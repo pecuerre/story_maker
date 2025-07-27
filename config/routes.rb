@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
-  resources :locations
+  # Main story routes
   resources :stories do
+    resources :locations
     resources :location_types
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

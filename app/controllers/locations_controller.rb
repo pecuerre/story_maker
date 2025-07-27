@@ -1,5 +1,6 @@
 class LocationsController < ApplicationController
   before_action :set_location, only: %i[ show edit update destroy ]
+  before_action :set_story
 
   # GET /locations or /locations.json
   def index
@@ -26,10 +27,8 @@ class LocationsController < ApplicationController
     respond_to do |format|
       if @location.save
         format.html { redirect_to @location, notice: "Location was successfully created." }
-        format.json { render :show, status: :created, location: @location }
       else
         format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @location.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -39,10 +38,8 @@ class LocationsController < ApplicationController
     respond_to do |format|
       if @location.update(location_params)
         format.html { redirect_to @location, notice: "Location was successfully updated." }
-        format.json { render :show, status: :ok, location: @location }
       else
         format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @location.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -61,6 +58,10 @@ class LocationsController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def set_location
       @location = Location.find(params.expect(:id))
+    end
+
+    def set_story
+      @story = Story.find(params.expect(:story_id))
     end
 
     # Only allow a list of trusted parameters through.

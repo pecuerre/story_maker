@@ -4,18 +4,29 @@
     <% if @story && !@story.new_record? %>
 
       <div class="card mb-3">
-        <div class="card-header">
+        <div class="card-header <%= highlighted_sidebar_section(:settings) %>">
           Story Settings
         </div>
         <ul class="list-group list-group-flush">
-          <li class="list-group-item">
+
+          <!-- Location Types -->
+          <li class="list-group-item <%= highlighted_sidebar_item(:location_types) %>">
             <%= link_to 'Location Types', story_location_types_path(@story) %>
-            <% @story.location_types.each do |location_type| %>
-              <br> <%= location_type.name %> (<%= location_type.locations.count %>)
+            <% if params[:controller] == 'location_types' %>
+              <% @story.location_types.each do |location_type| %>
+                <br> <span class="text-dark"> <%= location_type.name %> (<%= location_type.locations.count %>) </span>
+              <% end %>
+              <% if @story.location_types.count == 0 %>
+                <span class="text-muted">No location types</span>
+              <% end %>
             <% end %>
-            <% if @story.location_types.count == 0 %>
-              <span class="text-muted">No location types</span>
-            <% end %>
+          </li>
+
+          <li class="list-group-item">
+            <%= link_to 'Event Types', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Character Types', '#', class: 'link-secondary' %>
           </li>
           <li class="list-group-item">
             <%= link_to 'Calendar', '#', class: 'link-secondary' %>

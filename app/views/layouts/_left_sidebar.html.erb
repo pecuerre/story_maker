@@ -4,7 +4,7 @@
 
 
     <div class="card mb-3">
-      <div class="card-header">
+      <div class="card-header <%= highlighted_sidebar_section(:general) %>">
         General
       </div>
       <ul class="list-group list-group-flush">
@@ -18,12 +18,12 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header">
+      <div class="card-header <%= highlighted_sidebar_section(:elements) %>">
         Story Elements
       </div>
       <ul class="list-group list-group-flush">
-        <li class="list-group-item">
-          <%= link_to 'Locations', "#", class: 'link-secondary' %>
+        <li class="list-group-item <%= highlighted_sidebar_item(:locations) %>">
+          <%= link_to 'Locations', story_locations_path(@story) %>
         </li>
         <li class="list-group-item">
           <%= link_to 'Characters', "#", class: 'link-secondary' %>

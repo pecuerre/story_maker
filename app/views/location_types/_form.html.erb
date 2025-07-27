@@ -1,4 +1,4 @@
-<%= form_with(model: location_type) do |form| %>
+<%= form_with(model: [@story, location_type]) do |form| %>
   <% if location_type.errors.any? %>
     <div style="color: red">
       <h2><%= pluralize(location_type.errors.count, "error") %> prohibited this location_type from being saved:</h2>
@@ -11,22 +11,19 @@
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :name, style: "display: block" %>
-    <%= form.text_field :name %>
+  <div class="mb-3">
+    <%= form.label :name, class: 'form-label' %>
+    <%= form.text_field :name, class: 'form-control' %>
   </div>
 
-  <div>
-    <%= form.label :description, style: "display: block" %>
-    <%= form.textarea :description %>
+  <div class="mb-3">
+    <%= form.label :description, class: 'form-label' %>
+    <%= form.textarea :description, class: 'form-control' %>
   </div>
 
-  <div>
-    <%= form.label :story_id, style: "display: block" %>
-    <%= form.text_field :story_id %>
-  </div>
-
-  <div>
-    <%= form.submit %>
+  <div class="mb-3">
+    <%= form.hidden_field :story_id, value: @story.id %>
+    <%= form.submit class: 'btn btn-primary' %>
+    <%= link_to "Back to Location Types", story_location_types_path(@story), class: 'btn btn-secondary' %>
   </div>
 <% end %>

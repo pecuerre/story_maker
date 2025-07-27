@@ -9,7 +9,7 @@
 <div id="stories" class="row">
   <% @stories.each do |story| %>
     <div class="col-md-3 mb-4">
-      <div class="card h-100">
+      <div class="card h-100 <%= highlighted_border(story) %>">
         <div class="card-header">
           <%= story.name %>
         </div>

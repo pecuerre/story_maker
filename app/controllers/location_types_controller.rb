@@ -1,14 +1,10 @@
 class LocationTypesController < ApplicationController
-  before_action :set_location_type, only: %i[ show edit update destroy ]
+  before_action :set_location_type, only: %i[ edit update destroy ]
   before_action :set_story
 
   # GET /location_types or /location_types.json
   def index
     @location_types = LocationType.all
-  end
-
-  # GET /location_types/1 or /location_types/1.json
-  def show
   end
 
   # GET /location_types/new
@@ -26,11 +22,9 @@ class LocationTypesController < ApplicationController
 
     respond_to do |format|
       if @location_type.save
-        format.html { redirect_to @location_type, notice: "Location type was successfully created." }
-        format.json { render :show, status: :created, location: @location_type }
+        format.html { redirect_to story_location_types_path(@story), notice: "Location type was successfully created." }
       else
         format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @location_type.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -39,11 +33,9 @@ class LocationTypesController < ApplicationController
   def update
     respond_to do |format|
       if @location_type.update(location_type_params)
-        format.html { redirect_to @location_type, notice: "Location type was successfully updated." }
-        format.json { render :show, status: :ok, location: @location_type }
+        format.html { redirect_to story_location_types_path(@story), notice: "Location type was successfully updated." }
       else
         format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @location_type.errors, status: :unprocessable_entity }
       end
     end
   end

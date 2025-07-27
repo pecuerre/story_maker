@@ -25,11 +25,9 @@ class StoriesController < ApplicationController
 
     respond_to do |format|
       if @story.save
-        format.html { redirect_to @story, notice: "Story was successfully created." }
-        format.json { render :show, status: :created, location: @story }
+        format.html { redirect_to stories_path(highlight: @story.id), notice: "Story was successfully created." }
       else
         format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @story.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -38,11 +36,9 @@ class StoriesController < ApplicationController
   def update
     respond_to do |format|
       if @story.update(story_params)
-        format.html { redirect_to @story, notice: "Story was successfully updated." }
-        format.json { render :show, status: :ok, location: @story }
+        format.html { redirect_to stories_path(highlight: @story.id), notice: "Story was successfully updated." }
       else
         format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @story.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -53,7 +49,6 @@ class StoriesController < ApplicationController
 
     respond_to do |format|
       format.html { redirect_to stories_path, status: :see_other, notice: "Story was successfully destroyed." }
-      format.json { head :no_content }
     end
   end
 

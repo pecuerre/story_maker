@@ -1,16 +1,31 @@
 <p style="color: green"><%= notice %></p>
-
 <% content_for :title, "Location types" %>
+<%= header "Location Types", icon: :list %>
 
-<h1>Location types</h1>
-
-<div id="location_types">
-  <% @location_types.each do |location_type| %>
-    <%= render location_type %>
-    <p>
-      <%= link_to "Show this location type", location_type %>
-    </p>
-  <% end %>
+<div class="mb-3">
+  <%= link_to "New location type", new_story_location_type_path(@story), class: 'btn btn-primary' %>
 </div>
 
-<%= link_to "New location type", new_location_type_path %>
+<table id="location_types" class="table table-striped">
+  <tr>
+    <th>Name</th>
+    <th>Description</th>
+    <th>Actions</th>
+  </tr>
+  <% @location_types.each do |location_type| %>
+    <tr>
+      <td><%= location_type.name %></td>
+      <td><%= location_type.description %></td>
+      <td>
+        <%= link_to "Edit", edit_story_location_type_path(@story, location_type),
+          class: 'btn btn-sm btn-secondary' %>
+        <%= button_to "Destroy", story_location_type_path(@story, location_type),
+          method: :delete,
+          class: 'btn btn-sm btn-danger',
+          data: { confirm: "Are you sure?" },
+          form: { class: 'd-inline'} %>
+      </td>
+    </tr>
+  <% end %>
+</table>
+

@@ -13,6 +13,9 @@
             <% @story.location_types.each do |location_type| %>
               <br> <%= location_type.name %> (0)
             <% end %>
+            <% if @story.location_types.count == 0 %>
+              <span class="text-muted">No location types</span>
+            <% end %>
           </li>
           <li class="list-group-item">
             <%= link_to 'Calendar', '#', class: 'link-secondary' %>

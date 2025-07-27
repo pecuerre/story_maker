@@ -3,10 +3,14 @@
       <div class="container-fluid">
         <a class="navbar-brand" href="#">Story Maker</a>
         <ul class="navbar-nav flex-row ms-2">
-          <li class="nav-item"><a class="nav-link px-2" href="#">Dashboard</a></li>
           <li class="nav-item">
-            <%= link_to 'Stories', stories_path, :class => 'nav-link' %>
+            <%= link_to 'All Stories', stories_path, :class => 'nav-link' %>
           </li>
+          <% if @story %>
+            <li class="nav-item">
+              <%= link_to @story.name, story_path(@story), class: 'text-info nav-link px-2' %>
+            </li>
+          <% end %>
         </ul>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>

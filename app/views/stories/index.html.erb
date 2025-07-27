@@ -1,16 +1,26 @@
 <p style="color: green"><%= notice %></p>
-
 <% content_for :title, "Stories" %>
+<%= header "Stories", icon: :list %>
 
-<h1>Stories</h1>
+<div class="mb-3">
+  <%= link_to "New story", new_story_path, class: 'btn btn-primary' %>
+</div>
 
-<div id="stories">
+<div id="stories" class="row">
   <% @stories.each do |story| %>
-    <%= render story %>
-    <p>
-      <%= link_to "Show this story", story %>
-    </p>
+    <div class="col-md-3 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <%= story.name %>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title"><%= story.slug %></h5>
+          <p class="card-text"><%= story.description %></p>
+          <%= link_to "Details", story, class: 'btn btn-info' %>
+          <%= link_to "Edit", edit_story_path(story), class: 'btn btn-primary' %>
+        </div>
+      </div>
+    </div>
   <% end %>
 </div>
 
-<%= link_to "New story", new_story_path %>

@@ -1,12 +1,3 @@
 <% content_for :title, "Editing story" %>
-
-<h1>Editing story</h1>
-
+<%= header "New Story", icon: :edit %>
 <%= render "form", story: @story %>
-
-<br>
-
-<div>
-  <%= link_to "Show this story", @story %> |
-  <%= link_to "Back to stories", stories_path %>
-</div>

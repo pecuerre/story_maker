@@ -1,10 +1,9 @@
 <p style="color: green"><%= notice %></p>
-
+<%= header "Story Details", icon: :details %>
 <%= render @story %>
 
-<div>
-  <%= link_to "Edit this story", edit_story_path(@story) %> |
-  <%= link_to "Back to stories", stories_path %>
-
-  <%= button_to "Destroy this story", @story, method: :delete %>
+<div class="mt-3">
+  <%= link_to "Edit this story", edit_story_path(@story), class: 'btn btn-primary' %>
+  <%= link_to "Back to stories", stories_path, class: 'btn btn-secondary' %>
+  <%= button_to "Destroy this story", @story, class: 'btn btn-danger', method: :delete, form: { class: "d-inline" } %>
 </div>

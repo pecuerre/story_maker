@@ -1,0 +1,19 @@
+<!-- Right Sidebar -->
+<nav class="col-md-2 d-none d-md-block bg-light sidebar vh-100 position-fixed" style="top:56px; right:0;">
+  <div class="sidebar-sticky pt-3">
+    <% if @story && !@story.new_record? %>
+      <!-- First Boxed Section -->
+      <div class="card mb-3">
+        <div class="card-header">
+          Setup
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            <%= link_to 'Location Types', story_location_types_path(@story) %>
+            <a class="nav-link" href="#">Link 1</a>
+          </li>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+</nav>

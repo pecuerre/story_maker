@@ -11,7 +11,7 @@
           <li class="list-group-item">
             <%= link_to 'Location Types', story_location_types_path(@story) %>
             <% @story.location_types.each do |location_type| %>
-              <br> <%= location_type.name %> (0)
+              <br> <%= location_type.name %> (<%= location_type.locations.count %>)
             <% end %>
             <% if @story.location_types.count == 0 %>
               <span class="text-muted">No location types</span>

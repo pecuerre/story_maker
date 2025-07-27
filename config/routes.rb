@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :locations
   resources :stories do
     resources :location_types
   end

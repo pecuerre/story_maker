@@ -1,0 +1,1 @@
+(A) location relation with other location (distance, direction, etc.)

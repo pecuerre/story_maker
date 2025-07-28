@@ -1,10 +1,9 @@
 class LocationTypesController < ApplicationController
   before_action :set_location_type, only: %i[ edit update destroy ]
-  before_action :set_story
 
   # GET /location_types or /location_types.json
   def index
-    @location_types = LocationType.all
+    @location_types = LocationType.all.where(story_id: @story.id)
   end
 
   # GET /location_types/new
@@ -54,10 +53,6 @@ class LocationTypesController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def set_location_type
       @location_type = LocationType.find(params.expect(:id))
-    end
-
-    def set_story
-      @story = Story.find(params.expect(:story_id))
     end
 
     # Only allow a list of trusted parameters through.

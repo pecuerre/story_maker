@@ -16,6 +16,7 @@
         <div class="card-body">
           <h5 class="card-title"><%= story.slug %></h5>
           <p class="card-text"><%= story.description %></p>
+          <p class="card-text"> Locations: <%= story.locations.count %></p>
           <%= link_to "Details", story, class: 'btn btn-info' %>
           <%= link_to "Edit", edit_story_path(story), class: 'btn btn-primary' %>
         </div>

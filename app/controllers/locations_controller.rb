@@ -1,10 +1,12 @@
 class LocationsController < ApplicationController
   before_action :set_location, only: %i[ show edit update destroy ]
   before_action :set_story
+  before_action :set_location_types, only: %i[new edit create update]
+  before_action :set_parent_locations, only: %i[new edit create update]
 
   # GET /locations or /locations.json
   def index
-    @locations = Location.all
+    @locations = Location.all.where(story_id: @story.id)
   end
 
   # GET /locations/1 or /locations/1.json
@@ -26,7 +28,7 @@ class LocationsController < ApplicationController
 
     respond_to do |format|
       if @location.save
-        format.html { redirect_to @location, notice: "Location was successfully created." }
+        format.html { redirect_to story_locations_path(@story), notice: "Location was successfully created." }
       else
         format.html { render :new, status: :unprocessable_entity }
       end
@@ -37,7 +39,7 @@ class LocationsController < ApplicationController
   def update
     respond_to do |format|
       if @location.update(location_params)
-        format.html { redirect_to @location, notice: "Location was successfully updated." }
+        format.html { redirect_to story_locations_path(@story), notice: "Location was successfully updated." }
       else
         format.html { render :edit, status: :unprocessable_entity }
       end
@@ -55,13 +57,20 @@ class LocationsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
     def set_location
       @location = Location.find(params.expect(:id))
     end
 
-    def set_story
-      @story = Story.find(params.expect(:story_id))
+    def set_location_types
+      @location_types = LocationType.where(story_id: @story.id).pluck(:name, :id)
+      @location_types.unshift([ "Select Location Type", nil ]) # Add a placeholder option
+    end
+
+    def set_parent_locations
+      @parent_locations = Location.where(story_id: @story.id)
+      @parent_locations = @parent_locations.where.not(id: @location.id) if @location.present?
+      @parent_locations = @parent_locations.pluck(:name, :id)
+      @parent_locations.unshift([ "Select Parent Location", nil ]) # Add a placeholder option
     end
 
     # Only allow a list of trusted parameters through.

@@ -1,12 +1,3 @@
 <% content_for :title, "Editing location" %>
-
-<h1>Editing location</h1>
-
+<%= header "Edit Location", icon: :edit %>
 <%= render "form", location: @location %>
-
-<br>
-
-<div>
-  <%= link_to "Show this location", @location %> |
-  <%= link_to "Back to locations", locations_path %>
-</div>

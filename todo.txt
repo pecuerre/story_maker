@@ -1,1 +1,7 @@
 (A) location relation with other location (distance, direction, etc.)
+(A) diferent visualization of elements and settings
+(A) change buttons with text for icons
+(A) autocomplete for every select
+(A) visualize location like vedado > habana > cuba
+(A) add filters to tables and views
+(A) TAXONOMY (remove location type)

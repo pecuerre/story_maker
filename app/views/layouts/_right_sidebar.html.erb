@@ -11,15 +11,8 @@
 
           <!-- Location Types -->
           <li class="list-group-item <%= highlighted_sidebar_item(:location_types) %>">
-            <%= link_to 'Location Types', story_location_types_path(@story) %>
-            <% if params[:controller] == 'location_types' %>
-              <% @story.location_types.each do |location_type| %>
-                <br> <span class="text-dark"> <%= location_type.name %> (<%= location_type.locations.count %>) </span>
-              <% end %>
-              <% if @story.location_types.count == 0 %>
-                <span class="text-muted">No location types</span>
-              <% end %>
-            <% end %>
+            <%= link_to "Location Types (#{@story.location_types.count})",
+              story_location_types_path(@story) %>
           </li>
 
           <li class="list-group-item">

@@ -1,16 +1,35 @@
 <p style="color: green"><%= notice %></p>
-
 <% content_for :title, "Locations" %>
+<%= header "Locations", icon: :list %>
 
-<h1>Locations</h1>
-
-<div id="locations">
-  <% @locations.each do |location| %>
-    <%= render location %>
-    <p>
-      <%= link_to "Show this location", location %>
-    </p>
-  <% end %>
+<div class="mb-3">
+  <%= link_to "New location", new_story_location_path(@story), class: 'btn btn-primary' %>
 </div>
 
-<%= link_to "New location", new_story_location_path(@story) %>
+<table id="locations" class="table table-striped">
+  <tr>
+    <th>Name</th>
+    <th>Parent</th>
+    <th>Type</th>
+    <th class="text-end">Actions</th>
+  </tr>
+  <% @locations.each do |location| %>
+    <tr>
+      <td><%= location.name %></td>
+      <td><%= link_to(location.parent.name, story_location_path(@story, location.parent)) if location.parent %></td>
+      <td><%= location.location_type.name %></td>
+      <td class="text-end">
+        <%= link_to "Show", story_location_path(@story, location),
+          class: 'btn btn-sm btn-info' %>
+        <%= link_to "Edit", edit_story_location_path(@story, location),
+          class: 'btn btn-sm btn-secondary' %>
+        <%= button_to "Destroy", story_location_path(@story, location),
+          method: :delete,
+          class: 'btn btn-sm btn-danger',
+          data: { confirm: "Are you sure?" },
+          form: { class: 'd-inline'} %>
+      </td>
+    </tr>
+  <% end %>
+</table>
+

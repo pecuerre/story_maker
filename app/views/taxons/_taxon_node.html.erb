@@ -1,0 +1,41 @@
+<div class="taxon-node" data-taxon-id="<%= taxon.id %>">
+  <div class="taxon-item d-flex align-items-center p-2 border-bottom">
+    <div class="taxon-toggle me-2" onclick="toggleTaxon(<%= taxon.id %>)" style="cursor: pointer;">
+      <i class="bi bi-chevron-<%= taxon.children.any? ? 'down' : 'right' %> text-muted"></i>
+    </div>
+    <div class="taxon-icon me-2">
+      <i class="bi bi-<%= taxon.children.any? ? 'folder' : 'tag' %> text-primary"></i>
+    </div>
+    <div class="taxon-content flex-grow-1">
+      <span class="taxon-name"><%= taxon.name %></span>
+      <% if taxon.root? %>
+        <span class="badge bg-info ms-2">Root</span>
+      <% end %>
+    </div>
+    <div class="taxon-actions">
+      <div class="btn-group btn-group-sm" role="group">
+        <%= link_to new_taxonomy_taxon_path(@taxonomy, parent_id: taxon.id), class: "btn btn-outline-primary btn-sm" do %>
+          <i class="bi bi-plus"></i>
+        <% end %>
+        <%= link_to edit_taxonomy_taxon_path(@taxonomy, taxon), class: "btn btn-outline-secondary btn-sm" do %>
+          <i class="bi bi-pencil"></i>
+        <% end %>
+        <% unless taxon.root? %>
+          <%= link_to taxonomy_taxon_path(@taxonomy, taxon),
+              method: :delete,
+              data: { confirm: "Are you sure? This will also delete all its children." },
+              class: "btn btn-outline-danger btn-sm" do %>
+            <i class="bi bi-trash"></i>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <% if taxon.children.any? %>
+    <div class="taxon-children ms-4" id="children-<%= taxon.id %>">
+      <% taxon.children.includes(:children).each do |child| %>
+        <%= render 'taxons/taxon_node', taxon: child %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

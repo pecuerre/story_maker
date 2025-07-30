@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_27_022342) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_28_034742) do
   create_table "location_types", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -40,7 +40,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_022342) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "taxonomies", force: :cascade do |t|
+    t.string "name"
+    t.text "description"
+    t.string "slug"
+    t.boolean "fixed", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "taxons", force: :cascade do |t|
+    t.string "name"
+    t.integer "taxonomy_id", null: false
+    t.integer "parent_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_taxons_on_parent_id"
+    t.index ["taxonomy_id"], name: "index_taxons_on_taxonomy_id"
+  end
+
   add_foreign_key "location_types", "stories"
   add_foreign_key "locations", "location_types"
   add_foreign_key "locations", "stories"
+  add_foreign_key "taxons", "taxonomies"
+  add_foreign_key "taxons", "taxons", column: "parent_id"
 end

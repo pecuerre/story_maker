@@ -4,4 +4,4 @@
 (A) autocomplete for every select
 (A) visualize location like vedado > habana > cuba
 (A) add filters to tables and views
-(A) TAXONOMY (remove location type)
+(A) TAXONOMY (remove location types, add tags)

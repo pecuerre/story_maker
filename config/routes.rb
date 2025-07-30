@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  resources :taxonomies do
+    resources :taxons, except: [ :show ]
+  end
+  resources :taxons, only: [ :index, :show ]
   # Main story routes
   resources :stories do
     resources :locations

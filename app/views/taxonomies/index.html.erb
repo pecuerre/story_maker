@@ -10,7 +10,7 @@
 <div class="row" id="taxonomies-container">
   <% @taxonomies.each do |taxonomy| %>
     <div class="col-md-6 col-lg-4 mb-4">
-      <div class="card h-100 taxonomy-card" data-taxonomy-id="<%= taxonomy.id %>">
+      <div class="card h-100 taxonomy-card" data-taxonomy-id="<%= taxonomy.id %>" data-taxonomy-slug="<%= taxonomy.slug %>">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="card-title mb-0">
             <%= link_to taxonomy.name, taxonomy_path(taxonomy), class: "text-decoration-none" %>
@@ -72,7 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadTaxonTree(taxonomyId, container) {
-  fetch(`/taxonomies/${taxonomyId}/taxons.json`)
+  const taxonomyCard = container.closest('.taxonomy-card');
+  const taxonomySlug = taxonomyCard.dataset.taxonomySlug;
+  fetch(`/t/${taxonomySlug}/taxons.json`)
     .then(response => response.json())
     .then(taxons => {
       container.innerHTML = renderTaxonTree(taxons);

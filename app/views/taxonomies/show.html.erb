@@ -118,7 +118,7 @@ function loadTaxonTree() {
 
   console.log('Loading taxons for taxonomy:', <%= @taxonomy.id %>);
 
-  fetch(`/taxonomies/<%= @taxonomy.id %>/taxons.json`, {
+  fetch(`/t/<%= @taxonomy.slug %>/taxons.json`, {
     signal: AbortSignal.timeout(5000) // 5 second timeout
   })
     .then(response => {
@@ -224,11 +224,11 @@ function collapseAll() {
 }
 
 function addChildTaxon(parentId) {
-  window.location.href = `/taxonomies/<%= @taxonomy.id %>/taxons/new?parent_id=${parentId}`;
+  window.location.href = `/t/<%= @taxonomy.slug %>/taxons/new?parent_id=${parentId}`;
 }
 
 function editTaxon(taxonId) {
-  window.location.href = `/taxonomies/<%= @taxonomy.id %>/taxons/${taxonId}/edit`;
+  window.location.href = `/t/<%= @taxonomy.slug %>/taxons/${taxonId}/edit`;
 }
 
 function deleteTaxon(taxonId) {
@@ -236,7 +236,7 @@ function deleteTaxon(taxonId) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ||
                      document.querySelector('input[name="authenticity_token"]')?.value;
 
-    fetch(`/taxonomies/<%= @taxonomy.id %>/taxons/${taxonId}`, {
+    fetch(`/t/<%= @taxonomy.slug %>/taxons/${taxonId}`, {
       method: 'DELETE',
       headers: {
         'X-CSRF-Token': csrfToken,

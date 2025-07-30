@@ -8,6 +8,10 @@ class Taxonomy < ApplicationRecord
   before_create :set_default_fixed
   after_create :create_root_taxon
 
+  def to_param
+    slug
+  end
+
   private
 
   def set_default_fixed

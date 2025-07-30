@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  resources :taxonomies do
+  resources :taxonomies, path: "t", param: :slug do
     resources :taxons, except: [ :show ]
   end
   resources :taxons, only: [ :index, :show ]

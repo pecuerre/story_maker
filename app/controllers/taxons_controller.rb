@@ -85,7 +85,7 @@ class TaxonsController < ApplicationController
   private
 
   def set_taxonomy
-    @taxonomy = Taxonomy.find(params[:taxonomy_id])
+    @taxonomy = Taxonomy.find_by!(slug: params[:taxonomy_slug])
   end
 
   def set_taxon

@@ -49,7 +49,7 @@ class TaxonomiesController < ApplicationController
   private
 
   def set_taxonomy
-    @taxonomy = Taxonomy.find(params[:id])
+    @taxonomy = Taxonomy.find_by!(slug: params[:slug])
   end
 
   def taxonomy_params

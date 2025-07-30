@@ -1,8 +1,8 @@
 <% content_for :title, "Taxonomies" %>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1>Taxonomies</h1>
-  <%= link_to new_taxonomy_path, class: "btn btn-primary" do %>
+  <h1>Taxonomies for <%= @story.name %></h1>
+  <%= link_to new_story_taxonomy_path(@story), class: "btn btn-primary" do %>
     <i class="bi bi-plus-circle"></i> New Taxonomy
   <% end %>
 </div>
@@ -13,7 +13,7 @@
       <div class="card h-100 taxonomy-card" data-taxonomy-id="<%= taxonomy.id %>" data-taxonomy-slug="<%= taxonomy.slug %>">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="card-title mb-0">
-            <%= link_to taxonomy.name, taxonomy_path(taxonomy), class: "text-decoration-none" %>
+            <%= link_to taxonomy.name, story_taxonomy_path(@story, taxonomy), class: "text-decoration-none" %>
           </h5>
           <% if taxonomy.fixed? %>
             <span class="badge bg-warning text-dark">Fixed</span>
@@ -30,14 +30,14 @@
         </div>
         <div class="card-footer">
           <div class="btn-group w-100" role="group">
-            <%= link_to taxonomy_path(taxonomy), class: "btn btn-outline-primary btn-sm" do %>
+            <%= link_to story_taxonomy_path(@story, taxonomy), class: "btn btn-outline-primary btn-sm" do %>
               <i class="bi bi-eye"></i> View
             <% end %>
-            <%= link_to edit_taxonomy_path(taxonomy), class: "btn btn-outline-secondary btn-sm" do %>
+            <%= link_to edit_story_taxonomy_path(@story, taxonomy), class: "btn btn-outline-secondary btn-sm" do %>
               <i class="bi bi-pencil"></i> Edit
             <% end %>
             <% unless taxonomy.fixed? %>
-              <%= link_to taxonomy_path(taxonomy),
+              <%= link_to story_taxonomy_path(@story, taxonomy),
                   method: :delete,
                   data: { confirm: "Are you sure? This will delete all taxons in this taxonomy." },
                   class: "btn btn-outline-danger btn-sm" do %>
@@ -56,7 +56,7 @@
     <i class="bi bi-diagram-3 display-1 text-muted"></i>
     <h3 class="mt-3">No Taxonomies Yet</h3>
     <p class="text-muted">Create your first taxonomy to start organizing your content.</p>
-    <%= link_to new_taxonomy_path, class: "btn btn-primary" do %>
+    <%= link_to new_story_taxonomy_path(@story), class: "btn btn-primary" do %>
       <i class="bi bi-plus-circle"></i> Create First Taxonomy
     <% end %>
   </div>
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadTaxonTree(taxonomyId, container) {
   const taxonomyCard = container.closest('.taxonomy-card');
   const taxonomySlug = taxonomyCard.dataset.taxonomySlug;
-  fetch(`/t/${taxonomySlug}/taxons.json`)
+  fetch(`/stories/${@story.id}/t/${taxonomySlug}/taxons.json`)
     .then(response => response.json())
     .then(taxons => {
       container.innerHTML = renderTaxonTree(taxons);

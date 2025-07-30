@@ -14,14 +14,14 @@
     </div>
     <div class="taxon-actions">
       <div class="btn-group btn-group-sm" role="group">
-        <%= link_to new_taxonomy_taxon_path(@taxonomy, parent_id: taxon.id), class: "btn btn-outline-primary btn-sm" do %>
+        <%= link_to new_story_taxonomy_taxon_path(@story, @taxonomy, parent_id: taxon.id), class: "btn btn-outline-primary btn-sm" do %>
           <i class="bi bi-plus"></i>
         <% end %>
-        <%= link_to edit_taxonomy_taxon_path(@taxonomy, taxon), class: "btn btn-outline-secondary btn-sm" do %>
+        <%= link_to edit_story_taxonomy_taxon_path(@story, @taxonomy, taxon), class: "btn btn-outline-secondary btn-sm" do %>
           <i class="bi bi-pencil"></i>
         <% end %>
         <% unless taxon.root? %>
-          <%= link_to taxonomy_taxon_path(@taxonomy, taxon),
+          <%= link_to story_taxonomy_taxon_path(@story, @taxonomy, taxon),
               method: :delete,
               data: { confirm: "Are you sure? This will also delete all its children." },
               class: "btn btn-outline-danger btn-sm" do %>

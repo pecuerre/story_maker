@@ -7,6 +7,9 @@ Rails.application.routes.draw do
   resources :stories do
     resources :locations
     resources :location_types
+    resources :taxonomies, path: "t", param: :slug do
+      resources :taxons, except: [ :show ]
+    end
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

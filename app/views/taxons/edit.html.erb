@@ -4,9 +4,10 @@
   <div>
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><%= link_to "Taxonomies", taxonomies_path %></li>
+        <li class="breadcrumb-item"><%= link_to @story.name, story_path(@story) %></li>
+        <li class="breadcrumb-item"><%= link_to "Taxonomies", story_taxonomies_path(@story) %></li>
         <% if @taxonomy %>
-          <li class="breadcrumb-item"><%= link_to @taxonomy.name, taxonomy_path(@taxonomy) %></li>
+          <li class="breadcrumb-item"><%= link_to @taxonomy.name, story_taxonomy_path(@story, @taxonomy) %></li>
         <% end %>
         <li class="breadcrumb-item active" aria-current="page">Edit Taxon</li>
       </ol>
@@ -55,7 +56,7 @@
           </div>
 
           <div class="d-flex justify-content-between">
-            <%= link_to "Cancel", @taxonomy ? taxonomy_path(@taxonomy) : taxons_path, class: "btn btn-secondary" %>
+            <%= link_to "Cancel", story_taxonomy_taxons_path(@story, @taxonomy), class: "btn btn-secondary" %>
             <%= form.submit "Update Taxon", class: "btn btn-primary" %>
           </div>
         <% end %>

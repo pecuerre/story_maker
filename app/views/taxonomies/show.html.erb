@@ -4,7 +4,8 @@
   <div>
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><%= link_to "Taxonomies", taxonomies_path %></li>
+        <li class="breadcrumb-item"><%= link_to @story.name, story_path(@story) %></li>
+        <li class="breadcrumb-item"><%= link_to "Taxonomies", story_taxonomies_path(@story) %></li>
         <li class="breadcrumb-item active" aria-current="page"><%= @taxonomy.name %></li>
       </ol>
     </nav>
@@ -16,10 +17,10 @@
     </h1>
   </div>
   <div class="btn-group" role="group">
-    <%= link_to edit_taxonomy_path(@taxonomy), class: "btn btn-outline-secondary" do %>
+    <%= link_to edit_story_taxonomy_path(@story, @taxonomy), class: "btn btn-outline-secondary" do %>
       <i class="bi bi-pencil"></i> Edit Taxonomy
     <% end %>
-    <%= link_to new_taxonomy_taxon_path(@taxonomy), class: "btn btn-primary" do %>
+    <%= link_to new_story_taxonomy_taxon_path(@story, @taxonomy), class: "btn btn-primary" do %>
       <i class="bi bi-plus-circle"></i> Add Taxon
     <% end %>
   </div>
@@ -43,6 +44,24 @@
           <dd class="col-sm-8">
             <% if @taxonomy.fixed? %>
               <span class="badge bg-success">Yes</span>
+            <% else %>
+              <span class="badge bg-secondary">No</span>
+            <% end %>
+          </dd>
+
+          <dt class="col-sm-4">Story Taxonomy:</dt>
+          <dd class="col-sm-8">
+            <% if @taxonomy.story_taxonomy? %>
+              <span class="badge bg-info">Yes</span>
+            <% else %>
+              <span class="badge bg-secondary">No</span>
+            <% end %>
+          </dd>
+
+          <dt class="col-sm-4">Setting Taxonomy:</dt>
+          <dd class="col-sm-8">
+            <% if @taxonomy.setting_taxonomy? %>
+              <span class="badge bg-info">Yes</span>
             <% else %>
               <span class="badge bg-secondary">No</span>
             <% end %>

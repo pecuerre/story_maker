@@ -1,8 +1,9 @@
 class TaxonsController < ApplicationController
+  before_action :set_story, if: -> { params[:story_id].present? }
   before_action :set_taxonomy, if: -> { params[:taxonomy_id].present? }
   before_action :set_taxon, only: [ :show, :edit, :update, :destroy ]
 
-    def index
+  def index
     @taxons = if @taxonomy
                 @taxonomy.taxons.roots.includes(:children)
     else
@@ -36,7 +37,7 @@ class TaxonsController < ApplicationController
 
     if @taxon.save
       respond_to do |format|
-        format.html { redirect_to @taxonomy || @taxon, notice: "Taxon was successfully created." }
+        format.html { redirect_to story_taxonomy_taxons_path(@story, @taxonomy), notice: "Taxon was successfully created." }
         format.json { render json: @taxon, status: :created }
       end
     else
@@ -55,7 +56,7 @@ class TaxonsController < ApplicationController
   def update
     if @taxon.update(taxon_params)
       respond_to do |format|
-        format.html { redirect_to @taxonomy || @taxon, notice: "Taxon was successfully updated." }
+        format.html { redirect_to story_taxonomy_taxons_path(@story, @taxonomy), notice: "Taxon was successfully updated." }
         format.json { render json: @taxon }
       end
     else
@@ -70,13 +71,13 @@ class TaxonsController < ApplicationController
   def destroy
     if @taxon.root? && @taxon.taxonomy.fixed?
       respond_to do |format|
-        format.html { redirect_to @taxonomy || @taxon, alert: "Cannot delete the root taxon of a fixed taxonomy." }
+        format.html { redirect_to story_taxonomy_taxons_path(@story, @taxonomy), alert: "Cannot delete the root taxon of a fixed taxonomy." }
         format.json { render json: { error: "Cannot delete the root taxon of a fixed taxonomy." }, status: :unprocessable_entity }
       end
     else
       @taxon.destroy
       respond_to do |format|
-        format.html { redirect_to @taxonomy || taxons_url, notice: "Taxon was successfully deleted." }
+        format.html { redirect_to story_taxonomy_taxons_path(@story, @taxonomy), notice: "Taxon was successfully deleted." }
         format.json { head :no_content }
       end
     end
@@ -84,8 +85,16 @@ class TaxonsController < ApplicationController
 
   private
 
+  def set_story
+    @story = Story.find(params[:story_id])
+  end
+
   def set_taxonomy
-    @taxonomy = Taxonomy.find_by!(slug: params[:taxonomy_slug])
+    if @story
+      @taxonomy = @story.taxonomies.find_by!(slug: params[:taxonomy_id])
+    else
+      @taxonomy = Taxonomy.find_by!(slug: params[:taxonomy_slug])
+    end
   end
 
   def set_taxon

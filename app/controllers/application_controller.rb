@@ -3,6 +3,8 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   before_action :set_story
 
+  # Almost all controllers need to know the story because
+  # everything is tied to a story.
   def set_story
     where = "#{params[:controller]}/#{params[:action]}"
     return if where == "stories/index"

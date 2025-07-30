@@ -2,7 +2,8 @@ require "test_helper"
 
 class TaxonomyTest < ActiveSupport::TestCase
   def setup
-    @taxonomy = Taxonomy.new(
+    @story = Story.create!(name: "Test Story", slug: "test-story")
+    @taxonomy = @story.taxonomies.build(
       name: "Test Taxonomy",
       description: "A test taxonomy",
       slug: "test-taxonomy",
@@ -20,9 +21,9 @@ class TaxonomyTest < ActiveSupport::TestCase
     assert_includes @taxonomy.errors[:name], "can't be blank"
   end
 
-  test "should require unique name" do
+  test "should require unique name within story" do
     @taxonomy.save!
-    duplicate = Taxonomy.new(name: "Test Taxonomy", slug: "different-slug")
+    duplicate = @story.taxonomies.build(name: "Test Taxonomy", slug: "different-slug")
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:name], "has already been taken"
   end
@@ -33,9 +34,9 @@ class TaxonomyTest < ActiveSupport::TestCase
     assert_includes @taxonomy.errors[:slug], "can't be blank"
   end
 
-  test "should require unique slug" do
+  test "should require unique slug within story" do
     @taxonomy.save!
-    duplicate = Taxonomy.new(name: "Different Name", slug: "test-taxonomy")
+    duplicate = @story.taxonomies.build(name: "Different Name", slug: "test-taxonomy")
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:slug], "has already been taken"
   end
@@ -84,5 +85,18 @@ class TaxonomyTest < ActiveSupport::TestCase
     @taxonomy.fixed = nil
     @taxonomy.save!
     assert_equal false, @taxonomy.reload.fixed
+  end
+
+    test "should create fixed taxonomies for new story" do
+    new_story = Story.create!(name: "New Story", slug: "new-story")
+    assert_equal Taxonomy::FIXED_TAXONOMIES.length, new_story.taxonomies.count
+
+    Taxonomy::FIXED_TAXONOMIES.each do |taxonomy_data|
+      taxonomy = new_story.taxonomies.find_by(name: taxonomy_data[:name])
+      assert_not_nil taxonomy
+      assert taxonomy.fixed?
+      assert_equal taxonomy_data[:story_taxonomy], taxonomy.story_taxonomy?
+      assert_equal taxonomy_data[:setting_taxonomy], taxonomy.setting_taxonomy?
+    end
   end
 end

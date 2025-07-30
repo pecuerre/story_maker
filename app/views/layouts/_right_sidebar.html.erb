@@ -1,11 +1,31 @@
 <!-- Right Sidebar -->
 <nav class="col-md-2 d-none d-md-block bg-light sidebar vh-100 position-fixed" style="top:56px; right:0;">
-  <div class="sidebar-sticky pt-3">
+  <div class="sidebar-sticky pt-3 overflow-y-auto" style="max-height: calc(100vh - 56px);">
     <% if @story && !@story.new_record? %>
 
       <div class="card mb-3">
+        <div class="card-header">
+          Recent Activity
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            <%= link_to 'Stories', "#", class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Last Changes', "#", class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Unread Comments', "#", class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Uncommitted Work', "#", class: 'link-secondary' %>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card mb-3">
         <div class="card-header <%= highlighted_sidebar_section(:settings) %>">
-          Story Settings
+          Story Management
         </div>
         <ul class="list-group list-group-flush">
 
@@ -34,13 +54,46 @@
         </ul>
       </div>
 
-            <div class="card mb-3">
+      <div class="card mb-3">
+        <div class="card-header">
+          Collaboration
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+            <%= link_to 'Collaborators', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Changes', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Comments', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Debates', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Verstions', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Branches', '#', class: 'link-secondary' %>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card mb-3">
         <div class="card-header">
           Configuration
         </div>
         <ul class="list-group list-group-flush">
           <li class="list-group-item">
             <%= link_to 'Export to PDF', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Import from CSV', '#', class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Settings', '#', class: 'link-secondary' %>
+          </li>
         </ul>
       </div>
 

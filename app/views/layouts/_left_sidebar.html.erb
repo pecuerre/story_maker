@@ -1,6 +1,8 @@
+<!-- the scroll should be visible when the mouse is over the sidebar -->
+
 <!-- Left Sidebar -->
 <nav class="col-md-2 d-none d-md-block bg-light sidebar vh-100 position-fixed" style="top:56px; left:0;">
-  <div class="sidebar-sticky pt-3">
+  <div class="sidebar-sticky pt-3 overflow-y-auto" style="max-height: calc(100vh - 56px);">
     <% if @story && !@story.new_record? %>
 
       <div class="card mb-3">
@@ -13,6 +15,15 @@
           </li>
           <li class="list-group-item">
             <%= link_to 'World Map', "#", class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'Plot', "#", class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'World Building', "#", class: 'link-secondary' %>
+          </li>
+          <li class="list-group-item">
+            <%= link_to 'History', "#", class: 'link-secondary' %>
           </li>
         </ul>
       </div>

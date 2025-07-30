@@ -1,6 +1,6 @@
 class TaxonsController < ApplicationController
   before_action :set_story, if: -> { params[:story_id].present? }
-  before_action :set_taxonomy, if: -> { params[:taxonomy_id].present? }
+  before_action :set_taxonomy, if: -> { params[:taxonomy_slug].present? }
   before_action :set_taxon, only: [ :show, :edit, :update, :destroy ]
 
   def index
@@ -91,7 +91,7 @@ class TaxonsController < ApplicationController
 
   def set_taxonomy
     if @story
-      @taxonomy = @story.taxonomies.find_by!(slug: params[:taxonomy_id])
+      @taxonomy = @story.taxonomies.find_by!(slug: params[:taxonomy_slug])
     else
       @taxonomy = Taxonomy.find_by!(slug: params[:taxonomy_slug])
     end

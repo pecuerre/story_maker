@@ -24,13 +24,13 @@
       </div>
 
       <div class="card mb-3">
-        <div class="card-header <%= highlighted_sidebar_section(:settings) %>">
+        <div class="card-header <%= highlight_section(:settings) %>">
           Story Management
         </div>
         <ul class="list-group list-group-flush">
 
           <!-- Location Types -->
-          <li class="list-group-item <%= highlighted_sidebar_item(:location_types) %>">
+          <li class="list-group-item <%= highlight_item(:location_types) %>">
             <%= link_to "Location Types (#{@story.location_types.count})",
               story_location_types_path(@story) %>
           </li>
@@ -46,7 +46,7 @@
           </li>
 
           <% @story.taxonomies.where(setting_taxonomy: true).each do |taxonomy| %>
-            <li class="list-group-item <%= highlighted_sidebar_item(:taxonomies) %>">
+            <li class="list-group-item <%= highlight_item(taxonomy.slug) %>">
               <%= link_to "#{taxonomy.name} (#{taxonomy.taxons.count})",
                 story_taxonomy_taxons_path(@story, taxonomy) %>
             </li>

@@ -19,24 +19,28 @@ class Taxonomy < ApplicationRecord
   FIXED_TAXONOMIES = [
     {
       name: "Character Race",
+      slug: "character-race",
       description: "Races and species of characters in the story",
       story_taxonomy: true,
       setting_taxonomy: false
     },
     {
       name: "Character Class",
+      slug: "character-class",
       description: "Professions, classes, or roles of characters",
       story_taxonomy: true,
       setting_taxonomy: false
     },
     {
       name: "World Regions",
+      slug: "world-regions",
       description: "Geographic regions and areas in the story world",
       story_taxonomy: false,
       setting_taxonomy: true
     },
     {
       name: "Time Periods",
+      slug: "time-periods",
       description: "Historical periods and eras in the story",
       story_taxonomy: false,
       setting_taxonomy: true

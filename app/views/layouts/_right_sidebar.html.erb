@@ -3,6 +3,7 @@
   <div class="sidebar-sticky pt-3 overflow-y-auto" style="max-height: calc(100vh - 56px);">
     <% if @story && !@story.new_record? %>
 
+      <!--
       <div class="card mb-3">
         <div class="card-header">
           Recent Activity
@@ -22,6 +23,7 @@
           </li>
         </ul>
       </div>
+      -->
 
       <div class="card mb-3">
         <div class="card-header <%= highlight_section(:settings) %>">
@@ -29,11 +31,12 @@
         </div>
         <ul class="list-group list-group-flush">
 
-          <!-- Location Types -->
-          <li class="list-group-item <%= highlight_item(:location_types) %>">
-            <%= link_to "Location Types (#{@story.location_types.count})",
-              story_location_types_path(@story) %>
-          </li>
+          <% @story.taxonomies.where(setting_taxonomy: true).each do |taxonomy| %>
+            <li class="list-group-item <%= highlight_item(taxonomy.slug) %>">
+              <%= link_to "#{taxonomy.name} (#{taxonomy.taxons.count})",
+                story_taxonomy_taxons_path(@story, taxonomy) %>
+            </li>
+          <% end %>
 
           <li class="list-group-item">
             <%= link_to 'Event Types', '#', class: 'link-secondary' %>
@@ -45,15 +48,10 @@
             <%= link_to 'Calendar', '#', class: 'link-secondary' %>
           </li>
 
-          <% @story.taxonomies.where(setting_taxonomy: true).each do |taxonomy| %>
-            <li class="list-group-item <%= highlight_item(taxonomy.slug) %>">
-              <%= link_to "#{taxonomy.name} (#{taxonomy.taxons.count})",
-                story_taxonomy_taxons_path(@story, taxonomy) %>
-            </li>
-          <% end %>
         </ul>
       </div>
 
+      <!--
       <div class="card mb-3">
         <div class="card-header">
           Collaboration
@@ -96,6 +94,7 @@
           </li>
         </ul>
       </div>
+      -->
 
     <% end %>
   </div>

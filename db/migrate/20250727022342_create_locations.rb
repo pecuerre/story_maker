@@ -4,7 +4,6 @@ class CreateLocations < ActiveRecord::Migration[8.0]
       t.string :name
       t.text :description
       t.references :story, null: false, foreign_key: true
-      t.references :location_type, null: false, foreign_key: true
       t.integer :parent_id
 
       t.timestamps

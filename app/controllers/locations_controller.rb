@@ -1,7 +1,6 @@
 class LocationsController < ApplicationController
   before_action :set_location, only: %i[ show edit update destroy ]
   before_action :set_story
-  before_action :set_location_types, only: %i[new edit create update]
   before_action :set_parent_locations, only: %i[new edit create update]
 
   # GET /locations or /locations.json
@@ -59,11 +58,6 @@ class LocationsController < ApplicationController
   private
     def set_location
       @location = Location.find(params.expect(:id))
-    end
-
-    def set_location_types
-      @location_types = LocationType.where(story_id: @story.id).pluck(:name, :id)
-      @location_types.unshift([ "Select Location Type", nil ]) # Add a placeholder option
     end
 
     def set_parent_locations

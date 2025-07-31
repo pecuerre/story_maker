@@ -10,14 +10,12 @@
   <tr>
     <th>Name</th>
     <th>Parent</th>
-    <th>Type</th>
     <th class="text-end">Actions</th>
   </tr>
   <% @locations.each do |location| %>
     <tr>
       <td><%= location.name %></td>
       <td><%= link_to(location.parent.name, story_location_path(@story, location.parent)) if location.parent %></td>
-      <td><%= location.location_type.name %></td>
       <td class="text-end">
         <%= link_to "Show", story_location_path(@story, location),
           class: 'btn btn-sm btn-info' %>

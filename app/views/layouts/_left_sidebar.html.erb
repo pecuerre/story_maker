@@ -5,6 +5,7 @@
   <div class="sidebar-sticky pt-3 overflow-y-auto" style="max-height: calc(100vh - 56px);">
     <% if @story && !@story.new_record? %>
 
+      <!--
       <div class="card mb-3">
         <div class="card-header <%= highlight_section(:general) %>">
           General
@@ -27,6 +28,7 @@
           </li>
         </ul>
       </div>
+      -->
 
       <div class="card mb-3">
         <div class="card-header <%= highlight_section(:elements) %>">
@@ -47,7 +49,7 @@
             <%= link_to 'Events', "#", class: 'link-secondary' %>
           </li>
           <li class="list-group-item">
-            <%= link_to 'Scenes', "#", class: 'link-secondary' %>
+            <%= link_to 'Passages', "#", class: 'link-secondary' %>
           </li>
 
           <% @story.taxonomies.where(story_taxonomy: true).each do |taxonomy| %>

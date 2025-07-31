@@ -18,23 +18,37 @@ class Taxonomy < ApplicationRecord
   # Fixed taxonomies that are mandatory for every story
   FIXED_TAXONOMIES = [
     {
-      name: "Character Race",
-      slug: "character-race",
-      description: "Races and species of characters in the story",
-      story_taxonomy: true,
-      setting_taxonomy: false
-    },
-    {
-      name: "Character Class",
-      slug: "character-class",
-      description: "Professions, classes, or roles of characters",
-      story_taxonomy: true,
-      setting_taxonomy: false
+      name: "Location Types",
+      slug: "location-types",
+      description: "Types of locations in the story world",
+      story_taxonomy: false,
+      setting_taxonomy: true
     },
     {
       name: "World Regions",
       slug: "world-regions",
       description: "Geographic regions and areas in the story world",
+      story_taxonomy: false,
+      setting_taxonomy: true
+    },
+    {
+      name: "Character Class",
+      slug: "character-class",
+      description: "Professions, classes, or roles of characters",
+      story_taxonomy: false,
+      setting_taxonomy: true
+    },
+    {
+      name: "Character Traits",
+      slug: "character-traits",
+      description: "Personality traits and characteristics of characters",
+      story_taxonomy: false,
+      setting_taxonomy: true
+    },
+    {
+      name: "Character Types",
+      slug: "character-types",
+      description: "Types of haracters in the story",
       story_taxonomy: false,
       setting_taxonomy: true
     },
@@ -45,7 +59,7 @@ class Taxonomy < ApplicationRecord
       story_taxonomy: false,
       setting_taxonomy: true
     }
-  ].freeze
+  ] # .freeze
 
   def to_param
     slug

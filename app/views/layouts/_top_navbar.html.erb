@@ -6,12 +6,12 @@
           <li class="nav-item">
             <%= link_to 'All Stories', stories_path, :class => 'nav-link' %>
           </li>
-          <li class="nav-item">
-            <%= link_to 'Taxonomies', taxonomies_path, :class => 'nav-link' %>
-          </li>
           <% if @story %>
             <li class="nav-item">
               <%= link_to @story.name, story_path(@story), class: 'text-info nav-link px-2' %>
+            </li>
+            <li class="nav-item">
+              <%= link_to 'Taxonomies', story_taxonomies_path(@story), :class => 'nav-link' %>
             </li>
           <% end %>
         </ul>

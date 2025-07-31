@@ -1,12 +1,12 @@
 class StoriesController < ApplicationController
   before_action :set_story, only: %i[ show edit update destroy ]
 
-  # GET /stories or /stories.json
+  # GET /stories
   def index
     @stories = Story.all
   end
 
-  # GET /stories/1 or /stories/1.json
+  # GET /stories/1
   def show
   end
 
@@ -19,7 +19,7 @@ class StoriesController < ApplicationController
   def edit
   end
 
-  # POST /stories or /stories.json
+  # POST /stories
   def create
     @story = Story.new(story_params)
 
@@ -32,7 +32,7 @@ class StoriesController < ApplicationController
     end
   end
 
-  # PATCH/PUT /stories/1 or /stories/1.json
+  # PATCH/PUT /stories/1
   def update
     respond_to do |format|
       if @story.update(story_params)
@@ -43,7 +43,7 @@ class StoriesController < ApplicationController
     end
   end
 
-  # DELETE /stories/1 or /stories/1.json
+  # DELETE /stories/1
   def destroy
     @story.destroy!
 

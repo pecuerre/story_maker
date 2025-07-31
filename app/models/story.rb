@@ -8,7 +8,7 @@ class Story < ApplicationRecord
 
   def create_fixed_taxonomies
     Taxonomy::FIXED_TAXONOMIES.each do |taxonomy_data|
-      slug = taxonomy_data[:name].downcase.gsub(/\s+/, "-").gsub(/[^a-z0-9-]/, "")
+      slug = to_slug(taxonomy_data[:name])
 
       taxonomies.create!(
         name: taxonomy_data[:name],

@@ -3,25 +3,25 @@ class LocationsController < ApplicationController
   before_action :set_story
   before_action :set_parent_locations, only: %i[new edit create update]
 
-  # GET /locations or /locations.json
+  # GET /stories/:story_id/locations
   def index
     @locations = Location.all.where(story_id: @story.id)
   end
 
-  # GET /locations/1 or /locations/1.json
+  # GET /stories/:story_id/locations/:id
   def show
   end
 
-  # GET /locations/new
+  # GET /stories/:story_id/locations/new
   def new
     @location = Location.new
   end
 
-  # GET /locations/1/edit
+  # GET /stories/:story_id/locations/:id/edit
   def edit
   end
 
-  # POST /locations or /locations.json
+  # POST /stories/:story_id/locations
   def create
     @location = Location.new(location_params)
 
@@ -34,7 +34,7 @@ class LocationsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /locations/1 or /locations/1.json
+  # PATCH/PUT /stories/:story_id/locations/:id
   def update
     respond_to do |format|
       if @location.update(location_params)
@@ -45,7 +45,7 @@ class LocationsController < ApplicationController
     end
   end
 
-  # DELETE /locations/1 or /locations/1.json
+  # DELETE /stories/:story_id/locations/:id
   def destroy
     @location.destroy!
 

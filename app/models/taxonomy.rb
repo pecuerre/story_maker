@@ -58,6 +58,13 @@ class Taxonomy < ApplicationRecord
       description: "Historical periods and eras in the story",
       story_taxonomy: false,
       setting_taxonomy: true
+    },
+    {
+      name: "Event Types",
+      slug: "event-types",
+      description: "Types of events that can occur in the story",
+      story_taxonomy: false,
+      setting_taxonomy: true
     }
   ] # .freeze
 

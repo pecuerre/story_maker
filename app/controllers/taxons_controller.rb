@@ -3,11 +3,12 @@ class TaxonsController < ApplicationController
   before_action :set_taxonomy, if: -> { params[:taxonomy_slug].present? }
   before_action :set_taxon, only: [ :show, :edit, :update, :destroy ]
 
+  # GET /stories/:story_id/t/:slug/taxons
   def index
     @taxons = if @taxonomy
-                @taxonomy.taxons.roots.includes(:children)
+      @taxonomy.taxons.roots.includes(:children)
     else
-                Taxon.roots.includes(:taxonomy, :children)
+      Taxon.roots.includes(:taxonomy, :children)
     end
 
     respond_to do |format|
@@ -16,23 +17,22 @@ class TaxonsController < ApplicationController
     end
   end
 
-  def show
-  end
-
+  # GET /stories/:story_id/t/:slug/taxons/:id
   def new
     @taxon = if @taxonomy
-               @taxonomy.taxons.build
+      @taxonomy.taxons.build
     else
-               Taxon.new
+      Taxon.new
     end
     @parent_taxons = available_parent_taxons
   end
 
+  # POST /stories/:story_id/t/:slug/taxons/:id
   def create
     @taxon = if @taxonomy
-               @taxonomy.taxons.build(taxon_params)
+      @taxonomy.taxons.build(taxon_params)
     else
-               Taxon.new(taxon_params)
+      Taxon.new(taxon_params)
     end
 
     if @taxon.save
@@ -49,10 +49,12 @@ class TaxonsController < ApplicationController
     end
   end
 
+  # GET /stories/:story_id/t/:slug/taxons/:id/edit
   def edit
     @parent_taxons = available_parent_taxons
   end
 
+  # PATCH/PUT /stories/:story_id/t/:slug/taxons/:id
   def update
     if @taxon.update(taxon_params)
       respond_to do |format|
@@ -68,6 +70,7 @@ class TaxonsController < ApplicationController
     end
   end
 
+  # DELETE /stories/:story_id/t/:slug/taxons/:id
   def destroy
     if @taxon.root? && @taxon.taxonomy.fixed?
       respond_to do |format|
@@ -99,9 +102,9 @@ class TaxonsController < ApplicationController
 
   def set_taxon
     @taxon = if @taxonomy
-               @taxonomy.taxons.find(params[:id])
+      @taxonomy.taxons.find(params[:id])
     else
-               Taxon.find(params[:id])
+      Taxon.find(params[:id])
     end
   end
 

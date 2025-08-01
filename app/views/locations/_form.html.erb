@@ -27,6 +27,11 @@
   </div>
 
   <div class="mb-3">
+    <%= form.label :location_type_taxon_id, class: 'form-label' %>
+    <%= form.select :location_type_taxon_id, @location_type_taxons, {}, class: 'form-select' %>
+  </div>
+
+  <div class="mb-3">
     <%= form.hidden_field :story_id, value: @story.id %>
     <%= form.submit class: 'btn btn-primary' %>
     <%= link_to "Back to Locations", story_locations_path(@story), class: 'btn btn-secondary' %>

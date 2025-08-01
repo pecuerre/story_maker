@@ -38,8 +38,8 @@ puts "Creating Locations...".yellow
 locations = [
   { name: "Middle-earth", parent: nil, description: "The fictional world where the story takes place.", type: "World" },
   { name: "Eriador", parent: "Middle-earth", description: "A region in the northwest of Middle-earth, home to the Shire and Bree.", type: "Region" },
-  { name: "Arnor", parent: "Eriador",  description: "A kingdom in Eriador, known for its ancient ruins and history.", type: "Kingdom" },
-  { name: "Shire", parent: "Arnor", description: "A peaceful region inhabited by Hobbits.", type: "Village" },
+  { name: "Kingdom of Arnor", parent: "Eriador",  description: "A kingdom in Eriador, known for its ancient ruins and history.", type: "Kingdom" },
+  { name: "The Shire", parent: "Kingdom of Arnor", description: "A peaceful region inhabited by Hobbits.", type: "Village" },
   { name: "Mordor", description: "A dark and desolate land, home to Sauron.", type: "Mountain" },
   { name: "Rivendell", description: "An Elven refuge known for its beauty and wisdom.", type: "Forest" },
   { name: "Helm's Deep", description: "A fortress in the mountains, site of a great battle.", type: "Castle" },

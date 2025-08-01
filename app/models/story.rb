@@ -1,6 +1,13 @@
 class Story < ApplicationRecord
   has_many :locations, dependent: :destroy
   has_many :taxonomies, dependent: :destroy
+  has_one :location_type_taxonomy, -> { where(slug: "location-types") }, class_name: "Taxonomy"
+  has_many :location_type_taxons, through: :location_type_taxonomy, source: :taxons
+
+  validates :name, presence: true
+  validates :slug, presence: true, uniqueness: true
+
+  before_validation :set_slug
 
   after_create :create_fixed_taxonomies
 

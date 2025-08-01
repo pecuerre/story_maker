@@ -10,24 +10,33 @@
 
 <table id="locations" class="table table-striped">
   <tr>
-    <th>Name</th>
-    <th>Parent</th>
+    <th>Type</th>
+    <th>Location</th>
     <th class="text-end">Actions</th>
   </tr>
   <% @locations.each do |location| %>
     <tr>
-      <td><%= location.name %></td>
-      <td><%= link_to(location.parent.name, story_location_path(@story, location.parent)) if location.parent %></td>
+      <td><%= location.location_type.name %></td>
+      <td>
+        <%= location.ancestors.reverse.map do |ancestor| %>
+          <% ancestor.name %>
+        <% end.join(" \\ ").html_safe %>
+        <%= " \\" if location.ancestors.count > 0 %>
+        <%= link_to location.name, story_location_path(@story, location) %>
+      </td>
       <td class="text-end">
-        <%= link_to "Show", story_location_path(@story, location),
-          class: 'btn btn-sm btn-info' %>
-        <%= link_to "Edit", edit_story_location_path(@story, location),
-          class: 'btn btn-sm btn-secondary' %>
-        <%= button_to "Destroy", story_location_path(@story, location),
-          method: :delete,
-          class: 'btn btn-sm btn-danger',
-          data: { confirm: "Are you sure?" },
-          form: { class: 'd-inline'} %>
+        <div class="d-flex gap-1 justify-content-end">
+          <%= link_to edit_story_location_path(@story, location),
+            class: "btn btn-outline-info btn-sm" do %>
+            <i class="bi bi-pencil"></i>
+          <% end %>
+          <%= button_to [@story, location],
+            method: :delete,
+            class: 'btn btn-outline-danger btn-sm',
+            form: { data: { turbo_confirm: "Are you sure?" }, class: "d-inline" } do %>
+            <i class="bi bi-trash"></i>
+          <% end %>
+        </div>
       </td>
     </tr>
   <% end %>

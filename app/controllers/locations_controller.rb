@@ -2,6 +2,7 @@ class LocationsController < ApplicationController
   before_action :set_location, only: %i[ show edit update destroy ]
   before_action :set_story
   before_action :set_parent_locations, only: %i[new edit create update]
+  before_action :set_location_type_taxons, only: %i[new edit create update]
 
   # GET /stories/:story_id/locations
   def index
@@ -50,7 +51,7 @@ class LocationsController < ApplicationController
     @location.destroy!
 
     respond_to do |format|
-      format.html { redirect_to locations_path, status: :see_other, notice: "Location was successfully destroyed." }
+      format.html { redirect_to story_locations_path(@story), status: :see_other, notice: "Location was successfully destroyed." }
       format.json { head :no_content }
     end
   end
@@ -67,8 +68,14 @@ class LocationsController < ApplicationController
       @parent_locations.unshift([ "Select Parent Location", nil ]) # Add a placeholder option
     end
 
+    def set_location_type_taxons
+      @location_type_taxons = @story.location_type_taxons
+      @location_type_taxons = @location_type_taxons.pluck(:name, :id) if @location_type_taxons.present?
+      @location_type_taxons.unshift([ "Select Location Type", nil ]) # Add a placeholder option
+    end
+
     # Only allow a list of trusted parameters through.
     def location_params
-      params.expect(location: [ :name, :description, :story_id, :location_type_id, :parent_id ])
+      params.expect(location: [ :name, :description, :story_id, :location_type_taxon_id, :parent_id ])
     end
 end

@@ -66,6 +66,6 @@ class TaxonomiesController < ApplicationController
   end
 
   def taxonomy_params
-    params.require(:taxonomy).permit(:name, :description, :slug, :story_taxonomy, :setting_taxonomy)
+    params.require(:taxonomy).permit(:name, :description, :slug, :is_story_taxonomy, :is_setting_taxonomy)
   end
 end

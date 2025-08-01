@@ -15,8 +15,9 @@ class Story < ApplicationRecord
         description: taxonomy_data[:description],
         slug: slug,
         fixed: true,
-        story_taxonomy: taxonomy_data[:story_taxonomy],
-        setting_taxonomy: taxonomy_data[:setting_taxonomy]
+        is_story_taxonomy: taxonomy_data[:is_story_taxonomy],
+        is_setting_taxonomy: taxonomy_data[:is_setting_taxonomy],
+        default_taxon: taxonomy_data[:default_taxon]
       )
     end
   end

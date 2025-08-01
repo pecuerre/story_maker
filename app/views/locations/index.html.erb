@@ -1,9 +1,11 @@
 <p style="color: green"><%= notice %></p>
 <% content_for :title, "Locations" %>
-<%= header "Locations", icon: :list %>
 
-<div class="mb-3">
-  <%= link_to "New location", new_story_location_path(@story), class: 'btn btn-primary' %>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <%= header "Locations", icon: :list %>
+  <%= link_to new_story_location_path(@story), class: "btn btn-primary" do %>
+    <i class="bi bi-plus-circle"></i> New Location
+  <% end %>
 </div>
 
 <table id="locations" class="table table-striped">

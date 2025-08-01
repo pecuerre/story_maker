@@ -10,25 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_30_035235) do
-  create_table "location_types", force: :cascade do |t|
-    t.string "name"
-    t.text "description"
-    t.integer "story_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["story_id"], name: "index_location_types_on_story_id"
-  end
-
+ActiveRecord::Schema[8.0].define(version: 2025_07_28_034208) do
   create_table "locations", force: :cascade do |t|
     t.string "name"
     t.text "description"
     t.integer "story_id", null: false
-    t.integer "location_type_id", null: false
     t.integer "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["location_type_id"], name: "index_locations_on_location_type_id"
     t.index ["story_id"], name: "index_locations_on_story_id"
   end
 
@@ -45,11 +34,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_30_035235) do
     t.text "description"
     t.string "slug"
     t.boolean "fixed", default: false
+    t.integer "story_id"
+    t.boolean "is_story_taxonomy", default: false
+    t.boolean "is_setting_taxonomy", default: false
+    t.string "default_taxon"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "story_id"
-    t.boolean "story_taxonomy", default: false
-    t.boolean "setting_taxonomy", default: false
     t.index ["story_id"], name: "index_taxonomies_on_story_id"
   end
 
@@ -63,8 +53,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_30_035235) do
     t.index ["taxonomy_id"], name: "index_taxons_on_taxonomy_id"
   end
 
-  add_foreign_key "location_types", "stories"
-  add_foreign_key "locations", "location_types"
   add_foreign_key "locations", "stories"
   add_foreign_key "taxonomies", "stories"
   add_foreign_key "taxons", "taxonomies"

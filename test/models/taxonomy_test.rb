@@ -95,8 +95,8 @@ class TaxonomyTest < ActiveSupport::TestCase
       taxonomy = new_story.taxonomies.find_by(name: taxonomy_data[:name])
       assert_not_nil taxonomy
       assert taxonomy.fixed?
-      assert_equal taxonomy_data[:story_taxonomy], taxonomy.story_taxonomy?
-      assert_equal taxonomy_data[:setting_taxonomy], taxonomy.setting_taxonomy?
+      assert_equal taxonomy_data[:is_story_taxonomy], taxonomy.is_story_taxonomy?
+      assert_equal taxonomy_data[:is_setting_taxonomy], taxonomy.is_setting_taxonomy?
     end
   end
 end

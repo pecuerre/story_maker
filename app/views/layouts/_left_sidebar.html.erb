@@ -52,7 +52,7 @@
             <%= link_to 'Passages', "#", class: 'link-secondary' %>
           </li>
 
-          <% @story.taxonomies.where(story_taxonomy: true).each do |taxonomy| %>
+          <% @story.taxonomies.where(is_story_taxonomy: true).each do |taxonomy| %>
             <li class="list-group-item <%= highlight_item(taxonomy.slug) %>">
               <%= link_to "#{taxonomy.name} (#{taxonomy.taxons.count})",
                 story_taxonomy_taxons_path(@story, taxonomy) %>

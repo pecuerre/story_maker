@@ -51,7 +51,7 @@
 
           <dt class="col-sm-4">Story Taxonomy:</dt>
           <dd class="col-sm-8">
-            <% if @taxonomy.story_taxonomy? %>
+            <% if @taxonomy.is_story_taxonomy? %>
               <span class="badge bg-info">Yes</span>
             <% else %>
               <span class="badge bg-secondary">No</span>
@@ -60,7 +60,7 @@
 
           <dt class="col-sm-4">Setting Taxonomy:</dt>
           <dd class="col-sm-8">
-            <% if @taxonomy.setting_taxonomy? %>
+            <% if @taxonomy.is_setting_taxonomy? %>
               <span class="badge bg-info">Yes</span>
             <% else %>
               <span class="badge bg-secondary">No</span>

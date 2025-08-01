@@ -50,11 +50,11 @@ module HighlightMenuHelper
     case section
     when :elements
       Taxonomy::FIXED_TAXONOMIES.select do |taxonomy|
-        taxonomy[:story_taxonomy]
+        taxonomy[:is_story_taxonomy]
       end.map { |taxonomy| taxonomy[:slug] }
     when :settings
       Taxonomy::FIXED_TAXONOMIES.select do |taxonomy|
-        taxonomy[:setting_taxonomy]
+        taxonomy[:is_setting_taxonomy]
       end.map { |taxonomy| taxonomy[:slug] }
     else
       []

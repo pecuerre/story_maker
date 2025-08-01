@@ -23,15 +23,7 @@ class Taxonomy < ApplicationRecord
       description: "Types of locations in the story world",
       is_story_taxonomy: false,
       is_setting_taxonomy: true,
-      default_taxon: nil
-    },
-    {
-      name: "World Regions",
-      slug: "world-regions",
-      description: "Geographic regions and areas in the story world",
-      is_story_taxonomy: false,
-      is_setting_taxonomy: true,
-      default_taxon: "world"
+      default_taxon: "World"
     },
     {
       name: "Character Class",
@@ -55,7 +47,7 @@ class Taxonomy < ApplicationRecord
       description: "Types of characters in the story",
       is_story_taxonomy: false,
       is_setting_taxonomy: true,
-      default_taxon: "human"
+      default_taxon: "Human"
     },
     {
       name: "Time Periods",

@@ -10,12 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_28_034208) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_29_022342) do
   create_table "locations", force: :cascade do |t|
     t.string "name"
     t.text "description"
     t.integer "story_id", null: false
     t.integer "parent_id"
+    t.integer "location_type_taxon_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["story_id"], name: "index_locations_on_story_id"

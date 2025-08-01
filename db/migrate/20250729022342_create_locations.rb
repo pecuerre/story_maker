@@ -5,6 +5,7 @@ class CreateLocations < ActiveRecord::Migration[8.0]
       t.text :description
       t.references :story, null: false, foreign_key: true
       t.integer :parent_id
+      t.integer :location_type_taxon_id
 
       t.timestamps
     end

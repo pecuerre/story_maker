@@ -26,22 +26,6 @@ class Taxonomy < ApplicationRecord
       default_taxon: "World"
     },
     {
-      name: "Character Class",
-      slug: "character-class",
-      description: "Professions, classes, or roles of characters",
-      is_story_taxonomy: false,
-      is_setting_taxonomy: true,
-      default_taxon: nil
-    },
-    {
-      name: "Character Traits",
-      slug: "character-traits",
-      description: "Personality traits and characteristics of characters",
-      is_story_taxonomy: false,
-      is_setting_taxonomy: true,
-      default_taxon: nil
-    },
-    {
       name: "Character Types",
       slug: "character-types",
       description: "Types of characters in the story",

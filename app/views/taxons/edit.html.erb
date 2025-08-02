@@ -1,3 +1,4 @@
+
 <% content_for :title, "Edit #{@taxon.name}" %>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,49 +19,6 @@
 
 <div class="row justify-content-center">
   <div class="col-md-8">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="card-title mb-0">Taxon Information</h5>
-      </div>
-      <div class="card-body">
-        <%= form_with model: [@taxonomy, @taxon], local: true do |form| %>
-          <% if @taxon.errors.any? %>
-            <div class="alert alert-danger">
-              <h6><%= pluralize(@taxon.errors.count, "error") %> prohibited this taxon from being saved:</h6>
-              <ul class="mb-0">
-                <% @taxon.errors.full_messages.each do |message| %>
-                  <li><%= message %></li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
-
-          <div class="mb-3">
-            <%= form.label :name, class: "form-label" %>
-            <%= form.text_field :name, class: "form-control", required: true %>
-            <div class="form-text">The name for this taxon</div>
-          </div>
-
-          <div class="mb-3">
-            <%= form.label :parent_id, "Parent Taxon", class: "form-label" %>
-            <%= form.select :parent_id,
-                options_from_collection_for_select(@parent_taxons, :id, :full_path, @taxon.parent_id),
-                { prompt: "Select a parent taxon (optional)" },
-                { class: "form-select" } %>
-            <div class="form-text">
-              Leave empty to make this a root-level taxon.
-              <% if @taxon.root? && @taxon.taxonomy.fixed? %>
-                <span class="text-warning">Note: This is the root taxon of a fixed taxonomy and cannot be moved.</span>
-              <% end %>
-            </div>
-          </div>
-
-          <div class="d-flex justify-content-between">
-            <%= link_to "Cancel", story_taxonomy_taxons_path(@story, @taxonomy), class: "btn btn-secondary" %>
-            <%= form.submit "Update Taxon", class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
+    <%= render "form" %>
   </div>
 </div>

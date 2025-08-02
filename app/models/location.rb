@@ -8,5 +8,4 @@ class Location < ApplicationRecord
   has_many :children, class_name: "Location", foreign_key: "parent_id", dependent: :destroy
 
   validates :name, presence: true
-  validates :description, presence: true
 end

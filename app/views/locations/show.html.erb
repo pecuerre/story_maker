@@ -1,10 +1,30 @@
 <p style="color: green"><%= notice %></p>
 
-<%= render @location %>
+<div id="<%= dom_id location %>">
+  <p>
+    <strong>Name:</strong>
+    <%= location.name %>
+  </p>
+
+  <p>
+    <strong>Description:</strong>
+    <%= location.description %>
+  </p>
+
+  <p>
+    <strong>Story:</strong>
+    <%= location.story_id %>
+  </p>
+
+  <p>
+    <strong>Parent:</strong>
+    <%= location.parent_id %>
+  </p>
+
+</div>
 
 <div>
   <%= link_to "Edit this location", edit_story_location_path(@story, @location) %> |
   <%= link_to "Back to locations", story_locations_path(@story) %>
-
   <%= button_to "Destroy this location", [@story, @location], method: :delete %>
 </div>

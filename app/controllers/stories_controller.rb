@@ -13,10 +13,12 @@ class StoriesController < ApplicationController
   # GET /stories/new
   def new
     @story = Story.new
+    render :form
   end
 
   # GET /stories/1/edit
   def edit
+    render :form
   end
 
   # POST /stories
@@ -27,7 +29,7 @@ class StoriesController < ApplicationController
       if @story.save
         format.html { redirect_to stories_path(highlight: @story.id), notice: "Story was successfully created." }
       else
-        format.html { render :new, status: :unprocessable_entity }
+        format.html { render :form, status: :unprocessable_entity }
       end
     end
   end
@@ -38,7 +40,7 @@ class StoriesController < ApplicationController
       if @story.update(story_params)
         format.html { redirect_to stories_path(highlight: @story.id), notice: "Story was successfully updated." }
       else
-        format.html { render :edit, status: :unprocessable_entity }
+        format.html { render :form, status: :unprocessable_entity }
       end
     end
   end

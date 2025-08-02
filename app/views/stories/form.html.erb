@@ -1,10 +1,18 @@
-<%= form_with(model: story) do |form| %>
-  <% if story.errors.any? %>
+<% if @story.new_record? %>
+  <% content_for :title, "New story" %>
+  <%= header "New Story", icon: :new %>
+<% else %>
+  <% content_for :title, "Editing story" %>
+  <%= header "Edit Story", icon: :edit %>
+<% end %>
+
+<%= form_with(model: @story) do |form| %>
+  <% if @story.errors.any? %>
     <div style="color: red">
-      <h2><%= pluralize(story.errors.count, "error") %> prohibited this story from being saved:</h2>
+      <h2><%= pluralize(@story.errors.count, "error") %> prohibited this story from being saved:</h2>
 
       <ul>
-        <% story.errors.each do |error| %>
+        <% @story.errors.each do |error| %>
           <li><%= error.full_message %></li>
         <% end %>
       </ul>

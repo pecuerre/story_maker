@@ -16,10 +16,12 @@ class LocationsController < ApplicationController
   # GET /stories/:story_id/locations/new
   def new
     @location = Location.new
+    render :form
   end
 
   # GET /stories/:story_id/locations/:id/edit
   def edit
+    render :form
   end
 
   # POST /stories/:story_id/locations
@@ -30,7 +32,7 @@ class LocationsController < ApplicationController
       if @location.save
         format.html { redirect_to story_locations_path(@story), notice: "Location was successfully created." }
       else
-        format.html { render :new, status: :unprocessable_entity }
+        format.html { render :form, status: :unprocessable_entity }
       end
     end
   end
@@ -41,7 +43,7 @@ class LocationsController < ApplicationController
       if @location.update(location_params)
         format.html { redirect_to story_locations_path(@story), notice: "Location was successfully updated." }
       else
-        format.html { render :edit, status: :unprocessable_entity }
+        format.html { render :form, status: :unprocessable_entity }
       end
     end
   end

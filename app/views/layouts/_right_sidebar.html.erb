@@ -34,7 +34,7 @@
           <% @story.taxonomies.where(is_setting_taxonomy: true).each do |taxonomy| %>
             <li class="list-group-item <%= highlight_item(taxonomy.slug) %>">
               <%= link_to "#{taxonomy.name} (#{taxonomy.taxons.count})",
-                story_taxonomy_taxons_path(@story, taxonomy) %>
+                story_taxonomy_path(@story, taxonomy) %>
             </li>
           <% end %>
 

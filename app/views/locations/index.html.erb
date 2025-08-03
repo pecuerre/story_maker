@@ -2,43 +2,53 @@
 <% content_for :title, "Locations" %>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <%= header "Locations", icon: :list %>
-  <%= link_to new_story_location_path(@story), class: "btn btn-primary" do %>
-    <i class="bi bi-plus-circle"></i> New Location
-  <% end %>
+  <div>
+    <h4 class="mb-0">
+      Locations for <%= @story.name %>
+    </h4>
+  </div>
+  <div class="btn-group" role="group">
+    <%= link_to new_story_location_path(@story), class: "btn btn-primary" do %>
+      <i class="bi bi-plus-circle"></i> New Location
+    <% end %>
+  </div>
 </div>
 
-<table id="locations" class="table table-striped">
-  <tr>
-    <th>Type</th>
-    <th>Location</th>
-    <th class="text-end">Actions</th>
-  </tr>
-  <% @locations.each do |location| %>
+<table id="locations" class="table table-hover table-sm">
+  <thead>
     <tr>
-      <td><%= location.location_type.name %></td>
-      <td>
-        <%= location.ancestors.reverse.map do |ancestor| %>
-          <% ancestor.name %>
-        <% end.join(" \\ ").html_safe %>
-        <%= " \\" if location.ancestors.count > 0 %>
-        <%= link_to location.name, story_location_path(@story, location) %>
-      </td>
-      <td class="text-end">
-        <div class="d-flex gap-1 justify-content-end">
-          <%= link_to edit_story_location_path(@story, location),
-            class: "btn btn-outline-info btn-sm" do %>
-            <i class="bi bi-pencil"></i>
-          <% end %>
-          <%= button_to [@story, location],
-            method: :delete,
-            class: 'btn btn-outline-danger btn-sm',
-            form: { data: { turbo_confirm: "Are you sure?" }, class: "d-inline" } do %>
-            <i class="bi bi-trash"></i>
-          <% end %>
-        </div>
-      </td>
+      <th>Type</th>
+      <th>Location</th>
+      <th class="text-end">Actions</th>
     </tr>
-  <% end %>
+  </thead>
+  <tbody class="table-group-divider">
+    <% @locations.each do |location| %>
+      <tr>
+        <td><%= location.location_type.name %></td>
+        <td>
+          <%= location.ancestors.reverse.map do |ancestor| %>
+            <% ancestor.name %>
+          <% end.join(" \\ ").html_safe %>
+          <%= " \\" if location.ancestors.count > 0 %>
+          <%= link_to location.name, story_location_path(@story, location) %>
+        </td>
+        <td class="text-end">
+          <div class="d-flex gap-1 justify-content-end">
+            <%= link_to edit_story_location_path(@story, location),
+              class: "btn btn-outline-info btn-sm" do %>
+              <i class="bi bi-pencil"></i>
+            <% end %>
+            <%= button_to [@story, location],
+              method: :delete,
+              class: 'btn btn-outline-danger btn-sm',
+              form: { data: { turbo_confirm: "Are you sure?" }, class: "d-inline" } do %>
+              <i class="bi bi-trash"></i>
+            <% end %>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
 </table>
 

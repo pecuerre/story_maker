@@ -1,27 +1,52 @@
 <p style="color: green"><%= notice %></p>
 <% content_for :title, "Stories" %>
-<%= header "Stories", icon: :list %>
 
-<div class="mb-3">
-  <%= link_to "New story", new_story_path, class: 'btn btn-primary' %>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="mb-0">
+      List of Stories
+    </h4>
+  </div>
+  <div class="btn-group" role="group">
+    <%= link_to new_story_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-circle"></i> New Story
+    <% end %>
+  </div>
 </div>
 
-<div id="stories" class="row">
-  <% @stories.each do |story| %>
-    <div class="col-md-3 mb-4">
-      <div class="card h-100 <%= highlighted_border(story) %>">
-        <div class="card-header">
-          <%= story.name %>
-        </div>
-        <div class="card-body">
-          <h5 class="card-title"><%= story.slug %></h5>
-          <p class="card-text"><%= story.description %></p>
-          <p class="card-text"> Locations: <%= story.locations.count %></p>
-          <%= link_to "Details", story, class: 'btn btn-info' %>
-          <%= link_to "Edit", edit_story_path(story), class: 'btn btn-primary' %>
-        </div>
-      </div>
-    </div>
-  <% end %>
-</div>
+<table id="stories" class="table table-hover table-sm">
+  <thead>
+    <tr>
+      <th class="text-nowrap">Name</th>
+      <th>Description</th>
+      <th class="text-end">Actions</th>
+    </tr>
+  </thead>
+  <tbody class="table-group-divider">
+    <% @stories.each do |story| %>
+      <tr>
+        <td class="text-nowrap"><%= story.name %></td>
+        <td><%= story.description %></td>
+        <td class="text-end">
+          <div class="d-flex gap-1 justify-content-end">
+            <%= link_to story,
+              class: "btn btn-outline-secondary btn-sm" do %>
+              <i class="bi bi-eye"></i>
+            <% end %>
+            <%= link_to edit_story_path(story),
+              class: "btn btn-outline-info btn-sm" do %>
+              <i class="bi bi-pencil"></i>
+            <% end %>
+            <%= button_to story,
+              method: :delete,
+              class: 'btn btn-outline-danger btn-sm',
+              form: { data: { turbo_confirm: "Are you sure?" }, class: "d-inline" } do %>
+              <i class="bi bi-trash"></i>
+            <% end %>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
 

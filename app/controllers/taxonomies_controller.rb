@@ -1,5 +1,4 @@
 class TaxonomiesController < ApplicationController
-  before_action :set_story, only: [ :index, :new, :create ]
   before_action :set_taxonomy, only: [ :show, :edit, :update, :destroy ]
 
   # GET /stories/:story_id/t
@@ -58,16 +57,11 @@ class TaxonomiesController < ApplicationController
 
   private
 
-  def set_story
-    @story = Story.find(params[:story_id])
-  end
-
   def set_taxonomy
-    @story = Story.find(params[:story_id])
     @taxonomy = @story.taxonomies.find_by!(slug: params[:slug])
   end
 
   def taxonomy_params
-    params.require(:taxonomy).permit(:name, :description, :slug, :is_story_taxonomy, :is_setting_taxonomy)
+    params.require(:taxonomy).permit(:name, :story_id, :description, :slug, :is_story_taxonomy, :is_setting_taxonomy)
   end
 end

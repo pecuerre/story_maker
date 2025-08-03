@@ -1,12 +1,12 @@
 
 <% content_for :title, "Taxonomy Form" %>
 
-<p></p>
+<p class="space"></p>
 
 <div class="row justify-content-center">
   <div class="col-md-8">
     <div class="card">
-      <div class="card-header">
+      <div class="card-header bg-info">
         <h5 class="card-title mb-0">Taxonomy Information</h5>
       </div>
       <div class="card-body">
@@ -22,21 +22,16 @@
             </div>
           <% end %>
 
-          <div class="row">
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= form.label :name, class: "form-label" %>
-                <%= form.text_field :name, class: "form-control", required: true, oninput: "if(document.getElementById('taxonomy_slug')) generateSlug(this.value)" %>
-                <div class="form-text">The display name for this taxonomy</div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="mb-3">
-                <%= form.label :slug, class: "form-label" %>
-                <%= form.text_field :slug, class: "form-control", required: true %>
-                <div class="form-text">URL-friendly identifier (auto-generated from name)</div>
-              </div>
-            </div>
+          <div class="mb-3">
+            <%= form.label :name, class: "form-label" %>
+            <%= form.text_field :name, class: "form-control", required: true, oninput: "if(document.getElementById('taxonomy_slug')) generateSlug(this.value)" %>
+            <div class="form-text">The display name for this taxonomy</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :slug, class: "form-label" %>
+            <%= form.text_field :slug, class: "form-control", required: true %>
+            <div class="form-text">URL-friendly identifier (auto-generated from name)</div>
           </div>
 
           <div class="mb-3">
@@ -45,37 +40,32 @@
             <div class="form-text">Optional description of this taxonomy's purpose</div>
           </div>
 
-          <div class="row">
-            <div class="col-md-4">
-              <div class="mb-3">
-                <div class="form-check">
-                  <%= form.check_box :is_story_taxonomy, class: "form-check-input" %>
-                  <%= form.label :is_story_taxonomy, "Story Taxonomy", class: "form-check-label" %>
-                  <div class="form-text">Appears in Story Elements sidebar</div>
-                </div>
-              </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <%= form.check_box :is_story_taxonomy, class: "form-check-input" %>
+              <%= form.label :is_story_taxonomy, "Story Taxonomy", class: "form-check-label" %>
+              <span class="form-text">Appears in Story Elements sidebar</span>
             </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <div class="form-check">
-                  <%= form.check_box :is_setting_taxonomy, class: "form-check-input" %>
-                  <%= form.label :is_setting_taxonomy, "Setting Taxonomy", class: "form-check-label" %>
-                  <div class="form-text">Appears in Story Settings sidebar</div>
-                </div>
-              </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              <%= form.check_box :is_setting_taxonomy, class: "form-check-input" %>
+              <%= form.label :is_setting_taxonomy, "Setting Taxonomy", class: "form-check-label" %>
+              <span class="form-text">Appears in Story Settings sidebar</span>
             </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <div class="form-check">
-                  <%= form.check_box :fixed, class: "form-check-input" %>
-                  <%= form.label :fixed, "Fixed Taxonomy", class: "form-check-label" %>
-                  <div class="form-text">Fixed taxonomies cannot be deleted</div>
-                </div>
-              </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              <%= form.check_box :fixed, class: "form-check-input" %>
+              <%= form.label :fixed, "Fixed Taxonomy", class: "form-check-label" %>
+              <span class="form-text">Fixed taxonomies cannot be deleted</span>
             </div>
           </div>
 
           <div class="d-flex justify-content-between">
+            <%= hidden_field_tag :story_id, @story.id %>
             <%= link_to "Cancel", @taxonomy.persisted? ? story_taxonomy_path(@story, @taxonomy) : story_taxonomies_path(@story), class: "btn btn-secondary" %>
             <%= form.submit(@taxonomy.persisted? ? "Update Taxonomy" : "Create Taxonomy", class: "btn btn-primary") %>
           </div>

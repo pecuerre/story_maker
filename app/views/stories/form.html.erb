@@ -1,44 +1,58 @@
-<% if @story.new_record? %>
-  <% content_for :title, "New story" %>
-  <%= header "New Story", icon: :new %>
-<% else %>
-  <% content_for :title, "Editing story" %>
-  <%= header "Edit Story", icon: :edit %>
-<% end %>
+<% content_for :title, "Story Form" %>
 
-<%= form_with(model: @story) do |form| %>
-  <% if @story.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(@story.errors.count, "error") %> prohibited this story from being saved:</h2>
+<p class="space"></p>
 
-      <ul>
-        <% @story.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-info">
+        <h5 class="card-title mb-0">Story Information</h5>
+      </div>
+      <div class="card-body">
+        <%= form_with(model: @story) do |form| %>
+          <% if @story.errors.any? %>
+            <div style="color: red">
+              <h2><%= pluralize(@story.errors.count, "error") %> prohibited this story from being saved:</h2>
+
+              <ul>
+                <% @story.errors.each do |error| %>
+                  <li><%= error.full_message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-3">
+            <%= form.label :name, class: 'form-label' %>
+            <%= form.text_field :name, class: 'form-control', required: true %>
+            <div class="form-text">The name of the story</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :slug, class: 'form-label' %>
+            <%= form.text_field :slug, class: 'form-control' %>
+            <div class="form-text">A unique identifier for the story</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :description, class: 'form-label' %>
+            <%= form.textarea :description, class: 'form-control' %>
+            <div class="form-text">A brief description of the story</div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <%= link_to "Cancel", stories_path, class: "btn btn-secondary" %>
+            <% unless @story.new_record? %>
+              <%= link_to "Details of this story", @story, class: 'btn btn-info' %>
+            <% end %>
+            <% if @story.new_record? %>
+              <%= form.submit("Create Story", class: "btn btn-primary") %>
+            <% else %>
+              <%= form.submit("Update Story", class: "btn btn-primary") %>
+            <% end %>
+          </div>
         <% end %>
-      </ul>
+      </div>
     </div>
-  <% end %>
-
-  <div class="mb-3">
-    <%= form.label :name, class: 'form-label' %>
-    <%= form.text_field :name, class: 'form-control' %>
   </div>
-
-  <div class="mb-3">
-    <%= form.label :slug, class: 'form-label' %>
-    <%= form.text_field :slug, class: 'form-control' %>
-  </div>
-
-  <div class="mb-3">
-    <%= form.label :description, class: 'form-label' %>
-    <%= form.textarea :description, class: 'form-control' %>
-  </div>
-
-  <div class="mb-3">
-    <%= form.submit class: 'btn btn-primary' %>
-    <%= link_to "Back to stories", stories_path, class: 'btn btn-secondary' %>
-    <% unless @story.new_record? %>
-      <%= link_to "Details of this story", @story, class: 'btn btn-info' %>
-    <% end %>
-  </div>
-<% end %>
+</div>

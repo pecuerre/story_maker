@@ -6,7 +6,7 @@
           <li class="nav-item">
             <%= link_to 'All Stories', stories_path, :class => 'nav-link' %>
           </li>
-          <% if @story %>
+          <% if @story && !@story.new_record? %>
             <li class="nav-item">
               <%= link_to @story.name, story_path(@story), class: 'text-info nav-link px-2' %>
             </li>

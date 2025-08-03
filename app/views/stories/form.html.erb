@@ -24,13 +24,13 @@
 
           <div class="mb-3">
             <%= form.label :name, class: 'form-label' %>
-            <%= form.text_field :name, class: 'form-control', required: true, oninput: "if(document.getElementById('story_slug')) generateSlug(this.value)"  %>
+            <%= form.text_field :name, class: 'form-control', required: true, id: 'story_name' %>
             <div class="form-text">The name of the story</div>
           </div>
 
           <div class="mb-3">
             <%= form.label :slug, class: 'form-label' %>
-            <%= form.text_field :slug, class: 'form-control' %>
+            <%= form.text_field :slug, class: 'form-control', id: 'story_slug' %>
             <div class="form-text">A unique identifier for the story</div>
           </div>
 
@@ -56,22 +56,3 @@
     </div>
   </div>
 </div>
-
-<script>
-function generateSlug(name) {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single
-    .replace(/^[-]+|[-]+$/g, ''); // Remove leading/trailing hyphens
-  document.getElementById('story_slug').value = slug;
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const nameField = document.getElementById('story_name');
-  if (nameField && nameField.value) {
-    generateSlug(nameField.value);
-  }
-});
-</script>

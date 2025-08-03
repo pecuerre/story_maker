@@ -37,7 +37,7 @@ class TaxonsController < ApplicationController
 
     if @taxon.save
       respond_to do |format|
-        format.html { redirect_to story_taxonomy_taxons_path(@taxonomy.story, @taxonomy), notice: "Taxon was successfully created." }
+        format.html { redirect_to story_taxonomy_path(@taxonomy.story, @taxonomy), notice: "Taxon was successfully created." }
         format.json { render json: @taxon, status: :created }
       end
     else
@@ -58,7 +58,7 @@ class TaxonsController < ApplicationController
   def update
     if @taxon.update(taxon_params)
       respond_to do |format|
-        format.html { redirect_to story_taxonomy_taxons_path(@taxonomy.story, @taxonomy), notice: "Taxon was successfully updated." }
+        format.html { redirect_to story_taxonomy_path(@taxonomy.story, @taxonomy), notice: "Taxon was successfully updated." }
         format.json { render json: @taxon }
       end
     else
@@ -74,13 +74,13 @@ class TaxonsController < ApplicationController
   def destroy
     if @taxon.root? && @taxon.taxonomy.fixed?
       respond_to do |format|
-        format.html { redirect_to story_taxonomy_taxons_path(@story, @taxonomy), alert: "Cannot delete the root taxon of a fixed taxonomy." }
+        format.html { redirect_to story_taxonomy_path(@story, @taxonomy), alert: "Cannot delete the root taxon of a fixed taxonomy." }
         format.json { render json: { error: "Cannot delete the root taxon of a fixed taxonomy." }, status: :unprocessable_entity }
       end
     else
       @taxon.destroy
       respond_to do |format|
-        format.html { redirect_to story_taxonomy_taxons_path(@story, @taxonomy), notice: "Taxon was successfully deleted." }
+        format.html { redirect_to story_taxonomy_path(@story, @taxonomy), notice: "Taxon was successfully deleted." }
         format.json { head :no_content }
       end
     end

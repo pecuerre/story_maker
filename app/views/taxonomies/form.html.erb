@@ -24,7 +24,7 @@
 
           <div class="mb-3">
             <%= form.label :name, class: "form-label" %>
-            <%= form.text_field :name, class: "form-control", required: true, oninput: "if(document.getElementById('taxonomy_slug')) generateSlug(this.value)" %>
+            <%= form.text_field :name, class: "form-control", required: true %>
             <div class="form-text">The display name for this taxonomy</div>
           </div>
 
@@ -75,21 +75,3 @@
   </div>
 </div>
 
-<script>
-function generateSlug(name) {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single
-    .replace(/^[-]+|[-]+$/g, ''); // Remove leading/trailing hyphens
-  document.getElementById('taxonomy_slug').value = slug;
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const nameField = document.getElementById('taxonomy_name');
-  if (nameField && nameField.value) {
-    generateSlug(nameField.value);
-  }
-});
-</script>

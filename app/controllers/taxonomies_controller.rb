@@ -18,6 +18,7 @@ class TaxonomiesController < ApplicationController
   # GET /stories/:story_id/t/new
   def new
     @taxonomy = @story.taxonomies.build
+    render :form
   end
 
   # GET /stories/:story_id/t/:slug/edit
@@ -33,6 +34,7 @@ class TaxonomiesController < ApplicationController
 
   # GET /stories/:story_id/t/:slug/edit
   def edit
+    render :form
   end
 
   # PATCH/PUT /stories/:story_id/t/:slug

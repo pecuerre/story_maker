@@ -1,0 +1,105 @@
+<% content_for :title, "Taxonomy Form" %>
+
+<p></p>
+
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+    <div class="card-header">
+      <h5 class="card-title mb-0">Taxonomy Information</h5>
+    </div>
+    <div class="card-body">
+        <%= form_with model: @taxonomy, local: true do |form| %>
+        <% if @taxonomy.errors.any? %>
+            <div class="alert alert-danger">
+            <h6><%= pluralize(@taxonomy.errors.count, "error") %> prohibited this taxonomy from being saved:</h6>
+            <ul class="mb-0">
+                <% @taxonomy.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+                <% end %>
+            </ul>
+            </div>
+        <% end %>
+
+        <div class="row">
+            <div class="col-md-6">
+            <div class="mb-3">
+                <%= form.label :name, class: "form-label" %>
+                <%= form.text_field :name, class: "form-control", required: true, oninput: "if(document.getElementById('taxonomy_slug')) generateSlug(this.value)" %>
+                <div class="form-text">The display name for this taxonomy</div>
+            </div>
+            </div>
+            <div class="col-md-6">
+            <div class="mb-3">
+                <%= form.label :slug, class: "form-label" %>
+                <%= form.text_field :slug, class: "form-control", required: true %>
+                <div class="form-text">URL-friendly identifier (auto-generated from name)</div>
+            </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <%= form.label :description, class: "form-label" %>
+            <%= form.text_area :description, class: "form-control", rows: 3 %>
+            <div class="form-text">Optional description of this taxonomy's purpose</div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+            <div class="mb-3">
+                <div class="form-check">
+                <%= form.check_box :is_story_taxonomy, class: "form-check-input" %>
+                <%= form.label :is_story_taxonomy, "Story Taxonomy", class: "form-check-label" %>
+                <div class="form-text">Appears in Story Elements sidebar</div>
+                </div>
+            </div>
+            </div>
+            <div class="col-md-4">
+            <div class="mb-3">
+                <div class="form-check">
+                <%= form.check_box :is_setting_taxonomy, class: "form-check-input" %>
+                <%= form.label :is_setting_taxonomy, "Setting Taxonomy", class: "form-check-label" %>
+                <div class="form-text">Appears in Story Settings sidebar</div>
+                </div>
+            </div>
+            </div>
+            <div class="col-md-4">
+            <div class="mb-3">
+                <div class="form-check">
+                <%= form.check_box :fixed, class: "form-check-input" %>
+                <%= form.label :fixed, "Fixed Taxonomy", class: "form-check-label" %>
+                <div class="form-text">Fixed taxonomies cannot be deleted</div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <%= link_to "Cancel", @taxonomy.persisted? ? story_taxonomy_path(@story, @taxonomy) : story_taxonomies_path(@story), class: "btn btn-secondary" %>
+            <%= form.submit(@taxonomy.persisted? ? "Update Taxonomy" : "Create Taxonomy", class: "btn btn-primary") %>
+        </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function generateSlug(name) {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .replace(/^[-]+|[-]+$/g, ''); // Remove leading/trailing hyphens
+  document.getElementById('taxonomy_slug').value = slug;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const nameField = document.getElementById('taxonomy_name');
+  if (nameField && nameField.value) {
+    generateSlug(nameField.value);
+  }
+});
+</script>

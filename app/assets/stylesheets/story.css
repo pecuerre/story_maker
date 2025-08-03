@@ -1,0 +1,11 @@
+.form-label {
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+  margin-top: 0.5rem;
+}
+
+.form-text {
+  font-size: 0.875rem;
+  color: #898e92;
+  margin-top: 0.25rem;
+}

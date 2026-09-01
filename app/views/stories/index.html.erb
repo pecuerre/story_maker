@@ -4,13 +4,34 @@
 
 <h1>Stories</h1>
 
-<div id="stories">
-  <% @stories.each do |story| %>
-    <%= render story %>
-    <p>
-      <%= link_to "Show this story", story %>
-    </p>
-  <% end %>
-</div>
+<table id="stories" class="index_table table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <div id="stories">
+      <% @stories.each do |story| %>
+        <tr>
+          <td>
+            <%= story.name %>
+            <% if story.private? %>
+              <span class="badge bg-warning">Private</span>
+            <% else %>
+              <span class="badge bg-success">Public</span>
+            <% end %>
+          </td>
+          <td>
+            <%= link_to "Details", story %>
+            <%= link_to "Edit", edit_story_path(story) %>
+            <%= link_to "Destroy", story, method: :delete %>
+          </td>
+        </tr>
+      <% end %>
+    </div>
+  </tbody>
+</table>
 
 <%= link_to "New story", new_story_path %>

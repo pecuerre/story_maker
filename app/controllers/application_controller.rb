@@ -6,7 +6,7 @@ class ApplicationController < ActionController::Base
 
   before_action :set_current_story
 
-  private
+  protected
 
   def set_current_story
     Current.story = Story.find_by!(slug: params[:story_slug])

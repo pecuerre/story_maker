@@ -1,15 +1,14 @@
 class ApplicationController < ActionController::Base
   include Authentication
+
   allow_browser versions: :modern
   stale_when_importmap_changes
 
-  helper_method :current_user, :user_signed_in?
+  before_action :set_current_story
 
-  def current_user
-    Current.user
-  end
+  private
 
-  def user_signed_in?
-    Current.user.present?
+  def set_current_story
+    Current.story = Story.find_by!(slug: params[:story_slug])
   end
 end

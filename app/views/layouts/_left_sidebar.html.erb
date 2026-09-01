@@ -1,15 +1,14 @@
 <div class="py-4">
 
+<% if Current.story.present? %>
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Application
+    <%= Current.story.name %> Elements
   </h6>
 
   <nav class="nav flex-column mb-4">
     <%= link_to "Dashboard", "#", class: "nav-link px-0" %>
-    <%= link_to "Stories", "#", class: "nav-link px-0" %>
-    <%= link_to "Projects", "#", class: "nav-link px-0" %>
   </nav>
-
+<% end %>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold">
     Other

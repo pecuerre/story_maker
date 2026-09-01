@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_130353) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_152244) do
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -25,6 +25,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_130353) do
     t.string "name"
     t.integer "owner_id", null: false
     t.boolean "private", default: false
+    t.string "slug"
     t.datetime "updated_at", null: false
     t.index ["owner_id"], name: "index_stories_on_owner_id"
   end

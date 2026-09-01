@@ -1,5 +1,6 @@
 class StoriesController < ApplicationController
   before_action :set_story, only: %i[ show edit update destroy ]
+  skip_before_action :set_current_story, only: %i[index]
 
   # GET /stories or /stories.json
   def index
@@ -60,7 +61,7 @@ class StoriesController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_story
-      @story = Story.find(params.expect(:id))
+      @story = Story.find_by(slug: params.expect(:story_slug))
     end
 
     # Only allow a list of trusted parameters through.

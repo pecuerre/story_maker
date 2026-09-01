@@ -1,0 +1,17 @@
+story
+- name
+
+section_type
+- story
+- name
+- parent
+
+section
+- story
+- name
+- section_type
+- parent
+
+scene
+- story
+- section

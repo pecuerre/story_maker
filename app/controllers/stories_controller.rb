@@ -1,10 +1,11 @@
 class StoriesController < ApplicationController
   before_action :set_story, only: %i[ show edit update destroy ]
+  allow_unauthenticated_access only: %i[index]
   skip_before_action :set_current_story, only: %i[index]
 
   # GET /stories or /stories.json
   def index
-    @stories = Story.all
+    @stories = visible_stories
   end
 
   # GET /stories/1 or /stories/1.json
@@ -59,13 +60,24 @@ class StoriesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_story
-      @story = Story.find_by(slug: params.expect(:story_slug))
-    end
 
-    # Only allow a list of trusted parameters through.
-    def story_params
-      params.expect(story: [ :name ])
+  def visible_stories
+    scope = Story.all
+
+    if authenticated?
+      scope.where(private: false).or(scope.where(owner_id: Current.user.id))
+    else
+      scope.where(private: false)
     end
+  end
+
+  # Use callbacks to share common setup or constraints between actions.
+  def set_story
+    @story = Story.find_by(slug: params.expect(:story_slug))
+  end
+
+  # Only allow a list of trusted parameters through.
+  def story_params
+    params.expect(story: [ :name ])
+  end
 end

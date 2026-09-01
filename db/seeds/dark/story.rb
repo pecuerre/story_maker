@@ -7,5 +7,6 @@ user = User.create(
 story = Story.create(
   name: "Dark",
   owner: user,
-  slug: "dark"
+  slug: "dark",
+  private: false
 )

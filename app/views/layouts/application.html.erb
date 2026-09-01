@@ -23,7 +23,31 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="bg-body-secondary">
+
+    <div class="container-xl">
+
+      <%= render "layouts/navbar" %>
+
+      <div class="row">
+
+        <!-- Left sidebar -->
+        <aside class="col-md-2 border-end">
+          <%= render "layouts/left_sidebar" %>
+        </aside>
+
+        <!-- Main content -->
+        <main class="col-md-7 px-md-4 py-4">
+          <%= yield %>
+        </main>
+
+        <!-- Right sidebar -->
+        <aside class="col-md-3 border-start">
+          <%= render "layouts/right_sidebar" %>
+        </aside>
+
+      </div>
+
+    </div>
   </body>
 </html>

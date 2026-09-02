@@ -2,7 +2,9 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
-  resources :stories, param: :slug, path: "s" do
+  resources :stories, param: :story_slug, path: "s"
+
+  scope "s/:story_slug", as: :story do
     resources :section_types
   end
 

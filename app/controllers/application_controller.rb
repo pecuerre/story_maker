@@ -9,6 +9,6 @@ class ApplicationController < ActionController::Base
   protected
 
   def set_current_story
-    Current.story = Story.find_by!(slug: params[:slug])
+    Current.story = Story.find_by!(slug: params.expect(:story_slug))
   end
 end

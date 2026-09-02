@@ -1,0 +1,27 @@
+<% nodes = local_assigns.fetch(:nodes) %>
+<% children_method = local_assigns.fetch(:children_method, :children) %>
+<% new_url = local_assigns[:new_url] %>
+<% edit_url = local_assigns.fetch(:edit_url) %>
+<% update_url = local_assigns.fetch(:update_url) %>
+<% delete_url = local_assigns.fetch(:delete_url) %>
+<% model_param = local_assigns.fetch(:model_param) %>
+
+<div class="taxonomy-tree" data-controller="taxonomy-tree" data-taxonomy-tree-model-param-value="<%= model_param %>">
+  <%= link_to new_url.call, class: "btn btn-sm btn-outline-primary mb-3" do %>
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span>Add</span>
+  <% end if new_url %>
+
+  <ul class="taxonomy-list list-unstyled mb-0">
+    <% nodes.each do |node| %>
+      <%= render "shared/taxonomy_node",
+        node: node,
+        children_method: children_method,
+        new_url: new_url,
+        edit_url: edit_url,
+        update_url: update_url,
+        delete_url: delete_url,
+        model_param: model_param %>
+    <% end %>
+  </ul>
+</div>

@@ -7,6 +7,6 @@
 <br>
 
 <div>
-  <%= link_to "Show this section type", @section_type %> |
-  <%= link_to "Back to section types", section_types_path %>
+  <%= link_to "Show this section type", story_section_type_path(story_slug: Current.story.slug, id: @section_type) %> |
+  <%= link_to "Back to section types", story_section_types_path(story_slug: Current.story.slug) %>
 </div>

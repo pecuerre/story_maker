@@ -1,0 +1,25 @@
+.taxonomy-node[draggable="true"] {
+  cursor: grab;
+}
+
+.taxonomy-node[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.taxonomy-actions {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease-in-out;
+}
+
+.taxonomy-node:hover > div > .taxonomy-actions,
+.taxonomy-node:focus-within > div > .taxonomy-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taxonomy-actions {
+    transition: none;
+  }
+}

@@ -6,18 +6,7 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%# link_to "Section Types", story_section_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
-    <%= link_to "Section Types", "#collapseSectionTypes", { 'class' => "nav-link px-0", 'data-bs-toggle' => "collapse", 'role' => "button", 'aria-expanded' => false, 'aria-controls' => "collapseSectionTypes"} %>
-
-    <div class="collapse" id="collapseSectionTypes">
-      <%= render "shared/taxonomy_tree",
-        nodes: Current.story.section_types.includes(:children).where(parent_id: nil),
-        new_url: ->(parent = nil) { new_story_section_type_path(story_slug: Current.story.slug, parent_id: parent&.id) },
-        edit_url: ->(section_type) { edit_story_section_type_path(story_slug: Current.story.slug, id: section_type) },
-        update_url: ->(section_type) { story_section_type_path(story_slug: Current.story.slug, id: section_type) },
-        delete_url: ->(section_type) { story_section_type_path(story_slug: Current.story.slug, id: section_type) },
-        model_param: "section_type" %>
-    </div>
+    <%= link_to "Section Types", story_section_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
   </nav>
 
 

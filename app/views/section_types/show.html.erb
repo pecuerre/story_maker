@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @section_type %>
+
+<div>
+  <%= link_to "Edit this section type", edit_section_type_path(@section_type) %> |
+  <%= link_to "Back to section types", section_types_path %>
+
+  <%= button_to "Destroy this section type", @section_type, method: :delete %>
+</div>

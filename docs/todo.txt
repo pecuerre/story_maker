@@ -1,0 +1,1 @@
+(A) crear un componente reusable tipo directorio/subdirectorio con inline editing en un sidebar

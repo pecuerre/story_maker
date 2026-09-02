@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_152244) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_172422) do
+  create_table "section_types", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_section_types_on_parent_id"
+    t.index ["story_id"], name: "index_section_types_on_story_id"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -38,6 +48,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_152244) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "section_types", "section_types", column: "parent_id"
+  add_foreign_key "section_types", "stories"
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "users", column: "owner_id"
 end

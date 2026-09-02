@@ -1,0 +1,9 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Section types" %>
+
+<h1>Section types</h1>
+
+<%= render 'section_types/list' %>
+
+<%= link_to "New section type", new_story_section_type_path(story_slug: Current.story.slug) %>

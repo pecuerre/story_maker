@@ -1,11 +1,11 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  owner: one
-  name: MyString
+story_one:
+  owner: user_one
+  name: Story one
   slug: one
 
-two:
-  owner: two
-  name: MyString
+story_two:
+  owner: user_two
+  name: Story two
   slug: two

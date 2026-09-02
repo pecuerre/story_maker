@@ -1,12 +1,12 @@
-user = User.create(
-  email_address: "lotr@lotr",
-  password: "lotr",
-  password_confirmation: "lotr"
-)
+user = User.create(email_address: "lotr@lotr", password: "lotr", password_confirmation: "lotr")
 
-story = Story.create(
-  name: "Lord of the Rings",
-  owner: user,
-  slug: "lotr",
-  private: true
-)
+story = Story.create(name: "lotr", owner: user, slug: "lotr", private: false)
+
+st_book = SectionType.create(story: story, name: "Book", parent: nil)
+st_part = SectionType.create(story: story, name: "Part", parent: st_book)
+st_chapter = SectionType.create(story: story, name: "Chapter", parent: st_part)
+st_section = SectionType.create(story: story, name: "Section", parent: st_chapter)
+
+s_b1 = Section.create(story: story, name: "The Fellowship of the Ring", section_type: st_book, parent: nil)
+s_b2 = Section.create(story: story, name: "The Two Towers", section_type: st_book, parent: nil)
+s_b3 = Section.create(story: story, name: "The Return of the King", section_type: st_book, parent: nil)

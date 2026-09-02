@@ -5,6 +5,7 @@ class SectionType < ApplicationRecord
            class_name: "SectionType",
            foreign_key: :parent_id,
            dependent: :destroy
+  has_many :sections, dependent: :destroy
 
   validates :name, presence: true
   validate :parent_belongs_to_same_story

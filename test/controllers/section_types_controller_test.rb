@@ -2,9 +2,9 @@ require "test_helper"
 
 class SectionTypesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @section_type = section_types(:one)
-    @story = stories(:one)
-    sign_in_as(users(:one))
+    @section_type = section_types(:section_type_one)
+    @story = stories(:story_one)
+    sign_in_as(users(:user_one))
   end
 
   test "should get index" do

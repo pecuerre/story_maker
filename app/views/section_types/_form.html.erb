@@ -1,4 +1,4 @@
-<%= form_with(model: section_type) do |form| %>
+<%= form_with(model: section_type, url: section_type.persisted? ? story_section_type_path(story_slug: Current.story.slug, id: section_type) : story_section_types_path(story_slug: Current.story.slug)) do |form| %>
   <% if section_type.errors.any? %>
     <div style="color: red">
       <h2><%= pluralize(section_type.errors.count, "error") %> prohibited this section_type from being saved:</h2>
@@ -12,18 +12,12 @@
   <% end %>
 
   <div>
-    <%= form.label :story_id, style: "display: block" %>
-    <%= form.text_field :story_id %>
-  </div>
-
-  <div>
     <%= form.label :name, style: "display: block" %>
     <%= form.text_field :name %>
   </div>
 
   <div>
-    <%= form.label :parent_id, style: "display: block" %>
-    <%= form.text_field :parent_id %>
+    <%= form.hidden_field :parent_id %>
   </div>
 
   <div>

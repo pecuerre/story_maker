@@ -3,9 +3,7 @@
 one:
   story: one
   name: MyString
-  parent: one
 
 two:
   story: two
   name: MyString
-  parent: two

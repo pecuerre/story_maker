@@ -3,46 +3,58 @@ require "test_helper"
 class SectionTypesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @section_type = section_types(:one)
+    @story = stories(:one)
+    sign_in_as(users(:one))
   end
 
   test "should get index" do
-    get section_types_url
+    get story_section_types_url(story_slug: @story.slug)
     assert_response :success
   end
 
   test "should get new" do
-    get new_section_type_url
+    get new_story_section_type_url(story_slug: @story.slug)
     assert_response :success
   end
 
   test "should create section_type" do
     assert_difference("SectionType.count") do
-      post section_types_url, params: { section_type: { name: @section_type.name, parent_id: @section_type.parent_id, story_id: @section_type.story_id } }
+      post story_section_types_url(story_slug: @story.slug), params: { section_type: { name: "New type", parent_id: nil } }
     end
 
-    assert_redirected_to section_type_url(SectionType.last)
+    assert_redirected_to story_section_type_url(story_slug: @story.slug, id: SectionType.last)
   end
 
   test "should show section_type" do
-    get section_type_url(@section_type)
+    get story_section_type_url(story_slug: @story.slug, id: @section_type)
     assert_response :success
   end
 
   test "should get edit" do
-    get edit_section_type_url(@section_type)
+    get edit_story_section_type_url(story_slug: @story.slug, id: @section_type)
     assert_response :success
   end
 
   test "should update section_type" do
-    patch section_type_url(@section_type), params: { section_type: { name: @section_type.name, parent_id: @section_type.parent_id, story_id: @section_type.story_id } }
-    assert_redirected_to section_type_url(@section_type)
+    patch story_section_type_url(story_slug: @story.slug, id: @section_type), params: { section_type: { name: "Renamed", parent_id: nil } }
+    assert_redirected_to story_section_type_url(story_slug: @story.slug, id: @section_type)
+    assert_equal "Renamed", @section_type.reload.name
   end
 
   test "should destroy section_type" do
     assert_difference("SectionType.count", -1) do
-      delete section_type_url(@section_type)
+      delete story_section_type_url(story_slug: @story.slug, id: @section_type)
     end
 
-    assert_redirected_to section_types_url
+    assert_redirected_to story_section_types_url(story_slug: @story.slug)
+  end
+
+  test "can move a section type to another parent" do
+    parent = SectionType.create!(story: @story, name: "Parent")
+
+    patch story_section_type_url(story_slug: @story.slug, id: @section_type), params: { section_type: { parent_id: parent.id } }
+
+    assert_redirected_to story_section_type_url(story_slug: @story.slug, id: @section_type)
+    assert_equal parent, @section_type.reload.parent
   end
 end

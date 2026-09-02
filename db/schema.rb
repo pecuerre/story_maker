@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_172422) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_232933) do
   create_table "section_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -19,6 +19,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_172422) do
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_section_types_on_parent_id"
     t.index ["story_id"], name: "index_section_types_on_story_id"
+  end
+
+  create_table "sections", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "section_type_id", null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_sections_on_parent_id"
+    t.index ["section_type_id"], name: "index_sections_on_section_type_id"
+    t.index ["story_id"], name: "index_sections_on_story_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -50,6 +62,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_172422) do
 
   add_foreign_key "section_types", "section_types", column: "parent_id"
   add_foreign_key "section_types", "stories"
+  add_foreign_key "sections", "section_types"
+  add_foreign_key "sections", "sections", column: "parent_id"
+  add_foreign_key "sections", "stories"
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "users", column: "owner_id"
 end

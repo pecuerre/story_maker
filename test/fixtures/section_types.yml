@@ -1,9 +1,13 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
-  story: one
-  name: MyString
+section_type_one:
+  story: story_one
+  name: Section type one
 
-two:
-  story: two
-  name: MyString
+section_type_two:
+  story: story_one
+  name: Section type two
+
+section_type_three:
+  story: story_two
+  name: Section type three

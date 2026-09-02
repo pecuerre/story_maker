@@ -9,6 +9,8 @@ class ApplicationController < ActionController::Base
   protected
 
   def set_current_story
-    Current.story = Story.find_by!(slug: params.expect(:story_slug))
+    return unless params[:story_slug].present?
+
+    Current.story = Story.find_by!(slug: params[:story_slug])
   end
 end

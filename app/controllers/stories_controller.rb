@@ -1,6 +1,6 @@
 class StoriesController < ApplicationController
   before_action :set_story, only: %i[ show edit update destroy ]
-  allow_unauthenticated_access only: %i[index]
+  allow_unauthenticated_access only: %i[index show new create edit update destroy]
   skip_before_action :set_current_story, only: %i[index]
 
   # GET /stories or /stories.json
@@ -24,6 +24,7 @@ class StoriesController < ApplicationController
   # POST /stories or /stories.json
   def create
     @story = Story.new(story_params)
+    @story.owner = Current.user || User.first
 
     respond_to do |format|
       if @story.save

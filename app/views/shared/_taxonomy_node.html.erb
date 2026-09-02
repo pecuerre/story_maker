@@ -1,17 +1,17 @@
-<li class="taxonomy-node" draggable="true" data-taxonomy-tree-target="node" data-node-id="<%= node.id %>" data-update-url="<%= update_url.call(node) %>">
+<li class="taxonomy-node" draggable="true" data-taxonomy-tree-target="node" data-node-id="<%= node.id %>" data-update-url="<%= update_url.call(node) %>" data-create-url="<%= create_url %>" data-name="<%= node.name %>">
   <div class="d-flex align-items-center gap-2 border-bottom py-2" data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode">
     <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
-    <span class="flex-grow-1 text-break"><%= node.name %></span>
+    <span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"><%= node.name %></span>
     <span class="taxonomy-actions d-flex gap-1">
       <% if new_url %>
-        <%= link_to new_url.call(node), class: "btn btn-sm btn-outline-secondary", title: "Add child", aria: { label: "Add child to #{node.name}" } do %>
+        <%= button_tag type: "button", class: "btn btn-sm btn-outline-secondary", title: "Add child", aria: { label: "Add child to #{node.name}" }, data: { action: "taxonomy-tree#add" } do %>
           <i class="bi bi-plus-lg" aria-hidden="true"></i>
         <% end %>
       <% end %>
-      <%= link_to edit_url.call(node), class: "btn btn-sm btn-outline-secondary", title: "Edit", aria: { label: "Edit #{node.name}" } do %>
+      <%= button_tag type: "button", class: "btn btn-sm btn-outline-secondary", title: "Edit", aria: { label: "Edit #{node.name}" }, data: { action: "taxonomy-tree#edit" } do %>
         <i class="bi bi-pencil" aria-hidden="true"></i>
       <% end %>
-      <%= button_to delete_url.call(node), method: :delete, class: "btn btn-sm btn-outline-danger", title: "Delete", aria: { label: "Delete #{node.name}" }, form: { data: { turbo_confirm: "Delete #{node.name} and its children?" } } do %>
+      <%= button_tag type: "button", class: "btn btn-sm btn-outline-danger", title: "Delete", aria: { label: "Delete #{node.name}" }, data: { action: "taxonomy-tree#remove" } do %>
         <i class="bi bi-trash" aria-hidden="true"></i>
       <% end %>
     </span>
@@ -28,6 +28,7 @@
           edit_url: edit_url,
           update_url: update_url,
           delete_url: delete_url,
+          create_url: create_url,
           model_param: model_param %>
       <% end %>
     </ul>

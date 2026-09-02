@@ -3,20 +3,9 @@ class SectionTypesController < ApplicationController
 
   # GET /section_types or /section_types.json
   def index
-    @section_types = Current.story.section_types.includes(:children).where(parent_id: nil)
-  end
-
-  # GET /section_types/1 or /section_types/1.json
-  def show
-  end
-
-  # GET /section_types/new
-  def new
-    @section_type = Current.story.section_types.new(parent_id: params[:parent_id])
-  end
-
-  # GET /section_types/1/edit
-  def edit
+    @section_types = Current.story.section_types
+    @section_types = @section_types.includes(:children)
+    @section_types = @section_types.where(parent_id: nil)
   end
 
   # POST /section_types or /section_types.json
@@ -25,11 +14,32 @@ class SectionTypesController < ApplicationController
 
     respond_to do |format|
       if @section_type.save
-        format.html { redirect_to story_section_type_path(story_slug: Current.story.slug, id: @section_type), notice: "Section type was successfully created." }
-        format.json { render :show, status: :created, location: @section_type }
+        format.html {
+          redirect_to story_section_type_path(
+              story_slug: Current.story.slug,
+              id: @section_type
+            ),
+            notice: "Section type was successfully created."
+        }
+        format.json {
+          render json: {
+            id: @section_type.id,
+            name: @section_type.name,
+            parent_id: @section_type.parent_id,
+            url: story_section_type_path(
+              story_slug: Current.story.slug,
+              id: @section_type
+            )
+          },
+          status: :created
+        }
       else
-        format.html { render :new, status: :unprocessable_content }
-        format.json { render json: @section_type.errors, status: :unprocessable_content }
+        format.html {
+          render :new, status: :unprocessable_content
+        }
+        format.json {
+          render json: @section_type.errors, status: :unprocessable_content
+        }
       end
     end
   end
@@ -38,11 +48,33 @@ class SectionTypesController < ApplicationController
   def update
     respond_to do |format|
       if @section_type.update(section_type_params)
-        format.html { redirect_to story_section_type_path(story_slug: Current.story.slug, id: @section_type), notice: "Section type was successfully updated.", status: :see_other }
-        format.json { render :show, status: :ok, location: @section_type }
+        format.html {
+          redirect_to story_section_type_path(
+            story_slug: Current.story.slug,
+            id: @section_type
+          ),
+          notice: "Section type was successfully updated.",
+          status: :see_other
+        }
+        format.json {
+          render json: {
+            id: @section_type.id,
+            name: @section_type.name,
+            parent_id: @section_type.parent_id,
+            url: story_section_type_path(
+              story_slug: Current.story.slug,
+              id: @section_type
+            )
+          },
+          status: :ok
+        }
       else
-        format.html { render :edit, status: :unprocessable_content }
-        format.json { render json: @section_type.errors, status: :unprocessable_content }
+        format.html {
+          render :edit, status: :unprocessable_content
+        }
+        format.json {
+          render json: @section_type.errors, status: :unprocessable_content
+        }
       end
     end
   end
@@ -52,8 +84,14 @@ class SectionTypesController < ApplicationController
     @section_type.destroy!
 
     respond_to do |format|
-      format.html { redirect_to story_section_types_path(story_slug: Current.story.slug), notice: "Section type was successfully destroyed.", status: :see_other }
-      format.json { head :no_content }
+      format.html {
+        redirect_to story_section_types_path(story_slug: Current.story.slug),
+          notice: "Section type was successfully destroyed.",
+          status: :see_other
+        }
+      format.json {
+        head :no_content
+      }
     end
   end
 

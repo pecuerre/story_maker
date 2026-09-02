@@ -1,6 +1,11 @@
 class SectionTypesController < ApplicationController
   before_action :set_section_type, only: %i[ show edit update destroy ]
 
+  # GET /section_types/new
+  def new
+    @section_type = Current.story.section_types.new(parent_id: params[:parent_id])
+  end
+
   # GET /section_types or /section_types.json
   def index
     @section_types = Current.story.section_types

@@ -1,16 +1,33 @@
 <div class="py-4">
 
-<!--
+<% if Current.story.present? %>
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Admin
+    Story Settings
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Users", "#", class: "nav-link px-0" %>
-    <%= link_to "Settings", "#", class: "nav-link px-0" %>
-    <%= link_to "Logs", "#", class: "nav-link px-0" %>
+    <%# link_to "Section Types", story_section_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Section Types", "#collapseSectionTypes", { 'class' => "nav-link px-0", 'data-bs-toggle' => "collapse", 'role' => "button", 'aria-expanded' => false, 'aria-controls' => "collapseSectionTypes"} %>
+
+    <div class="collapse" id="collapseSectionTypes">
+      <table id="section_types" class="table">
+        <% Current.story.section_types.each do |section_type| %>
+          <tr>
+            <td>
+              <%= section_type.name %>
+              <%= link_to "Edit", edit_story_section_type_path(story_slug: Current.story.slug, id: section_type.id) %>
+              <%#= link_to "Show this section type", story_section_type_path(story_slug: Current.story.slug, id: section_type.id) %>
+            </td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
   </nav>
 
+
+<% end %>
+
+<!--
 
   <h6 class="text-uppercase text-body-secondary small fw-bold">
     Links

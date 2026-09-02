@@ -11,3 +11,11 @@ body {
   height: calc(100vh - 56px);
   overflow-y: auto;
 }
+
+.left-sidebar {
+  border-right: 1px solid #dee2e6;
+}
+
+.right-sidebar {
+  border-left: 1px solid #dee2e6;
+}

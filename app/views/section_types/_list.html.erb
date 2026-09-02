@@ -1,0 +1,8 @@
+<div id="section_types">
+  <% @section_types.each do |section_type| %>
+    <%= render section_type %>
+    <p>
+      <%= link_to "Show this section type", story_section_type_path(story_slug: Current.story.slug, id: section_type) %>
+    </p>
+  <% end %>
+</div>

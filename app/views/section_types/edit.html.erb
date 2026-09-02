@@ -1,0 +1,12 @@
+<% content_for :title, "Editing section type" %>
+
+<h1>Editing section type</h1>
+
+<%= render "form", section_type: @section_type %>
+
+<br>
+
+<div>
+  <%= link_to "Show this section type", @section_type %> |
+  <%= link_to "Back to section types", section_types_path %>
+</div>

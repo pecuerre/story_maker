@@ -73,7 +73,7 @@ class StoriesController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_story
-    @story = Story.find_by(slug: params.expect(:story_slug))
+    @story = Story.find_by(slug: params.expect(:slug))
   end
 
   # Only allow a list of trusted parameters through.

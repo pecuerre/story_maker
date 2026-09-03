@@ -2,14 +2,13 @@
 
 <% if Current.story.present? %>
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Story Settings
+    <%= Current.story.name %> Settings
   </h6>
 
   <nav class="nav flex-column mb-4">
     <%= link_to "Section Types", story_section_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
   </nav>
-
-
 <% end %>
 
 <!--

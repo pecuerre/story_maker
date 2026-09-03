@@ -9,7 +9,7 @@ s_s1 = Section.create(story: story, name: "Season 1", section_type: st_season, p
 s_s1e1 = Section.create(story: story, name: "Episode 1: Secrets", section_type: st_episode, parent: s_s1)
 s_s1e2 = Section.create(story: story, name: "Episode 2: Lies", section_type: st_episode, parent: s_s1)
 s_s1e3 = Section.create(story: story, name: "Episode 3: Past and Present", section_type: st_episode, parent: s_s1)
-s_s1e4 = Section.create(story: story, name: "Episode 4: Double Lives", section_type: st_episode, parent: s_s1e4)
+s_s1e4 = Section.create(story: story, name: "Episode 4: Double Lives", section_type: st_episode, parent: s_s1)
 s_s1e5 = Section.create(story: story, name: "Episode 5: Truths", section_type: st_episode, parent: s_s1)
 s_s1e6 = Section.create(story: story, name: "Episode 6: Sic Mundus Creatus Est", section_type: st_episode, parent: s_s1)
 

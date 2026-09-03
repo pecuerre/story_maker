@@ -3,7 +3,7 @@ user = User.create(email_address: "dark@dark", password: "dark", password_confir
 story = Story.create(name: "Dark", owner: user, slug: "dark", private: false)
 
 st_season = SectionType.create(story: story, name: "Season", parent: nil)
-st_episode = SectionType.create(story: story, name: "Episode", parent: st_season)
+st_episode = SectionType.create(story: story, name: "Episode", parent: nil)
 
 s_s1 = Section.create(story: story, name: "Season 1", section_type: st_season, parent: nil)
 s_s1e1 = Section.create(story: story, name: "Episode 1: Secrets", section_type: st_episode, parent: s_s1)

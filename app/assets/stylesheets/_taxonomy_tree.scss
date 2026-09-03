@@ -12,15 +12,11 @@
   transition: opacity 120ms ease-in-out;
 }
 
-.taxonomy-node:hover > div > .taxonomy-actions,
-.taxonomy-node:focus-within > div > .taxonomy-actions {
+.taxonomy-row:hover > .taxonomy-actions,
+.taxonomy-row:focus-within > .taxonomy-actions,
+.taxonomy-node.is-editing > .taxonomy-row > .taxonomy-actions {
   opacity: 1;
   pointer-events: auto;
-}
-
-.taxonomy-node.is-editing > div > .taxonomy-actions {
-  opacity: 0;
-  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

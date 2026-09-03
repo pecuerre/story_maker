@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import "bootstrap"
 
 export default class extends Controller {
   static values = { modelParam: String, createUrl: String }
@@ -19,9 +20,10 @@ export default class extends Controller {
     item.querySelector("input").focus()
   }
 
-  editName(event) {
+  async editName(event) {
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
+    if (this.inlineEditor && this.inlineEditor !== node) await this.saveInlineEditor()
     if (node.querySelector("input")) return
     const name = node.querySelector('[data-taxonomy-tree-target="name"]')
     const form = document.createElement("form")
@@ -30,6 +32,8 @@ export default class extends Controller {
     form.innerHTML = `<input class="form-control form-control-sm" name="name" value="" required><button type="submit" class="btn btn-sm btn-primary">Save</button><button type="button" class="btn btn-sm btn-outline-secondary" data-action="taxonomy-tree#cancel">Cancel</button>`
     form.querySelector("input").value = node.dataset.name
     name.replaceWith(form)
+    node.classList.add("is-editing")
+    this.inlineEditor = node
     form.querySelector("input").focus()
     form.querySelector("input").select()
   }
@@ -37,29 +41,29 @@ export default class extends Controller {
   async edit(event) {
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
-    if (this.dialog) return
+    if (this.inlineEditor) await this.saveInlineEditor()
+    if (this.modal) return
 
-    const response = await fetch(node.dataset.editUrl, { headers: { "Accept": "text/html" } })
-    if (!response.ok) return
-    const page = new DOMParser().parseFromString(await response.text(), "text/html")
-    const form = page.querySelector("form")
-    if (!form) return
+    const modal = document.createElement("div")
+    const titleId = `taxonomy-edit-title-${node.dataset.nodeId}`
+    modal.className = "modal fade"
+    modal.tabIndex = -1
+    modal.setAttribute("aria-labelledby", titleId)
+    modal.setAttribute("aria-hidden", "true")
+    modal.innerHTML = `<div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h1 class="modal-title fs-5" id="${titleId}"></h1><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><form action="${node.dataset.updateUrl}" method="post"><div class="modal-body"><div class="mb-3"><label class="form-label" for="taxonomy-edit-name-${node.dataset.nodeId}">Name</label><input class="form-control" id="taxonomy-edit-name-${node.dataset.nodeId}" name="${this.modelParamValue}[name]" required></div><div><label class="form-label" for="taxonomy-edit-description-${node.dataset.nodeId}">Description</label><textarea class="form-control" id="taxonomy-edit-description-${node.dataset.nodeId}" name="${this.modelParamValue}[description]" rows="4"></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save changes</button></div></form></div></div>`
+    modal.querySelector(".modal-title").textContent = `Edit ${node.dataset.name}`
+    modal.querySelector('[name$="[name]"]').value = node.dataset.name
+    modal.querySelector('[name$="[description]"]').value = node.dataset.description || ""
+    modal.querySelector("form").addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
+    document.body.append(modal)
 
-    form.querySelector('[name$="[name]"]')?.closest("div")?.remove()
-    form.addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
-
-    this.dialog = window.document.createElement("dialog")
-    this.dialog.className = "taxonomy-edit-dialog"
-    this.dialog.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 mb-0">Edit ${node.dataset.name}</h2><button type="button" class="btn-close" aria-label="Close"></button></div>`
-    this.dialog.append(form)
-    const cancel = this.dialog.querySelector(".btn-close")
-    cancel.addEventListener("click", () => this.dialog.close())
-    window.document.body.append(this.dialog)
-    this.dialog.addEventListener("close", () => {
-      this.dialog.remove()
-      this.dialog = null
+    this.modal = new window.bootstrap.Modal(modal)
+    modal.addEventListener("hidden.bs.modal", () => {
+      this.modal.dispose()
+      modal.remove()
+      this.modal = null
     }, { once: true })
-    this.dialog.showModal()
+    this.modal.show()
   }
 
   async updateDetails(event, node) {
@@ -71,7 +75,11 @@ export default class extends Controller {
       body: new URLSearchParams(new FormData(form))
     })
     if (!response.ok) return
-    this.dialog.close()
+    const data = await response.json()
+    node.dataset.name = data.name
+    node.dataset.description = data.description || ""
+    node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
+    this.modal.hide()
     window.Turbo.visit(window.location.href)
   }
 
@@ -79,7 +87,12 @@ export default class extends Controller {
     event.preventDefault()
     const item = event.currentTarget.closest(".taxonomy-new")
     if (item) item.remove()
-    else this.restoreName(event.currentTarget.closest("form"))
+    else {
+      const form = event.currentTarget.closest("form")
+      this.restoreName(form)
+      form.closest("[data-node-id]").classList.remove("is-editing")
+      this.inlineEditor = null
+    }
   }
 
   async create(event) {
@@ -100,6 +113,25 @@ export default class extends Controller {
     const data = await response.json()
     node.dataset.name = data.name
     this.restoreName(form, data.name)
+    node.classList.remove("is-editing")
+    this.inlineEditor = null
+  }
+
+  async saveInlineEditor() {
+    const node = this.inlineEditor
+    const form = node?.querySelector("form")
+    if (!form) {
+      this.inlineEditor = null
+      return
+    }
+
+    const response = await this.request(node.dataset.updateUrl, "PATCH", { name: form.name.value })
+    if (!response.ok) return
+    const data = await response.json()
+    node.dataset.name = data.name
+    this.restoreName(form, data.name)
+    node.classList.remove("is-editing")
+    this.inlineEditor = null
   }
 
   async remove(event) {
@@ -141,6 +173,7 @@ export default class extends Controller {
     node.dataset.updateUrl = data.url
     node.dataset.createUrl = this.createUrlValue
     node.dataset.name = data.name
+    node.dataset.description = data.description || ""
     node.innerHTML = `<div class="d-flex align-items-center gap-2 border-bottom py-2" data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
     node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
     return node
@@ -149,7 +182,10 @@ export default class extends Controller {
   restoreName(form, value = form.querySelector("input").value) {
     const name = document.createElement("span")
     name.className = "flex-grow-1 text-break"
+    name.setAttribute("role", "button")
+    name.tabIndex = 0
     name.dataset.taxonomyTreeTarget = "name"
+    name.dataset.action = "click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName"
     name.textContent = value
     form.replaceWith(name)
   }

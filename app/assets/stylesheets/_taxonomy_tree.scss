@@ -18,6 +18,11 @@
   pointer-events: auto;
 }
 
+.taxonomy-node.is-editing > div > .taxonomy-actions {
+  opacity: 0;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .taxonomy-actions {
     transition: none;

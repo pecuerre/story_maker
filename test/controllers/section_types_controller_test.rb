@@ -48,18 +48,20 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update section_type" do
-    patch story_section_type_url(story_slug: @story.slug, id: @section_type), params: { section_type: { name: "Renamed", parent_id: nil } }
+    patch story_section_type_url(story_slug: @story.slug, id: @section_type), params: { section_type: { name: "Renamed", description: "Updated description", parent_id: nil } }
     assert_redirected_to story_section_type_url(story_slug: @story.slug, id: @section_type)
     assert_equal "Renamed", @section_type.reload.name
+    assert_equal "Updated description", @section_type.description
   end
 
   test "should update section_type as json for inline editing" do
     patch story_section_type_url(story_slug: @story.slug, id: @section_type),
-      params: { section_type: { name: "Inline rename" } },
+      params: { section_type: { name: "Inline rename", description: "Inline description" } },
       as: :json
 
     assert_response :success
     assert_equal "Inline rename", response.parsed_body["name"]
+    assert_equal "Inline description", response.parsed_body["description"]
     assert_nil @section_type.reload.parent_id
   end
 

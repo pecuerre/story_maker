@@ -1,0 +1,19 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Sections" %>
+
+<h1>Sections</h1>
+
+<%= render "shared/taxonomy_tree",
+	nodes: @sections,
+	new_url: ->(parent = nil) { new_story_section_path(story_slug: Current.story.slug, parent_id: parent&.id) },
+	create_url: story_sections_path(story_slug: Current.story.slug),
+	edit_url: ->(section) { edit_story_section_path(story_slug: Current.story.slug, id: section) },
+	update_url: ->(section) { story_section_path(story_slug: Current.story.slug, id: section) },
+	delete_url: ->(section) { story_section_path(story_slug: Current.story.slug, id: section) },
+	model_param: "section",
+	modal_fields: [
+		{ name: "name", label: "Name", type: "text" },
+		{ name: "description", label: "Description", type: "textarea" },
+		{ name: "section_type_id", label: "Section type", type: "select", options: @section_types.map { |section_type| [ section_type.id, section_type.name ] } }
+	] %>

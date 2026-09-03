@@ -6,7 +6,8 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Dashboard", "#", class: "nav-link px-0" %>
+    <%# link_to "Dashboard", "#", class: "nav-link px-0" %>
+    <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
   </nav>
 <% end %>
 

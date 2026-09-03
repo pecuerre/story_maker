@@ -6,14 +6,15 @@
 <% update_url = local_assigns.fetch(:update_url) %>
 <% delete_url = local_assigns.fetch(:delete_url) %>
 <% model_param = local_assigns.fetch(:model_param) %>
+<% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 
-<div class="taxonomy-tree" data-controller="taxonomy-tree" data-taxonomy-tree-model-param-value="<%= model_param %>" data-taxonomy-tree-create-url-value="<%= create_url %>">
+<div class="taxonomy-tree" data-controller="taxonomy-tree" data-taxonomy-tree-model-param-value="<%= model_param %>" data-taxonomy-tree-create-url-value="<%= create_url %>" data-taxonomy-tree-modal-fields-value="<%= modal_fields.to_json %>">
   <%= button_tag type: "button", class: "btn btn-sm btn-outline-primary mb-3", data: { action: "taxonomy-tree#add", create_url: new_url.call } do %>
     <i class="bi bi-plus-lg" aria-hidden="true"></i>
     <span>Add</span>
   <% end if new_url %>
 
-  <ul class="taxonomy-list list-unstyled mb-0">
+  <ul class="taxonomy-list list-unstyled mb-0" data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode" data-drop-parent-id="">
     <% nodes.each do |node| %>
       <%= render "shared/taxonomy_node",
         node: node,
@@ -23,7 +24,8 @@
         update_url: update_url,
         delete_url: delete_url,
         create_url: create_url,
-        model_param: model_param %>
+        model_param: model_param,
+        modal_fields: modal_fields %>
     <% end %>
   </ul>
 </div>

@@ -4,6 +4,15 @@ import "bootstrap"
 export default class extends Controller {
   static values = { modelParam: String, createUrl: String }
 
+  connect() {
+    this.handleOutsideClick = this.handleOutsideClick.bind(this)
+    document.addEventListener("pointerdown", this.handleOutsideClick)
+  }
+
+  disconnect() {
+    document.removeEventListener("pointerdown", this.handleOutsideClick)
+  }
+
   add(event) {
     event.preventDefault()
     const source = event.currentTarget
@@ -36,6 +45,11 @@ export default class extends Controller {
     this.inlineEditor = node
     form.querySelector("input").focus()
     form.querySelector("input").select()
+  }
+
+  async handleOutsideClick(event) {
+    if (!this.inlineEditor || event.target.closest("[data-node-id], .taxonomy-new")) return
+    await this.saveInlineEditor()
   }
 
   async edit(event) {
@@ -174,7 +188,7 @@ export default class extends Controller {
     node.dataset.createUrl = this.createUrlValue
     node.dataset.name = data.name
     node.dataset.description = data.description || ""
-    node.innerHTML = `<div class="d-flex align-items-center gap-2 border-bottom py-2" data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
+    node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2" data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
     node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
     return node
   }

@@ -1,5 +1,5 @@
 <li class="taxonomy-node" draggable="true" data-taxonomy-tree-target="node" data-node-id="<%= node.id %>" data-update-url="<%= update_url.call(node) %>" data-edit-url="<%= edit_url.call(node) %>" data-create-url="<%= create_url %>" data-name="<%= node.name %>" data-description="<%= node.description %>">
-  <div class="d-flex align-items-center gap-2 border-bottom py-2" data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode">
+  <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2" data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode">
     <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
     <span class="flex-grow-1 text-break" role="button" tabindex="0" data-taxonomy-tree-target="name" data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName"><%= node.name %></span>
     <span class="taxonomy-actions d-flex gap-1">

@@ -1,7 +1,7 @@
 class SectionType < ApplicationRecord
   belongs_to :story
   belongs_to :parent, class_name: "SectionType", optional: true
-  has_many :children,
+  has_many :children, -> { order(:position, :id) },
            class_name: "SectionType",
            foreign_key: :parent_id,
            dependent: :destroy
@@ -14,6 +14,10 @@ class SectionType < ApplicationRecord
 
   def root?
     parent_id.nil?
+  end
+
+  def sibling_scope
+    story.section_types.where(parent_id: parent_id).where.not(id: id).order(:position, :id)
   end
 
   def ancestor_chain

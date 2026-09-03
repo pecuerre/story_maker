@@ -19,7 +19,7 @@ export default class extends Controller {
     item.querySelector("input").focus()
   }
 
-  edit(event) {
+  editName(event) {
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
     if (node.querySelector("input")) return
@@ -32,6 +32,47 @@ export default class extends Controller {
     name.replaceWith(form)
     form.querySelector("input").focus()
     form.querySelector("input").select()
+  }
+
+  async edit(event) {
+    event.preventDefault()
+    const node = event.currentTarget.closest("[data-node-id]")
+    if (this.dialog) return
+
+    const response = await fetch(node.dataset.editUrl, { headers: { "Accept": "text/html" } })
+    if (!response.ok) return
+    const page = new DOMParser().parseFromString(await response.text(), "text/html")
+    const form = page.querySelector("form")
+    if (!form) return
+
+    form.querySelector('[name$="[name]"]')?.closest("div")?.remove()
+    form.addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
+
+    this.dialog = window.document.createElement("dialog")
+    this.dialog.className = "taxonomy-edit-dialog"
+    this.dialog.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 mb-0">Edit ${node.dataset.name}</h2><button type="button" class="btn-close" aria-label="Close"></button></div>`
+    this.dialog.append(form)
+    const cancel = this.dialog.querySelector(".btn-close")
+    cancel.addEventListener("click", () => this.dialog.close())
+    window.document.body.append(this.dialog)
+    this.dialog.addEventListener("close", () => {
+      this.dialog.remove()
+      this.dialog = null
+    }, { once: true })
+    this.dialog.showModal()
+  }
+
+  async updateDetails(event, node) {
+    event.preventDefault()
+    const form = event.currentTarget
+    const response = await fetch(form.action, {
+      method: "PATCH",
+      headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content },
+      body: new URLSearchParams(new FormData(form))
+    })
+    if (!response.ok) return
+    this.dialog.close()
+    window.Turbo.visit(window.location.href)
   }
 
   cancel(event) {
@@ -137,7 +178,8 @@ export default class extends Controller {
         "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
       },
       body: new URLSearchParams({
-        [`${this.modelParamValue}[parent_id]`]: targetNode.dataset.nodeId
+        [`${this.modelParamValue}[parent_id]`]: targetNode.dataset.nodeId,
+        [`${this.modelParamValue}[position]`]: targetNode.querySelector(":scope > .taxonomy-list")?.children.length || 0
       })
     })
 

@@ -10,11 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_02_232933) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_03_090000) do
   create_table "section_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
     t.integer "parent_id"
+    t.integer "position", default: 0, null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_section_types_on_parent_id"

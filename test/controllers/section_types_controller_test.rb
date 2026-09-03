@@ -79,4 +79,19 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to story_section_type_url(story_slug: @story.slug, id: @section_type)
     assert_equal parent, @section_type.reload.parent
   end
+
+  test "can move a section type to a position among siblings" do
+    parent = SectionType.create!(story: @story, name: "Parent")
+    first = SectionType.create!(story: @story, name: "First", parent: parent, position: 0)
+    second = SectionType.create!(story: @story, name: "Second", parent: parent, position: 1)
+
+    patch story_section_type_url(story_slug: @story.slug, id: second),
+      params: { section_type: { position: 0 } },
+      as: :json
+
+    assert_response :success
+    assert_equal [ second, first ], parent.children.reload.to_a
+    assert_equal 0, second.reload.position
+    assert_equal 1, first.reload.position
+  end
 end

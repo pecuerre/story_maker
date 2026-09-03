@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import "bootstrap"
 
 export default class extends Controller {
-  static values = { modelParam: String, createUrl: String }
+  static values = { modelParam: String, createUrl: String, modalFields: String }
 
   connect() {
     this.handleOutsideClick = this.handleOutsideClick.bind(this)
@@ -64,10 +64,9 @@ export default class extends Controller {
     modal.tabIndex = -1
     modal.setAttribute("aria-labelledby", titleId)
     modal.setAttribute("aria-hidden", "true")
-    modal.innerHTML = `<div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h1 class="modal-title fs-5" id="${titleId}"></h1><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><form action="${node.dataset.updateUrl}" method="post"><div class="modal-body"><div class="mb-3"><label class="form-label" for="taxonomy-edit-name-${node.dataset.nodeId}">Name</label><input class="form-control" id="taxonomy-edit-name-${node.dataset.nodeId}" name="${this.modelParamValue}[name]" required></div><div><label class="form-label" for="taxonomy-edit-description-${node.dataset.nodeId}">Description</label><textarea class="form-control" id="taxonomy-edit-description-${node.dataset.nodeId}" name="${this.modelParamValue}[description]" rows="4"></textarea></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save changes</button></div></form></div></div>`
+    modal.innerHTML = `<div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h1 class="modal-title fs-5" id="${titleId}"></h1><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><form action="${node.dataset.updateUrl}" method="post"><div class="modal-body">${this.modalFields(node)}</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save changes</button></div></form></div></div>`
     modal.querySelector(".modal-title").textContent = `Edit ${node.dataset.name}`
-    modal.querySelector('[name$="[name]"]').value = node.dataset.name
-    modal.querySelector('[name$="[description]"]').value = node.dataset.description || ""
+    this.populateModalFields(modal, node)
     modal.querySelector("form").addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
     document.body.append(modal)
 
@@ -95,6 +94,27 @@ export default class extends Controller {
     node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
     this.modal.hide()
     window.Turbo.visit(window.location.href)
+  }
+
+  modalFields(node) {
+    return JSON.parse(this.modalFieldsValue || "[]").map((field) => {
+      const id = `taxonomy-edit-${field.name}-${node.dataset.nodeId}`
+      const name = `${this.modelParamValue}[${field.name}]`
+      if (field.type === "select") {
+        const options = field.options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")
+        return `<div class="mb-3"><label class="form-label" for="${id}">${field.label}</label><select class="form-select" id="${id}" name="${name}" required>${options}</select></div>`
+      }
+      const input = field.type === "textarea" ? `<textarea class="form-control" id="${id}" name="${name}" rows="4"></textarea>` : `<input class="form-control" id="${id}" name="${name}" required>`
+      return `<div class="mb-3"><label class="form-label" for="${id}">${field.label}</label>${input}</div>`
+    }).join("")
+  }
+
+  populateModalFields(modal, node) {
+    const values = { name: node.dataset.name, description: node.dataset.description || "", section_type_id: node.dataset.sectionTypeId }
+    JSON.parse(this.modalFieldsValue || "[]").forEach((field) => {
+      const input = modal.querySelector(`[name="${this.modelParamValue}[${field.name}]"]`)
+      if (input) input.value = values[field.name] || ""
+    })
   }
 
   cancel(event) {
@@ -160,6 +180,7 @@ export default class extends Controller {
     const params = {}
     if (values.name !== undefined) params[`${this.modelParamValue}[name]`] = values.name
     if (values.parent_id !== undefined) params[`${this.modelParamValue}[parent_id]`] = values.parent_id
+    if (values.section_type_id !== undefined) params[`${this.modelParamValue}[section_type_id]`] = values.section_type_id
 
     return fetch(url, {
       method,
@@ -173,6 +194,8 @@ export default class extends Controller {
     if (!list) {
       list = document.createElement("ul")
       list.className = "taxonomy-list list-unstyled ms-4"
+      list.dataset.action = "dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"
+      list.dataset.dropParentId = node.dataset.nodeId
       node.append(list)
     }
     return list
@@ -183,12 +206,14 @@ export default class extends Controller {
     node.className = "taxonomy-node"
     node.draggable = true
     node.dataset.taxonomyTreeTarget = "node"
+    node.dataset.action = "dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"
     node.dataset.nodeId = data.id
     node.dataset.updateUrl = data.url
     node.dataset.createUrl = this.createUrlValue
     node.dataset.name = data.name
     node.dataset.description = data.description || ""
-    node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2" data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
+    node.dataset.sectionTypeId = data.section_type_id || ""
+    node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
     node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
     return node
   }
@@ -205,7 +230,8 @@ export default class extends Controller {
   }
 
   startDrag(event) {
-    this.draggedNode = event.currentTarget.closest("[data-node-id]")
+    event.stopPropagation()
+    this.draggedNode = event.currentTarget
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("text/plain", this.draggedNode.dataset.nodeId)
   }
@@ -217,10 +243,34 @@ export default class extends Controller {
 
   async moveNode(event) {
     event.preventDefault()
-    const targetNode = event.currentTarget.closest("[data-node-id]")
-    if (!this.draggedNode || !targetNode || this.draggedNode === targetNode) return
+    event.stopPropagation()
+    if (!this.draggedNode) return
 
-    const response = await fetch(this.draggedNode.dataset.updateUrl, {
+    const targetNode = event.currentTarget.closest("[data-node-id]")
+    const targetList = event.currentTarget.matches(".taxonomy-list") ? event.currentTarget : null
+    if (targetNode && this.draggedNode === targetNode) return
+
+    let parentId
+    let position
+    if (targetList) {
+      parentId = targetList.dataset.dropParentId || ""
+      position = targetList.children.length
+    } else if (targetNode) {
+      const siblingList = targetNode.parentElement
+      const siblings = [...siblingList.children].filter((node) => node !== this.draggedNode)
+      const targetIndex = siblings.indexOf(targetNode)
+      const targetRow = targetNode.querySelector(":scope > .taxonomy-row")
+      const droppedAfter = event.clientY > targetRow.getBoundingClientRect().top + targetRow.getBoundingClientRect().height / 2
+      parentId = siblingList.closest("[data-node-id]")?.dataset.nodeId || ""
+      position = targetIndex + (droppedAfter ? 1 : 0)
+    } else {
+      return
+    }
+
+    const updateUrl = this.draggedNode.getAttribute("data-update-url")
+    if (!updateUrl) return
+
+    const response = await fetch(updateUrl, {
       method: "PATCH",
       headers: {
         "Accept": "text/vnd.turbo-stream.html, text/html",
@@ -228,8 +278,8 @@ export default class extends Controller {
         "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
       },
       body: new URLSearchParams({
-        [`${this.modelParamValue}[parent_id]`]: targetNode.dataset.nodeId,
-        [`${this.modelParamValue}[position]`]: targetNode.querySelector(":scope > .taxonomy-list")?.children.length || 0
+        [`${this.modelParamValue}[parent_id]`]: parentId,
+        [`${this.modelParamValue}[position]`]: position
       })
     })
 

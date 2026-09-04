@@ -2,8 +2,13 @@ class LocationsController < ApplicationController
   before_action :set_location, only: %i[ update destroy ]
 
   def index
-    @locations = Current.story.locations.includes(:children, :location_type).where(parent_id: nil).order(:position, :id)
-    @location_types = Current.story.location_types.order(:name)
+    @locations = Current.story.locations
+    @locations = @locations.includes(:children, :location_type)
+    @locations = @locations.where(parent_id: nil)
+    @locations = @locations.order(:position, :id)
+
+    @location_types = Current.story.location_types
+    @location_types = @location_types.order(:name)
   end
 
   def create

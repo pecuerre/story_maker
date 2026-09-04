@@ -1,27 +1,4 @@
 @import 'bootstrap/scss/bootstrap';
 @import 'bootstrap-icons/font/bootstrap-icons';
 @import 'taxonomy_tree';
-
-body {
-  padding-top: 56px;
-}
-
-.sidebar {
-  position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
-  overflow-y: auto;
-}
-
-.left-sidebar {
-  border-right: 1px solid #dee2e6;
-}
-
-.right-sidebar {
-  border-left: 1px solid #dee2e6;
-}
-
-.nav-link {
-  padding-top: .15rem;
-  padding-bottom: .15rem;
-}
+@import 'application_custom';

@@ -100,14 +100,16 @@ export default class extends Controller {
     return JSON.parse(this.modalFieldsValue || "[]").map((field) => {
       const id = `taxonomy-edit-${field.name}-${node.dataset.nodeId}`
       const name = `${this.modelParamValue}[${field.name}]`
+      const required = field.required || field.required_unless
+      const label = `${field.label}${required ? ' <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden"> (required)</span>' : ""}`
       if (field.type === "select") {
         const options = field.options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")
-        return `<div class="mb-3"><label class="form-label" for="${id}">${field.label}</label><select class="form-select" id="${id}" name="${name}" required>${options}</select></div>`
+        return `<div class="mb-3"><label class="form-label" for="${id}">${label}</label><select class="form-select" id="${id}" name="${name}"${field.required ? " required" : ""}>${options}</select></div>`
       }
-      if (field.type === "checkbox") return `<div class="mb-3 form-check"><input type="hidden" name="${name}" value="0"><input class="form-check-input" type="checkbox" id="${id}" name="${name}" value="1"><label class="form-check-label" for="${id}">${field.label}</label></div>`
-      const required = field.required_unless ? "" : " required"
-      const input = field.type === "textarea" ? `<textarea class="form-control" id="${id}" name="${name}" rows="4"${required}></textarea>` : `<input class="form-control" id="${id}" name="${name}"${required}>`
-      return `<div class="mb-3"><label class="form-label" for="${id}">${field.label}</label>${input}</div>`
+      if (field.type === "checkbox") return `<div class="mb-3 form-check"><input type="hidden" name="${name}" value="0"><input class="form-check-input" type="checkbox" id="${id}" name="${name}" value="1"><label class="form-check-label" for="${id}">${label}</label></div>`
+      const requiredAttribute = field.required ? " required" : ""
+      const input = field.type === "textarea" ? `<textarea class="form-control" id="${id}" name="${name}" rows="4"${requiredAttribute}></textarea>` : `<input class="form-control" id="${id}" name="${name}"${requiredAttribute}>`
+      return `<div class="mb-3"><label class="form-label" for="${id}">${label}</label>${input}</div>`
     }).join("")
   }
 

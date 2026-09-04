@@ -13,7 +13,7 @@
   delete_url: ->(relation_type) { story_relation_type_path(story_slug: Current.story.slug, id: relation_type) },
   model_param: "relation_type",
   modal_fields: [
-    { name: "name", label: "Name", type: "text" },
+    { name: "name", label: "Name", type: "text", required: true },
     { name: "description", label: "Description", type: "textarea" },
     { name: "symmetric", label: "Symmetric", type: "checkbox" },
     { name: "inverse", label: "Inverse", type: "text", required_unless: { field: "symmetric", value: true } }

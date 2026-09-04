@@ -6,7 +6,7 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0#{' active' if controller_name == 'sections'}" %>
     <%= link_to "Scenes", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
 
@@ -15,10 +15,10 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Locations", story_locations_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
-    <%= link_to "Items", story_items_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
-    <%= link_to "Characters", story_characters_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
-    <%= link_to "Relations", story_relations_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Locations", story_locations_path(story_slug: Current.story.slug), class: "nav-link px-0#{' active' if controller_name == 'locations'}" %>
+    <%= link_to "Items", story_items_path(story_slug: Current.story.slug), class: "nav-link px-0#{' active' if controller_name == 'items'}" %>
+    <%= link_to "Characters", story_characters_path(story_slug: Current.story.slug), class: "nav-link px-0#{' active' if controller_name == 'characters'}" %>
+    <%= link_to "Relations", story_relations_path(story_slug: Current.story.slug), class: "nav-link px-0#{' active' if controller_name == 'relations'}" %>
     <%= link_to "Dialogs", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Events", "#", class: "nav-link px-0 link-secondary" %>
   </nav>

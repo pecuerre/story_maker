@@ -18,6 +18,10 @@ body {
 }
 
 .nav-link {
-  padding-top: .15rem;
-  padding-bottom: .15rem;
+  padding-top: .1rem;
+  padding-bottom: .1rem;
+}
+
+.nav-link.active {
+  font-weight: bold;
 }

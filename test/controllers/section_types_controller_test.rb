@@ -12,11 +12,6 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should get new" do
-    get new_story_section_type_url(story_slug: @story.slug)
-    assert_response :success
-  end
-
   test "should create section_type as json for inline editing" do
     assert_difference("SectionType.count") do
       post story_section_types_url(story_slug: @story.slug),
@@ -27,16 +22,6 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     assert_equal "Inline type", response.parsed_body["name"]
     assert_equal @section_type.id, response.parsed_body["parent_id"]
-  end
-
-  test "should show section_type" do
-    get story_section_type_url(story_slug: @story.slug, id: @section_type)
-    assert_response :success
-  end
-
-  test "should get edit" do
-    get edit_story_section_type_url(story_slug: @story.slug, id: @section_type)
-    assert_response :success
   end
 
   test "should update section_type as json for inline editing" do

@@ -3,7 +3,7 @@ class SectionTypesController < ApplicationController
   maintains_sibling_positions_for :section_type
 
   before_action :set_section_type,
-    only: %i[ show edit update destroy ]
+    only: %i[ update destroy ]
 
   # GET /section_types/new
   def new

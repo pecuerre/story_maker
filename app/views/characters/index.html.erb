@@ -14,7 +14,7 @@
   model_param: "character",
   taxonomy_field: "character_type_id",
   modal_fields: [
-    { name: "name", label: "Name", type: "text" },
+    { name: "name", label: "Name", type: "text", required: true },
     { name: "description", label: "Description", type: "textarea" },
-    { name: "character_type_id", label: "Character type", type: "select", options: @character_types.map { |character_type| [ character_type.id, character_type.name ] } }
+    { name: "character_type_id", label: "Character type", type: "select", required: true, options: @character_types.map { |character_type| [ character_type.id, character_type.name ] } }
   ] %>

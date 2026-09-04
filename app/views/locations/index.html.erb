@@ -14,7 +14,7 @@
   model_param: "location",
   taxonomy_field: "location_type_id",
   modal_fields: [
-    { name: "name", label: "Name", type: "text" },
+    { name: "name", label: "Name", type: "text", required: true },
     { name: "description", label: "Description", type: "textarea" },
-    { name: "location_type_id", label: "Location type", type: "select", options: @location_types.map { |location_type| [ location_type.id, location_type.name ] } }
+    { name: "location_type_id", label: "Location type", type: "select", required: true, options: @location_types.map { |location_type| [ location_type.id, location_type.name ] } }
   ] %>

@@ -14,7 +14,7 @@
   model_param: "item",
   taxonomy_field: "item_type_id",
   modal_fields: [
-    { name: "name", label: "Name", type: "text" },
+    { name: "name", label: "Name", type: "text", required: true },
     { name: "description", label: "Description", type: "textarea" },
-    { name: "item_type_id", label: "Item type", type: "select", options: @item_types.map { |item_type| [ item_type.id, item_type.name ] } }
+    { name: "item_type_id", label: "Item type", type: "select", required: true, options: @item_types.map { |item_type| [ item_type.id, item_type.name ] } }
   ] %>

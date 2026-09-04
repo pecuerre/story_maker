@@ -14,7 +14,7 @@
 	model_param: "section",
 	taxonomy_field: "section_type_id",
 	modal_fields: [
-		{ name: "name", label: "Name", type: "text" },
+		{ name: "name", label: "Name", type: "text", required: true },
 		{ name: "description", label: "Description", type: "textarea" },
-		{ name: "section_type_id", label: "Section type", type: "select", options: @section_types.map { |section_type| [ section_type.id, section_type.name ] } }
+		{ name: "section_type_id", label: "Section type", type: "select", required: true, options: @section_types.map { |section_type| [ section_type.id, section_type.name ] } }
 	] %>

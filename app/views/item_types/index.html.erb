@@ -13,6 +13,6 @@
   delete_url: ->(item_type) { story_item_type_path(story_slug: Current.story.slug, id: item_type) },
   model_param: "item_type",
   modal_fields: [
-    { name: "name", label: "Name", type: "text" },
+    { name: "name", label: "Name", type: "text", required: true },
     { name: "description", label: "Description", type: "textarea" }
   ] %>

@@ -7,7 +7,6 @@
 
   <nav class="nav flex-column mb-4">
     <%= link_to "Section Types", story_section_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
-    <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Item Types", story_item_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Location Types", story_location_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
   </nav>

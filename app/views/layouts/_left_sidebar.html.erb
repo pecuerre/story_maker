@@ -2,18 +2,25 @@
 
 <% if Current.story.present? %>
   <h6 class="text-uppercase text-body-secondary small fw-bold">
+    Story Structure
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Scenes", "#", class: "nav-link px-0 link-secondary" %>
+  </nav>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold">
     Story Elements
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Scenes", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Locations", story_locations_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Items", story_items_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Characters", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Dialogs", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Events", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
-<% end %>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold">
     Story Tracking
@@ -37,5 +44,6 @@
     <%= link_to "Incomplete", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Pending", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
+<% end %>
 
 </div>

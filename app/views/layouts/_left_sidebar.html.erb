@@ -18,6 +18,7 @@
     <%= link_to "Locations", story_locations_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Items", story_items_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Characters", story_characters_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Relations", story_relations_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Dialogs", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Events", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
@@ -31,7 +32,6 @@
     <%= link_to "Timeline", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Map", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Meetings", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Relations", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold">

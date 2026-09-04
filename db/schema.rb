@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_193904) do
   create_table "character_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -103,6 +103,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_140000) do
     t.index ["story_id"], name: "index_relation_types_on_story_id"
   end
 
+  create_table "relations", force: :cascade do |t|
+    t.integer "character1_id", null: false
+    t.integer "character2_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.datetime "from_date"
+    t.integer "relation_type_id", null: false
+    t.integer "story_id", null: false
+    t.datetime "to_date"
+    t.datetime "updated_at", null: false
+    t.index ["character1_id"], name: "index_relations_on_character1_id"
+    t.index ["character2_id"], name: "index_relations_on_character2_id"
+    t.index ["relation_type_id"], name: "index_relations_on_relation_type_id"
+    t.index ["story_id"], name: "index_relations_on_story_id"
+  end
+
   create_table "section_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -173,6 +189,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_140000) do
   add_foreign_key "locations", "stories"
   add_foreign_key "relation_types", "relation_types", column: "parent_id"
   add_foreign_key "relation_types", "stories"
+  add_foreign_key "relations", "characters", column: "character1_id"
+  add_foreign_key "relations", "characters", column: "character2_id"
+  add_foreign_key "relations", "relation_types"
+  add_foreign_key "relations", "stories"
   add_foreign_key "section_types", "section_types", column: "parent_id"
   add_foreign_key "section_types", "stories"
   add_foreign_key "sections", "section_types"

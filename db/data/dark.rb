@@ -52,5 +52,6 @@ c_hannah = Character.create(story: story, name: "Hannah", character_type: ct_hum
 # relations
 rt_friend = RelationType.create(story: story, name: "is friend to", symmetric: true)
 rt_parent_child = RelationType.create(story: story, name: "is parent of", symmetric: false, inverse: "is child of")
-
-
+r_martha_jonas = Relation.create(story: story, relation_type: rt_friend, character1: c_martha, character2: c_jonas)
+r_hannah_jonas = Relation.create(story: story, relation_type: rt_parent_child, character1: c_hannah, character2: c_jonas)
+r_ulrich_martha = Relation.create(story: story, relation_type: rt_parent_child, character1: c_ulrich, character2: c_martha)

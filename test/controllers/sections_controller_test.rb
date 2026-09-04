@@ -15,6 +15,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Sections"
     assert_includes response.body, "Section type"
     assert_includes response.body, story_section_path(story_slug: @story.slug, id: @section)
+    assert_select "a.nav-link.active", text: "Sections"
   end
 
   test "should create section as json" do

@@ -273,7 +273,7 @@ export default class extends Controller {
     const response = await fetch(updateUrl, {
       method: "PATCH",
       headers: {
-        "Accept": "text/vnd.turbo-stream.html, text/html",
+        "Accept": "application/json",
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
         "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
       },

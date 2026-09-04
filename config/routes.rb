@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   scope "s/:story_slug", as: :story do
     resources :section_types
     resources :sections
+    resources :location_types
+    resources :locations
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

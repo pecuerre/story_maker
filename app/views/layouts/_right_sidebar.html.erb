@@ -2,25 +2,35 @@
 
 <% if Current.story.present? %>
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    <%= Current.story.name %> Settings
+    Story Settings
   </h6>
 
   <nav class="nav flex-column mb-4">
     <%= link_to "Section Types", story_section_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
     <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Location Types", story_location_types_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
   </nav>
 <% end %>
 
-<!--
-
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Links
+    Collaboration
   </h6>
 
-  <nav class="nav flex-column">
-    <%= link_to "Documentation", "#", class: "nav-link px-0" %>
-    <%= link_to "GitHub", "#", class: "nav-link px-0" %>
-    <%= link_to "Support", "#", class: "nav-link px-0" %>
+  <nav class="nav flex-column mb-4">
+    <%= link_to "Collaborators", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Submitions", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Changes", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Forks", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
--->
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold">
+    Tools
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to "Graphs", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Analytics", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Tropes", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Drafts", "#", class: "nav-link px-0 link-secondary" %>
+  </nav>
 </div>

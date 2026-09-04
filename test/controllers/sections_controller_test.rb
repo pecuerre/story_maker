@@ -38,10 +38,12 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Renamed", "Updated", @section_type.id ], @section.reload.values_at(:name, :description, :section_type_id)
   end
 
-  test "should redirect section updates with see other" do
+  test "should update section position as json" do
     patch story_section_url(story_slug: @story.slug, id: @section),
-      params: { section: { position: 0 } }
+      params: { section: { position: 0 } },
+      as: :json
 
-    assert_response :see_other
+    assert_response :success
+    assert_equal 0, @section.reload.position
   end
 end

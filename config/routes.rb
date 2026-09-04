@@ -11,6 +11,8 @@ Rails.application.routes.draw do
     resources :items
     resources :location_types
     resources :locations
+    resources :character_types
+    resources :characters
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

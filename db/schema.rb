@@ -10,7 +10,33 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_130100) do
+  create_table "character_types", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_character_types_on_parent_id"
+    t.index ["story_id"], name: "index_character_types_on_story_id"
+  end
+
+  create_table "characters", force: :cascade do |t|
+    t.integer "character_type_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_type_id"], name: "index_characters_on_character_type_id"
+    t.index ["parent_id"], name: "index_characters_on_parent_id"
+    t.index ["story_id"], name: "index_characters_on_story_id"
+  end
+
   create_table "item_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -116,6 +142,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_120100) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "character_types", "character_types", column: "parent_id"
+  add_foreign_key "character_types", "stories"
+  add_foreign_key "characters", "character_types"
+  add_foreign_key "characters", "characters", column: "parent_id"
+  add_foreign_key "characters", "stories"
   add_foreign_key "item_types", "item_types", column: "parent_id"
   add_foreign_key "item_types", "stories"
   add_foreign_key "items", "item_types"

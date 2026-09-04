@@ -104,18 +104,29 @@ export default class extends Controller {
         const options = field.options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")
         return `<div class="mb-3"><label class="form-label" for="${id}">${field.label}</label><select class="form-select" id="${id}" name="${name}" required>${options}</select></div>`
       }
-      const input = field.type === "textarea" ? `<textarea class="form-control" id="${id}" name="${name}" rows="4"></textarea>` : `<input class="form-control" id="${id}" name="${name}" required>`
+      if (field.type === "checkbox") return `<div class="mb-3 form-check"><input type="hidden" name="${name}" value="0"><input class="form-check-input" type="checkbox" id="${id}" name="${name}" value="1"><label class="form-check-label" for="${id}">${field.label}</label></div>`
+      const required = field.required_unless ? "" : " required"
+      const input = field.type === "textarea" ? `<textarea class="form-control" id="${id}" name="${name}" rows="4"${required}></textarea>` : `<input class="form-control" id="${id}" name="${name}"${required}>`
       return `<div class="mb-3"><label class="form-label" for="${id}">${field.label}</label>${input}</div>`
     }).join("")
   }
 
   populateModalFields(modal, node) {
-    const values = { name: node.dataset.name, description: node.dataset.description || "" }
+    const values = { name: node.dataset.name, description: node.dataset.description || "", ...JSON.parse(node.dataset.taxonomyValues || "{}") }
     if (this.hasFieldNameValue) values[this.fieldNameValue] = node.dataset.taxonomyFieldValue
     JSON.parse(this.modalFieldsValue || "[]").forEach((field) => {
-      const input = modal.querySelector(`[name="${this.modelParamValue}[${field.name}]"]`)
-      if (input) input.value = values[field.name] || ""
+      const input = modal.querySelector(`[name="${this.modelParamValue}[${field.name}]"]${field.type === "checkbox" ? ":not([type='hidden'])" : ""}`)
+      if (!input) return
+      if (field.type === "checkbox") input.checked = Boolean(values[field.name])
+      else input.value = values[field.name] || ""
     })
+    const symmetric = modal.querySelector(`[name="${this.modelParamValue}[symmetric]"]:not([type='hidden'])`)
+    const inverse = modal.querySelector(`[name="${this.modelParamValue}[inverse]"]`)
+    if (symmetric && inverse) {
+      const updateInverseRequirement = () => { inverse.required = !symmetric.checked }
+      symmetric.addEventListener("change", updateInverseRequirement)
+      updateInverseRequirement()
+    }
   }
 
   cancel(event) {
@@ -211,6 +222,7 @@ export default class extends Controller {
     node.dataset.createUrl = this.createUrlValue
     node.dataset.name = data.name
     node.dataset.description = data.description || ""
+    node.dataset.taxonomyValues = JSON.stringify(data)
     if (this.hasFieldNameValue) node.dataset.taxonomyFieldValue = data[this.fieldNameValue] || ""
     node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
     node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name

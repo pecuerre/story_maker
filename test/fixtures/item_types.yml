@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+item_type_one:
+  story: story_one
+  name: Item type one
+
+item_type_two:
+  story: story_one
+  name: Item type two
+
+item_type_three:
+  story: story_two
+  name: Item type three

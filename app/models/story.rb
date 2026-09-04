@@ -2,6 +2,8 @@ class Story < ApplicationRecord
   belongs_to :owner, class_name: "User"
   has_many :section_types, dependent: :destroy
   has_many :sections, dependent: :destroy
+  has_many :item_types, dependent: :destroy
+  has_many :items, dependent: :destroy
   has_many :location_types, dependent: :destroy
   has_many :locations, dependent: :destroy
 

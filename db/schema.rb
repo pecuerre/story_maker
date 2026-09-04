@@ -10,7 +10,33 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_03_171000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_120100) do
+  create_table "item_types", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_item_types_on_parent_id"
+    t.index ["story_id"], name: "index_item_types_on_story_id"
+  end
+
+  create_table "items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "item_type_id", null: false
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["item_type_id"], name: "index_items_on_item_type_id"
+    t.index ["parent_id"], name: "index_items_on_parent_id"
+    t.index ["story_id"], name: "index_items_on_story_id"
+  end
+
   create_table "location_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -90,6 +116,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_171000) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "item_types", "item_types", column: "parent_id"
+  add_foreign_key "item_types", "stories"
+  add_foreign_key "items", "item_types"
+  add_foreign_key "items", "items", column: "parent_id"
+  add_foreign_key "items", "stories"
   add_foreign_key "location_types", "location_types", column: "parent_id"
   add_foreign_key "location_types", "stories"
   add_foreign_key "locations", "location_types"

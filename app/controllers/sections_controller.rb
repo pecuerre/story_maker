@@ -2,13 +2,20 @@ class SectionsController < ApplicationController
   before_action :set_section, only: %i[ update destroy ]
 
   def index
-    @sections = Current.story.sections.includes(:children, :section_type).where(parent_id: nil).order(:position, :id)
-    @section_types = Current.story.section_types.order(:name)
+    @sections = Current.story.sections
+    @sections = @sections.includes(:children, :section_type)
+    @sections = @sections.where(parent_id: nil)
+    @sections = @sections.order(:position, :id)
+
+    @section_types = Current.story.section_types
+    @section_types = @section_types.order(:name)
   end
 
   def new
     @section = Current.story.sections.new(parent_id: params[:parent_id])
-    @section_types = Current.story.section_types.order(:name)
+
+    @section_types = Current.story.section_types
+    @section_types = @section_types.order(:name)
   end
 
   def create
@@ -18,10 +25,8 @@ class SectionsController < ApplicationController
 
     respond_to do |format|
       if @section.save
-        format.html { redirect_to story_sections_path(story_slug: Current.story.slug), notice: "Section was successfully created." }
         format.json { render json: section_json, status: :created }
       else
-        format.html { redirect_to story_sections_path(story_slug: Current.story.slug), alert: @section.errors.full_messages.to_sentence }
         format.json { render json: @section.errors, status: :unprocessable_content }
       end
     end
@@ -30,10 +35,8 @@ class SectionsController < ApplicationController
   def update
     respond_to do |format|
       if update_section
-        format.html { redirect_to story_sections_path(story_slug: Current.story.slug), notice: "Section was successfully updated.", status: :see_other }
         format.json { render json: section_json, status: :ok }
       else
-        format.html { redirect_to story_sections_path(story_slug: Current.story.slug), alert: @section.errors.full_messages.to_sentence }
         format.json { render json: @section.errors, status: :unprocessable_content }
       end
     end
@@ -42,12 +45,15 @@ class SectionsController < ApplicationController
   def destroy
     @section.destroy!
     respond_to do |format|
-      format.html { redirect_to story_sections_path(story_slug: Current.story.slug), notice: "Section was successfully destroyed." }
       format.json { head :no_content }
     end
   end
 
   private
+
+  def current_story_sections_path
+    story_sections_path(story_slug: Current.story.slug)
+  end
 
   def set_section
     @section = Current.story.sections.find(params.expect(:id))

@@ -2,7 +2,10 @@ class LocationTypesController < ApplicationController
   before_action :set_location_type, only: %i[ update destroy ]
 
   def index
-    @location_types = Current.story.location_types.includes(:children).where(parent_id: nil).order(:position, :id)
+    @location_types = Current.story.location_types
+    @location_types = @location_types.includes(:children)
+    @location_types = @location_types.where(parent_id: nil)
+    @location_types = @location_types.order(:position, :id)
   end
 
   def create

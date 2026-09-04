@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import "bootstrap"
 
 export default class extends Controller {
-  static values = { modelParam: String, createUrl: String, modalFields: String }
+  static values = { modelParam: String, createUrl: String, modalFields: String, fieldName: String }
 
   connect() {
     this.handleOutsideClick = this.handleOutsideClick.bind(this)
@@ -110,7 +110,8 @@ export default class extends Controller {
   }
 
   populateModalFields(modal, node) {
-    const values = { name: node.dataset.name, description: node.dataset.description || "", section_type_id: node.dataset.sectionTypeId, location_type_id: node.dataset.locationTypeId, item_type_id: node.dataset.itemTypeId }
+    const values = { name: node.dataset.name, description: node.dataset.description || "" }
+    if (this.hasFieldNameValue) values[this.fieldNameValue] = node.dataset.taxonomyFieldValue
     JSON.parse(this.modalFieldsValue || "[]").forEach((field) => {
       const input = modal.querySelector(`[name="${this.modelParamValue}[${field.name}]"]`)
       if (input) input.value = values[field.name] || ""
@@ -180,8 +181,6 @@ export default class extends Controller {
     const params = {}
     if (values.name !== undefined) params[`${this.modelParamValue}[name]`] = values.name
     if (values.parent_id !== undefined) params[`${this.modelParamValue}[parent_id]`] = values.parent_id
-    if (values.section_type_id !== undefined) params[`${this.modelParamValue}[section_type_id]`] = values.section_type_id
-
     return fetch(url, {
       method,
       headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content },
@@ -212,8 +211,7 @@ export default class extends Controller {
     node.dataset.createUrl = this.createUrlValue
     node.dataset.name = data.name
     node.dataset.description = data.description || ""
-    node.dataset.sectionTypeId = data.section_type_id || ""
-    node.dataset.itemTypeId = data.item_type_id || ""
+    if (this.hasFieldNameValue) node.dataset.taxonomyFieldValue = data[this.fieldNameValue] || ""
     node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
     node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
     return node

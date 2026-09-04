@@ -12,6 +12,7 @@
 	update_url: ->(section) { story_section_path(story_slug: Current.story.slug, id: section) },
 	delete_url: ->(section) { story_section_path(story_slug: Current.story.slug, id: section) },
 	model_param: "section",
+	taxonomy_field: "section_type_id",
 	modal_fields: [
 		{ name: "name", label: "Name", type: "text" },
 		{ name: "description", label: "Description", type: "textarea" },

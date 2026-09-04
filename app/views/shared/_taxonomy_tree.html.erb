@@ -7,8 +7,9 @@
 <% delete_url = local_assigns.fetch(:delete_url) %>
 <% model_param = local_assigns.fetch(:model_param) %>
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
+<% taxonomy_field = local_assigns[:taxonomy_field] %>
 
-<div class="taxonomy-tree" data-controller="taxonomy-tree" data-taxonomy-tree-model-param-value="<%= model_param %>" data-taxonomy-tree-create-url-value="<%= create_url %>" data-taxonomy-tree-modal-fields-value="<%= modal_fields.to_json %>">
+<div class="taxonomy-tree" data-controller="taxonomy-tree" data-taxonomy-tree-model-param-value="<%= model_param %>" data-taxonomy-tree-create-url-value="<%= create_url %>" data-taxonomy-tree-modal-fields-value="<%= modal_fields.to_json %>"<% if taxonomy_field %> data-taxonomy-tree-field-name-value="<%= taxonomy_field %>"<% end %>>
   <%= button_tag type: "button", class: "btn btn-sm btn-outline-primary mb-3", data: { action: "taxonomy-tree#add", create_url: new_url.call } do %>
     <i class="bi bi-plus-lg" aria-hidden="true"></i>
     <span>Add</span>
@@ -25,7 +26,8 @@
         delete_url: delete_url,
         create_url: create_url,
         model_param: model_param,
-        modal_fields: modal_fields %>
+        modal_fields: modal_fields,
+        taxonomy_field: taxonomy_field %>
     <% end %>
   </ul>
 </div>

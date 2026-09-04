@@ -12,6 +12,7 @@
   update_url: ->(location) { story_location_path(story_slug: Current.story.slug, id: location) },
   delete_url: ->(location) { story_location_path(story_slug: Current.story.slug, id: location) },
   model_param: "location",
+  taxonomy_field: "location_type_id",
   modal_fields: [
     { name: "name", label: "Name", type: "text" },
     { name: "description", label: "Description", type: "textarea" },

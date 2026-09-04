@@ -1,0 +1,20 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Characters" %>
+
+<h1>Characters</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @characters,
+  new_url: ->(parent = nil) { new_story_character_path(story_slug: Current.story.slug, parent_id: parent&.id) },
+  create_url: story_characters_path(story_slug: Current.story.slug),
+  edit_url: ->(character) { edit_story_character_path(story_slug: Current.story.slug, id: character) },
+  update_url: ->(character) { story_character_path(story_slug: Current.story.slug, id: character) },
+  delete_url: ->(character) { story_character_path(story_slug: Current.story.slug, id: character) },
+  model_param: "character",
+  taxonomy_field: "character_type_id",
+  modal_fields: [
+    { name: "name", label: "Name", type: "text" },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "character_type_id", label: "Character type", type: "select", options: @character_types.map { |character_type| [ character_type.id, character_type.name ] } }
+  ] %>

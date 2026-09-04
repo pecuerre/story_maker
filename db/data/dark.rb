@@ -41,3 +41,11 @@ it_key = ItemType.create(story: story, name: "Key", parent: nil)
 it_time_machine = ItemType.create(story: story, name: "Time Machine", parent: nil)
 i_jonas_key = Item.create(story: story, name: "Jonas Key", item_type: it_key, parent: nil)
 i_time_machine = Item.create(story: story, name: "Time Machine", item_type: it_time_machine, parent: nil)
+
+# characters
+ct_human = CharacterType.create(story: story, name: "Human", parent: nil)
+c_jonas = Character.create(story: story, name: "Jonas", character_type: ct_human, parent: nil)
+c_martha = Character.create(story: story, name: "Martha", character_type: ct_human, parent: nil)
+c_ulrich = Character.create(story: story, name: "Ulrich", character_type: ct_human, parent: nil)
+c_hannah = Character.create(story: story, name: "Hannah", character_type: ct_human, parent: nil)
+

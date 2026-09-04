@@ -110,7 +110,7 @@ export default class extends Controller {
   }
 
   populateModalFields(modal, node) {
-    const values = { name: node.dataset.name, description: node.dataset.description || "", section_type_id: node.dataset.sectionTypeId }
+    const values = { name: node.dataset.name, description: node.dataset.description || "", section_type_id: node.dataset.sectionTypeId, location_type_id: node.dataset.locationTypeId }
     JSON.parse(this.modalFieldsValue || "[]").forEach((field) => {
       const input = modal.querySelector(`[name="${this.modelParamValue}[${field.name}]"]`)
       if (input) input.value = values[field.name] || ""

@@ -22,3 +22,16 @@ s_s3 = Section.create(story: story, name: "Season 3", section_type: st_season, p
 s_s3e1 = Section.create(story: story, name: "Episode 1", section_type: st_episode, parent: s_s3)
 s_s3e2 = Section.create(story: story, name: "Episode 2", section_type: st_episode, parent: s_s3)
 s_s3e3 = Section.create(story: story, name: "Episode 3", section_type: st_episode, parent: s_s3)
+
+lt_town = LocationType.create(story: story, name: "Town", parent: nil)
+lt_house = LocationType.create(story: story, name: "House", parent: nil)
+lt_school = LocationType.create(story: story, name: "School", parent: nil)
+lt_police = LocationType.create(story: story, name: "Police", parent: nil)
+lt_forest = LocationType.create(story: story, name: "Forest", parent: nil)
+lt_cave = LocationType.create(story: story, name: "Cave", parent: nil)
+lt_room = LocationType.create(story: story, name: "Room", parent: nil)
+
+l_winden = Location.create(story: story, name: "Winden", location_type: lt_town, parent: nil)
+l_jonas_huose = Location.create(story: story, name: "Jonas House", location_type: lt_house, parent: l_winden)
+l_jonas_room = Location.create(story: story, name: "Jonas Room", location_type: lt_room, parent: l_jonas_huose)
+l_winden_cave = Location.create(story: story, name: "Winden Cave", location_type: lt_cave, parent: l_winden)

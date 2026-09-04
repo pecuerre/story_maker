@@ -2,28 +2,40 @@
 
 <% if Current.story.present? %>
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    <%= Current.story.name %> Elements
+    Story Elements
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to "Scenes", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Locations", story_locations_path(story_slug: Current.story.slug), class: "nav-link px-0" %>
+    <%= link_to "Characters", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Objects", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Dialogs", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Events", "#", class: "nav-link px-0 link-secondary" %>
+  </nav>
+<% end %>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold">
+    Story Tracking
   </h6>
 
   <nav class="nav flex-column mb-4">
     <%= link_to "Dashboard", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Scenes", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Characters", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Objects", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Dialogs", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Locations", "#", class: "nav-link px-0" %>
+    <%= link_to "Timeline", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Map", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Meetings", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Relations", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
-<% end %>
 
-<!--
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Other
+    Story Analyzer
   </h6>
 
-  <nav class="nav flex-column">
-    <%= link_to "Reports", "#", class: "nav-link px-0" %>
-    <%= link_to "Analytics", "#", class: "nav-link px-0" %>
+  <nav class="nav flex-column mb-4">
+    <%= link_to "Inconcistencies", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Undefined", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Incomplete", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Pending", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
--->
 
 </div>

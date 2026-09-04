@@ -1,13 +1,12 @@
 <% content_for :title, "Relations" %>
 
 <div data-controller="modal-form" data-modal-form-create-title-value="New relation">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">Relations</h1>
-    <button type="button" class="btn btn-primary" data-action="modal-form#open" data-modal-form-url="<%= story_relations_path(story_slug: Current.story.slug) %>" data-modal-form-method="post" data-modal-form-title="New relation" data-modal-form-values-value="{}">
-      <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      <span>Add relation</span>
-    </button>
-  </div>
+  <h1>Relations</h1>
+
+  <button type="button" class="btn btn-sm btn-primary mb-3" data-action="modal-form#open" data-modal-form-url="<%= story_relations_path(story_slug: Current.story.slug) %>" data-modal-form-method="post" data-modal-form-title="New relation" data-modal-form-values-value="{}">
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span>Add Relation</span>
+  </button>
 
   <% if @relations.any? %>
     <div class="list-group">

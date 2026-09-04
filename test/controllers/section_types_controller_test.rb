@@ -17,14 +17,6 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should create section_type" do
-    assert_difference("SectionType.count") do
-      post story_section_types_url(story_slug: @story.slug), params: { section_type: { name: "New type", parent_id: nil } }
-    end
-
-    assert_redirected_to story_section_type_url(story_slug: @story.slug, id: SectionType.last)
-  end
-
   test "should create section_type as json for inline editing" do
     assert_difference("SectionType.count") do
       post story_section_types_url(story_slug: @story.slug),
@@ -47,13 +39,6 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should update section_type" do
-    patch story_section_type_url(story_slug: @story.slug, id: @section_type), params: { section_type: { name: "Renamed", description: "Updated description", parent_id: nil } }
-    assert_redirected_to story_section_type_url(story_slug: @story.slug, id: @section_type)
-    assert_equal "Renamed", @section_type.reload.name
-    assert_equal "Updated description", @section_type.description
-  end
-
   test "should update section_type as json for inline editing" do
     patch story_section_type_url(story_slug: @story.slug, id: @section_type),
       params: { section_type: { name: "Inline rename", description: "Inline description" } },
@@ -65,20 +50,22 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
     assert_nil @section_type.reload.parent_id
   end
 
-  test "should destroy section_type" do
+  test "should destroy section_type as json" do
     assert_difference("SectionType.count", -1) do
-      delete story_section_type_url(story_slug: @story.slug, id: @section_type)
+      delete story_section_type_url(story_slug: @story.slug, id: @section_type), as: :json
     end
 
-    assert_redirected_to story_section_types_url(story_slug: @story.slug)
+    assert_response :no_content
   end
 
-  test "can move a section type to another parent" do
+  test "can move a section type to another parent as json" do
     parent = SectionType.create!(story: @story, name: "Parent")
 
-    patch story_section_type_url(story_slug: @story.slug, id: @section_type), params: { section_type: { parent_id: parent.id } }
+    patch story_section_type_url(story_slug: @story.slug, id: @section_type),
+      params: { section_type: { parent_id: parent.id } },
+      as: :json
 
-    assert_redirected_to story_section_type_url(story_slug: @story.slug, id: @section_type)
+    assert_response :success
     assert_equal parent, @section_type.reload.parent
   end
 

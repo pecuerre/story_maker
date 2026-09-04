@@ -1,4 +1,7 @@
 class LocationTypesController < ApplicationController
+  include MaintainsSiblingPositions
+  maintains_sibling_positions_for :location_type
+
   before_action :set_location_type, only: %i[ update destroy ]
 
   def index
@@ -46,30 +49,9 @@ class LocationTypesController < ApplicationController
     params.expect(location_type: [ :name, :description, :parent_id, :position ])
   end
 
-  def sibling_count(parent_id)
-    Current.story.location_types.where(parent_id: parent_id).where.not(id: @location_type&.id).count
-  end
-
   def update_location_type
     attributes = location_type_params
-    requested_position = attributes[:position]
-    old_parent_id = @location_type.parent_id
-
-    return false unless @location_type.update(attributes.except(:position))
-
-    if requested_position.present? || old_parent_id != @location_type.parent_id
-      normalize_siblings(Current.story.location_types.where(parent_id: old_parent_id).order(:position, :id).to_a) if old_parent_id != @location_type.parent_id
-      siblings = @location_type.sibling_scope.to_a
-      position = requested_position.present? ? requested_position.to_i.clamp(0, siblings.length) : siblings.length
-      siblings.insert(position, @location_type)
-      normalize_siblings(siblings)
-    end
-
-    true
-  end
-
-  def normalize_siblings(siblings)
-    siblings.each_with_index { |location_type, index| location_type.update_columns(position: index) }
+    update_with_sibling_position(@location_type, attributes)
   end
 
   def location_type_json

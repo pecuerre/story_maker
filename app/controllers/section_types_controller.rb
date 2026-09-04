@@ -1,4 +1,7 @@
 class SectionTypesController < ApplicationController
+  include MaintainsSiblingPositions
+  maintains_sibling_positions_for :section_type
+
   before_action :set_section_type,
     only: %i[ show edit update destroy ]
 
@@ -80,30 +83,8 @@ class SectionTypesController < ApplicationController
     params.expect(section_type: [ :name, :description, :parent_id, :position ])
   end
 
-  def sibling_count(parent_id)
-    Current.story.section_types.where(parent_id: parent_id).where.not(id: @section_type&.id).count
-  end
-
   def update_section_type
     attributes = section_type_params
-    requested_position = attributes[:position]
-    old_parent_id = @section_type.parent_id
-
-    return false unless @section_type.update(attributes.except(:position))
-
-    if requested_position.present? || old_parent_id != @section_type.parent_id
-      normalize_siblings(Current.story.section_types.where(parent_id: old_parent_id).order(:position, :id).to_a) if old_parent_id != @section_type.parent_id
-      siblings = @section_type.sibling_scope.to_a
-      position = requested_position.present? ? requested_position.to_i.clamp(0, siblings.length) : siblings.length
-      siblings.insert(position, @section_type)
-      normalize_siblings(siblings)
-    end
-
-    true
-  end
-
-  def normalize_siblings(siblings)
-    siblings = siblings.to_a unless siblings.respond_to?(:to_a)
-    siblings.each_with_index { |section_type, index| section_type.update_columns(position: index) }
+    update_with_sibling_position(@section_type, attributes)
   end
 end

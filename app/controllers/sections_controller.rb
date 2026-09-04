@@ -1,4 +1,7 @@
 class SectionsController < ApplicationController
+  include MaintainsSiblingPositions
+  maintains_sibling_positions_for :section
+
   before_action :set_section, only: %i[ update destroy ]
 
   def index
@@ -63,30 +66,9 @@ class SectionsController < ApplicationController
     params.expect(section: [ :name, :description, :section_type_id, :parent_id, :position ])
   end
 
-  def sibling_count(parent_id)
-    Current.story.sections.where(parent_id: parent_id).where.not(id: @section&.id).count
-  end
-
   def update_section
     attributes = section_params
-    requested_position = attributes[:position]
-    old_parent_id = @section.parent_id
-
-    return false unless @section.update(attributes.except(:position))
-
-    if requested_position.present? || old_parent_id != @section.parent_id
-      normalize_siblings(Current.story.sections.where(parent_id: old_parent_id).order(:position, :id).to_a) if old_parent_id != @section.parent_id
-      siblings = @section.sibling_scope.to_a
-      position = requested_position.present? ? requested_position.to_i.clamp(0, siblings.length) : siblings.length
-      siblings.insert(position, @section)
-      normalize_siblings(siblings)
-    end
-
-    true
-  end
-
-  def normalize_siblings(siblings)
-    siblings.each_with_index { |section, index| section.update_columns(position: index) }
+    update_with_sibling_position(@section, attributes)
   end
 
   def section_json

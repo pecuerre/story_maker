@@ -1,0 +1,20 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Relation types" %>
+
+<h1>Relation types</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @relation_types,
+  new_url: ->(parent = nil) { new_story_relation_type_path(story_slug: Current.story.slug, parent_id: parent&.id) },
+  create_url: story_relation_types_path(story_slug: Current.story.slug),
+  edit_url: ->(relation_type) { edit_story_relation_type_path(story_slug: Current.story.slug, id: relation_type) },
+  update_url: ->(relation_type) { story_relation_type_path(story_slug: Current.story.slug, id: relation_type) },
+  delete_url: ->(relation_type) { story_relation_type_path(story_slug: Current.story.slug, id: relation_type) },
+  model_param: "relation_type",
+  modal_fields: [
+    { name: "name", label: "Name", type: "text" },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "symmetric", label: "Symmetric", type: "checkbox" },
+    { name: "inverse", label: "Inverse", type: "text", required_unless: { field: "symmetric", value: true } }
+  ] %>

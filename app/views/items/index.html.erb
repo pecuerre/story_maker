@@ -1,0 +1,19 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Items" %>
+
+<h1>Items</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @items,
+  new_url: ->(parent = nil) { new_story_item_path(story_slug: Current.story.slug, parent_id: parent&.id) },
+  create_url: story_items_path(story_slug: Current.story.slug),
+  edit_url: ->(item) { edit_story_item_path(story_slug: Current.story.slug, id: item) },
+  update_url: ->(item) { story_item_path(story_slug: Current.story.slug, id: item) },
+  delete_url: ->(item) { story_item_path(story_slug: Current.story.slug, id: item) },
+  model_param: "item",
+  modal_fields: [
+    { name: "name", label: "Name", type: "text" },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "item_type_id", label: "Item type", type: "select", options: @item_types.map { |item_type| [ item_type.id, item_type.name ] } }
+  ] %>

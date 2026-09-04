@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+item_one:
+  name: Item one
+  parent:
+  story: story_one
+  item_type: item_type_one
+
+item_two:
+  name: Item two
+  parent: item_one
+  story: story_one
+  item_type: item_type_two

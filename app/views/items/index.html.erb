@@ -1,18 +1,67 @@
 <% content_for :title, "Items" %>
 
-<h1>Items</h1>
+<div data-controller="modal-form" data-modal-form-model-param-value="item" data-modal-form-create-title-value="New item">
+  <h1>Items</h1>
 
-<%= render "shared/taxonomy_tree",
-  nodes: @items,
-  new_url: ->(parent = nil) { new_story_item_path(story_slug: Current.story.slug, parent_id: parent&.id) },
-  create_url: story_items_path(story_slug: Current.story.slug),
-  edit_url: ->(item) { edit_story_item_path(story_slug: Current.story.slug, id: item) },
-  update_url: ->(item) { story_item_path(story_slug: Current.story.slug, id: item) },
-  delete_url: ->(item) { story_item_path(story_slug: Current.story.slug, id: item) },
-  model_param: "item",
-  taxonomy_field: "item_type_id",
-  modal_fields: [
-    { name: "name", label: "Name", type: "text", required: true },
-    { name: "description", label: "Description", type: "textarea" },
-    { name: "item_type_id", label: "Item type", type: "select", required: true, options: @item_types.map { |item_type| [ item_type.id, item_type.name ] } }
-  ] %>
+  <button type="button" class="btn btn-sm btn-primary mb-3" data-action="modal-form#open" data-modal-form-url="<%= story_items_path(story_slug: Current.story.slug) %>" data-modal-form-method="post" data-modal-form-title="New item" data-modal-form-values-value="{}">
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span>Add Item</span>
+  </button>
+
+  <% if @items.any? %>
+    <div class="list-group">
+      <% @items.each do |item| %>
+        <div class="list-group-item d-flex align-items-center gap-3">
+          <div class="flex-grow-1">
+            <%= item.name %>
+            <span class="text-body-secondary"><%= item.item_type.name %></span>
+            <% if item.description.present? %>
+              <div class="small text-body-secondary text-break"><%= item.description %></div>
+            <% end %>
+          </div>
+          <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit item" aria-label="Edit item" data-action="modal-form#open" data-modal-form-url="<%= story_item_path(story_slug: Current.story.slug, id: item) %>" data-modal-form-method="patch" data-modal-form-title="Edit item" data-modal-form-values-value="<%= { name: item.name, description: item.description, item_type_id: item.item_type_id }.to_json %>">
+              <i class="bi bi-pencil" aria-hidden="true"></i>
+            </button>
+            <%= button_to story_item_path(story_slug: Current.story.slug, id: item), method: :delete, class: "btn btn-sm btn-outline-danger", title: "Delete item", aria: { label: "Delete item" } do %>
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-body-secondary">No items yet.</p>
+  <% end %>
+
+  <div class="modal fade" tabindex="-1" aria-labelledby="item-modal-title" aria-hidden="true" data-modal-form-target="modal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="item-modal-title" data-modal-form-target="title">New item</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <%= form_with scope: :item, url: story_items_path(story_slug: Current.story.slug), method: :post, data: { modal_form_target: "form" } do |form| %>
+          <div class="modal-body">
+            <div class="mb-3">
+              <%= form.label :name, class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", required: true %>
+            </div>
+            <div class="mb-3">
+              <%= form.label :item_type_id, "Item type", class: "form-label" %>
+              <%= form.collection_select :item_type_id, @item_types, :id, :name, { prompt: "Select an item type" }, { class: "form-select", required: true } %>
+            </div>
+            <div class="mb-3">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 4 %>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= form.submit "Save item", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

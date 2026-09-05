@@ -6,9 +6,8 @@ class CharactersController < ApplicationController
 
   def index
     @characters = Current.story.characters
-    @characters = @characters.includes(:children, :character_type)
-    @characters = @characters.where(parent_id: nil)
-    @characters = @characters.order(:position, :id)
+    @characters = @characters.includes(:character_type)
+    @characters = @characters.order(:name, :id)
 
     @character_types = Current.story.character_types
     @character_types = @character_types.order(:name)

@@ -3,7 +3,7 @@ import "bootstrap"
 
 export default class extends Controller {
   static targets = ["modal", "title", "form"]
-  static values = { createTitle: String }
+  static values = { createTitle: String, modelParam: String }
 
   connect() {
     this.modal = new window.bootstrap.Modal(this.modalTarget)
@@ -24,7 +24,7 @@ export default class extends Controller {
     this.formTarget.reset()
 
     Object.entries(values).forEach(([name, value]) => {
-      const field = this.formTarget.elements.namedItem(`relation[${name}]`)
+      const field = this.formTarget.elements.namedItem(`${this.modelParamValue}[${name}]`)
       if (field) field.value = value
     })
 

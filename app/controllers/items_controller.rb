@@ -6,9 +6,8 @@ class ItemsController < ApplicationController
 
   def index
     @items = Current.story.items
-    @items = @items.includes(:children, :item_type)
-    @items = @items.where(parent_id: nil)
-    @items = @items.order(:position, :id)
+    @items = @items.includes(:item_type)
+    @items = @items.order(:name, :id)
 
     @item_types = Current.story.item_types
     @item_types = @item_types.order(:name)

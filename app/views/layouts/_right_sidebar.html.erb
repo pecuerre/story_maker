@@ -26,6 +26,10 @@
       story_relation_types_path(story_slug: Current.story.slug),
       class: "nav-link px-0#{active_if(:relation_types)}"
     %>
+    <%= link_to "Ownership Types",
+      story_ownership_types_path(story_slug: Current.story.slug),
+      class: "nav-link px-0#{active_if(:ownership_types)}"
+    %>
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold">

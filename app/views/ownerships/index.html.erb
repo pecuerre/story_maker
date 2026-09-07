@@ -1,0 +1,84 @@
+<% content_for :title, "Ownerships" %>
+
+<div data-controller="modal-form" data-modal-form-model-param-value="ownership" data-modal-form-create-title-value="New ownership">
+  <h1>Ownerships</h1>
+
+  <button type="button" class="btn btn-sm btn-primary mb-3" data-action="modal-form#open" data-modal-form-url="<%= story_ownerships_path(story_slug: Current.story.slug) %>" data-modal-form-method="post" data-modal-form-title="New ownership" data-modal-form-values-value="{}">
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span>Add Ownership</span>
+  </button>
+
+  <% if @ownerships.any? %>
+    <div class="list-group">
+      <% @ownerships.each do |ownership| %>
+        <div class="list-group-item d-flex align-items-center gap-3">
+          <div class="flex-grow-1">
+            <%= ownership.character.name %>
+            <span class="text-body-secondary"><%= ownership.ownership_type.name %></span>
+            <%= ownership.item.name %>
+            <% if ownership.description.present? %>
+              <div class="small text-body-secondary text-break"><%= ownership.description %></div>
+            <% end %>
+          </div>
+          <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit ownership" aria-label="Edit ownership" data-action="modal-form#open" data-modal-form-url="<%= story_ownership_path(story_slug: Current.story.slug, id: ownership) %>" data-modal-form-method="patch" data-modal-form-title="Edit ownership" data-modal-form-values-value="<%= { item_id: ownership.item_id, character_id: ownership.character_id, ownership_type_id: ownership.ownership_type_id, description: ownership.description, from_date: ownership.from_date&.strftime('%Y-%m-%dT%H:%M'), to_date: ownership.to_date&.strftime('%Y-%m-%dT%H:%M') }.to_json %>">
+              <i class="bi bi-pencil" aria-hidden="true"></i>
+            </button>
+            <%= button_to story_ownership_path(story_slug: Current.story.slug, id: ownership), method: :delete, class: "btn btn-sm btn-outline-danger", title: "Delete ownership", aria: { label: "Delete ownership" } do %>
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-body-secondary">No ownerships yet.</p>
+  <% end %>
+
+  <div class="modal fade" tabindex="-1" aria-labelledby="ownership-modal-title" aria-hidden="true" data-modal-form-target="modal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="ownership-modal-title" data-modal-form-target="title">New ownership</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <%= form_with scope: :ownership, url: story_ownerships_path(story_slug: Current.story.slug), method: :post, data: { modal_form_target: "form" } do |form| %>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <%= form.label :item_id, "Item", class: "form-label" %>
+                <%= form.collection_select :item_id, @items, :id, :name, { prompt: "Select an item" }, { class: "form-select", required: true } %>
+              </div>
+              <div class="col-md-6">
+                <%= form.label :character_id, "Character", class: "form-label" %>
+                <%= form.collection_select :character_id, @characters, :id, :name, { prompt: "Select a character" }, { class: "form-select", required: true } %>
+              </div>
+            </div>
+            <div class="mb-3">
+              <%= form.label :ownership_type_id, "Ownership type", class: "form-label" %>
+              <%= form.collection_select :ownership_type_id, @ownership_types, :id, :name, { prompt: "Select an ownership type" }, { class: "form-select", required: true } %>
+            </div>
+            <div class="mb-3">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 4 %>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <%= form.label :from_date, class: "form-label" %>
+                <%= form.datetime_local_field :from_date, class: "form-control" %>
+              </div>
+              <div class="col-md-6">
+                <%= form.label :to_date, class: "form-label" %>
+                <%= form.datetime_local_field :to_date, class: "form-control" %>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= form.submit "Save ownership", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

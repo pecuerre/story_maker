@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_193904) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_05_000000) do
   create_table "character_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -87,6 +87,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_193904) do
     t.index ["location_type_id"], name: "index_locations_on_location_type_id"
     t.index ["parent_id"], name: "index_locations_on_parent_id"
     t.index ["story_id"], name: "index_locations_on_story_id"
+  end
+
+  create_table "ownership_types", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_ownership_types_on_parent_id"
+    t.index ["story_id"], name: "index_ownership_types_on_story_id"
+  end
+
+  create_table "ownerships", force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.datetime "from_date"
+    t.integer "item_id", null: false
+    t.integer "ownership_type_id", null: false
+    t.integer "story_id", null: false
+    t.datetime "to_date"
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_ownerships_on_character_id"
+    t.index ["item_id"], name: "index_ownerships_on_item_id"
+    t.index ["ownership_type_id"], name: "index_ownerships_on_ownership_type_id"
+    t.index ["story_id"], name: "index_ownerships_on_story_id"
   end
 
   create_table "relation_types", force: :cascade do |t|
@@ -187,6 +215,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_193904) do
   add_foreign_key "locations", "location_types"
   add_foreign_key "locations", "locations", column: "parent_id"
   add_foreign_key "locations", "stories"
+  add_foreign_key "ownership_types", "ownership_types", column: "parent_id"
+  add_foreign_key "ownership_types", "stories"
+  add_foreign_key "ownerships", "characters"
+  add_foreign_key "ownerships", "items"
+  add_foreign_key "ownerships", "ownership_types"
+  add_foreign_key "ownerships", "stories"
   add_foreign_key "relation_types", "relation_types", column: "parent_id"
   add_foreign_key "relation_types", "stories"
   add_foreign_key "relations", "characters", column: "character1_id"

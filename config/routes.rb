@@ -15,6 +15,8 @@ Rails.application.routes.draw do
     resources :characters
     resources :relation_types
     resources :relations, only: %i[ index create update destroy ]
+    resources :ownership_types
+    resources :ownerships, only: %i[ index create update destroy ]
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

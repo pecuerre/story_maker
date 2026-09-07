@@ -1,0 +1,16 @@
+<% content_for :title, "Ownership types" %>
+
+<h1>Ownership types</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @ownership_types,
+  new_url: ->(parent = nil) { new_story_ownership_type_path(story_slug: Current.story.slug, parent_id: parent&.id) },
+  create_url: story_ownership_types_path(story_slug: Current.story.slug),
+  edit_url: ->(ownership_type) { edit_story_ownership_type_path(story_slug: Current.story.slug, id: ownership_type) },
+  update_url: ->(ownership_type) { story_ownership_type_path(story_slug: Current.story.slug, id: ownership_type) },
+  delete_url: ->(ownership_type) { story_ownership_type_path(story_slug: Current.story.slug, id: ownership_type) },
+  model_param: "ownership_type",
+  modal_fields: [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "description", label: "Description", type: "textarea" }
+  ] %>

@@ -10,6 +10,8 @@ class Story < ApplicationRecord
   has_many :characters, dependent: :destroy
   has_many :relation_types, dependent: :destroy
   has_many :relations, dependent: :destroy
+  has_many :ownership_types, dependent: :destroy
+  has_many :ownerships, dependent: :destroy
 
   before_validation :set_slug, if: :name_changed?
 

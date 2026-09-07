@@ -1,8 +1,7 @@
-class Item < ApplicationRecord
+class OwnershipType < ApplicationRecord
   include Hierarchical
 
   belongs_to :story
-  belongs_to :item_type
   has_many :ownerships, dependent: :destroy
 
   validates :name, presence: true

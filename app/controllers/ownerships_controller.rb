@@ -10,7 +10,7 @@ class OwnershipsController < ApplicationController
     @ownership = Current.story.ownerships.new(ownership_params)
 
     if @ownership.save
-      redirect_to story_ownerships_path(story_slug: Current.story.slug), notice: "Ownership created."
+      redirect_to story_ownerships_path(), notice: "Ownership created."
     else
       load_form_options
       @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_type).order(:id)
@@ -20,7 +20,7 @@ class OwnershipsController < ApplicationController
 
   def update
     if @ownership.update(ownership_params)
-      redirect_to story_ownerships_path(story_slug: Current.story.slug), notice: "Ownership updated."
+      redirect_to story_ownerships_path(), notice: "Ownership updated."
     else
       load_form_options
       @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_type).order(:id)
@@ -30,7 +30,7 @@ class OwnershipsController < ApplicationController
 
   def destroy
     @ownership.destroy!
-    redirect_to story_ownerships_path(story_slug: Current.story.slug), notice: "Ownership deleted."
+    redirect_to story_ownerships_path(), notice: "Ownership deleted."
   end
 
   private

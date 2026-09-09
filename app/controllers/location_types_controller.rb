@@ -61,7 +61,7 @@ class LocationTypesController < ApplicationController
       description: @location_type.description,
       parent_id: @location_type.parent_id,
       position: @location_type.position,
-      url: story_location_type_path(story_slug: Current.story.slug, id: @location_type)
+      url: story_location_type_path(id: @location_type)
     }
   end
 end

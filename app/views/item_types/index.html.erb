@@ -4,11 +4,11 @@
 
 <%= render "shared/taxonomy_tree",
   nodes: @item_types,
-  new_url: ->(parent = nil) { new_story_item_type_path(story_slug: Current.story.slug, parent_id: parent&.id) },
-  create_url: story_item_types_path(story_slug: Current.story.slug),
-  edit_url: ->(item_type) { edit_story_item_type_path(story_slug: Current.story.slug, id: item_type) },
-  update_url: ->(item_type) { story_item_type_path(story_slug: Current.story.slug, id: item_type) },
-  delete_url: ->(item_type) { story_item_type_path(story_slug: Current.story.slug, id: item_type) },
+  new_url: ->(parent = nil) { new_story_item_type_path(parent_id: parent&.id) },
+  create_url: story_item_types_path(),
+  edit_url: ->(item_type) { edit_story_item_type_path(id: item_type) },
+  update_url: ->(item_type) { story_item_type_path(id: item_type) },
+  delete_url: ->(item_type) { story_item_type_path(id: item_type) },
   model_param: "item_type",
   modal_fields: [
     { name: "name", label: "Name", type: "text", required: true },

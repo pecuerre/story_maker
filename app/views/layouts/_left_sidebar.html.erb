@@ -7,11 +7,11 @@
 
   <nav class="nav flex-column mb-4">
     <%= link_to icon_and_text("list-nested", "Sections"),
-      story_sections_path(story_slug: Current.story.slug),
+      story_sections_path(),
       class: "nav-link px-0#{active_if(:sections)}"
     %>
       <%= link_to icon_and_text("gear", "Section Types"),
-        story_section_types_path(story_slug: Current.story.slug),
+        story_section_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:section_types)}"
       %>
 
@@ -26,45 +26,45 @@
 
   <nav class="nav flex-column mb-4">
     <%= link_to icon_and_text("geo-alt", "Locations"),
-      story_locations_path(story_slug: Current.story.slug),
+      story_locations_path(),
       class: "nav-link px-0#{active_if(:locations)}"
     %>
       <%= link_to icon_and_text("gear", "Location Types"),
-        story_location_types_path(story_slug: Current.story.slug),
+        story_location_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:location_types)}"
       %>
 
     <%= link_to icon_and_text("box-seam", "Items"),
-      story_items_path(story_slug: Current.story.slug),
+      story_items_path(),
       class: "nav-link px-0#{active_if(:items)}"
     %>
       <%= link_to icon_and_text("person-bounding-box", "Ownerships"),
-        story_ownerships_path(story_slug: Current.story.slug),
+        story_ownerships_path(),
         class: "nav-link nav-sublink px-0#{active_if(:ownerships)}"
       %>
       <%= link_to icon_and_text("gear", "Item Types"),
-        story_item_types_path(story_slug: Current.story.slug),
+        story_item_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:item_types)}"
       %>
       <%= link_to icon_and_text("gear", "Ownership Types"),
-        story_ownership_types_path(story_slug: Current.story.slug),
+        story_ownership_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:ownership_types)}"
       %>
 
     <%= link_to icon_and_text("person", "Characters"),
-      story_characters_path(story_slug: Current.story.slug),
+      story_characters_path(),
       class: "nav-link px-0#{active_if(:characters)}"
     %>
       <%= link_to icon_and_text("people", "Relations"),
-        story_relations_path(story_slug: Current.story.slug),
+        story_relations_path(),
         class: "nav-link nav-sublink px-0#{active_if(:relations)}"
       %>
       <%= link_to icon_and_text("gear", "Character Types"),
-        story_character_types_path(story_slug: Current.story.slug),
+        story_character_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:character_types)}"
       %>
       <%= link_to icon_and_text("gear", "Relation Types"),
-        story_relation_types_path(story_slug: Current.story.slug),
+        story_relation_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:relation_types)}"
       %>
 

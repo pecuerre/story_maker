@@ -6,11 +6,11 @@
 
 <%= render "shared/taxonomy_tree",
   nodes: @locations,
-  new_url: ->(parent = nil) { new_story_location_path(story_slug: Current.story.slug, parent_id: parent&.id) },
-  create_url: story_locations_path(story_slug: Current.story.slug),
-  edit_url: ->(location) { edit_story_location_path(story_slug: Current.story.slug, id: location) },
-  update_url: ->(location) { story_location_path(story_slug: Current.story.slug, id: location) },
-  delete_url: ->(location) { story_location_path(story_slug: Current.story.slug, id: location) },
+  new_url: ->(parent = nil) { new_story_location_path(parent_id: parent&.id) },
+  create_url: story_locations_path(),
+  edit_url: ->(location) { edit_story_location_path(id: location) },
+  update_url: ->(location) { story_location_path(id: location) },
+  delete_url: ->(location) { story_location_path(id: location) },
   model_param: "location",
   taxonomy_field: "location_type_id",
   modal_fields: [

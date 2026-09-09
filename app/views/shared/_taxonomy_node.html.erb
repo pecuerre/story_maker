@@ -3,7 +3,7 @@
 <li class="taxonomy-node"
   draggable="true"
   data-taxonomy-tree-target="node"
-  data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"
+  data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop dragend->taxonomy-tree#endDrag"
   data-node-id="<%= node.id %>"
   data-update-url="<%= update_url.call(node) %>"
   data-edit-url="<%= edit_url.call(node) %>"
@@ -56,7 +56,7 @@
   <% children = node.public_send(children_method) %>
   <% if children.any? %>
     <ul class="taxonomy-list list-unstyled ms-4"
-      data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"
+      data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
       data-drop-parent-id="<%= node.id %>">
       <% children.each do |child| %>
         <%= render "shared/taxonomy_node",

@@ -1,10 +1,18 @@
 <% content_for :title, "Relations" %>
 
-<div data-controller="modal-form" data-modal-form-model-param-value="relation" data-modal-form-create-title-value="New relation">
+<div data-controller="modal-form"
+  data-modal-form-model-param-value="relation"
+  data-modal-form-create-title-value="New relation">
   <h1>Relations</h1>
 
-  <button type="button" class="btn btn-sm btn-primary mb-3" data-action="modal-form#open" data-modal-form-url="<%= story_relations_path() %>" data-modal-form-method="post" data-modal-form-title="New relation" data-modal-form-values-value="{}">
-    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+  <button type="button"
+    class="btn btn-sm btn-primary mb-3"
+    data-action="modal-form#open"
+    data-modal-form-url="<%= story_relations_path() %>"
+    data-modal-form-method="post"
+    data-modal-form-title="New relation"
+    data-modal-form-values-value="{}">
+    <i class="bi bi-plus-circle" aria-hidden="true"></i>
     <span>Add Relation</span>
   </button>
 
@@ -14,17 +22,29 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= relation.character1.name %>
-            <span class="text-body-secondary"><%= relation.relation_type.name %></span>
+            <%= entity_type_badge(relation) %>
             <%= relation.character2.name %>
             <% if relation.description.present? %>
               <div class="small text-body-secondary text-break"><%= relation.description %></div>
             <% end %>
           </div>
           <div class="d-flex gap-1">
-            <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit relation" aria-label="Edit relation" data-action="modal-form#open" data-modal-form-url="<%= story_relation_path(id: relation) %>" data-modal-form-method="patch" data-modal-form-title="Edit relation" data-modal-form-values-value="<%= { character1_id: relation.character1_id, character2_id: relation.character2_id, relation_type_id: relation.relation_type_id, description: relation.description, from_date: relation.from_date&.strftime('%Y-%m-%dT%H:%M'), to_date: relation.to_date&.strftime('%Y-%m-%dT%H:%M') }.to_json %>">
+            <button type="button"
+              class="btn btn-sm btn-outline-secondary"
+              title="Edit relation"
+              aria-label="Edit relation"
+              data-action="modal-form#open"
+              data-modal-form-url="<%= story_relation_path(id: relation) %>"
+              data-modal-form-method="patch"
+              data-modal-form-title="Edit relation"
+              data-modal-form-values-value="<%= relation_fields_json(relation) %>">
               <i class="bi bi-pencil" aria-hidden="true"></i>
             </button>
-            <%= button_to story_relation_path(id: relation), method: :delete, class: "btn btn-sm btn-outline-danger", title: "Delete relation", aria: { label: "Delete relation" } do %>
+            <%= button_to story_relation_path(id: relation),
+              method: :delete,
+              class: "btn btn-sm btn-outline-danger",
+              title: "Delete relation",
+              aria: { label: "Delete relation" } do %>
               <i class="bi bi-trash" aria-hidden="true"></i>
             <% end %>
           </div>
@@ -35,28 +55,44 @@
     <p class="text-body-secondary">No relations yet.</p>
   <% end %>
 
-  <div class="modal fade" tabindex="-1" aria-labelledby="relation-modal-title" aria-hidden="true" data-modal-form-target="modal">
+  <div class="modal fade" tabindex="-1"
+    aria-labelledby="relation-modal-title"
+    aria-hidden="true"
+    data-modal-form-target="modal">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="relation-modal-title" data-modal-form-target="title">New relation</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h2 class="modal-title fs-5"
+            id="relation-modal-title"
+            data-modal-form-target="title">New relation</h2>
+          <button type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"></button>
         </div>
-        <%= form_with scope: :relation, url: story_relations_path(), method: :post, data: { modal_form_target: "form" } do |form| %>
+        <%= form_with scope: :relation, url: story_relations_path(),
+          method: :post,
+          data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">
             <div class="row g-3">
               <div class="col-md-6">
                 <%= form.label :character1_id, "Character 1", class: "form-label" %>
-                <%= form.collection_select :character1_id, @characters, :id, :name, { prompt: "Select a character" }, { class: "form-select", required: true } %>
+                <%= form.collection_select :character1_id, @characters, :id, :name,
+                  { prompt: "Select a character" },
+                  { class: "form-select", required: true } %>
               </div>
               <div class="col-md-6">
                 <%= form.label :character2_id, "Character 2", class: "form-label" %>
-                <%= form.collection_select :character2_id, @characters, :id, :name, { prompt: "Select a character" }, { class: "form-select", required: true } %>
+                <%= form.collection_select :character2_id, @characters, :id, :name,
+                  { prompt: "Select a character" },
+                  { class: "form-select", required: true } %>
               </div>
             </div>
             <div class="mb-3">
               <%= form.label :relation_type_id, "Relation type", class: "form-label" %>
-              <%= form.collection_select :relation_type_id, @relation_types, :id, :name, { prompt: "Select a relation type" }, { class: "form-select", required: true } %>
+              <%= form.collection_select :relation_type_id, @relation_types, :id, :name,
+                { prompt: "Select a relation type" },
+                { class: "form-select", required: true } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>
@@ -74,7 +110,9 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal">Cancel</button>
             <%= form.submit "Save relation", class: "btn btn-primary" %>
           </div>
         <% end %>

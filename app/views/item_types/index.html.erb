@@ -10,7 +10,4 @@
   update_url: ->(item_type) { story_item_type_path(id: item_type) },
   delete_url: ->(item_type) { story_item_type_path(id: item_type) },
   model_param: "item_type",
-  modal_fields: [
-    { name: "name", label: "Name", type: "text", required: true },
-    { name: "description", label: "Description", type: "textarea" }
-  ] %>
+  modal_fields: item_type_taxonomy_fields %>

@@ -17,8 +17,10 @@ module ApplicationHelper
   end
 
   def entity_type_badge(entity)
+    return if entity.nil?
     type_name = entity.class.name.demodulize.underscore
+    return unless entity.respond_to?("#{type_name}_type")
     type = entity.send("#{type_name}_type").name
-    content_tag(:span, type.titleize, class: "badge bg-info text-dark ms-2")
+    content_tag(:span, type, class: "badge bg-info text-dark")
   end
 end

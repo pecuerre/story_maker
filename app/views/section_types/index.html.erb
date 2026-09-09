@@ -10,7 +10,4 @@
 	update_url: ->(section_type) { story_section_type_path(id: section_type) },
 	delete_url: ->(section_type) { story_section_type_path(id: section_type) },
 	model_param: "section_type",
-	modal_fields: [
-		{ name: "name", label: "Name", type: "text", required: true },
-		{ name: "description", label: "Description", type: "textarea" }
-	] %>
+	modal_fields: section_type_taxonomy_fields %>

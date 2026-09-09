@@ -1,10 +1,18 @@
 <% content_for :title, "Items" %>
 
-<div data-controller="modal-form" data-modal-form-model-param-value="item" data-modal-form-create-title-value="New item">
+<div data-controller="modal-form"
+  data-modal-form-model-param-value="item"
+  data-modal-form-create-title-value="New item">
   <h1>Items</h1>
 
-  <button type="button" class="btn btn-sm btn-primary mb-3" data-action="modal-form#open" data-modal-form-url="<%= story_items_path() %>" data-modal-form-method="post" data-modal-form-title="New item" data-modal-form-values-value="{}">
-    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+  <button type="button"
+    class="btn btn-sm btn-primary mb-3"
+    data-action="modal-form#open"
+    data-modal-form-url="<%= story_items_path() %>"
+    data-modal-form-method="post"
+    data-modal-form-title="New item"
+    data-modal-form-values-value="{}">
+    <i class="bi bi-plus-circle" aria-hidden="true"></i>
     <span>Add Item</span>
   </button>
 
@@ -14,16 +22,28 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= item.name %>
-            <span class="text-body-secondary"><%= item.item_type.name %></span>
+            <%= entity_type_badge(item) %>
             <% if item.description.present? %>
               <div class="small text-body-secondary text-break"><%= item.description %></div>
             <% end %>
           </div>
           <div class="d-flex gap-1">
-            <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit item" aria-label="Edit item" data-action="modal-form#open" data-modal-form-url="<%= story_item_path(id: item) %>" data-modal-form-method="patch" data-modal-form-title="Edit item" data-modal-form-values-value="<%= { name: item.name, description: item.description, item_type_id: item.item_type_id }.to_json %>">
+            <button type="button"
+              class="btn btn-sm btn-outline-secondary"
+              title="Edit item"
+              aria-label="Edit item"
+              data-action="modal-form#open"
+              data-modal-form-url="<%= story_item_path(id: item) %>"
+              data-modal-form-method="patch"
+              data-modal-form-title="Edit item"
+              data-modal-form-values-value="<%= item_fields_json(item) %>">
               <i class="bi bi-pencil" aria-hidden="true"></i>
             </button>
-            <%= button_to story_item_path(id: item), method: :delete, class: "btn btn-sm btn-outline-danger", title: "Delete item", aria: { label: "Delete item" } do %>
+            <%= button_to story_item_path(id: item),
+              method: :delete,
+              class: "btn btn-sm btn-outline-danger",
+              title: "Delete item",
+              aria: { label: "Delete item" } do %>
               <i class="bi bi-trash" aria-hidden="true"></i>
             <% end %>
           </div>
@@ -34,14 +54,21 @@
     <p class="text-body-secondary">No items yet.</p>
   <% end %>
 
-  <div class="modal fade" tabindex="-1" aria-labelledby="item-modal-title" aria-hidden="true" data-modal-form-target="modal">
+  <div class="modal fade" tabindex="-1"
+    aria-labelledby="item-modal-title"
+    aria-hidden="true"
+    data-modal-form-target="modal">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="item-modal-title" data-modal-form-target="title">New item</h2>
+          <h2 class="modal-title fs-5" id="item-modal-title"
+            data-modal-form-target="title">
+            New item
+          </h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <%= form_with scope: :item, url: story_items_path(), method: :post, data: { modal_form_target: "form" } do |form| %>
+        <%= form_with scope: :item, url: story_items_path(), method: :post,
+          data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">
             <div class="mb-3">
               <%= form.label :name, class: "form-label" %>
@@ -49,7 +76,9 @@
             </div>
             <div class="mb-3">
               <%= form.label :item_type_id, "Item type", class: "form-label" %>
-              <%= form.collection_select :item_type_id, @item_types, :id, :name, { prompt: "Select an item type" }, { class: "form-select", required: true } %>
+              <%= form.collection_select :item_type_id, @item_types, :id, :name,
+                { prompt: "Select an item type" },
+                { class: "form-select", required: true } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>

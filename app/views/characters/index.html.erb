@@ -39,7 +39,7 @@
               data-modal-form-url="<%= story_character_path(id: character) %>"
               data-modal-form-method="patch"
               data-modal-form-title="Edit character"
-              data-modal-form-values-value="<%= character_fields(character) %>">
+              data-modal-form-values-value="<%= character_fields_json(character) %>">
               <i class="bi bi-pencil" aria-hidden="true"></i>
             </button>
             <%= button_to story_character_path(id: character),

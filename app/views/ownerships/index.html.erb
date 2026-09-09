@@ -13,9 +13,9 @@
       <% @ownerships.each do |ownership| %>
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
-            <%= ownership.character.name %>
-            <span class="text-body-secondary"><%= ownership.ownership_type.name %></span>
             <%= ownership.item.name %>
+            <span class="text-body-secondary"><%= ownership.ownership_type.name %></span>
+            <%= ownership.character.name %>
             <% if ownership.description.present? %>
               <div class="small text-body-secondary text-break"><%= ownership.description %></div>
             <% end %>

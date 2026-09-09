@@ -19,22 +19,25 @@
       story_locations_path(story_slug: Current.story.slug),
       class: "nav-link px-0#{active_if(:locations)}"
     %>
+
     <%= link_to "Items",
       story_items_path(story_slug: Current.story.slug),
       class: "nav-link px-0#{active_if(:items)}"
+    %>
+      <%= link_to "Ownerships",
+        story_ownerships_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:ownerships)}"
       %>
+
     <%= link_to "Characters",
       story_characters_path(story_slug: Current.story.slug),
       class: "nav-link px-0#{active_if(:characters)}"
     %>
-    <%= link_to "Relations",
-      story_relations_path(story_slug: Current.story.slug),
-      class: "nav-link nav-sublink px-0#{active_if(:relations)}"
-    %>
-    <%= link_to "Ownerships",
-      story_ownerships_path(story_slug: Current.story.slug),
-      class: "nav-link nav-sublink px-0#{active_if(:ownerships)}"
-    %>
+      <%= link_to "Relations",
+        story_relations_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:relations)}"
+      %>
+
     <%= link_to "Dialogs", "#", class: "nav-link px-0 link-secondary" %>
     <%= link_to "Events", "#", class: "nav-link px-0 link-secondary" %>
   </nav>

@@ -4,11 +4,11 @@
 
 <%= render "shared/taxonomy_tree",
   nodes: @character_types,
-  new_url: ->(parent = nil) { new_story_character_type_path(story_slug: Current.story.slug, parent_id: parent&.id) },
-  create_url: story_character_types_path(story_slug: Current.story.slug),
-  edit_url: ->(character_type) { edit_story_character_type_path(story_slug: Current.story.slug, id: character_type) },
-  update_url: ->(character_type) { story_character_type_path(story_slug: Current.story.slug, id: character_type) },
-  delete_url: ->(character_type) { story_character_type_path(story_slug: Current.story.slug, id: character_type) },
+  new_url: ->(parent = nil) { new_story_character_type_path(parent_id: parent&.id) },
+  create_url: story_character_types_path(),
+  edit_url: ->(character_type) { edit_story_character_type_path(id: character_type) },
+  update_url: ->(character_type) { story_character_type_path(id: character_type) },
+  delete_url: ->(character_type) { story_character_type_path(id: character_type) },
   model_param: "character_type",
   modal_fields: [
     { name: "name", label: "Name", type: "text", required: true },

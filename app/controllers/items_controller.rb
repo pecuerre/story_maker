@@ -72,7 +72,7 @@ class ItemsController < ApplicationController
       item_type_id: @item.item_type_id,
       parent_id: @item.parent_id,
       position: @item.position,
-      url: story_item_path(story_slug: Current.story.slug, id: @item)
+      url: story_item_path(id: @item)
     }
   end
 end

@@ -65,7 +65,7 @@ class OwnershipTypesController < ApplicationController
       description: @ownership_type.description,
       parent_id: @ownership_type.parent_id,
       position: @ownership_type.position,
-      url: story_ownership_type_path(story_slug: Current.story.slug, id: @ownership_type)
+      url: story_ownership_type_path(id: @ownership_type)
     }
   end
 end

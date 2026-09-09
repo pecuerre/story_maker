@@ -67,7 +67,7 @@ class RelationTypesController < ApplicationController
       position: @relation_type.position,
       symmetric: @relation_type.symmetric,
       inverse: @relation_type.inverse,
-      url: story_relation_type_path(story_slug: Current.story.slug, id: @relation_type)
+      url: story_relation_type_path(id: @relation_type)
     }
   end
 end

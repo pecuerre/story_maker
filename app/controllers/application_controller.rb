@@ -9,6 +9,12 @@ class ApplicationController < ActionController::Base
 
   protected
 
+  def default_url_options
+    return super unless Current.story
+
+    super.merge()
+  end
+
   def set_current_story
     return unless params[:story_slug].present?
 

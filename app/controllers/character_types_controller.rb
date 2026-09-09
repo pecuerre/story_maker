@@ -66,7 +66,7 @@ class CharacterTypesController < ApplicationController
       description: @character_type.description,
       parent_id: @character_type.parent_id,
       position: @character_type.position,
-      url: story_character_type_path(story_slug: Current.story.slug, id: @character_type)
+      url: story_character_type_path(id: @character_type)
     }
   end
 end

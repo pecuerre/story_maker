@@ -10,7 +10,7 @@ class RelationsController < ApplicationController
     @relation = Current.story.relations.new(relation_params)
 
     if @relation.save
-      redirect_to story_relations_path(story_slug: Current.story.slug), notice: "Relation created."
+      redirect_to story_relations_path(), notice: "Relation created."
     else
       load_form_options
       @relations = Current.story.relations.includes(:character1, :character2, :relation_type).order(:id)
@@ -20,7 +20,7 @@ class RelationsController < ApplicationController
 
   def update
     if @relation.update(relation_params)
-      redirect_to story_relations_path(story_slug: Current.story.slug), notice: "Relation updated."
+      redirect_to story_relations_path(), notice: "Relation updated."
     else
       load_form_options
       @relations = Current.story.relations.includes(:character1, :character2, :relation_type).order(:id)
@@ -30,7 +30,7 @@ class RelationsController < ApplicationController
 
   def destroy
     @relation.destroy!
-    redirect_to story_relations_path(story_slug: Current.story.slug), notice: "Relation deleted."
+    redirect_to story_relations_path(), notice: "Relation deleted."
   end
 
   private

@@ -55,7 +55,7 @@ class SectionsController < ApplicationController
   private
 
   def current_story_sections_path
-    story_sections_path(story_slug: Current.story.slug)
+    story_sections_path()
   end
 
   def set_section
@@ -78,7 +78,7 @@ class SectionsController < ApplicationController
       description: @section.description,
       section_type_id: @section.section_type_id,
       parent_id: @section.parent_id,
-      url: story_section_path(story_slug: Current.story.slug, id: @section)
+      url: story_section_path(id: @section)
     }
   end
 end

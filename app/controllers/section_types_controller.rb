@@ -60,11 +60,11 @@ class SectionTypesController < ApplicationController
   end
 
   def current_story_section_type_path
-    story_section_type_path(story_slug: Current.story.slug, id: @section_type)
+    story_section_type_path(id: @section_type)
   end
 
   def current_story_section_types_path
-    story_section_types_path(story_slug: Current.story.slug)
+    story_section_types_path()
   end
 
   def section_type_json

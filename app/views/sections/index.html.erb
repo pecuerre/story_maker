@@ -11,8 +11,4 @@
 	delete_url: ->(section) { story_section_path(id: section) },
 	model_param: "section",
 	taxonomy_field: "section_type_id",
-	modal_fields: [
-		{ name: "name", label: "Name", type: "text", required: true },
-		{ name: "description", label: "Description", type: "textarea" },
-		{ name: "section_type_id", label: "Section type", type: "select", required: true, options: @section_types.map { |section_type| [ section_type.id, section_type.name ] } }
-	] %>
+	modal_fields: section_taxonomy_fields(@section_types) %>

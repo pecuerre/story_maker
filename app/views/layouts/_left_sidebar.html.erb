@@ -1,27 +1,29 @@
 <div class="py-4">
 
 <% if Current.story.present? %>
-  <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Story Structure
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
+    HOW
   </h6>
 
   <nav class="nav flex-column mb-4">
+    <%= link_to icon_and_text("film", "Scenes"),
+      "#", class: "nav-link px-0 link-secondary"
+    %>
     <%= link_to icon_and_text("list-nested", "Sections"),
       story_sections_path(),
       class: "nav-link px-0#{active_if(:sections)}"
     %>
+    <% if visible?(:sections, :section_types) %>
       <%= link_to icon_and_text("gear", "Section Types"),
         story_section_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:section_types)}"
       %>
-
-    <%= link_to icon_and_text("film", "Scenes"),
-      "#", class: "nav-link px-0 link-secondary"
-      %>
+    <% end %>
   </nav>
 
-  <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Story Elements
+  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
+    WHERE
   </h6>
 
   <nav class="nav flex-column mb-4">
@@ -29,51 +31,87 @@
       story_locations_path(),
       class: "nav-link px-0#{active_if(:locations)}"
     %>
+    <% if visible?(:locations, :location_types) %>
       <%= link_to icon_and_text("gear", "Location Types"),
         story_location_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:location_types)}"
       %>
+    <% end %>
+    <%= link_to icon_and_text("map", "Map"), "#",
+      class: "nav-link px-0 link-secondary" %>
+  </nav>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
+    WHO
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to icon_and_text("person", "Characters"),
+      story_characters_path(),
+      class: "nav-link px-0#{active_if(:characters)}"
+    %>
+    <% if visible?(:characters, :character_types) %>
+      <%= link_to icon_and_text("gear", "Character Types"),
+        story_character_types_path(),
+        class: "nav-link nav-sublink px-0#{active_if(:character_types)}"
+      %>
+    <% end %>
+    <%= link_to icon_and_text("people", "Relations"),
+      story_relations_path(),
+      class: "nav-link px-0#{active_if(:relations)}"
+    %>
+    <% if visible?(:relations, :relation_types) %>
+      <%= link_to icon_and_text("gear", "Relation Types"),
+        story_relation_types_path(),
+        class: "nav-link nav-sublink px-0#{active_if(:relation_types)}"
+      %>
+    <% end %>
+    <%= link_to icon_and_text("person-plus", "Meetings"), "#",
+      class: "nav-link px-0 link-secondary" %>
+    <%= link_to icon_and_text("chat-dots", "Dialogs"),
+      "#", class: "nav-link px-0 link-secondary"
+      %>
+  </nav>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
+    WHEN
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to icon_and_text("calendar-event", "Events"),
+      "#", class: "nav-link px-0 link-secondary"
+      %>
+    <%= link_to icon_and_text("calendar-range", "Timeline"), "#",
+      class: "nav-link px-0 link-secondary" %>
+
+  </nav>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
+    WHAT
+  </h6>
+
+  <nav class="nav flex-column mb-4">
 
     <%= link_to icon_and_text("box-seam", "Items"),
       story_items_path(),
       class: "nav-link px-0#{active_if(:items)}"
     %>
-      <%= link_to icon_and_text("person-bounding-box", "Ownerships"),
-        story_ownerships_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:ownerships)}"
-      %>
+    <% if visible?(:items, :item_types) %>
       <%= link_to icon_and_text("gear", "Item Types"),
         story_item_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:item_types)}"
       %>
+    <% end %>
+    <%= link_to icon_and_text("person-bounding-box", "Ownerships"),
+      story_ownerships_path(),
+      class: "nav-link px-0#{active_if(:ownerships)}"
+    %>
+    <% if visible?(:ownerships, :ownership_types) %>
       <%= link_to icon_and_text("gear", "Ownership Types"),
         story_ownership_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:ownership_types)}"
       %>
-
-    <%= link_to icon_and_text("person", "Characters"),
-      story_characters_path(),
-      class: "nav-link px-0#{active_if(:characters)}"
-    %>
-      <%= link_to icon_and_text("people", "Relations"),
-        story_relations_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:relations)}"
-      %>
-      <%= link_to icon_and_text("gear", "Character Types"),
-        story_character_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:character_types)}"
-      %>
-      <%= link_to icon_and_text("gear", "Relation Types"),
-        story_relation_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:relation_types)}"
-      %>
-
-    <%= link_to icon_and_text("chat-dots", "Dialogs"),
-      "#", class: "nav-link px-0 link-secondary"
-      %>
-    <%= link_to icon_and_text("calendar-event", "Events"),
-      "#", class: "nav-link px-0 link-secondary"
-      %>
+    <% end %>
   </nav>
 <% end %>
 

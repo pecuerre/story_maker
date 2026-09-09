@@ -55,3 +55,10 @@ rt_parent_child = RelationType.create(story: story, name: "is parent of", symmet
 r_martha_jonas = Relation.create(story: story, relation_type: rt_friend, character1: c_martha, character2: c_jonas)
 r_hannah_jonas = Relation.create(story: story, relation_type: rt_parent_child, character1: c_hannah, character2: c_jonas)
 r_ulrich_martha = Relation.create(story: story, relation_type: rt_parent_child, character1: c_ulrich, character2: c_martha)
+
+# ownerships
+ot_belongs = OwnershipType.create(story: story, name: "belongs to")
+ot_holds = OwnershipType.create(story: story, name: "is holded by")
+o_time_machine_1 = Ownership.create(story: story, ownership_type: ot_belongs, item: i_time_machine, character: c_jonas)
+o_time_machine_2 = Ownership.create(story: story, ownership_type: ot_holds, item: i_time_machine, character: c_martha)
+o_time_machine_2 = Ownership.create(story: story, ownership_type: ot_holds, item: i_time_machine, character: c_hannah)

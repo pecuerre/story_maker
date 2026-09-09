@@ -24,3 +24,69 @@
     transition: none;
   }
 }
+
+// Hover strip between two adjacent nodes exposing a "+" button to insert a node at that position.
+.taxonomy-separator {
+  position: relative;
+  height: 10px;
+  margin-top: -5px;
+  margin-bottom: -5px;
+  z-index: 1;
+  list-style: none;
+}
+
+.taxonomy-separator-add {
+  position: absolute;
+  top: 50%;
+  left: 0.25rem;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 1px solid var(--bs-primary);
+  border-radius: 50%;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-primary);
+  font-size: 0.65rem;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease-in-out;
+}
+
+.taxonomy-separator:hover .taxonomy-separator-add,
+.taxonomy-separator-add:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.taxonomy-tree--dragging .taxonomy-separator {
+  display: none;
+}
+
+// Dragged node feedback: dashed/muted while it would return to its original spot, solid/accented once it would move.
+.taxonomy-node--dragging {
+  opacity: 0.6;
+}
+
+.taxonomy-node--dragging > .taxonomy-row {
+  outline-offset: -2px;
+}
+
+.taxonomy-node--dragging.taxonomy-node--drop-noop > .taxonomy-row {
+  outline: 2px dashed var(--bs-secondary);
+}
+
+.taxonomy-node--dragging.taxonomy-node--drop-move > .taxonomy-row {
+  outline: 2px solid var(--bs-primary);
+  background-color: var(--bs-primary-bg-subtle, rgba(13, 110, 253, 0.08));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taxonomy-separator-add {
+    transition: none;
+  }
+}

@@ -7,6 +7,7 @@ export default class extends Controller {
   connect() {
     this.handleOutsideClick = this.handleOutsideClick.bind(this)
     document.addEventListener("pointerdown", this.handleOutsideClick)
+    this.refreshSeparators()
   }
 
   disconnect() {
@@ -15,18 +16,54 @@ export default class extends Controller {
 
   add(event) {
     event.preventDefault()
+    if (this.element.querySelector(".taxonomy-new")) return
     const source = event.currentTarget
     const parentNode = source.closest("[data-node-id]")
     const list = parentNode ? this.childList(parentNode) : this.element.querySelector(":scope > .taxonomy-list")
-    if (list.querySelector(":scope > .taxonomy-new")) return
 
+    const item = this.buildNewItem(parentNode?.dataset.nodeId || "")
+    list.append(item)
+    item.querySelector("input").focus()
+  }
+
+  insertAt(event) {
+    event.preventDefault()
+    if (this.element.querySelector(".taxonomy-new")) return
+
+    const separator = event.currentTarget.closest(".taxonomy-separator")
+    const belowNode = separator.nextElementSibling
+    const flatNodes = [...this.element.querySelectorAll(".taxonomy-node")]
+    const aboveNode = flatNodes[flatNodes.indexOf(belowNode) - 1]
+    if (!aboveNode || !belowNode) return
+
+    const belowParentId = belowNode.parentElement.dataset.dropParentId || ""
+    let item
+    if (belowParentId === aboveNode.dataset.nodeId) {
+      // Below node is above node's first child: insert as the new first child.
+      item = this.buildNewItem(aboveNode.dataset.nodeId, 0)
+      separator.remove()
+      this.childList(aboveNode).prepend(item)
+    } else {
+      // Otherwise the new node takes the same parent as the node above, right after it.
+      const aboveList = aboveNode.parentElement
+      const parentId = aboveList.dataset.dropParentId || ""
+      const position = [...aboveList.children].filter((el) => el.matches(".taxonomy-node")).indexOf(aboveNode) + 1
+      item = this.buildNewItem(parentId, position)
+      separator.remove()
+      aboveNode.after(item)
+    }
+    item.querySelector("input").focus()
+  }
+
+  buildNewItem(parentId, position) {
     const item = document.createElement("li")
     item.className = "taxonomy-node taxonomy-new"
     item.innerHTML = `<div class="d-flex align-items-center gap-2 border-bottom py-2"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><form class="d-flex flex-grow-1 gap-2" data-action="submit->taxonomy-tree#create"><input class="form-control form-control-sm" name="name" aria-label="New name" required><button type="submit" class="btn btn-sm btn-primary">Save</button><button type="button" class="btn btn-sm btn-outline-secondary" data-action="taxonomy-tree#cancel">Cancel</button></form></div>`
-    item.querySelector("form").dataset.url = parentNode?.dataset.createUrl || this.createUrlValue
-    item.querySelector("form").dataset.parentId = parentNode?.dataset.nodeId || ""
-    list.append(item)
-    item.querySelector("input").focus()
+    const form = item.querySelector("form")
+    form.dataset.url = this.createUrlValue
+    form.dataset.parentId = parentId || ""
+    if (position !== undefined) form.dataset.position = position
+    return item
   }
 
   async editName(event) {
@@ -134,8 +171,10 @@ export default class extends Controller {
   cancel(event) {
     event.preventDefault()
     const item = event.currentTarget.closest(".taxonomy-new")
-    if (item) item.remove()
-    else {
+    if (item) {
+      item.remove()
+      this.refreshSeparators()
+    } else {
       const form = event.currentTarget.closest("form")
       this.restoreName(form)
       form.closest("[data-node-id]").classList.remove("is-editing")
@@ -149,7 +188,16 @@ export default class extends Controller {
     const response = await this.request(form.dataset.url, "POST", { name: form.name.value, parent_id: form.dataset.parentId })
     if (!response.ok) return
     const data = await response.json()
+
+    if (form.dataset.position !== undefined) {
+      // Created at the end of its parent's children server-side; reposition then reload to renumber siblings.
+      await this.request(data.url, "PATCH", { parent_id: form.dataset.parentId, position: form.dataset.position })
+      window.Turbo.visit(window.location.href)
+      return
+    }
+
     form.closest(".taxonomy-new").replaceWith(this.buildNode(data))
+    this.refreshSeparators()
   }
 
   async update(event) {
@@ -187,13 +235,17 @@ export default class extends Controller {
     const node = event.currentTarget.closest("[data-node-id]")
     if (!window.confirm(`Delete ${node.dataset.name} and its children?`)) return
     const response = await this.request(node.dataset.updateUrl, "DELETE")
-    if (response.ok) node.remove()
+    if (response.ok) {
+      node.remove()
+      this.refreshSeparators()
+    }
   }
 
   async request(url, method, values = {}) {
     const params = {}
     if (values.name !== undefined) params[`${this.modelParamValue}[name]`] = values.name
     if (values.parent_id !== undefined) params[`${this.modelParamValue}[parent_id]`] = values.parent_id
+    if (values.position !== undefined) params[`${this.modelParamValue}[position]`] = values.position
     return fetch(url, {
       method,
       headers: { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content },
@@ -206,7 +258,7 @@ export default class extends Controller {
     if (!list) {
       list = document.createElement("ul")
       list.className = "taxonomy-list list-unstyled ms-4"
-      list.dataset.action = "dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"
+      list.dataset.action = "dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
       list.dataset.dropParentId = node.dataset.nodeId
       node.append(list)
     }
@@ -218,7 +270,7 @@ export default class extends Controller {
     node.className = "taxonomy-node"
     node.draggable = true
     node.dataset.taxonomyTreeTarget = "node"
-    node.dataset.action = "dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode"
+    node.dataset.action = "dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop dragend->taxonomy-tree#endDrag"
     node.dataset.nodeId = data.id
     node.dataset.updateUrl = data.url
     node.dataset.createUrl = this.createUrlValue
@@ -242,60 +294,121 @@ export default class extends Controller {
     form.replaceWith(name)
   }
 
+  // Separators sit between every pair of adjacently rendered nodes (regardless of nesting depth)
+  // and expose a "+" button to insert a new node at that exact position.
+  refreshSeparators() {
+    this.element.querySelectorAll(".taxonomy-separator").forEach((el) => el.remove())
+    const nodes = [...this.element.querySelectorAll(".taxonomy-node")]
+    nodes.slice(1).forEach((node) => node.before(this.buildSeparator()))
+  }
+
+  buildSeparator() {
+    const separator = document.createElement("li")
+    separator.className = "taxonomy-separator"
+    separator.innerHTML = `<button type="button" class="taxonomy-separator-add" aria-label="Insert item here" data-action="taxonomy-tree#insertAt"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>`
+    return separator
+  }
+
+  nextTaxonomyNode(node) {
+    let el = node.nextElementSibling
+    while (el && !el.matches(".taxonomy-node")) el = el.nextElementSibling
+    return el
+  }
+
   startDrag(event) {
     event.stopPropagation()
     this.draggedNode = event.currentTarget
+    this.dragOriginalParent = this.draggedNode.parentElement
+    this.dragOriginalNext = this.nextTaxonomyNode(this.draggedNode)
+    this.dropHandled = false
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("text/plain", this.draggedNode.dataset.nodeId)
+    this.element.classList.add("taxonomy-tree--dragging")
+    this.draggedNode.classList.add("taxonomy-node--dragging")
+    requestAnimationFrame(() => this.updateDragIndicator())
   }
 
   allowDrop(event) {
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
+    if (!this.draggedNode) return
+    event.stopPropagation()
+
+    const current = event.currentTarget
+    if (current.matches(".taxonomy-list")) {
+      this.previewMove(current, null, event)
+      return
+    }
+    if (!current.matches("[data-node-id]") || current === this.draggedNode || this.draggedNode.contains(current)) return
+    this.previewMove(current.parentElement, current, event)
   }
 
-  async moveNode(event) {
+  // Physically relocates the dragged node live so the list opens a gap showing exactly where it will land.
+  previewMove(list, targetNode, event) {
+    if (targetNode) {
+      const row = targetNode.querySelector(":scope > .taxonomy-row")
+      const rect = row.getBoundingClientRect()
+      const after = event.clientY > rect.top + rect.height / 2
+      if (after) {
+        if (targetNode.nextElementSibling !== this.draggedNode) targetNode.after(this.draggedNode)
+      } else if (targetNode.previousElementSibling !== this.draggedNode) {
+        targetNode.before(this.draggedNode)
+      }
+    } else if (list.lastElementChild !== this.draggedNode) {
+      list.append(this.draggedNode)
+    }
+    this.updateDragIndicator()
+  }
+
+  // Toggles whether the drop would be a no-op (returns to its original spot) or an actual move.
+  updateDragIndicator() {
+    const node = this.draggedNode
+    if (!node) return
+    const isNoop = node.parentElement === this.dragOriginalParent && this.nextTaxonomyNode(node) === this.dragOriginalNext
+    node.classList.toggle("taxonomy-node--drop-noop", isNoop)
+    node.classList.toggle("taxonomy-node--drop-move", !isNoop)
+  }
+
+  async drop(event) {
     event.preventDefault()
     event.stopPropagation()
     if (!this.draggedNode) return
+    this.dropHandled = true
 
-    const targetNode = event.currentTarget.closest("[data-node-id]")
-    const targetList = event.currentTarget.matches(".taxonomy-list") ? event.currentTarget : null
-    if (targetNode && this.draggedNode === targetNode) return
+    const node = this.draggedNode
+    const originalParent = this.dragOriginalParent
+    const originalNext = this.dragOriginalNext
+    const isNoop = node.parentElement === originalParent && this.nextTaxonomyNode(node) === originalNext
+    this.cleanupDrag()
+    if (isNoop) return
 
-    let parentId
-    let position
-    if (targetList) {
-      parentId = targetList.dataset.dropParentId || ""
-      position = targetList.children.length
-    } else if (targetNode) {
-      const siblingList = targetNode.parentElement
-      const siblings = [...siblingList.children].filter((node) => node !== this.draggedNode)
-      const targetIndex = siblings.indexOf(targetNode)
-      const targetRow = targetNode.querySelector(":scope > .taxonomy-row")
-      const droppedAfter = event.clientY > targetRow.getBoundingClientRect().top + targetRow.getBoundingClientRect().height / 2
-      parentId = siblingList.closest("[data-node-id]")?.dataset.nodeId || ""
-      position = targetIndex + (droppedAfter ? 1 : 0)
-    } else {
-      return
-    }
+    const parentId = node.parentElement.dataset.dropParentId || ""
+    const position = [...node.parentElement.children].filter((el) => el.matches(".taxonomy-node")).indexOf(node)
+    const updateUrl = node.getAttribute("data-update-url")
+    const restore = () => { if (originalNext) originalNext.before(node); else originalParent.append(node) }
+    if (!updateUrl) { restore(); return }
 
-    const updateUrl = this.draggedNode.getAttribute("data-update-url")
-    if (!updateUrl) return
-
-    const response = await fetch(updateUrl, {
-      method: "PATCH",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
-      },
-      body: new URLSearchParams({
-        [`${this.modelParamValue}[parent_id]`]: parentId,
-        [`${this.modelParamValue}[position]`]: position
-      })
-    })
-
+    const response = await this.request(updateUrl, "PATCH", { parent_id: parentId, position })
     if (response.ok) window.Turbo.visit(window.location.href)
+    else restore()
+  }
+
+  endDrag() {
+    if (!this.draggedNode) return
+    if (!this.dropHandled) {
+      // Drag ended without a valid drop (e.g. released outside the tree) so put the node back.
+      if (this.dragOriginalNext) this.dragOriginalNext.before(this.draggedNode)
+      else this.dragOriginalParent.append(this.draggedNode)
+    }
+    this.cleanupDrag()
+  }
+
+  cleanupDrag() {
+    if (this.draggedNode) this.draggedNode.classList.remove("taxonomy-node--dragging", "taxonomy-node--drop-noop", "taxonomy-node--drop-move")
+    this.element.classList.remove("taxonomy-tree--dragging")
+    this.draggedNode = null
+    this.dragOriginalParent = null
+    this.dragOriginalNext = null
+    this.dropHandled = false
   }
 }

@@ -15,7 +15,7 @@
     <span>Add <%= model_param.capitalize %></span>
   <% end if new_url %>
 
-  <ul class="taxonomy-list list-unstyled mb-0" data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#moveNode" data-drop-parent-id="">
+  <ul class="taxonomy-list list-unstyled mb-0" data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop" data-drop-parent-id="">
     <% nodes.each do |node| %>
       <%= render "shared/taxonomy_node",
         node: node,

@@ -2,34 +2,35 @@
 
 <% if Current.story.present? %>
   <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Story Settings
+    Story Tracking
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Section Types",
-      story_section_types_path(story_slug: Current.story.slug),
-      class: "nav-link px-0#{active_if(:section_types)}"
-    %>
-    <%= link_to "Item Types",
-      story_item_types_path(story_slug: Current.story.slug),
-      class: "nav-link px-0#{active_if(:item_types)}"
-    %>
-    <%= link_to "Location Types",
-      story_location_types_path(story_slug: Current.story.slug),
-      class: "nav-link px-0#{active_if(:location_types)}"
-    %>
-    <%= link_to "Character Types",
-      story_character_types_path(story_slug: Current.story.slug),
-      class: "nav-link px-0#{active_if(:character_types)}"
-    %>
-    <%= link_to "Relation Types",
-      story_relation_types_path(story_slug: Current.story.slug),
-      class: "nav-link px-0#{active_if(:relation_types)}"
-    %>
-    <%= link_to "Ownership Types",
-      story_ownership_types_path(story_slug: Current.story.slug),
-      class: "nav-link px-0#{active_if(:ownership_types)}"
-    %>
+    <%= link_to "Dashboard", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Timeline", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Map", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Meetings", "#", class: "nav-link px-0 link-secondary" %>
+  </nav>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold">
+    Story Core
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to "Plot", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "World Building", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Character Development", "#", class: "nav-link px-0 link-secondary" %>
+  </nav>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold">
+    Story Analyzer
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to "Inconsistencies", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Undefined", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Incomplete", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to "Pending", "#", class: "nav-link px-0 link-secondary" %>
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold">

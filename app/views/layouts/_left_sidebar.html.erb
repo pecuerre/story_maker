@@ -6,8 +6,18 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Sections", story_sections_path(story_slug: Current.story.slug), class: "nav-link px-0#{' active' if controller_name == 'sections'}" %>
-    <%= link_to "Scenes", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to icon_and_text("list-nested", "Sections"),
+      story_sections_path(story_slug: Current.story.slug),
+      class: "nav-link px-0#{active_if(:sections)}"
+    %>
+      <%= link_to icon_and_text("gear", "Section Types"),
+        story_section_types_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:section_types)}"
+      %>
+
+    <%= link_to icon_and_text("film", "Scenes"),
+      "#", class: "nav-link px-0 link-secondary"
+      %>
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold">
@@ -15,53 +25,55 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to "Locations",
+    <%= link_to icon_and_text("geo-alt", "Locations"),
       story_locations_path(story_slug: Current.story.slug),
       class: "nav-link px-0#{active_if(:locations)}"
     %>
+      <%= link_to icon_and_text("gear", "Location Types"),
+        story_location_types_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:location_types)}"
+      %>
 
-    <%= link_to "Items",
+    <%= link_to icon_and_text("box-seam", "Items"),
       story_items_path(story_slug: Current.story.slug),
       class: "nav-link px-0#{active_if(:items)}"
     %>
-      <%= link_to "Ownerships",
+      <%= link_to icon_and_text("person-bounding-box", "Ownerships"),
         story_ownerships_path(story_slug: Current.story.slug),
         class: "nav-link nav-sublink px-0#{active_if(:ownerships)}"
       %>
+      <%= link_to icon_and_text("gear", "Item Types"),
+        story_item_types_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:item_types)}"
+      %>
+      <%= link_to icon_and_text("gear", "Ownership Types"),
+        story_ownership_types_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:ownership_types)}"
+      %>
 
-    <%= link_to "Characters",
+    <%= link_to icon_and_text("person", "Characters"),
       story_characters_path(story_slug: Current.story.slug),
       class: "nav-link px-0#{active_if(:characters)}"
     %>
-      <%= link_to "Relations",
+      <%= link_to icon_and_text("people", "Relations"),
         story_relations_path(story_slug: Current.story.slug),
         class: "nav-link nav-sublink px-0#{active_if(:relations)}"
       %>
+      <%= link_to icon_and_text("gear", "Character Types"),
+        story_character_types_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:character_types)}"
+      %>
+      <%= link_to icon_and_text("gear", "Relation Types"),
+        story_relation_types_path(story_slug: Current.story.slug),
+        class: "nav-link nav-sublink px-0#{active_if(:relation_types)}"
+      %>
 
-    <%= link_to "Dialogs", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Events", "#", class: "nav-link px-0 link-secondary" %>
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Story Tracking
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-    <%= link_to "Dashboard", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Timeline", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Map", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Meetings", "#", class: "nav-link px-0 link-secondary" %>
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold">
-    Story Analyzer
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-    <%= link_to "Inconcistencies", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Undefined", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Incomplete", "#", class: "nav-link px-0 link-secondary" %>
-    <%= link_to "Pending", "#", class: "nav-link px-0 link-secondary" %>
+    <%= link_to icon_and_text("chat-dots", "Dialogs"),
+      "#", class: "nav-link px-0 link-secondary"
+      %>
+    <%= link_to icon_and_text("calendar-event", "Events"),
+      "#", class: "nav-link px-0 link-secondary"
+      %>
   </nav>
 <% end %>
 

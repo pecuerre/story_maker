@@ -1,10 +1,19 @@
 <% content_for :title, "Characters" %>
 
-<div data-controller="modal-form" data-modal-form-model-param-value="character" data-modal-form-create-title-value="New character">
+<div id="character-list"
+  data-controller="modal-form"
+  data-modal-form-model-param-value="character"
+  data-modal-form-create-title-value="New character">
   <h1>Characters</h1>
 
-  <button type="button" class="btn btn-sm btn-primary mb-3" data-action="modal-form#open" data-modal-form-url="<%= story_characters_path(story_slug: Current.story.slug) %>" data-modal-form-method="post" data-modal-form-title="New character" data-modal-form-values-value="{}">
-    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+  <button type="button"
+    class="btn btn-sm btn-primary mb-3"
+    data-action="modal-form#open"
+    data-modal-form-url="<%= story_characters_path(story_slug: Current.story.slug) %>"
+    data-modal-form-method="post"
+    data-modal-form-title="New character"
+    data-modal-form-values-value="{}">
+    <i class="bi bi-plus-circle" aria-hidden="true"></i>
     <span>Add Character</span>
   </button>
 
@@ -14,16 +23,30 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= character.name %>
-            <span class="text-body-secondary"><%= character.character_type.name %></span>
+            <%= entity_type_badge(character) %>
             <% if character.description.present? %>
-              <div class="small text-body-secondary text-break"><%= character.description %></div>
+              <div class="small text-body-secondary text-break">
+                <%= character.description %>
+              </div>
             <% end %>
           </div>
           <div class="d-flex gap-1">
-            <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit character" aria-label="Edit character" data-action="modal-form#open" data-modal-form-url="<%= story_character_path(story_slug: Current.story.slug, id: character) %>" data-modal-form-method="patch" data-modal-form-title="Edit character" data-modal-form-values-value="<%= { name: character.name, description: character.description, character_type_id: character.character_type_id }.to_json %>">
+            <button type="button"
+              class="btn btn-sm btn-outline-secondary"
+              title="Edit character"
+              aria-label="Edit character"
+              data-action="modal-form#open"
+              data-modal-form-url="<%= story_character_path(story_slug: Current.story.slug, id: character) %>"
+              data-modal-form-method="patch"
+              data-modal-form-title="Edit character"
+              data-modal-form-values-value="<%= character_fields(character) %>">
               <i class="bi bi-pencil" aria-hidden="true"></i>
             </button>
-            <%= button_to story_character_path(story_slug: Current.story.slug, id: character), method: :delete, class: "btn btn-sm btn-outline-danger", title: "Delete character", aria: { label: "Delete character" } do %>
+            <%= button_to story_character_path(story_slug: Current.story.slug, id: character),
+              method: :delete,
+              class: "btn btn-sm btn-outline-danger",
+              title: "Delete character",
+              aria: { label: "Delete character" } do %>
               <i class="bi bi-trash" aria-hidden="true"></i>
             <% end %>
           </div>
@@ -34,14 +57,24 @@
     <p class="text-body-secondary">No characters yet.</p>
   <% end %>
 
-  <div class="modal fade" tabindex="-1" aria-labelledby="character-modal-title" aria-hidden="true" data-modal-form-target="modal">
+  <div class="modal fade" tabindex="-1"
+    aria-labelledby="character-modal-title"
+    aria-hidden="true"
+    data-modal-form-target="modal">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="character-modal-title" data-modal-form-target="title">New character</h2>
+          <h2 class="modal-title fs-5"
+            id="character-modal-title"
+            data-modal-form-target="title">
+            New character
+          </h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <%= form_with scope: :character, url: story_characters_path(story_slug: Current.story.slug), method: :post, data: { modal_form_target: "form" } do |form| %>
+        <%= form_with scope: :character,
+          url: story_characters_path(story_slug: Current.story.slug),
+          method: :post,
+          data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">
             <div class="mb-3">
               <%= form.label :name, class: "form-label" %>
@@ -49,7 +82,9 @@
             </div>
             <div class="mb-3">
               <%= form.label :character_type_id, "Character type", class: "form-label" %>
-              <%= form.collection_select :character_type_id, @character_types, :id, :name, { prompt: "Select a character type" }, { class: "form-select", required: true } %>
+              <%= form.collection_select :character_type_id, @character_types, :id, :name,
+                { prompt: "Select a character type" },
+                { class: "form-select", required: true } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>

@@ -3,10 +3,14 @@
 <% if Current.story.present? %>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    HOW
+    WHAT AND HOW
   </h6>
 
   <nav class="nav flex-column mb-4">
+    <%= link_to icon_text_count("file-text", "Plot"), "#",
+      class: "nav-link px-0 link-secondary" %>
+    <%= link_to icon_text_count("globe", "World Building"), "#",
+      class: "nav-link px-0 link-secondary" %>
     <%= link_to icon_text_count("film", "Scenes"),
       "#", class: "nav-link px-0 link-secondary"
     %>
@@ -20,46 +24,6 @@
         class: "nav-link nav-sublink px-0#{active_if(:section_types)}"
       %>
     <% end %>
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WHY
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("file-text", "Plot"), "#",
-      class: "nav-link px-0 link-secondary" %>
-    <%= link_to icon_text_count("globe", "World Building"), "#",
-      class: "nav-link px-0 link-secondary" %>
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WHERE
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("geo-alt", "Locations", Current.story.locations.count),
-      story_locations_path(),
-      class: "nav-link px-0#{active_if(:locations)}"
-    %>
-    <% if visible?(:locations, :location_types) %>
-      <%= link_to icon_text_count("gear", "Location Types", Current.story.location_types.count),
-        story_location_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:location_types)}"
-      %>
-      <%= link_to icon_text_count("rulers", "Distances"), "#",
-        class: "nav-link nav-sublink px-0 link-secondary"
-      %>
-      <%= link_to icon_text_count("bounding-box-circles", "Connections"), "#",
-        class: "nav-link nav-sublink px-0 link-secondary"
-      %>
-      <%= link_to icon_text_count("sign-turn-right", "Routes"), "#",
-        class: "nav-link nav-sublink px-0 link-secondary"
-      %>
-    <% end %>
-    <%= link_to icon_text_count("map", "Map"), "#",
-      class: "nav-link px-0 link-secondary"
-    %>
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
@@ -95,6 +59,35 @@
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
+    WHERE
+  </h6>
+
+  <nav class="nav flex-column mb-4">
+    <%= link_to icon_text_count("geo-alt", "Locations", Current.story.locations.count),
+      story_locations_path(),
+      class: "nav-link px-0#{active_if(:locations)}"
+    %>
+    <% if visible?(:locations, :location_types) %>
+      <%= link_to icon_text_count("gear", "Location Types", Current.story.location_types.count),
+        story_location_types_path(),
+        class: "nav-link nav-sublink px-0#{active_if(:location_types)}"
+      %>
+      <%= link_to icon_text_count("rulers", "Distances"), "#",
+        class: "nav-link nav-sublink px-0 link-secondary"
+      %>
+      <%= link_to icon_text_count("bounding-box-circles", "Connections"), "#",
+        class: "nav-link nav-sublink px-0 link-secondary"
+      %>
+      <%= link_to icon_text_count("sign-turn-right", "Routes"), "#",
+        class: "nav-link nav-sublink px-0 link-secondary"
+      %>
+    <% end %>
+    <%= link_to icon_text_count("map", "Map"), "#",
+      class: "nav-link px-0 link-secondary"
+    %>
+  </nav>
+
+  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
     WHEN
   </h6>
 
@@ -116,7 +109,7 @@
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WHAT
+    WITH WHAT
   </h6>
 
   <nav class="nav flex-column mb-4">

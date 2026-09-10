@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_10_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_10_020000) do
   create_table "character_types", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -37,12 +37,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_000000) do
     t.index ["story_id"], name: "index_characters_on_story_id"
   end
 
+  create_table "event_types", force: :cascade do |t|
+    t.string "color", default: "#d3d3d3", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_event_types_on_parent_id"
+    t.index ["story_id"], name: "index_event_types_on_story_id"
+  end
+
   create_table "events", force: :cascade do |t|
     t.integer "after_event_id"
     t.integer "before_event_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "end_datetime"
+    t.integer "event_type_id"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
     t.integer "simultaneous_event_id"
@@ -52,6 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_000000) do
     t.datetime "updated_at", null: false
     t.index ["after_event_id"], name: "index_events_on_after_event_id"
     t.index ["before_event_id"], name: "index_events_on_before_event_id"
+    t.index ["event_type_id"], name: "index_events_on_event_type_id"
     t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["simultaneous_event_id"], name: "index_events_on_simultaneous_event_id"
     t.index ["story_id"], name: "index_events_on_story_id"
@@ -225,6 +240,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_000000) do
   add_foreign_key "characters", "character_types"
   add_foreign_key "characters", "characters", column: "parent_id"
   add_foreign_key "characters", "stories"
+  add_foreign_key "event_types", "event_types", column: "parent_id"
+  add_foreign_key "event_types", "stories"
+  add_foreign_key "events", "event_types"
   add_foreign_key "events", "events", column: "after_event_id"
   add_foreign_key "events", "events", column: "before_event_id"
   add_foreign_key "events", "events", column: "parent_id"

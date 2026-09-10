@@ -1,8 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
+import "bootstrap"
 
-// Draws arrows between event cards on the Timeline view: a solid arrow for
+// Draws arrows between event nodes on the Timeline view: a solid arrow for
 // "happens before/after" relations, and a dashed double-headed line for
-// events marked as happening at the same time.
+// events marked as happening at the same time. Each node also shows a
+// Bootstrap popover with event details on hover.
 export default class extends Controller {
   static targets = ["svg", "track", "node"]
   static values = { edges: Array }
@@ -16,12 +18,15 @@ export default class extends Controller {
       this.resizeObserver.observe(this.trackTarget)
     }
 
+    this.popovers = this.nodeTargets.map((node) => new window.bootstrap.Popover(node))
+
     requestAnimationFrame(this.redraw)
   }
 
   disconnect() {
     window.removeEventListener("resize", this.redraw)
     this.resizeObserver?.disconnect()
+    this.popovers?.forEach((popover) => popover.dispose())
   }
 
   draw() {

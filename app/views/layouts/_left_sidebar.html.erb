@@ -103,6 +103,12 @@
       story_events_path(),
       class: "nav-link px-0#{active_if(:events)}"
       %>
+    <% if visible?(:events, :event_types) %>
+      <%= link_to icon_text_count("gear", "Event Types", Current.story.event_types.count),
+        story_event_types_path(),
+        class: "nav-link nav-sublink px-0#{active_if(:event_types)}"
+      %>
+    <% end %>
     <%= link_to icon_text_count("calendar-range", "Timeline"),
       story_timeline_path(),
       class: "nav-link px-0#{active_if(:timeline)}" %>

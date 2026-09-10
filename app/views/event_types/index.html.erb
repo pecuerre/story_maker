@@ -1,0 +1,13 @@
+<% content_for :title, "Event types" %>
+
+<h1>Event types</h1>
+
+<%= render "shared/taxonomy_tree",
+	nodes: @event_types,
+	new_url: ->(parent = nil) { new_story_event_type_path(parent_id: parent&.id) },
+	create_url: story_event_types_path(),
+	edit_url: ->(event_type) { edit_story_event_type_path(id: event_type) },
+	update_url: ->(event_type) { story_event_type_path(id: event_type) },
+	delete_url: ->(event_type) { story_event_type_path(id: event_type) },
+	model_param: "event_type",
+	modal_fields: event_type_taxonomy_fields %>

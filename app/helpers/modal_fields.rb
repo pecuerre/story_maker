@@ -7,8 +7,30 @@ module ModalFields
       before_event_id: event.before_event_id,
       after_event_id: event.after_event_id,
       simultaneous_event_id: event.simultaneous_event_id,
-      description: event.description
+      description: event.description,
+      event_type_id: event.event_type_id
     }.to_json
+  end
+
+  def event_type_taxonomy_fields
+    [
+      {
+        name: "name",
+        label: "Name",
+        type: "text",
+        required: true
+      },
+      {
+        name: "description",
+        label: "Description",
+        type: "textarea"
+      },
+      {
+        name: "color",
+        label: "Color",
+        type: "color"
+      }
+    ]
   end
 
   def character_type_taxonomy_fields

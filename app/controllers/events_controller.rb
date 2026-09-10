@@ -5,13 +5,15 @@ class EventsController < ApplicationController
   before_action :set_event, only: %i[ update destroy ]
 
   def index
-    @events = Current.story.events.order(:id)
+    @events = Current.story.events.includes(:event_type).order(:id)
     @events_for_select = @events
+    @event_types = Current.story.event_types.order(:position, :id)
   end
 
   def new
     @event = Current.story.events.new(parent_id: params[:parent_id])
     @events_for_select = Current.story.events.order(:id)
+    @event_types = Current.story.event_types.order(:position, :id)
   end
 
   def create
@@ -50,7 +52,7 @@ class EventsController < ApplicationController
 
   def event_params
     params.expect(event: [ :title, :start_datetime, :end_datetime, :before_event_id, :after_event_id,
-      :simultaneous_event_id, :description, :parent_id, :position ])
+      :simultaneous_event_id, :description, :event_type_id, :parent_id, :position ])
   end
 
   def update_event
@@ -68,6 +70,7 @@ class EventsController < ApplicationController
       after_event_id: @event.after_event_id,
       simultaneous_event_id: @event.simultaneous_event_id,
       description: @event.description,
+      event_type_id: @event.event_type_id,
       parent_id: @event.parent_id,
       position: @event.position,
       display_string: @event.display_string,

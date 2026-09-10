@@ -144,6 +144,7 @@ export default class extends Controller {
         return `<div class="mb-3"><label class="form-label" for="${id}">${label}</label><select class="form-select" id="${id}" name="${name}"${field.required ? " required" : ""}>${options}</select></div>`
       }
       if (field.type === "checkbox") return `<div class="mb-3 form-check"><input type="hidden" name="${name}" value="0"><input class="form-check-input" type="checkbox" id="${id}" name="${name}" value="1"><label class="form-check-label" for="${id}">${label}</label></div>`
+      if (field.type === "color") return `<div class="mb-3"><label class="form-label" for="${id}">${label}</label><input type="color" class="form-control form-control-color" id="${id}" name="${name}"${field.required ? " required" : ""}></div>`
       const requiredAttribute = field.required ? " required" : ""
       const input = field.type === "textarea" ? `<textarea class="form-control" id="${id}" name="${name}" rows="4"${requiredAttribute}></textarea>` : `<input class="form-control" id="${id}" name="${name}"${requiredAttribute}>`
       return `<div class="mb-3"><label class="form-label" for="${id}">${label}</label>${input}</div>`

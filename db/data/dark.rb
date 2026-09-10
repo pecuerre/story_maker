@@ -73,3 +73,8 @@ e_party = Event.create(story: story, title: "Party", after_event: e_dinner)
 e_farewell = Event.create(story: story, title: "Farewell", after_event: e_party)
 e_reunion = Event.create(story: story, title: "Reunion", after_event: e_dinner)
 e_explosion = Event.create(story: story, title: "Explosion", simultaneous_event: e_party)
+e_meeting = Event.create(story: story, title: "Meeting", before_event: e_explosion)
+e_work = Event.create(story: story, title: "Work", after_event: e_conversation_1)
+
+
+

@@ -12,6 +12,7 @@ class Story < ApplicationRecord
   has_many :relations, dependent: :destroy
   has_many :ownership_types, dependent: :destroy
   has_many :ownerships, dependent: :destroy
+  has_many :event_types, dependent: :destroy
   has_many :events, dependent: :destroy
 
   before_validation :set_slug, if: :name_changed?

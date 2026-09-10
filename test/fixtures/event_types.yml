@@ -1,0 +1,14 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+event_type_one:
+  story: story_one
+  name: Event type one
+  color: "#ff0000"
+
+event_type_two:
+  story: story_one
+  name: Event type two
+
+event_type_three:
+  story: story_two
+  name: Event type three

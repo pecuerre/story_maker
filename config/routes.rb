@@ -17,6 +17,8 @@ Rails.application.routes.draw do
     resources :relations, only: %i[ index create update destroy ]
     resources :ownership_types
     resources :ownerships, only: %i[ index create update destroy ]
+    resources :events
+    get "timeline", to: "timeline#index", as: :timeline
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

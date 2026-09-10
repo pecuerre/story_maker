@@ -1,0 +1,127 @@
+<% content_for :title, "Events" %>
+
+<div data-controller="modal-form"
+  data-modal-form-model-param-value="event"
+  data-modal-form-create-title-value="New event">
+  <h1>Events</h1>
+
+  <button type="button"
+    class="btn btn-sm btn-primary mb-3"
+    data-action="modal-form#open"
+    data-modal-form-url="<%= story_events_path() %>"
+    data-modal-form-method="post"
+    data-modal-form-title="New event"
+    data-modal-form-values-value="{}">
+    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+    <span>Add Event</span>
+  </button>
+
+  <% if @events.any? %>
+    <div class="list-group">
+      <% @events.each do |event| %>
+        <div class="list-group-item d-flex align-items-center gap-3">
+          <div class="flex-grow-1">
+            <%= event.display_string %>
+            <% if event.description.present? %>
+              <div class="small text-body-secondary text-break">
+                <%= event.description %>
+              </div>
+            <% end %>
+          </div>
+          <div class="d-flex gap-1">
+            <button type="button"
+              class="btn btn-sm btn-outline-secondary"
+              title="Edit event"
+              aria-label="Edit event"
+              data-action="modal-form#open"
+              data-modal-form-url="<%= story_event_path(id: event) %>"
+              data-modal-form-method="patch"
+              data-modal-form-title="Edit event"
+              data-modal-form-values-value="<%= event_fields_json(event) %>">
+              <i class="bi bi-pencil" aria-hidden="true"></i>
+            </button>
+            <%= button_to story_event_path(id: event),
+              method: :delete,
+              class: "btn btn-sm btn-outline-danger",
+              title: "Delete event",
+              aria: { label: "Delete event" } do %>
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-body-secondary">No events yet.</p>
+  <% end %>
+
+  <div class="modal fade" tabindex="-1"
+    aria-labelledby="event-modal-title"
+    aria-hidden="true"
+    data-modal-form-target="modal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5"
+            id="event-modal-title"
+            data-modal-form-target="title">
+            New event
+          </h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <%= form_with scope: :event,
+          url: story_events_path(),
+          method: :post,
+          data: { modal_form_target: "form" } do |form| %>
+          <div class="modal-body">
+            <p class="text-body-secondary small">
+              An event needs at least a title, a start or end date, or a relation to another event below.
+            </p>
+            <div class="mb-3">
+              <%= form.label :title, class: "form-label" %>
+              <%= form.text_field :title, class: "form-control" %>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <%= form.label :start_datetime, "Start date/time", class: "form-label" %>
+                <%= form.datetime_local_field :start_datetime, class: "form-control" %>
+              </div>
+              <div class="col-md-6">
+                <%= form.label :end_datetime, "End date/time", class: "form-label" %>
+                <%= form.datetime_local_field :end_datetime, class: "form-control" %>
+              </div>
+            </div>
+            <div class="mb-3">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 3 %>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <%= form.label :before_event_id, "Happens before", class: "form-label" %>
+                <%= form.collection_select :before_event_id, @events_for_select, :id, :display_string,
+                  { include_blank: "None" },
+                  { class: "form-select" } %>
+              </div>
+              <div class="col-md-4">
+                <%= form.label :after_event_id, "Happens after", class: "form-label" %>
+                <%= form.collection_select :after_event_id, @events_for_select, :id, :display_string,
+                  { include_blank: "None" },
+                  { class: "form-select" } %>
+              </div>
+              <div class="col-md-4">
+                <%= form.label :simultaneous_event_id, "Same time as", class: "form-label" %>
+                <%= form.collection_select :simultaneous_event_id, @events_for_select, :id, :display_string,
+                  { include_blank: "None" },
+                  { class: "form-select" } %>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <%= form.submit "Save event", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

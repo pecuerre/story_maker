@@ -99,11 +99,13 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("calendar-event", "Events"),
-      "#", class: "nav-link px-0 link-secondary"
+    <%= link_to icon_text_count("calendar-event", "Events", Current.story.events.count),
+      story_events_path(),
+      class: "nav-link px-0#{active_if(:events)}"
       %>
-    <%= link_to icon_text_count("calendar-range", "Timeline"), "#",
-      class: "nav-link px-0 link-secondary" %>
+    <%= link_to icon_text_count("calendar-range", "Timeline"),
+      story_timeline_path(),
+      class: "nav-link px-0#{active_if(:timeline)}" %>
 
   </nav>
 

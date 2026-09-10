@@ -20,24 +20,20 @@
           </div>
           <div class="timeline-layer-events">
             <% layer.each do |event| %>
-              <div class="timeline-card card"
+              <div class="timeline-node"
                 id="timeline-event-<%= event.id %>"
                 data-timeline-target="node"
-                data-event-id="<%= event.id %>">
-                <div class="card-body py-2 px-3">
-                  <div class="fw-semibold"><%= event.display_string %></div>
-                  <% if event.start_datetime.present? || event.end_datetime.present? %>
-                    <div class="small text-body-secondary">
-                      <%= event.start_datetime&.strftime("%Y-%m-%d %H:%M") %>
-                      <% if event.end_datetime.present? %>
-                        &rarr; <%= event.end_datetime.strftime("%Y-%m-%d %H:%M") %>
-                      <% end %>
-                    </div>
-                  <% end %>
-                  <% if event.description.present? %>
-                    <div class="small text-break"><%= event.description %></div>
-                  <% end %>
-                </div>
+                data-event-id="<%= event.id %>"
+                style="background-color: <%= event.event_type&.color || '#d3d3d3' %>;"
+                tabindex="0"
+                data-bs-toggle="popover"
+                data-bs-trigger="hover focus"
+                data-bs-custom-class="custom-popover"
+                data-bs-html="true"
+                data-bs-placement="right"
+                data-bs-title="<%= event_popover_title(event) %>"
+                data-bs-content="<%= event_popover_content(event) %>">
+                <%= event.id %>
               </div>
             <% end %>
           </div>
@@ -46,3 +42,4 @@
     </div>
   <% end %>
 </div>
+

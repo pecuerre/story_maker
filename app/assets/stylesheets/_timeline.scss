@@ -63,6 +63,21 @@
   max-width: 20rem;
 }
 
+.timeline-node {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--bs-border-color);
+  cursor: default;
+  flex-shrink: 0;
+}
+
 .timeline-edge {
   stroke-width: 2;
 }
@@ -82,4 +97,13 @@
 
 .timeline-arrow-head-simultaneous {
   fill: var(--bs-warning);
+}
+
+.custom-popover {
+  --bs-popover-max-width: 300px;
+  --bs-popover-border-color: #712cf9;
+  --bs-popover-header-bg: #712cf9;
+  --bs-popover-header-color: #ffffff;
+  --bs-popover-body-padding-x: 1rem;
+  --bs-popover-body-padding-y: .5rem;
 }

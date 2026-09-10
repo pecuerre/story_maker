@@ -7,12 +7,17 @@ module ApplicationHelper
   def visible?(*controllers)
     controllers = controllers.map { |c| c.to_s }
     controllers.include?(controller.controller_name)
+    true
   end
 
-  def icon_and_text(icon_name, text)
+  def icon_text_count(icon, text, count = nil)
     content_tag(:span, class: "d-flex") do
-      concat content_tag(:i, "", class: "bi bi-#{icon_name} me-1")
+      concat content_tag(:i, "", class: "bi bi-#{icon} me-1")
       concat text
+      if count.present?
+        # concat content_tag(:span, count, class: "badge text-bg-secondary rounded-pill ms-1")
+        concat content_tag(:small, "(#{count})", class: "text-body-secondary")
+      end
     end
   end
 

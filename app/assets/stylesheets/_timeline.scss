@@ -1,0 +1,85 @@
+.timeline-wrapper {
+  position: relative;
+}
+
+.timeline-track {
+  position: relative;
+  padding-left: 2.5rem;
+}
+
+.timeline-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+
+.timeline-layer {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.timeline-layer-marker {
+  position: absolute;
+  left: -2.5rem;
+  top: 0.75rem;
+  width: 2.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.timeline-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background-color: var(--bs-primary);
+  display: block;
+}
+
+.timeline-track::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2.125rem;
+  width: 0;
+  border-left: 2px dashed var(--bs-border-color);
+}
+
+.timeline-layer-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-card {
+  min-width: 14rem;
+  max-width: 20rem;
+}
+
+.timeline-edge {
+  stroke-width: 2;
+}
+
+.timeline-edge-sequence {
+  stroke: var(--bs-primary);
+}
+
+.timeline-edge-simultaneous {
+  stroke: var(--bs-warning);
+  stroke-dasharray: 4 3;
+}
+
+.timeline-arrow-head-sequence {
+  fill: var(--bs-primary);
+}
+
+.timeline-arrow-head-simultaneous {
+  fill: var(--bs-warning);
+}

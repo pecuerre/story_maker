@@ -1,0 +1,8 @@
+event_one:
+  story: story_one
+  title: The beginning
+
+event_two:
+  story: story_one
+  title: The end
+  start_datetime: 2026-09-11 10:00:00

@@ -1,4 +1,16 @@
 module ModalFields
+  def event_fields_json(event)
+    {
+      title: event.title,
+      start_datetime: event.start_datetime&.strftime("%Y-%m-%dT%H:%M"),
+      end_datetime: event.end_datetime&.strftime("%Y-%m-%dT%H:%M"),
+      before_event_id: event.before_event_id,
+      after_event_id: event.after_event_id,
+      simultaneous_event_id: event.simultaneous_event_id,
+      description: event.description
+    }.to_json
+  end
+
   def character_type_taxonomy_fields
     [
       {

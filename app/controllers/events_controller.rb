@@ -1,0 +1,77 @@
+class EventsController < ApplicationController
+  include MaintainsSiblingPositions
+  maintains_sibling_positions_for :event
+
+  before_action :set_event, only: %i[ update destroy ]
+
+  def index
+    @events = Current.story.events.order(:id)
+    @events_for_select = @events
+  end
+
+  def new
+    @event = Current.story.events.new(parent_id: params[:parent_id])
+    @events_for_select = Current.story.events.order(:id)
+  end
+
+  def create
+    @event = Current.story.events.new(event_params)
+    @event.position = sibling_count(@event.parent_id)
+
+    respond_to do |format|
+      if @event.save
+        format.json { render json: event_json, status: :created }
+      else
+        format.json { render json: @event.errors, status: :unprocessable_content }
+      end
+    end
+  end
+
+  def update
+    respond_to do |format|
+      if update_event
+        format.json { render json: event_json, status: :ok }
+      else
+        format.json { render json: @event.errors, status: :unprocessable_content }
+      end
+    end
+  end
+
+  def destroy
+    @event.destroy!
+    head :no_content
+  end
+
+  private
+
+  def set_event
+    @event = Current.story.events.find(params.expect(:id))
+  end
+
+  def event_params
+    params.expect(event: [ :title, :start_datetime, :end_datetime, :before_event_id, :after_event_id,
+      :simultaneous_event_id, :description, :parent_id, :position ])
+  end
+
+  def update_event
+    attributes = event_params
+    update_with_sibling_position(@event, attributes)
+  end
+
+  def event_json
+    {
+      id: @event.id,
+      title: @event.title,
+      start_datetime: @event.start_datetime,
+      end_datetime: @event.end_datetime,
+      before_event_id: @event.before_event_id,
+      after_event_id: @event.after_event_id,
+      simultaneous_event_id: @event.simultaneous_event_id,
+      description: @event.description,
+      parent_id: @event.parent_id,
+      position: @event.position,
+      display_string: @event.display_string,
+      url: story_event_path(id: @event)
+    }
+  end
+end

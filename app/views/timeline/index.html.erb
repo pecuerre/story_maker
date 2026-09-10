@@ -1,0 +1,48 @@
+<% content_for :title, "Timeline" %>
+
+<div class="timeline-wrapper"
+  data-controller="timeline"
+  data-timeline-edges-value="<%= @edges.to_json %>">
+  <h1>Timeline</h1>
+
+  <% if @layers.blank? || @layers.all?(&:empty?) %>
+    <p class="text-body-secondary">
+      No events yet. <%= link_to "Add some events", story_events_path() %> to build a timeline.
+    </p>
+  <% else %>
+    <div class="timeline-track" data-timeline-target="track">
+      <svg class="timeline-svg" data-timeline-target="svg"></svg>
+      <% @layers.each_with_index do |layer, index| %>
+        <% next if layer.empty? %>
+        <div class="timeline-layer">
+          <div class="timeline-layer-marker">
+            <span class="timeline-dot"></span>
+          </div>
+          <div class="timeline-layer-events">
+            <% layer.each do |event| %>
+              <div class="timeline-card card"
+                id="timeline-event-<%= event.id %>"
+                data-timeline-target="node"
+                data-event-id="<%= event.id %>">
+                <div class="card-body py-2 px-3">
+                  <div class="fw-semibold"><%= event.display_string %></div>
+                  <% if event.start_datetime.present? || event.end_datetime.present? %>
+                    <div class="small text-body-secondary">
+                      <%= event.start_datetime&.strftime("%Y-%m-%d %H:%M") %>
+                      <% if event.end_datetime.present? %>
+                        &rarr; <%= event.end_datetime.strftime("%Y-%m-%d %H:%M") %>
+                      <% end %>
+                    </div>
+                  <% end %>
+                  <% if event.description.present? %>
+                    <div class="small text-break"><%= event.description %></div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

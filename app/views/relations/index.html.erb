@@ -92,7 +92,7 @@
               <%= form.label :relation_type_ids, "Relation types", class: "form-label" %>
               <%= form.collection_select :relation_type_ids, @relation_types, :id, :name,
                 {},
-                { class: "form-select", multiple: true, required: true } %>
+                { class: "form-select", multiple: true, required: true, data: { controller: "tom-select" } } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>

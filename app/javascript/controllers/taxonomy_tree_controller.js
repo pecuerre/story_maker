@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import "bootstrap"
+import "tom-select"
 
 export default class extends Controller {
   static values = { modelParam: String, createUrl: String, modalFields: String, fieldName: String }
@@ -106,10 +107,12 @@ export default class extends Controller {
     this.populateModalFields(modal, node)
     modal.querySelector("form").addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
     document.body.append(modal)
+    modal.querySelectorAll("select[multiple]").forEach((select) => new window.TomSelect(select, { plugins: [ "remove_button" ], create: false }))
 
     this.modal = new window.bootstrap.Modal(modal)
     modal.addEventListener("hidden.bs.modal", () => {
       this.modal.dispose()
+      modal.querySelectorAll("select[multiple]").forEach((select) => select.tomselect?.destroy())
       modal.remove()
       this.modal = null
     }, { once: true })

@@ -84,7 +84,7 @@
               <%= form.label :character_type_ids, "Character types", class: "form-label" %>
               <%= form.collection_select :character_type_ids, @character_types, :id, :name,
                 {},
-                { class: "form-select", multiple: true, required: true } %>
+                { class: "form-select", multiple: true, required: true, data: { controller: "tom-select" } } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>

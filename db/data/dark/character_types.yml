@@ -1,0 +1,68 @@
+- story: Story.dark
+  name: Family
+  slug: family
+  color: "#99cc99" # light green
+
+- story: Story.dark
+  name: Family Nielsen
+  slug: family_nielsen
+  parent: CharacterType.family
+  color: "#66cc99" # medium green
+
+- story: Story.dark
+  name: Family Doppler
+  slug: family_doppler
+  parent: CharacterType.family
+  color: "#33cc99" # dark green
+
+- story: Story.dark
+  name: Family Tiedemann
+  slug: family_tiedemann
+  parent: CharacterType.family
+  color: "#009966" # very dark green
+
+- story: Story.dark
+  name: Family Kahnwald
+  slug: family_kahnwald
+  parent: CharacterType.family
+  color: "#33cc99" # dark green
+
+- story: Story.dark
+  name: Faction
+  slug: faction
+  color: "#cc99cc" # light purple
+
+- story: Story.dark
+  name: Sic Mundus
+  parent: CharacterType.faction
+  slug: sic_mundus
+  color: "#9966cc" # medium purple
+
+- story: Story.dark
+  name: Erit Lux
+  parent: CharacterType.faction
+  slug: erit_lux
+  color: "#6600cc" # dark purple
+
+- story: Story.dark
+  name: Job
+  slug: job
+  color: "#ffcc99" # light orange
+
+- story: Story.dark
+  name: Police
+  parent: CharacterType.job
+  slug: police
+  color: "#ff9966" # medium orange
+
+- story: Story.dark
+  name: Nuclear Plant
+  parent: CharacterType.job
+  slug: nuclear_plant
+  color: "#ff6600" # dark orange
+
+- story: Story.dark
+  name: Scientist
+  parent: CharacterType.job
+  slug: scientist
+  color: "#ff3300" # very dark orange

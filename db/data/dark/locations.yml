@@ -1,0 +1,46 @@
+- story: Story.dark
+  name: Winden
+  slug: winden
+  location_types: [ LocationType.town ]
+
+- story: Story.dark
+  name: Jonas House
+  slug: jonas_house
+  location_types: [ LocationType.house ]
+  parent: Location.winden
+
+- story: Story.dark
+  slug: jonas_room
+  name: Jonas Room
+  location_types: [ LocationType.room ]
+  parent: Location.jonas_house
+
+- story: Story.dark
+  slug: winden_cave
+  name: Winden Cave
+  location_types: [ LocationType.cave ]
+  parent: Location.winden
+
+- story: Story.dark
+  slug: winden_forest
+  name: Winden Forest
+  location_types: [ LocationType.forest ]
+  parent: Location.winden
+
+- story: Story.dark
+  slug: nielsen_house
+  name: Nielsen House
+  location_types: [ LocationType.house ]
+  parent: Location.winden
+
+- story: Story.dark
+  slug: martha_room
+  name: Martha Room
+  location_types: [ LocationType.room ]
+  parent: Location.nielsen_house
+
+- story: Story.dark
+  slug: magnus_room
+  name: Magnus Room
+  location_types: [ LocationType.room ]
+  parent: Location.nielsen_house

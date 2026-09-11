@@ -1,86 +1,86 @@
-- story: "Story.dark"
+- story: Story.dark
   name: "Season 1"
-  slug: "s1"
-  section_types: [ "SectionType.season" ]
+  slug: s1
+  section_types: [ SectionType.season ]
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 1: Secrets"
-  slug: "s1e1"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s1"
+  slug: s1e1
+  section_types: [ SectionType.episode ]
+  parent: Section.s1
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 2: Lies"
-  slug: "s1e2"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s1"
+  slug: s1e2
+  section_types: [ SectionType.episode ]
+  parent: Section.s1
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 3: Past and Present"
-  slug: "s1e3"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s1"
+  slug: s1e3
+  section_types: [ SectionType.episode ]
+  parent: Section.s1
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 4: Double Lives"
-  slug: "s1e4"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s1"
+  slug: s1e4
+  section_types: [ SectionType.episode ]
+  parent: Section.s1
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 5: Truths"
-  slug: "s1e5"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s1"
+  slug: s1e5
+  section_types: [ SectionType.episode ]
+  parent: Section.s1
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 6: Sic Mundus Creatus Est"
-  slug: "s1e6"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s1"
+  slug: s1e6
+  section_types: [ SectionType.episode, SectionType.finale ]
+  parent: Section.s1
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Season 2"
-  slug: "s2"
-  section_types: [ "SectionType.season" ]
+  slug: s2
+  section_types: [ SectionType.season ]
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 1"
-  slug: "s2e1"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s2"
+  slug: s2e1
+  section_types: [ SectionType.episode ]
+  parent: Section.s2
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 2"
-  slug: "s2e2"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s2"
+  slug: s2e2
+  section_types: [ SectionType.episode ]
+  parent: Section.s2
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 3"
-  slug: "s2e3"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s2"
+  slug: s2e3
+  section_types: [ SectionType.episode ]
+  parent: Section.s2
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Season 3"
-  slug: "s3"
-  section_types: [ "SectionType.season" ]
+  slug: s3
+  section_types: [ SectionType.season ]
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 1"
-  slug: "s3e1"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s3"
+  slug: s3e1
+  section_types: [ SectionType.episode ]
+  parent: Section.s3
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 2"
-  slug: "s3e2"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s3"
+  slug: s3e2
+  section_types: [ SectionType.episode ]
+  parent: Section.s3
 
-- story: "Story.dark"
+- story: Story.dark
   name: "Episode 3"
-  slug: "s3e3"
-  section_types: [ "SectionType.episode" ]
-  parent: "Section.s3"
+  slug: s3e3
+  section_types: [ SectionType.episode ]
+  parent: Section.s3

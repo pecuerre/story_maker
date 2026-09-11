@@ -1,4 +1,18 @@
 module ModalFields
+  # Builds a flat, depth-indented [id, label] list of taxonomy nodes suitable for a parent-select dropdown.
+  def taxonomy_parent_options(nodes)
+    by_parent = nodes.group_by(&:parent_id)
+    options = [ [ "", "(No parent)" ] ]
+    add_children = lambda do |parent_id, depth|
+      (by_parent[parent_id] || []).each do |node|
+        options << [ node.id, ("— " * depth) + node.name ]
+        add_children.call(node.id, depth + 1)
+      end
+    end
+    add_children.call(nil, 0)
+    options
+  end
+
   def event_fields_json(event)
     {
       title: event.title,
@@ -12,7 +26,7 @@ module ModalFields
     }.to_json
   end
 
-  def event_type_taxonomy_fields
+  def event_type_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -29,11 +43,17 @@ module ModalFields
         name: "color",
         label: "Color",
         type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
       }
     ]
   end
 
-  def character_type_taxonomy_fields
+  def character_type_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -45,6 +65,17 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "color",
+        label: "Color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
       }
     ]
   end
@@ -57,7 +88,7 @@ module ModalFields
     }.to_json
   end
 
-  def item_type_taxonomy_fields
+  def item_type_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -69,6 +100,17 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "color",
+        label: "Color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
       }
     ]
   end
@@ -81,7 +123,7 @@ module ModalFields
     }.to_json
   end
 
-  def location_type_taxonomy_fields
+  def location_type_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -93,6 +135,17 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "color",
+        label: "Color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
       }
     ]
   end
@@ -122,7 +175,7 @@ module ModalFields
     ]
   end
 
-  def ownership_type_taxonomy_fields
+  def ownership_type_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -134,6 +187,17 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "color",
+        label: "Color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
       }
     ]
   end
@@ -149,7 +213,7 @@ module ModalFields
     }.to_json
   end
 
-  def relation_type_taxonomy_fields
+  def relation_type_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -161,6 +225,17 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "color",
+        label: "Color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
       },
       {
         name: "symmetric",
@@ -187,7 +262,7 @@ module ModalFields
     }.to_json
   end
 
-  def section_type_taxonomy_fields
+  def section_type_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -199,6 +274,17 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "color",
+        label: "Color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
       }
     ]
   end

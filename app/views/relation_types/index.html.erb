@@ -10,4 +10,4 @@
   update_url: ->(relation_type) { story_relation_type_path(id: relation_type) },
   delete_url: ->(relation_type) { story_relation_type_path(id: relation_type) },
   model_param: "relation_type",
-  modal_fields: relation_type_taxonomy_fields %>
+  modal_fields: relation_type_taxonomy_fields(Current.story.relation_types.order(:position, :id)) %>

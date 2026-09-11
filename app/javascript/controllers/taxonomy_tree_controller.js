@@ -128,19 +128,23 @@ export default class extends Controller {
     const data = await response.json()
     node.dataset.name = data.name
     node.dataset.description = data.description || ""
-    node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
+    node.dataset.taxonomyValues = JSON.stringify(data)
+    node.querySelector('[data-taxonomy-tree-target="name"]').innerHTML = this.buildNameContent(data)
     this.modal.hide()
     window.Turbo.visit(window.location.href)
   }
 
   modalFields(node) {
+    // The dragged/edited node cannot become its own parent, nor a descendant of itself.
+    const excludedParentIds = new Set([node.dataset.nodeId, ...[...node.querySelectorAll("[data-node-id]")].map((el) => el.dataset.nodeId)])
     return JSON.parse(this.modalFieldsValue || "[]").map((field) => {
       const id = `taxonomy-edit-${field.name}-${node.dataset.nodeId}`
       const name = `${this.modelParamValue}[${field.name}]`
       const required = field.required || field.required_unless
       const label = `${field.label}${required ? ' <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden"> (required)</span>' : ""}`
       if (field.type === "select") {
-        const options = field.options.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")
+        const fieldOptions = field.name === "parent_id" ? field.options.filter(([value]) => !excludedParentIds.has(String(value))) : field.options
+        const options = fieldOptions.map(([value, label]) => `<option value="${value}">${label}</option>`).join("")
         return `<div class="mb-3"><label class="form-label" for="${id}">${label}</label><select class="form-select" id="${id}" name="${name}"${field.required ? " required" : ""}>${options}</select></div>`
       }
       if (field.type === "checkbox") return `<div class="mb-3 form-check"><input type="hidden" name="${name}" value="0"><input class="form-check-input" type="checkbox" id="${id}" name="${name}" value="1"><label class="form-check-label" for="${id}">${label}</label></div>`
@@ -261,6 +265,8 @@ export default class extends Controller {
       list.className = "taxonomy-list list-unstyled ms-4"
       list.dataset.action = "dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
       list.dataset.dropParentId = node.dataset.nodeId
+      // Tag lists created to preview a nesting drop so cleanupDrag can remove them if they end up unused.
+      if (this.draggedNode) list.dataset.dragPreview = "true"
       node.append(list)
     }
     return list
@@ -280,19 +286,35 @@ export default class extends Controller {
     node.dataset.taxonomyValues = JSON.stringify(data)
     if (this.hasFieldNameValue) node.dataset.taxonomyFieldValue = data[this.fieldNameValue] || ""
     node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
-    node.querySelector('[data-taxonomy-tree-target="name"]').textContent = data.name
+    node.querySelector('[data-taxonomy-tree-target="name"]').innerHTML = this.buildNameContent(data)
     return node
   }
 
   restoreName(form, value = form.querySelector("input").value) {
+    const node = form.closest("[data-node-id]")
+    const values = JSON.parse(node?.dataset.taxonomyValues || "{}")
     const name = document.createElement("span")
     name.className = "flex-grow-1 text-break"
     name.setAttribute("role", "button")
     name.tabIndex = 0
     name.dataset.taxonomyTreeTarget = "name"
     name.dataset.action = "click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName"
-    name.textContent = value
+    name.innerHTML = this.buildNameContent({ name: value, color: values.color, description: node?.dataset.description })
     form.replaceWith(name)
+  }
+
+  escapeHtml(value) {
+    const div = document.createElement("div")
+    div.textContent = value ?? ""
+    return div.innerHTML
+  }
+
+  // Renders a node's name as a badge tinted with its own color, plus its description underneath.
+  buildNameContent(data) {
+    const name = this.escapeHtml(data.name)
+    const badge = data.color ? `<span class="badge text-dark" style="background-color: ${this.escapeHtml(data.color)};">${name}</span>` : name
+    const description = data.description ? `<div class="small text-body-secondary text-break">${this.escapeHtml(data.description)}</div>` : ""
+    return badge + description
   }
 
   // Separators sit between every pair of adjacently rendered nodes (regardless of nesting depth)
@@ -337,20 +359,29 @@ export default class extends Controller {
 
     const current = event.currentTarget
     if (current.matches(".taxonomy-list")) {
-      this.previewMove(current, null, event)
+      this.previewMove(current, null)
       return
     }
     if (!current.matches("[data-node-id]") || current === this.draggedNode || this.draggedNode.contains(current)) return
-    this.previewMove(current.parentElement, current, event)
+
+    // Hovering the top/bottom quarter of a node drops as its sibling (before/after); the middle half nests as its child.
+    const row = current.querySelector(":scope > .taxonomy-row")
+    const rect = row.getBoundingClientRect()
+    const offset = (event.clientY - rect.top) / rect.height
+    if (offset < 0.25) {
+      this.previewMove(current.parentElement, current, "before")
+    } else if (offset > 0.75) {
+      this.previewMove(current.parentElement, current, "after")
+    } else {
+      this.previewMove(this.childList(current), null)
+    }
   }
 
   // Physically relocates the dragged node live so the list opens a gap showing exactly where it will land.
-  previewMove(list, targetNode, event) {
+  // `position` is "before"/"after" relative to targetNode; omitted means append to the end of `list`.
+  previewMove(list, targetNode, position) {
     if (targetNode) {
-      const row = targetNode.querySelector(":scope > .taxonomy-row")
-      const rect = row.getBoundingClientRect()
-      const after = event.clientY > rect.top + rect.height / 2
-      if (after) {
+      if (position === "after") {
         if (targetNode.nextElementSibling !== this.draggedNode) targetNode.after(this.draggedNode)
       } else if (targetNode.previousElementSibling !== this.draggedNode) {
         targetNode.before(this.draggedNode)
@@ -407,6 +438,11 @@ export default class extends Controller {
   cleanupDrag() {
     if (this.draggedNode) this.draggedNode.classList.remove("taxonomy-node--dragging", "taxonomy-node--drop-noop", "taxonomy-node--drop-move")
     this.element.classList.remove("taxonomy-tree--dragging")
+    // Remove any child list created solely to preview nesting that ended up empty (drag moved elsewhere or was cancelled).
+    this.element.querySelectorAll('.taxonomy-list[data-drag-preview="true"]').forEach((list) => {
+      if (list.children.length === 0) list.remove()
+      else delete list.dataset.dragPreview
+    })
     this.draggedNode = null
     this.dragOriginalParent = null
     this.dragOriginalNext = null

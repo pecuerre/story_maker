@@ -10,4 +10,4 @@
   update_url: ->(location_type) { story_location_type_path(id: location_type) },
   delete_url: ->(location_type) { story_location_type_path(id: location_type) },
   model_param: "location_type",
-  modal_fields: location_type_taxonomy_fields %>
+  modal_fields: location_type_taxonomy_fields(Current.story.location_types.order(:position, :id)) %>

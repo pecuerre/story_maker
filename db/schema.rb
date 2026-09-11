@@ -10,8 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_10_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_11_000000) do
   create_table "character_types", force: :cascade do |t|
+    t.string "color", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
@@ -73,6 +74,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_020000) do
   end
 
   create_table "item_types", force: :cascade do |t|
+    t.string "color", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
@@ -99,6 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_020000) do
   end
 
   create_table "location_types", force: :cascade do |t|
+    t.string "color", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
@@ -125,6 +128,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_020000) do
   end
 
   create_table "ownership_types", force: :cascade do |t|
+    t.string "color", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
@@ -153,6 +157,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_020000) do
   end
 
   create_table "relation_types", force: :cascade do |t|
+    t.string "color", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "inverse"
@@ -183,6 +188,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_020000) do
   end
 
   create_table "section_types", force: :cascade do |t|
+    t.string "color", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"

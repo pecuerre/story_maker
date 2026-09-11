@@ -3,7 +3,7 @@ class OwnershipsController < ApplicationController
 
   def index
     load_form_options
-    @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_type).order(:id)
+    @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_types).order(:id)
   end
 
   def create
@@ -13,7 +13,7 @@ class OwnershipsController < ApplicationController
       redirect_to story_ownerships_path(), notice: "Ownership created."
     else
       load_form_options
-      @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_type).order(:id)
+      @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_types).order(:id)
       render :index, status: :unprocessable_content
     end
   end
@@ -23,7 +23,7 @@ class OwnershipsController < ApplicationController
       redirect_to story_ownerships_path(), notice: "Ownership updated."
     else
       load_form_options
-      @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_type).order(:id)
+      @ownerships = Current.story.ownerships.includes(:item, :character, :ownership_types).order(:id)
       render :index, status: :unprocessable_content
     end
   end
@@ -40,7 +40,7 @@ class OwnershipsController < ApplicationController
   end
 
   def ownership_params
-    params.expect(ownership: [ :item_id, :character_id, :ownership_type_id, :description, :from_date, :to_date ])
+    params.expect(ownership: [ :item_id, :character_id, { ownership_type_ids: [] }, :description, :from_date, :to_date ])
   end
 
   def load_form_options

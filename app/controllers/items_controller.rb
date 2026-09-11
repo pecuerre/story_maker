@@ -6,7 +6,7 @@ class ItemsController < ApplicationController
 
   def index
     @items = Current.story.items
-    @items = @items.includes(:item_type)
+    @items = @items.includes(:item_types)
     @items = @items.order(:name, :id)
 
     @item_types = Current.story.item_types
@@ -22,7 +22,7 @@ class ItemsController < ApplicationController
 
   def create
     @item = Current.story.items.new(item_params)
-    @item.item_type ||= Current.story.item_types.order(:id).first
+    @item.item_type_ids = [ Current.story.item_types.order(:id).first.id ] if @item.item_type_ids.empty?
     @item.position = sibling_count(@item.parent_id)
 
     respond_to do |format|
@@ -56,7 +56,7 @@ class ItemsController < ApplicationController
   end
 
   def item_params
-    params.expect(item: [ :name, :description, :item_type_id, :parent_id, :position ])
+    params.expect(item: [ :name, :description, { item_type_ids: [] }, :parent_id, :position ])
   end
 
   def update_item
@@ -69,7 +69,7 @@ class ItemsController < ApplicationController
       id: @item.id,
       name: @item.name,
       description: @item.description,
-      item_type_id: @item.item_type_id,
+      item_type_ids: @item.item_type_ids,
       parent_id: @item.parent_id,
       position: @item.position,
       url: story_item_path(id: @item)

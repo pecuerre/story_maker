@@ -81,10 +81,10 @@
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
             <div class="mb-3">
-              <%= form.label :character_type_id, "Character type", class: "form-label" %>
-              <%= form.collection_select :character_type_id, @character_types, :id, :name,
-                { prompt: "Select a character type" },
-                { class: "form-select", required: true } %>
+              <%= form.label :character_type_ids, "Character types", class: "form-label" %>
+              <%= form.collection_select :character_type_ids, @character_types, :id, :name,
+                {},
+                { class: "form-select", multiple: true, required: true } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>

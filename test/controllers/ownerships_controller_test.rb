@@ -24,7 +24,7 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
         ownership: {
           item_id: @item.id,
           character_id: @character.id,
-          ownership_type_id: @ownership_type.id,
+          ownership_type_ids: [ @ownership_type.id ],
           description: "Held by the character"
         }
       }

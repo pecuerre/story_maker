@@ -1,9 +1,10 @@
 class SectionType < ApplicationRecord
   include Hierarchical
   include HasColor
+  include HasManyTypes
 
   belongs_to :story
-  has_many :sections, dependent: :destroy
+  has_many_typed :section
 
   validates :name, presence: true
 end

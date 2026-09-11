@@ -24,7 +24,7 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
         relation: {
           character1_id: @character_one.id,
           character2_id: @character_two.id,
-          relation_type_id: @relation_type.id,
+          relation_type_ids: [ @relation_type.id ],
           description: "They are family"
         }
       }
@@ -35,7 +35,7 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update relation and redirect" do
-    relation = Relation.create!(story: @story, character1: @character_one, character2: @character_two, relation_type: @relation_type)
+    relation = Relation.create!(story: @story, character1: @character_one, character2: @character_two, relation_types: [ @relation_type ])
 
     patch story_relation_url(story_slug: @story.slug, id: relation), params: {
       relation: { description: "Updated description" }

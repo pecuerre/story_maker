@@ -22,7 +22,7 @@ module ModalFields
       after_event_id: event.after_event_id,
       simultaneous_event_id: event.simultaneous_event_id,
       description: event.description,
-      event_type_id: event.event_type_id
+      event_type_ids: event.event_type_ids
     }.to_json
   end
 
@@ -84,7 +84,7 @@ module ModalFields
     {
       name: character.name,
       description: character.description,
-      character_type_id: character.character_type_id
+      character_type_ids: character.character_type_ids
     }.to_json
   end
 
@@ -119,7 +119,7 @@ module ModalFields
     {
       name: item.name,
       description: item.description,
-      item_type_id: item.item_type_id
+      item_type_ids: item.item_type_ids
     }.to_json
   end
 
@@ -164,9 +164,10 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "location_type_id",
-        label: "Location type",
+        name: "location_type_ids",
+        label: "Location types",
         type: "select",
+        multiple: true,
         required: true,
         options: location_types.map { |location_type|
           [ location_type.id, location_type.name ]
@@ -206,7 +207,7 @@ module ModalFields
     {
       item_id: ownership.item_id,
       character_id: ownership.character_id,
-      ownership_type_id: ownership.ownership_type_id,
+      ownership_type_ids: ownership.ownership_type_ids,
       description: ownership.description,
       from_date: ownership.from_date&.strftime('%Y-%m-%dT%H:%M'),
       to_date: ownership.to_date&.strftime('%Y-%m-%dT%H:%M')
@@ -255,7 +256,7 @@ module ModalFields
     {
       character1_id: relation.character1_id,
       character2_id: relation.character2_id,
-      relation_type_id: relation.relation_type_id,
+      relation_type_ids: relation.relation_type_ids,
       description: relation.description,
       from_date: relation.from_date&.strftime('%Y-%m-%dT%H:%M'),
       to_date: relation.to_date&.strftime('%Y-%m-%dT%H:%M')
@@ -303,9 +304,10 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "section_type_id",
-        label: "Section type",
+        name: "section_type_ids",
+        label: "Section types",
         type: "select",
+        multiple: true,
         required: true,
         options: section_types.map { |section_type|
           [ section_type.id, section_type.name ]

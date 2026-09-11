@@ -4,10 +4,10 @@ item_one:
   name: Item one
   parent:
   story: story_one
-  item_type: item_type_one
+  item_types: item_type_one
 
 item_two:
   name: Item two
   parent: item_one
   story: story_one
-  item_type: item_type_two
+  item_types: item_type_two

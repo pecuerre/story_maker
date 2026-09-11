@@ -1,8 +1,9 @@
 class Event < ApplicationRecord
   include Hierarchical
+  include HasManyTypes
 
   belongs_to :story
-  belongs_to :event_type, optional: true
+  has_many_types :event_type, required: false
   belongs_to :before_event, class_name: "Event", optional: true
   belongs_to :after_event, class_name: "Event", optional: true
   belongs_to :simultaneous_event, class_name: "Event", optional: true

@@ -13,12 +13,12 @@ class RelationTest < ActiveSupport::TestCase
     assert_not relation.valid?
     assert_includes relation.errors[:character1], "can't be blank"
     assert_includes relation.errors[:character2], "can't be blank"
-    assert_includes relation.errors[:relation_type], "can't be blank"
+    assert_includes relation.errors[:relation_types], "can't be blank"
   end
 
   test "allows repeated relations between the same characters" do
     @relation_type.save!
-    attributes = { story: @story, character1: @character, character2: characters(:character_two), relation_type: @relation_type }
+    attributes = { story: @story, character1: @character, character2: characters(:character_two), relation_types: [ @relation_type ] }
 
     assert Relation.create!(attributes)
     assert Relation.create!(attributes)

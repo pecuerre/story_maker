@@ -1,8 +1,9 @@
 class Location < ApplicationRecord
   include Hierarchical
+  include HasManyTypes
 
   belongs_to :story
-  belongs_to :location_type
+  has_many_types :location_type
 
   validates :name, presence: true
 end

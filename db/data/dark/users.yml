@@ -1,0 +1,5 @@
+- slug: dark-admin
+  name: "Dark Admin User"
+  email_address: "dark@dark"
+  password: "dark"
+  password_confirmation: "dark"

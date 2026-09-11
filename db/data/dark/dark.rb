@@ -1,37 +1,52 @@
-###
-### user
-###
-user = User.create(name: "Dark User", email_address: "dark@dark", password: "dark", password_confirmation: "dark")
+directory = Rails.root.join("db/data/dark")
 
-###
-### story
-###
-story = Story.create(name: "Dark", owner: user, slug: "dark", private: false)
+models_in_order = [
+  User,
+  Story,
+  SectionType,
+  Section,
+]
 
-###
-### section types
-###
-st_season = SectionType.create(story: story, name: "Season", color: "#b3b3b3")
-st_episode = SectionType.create(story: story, name: "Episode", color: "#d3d3d3")
+def extract_reference(value, model)
+  object_regex = /\A([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\z/
 
-###
-### sections
-###
-s_s1 = Section.create(story: story, name: "Season 1", section_types: [ st_season ])
-s_s1e1 = Section.create(story: story, name: "Episode 1: Secrets", section_types: [ st_episode ], parent: s_s1)
-s_s1e2 = Section.create(story: story, name: "Episode 2: Lies", section_types: [ st_episode ], parent: s_s1)
-s_s1e3 = Section.create(story: story, name: "Episode 3: Past and Present", section_types: [ st_episode ], parent: s_s1)
-s_s1e4 = Section.create(story: story, name: "Episode 4: Double Lives", section_types: [ st_episode ], parent: s_s1)
-s_s1e5 = Section.create(story: story, name: "Episode 5: Truths", section_types: [ st_episode ], parent: s_s1)
-s_s1e6 = Section.create(story: story, name: "Episode 6: Sic Mundus Creatus Est", section_types: [ st_episode ], parent: s_s1)
-s_s2 = Section.create(story: story, name: "Season 2", section_types: [ st_season ])
-s_s2e1 = Section.create(story: story, name: "Episode 1", section_types: [ st_episode ], parent: s_s2)
-s_s2e2 = Section.create(story: story, name: "Episode 2", section_types: [ st_episode ], parent: s_s2)
-s_s2e3 = Section.create(story: story, name: "Episode 3", section_types: [ st_episode ], parent: s_s2)
-s_s3 = Section.create(story: story, name: "Season 3", section_types: [ st_season ])
-s_s3e1 = Section.create(story: story, name: "Episode 1", section_types: [ st_episode ], parent: s_s3)
-s_s3e2 = Section.create(story: story, name: "Episode 2", section_types: [ st_episode ], parent: s_s3)
-s_s3e3 = Section.create(story: story, name: "Episode 3", section_types: [ st_episode ], parent: s_s3)
+  if value.is_a?(String) && value.match(object_regex)
+    referenced_model_name = $1
+    slug = model.slugify($2)
+    referenced_model = referenced_model_name.camelize.constantize
+    value = referenced_model.find_by(slug: slug)
+  end
+
+  value
+end
+
+models_in_order.each do |model|
+  model_name = model.name.underscore.pluralize
+  puts "Processing model: #{model_name.green}"
+
+  model_data = YAML.load_file(directory.join("#{model_name}.yml"))
+
+  model_data.each do |yaml_attributes|
+    attributes = {}
+
+    yaml_attributes.each do |key, value|
+      if value.is_a?(String)
+        value = extract_reference(value, model)
+      elsif value.is_a?(Array)
+        value = value.map { |v| extract_reference(v, model) }
+      else
+        # value remains the same
+      end
+
+      attributes[key] = value
+    end
+
+    model.create!(attributes)
+    puts "- Created #{model.name}: #{attributes['slug'].blue}"
+  end
+end
+
+story = Story.find_by(slug: "dark")
 
 # locations
 lt_town = LocationType.create(story: story, name: "Town")

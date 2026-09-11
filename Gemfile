@@ -67,4 +67,6 @@ end
 
 gem "cssbundling-rails", "~> 1.4"
 
+# Added by PQR
 gem "cancancan", "~> 3.6"
+gem "colorize"

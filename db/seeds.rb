@@ -9,7 +9,9 @@ Dir[Rails.root.join("db/seeds/**/*.rb")].sort.each do |file|
 end
 
 # Then the data
-Dir[Rails.root.join("db/data/**/*.rb")].sort.each do |file|
-  puts "Loading #{file}"
+stories = ["dark", "lotr"]
+stories.each do |name|
+  file = Rails.root.join("db/data/#{name}/#{name}.rb")
+  puts "Loading #{file}".yellow
   load file
 end

@@ -1,9 +1,14 @@
-- story: "Story.dark"
-  name: "Season"
-  slug: "season"
+- story: Story.dark
+  name: Season
+  slug: season
   color: "#b3b3b3"
 
-- story: "Story.dark"
-  name: "Episode"
-  slug: "episode"
+- story: Story.dark
+  name: Episode
+  slug: episode
   color: "#d3d3d3"
+
+- story: Story.dark
+  name: Finale
+  slug: finale
+  color: "#6699cc" # blue gray

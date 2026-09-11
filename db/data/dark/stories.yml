@@ -1,6 +1,4 @@
-# story = Story.create(name: "Dark", owner: User.dark_admin, slug: "dark", private: false)
-
-- name: "Dark"
-  owner: "User.dark_admin"
-  slug: "dark"
+- name: Dark
+  owner: User.dark_admin
+  slug: dark
   private: false

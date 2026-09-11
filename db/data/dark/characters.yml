@@ -1,0 +1,31 @@
+- story: Story.dark
+  name: Jonas
+  character_types: [ CharacterType.family_kahnwald, CharacterType.sic_mundus ]
+
+- story: Story.dark
+  name: Martha
+  character_types: [ CharacterType.family_nielsen, CharacterType.erit_lux ]
+
+- story: Story.dark
+  name: Ulrich
+  character_types: [ CharacterType.family_nielsen, CharacterType.police ]
+
+- story: Story.dark
+  name: Hannah
+  character_types: [ CharacterType.family_nielsen ]
+
+- story: Story.dark
+  name: Katharina
+  character_types: [ CharacterType.family_nielsen ]
+
+- story: Story.dark
+  name: Charlotte
+  character_types: [ CharacterType.family_doppler, CharacterType.police ]
+
+- story: Story.dark
+  name: Egon
+  character_types: [ CharacterType.family_tiedemann, CharacterType.police ]
+
+- story: Story.dark
+  name: Claudia
+  character_types: [ CharacterType.family_tiedemann, CharacterType.nuclear_plant ]

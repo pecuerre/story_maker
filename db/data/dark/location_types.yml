@@ -1,0 +1,33 @@
+- story: Story.dark
+  name: "Town"
+  slug: "town"
+  color: "#FF0000"
+
+- story: Story.dark
+  name: "House"
+  slug: "house"
+  color: "#00FF00"
+
+- story: Story.dark
+  name: "School"
+  slug: "school"
+  color: "#0000FF"
+
+- story: Story.dark
+  name: "Police"
+  slug: "police"
+  color: "#FFFF00"
+
+- story: Story.dark
+  name: "Forest"
+  slug: "forest"
+  color: "#00FFFF"
+
+- story: Story.dark
+  name: "Cave"
+  slug: "cave"
+  color: "#FF00FF"
+
+- story: Story.dark
+  name: "Room"
+  slug: "room"

@@ -100,7 +100,7 @@
               <%= form.label :event_type_ids, "Event types", class: "form-label" %>
               <%= form.collection_select :event_type_ids, @event_types, :id, :name,
                 {},
-                { class: "form-select", multiple: true } %>
+                { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
             <div class="row g-3">
               <div class="col-md-4">

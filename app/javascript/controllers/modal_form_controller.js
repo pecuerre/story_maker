@@ -22,6 +22,7 @@ export default class extends Controller {
     this.formTarget.action = trigger.dataset.modalFormUrl
     this.setMethod(trigger.dataset.modalFormMethod || "post")
     this.formTarget.reset()
+    this.formTarget.querySelectorAll("select[multiple]").forEach((select) => select.tomselect?.clear(true))
 
     Object.entries(values).forEach(([name, value]) => {
       const fieldName = `${this.modelParamValue}[${name}]`
@@ -30,7 +31,8 @@ export default class extends Controller {
 
       if (Array.isArray(value) && field.multiple) {
         const selected = value.map(String)
-        Array.from(field.options).forEach((option) => { option.selected = selected.includes(option.value) })
+        if (field.tomselect) field.tomselect.setValue(selected, true)
+        else Array.from(field.options).forEach((option) => { option.selected = selected.includes(option.value) })
       } else {
         field.value = value
       }

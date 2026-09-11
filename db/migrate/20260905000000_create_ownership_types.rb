@@ -6,6 +6,8 @@ class CreateOwnershipTypes < ActiveRecord::Migration[8.1]
       t.text :description
       t.references :parent, foreign_key: { to_table: :ownership_types }
       t.integer :position, null: false, default: 0
+      t.string :slug, null: false
+      t.string :color, null: false, default: "#d3d3d3"
 
       t.timestamps
     end

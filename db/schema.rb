@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   create_table "character_types", force: :cascade do |t|
     t.string "color", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -18,6 +18,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_character_types_on_parent_id"
@@ -30,6 +31,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_characters_on_parent_id"
@@ -39,8 +41,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
   create_table "characters_character_types", id: false, force: :cascade do |t|
     t.integer "character_id", null: false
     t.integer "character_type_id", null: false
-    t.index ["character_id", "character_type_id"], name: "index_characters_character_types_uniq", unique: true
-    t.index ["character_type_id", "character_id"], name: "index_characters_character_types_inverse"
   end
 
   create_table "event_types", force: :cascade do |t|
@@ -50,6 +50,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_event_types_on_parent_id"
@@ -62,9 +63,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "end_datetime"
+    t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
     t.integer "simultaneous_event_id"
+    t.string "slug", null: false
     t.datetime "start_datetime"
     t.integer "story_id", null: false
     t.string "title"
@@ -79,8 +82,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
   create_table "events_event_types", id: false, force: :cascade do |t|
     t.integer "event_id", null: false
     t.integer "event_type_id", null: false
-    t.index ["event_id", "event_type_id"], name: "index_events_event_types_uniq", unique: true
-    t.index ["event_type_id", "event_id"], name: "index_events_event_types_inverse"
   end
 
   create_table "item_types", force: :cascade do |t|
@@ -90,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_item_types_on_parent_id"
@@ -102,6 +104,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_items_on_parent_id"
@@ -111,8 +114,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
   create_table "items_item_types", id: false, force: :cascade do |t|
     t.integer "item_id", null: false
     t.integer "item_type_id", null: false
-    t.index ["item_id", "item_type_id"], name: "index_items_item_types_uniq", unique: true
-    t.index ["item_type_id", "item_id"], name: "index_items_item_types_inverse"
   end
 
   create_table "location_types", force: :cascade do |t|
@@ -122,6 +123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_location_types_on_parent_id"
@@ -134,6 +136,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_locations_on_parent_id"
@@ -143,8 +146,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
   create_table "locations_location_types", id: false, force: :cascade do |t|
     t.integer "location_id", null: false
     t.integer "location_type_id", null: false
-    t.index ["location_id", "location_type_id"], name: "index_locations_location_types_uniq", unique: true
-    t.index ["location_type_id", "location_id"], name: "index_locations_location_types_inverse"
   end
 
   create_table "ownership_types", force: :cascade do |t|
@@ -154,6 +155,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_ownership_types_on_parent_id"
@@ -166,6 +168,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.text "description"
     t.datetime "from_date"
     t.integer "item_id", null: false
+    t.string "name"
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "to_date"
     t.datetime "updated_at", null: false
@@ -177,8 +181,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
   create_table "ownerships_ownership_types", id: false, force: :cascade do |t|
     t.integer "ownership_id", null: false
     t.integer "ownership_type_id", null: false
-    t.index ["ownership_id", "ownership_type_id"], name: "index_ownerships_ownership_types_uniq", unique: true
-    t.index ["ownership_type_id", "ownership_id"], name: "index_ownerships_ownership_types_inverse"
   end
 
   create_table "relation_types", force: :cascade do |t|
@@ -189,6 +191,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.boolean "symmetric", default: true, null: false
     t.datetime "updated_at", null: false
@@ -202,6 +205,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "from_date"
+    t.string "name"
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "to_date"
     t.datetime "updated_at", null: false
@@ -213,8 +218,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
   create_table "relations_relation_types", id: false, force: :cascade do |t|
     t.integer "relation_id", null: false
     t.integer "relation_type_id", null: false
-    t.index ["relation_id", "relation_type_id"], name: "index_relations_relation_types_uniq", unique: true
-    t.index ["relation_type_id", "relation_id"], name: "index_relations_relation_types_inverse"
   end
 
   create_table "section_types", force: :cascade do |t|
@@ -224,6 +227,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_section_types_on_parent_id"
@@ -236,6 +240,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_sections_on_parent_id"
@@ -245,8 +250,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
   create_table "sections_section_types", id: false, force: :cascade do |t|
     t.integer "section_id", null: false
     t.integer "section_type_id", null: false
-    t.index ["section_id", "section_type_id"], name: "index_sections_section_types_uniq", unique: true
-    t.index ["section_type_id", "section_id"], name: "index_sections_section_types_inverse"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -263,17 +266,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_11_010000) do
     t.string "name"
     t.integer "owner_id", null: false
     t.boolean "private", default: false
-    t.string "slug"
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["owner_id"], name: "index_stories_on_owner_id"
+    t.index ["slug"], name: "index_stories_on_slug", unique: true
   end
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address", null: false
+    t.string "name", null: false
     t.string "password_digest", null: false
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["slug"], name: "index_users_on_slug", unique: true
   end
 
   add_foreign_key "character_types", "character_types", column: "parent_id"

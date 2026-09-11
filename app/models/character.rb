@@ -1,6 +1,7 @@
 class Character < ApplicationRecord
   include Hierarchical
   include HasManyTypes
+  include HasSlug
 
   belongs_to :story
   has_many_types :character_type

@@ -1,15 +1,28 @@
 class Ownership < ApplicationRecord
   include HasManyTypes
+  include HasSlug
 
   belongs_to :story
   belongs_to :item
   belongs_to :character
   has_many_types :ownership_type
 
+  before_validation :generate_slug, on: :create
   validates :item, :character, presence: true
   validate :associated_records_belong_to_story
 
   private
+
+  def generate_slug
+    return if slug.present?
+
+    if name.present?
+      self.slug = name.to_s.parameterize
+      return
+    end
+
+    self.slug = "#{character.slug}-#{ownership_types.first.slug}-#{item.slug}"
+  end
 
   def associated_records_belong_to_story
     { item: item, character: character }.each do |name, record|

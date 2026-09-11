@@ -10,4 +10,4 @@
 	update_url: ->(event_type) { story_event_type_path(id: event_type) },
 	delete_url: ->(event_type) { story_event_type_path(id: event_type) },
 	model_param: "event_type",
-	modal_fields: event_type_taxonomy_fields %>
+	modal_fields: event_type_taxonomy_fields(Current.story.event_types.order(:position, :id)) %>

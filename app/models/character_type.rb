@@ -1,5 +1,6 @@
 class CharacterType < ApplicationRecord
   include Hierarchical
+  include HasColor
 
   belongs_to :story
   has_many :characters, dependent: :destroy

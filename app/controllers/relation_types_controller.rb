@@ -51,7 +51,7 @@ class RelationTypesController < ApplicationController
   end
 
   def relation_type_params
-    params.expect(relation_type: [ :name, :description, :parent_id, :position, :symmetric, :inverse ])
+    params.expect(relation_type: [ :name, :description, :color, :parent_id, :position, :symmetric, :inverse ])
   end
 
   def update_relation_type
@@ -63,6 +63,7 @@ class RelationTypesController < ApplicationController
       id: @relation_type.id,
       name: @relation_type.name,
       description: @relation_type.description,
+      color: @relation_type.color,
       parent_id: @relation_type.parent_id,
       position: @relation_type.position,
       symmetric: @relation_type.symmetric,

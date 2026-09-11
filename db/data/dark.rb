@@ -1,12 +1,22 @@
-# user
+###
+### user
+###
 user = User.create(email_address: "dark@dark", password: "dark", password_confirmation: "dark")
 
-# story
+###
+### story
+###
 story = Story.create(name: "Dark", owner: user, slug: "dark", private: false)
 
-# sections
-st_season = SectionType.create(story: story, name: "Season")
-st_episode = SectionType.create(story: story, name: "Episode")
+###
+### section types
+###
+st_season = SectionType.create(story: story, name: "Season", color: "#b3b3b3")
+st_episode = SectionType.create(story: story, name: "Episode", color: "#d3d3d3")
+
+###
+### sections
+###
 s_s1 = Section.create(story: story, name: "Season 1", section_type: st_season)
 s_s1e1 = Section.create(story: story, name: "Episode 1: Secrets", section_type: st_episode, parent: s_s1)
 s_s1e2 = Section.create(story: story, name: "Episode 2: Lies", section_type: st_episode, parent: s_s1)

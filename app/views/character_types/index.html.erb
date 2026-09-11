@@ -10,4 +10,4 @@
   update_url: ->(character_type) { story_character_type_path(id: character_type) },
   delete_url: ->(character_type) { story_character_type_path(id: character_type) },
   model_param: "character_type",
-  modal_fields: character_type_taxonomy_fields %>
+  modal_fields: character_type_taxonomy_fields(Current.story.character_types.order(:position, :id)) %>

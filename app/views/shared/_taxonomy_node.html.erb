@@ -20,8 +20,12 @@
       role="button" tabindex="0"
       data-taxonomy-tree-target="name"
       data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName">
-      <%= node.name %>
-      <%= entity_type_badge(node) %>
+      <% if node.respond_to?(:color) %>
+        <%= entity_type_badge(node) %>
+      <% else %>
+        <%= node.name %>
+        <%= entity_type_badge(node) %>
+      <% end %>
       <% if node.description.present? %>
         <div class="small text-body-secondary text-break"><%= node.description %></div>
       <% end %>

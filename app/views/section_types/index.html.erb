@@ -10,4 +10,4 @@
 	update_url: ->(section_type) { story_section_type_path(id: section_type) },
 	delete_url: ->(section_type) { story_section_type_path(id: section_type) },
 	model_param: "section_type",
-	modal_fields: section_type_taxonomy_fields %>
+	modal_fields: section_type_taxonomy_fields(Current.story.section_types.order(:position, :id)) %>

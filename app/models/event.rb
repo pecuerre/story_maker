@@ -1,12 +1,14 @@
 class Event < ApplicationRecord
   include Hierarchical
   include HasManyTypes
+  include HasSlug
 
   belongs_to :story
   has_many_types :event_type, required: false
   belongs_to :before_event, class_name: "Event", optional: true
   belongs_to :after_event, class_name: "Event", optional: true
   belongs_to :simultaneous_event, class_name: "Event", optional: true
+  before_validation :set_name, on: :create
 
   validate :associated_records_belong_to_story
   validate :cannot_reference_self
@@ -37,6 +39,10 @@ class Event < ApplicationRecord
   end
 
   private
+
+  def set_name
+    self.name = title if title.present?
+  end
 
   def formatted_datetime(datetime)
     datetime.strftime("%Y-%m-%d %H:%M")

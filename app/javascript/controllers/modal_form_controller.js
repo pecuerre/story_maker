@@ -24,8 +24,16 @@ export default class extends Controller {
     this.formTarget.reset()
 
     Object.entries(values).forEach(([name, value]) => {
-      const field = this.formTarget.elements.namedItem(`${this.modelParamValue}[${name}]`)
-      if (field) field.value = value
+      const fieldName = `${this.modelParamValue}[${name}]`
+      const field = this.formTarget.elements.namedItem(fieldName) || this.formTarget.elements.namedItem(`${fieldName}[]`)
+      if (!field) return
+
+      if (Array.isArray(value) && field.multiple) {
+        const selected = value.map(String)
+        Array.from(field.options).forEach((option) => { option.selected = selected.includes(option.value) })
+      } else {
+        field.value = value
+      }
     })
 
     this.modal.show()

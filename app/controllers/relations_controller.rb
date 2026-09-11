@@ -3,7 +3,7 @@ class RelationsController < ApplicationController
 
   def index
     load_form_options
-    @relations = Current.story.relations.includes(:character1, :character2, :relation_type).order(:id)
+    @relations = Current.story.relations.includes(:character1, :character2, :relation_types).order(:id)
   end
 
   def create
@@ -13,7 +13,7 @@ class RelationsController < ApplicationController
       redirect_to story_relations_path(), notice: "Relation created."
     else
       load_form_options
-      @relations = Current.story.relations.includes(:character1, :character2, :relation_type).order(:id)
+      @relations = Current.story.relations.includes(:character1, :character2, :relation_types).order(:id)
       render :index, status: :unprocessable_content
     end
   end
@@ -23,7 +23,7 @@ class RelationsController < ApplicationController
       redirect_to story_relations_path(), notice: "Relation updated."
     else
       load_form_options
-      @relations = Current.story.relations.includes(:character1, :character2, :relation_type).order(:id)
+      @relations = Current.story.relations.includes(:character1, :character2, :relation_types).order(:id)
       render :index, status: :unprocessable_content
     end
   end
@@ -40,7 +40,7 @@ class RelationsController < ApplicationController
   end
 
   def relation_params
-    params.expect(relation: [ :character1_id, :character2_id, :relation_type_id, :description, :from_date, :to_date ])
+    params.expect(relation: [ :character1_id, :character2_id, { relation_type_ids: [] }, :description, :from_date, :to_date ])
   end
 
   def load_form_options

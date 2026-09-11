@@ -6,7 +6,7 @@ class SectionsController < ApplicationController
 
   def index
     @sections = Current.story.sections
-    @sections = @sections.includes(:children, :section_type)
+    @sections = @sections.includes(:children, :section_types)
     @sections = @sections.where(parent_id: nil)
     @sections = @sections.order(:position, :id)
 
@@ -23,7 +23,7 @@ class SectionsController < ApplicationController
 
   def create
     @section = Current.story.sections.new(section_params)
-    @section.section_type ||= Current.story.section_types.order(:id).first
+    @section.section_type_ids = [ Current.story.section_types.order(:id).first.id ] if @section.section_type_ids.empty?
     @section.position = sibling_count(@section.parent_id)
 
     respond_to do |format|
@@ -63,7 +63,7 @@ class SectionsController < ApplicationController
   end
 
   def section_params
-    params.expect(section: [ :name, :description, :section_type_id, :parent_id, :position ])
+    params.expect(section: [ :name, :description, { section_type_ids: [] }, :parent_id, :position ])
   end
 
   def update_section
@@ -76,7 +76,7 @@ class SectionsController < ApplicationController
       id: @section.id,
       name: @section.name,
       description: @section.description,
-      section_type_id: @section.section_type_id,
+      section_type_ids: @section.section_type_ids,
       parent_id: @section.parent_id,
       url: story_section_path(id: @section)
     }

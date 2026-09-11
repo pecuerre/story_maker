@@ -20,21 +20,22 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "should create location as json" do
     assert_difference("Location.count") do
       post story_locations_url(story_slug: @story.slug),
-        params: { location: { name: "New location", description: "A description", location_type_id: @location_type.id } },
+        params: { location: { name: "New location", description: "A description", location_type_ids: [ @location_type.id ] } },
         as: :json
     end
 
     assert_response :created
-    assert_equal @location_type.id, response.parsed_body["location_type_id"]
+    assert_equal [ @location_type.id ], response.parsed_body["location_type_ids"]
     assert_equal "A description", Location.order(:id).last.description
   end
 
   test "should update location details as json" do
     patch story_location_url(story_slug: @story.slug, id: @location),
-      params: { location: { name: "Renamed", description: "Updated", location_type_id: @location_type.id } },
+      params: { location: { name: "Renamed", description: "Updated", location_type_ids: [ @location_type.id ] } },
       as: :json
 
     assert_response :success
-    assert_equal [ "Renamed", "Updated", @location_type.id ], @location.reload.values_at(:name, :description, :location_type_id)
+    @location.reload
+    assert_equal [ "Renamed", "Updated", [ @location_type.id ] ], [ @location.name, @location.description, @location.location_type_ids ]
   end
 end

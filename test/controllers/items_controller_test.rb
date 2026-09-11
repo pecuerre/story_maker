@@ -20,21 +20,22 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
   test "should create item as json" do
     assert_difference("Item.count") do
       post story_items_url(story_slug: @story.slug),
-        params: { item: { name: "New item", description: "A description", item_type_id: @item_type.id } },
+        params: { item: { name: "New item", description: "A description", item_type_ids: [ @item_type.id ] } },
         as: :json
     end
 
     assert_response :created
-    assert_equal @item_type.id, response.parsed_body["item_type_id"]
+    assert_equal [ @item_type.id ], response.parsed_body["item_type_ids"]
     assert_equal "A description", Item.order(:id).last.description
   end
 
   test "should update item details as json" do
     patch story_item_url(story_slug: @story.slug, id: @item),
-      params: { item: { name: "Renamed", description: "Updated", item_type_id: @item_type.id } },
+      params: { item: { name: "Renamed", description: "Updated", item_type_ids: [ @item_type.id ] } },
       as: :json
 
     assert_response :success
-    assert_equal [ "Renamed", "Updated", @item_type.id ], @item.reload.values_at(:name, :description, :item_type_id)
+    @item.reload
+    assert_equal [ "Renamed", "Updated", [ @item_type.id ] ], [ @item.name, @item.description, @item.item_type_ids ]
   end
 end

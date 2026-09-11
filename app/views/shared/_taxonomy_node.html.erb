@@ -12,7 +12,7 @@
   data-description="<%= node.description %>"
   data-taxonomy-values="<%= modal_fields.to_h { |field| [field[:name], node.public_send(field[:name])] }.to_json %>"
     <% if taxonomy_field %>
-      data-taxonomy-field-value="<%= node.public_send(taxonomy_field) %>"
+      data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"
     <% end %>>
   <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2">
     <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>

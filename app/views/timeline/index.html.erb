@@ -24,7 +24,7 @@
                 id="timeline-event-<%= event.id %>"
                 data-timeline-target="node"
                 data-event-id="<%= event.id %>"
-                style="background-color: <%= event.event_type&.color || '#d3d3d3' %>;"
+                style="background-color: <%= event.event_types.first&.color || '#d3d3d3' %>;"
                 tabindex="0"
                 data-bs-toggle="popover"
                 data-bs-trigger="hover focus"

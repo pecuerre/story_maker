@@ -90,10 +90,10 @@
               </div>
             </div>
             <div class="mb-3">
-              <%= form.label :ownership_type_id, "Ownership type", class: "form-label" %>
-              <%= form.collection_select :ownership_type_id, @ownership_types, :id, :name,
-                { prompt: "Select an ownership type" },
-                  { class: "form-select", required: true } %>
+              <%= form.label :ownership_type_ids, "Ownership types", class: "form-label" %>
+              <%= form.collection_select :ownership_type_ids, @ownership_types, :id, :name,
+                {},
+                  { class: "form-select", multiple: true, required: true } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>

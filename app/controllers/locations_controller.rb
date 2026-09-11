@@ -6,7 +6,7 @@ class LocationsController < ApplicationController
 
   def index
     @locations = Current.story.locations
-    @locations = @locations.includes(:children, :location_type)
+    @locations = @locations.includes(:children, :location_types)
     @locations = @locations.where(parent_id: nil)
     @locations = @locations.order(:position, :id)
 
@@ -16,7 +16,7 @@ class LocationsController < ApplicationController
 
   def create
     @location = Current.story.locations.new(location_params)
-    @location.location_type ||= Current.story.location_types.order(:id).first
+    @location.location_type_ids = [ Current.story.location_types.order(:id).first.id ] if @location.location_type_ids.empty?
     @location.position = sibling_count(@location.parent_id)
 
     respond_to do |format|
@@ -50,7 +50,7 @@ class LocationsController < ApplicationController
   end
 
   def location_params
-    params.expect(location: [ :name, :description, :location_type_id, :parent_id, :position ])
+    params.expect(location: [ :name, :description, { location_type_ids: [] }, :parent_id, :position ])
   end
 
   def update_location
@@ -63,7 +63,7 @@ class LocationsController < ApplicationController
       id: @location.id,
       name: @location.name,
       description: @location.description,
-      location_type_id: @location.location_type_id,
+      location_type_ids: @location.location_type_ids,
       parent_id: @location.parent_id,
       position: @location.position,
       url: story_location_path(id: @location)

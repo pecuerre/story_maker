@@ -21,22 +21,23 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
   test "should create section as json" do
     assert_difference("Section.count") do
       post story_sections_url(story_slug: @story.slug),
-        params: { section: { name: "New section", description: "A description", section_type_id: @section_type.id } },
+        params: { section: { name: "New section", description: "A description", section_type_ids: [ @section_type.id ] } },
         as: :json
     end
 
     assert_response :created
-    assert_equal @section_type.id, response.parsed_body["section_type_id"]
+    assert_equal [ @section_type.id ], response.parsed_body["section_type_ids"]
     assert_equal "A description", Section.order(:id).last.description
   end
 
   test "should update section details as json" do
     patch story_section_url(story_slug: @story.slug, id: @section),
-      params: { section: { name: "Renamed", description: "Updated", section_type_id: @section_type.id } },
+      params: { section: { name: "Renamed", description: "Updated", section_type_ids: [ @section_type.id ] } },
       as: :json
 
     assert_response :success
-    assert_equal [ "Renamed", "Updated", @section_type.id ], @section.reload.values_at(:name, :description, :section_type_id)
+    @section.reload
+    assert_equal [ "Renamed", "Updated", [ @section_type.id ] ], [ @section.name, @section.description, @section.section_type_ids ]
   end
 
   test "should update section position as json" do

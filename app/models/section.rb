@@ -1,8 +1,9 @@
 class Section < ApplicationRecord
   include Hierarchical
+  include HasManyTypes
 
   belongs_to :story
-  belongs_to :section_type
+  has_many_types :section_type
 
   validates :name, presence: true
 end

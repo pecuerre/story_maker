@@ -22,11 +22,7 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= event.display_string %>
-            <% if event.event_type %>
-              <span class="badge text-dark" style="background-color: <%= event.event_type.color %>;">
-                <%= event.event_type.name %>
-              </span>
-            <% end %>
+            <%= entity_type_badge(event) %>
             <% if event.description.present? %>
               <div class="small text-body-secondary text-break">
                 <%= event.description %>
@@ -101,10 +97,10 @@
               <%= form.text_area :description, class: "form-control", rows: 3 %>
             </div>
             <div class="mb-3">
-              <%= form.label :event_type_id, "Event type", class: "form-label" %>
-              <%= form.collection_select :event_type_id, @event_types, :id, :name,
-                { include_blank: "None" },
-                { class: "form-select" } %>
+              <%= form.label :event_type_ids, "Event types", class: "form-label" %>
+              <%= form.collection_select :event_type_ids, @event_types, :id, :name,
+                {},
+                { class: "form-select", multiple: true } %>
             </div>
             <div class="row g-3">
               <div class="col-md-4">

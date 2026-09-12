@@ -3,11 +3,13 @@
 item_one:
   name: Item one
   parent:
+  slug: "item_one"
   story: story_one
   item_types: item_type_one
 
 item_two:
   name: Item two
   parent: item_one
+  slug: "item_two"
   story: story_one
   item_types: item_type_two

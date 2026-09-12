@@ -39,7 +39,11 @@ module ApplicationHelper
   private
 
   def type_badge(type)
-    color = type.respond_to?(:color) ? type.color : "#d3d3d3"
-    content_tag(:span, type.name, class: "badge text-dark", style: "background-color: #{color};")
+    bgcolor = type.respond_to?(:bgcolor) ? type.bgcolor : "#d3d3d3"
+    fgcolor = type.respond_to?(:fgcolor) ? type.fgcolor : "#000000"
+    content_tag(:span, type.name,
+      class: "badge text-dark",
+      style: "background-color: #{bgcolor} !important; color: #{fgcolor} !important;"
+    )
   end
 end

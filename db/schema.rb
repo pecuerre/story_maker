@@ -12,9 +12,10 @@
 
 ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   create_table "character_types", force: :cascade do |t|
-    t.string "color", default: "#d3d3d3", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
@@ -44,9 +45,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   end
 
   create_table "event_types", force: :cascade do |t|
-    t.string "color", default: "#d3d3d3", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
@@ -85,9 +87,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   end
 
   create_table "item_types", force: :cascade do |t|
-    t.string "color", default: "#d3d3d3", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
@@ -117,9 +120,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   end
 
   create_table "location_types", force: :cascade do |t|
-    t.string "color", default: "#d3d3d3", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
@@ -149,9 +153,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   end
 
   create_table "ownership_types", force: :cascade do |t|
-    t.string "color", default: "#d3d3d3", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
@@ -184,9 +189,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   end
 
   create_table "relation_types", force: :cascade do |t|
-    t.string "color", default: "#d3d3d3", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
     t.string "inverse"
     t.string "name"
     t.integer "parent_id"
@@ -221,9 +227,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   end
 
   create_table "section_types", force: :cascade do |t|
-    t.string "color", default: "#d3d3d3", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false

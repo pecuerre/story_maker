@@ -72,7 +72,8 @@ class SectionTypesController < ApplicationController
       id: @section_type.id,
       name: @section_type.name,
       description: @section_type.description,
-      color: @section_type.color,
+      bgcolor: @section_type.bgcolor,
+      fgcolor: @section_type.fgcolor,
       parent_id: @section_type.parent_id,
       position: @section_type.position,
       url: current_story_section_type_path,
@@ -81,7 +82,7 @@ class SectionTypesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def section_type_params
-    params.expect(section_type: [ :name, :description, :color, :parent_id, :position ])
+    params.expect(section_type: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
   end
 
   def update_section_type

@@ -51,7 +51,7 @@ class ItemTypesController < ApplicationController
   end
 
   def item_type_params
-    params.expect(item_type: [ :name, :description, :color, :parent_id, :position ])
+    params.expect(item_type: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
   end
 
   def update_item_type
@@ -64,7 +64,8 @@ class ItemTypesController < ApplicationController
       id: @item_type.id,
       name: @item_type.name,
       description: @item_type.description,
-      color: @item_type.color,
+      bgcolor: @item_type.bgcolor,
+      fgcolor: @item_type.fgcolor,
       parent_id: @item_type.parent_id,
       position: @item_type.position,
       url: story_item_type_path(id: @item_type)

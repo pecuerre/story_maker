@@ -11,14 +11,14 @@ class EventTypeTest < ActiveSupport::TestCase
   test "defaults to a light gray color" do
     event_type = EventType.create!(story: stories(:story_one), name: "New type")
 
-    assert_equal "#d3d3d3", event_type.color
+    assert_equal "#d3d3d3", event_type.bgcolor
   end
 
-  test "requires a valid hex color" do
-    event_type = EventType.new(story: stories(:story_one), name: "New type", color: "red")
+  test "requires a valid hex background color" do
+    event_type = EventType.new(story: stories(:story_one), name: "New type", bgcolor: "red")
 
     assert_not event_type.valid?
-    assert_includes event_type.errors[:color], "must be a hex color like #d3d3d3"
+    assert_includes event_type.errors[:bgcolor], "must be a hex color like #d3d3d3"
   end
 
   test "rejects a parent from another story" do

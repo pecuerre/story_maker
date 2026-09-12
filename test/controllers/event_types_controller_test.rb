@@ -27,13 +27,13 @@ class EventTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update event_type as json for inline editing" do
     patch story_event_type_url(story_slug: @story.slug, id: @event_type),
-      params: { event_type: { name: "Inline rename", description: "Inline description", color: "#00ff00" } },
+      params: { event_type: { name: "Inline rename", description: "Inline description", bgcolor: "#00ff00" } },
       as: :json
 
     assert_response :success
     assert_equal "Inline rename", response.parsed_body["name"]
     assert_equal "Inline description", response.parsed_body["description"]
-    assert_equal "#00ff00", response.parsed_body["color"]
+    assert_equal "#00ff00", response.parsed_body["bgcolor"]
   end
 
   test "should destroy event_type as json" do

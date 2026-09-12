@@ -307,7 +307,7 @@ export default class extends Controller {
     name.tabIndex = 0
     name.dataset.taxonomyTreeTarget = "name"
     name.dataset.action = "click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName"
-    name.innerHTML = this.buildNameContent({ name: value, color: values.color, description: node?.dataset.description })
+    name.innerHTML = this.buildNameContent({ name: value, bgcolor: values.bgcolor, fgcolor: values.fgcolor, description: node?.dataset.description })
     form.replaceWith(name)
   }
 
@@ -320,7 +320,7 @@ export default class extends Controller {
   // Renders a node's name as a badge tinted with its own color, plus its description underneath.
   buildNameContent(data) {
     const name = this.escapeHtml(data.name)
-    const badge = data.color ? `<span class="badge text-dark" style="background-color: ${this.escapeHtml(data.color)};">${name}</span>` : name
+    const badge = data.bgcolor ? `<span class="badge text-dark" style="background-color: ${this.escapeHtml(data.bgcolor)}; color: ${this.escapeHtml(data.fgcolor)};">${name}</span>` : name
     const description = data.description ? `<div class="small text-body-secondary text-break">${this.escapeHtml(data.description)}</div>` : ""
     return badge + description
   }

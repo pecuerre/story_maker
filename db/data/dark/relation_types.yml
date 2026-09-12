@@ -1,0 +1,20 @@
+
+- story: Story.dark
+  name: "is friend to"
+  slug: "is_friend_to"
+  symmetric: true
+  color: "#d2FF18"
+
+- story: Story.dark
+  name: "is parent of"
+  slug: "is_parent_of"
+  symmetric: false
+  inverse: "is child of"
+  color: "#FF5733"
+
+- story: Story.dark
+  name: "is boss of"
+  slug: "is_boss_of"
+  symmetric: false
+  inverse: "is subordinate of"
+  color: "#33FF57"

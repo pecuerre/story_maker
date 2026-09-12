@@ -1,0 +1,29 @@
+- story: Story.dark
+  slug: "martha_jonas"
+  character1: Character.martha
+  relation_types: [ RelationType.is_friend_to ]
+  character2: Character.jonas
+
+- story: Story.dark
+  slug: "hannah_jonas"
+  character1: Character.hannah
+  relation_types: [ RelationType.is_parent_of ]
+  character2: Character.jonas
+
+- story: Story.dark
+  slug: "ulrich_martha"
+  character1: Character.ulrich
+  relation_types: [ RelationType.is_parent_of ]
+  character2: Character.martha
+
+- story: Story.dark
+  slug: "ulrich_hannah"
+  character1: Character.ulrich
+  relation_types: [ RelationType.is_friend_to ]
+  character2: Character.hannah
+
+- story: Story.dark
+  slug: "charlotte_ulrich"
+  character1: Character.charlotte
+  relation_types: [ RelationType.is_boss_of ]
+  character2: Character.ulrich

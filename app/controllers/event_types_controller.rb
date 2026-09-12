@@ -72,7 +72,8 @@ class EventTypesController < ApplicationController
       id: @event_type.id,
       name: @event_type.name,
       description: @event_type.description,
-      color: @event_type.color,
+      bgcolor: @event_type.bgcolor,
+      fgcolor: @event_type.fgcolor,
       parent_id: @event_type.parent_id,
       position: @event_type.position,
       url: current_story_event_type_path,
@@ -81,7 +82,7 @@ class EventTypesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def event_type_params
-    params.expect(event_type: [ :name, :description, :color, :parent_id, :position ])
+    params.expect(event_type: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
   end
 
   def update_event_type

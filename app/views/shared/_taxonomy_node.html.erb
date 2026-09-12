@@ -20,7 +20,7 @@
       role="button" tabindex="0"
       data-taxonomy-tree-target="name"
       data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName">
-      <% if node.respond_to?(:color) %>
+      <% if node.respond_to?(:bgcolor) %>
         <%= entity_type_badge(node) %>
       <% else %>
         <%= node.name %>

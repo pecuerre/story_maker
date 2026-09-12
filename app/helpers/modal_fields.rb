@@ -40,8 +40,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "color",
-        label: "Color",
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
         type: "color"
       },
       {
@@ -67,8 +72,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "color",
-        label: "Color",
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
         type: "color"
       },
       {
@@ -102,8 +112,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "color",
-        label: "Color",
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
         type: "color"
       },
       {
@@ -137,8 +152,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "color",
-        label: "Color",
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
         type: "color"
       },
       {
@@ -190,8 +210,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "color",
-        label: "Color",
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
         type: "color"
       },
       {
@@ -228,8 +253,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "color",
-        label: "Color",
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
         type: "color"
       },
       {
@@ -277,8 +307,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "color",
-        label: "Color",
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
         type: "color"
       },
       {

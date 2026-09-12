@@ -1,33 +1,41 @@
 - story: Story.dark
   name: "Town"
   slug: "town"
-  color: "#FF0000"
+  bgcolor: "#FF0000"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "House"
   slug: "house"
-  color: "#00FF00"
+  bgcolor: "#00FF00"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "School"
   slug: "school"
-  color: "#0000FF"
+  bgcolor: "#0000FF"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "Police"
   slug: "police"
-  color: "#FFFF00"
+  bgcolor: "#FFFF00"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "Forest"
   slug: "forest"
-  color: "#00FFFF"
+  bgcolor: "#00FFFF"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "Cave"
   slug: "cave"
-  color: "#FF00FF"
+  bgcolor: "#FF00FF"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "Room"
   slug: "room"
+  bgcolor: "#FFFFFF"
+  fgcolor: "#000000" # black

@@ -51,7 +51,7 @@ class CharacterTypesController < ApplicationController
   end
 
   def character_type_params
-    params.expect(character_type: [ :name, :description, :color, :parent_id, :position ])
+    params.expect(character_type: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
   end
 
   def update_character_type
@@ -64,7 +64,8 @@ class CharacterTypesController < ApplicationController
       id: @character_type.id,
       name: @character_type.name,
       description: @character_type.description,
-      color: @character_type.color,
+      bgcolor: @character_type.bgcolor,
+      fgcolor: @character_type.fgcolor,
       parent_id: @character_type.parent_id,
       position: @character_type.position,
       url: story_character_type_path(id: @character_type)

@@ -1,68 +1,80 @@
 - story: Story.dark
   name: Family
   slug: family
-  color: "#99cc99" # light green
+  bgcolor: "#99cc99" # light green
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Family Nielsen
   slug: family_nielsen
   parent: CharacterType.family
-  color: "#66cc99" # medium green
+  bgcolor: "#66cc99" # medium green
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Family Doppler
   slug: family_doppler
   parent: CharacterType.family
-  color: "#33cc99" # dark green
+  bgcolor: "#33cc99" # dark green
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Family Tiedemann
   slug: family_tiedemann
   parent: CharacterType.family
-  color: "#009966" # very dark green
+  bgcolor: "#009966" # very dark green
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Family Kahnwald
   slug: family_kahnwald
   parent: CharacterType.family
-  color: "#33cc99" # dark green
+  bgcolor: "#33cc99" # dark green
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Faction
   slug: faction
-  color: "#cc99cc" # light purple
+  bgcolor: "#cc99cc" # light purple
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Sic Mundus
   parent: CharacterType.faction
   slug: sic_mundus
-  color: "#9966cc" # medium purple
+  bgcolor: "#9966cc" # medium purple
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Erit Lux
   parent: CharacterType.faction
   slug: erit_lux
-  color: "#6600cc" # dark purple
+  bgcolor: "#6600cc" # dark purple
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Job
   slug: job
-  color: "#ffcc99" # light orange
+  bgcolor: "#ffcc99" # light orange
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Police
   parent: CharacterType.job
   slug: police
-  color: "#ff9966" # medium orange
+  bgcolor: "#ff9966" # medium orange
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Nuclear Plant
   parent: CharacterType.job
   slug: nuclear_plant
-  color: "#ff6600" # dark orange
+  bgcolor: "#ff6600" # dark orange
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Scientist
   parent: CharacterType.job
   slug: scientist
-  color: "#ff3300" # very dark orange
+  bgcolor: "#ff3300" # very dark orange
+  fgcolor: "#000000" # black

@@ -46,7 +46,7 @@ class LocationTypesController < ApplicationController
   end
 
   def location_type_params
-    params.expect(location_type: [ :name, :description, :color, :parent_id, :position ])
+    params.expect(location_type: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
   end
 
   def update_location_type
@@ -59,7 +59,8 @@ class LocationTypesController < ApplicationController
       id: @location_type.id,
       name: @location_type.name,
       description: @location_type.description,
-      color: @location_type.color,
+      bgcolor: @location_type.bgcolor,
+      fgcolor: @location_type.fgcolor,
       parent_id: @location_type.parent_id,
       position: @location_type.position,
       url: story_location_type_path(id: @location_type)

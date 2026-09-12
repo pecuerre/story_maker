@@ -51,7 +51,7 @@ class OwnershipTypesController < ApplicationController
   end
 
   def ownership_type_params
-    params.expect(ownership_type: [ :name, :description, :color, :parent_id, :position ])
+    params.expect(ownership_type: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
   end
 
   def update_ownership_type
@@ -63,7 +63,8 @@ class OwnershipTypesController < ApplicationController
       id: @ownership_type.id,
       name: @ownership_type.name,
       description: @ownership_type.description,
-      color: @ownership_type.color,
+      bgcolor: @ownership_type.bgcolor,
+      fgcolor: @ownership_type.fgcolor,
       parent_id: @ownership_type.parent_id,
       position: @ownership_type.position,
       url: story_ownership_type_path(id: @ownership_type)

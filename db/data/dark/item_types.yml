@@ -2,14 +2,17 @@
 - story: Story.dark
   name: "Key"
   slug: "key"
-  color: "#FFD700" # "gold"
+  bgcolor: "#FFD700" # "gold"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "Time Machine"
   slug: "time_machine"
-  color: "#C0C0C0" # "silver"
+  bgcolor: "#C0C0C0" # "silver"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: "Medal"
   slug: "medal"
-  color: "#A52A2A" # "brown"
+  bgcolor: "#A52A2A" # "brown"
+  fgcolor: "#000000" # black

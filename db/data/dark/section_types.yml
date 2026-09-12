@@ -1,14 +1,17 @@
 - story: Story.dark
   name: Season
   slug: season
-  color: "#b3b3b3"
+  bgcolor: "#b3b3b3"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Episode
   slug: episode
-  color: "#d3d3d3"
+  bgcolor: "#d3d3d3"
+  fgcolor: "#000000" # black
 
 - story: Story.dark
   name: Finale
   slug: finale
-  color: "#6699cc" # blue gray
+  bgcolor: "#6699cc" # blue gray
+  fgcolor: "#000000" # black

@@ -2,13 +2,18 @@
 
 event_type_one:
   story: story_one
+  slug: "event_type_one"
   name: Event type one
   color: "#ff0000"
 
 event_type_two:
   story: story_one
+  slug: "event_type_two"
   name: Event type two
+  color: "#00ff00"
 
 event_type_three:
   story: story_two
+  slug: "event_type_three"
   name: Event type three
+  color: "#0000ff"

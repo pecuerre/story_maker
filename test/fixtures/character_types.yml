@@ -1,11 +1,14 @@
 character_type_one:
   story: story_one
+  slug: "character_type_one"
   name: Character type one
 
 character_type_two:
   story: story_one
+  slug: "character_type_two"
   name: Character type two
 
 character_type_three:
   story: story_two
+  slug: "character_type_three"
   name: Character type three

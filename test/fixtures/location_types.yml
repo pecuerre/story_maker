@@ -1,11 +1,14 @@
 location_type_one:
   story: story_one
   name: Location type one
+  slug: "location_type_one"
 
 location_type_two:
   story: story_one
   name: Location type two
+  slug: "location_type_two"
 
 location_type_three:
   story: story_two
   name: Location type three
+  slug: "location_type_three"

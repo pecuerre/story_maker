@@ -10,7 +10,7 @@ class SectionTypesControllerTest < ActionDispatch::IntegrationTest
   test "should get index" do
     get story_section_types_url(story_slug: @story.slug)
     assert_response :success
-    assert_select "a.nav-link.active", text: "Section Types"
+    assert_select "a.nav-link.active", text: "Section Types(2)"
   end
 
   test "should create section_type as json for inline editing" do

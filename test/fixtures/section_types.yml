@@ -3,11 +3,14 @@
 section_type_one:
   story: story_one
   name: Section type one
+  slug: "section_type_one"
 
 section_type_two:
   story: story_one
   name: Section type two
+  slug: "section_type_two"
 
 section_type_three:
   story: story_two
   name: Section type three
+  slug: "section_type_three"

@@ -1,1 +1,1 @@
-(A) crear un componente reusable tipo directorio/subdirectorio con inline editing en un sidebar
+(A) add "fixed" attribute to all _types models (the fixed ones should not be editable or deletable)

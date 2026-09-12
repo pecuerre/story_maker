@@ -8,7 +8,9 @@ models_in_order = [
   LocationType,
   Location,
   CharacterType,
-  Character
+  Character,
+  RelationType,
+  Relation,
 ]
 
 def extract_reference(value, model)
@@ -56,7 +58,8 @@ models_in_order.each do |model|
     if model_name.end_with?("types")
       puts "- Created #{model.name}: #{attributes['slug'].cyan}"
     else
-      puts "- Created #{model.name}: #{attributes['name'].blue} [#{type_slugs.join(', ').cyan}]"
+      text = attributes['name'] || attributes['slug']
+      puts "- Created #{model.name}: #{text.blue} [#{type_slugs.join(', ').cyan}]"
     end
   end
 end
@@ -68,13 +71,6 @@ it_key = ItemType.create(story: story, name: "Key")
 it_time_machine = ItemType.create(story: story, name: "Time Machine")
 i_jonas_key = Item.create(story: story, name: "Jonas Key", item_types: [ it_key ])
 i_time_machine = Item.create(story: story, name: "Time Machine", item_types: [ it_time_machine ])
-
-# relations
-# rt_friend = RelationType.create(story: story, name: "is friend to", symmetric: true)
-# rt_parent_child = RelationType.create(story: story, name: "is parent of", symmetric: false, inverse: "is child of")
-# r_martha_jonas = Relation.create(story: story, relation_types: [ rt_friend ], character1: c_martha, character2: c_jonas)
-# r_hannah_jonas = Relation.create(story: story, relation_types: [ rt_parent_child ], character1: c_hannah, character2: c_jonas)
-# r_ulrich_martha = Relation.create(story: story, relation_types: [ rt_parent_child ], character1: c_ulrich, character2: c_martha)
 
 # ownerships
 # ot_belongs = OwnershipType.create(story: story, name: "belongs to")

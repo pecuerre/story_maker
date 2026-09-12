@@ -11,6 +11,12 @@ models_in_order = [
   Character,
   RelationType,
   Relation,
+  ItemType,
+  Item,
+  OwnershipType,
+  Ownership,
+  EventType,
+  Event
 ]
 
 def extract_reference(value, model)
@@ -63,34 +69,3 @@ models_in_order.each do |model|
     end
   end
 end
-
-story = Story.find_by(slug: "dark")
-
-# items
-it_key = ItemType.create(story: story, name: "Key")
-it_time_machine = ItemType.create(story: story, name: "Time Machine")
-i_jonas_key = Item.create(story: story, name: "Jonas Key", item_types: [ it_key ])
-i_time_machine = Item.create(story: story, name: "Time Machine", item_types: [ it_time_machine ])
-
-# ownerships
-# ot_belongs = OwnershipType.create(story: story, name: "belongs to")
-# ot_holds = OwnershipType.create(story: story, name: "is holded by")
-# o_time_machine_1 = Ownership.create(story: story, ownership_types: [ ot_belongs ], item: i_time_machine, character: c_jonas)
-# o_time_machine_2 = Ownership.create(story: story, ownership_types: [ ot_holds ], item: i_time_machine, character: c_martha)
-# o_time_machine_3 = Ownership.create(story: story, ownership_types: [ ot_holds ], item: i_time_machine, character: c_hannah)
-
-e_jonas_bartosz = Event.create(story: story, title: "Jonas meets Bartosz", start_datetime: "2024-01-01T10:00", end_datetime: "2024-01-01T11:00")
-e_ulrich_hannah = Event.create(story: story, title: "Ulrich meets Hannah", start_datetime: "2024-01-02T10:00", end_datetime: "2024-01-02T11:00")
-e_conversation_1 = Event.create(story: story, title: "Conversation 1", after_event: e_ulrich_hannah)
-e_conversation_2 = Event.create(story: story, title: "Conversation 2", after_event: e_conversation_1)
-e_time_travel = Event.create(story: story, title: "Time Travel", simultaneous_event: e_ulrich_hannah)
-e_dinner = Event.create(story: story, title: "Dinner", after_event: e_conversation_2)
-e_party = Event.create(story: story, title: "Party", after_event: e_dinner)
-e_farewell = Event.create(story: story, title: "Farewell", after_event: e_party)
-e_reunion = Event.create(story: story, title: "Reunion", after_event: e_dinner)
-e_explosion = Event.create(story: story, title: "Explosion", simultaneous_event: e_party)
-e_meeting = Event.create(story: story, title: "Meeting", before_event: e_explosion)
-e_work = Event.create(story: story, title: "Work", after_event: e_conversation_1)
-
-
-

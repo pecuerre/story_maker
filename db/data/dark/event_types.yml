@@ -1,0 +1,14 @@
+- story: Story.dark
+  slug: "meeting"
+  name: "Meeting"
+  color: "#FF5733"
+
+- story: Story.dark
+  slug: "time_travel"
+  name: "Time Travel"
+  color: "#33FF57"
+
+- story: Story.dark
+  slug: "party"
+  name: "Party"
+  color: "#3357FF"

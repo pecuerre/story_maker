@@ -1,0 +1,15 @@
+
+- story: Story.dark
+  name: "Key"
+  slug: "key"
+  color: "#FFD700" # "gold"
+
+- story: Story.dark
+  name: "Time Machine"
+  slug: "time_machine"
+  color: "#C0C0C0" # "silver"
+
+- story: Story.dark
+  name: "Medal"
+  slug: "medal"
+  color: "#A52A2A" # "brown"

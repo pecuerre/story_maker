@@ -1,0 +1,13 @@
+# ownerships
+# ot_belongs = OwnershipType.create(story: story, name: "belongs to")
+# ot_holds = OwnershipType.create(story: story, name: "is holded by")
+
+- story: Story.dark
+  name: "belongs to"
+  slug: "belongs_to"
+  color: "#FF0000" # "red"
+
+- story: Story.dark
+  name: "is holded by"
+  slug: "is_holded_by"
+  color: "#0000FF" # "blue"

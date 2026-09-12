@@ -1,0 +1,74 @@
+
+- story: Story.dark
+  title: "Jonas meets Bartosz"
+  start_datetime: "2024-01-01T10:00"
+  end_datetime: "2024-01-01T11:00"
+  slug: "jonas_meets_bartosz"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Ulrich meets Hannah"
+  start_datetime: "2024-01-02T10:00"
+  end_datetime: "2024-01-02T11:00"
+  slug: "ulrich_meets_hannah"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Conversation 1"
+  after_event: Event.ulrich_meets_hannah
+  slug: "conversation1"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Conversation 2"
+  after_event: Event.conversation1
+  slug: "conversation2"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Time Travel"
+  simultaneous_event: Event.ulrich_meets_hannah
+  slug: "time_travel"
+  event_types: [ EventType.time_travel ]
+
+- story: Story.dark
+  title: "Dinner"
+  after_event: Event.conversation2
+  slug: "dinner"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Party"
+  after_event: Event.dinner
+  slug: "party"
+  event_types: [ EventType.party ]
+
+- story: Story.dark
+  title: "Farewell"
+  after_event: Event.party
+  slug: "farewell"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Reunion"
+  after_event: Event.dinner
+  slug: "reunion"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Explosion"
+  simultaneous_event: Event.party
+  slug: "explosion"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Meeting"
+  before_event: Event.explosion
+  slug: "meeting"
+  event_types: [ EventType.meeting ]
+
+- story: Story.dark
+  title: "Work"
+  after_event: Event.conversation1
+  slug: "work"
+  event_types: [ EventType.meeting ]

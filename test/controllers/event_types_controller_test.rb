@@ -3,19 +3,19 @@ require "test_helper"
 class EventTypesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @event_type = event_types(:event_type_one)
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     sign_in_as(users(:user_one))
   end
 
   test "should get index" do
-    get story_event_types_url(story_slug: @story.slug)
+    get universe_event_types_url(universe_slug: @universe.slug)
     assert_response :success
     assert_select "a.nav-link.active", text: "Event Types(2)"
   end
 
   test "should create event_type as json for inline editing" do
     assert_difference("EventType.count") do
-      post story_event_types_url(story_slug: @story.slug),
+      post universe_event_types_url(universe_slug: @universe.slug),
         params: { event_type: { name: "Inline type", parent_id: @event_type.id } },
         as: :json
     end
@@ -26,7 +26,7 @@ class EventTypesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update event_type as json for inline editing" do
-    patch story_event_type_url(story_slug: @story.slug, id: @event_type),
+    patch universe_event_type_url(universe_slug: @universe.slug, id: @event_type),
       params: { event_type: { name: "Inline rename", description: "Inline description", bgcolor: "#00ff00" } },
       as: :json
 
@@ -38,7 +38,7 @@ class EventTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy event_type as json" do
     assert_difference("EventType.count", -1) do
-      delete story_event_type_url(story_slug: @story.slug, id: @event_type), as: :json
+      delete universe_event_type_url(universe_slug: @universe.slug, id: @event_type), as: :json
     end
 
     assert_response :no_content

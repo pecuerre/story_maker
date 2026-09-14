@@ -2,18 +2,18 @@ require "test_helper"
 
 class OwnershipTypesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     sign_in_as(users(:user_one))
   end
 
   test "should get index" do
-    get story_ownership_types_url(story_slug: @story.slug)
+    get universe_ownership_types_url(universe_slug: @universe.slug)
     assert_response :success
   end
 
   test "should create ownership_type as json" do
     assert_difference("OwnershipType.count") do
-      post story_ownership_types_url(story_slug: @story.slug),
+      post universe_ownership_types_url(universe_slug: @universe.slug),
         params: { ownership_type: { name: "Owns", description: "Has possession of" } },
         as: :json
     end

@@ -7,7 +7,7 @@
 
   <% if @layers.blank? || @layers.all?(&:empty?) %>
     <p class="text-body-secondary">
-      No events yet. <%= link_to "Add some events", story_events_path() %> to build a timeline.
+      No events yet. <%= link_to "Add some events", universe_events_path() %> to build a timeline.
     </p>
   <% else %>
     <div class="timeline-track" data-timeline-target="track">

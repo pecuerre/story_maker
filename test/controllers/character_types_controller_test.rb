@@ -2,13 +2,13 @@ require "test_helper"
 
 class CharacterTypesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     @character_type = character_types(:character_type_one)
     sign_in_as(users(:user_one))
   end
 
   test "should get index" do
-    get story_character_types_url(story_slug: @story.slug)
+    get universe_character_types_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_includes response.body, "Character types"
@@ -17,7 +17,7 @@ class CharacterTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create character type as json" do
     assert_difference("CharacterType.count") do
-      post story_character_types_url(story_slug: @story.slug),
+      post universe_character_types_url(universe_slug: @universe.slug),
         params: { character_type: { name: "New character type", description: "A description" } },
         as: :json
     end
@@ -28,7 +28,7 @@ class CharacterTypesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update character type as json" do
-    patch story_character_type_url(story_slug: @story.slug, id: @character_type),
+    patch universe_character_type_url(universe_slug: @universe.slug, id: @character_type),
       params: { character_type: { name: "Renamed", description: "Updated" } },
       as: :json
 

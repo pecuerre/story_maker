@@ -1,16 +1,16 @@
-- story: Story.dark
+- universe: Universe.dark
   slug: "meeting"
   name: "Meeting"
   bgcolor: "#FF5733"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   slug: "time_travel"
   name: "Time Travel"
   bgcolor: "#33FF57"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   slug: "party"
   name: "Party"
   bgcolor: "#3357FF"

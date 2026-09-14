@@ -5,19 +5,19 @@ class RelationTypesController < ApplicationController
   before_action :set_relation_type, only: %i[ update destroy ]
 
   def index
-    @relation_types = Current.story.relation_types
+    @relation_types = Current.universe.relation_types
     @relation_types = @relation_types.includes(:children)
     @relation_types = @relation_types.where(parent_id: nil)
     @relation_types = @relation_types.order(:position, :id)
   end
 
   def new
-    relation_types = Current.story.relation_types
+    relation_types = Current.universe.relation_types
     @relation_type = relation_types.new(parent_id: params[:parent_id])
   end
 
   def create
-    @relation_type = Current.story.relation_types.new(relation_type_params)
+    @relation_type = Current.universe.relation_types.new(relation_type_params)
     @relation_type.position = sibling_count(@relation_type.parent_id)
 
     respond_to do |format|
@@ -47,7 +47,7 @@ class RelationTypesController < ApplicationController
   private
 
   def set_relation_type
-    @relation_type = Current.story.relation_types.find(params.expect(:id))
+    @relation_type = Current.universe.relation_types.find(params.expect(:id))
   end
 
   def relation_type_params
@@ -69,7 +69,7 @@ class RelationTypesController < ApplicationController
       position: @relation_type.position,
       symmetric: @relation_type.symmetric,
       inverse: @relation_type.inverse,
-      url: story_relation_type_path(id: @relation_type)
+      url: universe_relation_type_path(id: @relation_type)
     }
   end
 end

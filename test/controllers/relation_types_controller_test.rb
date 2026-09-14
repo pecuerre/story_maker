@@ -2,18 +2,18 @@ require "test_helper"
 
 class RelationTypesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     sign_in_as(users(:user_one))
   end
 
   test "should get index" do
-    get story_relation_types_url(story_slug: @story.slug)
+    get universe_relation_types_url(universe_slug: @universe.slug)
     assert_response :success
   end
 
   test "should create relation_type as json" do
     assert_difference("RelationType.count") do
-      post story_relation_types_url(story_slug: @story.slug),
+      post universe_relation_types_url(universe_slug: @universe.slug),
         params: { relation_type: { name: "Knows", symmetric: false, inverse: "Known by" } },
         as: :json
     end
@@ -26,7 +26,7 @@ class RelationTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "rejects a non-symmetric relation without an inverse" do
     assert_no_difference("RelationType.count") do
-      post story_relation_types_url(story_slug: @story.slug),
+      post universe_relation_types_url(universe_slug: @universe.slug),
         params: { relation_type: { name: "Knows", symmetric: false } },
         as: :json
     end
@@ -35,9 +35,9 @@ class RelationTypesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update relation_type as json" do
-    relation_type = RelationType.create!(story: @story, name: "Knows", symmetric: false, inverse: "Known by")
+    relation_type = RelationType.create!(universe: @universe, name: "Knows", symmetric: false, inverse: "Known by")
 
-    patch story_relation_type_url(story_slug: @story.slug, id: relation_type),
+    patch universe_relation_type_url(universe_slug: @universe.slug, id: relation_type),
       params: { relation_type: { symmetric: true, inverse: "" } },
       as: :json
 

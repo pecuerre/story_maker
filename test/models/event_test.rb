@@ -2,26 +2,26 @@ require "test_helper"
 
 class EventTest < ActiveSupport::TestCase
   test "requires at least a title, a date, or a relation to another event" do
-    event = Event.new(story: stories(:story_one))
+    event = Event.new(universe: universes(:universe_one))
 
     assert_not event.valid?
     assert_includes event.errors[:base], "must have a title, a date, or a relation to another event"
   end
 
   test "is valid with only a title" do
-    event = Event.new(story: stories(:story_one), title: "A title")
+    event = Event.new(universe: universes(:universe_one), title: "A title")
 
     assert event.valid?
   end
 
   test "is valid with only a start date" do
-    event = Event.new(story: stories(:story_one), start_datetime: Time.current)
+    event = Event.new(universe: universes(:universe_one), start_datetime: Time.current)
 
     assert event.valid?
   end
 
   test "is valid with only a before_event relation" do
-    event = Event.new(story: stories(:story_one), before_event: events(:event_one))
+    event = Event.new(universe: universes(:universe_one), before_event: events(:event_one))
 
     assert event.valid?
   end

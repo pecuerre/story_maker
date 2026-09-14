@@ -1,17 +1,17 @@
 location_one:
-  story: story_one
+  universe: universe_one
   name: Location one
   location_types: location_type_one
   slug: "location_one"
 
 location_two:
-  story: story_one
+  universe: universe_one
   name: Location two
   location_types: location_type_two
   slug: "location_two"
 
 location_three:
-  story: story_two
+  universe: universe_two
   name: Location three
   location_types: location_type_three
   slug: "location_three"

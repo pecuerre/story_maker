@@ -1,12 +1,12 @@
 
-- story: Story.dark
+- universe: Universe.dark
   name: "is friend to"
   slug: "is_friend_to"
   symmetric: true
   bgcolor: "#d2FF18"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "is parent of"
   slug: "is_parent_of"
   symmetric: false
@@ -14,7 +14,7 @@
   bgcolor: "#FF5733"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "is boss of"
   slug: "is_boss_of"
   symmetric: false

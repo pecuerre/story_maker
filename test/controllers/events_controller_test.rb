@@ -2,13 +2,13 @@ require "test_helper"
 
 class EventsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     @event = events(:event_one)
     sign_in_as(users(:user_one))
   end
 
   test "should get index" do
-    get story_events_url(story_slug: @story.slug)
+    get universe_events_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_includes response.body, "Events"
@@ -17,7 +17,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create event with only a title as json" do
     assert_difference("Event.count") do
-      post story_events_url(story_slug: @story.slug),
+      post universe_events_url(universe_slug: @universe.slug),
         params: { event: { title: "New event" } },
         as: :json
     end
@@ -28,7 +28,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not create an event with no identifying attribute" do
     assert_no_difference("Event.count") do
-      post story_events_url(story_slug: @story.slug),
+      post universe_events_url(universe_slug: @universe.slug),
         params: { event: { description: "Just a description" } },
         as: :json
     end
@@ -37,7 +37,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update event details as json" do
-    patch story_event_url(story_slug: @story.slug, id: @event),
+    patch universe_event_url(universe_slug: @universe.slug, id: @event),
       params: { event: { title: "Renamed" } },
       as: :json
 
@@ -47,7 +47,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy event" do
     assert_difference("Event.count", -1) do
-      delete story_event_url(story_slug: @story.slug, id: @event)
+      delete universe_event_url(universe_slug: @universe.slug, id: @event)
     end
 
     assert_response :no_content

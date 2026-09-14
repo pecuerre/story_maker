@@ -3,7 +3,7 @@ class CreateSections < ActiveRecord::Migration[8.1]
     create_table :sections do |t|
       t.string :name
       t.references :parent, null: true, foreign_key: { to_table: :sections }
-      t.references :story, null: false, foreign_key: { to_table: :stories }
+      t.references :universe, null: false, foreign_key: { to_table: :universes }
       t.integer :position, null: false, default: 0
       t.text :description
       t.string :slug, null: false

@@ -2,14 +2,14 @@ require "test_helper"
 
 class ItemsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     @item = items(:item_one)
     @item_type = item_types(:item_type_two)
     sign_in_as(users(:user_one))
   end
 
   test "should get index with item type options" do
-    get story_items_url(story_slug: @story.slug)
+    get universe_items_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_includes response.body, "Items"
@@ -19,7 +19,7 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create item as json" do
     assert_difference("Item.count") do
-      post story_items_url(story_slug: @story.slug),
+      post universe_items_url(universe_slug: @universe.slug),
         params: { item: { name: "New item", description: "A description", item_type_ids: [ @item_type.id ] } },
         as: :json
     end
@@ -30,7 +30,7 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update item details as json" do
-    patch story_item_url(story_slug: @story.slug, id: @item),
+    patch universe_item_url(universe_slug: @universe.slug, id: @item),
       params: { item: { name: "Renamed", description: "Updated", item_type_ids: [ @item_type.id ] } },
       as: :json
 

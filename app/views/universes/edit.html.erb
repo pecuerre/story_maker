@@ -1,0 +1,12 @@
+<% content_for :title, "Editing universe" %>
+
+<h1>Editing universe</h1>
+
+<%= render "form", universe: @universe %>
+
+<br>
+
+<div>
+  <%= link_to "Show this universe", @universe %> |
+  <%= link_to "Back to universes", universes_path %>
+</div>

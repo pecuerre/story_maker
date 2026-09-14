@@ -5,19 +5,19 @@ class CharacterTypesController < ApplicationController
   before_action :set_character_type, only: %i[ update destroy ]
 
   def index
-    @character_types = Current.story.character_types
+    @character_types = Current.universe.character_types
     @character_types = @character_types.includes(:children)
     @character_types = @character_types.where(parent_id: nil)
     @character_types = @character_types.order(:position, :id)
   end
 
   def new
-    character_types = Current.story.character_types
+    character_types = Current.universe.character_types
     @character_type = character_types.new(parent_id: params[:parent_id])
   end
 
   def create
-    @character_type = Current.story.character_types.new(character_type_params)
+    @character_type = Current.universe.character_types.new(character_type_params)
     @character_type.position = sibling_count(@character_type.parent_id)
 
     respond_to do |format|
@@ -47,7 +47,7 @@ class CharacterTypesController < ApplicationController
   private
 
   def set_character_type
-    @character_type = Current.story.character_types.find(params.expect(:id))
+    @character_type = Current.universe.character_types.find(params.expect(:id))
   end
 
   def character_type_params
@@ -68,7 +68,7 @@ class CharacterTypesController < ApplicationController
       fgcolor: @character_type.fgcolor,
       parent_id: @character_type.parent_id,
       position: @character_type.position,
-      url: story_character_type_path(id: @character_type)
+      url: universe_character_type_path(id: @character_type)
     }
   end
 end

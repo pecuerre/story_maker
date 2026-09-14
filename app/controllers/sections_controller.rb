@@ -5,25 +5,25 @@ class SectionsController < ApplicationController
   before_action :set_section, only: %i[ update destroy ]
 
   def index
-    @sections = Current.story.sections
+    @sections = Current.universe.sections
     @sections = @sections.includes(:children, :section_types)
     @sections = @sections.where(parent_id: nil)
     @sections = @sections.order(:position, :id)
 
-    @section_types = Current.story.section_types
+    @section_types = Current.universe.section_types
     @section_types = @section_types.order(:name)
   end
 
   def new
-    @section = Current.story.sections.new(parent_id: params[:parent_id])
+    @section = Current.universe.sections.new(parent_id: params[:parent_id])
 
-    @section_types = Current.story.section_types
+    @section_types = Current.universe.section_types
     @section_types = @section_types.order(:name)
   end
 
   def create
-    @section = Current.story.sections.new(section_params)
-    @section.section_type_ids = [ Current.story.section_types.order(:id).first.id ] if @section.section_type_ids.empty?
+    @section = Current.universe.sections.new(section_params)
+    @section.section_type_ids = [ Current.universe.section_types.order(:id).first.id ] if @section.section_type_ids.empty?
     @section.position = sibling_count(@section.parent_id)
 
     respond_to do |format|
@@ -54,12 +54,12 @@ class SectionsController < ApplicationController
 
   private
 
-  def current_story_sections_path
-    story_sections_path()
+  def current_universe_sections_path
+    universe_sections_path()
   end
 
   def set_section
-    @section = Current.story.sections.find(params.expect(:id))
+    @section = Current.universe.sections.find(params.expect(:id))
   end
 
   def section_params
@@ -78,7 +78,7 @@ class SectionsController < ApplicationController
       description: @section.description,
       section_type_ids: @section.section_type_ids,
       parent_id: @section.parent_id,
-      url: story_section_path(id: @section)
+      url: universe_section_path(id: @section)
     }
   end
 end

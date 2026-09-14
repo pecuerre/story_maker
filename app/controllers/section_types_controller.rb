@@ -7,13 +7,13 @@ class SectionTypesController < ApplicationController
 
   # GET /section_types/new
   def new
-    section_types = Current.story.section_types
+    section_types = Current.universe.section_types
     @section_type = section_types.new(parent_id: params[:parent_id])
   end
 
   # GET /section_types or /section_types.json
   def index
-    @section_types = Current.story.section_types
+    @section_types = Current.universe.section_types
     @section_types = @section_types.includes(:children)
     @section_types = @section_types.where(parent_id: nil)
     @section_types = @section_types.order(:position, :id)
@@ -21,7 +21,7 @@ class SectionTypesController < ApplicationController
 
   # POST /section_types or /section_types.json
   def create
-    @section_type = Current.story.section_types.new(section_type_params)
+    @section_type = Current.universe.section_types.new(section_type_params)
     @section_type.position = sibling_count(@section_type.parent_id)
 
     respond_to do |format|
@@ -56,15 +56,15 @@ class SectionTypesController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
   def set_section_type
-    @section_type = Current.story.section_types.find(params.expect(:id))
+    @section_type = Current.universe.section_types.find(params.expect(:id))
   end
 
-  def current_story_section_type_path
-    story_section_type_path(id: @section_type)
+  def current_universe_section_type_path
+    universe_section_type_path(id: @section_type)
   end
 
-  def current_story_section_types_path
-    story_section_types_path()
+  def current_universe_section_types_path
+    universe_section_types_path()
   end
 
   def section_type_json
@@ -76,7 +76,7 @@ class SectionTypesController < ApplicationController
       fgcolor: @section_type.fgcolor,
       parent_id: @section_type.parent_id,
       position: @section_type.position,
-      url: current_story_section_type_path,
+      url: current_universe_section_type_path,
     }
   end
 

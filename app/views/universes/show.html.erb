@@ -1,0 +1,8 @@
+<%= render @universe %>
+
+<div>
+  <%= link_to "Edit this universe", edit_universe_path(@universe) %> |
+  <%= link_to "Back to universes", universes_path %>
+
+  <%= button_to "Destroy this universe", @universe, method: :delete %>
+</div>

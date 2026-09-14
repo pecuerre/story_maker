@@ -1,17 +1,17 @@
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Key"
   slug: "key"
   bgcolor: "#FFD700" # "gold"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Time Machine"
   slug: "time_machine"
   bgcolor: "#C0C0C0" # "silver"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Medal"
   slug: "medal"
   bgcolor: "#A52A2A" # "brown"

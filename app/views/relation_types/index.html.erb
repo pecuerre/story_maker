@@ -4,10 +4,10 @@
 
 <%= render "shared/taxonomy_tree",
   nodes: @relation_types,
-  new_url: ->(parent = nil) { new_story_relation_type_path(parent_id: parent&.id) },
-  create_url: story_relation_types_path(),
-  edit_url: ->(relation_type) { edit_story_relation_type_path(id: relation_type) },
-  update_url: ->(relation_type) { story_relation_type_path(id: relation_type) },
-  delete_url: ->(relation_type) { story_relation_type_path(id: relation_type) },
+  new_url: ->(parent = nil) { new_universe_relation_type_path(parent_id: parent&.id) },
+  create_url: universe_relation_types_path(),
+  edit_url: ->(relation_type) { edit_universe_relation_type_path(id: relation_type) },
+  update_url: ->(relation_type) { universe_relation_type_path(id: relation_type) },
+  delete_url: ->(relation_type) { universe_relation_type_path(id: relation_type) },
   model_param: "relation_type",
-  modal_fields: relation_type_taxonomy_fields(Current.story.relation_types.order(:position, :id)) %>
+  modal_fields: relation_type_taxonomy_fields(Current.universe.relation_types.order(:position, :id)) %>

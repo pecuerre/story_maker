@@ -1,4 +1,4 @@
-# Computes a layered ordering of a story's events for the Timeline view.
+# Computes a layered ordering of a universe's events for the Timeline view.
 #
 # Events are grouped together when they are marked as happening at the same time
 # (via `simultaneous_event`), then a directed "happens no later than" graph is built

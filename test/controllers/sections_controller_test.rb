@@ -2,25 +2,25 @@ require "test_helper"
 
 class SectionsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     @section = sections(:section_one)
     @section_type = section_types(:section_type_two)
     sign_in_as(users(:user_one))
   end
 
   test "should get index" do
-    get story_sections_url(story_slug: @story.slug)
+    get universe_sections_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_includes response.body, "Sections"
     assert_includes response.body, "Section type"
-    assert_includes response.body, story_section_path(story_slug: @story.slug, id: @section)
+    assert_includes response.body, universe_section_path(universe_slug: @universe.slug, id: @section)
     assert_select "a.nav-link.active", text: "Sections(2)"
   end
 
   test "should create section as json" do
     assert_difference("Section.count") do
-      post story_sections_url(story_slug: @story.slug),
+      post universe_sections_url(universe_slug: @universe.slug),
         params: { section: { name: "New section", description: "A description", section_type_ids: [ @section_type.id ] } },
         as: :json
     end
@@ -31,7 +31,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update section details as json" do
-    patch story_section_url(story_slug: @story.slug, id: @section),
+    patch universe_section_url(universe_slug: @universe.slug, id: @section),
       params: { section: { name: "Renamed", description: "Updated", section_type_ids: [ @section_type.id ] } },
       as: :json
 
@@ -41,7 +41,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update section position as json" do
-    patch story_section_url(story_slug: @story.slug, id: @section),
+    patch universe_section_url(universe_slug: @universe.slug, id: @section),
       params: { section: { position: 0 } },
       as: :json
 

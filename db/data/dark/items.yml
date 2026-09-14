@@ -1,25 +1,25 @@
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Jonas Key"
   item_types: [ ItemType.key ]
   slug: "jonas_key"
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Tannhaus Clockwork Device"
   item_types: [ ItemType.time_machine ]
   slug: "tannhaus_clockwork_device"
 
-- story: Story.dark
+- universe: Universe.dark
   name: "St Christopher Medal"
   item_types: [ ItemType.medal ]
   slug: "st_christopher_medal"
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Sphere Machine"
   item_types: [ ItemType.time_machine ]
   slug: "sphere_machine"
 
-- story: Story.dark
+- universe: Universe.dark
   name: "The God Particle"
   item_types: [ ItemType.time_machine ]
   slug: "the_god_particle"

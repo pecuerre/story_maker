@@ -5,19 +5,19 @@ class OwnershipTypesController < ApplicationController
   before_action :set_ownership_type, only: %i[ update destroy ]
 
   def index
-    @ownership_types = Current.story.ownership_types
+    @ownership_types = Current.universe.ownership_types
     @ownership_types = @ownership_types.includes(:children)
     @ownership_types = @ownership_types.where(parent_id: nil)
     @ownership_types = @ownership_types.order(:position, :id)
   end
 
   def new
-    ownership_types = Current.story.ownership_types
+    ownership_types = Current.universe.ownership_types
     @ownership_type = ownership_types.new(parent_id: params[:parent_id])
   end
 
   def create
-    @ownership_type = Current.story.ownership_types.new(ownership_type_params)
+    @ownership_type = Current.universe.ownership_types.new(ownership_type_params)
     @ownership_type.position = sibling_count(@ownership_type.parent_id)
 
     respond_to do |format|
@@ -47,7 +47,7 @@ class OwnershipTypesController < ApplicationController
   private
 
   def set_ownership_type
-    @ownership_type = Current.story.ownership_types.find(params.expect(:id))
+    @ownership_type = Current.universe.ownership_types.find(params.expect(:id))
   end
 
   def ownership_type_params
@@ -67,7 +67,7 @@ class OwnershipTypesController < ApplicationController
       fgcolor: @ownership_type.fgcolor,
       parent_id: @ownership_type.parent_id,
       position: @ownership_type.position,
-      url: story_ownership_type_path(id: @ownership_type)
+      url: universe_ownership_type_path(id: @ownership_type)
     }
   end
 end

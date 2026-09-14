@@ -3,14 +3,14 @@ class Event < ApplicationRecord
   include HasManyTypes
   include HasSlug
 
-  belongs_to :story
+  belongs_to :universe
   has_many_types :event_type, required: false
   belongs_to :before_event, class_name: "Event", optional: true
   belongs_to :after_event, class_name: "Event", optional: true
   belongs_to :simultaneous_event, class_name: "Event", optional: true
   before_validation :set_name, on: :create
 
-  validate :associated_records_belong_to_story
+  validate :associated_records_belong_to_universe
   validate :cannot_reference_self
   validate :must_be_identifiable
 
@@ -48,9 +48,9 @@ class Event < ApplicationRecord
     datetime.strftime("%Y-%m-%d %H:%M")
   end
 
-  def associated_records_belong_to_story
+  def associated_records_belong_to_universe
     { before_event: before_event, after_event: after_event, simultaneous_event: simultaneous_event }.each do |name, record|
-      errors.add(name, "must belong to the event's story") if record && story && record.story_id != story_id
+      errors.add(name, "must belong to the event's universe") if record && universe && record.universe_id != universe_id
     end
   end
 

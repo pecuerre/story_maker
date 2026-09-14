@@ -1,78 +1,78 @@
-- story: Story.dark
+- universe: Universe.dark
   name: Family
   slug: family
   bgcolor: "#99cc99" # light green
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Family Nielsen
   slug: family_nielsen
   parent: CharacterType.family
   bgcolor: "#66cc99" # medium green
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Family Doppler
   slug: family_doppler
   parent: CharacterType.family
   bgcolor: "#33cc99" # dark green
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Family Tiedemann
   slug: family_tiedemann
   parent: CharacterType.family
   bgcolor: "#009966" # very dark green
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Family Kahnwald
   slug: family_kahnwald
   parent: CharacterType.family
   bgcolor: "#33cc99" # dark green
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Faction
   slug: faction
   bgcolor: "#cc99cc" # light purple
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Sic Mundus
   parent: CharacterType.faction
   slug: sic_mundus
   bgcolor: "#9966cc" # medium purple
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Erit Lux
   parent: CharacterType.faction
   slug: erit_lux
   bgcolor: "#6600cc" # dark purple
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Job
   slug: job
   bgcolor: "#ffcc99" # light orange
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Police
   parent: CharacterType.job
   slug: police
   bgcolor: "#ff9966" # medium orange
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Nuclear Plant
   parent: CharacterType.job
   slug: nuclear_plant
   bgcolor: "#ff6600" # dark orange
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: Scientist
   parent: CharacterType.job
   slug: scientist

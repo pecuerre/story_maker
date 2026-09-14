@@ -5,19 +5,19 @@ class ItemTypesController < ApplicationController
   before_action :set_item_type, only: %i[ update destroy ]
 
   def index
-    @item_types = Current.story.item_types
+    @item_types = Current.universe.item_types
     @item_types = @item_types.includes(:children)
     @item_types = @item_types.where(parent_id: nil)
     @item_types = @item_types.order(:position, :id)
   end
 
   def new
-    item_types = Current.story.item_types
+    item_types = Current.universe.item_types
     @item_type = item_types.new(parent_id: params[:parent_id])
   end
 
   def create
-    @item_type = Current.story.item_types.new(item_type_params)
+    @item_type = Current.universe.item_types.new(item_type_params)
     @item_type.position = sibling_count(@item_type.parent_id)
 
     respond_to do |format|
@@ -47,7 +47,7 @@ class ItemTypesController < ApplicationController
   private
 
   def set_item_type
-    @item_type = Current.story.item_types.find(params.expect(:id))
+    @item_type = Current.universe.item_types.find(params.expect(:id))
   end
 
   def item_type_params
@@ -68,7 +68,7 @@ class ItemTypesController < ApplicationController
       fgcolor: @item_type.fgcolor,
       parent_id: @item_type.parent_id,
       position: @item_type.position,
-      url: story_item_type_path(id: @item_type)
+      url: universe_item_type_path(id: @item_type)
     }
   end
 end

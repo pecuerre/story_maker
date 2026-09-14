@@ -5,18 +5,18 @@ class LocationsController < ApplicationController
   before_action :set_location, only: %i[ update destroy ]
 
   def index
-    @locations = Current.story.locations
+    @locations = Current.universe.locations
     @locations = @locations.includes(:children, :location_types)
     @locations = @locations.where(parent_id: nil)
     @locations = @locations.order(:position, :id)
 
-    @location_types = Current.story.location_types
+    @location_types = Current.universe.location_types
     @location_types = @location_types.order(:name)
   end
 
   def create
-    @location = Current.story.locations.new(location_params)
-    @location.location_type_ids = [ Current.story.location_types.order(:id).first.id ] if @location.location_type_ids.empty?
+    @location = Current.universe.locations.new(location_params)
+    @location.location_type_ids = [ Current.universe.location_types.order(:id).first.id ] if @location.location_type_ids.empty?
     @location.position = sibling_count(@location.parent_id)
 
     respond_to do |format|
@@ -46,7 +46,7 @@ class LocationsController < ApplicationController
   private
 
   def set_location
-    @location = Current.story.locations.find(params.expect(:id))
+    @location = Current.universe.locations.find(params.expect(:id))
   end
 
   def location_params
@@ -66,7 +66,7 @@ class LocationsController < ApplicationController
       location_type_ids: @location.location_type_ids,
       parent_id: @location.parent_id,
       position: @location.position,
-      url: story_location_path(id: @location)
+      url: universe_location_path(id: @location)
     }
   end
 end

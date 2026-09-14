@@ -2,7 +2,7 @@ directory = Rails.root.join("db/data/dark")
 
 models_in_order = [
   User,
-  Story,
+  Universe,
   SectionType,
   Section,
   LocationType,

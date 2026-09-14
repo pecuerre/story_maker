@@ -1,6 +1,6 @@
 require "test_helper"
 
-class StoryTest < ActiveSupport::TestCase
+class UniverseTest < ActiveSupport::TestCase
   # test "the truth" do
   #   assert true
   # end

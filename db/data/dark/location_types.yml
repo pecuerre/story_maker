@@ -1,40 +1,40 @@
-- story: Story.dark
+- universe: Universe.dark
   name: "Town"
   slug: "town"
   bgcolor: "#FF0000"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "House"
   slug: "house"
   bgcolor: "#00FF00"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "School"
   slug: "school"
   bgcolor: "#0000FF"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Police"
   slug: "police"
   bgcolor: "#FFFF00"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Forest"
   slug: "forest"
   bgcolor: "#00FFFF"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Cave"
   slug: "cave"
   bgcolor: "#FF00FF"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- universe: Universe.dark
   name: "Room"
   slug: "room"
   bgcolor: "#FFFFFF"

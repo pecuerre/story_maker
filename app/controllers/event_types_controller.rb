@@ -7,13 +7,13 @@ class EventTypesController < ApplicationController
 
   # GET /event_types/new
   def new
-    event_types = Current.story.event_types
+    event_types = Current.universe.event_types
     @event_type = event_types.new(parent_id: params[:parent_id])
   end
 
   # GET /event_types or /event_types.json
   def index
-    @event_types = Current.story.event_types
+    @event_types = Current.universe.event_types
     @event_types = @event_types.includes(:children)
     @event_types = @event_types.where(parent_id: nil)
     @event_types = @event_types.order(:position, :id)
@@ -21,7 +21,7 @@ class EventTypesController < ApplicationController
 
   # POST /event_types or /event_types.json
   def create
-    @event_type = Current.story.event_types.new(event_type_params)
+    @event_type = Current.universe.event_types.new(event_type_params)
     @event_type.position = sibling_count(@event_type.parent_id)
 
     respond_to do |format|
@@ -56,15 +56,15 @@ class EventTypesController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
   def set_event_type
-    @event_type = Current.story.event_types.find(params.expect(:id))
+    @event_type = Current.universe.event_types.find(params.expect(:id))
   end
 
-  def current_story_event_type_path
-    story_event_type_path(id: @event_type)
+  def current_universe_event_type_path
+    universe_event_type_path(id: @event_type)
   end
 
-  def current_story_event_types_path
-    story_event_types_path()
+  def current_universe_event_types_path
+    universe_event_types_path()
   end
 
   def event_type_json
@@ -76,7 +76,7 @@ class EventTypesController < ApplicationController
       fgcolor: @event_type.fgcolor,
       parent_id: @event_type.parent_id,
       position: @event_type.position,
-      url: current_story_event_type_path,
+      url: current_universe_event_type_path,
     }
   end
 

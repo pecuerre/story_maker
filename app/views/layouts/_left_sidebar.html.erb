@@ -1,6 +1,6 @@
 <div class="py-4">
 
-<% if Current.story.present? %>
+<% if Current.universe.present? %>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
     WHAT AND HOW
@@ -16,13 +16,13 @@
     <%= link_to icon_text_count("film", "Scenes"),
       "#", class: "nav-link px-0 link-secondary"
     %>
-    <%= link_to icon_text_count("list-nested", "Sections", Current.story.sections.count),
-      story_sections_path(),
+    <%= link_to icon_text_count("list-nested", "Sections", Current.universe.sections.count),
+      universe_sections_path(),
       class: "nav-link px-0#{active_if(:sections)}"
     %>
     <% if visible?(:sections, :section_types) %>
-      <%= link_to icon_text_count("gear", "Section Types", Current.story.section_types.count),
-        story_section_types_path(),
+      <%= link_to icon_text_count("gear", "Section Types", Current.universe.section_types.count),
+        universe_section_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:section_types)}"
       %>
     <% end %>
@@ -33,23 +33,23 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("person", "Characters", Current.story.characters.count),
-      story_characters_path(),
+    <%= link_to icon_text_count("person", "Characters", Current.universe.characters.count),
+      universe_characters_path(),
       class: "nav-link px-0#{active_if(:characters)}"
     %>
     <% if visible?(:characters, :character_types) %>
-      <%= link_to icon_text_count("gear", "Character Types", Current.story.character_types.count),
-        story_character_types_path(),
+      <%= link_to icon_text_count("gear", "Character Types", Current.universe.character_types.count),
+        universe_character_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:character_types)}"
       %>
     <% end %>
-    <%= link_to icon_text_count("people", "Relations", Current.story.relations.count),
-      story_relations_path(),
+    <%= link_to icon_text_count("people", "Relations", Current.universe.relations.count),
+      universe_relations_path(),
       class: "nav-link px-0#{active_if(:relations)}"
     %>
     <% if visible?(:relations, :relation_types) %>
-      <%= link_to icon_text_count("gear", "Relation Types", Current.story.relation_types.count),
-        story_relation_types_path(),
+      <%= link_to icon_text_count("gear", "Relation Types", Current.universe.relation_types.count),
+        universe_relation_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:relation_types)}"
       %>
     <% end %>
@@ -65,13 +65,13 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("geo-alt", "Locations", Current.story.locations.count),
-      story_locations_path(),
+    <%= link_to icon_text_count("geo-alt", "Locations", Current.universe.locations.count),
+      universe_locations_path(),
       class: "nav-link px-0#{active_if(:locations)}"
     %>
     <% if visible?(:locations, :location_types) %>
-      <%= link_to icon_text_count("gear", "Location Types", Current.story.location_types.count),
-        story_location_types_path(),
+      <%= link_to icon_text_count("gear", "Location Types", Current.universe.location_types.count),
+        universe_location_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:location_types)}"
       %>
       <%= link_to icon_text_count("rulers", "Distances"), "#",
@@ -94,18 +94,18 @@
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("calendar-event", "Events", Current.story.events.count),
-      story_events_path(),
+    <%= link_to icon_text_count("calendar-event", "Events", Current.universe.events.count),
+      universe_events_path(),
       class: "nav-link px-0#{active_if(:events)}"
       %>
     <% if visible?(:events, :event_types) %>
-      <%= link_to icon_text_count("gear", "Event Types", Current.story.event_types.count),
-        story_event_types_path(),
+      <%= link_to icon_text_count("gear", "Event Types", Current.universe.event_types.count),
+        universe_event_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:event_types)}"
       %>
     <% end %>
     <%= link_to icon_text_count("calendar-range", "Timeline"),
-      story_timeline_path(),
+      universe_timeline_path(),
       class: "nav-link px-0#{active_if(:timeline)}" %>
 
   </nav>
@@ -116,23 +116,23 @@
 
   <nav class="nav flex-column mb-4">
 
-    <%= link_to icon_text_count("box-seam", "Items", Current.story.items.count),
-      story_items_path(),
+    <%= link_to icon_text_count("box-seam", "Items", Current.universe.items.count),
+      universe_items_path(),
       class: "nav-link px-0#{active_if(:items)}"
     %>
     <% if visible?(:items, :item_types) %>
-      <%= link_to icon_text_count("gear", "Item Types", Current.story.item_types.count),
-        story_item_types_path(),
+      <%= link_to icon_text_count("gear", "Item Types", Current.universe.item_types.count),
+        universe_item_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:item_types)}"
       %>
     <% end %>
-    <%= link_to icon_text_count("person-bounding-box", "Ownerships", Current.story.ownerships.count),
-      story_ownerships_path(),
+    <%= link_to icon_text_count("person-bounding-box", "Ownerships", Current.universe.ownerships.count),
+      universe_ownerships_path(),
       class: "nav-link px-0#{active_if(:ownerships)}"
     %>
     <% if visible?(:ownerships, :ownership_types) %>
-      <%= link_to icon_text_count("gear", "Ownership Types", Current.story.ownership_types.count),
-        story_ownership_types_path(),
+      <%= link_to icon_text_count("gear", "Ownership Types", Current.universe.ownership_types.count),
+        universe_ownership_types_path(),
         class: "nav-link nav-sublink px-0#{active_if(:ownership_types)}"
       %>
     <% end %>

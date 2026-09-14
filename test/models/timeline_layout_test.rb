@@ -2,12 +2,12 @@ require "test_helper"
 
 class TimelineLayoutTest < ActiveSupport::TestCase
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
   end
 
   test "orders events by non-overlapping start/end ranges" do
-    early = @story.events.create!(title: "Early", start_datetime: "2026-01-01 09:00", end_datetime: "2026-01-01 10:00")
-    late = @story.events.create!(title: "Late", start_datetime: "2026-01-01 11:00", end_datetime: "2026-01-01 12:00")
+    early = @universe.events.create!(title: "Early", start_datetime: "2026-01-01 09:00", end_datetime: "2026-01-01 10:00")
+    late = @universe.events.create!(title: "Late", start_datetime: "2026-01-01 11:00", end_datetime: "2026-01-01 12:00")
 
     layout = TimelineLayout.new([ early, late ])
 
@@ -15,8 +15,8 @@ class TimelineLayoutTest < ActiveSupport::TestCase
   end
 
   test "orders events using start dates when ranges are unknown" do
-    early = @story.events.create!(title: "Early", start_datetime: "2026-01-01 09:00")
-    late = @story.events.create!(title: "Late", start_datetime: "2026-01-02 09:00")
+    early = @universe.events.create!(title: "Early", start_datetime: "2026-01-01 09:00")
+    late = @universe.events.create!(title: "Late", start_datetime: "2026-01-02 09:00")
 
     layout = TimelineLayout.new([ early, late ])
 
@@ -24,8 +24,8 @@ class TimelineLayoutTest < ActiveSupport::TestCase
   end
 
   test "orders events using explicit before_event/after_event relations" do
-    first = @story.events.create!(title: "First")
-    second = @story.events.create!(title: "Second", before_event: first)
+    first = @universe.events.create!(title: "First")
+    second = @universe.events.create!(title: "Second", before_event: first)
 
     layout = TimelineLayout.new([ first, second ])
 
@@ -33,8 +33,8 @@ class TimelineLayoutTest < ActiveSupport::TestCase
   end
 
   test "groups simultaneous events on the same layer" do
-    a = @story.events.create!(title: "A")
-    b = @story.events.create!(title: "B", simultaneous_event: a)
+    a = @universe.events.create!(title: "A")
+    b = @universe.events.create!(title: "B", simultaneous_event: a)
 
     layout = TimelineLayout.new([ a, b ])
 

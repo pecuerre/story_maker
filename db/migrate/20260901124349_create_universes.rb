@@ -1,6 +1,6 @@
-class CreateStories < ActiveRecord::Migration[8.1]
+class CreateUniverses < ActiveRecord::Migration[8.1]
   def change
-    create_table :stories do |t|
+    create_table :universes do |t|
       t.string :name
       t.references :owner, null: false, foreign_key: { to_table: :users }
       t.boolean :private, default: false
@@ -9,6 +9,6 @@ class CreateStories < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :stories, :slug, unique: true
+    add_index :universes, :slug, unique: true
   end
 end

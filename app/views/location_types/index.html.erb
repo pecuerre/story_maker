@@ -4,10 +4,10 @@
 
 <%= render "shared/taxonomy_tree",
   nodes: @location_types,
-  new_url: ->(parent = nil) { new_story_location_type_path(parent_id: parent&.id) },
-  create_url: story_location_types_path(),
-  edit_url: ->(location_type) { edit_story_location_type_path(id: location_type) },
-  update_url: ->(location_type) { story_location_type_path(id: location_type) },
-  delete_url: ->(location_type) { story_location_type_path(id: location_type) },
+  new_url: ->(parent = nil) { new_universe_location_type_path(parent_id: parent&.id) },
+  create_url: universe_location_types_path(),
+  edit_url: ->(location_type) { edit_universe_location_type_path(id: location_type) },
+  update_url: ->(location_type) { universe_location_type_path(id: location_type) },
+  delete_url: ->(location_type) { universe_location_type_path(id: location_type) },
   model_param: "location_type",
-  modal_fields: location_type_taxonomy_fields(Current.story.location_types.order(:position, :id)) %>
+  modal_fields: location_type_taxonomy_fields(Current.universe.location_types.order(:position, :id)) %>

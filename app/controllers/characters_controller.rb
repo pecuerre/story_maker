@@ -5,24 +5,24 @@ class CharactersController < ApplicationController
   before_action :set_character, only: %i[ update destroy ]
 
   def index
-    @characters = Current.story.characters
+    @characters = Current.universe.characters
     @characters = @characters.includes(:character_types)
     @characters = @characters.order(:name, :id)
 
-    @character_types = Current.story.character_types
+    @character_types = Current.universe.character_types
     @character_types = @character_types.order(:name)
   end
 
   def new
-    @character = Current.story.characters.new(parent_id: params[:parent_id])
+    @character = Current.universe.characters.new(parent_id: params[:parent_id])
 
-    @character_types = Current.story.character_types
+    @character_types = Current.universe.character_types
     @character_types = @character_types.order(:name)
   end
 
   def create
-    @character = Current.story.characters.new(character_params)
-    @character.character_type_ids = [ Current.story.character_types.order(:id).first.id ] if @character.character_type_ids.empty?
+    @character = Current.universe.characters.new(character_params)
+    @character.character_type_ids = [ Current.universe.character_types.order(:id).first.id ] if @character.character_type_ids.empty?
     @character.position = sibling_count(@character.parent_id)
 
     respond_to do |format|
@@ -52,7 +52,7 @@ class CharactersController < ApplicationController
   private
 
   def set_character
-    @character = Current.story.characters.find(params.expect(:id))
+    @character = Current.universe.characters.find(params.expect(:id))
   end
 
   def character_params
@@ -72,7 +72,7 @@ class CharactersController < ApplicationController
       character_type_ids: @character.character_type_ids,
       parent_id: @character.parent_id,
       position: @character.position,
-      url: story_character_path(id: @character)
+      url: universe_character_path(id: @character)
     }
   end
 end

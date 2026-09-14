@@ -1,5 +1,5 @@
 class Current < ActiveSupport::CurrentAttributes
   attribute :session
-  attribute :story
+  attribute :universe
   delegate :user, to: :session, allow_nil: true
 end

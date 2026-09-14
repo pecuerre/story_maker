@@ -2,13 +2,13 @@ require "test_helper"
 
 class LocationTypesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     @location_type = location_types(:location_type_one)
     sign_in_as(users(:user_one))
   end
 
   test "should get index" do
-    get story_location_types_url(story_slug: @story.slug)
+    get universe_location_types_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_includes response.body, "Location types"
@@ -17,7 +17,7 @@ class LocationTypesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create location type as json" do
     assert_difference("LocationType.count") do
-      post story_location_types_url(story_slug: @story.slug),
+      post universe_location_types_url(universe_slug: @universe.slug),
         params: { location_type: { name: "New location type", description: "A description" } },
         as: :json
     end
@@ -28,7 +28,7 @@ class LocationTypesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update location type as json" do
-    patch story_location_type_url(story_slug: @story.slug, id: @location_type),
+    patch universe_location_type_url(universe_slug: @universe.slug, id: @location_type),
       params: { location_type: { name: "Renamed", description: "Updated" } },
       as: :json
 

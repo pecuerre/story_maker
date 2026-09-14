@@ -5,19 +5,19 @@ class EventsController < ApplicationController
   before_action :set_event, only: %i[ update destroy ]
 
   def index
-    @events = Current.story.events.includes(:event_types).order(:id)
+    @events = Current.universe.events.includes(:event_types).order(:id)
     @events_for_select = @events
-    @event_types = Current.story.event_types.order(:position, :id)
+    @event_types = Current.universe.event_types.order(:position, :id)
   end
 
   def new
-    @event = Current.story.events.new(parent_id: params[:parent_id])
-    @events_for_select = Current.story.events.order(:id)
-    @event_types = Current.story.event_types.order(:position, :id)
+    @event = Current.universe.events.new(parent_id: params[:parent_id])
+    @events_for_select = Current.universe.events.order(:id)
+    @event_types = Current.universe.event_types.order(:position, :id)
   end
 
   def create
-    @event = Current.story.events.new(event_params)
+    @event = Current.universe.events.new(event_params)
     @event.position = sibling_count(@event.parent_id)
 
     respond_to do |format|
@@ -47,7 +47,7 @@ class EventsController < ApplicationController
   private
 
   def set_event
-    @event = Current.story.events.find(params.expect(:id))
+    @event = Current.universe.events.find(params.expect(:id))
   end
 
   def event_params
@@ -74,7 +74,7 @@ class EventsController < ApplicationController
       parent_id: @event.parent_id,
       position: @event.position,
       display_string: @event.display_string,
-      url: story_event_path(id: @event)
+      url: universe_event_path(id: @event)
     }
   end
 end

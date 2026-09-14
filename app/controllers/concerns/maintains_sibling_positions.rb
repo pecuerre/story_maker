@@ -35,7 +35,7 @@ module MaintainsSiblingPositions
   end
 
   def sibling_collection
-    Current.story.public_send(sibling_position_resource_name.to_s.pluralize)
+    Current.universe.public_send(sibling_position_resource_name.to_s.pluralize)
   end
 
   def sibling_position_resource

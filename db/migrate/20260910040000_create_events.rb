@@ -9,7 +9,7 @@ class CreateEvents < ActiveRecord::Migration[8.1]
       t.references :after_event, null: true, foreign_key: { to_table: :events }
       t.references :simultaneous_event, null: true, foreign_key: { to_table: :events }
       t.references :parent, null: true, foreign_key: { to_table: :events }
-      t.references :story, null: false, foreign_key: true
+      t.references :universe, null: false, foreign_key: true
       t.integer :position, null: false, default: 0
       t.text :description
       t.string :slug, null: false

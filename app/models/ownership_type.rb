@@ -4,7 +4,7 @@ class OwnershipType < ApplicationRecord
   include HasManyTypes
   include HasSlug
 
-  belongs_to :story
+  belongs_to :universe
   has_many_typed :ownership
 
   validates :name, presence: true

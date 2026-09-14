@@ -1,16 +1,16 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 item_type_one:
-  story: story_one
+  universe: universe_one
   name: Item type one
   slug: "item_type_one"
 
 item_type_two:
-  story: story_one
+  universe: universe_one
   name: Item type two
   slug: "item_type_two"
 
 item_type_three:
-  story: story_two
+  universe: universe_two
   name: Item type three
   slug: "item_type_three"

@@ -1,11 +1,11 @@
 character_one:
-  story: story_one
+  universe: universe_one
   slug: "character_one"
   character_types: character_type_one
   name: Character one
 
 character_two:
-  story: story_one
+  universe: universe_one
   slug: "character_two"
   character_types: character_type_two
   name: Character two

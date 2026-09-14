@@ -5,19 +5,19 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   stale_when_importmap_changes
 
-  before_action :set_current_story
+  before_action :set_current_universe
 
   protected
 
   def default_url_options
-    return super unless Current.story
+    return super unless Current.universe
 
     super.merge()
   end
 
-  def set_current_story
-    return unless params[:story_slug].present?
+  def set_current_universe
+    return unless params[:universe_slug].present?
 
-    Current.story = Story.find_by!(slug: params[:story_slug])
+    Current.universe = Universe.find_by!(slug: params[:universe_slug])
   end
 end

@@ -2,15 +2,15 @@ require "test_helper"
 
 class OwnershipsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     @item = items(:item_one)
     @character = characters(:character_one)
-    @ownership_type = OwnershipType.create!(story: @story, name: "Owns")
+    @ownership_type = OwnershipType.create!(universe: @universe, name: "Owns")
     sign_in_as(users(:user_one))
   end
 
   test "should get index with ownership options" do
-    get story_ownerships_url(story_slug: @story.slug)
+    get universe_ownerships_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_includes response.body, "Ownerships"
@@ -20,7 +20,7 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create ownership and redirect" do
     assert_difference("Ownership.count") do
-      post story_ownerships_url(story_slug: @story.slug), params: {
+      post universe_ownerships_url(universe_slug: @universe.slug), params: {
         ownership: {
           item_id: @item.id,
           character_id: @character.id,
@@ -30,7 +30,7 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to story_ownerships_url(story_slug: @story.slug)
+    assert_redirected_to universe_ownerships_url(universe_slug: @universe.slug)
     assert_equal "Held by the character", Ownership.order(:id).last.description
   end
 end

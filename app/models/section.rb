@@ -3,7 +3,7 @@ class Section < ApplicationRecord
   include HasManyTypes
   include HasSlug
 
-  belongs_to :story
+  belongs_to :universe
   has_many_types :section_type
 
   validates :name, presence: true

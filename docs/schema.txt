@@ -1,18 +1,18 @@
-story
+universe
 - name
 
 section_type
-- story
+- universe
 - name
 - parent
 
 section
-- story
+- universe
 - name
 - section_type
 - parent
 
 scene
-- story
+- universe
 - section
 - name

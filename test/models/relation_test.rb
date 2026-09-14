@@ -2,13 +2,13 @@ require "test_helper"
 
 class RelationTest < ActiveSupport::TestCase
   setup do
-    @story = stories(:story_one)
+    @universe = universes(:universe_one)
     @character = characters(:character_one)
-    @relation_type = RelationType.new(story: @story, name: "Child of")
+    @relation_type = RelationType.new(universe: @universe, name: "Child of")
   end
 
   test "requires both characters and a relation type" do
-    relation = Relation.new(story: @story)
+    relation = Relation.new(universe: @universe)
 
     assert_not relation.valid?
     assert_includes relation.errors[:character1], "can't be blank"
@@ -18,7 +18,7 @@ class RelationTest < ActiveSupport::TestCase
 
   test "allows repeated relations between the same characters" do
     @relation_type.save!
-    attributes = { story: @story, character1: @character, character2: characters(:character_two), relation_types: [ @relation_type ] }
+    attributes = { universe: @universe, character1: @character, character2: characters(:character_two), relation_types: [ @relation_type ] }
 
     assert Relation.create!(attributes)
     assert Relation.create!(attributes)

@@ -8,7 +8,7 @@ module Hierarchical
              foreign_key: :parent_id,
              dependent: :destroy
 
-    validate :parent_belongs_to_same_story
+    validate :parent_belongs_to_same_universe
     validate :parent_cannot_be_self
     validate :parent_cannot_be_descendant
   end
@@ -18,7 +18,7 @@ module Hierarchical
   end
 
   def sibling_scope
-    story.public_send(self.class.table_name).where(parent_id: parent_id).where.not(id: id).order(:position, :id)
+    universe.public_send(self.class.table_name).where(parent_id: parent_id).where.not(id: id).order(:position, :id)
   end
 
   def ancestor_chain
@@ -37,10 +37,10 @@ module Hierarchical
 
   private
 
-  def parent_belongs_to_same_story
-    return if parent.nil? || parent.story_id == story_id
+  def parent_belongs_to_same_universe
+    return if parent.nil? || parent.universe_id == universe_id
 
-    errors.add(:parent, "must belong to the same story")
+    errors.add(:parent, "must belong to the same universe")
   end
 
   def parent_cannot_be_self

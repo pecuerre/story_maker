@@ -1,4 +1,4 @@
-class Story < ApplicationRecord
+class Universe < ApplicationRecord
   include HasSlug
 
   belongs_to :owner, class_name: "User"

@@ -3,7 +3,7 @@ class Character < ApplicationRecord
   include HasManyTypes
   include HasSlug
 
-  belongs_to :story
+  belongs_to :universe
   has_many_types :character_type
   has_many :relations_as_character1, class_name: "Relation", foreign_key: :character1_id, dependent: :destroy
   has_many :relations_as_character2, class_name: "Relation", foreign_key: :character2_id, dependent: :destroy

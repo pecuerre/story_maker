@@ -5,14 +5,14 @@ class LocationTypesController < ApplicationController
   before_action :set_location_type, only: %i[ update destroy ]
 
   def index
-    @location_types = Current.story.location_types
+    @location_types = Current.universe.location_types
     @location_types = @location_types.includes(:children)
     @location_types = @location_types.where(parent_id: nil)
     @location_types = @location_types.order(:position, :id)
   end
 
   def create
-    @location_type = Current.story.location_types.new(location_type_params)
+    @location_type = Current.universe.location_types.new(location_type_params)
     @location_type.position = sibling_count(@location_type.parent_id)
 
     respond_to do |format|
@@ -42,7 +42,7 @@ class LocationTypesController < ApplicationController
   private
 
   def set_location_type
-    @location_type = Current.story.location_types.find(params.expect(:id))
+    @location_type = Current.universe.location_types.find(params.expect(:id))
   end
 
   def location_type_params
@@ -63,7 +63,7 @@ class LocationTypesController < ApplicationController
       fgcolor: @location_type.fgcolor,
       parent_id: @location_type.parent_id,
       position: @location_type.position,
-      url: story_location_type_path(id: @location_type)
+      url: universe_location_type_path(id: @location_type)
     }
   end
 end

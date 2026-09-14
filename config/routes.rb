@@ -2,9 +2,9 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
-  resources :stories, param: :story_slug, path: "s"
+  resources :universes, param: :universe_slug, path: "s"
 
-  scope "s/:story_slug", as: :story do
+  scope "s/:universe_slug", as: :universe do
     resources :section_types
     resources :sections
     resources :item_types
@@ -23,5 +23,5 @@ Rails.application.routes.draw do
   end
 
   get "up" => "rails/health#show", as: :rails_health_check
-  root "stories#index"
+  root "universes#index"
 end

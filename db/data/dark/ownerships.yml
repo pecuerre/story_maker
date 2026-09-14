@@ -1,5 +1,5 @@
 
-- story: Story.dark
+- universe: Universe.dark
   item: Item.tannhaus_clockwork_device
   ownership_types: [ OwnershipType.belongs_to ]
   character: Character.jonas
@@ -7,13 +7,13 @@
   to_date: "2024-01-01T11:00"
   slug: "jonas_time_machine"
 
-- story: Story.dark
+- universe: Universe.dark
   item: Item.sphere_machine
   ownership_types: [ OwnershipType.is_holded_by ]
   character: Character.martha
   slug: "martha_time_machine"
 
-- story: Story.dark
+- universe: Universe.dark
   item: Item.tannhaus_clockwork_device
   ownership_types: [ OwnershipType.is_holded_by ]
   character: Character.hannah

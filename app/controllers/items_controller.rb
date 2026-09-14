@@ -5,24 +5,24 @@ class ItemsController < ApplicationController
   before_action :set_item, only: %i[ update destroy ]
 
   def index
-    @items = Current.story.items
+    @items = Current.universe.items
     @items = @items.includes(:item_types)
     @items = @items.order(:name, :id)
 
-    @item_types = Current.story.item_types
+    @item_types = Current.universe.item_types
     @item_types = @item_types.order(:name)
   end
 
   def new
-    @item = Current.story.items.new(parent_id: params[:parent_id])
+    @item = Current.universe.items.new(parent_id: params[:parent_id])
 
-    @item_types = Current.story.item_types
+    @item_types = Current.universe.item_types
     @item_types = @item_types.order(:name)
   end
 
   def create
-    @item = Current.story.items.new(item_params)
-    @item.item_type_ids = [ Current.story.item_types.order(:id).first.id ] if @item.item_type_ids.empty?
+    @item = Current.universe.items.new(item_params)
+    @item.item_type_ids = [ Current.universe.item_types.order(:id).first.id ] if @item.item_type_ids.empty?
     @item.position = sibling_count(@item.parent_id)
 
     respond_to do |format|
@@ -52,7 +52,7 @@ class ItemsController < ApplicationController
   private
 
   def set_item
-    @item = Current.story.items.find(params.expect(:id))
+    @item = Current.universe.items.find(params.expect(:id))
   end
 
   def item_params
@@ -72,7 +72,7 @@ class ItemsController < ApplicationController
       item_type_ids: @item.item_type_ids,
       parent_id: @item.parent_id,
       position: @item.position,
-      url: story_item_path(id: @item)
+      url: universe_item_path(id: @item)
     }
   end
 end

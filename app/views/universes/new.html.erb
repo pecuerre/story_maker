@@ -1,0 +1,11 @@
+<% content_for :title, "New universe" %>
+
+<h1>New universe</h1>
+
+<%= render "form", universe: @universe %>
+
+<br>
+
+<div>
+  <%= link_to "Back to universes", universes_path %>
+</div>

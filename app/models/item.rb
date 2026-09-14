@@ -3,7 +3,7 @@ class Item < ApplicationRecord
   include HasManyTypes
   include HasSlug
 
-  belongs_to :story
+  belongs_to :universe
   has_many_types :item_type
   has_many :ownerships, dependent: :destroy
 

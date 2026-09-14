@@ -8,7 +8,7 @@
   <button type="button"
     class="btn btn-sm btn-primary mb-3"
     data-action="modal-form#open"
-    data-modal-form-url="<%= story_events_path() %>"
+    data-modal-form-url="<%= universe_events_path() %>"
     data-modal-form-method="post"
     data-modal-form-title="New event"
     data-modal-form-values-value="{}">
@@ -35,13 +35,13 @@
               title="Edit event"
               aria-label="Edit event"
               data-action="modal-form#open"
-              data-modal-form-url="<%= story_event_path(id: event) %>"
+              data-modal-form-url="<%= universe_event_path(id: event) %>"
               data-modal-form-method="patch"
               data-modal-form-title="Edit event"
               data-modal-form-values-value="<%= event_fields_json(event) %>">
               <i class="bi bi-pencil" aria-hidden="true"></i>
             </button>
-            <%= button_to story_event_path(id: event),
+            <%= button_to universe_event_path(id: event),
               method: :delete,
               class: "btn btn-sm btn-outline-danger",
               title: "Delete event",
@@ -71,7 +71,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <%= form_with scope: :event,
-          url: story_events_path(),
+          url: universe_events_path(),
           method: :post,
           data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">

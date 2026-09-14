@@ -41,7 +41,7 @@ class Ability
   end
 
   def define_logged_user_abilities(user)
-    can :manage, Story, user_id: user.id
+    can :manage, Universe, user_id: user.id
   end
 
   def define_admin_abilities(user)
@@ -49,6 +49,6 @@ class Ability
   end
 
   def define_guest_abilities
-    can :read, Story, private: false
+    can :read, Universe, private: false
   end
 end

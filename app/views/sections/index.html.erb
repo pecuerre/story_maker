@@ -4,11 +4,11 @@
 
 <%= render "shared/taxonomy_tree",
 	nodes: @sections,
-	new_url: ->(parent = nil) { new_story_section_path(parent_id: parent&.id) },
-	create_url: story_sections_path(),
-	edit_url: ->(section) { edit_story_section_path(id: section) },
-	update_url: ->(section) { story_section_path(id: section) },
-	delete_url: ->(section) { story_section_path(id: section) },
+	new_url: ->(parent = nil) { new_universe_section_path(parent_id: parent&.id) },
+	create_url: universe_sections_path(),
+	edit_url: ->(section) { edit_universe_section_path(id: section) },
+	update_url: ->(section) { universe_section_path(id: section) },
+	delete_url: ->(section) { universe_section_path(id: section) },
 	model_param: "section",
 	taxonomy_field: "section_type_ids",
 	modal_fields: section_taxonomy_fields(@section_types) %>

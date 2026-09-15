@@ -2,9 +2,9 @@ Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
 
-  resources :universes, param: :universe_slug, path: "s"
+  resources :universes, param: :universe_slug, path: "u"
 
-  scope "s/:universe_slug", as: :universe do
+  scope "u/:universe_slug", as: :universe do
     resources :section_types
     resources :sections
     resources :item_types

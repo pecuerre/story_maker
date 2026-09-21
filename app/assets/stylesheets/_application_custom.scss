@@ -26,15 +26,26 @@ body {
   padding-left: 1rem !important;
 }
 
+.card-header {
+  padding-top: .2rem;
+  padding-bottom: .2rem;
+  font-weight: bold;
+}
+
+.list-group-item {
+  padding-top: .1rem;
+  padding-bottom: .1rem;
+}
+
 .list-group-item.active .nav-link {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .list-group-item.active .nav-sublink {
   color: #ffffff;
 }
 
-.nav-link.active {
+.list-group-item.active .nav-link.active {
   color: yellow !important;
 }
 

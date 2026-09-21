@@ -3,7 +3,7 @@
 <% if Current.universe.present? %>
 
   <div class="card flex-column mb-4 nav">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header border-primary text-primary">
       WHAT
     </div>
     <ul class="list-group list-group-flush">
@@ -23,7 +23,7 @@
   </div>
 
   <div class="card flex-column mb-4 nav">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header border-primary text-primary">
       HOW
     </div>
     <ul class="list-group list-group-flush">
@@ -50,7 +50,7 @@
 
 
   <div class="card flex-column mb-4 nav">
-    <div class="card-header bg-danger text-white">
+    <div class="card-header border-danger text-danger">
       WHO
     </div>
     <ul class="list-group list-group-flush">
@@ -58,12 +58,12 @@
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("person", "Characters", Current.universe.characters.count),
             universe_characters_path(),
-            class: "nav-link px-0#{active_if(:characters)}"
+            class: "nav-link text-danger px-0#{active_if(:characters)}"
           %>
           <% if visible?(:characters, :character_types) %>
             <%= link_to icon("gear"),
               universe_character_types_path(),
-              class: "nav-link px-0#{active_if(:character_types)}"
+              class: "nav-link text-danger px-0#{active_if(:character_types)}"
             %>
           <% end %>
         </div>
@@ -72,12 +72,12 @@
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("people", "Relations", Current.universe.relations.count),
             universe_relations_path(),
-            class: "nav-link px-0#{active_if(:relations)}"
+            class: "nav-link text-danger px-0#{active_if(:relations)}"
           %>
           <% if visible?(:relations, :relation_types) %>
             <%= link_to icon("gear"),
               universe_relation_types_path(),
-              class: "nav-link px-0#{active_if(:relation_types)}"
+              class: "nav-link text-danger px-0#{active_if(:relation_types)}"
             %>
           <% end %>
         </div>
@@ -94,7 +94,7 @@
   </div>
 
   <div class="card flex-column mb-4 nav">
-    <div class="card-header bg-danger text-white">
+    <div class="card-header border-danger text-danger">
       WHERE
     </div>
     <ul class="list-group list-group-flush">
@@ -102,12 +102,12 @@
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("geo-alt", "Locations", Current.universe.locations.count),
             universe_locations_path(),
-            class: "nav-link px-0#{active_if(:locations)}"
+            class: "nav-link text-danger px-0#{active_if(:locations)}"
           %>
           <% if visible?(:locations, :location_types) %>
             <%= link_to icon("gear"),
               universe_location_types_path(),
-              class: "nav-link px-0#{active_if(:location_types)}"
+              class: "nav-link text-danger px-0#{active_if(:location_types)}"
             %>
           <% end %>
         </div>
@@ -132,7 +132,7 @@
   </div>
 
   <div class="card flex-column mb-4 nav">
-    <div class="card-header bg-danger text-white">
+    <div class="card-header border-danger text-danger">
       WHEN
     </div>
     <ul class="list-group list-group-flush">
@@ -140,12 +140,12 @@
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("calendar-event", "Events", Current.universe.events.count),
             universe_events_path(),
-            class: "nav-link px-0#{active_if(:events)}"
+            class: "nav-link text-danger px-0#{active_if(:events)}"
           %>
           <% if visible?(:events, :event_types) %>
             <%= link_to icon("gear"),
               universe_event_types_path(),
-              class: "nav-link px-0#{active_if(:event_types)}"
+              class: "nav-link text-danger px-0#{active_if(:event_types)}"
             %>
           <% end %>
         </div>
@@ -153,13 +153,13 @@
       <li class="list-group-item <%= active_if(:timeline) %>">
         <%= link_to icon_text_count("calendar-range", "Timeline"),
           universe_timeline_path(),
-          class: "nav-link px-0#{active_if(:timeline)}" %>
+          class: "nav-link text-danger px-0#{active_if(:timeline)}" %>
       </li>
     </ul>
   </div>
 
   <div class="card flex-column mb-4 nav">
-    <div class="card-header bg-danger text-white">
+    <div class="card-header border-danger text-danger">
       WITH
     </div>
     <ul class="list-group list-group-flush">
@@ -167,12 +167,12 @@
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("box-seam", "Items", Current.universe.items.count),
             universe_items_path(),
-            class: "nav-link px-0#{active_if(:items)}"
+            class: "nav-link text-danger px-0#{active_if(:items)}"
           %>
           <% if visible?(:items, :item_types) %>
             <%= link_to icon("gear"),
               universe_item_types_path(),
-              class: "nav-link px-0#{active_if(:item_types)}"
+              class: "nav-link text-danger px-0#{active_if(:item_types)}"
             %>
           <% end %>
         </div>
@@ -181,12 +181,12 @@
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("person-bounding-box", "Ownerships", Current.universe.ownerships.count),
             universe_ownerships_path(),
-            class: "nav-link px-0#{active_if(:ownerships)}"
+            class: "nav-link text-danger px-0#{active_if(:ownerships)}"
           %>
           <% if visible?(:ownerships, :ownership_types) %>
             <%= link_to icon("gear"),
               universe_ownership_types_path(),
-              class: "nav-link px-0#{active_if(:ownership_types)}"
+              class: "nav-link text-danger px-0#{active_if(:ownership_types)}"
             %>
           <% end %>
         </div>

@@ -2,25 +2,49 @@
 
 <% if Current.universe.present? %>
 
-  <div class="card flex-column mb-4">
+  <div class="card flex-column mb-4 nav">
     <div class="card-header bg-primary text-white">
-      Story
+      WHAT
     </div>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item">An item</li>
-      <li class="list-group-item">A second item</li>
-      <li class="list-group-item">A third item</li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("file-text", "Stories"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("file-text", "Plot"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("globe", "World Building"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
     </ul>
   </div>
 
-  <div class="card flex-column mb-4">
+  <div class="card flex-column mb-4 nav">
     <div class="card-header bg-primary text-white">
-      WHAT & HOW
+      HOW
     </div>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item">An item</li>
-      <li class="list-group-item">A second item</li>
-      <li class="list-group-item">A third item</li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("film", "Scenes"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item <%= active_if(:sections, :section_types) %>">
+        <div class="d-flex align-items-center justify-content-between">
+          <%= link_to icon_text_count("list-nested", "Sections", Current.universe.sections.count),
+            universe_sections_path(),
+            class: "nav-link px-0#{active_if(:sections)}"
+          %>
+          <% if visible?(:sections, :section_types) %>
+            <%= link_to icon("gear"),
+              universe_section_types_path(),
+              class: "nav-link px-0#{active_if(:section_types)}"
+            %>
+          <% end %>
+        </div>
+      </li>
     </ul>
   </div>
 
@@ -69,7 +93,7 @@
     </ul>
   </div>
 
-  <div class="card flex-column mb-4">
+  <div class="card flex-column mb-4 nav">
     <div class="card-header bg-danger text-white">
       WHERE
     </div>
@@ -107,80 +131,68 @@
     </ul>
   </div>
 
-  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WHAT AND HOW
-  </h6>
+  <div class="card flex-column mb-4 nav">
+    <div class="card-header bg-danger text-white">
+      WHEN
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item <%= active_if(:events, :event_types) %>">
+        <div class="d-flex align-items-center justify-content-between">
+          <%= link_to icon_text_count("calendar-event", "Events", Current.universe.events.count),
+            universe_events_path(),
+            class: "nav-link px-0#{active_if(:events)}"
+          %>
+          <% if visible?(:events, :event_types) %>
+            <%= link_to icon("gear"),
+              universe_event_types_path(),
+              class: "nav-link px-0#{active_if(:event_types)}"
+            %>
+          <% end %>
+        </div>
+      </li>
+      <li class="list-group-item <%= active_if(:timeline) %>">
+        <%= link_to icon_text_count("calendar-range", "Timeline"),
+          universe_timeline_path(),
+          class: "nav-link px-0#{active_if(:timeline)}" %>
+      </li>
+    </ul>
+  </div>
 
-  <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("file-text", "Stories"), "#",
-      class: "nav-link px-0 link-secondary" %>
-    <%= link_to icon_text_count("file-text", "Plot"), "#",
-      class: "nav-link px-0 link-secondary" %>
-    <%= link_to icon_text_count("globe", "World Building"), "#",
-      class: "nav-link px-0 link-secondary" %>
-    <%= link_to icon_text_count("film", "Scenes"),
-      "#", class: "nav-link px-0 link-secondary"
-    %>
-    <%= link_to icon_text_count("list-nested", "Sections", Current.universe.sections.count),
-      universe_sections_path(),
-      class: "nav-link px-0#{active_if(:sections)}"
-    %>
-    <% if visible?(:sections, :section_types) %>
-      <%= link_to icon_text_count("gear", "Section Types", Current.universe.section_types.count),
-        universe_section_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:section_types)}"
-      %>
-    <% end %>
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WHEN
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("calendar-event", "Events", Current.universe.events.count),
-      universe_events_path(),
-      class: "nav-link px-0#{active_if(:events)}"
-      %>
-    <% if visible?(:events, :event_types) %>
-      <%= link_to icon_text_count("gear", "Event Types", Current.universe.event_types.count),
-        universe_event_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:event_types)}"
-      %>
-    <% end %>
-    <%= link_to icon_text_count("calendar-range", "Timeline"),
-      universe_timeline_path(),
-      class: "nav-link px-0#{active_if(:timeline)}" %>
-
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WITH WHAT
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-
-    <%= link_to icon_text_count("box-seam", "Items", Current.universe.items.count),
-      universe_items_path(),
-      class: "nav-link px-0#{active_if(:items)}"
-    %>
-    <% if visible?(:items, :item_types) %>
-      <%= link_to icon_text_count("gear", "Item Types", Current.universe.item_types.count),
-        universe_item_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:item_types)}"
-      %>
-    <% end %>
-    <%= link_to icon_text_count("person-bounding-box", "Ownerships", Current.universe.ownerships.count),
-      universe_ownerships_path(),
-      class: "nav-link px-0#{active_if(:ownerships)}"
-    %>
-    <% if visible?(:ownerships, :ownership_types) %>
-      <%= link_to icon_text_count("gear", "Ownership Types", Current.universe.ownership_types.count),
-        universe_ownership_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:ownership_types)}"
-      %>
-    <% end %>
-  </nav>
+  <div class="card flex-column mb-4 nav">
+    <div class="card-header bg-danger text-white">
+      WITH
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item <%= active_if(:items, :item_types) %>">
+        <div class="d-flex align-items-center justify-content-between">
+          <%= link_to icon_text_count("box-seam", "Items", Current.universe.items.count),
+            universe_items_path(),
+            class: "nav-link px-0#{active_if(:items)}"
+          %>
+          <% if visible?(:items, :item_types) %>
+            <%= link_to icon("gear"),
+              universe_item_types_path(),
+              class: "nav-link px-0#{active_if(:item_types)}"
+            %>
+          <% end %>
+        </div>
+      </li>
+      <li class="list-group-item <%= active_if(:ownerships, :ownership_types) %>">
+        <div class="d-flex align-items-center justify-content-between">
+          <%= link_to icon_text_count("person-bounding-box", "Ownerships", Current.universe.ownerships.count),
+            universe_ownerships_path(),
+            class: "nav-link px-0#{active_if(:ownerships)}"
+          %>
+          <% if visible?(:ownerships, :ownership_types) %>
+            <%= link_to icon("gear"),
+              universe_ownership_types_path(),
+              class: "nav-link px-0#{active_if(:ownership_types)}"
+            %>
+          <% end %>
+        </div>
+      </li>
+    </ul>
+  </div>
 <% end %>
 
 </div>

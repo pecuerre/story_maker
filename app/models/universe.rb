@@ -2,6 +2,7 @@ class Universe < ApplicationRecord
   include HasSlug
 
   belongs_to :owner, class_name: "User"
+  has_many :stories, dependent: :destroy
   has_many :section_types, dependent: :destroy
   has_many :sections, dependent: :destroy
   has_many :item_types, dependent: :destroy

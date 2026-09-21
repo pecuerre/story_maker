@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
   create_table "character_types", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -268,6 +268,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "stories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name"
+    t.integer "universe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["universe_id"], name: "index_stories_on_universe_id"
+  end
+
   create_table "universes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -324,5 +333,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_10_040000) do
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sections", "universes"
   add_foreign_key "sessions", "users"
+  add_foreign_key "stories", "universes"
   add_foreign_key "universes", "users", column: "owner_id"
 end

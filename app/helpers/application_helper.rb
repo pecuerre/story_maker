@@ -10,6 +10,10 @@ module ApplicationHelper
     true
   end
 
+  def icon(name)
+    content_tag(:i, "", class: "bi bi-#{name} me-1")
+  end
+
   def icon_text_count(icon, text, count = nil)
     content_tag(:span, class: "d-flex") do
       concat content_tag(:i, "", class: "bi bi-#{icon} me-1")

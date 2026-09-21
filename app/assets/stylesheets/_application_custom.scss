@@ -26,8 +26,20 @@ body {
   padding-left: 1rem !important;
 }
 
+.list-group-item.active .nav-link {
+  color: #ffffff;
+}
+
+.list-group-item.active .nav-sublink {
+  color: #ffffff;
+}
+
 .nav-link.active {
-  font-weight: bold;
+  color: yellow !important;
+}
+
+.nav-link:hover {
+  color: orange !important;
 }
 
 .menu-header {

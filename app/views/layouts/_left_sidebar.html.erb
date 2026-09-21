@@ -2,12 +2,117 @@
 
 <% if Current.universe.present? %>
 
+  <div class="card flex-column mb-4">
+    <div class="card-header bg-primary text-white">
+      Story
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item">An item</li>
+      <li class="list-group-item">A second item</li>
+      <li class="list-group-item">A third item</li>
+    </ul>
+  </div>
+
+  <div class="card flex-column mb-4">
+    <div class="card-header bg-primary text-white">
+      WHAT & HOW
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item">An item</li>
+      <li class="list-group-item">A second item</li>
+      <li class="list-group-item">A third item</li>
+    </ul>
+  </div>
+
+
+  <div class="card flex-column mb-4 nav">
+    <div class="card-header bg-danger text-white">
+      WHO
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item <%= active_if(:characters, :character_types) %>">
+        <div class="d-flex align-items-center justify-content-between">
+          <%= link_to icon_text_count("person", "Characters", Current.universe.characters.count),
+            universe_characters_path(),
+            class: "nav-link px-0#{active_if(:characters)}"
+          %>
+          <% if visible?(:characters, :character_types) %>
+            <%= link_to icon("gear"),
+              universe_character_types_path(),
+              class: "nav-link px-0#{active_if(:character_types)}"
+            %>
+          <% end %>
+        </div>
+      </li>
+      <li class="list-group-item <%= active_if(:relations, :relation_types) %>">
+        <div class="d-flex align-items-center justify-content-between">
+          <%= link_to icon_text_count("people", "Relations", Current.universe.relations.count),
+            universe_relations_path(),
+            class: "nav-link px-0#{active_if(:relations)}"
+          %>
+          <% if visible?(:relations, :relation_types) %>
+            <%= link_to icon("gear"),
+              universe_relation_types_path(),
+              class: "nav-link px-0#{active_if(:relation_types)}"
+            %>
+          <% end %>
+        </div>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("person-plus", "Meetings"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("chat-dots", "Dialogs"),
+          "#", class: "nav-link px-0 link-secondary" %>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card flex-column mb-4">
+    <div class="card-header bg-danger text-white">
+      WHERE
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item <%= active_if(:locations, :location_types) %>">
+        <div class="d-flex align-items-center justify-content-between">
+          <%= link_to icon_text_count("geo-alt", "Locations", Current.universe.locations.count),
+            universe_locations_path(),
+            class: "nav-link px-0#{active_if(:locations)}"
+          %>
+          <% if visible?(:locations, :location_types) %>
+            <%= link_to icon("gear"),
+              universe_location_types_path(),
+              class: "nav-link px-0#{active_if(:location_types)}"
+            %>
+          <% end %>
+        </div>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("sign-turn-right", "Routes"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("map", "Map"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("rulers", "Distances"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("bounding-box-circles", "Connections"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+    </ul>
+  </div>
+
   <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
     WHAT AND HOW
   </h6>
 
   <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("file-text", "Scripts"), "#",
+    <%= link_to icon_text_count("file-text", "Stories"), "#",
       class: "nav-link px-0 link-secondary" %>
     <%= link_to icon_text_count("file-text", "Plot"), "#",
       class: "nav-link px-0 link-secondary" %>
@@ -26,67 +131,6 @@
         class: "nav-link nav-sublink px-0#{active_if(:section_types)}"
       %>
     <% end %>
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WHO
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("person", "Characters", Current.universe.characters.count),
-      universe_characters_path(),
-      class: "nav-link px-0#{active_if(:characters)}"
-    %>
-    <% if visible?(:characters, :character_types) %>
-      <%= link_to icon_text_count("gear", "Character Types", Current.universe.character_types.count),
-        universe_character_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:character_types)}"
-      %>
-    <% end %>
-    <%= link_to icon_text_count("people", "Relations", Current.universe.relations.count),
-      universe_relations_path(),
-      class: "nav-link px-0#{active_if(:relations)}"
-    %>
-    <% if visible?(:relations, :relation_types) %>
-      <%= link_to icon_text_count("gear", "Relation Types", Current.universe.relation_types.count),
-        universe_relation_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:relation_types)}"
-      %>
-    <% end %>
-    <%= link_to icon_text_count("person-plus", "Meetings"), "#",
-      class: "nav-link px-0 link-secondary" %>
-    <%= link_to icon_text_count("chat-dots", "Dialogs"),
-      "#", class: "nav-link px-0 link-secondary"
-      %>
-  </nav>
-
-  <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">
-    WHERE
-  </h6>
-
-  <nav class="nav flex-column mb-4">
-    <%= link_to icon_text_count("geo-alt", "Locations", Current.universe.locations.count),
-      universe_locations_path(),
-      class: "nav-link px-0#{active_if(:locations)}"
-    %>
-    <% if visible?(:locations, :location_types) %>
-      <%= link_to icon_text_count("gear", "Location Types", Current.universe.location_types.count),
-        universe_location_types_path(),
-        class: "nav-link nav-sublink px-0#{active_if(:location_types)}"
-      %>
-      <%= link_to icon_text_count("rulers", "Distances"), "#",
-        class: "nav-link nav-sublink px-0 link-secondary"
-      %>
-      <%= link_to icon_text_count("bounding-box-circles", "Connections"), "#",
-        class: "nav-link nav-sublink px-0 link-secondary"
-      %>
-      <%= link_to icon_text_count("sign-turn-right", "Routes"), "#",
-        class: "nav-link nav-sublink px-0 link-secondary"
-      %>
-    <% end %>
-    <%= link_to icon_text_count("map", "Map"), "#",
-      class: "nav-link px-0 link-secondary"
-    %>
   </nav>
 
   <h6 class="text-uppercase text-body-secondary small fw-bold menu-header">

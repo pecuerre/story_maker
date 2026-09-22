@@ -11,7 +11,7 @@ class LocationTagsControllerTest < ActionDispatch::IntegrationTest
     get universe_location_tags_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_includes response.body, "Location tags"
+    assert_includes response.body, "Location Tags"
     assert_includes response.body, @location_tag.name
   end
 

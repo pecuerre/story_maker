@@ -11,7 +11,7 @@ class ItemTagsControllerTest < ActionDispatch::IntegrationTest
     get universe_item_tags_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_includes response.body, "Item tags"
+    assert_includes response.body, "Item Tags"
     assert_includes response.body, @item_tag.name
   end
 

@@ -11,7 +11,7 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     get universe_character_tags_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_includes response.body, "Character tags"
+    assert_includes response.body, "Character Tags"
     assert_includes response.body, @character_tag.name
   end
 

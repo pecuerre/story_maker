@@ -12,11 +12,15 @@
           class: "nav-link px-0 link-secondary" %>
       </li>
       <li class="list-group-item">
-        <%= link_to icon_text_count("file-text", "Plot"), "#",
+        <%= link_to icon_text_count("diagram-3", "Plot"), "#",
           class: "nav-link px-0 link-secondary" %>
       </li>
       <li class="list-group-item">
         <%= link_to icon_text_count("globe", "World Building"), "#",
+          class: "nav-link px-0 link-secondary" %>
+      </li>
+      <li class="list-group-item">
+        <%= link_to icon_text_count("bricks", "Tropes"), "#",
           class: "nav-link px-0 link-secondary" %>
       </li>
     </ul>
@@ -38,7 +42,7 @@
             class: "nav-link px-0#{active_if(:sections)}"
           %>
           <% if visible?(:sections, :section_types) %>
-            <%= link_to icon("gear"),
+            <%= link_to icon("tags"),
               universe_section_types_path(),
               class: "nav-link px-0#{active_if(:section_types)}"
             %>
@@ -61,7 +65,7 @@
             class: "nav-link text-danger px-0#{active_if(:characters)}"
           %>
           <% if visible?(:characters, :character_types) %>
-            <%= link_to icon("gear"),
+            <%= link_to icon("tags"),
               universe_character_types_path(),
               class: "nav-link text-danger px-0#{active_if(:character_types)}"
             %>
@@ -75,7 +79,7 @@
             class: "nav-link text-danger px-0#{active_if(:relations)}"
           %>
           <% if visible?(:relations, :relation_types) %>
-            <%= link_to icon("gear"),
+            <%= link_to icon("tags"),
               universe_relation_types_path(),
               class: "nav-link text-danger px-0#{active_if(:relation_types)}"
             %>
@@ -105,7 +109,7 @@
             class: "nav-link text-danger px-0#{active_if(:locations)}"
           %>
           <% if visible?(:locations, :location_types) %>
-            <%= link_to icon("gear"),
+            <%= link_to icon("tags"),
               universe_location_types_path(),
               class: "nav-link text-danger px-0#{active_if(:location_types)}"
             %>
@@ -143,7 +147,7 @@
             class: "nav-link text-danger px-0#{active_if(:events)}"
           %>
           <% if visible?(:events, :event_types) %>
-            <%= link_to icon("gear"),
+            <%= link_to icon("tags"),
               universe_event_types_path(),
               class: "nav-link text-danger px-0#{active_if(:event_types)}"
             %>
@@ -170,7 +174,7 @@
             class: "nav-link text-danger px-0#{active_if(:items)}"
           %>
           <% if visible?(:items, :item_types) %>
-            <%= link_to icon("gear"),
+            <%= link_to icon("tags"),
               universe_item_types_path(),
               class: "nav-link text-danger px-0#{active_if(:item_types)}"
             %>
@@ -184,7 +188,7 @@
             class: "nav-link text-danger px-0#{active_if(:ownerships)}"
           %>
           <% if visible?(:ownerships, :ownership_types) %>
-            <%= link_to icon("gear"),
+            <%= link_to icon("tags"),
               universe_ownership_types_path(),
               class: "nav-link text-danger px-0#{active_if(:ownership_types)}"
             %>

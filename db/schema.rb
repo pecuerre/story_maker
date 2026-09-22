@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -248,10 +248,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
-    t.integer "universe_id", null: false
+    t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_sections_on_parent_id"
-    t.index ["universe_id"], name: "index_sections_on_universe_id"
+    t.index ["story_id"], name: "index_sections_on_story_id"
   end
 
   create_table "sections_section_tags", id: false, force: :cascade do |t|
@@ -272,8 +272,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name"
+    t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["universe_id", "slug"], name: "index_stories_on_universe_id_and_slug", unique: true
     t.index ["universe_id"], name: "index_stories_on_universe_id"
   end
 
@@ -331,7 +333,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
   add_foreign_key "section_tags", "section_tags", column: "parent_id"
   add_foreign_key "section_tags", "universes"
   add_foreign_key "sections", "sections", column: "parent_id"
-  add_foreign_key "sections", "universes"
+  add_foreign_key "sections", "stories"
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "universes"
   add_foreign_key "universes", "users", column: "owner_id"

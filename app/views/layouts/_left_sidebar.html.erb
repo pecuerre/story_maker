@@ -1,15 +1,24 @@
 <div class="py-4">
 
 <% if Current.universe.present? %>
+  <% sections_scope = Current.story || Current.universe %>
 
   <div class="card flex-column mb-4 nav">
     <div class="card-header border-primary text-primary">
       WHAT
     </div>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item">
-        <%= link_to icon_text_count("file-text", "Stories"), "#",
-          class: "nav-link px-0 link-secondary" %>
+      <li class="list-group-item <%= active_if(:stories) %>">
+        <%= link_to icon_text_count("file-text", "Stories", Current.universe.stories.count),
+          universe_stories_path(),
+          class: "nav-link px-0#{active_if(:stories)}" %>
+        <% Current.universe.stories.each do |story| %>
+          <div class="ms-4">
+            <%= link_to story.name,
+              universe_story_sections_path(story_id: story),
+              class: "nav-link px-0 link-secondary small#{Current.story == story ? " fw-bold" : ""}" %>
+          </div>
+        <% end %>
       </li>
       <li class="list-group-item">
         <%= link_to icon_text_count("diagram-3", "Plot"), "#",
@@ -37,8 +46,8 @@
       </li>
       <li class="list-group-item <%= active_if(:sections, :section_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("list-nested", "Sections", Current.universe.sections.count),
-            universe_sections_path(),
+          <%= link_to icon_text_count("list-nested", "Sections", sections_scope.sections.count),
+            Current.story ? universe_story_sections_path(story_id: Current.story) : universe_stories_path(),
             class: "nav-link px-0#{active_if(:sections)}"
           %>
           <% if visible?(:sections, :section_tags) %>

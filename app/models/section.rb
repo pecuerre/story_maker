@@ -3,8 +3,23 @@ class Section < ApplicationRecord
   include HasManyTags
   include HasSlug
 
-  belongs_to :universe
+  belongs_to :story
   has_many_tags :section_tag
 
   validates :name, presence: true
+
+  # Sections are scoped to their story instead of directly to the universe.
+  private
+
+  def hierarchy_scope
+    story
+  end
+
+  def hierarchy_scope_attribute
+    :story_id
+  end
+
+  def hierarchy_scope_error
+    "must belong to the same story"
+  end
 end

@@ -1,11 +1,19 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-one:
+story_one:
   universe: universe_one
-  name: MyString
-  description: MyText
+  name: "Story One"
+  slug: "story-one"
+  description: "The main story of universe one"
 
-two:
+story_alt:
+  universe: universe_one
+  name: "Spin-off"
+  slug: "spin-off"
+  description: "A second story in the same universe"
+
+story_two:
   universe: universe_two
-  name: MyString
-  description: MyText
+  name: "Story Two"
+  slug: "story-two"
+  description: "The story of universe two"

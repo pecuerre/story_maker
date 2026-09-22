@@ -2,10 +2,11 @@ class SectionsController < ApplicationController
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :section
 
+  before_action :set_story
   before_action :set_section, only: %i[ update destroy ]
 
   def index
-    @sections = Current.universe.sections
+    @sections = @story.sections
     @sections = @sections.includes(:children, :section_tags)
     @sections = @sections.where(parent_id: nil)
     @sections = @sections.order(:position, :id)
@@ -15,14 +16,14 @@ class SectionsController < ApplicationController
   end
 
   def new
-    @section = Current.universe.sections.new(parent_id: params[:parent_id])
+    @section = @story.sections.new(parent_id: params[:parent_id])
 
     @section_tags = Current.universe.section_tags
     @section_tags = @section_tags.order(:name)
   end
 
   def create
-    @section = Current.universe.sections.new(section_params)
+    @section = @story.sections.new(section_params)
     @section.section_tag_ids = [ Current.universe.section_tags.order(:id).first.id ] if @section.section_tag_ids.empty?
     @section.position = sibling_count(@section.parent_id)
 
@@ -54,12 +55,21 @@ class SectionsController < ApplicationController
 
   private
 
+  def set_story
+    @story = Current.universe.stories.find(params.expect(:story_id))
+  end
+
   def current_universe_sections_path
-    universe_sections_path()
+    universe_story_sections_path(story_id: @story)
   end
 
   def set_section
-    @section = Current.universe.sections.find(params.expect(:id))
+    @section = @story.sections.find(params.expect(:id))
+  end
+
+  # Positions are maintained among the story's sections, not the universe's.
+  def sibling_collection
+    @story.sections
   end
 
   def section_params
@@ -78,7 +88,7 @@ class SectionsController < ApplicationController
       description: @section.description,
       section_tag_ids: @section.section_tag_ids,
       parent_id: @section.parent_id,
-      url: universe_section_path(id: @section)
+      url: universe_story_section_path(story_id: @story, id: @section)
     }
   end
 end

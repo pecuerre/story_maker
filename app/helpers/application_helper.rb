@@ -25,6 +25,11 @@ module ApplicationHelper
     end
   end
 
+  # Universes listed in the top bar dropdown, respecting visibility rules.
+  def nav_universes
+    @nav_universes ||= Universe.visible_to(Current.user).order(:name)
+  end
+
   def entity_tag_badge(entity)
     return if entity.nil?
 

@@ -1,11 +1,11 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  universe: one
+  universe: universe_one
   name: MyString
   description: MyText
 
 two:
-  universe: two
+  universe: universe_two
   name: MyString
   description: MyText

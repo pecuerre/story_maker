@@ -63,13 +63,7 @@ class UniversesController < ApplicationController
   private
 
   def visible_universes
-    scope = Universe.all
-
-    if authenticated?
-      scope.where(private: false).or(scope.where(owner_id: Current.user.id))
-    else
-      scope.where(private: false)
-    end
+    Universe.visible_to(Current.user)
   end
 
   # Use callbacks to share common setup or constraints between actions.

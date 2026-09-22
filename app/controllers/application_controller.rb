@@ -5,6 +5,9 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   stale_when_importmap_changes
 
+  # Load the session (if any) on public pages too, so Current.user is available
+  # in views for things like the universes navbar dropdown.
+  before_action :resume_session
   before_action :set_current_universe
 
   protected

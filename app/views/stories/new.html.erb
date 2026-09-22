@@ -1,0 +1,9 @@
+<% content_for :title, "New story" %>
+
+<h1>New story</h1>
+
+<%= render "form", story: @story %>
+
+<div>
+  <%= link_to "Back to stories", universe_stories_path %>
+</div>

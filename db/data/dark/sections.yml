@@ -1,85 +1,85 @@
-- universe: Universe.dark
+- story: Story.dark
   name: "Season 1"
   slug: s1
   section_tags: [ SectionTag.season ]
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 1: Secrets"
   slug: s1e1
   section_tags: [ SectionTag.episode ]
   parent: Section.s1
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 2: Lies"
   slug: s1e2
   section_tags: [ SectionTag.episode ]
   parent: Section.s1
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 3: Past and Present"
   slug: s1e3
   section_tags: [ SectionTag.episode ]
   parent: Section.s1
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 4: Double Lives"
   slug: s1e4
   section_tags: [ SectionTag.episode ]
   parent: Section.s1
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 5: Truths"
   slug: s1e5
   section_tags: [ SectionTag.episode ]
   parent: Section.s1
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 6: Sic Mundus Creatus Est"
   slug: s1e6
   section_tags: [ SectionTag.episode, SectionTag.finale ]
   parent: Section.s1
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Season 2"
   slug: s2
   section_tags: [ SectionTag.season ]
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 1"
   slug: s2e1
   section_tags: [ SectionTag.episode ]
   parent: Section.s2
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 2"
   slug: s2e2
   section_tags: [ SectionTag.episode ]
   parent: Section.s2
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 3"
   slug: s2e3
   section_tags: [ SectionTag.episode ]
   parent: Section.s2
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Season 3"
   slug: s3
   section_tags: [ SectionTag.season ]
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 1"
   slug: s3e1
   section_tags: [ SectionTag.episode ]
   parent: Section.s3
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 2"
   slug: s3e2
   section_tags: [ SectionTag.episode ]
   parent: Section.s3
 
-- universe: Universe.dark
+- story: Story.dark
   name: "Episode 3"
   slug: s3e3
   section_tags: [ SectionTag.episode ]

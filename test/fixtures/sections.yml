@@ -3,13 +3,13 @@
 section_one:
   name: Section one
   parent:
-  universe: universe_one
+  story: story_one
   slug: "section_one"
   section_tags: section_tag_one
 
 section_two:
   name: Section two
   parent: section_one
-  universe: universe_one
+  story: story_one
   slug: "section_two"
   section_tags: section_tag_two

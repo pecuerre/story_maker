@@ -1,18 +1,22 @@
 universe
 - name
 
+story
+- universe
+- name
+
 section_tag
 - universe
 - name
 - parent
 
 section
-- universe
+- story
 - name
 - section_tag
 - parent
 
 scene
-- universe
+- story
 - section
 - name

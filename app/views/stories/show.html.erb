@@ -1,0 +1,24 @@
+<% content_for :title, @story.name %>
+
+<div id="<%= dom_id @story %>">
+  <h1><%= @story.name %></h1>
+
+  <% if @story.description.present? %>
+    <p><%= @story.description %></p>
+  <% end %>
+
+  <p class="text-body-secondary">
+    <%= pluralize(@story.sections.size, "section") %>
+  </p>
+</div>
+
+<div>
+  <%= link_to "Sections", universe_story_sections_path(story_id: @story) %> |
+  <%= link_to "Edit this story", edit_universe_story_path(id: @story) %> |
+  <%= link_to "Back to stories", universe_stories_path %>
+
+  <%= button_to "Destroy this story",
+        universe_story_path(id: @story),
+        method: :delete,
+        data: { turbo_confirm: "Delete this story and all of its sections?" } %>
+</div>

@@ -18,7 +18,7 @@ module Hierarchical
   end
 
   def sibling_scope
-    universe.public_send(self.class.table_name).where(parent_id: parent_id).where.not(id: id).order(:position, :id)
+    hierarchy_scope.public_send(self.class.table_name).where(parent_id: parent_id).where.not(id: id).order(:position, :id)
   end
 
   def ancestor_chain
@@ -37,10 +37,25 @@ module Hierarchical
 
   private
 
-  def parent_belongs_to_same_universe
-    return if parent.nil? || parent.universe_id == universe_id
+  # Ownership scope parents must share. Defaults to the universe; models that
+  # belong to something narrower (Section belongs_to :story) override these.
+  def hierarchy_scope
+    universe
+  end
 
-    errors.add(:parent, "must belong to the same universe")
+  def hierarchy_scope_attribute
+    :universe_id
+  end
+
+  def hierarchy_scope_error
+    "must belong to the same universe"
+  end
+
+  def parent_belongs_to_same_universe
+    return if parent.nil? ||
+      parent.public_send(hierarchy_scope_attribute) == public_send(hierarchy_scope_attribute)
+
+    errors.add(:parent, hierarchy_scope_error)
   end
 
   def parent_cannot_be_self

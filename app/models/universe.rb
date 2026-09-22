@@ -8,7 +8,7 @@ class Universe < ApplicationRecord
   belongs_to :owner, class_name: "User"
   has_many :stories, dependent: :destroy
   has_many :section_tags, dependent: :destroy
-  has_many :sections, dependent: :destroy
+  has_many :sections, through: :stories
   has_many :item_tags, dependent: :destroy
   has_many :items, dependent: :destroy
   has_many :location_tags, dependent: :destroy

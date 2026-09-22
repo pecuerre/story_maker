@@ -1,6 +1,10 @@
 class Universe < ApplicationRecord
   include HasSlug
 
+  scope :visible_to, ->(user) {
+    user ? where(private: false).or(where(owner_id: user.id)) : where(private: false)
+  }
+
   belongs_to :owner, class_name: "User"
   has_many :stories, dependent: :destroy
   has_many :section_tags, dependent: :destroy

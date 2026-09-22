@@ -21,10 +21,10 @@
       data-taxonomy-tree-target="name"
       data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName">
       <% if node.respond_to?(:bgcolor) %>
-        <%= entity_type_badge(node) %>
+        <%= entity_tag_badge(node) %>
       <% else %>
         <%= node.name %>
-        <%= entity_type_badge(node) %>
+        <%= entity_tag_badge(node) %>
       <% end %>
       <% if node.description.present? %>
         <div class="small text-body-secondary text-break"><%= node.description %></div>

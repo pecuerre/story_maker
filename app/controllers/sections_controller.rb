@@ -6,24 +6,24 @@ class SectionsController < ApplicationController
 
   def index
     @sections = Current.universe.sections
-    @sections = @sections.includes(:children, :section_types)
+    @sections = @sections.includes(:children, :section_tags)
     @sections = @sections.where(parent_id: nil)
     @sections = @sections.order(:position, :id)
 
-    @section_types = Current.universe.section_types
-    @section_types = @section_types.order(:name)
+    @section_tags = Current.universe.section_tags
+    @section_tags = @section_tags.order(:name)
   end
 
   def new
     @section = Current.universe.sections.new(parent_id: params[:parent_id])
 
-    @section_types = Current.universe.section_types
-    @section_types = @section_types.order(:name)
+    @section_tags = Current.universe.section_tags
+    @section_tags = @section_tags.order(:name)
   end
 
   def create
     @section = Current.universe.sections.new(section_params)
-    @section.section_type_ids = [ Current.universe.section_types.order(:id).first.id ] if @section.section_type_ids.empty?
+    @section.section_tag_ids = [ Current.universe.section_tags.order(:id).first.id ] if @section.section_tag_ids.empty?
     @section.position = sibling_count(@section.parent_id)
 
     respond_to do |format|
@@ -63,7 +63,7 @@ class SectionsController < ApplicationController
   end
 
   def section_params
-    params.expect(section: [ :name, :description, { section_type_ids: [] }, :parent_id, :position ])
+    params.expect(section: [ :name, :description, { section_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_section
@@ -76,7 +76,7 @@ class SectionsController < ApplicationController
       id: @section.id,
       name: @section.name,
       description: @section.description,
-      section_type_ids: @section.section_type_ids,
+      section_tag_ids: @section.section_tag_ids,
       parent_id: @section.parent_id,
       url: universe_section_path(id: @section)
     }

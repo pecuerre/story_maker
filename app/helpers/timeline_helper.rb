@@ -14,8 +14,8 @@ module TimelineHelper
       parts << "<div><strong>Dates:</strong> #{dates}</div>"
     end
 
-    if event.event_types.any?
-      parts << "<div><strong>Type:</strong> #{h(event.event_types.map(&:name).join(', '))}</div>"
+    if event.event_tags.any?
+      parts << "<div><strong>Tag:</strong> #{h(event.event_tags.map(&:name).join(', '))}</div>"
     end
 
     related = []

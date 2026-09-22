@@ -5,7 +5,7 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
     @universe = universes(:universe_one)
     @item = items(:item_one)
     @character = characters(:character_one)
-    @ownership_type = OwnershipType.create!(universe: @universe, name: "Owns")
+    @ownership_tag = OwnershipTag.create!(universe: @universe, name: "Owns")
     sign_in_as(users(:user_one))
   end
 
@@ -15,7 +15,7 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Ownerships"
     assert_includes response.body, @item.name
-    assert_includes response.body, @ownership_type.name
+    assert_includes response.body, @ownership_tag.name
   end
 
   test "should create ownership and redirect" do
@@ -24,7 +24,7 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
         ownership: {
           item_id: @item.id,
           character_id: @character.id,
-          ownership_type_ids: [ @ownership_type.id ],
+          ownership_tag_ids: [ @ownership_tag.id ],
           description: "Held by the character"
         }
       }

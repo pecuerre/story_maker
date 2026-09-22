@@ -17,6 +17,6 @@ class CreateEvents < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_join_table :events, :event_types, table_name: :events_event_types
+    create_join_table :events, :event_tags, table_name: :events_event_tags
   end
 end

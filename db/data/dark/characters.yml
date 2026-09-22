@@ -1,31 +1,31 @@
 - universe: Universe.dark
   name: Jonas
-  character_types: [ CharacterType.family_kahnwald, CharacterType.sic_mundus ]
+  character_tags: [ CharacterTag.family_kahnwald, CharacterTag.sic_mundus ]
 
 - universe: Universe.dark
   name: Martha
-  character_types: [ CharacterType.family_nielsen, CharacterType.erit_lux ]
+  character_tags: [ CharacterTag.family_nielsen, CharacterTag.erit_lux ]
 
 - universe: Universe.dark
   name: Ulrich
-  character_types: [ CharacterType.family_nielsen, CharacterType.police ]
+  character_tags: [ CharacterTag.family_nielsen, CharacterTag.police ]
 
 - universe: Universe.dark
   name: Hannah
-  character_types: [ CharacterType.family_nielsen ]
+  character_tags: [ CharacterTag.family_nielsen ]
 
 - universe: Universe.dark
   name: Katharina
-  character_types: [ CharacterType.family_nielsen ]
+  character_tags: [ CharacterTag.family_nielsen ]
 
 - universe: Universe.dark
   name: Charlotte
-  character_types: [ CharacterType.family_doppler, CharacterType.police ]
+  character_tags: [ CharacterTag.family_doppler, CharacterTag.police ]
 
 - universe: Universe.dark
   name: Egon
-  character_types: [ CharacterType.family_tiedemann, CharacterType.police ]
+  character_tags: [ CharacterTag.family_tiedemann, CharacterTag.police ]
 
 - universe: Universe.dark
   name: Claudia
-  character_types: [ CharacterType.family_tiedemann, CharacterType.nuclear_plant ]
+  character_tags: [ CharacterTag.family_tiedemann, CharacterTag.nuclear_plant ]

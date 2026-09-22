@@ -1,7 +1,7 @@
 universe
 - name
 
-section_type
+section_tag
 - universe
 - name
 - parent
@@ -9,7 +9,7 @@ section_type
 section
 - universe
 - name
-- section_type
+- section_tag
 - parent
 
 scene

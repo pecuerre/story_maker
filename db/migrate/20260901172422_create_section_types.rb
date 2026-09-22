@@ -1,9 +1,9 @@
-class CreateSectionTypes < ActiveRecord::Migration[8.1]
+class CreateSectionTags < ActiveRecord::Migration[8.1]
   def change
-    create_table :section_types do |t|
+    create_table :section_tags do |t|
       t.references :universe, null: false, foreign_key: true
       t.string :name
-      t.references :parent, null: true, foreign_key: { to_table: :section_types }
+      t.references :parent, null: true, foreign_key: { to_table: :section_tags }
       t.integer :position, null: false, default: 0
       t.text :description
       t.string :bgcolor, null: false, default: "#d3d3d3"

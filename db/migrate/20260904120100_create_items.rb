@@ -11,6 +11,6 @@ class CreateItems < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_join_table :items, :item_types, table_name: :items_item_types
+    create_join_table :items, :item_tags, table_name: :items_item_tags
   end
 end

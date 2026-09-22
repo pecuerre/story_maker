@@ -11,6 +11,6 @@ class CreateSections < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_join_table :sections, :section_types, table_name: :sections_section_types
+    create_join_table :sections, :section_tags, table_name: :sections_section_tags
   end
 end

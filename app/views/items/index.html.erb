@@ -22,7 +22,7 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= item.name %>
-            <%= entity_type_badge(item) %>
+            <%= entity_tag_badge(item) %>
             <% if item.description.present? %>
               <div class="small text-body-secondary text-break"><%= item.description %></div>
             <% end %>
@@ -75,8 +75,8 @@
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
             <div class="mb-3">
-              <%= form.label :item_type_ids, "Item types", class: "form-label" %>
-              <%= form.collection_select :item_type_ids, @item_types, :id, :name,
+              <%= form.label :item_tag_ids, "Item Tags", class: "form-label" %>
+              <%= form.collection_select :item_tag_ids, @item_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, required: true, data: { controller: "tom-select" } } %>
             </div>

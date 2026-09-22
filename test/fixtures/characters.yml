@@ -1,11 +1,11 @@
 character_one:
   universe: universe_one
   slug: "character_one"
-  character_types: character_type_one
+  character_tags: character_tag_one
   name: Character one
 
 character_two:
   universe: universe_one
   slug: "character_two"
-  character_types: character_type_two
+  character_tags: character_tag_two
   name: Character two

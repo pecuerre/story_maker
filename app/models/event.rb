@@ -1,10 +1,10 @@
 class Event < ApplicationRecord
   include Hierarchical
-  include HasManyTypes
+  include HasManyTags
   include HasSlug
 
   belongs_to :universe
-  has_many_types :event_type, required: false
+  has_many_tags :event_tag, required: false
   belongs_to :before_event, class_name: "Event", optional: true
   belongs_to :after_event, class_name: "Event", optional: true
   belongs_to :simultaneous_event, class_name: "Event", optional: true

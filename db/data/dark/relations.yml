@@ -1,29 +1,29 @@
 - universe: Universe.dark
   slug: "martha_jonas"
   character1: Character.martha
-  relation_types: [ RelationType.is_friend_to ]
+  relation_tags: [ RelationTag.is_friend_to ]
   character2: Character.jonas
 
 - universe: Universe.dark
   slug: "hannah_jonas"
   character1: Character.hannah
-  relation_types: [ RelationType.is_parent_of ]
+  relation_tags: [ RelationTag.is_parent_of ]
   character2: Character.jonas
 
 - universe: Universe.dark
   slug: "ulrich_martha"
   character1: Character.ulrich
-  relation_types: [ RelationType.is_parent_of ]
+  relation_tags: [ RelationTag.is_parent_of ]
   character2: Character.martha
 
 - universe: Universe.dark
   slug: "ulrich_hannah"
   character1: Character.ulrich
-  relation_types: [ RelationType.is_friend_to ]
+  relation_tags: [ RelationTag.is_friend_to ]
   character2: Character.hannah
 
 - universe: Universe.dark
   slug: "charlotte_ulrich"
   character1: Character.charlotte
-  relation_types: [ RelationType.is_boss_of ]
+  relation_tags: [ RelationTag.is_boss_of ]
   character2: Character.ulrich

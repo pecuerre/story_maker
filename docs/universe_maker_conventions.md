@@ -4,15 +4,15 @@
 
 ### Database Schema
 - All main models have: `name`, `description`, `universe_id` (FK), `parent_id` (self-ref FK), `position` (order), created_at/updated_at
-- Parent models (Character, Location, Item, Section) each have a "_type" taxonomy model
-- "_type" models are hierarchical but don't have a type_id foreign key
-- Both parent and "_type" models support hierarchies via parent_id
+- Parent models (Character, Location, Item, Section) each have a "_tag" taxonomy model
+- "_tag" models are hierarchical but don't have a tag_id foreign key
+- Both parent and "_tag" models support hierarchies via parent_id
 - Position column defaults to 0, enables ordered lists
 
 ### Models
 - All include `Hierarchical` concern (parent relationship, children collection, validations)
-- Parent models (Character, Location, Item) belong_to their Type model
-- Type models have_many of their parent model
+- Parent models (Character, Location, Item) belong_to their Tag model
+- Tag models have_many of their parent model
 - Complex relations (Relation, Ownership) connect multiple entities
 - All models validate name presence
 - Custom validators check universe_id consistency across relationships
@@ -31,7 +31,7 @@
 
 ### Views - Two Patterns
 
-**Taxonomy Views (for "_types" models):**
+**Taxonomy Views (for "_ttag" models):**
 - Use `shared/taxonomy_tree` partial with hierarchy rendering
 - Use `taxonomy_tree_controller.js` for drag/drop reordering, inline editing
 - Modal editing built into the tree via `modal_fields` helper data
@@ -40,12 +40,12 @@
 - Simple list layout with edit/delete buttons
 - Use `modal_form_controller.js` for modal dialogs
 - Character view uses simpler flat list instead of tree
-- Locations view uses tree structure with location_type_id field
+- Locations view uses tree structure with location_tag_id field
 
 ### Helpers
-- `modal_fields.rb` defines form fields for each model type
-- `*_type_taxonomy_fields` - fields for taxonomy editors
-- `*_taxonomy_fields(options)` - fields for main models with type selector
+- `modal_fields.rb` defines form fields for each model tag
+- `*_tag_taxonomy_fitag` - fields for taxonomy editors
+- `*_taxonomy_fields(options)` - fields for main models with tag selector
 - `*_fields_json(obj)` - serializes object to JSON for modal population
 
 ### JavaScript Controllers
@@ -54,16 +54,16 @@
 
 ### Navigation (Sidebar)
 - Organized by universe theme questions:
-  - HOW: Sections/Section Types (Scenes future)
+  - HOW: Sections/Section Tags (Scenes future)
   - WHY: Plot, World Building (future)
-  - WHERE: Locations + types, Distances, Connections, Routes (future), Map (future)
-  - WHO: Characters + types, Relations + types, Meetings, Dialogs (future)
+  - WHERE: Locations + tags, Distances, Connections, Routes (future), Map (future)
+  - WHO: Characters + tags, Relations + tags, Meetings, Dialogs (future)
   - WHEN: Events, Timeline
-  - WHAT: Items + types, Ownerships + types
+  - WHAT: Items + tags, Ownerships + tags
 
 ## Event Model (implemented)
 
-Unlike Character/Location/Item, Event has no "_type" taxonomy model:
+Unlike Character/Location/Item, Event has no "_tag" taxonomy model:
 1. `Event` model includes the `Hierarchical` concern (parent/position) plus self-referencing
    `before_event`, `after_event`, `simultaneous_event` associations
 2. `EventsController` includes `MaintainsSiblingPositions`, flat list UI (no taxonomy tree)

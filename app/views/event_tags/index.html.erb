@@ -1,0 +1,13 @@
+<% content_for :title, "Event Tags" %>
+
+<h1>Event Tags</h1>
+
+<%= render "shared/taxonomy_tree",
+	nodes: @event_tags,
+	new_url: ->(parent = nil) { new_universe_event_tag_path(parent_id: parent&.id) },
+	create_url: universe_event_tags_path(),
+	edit_url: ->(event_tag) { edit_universe_event_tag_path(id: event_tag) },
+	update_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
+	delete_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
+	model_param: "event_tag",
+	modal_fields: event_tag_taxonomy_fields(Current.universe.event_tags.order(:position, :id)) %>

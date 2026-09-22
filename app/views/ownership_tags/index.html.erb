@@ -1,0 +1,13 @@
+<% content_for :title, "Ownership Tags" %>
+
+<h1>Ownership Tags</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @ownership_tags,
+  new_url: ->(parent = nil) { new_universe_ownership_tag_path(parent_id: parent&.id) },
+  create_url: universe_ownership_tags_path(),
+  edit_url: ->(ownership_tag) { edit_universe_ownership_tag_path(id: ownership_tag) },
+  update_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },
+  delete_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },
+  model_param: "ownership_tag",
+  modal_fields: ownership_tag_taxonomy_fields(Current.universe.ownership_tags.order(:position, :id)) %>

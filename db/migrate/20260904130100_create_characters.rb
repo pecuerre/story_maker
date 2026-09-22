@@ -11,6 +11,6 @@ class CreateCharacters < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_join_table :characters, :character_types, table_name: :characters_character_types
+    create_join_table :characters, :character_tags, table_name: :characters_character_tags
   end
 end

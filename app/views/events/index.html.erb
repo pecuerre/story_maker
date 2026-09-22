@@ -22,7 +22,7 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= event.display_string %>
-            <%= entity_type_badge(event) %>
+            <%= entity_tag_badge(event) %>
             <% if event.description.present? %>
               <div class="small text-body-secondary text-break">
                 <%= event.description %>
@@ -97,8 +97,8 @@
               <%= form.text_area :description, class: "form-control", rows: 3 %>
             </div>
             <div class="mb-3">
-              <%= form.label :event_type_ids, "Event types", class: "form-label" %>
-              <%= form.collection_select :event_type_ids, @event_types, :id, :name,
+              <%= form.label :event_tag_ids, "Event Tags", class: "form-label" %>
+              <%= form.collection_select :event_tag_ids, @event_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>

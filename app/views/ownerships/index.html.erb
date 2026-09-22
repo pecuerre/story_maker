@@ -21,7 +21,7 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= ownership.item.name %>
-            <%= entity_type_badge(ownership) %>
+            <%= entity_tag_badge(ownership) %>
             <%= ownership.character.name %>
             <% if ownership.description.present? %>
               <div class="small text-body-secondary text-break"><%= ownership.description %></div>
@@ -90,8 +90,8 @@
               </div>
             </div>
             <div class="mb-3">
-              <%= form.label :ownership_type_ids, "Ownership types", class: "form-label" %>
-              <%= form.collection_select :ownership_type_ids, @ownership_types, :id, :name,
+              <%= form.label :ownership_tag_ids, "Ownership Tags", class: "form-label" %>
+              <%= form.collection_select :ownership_tag_ids, @ownership_tags, :id, :name,
                 {},
                   { class: "form-select", multiple: true, required: true, data: { controller: "tom-select" } } %>
             </div>

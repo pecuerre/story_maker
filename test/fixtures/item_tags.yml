@@ -1,0 +1,16 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+item_tag_one:
+  universe: universe_one
+  name: Item tag one
+  slug: "item_tag_one"
+
+item_tag_two:
+  universe: universe_one
+  name: Item tag two
+  slug: "item_tag_two"
+
+item_tag_three:
+  universe: universe_two
+  name: Item tag three
+  slug: "item_tag_three"

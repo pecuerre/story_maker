@@ -5,7 +5,7 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
     @universe = universes(:universe_one)
     @character_one = characters(:character_one)
     @character_two = characters(:character_two)
-    @relation_type = RelationType.create!(universe: @universe, name: "Child of")
+    @relation_tag = RelationTag.create!(universe: @universe, name: "Child of")
     sign_in_as(users(:user_one))
   end
 
@@ -15,7 +15,7 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Relations"
     assert_includes response.body, @character_one.name
-    assert_includes response.body, @relation_type.name
+    assert_includes response.body, @relation_tag.name
   end
 
   test "should create relation and redirect" do
@@ -24,7 +24,7 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
         relation: {
           character1_id: @character_one.id,
           character2_id: @character_two.id,
-          relation_type_ids: [ @relation_type.id ],
+          relation_tag_ids: [ @relation_tag.id ],
           description: "They are family"
         }
       }
@@ -35,7 +35,7 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update relation and redirect" do
-    relation = Relation.create!(universe: @universe, character1: @character_one, character2: @character_two, relation_types: [ @relation_type ])
+    relation = Relation.create!(universe: @universe, character1: @character_one, character2: @character_two, relation_tags: [ @relation_tag ])
 
     patch universe_relation_url(universe_slug: @universe.slug, id: relation), params: {
       relation: { description: "Updated description" }

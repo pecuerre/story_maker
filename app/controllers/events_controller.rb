@@ -5,15 +5,15 @@ class EventsController < ApplicationController
   before_action :set_event, only: %i[ update destroy ]
 
   def index
-    @events = Current.universe.events.includes(:event_types).order(:id)
+    @events = Current.universe.events.includes(:event_tags).order(:id)
     @events_for_select = @events
-    @event_types = Current.universe.event_types.order(:position, :id)
+    @event_tags = Current.universe.event_tags.order(:position, :id)
   end
 
   def new
     @event = Current.universe.events.new(parent_id: params[:parent_id])
     @events_for_select = Current.universe.events.order(:id)
-    @event_types = Current.universe.event_types.order(:position, :id)
+    @event_tags = Current.universe.event_tags.order(:position, :id)
   end
 
   def create
@@ -52,7 +52,7 @@ class EventsController < ApplicationController
 
   def event_params
     params.expect(event: [ :title, :start_datetime, :end_datetime, :before_event_id, :after_event_id,
-      :simultaneous_event_id, :description, { event_type_ids: [] }, :parent_id, :position ])
+      :simultaneous_event_id, :description, { event_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_event
@@ -70,7 +70,7 @@ class EventsController < ApplicationController
       after_event_id: @event.after_event_id,
       simultaneous_event_id: @event.simultaneous_event_id,
       description: @event.description,
-      event_type_ids: @event.event_type_ids,
+      event_tag_ids: @event.event_tag_ids,
       parent_id: @event.parent_id,
       position: @event.position,
       display_string: @event.display_string,

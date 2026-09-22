@@ -1,0 +1,13 @@
+<% content_for :title, "Item Tags" %>
+
+<h1>Item Tags</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @item_tags,
+  new_url: ->(parent = nil) { new_universe_item_tag_path(parent_id: parent&.id) },
+  create_url: universe_item_tags_path(),
+  edit_url: ->(item_tag) { edit_universe_item_tag_path(id: item_tag) },
+  update_url: ->(item_tag) { universe_item_tag_path(id: item_tag) },
+  delete_url: ->(item_tag) { universe_item_tag_path(id: item_tag) },
+  model_param: "item_tag",
+  modal_fields: item_tag_taxonomy_fields(Current.universe.item_tags.order(:position, :id)) %>

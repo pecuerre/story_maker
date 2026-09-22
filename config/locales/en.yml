@@ -3,7 +3,7 @@ en:
   section_created: "Section was successfully created."
   section_updated: "Section was successfully updated."
   section_destroyed: "Section was successfully destroyed."
-  # section types
-  section_type_created: "Section type was successfully created."
-  section_type_updated: "Section type was successfully updated."
-  section_type_destroyed: "Section type was successfully destroyed."
+  # section tags
+  section_tag_created: "Section tag was successfully created."
+  section_tag_updated: "Section tag was successfully updated."
+  section_tag_destroyed: "Section tag was successfully destroyed."

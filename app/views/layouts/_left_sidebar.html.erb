@@ -35,16 +35,16 @@
         <%= link_to icon_text_count("film", "Scenes"), "#",
           class: "nav-link px-0 link-secondary" %>
       </li>
-      <li class="list-group-item <%= active_if(:sections, :section_types) %>">
+      <li class="list-group-item <%= active_if(:sections, :section_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("list-nested", "Sections", Current.universe.sections.count),
             universe_sections_path(),
             class: "nav-link px-0#{active_if(:sections)}"
           %>
-          <% if visible?(:sections, :section_types) %>
+          <% if visible?(:sections, :section_tags) %>
             <%= link_to icon("tags"),
-              universe_section_types_path(),
-              class: "nav-link px-0#{active_if(:section_types)}"
+              universe_section_tags_path(),
+              class: "nav-link px-0#{active_if(:section_tags)}"
             %>
           <% end %>
         </div>
@@ -58,30 +58,30 @@
       WHO
     </div>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:characters, :character_types) %>">
+      <li class="list-group-item <%= active_if(:characters, :character_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("person", "Characters", Current.universe.characters.count),
             universe_characters_path(),
             class: "nav-link text-danger px-0#{active_if(:characters)}"
           %>
-          <% if visible?(:characters, :character_types) %>
+          <% if visible?(:characters, :character_tags) %>
             <%= link_to icon("tags"),
-              universe_character_types_path(),
-              class: "nav-link text-danger px-0#{active_if(:character_types)}"
+              universe_character_tags_path(),
+              class: "nav-link text-danger px-0#{active_if(:character_tags)}"
             %>
           <% end %>
         </div>
       </li>
-      <li class="list-group-item <%= active_if(:relations, :relation_types) %>">
+      <li class="list-group-item <%= active_if(:relations, :relation_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("people", "Relations", Current.universe.relations.count),
             universe_relations_path(),
             class: "nav-link text-danger px-0#{active_if(:relations)}"
           %>
-          <% if visible?(:relations, :relation_types) %>
+          <% if visible?(:relations, :relation_tags) %>
             <%= link_to icon("tags"),
-              universe_relation_types_path(),
-              class: "nav-link text-danger px-0#{active_if(:relation_types)}"
+              universe_relation_tags_path(),
+              class: "nav-link text-danger px-0#{active_if(:relation_tags)}"
             %>
           <% end %>
         </div>
@@ -102,16 +102,16 @@
       WHERE
     </div>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:locations, :location_types) %>">
+      <li class="list-group-item <%= active_if(:locations, :location_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("geo-alt", "Locations", Current.universe.locations.count),
             universe_locations_path(),
             class: "nav-link text-danger px-0#{active_if(:locations)}"
           %>
-          <% if visible?(:locations, :location_types) %>
+          <% if visible?(:locations, :location_tags) %>
             <%= link_to icon("tags"),
-              universe_location_types_path(),
-              class: "nav-link text-danger px-0#{active_if(:location_types)}"
+              universe_location_tags_path(),
+              class: "nav-link text-danger px-0#{active_if(:location_tags)}"
             %>
           <% end %>
         </div>
@@ -140,16 +140,16 @@
       WHEN
     </div>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:events, :event_types) %>">
+      <li class="list-group-item <%= active_if(:events, :event_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("calendar-event", "Events", Current.universe.events.count),
             universe_events_path(),
             class: "nav-link text-danger px-0#{active_if(:events)}"
           %>
-          <% if visible?(:events, :event_types) %>
+          <% if visible?(:events, :event_tags) %>
             <%= link_to icon("tags"),
-              universe_event_types_path(),
-              class: "nav-link text-danger px-0#{active_if(:event_types)}"
+              universe_event_tags_path(),
+              class: "nav-link text-danger px-0#{active_if(:event_tags)}"
             %>
           <% end %>
         </div>
@@ -167,30 +167,30 @@
       WITH
     </div>
     <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:items, :item_types) %>">
+      <li class="list-group-item <%= active_if(:items, :item_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("box-seam", "Items", Current.universe.items.count),
             universe_items_path(),
             class: "nav-link text-danger px-0#{active_if(:items)}"
           %>
-          <% if visible?(:items, :item_types) %>
+          <% if visible?(:items, :item_tags) %>
             <%= link_to icon("tags"),
-              universe_item_types_path(),
-              class: "nav-link text-danger px-0#{active_if(:item_types)}"
+              universe_item_tags_path(),
+              class: "nav-link text-danger px-0#{active_if(:item_tags)}"
             %>
           <% end %>
         </div>
       </li>
-      <li class="list-group-item <%= active_if(:ownerships, :ownership_types) %>">
+      <li class="list-group-item <%= active_if(:ownerships, :ownership_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
           <%= link_to icon_text_count("person-bounding-box", "Ownerships", Current.universe.ownerships.count),
             universe_ownerships_path(),
             class: "nav-link text-danger px-0#{active_if(:ownerships)}"
           %>
-          <% if visible?(:ownerships, :ownership_types) %>
+          <% if visible?(:ownerships, :ownership_tags) %>
             <%= link_to icon("tags"),
-              universe_ownership_types_path(),
-              class: "nav-link text-danger px-0#{active_if(:ownership_types)}"
+              universe_ownership_tags_path(),
+              class: "nav-link text-danger px-0#{active_if(:ownership_tags)}"
             %>
           <% end %>
         </div>

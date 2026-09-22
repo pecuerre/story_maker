@@ -1,4 +1,4 @@
-(A) add "fixed" attribute to all _types models (the fixed ones should not be editable or deletable)
+(A) add "fixed" attribute to all _tags models (the fixed ones should not be editable or deletable)
 (A) change universe for world or universe
 (A) in each universe we can have multiple universes (like in the Marvel or Star Wars universes)
 (A) each universe in the same universe share the same world-building elements, characters, events

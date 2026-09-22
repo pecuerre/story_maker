@@ -5,19 +5,19 @@ Rails.application.routes.draw do
   resources :universes, param: :universe_slug, path: "u"
 
   scope "u/:universe_slug", as: :universe do
-    resources :section_types
+    resources :section_tags
     resources :sections
-    resources :item_types
+    resources :item_tags
     resources :items
-    resources :location_types
+    resources :location_tags
     resources :locations
-    resources :character_types
+    resources :character_tags
     resources :characters
-    resources :relation_types
+    resources :relation_tags
     resources :relations, only: %i[ index create update destroy ]
-    resources :ownership_types
+    resources :ownership_tags
     resources :ownerships, only: %i[ index create update destroy ]
-    resources :event_types
+    resources :event_tags
     resources :events
     get "timeline", to: "timeline#index", as: :timeline
   end

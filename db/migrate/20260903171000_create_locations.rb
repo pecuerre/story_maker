@@ -11,6 +11,6 @@ class CreateLocations < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_join_table :locations, :location_types, table_name: :locations_location_types
+    create_join_table :locations, :location_tags, table_name: :locations_location_tags
   end
 end

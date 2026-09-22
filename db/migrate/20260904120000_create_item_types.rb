@@ -1,9 +1,9 @@
-class CreateItemTypes < ActiveRecord::Migration[8.1]
+class CreateItemTags < ActiveRecord::Migration[8.1]
   def change
-    create_table :item_types do |t|
+    create_table :item_tags do |t|
       t.references :universe, null: false, foreign_key: true
       t.string :name
-      t.references :parent, null: true, foreign_key: { to_table: :item_types }
+      t.references :parent, null: true, foreign_key: { to_table: :item_tags }
       t.integer :position, null: false, default: 0
       t.text :description
       t.string :slug, null: false

@@ -1,0 +1,13 @@
+<% content_for :title, "Section Tags" %>
+
+<h1>Section Tags</h1>
+
+<%= render "shared/taxonomy_tree",
+	nodes: @section_tags,
+	new_url: ->(parent = nil) { new_universe_section_tag_path(parent_id: parent&.id) },
+	create_url: universe_section_tags_path(),
+	edit_url: ->(section_tag) { edit_universe_section_tag_path(id: section_tag) },
+	update_url: ->(section_tag) { universe_section_tag_path(id: section_tag) },
+	delete_url: ->(section_tag) { universe_section_tag_path(id: section_tag) },
+	model_param: "section_tag",
+	modal_fields: section_tag_taxonomy_fields(Current.universe.section_tags.order(:position, :id)) %>

@@ -11,7 +11,7 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
-  create_table "character_types", force: :cascade do |t|
+  create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -22,8 +22,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_character_types_on_parent_id"
-    t.index ["universe_id"], name: "index_character_types_on_universe_id"
+    t.index ["parent_id"], name: "index_character_tags_on_parent_id"
+    t.index ["universe_id"], name: "index_character_tags_on_universe_id"
   end
 
   create_table "characters", force: :cascade do |t|
@@ -39,12 +39,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["universe_id"], name: "index_characters_on_universe_id"
   end
 
-  create_table "characters_character_types", id: false, force: :cascade do |t|
+  create_table "characters_character_tags", id: false, force: :cascade do |t|
     t.integer "character_id", null: false
-    t.integer "character_type_id", null: false
+    t.integer "character_tag_id", null: false
   end
 
-  create_table "event_types", force: :cascade do |t|
+  create_table "event_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -55,8 +55,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_event_types_on_parent_id"
-    t.index ["universe_id"], name: "index_event_types_on_universe_id"
+    t.index ["parent_id"], name: "index_event_tags_on_parent_id"
+    t.index ["universe_id"], name: "index_event_tags_on_universe_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -81,12 +81,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["universe_id"], name: "index_events_on_universe_id"
   end
 
-  create_table "events_event_types", id: false, force: :cascade do |t|
+  create_table "events_event_tags", id: false, force: :cascade do |t|
     t.integer "event_id", null: false
-    t.integer "event_type_id", null: false
+    t.integer "event_tag_id", null: false
   end
 
-  create_table "item_types", force: :cascade do |t|
+  create_table "item_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -97,8 +97,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_item_types_on_parent_id"
-    t.index ["universe_id"], name: "index_item_types_on_universe_id"
+    t.index ["parent_id"], name: "index_item_tags_on_parent_id"
+    t.index ["universe_id"], name: "index_item_tags_on_universe_id"
   end
 
   create_table "items", force: :cascade do |t|
@@ -114,12 +114,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["universe_id"], name: "index_items_on_universe_id"
   end
 
-  create_table "items_item_types", id: false, force: :cascade do |t|
+  create_table "items_item_tags", id: false, force: :cascade do |t|
     t.integer "item_id", null: false
-    t.integer "item_type_id", null: false
+    t.integer "item_tag_id", null: false
   end
 
-  create_table "location_types", force: :cascade do |t|
+  create_table "location_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -130,8 +130,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_location_types_on_parent_id"
-    t.index ["universe_id"], name: "index_location_types_on_universe_id"
+    t.index ["parent_id"], name: "index_location_tags_on_parent_id"
+    t.index ["universe_id"], name: "index_location_tags_on_universe_id"
   end
 
   create_table "locations", force: :cascade do |t|
@@ -147,12 +147,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["universe_id"], name: "index_locations_on_universe_id"
   end
 
-  create_table "locations_location_types", id: false, force: :cascade do |t|
+  create_table "locations_location_tags", id: false, force: :cascade do |t|
     t.integer "location_id", null: false
-    t.integer "location_type_id", null: false
+    t.integer "location_tag_id", null: false
   end
 
-  create_table "ownership_types", force: :cascade do |t|
+  create_table "ownership_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -163,8 +163,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_ownership_types_on_parent_id"
-    t.index ["universe_id"], name: "index_ownership_types_on_universe_id"
+    t.index ["parent_id"], name: "index_ownership_tags_on_parent_id"
+    t.index ["universe_id"], name: "index_ownership_tags_on_universe_id"
   end
 
   create_table "ownerships", force: :cascade do |t|
@@ -183,12 +183,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["universe_id"], name: "index_ownerships_on_universe_id"
   end
 
-  create_table "ownerships_ownership_types", id: false, force: :cascade do |t|
+  create_table "ownerships_ownership_tags", id: false, force: :cascade do |t|
     t.integer "ownership_id", null: false
-    t.integer "ownership_type_id", null: false
+    t.integer "ownership_tag_id", null: false
   end
 
-  create_table "relation_types", force: :cascade do |t|
+  create_table "relation_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -201,8 +201,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.boolean "symmetric", default: true, null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_relation_types_on_parent_id"
-    t.index ["universe_id"], name: "index_relation_types_on_universe_id"
+    t.index ["parent_id"], name: "index_relation_tags_on_parent_id"
+    t.index ["universe_id"], name: "index_relation_tags_on_universe_id"
   end
 
   create_table "relations", force: :cascade do |t|
@@ -221,12 +221,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["universe_id"], name: "index_relations_on_universe_id"
   end
 
-  create_table "relations_relation_types", id: false, force: :cascade do |t|
+  create_table "relations_relation_tags", id: false, force: :cascade do |t|
     t.integer "relation_id", null: false
-    t.integer "relation_type_id", null: false
+    t.integer "relation_tag_id", null: false
   end
 
-  create_table "section_types", force: :cascade do |t|
+  create_table "section_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -237,8 +237,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "index_section_types_on_parent_id"
-    t.index ["universe_id"], name: "index_section_types_on_universe_id"
+    t.index ["parent_id"], name: "index_section_tags_on_parent_id"
+    t.index ["universe_id"], name: "index_section_tags_on_universe_id"
   end
 
   create_table "sections", force: :cascade do |t|
@@ -254,9 +254,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["universe_id"], name: "index_sections_on_universe_id"
   end
 
-  create_table "sections_section_types", id: false, force: :cascade do |t|
+  create_table "sections_section_tags", id: false, force: :cascade do |t|
     t.integer "section_id", null: false
-    t.integer "section_type_id", null: false
+    t.integer "section_tag_id", null: false
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -299,37 +299,37 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_001246) do
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end
 
-  add_foreign_key "character_types", "character_types", column: "parent_id"
-  add_foreign_key "character_types", "universes"
+  add_foreign_key "character_tags", "character_tags", column: "parent_id"
+  add_foreign_key "character_tags", "universes"
   add_foreign_key "characters", "characters", column: "parent_id"
   add_foreign_key "characters", "universes"
-  add_foreign_key "event_types", "event_types", column: "parent_id"
-  add_foreign_key "event_types", "universes"
+  add_foreign_key "event_tags", "event_tags", column: "parent_id"
+  add_foreign_key "event_tags", "universes"
   add_foreign_key "events", "events", column: "after_event_id"
   add_foreign_key "events", "events", column: "before_event_id"
   add_foreign_key "events", "events", column: "parent_id"
   add_foreign_key "events", "events", column: "simultaneous_event_id"
   add_foreign_key "events", "universes"
-  add_foreign_key "item_types", "item_types", column: "parent_id"
-  add_foreign_key "item_types", "universes"
+  add_foreign_key "item_tags", "item_tags", column: "parent_id"
+  add_foreign_key "item_tags", "universes"
   add_foreign_key "items", "items", column: "parent_id"
   add_foreign_key "items", "universes"
-  add_foreign_key "location_types", "location_types", column: "parent_id"
-  add_foreign_key "location_types", "universes"
+  add_foreign_key "location_tags", "location_tags", column: "parent_id"
+  add_foreign_key "location_tags", "universes"
   add_foreign_key "locations", "locations", column: "parent_id"
   add_foreign_key "locations", "universes"
-  add_foreign_key "ownership_types", "ownership_types", column: "parent_id"
-  add_foreign_key "ownership_types", "universes"
+  add_foreign_key "ownership_tags", "ownership_tags", column: "parent_id"
+  add_foreign_key "ownership_tags", "universes"
   add_foreign_key "ownerships", "characters"
   add_foreign_key "ownerships", "items"
   add_foreign_key "ownerships", "universes"
-  add_foreign_key "relation_types", "relation_types", column: "parent_id"
-  add_foreign_key "relation_types", "universes"
+  add_foreign_key "relation_tags", "relation_tags", column: "parent_id"
+  add_foreign_key "relation_tags", "universes"
   add_foreign_key "relations", "characters", column: "character1_id"
   add_foreign_key "relations", "characters", column: "character2_id"
   add_foreign_key "relations", "universes"
-  add_foreign_key "section_types", "section_types", column: "parent_id"
-  add_foreign_key "section_types", "universes"
+  add_foreign_key "section_tags", "section_tags", column: "parent_id"
+  add_foreign_key "section_tags", "universes"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sections", "universes"
   add_foreign_key "sessions", "users"

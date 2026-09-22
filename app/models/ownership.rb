@@ -1,11 +1,11 @@
 class Ownership < ApplicationRecord
-  include HasManyTypes
+  include HasManyTags
   include HasSlug
 
   belongs_to :universe
   belongs_to :item
   belongs_to :character
-  has_many_types :ownership_type
+  has_many_tags :ownership_tag
 
   before_validation :generate_slug, on: :create
   validates :item, :character, presence: true
@@ -21,17 +21,17 @@ class Ownership < ApplicationRecord
       return
     end
 
-    self.slug = "#{character.slug}-#{ownership_types.first.slug}-#{item.slug}"
+    self.slug = "#{character.slug}-#{ownership_tags.first.slug}-#{item.slug}"
   end
 
   def associated_records_belong_to_universe
     { item: item, character: character }.each do |name, record|
       errors.add(name, "must belong to the ownership's universe") if record && universe && record.universe_id != universe_id
     end
-    ownership_types.each do |ownership_type|
-      next if universe.nil? || ownership_type.universe_id == universe_id
+    ownership_tags.each do |ownership_tag|
+      next if universe.nil? || ownership_tag.universe_id == universe_id
 
-      errors.add(:ownership_types, "must belong to the ownership's universe")
+      errors.add(:ownership_tags, "must belong to the ownership's universe")
     end
   end
 end

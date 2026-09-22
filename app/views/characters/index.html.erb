@@ -23,7 +23,7 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= character.name %>
-            <%= entity_type_badge(character) %>
+            <%= entity_tag_badge(character) %>
             <% if character.description.present? %>
               <div class="small text-body-secondary text-break">
                 <%= character.description %>
@@ -81,8 +81,8 @@
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
             <div class="mb-3">
-              <%= form.label :character_type_ids, "Character types", class: "form-label" %>
-              <%= form.collection_select :character_type_ids, @character_types, :id, :name,
+              <%= form.label :character_tag_ids, "Character Tags", class: "form-label" %>
+              <%= form.collection_select :character_tag_ids, @character_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, required: true, data: { controller: "tom-select" } } %>
             </div>

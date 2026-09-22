@@ -13,6 +13,6 @@ class CreateOwnerships < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    create_join_table :ownerships, :ownership_types, table_name: :ownerships_ownership_types
+    create_join_table :ownerships, :ownership_tags, table_name: :ownerships_ownership_tags
   end
 end

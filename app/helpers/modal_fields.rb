@@ -22,11 +22,11 @@ module ModalFields
       after_event_id: event.after_event_id,
       simultaneous_event_id: event.simultaneous_event_id,
       description: event.description,
-      event_type_ids: event.event_type_ids
+      event_tag_ids: event.event_tag_ids
     }.to_json
   end
 
-  def event_type_taxonomy_fields(nodes = [])
+  def event_tag_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -58,7 +58,7 @@ module ModalFields
     ]
   end
 
-  def character_type_taxonomy_fields(nodes = [])
+  def character_tag_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -94,11 +94,11 @@ module ModalFields
     {
       name: character.name,
       description: character.description,
-      character_type_ids: character.character_type_ids
+      character_tag_ids: character.character_tag_ids
     }.to_json
   end
 
-  def item_type_taxonomy_fields(nodes = [])
+  def item_tag_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -134,11 +134,11 @@ module ModalFields
     {
       name: item.name,
       description: item.description,
-      item_type_ids: item.item_type_ids
+      item_tag_ids: item.item_tag_ids
     }.to_json
   end
 
-  def location_type_taxonomy_fields(nodes = [])
+  def location_tag_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -170,7 +170,7 @@ module ModalFields
     ]
   end
 
-  def location_taxonomy_fields(location_types)
+  def location_taxonomy_fields(location_tags)
     [
       {
         name: "name",
@@ -184,19 +184,19 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "location_type_ids",
-        label: "Location types",
+        name: "location_tag_ids",
+        label: "Location tags",
         type: "select",
         multiple: true,
         required: true,
-        options: location_types.map { |location_type|
-          [ location_type.id, location_type.name ]
+        options: location_tags.map { |location_tag|
+          [ location_tag.id, location_tag.name ]
         }
       }
     ]
   end
 
-  def ownership_type_taxonomy_fields(nodes = [])
+  def ownership_tag_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -232,14 +232,14 @@ module ModalFields
     {
       item_id: ownership.item_id,
       character_id: ownership.character_id,
-      ownership_type_ids: ownership.ownership_type_ids,
+      ownership_tag_ids: ownership.ownership_tag_ids,
       description: ownership.description,
       from_date: ownership.from_date&.strftime('%Y-%m-%dT%H:%M'),
       to_date: ownership.to_date&.strftime('%Y-%m-%dT%H:%M')
     }.to_json
   end
 
-  def relation_type_taxonomy_fields(nodes = [])
+  def relation_tag_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -286,14 +286,14 @@ module ModalFields
     {
       character1_id: relation.character1_id,
       character2_id: relation.character2_id,
-      relation_type_ids: relation.relation_type_ids,
+      relation_tag_ids: relation.relation_tag_ids,
       description: relation.description,
       from_date: relation.from_date&.strftime('%Y-%m-%dT%H:%M'),
       to_date: relation.to_date&.strftime('%Y-%m-%dT%H:%M')
     }.to_json
   end
 
-  def section_type_taxonomy_fields(nodes = [])
+  def section_tag_taxonomy_fields(nodes = [])
     [
       {
         name: "name",
@@ -325,7 +325,7 @@ module ModalFields
     ]
   end
 
-  def section_taxonomy_fields(section_types)
+  def section_taxonomy_fields(section_tags)
     [
       {
         name: "name",
@@ -339,13 +339,13 @@ module ModalFields
         type: "textarea"
       },
       {
-        name: "section_type_ids",
-        label: "Section types",
+        name: "section_tag_ids",
+        label: "Section tags",
         type: "select",
         multiple: true,
         required: true,
-        options: section_types.map { |section_type|
-          [ section_type.id, section_type.name ]
+        options: section_tags.map { |section_tag|
+          [ section_tag.id, section_tag.name ]
         }
       }
     ]

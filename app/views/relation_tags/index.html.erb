@@ -1,0 +1,13 @@
+<% content_for :title, "Relation Tags" %>
+
+<h1>Relation Tags</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @relation_tags,
+  new_url: ->(parent = nil) { new_universe_relation_tag_path(parent_id: parent&.id) },
+  create_url: universe_relation_tags_path(),
+  edit_url: ->(relation_tag) { edit_universe_relation_tag_path(id: relation_tag) },
+  update_url: ->(relation_tag) { universe_relation_tag_path(id: relation_tag) },
+  delete_url: ->(relation_tag) { universe_relation_tag_path(id: relation_tag) },
+  model_param: "relation_tag",
+  modal_fields: relation_tag_taxonomy_fields(Current.universe.relation_tags.order(:position, :id)) %>

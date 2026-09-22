@@ -25,27 +25,27 @@ module ApplicationHelper
     end
   end
 
-  def entity_type_badge(entity)
+  def entity_tag_badge(entity)
     return if entity.nil?
 
     entity_class_name = entity.class.name.demodulize.underscore
 
-    if entity_class_name.ends_with?("_type")
-      return type_badge(entity)
+    if entity_class_name.ends_with?("_tag")
+      return tag_badge(entity)
     end
 
-    association_name = "#{entity_class_name}_types"
+    association_name = "#{entity_class_name}_tags"
     return unless entity.respond_to?(association_name)
 
-    safe_join(entity.send(association_name).map { |type| type_badge(type) }, " ")
+    safe_join(entity.send(association_name).map { |tag| tag_badge(tag) }, " ")
   end
 
   private
 
-  def type_badge(type)
-    bgcolor = type.respond_to?(:bgcolor) ? type.bgcolor : "#d3d3d3"
-    fgcolor = type.respond_to?(:fgcolor) ? type.fgcolor : "#000000"
-    content_tag(:span, type.name,
+  def tag_badge(tag)
+    bgcolor = tag.respond_to?(:bgcolor) ? tag.bgcolor : "#d3d3d3"
+    fgcolor = tag.respond_to?(:fgcolor) ? tag.fgcolor : "#000000"
+    content_tag(:span, tag.name,
       class: "badge text-dark",
       style: "background-color: #{bgcolor} !important; color: #{fgcolor} !important;"
     )

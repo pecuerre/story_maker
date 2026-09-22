@@ -10,5 +10,5 @@
 	update_url: ->(section) { universe_section_path(id: section) },
 	delete_url: ->(section) { universe_section_path(id: section) },
 	model_param: "section",
-	taxonomy_field: "section_type_ids",
-	modal_fields: section_taxonomy_fields(@section_types) %>
+	taxonomy_field: "section_tag_ids",
+	modal_fields: section_taxonomy_fields(@section_tags) %>

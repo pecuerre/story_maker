@@ -1,10 +1,10 @@
 class Location < ApplicationRecord
   include Hierarchical
-  include HasManyTypes
+  include HasManyTags
   include HasSlug
 
   belongs_to :universe
-  has_many_types :location_type
+  has_many_tags :location_tag
 
   validates :name, presence: true
 end

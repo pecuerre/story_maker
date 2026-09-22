@@ -1,0 +1,14 @@
+character_tag_one:
+  universe: universe_one
+  slug: "character_tag_one"
+  name: Character tag one
+
+character_tag_two:
+  universe: universe_one
+  slug: "character_tag_two"
+  name: Character tag two
+
+character_tag_three:
+  universe: universe_two
+  slug: "character_tag_three"
+  name: Character tag three

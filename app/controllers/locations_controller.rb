@@ -6,17 +6,17 @@ class LocationsController < ApplicationController
 
   def index
     @locations = Current.universe.locations
-    @locations = @locations.includes(:children, :location_types)
+    @locations = @locations.includes(:children, :location_tags)
     @locations = @locations.where(parent_id: nil)
     @locations = @locations.order(:position, :id)
 
-    @location_types = Current.universe.location_types
-    @location_types = @location_types.order(:name)
+    @location_tags = Current.universe.location_tags
+    @location_tags = @location_tags.order(:name)
   end
 
   def create
     @location = Current.universe.locations.new(location_params)
-    @location.location_type_ids = [ Current.universe.location_types.order(:id).first.id ] if @location.location_type_ids.empty?
+    @location.location_tag_ids = [ Current.universe.location_tags.order(:id).first.id ] if @location.location_tag_ids.empty?
     @location.position = sibling_count(@location.parent_id)
 
     respond_to do |format|
@@ -50,7 +50,7 @@ class LocationsController < ApplicationController
   end
 
   def location_params
-    params.expect(location: [ :name, :description, { location_type_ids: [] }, :parent_id, :position ])
+    params.expect(location: [ :name, :description, { location_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_location
@@ -63,7 +63,7 @@ class LocationsController < ApplicationController
       id: @location.id,
       name: @location.name,
       description: @location.description,
-      location_type_ids: @location.location_type_ids,
+      location_tag_ids: @location.location_tag_ids,
       parent_id: @location.parent_id,
       position: @location.position,
       url: universe_location_path(id: @location)

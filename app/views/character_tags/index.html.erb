@@ -1,0 +1,13 @@
+<% content_for :title, "Character Tags" %>
+
+<h1>Character Tags</h1>
+
+<%= render "shared/taxonomy_tree",
+  nodes: @character_tags,
+  new_url: ->(parent = nil) { new_universe_character_tag_path(parent_id: parent&.id) },
+  create_url: universe_character_tags_path(),
+  edit_url: ->(character_tag) { edit_universe_character_tag_path(id: character_tag) },
+  update_url: ->(character_tag) { universe_character_tag_path(id: character_tag) },
+  delete_url: ->(character_tag) { universe_character_tag_path(id: character_tag) },
+  model_param: "character_tag",
+  modal_fields: character_tag_taxonomy_fields(Current.universe.character_tags.order(:position, :id)) %>

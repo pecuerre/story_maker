@@ -1,0 +1,15 @@
+# ownerships
+# ot_belongs = OwnershipTag.create(universe: universe, name: "belongs to")
+# ot_holds = OwnershipTag.create(universe: universe, name: "is holded by")
+
+- universe: Universe.dark
+  name: "belongs to"
+  slug: "belongs_to"
+  bgcolor: "#FF0000" # "red"
+  fgcolor: "#000000" # black
+
+- universe: Universe.dark
+  name: "is holded by"
+  slug: "is_holded_by"
+  bgcolor: "#0000FF" # "blue"
+  fgcolor: "#000000" # black

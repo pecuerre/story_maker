@@ -22,7 +22,7 @@
         <div class="list-group-item d-flex align-items-center gap-3">
           <div class="flex-grow-1">
             <%= relation.character1.name %>
-            <%= entity_type_badge(relation) %>
+            <%= entity_tag_badge(relation) %>
             <%= relation.character2.name %>
             <% if relation.description.present? %>
               <div class="small text-body-secondary text-break"><%= relation.description %></div>
@@ -89,8 +89,8 @@
               </div>
             </div>
             <div class="mb-3">
-              <%= form.label :relation_type_ids, "Relation types", class: "form-label" %>
-              <%= form.collection_select :relation_type_ids, @relation_types, :id, :name,
+              <%= form.label :relation_tag_ids, "Relation Tags", class: "form-label" %>
+              <%= form.collection_select :relation_tag_ids, @relation_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, required: true, data: { controller: "tom-select" } } %>
             </div>

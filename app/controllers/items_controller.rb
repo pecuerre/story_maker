@@ -6,23 +6,23 @@ class ItemsController < ApplicationController
 
   def index
     @items = Current.universe.items
-    @items = @items.includes(:item_types)
+    @items = @items.includes(:item_tags)
     @items = @items.order(:name, :id)
 
-    @item_types = Current.universe.item_types
-    @item_types = @item_types.order(:name)
+    @item_tags = Current.universe.item_tags
+    @item_tags = @item_tags.order(:name)
   end
 
   def new
     @item = Current.universe.items.new(parent_id: params[:parent_id])
 
-    @item_types = Current.universe.item_types
-    @item_types = @item_types.order(:name)
+    @item_tags = Current.universe.item_tags
+    @item_tags = @item_tags.order(:name)
   end
 
   def create
     @item = Current.universe.items.new(item_params)
-    @item.item_type_ids = [ Current.universe.item_types.order(:id).first.id ] if @item.item_type_ids.empty?
+    @item.item_tag_ids = [ Current.universe.item_tags.order(:id).first.id ] if @item.item_tag_ids.empty?
     @item.position = sibling_count(@item.parent_id)
 
     respond_to do |format|
@@ -56,7 +56,7 @@ class ItemsController < ApplicationController
   end
 
   def item_params
-    params.expect(item: [ :name, :description, { item_type_ids: [] }, :parent_id, :position ])
+    params.expect(item: [ :name, :description, { item_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_item
@@ -69,7 +69,7 @@ class ItemsController < ApplicationController
       id: @item.id,
       name: @item.name,
       description: @item.description,
-      item_type_ids: @item.item_type_ids,
+      item_tag_ids: @item.item_tag_ids,
       parent_id: @item.parent_id,
       position: @item.position,
       url: universe_item_path(id: @item)

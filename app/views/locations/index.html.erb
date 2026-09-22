@@ -10,5 +10,5 @@
   update_url: ->(location) { universe_location_path(id: location) },
   delete_url: ->(location) { universe_location_path(id: location) },
   model_param: "location",
-  taxonomy_field: "location_type_ids",
-  modal_fields: location_taxonomy_fields(@location_types) %>
+  taxonomy_field: "location_tag_ids",
+  modal_fields: location_taxonomy_fields(@location_tags) %>

@@ -27,8 +27,10 @@ class ApplicationController < ActionController::Base
 
   # Resolve the story the sidebar and story-scoped pages should point at.
   # An explicit story (params[:story_id] or the stories resource) wins and is
-  # remembered in the session; otherwise fall back to the remembered story or
-  # the universe's first story.
+  # remembered in the session; otherwise fall back to the remembered story.
+  # There is deliberately no fallback to the universe's first story: a story is
+  # only "current" when the user picked it (the WHAT/HOW sidebar cards and the
+  # top bar story menu stay hidden until then).
   def set_current_story
     Current.story = nil
     return if Current.universe.nil?
@@ -41,7 +43,7 @@ class ApplicationController < ActionController::Base
       session[:current_story_ids] = remembered_story_ids.merge(Current.universe.id.to_s => story.id)
       Current.story = story
     else
-      Current.story = stories.find_by(id: remembered_story_ids[Current.universe.id.to_s]) || stories.first
+      Current.story = stories.find_by(id: remembered_story_ids[Current.universe.id.to_s])
     end
   end
 

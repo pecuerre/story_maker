@@ -6,7 +6,7 @@ Rails scaffold boilerplate). Facts were verified against the code — last full 
 
 | File | Contents |
 |---|---|
-| [universe_maker_conventions.md](universe_maker_conventions.md) | Code conventions & patterns: models, controllers, routes, views (3 page patterns), helpers, Stimulus controllers, sidebar navigation, Event/Timeline feature notes |
+| [universe_maker_conventions.md](universe_maker_conventions.md) | Code conventions & patterns: models, controllers, routes, views (3 page patterns), helpers, Stimulus controllers, top bar & sidebar navigation, Event/Timeline feature notes |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, Timeline algorithm |
 | [development.md](development.md) | Running the app, test suite, lint/security scans, seeding (dark YAML loader + lotr), CI, Kamal deployment, smoke test, "adding a new model" checklist |

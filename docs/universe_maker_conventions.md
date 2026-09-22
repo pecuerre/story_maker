@@ -102,7 +102,8 @@
     `event_fields_json`, `character_fields_json`, `item_fields_json`,
     `ownership_fields_json`, `relation_fields_json`.
 - `app/helpers/application_helper.rb` — `active_if`, `visible?`, `icon`, `icon_text_count`,
-  `nav_universes`, `entity_tag_badge` (renders a record's tags as colored badges).
+  `nav_universes`, `nav_stories` (top bar dropdowns), `entity_tag_badge` (renders a record's tags
+  as colored badges).
 - `app/helpers/timeline_helper.rb` — popover title/content for timeline events.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
@@ -112,13 +113,26 @@
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
 - `hello_controller.js` — Rails scaffold leftover.
 
+### Navigation (Top bar) — `app/views/layouts/_navbar.html.erb`
+Left to right:
+- **Dashboard** — placeholder (`#`).
+- **Universes** — dropdown: `nav_universes` list (current universe highlighted), *All
+  universes*, *New universe*.
+- **[current universe]** — only when `Current.universe` is present: a dropdown named after the
+  universe listing `nav_stories` (current story highlighted as `active`), plus *All stories* and
+  *New story*. This is where the stories menu now lives (it used to be the sidebar's WHAT card).
+  The toggle also gets `active_if(:stories)` so it lights up on story pages.
+- **[current story]** — only when `Current.story` is present: a link to that story's page
+  (`universe_story_path(id: …)`).
+
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
-Rendered only when `Current.universe` is present; grouped by question cards:
-- **WHAT**: Stories (count + one link per story → that story's sections; current story bold),
-  Plot (placeholder `#`), World Building (placeholder), Tropes (placeholder).
-- **HOW**: Scenes (placeholder), Sections + Section Tags — the Sections link targets
-  `Current.story` (remembered per universe in the session, falls back to the universe's first
-  story; links to the Stories index when the universe has no stories).
+Both sidebars render only when `Current.universe` is present (with no universe selected the main
+column takes the full width), grouped by question cards:
+- **WHAT** *(story-scoped — hidden until a story is selected)*: Plot (placeholder `#`),
+  World Building (placeholder), Tropes (placeholder). The Stories entry moved to the top bar.
+- **HOW** *(story-scoped — hidden until a story is selected)*: Scenes (placeholder), Sections +
+  Section Tags — the Sections link targets `Current.story` (remembered per universe in the
+  session; there is **no** fallback to the first story).
 - **WHO**: Characters, Relations, Meetings (placeholder), Dialogs (placeholder).
 - **WHERE**: Locations, Routes (placeholder), Map (placeholder), Distances (placeholder),
   Connections (placeholder).

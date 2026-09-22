@@ -40,8 +40,10 @@ UI patterns and the Timeline algorithm. Conventions are in
 4. **`set_current_story`** — when a universe is present, resolves `Current.story`:
    - explicit `params[:story_id]` (sections) or `params[:id]` on the `stories` controller wins and
      is remembered in the session (`session[:current_story_ids]` keyed by universe id);
-   - otherwise the remembered story (if it still exists) or the universe's first story;
-   - `nil` when the universe has no stories (the sidebar then links to the Stories index).
+   - otherwise the remembered story, if it still exists;
+   - `nil` otherwise. There is deliberately **no fallback to the universe's first story**: a story
+     only becomes current when the user picks it, which is what reveals the WHAT/HOW sidebar
+     cards and the current-story item in the top bar.
    A `story_id` from another universe raises `RecordNotFound` → 404 (cross-scope protection).
 
 Per-request state lives in **`Current`** (`ActiveSupport::CurrentAttributes`):
@@ -105,9 +107,22 @@ Other global behavior: `allow_browser versions: :modern`,
 
 ## UI structure
 
-Layout (`app/views/layouts/application.html.erb`): fixed top **navbar** (universe dropdown via
-`nav_universes`), **left sidebar** (theme cards — only when `Current.universe`),
-**main** content (`yield` + `content_for :title`), **right sidebar** (placeholder panels).
+Layout (`app/views/layouts/application.html.erb`): fixed top **navbar**, **left sidebar** (theme
+cards), **main** content (`yield` + `content_for :title`), **right sidebar** (placeholder
+panels). Everything follows a two-step selection:
+
+1. **No universe selected yet** (fresh login → the Universes index): both sidebars are dropped
+   and the main column takes the full width — the only thing to do is pick (or create) a
+   universe from the *Universes* dropdown.
+2. **Universe selected** (`Current.universe`): the sidebars appear with the universe-scoped
+   cards; the navbar grows a dropdown named after the universe.
+3. **Story selected** (`Current.story`): the story-scoped WHAT/HOW cards and the current-story
+   navbar item appear.
+
+Navbar items, left to right: **Dashboard** (placeholder), **Universes** (dropdown via
+`nav_universes` → list / all / new), **[current universe]** (dropdown via `nav_stories` → the
+universe's stories, *All stories*, *New story* — only once a universe is selected),
+**[current story]** (link to `universe_story_path` — only once a story is selected).
 
 Three page patterns + their Stimulus controllers are described in
 [universe_maker_conventions.md](universe_maker_conventions.md#views---three-patterns):
@@ -136,6 +151,7 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
 ## Caching / performance notes
 
 - `stale_when_importmap_changes` (HTTP caching keyed on the importmap).
-- `solid_cache` store in production; `nav_universes` is memoized per request.
+- `solid_cache` store in production; `nav_universes` and `nav_stories` are memoized per request.
 - The sidebar issues one `COUNT` query per nav item per page (N+1-ish, see
-  [known_quirks.md](known_quirks.md)).
+  [known_quirks.md](known_quirks.md)); the navbar adds one `stories` query per render
+  (`nav_stories`).

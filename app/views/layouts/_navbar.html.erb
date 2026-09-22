@@ -28,6 +28,39 @@
           <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
         </ul>
       </li>
+
+      <%# Story picker: only once a universe has been selected. %>
+      <% if Current.universe.present? %>
+        <li class="nav-item dropdown">
+          <%= link_to Current.universe.name, "#",
+                class: "nav-link dropdown-toggle#{ active_if(:stories) }",
+                role: "button",
+                data: { bs_toggle: "dropdown" },
+                aria: { expanded: "false" } %>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <% nav_stories.each do |story| %>
+              <li>
+                <%= link_to story.name, universe_story_path(id: story),
+                      class: "dropdown-item#{ " active" if Current.story == story }" %>
+              </li>
+            <% end %>
+            <% if nav_stories.empty? %>
+              <li><span class="dropdown-item-text text-body-secondary">No stories yet</span></li>
+            <% end %>
+            <li><hr class="dropdown-divider"></li>
+            <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
+            <li><%= link_to "New story", new_universe_story_path, class: "dropdown-item" %></li>
+          </ul>
+        </li>
+      <% end %>
+
+      <%# Current story: only once one has been selected. %>
+      <% if Current.story.present? %>
+        <li class="nav-item">
+          <%= link_to Current.story.name, universe_story_path(id: Current.story),
+                class: "nav-link active" %>
+        </li>
+      <% end %>
     </ul>
 
     <div class="ms-auto d-flex align-items-center gap-3">

@@ -92,8 +92,9 @@ Index of all docs: [README.md](README.md).
 19. **Old sections URL is gone.** `/u/<slug>/sections` now 404s; sections live under
     `/u/<slug>/stories/<story_id>/sections`.
 
-20. **Sidebar issues many COUNT queries** (one per nav entry) on every page render; story counts
-    and section counts are not memoized (`icon_text_count(Current.universe.X.count)`).
+20. **Sidebar issues many COUNT queries** (one per nav entry) on every page render; section
+    counts are not memoized (`icon_text_count(Current.universe.X.count)`). The stories menu (and
+    its count) moved to the top bar navbar, which renders no counts.
 
 21. **Two lockfiles.** `bun.lock` (current — `bun install` runs during asset/test tasks) and a
     stale `yarn.lock` coexist; `Procfile.dev` still says `css: yarn watch:css`. Prefer bun

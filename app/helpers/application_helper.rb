@@ -30,6 +30,13 @@ module ApplicationHelper
     @nav_universes ||= Universe.visible_to(Current.user).order(:name)
   end
 
+  # Stories listed in the top bar dropdown of the current universe.
+  def nav_stories
+    return [] if Current.universe.nil?
+
+    @nav_stories ||= Current.universe.stories.order(:id)
+  end
+
   def entity_tag_badge(entity)
     return if entity.nil?
 

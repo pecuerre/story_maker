@@ -8,6 +8,10 @@ class SectionTagsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get index" do
+    # The section-tags shortcut lives in the story-scoped HOW card, so a story
+    # has to be selected first for the sidebar to render it.
+    get universe_story_url(universe_slug: @universe.slug, id: stories(:story_one))
+
     get universe_section_tags_url(universe_slug: @universe.slug)
     assert_response :success
     assert_select "h1", text: "Section Tags"

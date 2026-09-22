@@ -5,7 +5,7 @@
 #
 # What it checks:
 #   1. login (CSRF token + signed session cookie)
-#   2. sidebar exposes /u/<slug>/stories and the current story's sections link
+#   2. top bar exposes /u/<slug>/stories (universe dropdown) and the current story's sections link
 #   3. stories index renders (cards, counts, "New story")
 #   4. the legacy /u/<slug>/sections URL is gone (404)
 #   5. a story's sections page renders that story's sections only
@@ -54,7 +54,7 @@ check "login succeeds" "302" "$LOGIN_CODE"
 # --- 2. sidebar links -------------------------------------------------------
 SIDEBAR=$(curl -s -b "$JAR" "$BASE/u/$UNIVERSE")
 echo "$SIDEBAR" | grep -oE 'href="/u/[^"]*/stories[^"]*"' | sort -u > /tmp/smoke_sidebar.txt
-contains "sidebar links to the stories index" "href=\"/u/$UNIVERSE/stories\"" /tmp/smoke_sidebar.txt
+contains "top bar links to the stories index" "href=\"/u/$UNIVERSE/stories\"" /tmp/smoke_sidebar.txt
 
 # --- 3. stories index -------------------------------------------------------
 curl -s -b "$JAR" "$BASE/u/$UNIVERSE/stories" -o /tmp/smoke_index.html -w "%{http_code}" \

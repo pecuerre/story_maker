@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_130018) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false

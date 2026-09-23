@@ -74,6 +74,14 @@ Other notes:
 - `bin/rails db:restart` (`lib/tasks/db.rake`) = drop + create + migrate + seed.
 - Tests do **not** use seeds; they use fixtures only.
 
+## Database migrations
+
+The database is intentionally disposable: schema migrations only define the structure, and demo
+records are reconstructed from `db/data/` by `db:seed`. Keep one schema-only create migration per
+persisted model, including any HABTM join table owned by that model. Migrations must not read or
+write application records or reference application models; use `bin/rails db:restart` after
+refactoring a create migration so the schema and `db/data/` records are rebuilt together.
+
 ## Smoke test (end-to-end over HTTP)
 
 `docs/smoke_test_stories.sh` — logs in over curl (CSRF token + signed cookie), then checks the
@@ -114,8 +122,9 @@ Dependabot config: `.github/dependabot.yml`.
 
 ## Adding a new content model (checklist)
 
-1. Migration in `db/migrate/` — `universe_id` FK (+ `parent_id`/`position`/`slug` if it is a
-   hierarchical/positioned model). Update `db/schema.rb` via `bin/rails db:migrate`.
+1. One schema-only create migration in `db/migrate/` — `universe_id` FK (+ `parent_id`/`position`/
+   `slug` if it is a hierarchical/positioned model), plus any HABTM join table. Never include data
+   operations or application-model references. Update `db/schema.rb` via `bin/rails db:migrate`.
 2. Model in `app/models/` — `include HasSlug` (+ `Hierarchical`, `HasManyTags`,
    `has_many_tags :foo_tag` / inverse `has_many_tagd :foo`, `HasColor` for tags — tags are
    optional, `has_many_tags` adds no presence validation), `belongs_to

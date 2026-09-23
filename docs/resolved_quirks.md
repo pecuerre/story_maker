@@ -31,15 +31,27 @@ though other named records rejected it.
 validation and reject universe creation without a name; the existing form error handling renders
 the validation message.
 
+### Former #22 — Migrations mixed schema changes with application-data work (fixed)
+
+**Then:** two later migrations backfilled and copied live records when moving sections and section
+tags under stories. Those migrations referenced application models (`Story`, `Section`, and
+`SectionTag`), so old migrations could break when model code changed. The database also had a
+multi-step schema history rather than one current definition per model.
+
+**Fix:** database data is disposable and is reconstructed from `db/data/`, so migrations are now
+schema-only and the history is consolidated into one create migration per persisted model. The
+story slug and the `story_id` foreign keys are defined directly in the corresponding create
+migrations; the record-copying migrations were removed. Existing databases must be recreated with
+`bin/rails db:restart`, which migrates the schema and then reloads `db/data/` through `db:seed`.
+
 ### Former #24 — Deleting a section tag silently un-tagged its sections (fixed, in two steps)
 
 **Then:** section tags were universe-wide while sections were story-scoped, so a tag could be
 deleted even though stories still referenced it.
 
-**Fix, step 1 (scoping):** tags belong to a story — migration
-`db/migrate/20260923120000_move_section_tags_to_stories.rb`, plus a `Section` validation that
-all `section_tags` share the section's story. A tag can no longer be deleted from under
-*another* story.
+**Fix, step 1 (scoping):** tags belong to a story — the `CreateSectionTags` migration defines
+`story_id` directly, plus a `Section` validation that all `section_tags` share the section's story.
+A tag can no longer be deleted from under *another* story.
 
 **What remained:** deleting a tag still dropped the join rows of its own story, and the
 affected sections only noticed at their **next save** (`section_tags` presence validation) —

@@ -61,14 +61,16 @@
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
   `universe_*` and URLs look like `/u/<universe-slug>/...` (see `config/routes.rb`).
 - Stories are a full resource in that scope with sections and section tags nested underneath:
-  `resources :stories do resources :sections; resources :section_tags end` →
-  `/u/:universe_slug/stories/:story_id/sections`, helpers `universe_story_*`,
+  `resources :stories, path: "s" do resources :sections; resources :section_tags end` →
+  `/u/:universe_slug/s/:story_id/sections`, helpers `universe_story_*`,
   `universe_story_section(s)`, `universe_story_section_tag(s)`.
 - **Path helpers must receive their keys explicitly** (`universe_story_path(id: story)`,
   `universe_story_sections_path(story_id: story)`): a positional record is assigned to the first
   path segment (`universe_slug`) and breaks the URL. The `universe_slug` itself is then filled in
   from the current request (recall) — that is why `universe_characters_path()` with no arguments
   works on any page inside a universe.
+- All section and section-tag URLs include the story id (`/u/:universe_slug/s/:story_id/...`).
+  The universe-level `/u/:universe_slug/sections` path is intentionally invalid.
 - Relations/Ownerships are limited to `index, create, update, destroy`; timeline is
   `get "timeline", to: "timeline#index"`; `root` → `universes#index`; health check `/up`.
 - `Universe#to_param` returns the slug; content models are addressed by numeric `id`.

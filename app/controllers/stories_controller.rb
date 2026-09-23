@@ -1,21 +1,21 @@
 class StoriesController < ApplicationController
   before_action :set_story, only: %i[ show edit update destroy ]
 
-  # GET /u/:universe_slug/stories
+  # GET /u/:universe_slug/s
   def index
     @stories = Current.universe.stories.includes(:sections).order(:id)
   end
 
-  # GET /u/:universe_slug/stories/:id
+  # GET /u/:universe_slug/s/:id
   def show
   end
 
-  # GET /u/:universe_slug/stories/new
+  # GET /u/:universe_slug/s/new
   def new
     @story = Story.new(universe: Current.universe)
   end
 
-  # POST /u/:universe_slug/stories
+  # POST /u/:universe_slug/s
   def create
     @story = Story.new(universe: Current.universe)
     @story.assign_attributes(story_params)
@@ -29,11 +29,11 @@ class StoriesController < ApplicationController
     end
   end
 
-  # GET /u/:universe_slug/stories/:id/edit
+  # GET /u/:universe_slug/s/:id/edit
   def edit
   end
 
-  # PATCH/PUT /u/:universe_slug/stories/:id
+  # PATCH/PUT /u/:universe_slug/s/:id
   def update
     respond_to do |format|
       if @story.update(story_params)
@@ -44,7 +44,7 @@ class StoriesController < ApplicationController
     end
   end
 
-  # DELETE /u/:universe_slug/stories/:id
+  # DELETE /u/:universe_slug/s/:id
   def destroy
     @story.destroy!
 

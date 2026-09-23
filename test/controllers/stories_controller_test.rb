@@ -6,6 +6,21 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
+  test "uses an explicit /s path for stories and their sections" do
+    story = stories(:story_one)
+
+    assert_equal "/u/#{@universe.slug}/s", universe_stories_path(universe_slug: @universe.slug)
+    assert_equal "/u/#{@universe.slug}/s/#{story.id}", universe_story_path(universe_slug: @universe.slug, id: story)
+    assert_equal "/u/#{@universe.slug}/s/#{story.id}/sections",
+      universe_story_sections_path(universe_slug: @universe.slug, story_id: story)
+  end
+
+  test "does not route the universe-level sections URL" do
+    get "/u/#{@universe.slug}/sections"
+
+    assert_response :not_found
+  end
+
   test "should get index listing only this universe's stories" do
     get universe_stories_url(universe_slug: @universe.slug)
 

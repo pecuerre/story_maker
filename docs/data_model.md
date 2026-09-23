@@ -157,8 +157,8 @@ are defined once per universe, while each story has its own section tree (its pl
 its own section tags (chapter/book/episode labels). This ownership split is defined directly by
 the schema-only create migrations: `stories` owns its slug, and `sections` and `section_tags`
 reference `stories`. Data is disposable and reconstructed from the files under `db/data/`; it is
-not backfilled by migrations. The old `/u/<slug>/sections` and `/u/<slug>/section_tags` routes no
-longer exist — both are only reachable under a story (`/u/<slug>/stories/<story_id>/sections`,
-`/u/<slug>/stories/<story_id>/section_tags`).
+not backfilled by migrations. Section tags and sections are reachable only under the explicit story
+path (`/u/<slug>/s/<story_id>/section_tags` and `/u/<slug>/s/<story_id>/sections`). The
+universe-level `/u/<slug>/section_tags` and `/u/<slug>/sections` routes are intentionally invalid.
 
 Hand-maintained sketch of the core entities: [schema.txt](schema.txt).

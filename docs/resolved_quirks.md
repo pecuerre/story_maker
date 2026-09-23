@@ -10,6 +10,23 @@ Index of all docs: [README.md](README.md).
 
 ## Resolved correctness issues
 
+### Former #18 — Sidebar issued COUNT queries on every page (fixed)
+
+**Then:** the left sidebar called `.count` for sections, characters, relations, locations, events,
+items, and ownerships on every rendered page. A selected story therefore caused seven database
+count queries on every request, even though the values changed only when content changed.
+
+**Fix:** `Universe#menu_counts` now stores all six universe-level values together in one
+`Rails.cache` entry, while `Story#menu_section_count` stores the selected story's value in a second
+entry. `InvalidatesMenuCounts` expires the affected entry from model `after_commit` callbacks when
+a counted record is created or destroyed (and when a record moves to another scope), so controller,
+seed, console, and dependent-destroy writes all stay correct. It tracks every intermediate scope
+during a multi-save transaction, and cache misses inside open transactions are never written, so
+rollbacks cannot leave stale data. Owner destruction removes its own entry, `db:restart` clears the
+cache after recreating the database, and a one-hour expiry is a safety net for rare cache-fill races
+or maintenance writes that bypass callbacks. Production continues to use the existing Solid Cache
+store; Redis is not required.
+
 ### Former #8 — Default-tag assignment crashed on tagless universes (fixed)
 
 **Then:** `CharactersController#create` (and the location/item equivalents) did

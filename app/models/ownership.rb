@@ -1,6 +1,9 @@
 class Ownership < ApplicationRecord
   include HasManyTags
   include HasSlug
+  include InvalidatesMenuCounts
+
+  invalidates_menu_counts_for :universe
 
   belongs_to :universe
   belongs_to :item

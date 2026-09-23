@@ -2,6 +2,9 @@ class Event < ApplicationRecord
   include Hierarchical
   include HasManyTags
   include HasSlug
+  include InvalidatesMenuCounts
+
+  invalidates_menu_counts_for :universe
 
   belongs_to :universe
   has_many_tags :event_tag

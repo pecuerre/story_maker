@@ -45,6 +45,28 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.left-sidebar .card-header", text: /HOW/
     assert_select "aside.left-sidebar .card-header", text: /WHO/
 
+    assert_select "aside.left-sidebar a[href=?]",
+      universe_story_sections_path(universe_slug: @universe.slug, story_id: @story),
+      text: "Sections(2)"
+    assert_select "aside.left-sidebar a[href=?]",
+      universe_characters_path(universe_slug: @universe.slug),
+      text: "Characters(2)"
+    assert_select "aside.left-sidebar a[href=?]",
+      universe_relations_path(universe_slug: @universe.slug),
+      text: "Relations(0)"
+    assert_select "aside.left-sidebar a[href=?]",
+      universe_locations_path(universe_slug: @universe.slug),
+      text: "Locations(2)"
+    assert_select "aside.left-sidebar a[href=?]",
+      universe_events_path(universe_slug: @universe.slug),
+      text: "Events(2)"
+    assert_select "aside.left-sidebar a[href=?]",
+      universe_items_path(universe_slug: @universe.slug),
+      text: "Items(2)"
+    assert_select "aside.left-sidebar a[href=?]",
+      universe_ownerships_path(universe_slug: @universe.slug),
+      text: "Ownerships(0)"
+
     assert_select "nav a.nav-link.active[href=?]",
       universe_story_path(universe_slug: @universe.slug, id: @story)
     assert_select "nav .dropdown-menu a.active[href=?]",

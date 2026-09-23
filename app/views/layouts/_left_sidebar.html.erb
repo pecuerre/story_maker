@@ -1,11 +1,12 @@
 <div class="py-4">
 
 <% if Current.universe.present? %>
+  <% menu_counts = Current.universe.menu_counts %>
 
   <%# WHAT and HOW are story-scoped, so they stay hidden until a story is
       selected in the top bar. The stories menu itself lives there too. %>
   <% if Current.story.present? %>
-    <% sections_scope = Current.story %>
+    <% section_count = Current.story.menu_section_count %>
 
     <div class="card flex-column mb-4 nav">
       <div class="card-header border-primary text-primary">
@@ -38,7 +39,7 @@
         </li>
         <li class="list-group-item <%= active_if(:sections, :section_tags) %>">
           <div class="d-flex align-items-center justify-content-between">
-            <%= link_to icon_text_count("list-nested", "Sections", sections_scope.sections.count),
+            <%= link_to icon_text_count("list-nested", "Sections", section_count),
               universe_story_sections_path(story_id: Current.story),
               class: "nav-link px-0#{active_if(:sections)}"
             %>
@@ -62,7 +63,7 @@
     <ul class="list-group list-group-flush">
       <li class="list-group-item <%= active_if(:characters, :character_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("person", "Characters", Current.universe.characters.count),
+          <%= link_to icon_text_count("person", "Characters", menu_counts[:characters]),
             universe_characters_path(),
             class: "nav-link text-danger px-0#{active_if(:characters)}"
           %>
@@ -76,7 +77,7 @@
       </li>
       <li class="list-group-item <%= active_if(:relations, :relation_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("people", "Relations", Current.universe.relations.count),
+          <%= link_to icon_text_count("people", "Relations", menu_counts[:relations]),
             universe_relations_path(),
             class: "nav-link text-danger px-0#{active_if(:relations)}"
           %>
@@ -106,7 +107,7 @@
     <ul class="list-group list-group-flush">
       <li class="list-group-item <%= active_if(:locations, :location_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("geo-alt", "Locations", Current.universe.locations.count),
+          <%= link_to icon_text_count("geo-alt", "Locations", menu_counts[:locations]),
             universe_locations_path(),
             class: "nav-link text-danger px-0#{active_if(:locations)}"
           %>
@@ -144,7 +145,7 @@
     <ul class="list-group list-group-flush">
       <li class="list-group-item <%= active_if(:events, :event_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("calendar-event", "Events", Current.universe.events.count),
+          <%= link_to icon_text_count("calendar-event", "Events", menu_counts[:events]),
             universe_events_path(),
             class: "nav-link text-danger px-0#{active_if(:events)}"
           %>
@@ -171,7 +172,7 @@
     <ul class="list-group list-group-flush">
       <li class="list-group-item <%= active_if(:items, :item_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("box-seam", "Items", Current.universe.items.count),
+          <%= link_to icon_text_count("box-seam", "Items", menu_counts[:items]),
             universe_items_path(),
             class: "nav-link text-danger px-0#{active_if(:items)}"
           %>
@@ -185,7 +186,7 @@
       </li>
       <li class="list-group-item <%= active_if(:ownerships, :ownership_tags) %>">
         <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("person-bounding-box", "Ownerships", Current.universe.ownerships.count),
+          <%= link_to icon_text_count("person-bounding-box", "Ownerships", menu_counts[:ownerships]),
             universe_ownerships_path(),
             class: "nav-link text-danger px-0#{active_if(:ownerships)}"
           %>

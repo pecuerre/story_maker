@@ -1,6 +1,9 @@
 class Relation < ApplicationRecord
   include HasManyTags
   include HasSlug
+  include InvalidatesMenuCounts
+
+  invalidates_menu_counts_for :universe
 
   belongs_to :universe
   belongs_to :character1, class_name: "Character"

@@ -153,6 +153,8 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
 
 - `stale_when_importmap_changes` (HTTP caching keyed on the importmap).
 - `solid_cache` store in production; `nav_universes` and `nav_stories` are memoized per request.
-- The sidebar issues one `COUNT` query per nav item per page (N+1-ish, see
-  [known_quirks.md](known_quirks.md)); the navbar adds one `stories` query per render
-  (`nav_stories`).
+- Sidebar count data is stored in `Rails.cache`: one grouped entry for the current universe and one
+  for the current story. `InvalidatesMenuCounts` expires the relevant entry after committed creates,
+  destroys, and scope moves. Open transactions calculate without filling the cache, and entries have
+  a one-hour safety expiry. See [former quirk #18](resolved_quirks.md#former-18--sidebar-issued-count-queries-on-every-page-fixed).
+- The navbar adds one `stories` query per render (`nav_stories`).

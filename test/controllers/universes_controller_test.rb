@@ -23,6 +23,14 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to universe_url(Universe.last)
   end
 
+  test "should not create universe without a name" do
+    assert_no_difference("Universe.count") do
+      post universes_url, params: { universe: { name: "" } }
+    end
+
+    assert_response :unprocessable_content
+  end
+
   test "should show universe" do
     get universe_url(@universe)
     assert_response :success

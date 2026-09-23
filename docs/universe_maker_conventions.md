@@ -35,8 +35,8 @@
   `has_many_tags` adds no presence validation and no controller force-assigns a default tag, so
   records are saved untagged when the user picks none (tag them later or never).
 - `_tag` models include `HasColor` (validated `#rrggbb` `bgcolor`/`fgcolor`) and `HasSlug`.
-- Name presence is validated on: Character, Location, Item, Section, Story and all `_tag` models.
-  Not on: Event (see below), Relation, Ownership (name optional), Universe.
+- Name presence is validated on: Universe, Character, Location, Item, Section, Story and all
+  `_tag` models. Not on: Event (see below), Relation and Ownership (name optional).
 - `Relation`, `Ownership` and `Event` add custom validators that keep every associated record
   inside the same universe.
 

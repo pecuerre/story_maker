@@ -1,9 +1,9 @@
 # Universe Maker — Documentation
 
-Everything learned about this project lives in this directory (the root `README.md` is still the
-Rails scaffold boilerplate). Facts were verified against the code — last full pass: September
-2026, after the *stories / story-scoped sections* rework and the *tags are optional everywhere*
-change.
+Everything learned about this project lives in this directory. The root `README.md` is a short
+quick start; this directory is the source of truth for project knowledge. Facts were verified
+against the code — last full pass: September 2026, after the *stories / story-scoped sections*
+rework and the *tags are optional everywhere* change.
 
 | File | Contents |
 |---|---|

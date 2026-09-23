@@ -8,6 +8,42 @@ code looks the way it does today. Only *open* oddities belong in
 Original entry numbers are kept ("former #8") so old references and commits still make sense.
 Index of all docs: [README.md](README.md).
 
+## Resolved vestigial code
+
+### Former #9 — `ApplicationController#default_url_options` was a no-op (fixed)
+
+**Then:** `ApplicationController` overrode `default_url_options` and called `super.merge()` with no
+options, while the universe slug was supplied by Rails request recall.
+
+**Fix:** the redundant override was removed. URL helpers continue to use the standard Rails
+behavior and request recall; no application-specific `universe_slug` option is needed.
+
+### Former #10 — Unused Hello Stimulus controller (fixed)
+
+**Then:** `app/javascript/controllers/hello_controller.js` was an untouched Rails scaffold
+controller. No view or application code used it; the import map's controller glob only made the
+unused file discoverable.
+
+**Fix:** the controller was deleted. The Stimulus eager loader now registers only the controllers
+used by the application.
+
+### Former #11 — Vestigial current-universe path wrappers (fixed)
+
+**Then:** `SectionsController` and the section/event tag controllers carried private
+`current_universe_*_path` wrappers. The plural wrappers were unused, and the singular wrappers
+only forwarded to route helpers used to build JSON URLs.
+
+**Fix:** the wrappers were removed. JSON responses now call the appropriate route helper directly,
+so URL behavior is unchanged without the dead indirection.
+
+### Former #12 — Root README was Rails scaffold boilerplate (fixed)
+
+**Then:** the root `README.md` still contained the generated Rails placeholder, leaving no useful
+entry point for the project.
+
+**Fix:** the root README now provides a concise project overview, quick start, test commands, and
+links to the detailed documentation in `docs/`, which remains the source of truth.
+
 ## Resolved correctness issues
 
 ### Former #17 — Sections URL did not make the story scope explicit (fixed)

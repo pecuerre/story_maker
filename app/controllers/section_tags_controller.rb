@@ -54,21 +54,14 @@ class SectionTagsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
+
+  # Use callbacks to share common setup or constraints between actions.
   def set_story
     @story = Current.universe.stories.find(params.expect(:story_id))
   end
 
   def set_section_tag
     @section_tag = @story.section_tags.find(params.expect(:id))
-  end
-
-  def current_universe_section_tag_path
-    universe_story_section_tag_path(story_id: @story, id: @section_tag)
-  end
-
-  def current_universe_section_tags_path
-    universe_story_section_tags_path(story_id: @story)
   end
 
   # Positions are maintained among the story's section tags, not the universe's.
@@ -85,7 +78,7 @@ class SectionTagsController < ApplicationController
       fgcolor: @section_tag.fgcolor,
       parent_id: @section_tag.parent_id,
       position: @section_tag.position,
-      url: current_universe_section_tag_path,
+      url: universe_story_section_tag_path(story_id: @story, id: @section_tag)
     }
   end
 

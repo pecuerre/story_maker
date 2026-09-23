@@ -72,6 +72,3 @@ survives. Index of all docs: [README.md](README.md).
 16. **`404` vs `RecordNotFound` in tests.** Because `show_exceptions = :rescuable` in
     `config/environments/test.rb`, out-of-scope records render HTTP 404 — assert with
     `assert_response :not_found`; `assert_raises(ActiveRecord::RecordNotFound)` will not trigger.
-
-22. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
-    generated content — edit carefully.

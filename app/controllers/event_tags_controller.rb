@@ -54,17 +54,10 @@ class EventTagsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
+
+  # Use callbacks to share common setup or constraints between actions.
   def set_event_tag
     @event_tag = Current.universe.event_tags.find(params.expect(:id))
-  end
-
-  def current_universe_event_tag_path
-    universe_event_tag_path(id: @event_tag)
-  end
-
-  def current_universe_event_tags_path
-    universe_event_tags_path()
   end
 
   def event_tag_json
@@ -76,7 +69,7 @@ class EventTagsController < ApplicationController
       fgcolor: @event_tag.fgcolor,
       parent_id: @event_tag.parent_id,
       position: @event_tag.position,
-      url: current_universe_event_tag_path,
+      url: universe_event_tag_path(id: @event_tag)
     }
   end
 

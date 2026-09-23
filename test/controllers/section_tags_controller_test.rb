@@ -44,7 +44,9 @@ class SectionTagsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     assert_equal "Inline tag", response.parsed_body["name"]
     assert_equal @section_tag.id, response.parsed_body["parent_id"]
-    assert_equal @story, SectionTag.order(:id).last.story
+    created_tag = SectionTag.order(:id).last
+    assert_equal @story, created_tag.story
+    assert_equal universe_story_section_tag_path(universe_slug: @universe.slug, story_id: @story, id: created_tag), response.parsed_body["url"]
   end
 
   test "should update section_tag as json for inline editing" do

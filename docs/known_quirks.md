@@ -53,20 +53,6 @@ survives. Index of all docs: [README.md](README.md).
    `system-test` (`test:system`) but there is no `test/system` directory yet (it will run zero
    tests; screenshots artifact is ignored).
 
-## Dead / vestigial code
-
-9. **`ApplicationController#default_url_options` is a no-op:**
-   `return super unless Current.universe; super.merge()` merges nothing. `universe_slug` in URLs
-   actually comes from request *recall* (see [architecture.md](architecture.md#routing--url-generation-the-sharp-edges)).
-
-10. **`hello_controller.js`** — Rails scaffold leftover.
-
-11. **`current_universe_sections_path`** in `SectionsController` (and similarly named private
-    methods in other controllers) is defined but not referenced anywhere.
-
-12. **Root `README.md`** is still the untouched Rails scaffold boilerplate — **this `docs/`
-    directory is the source of truth** for project knowledge.
-
 ## Conventions that will bite you
 
 13. **Positional path-helper trap.** `universe_story_sections_path(story)` binds the Story to

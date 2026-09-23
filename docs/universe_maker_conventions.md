@@ -116,7 +116,6 @@
 - `modal_form_controller.js` — Bootstrap modal CRUD for the flat list views.
 - `timeline_controller.js` — pan/zoom + popovers for the Timeline view.
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
-- `hello_controller.js` — Rails scaffold leftover.
 
 ### Navigation (Top bar) — `app/views/layouts/_navbar.html.erb`
 Left to right:

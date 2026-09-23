@@ -13,12 +13,6 @@ class ApplicationController < ActionController::Base
 
   protected
 
-  def default_url_options
-    return super unless Current.universe
-
-    super.merge()
-  end
-
   def set_current_universe
     return unless params[:universe_slug].present?
 

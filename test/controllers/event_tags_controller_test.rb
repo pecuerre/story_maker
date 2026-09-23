@@ -25,6 +25,8 @@ class EventTagsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     assert_equal "Inline tag", response.parsed_body["name"]
     assert_equal @event_tag.id, response.parsed_body["parent_id"]
+    created_tag = EventTag.order(:id).last
+    assert_equal universe_event_tag_path(universe_slug: @universe.slug, id: created_tag), response.parsed_body["url"]
   end
 
   test "should update event_tag as json for inline editing" do

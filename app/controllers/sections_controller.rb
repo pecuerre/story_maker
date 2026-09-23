@@ -58,10 +58,6 @@ class SectionsController < ApplicationController
     @story = Current.universe.stories.find(params.expect(:story_id))
   end
 
-  def current_universe_sections_path
-    universe_story_sections_path(story_id: @story)
-  end
-
   def set_section
     @section = @story.sections.find(params.expect(:id))
   end

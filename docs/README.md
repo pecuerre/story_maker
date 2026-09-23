@@ -15,7 +15,7 @@ rework and the *tags are optional everywhere* change.
 | [known_quirks.md](known_quirks.md) | Verified **open** oddities, dead code and tech debt — read before changing shared code |
 | [resolved_quirks.md](resolved_quirks.md) | Quirks/tech debt that **used to exist and is fixed now** — what the problem was and how it was solved |
 | [schema.txt](schema.txt) | Hand-maintained sketch of the core entities (owner-maintained, not generated) |
-| [todo.txt](todo.txt) | Shared pending-work list for the owner and AI assistants, including ideas for the future |
+| [backlog.md](backlog.md) | Shared pending-work list for the owner and AI assistants, including ideas for the future |
 | [smoke_test_stories.sh](smoke_test_stories.sh) | Curl-based end-to-end smoke test (login → stories → sections); moved here from `/tmp/opencode/` so it is tracked |
 | `images-to-ai/` | Screenshots/images used when prompting AI assistants |
 
@@ -30,7 +30,7 @@ How to use these docs:
 
 ## Shared backlog
 
-[todo.txt](todo.txt) is the owner's and AI assistants' shared list for pending work and future
+[backlog.md](backlog.md) is the owner's and AI assistants' shared list for pending work and future
 ideas. The owner can write rough notes without worrying about formatting. If an AI notices another
 worthwhile improvement while working, it should ask whether to do it **now**, **later**, or
 **never**. A **later** item is added under `FUTURE WORK`; a **never** item is not added, and extra

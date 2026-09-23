@@ -2,6 +2,9 @@ class Section < ApplicationRecord
   include Hierarchical
   include HasManyTags
   include HasSlug
+  include InvalidatesMenuCounts
+
+  invalidates_menu_counts_for :story
 
   belongs_to :story
   has_many_tags :section_tag

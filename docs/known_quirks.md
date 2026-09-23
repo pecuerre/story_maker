@@ -90,10 +90,5 @@ survives. Index of all docs: [README.md](README.md).
 17. **Old sections URL is gone.** `/u/<slug>/sections` now 404s; sections live under
     `/u/<slug>/stories/<story_id>/sections`.
 
-18. **Sidebar issues many COUNT queries** (one per nav entry: sections, characters, relations,
-    locations, events, items, ownerships) on every page render; counts are not memoized
-    (`icon_text_count(Current.universe.X.count)`). The stories menu (and its count) moved to the
-    top bar navbar, which renders no counts.
-
 22. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
     generated content — edit carefully.

@@ -82,8 +82,8 @@ Other global behavior: `allow_browser versions: :modern`,
 
 - Universe content is mounted with `scope "u/:universe_slug", as: :universe`
   → named helpers `universe_*`, URLs `/u/<slug>/...`.
-- Stories are a full resource inside that scope with sections nested:
-  `resources :stories do resources :sections end`.
+- Stories are a full resource inside that scope with sections and section tags nested:
+  `resources :stories do resources :sections; resources :section_tags end`.
 - **Always pass route keys by name**: `universe_story_path(id: story)`,
   `universe_story_sections_path(story_id: story)`, `universe_section_path(id: section)`.
   A positional record (`universe_story_sections_path(story)`) is assigned to the *first* dynamic
@@ -94,7 +94,8 @@ Other global behavior: `allow_browser versions: :modern`,
   runner`) the same call raises `missing required keys: [:universe_slug]`.
 - `Universe#to_param` → slug (the route uses `param: :universe_slug` and looks up by slug).
   Content models are addressed by numeric id.
-- Removed route: `/u/:slug/sections` → now `/u/:slug/stories/:story_id/sections` (old bookmarks 404).
+- Removed routes: `/u/:slug/sections` → now `/u/:slug/stories/:story_id/sections`, and
+  `/u/:slug/section_tags` → now `/u/:slug/stories/:story_id/section_tags` (old bookmarks 404).
 
 ## Response formats per controller
 

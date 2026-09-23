@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_120000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -235,10 +235,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000000) do
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
-    t.integer "universe_id", null: false
+    t.integer "story_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_section_tags_on_parent_id"
-    t.index ["universe_id"], name: "index_section_tags_on_universe_id"
+    t.index ["story_id"], name: "index_section_tags_on_story_id"
   end
 
   create_table "sections", force: :cascade do |t|
@@ -331,7 +331,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000000) do
   add_foreign_key "relations", "characters", column: "character2_id"
   add_foreign_key "relations", "universes"
   add_foreign_key "section_tags", "section_tags", column: "parent_id"
-  add_foreign_key "section_tags", "universes"
+  add_foreign_key "section_tags", "stories"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sections", "stories"
   add_foreign_key "sessions", "users"

@@ -1,6 +1,8 @@
 class Universe < ApplicationRecord
   include HasSlug
 
+  validates :name, presence: true
+
   scope :visible_to, ->(user) {
     user ? where(private: false).or(where(owner_id: user.id)) : where(private: false)
   }

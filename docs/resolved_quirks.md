@@ -22,6 +22,15 @@ records the user had deliberately left untagged. `SectionsController#create` use
 and `Story#default_section_tag` was deleted as dead code. Creating a record without tags simply
 saves it untagged — a tagless universe (or story) is now a normal state, not a crash.
 
+### Former #21 — Universes could be saved without a name (fixed)
+
+**Then:** `Universe` had no validations, so a missing or blank name passed validation even
+though other named records rejected it.
+
+**Fix:** `Universe` now validates that `name` is present. Model and request tests cover the
+validation and reject universe creation without a name; the existing form error handling renders
+the validation message.
+
 ### Former #24 — Deleting a section tag silently un-tagged its sections (fixed, in two steps)
 
 **Then:** section tags were universe-wide while sections were story-scoped, so a tag could be

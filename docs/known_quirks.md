@@ -104,7 +104,5 @@ survives. Index of all docs: [README.md](README.md).
     `db/migrate/20260923120000_move_section_tags_to_stories.rb`). Fine at this project stage, but
     editing those models later can break re-runs of old migrations (schema loads are safe).
 
-21. **`Universe` has no validations** — a universe can be saved with a blank name (Story cannot).
-
 22. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
     generated content — edit carefully.

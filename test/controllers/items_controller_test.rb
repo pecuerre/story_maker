@@ -29,6 +29,18 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "A description", Item.order(:id).last.description
   end
 
+  test "should create an item without tags" do
+    assert_difference("Item.count") do
+      post universe_items_url(universe_slug: @universe.slug),
+        params: { item: { name: "Untagged item" } },
+        as: :json
+    end
+
+    assert_response :created
+    assert_empty response.parsed_body["item_tag_ids"]
+    assert_empty Item.order(:id).last.item_tags
+  end
+
   test "should update item details as json" do
     patch universe_item_url(universe_slug: @universe.slug, id: @item),
       params: { item: { name: "Renamed", description: "Updated", item_tag_ids: [ @item_tag.id ] } },

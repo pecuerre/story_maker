@@ -93,7 +93,7 @@
               <%= form.label :ownership_tag_ids, "Ownership Tags", class: "form-label" %>
               <%= form.collection_select :ownership_tag_ids, @ownership_tags, :id, :name,
                 {},
-                  { class: "form-select", multiple: true, required: true, data: { controller: "tom-select" } } %>
+                  { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
             <div class="mb-3">
               <%= form.label :description, class: "form-label" %>

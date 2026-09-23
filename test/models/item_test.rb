@@ -7,4 +7,8 @@ class ItemTest < ActiveSupport::TestCase
     assert_not item.valid?
     assert_includes item.errors[:name], "can't be blank"
   end
+
+  test "allows an item without tags" do
+    assert Item.create!(universe: universes(:universe_one), name: "Untagged")
+  end
 end

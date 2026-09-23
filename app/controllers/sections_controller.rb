@@ -24,7 +24,6 @@ class SectionsController < ApplicationController
 
   def create
     @section = @story.sections.new(section_params)
-    @section.section_tag_ids = [ @story.default_section_tag.id ] if @section.section_tag_ids.empty?
     @section.position = sibling_count(@section.parent_id)
 
     respond_to do |format|

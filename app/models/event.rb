@@ -4,7 +4,7 @@ class Event < ApplicationRecord
   include HasSlug
 
   belongs_to :universe
-  has_many_tags :event_tag, required: false
+  has_many_tags :event_tag
   belongs_to :before_event, class_name: "Event", optional: true
   belongs_to :after_event, class_name: "Event", optional: true
   belongs_to :simultaneous_event, class_name: "Event", optional: true

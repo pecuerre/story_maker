@@ -1,12 +1,15 @@
 require "test_helper"
 
 class LocationTest < ActiveSupport::TestCase
-  test "requires a name and location tag" do
+  test "requires a name" do
     location = Location.new(universe: universes(:universe_one))
 
     assert_not location.valid?
     assert_includes location.errors[:name], "can't be blank"
-    assert_includes location.errors[:location_tags], "can't be blank"
+  end
+
+  test "allows a location without tags" do
+    assert Location.create!(universe: universes(:universe_one), name: "Untagged")
   end
 
   test "rejects a parent from another universe" do

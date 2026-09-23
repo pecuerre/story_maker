@@ -21,7 +21,9 @@ class Ownership < ApplicationRecord
       return
     end
 
-    self.slug = "#{character.slug}-#{ownership_tags.first.slug}-#{item.slug}"
+    # Tags are optional, so the tag segment may be missing entirely.
+    parts = [ character&.slug, ownership_tags.first&.slug, item&.slug ].compact
+    self.slug = parts.presence&.join("-") || SecureRandom.hex(4)
   end
 
   def associated_records_belong_to_universe

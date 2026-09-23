@@ -30,9 +30,10 @@
   (universe by default; `Section` overrides them to compare `story_id` →
   *"must belong to the same story"*).
 - Content ↔ tag pairs are declared with the `HasManyTags` DSL:
-  content model: `has_many_tags :character_tag` (HABTM + presence validation by default),
-  tag model: `has_many_tagd :character` (inverse side). Tags are **required** except on `Event`
-  (`has_many_tags :event_tag, required: false`).
+  content model: `has_many_tags :character_tag` (HABTM only), tag model:
+  `has_many_tagd :character` (inverse side). Tags are **optional on every content model** —
+  `has_many_tags` adds no presence validation and no controller force-assigns a default tag, so
+  records are saved untagged when the user picks none (tag them later or never).
 - `_tag` models include `HasColor` (validated `#rrggbb` `bgcolor`/`fgcolor`) and `HasSlug`.
 - Name presence is validated on: Character, Location, Item, Section, Story and all `_tag` models.
   Not on: Event (see below), Relation, Ownership (name optional), Universe.
@@ -151,8 +152,9 @@ content models. What actually makes Event special:
 1. `Event` includes `Hierarchical` (parent/position) **plus** the self-referencing
    `before_event`, `after_event`, `simultaneous_event` associations (cycle-safe: `display_string`
    walks with a visited list and `cannot_reference_self` guards the ids).
-2. Tags are **optional**: `has_many_tags :event_tag, required: false` (the only content model
-   where a tag is not required).
+2. Tags are **optional** — as on every content model (`has_many_tags` adds no presence
+   validation). Event was simply the first model to work this way; the old
+   `required: false` opt-in is gone.
 3. Identity is title-driven: users enter `title`; `set_name` copies `title → name` **on create
    only**; `Event#display_string` renders the label, falling back to dates, then relations
    (`"before Event #3"`), and finally `"Event #id"`.

@@ -34,6 +34,21 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "They are family", Relation.order(:id).last.description
   end
 
+  test "should create a relation without tags" do
+    assert_difference("Relation.count") do
+      post universe_relations_url(universe_slug: @universe.slug), params: {
+        relation: {
+          character1_id: @character_one.id,
+          character2_id: @character_two.id,
+          description: "No taxonomy needed"
+        }
+      }
+    end
+
+    assert_redirected_to universe_relations_url(universe_slug: @universe.slug)
+    assert_empty Relation.order(:id).last.relation_tags
+  end
+
   test "should update relation and redirect" do
     relation = Relation.create!(universe: @universe, character1: @character_one, character2: @character_two, relation_tags: [ @relation_tag ])
 

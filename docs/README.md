@@ -2,7 +2,8 @@
 
 Everything learned about this project lives in this directory (the root `README.md` is still the
 Rails scaffold boilerplate). Facts were verified against the code — last full pass: September
-2026, after the *stories / story-scoped sections* rework.
+2026, after the *stories / story-scoped sections* rework and the *tags are optional everywhere*
+change.
 
 | File | Contents |
 |---|---|
@@ -11,7 +12,8 @@ Rails scaffold boilerplate). Facts were verified against the code — last full 
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, Timeline algorithm |
 | [development.md](development.md) | Running the app, test suite, lint/security scans, seeding (dark YAML loader + lotr), CI, Kamal deployment, smoke test, "adding a new model" checklist |
-| [known_quirks.md](known_quirks.md) | Verified oddities, dead code and tech debt — read before changing shared code |
+| [known_quirks.md](known_quirks.md) | Verified **open** oddities, dead code and tech debt — read before changing shared code |
+| [resolved_quirks.md](resolved_quirks.md) | Quirks/tech debt that **used to exist and is fixed now** — what the problem was and how it was solved |
 | [schema.txt](schema.txt) | Hand-maintained sketch of the core entities (owner-maintained, not generated) |
 | [todo.txt](todo.txt) | Owner's backlog/idea notes ("(A)" markers) |
 | [smoke_test_stories.sh](smoke_test_stories.sh) | Curl-based end-to-end smoke test (login → stories → sections); moved here from `/tmp/opencode/` so it is tracked |

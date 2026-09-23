@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   resources :universes, param: :universe_slug, path: "u"
 
   scope "u/:universe_slug", as: :universe do
-    resources :stories do
+    resources :stories, path: "s" do
       resources :sections
       resources :section_tags
     end

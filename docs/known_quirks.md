@@ -87,8 +87,5 @@ survives. Index of all docs: [README.md](README.md).
     `config/environments/test.rb`, out-of-scope records render HTTP 404 — assert with
     `assert_response :not_found`; `assert_raises(ActiveRecord::RecordNotFound)` will not trigger.
 
-17. **Old sections URL is gone.** `/u/<slug>/sections` now 404s; sections live under
-    `/u/<slug>/stories/<story_id>/sections`.
-
 22. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
     generated content — edit carefully.

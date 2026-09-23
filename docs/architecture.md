@@ -83,9 +83,10 @@ Other global behavior: `allow_browser versions: :modern`,
 - Universe content is mounted with `scope "u/:universe_slug", as: :universe`
   → named helpers `universe_*`, URLs `/u/<slug>/...`.
 - Stories are a full resource inside that scope with sections and section tags nested:
-  `resources :stories do resources :sections; resources :section_tags end`.
+  `resources :stories, path: "s" do resources :sections; resources :section_tags end`.
 - **Always pass route keys by name**: `universe_story_path(id: story)`,
-  `universe_story_sections_path(story_id: story)`, `universe_section_path(id: section)`.
+  `universe_story_sections_path(story_id: story)`, `universe_story_section_path(story_id: story,
+  id: section)`.
   A positional record (`universe_story_sections_path(story)`) is assigned to the *first* dynamic
   segment — `universe_slug` — and yields `missing required keys: [:story_id]` or a broken URL.
 - `universe_slug` itself is usually **not** passed: inside a universe-scoped request Rails fills
@@ -94,8 +95,10 @@ Other global behavior: `allow_browser versions: :modern`,
   runner`) the same call raises `missing required keys: [:universe_slug]`.
 - `Universe#to_param` → slug (the route uses `param: :universe_slug` and looks up by slug).
   Content models are addressed by numeric id.
-- Removed routes: `/u/:slug/sections` → now `/u/:slug/stories/:story_id/sections`, and
-  `/u/:slug/section_tags` → now `/u/:slug/stories/:story_id/section_tags` (old bookmarks 404).
+- Story URLs use the short `/s` resource path: `/u/:slug/s`, `/u/:slug/s/:story_id`, and the
+  story-scoped content paths `/u/:slug/s/:story_id/sections` and
+  `/u/:slug/s/:story_id/section_tags`. The universe-level `/u/:slug/sections` path is intentionally
+  not routed; every section URL must include its story id.
 
 ## Response formats per controller
 

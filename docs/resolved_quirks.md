@@ -10,6 +10,15 @@ Index of all docs: [README.md](README.md).
 
 ## Resolved correctness issues
 
+### Former #17 — Sections URL did not make the story scope explicit (fixed)
+
+**Then:** the story-scoped sections refactor left the universe-level `/u/:universe_slug/sections`
+path as a dead end, while the replacement used the verbose `/stories/:story_id` segment.
+
+**Fix:** stories are mounted at the short `/s` path, and sections and section tags are available
+only at explicit story-scoped URLs such as `/u/:universe_slug/s/:story_id/sections`. The
+universe-level sections URL is intentionally not routed; no compatibility alias is provided.
+
 ### Former #18 — Sidebar issued COUNT queries on every page (fixed)
 
 **Then:** the left sidebar called `.count` for sections, characters, relations, locations, events,

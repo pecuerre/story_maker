@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_09_23_120000`) and the models in `app/models/`.
+`2026_09_23_130018`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -40,8 +40,8 @@ own section taxonomy.
 | Table | Columns | Notes |
 |---|---|---|
 | `stories` | `universe_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL) | unique index on `[universe_id, slug]` |
-| `sections` | `story_id` FK (NOT NULL), `name`, `description`, `slug`, `parent_id` self-FK, `position` (default 0) | `universe_id` was **removed** by migration `20260923000000_move_sections_to_stories` (existing rows were backfilled into a per-universe default story named *"Main story"*) |
-| `section_tags` | tag columns (below), `story_id` | story-scoped: each story owns its chapter/book/episode labels (`universe_id` was **removed** by migration `20260923120000_move_section_tags_to_stories`) |
+| `sections` | `story_id` FK (NOT NULL), `name`, `description`, `slug`, `parent_id` self-FK, `position` (default 0) | sections belong directly to a story |
+| `section_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its chapter/book/episode labels |
 
 ### Tag tables (`*_tags`) — all identical shape
 `name`, `description`, `slug`, `parent_id` (self-FK), `position` (default 0),
@@ -154,13 +154,11 @@ constraint either — only the FKs in `db/schema.rb` are enforced by SQLite.
 One universe can host several stories that share the same world (e.g. *A Song of Ice and Fire*
 hosts *Game of Thrones* and *House of the Dragon*): characters/relations/locations/events/items
 are defined once per universe, while each story has its own section tree (its plot/scenes) and
-its own section tags (chapter/book/episode labels). Sections moved from `universe_id` to
-`story_id` in migration `db/migrate/20260923000000_move_sections_to_stories.rb`, which also
-added `stories.slug` and backfilled every existing section into a per-universe default story;
-section tags followed in `db/migrate/20260923120000_move_section_tags_to_stories.rb` (each tag
-went to the story of its oldest section, tags shared by several stories were copied per story,
-and tags left in a universe without stories were dropped). The old `/u/<slug>/sections` and
-`/u/<slug>/section_tags` routes no longer exist — both are only reachable under a story
-(`/u/<slug>/stories/<story_id>/sections`, `/u/<slug>/stories/<story_id>/section_tags`).
+its own section tags (chapter/book/episode labels). This ownership split is defined directly by
+the schema-only create migrations: `stories` owns its slug, and `sections` and `section_tags`
+reference `stories`. Data is disposable and reconstructed from the files under `db/data/`; it is
+not backfilled by migrations. The old `/u/<slug>/sections` and `/u/<slug>/section_tags` routes no
+longer exist — both are only reachable under a story (`/u/<slug>/stories/<story_id>/sections`,
+`/u/<slug>/stories/<story_id>/section_tags`).
 
 Hand-maintained sketch of the core entities: [schema.txt](schema.txt).

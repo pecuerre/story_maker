@@ -99,10 +99,5 @@ survives. Index of all docs: [README.md](README.md).
     stale `yarn.lock` coexist; `Procfile.dev` still says `css: yarn watch:css`. Prefer bun
     (`bun run watch:css`).
 
-20. **Migrations reference app models** (`Story`, `Section` in
-    `db/migrate/20260923000000_move_sections_to_stories.rb`; `Story`, `Section`, `SectionTag` in
-    `db/migrate/20260923120000_move_section_tags_to_stories.rb`). Fine at this project stage, but
-    editing those models later can break re-runs of old migrations (schema loads are safe).
-
 22. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
     generated content — edit carefully.

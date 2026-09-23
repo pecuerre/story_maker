@@ -1,5 +1,5 @@
 namespace :db do
-  desc "Recreated the DB, including all data from YAML files"
+  desc "Recreate the DB schema and load all data from db/data"
   task restart: :environment do
     Rake::Task["db:drop"].invoke
     Rake::Task["db:create"].invoke

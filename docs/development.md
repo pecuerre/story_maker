@@ -7,8 +7,8 @@ Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirk
 ## Prerequisites & running
 
 - Ruby **3.4.10** via [mise](https://mise.jdx.dev) (`mise.toml`); `bundle install`.
-- **bun** for CSS/JS assets: `bun install` (both `bun.lock` and a stale `yarn.lock` exist —
-  prefer **bun**, see [known_quirks.md](known_quirks.md)).
+- **Bun** for CSS/JS assets: `bun install`; `bun.lock` is the committed source of truth. Use
+  `bun install --frozen-lockfile` in CI and other reproducible environments.
 - Setup & run:
 
 ```bash
@@ -96,6 +96,9 @@ It was moved from `/tmp/opencode/` into `docs/` so it is tracked by git. Note: i
 story in the development DB and deletes it again at the end.
 
 ## CI (`.github/workflows/ci.yml`, runs on PR + push to main)
+
+The test jobs install the pinned Bun version and run `bun install --frozen-lockfile` before
+starting Rails, so CSS builds use the same dependency graph as local development.
 
 | Job | Command |
 |---|---|

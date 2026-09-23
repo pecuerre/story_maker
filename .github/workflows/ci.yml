@@ -86,9 +86,18 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
+
       - name: Run tests
         env:
           RAILS_ENV: test
+          SKIP_BUN_INSTALL: 1
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
@@ -114,9 +123,18 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
+
       - name: Run System Tests
         env:
           RAILS_ENV: test
+          SKIP_BUN_INSTALL: 1
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test:system

@@ -95,9 +95,5 @@ survives. Index of all docs: [README.md](README.md).
     (`icon_text_count(Current.universe.X.count)`). The stories menu (and its count) moved to the
     top bar navbar, which renders no counts.
 
-19. **Two lockfiles.** `bun.lock` (current — `bun install` runs during asset/test tasks) and a
-    stale `yarn.lock` coexist; `Procfile.dev` still says `css: yarn watch:css`. Prefer bun
-    (`bun run watch:css`).
-
 22. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
     generated content — edit carefully.

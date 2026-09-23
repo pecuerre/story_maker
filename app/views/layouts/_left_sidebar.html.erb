@@ -44,7 +44,7 @@
             %>
             <% if visible?(:sections, :section_tags) %>
               <%= link_to icon("tags"),
-                universe_section_tags_path(),
+                universe_story_section_tags_path(story_id: Current.story),
                 class: "nav-link px-0#{active_if(:section_tags)}"
               %>
             <% end %>

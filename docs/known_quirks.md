@@ -44,10 +44,12 @@ Index of all docs: [README.md](README.md).
    update `name` (only `title` is used by `display_string`, so the drift is mostly invisible —
    but `name` and `slug` stay at their create-time values).
 
-8. **`SectionTagsController`-style default-tag assignment raises on tagless universes.**
-   `SectionsController#create` / `CharactersController#create` do
-   `...section_tags.order(:id).first.id if ids.empty?` — `NoMethodError` on `nil` if the universe
-   has no tags yet (tag fixtures/seeds normally prevent this).
+8. **Default-tag assignment raises on tagless universes.** `CharactersController#create`
+   (and the location/item equivalents) do `...character_tags.order(:id).first.id if ids.empty?`
+   — `NoMethodError` on `nil` if the universe has no tags yet (tag fixtures/seeds normally
+   prevent this). `SectionsController#create` no longer crashes on a tagless story: section tags
+   are story-scoped now, so it falls back to `Story#default_section_tag`, which lazily creates a
+   tag named *"Section"*.
 
 9. **CI runs a system-test job with no system tests.** `.github/workflows/ci.yml` has
    `system-test` (`test:system`) but there is no `test/system` directory yet (it will run zero
@@ -101,16 +103,19 @@ Index of all docs: [README.md](README.md).
     (`bun run watch:css`).
 
 22. **Migrations reference app models** (`Story`, `Section` in
-    `db/migrate/20260923000000_move_sections_to_stories.rb`). Fine at this project stage, but
+    `db/migrate/20260923000000_move_sections_to_stories.rb`; `Story`, `Section`, `SectionTag` in
+    `db/migrate/20260923120000_move_section_tags_to_stories.rb`). Fine at this project stage, but
     editing those models later can break re-runs of old migrations (schema loads are safe).
 
 23. **`Universe` has no validations** — a universe can be saved with a blank name (Story cannot).
 
-24. **Section tags are universe-wide while sections are story-scoped — on purpose** (chapter /
-    book / episode labels are reused across stories), but it means a tag can be deleted even if
-    stories still reference it (`dependent: :destroy` on `universe.section_tags` only cleans join
-    rows).
+24. **Deleting a section tag silently un-tags its story's sections.** The original quirk —
+    section tags were universe-wide while sections were story-scoped, so a tag could be deleted
+    even though stories still referenced it — is **fixed**: tags belong to a story now (migration
+    `db/migrate/20260923120000_move_section_tags_to_stories.rb`, plus a `Section` validation
+    that all `section_tags` share the section's story). What remains is the behaviour every tag
+    model has: deleting a tag removes the join rows of its *own* story, and those sections only
+    notice on their next save (`section_tags` presence validation).
 
 25. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
-    generated content — edit carefully. `docs/schema.txt` is a hand-maintained sketch (kept in
-    sync manually; currently shows `story` and story-scoped `section`/`scene`).
+    generated content — edit carefully.

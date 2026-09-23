@@ -41,10 +41,11 @@
 
 ### Controllers
 - Universe scoping via `Current.universe` (set from the `:universe_slug` param in
-  `ApplicationController#set_current_universe`); sections add `Current.story`/`@story` scoping.
+  `ApplicationController#set_current_universe`); sections and section tags add
+  `Current.story`/`@story` scoping.
 - Positioned/hierarchical controllers include `MaintainsSiblingPositions`
   (`maintains_sibling_positions_for :model`) and override `sibling_collection` when the scope is
-  not the universe (Sections use `@story.sections`).
+  not the universe (Sections and SectionTags use `@story.sections` / `@story.section_tags`).
 - Strong params use Rails 8 `params.expect(model: [ ... ])`.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
@@ -58,10 +59,10 @@
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
   `universe_*` and URLs look like `/u/<universe-slug>/...` (see `config/routes.rb`).
-- Stories are a full resource in that scope with sections nested underneath:
-  `resources :stories do resources :sections end` →
+- Stories are a full resource in that scope with sections and section tags nested underneath:
+  `resources :stories do resources :sections; resources :section_tags end` →
   `/u/:universe_slug/stories/:story_id/sections`, helpers `universe_story_*`,
-  `universe_story_section(s)`.
+  `universe_story_section(s)`, `universe_story_section_tag(s)`.
 - **Path helpers must receive their keys explicitly** (`universe_story_path(id: story)`,
   `universe_story_sections_path(story_id: story)`): a positional record is assigned to the first
   path segment (`universe_slug`) and breaks the URL. The `universe_slug` itself is then filled in
@@ -90,7 +91,8 @@
   (`form_with model: story, url: story.persisted? ? universe_story_path(id: story) : universe_stories_path`)
   because the routes are not nested under `resources :universes`.
 
-- Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`.
+- Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
+  (the same applies to `app/views/section_tags/index.html.erb`).
 
 ### Helpers
 - `app/helpers/modal_fields.rb` — field descriptors consumed by the JS controllers:

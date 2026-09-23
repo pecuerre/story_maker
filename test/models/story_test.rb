@@ -44,4 +44,23 @@ class StoryTest < ActiveSupport::TestCase
       story.destroy!
     end
   end
+
+  test "destroying a story destroys its section tags" do
+    story = stories(:story_one)
+
+    assert_difference("SectionTag.count", -2) do
+      story.destroy!
+    end
+  end
+
+  test "default_section_tag lazily creates a tag for a story without tags" do
+    story = stories(:story_alt)
+    assert_empty story.section_tags
+
+    tag = story.default_section_tag
+
+    assert_equal "Section", tag.name
+    assert_equal [ tag ], story.reload.section_tags.to_a
+    assert_equal tag, story.default_section_tag
+  end
 end

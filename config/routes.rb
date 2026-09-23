@@ -7,8 +7,8 @@ Rails.application.routes.draw do
   scope "u/:universe_slug", as: :universe do
     resources :stories do
       resources :sections
+      resources :section_tags
     end
-    resources :section_tags
     resources :item_tags
     resources :items
     resources :location_tags

@@ -20,9 +20,10 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index only lists sections of the current story" do
+    alt_tag = stories(:story_alt).section_tags.create!(name: "Alt story tag")
     stories(:story_alt).sections.create!(
       name: "Section of another story",
-      section_tags: [ section_tags(:section_tag_one) ]
+      section_tags: [ alt_tag ]
     )
 
     get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
@@ -43,6 +44,36 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     section = Section.order(:id).last
     assert_equal "A description", section.description
     assert_equal @story, section.story
+  end
+
+  test "creating a section without tags gives the story a default one" do
+    story = stories(:story_alt)
+
+    assert_difference("SectionTag.count", 1) do
+      assert_difference("Section.count") do
+        post universe_story_sections_url(universe_slug: @universe.slug, story_id: story),
+          params: { section: { name: "Inline section" } },
+          as: :json
+      end
+    end
+
+    assert_response :created
+    section = Section.order(:id).last
+    assert_equal [ story.default_section_tag ], section.section_tags.to_a
+    assert_equal "Section", story.reload.section_tags.order(:id).first.name
+  end
+
+  test "cannot use a section tag of another story" do
+    foreign_tag = section_tags(:section_tag_three)
+
+    assert_no_difference("Section.count") do
+      post universe_story_sections_url(universe_slug: @universe.slug, story_id: @story),
+        params: { section: { name: "Cross-story", section_tag_ids: [ foreign_tag.id ] } },
+        as: :json
+    end
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["section_tags"], "must belong to the same story"
   end
 
   test "should update section details as json" do

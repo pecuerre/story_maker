@@ -11,20 +11,20 @@ class SectionsController < ApplicationController
     @sections = @sections.where(parent_id: nil)
     @sections = @sections.order(:position, :id)
 
-    @section_tags = Current.universe.section_tags
+    @section_tags = @story.section_tags
     @section_tags = @section_tags.order(:name)
   end
 
   def new
     @section = @story.sections.new(parent_id: params[:parent_id])
 
-    @section_tags = Current.universe.section_tags
+    @section_tags = @story.section_tags
     @section_tags = @section_tags.order(:name)
   end
 
   def create
     @section = @story.sections.new(section_params)
-    @section.section_tag_ids = [ Current.universe.section_tags.order(:id).first.id ] if @section.section_tag_ids.empty?
+    @section.section_tag_ids = [ @story.default_section_tag.id ] if @section.section_tag_ids.empty?
     @section.position = sibling_count(@section.parent_id)
 
     respond_to do |format|

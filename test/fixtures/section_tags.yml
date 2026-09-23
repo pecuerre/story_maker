@@ -1,16 +1,16 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 section_tag_one:
-  universe: universe_one
+  story: story_one
   name: Section tag one
   slug: "section_tag_one"
 
 section_tag_two:
-  universe: universe_one
+  story: story_one
   name: Section tag two
   slug: "section_tag_two"
 
 section_tag_three:
-  universe: universe_two
+  story: story_two
   name: Section tag three
   slug: "section_tag_three"

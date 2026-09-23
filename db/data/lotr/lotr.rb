@@ -4,10 +4,10 @@ universe = Universe.create(name: "lotr", owner: user, slug: "lotr", private: fal
 
 story = Story.create(universe: universe, name: "The Lord of the Rings")
 
-st_book = SectionTag.create(universe: universe, name: "Book", parent: nil)
-st_part = SectionTag.create(universe: universe, name: "Part", parent: nil)
-st_chapter = SectionTag.create(universe: universe, name: "Chapter", parent: nil)
-st_section = SectionTag.create(universe: universe, name: "Section", parent: nil)
+st_book = SectionTag.create(story: story, name: "Book", parent: nil)
+st_part = SectionTag.create(story: story, name: "Part", parent: nil)
+st_chapter = SectionTag.create(story: story, name: "Chapter", parent: nil)
+st_section = SectionTag.create(story: story, name: "Section", parent: nil)
 
 s_b1 = Section.create(story: story, name: "The Fellowship of the Ring", section_tags: [ st_book ], parent: nil)
 s_b2 = Section.create(story: story, name: "The Two Towers", section_tags: [ st_book ], parent: nil)

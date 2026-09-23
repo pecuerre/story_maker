@@ -33,4 +33,19 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to universe_ownerships_url(universe_slug: @universe.slug)
     assert_equal "Held by the character", Ownership.order(:id).last.description
   end
+
+  test "should create an ownership without tags" do
+    assert_difference("Ownership.count") do
+      post universe_ownerships_url(universe_slug: @universe.slug), params: {
+        ownership: {
+          item_id: @item.id,
+          character_id: @character.id,
+          description: "No taxonomy needed"
+        }
+      }
+    end
+
+    assert_redirected_to universe_ownerships_url(universe_slug: @universe.slug)
+    assert_empty Ownership.order(:id).last.ownership_tags
+  end
 end

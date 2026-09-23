@@ -22,7 +22,6 @@ class ItemsController < ApplicationController
 
   def create
     @item = Current.universe.items.new(item_params)
-    @item.item_tag_ids = [ Current.universe.item_tags.order(:id).first.id ] if @item.item_tag_ids.empty?
     @item.position = sibling_count(@item.parent_id)
 
     respond_to do |format|

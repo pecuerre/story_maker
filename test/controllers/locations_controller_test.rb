@@ -29,6 +29,18 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "A description", Location.order(:id).last.description
   end
 
+  test "should create a location without tags" do
+    assert_difference("Location.count") do
+      post universe_locations_url(universe_slug: @universe.slug),
+        params: { location: { name: "Untagged location" } },
+        as: :json
+    end
+
+    assert_response :created
+    assert_empty response.parsed_body["location_tag_ids"]
+    assert_empty Location.order(:id).last.location_tags
+  end
+
   test "should update location details as json" do
     patch universe_location_url(universe_slug: @universe.slug, id: @location),
       params: { location: { name: "Renamed", description: "Updated", location_tag_ids: [ @location_tag.id ] } },

@@ -46,10 +46,10 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal @story, section.story
   end
 
-  test "creating a section without tags gives the story a default one" do
+  test "creating a section without tags leaves it untagged" do
     story = stories(:story_alt)
 
-    assert_difference("SectionTag.count", 1) do
+    assert_no_difference("SectionTag.count") do
       assert_difference("Section.count") do
         post universe_story_sections_url(universe_slug: @universe.slug, story_id: story),
           params: { section: { name: "Inline section" } },
@@ -59,8 +59,8 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :created
     section = Section.order(:id).last
-    assert_equal [ story.default_section_tag ], section.section_tags.to_a
-    assert_equal "Section", story.reload.section_tags.order(:id).first.name
+    assert_empty section.section_tags
+    assert_empty response.parsed_body["section_tag_ids"]
   end
 
   test "cannot use a section tag of another story" do

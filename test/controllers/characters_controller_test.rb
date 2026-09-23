@@ -29,6 +29,18 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "A description", Character.order(:id).last.description
   end
 
+  test "should create a character without tags" do
+    assert_difference("Character.count") do
+      post universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "Untagged character" } },
+        as: :json
+    end
+
+    assert_response :created
+    assert_empty response.parsed_body["character_tag_ids"]
+    assert_empty Character.order(:id).last.character_tags
+  end
+
   test "should update character details as json" do
     patch universe_character_url(universe_slug: @universe.slug, id: @character),
       params: { character: { name: "Renamed", description: "Updated", character_tag_ids: [ @character_tag.id ] } },

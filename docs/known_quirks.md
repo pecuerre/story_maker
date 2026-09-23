@@ -1,15 +1,17 @@
 # Known Quirks & Tech Debt
 
-Verified oddities in this codebase — things that look like bugs, are bugs, or will surprise you.
-Each entry was checked against the code (paths given); update this file when one is fixed.
-Index of all docs: [README.md](README.md).
+Verified **open** oddities in this codebase — things that look like bugs, are bugs, or will
+surprise you. Each entry was checked against the code (paths given); when one gets fixed, move
+it to [resolved_quirks.md](resolved_quirks.md) instead of deleting it, so the fix history
+survives. Index of all docs: [README.md](README.md).
 
 ## Correctness / security observations
 
 1. **`visible?` always returns `true`.** `ApplicationHelper#visible?`
    (`app/helpers/application_helper.rb`) computes `controllers.include?(controller.controller_name)`
-   on its own line and then returns literal `true`. Every sidebar "tag" shortcut is therefore
-   always rendered (harmless today because it is only used to decide visibility, not access).
+   on its own line and then returns literal `true` (the comparison is discarded). Every sidebar
+   "tag" shortcut is therefore always rendered (harmless today because it is only used to decide
+   visibility, not access).
 
 2. **cancancan is installed but never used.** `Ability` (`app/models/ability.rb`) includes
    `CanCan::Ability`, but there is no `authorize!`/`current_ability`/`load_and_authorize` anywhere
@@ -33,89 +35,76 @@ Index of all docs: [README.md](README.md).
    ("should be idempotent"): the dark loader and `lotr.rb` use `create`/`create!` on every run,
    and the demo-universe list `["dark", "lotr"]` is hardcoded there.
 
-6. **`Relation`/`Ownership` composite-slug code looks unreachable.** Both define
+6. **`Relation`/`Ownership` composite-slug code is a trap.** Both define
    `before_validation :generate_slug, on: :create` (intended `character-tag-character` slugs when
    `name` is blank), but `HasSlug`'s `before_validation :set_slug` is registered first (at
-   `include` time) and its `else` branch already assigns `SecureRandom.hex(4)`, so
-   `generate_slug` always returns early. Net effect: unnamed relations/ownerships get a random
-   hex slug.
+   `include` time). For the usual case — no `name` attribute at all — its `else` branch already
+   assigns `SecureRandom.hex(4)`, so `generate_slug` returns early and unnamed
+   relations/ownerships get a random hex slug. The composite branch only runs when `name` was
+   assigned but is blank (`name: ""` → `slugify("")` → `nil`), where it builds
+   `character-<tag>-character` — or just `character-character` when the record has no tags
+   (tags are optional, see [data_model.md](data_model.md#slugs)).
 
 7. **`Event#set_name` runs `on: :create` only.** Renaming an event's `title` later does **not**
    update `name` (only `title` is used by `display_string`, so the drift is mostly invisible —
    but `name` and `slug` stay at their create-time values).
 
-8. **Default-tag assignment raises on tagless universes.** `CharactersController#create`
-   (and the location/item equivalents) do `...character_tags.order(:id).first.id if ids.empty?`
-   — `NoMethodError` on `nil` if the universe has no tags yet (tag fixtures/seeds normally
-   prevent this). `SectionsController#create` no longer crashes on a tagless story: section tags
-   are story-scoped now, so it falls back to `Story#default_section_tag`, which lazily creates a
-   tag named *"Section"*.
-
-9. **CI runs a system-test job with no system tests.** `.github/workflows/ci.yml` has
+8. **CI runs a system-test job with no system tests.** `.github/workflows/ci.yml` has
    `system-test` (`test:system`) but there is no `test/system` directory yet (it will run zero
    tests; screenshots artifact is ignored).
 
 ## Dead / vestigial code
 
-10. **`ApplicationController#default_url_options` is a no-op:**
-    `return super unless Current.universe; super.merge()` merges nothing. `universe_slug` in URLs
-    actually comes from request *recall* (see [architecture.md](architecture.md#routing--url-generation-the-sharp-edges)).
+9. **`ApplicationController#default_url_options` is a no-op:**
+   `return super unless Current.universe; super.merge()` merges nothing. `universe_slug` in URLs
+   actually comes from request *recall* (see [architecture.md](architecture.md#routing--url-generation-the-sharp-edges)).
 
-11. **`ApplicationHelper#visible?`** (see #1) — its comparison is discarded.
+10. **`hello_controller.js`** — Rails scaffold leftover.
 
-12. **`hello_controller.js`** — Rails scaffold leftover.
-
-13. **`current_universe_sections_path`** in `SectionsController` (and similarly named private
+11. **`current_universe_sections_path`** in `SectionsController` (and similarly named private
     methods in other controllers) is defined but not referenced anywhere.
 
-14. **Root `README.md`** is still the untouched Rails scaffold boilerplate — **this `docs/`
+12. **Root `README.md`** is still the untouched Rails scaffold boilerplate — **this `docs/`
     directory is the source of truth** for project knowledge.
 
 ## Conventions that will bite you
 
-15. **Positional path-helper trap.** `universe_story_sections_path(story)` binds the Story to
+13. **Positional path-helper trap.** `universe_story_sections_path(story)` binds the Story to
     `universe_slug` (first dynamic segment) and fails with
     `missing required keys: [:story_id]`. Always pass named keys:
     `universe_story_path(id: story)`, `universe_story_sections_path(story_id: story)`.
 
-16. **Building on an association leaks into views.** `Current.universe.stories.new(...)` appends
+14. **Building on an association leaks into views.** `Current.universe.stories.new(...)` appends
     the unsaved record to the association target, so a sidebar rendering
     `Current.universe.stories.each` blows up on `id: nil`. Build with
     `Story.new(universe: Current.universe)` instead (`StoriesController` does).
 
-17. **Fixture slugs use underscores** (`section_one`) while `HasSlug.slugify` converts `_` → `-`,
+15. **Fixture slugs use underscores** (`section_one`) while `HasSlug.slugify` converts `_` → `-`,
     so the class-level finder `Section.section_one` would look for `section-one`. Keep new slugs
     **dash-separated** (seed files already are).
 
-18. **`404` vs `RecordNotFound` in tests.** Because `show_exceptions = :rescuable` in
+16. **`404` vs `RecordNotFound` in tests.** Because `show_exceptions = :rescuable` in
     `config/environments/test.rb`, out-of-scope records render HTTP 404 — assert with
     `assert_response :not_found`; `assert_raises(ActiveRecord::RecordNotFound)` will not trigger.
 
-19. **Old sections URL is gone.** `/u/<slug>/sections` now 404s; sections live under
+17. **Old sections URL is gone.** `/u/<slug>/sections` now 404s; sections live under
     `/u/<slug>/stories/<story_id>/sections`.
 
-20. **Sidebar issues many COUNT queries** (one per nav entry) on every page render; section
-    counts are not memoized (`icon_text_count(Current.universe.X.count)`). The stories menu (and
-    its count) moved to the top bar navbar, which renders no counts.
+18. **Sidebar issues many COUNT queries** (one per nav entry: sections, characters, relations,
+    locations, events, items, ownerships) on every page render; counts are not memoized
+    (`icon_text_count(Current.universe.X.count)`). The stories menu (and its count) moved to the
+    top bar navbar, which renders no counts.
 
-21. **Two lockfiles.** `bun.lock` (current — `bun install` runs during asset/test tasks) and a
+19. **Two lockfiles.** `bun.lock` (current — `bun install` runs during asset/test tasks) and a
     stale `yarn.lock` coexist; `Procfile.dev` still says `css: yarn watch:css`. Prefer bun
     (`bun run watch:css`).
 
-22. **Migrations reference app models** (`Story`, `Section` in
+20. **Migrations reference app models** (`Story`, `Section` in
     `db/migrate/20260923000000_move_sections_to_stories.rb`; `Story`, `Section`, `SectionTag` in
     `db/migrate/20260923120000_move_section_tags_to_stories.rb`). Fine at this project stage, but
     editing those models later can break re-runs of old migrations (schema loads are safe).
 
-23. **`Universe` has no validations** — a universe can be saved with a blank name (Story cannot).
+21. **`Universe` has no validations** — a universe can be saved with a blank name (Story cannot).
 
-24. **Deleting a section tag silently un-tags its story's sections.** The original quirk —
-    section tags were universe-wide while sections were story-scoped, so a tag could be deleted
-    even though stories still referenced it — is **fixed**: tags belong to a story now (migration
-    `db/migrate/20260923120000_move_section_tags_to_stories.rb`, plus a `Section` validation
-    that all `section_tags` share the section's story). What remains is the behaviour every tag
-    model has: deleting a tag removes the join rows of its *own* story, and those sections only
-    notice on their next save (`section_tags` presence validation).
-
-25. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
+22. **`docs/todo.txt` markers:** "(A)" lines are the project owner's idea/backlog notes, not
     generated content — edit carefully.

@@ -23,6 +23,10 @@ class SectionTest < ActiveSupport::TestCase
     assert section.valid?
   end
 
+  test "allows a section without tags" do
+    assert Section.create!(story: @story, name: "Untagged")
+  end
+
   test "rejects a parent from another story" do
     section = Section.new(
       story: stories(:story_alt),

@@ -117,7 +117,8 @@ Dependabot config: `.github/dependabot.yml`.
 1. Migration in `db/migrate/` — `universe_id` FK (+ `parent_id`/`position`/`slug` if it is a
    hierarchical/positioned model). Update `db/schema.rb` via `bin/rails db:migrate`.
 2. Model in `app/models/` — `include HasSlug` (+ `Hierarchical`, `HasManyTags`,
-   `has_many_tags :foo_tag` / inverse `has_many_tagd :foo`, `HasColor` for tags), `belongs_to
+   `has_many_tags :foo_tag` / inverse `has_many_tagd :foo`, `HasColor` for tags — tags are
+   optional, `has_many_tags` adds no presence validation), `belongs_to
    :universe`, `validates :name, presence: true` (unless it has custom identity rules).
    Sections are the exception: they belong to a **story**.
 3. Controller in `app/controllers/` — `Current.universe.<assoc>` scoping,

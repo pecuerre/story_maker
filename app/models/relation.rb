@@ -21,7 +21,9 @@ class Relation < ApplicationRecord
       return
     end
 
-    self.slug = "#{character1.slug}-#{relation_tags.first.slug}-#{character2.slug}"
+    # Tags are optional, so the tag segment may be missing entirely.
+    parts = [ character1&.slug, relation_tags.first&.slug, character2&.slug ].compact
+    self.slug = parts.presence&.join("-") || SecureRandom.hex(4)
   end
 
   def associated_records_belong_to_universe

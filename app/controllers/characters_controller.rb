@@ -22,7 +22,6 @@ class CharactersController < ApplicationController
 
   def create
     @character = Current.universe.characters.new(character_params)
-    @character.character_tag_ids = [ Current.universe.character_tags.order(:id).first.id ] if @character.character_tag_ids.empty?
     @character.position = sibling_count(@character.parent_id)
 
     respond_to do |format|

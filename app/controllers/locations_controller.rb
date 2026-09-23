@@ -16,7 +16,6 @@ class LocationsController < ApplicationController
 
   def create
     @location = Current.universe.locations.new(location_params)
-    @location.location_tag_ids = [ Current.universe.location_tags.order(:id).first.id ] if @location.location_tag_ids.empty?
     @location.position = sibling_count(@location.parent_id)
 
     respond_to do |format|

@@ -7,4 +7,8 @@ class CharacterTest < ActiveSupport::TestCase
     assert_not character.valid?
     assert_includes character.errors[:name], "can't be blank"
   end
+
+  test "allows a character without tags" do
+    assert Character.create!(universe: universes(:universe_one), name: "Untagged")
+  end
 end

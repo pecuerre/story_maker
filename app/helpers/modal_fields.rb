@@ -188,7 +188,6 @@ module ModalFields
         label: "Location tags",
         type: "select",
         multiple: true,
-        required: true,
         options: location_tags.map { |location_tag|
           [ location_tag.id, location_tag.name ]
         }
@@ -343,7 +342,6 @@ module ModalFields
         label: "Section tags",
         type: "select",
         multiple: true,
-        required: true,
         options: section_tags.map { |section_tag|
           [ section_tag.id, section_tag.name ]
         }

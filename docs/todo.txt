@@ -1,6 +1,1 @@
 (A) add "fixed" attribute to all _tags models (the fixed ones should not be editable or deletable)
-(A) change universe for world or universe
-(A) in each universe we can have multiple universes (like in the Marvel or Star Wars universes)
-(A) each universe in the same universe share the same world-building elements, characters, events
-(A) but each universe have its own script, plot and scenes
-(A) the consistency checker should ensure that shared world-building elements, characters, and events remain consistent across all universes within the same universe

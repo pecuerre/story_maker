@@ -22,6 +22,17 @@ records the user had deliberately left untagged. `SectionsController#create` use
 and `Story#default_section_tag` was deleted as dead code. Creating a record without tags simply
 saves it untagged — a tagless universe (or story) is now a normal state, not a crash.
 
+### Former #19 — Two lockfiles and a mismatched CSS watcher (fixed)
+
+**Then:** `bun.lock` and `yarn.lock` coexisted, while `package.json` and the Rails CSS build used
+Bun. `Procfile.dev` still launched the watcher with `yarn watch:css`, creating two possible package
+managers and requiring Yarn for a workflow whose actual build commands call Bun.
+
+**Fix:** Bun is now the only JavaScript package manager. `yarn.lock` was removed, `Procfile.dev`
+uses `bun run watch:css`, Bun is pinned in `mise.toml`, and the development documentation names
+`bun.lock` as the source of truth. CI and the Docker build install the pinned Bun version and use
+`bun install --frozen-lockfile` in reproducible environments.
+
 ### Former #21 — Universes could be saved without a name (fixed)
 
 **Then:** `Universe` had no validations, so a missing or blank name passed validation even

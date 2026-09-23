@@ -1,6 +1,7 @@
 {
   "name": "app",
   "private": "true",
+  "packageManager": "bun@1.4.2",
   "dependencies": {
     "@popperjs/core": "^2.11.8",
     "autoprefixer": "^10.5.4",

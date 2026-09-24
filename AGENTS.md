@@ -35,6 +35,19 @@ workflow; do not rewrite an accepted ADR to hide its history.
 
 When behavior changes, update the matching document in `docs/` in the same change.
 
+## Changelog discipline
+
+- Maintain the root [`CHANGELOG.md`](CHANGELOG.md) as a date-based project history. The project
+  does not currently use release versions, so do not invent a versioning scheme.
+- Every change to application code, site/UI behavior, schema or development data, tests,
+  documentation, configuration, security, or tooling must add or update a changelog entry in the
+  same work, using the actual calendar date of the change.
+- Group related changes under one date and use a concise label such as `[added]`, `[changed]`,
+  `[fixed]`, `[security]`, `[docs]`, `[chore]`, or `[planned]`. Do not rewrite historical entries;
+  add a new entry when behavior changes again.
+- When reconstructing the first historical entries, use the repository's Git history and existing
+  documentation. Mark future work as `[planned]` rather than describing it as implemented.
+
 ## Setup and verification commands
 
 Install the pinned tools and dependencies:

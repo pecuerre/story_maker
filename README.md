@@ -51,6 +51,7 @@ production seed data. Application-data migrations are intentionally not used.
 
 [`docs/`](docs/README.md) is the source of truth for this project. In particular:
 
+- [Changelog](CHANGELOG.md) — date-based history of project changes
 - [Vision](docs/vision.md) — the product goals and continuity promise
 - [Development](docs/development.md) — setup, tests, seeds, CI, and deployment
 - [Architecture](docs/architecture.md) — request lifecycle, routing, and feature design

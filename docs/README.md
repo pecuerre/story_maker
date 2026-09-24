@@ -9,6 +9,7 @@ per-universe development-data convention, and the public/private universe access
 | File | Contents |
 |---|---|
 | [vision.md](vision.md) | The idea in plain words: what the tool is for, continuity as the core promise, collaboration & analyzers (the "does this fit the goal?" reference) |
+| [../CHANGELOG.md](../CHANGELOG.md) | Date-based history of application, site, data, security, documentation, and tooling changes |
 | [visual_design.md](visual_design.md) | Bootstrap theme tokens, application shell, responsive navigation, shared page/list/taxonomy patterns, accessibility and UI decisions |
 | [universe_maker_conventions.md](universe_maker_conventions.md) | Code conventions & patterns: models, controllers, routes, views (3 page patterns), helpers, Stimulus controllers, top bar & sidebar navigation, Event/Timeline feature notes |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, per-model validations, the slug system |
@@ -26,6 +27,8 @@ How to use these docs:
 
 - Changing behavior? Update the matching doc in the same commit — this directory is meant to be
   the single, trackable source of knowledge about the app.
+- After every code, site, data, test, documentation, configuration, security, or tooling change,
+  add or update a dated entry in [`../CHANGELOG.md`](../CHANGELOG.md) using the actual work date.
 - Meeting the codebase for the first time? Read order:
   [architecture.md](architecture.md) → [data_model.md](data_model.md) →
   [universe_maker_conventions.md](universe_maker_conventions.md) →

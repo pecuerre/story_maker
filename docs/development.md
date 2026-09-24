@@ -171,7 +171,14 @@ starting Rails, so CSS builds use the same dependency graph as local development
 The system-test job passes the exact Chrome and ChromeDriver paths emitted by
 `browser-actions/setup-chrome` to Selenium as `SE_CHROME_PATH` and `SE_CHROMEDRIVER`. Do not rely
 only on `google-chrome` or `chromedriver` from `PATH`: GitHub-hosted Ubuntu images can contain a
-different preinstalled Chrome than the version installed by the setup action.
+different preinstalled Chrome than the version installed by the setup action. The CI job also
+sets `SE_CHROME_NO_SANDBOX=1`, which makes the system-test driver add `--no-sandbox` because
+Ubuntu 24.04+ AppArmor policy can prevent the setup action's Chrome for Testing binary from creating
+an unprivileged user namespace. This option is limited to the explicitly configured CI browser;
+local system tests keep Chrome's normal sandbox behavior. The workflow also performs a headless
+launch smoke check so a browser startup failure is reported during setup rather than only as a
+Selenium test error. System tests quit the browser after each test so Chrome profile state, including
+password/autofill data, cannot leak from one test into the next.
 
 Dependabot config: `.github/dependabot.yml`.
 

@@ -3,6 +3,16 @@ require "test_helper"
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
     options.binary = ENV["SE_CHROME_PATH"] if ENV["SE_CHROME_PATH"].present?
+    # Chrome for Testing on Ubuntu 24.04+ can be blocked by the AppArmor
+    # user-namespace policy when it is not launched with the sandbox disabled.
+    options.add_argument("--no-sandbox") if ENV["SE_CHROME_NO_SANDBOX"] == "1"
+  end
+
+  def after_teardown
+    # Keep Chrome profile state (notably password/autofill data) from leaking between tests.
+    Capybara.current_session.quit if Capybara::Session.instance_created?
+  ensure
+    super
   end
 
   private

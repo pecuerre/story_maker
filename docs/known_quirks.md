@@ -7,8 +7,8 @@ survives. Index of all docs: [README.md](README.md).
 
 This re-audit was performed on 2026-09-24 against commit `8fcf4d4`. It is an observation record
 only: no application, test, configuration, dependency, or generated-asset fixes were made in this
-pass. Severity labels distinguish reachable security/data-loss issues from lower-priority
-hardening and contract decisions.
+pass. Any later documentation-only commit is not part of the audited code baseline. Severity labels
+distinguish reachable security/data-loss issues from lower-priority hardening and contract decisions.
 
 ## Development workflow observations
 
@@ -22,6 +22,10 @@ hardening and contract decisions.
    seeded with the database default `0` rather than the documented contiguous positions. This is
    not a request to make temporary feature data production-idempotent; the intended fix is an
    explicit, environment-guarded development load/reset task that keeps `db/seeds.rb` production-safe.
+   There is also no shared model/universe registry yet: the Dark order is local to
+   `db/data/dark/dark.rb:3-22`, LOTR has a separate hand-written loader, and a new universe must be
+   added to the hard-coded seed list. A new YAML file in an otherwise supported universe directory
+   is not automatically loaded, and a missing file aborts the Dark loader at `YAML.load_file`.
    The current coupling is tracked as a transitional implementation gap in [ADR 0004](adr/0004-universe-data-and-demo-seeding.md).
 
 ## Critical security observations
@@ -297,8 +301,10 @@ hardening and contract decisions.
     ownership, relation-tag, ownership-tag, and membership fixture files are absent; tests create
     many of those records ad hoc. `docs/README.md:19` and `docs/data_model.md:207` link to missing
     `docs/schema.txt`, and `docs/README.md:23` advertises an absent `docs/images-to-ai/` directory.
-    The root README presents `db:restart` without the explicit approval warning present in
-    `AGENTS.md` and `docs/development.md`.
+    The development guide also calls `test/helpers` and mailer previews effectively empty even though
+    `test/helpers/application_helper_test.rb` and a mailer preview are present. The root README presents
+    `db:restart` without the explicit approval warning present in `AGENTS.md` and
+    `docs/development.md`.
 
 38. **Low — setup and supply-chain reproducibility has gaps.** `bin/dev:3-5` installs an unpinned
     `foreman` gem at runtime; the Dockerfile comment refers to a nonexistent `.ruby-version` while
@@ -322,6 +328,20 @@ through the current normal UI. They are recorded so they are not mistaken for se
   content classes use instance blocks (`app/models/ability.rb:59-81`); a guest class-level
   `authorize!(:read, Character)` can be allowed even though an instance check is denied. Current
   `UniverseAuthorization` passes concrete universe objects, so no active route bypass was found.
+  The content-class registry is also hard-coded (`app/models/ability.rb:11-27`), while the documented
+  new-model workflow does not explicitly require updating it.
+- **Section-owned models need an undocumented authorization/helper adapter.** The new-model contract
+  permits a section ownership scope (`docs/development.md:227-228`), but `Ability#universe_for` and
+  `ApplicationHelper#universe_for_record` only understand direct `universe` or `story` ownership
+  (`app/models/ability.rb:96-101`, `app/helpers/application_helper.rb:72-77`). A section-owned model
+  can therefore resolve to no universe and lose read/write UI and authorization unless it supplies
+  custom delegation/handling.
+- **Implicit owner access is missing from association APIs.** `User#universes` and
+  `Universe#members` are membership-only associations (`app/models/user.rb:6-8`,
+  `app/models/universe.rb:41-43`), while the owner is intentionally not stored as a membership row.
+  The policy-aware `User#accessible_universes` and the membership view compensate manually
+  (`app/models/user.rb:12-14`, `app/views/memberships/index.html.erb:64-70`); new code using the
+  ordinary associations can omit owners and report incomplete access/collaboration data.
 - **No mutation rate limits exist beyond sign-in/password-reset.** Public universes intentionally
   allow every signed-in contributor to write, so throttling content/story/tag/membership mutations
   is a product decision rather than a confirmed defect.
@@ -425,11 +445,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `app/views/pwa/service-worker.js` have no route or layout link, and the PWA palette contains a
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
-
-51. **Low/medium — system-test flakiness has been observed.** One independent system-test run failed
-    at the sign-in email assertion (`test/application_system_test_case.rb:14`) while a rerun passed;
-    the normal system test count is otherwise green. The failure was not reproduced as an application
-    defect, but the smoke harness is not fully deterministic.
 
 ## Audit evidence and clean checks
 

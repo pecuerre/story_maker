@@ -61,6 +61,17 @@ in its generic API; this project-level guard prevents that footgun in its own co
 
 ## Resolved correctness issues
 
+### CI system-test job had no tests (fixed)
+
+**Then:** the CI workflow ran `test:system`, but the repository had no `test/system` directory.
+The command had no browser tests to execute (and could not load the missing test directory), so it
+could not provide browser-level coverage and the screenshot artifact had nothing to capture.
+
+**Fix:** added `test/application_system_test_case.rb` and an initial system-test suite covering
+sign-in/sign-out, universe and story creation, story-scoped section navigation, character creation
+through the modal editor, and workspace navigation to the timeline. The existing CI job now runs
+real browser tests and retains its failure screenshots.
+
 ### Building on an association leaked unsaved records into views (fixed)
 
 **Then:** `Current.universe.stories.new(...)` added the new, unsaved `Story` to the `has_many`

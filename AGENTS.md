@@ -51,7 +51,7 @@ Useful commands:
 ```bash
 bin/rails test                         # all Minitest tests
 bin/rails test test/path/to/file_test.rb
-bin/rails test:system                  # currently no system tests, but CI has a job
+bin/rails test:system                  # browser-based smoke tests (requires Chrome)
 bin/rubocop                            # Ruby style
 bin/brakeman --no-pager                # Rails security analysis
 bin/bundler-audit                      # vulnerable gems
@@ -108,12 +108,14 @@ development database.
 ## Testing conventions
 
 - Add or update tests for behavior changes.
-- Use the existing fixtures and `sign_in_as` / `sign_out` helpers.
+- Use the existing fixtures. Request tests use `sign_in_as` / `sign_out`; system tests use the
+  real sign-in form when authentication behavior is part of the scenario.
 - In the test environment, cross-scope `ActiveRecord::RecordNotFound` requests render as HTTP
   404; assert `assert_response :not_found` rather than expecting an exception.
 - Keep route helpers fully qualified in tests when the current request does not provide the
   universe slug.
-- Do not claim UI coverage from the system-test job: the project currently has no system tests.
+- Do not claim exhaustive UI coverage from the system-test job: it currently covers the initial
+  smoke journeys only.
 
 ## Scope, safety, and completion
 

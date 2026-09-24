@@ -48,7 +48,3 @@ survives. Index of all docs: [README.md](README.md).
 7. **`Event#set_name` runs `on: :create` only.** Renaming an event's `title` later does **not**
    update `name` (only `title` is used by `display_string`, so the drift is mostly invisible —
    but `name` and `slug` stay at their create-time values).
-
-8. **CI runs a system-test job with no system tests.** `.github/workflows/ci.yml` has
-   `system-test` (`test:system`) but there is no `test/system` directory yet (it will run zero
-   tests; screenshots artifact is ignored).

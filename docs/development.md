@@ -7,6 +7,7 @@ Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirk
 ## Prerequisites & running
 
 - Ruby **3.4.10** via [mise](https://mise.jdx.dev) (`mise.toml`); `bundle install`.
+- **Google Chrome** (or a compatible browser) for `bin/rails test:system`.
 - **Bun** for CSS/JS assets: `bun install`; `bun.lock` is the committed source of truth. Use
   `bun install --frozen-lockfile` in CI and other reproducible environments.
 - Setup & run:
@@ -31,11 +32,12 @@ bun run watch:css             # rebuild CSS on .scss changes (Procfile.dev: fore
 ```bash
 bin/rails test                # models, controllers, helpers (runs in parallel, all fixtures)
 bin/rails test test/models/section_test.rb
-bin/rails test:system         # currently empty — CI still runs the job
+bin/rails test:system         # browser-based system tests
 ```
 
 Layout:
-- `test/controllers`, `test/models` — the real coverage; `test/helpers`, `test/integration`,
+- `test/controllers`, `test/models` — the real coverage; `test/system` — browser-level smoke
+  coverage for the primary workspace journeys; `test/helpers`, `test/integration`,
   `test/mailers/previews` are effectively empty.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
@@ -112,7 +114,7 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | `scan_js` | `bin/importmap audit` |
 | `lint` | `bin/rubocop -f github` (cached) |
 | `test` | `bin/rails db:test:prepare test` |
-| `system-test` | `bin/rails db:test:prepare test:system` (no system tests yet; uploads screenshots on failure) |
+| `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure) |
 
 Dependabot config: `.github/dependabot.yml`.
 

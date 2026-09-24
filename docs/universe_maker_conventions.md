@@ -68,7 +68,8 @@
   `universe_story_sections_path(story_id: story)`): a positional record is assigned to the first
   path segment (`universe_slug`) and breaks the URL. The `universe_slug` itself is then filled in
   from the current request (recall) — that is why `universe_characters_path()` with no arguments
-  works on any page inside a universe.
+  works on any page inside a universe. A test scans Ruby and ERB call sites and rejects positional
+  arguments to `universe_*_path`/`universe_*_url` helpers.
 - All section and section-tag URLs include the story id (`/u/:universe_slug/s/:story_id/...`).
   The universe-level `/u/:universe_slug/sections` path is intentionally invalid.
 - Relations/Ownerships are limited to `index, create, update, destroy`; timeline is

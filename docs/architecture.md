@@ -89,6 +89,8 @@ Other global behavior: `allow_browser versions: :modern`,
   id: section)`.
   A positional record (`universe_story_sections_path(story)`) is assigned to the *first* dynamic
   segment — `universe_slug` — and yields `missing required keys: [:story_id]` or a broken URL.
+  The test suite scans Ruby and ERB call sites and rejects positional arguments to universe-scoped
+  route helpers.
 - `universe_slug` itself is usually **not** passed: inside a universe-scoped request Rails fills
   missing segments from the current request (recall), which is why
   `universe_characters_path()` works in the sidebar. Outside such a request (e.g. `bin/rails

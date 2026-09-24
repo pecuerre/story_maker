@@ -116,10 +116,19 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips
 
       - name: Set up Chrome
+        id: setup-chrome
         uses: browser-actions/setup-chrome@v2
         with:
           chrome-version: stable
           install-chromedriver: true
+
+      - name: Verify the installed Chrome and ChromeDriver
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          CHROMEDRIVER_PATH: ${{ steps.setup-chrome.outputs.chromedriver-path }}
+        run: |
+          "$CHROME_PATH" --version
+          "$CHROMEDRIVER_PATH" --version
 
       - name: Checkout code
         uses: actions/checkout@v6
@@ -141,6 +150,8 @@ jobs:
         env:
           RAILS_ENV: test
           SKIP_BUN_INSTALL: 1
+          SE_CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+          SE_CHROMEDRIVER: ${{ steps.setup-chrome.outputs.chromedriver-path }}
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test:system

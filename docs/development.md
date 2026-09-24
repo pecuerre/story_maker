@@ -168,6 +168,11 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | `test` | `bin/rails db:test:prepare test` |
 | `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure) |
 
+The system-test job passes the exact Chrome and ChromeDriver paths emitted by
+`browser-actions/setup-chrome` to Selenium as `SE_CHROME_PATH` and `SE_CHROMEDRIVER`. Do not rely
+only on `google-chrome` or `chromedriver` from `PATH`: GitHub-hosted Ubuntu images can contain a
+different preinstalled Chrome than the version installed by the setup action.
+
 Dependabot config: `.github/dependabot.yml`.
 
 ## Deployment (Kamal)

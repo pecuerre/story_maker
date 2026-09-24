@@ -73,9 +73,71 @@ stores read/write/admin membership for private universes and optional delegated 
 the owner is always admin. `Ability` defines the same rules for universes and every universe- or
 story-scoped content class, and `UniverseAuthorization` applies them after resolving the universe
 but before loading stories or content. Public universes allow guest read and signed-in write;
-private universes allow only owners/members, with 404 for authenticated non-members and 403 for
-insufficient collaborator access. Guests attempting mutations are redirected to sign in. The
-membership manager is available to universe admins at `/u/:universe_slug/members`.
+private universes allow only owners/members, with 404 for every non-member (including guests) and
+403 for insufficient collaborator access. Guests attempting public-universe mutations are
+redirected to sign in. The membership manager is available to universe admins at
+`/u/:universe_slug/members`.
+
+### Former quirk #6: nullable universe visibility failed open (fixed)
+
+**Then:** `universes.private` allowed NULL and the policy treated NULL like false. A hidden universe
+could therefore be readable by guests and writable by any signed-in user when reached directly by
+slug.
+
+**Resolution:** `Universe` now requires an explicit boolean, only an explicit `false` grants the
+public baseline, and any ambiguous legacy value is handled as private by the policy. A schema-only
+migration makes the column `NOT NULL`; it deliberately refuses to guess whether an existing NULL
+row was public or private, so an older database must have those rows resolved explicitly before
+migration. Tests cover validation, the database constraint, and fail-closed instance policy.
+
+### Former quirk #7: HABTM tags could cross universe/story scope (fixed)
+
+**Then:** all seven content/tag HABTM associations were unscoped. Four content models had no
+same-scope validation at all, the other three validated only the content-to-tag direction, and
+crafted `*_tag_ids` parameters could attach a private-universe tag to public content. Unscoped
+inverse reads could also disclose corrupt foreign rows.
+
+**Resolution:** every `HasManyTags` declaration now requires an explicit `:universe_id` or
+`:story_id` scope. The concern applies that scope to both association directions and validates the
+in-memory target so ID writers and inverse assignments fail normal model/controller saves with a
+422 contract. Corrupt foreign join rows are hidden by scoped reads; the separate lack of database
+join constraints remains tracked in the open quirks.
+
+### Former quirk #13: anonymous private-universe enumeration (fixed)
+
+**Then:** an unknown slug returned 404, but a guest request for an existing private universe was
+redirected to sign-in. The different response disclosed that the slug existed.
+
+**Resolution:** the shared `UniverseAuthorization` concern now converts every private-universe
+read denial to the same 404 used for an unknown slug, before any story or content lookup. Public
+guest reads remain public, and public guest mutations still use the normal sign-in redirect.
+
+### Former quirk #14: story context survived authentication boundaries (fixed)
+
+**Then:** the Rails session's `current_story_ids` map survived logout, account switching, current-user
+password reset, and stale database sessions. A later account on the same browser could inherit a
+story selection.
+
+**Resolution:** authentication start, logout, current-user password reset, and stale-cookie handling
+now clear the complete remembered-story map. They also remove invalid authentication cookies and
+reset `Current.session` where appropriate. Tests preserve ordinary same-session story memory while
+covering logout, direct account switching, reset, and stale-session cleanup.
+
+### Former quirk #15: referenced events caused foreign-key 500s (fixed)
+
+**Then:** restrictive self-foreign keys made `destroy!` fail when another event referenced the target
+through `before_event`, `after_event`, or `simultaneous_event`. Universe destruction could fail for
+the same reason. The self-reference validator compared only foreign-key IDs, so an unsaved event
+could evade it.
+
+**Resolution:** `Event` now declares all three incoming reference collections with
+`dependent: :nullify`, so normal event and universe destruction releases references before deleting
+the target. A referrer that existed only to point at the deleted event is removed first, preserving
+`must_be_identifiable` for every retained row. `cannot_reference_self` checks both object identity
+and the foreign-key id, while three schema-only check constraints close the insert-time gap where
+SQLite assigns the new ID only during the write. Model and request tests cover every reference
+direction, relation-only cleanup, universe destruction, unsaved/future-ID self-links, and direct
+database writes.
 
 ### Universe-scoped content was not authorized (fixed)
 

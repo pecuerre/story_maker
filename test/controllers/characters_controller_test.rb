@@ -28,6 +28,20 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
       universe_relations_path(universe_slug: @universe.slug), text: "Relations"
   end
 
+  test "index does not render a corrupt cross-universe tag join" do
+    foreign_tag = character_tags(:character_tag_three)
+    ActiveRecord::Base.connection.execute(<<~SQL.squish)
+      INSERT INTO characters_character_tags (character_id, character_tag_id)
+      VALUES (#{@character.id}, #{foreign_tag.id})
+    SQL
+
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_includes response.body, @character.name
+    assert_not_includes response.body, foreign_tag.name
+  end
+
   test "should create character as json" do
     assert_difference("Character.count") do
       post universe_characters_url(universe_slug: @universe.slug),
@@ -50,6 +64,20 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     assert_empty response.parsed_body["character_tag_ids"]
     assert_empty Character.order(:id).last.character_tags
+  end
+
+  test "should reject character tags from another universe" do
+    foreign_tag = character_tags(:character_tag_three)
+    join_count = -> { ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM characters_character_tags") }
+
+    assert_no_difference([ "Character.count", join_count ]) do
+      post universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "Mis-scoped character", character_tag_ids: [ foreign_tag.id ] } },
+        as: :json
+    end
+
+    assert_response :unprocessable_content
+    assert_equal [ "must belong to the same universe" ], response.parsed_body["character_tags"]
   end
 
   test "should update character details as json" do

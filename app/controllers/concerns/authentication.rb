@@ -26,7 +26,9 @@ module Authentication
     end
 
     def find_session_by_cookie
-      Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
+      return unless cookies[:session_id].present?
+
+      Session.find_by(id: cookies.signed[:session_id]) || invalidate_stale_session
     end
 
     def request_authentication
@@ -39,6 +41,7 @@ module Authentication
     end
 
     def start_new_session_for(user)
+      clear_remembered_stories
       user.sessions.create!(user_agent: request.user_agent, ip_address: request.remote_ip).tap do |session|
         Current.session = session
         cookies.signed.permanent[:session_id] = { value: session.id, httponly: true, same_site: :lax }
@@ -46,7 +49,19 @@ module Authentication
     end
 
     def terminate_session
+      clear_remembered_stories
       Current.session.destroy
+      Current.session = nil
       cookies.delete(:session_id)
+    end
+
+    def invalidate_stale_session
+      clear_remembered_stories
+      cookies.delete(:session_id)
+      nil
+    end
+
+    def clear_remembered_stories
+      session.delete(:current_story_ids)
     end
 end

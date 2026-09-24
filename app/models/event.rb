@@ -7,10 +7,26 @@ class Event < ApplicationRecord
   invalidates_menu_counts_for :universe
 
   belongs_to :universe
-  has_many_tags :event_tag
-  belongs_to :before_event, class_name: "Event", optional: true
-  belongs_to :after_event, class_name: "Event", optional: true
-  belongs_to :simultaneous_event, class_name: "Event", optional: true
+  has_many_tags :event_tag, scope: :universe_id
+  belongs_to :before_event, class_name: "Event", inverse_of: :before_event_references, optional: true
+  belongs_to :after_event, class_name: "Event", inverse_of: :after_event_references, optional: true
+  belongs_to :simultaneous_event, class_name: "Event", inverse_of: :simultaneous_event_references, optional: true
+  before_destroy :destroy_unidentifiable_temporal_referrers
+  has_many :before_event_references,
+    class_name: "Event",
+    foreign_key: :before_event_id,
+    inverse_of: :before_event,
+    dependent: :nullify
+  has_many :after_event_references,
+    class_name: "Event",
+    foreign_key: :after_event_id,
+    inverse_of: :after_event,
+    dependent: :nullify
+  has_many :simultaneous_event_references,
+    class_name: "Event",
+    foreign_key: :simultaneous_event_id,
+    inverse_of: :simultaneous_event,
+    dependent: :nullify
   # Run before HasSlug so a newly created event without an explicit slug can derive it from the title.
   before_validation :set_name, prepend: true
 
@@ -59,9 +75,37 @@ class Event < ApplicationRecord
   end
 
   def cannot_reference_self
-    errors.add(:before_event, "cannot be itself") if before_event_id.present? && before_event_id == id
-    errors.add(:after_event, "cannot be itself") if after_event_id.present? && after_event_id == id
-    errors.add(:simultaneous_event, "cannot be itself") if simultaneous_event_id.present? && simultaneous_event_id == id
+    { before_event: before_event, after_event: after_event, simultaneous_event: simultaneous_event }.each do |name, record|
+      foreign_key = public_send("#{name}_id")
+      next unless record == self || (id.present? && foreign_key.present? && foreign_key == id)
+
+      errors.add(name, "cannot be itself")
+    end
+  end
+
+  def destroy_unidentifiable_temporal_referrers
+    @destroying_temporal_referrers = true
+    temporal_referrers.each do |referrer|
+      next if referrer.id == id || referrer.instance_variable_get(:@destroying_temporal_referrers) ||
+        referrer.send(:identifiable_without_temporal_reference?, id)
+
+      referrer.destroy!
+    end
+  ensure
+    remove_instance_variable(:@destroying_temporal_referrers) if defined?(@destroying_temporal_referrers)
+  end
+
+  def temporal_referrers
+    (before_event_references.to_a + after_event_references.to_a + simultaneous_event_references.to_a).uniq
+  end
+
+  def identifiable_without_temporal_reference?(event_id)
+    return true if title.present? || start_datetime.present? || end_datetime.present?
+
+    %i[before_event_id after_event_id simultaneous_event_id].any? do |name|
+      foreign_key = public_send(name)
+      foreign_key.present? && foreign_key != event_id
+    end
   end
 
   def must_be_identifiable

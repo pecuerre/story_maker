@@ -55,8 +55,12 @@ Layout:
   access only for read actions; the shared authorization callback enforces the universe policy.
 - Universe authorization tests must cover both public and private universes. Create explicit
   `UniverseMembership` records for read/write/admin cases; do not rely on a public fixture to stand
-  in for a private collaboration scenario. Authenticated private non-members receive 404, while
-  members with insufficient access receive 403.
+  in for a private collaboration scenario. Private non-members—including guests—receive 404;
+  members with insufficient access receive 403. Public-universe guest mutations still redirect to
+  sign-in.
+- Authentication tests must verify that remembered stories survive ordinary navigation but are
+  cleared on sign-out, when a new account session starts, after current-user password reset, and
+  when a stale authentication session is encountered.
 
 ## Lint & security scans
 
@@ -139,8 +143,12 @@ The database is intentionally disposable: schema migrations only define the stru
 records are reconstructed from the per-universe files under `db/data/`; they are not backfilled by
 migrations. Keep one schema-only create migration per persisted model, including any HABTM join
 table owned by that model. Migrations must not read or write application records or reference
-application models. After changing a schema, rebuild the development database and reload the
-relevant universe data with approval; do not run `bin/rails db:restart` without approval.
+application models. The `universes.private` NOT NULL migration deliberately refuses to guess how
+legacy NULL rows should be classified; resolve each such row explicitly before migrating an older
+database. The Event self-reference check-constraint migration likewise fails rather than deleting
+or rewriting an existing corrupt loop. After changing a schema, rebuild the development database
+and reload the relevant universe data with approval; do not run `bin/rails db:restart` without
+approval.
 
 ## Smoke test (end-to-end over HTTP)
 
@@ -201,10 +209,11 @@ Dependabot config: `.github/dependabot.yml`.
    `slug` if it is a hierarchical/positioned model), plus any HABTM join table. Never include data
    operations or application-model references. Update `db/schema.rb` via `bin/rails db:migrate`.
 2. Model in `app/models/` — `include HasSlug` (+ `Hierarchical`, `HasManyTags`,
-   `has_many_tags :foo_tag` / inverse `has_many_tagd :foo`, `HasColor` for tags — tags are
-   optional, `has_many_tags` adds no presence validation), `belongs_to
-   :universe`, `validates :name, presence: true` (unless it has custom identity rules).
-   Sections are the exception: they belong to a **story**.
+   `has_many_tags :foo_tag, scope: :universe_id` / inverse
+   `has_many_tagd :foo, scope: :universe_id`, `HasColor` for tags — the scope is mandatory and
+   tags remain optional), `belongs_to :universe`, `validates :name, presence: true` (unless it has
+   custom identity rules). Story-scoped tag pairs use `scope: :story_id`. Sections are the
+   exception: they belong to a **story**.
 3. Controller in `app/controllers/` — `Current.universe.<assoc>` scoping,
    `include MaintainsSiblingPositions` + `maintains_sibling_positions_for :model` if positioned,
    `params.expect(model: [ … ])`, JSON-only `respond_to` for tree/modal UIs (or HTML flow like

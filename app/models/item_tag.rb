@@ -5,7 +5,7 @@ class ItemTag < ApplicationRecord
   include HasSlug
 
   belongs_to :universe
-  has_many_tagd :item
+  has_many_tagd :item, scope: :universe_id
 
   validates :name, presence: true
 end

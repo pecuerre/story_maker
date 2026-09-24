@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_130100) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -79,6 +79,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
     t.index ["parent_id"], name: "index_events_on_parent_id"
     t.index ["simultaneous_event_id"], name: "index_events_on_simultaneous_event_id"
     t.index ["universe_id"], name: "index_events_on_universe_id"
+    t.check_constraint "after_event_id IS NULL OR after_event_id <> id", name: "events_after_event_not_self"
+    t.check_constraint "before_event_id IS NULL OR before_event_id <> id", name: "events_before_event_not_self"
+    t.check_constraint "simultaneous_event_id IS NULL OR simultaneous_event_id <> id", name: "events_simultaneous_event_not_self"
   end
 
   create_table "events_event_tags", id: false, force: :cascade do |t|
@@ -294,7 +297,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
     t.datetime "created_at", null: false
     t.string "name"
     t.integer "owner_id", null: false
-    t.boolean "private", default: false
+    t.boolean "private", default: false, null: false
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["owner_id"], name: "index_universes_on_owner_id"

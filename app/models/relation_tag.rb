@@ -5,7 +5,7 @@ class RelationTag < ApplicationRecord
   include HasSlug
 
   belongs_to :universe
-  has_many_tagd :relation
+  has_many_tagd :relation, scope: :universe_id
 
   validates :name, presence: true
   validates :inverse, presence: true, unless: :symmetric?

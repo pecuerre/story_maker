@@ -41,6 +41,20 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_empty Location.order(:id).last.location_tags
   end
 
+  test "should reject location tags from another universe" do
+    foreign_tag = location_tags(:location_tag_three)
+    join_count = -> { ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM locations_location_tags") }
+
+    assert_no_difference([ "Location.count", join_count ]) do
+      post universe_locations_url(universe_slug: @universe.slug),
+        params: { location: { name: "Mis-scoped location", location_tag_ids: [ foreign_tag.id ] } },
+        as: :json
+    end
+
+    assert_response :unprocessable_content
+    assert_equal [ "must belong to the same universe" ], response.parsed_body["location_tags"]
+  end
+
   test "should update location details as json" do
     patch universe_location_url(universe_slug: @universe.slug, id: @location),
       params: { location: { name: "Renamed", description: "Updated", location_tag_ids: [ @location_tag.id ] } },

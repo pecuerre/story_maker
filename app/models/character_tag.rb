@@ -5,7 +5,7 @@ class CharacterTag < ApplicationRecord
   include HasSlug
 
   belongs_to :universe
-  has_many_tagd :character
+  has_many_tagd :character, scope: :universe_id
 
   validates :name, presence: true
 end

@@ -5,7 +5,7 @@ class OwnershipTag < ApplicationRecord
   include HasSlug
 
   belongs_to :universe
-  has_many_tagd :ownership
+  has_many_tagd :ownership, scope: :universe_id
 
   validates :name, presence: true
 end

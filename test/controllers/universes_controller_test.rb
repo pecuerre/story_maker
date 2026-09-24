@@ -34,6 +34,23 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
   end
 
+  test "should not create universe with a null visibility flag" do
+    assert_no_difference("Universe.count") do
+      post universes_url, params: { universe: { name: "Ambiguous", private: nil } }, as: :json
+    end
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["private"], "is not included in the list"
+  end
+
+  test "should not update universe with a null visibility flag" do
+    patch universe_url(@universe), params: { universe: { private: nil } }, as: :json
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["private"], "is not included in the list"
+    assert_equal false, @universe.reload[:private]
+  end
+
   test "should show universe" do
     get universe_url(@universe)
     assert_response :success
@@ -108,7 +125,7 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.parsed_body.map { |universe| universe["id"] }, private_universe.id
 
     get universe_url(private_universe, format: :json)
-    assert_redirected_to new_session_path
+    assert_response :not_found
 
     sign_in_as(users(:user_two))
     UniverseMembership.create!(universe: private_universe, user: users(:user_two), access_level: :read)
@@ -143,7 +160,14 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     sign_out
 
     get universe_url(private_universe)
-    assert_redirected_to new_session_path
+    assert_response :not_found
+    private_response_body = response.body
+    assert_nil response.headers["Location"]
+
+    get universe_url(universe_slug: "missing")
+    assert_response :not_found
+    assert_equal private_response_body, response.body
+    assert_nil response.headers["Location"]
 
     sign_in_as(users(:user_two))
     get universe_url(private_universe)

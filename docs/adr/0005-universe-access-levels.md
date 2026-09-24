@@ -46,8 +46,8 @@ Authorization is defined at the universe level and has three levels: **read**, *
 
 - Every universe-scoped controller must allow public read requests to reach the shared policy
   callback, then require authentication for writes.
-- A private non-member receives 404 to avoid disclosing the universe; a member with an insufficient
-  level receives 403.
+- A private non-member receives 404 to avoid disclosing the universe; this includes anonymous
+  visitors. A member with an insufficient level receives 403.
 - Membership changes affect access immediately and must be covered by request/model tests.
 
 ## Alternatives considered

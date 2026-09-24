@@ -5,7 +5,7 @@ class LocationTag < ApplicationRecord
   include HasSlug
 
   belongs_to :universe
-  has_many_tagd :location
+  has_many_tagd :location, scope: :universe_id
 
   validates :name, presence: true
 end

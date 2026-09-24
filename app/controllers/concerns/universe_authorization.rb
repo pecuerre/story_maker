@@ -11,11 +11,11 @@ module UniverseAuthorization
       begin
         authorize! :read, Current.universe
       rescue CanCan::AccessDenied
+        raise ActiveRecord::RecordNotFound, "Universe not found" unless Current.universe.public?
+
         if Current.user.nil?
           request_authentication
           return
-        elsif Current.universe.private?
-          raise ActiveRecord::RecordNotFound, "Universe not found"
         else
           raise
         end
@@ -25,6 +25,8 @@ module UniverseAuthorization
         authorize! universe_access_for_request, Current.universe
       rescue CanCan::AccessDenied
         if Current.user.nil?
+          raise ActiveRecord::RecordNotFound, "Universe not found" unless Current.universe.public?
+
           request_authentication
         else
           raise

@@ -70,7 +70,7 @@ class OwnershipTest < ActiveSupport::TestCase
     )
 
     assert_not ownership.valid?
-    assert_includes ownership.errors[:ownership_tags], "must belong to the ownership's universe"
+    assert_includes ownership.errors[:ownership_tags], "must belong to the same universe"
   end
 
   test "allows repeated ownerships" do

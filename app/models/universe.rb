@@ -6,6 +6,7 @@ class Universe < ApplicationRecord
   after_destroy_commit :expire_menu_counts
   validates :name, presence: true
   validates :owner, presence: true
+  validates :private, inclusion: { in: [ true, false ] }
 
   scope :visible_to, ->(user) {
     if user
@@ -56,6 +57,13 @@ class Universe < ApplicationRecord
   has_many :event_tags, dependent: :destroy
   has_many :events, dependent: :destroy
 
+  # Only an explicit false grants the public baseline. Treating any other
+  # value (including legacy NULL data) as private prevents ambiguous records
+  # from failing open while an owner or explicit member still retains access.
+  def public?
+    self[:private] == false
+  end
+
   # The effective level for a user. Public universes give every signed-in user
   # write access; private universes use the explicit membership level. The
   # owner is always an admin, even when no membership row exists.
@@ -66,13 +74,13 @@ class Universe < ApplicationRecord
 
     membership = memberships.find_by(user_id: user.id)
     return "admin" if membership&.access_level == "admin"
-    return "write" unless private?
+    return "write" if public?
 
     membership&.access_level
   end
 
   def readable_by?(user)
-    return true unless private?
+    return true if public?
 
     access_level_for(user).present?
   end

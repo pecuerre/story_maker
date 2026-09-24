@@ -8,6 +8,38 @@ class UniverseTest < ActiveSupport::TestCase
     assert_includes universe.errors[:name], "can't be blank"
   end
 
+  test "requires an explicit boolean visibility flag" do
+    universe = Universe.new(owner: users(:user_one), name: "Ambiguous", private: nil)
+
+    assert_not universe.valid?
+    assert_includes universe.errors[:private], "is not included in the list"
+  end
+
+  test "defaults visibility to public" do
+    universe = Universe.create!(owner: users(:user_one), name: "Default visibility")
+
+    assert_equal false, universe.reload[:private]
+  end
+
+  test "database rejects null visibility flags" do
+    universe = universes(:universe_one)
+
+    assert_not Universe.columns_hash.fetch("private").null
+    assert_raises ActiveRecord::NotNullViolation do
+      Universe.where(id: universe.id).update_all(private: nil)
+    end
+    assert_equal false, universe.reload[:private]
+  end
+
+  test "ambiguous visibility fails closed" do
+    universe = Universe.new(owner: users(:user_one), name: "Ambiguous", private: nil)
+
+    assert_not universe.public?
+    assert_nil universe.access_level_for(users(:user_two))
+    assert_not universe.readable_by?(users(:user_two))
+    assert_not universe.writable_by?(users(:user_two))
+  end
+
   test "visible_to includes explicit private memberships" do
     private_universe = Universe.create!(owner: users(:user_one), name: "Private", slug: "private", private: true)
     UniverseMembership.create!(universe: private_universe, user: users(:user_two), access_level: :read)

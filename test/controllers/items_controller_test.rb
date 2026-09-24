@@ -45,6 +45,20 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_empty Item.order(:id).last.item_tags
   end
 
+  test "should reject item tags from another universe" do
+    foreign_tag = item_tags(:item_tag_three)
+    join_count = -> { ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM items_item_tags") }
+
+    assert_no_difference([ "Item.count", join_count ]) do
+      post universe_items_url(universe_slug: @universe.slug),
+        params: { item: { name: "Mis-scoped item", item_tag_ids: [ foreign_tag.id ] } },
+        as: :json
+    end
+
+    assert_response :unprocessable_content
+    assert_equal [ "must belong to the same universe" ], response.parsed_body["item_tags"]
+  end
+
   test "should update item details as json" do
     patch universe_item_url(universe_slug: @universe.slug, id: @item),
       params: { item: { name: "Renamed", description: "Updated", item_tag_ids: [ @item_tag.id ] } },

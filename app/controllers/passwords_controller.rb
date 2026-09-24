@@ -21,7 +21,7 @@ class PasswordsController < ApplicationController
 
   def update
     if @user.update(params.permit(:password, :password_confirmation))
-      @user.sessions.destroy_all
+      reset_sessions_for(@user)
       redirect_to new_session_path, notice: "Password has been reset."
     else
       redirect_to edit_password_path(params[:token]), alert: "Passwords did not match."
@@ -29,6 +29,16 @@ class PasswordsController < ApplicationController
   end
 
   private
+    def reset_sessions_for(user)
+      current_session_belongs_to_user = Current.session&.user_id == user.id
+      user.sessions.destroy_all
+      return unless current_session_belongs_to_user
+
+      clear_remembered_stories
+      cookies.delete(:session_id)
+      Current.session = nil
+    end
+
     def set_user_by_token
       @user = User.find_by_password_reset_token!(params[:token])
     rescue ActiveSupport::MessageVerifier::InvalidSignature

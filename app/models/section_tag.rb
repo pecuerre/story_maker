@@ -5,7 +5,7 @@ class SectionTag < ApplicationRecord
   include HasSlug
 
   belongs_to :story
-  has_many_tagd :section
+  has_many_tagd :section, scope: :story_id
 
   validates :name, presence: true
 

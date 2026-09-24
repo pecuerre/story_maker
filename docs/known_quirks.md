@@ -38,29 +38,6 @@ distinguish reachable security/data-loss issues from lower-priority hardening an
    reset tokens, or other signed messages. Treat the value as exposed until the owner verifies and
    rotates it. No secret value is reproduced in this document.
 
-6. **High — a nullable `private` flag fails open.** `universes.private` is nullable in
-   `db/migrate/20260923130002_create_universes.rb:3-7` and `db/schema.rb:293-302`, and `Universe`
-   has no boolean validation. `private: nil` makes `private?` false, so
-   `Universe#readable_by?` grants guest read access and `access_level_for` grants signed-in users
-   write access (`app/models/universe.rb:59-88`). At the same time, `visible_to` uses
-   `WHERE private = false` (`app/models/universe.rb:10-16`), so the universe is hidden from normal
-   listings but remains reachable by slug. The controller permits `private` in both create and
-   update parameters (`app/controllers/universes_controller.rb:27-38,43-50,77-79`). This is a
-   fail-open state for API, import, legacy, or nullable-database paths; current fixtures do not
-   contain the value.
-
-7. **High — four content models accept tags from another universe.** `HasManyTags` declares an
-   unscoped HABTM association (`app/models/concerns/has_many_tags.rb:9-15`). `Character`,
-   `Location`, `Item`, and `Event` do not validate that submitted tag IDs belong to their universe,
-   and their controllers accept arbitrary `*_tag_ids` (`app/controllers/characters_controller.rb:58-60`,
-   `locations_controller.rb:52-54`, `items_controller.rb:58-60`, `events_controller.rb:54-57`).
-   A disposable request probe created a public-universe record carrying a private-universe tag.
-   `entity_tag_badge` and the timeline render attached tags without an independent scope check
-   (`app/helpers/application_helper.rb:80-92`, `app/helpers/timeline_helper.rb:17-19`), so the
-   foreign tag's name and colors can be disclosed and the data graph is corrupted. The documented
-   same-universe invariant in `docs/data_model.md:141-146` is therefore not enforced for these
-   models.
-
 8. **High — taxonomy edit modals have a stored DOM XSS path.** User-controlled taxonomy names are
    returned as option labels (`app/helpers/modal_fields.rb:3-13,173-195,327-349`). The Stimulus
    controller interpolates those labels into an HTML string and assigns it through `innerHTML`
@@ -106,30 +83,6 @@ distinguish reachable security/data-loss issues from lower-priority hardening an
     agent (`authentication.rb:24-30,42`). A stolen cookie remains usable until logout, password
     reset, or user deletion, and old rows have no cleanup path. No session-expiration or
     cookie-attribute tests exist.
-
-13. **Medium — anonymous users can distinguish private-universe existence.** An unknown slug fails
-    lookup and becomes 404 (`app/controllers/application_controller.rb:33-37`), while a guest
-    request for an existing private universe is sent to sign-in (`app/controllers/concerns/universe_authorization.rb:9-20`).
-    This contradicts the non-disclosure rule in ADR 0005 (`docs/adr/0005-universe-access-levels.md:47-51`).
-    No private content is returned, but the different responses allow slug enumeration.
-
-14. **Medium — logout leaves the remembered current story in the Rails session.** Story selections
-    are stored in `session[:current_story_ids]` (`app/controllers/application_controller.rb:45-62`),
-    but logout destroys only the database session and `session_id` cookie
-    (`app/controllers/concerns/authentication.rb:48-51`). On a shared browser, a second user can
-    inherit the previous user's story context if that user can access the universe. The map is not
-    user-keyed or cleared on logout/password reset; account-switch coverage is missing.
-
-15. **High — referenced events cannot be destroyed through normal CRUD.** `before_event`,
-    `after_event`, and `simultaneous_event` are restrictive self-foreign keys
-    (`app/models/event.rb:11-13`, `db/schema.rb:321-324`). The controllers call `destroy!`
-    (`app/controllers/events_controller.rb:43-45`) without lifecycle handling. Deleting an event
-    referenced by another event raises `ActiveRecord::InvalidForeignKey`; destroying a universe
-    containing linked events can fail for the same reason (`app/models/universe.rb:56-57`). The
-    shared controller does not rescue that exception, so the request becomes a 500. The custom
-    self-reference validator also compares foreign-key IDs, so assigning a new event to itself before
-    persistence can bypass the check and create a self-loop. The current event destroy test uses an
-    unreferenced event only.
 
 16. **High safety issue — `db:restart` has no environment guard.** `lib/tasks/db.rake:1-9` invokes
     `db:drop`, `db:create`, `db:migrate`, and `db:seed` without checking `Rails.env` or requiring an
@@ -198,9 +151,10 @@ distinguish reachable security/data-loss issues from lower-priority hardening an
     example `db/schema.rb:42-45,84-87,117-120,150-153,186-189,224-227,257-260`; the migrations use
     bare `create_join_table`, e.g. `db/migrate/20260923130012_create_characters.rb:14`). Direct SQL,
     imports, failed association replacement, or duplicate IDs can create orphan/duplicate join rows.
-    Even where a model validator reports a cross-scope tag, HABTM collection replacement can write
-    the join row before the validation failure is returned. This is separate from the missing
-    validators in finding 7.
+    Scoped association reads prevent foreign tags from being disclosed through ordinary model/view
+    paths, and controller saves roll back rejected ID replacements. A direct HABTM collection
+    writer can still write a join row before a later validation failure, however, because the
+    database has no constraints to reject it.
 
 24. **Medium — Timeline output can contradict its layer ordering.** `TimelineLayout` rejects an
     edge that would create a cycle (`app/models/timeline_layout.rb:33-40`), but later rebuilds
@@ -349,8 +303,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
   internally consistent, but a concurrent slug rename or scope mutation could create a TOCTOU
   mismatch between the object authorized and the object acted on; no deterministic exploit was
   demonstrated.
-- **The current-story session map is not user-keyed** (see finding 14), and account switching or
-  shared-browser behavior should be made an explicit session policy.
 - **Development symbolic references are globally resolved.** `db/data/dark/dark.rb:24-37` and
   `HasSlug.method_missing` look up slugs without a universe/story qualifier. The checked-in data
   currently avoids collisions, but duplicate slugs across universe directories could resolve to

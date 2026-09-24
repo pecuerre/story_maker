@@ -7,7 +7,7 @@ class Item < ApplicationRecord
   invalidates_menu_counts_for :universe
 
   belongs_to :universe
-  has_many_tags :item_tag
+  has_many_tags :item_tag, scope: :universe_id
   has_many :ownerships, dependent: :destroy
 
   validates :name, presence: true

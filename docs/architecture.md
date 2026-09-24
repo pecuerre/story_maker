@@ -40,16 +40,19 @@ UI patterns and the Timeline algorithm. Conventions are in
    those non-universe controllers also skip the authorization callback.
 4. **`authorize_universe_access`** (from `UniverseAuthorization`) — checks the resolved universe
    through `Ability`/`current_ability`: public universes grant read access to guests and write
-   access to signed-in users; private universes require an owner or membership. Guests are sent
-   to sign in, authenticated non-members receive 404 for private universes, and authenticated
-   users without the required level receive 403.
+   access to signed-in users; private universes require an owner or membership. A private
+   universe is hidden from every non-member, including guests, with the same 404 used for an
+   unknown slug. Guests attempting a public-universe write are sent to sign in, while
+   authenticated collaborators without the required level receive 403.
 5. **`set_current_story`** — when a universe is present, resolves `Current.story`:
    - explicit `params[:story_id]` (sections) or `params[:id]` on the `stories` controller wins and
      is remembered in the session (`session[:current_story_ids]` keyed by universe id);
    - otherwise the remembered story, if it still exists;
    - `nil` otherwise. There is deliberately **no fallback to the universe's first story**: a story
      only becomes current when the user picks it, which is what reveals the WHAT/HOW sidebar
-     cards and the current-story item in the top bar.
+     cards and the current-story item in the top bar. The remembered map is cleared whenever an
+     authenticated session starts or ends, when password reset invalidates the current browser
+     session, and when a stale authentication cookie is encountered, so it cannot cross accounts.
    A `story_id` from another universe raises `RecordNotFound` → 404 (cross-scope protection).
 
 Per-request state lives in **`Current`** (`ActiveSupport::CurrentAttributes`):
@@ -75,9 +78,12 @@ Other global behavior: `allow_browser versions: :modern`,
   required` (500).
 - `start_new_session_for(user)` creates a `Session` row (user agent, IP) and sets
   `cookies.signed.permanent[:session_id]`.
-- Sign-out destroys the `Current.session` and deletes the cookie.
+- Sign-out destroys the `Current.session`, deletes the cookie, and clears remembered story
+  selections. Starting a new authenticated session performs the same context cleanup, and a
+  request with a stale/deleted authentication session clears its cookie and story context.
 - Password reset: `passwords#create` mails a token link, `passwords#edit/update` change the
-  password and destroy all of that user's sessions.
+  password and destroy all of that user's sessions. If the reset is completed in that user's
+  current browser, its authentication cookie and remembered story selections are cleared too.
 - Visibility and authorization are centralized in `Ability` plus `UniverseAuthorization`:
   - public universe: guests may read; every signed-in user may write; only the owner or an admin
     member may change universe settings or memberships;
@@ -87,10 +93,10 @@ Other global behavior: `allow_browser versions: :modern`,
     authorized through their story's universe.
 - `Universe.visible_to(user)` applies the same policy to the universes index and navbar dropdown.
   Universe show and all universe-scoped content callbacks apply the policy before loading records.
-- Guests attempting a write are redirected to sign in; authenticated users who lack a private
-  universe's read access receive 404, while a member with insufficient write/admin access receives
-  403. The distinction avoids disclosing private universe membership while making permission
-  failures explicit for known collaborators.
+- Guests attempting a public-universe write are redirected to sign in. Every non-member,
+  including a guest, receives 404 for a private universe; a member with insufficient
+  write/admin access receives 403. This keeps private-universe existence indistinguishable from
+  an unknown slug while making permission failures explicit for known collaborators.
 - The membership admin screen lives at `/u/:universe_slug/members` and is linked for universe
   admins from the universe view/navigation.
 - In tests use `sign_in_as(users(:user_one))` / `sign_out`

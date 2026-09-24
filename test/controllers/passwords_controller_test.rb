@@ -66,6 +66,25 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_notice "Passwords did not match"
   end
 
+  test "successful reset clears the current user's authentication and story context" do
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+    sign_in_as(@user)
+    get universe_story_url(universe_slug: universe.slug, id: story)
+
+    put password_path(@user.password_reset_token),
+      params: { password: "new", password_confirmation: "new" }
+
+    assert_redirected_to new_session_path
+    assert_empty cookies[:session_id]
+    assert_nil session[:current_story_ids]
+    assert_not @user.sessions.exists?
+
+    get universe_url(universe)
+    assert_response :success
+    assert_select "span.navbar-context", text: "Select"
+  end
+
   private
     def assert_notice(text)
       assert_select "div", /#{text}/

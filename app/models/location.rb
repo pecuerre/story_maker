@@ -7,7 +7,7 @@ class Location < ApplicationRecord
   invalidates_menu_counts_for :universe
 
   belongs_to :universe
-  has_many_tags :location_tag
+  has_many_tags :location_tag, scope: :universe_id
 
   validates :name, presence: true
 end

@@ -30,15 +30,18 @@
   (universe by default; `Section` overrides them to compare `story_id` →
   *"must belong to the same story"*).
 - Content ↔ tag pairs are declared with the `HasManyTags` DSL:
-  content model: `has_many_tags :character_tag` (HABTM only), tag model:
-  `has_many_tagd :character` (inverse side). Tags are **optional on every content model** —
-  `has_many_tags` adds no presence validation and no controller force-assigns a default tag, so
-  records are saved untagged when the user picks none (tag them later or never).
+  content model: `has_many_tags :character_tag, scope: :universe_id`, tag model:
+  `has_many_tagd :character, scope: :universe_id` (inverse side). Section/SectionTag use
+  `scope: :story_id`. The scope is mandatory and is applied to reads/builds on both sides; a shared
+  validation also rejects foreign members assigned in memory or through an ID writer. Tags are
+  **optional on every content model** — the DSL adds no presence validation and no controller
+  force-assigns a default tag, so records are saved untagged when the user picks none.
 - `_tag` models include `HasColor` (validated `#rrggbb` `bgcolor`/`fgcolor`) and `HasSlug`.
 - Name presence is validated on: Universe, Character, Location, Item, Section, Story and all
   `_tag` models. Not on: Event (see below), Relation and Ownership (name optional).
-- `Relation`, `Ownership` and `Event` add custom validators that keep every associated record
-  inside the same universe.
+- `Relation`, `Ownership` and `Event` add custom validators that keep their non-tag associated
+  records inside the same universe. `HasManyTags` independently enforces the shared universe or
+  story scope in both directions for all seven content/tag pairs.
 
 ### Controllers
 - Universe scoping via `Current.universe` (set from the `:universe_slug` param in
@@ -54,8 +57,10 @@
 - Strong params use Rails 8 `params.expect(model: [ ... ])`.
 - Universe authorization is a three-level policy: `read`, `write`, and `admin`. Public universes
   grant guest read and signed-in write access; private universes require an owner or membership.
-  The owner is always admin, and a membership's level applies uniformly to all universe/story
-  components. Admin membership management is an HTML flow at `/u/:universe_slug/members`.
+  A private-universe non-member, including a guest, receives 404 so slug enumeration cannot
+  distinguish it from an unknown universe. The owner is always admin, and a membership's level
+  applies uniformly to all universe/story components. Admin membership management is an HTML flow
+  at `/u/:universe_slug/members`.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
     Characters, Locations, Items, Events, Sections. The page renders HTML; create/update/destroy
@@ -199,8 +204,11 @@ Correction of an older (wrong) note: **Event does have a `_tag` taxonomy** — `
 content models. What actually makes Event special:
 
 1. `Event` includes `Hierarchical` (parent/position) **plus** the self-referencing
-   `before_event`, `after_event`, `simultaneous_event` associations (cycle-safe: `display_string`
-   walks with a visited list and `cannot_reference_self` guards the ids).
+   `before_event`, `after_event`, `simultaneous_event` associations. `display_string` walks with a
+   visited list, and `cannot_reference_self` checks both object identity and the foreign-key id.
+   Database check constraints close the insert-time gap where an ID is assigned only during save.
+   Destroying an event nullifies every incoming temporal reference; a referrer that existed only to
+   point at that event is removed first so `must_be_identifiable` remains true for retained rows.
 2. Tags are **optional** — as on every content model (`has_many_tags` adds no presence
    validation). Event was simply the first model to work this way; the old
    `required: false` opt-in is gone.

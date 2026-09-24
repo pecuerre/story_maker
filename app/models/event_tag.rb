@@ -5,7 +5,7 @@ class EventTag < ApplicationRecord
   include HasSlug
 
   belongs_to :universe
-  has_many_tagd :event
+  has_many_tagd :event, scope: :universe_id
 
   validates :name, presence: true
 end

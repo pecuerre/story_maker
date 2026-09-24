@@ -7,19 +7,12 @@ class Section < ApplicationRecord
   invalidates_menu_counts_for :story
 
   belongs_to :story
-  has_many_tags :section_tag
+  has_many_tags :section_tag, scope: :story_id
 
   validates :name, presence: true
-  validate :section_tags_belong_to_story
 
   # Sections are scoped to their story instead of directly to the universe.
   private
-
-  def section_tags_belong_to_story
-    return if story.nil? || section_tags.all? { |section_tag| section_tag.story_id == story_id }
-
-    errors.add(:section_tags, "must belong to the same story")
-  end
 
   def hierarchy_scope
     story

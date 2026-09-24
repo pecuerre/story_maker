@@ -1,14 +1,14 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
+# Production-safe bootstrap records belong in db/seeds/ and should be idempotent.
+# Temporary development data lives under db/data/<universe_slug>/, one directory per universe.
+# The demo loading below is transitional and must not be treated as a production seed contract.
 
-# First the seeds
+# First the production-safe seeds
 Dir[Rails.root.join("db/seeds/**/*.rb")].sort.each do |file|
   puts "Loading #{file}"
   load file
 end
 
-# Then the data
+# Transitional development-only data loader
 universes = ["dark", "lotr"]
 universes.each do |name|
   file = Rails.root.join("db/data/#{name}/#{name}.rb")

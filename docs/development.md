@@ -13,7 +13,7 @@ Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirk
 - Setup & run:
 
 ```bash
-bin/rails db:prepare          # create + migrate + seed (first run)
+bin/rails db:prepare          # create + migrate + current transitional seed (first run)
 bin/rails server              # http://localhost:3000
 bin/rails console
 bun run watch:css             # rebuild CSS on .scss changes (Procfile.dev: foreman start)
@@ -62,33 +62,80 @@ bin/bundler-audit            # vulnerable gems
 bin/importmap audit          # vulnerable JS pins
 ```
 
-## Seeding / demo data
+## Seeding / development data
 
-`bin/rails db:seed` (`db/seeds.rb`) does two things:
+`db/data/` contains checked-in but **disposable development data**. It is not production seed data,
+and it is not loaded by the test suite. The preferred local lifecycle is to rebuild the disposable
+database and then load one universe directory for browser testing.
 
-1. loads every `db/seeds/**/*.rb` (directory currently empty);
-2. loads the demo universes from a **hardcoded list** `["dark", "lotr"]`:
-   - `db/data/dark/dark.rb` — generic YAML loader. It walks `models_in_order`
-     (User → Universe → **Story** → SectionTag → Section → … → Event), reads
-     `db/data/<model>.yml`, resolves reference strings `"Model.some_slug"` with
-     `Model.find_by(slug: …)` (arrays too; a `"Tag.*"` reference also records the tag slug for
-     the colored output). References therefore need the target model to have a **slug column**
-     (this is why `stories.slug` exists).
-   - `db/data/lotr/lotr.rb` — plain Ruby: user, universe, **story** ("The Lord of the Rings"),
-     section tags, three book sections.
+### One directory per universe
 
-Other notes:
-- Seeding is **not idempotent** (`create!` each run) — re-running duplicates data.
-- `bin/rails db:restart` (`lib/tasks/db.rake`) = drop + create + migrate + seed.
-- Tests do **not** use seeds; they use fixtures only.
+There is one subdirectory per universe, named by its slug:
+
+```text
+db/data/
+  dark/       # the more complete Dark dataset
+  lotr/       # the smaller Lord of the Rings dataset
+  star_wars/  # future universe data
+```
+
+Each directory contains all data used to exercise that universe: its user/universe record, stories,
+sections, section tags, world-building records, taxonomies, and relationships. A universe
+directory is not a feature directory. For example, a future `Dialog` model belongs in
+`db/data/dark/dialogs.yml` (and in `db/data/lotr/dialogs.yml` when that universe should exercise
+it), not in `db/data/dialog/`.
+
+The current implementation has two different loaders:
+
+- `db/data/dark/dark.rb` is a generic YAML loader. It walks `models_in_order`
+  (User → Universe → **Story** → SectionTag → Section → … → Event), reads
+  `db/data/<model>.yml`, and resolves reference strings such as `"Model.some_slug"` with
+  `Model.find_by(slug: …)`. Arrays are supported, and a `"Tag.*"` reference is also recorded for
+  colored output. Referenced models therefore need a stable **slug**.
+- `db/data/lotr/lotr.rb` is plain Ruby containing the user, universe, story, section tags, and
+  three book sections.
+
+The intended model order is shared by the universe data rather than duplicated as a
+feature-specific loader. The current Dark loader keeps that order in `dark/dark.rb`; the LOTR Ruby
+loader is a smaller transitional exception. New model work should centralize the shared order in
+the development loader/registry. New model data must use stable symbolic references and preserve
+the model's universe/story scope. If `Dialog` is story-scoped, its records use
+`story: Story.<slug>`; if it is universe-scoped, they use `universe: Universe.<slug>`. Include
+related characters, locations, items, events, sections, and tags where those associations exist
+so the browser scenario exercises the real feature graph.
+
+### Current and target execution paths
+
+`bin/rails db:seed` currently loads `db/seeds/**/*.rb` and then the hardcoded list
+`["dark", "lotr"]` from `db/seeds.rb`. This is transitional. The loaders use `create`/`create!` on
+every run, so the demo data is not safe to rerun; that is acceptable for disposable data only when
+the database is deliberately rebuilt. It must not be treated as a production seed path.
+
+The intended replacement is an explicit, environment-guarded development task, conceptually:
+
+```bash
+bin/rails db:demo:check UNIVERSE=dark       # proposed; validate without committing data
+bin/rails db:demo:load UNIVERSE=dark        # proposed; load one universe directory
+bin/rails db:demo:reset UNIVERSE=dark       # proposed; rebuild, migrate, and load it
+```
+
+These task names are a design target and are not implemented yet. The eventual task must refuse
+to run in production, and `db:seed`/`db:prepare` must not load temporary development records.
+Until that separation is implemented, use `bin/rails db:restart` only with approval; it currently
+drops, recreates, migrates, and seeds the development database.
+
+The Rails test suite uses `test/fixtures/` so automated tests remain deterministic; these mutable
+universe files are not its fixture source. The local `config/ci.rb` still contains a transitional
+`db:seed:replant` check, which should be revisited when the seed boundary is separated.
 
 ## Database migrations
 
-The database is intentionally disposable: schema migrations only define the structure, and demo
-records are reconstructed from `db/data/` by `db:seed`. Keep one schema-only create migration per
-persisted model, including any HABTM join table owned by that model. Migrations must not read or
-write application records or reference application models; use `bin/rails db:restart` after
-refactoring a create migration so the schema and `db/data/` records are rebuilt together.
+The database is intentionally disposable: schema migrations only define the structure. Demo
+records are reconstructed from the per-universe files under `db/data/`; they are not backfilled by
+migrations. Keep one schema-only create migration per persisted model, including any HABTM join
+table owned by that model. Migrations must not read or write application records or reference
+application models. After changing a schema, rebuild the development database and reload the
+relevant universe data with approval; do not run `bin/rails db:restart` without approval.
 
 ## Smoke test (end-to-end over HTTP)
 
@@ -153,5 +200,30 @@ Dependabot config: `.github/dependabot.yml`.
    `shared/_sidebar_link` pattern; use `shared/_content_tabs` to connect related content and its
    corresponding tag taxonomy. Keep the Configuration section for future organization/settings.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
-8. Demo data: YAML entry handled by the loader (add the model to `models_in_order` in
-   `db/data/<name>/<name>.rb`) or Ruby seed.
+8. Development data: add or update `<model>.yml` in every relevant
+   `db/data/<universe_slug>/` directory, update the shared model order/registry, and include
+   representative records connected to existing universe/story/character/location/item/event
+   records. Do not create a feature-level directory such as `db/data/dialog/`; a future Dialog
+   model belongs in `db/data/dark/dialogs.yml` and the corresponding files for other universes.
+
+### Full-stack data contract for a new model
+
+When the owner asks for a new model, treat the request as a complete feature rather than stopping
+at the migration and model class:
+
+1. Decide and document the ownership scope (universe, story, section, or a deliberate exception)
+   and the associations, tags, and relationship validations it needs.
+2. Add the schema-only migration and model, keeping the existing naming, slug, hierarchy, and
+   scope conventions.
+3. Add the route, controller, views/helpers/navigation, and the appropriate JSON or HTML response
+   pattern.
+4. Add model, request, and browser-level tests where the feature warrants them. Keep the automated
+   suite fixture-based.
+5. Add connected development data to every universe directory that should exercise the model. A
+   Dialog record, for example, should point to the actual universe/story scope and relevant
+   characters, locations, events, sections, and tags rather than being an isolated placeholder.
+6. Update the shared loader order/registry and the documentation that describes the new model or
+   relationship.
+7. Rebuild/load the disposable development data, open the feature in the browser, and report the
+   exact load command, URL, local login, and checks performed. Do not run a destructive rebuild
+   without approval.

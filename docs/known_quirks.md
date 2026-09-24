@@ -31,6 +31,13 @@ survives. Index of all docs: [README.md](README.md).
    anyone with the slug can open and even edit/destroy it. `create` falls back to
    `Current.user || User.first`, so a logged-out creator's universe is owned by the first user.
 
-5. **Seeds are not idempotent** despite the Rails boilerplate comment in `db/seeds.rb`
-   ("should be idempotent"): the dark loader and `lotr.rb` use `create`/`create!` on every run,
-   and the demo-universe list `["dark", "lotr"]` is hardcoded there.
+## Development workflow observations
+
+5. **Disposable universe data is still coupled to `db:seed`.** `db/data/` is intentionally
+   development-only: one subdirectory per universe (`dark/`, `lotr/`, and future universe slugs)
+   contains the records used to exercise that universe. The current `dark` and `lotr` loaders use
+   `create`/`create!`, and `db/seeds.rb` still loads a hardcoded `["dark", "lotr"]` list, so the
+   loaders are not safe to rerun. This is not a request to make temporary feature data production-
+   idempotent; the intended fix is an explicit, environment-guarded development load/reset task
+   that keeps `db/seeds.rb` production-safe. The current coupling is tracked as a transitional
+   implementation gap in [ADR 0004](adr/0004-universe-data-and-demo-seeding.md).

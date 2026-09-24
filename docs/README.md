@@ -3,7 +3,8 @@
 Everything learned about this project lives in this directory. The root `README.md` is a short
 quick start; this directory is the source of truth for project knowledge. Facts were verified
 against the code — last full pass: September 2026, after the Bootstrap visual-shell refresh, the
-*stories / story-scoped sections* rework, and the *tags are optional everywhere* change.
+*stories / story-scoped sections* rework, the *tags are optional everywhere* change, and the
+per-universe development-data convention.
 
 | File | Contents |
 |---|---|
@@ -12,7 +13,7 @@ against the code — last full pass: September 2026, after the Bootstrap visual-
 | [universe_maker_conventions.md](universe_maker_conventions.md) | Code conventions & patterns: models, controllers, routes, views (3 page patterns), helpers, Stimulus controllers, top bar & sidebar navigation, Event/Timeline feature notes |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, Timeline algorithm |
-| [development.md](development.md) | Running the app, test suite, lint/security scans, seeding (dark YAML loader + lotr), CI, Kamal deployment, smoke test, "adding a new model" checklist |
+| [development.md](development.md) | Running the app, test suite, lint/security scans, per-universe development data (`db/data/<universe_slug>/`), CI, Kamal deployment, smoke test, and the full "adding a new model" workflow |
 | [known_quirks.md](known_quirks.md) | Verified **open** oddities, dead code and tech debt — read before changing shared code |
 | [resolved_quirks.md](resolved_quirks.md) | Quirks/tech debt that **used to exist and is fixed now** — what the problem was and how it was solved |
 | [schema.txt](schema.txt) | Hand-maintained sketch of the core entities (owner-maintained, not generated) |

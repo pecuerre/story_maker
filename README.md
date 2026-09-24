@@ -40,8 +40,10 @@ bin/bundler-audit
 bin/importmap audit
 ```
 
-`bin/rails db:restart` recreates the disposable database, migrates it, and reloads the demo data.
-The database is rebuilt from `db/data/`; application-data migrations are intentionally not used.
+`bin/rails db:restart` recreates the disposable database, migrates it, and reloads the current demo
+data. The database is rebuilt from `db/data/`; that directory is organized as one disposable
+development directory per universe (for example `db/data/dark/` and `db/data/lotr/`) and is not
+production seed data. Application-data migrations are intentionally not used.
 
 ## Documentation
 

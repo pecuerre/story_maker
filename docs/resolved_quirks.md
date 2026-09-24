@@ -61,6 +61,38 @@ in its generic API; this project-level guard prevents that footgun in its own co
 
 ## Resolved correctness issues
 
+### HasSlug treated generated slugs as explicit on updates (fixed)
+
+**Then:** `HasSlug#set_slug` checked `slug.present?` before checking whether `name` changed. Every
+persisted record normally has a slug, so renaming any model normalized and preserved its old slug;
+the `name_changed?` regeneration branch was effectively unreachable. This affected all models
+that include `HasSlug`.
+
+**Fix:** the callback now uses Rails 8 dirty tracking. A slug explicitly changed on the current save
+wins; otherwise a changed name regenerates the slug; unrelated saves preserve the existing slug.
+Unslugifiable values receive a random fallback so the non-null database constraint is respected.
+
+### Relation/Ownership composite slugs were bypassed by HasSlug (fixed)
+
+**Then:** `Relation` and `Ownership` registered their composite-slug callbacks after
+`HasSlug#set_slug`. For unnamed records, the generic callback assigned a random slug first, so the
+intended `character-tag-character` / `character-tag-item` slug was usually never generated.
+
+**Fix:** both callbacks now run with `prepend: true`, before the generic `HasSlug` callback. Omitted
+and blank names produce the documented composite slug, untagged records omit the optional tag
+segment, and an explicitly supplied slug still wins for that save. Composite slugs remain
+creation-time snapshots when endpoints or tags change; a name change follows the normal
+name-based slug rule.
+
+### Event name drifted when its title was renamed (fixed)
+
+**Then:** `Event#set_name` ran only on create, so changing an event's `title` left the legacy
+`name` field at its original value. `HasSlug` also ran before `set_name` during creation, which
+could make a new event receive a random slug instead of one derived from its title.
+
+**Fix:** `set_name` now runs before `HasSlug` on create and whenever the title changes. The title is
+copied to `name`, and `HasSlug` regenerates the slug when that name changes.
+
 ### CI system-test job had no tests (fixed)
 
 **Then:** the CI workflow ran `test:system`, but the repository had no `test/system` directory.

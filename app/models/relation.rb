@@ -10,7 +10,9 @@ class Relation < ApplicationRecord
   belongs_to :character2, class_name: "Character"
   has_many_tags :relation_tag
 
-  before_validation :generate_slug, on: :create
+  # Generate before HasSlug so the composite slug can be set on create.
+  # Later endpoint or tag changes do not rewrite this creation-time snapshot.
+  before_validation :generate_slug, on: :create, prepend: true
   validates :character1, :character2, presence: true
   validate :associated_records_belong_to_universe
 
@@ -20,8 +22,8 @@ class Relation < ApplicationRecord
     return if slug.present?
 
     if name.present?
-      self.slug = name.to_s.parameterize
-      return
+      name_slug = slugify(name)
+      return self.slug = name_slug if name_slug.present?
     end
 
     # Tags are optional, so the tag segment may be missing entirely.

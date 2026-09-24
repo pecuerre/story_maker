@@ -26,6 +26,41 @@ class OwnershipTest < ActiveSupport::TestCase
     assert_equal "#{characters(:character_one).slug}-#{items(:item_one).slug}", ownership.slug
   end
 
+  test "derives a composite slug when name is omitted" do
+    ownership = Ownership.create!(
+      universe: @universe,
+      item: items(:item_one),
+      character: characters(:character_one)
+    )
+
+    assert_equal "#{characters(:character_one).slug}-#{items(:item_one).slug}", ownership.slug
+  end
+
+  test "includes the ownership tag in an automatically generated slug" do
+    ownership = Ownership.create!(
+      universe: @universe,
+      item: items(:item_one),
+      character: characters(:character_one),
+      ownership_tags: [ @ownership_tag ]
+    )
+
+    assert_equal(
+      "#{characters(:character_one).slug}-#{@ownership_tag.slug}-#{items(:item_one).slug}",
+      ownership.slug
+    )
+  end
+
+  test "falls back to the composite slug when the name cannot be slugified" do
+    ownership = Ownership.create!(
+      universe: @universe,
+      item: items(:item_one),
+      character: characters(:character_one),
+      name: "!!!"
+    )
+
+    assert_equal "#{characters(:character_one).slug}-#{items(:item_one).slug}", ownership.slug
+  end
+
   test "rejects associated records from another universe" do
     ownership = Ownership.new(
       universe: @universe,

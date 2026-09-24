@@ -181,9 +181,10 @@ content models. What actually makes Event special:
 2. Tags are **optional** — as on every content model (`has_many_tags` adds no presence
    validation). Event was simply the first model to work this way; the old
    `required: false` opt-in is gone.
-3. Identity is title-driven: users enter `title`; `set_name` copies `title → name` **on create
-   only**; `Event#display_string` renders the label, falling back to dates, then relations
-   (`"before Event #3"`), and finally `"Event #id"`.
+3. Identity is title-driven: users enter `title`; `set_name` copies `title` to `name` on create
+   and whenever the title changes. It is prepended before `HasSlug`, so the event slug follows the
+   title on create and rename. `Event#display_string` renders the label, falling back to dates, then
+   relations (`"before Event #3"`), and finally `"Event #id"`.
 4. `must_be_identifiable`: an event needs a title, a start/end datetime, or a relation to
    another event; related events must belong to the same universe.
 5. UI: flat list + modal (pattern 2), `modal_fields.rb` provides `event_fields_json`; the modal

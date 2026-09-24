@@ -23,6 +23,33 @@ class RelationTest < ActiveSupport::TestCase
     assert_equal "#{@character.slug}-#{other.slug}", relation.slug
   end
 
+  test "derives a composite slug when name is omitted" do
+    other = characters(:character_two)
+    relation = Relation.create!(universe: @universe, character1: @character, character2: other)
+
+    assert_equal "#{@character.slug}-#{other.slug}", relation.slug
+  end
+
+  test "includes the relation tag in an automatically generated slug" do
+    other = characters(:character_two)
+    @relation_tag.save!
+    relation = Relation.create!(
+      universe: @universe,
+      character1: @character,
+      character2: other,
+      relation_tags: [ @relation_tag ]
+    )
+
+    assert_equal "#{@character.slug}-#{@relation_tag.slug}-#{other.slug}", relation.slug
+  end
+
+  test "falls back to the composite slug when the name cannot be slugified" do
+    other = characters(:character_two)
+    relation = Relation.create!(universe: @universe, character1: @character, character2: other, name: "!!!")
+
+    assert_equal "#{@character.slug}-#{other.slug}", relation.slug
+  end
+
   test "allows repeated relations between the same characters" do
     @relation_tag.save!
     attributes = { universe: @universe, character1: @character, character2: characters(:character_two), relation_tags: [ @relation_tag ] }

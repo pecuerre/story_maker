@@ -134,20 +134,23 @@ constraint either — only the FKs in `db/schema.rb` are enforced by SQLite.
 ## Slugs
 
 - `HasSlug` (app/models/concerns/has_slug.rb): `before_validation :set_slug`.
-  Priority: explicit `slug` → slugified `name` (when name changed) → existing name →
-  `SecureRandom.hex(4)`.
+  Priority: an explicitly changed `slug` → slugified `name` when the name changes → the existing
+  slug/name → a random hex fallback when no usable value exists. Generated slugs therefore follow
+  name changes; an explicitly supplied slug wins for the save on which it is supplied.
+- Event's `set_name` and the composite-slug callbacks on `Relation`/`Ownership` use `prepend: true`
+  so they run before the generic `HasSlug` callback when a record is first created. Relation and
+  ownership composite slugs are creation-time snapshots; later endpoint or tag changes do not
+  rewrite them, while a name change follows the generic name-based rule.
 - `slugify` = `parameterize` + `_+ → -`. **Write slugs dash-separated**, including fixture
   slugs; the class-level finder `Model.some_name` (custom `method_missing`) also slugifies its
   argument, so underscore-separated fixture labels are not the stored slug format.
 - Uniqueness: **DB-enforced** only for `universes.slug`, `users.slug` and
   `stories.[universe_id, slug]`; everywhere else uniqueness is a matter of convention
   (Story validates name+slug per universe; other models don't validate slug uniqueness).
-- `Relation`/`Ownership` additionally define `before_validation :generate_slug` intending a
-  `character-tag-character` slug when name is blank — see
-  [known_quirks.md](known_quirks.md) (usually unreachable: `HasSlug` already set a random slug;
-  only reached when `name` was assigned but is blank).
-  Since tags are optional, the tag segment is simply omitted for an untagged record
-  (`character-character`), falling back to a random hex slug when nothing is left to join.
+- `Relation`/`Ownership` additionally generate a `character-tag-character` (or
+  `character-character` when untagged) slug when no explicit slug or name is supplied. Because
+  tags are optional, the tag segment is omitted for an untagged record; if no part is available,
+  a random hex slug is used.
 
 ## Stories vs world building (why the split exists)
 

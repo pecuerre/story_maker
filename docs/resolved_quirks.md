@@ -151,6 +151,16 @@ sign-in/sign-out, universe and story creation, story-scoped section navigation, 
 through the modal editor, and workspace navigation to the timeline. The existing CI job now runs
 real browser tests and retains its failure screenshots.
 
+### System tests reused Chrome profile state (fixed)
+
+**Then:** system tests reused one browser process across cases. Chrome's password/autofill state could
+survive the Capybara session reset and intermittently clear the sign-in fields, producing a failure at
+the intermediate email-field assertion.
+
+**Fix:** `ApplicationSystemTestCase` now quits the browser after each test, before Capybara resets
+its session pool. Each case starts with a fresh Chrome profile while preserving the normal Rails
+screenshot teardown order.
+
 ### Building on an association leaked unsaved records into views (fixed)
 
 **Then:** `Current.universe.stories.new(...)` added the new, unsaved `Story` to the `has_many`

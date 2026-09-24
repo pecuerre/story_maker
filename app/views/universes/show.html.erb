@@ -1,8 +1,49 @@
-<%= render @universe %>
+<% content_for :title, @universe.name %>
 
-<div>
-  <%= link_to "Edit this universe", edit_universe_path(@universe) %> |
-  <%= link_to "Back to universes", universes_path %>
+<%= render "shared/page_header",
+  title: @universe.name,
+  eyebrow: "Universe",
+  description: "The shared world and story collection for this workspace." do %>
+  <%= link_to "All stories", universe_stories_path, class: "btn btn-primary" %>
+  <div class="dropdown">
+    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+      data-bs-toggle="dropdown" aria-expanded="false" aria-label="Universe actions">
+      <i class="bi bi-three-dots" aria-hidden="true"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><%= link_to "Edit universe", edit_universe_path(@universe), class: "dropdown-item" %></li>
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <%= button_to "Delete universe", universe_path(@universe),
+          method: :delete,
+          class: "dropdown-item text-danger",
+          data: { turbo_confirm: "Delete #{@universe.name} and all of its content?" } %>
+      </li>
+    </ul>
+  </div>
+<% end %>
 
-  <%= button_to "Destroy this universe", @universe, method: :delete %>
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="surface-card h-100 p-4">
+      <div class="page-eyebrow">Story collection</div>
+      <h2 class="h4"><%= pluralize(nav_stories.size, "story") %></h2>
+      <p class="text-body-secondary">Each story has its own sections and section tags while sharing this universe's world.</p>
+      <%= link_to "Browse stories", universe_stories_path, class: "btn btn-outline-primary" %>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="surface-card h-100 p-4">
+      <div class="page-eyebrow">Universe Bible</div>
+      <h2 class="h4">Shared world</h2>
+      <p class="text-body-secondary">Characters, places, events, items, and their relationships live at universe scope.</p>
+      <div class="d-flex flex-wrap gap-2">
+        <%= link_to "Characters", universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
+        <%= link_to "Locations", universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
+        <%= link_to "Events", universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
+        <%= link_to "Timeline", universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
+      </div>
+    </div>
+  </div>
 </div>

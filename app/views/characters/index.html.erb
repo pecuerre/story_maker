@@ -1,78 +1,70 @@
 <% content_for :title, "Characters" %>
 
-<div id="character-list"
-  data-controller="modal-form"
+<div data-controller="modal-form"
   data-modal-form-model-param-value="character"
   data-modal-form-create-title-value="New character">
-  <h1>Characters</h1>
-
-  <button type="button"
-    class="btn btn-sm btn-primary mb-3"
-    data-action="modal-form#open"
-    data-modal-form-url="<%= universe_characters_path() %>"
-    data-modal-form-method="post"
-    data-modal-form-title="New character"
-    data-modal-form-values-value="{}">
-    <i class="bi bi-plus-circle" aria-hidden="true"></i>
-    <span>Add Character</span>
-  </button>
+  <%= render "shared/page_header",
+    title: "Characters",
+    eyebrow: "Universe Bible",
+    description: "People and beings whose details are shared by every story in this universe.",
+    count: @characters.size,
+    count_label: "character" do %>
+    <button type="button" class="btn btn-primary"
+      data-action="modal-form#open"
+      data-modal-form-url="<%= universe_characters_path %>"
+      data-modal-form-method="post"
+      data-modal-form-title="New character"
+      data-modal-form-values-value="{}">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>Add character</span>
+    </button>
+  <% end %>
 
   <% if @characters.any? %>
-    <div class="list-group">
-      <% @characters.each do |character| %>
-        <div class="list-group-item d-flex align-items-center gap-3">
-          <div class="flex-grow-1">
-            <%= character.name %>
-            <%= entity_tag_badge(character) %>
-            <% if character.description.present? %>
-              <div class="small text-body-secondary text-break">
-                <%= character.description %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @characters.each do |character| %>
+          <div class="list-group-item entity-row d-flex align-items-center gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= character.name %></span>
+                <%= entity_tag_badge(character) %>
               </div>
-            <% end %>
+              <% if character.description.present? %>
+                <div class="entity-description"><%= character.description %></div>
+              <% end %>
+            </div>
+
+            <%= render "shared/row_actions",
+              record: character,
+              label: "character",
+              record_name: character.name,
+              edit_url: universe_character_path(id: character),
+              delete_url: universe_character_path(id: character),
+              values: character_fields_json(character) %>
           </div>
-          <div class="d-flex gap-1">
-            <button type="button"
-              class="btn btn-sm btn-outline-secondary"
-              title="Edit character"
-              aria-label="Edit character"
-              data-action="modal-form#open"
-              data-modal-form-url="<%= universe_character_path(id: character) %>"
-              data-modal-form-method="patch"
-              data-modal-form-title="Edit character"
-              data-modal-form-values-value="<%= character_fields_json(character) %>">
-              <i class="bi bi-pencil" aria-hidden="true"></i>
-            </button>
-            <%= button_to universe_character_path(id: character),
-              method: :delete,
-              class: "btn btn-sm btn-outline-danger",
-              title: "Delete character",
-              aria: { label: "Delete character" } do %>
-              <i class="bi bi-trash" aria-hidden="true"></i>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   <% else %>
-    <p class="text-body-secondary">No characters yet.</p>
+    <%= render "shared/empty_state",
+      title: "No characters yet",
+      description: "Characters belong to the universe and are shared by all of its stories. Add the first one to begin.",
+      icon: "person" %>
   <% end %>
 
   <div class="modal fade" tabindex="-1"
     aria-labelledby="character-modal-title"
     aria-hidden="true"
     data-modal-form-target="modal">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5"
-            id="character-modal-title"
-            data-modal-form-target="title">
-            New character
-          </h2>
+          <h2 class="modal-title fs-5" id="character-modal-title" data-modal-form-target="title">New character</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <%= form_with scope: :character,
-          url: universe_characters_path(),
+          url: universe_characters_path,
           method: :post,
           data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">
@@ -81,12 +73,12 @@
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
             <div class="mb-3">
-              <%= form.label :character_tag_ids, "Character Tags", class: "form-label" %>
+              <%= form.label :character_tag_ids, "Character tags", class: "form-label" %>
               <%= form.collection_select :character_tag_ids, @character_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
-            <div class="mb-3">
+            <div>
               <%= form.label :description, class: "form-label" %>
               <%= form.text_area :description, class: "form-control", rows: 4 %>
             </div>

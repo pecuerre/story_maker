@@ -15,6 +15,13 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Characters"
     assert_includes response.body, "Character tag"
     assert_includes response.body, @character.name
+    assert_select ".page-header h1", text: "Characters"
+    assert_select ".entity-row", minimum: 1 do
+      assert_select ".row-actions .dropdown-menu", text: /Edit/
+      assert_select "button[data-action='modal-form#open'][data-modal-form-url=?]",
+        universe_character_path(universe_slug: @universe.slug, id: @character)
+    end
+    assert_select ".page-actions button", text: "Add character"
   end
 
   test "should create character as json" do

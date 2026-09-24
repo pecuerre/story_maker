@@ -1,5 +1,6 @@
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 <% taxonomy_field = local_assigns[:taxonomy_field] %>
+
 <li class="taxonomy-node"
   draggable="true"
   data-taxonomy-tree-target="node"
@@ -11,55 +12,69 @@
   data-name="<%= node.name %>"
   data-description="<%= node.description %>"
   data-taxonomy-values="<%= modal_fields.to_h { |field| [field[:name], node.public_send(field[:name])] }.to_json %>"
-    <% if taxonomy_field %>
-      data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"
-    <% end %>>
-  <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2">
+  <% if taxonomy_field %>data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"<% end %>>
+
+  <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom">
     <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
+
     <span class="flex-grow-1 text-break"
-      role="button" tabindex="0"
+      role="button"
+      tabindex="0"
+      aria-label="Rename <%= node.name %>"
       data-taxonomy-tree-target="name"
       data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName">
       <% if node.respond_to?(:bgcolor) %>
         <%= entity_tag_badge(node) %>
       <% else %>
-        <%= node.name %>
+        <span class="entity-title"><%= node.name %></span>
         <%= entity_tag_badge(node) %>
       <% end %>
       <% if node.description.present? %>
-        <div class="small text-body-secondary text-break"><%= node.description %></div>
+        <div class="entity-description"><%= node.description %></div>
       <% end %>
     </span>
-    <span class="taxonomy-actions d-flex gap-1">
+
+    <span class="taxonomy-actions d-flex align-items-center gap-1">
       <% if new_url %>
         <%= button_tag type: "button",
-          class: "btn btn-sm btn-outline-secondary",
+          class: "btn btn-sm btn-light border",
           title: "Add child",
           aria: { label: "Add child to #{node.name}" },
           data: { action: "taxonomy-tree#add" } do %>
           <i class="bi bi-plus-lg" aria-hidden="true"></i>
         <% end %>
       <% end %>
-      <%= button_tag type: "button",
-        class: "btn btn-sm btn-outline-secondary",
-        title: "Edit",
-        aria: { label: "Edit #{node.name}" },
-        data: { action: "taxonomy-tree#edit" } do %>
-        <i class="bi bi-pencil" aria-hidden="true"></i>
-      <% end %>
-      <%= button_tag type: "button",
-        class: "btn btn-sm btn-outline-danger",
-        title: "Delete",
-        aria: { label: "Delete #{node.name}" },
-        data: { action: "taxonomy-tree#remove" } do %>
-        <i class="bi bi-trash" aria-hidden="true"></i>
-      <% end %>
+
+      <div class="dropdown">
+        <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+          id="taxonomy-<%= node.id %>-actions"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="Actions for <%= node.name %>">
+          <i class="bi bi-three-dots" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
+          <li>
+            <button type="button" class="dropdown-item"
+              data-action="taxonomy-tree#edit">
+              <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+            </button>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <button type="button" class="dropdown-item text-danger"
+              data-action="taxonomy-tree#remove">
+              <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+            </button>
+          </li>
+        </ul>
+      </div>
     </span>
   </div>
 
   <% children = node.public_send(children_method) %>
   <% if children.any? %>
-    <ul class="taxonomy-list list-unstyled ms-4"
+    <ul class="taxonomy-list list-unstyled ms-4 ps-3"
       data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
       data-drop-parent-id="<%= node.id %>">
       <% children.each do |child| %>

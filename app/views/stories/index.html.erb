@@ -1,47 +1,74 @@
 <% content_for :title, "Stories" %>
 
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <h1 class="mb-0">Stories</h1>
-  <%= link_to "New story", new_universe_story_path, class: "btn btn-primary" %>
-</div>
-
-<% if @stories.empty? %>
-  <p class="text-body-secondary">
-    No stories yet. A story holds the plot and sections of this universe, while
-    characters, locations, events and items are shared by all of them.
-  </p>
+<%= render "shared/page_header",
+  title: "Stories",
+  eyebrow: Current.universe.name,
+  description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe.",
+  count: @stories.size,
+  count_label: "story" do %>
+  <%= link_to new_universe_story_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span>New story</span>
+  <% end %>
 <% end %>
 
-<div class="row">
-  <% @stories.each do |story| %>
-    <div class="col-md-6 col-lg-4 mb-3">
-      <div class="card h-100">
-        <div class="card-body">
-          <h5 class="card-title">
-            <%= link_to story.name, universe_story_path(id: story) %>
-            <% if Current.story == story %>
-              <span class="badge text-bg-primary">Current</span>
+<% if @stories.any? %>
+  <div class="row g-3">
+    <% @stories.each do |story| %>
+      <div class="col-md-6 col-xl-4">
+        <article class="card surface-card story-card h-100">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between gap-3 mb-2">
+              <h2 class="h5 story-card-title mb-0">
+                <%= link_to story.name, universe_story_path(id: story) %>
+              </h2>
+              <% if Current.story == story %>
+                <span class="badge text-bg-primary">Current</span>
+              <% end %>
+            </div>
+
+            <% if story.description.present? %>
+              <p class="text-body-secondary"><%= story.description %></p>
+            <% else %>
+              <p class="text-body-secondary">No description yet.</p>
             <% end %>
-          </h5>
-          <% if story.description.present? %>
-            <p class="card-text"><%= story.description %></p>
-          <% end %>
-          <p class="card-text">
-            <small class="text-body-secondary">
+
+            <div class="small text-body-secondary mb-3">
               <%= pluralize(story.sections.size, "section") %>
-            </small>
-          </p>
-          <%= link_to "Sections", universe_story_sections_path(story_id: story), class: "btn btn-sm btn-outline-primary" %>
-        </div>
-        <div class="card-footer d-flex justify-content-between">
-          <%= link_to "Edit", edit_universe_story_path(id: story) %>
-          <%= button_to "Destroy",
-                universe_story_path(id: story),
-                method: :delete,
-                class: "btn btn-sm btn-outline-danger",
-                data: { turbo_confirm: "Delete this story and all of its sections?" } %>
-        </div>
+            </div>
+          </div>
+
+          <div class="card-footer bg-body border-top-0 d-flex align-items-center gap-2">
+            <%= link_to "Open story", universe_story_path(id: story), class: "btn btn-sm btn-primary" %>
+            <%= link_to "Sections", universe_story_sections_path(story_id: story), class: "btn btn-sm btn-outline-secondary" %>
+
+            <div class="dropdown row-actions ms-auto">
+              <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                id="<%= dom_id(story) %>-actions"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-label="Actions for <%= story.name %>">
+                <i class="bi bi-three-dots" aria-hidden="true"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(story) %>-actions">
+                <li><%= link_to "Edit story", edit_universe_story_path(id: story), class: "dropdown-item" %></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <%= button_to "Delete story", universe_story_path(id: story),
+                    method: :delete,
+                    class: "dropdown-item text-danger",
+                    data: { turbo_confirm: "Delete #{story.name} and all of its sections?" } %>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </article>
       </div>
-    </div>
-  <% end %>
-</div>
+    <% end %>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+    title: "No stories yet",
+    description: "A story holds the plot and sections of this universe, while its world-building records remain shared across stories.",
+    icon: "books" %>
+<% end %>

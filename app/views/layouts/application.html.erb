@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title><%= content_for(:title) || "Universe Maker" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,47 +11,62 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="bg-body-secondary">
+  <body class="um-page-canvas">
+    <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
 
-    <div class="container-xl">
+    <%= render "layouts/navbar" %>
 
-      <%= render "layouts/navbar" %>
-
-      <div class="row">
-
-        <% if Current.universe.present? %>
-          <!-- Left sidebar -->
-          <aside class="col-md-2 border-end left-sidebar">
+    <% if Current.universe.present? %>
+      <div class="workspace-shell">
+        <aside class="workspace-sidebar offcanvas-lg offcanvas-start"
+          tabindex="-1"
+          id="workspace-navigation"
+          aria-labelledby="workspace-navigation-title">
+          <div class="offcanvas-header border-bottom">
+            <h2 class="offcanvas-title h5 mb-0" id="workspace-navigation-title">Workspace navigation</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close navigation"></button>
+          </div>
+          <div class="offcanvas-body p-0">
             <%= render "layouts/left_sidebar" %>
-          </aside>
-        <% end %>
+          </div>
+        </aside>
 
-        <!-- Main content -->
-        <main class="<%= Current.universe.present? ? "col-md-8" : "col-12" %> px-md-4 py-4">
-          <%= yield %>
+        <main class="workspace-main" id="main-content">
+          <div class="mobile-workspace-bar d-lg-none">
+            <button class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#workspace-navigation"
+              aria-controls="workspace-navigation">
+              <i class="bi bi-list" aria-hidden="true"></i>
+              Menu
+            </button>
+            <span class="mobile-workspace-context">
+              <%= Current.universe.name %><% if Current.story %> · <%= Current.story.name %><% end %>
+            </span>
+          </div>
+
+          <div class="page-shell">
+            <%= render "shared/flash" %>
+            <%= yield %>
+          </div>
         </main>
-
-        <% if Current.universe.present? %>
-          <!-- Right sidebar -->
-          <aside class="col-md-2 border-start right-sidebar">
-            <%= render "layouts/right_sidebar" %>
-          </aside>
-        <% end %>
-
       </div>
-
-    </div>
+    <% else %>
+      <main class="workspace-main workspace-main--full" id="main-content">
+        <div class="page-shell">
+          <%= render "shared/flash" %>
+          <%= yield %>
+        </div>
+      </main>
+    <% end %>
   </body>
 </html>

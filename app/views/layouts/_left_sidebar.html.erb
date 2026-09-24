@@ -1,205 +1,160 @@
-<div class="py-4">
+<% menu_counts = Current.universe.menu_counts %>
+<% section_count = Current.story&.menu_section_count %>
 
-<% if Current.universe.present? %>
-  <% menu_counts = Current.universe.menu_counts %>
-
-  <%# WHAT and HOW are story-scoped, so they stay hidden until a story is
-      selected in the top bar. The stories menu itself lives there too. %>
+<div class="sidebar-context">
+  <div class="sidebar-eyebrow">Current universe</div>
+  <h2 class="sidebar-universe-name"><%= Current.universe.name %></h2>
   <% if Current.story.present? %>
-    <% section_count = Current.story.menu_section_count %>
-
-    <div class="card flex-column mb-4 nav">
-      <div class="card-header border-primary text-primary">
-        WHAT
-      </div>
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">
-          <%= link_to icon_text_count("diagram-3", "Plot"), "#",
-            class: "nav-link px-0 link-secondary" %>
-        </li>
-        <li class="list-group-item">
-          <%= link_to icon_text_count("globe", "World Building"), "#",
-            class: "nav-link px-0 link-secondary" %>
-        </li>
-        <li class="list-group-item">
-          <%= link_to icon_text_count("bricks", "Tropes"), "#",
-            class: "nav-link px-0 link-secondary" %>
-        </li>
-      </ul>
-    </div>
-
-    <div class="card flex-column mb-4 nav">
-      <div class="card-header border-primary text-primary">
-        HOW
-      </div>
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">
-          <%= link_to icon_text_count("film", "Scenes"), "#",
-            class: "nav-link px-0 link-secondary" %>
-        </li>
-        <li class="list-group-item <%= active_if(:sections, :section_tags) %>">
-          <div class="d-flex align-items-center justify-content-between">
-            <%= link_to icon_text_count("list-nested", "Sections", section_count),
-              universe_story_sections_path(story_id: Current.story),
-              class: "nav-link px-0#{active_if(:sections)}"
-            %>
-            <% if visible?(:sections, :section_tags) %>
-              <%= link_to icon("tags"),
-                universe_story_section_tags_path(story_id: Current.story),
-                class: "nav-link px-0#{active_if(:section_tags)}"
-              %>
-            <% end %>
-          </div>
-        </li>
-      </ul>
-    </div>
+    <p class="sidebar-story-name">Story: <%= Current.story.name %></p>
   <% end %>
-
-
-  <div class="card flex-column mb-4 nav">
-    <div class="card-header border-danger text-danger">
-      WHO
-    </div>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:characters, :character_tags) %>">
-        <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("person", "Characters", menu_counts[:characters]),
-            universe_characters_path(),
-            class: "nav-link text-danger px-0#{active_if(:characters)}"
-          %>
-          <% if visible?(:characters, :character_tags) %>
-            <%= link_to icon("tags"),
-              universe_character_tags_path(),
-              class: "nav-link text-danger px-0#{active_if(:character_tags)}"
-            %>
-          <% end %>
-        </div>
-      </li>
-      <li class="list-group-item <%= active_if(:relations, :relation_tags) %>">
-        <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("people", "Relations", menu_counts[:relations]),
-            universe_relations_path(),
-            class: "nav-link text-danger px-0#{active_if(:relations)}"
-          %>
-          <% if visible?(:relations, :relation_tags) %>
-            <%= link_to icon("tags"),
-              universe_relation_tags_path(),
-              class: "nav-link text-danger px-0#{active_if(:relation_tags)}"
-            %>
-          <% end %>
-        </div>
-      </li>
-      <li class="list-group-item">
-        <%= link_to icon_text_count("person-plus", "Meetings"), "#",
-          class: "nav-link px-0 link-secondary" %>
-      </li>
-      <li class="list-group-item">
-        <%= link_to icon_text_count("chat-dots", "Dialogs"),
-          "#", class: "nav-link px-0 link-secondary" %>
-      </li>
-    </ul>
-  </div>
-
-  <div class="card flex-column mb-4 nav">
-    <div class="card-header border-danger text-danger">
-      WHERE
-    </div>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:locations, :location_tags) %>">
-        <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("geo-alt", "Locations", menu_counts[:locations]),
-            universe_locations_path(),
-            class: "nav-link text-danger px-0#{active_if(:locations)}"
-          %>
-          <% if visible?(:locations, :location_tags) %>
-            <%= link_to icon("tags"),
-              universe_location_tags_path(),
-              class: "nav-link text-danger px-0#{active_if(:location_tags)}"
-            %>
-          <% end %>
-        </div>
-      </li>
-      <li class="list-group-item">
-        <%= link_to icon_text_count("sign-turn-right", "Routes"), "#",
-          class: "nav-link px-0 link-secondary" %>
-      </li>
-      <li class="list-group-item">
-        <%= link_to icon_text_count("map", "Map"), "#",
-          class: "nav-link px-0 link-secondary" %>
-      </li>
-      <li class="list-group-item">
-        <%= link_to icon_text_count("rulers", "Distances"), "#",
-          class: "nav-link px-0 link-secondary" %>
-      </li>
-      <li class="list-group-item">
-        <%= link_to icon_text_count("bounding-box-circles", "Connections"), "#",
-          class: "nav-link px-0 link-secondary" %>
-      </li>
-    </ul>
-  </div>
-
-  <div class="card flex-column mb-4 nav">
-    <div class="card-header border-danger text-danger">
-      WHEN
-    </div>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:events, :event_tags) %>">
-        <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("calendar-event", "Events", menu_counts[:events]),
-            universe_events_path(),
-            class: "nav-link text-danger px-0#{active_if(:events)}"
-          %>
-          <% if visible?(:events, :event_tags) %>
-            <%= link_to icon("tags"),
-              universe_event_tags_path(),
-              class: "nav-link text-danger px-0#{active_if(:event_tags)}"
-            %>
-          <% end %>
-        </div>
-      </li>
-      <li class="list-group-item <%= active_if(:timeline) %>">
-        <%= link_to icon_text_count("calendar-range", "Timeline"),
-          universe_timeline_path(),
-          class: "nav-link text-danger px-0#{active_if(:timeline)}" %>
-      </li>
-    </ul>
-  </div>
-
-  <div class="card flex-column mb-4 nav">
-    <div class="card-header border-danger text-danger">
-      WITH
-    </div>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item <%= active_if(:items, :item_tags) %>">
-        <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("box-seam", "Items", menu_counts[:items]),
-            universe_items_path(),
-            class: "nav-link text-danger px-0#{active_if(:items)}"
-          %>
-          <% if visible?(:items, :item_tags) %>
-            <%= link_to icon("tags"),
-              universe_item_tags_path(),
-              class: "nav-link text-danger px-0#{active_if(:item_tags)}"
-            %>
-          <% end %>
-        </div>
-      </li>
-      <li class="list-group-item <%= active_if(:ownerships, :ownership_tags) %>">
-        <div class="d-flex align-items-center justify-content-between">
-          <%= link_to icon_text_count("person-bounding-box", "Ownerships", menu_counts[:ownerships]),
-            universe_ownerships_path(),
-            class: "nav-link text-danger px-0#{active_if(:ownerships)}"
-          %>
-          <% if visible?(:ownerships, :ownership_tags) %>
-            <%= link_to icon("tags"),
-              universe_ownership_tags_path(),
-              class: "nav-link text-danger px-0#{active_if(:ownership_tags)}"
-            %>
-          <% end %>
-        </div>
-      </li>
-    </ul>
-  </div>
-<% end %>
-
 </div>
+
+<nav class="workspace-navigation" aria-label="Universe and story navigation">
+  <section class="sidebar-section" aria-labelledby="story-workspace-title">
+    <h3 class="sidebar-section-title" id="story-workspace-title">Story workspace</h3>
+    <ul class="sidebar-list">
+      <% if Current.story.present? %>
+        <%= render "shared/sidebar_link",
+          icon: "house",
+          label: "Story overview",
+          path: universe_story_path(id: Current.story),
+          controllers: %i[ stories ] %>
+
+        <%= render "shared/sidebar_link",
+          icon: "list-nested",
+          label: "Sections",
+          count: section_count,
+          path: universe_story_sections_path(story_id: Current.story),
+          controllers: %i[ sections ] %>
+      <% else %>
+        <%= render "shared/sidebar_link",
+          icon: "books",
+          label: "All stories",
+          path: universe_stories_path,
+          controllers: %i[ stories ] %>
+        <p class="sidebar-hint">Select a story to work on its sections and story-specific structure.</p>
+      <% end %>
+    </ul>
+
+    <%= link_to "New story", new_universe_story_path, class: "btn btn-outline-primary btn-sm w-100 sidebar-create-link" %>
+  </section>
+
+  <section class="sidebar-section" aria-labelledby="universe-bible-title">
+    <h3 class="sidebar-section-title" id="universe-bible-title">Universe Bible</h3>
+
+    <h4 class="sidebar-group-title">People</h4>
+    <ul class="sidebar-list">
+      <%= render "shared/sidebar_link",
+        icon: "person",
+        label: "Characters",
+        count: menu_counts[:characters],
+        path: universe_characters_path,
+        controllers: %i[ characters ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "people",
+        label: "Relations",
+        count: menu_counts[:relations],
+        path: universe_relations_path,
+        controllers: %i[ relations ] %>
+    </ul>
+
+    <h4 class="sidebar-group-title">Places</h4>
+    <ul class="sidebar-list">
+      <%= render "shared/sidebar_link",
+        icon: "geo-alt",
+        label: "Locations",
+        count: menu_counts[:locations],
+        path: universe_locations_path,
+        controllers: %i[ locations ] %>
+    </ul>
+
+    <h4 class="sidebar-group-title">Time</h4>
+    <ul class="sidebar-list">
+      <%= render "shared/sidebar_link",
+        icon: "calendar-event",
+        label: "Events",
+        count: menu_counts[:events],
+        path: universe_events_path,
+        controllers: %i[ events ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "calendar-range",
+        label: "Timeline",
+        path: universe_timeline_path,
+        controllers: %i[ timeline ] %>
+    </ul>
+
+    <h4 class="sidebar-group-title">Objects</h4>
+    <ul class="sidebar-list">
+      <%= render "shared/sidebar_link",
+        icon: "box-seam",
+        label: "Items",
+        count: menu_counts[:items],
+        path: universe_items_path,
+        controllers: %i[ items ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "person-bounding-box",
+        label: "Ownerships",
+        count: menu_counts[:ownerships],
+        path: universe_ownerships_path,
+        controllers: %i[ ownerships ] %>
+    </ul>
+  </section>
+
+  <section class="sidebar-section" aria-labelledby="configuration-title">
+    <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
+    <p class="sidebar-hint">Tags and future organization tools live here.</p>
+
+    <% if Current.story.present? %>
+      <h4 class="sidebar-group-title">Story</h4>
+      <ul class="sidebar-list">
+        <%= render "shared/sidebar_link",
+          icon: "tags",
+          label: "Section tags",
+          path: universe_story_section_tags_path(story_id: Current.story),
+          controllers: %i[ section_tags ] %>
+      </ul>
+    <% end %>
+
+    <h4 class="sidebar-group-title">Universe</h4>
+    <ul class="sidebar-list">
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Character tags",
+        path: universe_character_tags_path,
+        controllers: %i[ character_tags ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Location tags",
+        path: universe_location_tags_path,
+        controllers: %i[ location_tags ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Item tags",
+        path: universe_item_tags_path,
+        controllers: %i[ item_tags ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Event tags",
+        path: universe_event_tags_path,
+        controllers: %i[ event_tags ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Relation tags",
+        path: universe_relation_tags_path,
+        controllers: %i[ relation_tags ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Ownership tags",
+        path: universe_ownership_tags_path,
+        controllers: %i[ ownership_tags ] %>
+    </ul>
+  </section>
+</nav>

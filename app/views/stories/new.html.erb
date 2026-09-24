@@ -1,9 +1,8 @@
 <% content_for :title, "New story" %>
 
-<h1>New story</h1>
+<%= render "shared/page_header",
+  title: "New story",
+  eyebrow: Current.universe.name,
+  description: "Create a story with its own plot and section structure inside this universe." %>
 
 <%= render "form", story: @story %>
-
-<div>
-  <%= link_to "Back to stories", universe_stories_path %>
-</div>

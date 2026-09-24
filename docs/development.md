@@ -19,8 +19,12 @@ bun run watch:css             # rebuild CSS on .scss changes (Procfile.dev: fore
 ```
 
 - CSS pipeline: `app/assets/stylesheets/application.bootstrap.scss` → sass → postcss/autoprefixer
-  → `app/assets/builds/application.css` (Propshaft serves it). The build also runs automatically
-  before the test suite, so tests require `node_modules` + bun.
+  → `app/assets/builds/application.css`. Development keeps Propshaft on a dynamic manifest under
+  `tmp/assets`, so `bun run watch:css` is immediately visible and a stale `public/assets` manifest
+  cannot shadow local changes. The build also runs automatically before the test suite, so tests
+  require `node_modules` + bun. Use `RAILS_ENV=production bin/rails assets:precompile` when
+  checking the production asset manifest; do not run a development precompile as the local CSS
+  workflow.
 
 ## Test suite (Minitest)
 
@@ -141,7 +145,9 @@ Dependabot config: `.github/dependabot.yml`.
    Remember: path helpers need **named** keys.
 5. Views — pick one of the three patterns; for modal editors add `*_fields_json` /
    `*_tag_taxonomy_fields` to `app/helpers/modal_fields.rb`.
-6. Sidebar link in `app/views/layouts/_left_sidebar.html.erb` (`icon_text_count` + `active_if`).
+6. Sidebar link in `app/views/layouts/_left_sidebar.html.erb` using the shared
+   `shared/_sidebar_link` pattern; add taxonomy/configuration links to the separate Configuration
+   section when the model needs them.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
 8. Demo data: YAML entry handled by the loader (add the model to `models_in_order` in
    `db/data/<name>/<name>.rb`) or Ruby seed.

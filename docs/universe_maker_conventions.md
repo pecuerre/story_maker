@@ -77,6 +77,14 @@
 
 ### Views - Three Patterns
 
+Every work page starts with `shared/_page_header` (eyebrow, sentence-case title, optional count and
+description, right-aligned actions) and uses `shared/_empty_state` instead of bare “No records yet”
+text. Flat entity rows use `shared/_row_actions`: neutral overflow menus for edit/delete, with
+destructive actions marked by text/icon rather than a permanently red button. Flash messages are
+rendered once by the application layout through `shared/_flash`.
+
+The three functional editing patterns are:
+
 **1. Taxonomy tree** (all `_tag` indexes, plus `sections` and `locations`):
 - Use the `shared/taxonomy_tree` partial (wraps `shared/_taxonomy_node`) with the
   `new_url`/`create_url`/`edit_url`/`update_url`/`delete_url` lambdas + `model_param` +
@@ -85,7 +93,7 @@
   modal editor (fields come from `data-taxonomy-tree-modal-fields-value`).
 
 **2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
-- `list-group` rows with edit/delete buttons + a modal in the same template.
+- `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
 - Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`.
 
 **3. Plain full-page forms** (universes, stories):
@@ -106,9 +114,10 @@
   - `*_fields_json(record)` — serializes a record for modal pre-filling:
     `event_fields_json`, `character_fields_json`, `item_fields_json`,
     `ownership_fields_json`, `relation_fields_json`.
-- `app/helpers/application_helper.rb` — `active_if`, `visible?`, `icon`, `icon_text_count`,
-  `nav_universes`, `nav_stories` (top bar dropdowns), `entity_tag_badge` (renders a record's tags
-  as colored badges).
+- `app/helpers/application_helper.rb` — `active_if`, `aria_current_for`, `visible?`, `icon`,
+  `icon_text_count`, `nav_universes`, `nav_stories` (top bar dropdowns), `entity_tag_badge`
+  (renders a record's tags as colored badges). Counts are right-aligned pills, not parenthesized
+  text; current links carry both `.active` and `aria-current="page"`.
 - `app/helpers/timeline_helper.rb` — popover title/content for timeline events.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
@@ -119,35 +128,36 @@
 
 ### Navigation (Top bar) — `app/views/layouts/_navbar.html.erb`
 Left to right:
-- **Dashboard** — placeholder (`#`).
-- **Universes** — dropdown: `nav_universes` list (current universe highlighted), *All
-  universes*, *New universe*.
-- **[current universe]** — only when `Current.universe` is present: a dropdown named after the
-  universe listing `nav_stories` (current story highlighted as `active`), plus *All stories* and
-  *New story*. This is where the stories menu now lives (it used to be the sidebar's WHAT card).
-  The toggle also gets `active_if(:stories)` so it lights up on story pages.
-- **[current story]** — only when `Current.story` is present: a link to that story's page
-  (`universe_story_path(id: …)`).
+- **Universes** — dropdown: `nav_universes` list (current universe highlighted), *All universes*,
+  *New universe*.
+- **Universe: [name]** — present when `Current.universe` exists; makes the current universe scope
+  explicit and links back to the universe overview/all universes.
+- **Story: [name or Select]** — present when `Current.universe` exists; lists `nav_stories`, *All
+  stories*, and *New story*. A selected story is highlighted, but there is no duplicate standalone
+  current-story link.
+- **Account** — signed-in email and logout action, or **Log in** for guests.
+
+Nonfunctional Dashboard, analyzer, collaboration, and tool links are not rendered. A future
+contextual inspector belongs offcanvas rather than in a permanent third column.
 
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
-Both sidebars render only when `Current.universe` is present (with no universe selected the main
-column takes the full width), grouped by question cards:
-- **WHAT** *(story-scoped — hidden until a story is selected)*: Plot (placeholder `#`),
-  World Building (placeholder), Tropes (placeholder). The Stories entry moved to the top bar.
-- **HOW** *(story-scoped — hidden until a story is selected)*: Scenes (placeholder), Sections +
-  Section Tags — the Sections link targets `Current.story` (remembered per universe in the
-  session; there is **no** fallback to the first story).
-- **WHO**: Characters, Relations, Meetings (placeholder), Dialogs (placeholder).
-- **WHERE**: Locations, Routes (placeholder), Map (placeholder), Distances (placeholder),
-  Connections (placeholder).
-- **WHEN**: Events, Timeline.
-- **WITH**: Items, Ownerships.
-Each real entry shows `icon_text_count` with a count and a tag-icon shortcut (`active_if`).
+The workspace sidebar renders only when `Current.universe` is present. It is one continuous
+navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas below `lg`:
+- **Story workspace**: Story overview + Sections when a story is selected; otherwise All stories
+  plus a prompt to select one. New story is always available.
+- **Universe Bible**: People (Characters, Relations), Places (Locations), Time (Events, Timeline),
+  and Objects (Items, Ownerships). These are the records themselves; taxonomy links do not appear
+  beneath them.
+- **Configuration**: a separate organization/settings section. It contains Story configuration
+  (Section tags when a story is selected) and Universe configuration (Character tags, Location tags,
+  Item tags, Event tags, Relation tags, Ownership tags). Future configuration tools belong here.
+- Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
+  background and `aria-current="page"`. There are no placeholder `#` links.
 
 ## Event Model (implemented)
 
 Correction of an older (wrong) note: **Event does have a `_tag` taxonomy** — `EventTag` +
-`events_event_tags` HABTM + `EventTagsController` + sidebar tag shortcut, exactly like the other
+`events_event_tags` HABTM + `EventTagsController` + labeled Event tags navigation, like the other
 content models. What actually makes Event special:
 
 1. `Event` includes `Hierarchical` (parent/position) **plus** the self-referencing

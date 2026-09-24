@@ -1,11 +1,18 @@
 <% content_for :title, "Item Tags" %>
 
-<h1>Item Tags</h1>
-
 <%= render "shared/taxonomy_tree",
+  title: "Item tags",
+  description: "Define optional categories for objects and resources in this universe.",
+  eyebrow: "Universe Bible",
+  count: Current.universe.item_tags.count,
+  count_label: "tag",
+  new_label: "Add item tag",
+  secondary_label: "Manage items",
+  secondary_url: universe_items_path,
+  empty_description: "Tags are optional. Add one to group items, or create untagged items.",
   nodes: @item_tags,
   new_url: ->(parent = nil) { new_universe_item_tag_path(parent_id: parent&.id) },
-  create_url: universe_item_tags_path(),
+  create_url: universe_item_tags_path,
   edit_url: ->(item_tag) { edit_universe_item_tag_path(id: item_tag) },
   update_url: ->(item_tag) { universe_item_tag_path(id: item_tag) },
   delete_url: ->(item_tag) { universe_item_tag_path(id: item_tag) },

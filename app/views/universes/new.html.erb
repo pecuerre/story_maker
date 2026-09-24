@@ -1,11 +1,7 @@
 <% content_for :title, "New universe" %>
 
-<h1>New universe</h1>
+<%= render "shared/page_header",
+  title: "New universe",
+  description: "Create a world that will contain its own stories and shared world-building records." %>
 
 <%= render "form", universe: @universe %>
-
-<br>
-
-<div>
-  <%= link_to "Back to universes", universes_path %>
-</div>

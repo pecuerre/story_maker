@@ -3,71 +3,67 @@
 <div data-controller="modal-form"
   data-modal-form-model-param-value="item"
   data-modal-form-create-title-value="New item">
-  <h1>Items</h1>
-
-  <button type="button"
-    class="btn btn-sm btn-primary mb-3"
-    data-action="modal-form#open"
-    data-modal-form-url="<%= universe_items_path() %>"
-    data-modal-form-method="post"
-    data-modal-form-title="New item"
-    data-modal-form-values-value="{}">
-    <i class="bi bi-plus-circle" aria-hidden="true"></i>
-    <span>Add Item</span>
-  </button>
+  <%= render "shared/page_header",
+    title: "Items",
+    eyebrow: "Universe Bible",
+    description: "Objects and resources whose details are shared by every story in this universe.",
+    count: @items.size,
+    count_label: "item" do %>
+    <button type="button" class="btn btn-primary"
+      data-action="modal-form#open"
+      data-modal-form-url="<%= universe_items_path %>"
+      data-modal-form-method="post"
+      data-modal-form-title="New item"
+      data-modal-form-values-value="{}">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>Add item</span>
+    </button>
+  <% end %>
 
   <% if @items.any? %>
-    <div class="list-group">
-      <% @items.each do |item| %>
-        <div class="list-group-item d-flex align-items-center gap-3">
-          <div class="flex-grow-1">
-            <%= item.name %>
-            <%= entity_tag_badge(item) %>
-            <% if item.description.present? %>
-              <div class="small text-body-secondary text-break"><%= item.description %></div>
-            <% end %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @items.each do |item| %>
+          <div class="list-group-item entity-row d-flex align-items-center gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= item.name %></span>
+                <%= entity_tag_badge(item) %>
+              </div>
+              <% if item.description.present? %>
+                <div class="entity-description"><%= item.description %></div>
+              <% end %>
+            </div>
+
+            <%= render "shared/row_actions",
+              record: item,
+              label: "item",
+              record_name: item.name,
+              edit_url: universe_item_path(id: item),
+              delete_url: universe_item_path(id: item),
+              values: item_fields_json(item) %>
           </div>
-          <div class="d-flex gap-1">
-            <button type="button"
-              class="btn btn-sm btn-outline-secondary"
-              title="Edit item"
-              aria-label="Edit item"
-              data-action="modal-form#open"
-              data-modal-form-url="<%= universe_item_path(id: item) %>"
-              data-modal-form-method="patch"
-              data-modal-form-title="Edit item"
-              data-modal-form-values-value="<%= item_fields_json(item) %>">
-              <i class="bi bi-pencil" aria-hidden="true"></i>
-            </button>
-            <%= button_to universe_item_path(id: item),
-              method: :delete,
-              class: "btn btn-sm btn-outline-danger",
-              title: "Delete item",
-              aria: { label: "Delete item" } do %>
-              <i class="bi bi-trash" aria-hidden="true"></i>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   <% else %>
-    <p class="text-body-secondary">No items yet.</p>
+    <%= render "shared/empty_state",
+      title: "No items yet",
+      description: "Items belong to the universe and can be used to track objects, resources, and ownership across every story.",
+      icon: "box-seam" %>
   <% end %>
 
   <div class="modal fade" tabindex="-1"
     aria-labelledby="item-modal-title"
     aria-hidden="true"
     data-modal-form-target="modal">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="item-modal-title"
-            data-modal-form-target="title">
-            New item
-          </h2>
+          <h2 class="modal-title fs-5" id="item-modal-title" data-modal-form-target="title">New item</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <%= form_with scope: :item, url: universe_items_path(), method: :post,
+        <%= form_with scope: :item, url: universe_items_path, method: :post,
           data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">
             <div class="mb-3">
@@ -75,12 +71,12 @@
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
             <div class="mb-3">
-              <%= form.label :item_tag_ids, "Item Tags", class: "form-label" %>
+              <%= form.label :item_tag_ids, "Item tags", class: "form-label" %>
               <%= form.collection_select :item_tag_ids, @item_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
-            <div class="mb-3">
+            <div>
               <%= form.label :description, class: "form-label" %>
               <%= form.text_area :description, class: "form-control", rows: 4 %>
             </div>

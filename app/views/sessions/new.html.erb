@@ -1,11 +1,35 @@
-<%= tag.div(flash[:alert], style: "color:red") if flash[:alert] %>
-<%= tag.div(flash[:notice], style: "color:green") if flash[:notice] %>
+<% content_for :title, "Sign in" %>
 
-<%= form_with url: session_path do |form| %>
-  <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address] %><br>
-  <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %><br>
-  <%= form.submit "Sign in" %>
-<% end %>
-<br>
+<div class="auth-shell">
+  <%= render "shared/page_header",
+    title: "Sign in",
+    description: "Open your universes and continue building your worlds." %>
 
-<%= link_to "Forgot password?", new_password_path %>
+  <%= form_with url: session_path, class: "form-surface" do |form| %>
+    <div class="mb-3">
+      <%= form.label :email_address, class: "form-label" %>
+      <%= form.email_field :email_address,
+        class: "form-control",
+        required: true,
+        autofocus: true,
+        autocomplete: "username",
+        placeholder: "you@example.com",
+        value: params[:email_address] %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :password, class: "form-label" %>
+      <%= form.password_field :password,
+        class: "form-control",
+        required: true,
+        autocomplete: "current-password",
+        placeholder: "Enter your password",
+        maxlength: 72 %>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between gap-3">
+      <%= form.submit "Sign in", class: "btn btn-primary" %>
+      <%= link_to "Forgot password?", new_password_path, class: "link-secondary" %>
+    </div>
+  <% end %>
+</div>

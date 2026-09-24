@@ -1,45 +1,52 @@
 <% content_for :title, "Timeline" %>
 
-<div class="timeline-wrapper"
-  data-controller="timeline"
-  data-timeline-edges-value="<%= @edges.to_json %>">
-  <h1>Timeline</h1>
+<div class="timeline-wrapper" data-controller="timeline" data-timeline-edges-value="<%= @edges.to_json %>">
+  <%= render "shared/page_header",
+    title: "Timeline",
+    eyebrow: "Universe Bible",
+    description: "See how events are ordered from dates and explicit before, after, and simultaneous relationships.",
+    count: @layers.sum(&:size),
+    count_label: "event" do %>
+    <%= link_to "Add event", universe_events_path, class: "btn btn-primary" %>
+  <% end %>
 
   <% if @layers.blank? || @layers.all?(&:empty?) %>
-    <p class="text-body-secondary">
-      No events yet. <%= link_to "Add some events", universe_events_path() %> to build a timeline.
-    </p>
+    <%= render "shared/empty_state",
+      title: "No events to place on the timeline",
+      description: "Add events with dates or relationships to each other, then return here to see their order.",
+      icon: "calendar-range" %>
   <% else %>
-    <div class="timeline-track" data-timeline-target="track">
-      <svg class="timeline-svg" data-timeline-target="svg"></svg>
-      <% @layers.each_with_index do |layer, index| %>
-        <% next if layer.empty? %>
-        <div class="timeline-layer">
-          <div class="timeline-layer-marker">
-            <span class="timeline-dot"></span>
+    <div class="surface-card p-3 p-md-4">
+      <div class="timeline-track" data-timeline-target="track">
+        <svg class="timeline-svg" data-timeline-target="svg"></svg>
+        <% @layers.each do |layer| %>
+          <% next if layer.empty? %>
+          <div class="timeline-layer">
+            <div class="timeline-layer-marker">
+              <span class="timeline-dot"></span>
+            </div>
+            <div class="timeline-layer-events">
+              <% layer.each do |event| %>
+                <div class="timeline-node"
+                  id="timeline-event-<%= event.id %>"
+                  data-timeline-target="node"
+                  data-event-id="<%= event.id %>"
+                  style="background-color: <%= event.event_tags.first&.bgcolor || '#d3d3d3' %>; color: <%= event.event_tags.first&.fgcolor || '#000000' %>;"
+                  tabindex="0"
+                  data-bs-toggle="popover"
+                  data-bs-trigger="hover focus"
+                  data-bs-custom-class="custom-popover"
+                  data-bs-html="true"
+                  data-bs-placement="right"
+                  data-bs-title="<%= event_popover_title(event) %>"
+                  data-bs-content="<%= event_popover_content(event) %>">
+                  <%= event.id %>
+                </div>
+              <% end %>
+            </div>
           </div>
-          <div class="timeline-layer-events">
-            <% layer.each do |event| %>
-              <div class="timeline-node"
-                id="timeline-event-<%= event.id %>"
-                data-timeline-target="node"
-                data-event-id="<%= event.id %>"
-                style="background-color: <%= event.event_tags.first&.bgcolor || '#d3d3d3' %>; color: <%= event.event_tags.first&.fgcolor || '#000000' %>;"
-                tabindex="0"
-                data-bs-toggle="popover"
-                data-bs-trigger="hover focus"
-                data-bs-custom-class="custom-popover"
-                data-bs-html="true"
-                data-bs-placement="right"
-                data-bs-title="<%= event_popover_title(event) %>"
-                data-bs-content="<%= event_popover_content(event) %>">
-                <%= event.id %>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>
-

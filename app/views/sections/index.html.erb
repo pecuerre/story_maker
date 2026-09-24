@@ -1,19 +1,21 @@
 <% content_for :title, "Sections" %>
 
-<h1>Sections</h1>
-
-<p class="text-body-secondary">
-  Story: <%= @story.name %> |
-  <%= link_to "All stories", universe_stories_path %>
-</p>
-
 <%= render "shared/taxonomy_tree",
-	nodes: @sections,
-	new_url: ->(parent = nil) { new_universe_story_section_path(story_id: @story, parent_id: parent&.id) },
-	create_url: universe_story_sections_path(story_id: @story),
-	edit_url: ->(section) { edit_universe_story_section_path(story_id: @story, id: section) },
-	update_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
-	delete_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
-	model_param: "section",
-	taxonomy_field: "section_tag_ids",
-	modal_fields: section_taxonomy_fields(@section_tags) %>
+  title: "Sections",
+  description: "Organize this story into a hierarchy of books, chapters, acts, scenes, or any structure you need.",
+  eyebrow: "Story: #{@story.name}",
+  count: @story.sections.count,
+  count_label: "section",
+  new_label: "Add section",
+  secondary_label: "Manage section tags",
+  secondary_url: universe_story_section_tags_path(story_id: @story),
+  empty_description: "Add a section, then drag rows to create the outline for this story.",
+  nodes: @sections,
+  new_url: ->(parent = nil) { new_universe_story_section_path(story_id: @story, parent_id: parent&.id) },
+  create_url: universe_story_sections_path(story_id: @story),
+  edit_url: ->(section) { edit_universe_story_section_path(story_id: @story, id: section) },
+  update_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
+  delete_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
+  model_param: "section",
+  taxonomy_field: "section_tag_ids",
+  modal_fields: section_taxonomy_fields(@section_tags) %>

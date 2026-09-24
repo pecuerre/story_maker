@@ -3,57 +3,54 @@
 <div data-controller="modal-form"
   data-modal-form-model-param-value="event"
   data-modal-form-create-title-value="New event">
-  <h1>Events</h1>
-
-  <button type="button"
-    class="btn btn-sm btn-primary mb-3"
-    data-action="modal-form#open"
-    data-modal-form-url="<%= universe_events_path() %>"
-    data-modal-form-method="post"
-    data-modal-form-title="New event"
-    data-modal-form-values-value="{}">
-    <i class="bi bi-plus-circle" aria-hidden="true"></i>
-    <span>Add Event</span>
-  </button>
+  <%= render "shared/page_header",
+    title: "Events",
+    eyebrow: "Universe Bible",
+    description: "Record moments that shape the universe and provide the structure for its timeline.",
+    count: @events.size,
+    count_label: "event" do %>
+    <button type="button" class="btn btn-primary"
+      data-action="modal-form#open"
+      data-modal-form-url="<%= universe_events_path %>"
+      data-modal-form-method="post"
+      data-modal-form-title="New event"
+      data-modal-form-values-value="{}">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>Add event</span>
+    </button>
+  <% end %>
 
   <% if @events.any? %>
-    <div class="list-group">
-      <% @events.each do |event| %>
-        <div class="list-group-item d-flex align-items-center gap-3">
-          <div class="flex-grow-1">
-            <%= event.display_string %>
-            <%= entity_tag_badge(event) %>
-            <% if event.description.present? %>
-              <div class="small text-body-secondary text-break">
-                <%= event.description %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @events.each do |event| %>
+          <div class="list-group-item entity-row d-flex align-items-center gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= event.display_string %></span>
+                <%= entity_tag_badge(event) %>
               </div>
-            <% end %>
+              <% if event.description.present? %>
+                <div class="entity-description"><%= event.description %></div>
+              <% end %>
+            </div>
+
+            <%= render "shared/row_actions",
+              record: event,
+              label: "event",
+              record_name: event.display_string,
+              edit_url: universe_event_path(id: event),
+              delete_url: universe_event_path(id: event),
+              values: event_fields_json(event) %>
           </div>
-          <div class="d-flex gap-1">
-            <button type="button"
-              class="btn btn-sm btn-outline-secondary"
-              title="Edit event"
-              aria-label="Edit event"
-              data-action="modal-form#open"
-              data-modal-form-url="<%= universe_event_path(id: event) %>"
-              data-modal-form-method="patch"
-              data-modal-form-title="Edit event"
-              data-modal-form-values-value="<%= event_fields_json(event) %>">
-              <i class="bi bi-pencil" aria-hidden="true"></i>
-            </button>
-            <%= button_to universe_event_path(id: event),
-              method: :delete,
-              class: "btn btn-sm btn-outline-danger",
-              title: "Delete event",
-              aria: { label: "Delete event" } do %>
-              <i class="bi bi-trash" aria-hidden="true"></i>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   <% else %>
-    <p class="text-body-secondary">No events yet.</p>
+    <%= render "shared/empty_state",
+      title: "No events yet",
+      description: "Add events with dates or relationships to each other, then open the Timeline to see how they connect.",
+      icon: "calendar-event" %>
   <% end %>
 
   <div class="modal fade" tabindex="-1"
@@ -63,26 +60,22 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5"
-            id="event-modal-title"
-            data-modal-form-target="title">
-            New event
-          </h2>
+          <h2 class="modal-title fs-5" id="event-modal-title" data-modal-form-target="title">New event</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <%= form_with scope: :event,
-          url: universe_events_path(),
+          url: universe_events_path,
           method: :post,
           data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">
             <p class="text-body-secondary small">
-              An event needs at least a title, a start or end date, or a relation to another event below.
+              An event needs at least a title, a start or end date, or a relationship to another event below.
             </p>
             <div class="mb-3">
               <%= form.label :title, class: "form-label" %>
               <%= form.text_field :title, class: "form-control" %>
             </div>
-            <div class="row g-3">
+            <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <%= form.label :start_datetime, "Start date/time", class: "form-label" %>
                 <%= form.datetime_local_field :start_datetime, class: "form-control" %>
@@ -97,7 +90,7 @@
               <%= form.text_area :description, class: "form-control", rows: 3 %>
             </div>
             <div class="mb-3">
-              <%= form.label :event_tag_ids, "Event Tags", class: "form-label" %>
+              <%= form.label :event_tag_ids, "Event tags", class: "form-label" %>
               <%= form.collection_select :event_tag_ids, @event_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>

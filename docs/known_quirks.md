@@ -9,9 +9,9 @@ survives. Index of all docs: [README.md](README.md).
 
 1. **`visible?` always returns `true`.** `ApplicationHelper#visible?`
    (`app/helpers/application_helper.rb`) computes `controllers.include?(controller.controller_name)`
-   on its own line and then returns literal `true` (the comparison is discarded). Every sidebar
-   "tag" shortcut is therefore always rendered (harmless today because it is only used to decide
-   visibility, not access).
+   on its own line and then returns literal `true` (the comparison is discarded). The redesigned
+   sidebar no longer calls this helper, so the bug no longer affects the current navigation, but
+   it must be fixed before reusing the helper for visibility decisions.
 
 2. **cancancan is installed but never used.** `Ability` (`app/models/ability.rb`) includes
    `CanCan::Ability`, but there is no `authorize!`/`current_ability`/`load_and_authorize` anywhere

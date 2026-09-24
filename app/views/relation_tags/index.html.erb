@@ -1,11 +1,18 @@
 <% content_for :title, "Relation Tags" %>
 
-<h1>Relation Tags</h1>
-
 <%= render "shared/taxonomy_tree",
+  title: "Relation tags",
+  description: "Define the relationship types used when connecting characters in this universe.",
+  eyebrow: "Universe Bible",
+  count: Current.universe.relation_tags.count,
+  count_label: "tag",
+  new_label: "Add relation tag",
+  secondary_label: "Manage relations",
+  secondary_url: universe_relations_path,
+  empty_description: "Tags are optional. Add one to describe character relationships, or leave relations untagged.",
   nodes: @relation_tags,
   new_url: ->(parent = nil) { new_universe_relation_tag_path(parent_id: parent&.id) },
-  create_url: universe_relation_tags_path(),
+  create_url: universe_relation_tags_path,
   edit_url: ->(relation_tag) { edit_universe_relation_tag_path(id: relation_tag) },
   update_url: ->(relation_tag) { universe_relation_tag_path(id: relation_tag) },
   delete_url: ->(relation_tag) { universe_relation_tag_path(id: relation_tag) },

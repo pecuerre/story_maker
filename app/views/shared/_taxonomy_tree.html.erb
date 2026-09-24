@@ -8,26 +8,68 @@
 <% model_param = local_assigns.fetch(:model_param) %>
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 <% taxonomy_field = local_assigns[:taxonomy_field] %>
+<% title = local_assigns.fetch(:title, model_param.humanize) %>
+<% count = local_assigns[:count] %>
+<% count_label = local_assigns[:count_label] || model_param.humanize.downcase.pluralize %>
+<% new_label = local_assigns[:new_label] || "Add #{model_param.humanize.downcase}" %>
 
-<div class="taxonomy-tree" data-controller="taxonomy-tree" data-taxonomy-tree-model-param-value="<%= model_param %>" data-taxonomy-tree-create-url-value="<%= create_url %>" data-taxonomy-tree-modal-fields-value="<%= modal_fields.to_json %>"<% if taxonomy_field %> data-taxonomy-tree-field-name-value="<%= taxonomy_field %>"<% end %>>
-  <%= button_tag type: "button", class: "btn btn-sm btn-primary mb-3", data: { action: "taxonomy-tree#add", create_url: new_url.call } do %>
-    <i class="bi bi-plus-circle" aria-hidden="true"></i>
-    <span>Add <%= model_param.capitalize %></span>
-  <% end if new_url %>
+<div class="taxonomy-tree"
+  data-controller="taxonomy-tree"
+  data-taxonomy-tree-model-param-value="<%= model_param %>"
+  data-taxonomy-tree-create-url-value="<%= create_url %>"
+  data-taxonomy-tree-modal-fields-value="<%= modal_fields.to_json %>"
+  <% if taxonomy_field %>data-taxonomy-tree-field-name-value="<%= taxonomy_field %>"<% end %>>
 
-  <ul class="taxonomy-list list-unstyled mb-0" data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop" data-drop-parent-id="">
-    <% nodes.each do |node| %>
-      <%= render "shared/taxonomy_node",
-        node: node,
-        children_method: children_method,
-        new_url: new_url,
-        edit_url: edit_url,
-        update_url: update_url,
-        delete_url: delete_url,
-        create_url: create_url,
-        model_param: model_param,
-        modal_fields: modal_fields,
-        taxonomy_field: taxonomy_field %>
+  <%= render "shared/page_header",
+    title: title,
+    eyebrow: local_assigns[:eyebrow],
+    description: local_assigns[:description],
+    count: count,
+    count_label: count_label do %>
+    <% if local_assigns[:secondary_url].present? %>
+      <%= link_to local_assigns.fetch(:secondary_label), local_assigns.fetch(:secondary_url),
+        class: "btn btn-outline-secondary" %>
     <% end %>
-  </ul>
+    <% if new_url %>
+      <%= button_tag type: "button",
+        class: "btn btn-primary",
+        data: { action: "taxonomy-tree#add" } do %>
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span><%= new_label %></span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <div class="taxonomy-surface">
+    <p class="taxonomy-hint">
+      Drag rows to reorder them. Drop near the top or bottom of a row to nest it as a child.
+    </p>
+
+    <% if nodes.empty? %>
+      <div class="p-3 p-md-4" data-taxonomy-tree-empty>
+        <%= render "shared/empty_state",
+          title: "No #{model_param.humanize.downcase.pluralize} yet",
+          description: local_assigns[:empty_description] || "Create the first one to start building this hierarchy.",
+          icon: "diagram-3" %>
+      </div>
+    <% end %>
+
+    <ul class="taxonomy-list list-unstyled mb-0"
+      data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
+      data-drop-parent-id="">
+      <% nodes.each do |node| %>
+        <%= render "shared/taxonomy_node",
+          node: node,
+          children_method: children_method,
+          new_url: new_url,
+          edit_url: edit_url,
+          update_url: update_url,
+          delete_url: delete_url,
+          create_url: create_url,
+          model_param: model_param,
+          modal_fields: modal_fields,
+          taxonomy_field: taxonomy_field %>
+      <% end %>
+    </ul>
+  </div>
 </div>

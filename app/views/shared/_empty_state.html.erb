@@ -1,0 +1,16 @@
+<% title = local_assigns.fetch(:title) %>
+<% description = local_assigns[:description] %>
+<% icon_name = local_assigns[:icon] || "inbox" %>
+
+<div class="empty-state">
+  <span class="empty-icon" aria-hidden="true">
+    <i class="bi bi-<%= icon_name %>"></i>
+  </span>
+  <h2 class="empty-title h5"><%= title %></h2>
+  <% if description.present? %>
+    <p class="empty-description"><%= description %></p>
+  <% end %>
+  <% if block_given? %>
+    <div class="mt-3"><%= yield %></div>
+  <% end %>
+</div>

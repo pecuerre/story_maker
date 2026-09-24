@@ -1,24 +1,67 @@
 <% content_for :title, @story.name %>
 
-<div id="<%= dom_id @story %>">
-  <h1><%= @story.name %></h1>
+<%= render "shared/page_header",
+  title: @story.name,
+  eyebrow: "Story workspace",
+  description: @story.description.presence || "Plan the plot and structure for this story." do %>
+  <%= link_to "Open sections", universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
+  <%= link_to "Edit story", edit_universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
 
-  <% if @story.description.present? %>
-    <p><%= @story.description %></p>
-  <% end %>
+  <div class="dropdown">
+    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+      data-bs-toggle="dropdown" aria-expanded="false" aria-label="Story actions">
+      <i class="bi bi-three-dots" aria-hidden="true"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <%= button_to "Delete story", universe_story_path(id: @story),
+          method: :delete,
+          class: "dropdown-item text-danger",
+          data: { turbo_confirm: "Delete #{@story.name} and all of its sections?" } %>
+      </li>
+    </ul>
+  </div>
+<% end %>
 
-  <p class="text-body-secondary">
-    <%= pluralize(@story.sections.size, "section") %>
-  </p>
-</div>
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="surface-card h-100 p-4">
+      <div class="page-eyebrow">Story structure</div>
+      <h2 class="h3"><%= pluralize(@story.sections.size, "section") %></h2>
+      <p class="text-body-secondary">Organize this story into a hierarchy such as acts, chapters, books, or scenes.</p>
+      <%= link_to "Manage sections", universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
+    </div>
+  </div>
 
-<div>
-  <%= link_to "Sections", universe_story_sections_path(story_id: @story) %> |
-  <%= link_to "Edit this story", edit_universe_story_path(id: @story) %> |
-  <%= link_to "Back to stories", universe_stories_path %>
-
-  <%= button_to "Destroy this story",
-        universe_story_path(id: @story),
-        method: :delete,
-        data: { turbo_confirm: "Delete this story and all of its sections?" } %>
+  <div class="col-md-7">
+    <div class="surface-card h-100 p-4">
+      <div class="page-eyebrow">Shared Universe Bible</div>
+      <h2 class="h4">World-building records</h2>
+      <p class="text-body-secondary">These records are shared by every story in <%= Current.universe.name %>.</p>
+      <div class="row g-2">
+        <div class="col-sm-6">
+          <%= link_to universe_characters_path, class: "quick-link" do %>
+            <i class="bi bi-people" aria-hidden="true"></i>Characters
+          <% end %>
+        </div>
+        <div class="col-sm-6">
+          <%= link_to universe_locations_path, class: "quick-link" do %>
+            <i class="bi bi-geo-alt" aria-hidden="true"></i>Locations
+          <% end %>
+        </div>
+        <div class="col-sm-6">
+          <%= link_to universe_events_path, class: "quick-link" do %>
+            <i class="bi bi-calendar-event" aria-hidden="true"></i>Events
+          <% end %>
+        </div>
+        <div class="col-sm-6">
+          <%= link_to universe_timeline_path, class: "quick-link" do %>
+            <i class="bi bi-calendar-range" aria-hidden="true"></i>Timeline
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

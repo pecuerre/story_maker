@@ -2,12 +2,13 @@
 
 Everything learned about this project lives in this directory. The root `README.md` is a short
 quick start; this directory is the source of truth for project knowledge. Facts were verified
-against the code — last full pass: September 2026, after the *stories / story-scoped sections*
-rework and the *tags are optional everywhere* change.
+against the code — last full pass: September 2026, after the Bootstrap visual-shell refresh, the
+*stories / story-scoped sections* rework, and the *tags are optional everywhere* change.
 
 | File | Contents |
 |---|---|
 | [vision.md](vision.md) | The idea in plain words: what the tool is for, continuity as the core promise, collaboration & analyzers (the "does this fit the goal?" reference) |
+| [visual_design.md](visual_design.md) | Bootstrap theme tokens, application shell, responsive navigation, shared page/list/taxonomy patterns, accessibility and UI decisions |
 | [universe_maker_conventions.md](universe_maker_conventions.md) | Code conventions & patterns: models, controllers, routes, views (3 page patterns), helpers, Stimulus controllers, top bar & sidebar navigation, Event/Timeline feature notes |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, Timeline algorithm |
@@ -27,7 +28,7 @@ How to use these docs:
 - Meeting the codebase for the first time? Read order:
   [architecture.md](architecture.md) → [data_model.md](data_model.md) →
   [universe_maker_conventions.md](universe_maker_conventions.md) →
-  [known_quirks.md](known_quirks.md).
+  [visual_design.md](visual_design.md) → [known_quirks.md](known_quirks.md).
 
 ## Shared backlog
 

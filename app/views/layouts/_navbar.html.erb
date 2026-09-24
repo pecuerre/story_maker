@@ -1,83 +1,108 @@
-<nav class="navbar navbar-expand-lg border-bottom fixed-top navbar-dark bg-dark">
-  <div class="container">
-
+<nav class="navbar navbar-expand-lg fixed-top border-bottom bg-dark navbar-dark" aria-label="Primary navigation">
+  <div class="container-fluid px-3 px-lg-4">
     <%= link_to "Universe Maker", root_path, class: "navbar-brand fw-bold" %>
 
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <%= link_to "Dashboard", "#", class: "nav-link" %>
-      </li>
-      <li class="nav-item dropdown">
-        <%= link_to "Universes", "#",
-              class: "nav-link dropdown-toggle",
-              role: "button",
-              data: { bs_toggle: "dropdown" },
-              aria: { expanded: "false" } %>
-        <ul class="dropdown-menu dropdown-menu-dark">
-          <% nav_universes.each do |universe| %>
-            <li>
-              <%= link_to universe.name, universe_path(universe),
-                    class: "dropdown-item#{ " active" if Current.universe == universe }" %>
-            </li>
-          <% end %>
-          <% if nav_universes.empty? %>
-            <li><span class="dropdown-item-text text-body-secondary">No universes yet</span></li>
-          <% end %>
-          <li><hr class="dropdown-divider"></li>
-          <li><%= link_to "All universes", universes_path, class: "dropdown-item" %></li>
-          <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
-        </ul>
-      </li>
+    <button class="navbar-toggler" type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#primary-navigation"
+      aria-controls="primary-navigation"
+      aria-expanded="false"
+      aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      <%# Story picker: only once a universe has been selected. %>
-      <% if Current.universe.present? %>
+    <div class="collapse navbar-collapse" id="primary-navigation">
+      <ul class="navbar-nav me-auto align-items-lg-center gap-lg-1">
         <li class="nav-item dropdown">
-          <%= link_to Current.universe.name, "#",
-                class: "nav-link dropdown-toggle#{ active_if(:stories) }",
-                role: "button",
-                data: { bs_toggle: "dropdown" },
-                aria: { expanded: "false" } %>
+          <button class="nav-link dropdown-toggle" type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+            Universes
+          </button>
           <ul class="dropdown-menu dropdown-menu-dark">
-            <% nav_stories.each do |story| %>
+            <% nav_universes.each do |universe| %>
               <li>
-                <%= link_to story.name, universe_story_path(id: story),
-                      class: "dropdown-item#{ " active" if Current.story == story }" %>
+                <%= link_to universe.name, universe_path(universe),
+                  class: "dropdown-item#{' active' if Current.universe == universe}" %>
               </li>
             <% end %>
-            <% if nav_stories.empty? %>
-              <li><span class="dropdown-item-text text-body-secondary">No stories yet</span></li>
+            <% if nav_universes.empty? %>
+              <li><span class="dropdown-item-text text-body-secondary">No universes yet</span></li>
             <% end %>
             <li><hr class="dropdown-divider"></li>
-            <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
-            <li><%= link_to "New story", new_universe_story_path, class: "dropdown-item" %></li>
+            <li><%= link_to "All universes", universes_path, class: "dropdown-item" %></li>
+            <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
           </ul>
         </li>
-      <% end %>
 
-      <%# Current story: only once one has been selected. %>
-      <% if Current.story.present? %>
-        <li class="nav-item">
-          <%= link_to Current.story.name, universe_story_path(id: Current.story),
-                class: "nav-link active" %>
-        </li>
-      <% end %>
-    </ul>
+        <% if Current.universe.present? %>
+          <li class="nav-item dropdown">
+            <button class="nav-link dropdown-toggle active" type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+              aria-current="true">
+              Universe: <span class="navbar-context"><%= Current.universe.name %></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark">
+              <li>
+                <%= link_to Current.universe.name, universe_path(Current.universe), class: "dropdown-item active" %>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><%= link_to "All universes", universes_path, class: "dropdown-item" %></li>
+              <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
+            </ul>
+          </li>
 
-    <div class="ms-auto d-flex align-items-center gap-3">
-      <% if Current.user.present? %>
-        <span class="text-body-secondar navbar-text">
-          <%= Current.user.email_address %>
-        </span>
+          <li class="nav-item dropdown">
+            <button class="nav-link dropdown-toggle<%= ' active' if Current.story.present? %>" type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"<% if Current.story.present? %> aria-current="true"<% end %>>
+              Story: <span class="navbar-context"><%= Current.story&.name || "Select" %></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark">
+              <% nav_stories.each do |story| %>
+                <li>
+                  <%= link_to story.name, universe_story_path(id: story),
+                    class: "dropdown-item#{' active' if Current.story == story}" %>
+                </li>
+              <% end %>
+              <% if nav_stories.empty? %>
+                <li><span class="dropdown-item-text text-body-secondary">No stories yet</span></li>
+              <% end %>
+              <li><hr class="dropdown-divider"></li>
+              <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
+              <li><%= link_to "New story", new_universe_story_path, class: "dropdown-item" %></li>
+            </ul>
+          </li>
+        <% end %>
+      </ul>
 
-        <%= button_to "Log out",
-              session_path,
-              method: :delete,
-              class: "btn btn-outline-secondary btn-sm" %>
-      <% else %>
-        <%= link_to "Log in", new_session_path, class: "btn btn-outline-primary btn-sm" %>
-        <%# link_to "Sign up", signup_path, class: "btn btn-primary btn-sm" %>
-      <% end %>
+      <div class="navbar-actions ms-auto mt-3 mt-lg-0">
+        <% if Current.user.present? %>
+          <div class="dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false">
+              Account
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+              <li>
+                <span class="dropdown-item-text navbar-account-label" title="<%= Current.user.email_address %>">
+                  <%= Current.user.email_address %>
+                </span>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <%= button_to "Log out", session_path,
+                  method: :delete,
+                  class: "dropdown-item" %>
+              </li>
+            </ul>
+          </div>
+        <% else %>
+          <%= link_to "Log in", new_session_path, class: "btn btn-outline-light btn-sm" %>
+        <% end %>
+      </div>
     </div>
-
   </div>
 </nav>

@@ -1,0 +1,36 @@
+<% record = local_assigns.fetch(:record) %>
+<% label = local_assigns[:label] || record.model_name.human.downcase %>
+<% record_name = local_assigns[:record_name] || record.try(:display_string) || record.name %>
+<% values = local_assigns.fetch(:values, "{}") %>
+<% actions_id = "#{dom_id(record)}-actions" %>
+
+<div class="dropdown row-actions">
+  <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+    id="<%= actions_id %>"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+    aria-label="Actions for <%= record_name %>">
+    <i class="bi bi-three-dots" aria-hidden="true"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= actions_id %>">
+    <li>
+      <button type="button" class="dropdown-item"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= local_assigns.fetch(:edit_url) %>"
+        data-modal-form-method="patch"
+        data-modal-form-title="Edit <%= label %>"
+        data-modal-form-values-value="<%= values %>">
+        <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+      </button>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li>
+      <%= button_to local_assigns.fetch(:delete_url),
+        method: :delete,
+        class: "dropdown-item text-danger",
+        data: { turbo_confirm: "Delete #{record_name}?" } do %>
+        <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+      <% end %>
+    </li>
+  </ul>
+</div>

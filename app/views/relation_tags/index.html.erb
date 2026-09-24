@@ -7,13 +7,8 @@
   count: Current.universe.relation_tags.count,
   count_label: "tag",
   new_label: "Add relation tag",
-  tabs_aria_label: "Character workspace",
-  tabs: [
-    { label: "Characters", path: universe_characters_path, controller: :characters },
-    { label: "Character tags", path: universe_character_tags_path, controller: :character_tags },
-    { label: "Relations", path: universe_relations_path, controller: :relations },
-    { label: "Relation tags", path: universe_relation_tags_path, controller: :relation_tags }
-  ],
+  tag_workspace_scope: "universe",
+  tag_workspace_taxonomy: "relation",
   empty_description: "Tags are optional. Add one to describe character relationships, or leave relations untagged.",
   nodes: @relation_tags,
   new_url: ->(parent = nil) { new_universe_relation_tag_path(parent_id: parent&.id) },

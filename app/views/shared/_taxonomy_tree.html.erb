@@ -49,7 +49,11 @@ end %>
     <% end %>
   <% end %>
 
-  <% if local_assigns[:tabs].present? %>
+  <% if local_assigns[:tag_workspace_scope].present? %>
+    <%= render "shared/tag_workspace_navigation",
+      scope: local_assigns.fetch(:tag_workspace_scope),
+      taxonomy: local_assigns[:tag_workspace_taxonomy] %>
+  <% elsif local_assigns[:tabs].present? %>
     <%= render "shared/content_tabs",
       aria_label: local_assigns.fetch(:tabs_aria_label),
       tabs: local_assigns.fetch(:tabs) %>

@@ -19,11 +19,11 @@ The interface should feel like a calm writing workspace:
 - destructive actions are visually distinct from navigation categories;
 - the universe/story model is always explicit.
 
-The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints so future
-collaboration, analytics, and AI tools have a stable home. Its current entries are deliberate,
-`aria-disabled` placeholders; they should become real destinations as the underlying product
-areas are defined. Below the `xl` breakpoint the panel becomes a Bootstrap `offcanvas-end`, so the
-main writing surface keeps priority on smaller screens.
+The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints. Its **Settings**
+section contains the real Members access manager, while the remaining Collaboration, Analytics,
+and AI entries are deliberate `aria-disabled` placeholders that should become real destinations
+as the underlying product areas are defined. Below the `xl` breakpoint the panel becomes a
+Bootstrap `offcanvas-end`, so the main writing surface keeps priority on smaller screens.
 
 ## Theme tokens
 
@@ -150,18 +150,19 @@ The Bible is a direct record list without People/Places/Time/Objects group label
 - Timeline;
 - Items.
 
-Relations are reached from the Characters workspace tabs, and Ownerships from the Items workspace
-tabs. Every content and taxonomy pair uses the same navigation: Locations / Location tags and
-Events / Event tags in the Universe Bible, plus Sections / Section tags in the Story workspace.
-These tabs are URL-backed navigation, not in-document tab panes, so each page keeps its canonical
-URL and mutation flow.
+Characters open a two-tab **Characters / Relations** workspace, and Items open a two-tab **Items /
+Ownerships** workspace. Locations, Events, and Sections each have a single record tab. These tabs
+are URL-backed navigation, not in-document tab panes, so each page keeps its canonical URL and
+mutation flow.
 
 ### Configuration
 
-Configuration is a separate sidebar section. Universe admins see **Members**, which manages the
-read/write/admin access list for the current universe. Tag management lives next to the records it
-classifies in the corresponding content workspace. New configuration tools should be added as
-top-level entries here, grouped by scope when needed.
+Configuration is a separate sidebar section. **Tags** opens the shared taxonomy workspace:
+**Universe Tags** is selected by default and contains Character, Relation, Location, Event, Item,
+and Ownership tag tabs; **Story Tags** contains the story-scoped Section tags tab. The right-side
+**Settings** section contains **Members** for universe admins, where the read/write/admin access
+list is managed. New configuration tools should be added as top-level entries here, grouped by
+scope when needed.
 
 Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
 `aria-current="page"`; color is not the only state signal. The reserved Scenes and right-sidebar
@@ -169,10 +170,10 @@ entries are the intentional placeholders for future functionality.
 
 ### Right utility sidebar
 
-The right sidebar is reserved for future **Analytics** and **AI** tools. The access manager is
-intentionally in the left Configuration section because it is a real universe setting; the right
-sidebar keeps a stable home for richer collaboration and analysis features without adding fake
-routes.
+The right sidebar contains a real **Settings** section with the universe **Members** access manager
+for admins. Its other space is reserved for future **Analytics** and **AI** tools. Keeping the
+access manager here leaves Configuration focused on shared taxonomy management while preserving a
+stable home for richer collaboration and analysis features without adding fake routes.
 
 ## Shared view patterns
 
@@ -211,11 +212,13 @@ row. Ownerships use the same readable relationship treatment.
 
 ### Related content navigation
 
-Use `shared/_content_tabs` for every content-and-taxonomy workspace. The Character workspace has
-Characters, Character tags, Relations, and Relation tags; the Item workspace has Items, Item tags,
-Ownerships, and Ownership tags. Locations, Events, and Sections each pair with their tag taxonomy.
-These are URL-backed Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do
-not add `data-bs-toggle="tab"` because each destination is a separate request.
+Use `shared/_content_tabs` for related record workspaces. The Character workspace has Characters
+and Relations; the Item workspace has Items and Ownerships. Locations, Events, and Sections each
+have one record tab. Use `shared/_tag_workspace_navigation` for Configuration → Tags: the outer
+Universe/Story selector is followed by the six universe taxonomy tabs or the single story Section
+tags tab. All tabs are URL-backed Bootstrap `nav-tabs`: use the active class and
+`aria-current="page"`, but do not add `data-bs-toggle="tab"` because each destination is a separate
+request.
 
 ### Taxonomy trees and other hierarchy pages
 
@@ -263,8 +266,8 @@ URL and meaningful navigation.
 2. Start with `shared/_page_header` and `shared/_empty_state` where applicable.
 3. Use the correct universe/story scope in every path.
 4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout.
-5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` to connect
-   related records and their corresponding tag taxonomy. Put real universe settings, including
-   the Members access manager, in the separate Configuration section.
+5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for related
+   records and `shared/_tag_workspace_navigation` for taxonomy management. Put the Members access
+   manager in the right-side Settings section.
 6. Check keyboard focus, mobile width, empty state, and long text.
 7. Update the relevant docs and tests in the same change.

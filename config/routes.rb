@@ -9,6 +9,7 @@ Rails.application.routes.draw do
       resources :sections
       resources :section_tags
     end
+    get "tags", to: "tags#index", as: :tags
     resources :item_tags
     resources :items
     resources :location_tags

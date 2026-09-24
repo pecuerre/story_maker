@@ -82,8 +82,9 @@
   The universe-level `/u/:universe_slug/sections` path is intentionally invalid.
 - Relations/Ownerships are limited to `index, create, update, destroy`; memberships are mounted at
   `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and are
-  admin-only; timeline is `get "timeline", to: "timeline#index"`; `root` → `universes#index`;
-  health check `/up`.
+  admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
+  and `taxonomy=character|relation|location|event|item|ownership|section` query parameters;
+  timeline is `get "timeline", to: "timeline#index"`; `root` → `universes#index`; health check `/up`.
 - `Universe#to_param` returns the slug; content models are addressed by numeric `id`.
 
 ### Views - Three Patterns
@@ -108,9 +109,10 @@ The three functional editing patterns are:
 
 **2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
-- Every record and taxonomy workspace uses `shared/_content_tabs`: URL-backed Bootstrap `nav-tabs`
-  that keep related records and their corresponding tag managers together while preserving each
-  canonical page.
+- Every record workspace uses `shared/_content_tabs`: URL-backed Bootstrap `nav-tabs` that keep
+  related records together while preserving each canonical page. Tag management uses
+  `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
+  scope tabs and the scope-specific taxonomy selector.
 - Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`.
 
 **3. Plain full-page forms** (universes, stories):
@@ -139,7 +141,10 @@ The three functional editing patterns are:
   both `.active` and `aria-current="page"`.
 - `app/views/shared/_content_tabs.html.erb` renders related universe pages as URL-backed
   Bootstrap navigation; it does not use `data-bs-toggle="tab"` because each tab is a separate
-  request and canonical URL.
+  request and canonical URL. It accepts an optional `class_name` and explicit `active` tab state
+  for nested selectors.
+- `app/views/shared/_tag_workspace_navigation.html.erb` and `app/helpers/tags_helper.rb` build the
+  Configuration → Tags scope/taxonomy navigation and the model-specific tree configuration.
 - `app/helpers/timeline_helper.rb` — popover title/content for timeline events.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
@@ -169,18 +174,21 @@ navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas
 - **Story workspace**: Story overview + Sections when a story is selected; otherwise All stories
   plus a prompt to select one. **Scenes** is a reserved placeholder link. New story is available
   from the navbar's Story dropdown, not from the sidebar.
-- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Relations,
-  Ownerships, and every tag taxonomy are reached from their corresponding workspace tabs.
-- **Configuration**: a separate organization/settings section. Universe admins see **Members**;
-  it opens the read/write/admin access manager.
+- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Characters
+  and Items open their related record tabs (Relations and Ownerships respectively); Locations,
+  Events, and Sections remain single-record workspaces.
+- **Configuration**: a separate organization/settings section. **Tags** opens the shared taxonomy
+  workspace, with **Universe Tags** selected by default and **Story Tags** for story-scoped
+  taxonomies. Universe admins see **Members** in the right-side **Settings** section.
 - Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
   background and `aria-current="page"`. The reserved Scenes and right-sidebar entries are the
   intentional `#` placeholders for future functionality.
 
 ### Navigation (Right sidebar) — `app/views/layouts/_right_sidebar.html.erb`
 The right utility sidebar renders only when `Current.universe` is present. It is a permanent
-14rem column at `xl` and above, and a Bootstrap `offcanvas-end` below `xl`. It currently groups
-future **Collaboration**, **Analytics**, and **AI** links; no model or route exists for these
+14rem column at `xl` and above, and a Bootstrap `offcanvas-end` below `xl`. Its **Settings** section
+contains the universe **Members** access manager for admins. It also keeps the future
+**Collaboration**, **Analytics**, and **AI** placeholder groups; no model or route exists for those
 entries yet. On smaller screens, the **Tools** button opens the panel from the mobile workspace
 bar.
 

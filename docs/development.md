@@ -214,9 +214,9 @@ Dependabot config: `.github/dependabot.yml`.
 5. Views — pick one of the three patterns; for modal editors add `*_fields_json` /
    `*_tag_taxonomy_fields` to `app/helpers/modal_fields.rb`.
 6. Sidebar link in `app/views/layouts/_left_sidebar.html.erb` using the shared
-   `shared/_sidebar_link` pattern; use `shared/_content_tabs` to connect related content and its
-   corresponding tag taxonomy. Put real settings, including the Members access manager, in the
-   Configuration section.
+   `shared/_sidebar_link` pattern; use `shared/_content_tabs` for related records and
+   `shared/_tag_workspace_navigation` for taxonomy management. Put the Members access manager in
+   the right-side Settings section.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
 8. Development data: add or update `<model>.yml` in every relevant
    `db/data/<universe_slug>/` directory, update the shared model order/registry, and include

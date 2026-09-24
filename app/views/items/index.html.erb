@@ -28,9 +28,7 @@
     aria_label: "Item workspace",
     tabs: [
       { label: "Items", path: universe_items_path, controller: :items },
-      { label: "Item tags", path: universe_item_tags_path, controller: :item_tags },
-      { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships },
-      { label: "Ownership tags", path: universe_ownership_tags_path, controller: :ownership_tags }
+      { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships }
     ] %>
 
   <% if @items.any? %>

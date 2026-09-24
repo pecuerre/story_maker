@@ -1,9 +1,11 @@
 <% tabs = local_assigns.fetch(:tabs) %>
+<% tab_classes = [ "nav", "nav-tabs", "content-tabs", "mb-4", local_assigns[:class_name] ].compact.join(" ") %>
 
-<nav class="nav nav-tabs content-tabs mb-4" aria-label="<%= local_assigns.fetch(:aria_label) %>">
+<nav class="<%= tab_classes %>" aria-label="<%= local_assigns.fetch(:aria_label) %>">
   <% tabs.each do |tab| %>
+    <% is_active = tab.key?(:active) ? tab.fetch(:active) : controller.controller_name == tab.fetch(:controller).to_s %>
     <%= link_to tab.fetch(:label), tab.fetch(:path),
-      class: "nav-link#{active_if(tab.fetch(:controller))}",
-      aria: aria_current_for(tab.fetch(:controller)) %>
+      class: "nav-link#{' active' if is_active}",
+      aria: is_active ? { current: "page" } : {} %>
   <% end %>
 </nav>

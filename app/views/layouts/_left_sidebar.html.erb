@@ -1,5 +1,8 @@
 <% menu_counts = Current.universe.menu_counts %>
 <% section_count = Current.story&.menu_section_count %>
+<% tag_controllers = %i[
+  tags character_tags relation_tags location_tags event_tags item_tags ownership_tags section_tags
+] %>
 
 <div class="sidebar-context">
   <div class="sidebar-eyebrow">Current universe</div>
@@ -28,7 +31,7 @@
           label: "Sections",
           count: section_count,
           path: universe_story_sections_path(story_id: Current.story),
-          controllers: %i[ sections section_tags ] %>
+          controllers: %i[ sections ] %>
       <% else %>
         <%= render "shared/sidebar_link",
           icon: "books",
@@ -58,21 +61,21 @@
         label: "Characters",
         count: menu_counts[:characters],
         path: universe_characters_path,
-        controllers: %i[ characters character_tags relations relation_tags ] %>
+        controllers: %i[ characters relations ] %>
 
       <%= render "shared/sidebar_link",
         icon: "geo-alt",
         label: "Locations",
         count: menu_counts[:locations],
         path: universe_locations_path,
-        controllers: %i[ locations location_tags ] %>
+        controllers: %i[ locations ] %>
 
       <%= render "shared/sidebar_link",
         icon: "calendar-event",
         label: "Events",
         count: menu_counts[:events],
         path: universe_events_path,
-        controllers: %i[ events event_tags ] %>
+        controllers: %i[ events ] %>
 
       <%= render "shared/sidebar_link",
         icon: "calendar-range",
@@ -85,20 +88,18 @@
         label: "Items",
         count: menu_counts[:items],
         path: universe_items_path,
-        controllers: %i[ items item_tags ownerships ownership_tags ] %>
+        controllers: %i[ items ownerships ] %>
     </ul>
   </section>
 
   <section class="sidebar-section" aria-labelledby="configuration-title">
     <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
-    <% if can_administer_universe? %>
-      <ul class="sidebar-list">
-        <%= render "shared/sidebar_link",
-          icon: "people",
-          label: "Members",
-          path: universe_memberships_path,
-          controllers: %i[ memberships ] %>
-      </ul>
-    <% end %>
+    <ul class="sidebar-list">
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Tags",
+        path: universe_tags_path,
+        controllers: tag_controllers %>
+    </ul>
   </section>
 </nav>

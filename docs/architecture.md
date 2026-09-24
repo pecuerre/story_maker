@@ -120,7 +120,8 @@ Other global behavior: `allow_browser versions: :modern`,
   `/u/:slug/s/:story_id/section_tags`. The universe-level `/u/:slug/sections` path is intentionally
   not routed; every section URL must include its story id.
 - Universe memberships live at `/u/:universe_slug/members`; only universe admins can reach the
-  membership index and mutations.
+  membership index and mutations. The taxonomy workspace lives at `/u/:universe_slug/tags`; its
+  `scope` and `taxonomy` query parameters select the Universe/Story scope and taxonomy editor.
 
 ## Response formats per controller
 
@@ -129,16 +130,16 @@ Other global behavior: `allow_browser versions: :modern`,
 | JSON-only mutations | all `*_tags`, characters, locations, items, events, sections | `index/new` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
 | HTML flow | universes, **stories**, relations, ownerships, universe memberships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
-| No mutation | timeline, sessions, passwords | |
+| No mutation | tags, timeline, sessions, passwords | |
 
 ## UI structure
 
 The UI is a Bootstrap 5.3 application shell with a fixed dark **navbar**, responsive left and
 right workspace navigation columns, and one flexible **main content** area. The left column is
-the working navigation; the right column reserves space for future universe tools such as richer
-collaboration, analytics, and AI. The right column becomes a Bootstrap `offcanvas-end` below
-`xl`, and the left column becomes an `offcanvas-start` below `lg`. On narrower screens, the mobile
-workspace bar exposes **Tools** below `xl` and **Menu** below `lg`.
+the working navigation; the right column contains **Settings** plus reserved space for future
+universe tools such as richer collaboration, analytics, and AI. The right column becomes a
+Bootstrap `offcanvas-end` below `xl`, and the left column becomes an `offcanvas-start` below `lg`.
+On narrower screens, the mobile workspace bar exposes **Tools** below `xl` and **Menu** below `lg`.
 
 Everything follows a two-step scope selection:
 
@@ -148,19 +149,21 @@ Everything follows a two-step scope selection:
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
    and as a left offcanvas below the `lg` breakpoint. At `xl` and above, a 14rem right utility
    sidebar is also visible. The left sidebar contains **Story workspace**, **Universe Bible**, and
-   a separate **Configuration** section containing **Members** for universe admins. The navbar
-   adds explicit **Universe: …** and **Story: …** context/switchers.
-3. **Story selected** (`Current.story`): Story workspace gains the story overview plus the
-   **Sections / Section tags** workspace tabs. The story is still remembered per universe; no
-   first-story fallback exists.
+   a separate **Configuration** section containing **Tags**. The right utility sidebar has a
+   **Settings** section containing **Members** for universe admins. The navbar adds explicit
+   **Universe: …** and **Story: …** context/switchers.
+3. **Story selected** (`Current.story`): Story workspace gains the story overview plus a
+   **Sections** workspace tab. The story is still remembered per universe; no first-story fallback
+   exists.
 
 The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
 switcher, and an **Account** menu. It keeps **New story** in the Story dropdown rather than in the
 left sidebar, and only shows contribution/admin actions when the current user has the required
 level. Universe-scoped content is shared by every story; Sections and Section tags remain
-story-scoped. Each workspace keeps related records and their tags together in URL-backed tabs:
-Characters / Character tags / Relations / Relation tags, Items / Item tags / Ownerships /
-Ownership tags, Locations / Location tags, Events / Event tags, and Sections / Section tags.
+story-scoped. Related record workspaces now keep only the records together in URL-backed tabs:
+Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
+lives under **Configuration → Tags**, with **Universe Tags** (Character, Relation, Location, Event,
+Item, and Ownership tags) and **Story Tags** (Section tags) selectors.
 
 All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`, and
 `empty_state` patterns. Visual tokens and responsive/component conventions live in

@@ -1,0 +1,13 @@
+<% scope = local_assigns[:scope] || tag_workspace_default_scope %>
+<% taxonomy = local_assigns[:taxonomy] || tag_workspace_default_taxonomy %>
+<% navigation = tag_workspace_navigation_data(scope: scope, taxonomy: taxonomy) %>
+
+<%= render "shared/content_tabs",
+  class_name: "tag-scope-tabs",
+  aria_label: "Tag scope",
+  tabs: navigation.fetch(:scope_tabs) %>
+
+<%= render "shared/content_tabs",
+  class_name: "tag-taxonomy-tabs",
+  aria_label: scope == "story" ? "Story tag workspace" : "Universe tag workspace",
+  tabs: navigation.fetch(:taxonomy_tabs) %>

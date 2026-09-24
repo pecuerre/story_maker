@@ -2,16 +2,16 @@ location_one:
   universe: universe_one
   name: Location one
   location_tags: location_tag_one
-  slug: "location_one"
+  slug: "location-one"
 
 location_two:
   universe: universe_one
   name: Location two
   location_tags: location_tag_two
-  slug: "location_two"
+  slug: "location-two"
 
 location_three:
   universe: universe_two
   name: Location three
   location_tags: location_tag_three
-  slug: "location_three"
+  slug: "location-three"

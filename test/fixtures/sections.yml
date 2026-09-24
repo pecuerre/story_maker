@@ -4,12 +4,12 @@ section_one:
   name: Section one
   parent:
   story: story_one
-  slug: "section_one"
+  slug: "section-one"
   section_tags: section_tag_one
 
 section_two:
   name: Section two
   parent: section_one
   story: story_one
-  slug: "section_two"
+  slug: "section-two"
   section_tags: section_tag_two

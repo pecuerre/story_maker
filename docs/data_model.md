@@ -136,9 +136,9 @@ constraint either — only the FKs in `db/schema.rb` are enforced by SQLite.
 - `HasSlug` (app/models/concerns/has_slug.rb): `before_validation :set_slug`.
   Priority: explicit `slug` → slugified `name` (when name changed) → existing name →
   `SecureRandom.hex(4)`.
-- `slugify` = `parameterize` + `_+ → -`. **Write slugs dash-separated**; the class-level finder
-  `Model.some_name` (custom `method_missing`) also slugifies its argument, so underscores in
-  stored slugs (only in fixtures) are not reachable that way.
+- `slugify` = `parameterize` + `_+ → -`. **Write slugs dash-separated**, including fixture
+  slugs; the class-level finder `Model.some_name` (custom `method_missing`) also slugifies its
+  argument, so underscore-separated fixture labels are not the stored slug format.
 - Uniqueness: **DB-enforced** only for `universes.slug`, `users.slug` and
   `stories.[universe_id, slug]`; everywhere else uniqueness is a matter of convention
   (Story validates name+slug per universe; other models don't validate slug uniqueness).

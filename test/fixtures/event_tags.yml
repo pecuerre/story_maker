@@ -2,21 +2,21 @@
 
 event_tag_one:
   universe: universe_one
-  slug: "event_tag_one"
+  slug: "event-tag-one"
   name: Event tag one
   bgcolor: "#ff0000"
   fgcolor: "#000000"
 
 event_tag_two:
   universe: universe_one
-  slug: "event_tag_two"
+  slug: "event-tag-two"
   name: Event tag two
   bgcolor: "#00ff00"
   fgcolor: "#000000"
 
 event_tag_three:
   universe: universe_two
-  slug: "event_tag_three"
+  slug: "event-tag-three"
   name: Event tag three
   bgcolor: "#0000ff"
   fgcolor: "#000000"

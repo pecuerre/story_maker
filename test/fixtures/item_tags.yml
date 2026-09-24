@@ -3,14 +3,14 @@
 item_tag_one:
   universe: universe_one
   name: Item tag one
-  slug: "item_tag_one"
+  slug: "item-tag-one"
 
 item_tag_two:
   universe: universe_one
   name: Item tag two
-  slug: "item_tag_two"
+  slug: "item-tag-two"
 
 item_tag_three:
   universe: universe_two
   name: Item tag three
-  slug: "item_tag_three"
+  slug: "item-tag-three"

@@ -34,17 +34,3 @@ survives. Index of all docs: [README.md](README.md).
 5. **Seeds are not idempotent** despite the Rails boilerplate comment in `db/seeds.rb`
    ("should be idempotent"): the dark loader and `lotr.rb` use `create`/`create!` on every run,
    and the demo-universe list `["dark", "lotr"]` is hardcoded there.
-
-6. **`Relation`/`Ownership` composite-slug code is a trap.** Both define
-   `before_validation :generate_slug, on: :create` (intended `character-tag-character` slugs when
-   `name` is blank), but `HasSlug`'s `before_validation :set_slug` is registered first (at
-   `include` time). For the usual case — no `name` attribute at all — its `else` branch already
-   assigns `SecureRandom.hex(4)`, so `generate_slug` returns early and unnamed
-   relations/ownerships get a random hex slug. The composite branch only runs when `name` was
-   assigned but is blank (`name: ""` → `slugify("")` → `nil`), where it builds
-   `character-<tag>-character` — or just `character-character` when the record has no tags
-   (tags are optional, see [data_model.md](data_model.md#slugs)).
-
-7. **`Event#set_name` runs `on: :create` only.** Renaming an event's `title` later does **not**
-   update `name` (only `title` is used by `display_string`, so the drift is mostly invisible —
-   but `name` and `slug` stay at their create-time values).

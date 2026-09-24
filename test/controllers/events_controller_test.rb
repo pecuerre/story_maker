@@ -43,6 +43,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "Renamed", @event.reload.title
+    assert_equal "Renamed", @event.name
+    assert_equal "renamed", @event.slug
   end
 
   test "should destroy event" do

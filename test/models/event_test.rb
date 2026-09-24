@@ -14,6 +14,34 @@ class EventTest < ActiveSupport::TestCase
     assert event.valid?
   end
 
+  test "derives its name and slug from the title when created" do
+    event = Event.create!(universe: universes(:universe_one), title: "A title")
+
+    assert_equal "A title", event.name
+    assert_equal "a-title", event.slug
+  end
+
+  test "keeps its name and slug synchronized with a changed title" do
+    event = Event.create!(universe: universes(:universe_one), title: "Original title")
+
+    event.update!(title: "Renamed title")
+
+    assert_equal "Renamed title", event.name
+    assert_equal "renamed-title", event.slug
+  end
+
+  test "updates the name and slug when a title is added or cleared" do
+    event = Event.create!(universe: universes(:universe_one), start_datetime: Time.current)
+
+    event.update!(title: "Named event")
+    assert_equal "Named event", event.name
+    assert_equal "named-event", event.slug
+
+    event.update!(title: nil)
+    assert_nil event.name
+    assert event.slug.present?
+  end
+
   test "is valid with only a start date" do
     event = Event.new(universe: universes(:universe_one), start_datetime: Time.current)
 

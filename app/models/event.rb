@@ -11,7 +11,8 @@ class Event < ApplicationRecord
   belongs_to :before_event, class_name: "Event", optional: true
   belongs_to :after_event, class_name: "Event", optional: true
   belongs_to :simultaneous_event, class_name: "Event", optional: true
-  before_validation :set_name, on: :create
+  # Run before HasSlug so a newly created event without an explicit slug can derive it from the title.
+  before_validation :set_name, prepend: true
 
   validate :associated_records_belong_to_universe
   validate :cannot_reference_self
@@ -44,7 +45,7 @@ class Event < ApplicationRecord
   private
 
   def set_name
-    self.name = title if title.present?
+    self.name = title if new_record? || will_save_change_to_title?
   end
 
   def formatted_datetime(datetime)

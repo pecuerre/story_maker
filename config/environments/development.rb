@@ -1,4 +1,5 @@
 require "active_support/core_ext/integer/time"
+require "fileutils"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -58,7 +59,11 @@ Rails.application.configure do
   # Highlight code that triggered redirect in logs.
   config.action_dispatch.verbose_redirect_logs = true
 
-  # Suppress logger output for asset requests.
+  # Keep development on Propshaft's dynamic asset resolver. The production/public manifest
+  # must not make the local CSS watcher serve a stale digested stylesheet.
+  config.assets.output_path = Rails.root.join("tmp", "assets")
+  config.assets.manifest_path = Rails.root.join("tmp", "assets", ".manifest.json")
+  FileUtils.rm_f(config.assets.manifest_path)
   config.assets.quiet = true
 
   # Raises error for missing translations.

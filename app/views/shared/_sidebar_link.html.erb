@@ -1,0 +1,8 @@
+<% controllers = local_assigns.fetch(:controllers, []) %>
+
+<li>
+  <%= link_to icon_text_count(local_assigns.fetch(:icon), local_assigns.fetch(:label), local_assigns[:count]),
+    local_assigns.fetch(:path),
+    class: "sidebar-link#{active_if(*controllers)}",
+    aria: aria_current_for(*controllers) %>
+</li>

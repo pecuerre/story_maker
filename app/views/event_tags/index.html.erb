@@ -1,13 +1,20 @@
 <% content_for :title, "Event Tags" %>
 
-<h1>Event Tags</h1>
-
 <%= render "shared/taxonomy_tree",
-	nodes: @event_tags,
-	new_url: ->(parent = nil) { new_universe_event_tag_path(parent_id: parent&.id) },
-	create_url: universe_event_tags_path(),
-	edit_url: ->(event_tag) { edit_universe_event_tag_path(id: event_tag) },
-	update_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
-	delete_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
-	model_param: "event_tag",
-	modal_fields: event_tag_taxonomy_fields(Current.universe.event_tags.order(:position, :id)) %>
+  title: "Event tags",
+  description: "Classify events so related moments are easier to find across the timeline.",
+  eyebrow: "Universe Bible",
+  count: Current.universe.event_tags.count,
+  count_label: "tag",
+  new_label: "Add event tag",
+  secondary_label: "Manage events",
+  secondary_url: universe_events_path,
+  empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead.",
+  nodes: @event_tags,
+  new_url: ->(parent = nil) { new_universe_event_tag_path(parent_id: parent&.id) },
+  create_url: universe_event_tags_path,
+  edit_url: ->(event_tag) { edit_universe_event_tag_path(id: event_tag) },
+  update_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
+  delete_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
+  model_param: "event_tag",
+  modal_fields: event_tag_taxonomy_fields(Current.universe.event_tags.order(:position, :id)) %>

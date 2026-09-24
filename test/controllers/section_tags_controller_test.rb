@@ -20,8 +20,8 @@ class SectionTagsControllerTest < ActionDispatch::IntegrationTest
     # The story_id in the URL also selects the story the sidebar links to.
     get section_tags_url_for
     assert_response :success
-    assert_select "h1", text: "Section Tags"
-    assert_select "a.nav-link.active[href=?]", universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story)
+    assert_select "h1", text: "Section tags"
+    assert_select "a.sidebar-link.active[href=?]", universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story)
     assert_select ".taxonomy-node", 2
   end
 

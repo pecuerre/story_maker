@@ -1,11 +1,18 @@
 <% content_for :title, "Character Tags" %>
 
-<h1>Character Tags</h1>
-
 <%= render "shared/taxonomy_tree",
+  title: "Character tags",
+  description: "Define the optional labels used to organize characters across this universe.",
+  eyebrow: "Universe Bible",
+  count: Current.universe.character_tags.count,
+  count_label: "tag",
+  new_label: "Add character tag",
+  secondary_label: "Manage characters",
+  secondary_url: universe_characters_path,
+  empty_description: "Tags are optional. Add one to group characters, or create characters without a tag.",
   nodes: @character_tags,
   new_url: ->(parent = nil) { new_universe_character_tag_path(parent_id: parent&.id) },
-  create_url: universe_character_tags_path(),
+  create_url: universe_character_tags_path,
   edit_url: ->(character_tag) { edit_universe_character_tag_path(id: character_tag) },
   update_url: ->(character_tag) { universe_character_tag_path(id: character_tag) },
   delete_url: ->(character_tag) { universe_character_tag_path(id: character_tag) },

@@ -8,7 +8,15 @@ class RelationTagsControllerTest < ActionDispatch::IntegrationTest
 
   test "should get index" do
     get universe_relation_tags_url(universe_slug: @universe.slug)
+
     assert_response :success
+    assert_select ".page-header h1", text: "Relation tags"
+    assert_select ".page-description", text: /relationship types/
+    assert_select ".page-actions a[href=?]", universe_relations_path(universe_slug: @universe.slug), text: "Manage relations"
+    assert_select ".page-actions button", text: "Add relation tag"
+    assert_select ".empty-state", text: /No relation tags yet/
+    assert_select "aside.workspace-sidebar a.sidebar-link.active[href=?]",
+      universe_relation_tags_path(universe_slug: @universe.slug)
   end
 
   test "should create relation_tag as json" do

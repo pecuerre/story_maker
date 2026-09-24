@@ -1,26 +1,32 @@
 module ApplicationHelper
   def active_if(*controllers)
-    controllers = controllers.map { |c| c.to_s }
+    controllers = controllers.map { |controller| controller.to_s }
     " active" if controllers.include?(controller.controller_name)
   end
 
+  def aria_current_for(*controllers)
+    controllers = controllers.map { |controller| controller.to_s }
+    controllers.include?(controller.controller_name) ? { current: "page" } : {}
+  end
+
   def visible?(*controllers)
-    controllers = controllers.map { |c| c.to_s }
+    controllers = controllers.map { |controller| controller.to_s }
     controllers.include?(controller.controller_name)
     true
   end
 
   def icon(name)
-    content_tag(:i, "", class: "bi bi-#{name} me-1")
+    content_tag(:i, "", class: "bi bi-#{name}")
   end
 
   def icon_text_count(icon, text, count = nil)
-    content_tag(:span, class: "d-flex") do
-      concat content_tag(:i, "", class: "bi bi-#{icon} me-1")
-      concat text
-      if count.present?
-        # concat content_tag(:span, count, class: "badge text-bg-secondary rounded-pill ms-1")
-        concat content_tag(:small, "(#{count})", class: "text-body-secondary")
+    content_tag(:span, class: "sidebar-link-content d-flex align-items-center gap-2 w-100") do
+      concat content_tag(:i, "", class: "bi bi-#{icon}", aria: { hidden: true })
+      concat content_tag(:span, text, class: "sidebar-link-label")
+      unless count.nil?
+        concat content_tag(:span, count,
+          class: "sidebar-count",
+          aria: { label: pluralize(count, text) })
       end
     end
   end
@@ -34,7 +40,7 @@ module ApplicationHelper
   def nav_stories
     return [] if Current.universe.nil?
 
-    @nav_stories ||= Current.universe.stories.order(:id)
+    @nav_stories ||= Current.universe.stories.order(:id).to_a
   end
 
   def entity_tag_badge(entity)
@@ -53,13 +59,12 @@ module ApplicationHelper
   end
 
   private
-
-  def tag_badge(tag)
-    bgcolor = tag.respond_to?(:bgcolor) ? tag.bgcolor : "#d3d3d3"
-    fgcolor = tag.respond_to?(:fgcolor) ? tag.fgcolor : "#000000"
-    content_tag(:span, tag.name,
-      class: "badge text-dark",
-      style: "background-color: #{bgcolor} !important; color: #{fgcolor} !important;"
-    )
-  end
+    def tag_badge(tag)
+      bgcolor = tag.respond_to?(:bgcolor) ? tag.bgcolor : "#d3d3d3"
+      fgcolor = tag.respond_to?(:fgcolor) ? tag.fgcolor : "#000000"
+      content_tag(:span, tag.name,
+        class: "badge rounded-pill taxonomy-tag text-dark",
+        style: "background-color: #{bgcolor} !important; color: #{fgcolor} !important;"
+      )
+    end
 end

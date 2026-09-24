@@ -1,11 +1,18 @@
 <% content_for :title, "Locations" %>
 
-<h1>Locations</h1>
-
 <%= render "shared/taxonomy_tree",
+  title: "Locations",
+  description: "Build a hierarchy of places and regions shared by every story in this universe.",
+  eyebrow: "Universe Bible",
+  count: Current.universe.locations.count,
+  count_label: "location",
+  new_label: "Add location",
+  secondary_label: "Manage location tags",
+  secondary_url: universe_location_tags_path,
+  empty_description: "Add a location, then drag rows to create parent and child places.",
   nodes: @locations,
   new_url: ->(parent = nil) { new_universe_location_path(parent_id: parent&.id) },
-  create_url: universe_locations_path(),
+  create_url: universe_locations_path,
   edit_url: ->(location) { edit_universe_location_path(id: location) },
   update_url: ->(location) { universe_location_path(id: location) },
   delete_url: ->(location) { universe_location_path(id: location) },

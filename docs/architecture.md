@@ -14,7 +14,7 @@ UI patterns and the Timeline algorithm. Conventions are in
 | Database | **SQLite 3** (`sqlite3 >= 2.1`); separate `cache/cable/queue` schemas for solid_* |
 | Server | Puma + **Thruster** (in the Docker image) |
 | Front-end | Hotwire (**Turbo + Stimulus**), **importmap** (no bundler for JS), Bootstrap 5 + bootstrap-icons + tom-select via npm, CSS built with **sass → postcss/autoprefixer** (`cssbundling-rails`) |
-| Assets | Propshaft; `stylesheet_link_tag :app` + `javascript_importmap_tags`; `stale_when_importmap_changes` on `ApplicationController` |
+| Assets | Propshaft; `stylesheet_link_tag :app` + `javascript_importmap_tags`; development uses a dynamic `tmp/assets` manifest so the CSS watcher is not shadowed by a stale public manifest; `stale_when_importmap_changes` on `ApplicationController` |
 | Auth | `bcrypt` (`has_secure_password`), signed permanent cookie session |
 | JSON views | Jbuilder (only for `universes/*.json`) |
 | Jobs/cache/cable | `solid_queue`, `solid_cache`, `solid_cable` (DB-backed) |
@@ -111,24 +111,33 @@ Other global behavior: `allow_browser versions: :modern`,
 
 ## UI structure
 
-Layout (`app/views/layouts/application.html.erb`): fixed top **navbar**, **left sidebar** (theme
-cards), **main** content (`yield` + `content_for :title`), **right sidebar** (placeholder
-panels). Everything follows a two-step selection:
+The UI is a Bootstrap 5.3 application shell with a fixed dark **navbar**, a responsive **left
+workspace navigation**, and one flexible **main content** area. There is no permanent right
+sidebar: the old panel contained only placeholder links and was removed. A contextual inspector
+may be added later as a Bootstrap offcanvas; see [`backlog.md`](backlog.md).
 
-1. **No universe selected yet** (fresh login → the Universes index): both sidebars are dropped
-   and the main column takes the full width — the only thing to do is pick (or create) a
-   universe from the *Universes* dropdown.
-2. **Universe selected** (`Current.universe`): the sidebars appear with the universe-scoped
-   cards; the navbar grows a dropdown named after the universe.
-3. **Story selected** (`Current.story`): the story-scoped WHAT/HOW cards and the current-story
-   navbar item appear.
+Everything follows a two-step scope selection:
 
-Navbar items, left to right: **Dashboard** (placeholder), **Universes** (dropdown via
-`nav_universes` → list / all / new), **[current universe]** (dropdown via `nav_stories` → the
-universe's stories, *All stories*, *New story* — only once a universe is selected),
-**[current story]** (link to `universe_story_path` — only once a story is selected).
+1. **No universe selected yet** (fresh login → the Universes index): workspace navigation is not
+   rendered and the main column takes the full width. The only initial task is selecting or
+   creating a universe from the **Universes** dropdown.
+2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
+   and as a left offcanvas below the `lg` breakpoint. It contains **Story workspace**, **Universe
+   Bible**, and a separate **Configuration** section. The navbar adds explicit **Universe: …** and
+   **Story: …** context/switchers.
+3. **Story selected** (`Current.story`): Story workspace gains the story overview and Sections;
+   story-scoped Section tags appear under Configuration. The story is still remembered per
+   universe; no first-story fallback exists.
 
-Three page patterns + their Stimulus controllers are described in
+The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
+switcher, and an **Account** menu. Nonfunctional dashboard/collaboration/analyzer placeholders
+are not rendered. Universe-scoped content is shared by every story; Sections and Section tags
+remain story-scoped.
+
+All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`, and
+`empty_state` patterns. Visual tokens and responsive/component conventions live in
+[`visual_design.md`](visual_design.md). Three functional page patterns + their Stimulus
+controllers are described in
 [universe_maker_conventions.md](universe_maker_conventions.md#views---three-patterns):
 taxonomy tree (`taxonomy_tree`), flat list + modal (`modal_form` + `tom_select`), plain forms.
 

@@ -10,8 +10,8 @@ class EventTagsControllerTest < ActionDispatch::IntegrationTest
   test "should get index" do
     get universe_event_tags_url(universe_slug: @universe.slug)
     assert_response :success
-    assert_select "h1", text: "Event Tags"
-    assert_select "a.nav-link.active[href=?]", universe_event_tags_path(universe_slug: @universe.slug)
+    assert_select "h1", text: "Event tags"
+    assert_select "a.sidebar-link.active[href=?]", universe_event_tags_path(universe_slug: @universe.slug)
     assert_select ".taxonomy-node", 2
   end
 

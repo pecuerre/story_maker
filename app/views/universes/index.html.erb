@@ -1,35 +1,75 @@
 <% content_for :title, "Universes" %>
 
-<h1>Universes</h1>
+<%= render "shared/page_header",
+  title: "Universes",
+  description: "Choose a world to work in. Each universe contains its own stories and shared world-building records.",
+  count: @universes.size,
+  count_label: "universe" do %>
+  <%= link_to new_universe_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span>New universe</span>
+  <% end %>
+<% end %>
 
-<table id="universes" class="index_table table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <div id="universes">
-      <% @universes.each do |universe| %>
-        <tr>
-          <td>
-            <%= universe.name %>
-            <% if universe.private? %>
-              <span class="badge bg-warning">Private</span>
-            <% else %>
-              <span class="badge bg-success">Public</span>
-            <% end %>
-          </td>
-          <td>
-            <%= link_to "Details", universe %>
-            <%= link_to "Edit", edit_universe_path(universe) %>
-            <%= link_to "Destroy", universe, method: :delete %>
-          </td>
-        </tr>
-      <% end %>
+<% if @universes.any? %>
+  <div class="content-surface">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Universe</th>
+            <th scope="col">Visibility</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @universes.each do |universe| %>
+            <tr>
+              <td>
+                <%= link_to universe.name, universe_path(universe), class: "fw-semibold" %>
+              </td>
+              <td>
+                <% if universe.private? %>
+                  <span class="badge text-bg-warning-subtle text-warning-emphasis">
+                    <span class="status-dot status-dot--private" aria-hidden="true"></span>Private
+                  </span>
+                <% else %>
+                  <span class="badge text-bg-success-subtle text-success-emphasis">
+                    <span class="status-dot" aria-hidden="true"></span>Public
+                  </span>
+                <% end %>
+              </td>
+              <td class="text-end">
+                <div class="dropdown row-actions">
+                  <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                    id="<%= dom_id(universe) %>-actions"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Actions for <%= universe.name %>">
+                    <i class="bi bi-three-dots" aria-hidden="true"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(universe) %>-actions">
+                    <li><%= link_to "Open universe", universe_path(universe), class: "dropdown-item" %></li>
+                    <li><%= link_to "Edit universe", edit_universe_path(universe), class: "dropdown-item" %></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <%= button_to "Delete universe", universe_path(universe),
+                        method: :delete,
+                        class: "dropdown-item text-danger",
+                        data: { turbo_confirm: "Delete #{universe.name} and all of its content?" } %>
+                    </li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
     </div>
-  </tbody>
-</table>
-
-<%= link_to "New universe", new_universe_path %>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+    title: "Create your first universe",
+    description: "A universe holds the world, characters, locations, events, and items shared by its stories.",
+    icon: "globe2" %>
+<% end %>

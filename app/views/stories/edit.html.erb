@@ -1,9 +1,8 @@
 <% content_for :title, "Edit #{@story.name}" %>
 
-<h1>Edit story</h1>
+<%= render "shared/page_header",
+  title: "Edit story",
+  eyebrow: @story.name,
+  description: "Update the name and description used for this story." %>
 
 <%= render "form", story: @story %>
-
-<div>
-  <%= link_to "Back to stories", universe_stories_path %>
-</div>

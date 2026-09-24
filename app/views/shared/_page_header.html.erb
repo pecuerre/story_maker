@@ -1,0 +1,33 @@
+<% title = local_assigns.fetch(:title) %>
+<% description = local_assigns[:description] %>
+<% eyebrow = local_assigns[:eyebrow] %>
+<% count = local_assigns[:count] %>
+<% count_label = local_assigns[:count_label] || "entry" %>
+
+<header class="page-header d-flex flex-column flex-md-row align-items-md-start justify-content-between">
+  <div class="page-header-copy">
+    <% if eyebrow.present? %>
+      <div class="page-eyebrow"><%= eyebrow %></div>
+    <% end %>
+
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <h1 class="page-title"><%= title %></h1>
+      <% unless count.nil? %>
+        <span class="badge rounded-pill text-bg-light border"
+          aria-label="<%= pluralize(count, count_label) %>">
+          <%= count %>
+        </span>
+      <% end %>
+    </div>
+
+    <% if description.present? %>
+      <p class="page-description"><%= description %></p>
+    <% end %>
+  </div>
+
+  <% if block_given? %>
+    <div class="page-actions d-flex align-items-center flex-wrap">
+      <%= yield %>
+    </div>
+  <% end %>
+</header>

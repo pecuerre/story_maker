@@ -16,7 +16,11 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Sections"
     assert_includes response.body, "Section tag"
     assert_includes response.body, universe_story_section_path(universe_slug: @universe.slug, story_id: @story, id: @section)
-    assert_select "a.nav-link.active", text: "Sections(2)"
+    assert_select "a.sidebar-link.active[href=?]",
+      universe_story_sections_path(universe_slug: @universe.slug, story_id: @story) do
+      assert_select ".sidebar-link-label", text: "Sections"
+      assert_select ".sidebar-count", text: "2"
+    end
   end
 
   test "index only lists sections of the current story" do

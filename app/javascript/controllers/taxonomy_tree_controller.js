@@ -20,7 +20,8 @@ export default class extends Controller {
     if (this.element.querySelector(".taxonomy-new")) return
     const source = event.currentTarget
     const parentNode = source.closest("[data-node-id]")
-    const list = parentNode ? this.childList(parentNode) : this.element.querySelector(":scope > .taxonomy-list")
+    const list = parentNode ? this.childList(parentNode) : this.element.querySelector(":scope > .taxonomy-surface > .taxonomy-list")
+    this.element.querySelector("[data-taxonomy-tree-empty]")?.remove()
 
     const item = this.buildNewItem(parentNode?.dataset.nodeId || "")
     list.append(item)
@@ -59,7 +60,7 @@ export default class extends Controller {
   buildNewItem(parentId, position) {
     const item = document.createElement("li")
     item.className = "taxonomy-node taxonomy-new"
-    item.innerHTML = `<div class="d-flex align-items-center gap-2 border-bottom py-2"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><form class="d-flex flex-grow-1 gap-2" data-action="submit->taxonomy-tree#create"><input class="form-control form-control-sm" name="name" aria-label="New name" required><button type="submit" class="btn btn-sm btn-primary">Save</button><button type="button" class="btn btn-sm btn-outline-secondary" data-action="taxonomy-tree#cancel">Cancel</button></form></div>`
+    item.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><form class="d-flex flex-grow-1 gap-2" data-action="submit->taxonomy-tree#create"><input class="form-control form-control-sm" name="name" aria-label="New name" required><button type="submit" class="btn btn-sm btn-primary">Save</button><button type="button" class="btn btn-sm btn-outline-secondary" data-action="taxonomy-tree#cancel">Cancel</button></form></div>`
     const form = item.querySelector("form")
     form.dataset.url = this.createUrlValue
     form.dataset.parentId = parentId || ""
@@ -270,7 +271,7 @@ export default class extends Controller {
     let list = node.querySelector(":scope > .taxonomy-list")
     if (!list) {
       list = document.createElement("ul")
-      list.className = "taxonomy-list list-unstyled ms-4"
+      list.className = "taxonomy-list list-unstyled ms-4 ps-3"
       list.dataset.action = "dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
       list.dataset.dropParentId = node.dataset.nodeId
       // Tag lists created to preview a nesting drop so cleanupDrag can remove them if they end up unused.
@@ -282,6 +283,7 @@ export default class extends Controller {
 
   buildNode(data) {
     const node = document.createElement("li")
+    const safeName = this.escapeHtml(data.name)
     node.className = "taxonomy-node"
     node.draggable = true
     node.dataset.taxonomyTreeTarget = "node"
@@ -293,8 +295,10 @@ export default class extends Controller {
     node.dataset.description = data.description || ""
     node.dataset.taxonomyValues = JSON.stringify(data)
     if (this.hasFieldNameValue) node.dataset.taxonomyFieldValue = JSON.stringify(data[this.fieldNameValue] ?? null)
-    node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom py-2"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex gap-1"><button type="button" class="btn btn-sm btn-outline-secondary" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-secondary" title="Edit" aria-label="Edit" data-action="taxonomy-tree#edit"><i class="bi bi-pencil" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete" data-action="taxonomy-tree#remove"><i class="bi bi-trash" aria-hidden="true"></i></button></span></div>`
-    node.querySelector('[data-taxonomy-tree-target="name"]').innerHTML = this.buildNameContent(data)
+    node.innerHTML = `<div class="taxonomy-row d-flex align-items-center gap-2 border-bottom"><i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i><span class="flex-grow-1 text-break" data-taxonomy-tree-target="name"></span><span class="taxonomy-actions d-flex align-items-center gap-1"><button type="button" class="btn btn-sm btn-light border" title="Add child" aria-label="Add child" data-action="taxonomy-tree#add"><i class="bi bi-plus-lg" aria-hidden="true"></i></button><div class="dropdown"><button class="btn btn-sm btn-light border dropdown-toggle" type="button" id="taxonomy-${data.id}-actions" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions for ${safeName}"><i class="bi bi-three-dots" aria-hidden="true"></i></button><ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-${data.id}-actions"><li><button type="button" class="dropdown-item" data-action="taxonomy-tree#edit"><i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit</button></li><li><hr class="dropdown-divider"></li><li><button type="button" class="dropdown-item text-danger" data-action="taxonomy-tree#remove"><i class="bi bi-trash me-2" aria-hidden="true"></i>Delete</button></li></ul></div></span></div>`
+    const nameTarget = node.querySelector('[data-taxonomy-tree-target="name"]')
+    nameTarget.setAttribute("aria-label", `Rename ${data.name}`)
+    nameTarget.innerHTML = this.buildNameContent(data)
     return node
   }
 
@@ -304,6 +308,7 @@ export default class extends Controller {
     const name = document.createElement("span")
     name.className = "flex-grow-1 text-break"
     name.setAttribute("role", "button")
+    name.setAttribute("aria-label", `Rename ${value}`)
     name.tabIndex = 0
     name.dataset.taxonomyTreeTarget = "name"
     name.dataset.action = "click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName"
@@ -320,8 +325,10 @@ export default class extends Controller {
   // Renders a node's name as a badge tinted with its own color, plus its description underneath.
   buildNameContent(data) {
     const name = this.escapeHtml(data.name)
-    const badge = data.bgcolor ? `<span class="badge text-dark" style="background-color: ${this.escapeHtml(data.bgcolor)}; color: ${this.escapeHtml(data.fgcolor)};">${name}</span>` : name
-    const description = data.description ? `<div class="small text-body-secondary text-break">${this.escapeHtml(data.description)}</div>` : ""
+    const badge = data.bgcolor
+      ? `<span class="badge rounded-pill taxonomy-tag text-dark" style="background-color: ${this.escapeHtml(data.bgcolor)}; color: ${this.escapeHtml(data.fgcolor)};">${name}</span>`
+      : `<span class="entity-title">${name}</span>`
+    const description = data.description ? `<div class="entity-description">${this.escapeHtml(data.description)}</div>` : ""
     return badge + description
   }
 

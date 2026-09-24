@@ -1,0 +1,12 @@
+<% if flash.any? %>
+  <div class="flash-stack" aria-live="polite">
+    <% flash.each do |type, message| %>
+      <% next if message.blank? %>
+      <% alert_class = type.to_s == "notice" ? "success" : (type.to_s == "alert" ? "danger" : "secondary") %>
+      <div class="alert alert-<%= alert_class %> alert-dismissible fade show" role="alert">
+        <%= message %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% end %>
+  </div>
+<% end %>

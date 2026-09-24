@@ -1,11 +1,18 @@
 <% content_for :title, "Ownership Tags" %>
 
-<h1>Ownership Tags</h1>
-
 <%= render "shared/taxonomy_tree",
+  title: "Ownership tags",
+  description: "Describe the kinds of ownership recorded between characters and items.",
+  eyebrow: "Universe Bible",
+  count: Current.universe.ownership_tags.count,
+  count_label: "tag",
+  new_label: "Add ownership tag",
+  secondary_label: "Manage ownerships",
+  secondary_url: universe_ownerships_path,
+  empty_description: "Tags are optional. Add one to classify ownership records, or create them untagged.",
   nodes: @ownership_tags,
   new_url: ->(parent = nil) { new_universe_ownership_tag_path(parent_id: parent&.id) },
-  create_url: universe_ownership_tags_path(),
+  create_url: universe_ownership_tags_path,
   edit_url: ->(ownership_tag) { edit_universe_ownership_tag_path(id: ownership_tag) },
   update_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },
   delete_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },

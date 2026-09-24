@@ -30,6 +30,17 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "Story Two"
   end
 
+  test "should get story show with workspace context" do
+    story = stories(:story_one)
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".page-header h1", text: story.name
+    assert_select ".page-eyebrow", text: "Story workspace"
+    assert_select "a[href=?]", universe_story_sections_path(universe_slug: @universe.slug, story_id: story), text: "Open sections"
+  end
+
   test "should get new story" do
     get new_universe_story_url(universe_slug: @universe.slug)
 

@@ -19,6 +19,16 @@ still pending.
 
 PENDING WORK
 ------------
+
+### Explicit development universe-data loader
+
+Replace the transitional `db:seed`/`db:restart` coupling with an environment-guarded development
+loader. Discover or register one `db/data/<universe_slug>/` directory per universe, support loading
+one named universe after a deliberate reset, validate model order and symbolic references, and
+keep temporary data out of production seed/deploy paths. Preserve the convention that a new model
+gets files such as `db/data/dark/dialogs.yml` in each relevant universe directory rather than a
+feature-level `db/data/dialog/` directory.
+
 (A) add "fixed" attribute to all _tags models (the fixed ones should not be
 editable or deletable)
 

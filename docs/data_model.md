@@ -159,9 +159,27 @@ hosts *Game of Thrones* and *House of the Dragon*): characters/relations/locatio
 are defined once per universe, while each story has its own section tree (its plot/scenes) and
 its own section tags (chapter/book/episode labels). This ownership split is defined directly by
 the schema-only create migrations: `stories` owns its slug, and `sections` and `section_tags`
-reference `stories`. Data is disposable and reconstructed from the files under `db/data/`; it is
-not backfilled by migrations. Section tags and sections are reachable only under the explicit story
-path (`/u/<slug>/s/<story_id>/section_tags` and `/u/<slug>/s/<story_id>/sections`). The
-universe-level `/u/<slug>/section_tags` and `/u/<slug>/sections` routes are intentionally invalid.
+reference `stories`. Data is disposable and reconstructed from the per-universe directories under
+`db/data/`; it is not backfilled by migrations. Section tags and sections are reachable only under
+the explicit story path (`/u/<slug>/s/<story_id>/section_tags` and
+`/u/<slug>/s/<story_id>/sections`). The universe-level `/u/<slug>/section_tags` and
+`/u/<slug>/sections` routes are intentionally invalid.
+
+## Development data convention
+
+`db/data/` is checked-in but disposable development data, organized as one directory per universe:
+
+```text
+db/data/dark/
+db/data/lotr/
+db/data/star_wars/
+```
+
+A new persisted model adds its data file to every universe directory where it should be exercised.
+For example, a future `Dialog` model uses `db/data/dark/dialogs.yml` and, if applicable,
+`db/data/lotr/dialogs.yml`; it does not get a `db/data/dialog/` feature directory. The shared
+loader order must place the model after its dependencies, and references must preserve the model's
+universe/story scope. Development data is for browser/manual validation only; automated tests use
+`test/fixtures/`, and production bootstrap data belongs in `db/seeds.rb`/`db/seeds/`.
 
 Hand-maintained sketch of the core entities: [schema.txt](schema.txt).

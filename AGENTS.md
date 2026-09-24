@@ -101,15 +101,41 @@ development database.
 - Keep one schema-only create migration per persisted model, including HABTM join tables where
   applicable.
 - Generate `db/schema.rb` through Rails migrations; do not edit it manually.
-- Demo data is reconstructed from `db/data/` by the seed loaders. Tests use fixtures, not seeds.
-- Treat the current seed process as non-idempotent. Do not add a data migration or assume a
-  second `db:seed` is safe without an explicit decision.
+- Demo data lives under `db/data/<universe_slug>/`: one subdirectory per universe. The current
+  examples are `db/data/dark/` and `db/data/lotr/`; a universe directory contains all data used to
+  exercise that universe, including its stories, sections, tags, world-building records, and
+  relationships.
+- Do not create a feature directory such as `db/data/dialog/`. If a new `Dialog` model is added,
+  its development data belongs in `db/data/dark/dialogs.yml` and in the corresponding file for
+  every other universe directory where it should be exercised; update the shared model
+  order/registry as well.
+- `db/data/` is disposable, development-only data. It may be changed freely to exercise new
+  features and relationships; do not put temporary demo records in migrations or production
+  seed/deploy paths. `db/seeds.rb` and `db/seeds/` are reserved for production-safe, idempotent
+  bootstrap data.
+- When adding or changing a model, table, association, or persisted field, update every relevant
+  `db/data/<universe_slug>/` data file, the shared loader order/registry, and the documentation in
+  the same change. Sample data must include representative records connected to existing
+  universe/story/character/location/item/event records where those relationships exist; isolated
+  rows do not satisfy the feature workflow.
+- Treat “create a new model” as a full-stack request: implement the model, schema migration,
+  routes/controller, views/helpers/navigation, fixtures and request/model tests, a browser-
+  reachable universe data directory, and the relevant docs. The data must provide a known
+  development login, scoped URL, and exact load/rebuild command so it can be verified manually.
+- The preferred data lifecycle is explicit and environment-guarded: rebuild or reset the disposable
+  development database, then load one named universe directory. Do not rely on a production seed
+  task to load temporary demo data, and never run a destructive database rebuild without approval.
+- The current `db:seed`/`db:restart` wiring still loads `db/data`; treat that as transitional. The
+  explicit development-only demo task described in the proposal is required before calling the
+  production boundary complete.
 
 ## Testing conventions
 
 - Add or update tests for behavior changes.
 - Use the existing fixtures. Request tests use `sign_in_as` / `sign_out`; system tests use the
-  real sign-in form when authentication behavior is part of the scenario.
+  real sign-in form when authentication behavior is part of the scenario. `db/data` is not a test
+  fixture source; the local `config/ci.rb` seed-replant step is transitional and should be revisited
+  with the explicit development-data task.
 - In the test environment, cross-scope `ActiveRecord::RecordNotFound` requests render as HTTP
   404; assert `assert_response :not_found` rather than expecting an exception.
 - Keep route helpers fully qualified in tests when the current request does not provide the

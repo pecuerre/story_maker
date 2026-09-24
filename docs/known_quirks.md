@@ -7,23 +7,17 @@ survives. Index of all docs: [README.md](README.md).
 
 ## Correctness / security observations
 
-1. **`visible?` always returns `true`.** `ApplicationHelper#visible?`
-   (`app/helpers/application_helper.rb`) computes `controllers.include?(controller.controller_name)`
-   on its own line and then returns literal `true` (the comparison is discarded). The redesigned
-   sidebar no longer calls this helper, so the bug no longer affects the current navigation, but
-   it must be fixed before reusing the helper for visibility decisions.
-
-2. **cancancan is installed but never used.** `Ability` (`app/models/ability.rb`) includes
+1. **cancancan is installed but never used.** `Ability` (`app/models/ability.rb`) includes
    `CanCan::Ability`, but there is no `authorize!`/`current_ability`/`load_and_authorize` anywhere
    in the app. Its rules are also wrong for this schema:
    `can :manage, Universe, user_id: user.id` — universes have `owner_id`, not `user_id`.
    Authorization today is effectively "any signed-in user may touch anything".
 
-3. **No authorization on universe-scoped content.** Content controllers only scope by the
+2. **No authorization on universe-scoped content.** Content controllers only scope by the
    `:universe_slug` param (`Current.universe.<assoc>.find(...)`). Any authenticated user (or, for
    universes, see next point) who knows a slug can read/modify/delete any universe's content.
 
-4. **Universes are open even to guests, and private universes are readable by slug.**
+3. **Universes are open even to guests, and private universes are readable by slug.**
    `UniversesController` declares
    `allow_unauthenticated_access only: %i[index show new create edit update destroy]` (i.e. all
    actions) and `set_universe` looks up `Universe.find_by(slug: …)` **without** applying
@@ -33,7 +27,7 @@ survives. Index of all docs: [README.md](README.md).
 
 ## Development workflow observations
 
-5. **Disposable universe data is still coupled to `db:seed`.** `db/data/` is intentionally
+4. **Disposable universe data is still coupled to `db:seed`.** `db/data/` is intentionally
    development-only: one subdirectory per universe (`dark/`, `lotr/`, and future universe slugs)
    contains the records used to exercise that universe. The current `dark` and `lotr` loaders use
    `create`/`create!`, and `db/seeds.rb` still loads a hardcoded `["dark", "lotr"]` list, so the

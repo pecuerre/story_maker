@@ -12,7 +12,6 @@ module ApplicationHelper
   def visible?(*controllers)
     controllers = controllers.map { |controller| controller.to_s }
     controllers.include?(controller.controller_name)
-    true
   end
 
   def icon(name)

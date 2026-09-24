@@ -61,6 +61,16 @@ in its generic API; this project-level guard prevents that footgun in its own co
 
 ## Resolved correctness issues
 
+### `ApplicationHelper#visible?` always returned `true` (fixed)
+
+**Then:** `ApplicationHelper#visible?` (`app/helpers/application_helper.rb`) computed the
+controller comparison and discarded it, then returned literal `true`. The redesigned sidebar did
+not call the helper, so the bug did not affect current navigation, but it made the helper unsafe
+for future visibility decisions.
+
+**Fix:** the stray test-only `true` was removed. The helper now returns the result of
+`controllers.include?(controller.controller_name)`.
+
 ### HasSlug treated generated slugs as explicit on updates (fixed)
 
 **Then:** `HasSlug#set_slug` checked `slug.present?` before checking whether `name` changed. Every

@@ -5,12 +5,12 @@ kept for history: what the problem was, how it bit you, and how it was solved �
 code looks the way it does today. Only *open* oddities belong in
 [known_quirks.md](known_quirks.md).
 
-Original entry numbers are kept ("former #8") so old references and commits still make sense.
+Each entry is organized around the original problem and its resolution.
 Index of all docs: [README.md](README.md).
 
 ## Resolved vestigial code
 
-### Former #9 — `ApplicationController#default_url_options` was a no-op (fixed)
+### `ApplicationController#default_url_options` was a no-op (fixed)
 
 **Then:** `ApplicationController` overrode `default_url_options` and called `super.merge()` with no
 options, while the universe slug was supplied by Rails request recall.
@@ -18,7 +18,7 @@ options, while the universe slug was supplied by Rails request recall.
 **Fix:** the redundant override was removed. URL helpers continue to use the standard Rails
 behavior and request recall; no application-specific `universe_slug` option is needed.
 
-### Former #10 — Unused Hello Stimulus controller (fixed)
+### Unused Hello Stimulus controller (fixed)
 
 **Then:** `app/javascript/controllers/hello_controller.js` was an untouched Rails scaffold
 controller. No view or application code used it; the import map's controller glob only made the
@@ -27,7 +27,7 @@ unused file discoverable.
 **Fix:** the controller was deleted. The Stimulus eager loader now registers only the controllers
 used by the application.
 
-### Former #11 — Vestigial current-universe path wrappers (fixed)
+### Vestigial current-universe path wrappers (fixed)
 
 **Then:** `SectionsController` and the section/event tag controllers carried private
 `current_universe_*_path` wrappers. The plural wrappers were unused, and the singular wrappers
@@ -36,7 +36,7 @@ only forwarded to route helpers used to build JSON URLs.
 **Fix:** the wrappers were removed. JSON responses now call the appropriate route helper directly,
 so URL behavior is unchanged without the dead indirection.
 
-### Former #12 — Root README was Rails scaffold boilerplate (fixed)
+### Root README was Rails scaffold boilerplate (fixed)
 
 **Then:** the root `README.md` still contained the generated Rails placeholder, leaving no useful
 entry point for the project.
@@ -46,7 +46,18 @@ links to the detailed documentation in `docs/`, which remains the source of trut
 
 ## Resolved correctness issues
 
-### Former #17 — Sections URL did not make the story scope explicit (fixed)
+### Building on an association leaked unsaved records into views (fixed)
+
+**Then:** `Current.universe.stories.new(...)` added the new, unsaved `Story` to the `has_many`
+association's in-memory target. A view that iterated the association during the same request could
+encounter the object with `id: nil` and fail while generating a story URL.
+
+**Fix:** `StoriesController` now builds the form object with
+`Story.new(universe: Current.universe)` in both `new` and `create`, assigning the parent without
+mutating `Current.universe.stories`. A controller regression test loads the association and verifies
+that the unsaved form object is absent from its target.
+
+### Sections URL did not make the story scope explicit (fixed)
 
 **Then:** the story-scoped sections refactor left the universe-level `/u/:universe_slug/sections`
 path as a dead end, while the replacement used the verbose `/stories/:story_id` segment.
@@ -55,7 +66,7 @@ path as a dead end, while the replacement used the verbose `/stories/:story_id` 
 only at explicit story-scoped URLs such as `/u/:universe_slug/s/:story_id/sections`. The
 universe-level sections URL is intentionally not routed; no compatibility alias is provided.
 
-### Former #18 — Sidebar issued COUNT queries on every page (fixed)
+### Sidebar issued COUNT queries on every page (fixed)
 
 **Then:** the left sidebar called `.count` for sections, characters, relations, locations, events,
 items, and ownerships on every rendered page. A selected story therefore caused seven database
@@ -72,7 +83,7 @@ cache after recreating the database, and a one-hour expiry is a safety net for r
 or maintenance writes that bypass callbacks. Production continues to use the existing Solid Cache
 store; Redis is not required.
 
-### Former #8 — Default-tag assignment crashed on tagless universes (fixed)
+### Default-tag assignment crashed on tagless universes (fixed)
 
 **Then:** `CharactersController#create` (and the location/item equivalents) did
 `...character_tags.order(:id).first.id if ids.empty?` — a `NoMethodError` on `nil` when the
@@ -84,7 +95,7 @@ records the user had deliberately left untagged. `SectionsController#create` use
 and `Story#default_section_tag` was deleted as dead code. Creating a record without tags simply
 saves it untagged — a tagless universe (or story) is now a normal state, not a crash.
 
-### Former #19 — Two lockfiles and a mismatched CSS watcher (fixed)
+### Two lockfiles and a mismatched CSS watcher (fixed)
 
 **Then:** `bun.lock` and `yarn.lock` coexisted, while `package.json` and the Rails CSS build used
 Bun. `Procfile.dev` still launched the watcher with `yarn watch:css`, creating two possible package
@@ -95,7 +106,7 @@ uses `bun run watch:css`, Bun is pinned in `mise.toml`, and the development docu
 `bun.lock` as the source of truth. CI and the Docker build install the pinned Bun version and use
 `bun install --frozen-lockfile` in reproducible environments.
 
-### Former #21 — Universes could be saved without a name (fixed)
+### Universes could be saved without a name (fixed)
 
 **Then:** `Universe` had no validations, so a missing or blank name passed validation even
 though other named records rejected it.
@@ -104,7 +115,7 @@ though other named records rejected it.
 validation and reject universe creation without a name; the existing form error handling renders
 the validation message.
 
-### Former #22 — Migrations mixed schema changes with application-data work (fixed)
+### Migrations mixed schema changes with application-data work (fixed)
 
 **Then:** two later migrations backfilled and copied live records when moving sections and section
 tags under stories. Those migrations referenced application models (`Story`, `Section`, and
@@ -117,7 +128,7 @@ story slug and the `story_id` foreign keys are defined directly in the correspon
 migrations; the record-copying migrations were removed. Existing databases must be recreated with
 `bin/rails db:restart`, which migrates the schema and then reloads `db/data/` through `db:seed`.
 
-### Former #24 — Deleting a section tag silently un-tagged its sections (fixed, in two steps)
+### Deleting a section tag silently un-tagged its sections (fixed, in two steps)
 
 **Then:** section tags were universe-wide while sections were story-scoped, so a tag could be
 deleted even though stories still referenced it.
@@ -134,10 +145,9 @@ relation/ownership tags).
 **Fix, step 2 (no presence validation):** `HasManyTags` no longer adds
 `validates association, presence: true`, so tags are optional on **every** content model.
 Deleting a tag simply leaves its records untagged, which is valid — no deferred failure, nothing
-breaks at the next save, and no controller force-assigns a default tag to compensate
-(see former #8).
+breaks at the next save, and no controller force-assigns a default tag to compensate.
 
-### Former #15 — Fixture slugs did not match the normalized slug format (fixed)
+### Fixture slugs did not match the normalized slug format (fixed)
 
 **Then:** fixture rows explicitly stored underscore-separated slugs such as `section_one`, while
 `HasSlug.slugify` normalizes underscores to dashes. Because fixtures load directly, a class-level
@@ -147,7 +157,7 @@ finder such as `Section.section_one` searched for `section-one` and could not fi
 records. Fixture labels and association references remain unchanged, and a regression test verifies
 that a fixture is reachable through its normalized class-level finder.
 
-### Former #16 — `404` vs `RecordNotFound` in tests (resolved as a test convention)
+### `404` vs `RecordNotFound` in tests (resolved as a test convention)
 
 **Then:** `config.action_dispatch.show_exceptions = :rescuable` causes an out-of-scope
 `ActiveRecord::RecordNotFound` raised during a request to be rendered as HTTP 404, so an

@@ -47,6 +47,17 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "new story form does not leak its unsaved object into the universe association" do
+    get new_universe_story_url(universe_slug: @universe.slug)
+
+    story = @controller.instance_variable_get(:@story)
+    assert_not story.persisted?
+    assert_equal @universe, story.universe
+
+    story.universe.stories.load
+    assert_not_includes story.universe.stories.target, story
+  end
+
   test "should create story" do
     assert_difference("Story.count") do
       post universe_stories_url(universe_slug: @universe.slug),

@@ -31,7 +31,9 @@
             <% end %>
             <li><hr class="dropdown-divider"></li>
             <li><%= link_to "All universes", universes_path, class: "dropdown-item" %></li>
-            <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
+            <% if Current.user.present? %>
+              <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
+            <% end %>
           </ul>
         </li>
 
@@ -49,7 +51,12 @@
               </li>
               <li><hr class="dropdown-divider"></li>
               <li><%= link_to "All universes", universes_path, class: "dropdown-item" %></li>
-              <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
+              <% if Current.user.present? %>
+                <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
+              <% end %>
+              <% if can_administer_universe? %>
+                <li><%= link_to "Manage members", universe_memberships_path, class: "dropdown-item" %></li>
+              <% end %>
             </ul>
           </li>
 
@@ -71,7 +78,9 @@
               <% end %>
               <li><hr class="dropdown-divider"></li>
               <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
-              <li><%= link_to "New story", new_universe_story_path, class: "dropdown-item" %></li>
+              <% if can_write_universe? %>
+                <li><%= link_to "New story", new_universe_story_path, class: "dropdown-item" %></li>
+              <% end %>
             </ul>
           </li>
         <% end %>

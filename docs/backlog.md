@@ -95,9 +95,10 @@ the feature has a real destination.
 
 ### Collaboration and universe analysis
 
-The right sidebar now reserves temporary links for Tracking, Analyzer, Collaboration, Graphs,
-Analytics, and AI tools. These remain future product areas. Before replacing the placeholders
-with navigation, specify the underlying records and permissions: inconsistency detection,
-incomplete/undefined records, collaborators, submissions, changes/forks, graphs, analytics, and
-drafts. A feature should appear as a live navigation item when it has a useful destination and
-clear empty/loading/error states.
+Universe-level access management is implemented: public/private visibility and read/write/admin
+memberships are available from the universe workspace. The right sidebar still reserves temporary
+links for Tracking, Analyzer, richer Collaboration, Graphs, Analytics, and AI tools. Those remain
+future product areas. Before replacing the placeholders with navigation, specify the underlying
+records and permissions: inconsistency detection, incomplete/undefined records, submissions,
+changes/forks, graphs, analytics, and drafts. A feature should appear as a live navigation item when
+it has a useful destination and clear empty/loading/error states.

@@ -1,0 +1,3 @@
+- user: User.dark_collaborator
+  universe: Universe.dark
+  access_level: admin

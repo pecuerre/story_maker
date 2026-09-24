@@ -158,10 +158,10 @@ URL and mutation flow.
 
 ### Configuration
 
-Configuration is a separate, currently empty sidebar section reserved for future organization and
-settings. Tag management now lives next to the records it classifies in the corresponding content
-workspace. New configuration tools should be added as top-level entries here, grouped by scope when
-needed.
+Configuration is a separate sidebar section. Universe admins see **Members**, which manages the
+read/write/admin access list for the current universe. Tag management lives next to the records it
+classifies in the corresponding content workspace. New configuration tools should be added as
+top-level entries here, grouped by scope when needed.
 
 Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
 `aria-current="page"`; color is not the only state signal. The reserved Scenes and right-sidebar
@@ -169,9 +169,10 @@ entries are the intentional placeholders for future functionality.
 
 ### Right utility sidebar
 
-The right sidebar is reserved for future **Collaboration**, **Analytics**, and **AI** tools. It
-contains a few `aria-disabled` links for now (Collaborators, Conflicts, Branches, Forks, Insights,
-Reports, and Assistant), giving those areas a stable visual home without adding fake routes.
+The right sidebar is reserved for future **Analytics** and **AI** tools. The access manager is
+intentionally in the left Configuration section because it is a real universe setting; the right
+sidebar keeps a stable home for richer collaboration and analysis features without adding fake
+routes.
 
 ## Shared view patterns
 
@@ -202,7 +203,8 @@ Characters, items, events, relations, and ownerships use:
 - a visible name/title and tag badges;
 - a short description clamped to a readable number of lines;
 - a `content-surface`/`list-group` wrapper;
-- a modal for quick create/edit, preserving the existing JSON-only mutation flow.
+- a modal for quick create/edit, preserving the existing JSON-only mutation flow;
+- mutation controls hidden for guests and read-only members, while the record content remains visible.
 
 Relations should read naturally (`Character A → Character B`) rather than as an unlabeled database
 row. Ownerships use the same readable relationship treatment.
@@ -223,7 +225,8 @@ The shared tree provides:
 - a page header with explicit `title`, count, description, and human-readable add label;
 - optional URL-backed workspace tabs via `tabs` and `tabs_aria_label` locals;
 - a consistent empty state;
-- drag handles, inline rename, add-child, edit, and delete actions;
+- drag handles, inline rename, add-child, edit, and delete actions for users with write access;
+  read-only viewers see the hierarchy without mutation controls.
 - a neutral overflow menu for edit/delete.
 
 The add action must be human-readable (`Add relation tag`), never generated directly from a
@@ -233,7 +236,7 @@ the rendered node partial.
 
 ### Full-page forms
 
-Universes and Stories use the existing `_form` partials with:
+Universes, Stories, and universe membership management use the existing form patterns with:
 
 - Bootstrap labels and controls;
 - an alert-based error summary;
@@ -261,7 +264,7 @@ URL and meaningful navigation.
 3. Use the correct universe/story scope in every path.
 4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout.
 5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` to connect
-   related records and their corresponding tag taxonomy. Reserve the separate Configuration
-   section for future organization/settings tools.
+   related records and their corresponding tag taxonomy. Put real universe settings, including
+   the Members access manager, in the separate Configuration section.
 6. Check keyboard focus, mobile width, empty state, and long text.
 7. Update the relevant docs and tests in the same change.

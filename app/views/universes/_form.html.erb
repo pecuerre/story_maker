@@ -15,6 +15,14 @@
     <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
   </div>
 
+  <div class="form-check form-switch mb-2">
+    <%= form.check_box :private, class: "form-check-input" %>
+    <%= form.label :private, "Private universe", class: "form-check-label" %>
+  </div>
+  <p class="form-text">
+    Public universes can be read by guests and contributed to by signed-in users. Private universes are visible only to their members.
+  </p>
+
   <div class="form-actions">
     <%= form.submit class: "btn btn-primary" %>
     <%= link_to "Cancel", universe.persisted? ? universe_path(universe) : universes_path, class: "btn btn-link" %>

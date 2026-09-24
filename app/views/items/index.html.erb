@@ -1,6 +1,8 @@
 <% content_for :title, "Items" %>
+<% empty_description = can_write_universe? ? "Items belong to the universe and can be used to track objects, resources, and ownership across every story. Add the first one to begin." : "Items belong to the universe and are shared by all of its stories." %>
 
-<div data-controller="modal-form"
+<div
+  <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="item"
   data-modal-form-create-title-value="New item">
   <%= render "shared/page_header",
@@ -9,15 +11,17 @@
     description: "Objects and resources whose details are shared by every story in this universe.",
     count: @items.size,
     count_label: "item" do %>
-    <button type="button" class="btn btn-primary"
-      data-action="modal-form#open"
-      data-modal-form-url="<%= universe_items_path %>"
-      data-modal-form-method="post"
-      data-modal-form-title="New item"
-      data-modal-form-values-value="{}">
-      <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      <span>Add item</span>
-    </button>
+    <% if can_write_universe? %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_items_path %>"
+        data-modal-form-method="post"
+        data-modal-form-title="New item"
+        data-modal-form-values-value="{}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>Add item</span>
+      </button>
+    <% end %>
   <% end %>
 
   <%= render "shared/content_tabs",
@@ -58,11 +62,12 @@
   <% else %>
     <%= render "shared/empty_state",
       title: "No items yet",
-      description: "Items belong to the universe and can be used to track objects, resources, and ownership across every story.",
+      description: empty_description,
       icon: "box-seam" %>
   <% end %>
 
-  <div class="modal fade" tabindex="-1"
+  <% if can_write_universe? %>
+    <div class="modal fade" tabindex="-1"
     aria-labelledby="item-modal-title"
     aria-hidden="true"
     data-modal-form-target="modal">
@@ -98,4 +103,5 @@
       </div>
     </div>
   </div>
+  <% end %>
 </div>

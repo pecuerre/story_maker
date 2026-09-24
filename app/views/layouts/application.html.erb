@@ -66,6 +66,15 @@
 
           <div class="page-shell">
             <%= render "shared/flash" %>
+            <% if !can_write_universe? %>
+              <div class="alert alert-info access-notice" role="status">
+                <% if Current.user.present? %>
+                  You have <strong>read-only</strong> access to this universe.
+                <% else %>
+                  You are viewing this public universe as a guest. <%= link_to "Log in", new_session_path %> to contribute.
+                <% end %>
+              </div>
+            <% end %>
             <%= yield %>
           </div>
         </main>

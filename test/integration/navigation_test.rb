@@ -62,7 +62,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_ownerships_path(universe_slug: @universe.slug), count: 0
 
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] :not(h3)", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
     assert_select "aside.workspace-sidebar #tag-navigation-menu", 0
 
     assert_select "aside.right-sidebar.offcanvas-xl.offcanvas-end", 1
@@ -89,7 +89,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
       assert_select ".sidebar-count", text: "2"
     end
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] :not(h3)", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
     assert_select "aside.workspace-sidebar #tag-navigation-menu", 0
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0

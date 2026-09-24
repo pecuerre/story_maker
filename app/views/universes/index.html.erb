@@ -1,13 +1,17 @@
 <% content_for :title, "Universes" %>
+<% empty_title = Current.user.present? ? "Create your first universe" : "No public universes yet" %>
+<% empty_description = Current.user.present? ? "A universe holds the world, characters, locations, events, and items shared by its stories." : "Sign in to create a universe, or check back when a public universe is available." %>
 
 <%= render "shared/page_header",
   title: "Universes",
   description: "Choose a world to work in. Each universe contains its own stories and shared world-building records.",
   count: @universes.size,
   count_label: "universe" do %>
-  <%= link_to new_universe_path, class: "btn btn-primary" do %>
-    <i class="bi bi-plus-lg" aria-hidden="true"></i>
-    <span>New universe</span>
+  <% if Current.user.present? %>
+    <%= link_to new_universe_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>New universe</span>
+    <% end %>
   <% end %>
 <% end %>
 
@@ -50,14 +54,17 @@
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(universe) %>-actions">
                     <li><%= link_to "Open universe", universe_path(universe), class: "dropdown-item" %></li>
-                    <li><%= link_to "Edit universe", edit_universe_path(universe), class: "dropdown-item" %></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                      <%= button_to "Delete universe", universe_path(universe),
-                        method: :delete,
-                        class: "dropdown-item text-danger",
-                        data: { turbo_confirm: "Delete #{universe.name} and all of its content?" } %>
-                    </li>
+                    <% if can_administer_universe?(universe) %>
+                      <li><%= link_to "Manage members", universe_memberships_path(universe_slug: universe.slug), class: "dropdown-item" %></li>
+                      <li><%= link_to "Edit universe", edit_universe_path(universe), class: "dropdown-item" %></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <%= button_to "Delete universe", universe_path(universe),
+                          method: :delete,
+                          class: "dropdown-item text-danger",
+                          data: { turbo_confirm: "Delete #{universe.name} and all of its content?" } %>
+                      </li>
+                    <% end %>
                   </ul>
                 </div>
               </td>
@@ -69,7 +76,7 @@
   </div>
 <% else %>
   <%= render "shared/empty_state",
-    title: "Create your first universe",
-    description: "A universe holds the world, characters, locations, events, and items shared by its stories.",
+    title: empty_title,
+    description: empty_description,
     icon: "globe2" %>
 <% end %>

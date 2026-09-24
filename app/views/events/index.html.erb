@@ -1,6 +1,8 @@
 <% content_for :title, "Events" %>
+<% empty_description = can_write_universe? ? "Add events with dates or relationships to each other, then open the Timeline to see how they connect." : "Events in this universe will appear here once they have been added." %>
 
-<div data-controller="modal-form"
+<div
+  <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="event"
   data-modal-form-create-title-value="New event">
   <%= render "shared/page_header",
@@ -9,15 +11,17 @@
     description: "Record moments that shape the universe and provide the structure for its timeline.",
     count: @events.size,
     count_label: "event" do %>
-    <button type="button" class="btn btn-primary"
-      data-action="modal-form#open"
-      data-modal-form-url="<%= universe_events_path %>"
-      data-modal-form-method="post"
-      data-modal-form-title="New event"
-      data-modal-form-values-value="{}">
-      <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      <span>Add event</span>
-    </button>
+    <% if can_write_universe? %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_events_path %>"
+        data-modal-form-method="post"
+        data-modal-form-title="New event"
+        data-modal-form-values-value="{}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>Add event</span>
+      </button>
+    <% end %>
   <% end %>
 
   <%= render "shared/content_tabs",
@@ -56,11 +60,12 @@
   <% else %>
     <%= render "shared/empty_state",
       title: "No events yet",
-      description: "Add events with dates or relationships to each other, then open the Timeline to see how they connect.",
+      description: empty_description,
       icon: "calendar-event" %>
   <% end %>
 
-  <div class="modal fade" tabindex="-1"
+  <% if can_write_universe? %>
+    <div class="modal fade" tabindex="-1"
     aria-labelledby="event-modal-title"
     aria-hidden="true"
     data-modal-form-target="modal">
@@ -131,4 +136,5 @@
       </div>
     </div>
   </div>
+  <% end %>
 </div>

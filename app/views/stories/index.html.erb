@@ -1,4 +1,5 @@
 <% content_for :title, "Stories" %>
+<% empty_description = can_write_universe? ? "A story holds the plot and sections of this universe, while its world-building records remain shared across stories." : "Stories in this universe will appear here once they have been added." %>
 
 <%= render "shared/page_header",
   title: "Stories",
@@ -6,9 +7,11 @@
   description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe.",
   count: @stories.size,
   count_label: "story" do %>
-  <%= link_to new_universe_story_path, class: "btn btn-primary" do %>
-    <i class="bi bi-plus-lg" aria-hidden="true"></i>
-    <span>New story</span>
+  <% if can_write_universe? %>
+    <%= link_to new_universe_story_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>New story</span>
+    <% end %>
   <% end %>
 <% end %>
 
@@ -42,25 +45,27 @@
             <%= link_to "Open story", universe_story_path(id: story), class: "btn btn-sm btn-primary" %>
             <%= link_to "Sections", universe_story_sections_path(story_id: story), class: "btn btn-sm btn-outline-secondary" %>
 
-            <div class="dropdown row-actions ms-auto">
-              <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
-                id="<%= dom_id(story) %>-actions"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                aria-label="Actions for <%= story.name %>">
-                <i class="bi bi-three-dots" aria-hidden="true"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(story) %>-actions">
-                <li><%= link_to "Edit story", edit_universe_story_path(id: story), class: "dropdown-item" %></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <%= button_to "Delete story", universe_story_path(id: story),
-                    method: :delete,
-                    class: "dropdown-item text-danger",
-                    data: { turbo_confirm: "Delete #{story.name} and all of its sections?" } %>
-                </li>
-              </ul>
-            </div>
+            <% if can_write_universe? %>
+              <div class="dropdown row-actions ms-auto">
+                <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                  id="<%= dom_id(story) %>-actions"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  aria-label="Actions for <%= story.name %>">
+                  <i class="bi bi-three-dots" aria-hidden="true"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(story) %>-actions">
+                  <li><%= link_to "Edit story", edit_universe_story_path(id: story), class: "dropdown-item" %></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <%= button_to "Delete story", universe_story_path(id: story),
+                      method: :delete,
+                      class: "dropdown-item text-danger",
+                      data: { turbo_confirm: "Delete #{story.name} and all of its sections?" } %>
+                  </li>
+                </ul>
+              </div>
+            <% end %>
           </div>
         </article>
       </div>
@@ -69,6 +74,6 @@
 <% else %>
   <%= render "shared/empty_state",
     title: "No stories yet",
-    description: "A story holds the plot and sections of this universe, while its world-building records remain shared across stories.",
+    description: empty_description,
     icon: "books" %>
 <% end %>

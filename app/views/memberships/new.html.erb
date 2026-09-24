@@ -1,0 +1,38 @@
+<% content_for :title, "Add member" %>
+
+<%= render "shared/page_header",
+  title: "Add member",
+  eyebrow: Current.universe.name,
+  description: "Grant a user access to this universe." %>
+
+<% if @membership.errors.any? %>
+  <div class="alert alert-danger" role="alert">
+    <ul class="mb-0">
+      <% @membership.errors.each do |error| %>
+        <li><%= error.full_message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<div class="surface-card p-4" style="max-width: 42rem;">
+  <%= form_with scope: :membership,
+    url: universe_memberships_path(universe_slug: Current.universe.slug),
+    class: "form-surface" do |form| %>
+    <div class="mb-3">
+      <%= form.label :email_address, "Email address", class: "form-label" %>
+      <%= form.email_field :email_address, class: "form-control", required: true, autofocus: true %>
+    </div>
+    <div class="mb-3">
+      <%= form.label :access_level, "Access level", class: "form-label" %>
+      <%= form.select :access_level,
+        UniverseMembership::ACCESS_LEVELS.keys.map { |level| [ level.to_s.titleize, level ] },
+        { include_blank: "Choose a level" },
+        class: "form-select", required: true %>
+    </div>
+    <div class="form-actions">
+      <%= form.submit "Grant access", class: "btn btn-primary" %>
+      <%= link_to "Cancel", universe_memberships_path(universe_slug: Current.universe.slug), class: "btn btn-link" %>
+    </div>
+  <% end %>
+</div>

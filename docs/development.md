@@ -50,8 +50,13 @@ Layout:
   if an application or test call uses positional arguments with a universe-scoped route helper.
 - `RecordNotFound` renders **404** in tests (`show_exceptions = :rescuable`): use
   `assert_response :not_found` to assert cross-scope/unknown-id rejections.
-- Unauthenticated access: some controllers use `allow_unauthenticated_access`; a request without
-  a session cookie redirects (302) to `/session/new`.
+- Unauthenticated access: public universe content is intentionally readable without a session;
+  mutations redirect (302) to `/session/new`. Universe-scoped controllers allow unauthenticated
+  access only for read actions; the shared authorization callback enforces the universe policy.
+- Universe authorization tests must cover both public and private universes. Create explicit
+  `UniverseMembership` records for read/write/admin cases; do not rely on a public fixture to stand
+  in for a private collaboration scenario. Authenticated private non-members receive 404, while
+  members with insufficient access receive 403.
 
 ## Lint & security scans
 
@@ -88,7 +93,7 @@ it), not in `db/data/dialog/`.
 The current implementation has two different loaders:
 
 - `db/data/dark/dark.rb` is a generic YAML loader. It walks `models_in_order`
-  (User → Universe → **Story** → SectionTag → Section → … → Event), reads
+  (User → Universe → UniverseMembership → **Story** → SectionTag → Section → … → Event), reads
   `db/data/<model>.yml`, and resolves reference strings such as `"Model.some_slug"` with
   `Model.find_by(slug: …)`. Arrays are supported, and a `"Tag.*"` reference is also recorded for
   colored output. Referenced models therefore need a stable **slug**.
@@ -198,13 +203,16 @@ Dependabot config: `.github/dependabot.yml`.
    `*_tag_taxonomy_fields` to `app/helpers/modal_fields.rb`.
 6. Sidebar link in `app/views/layouts/_left_sidebar.html.erb` using the shared
    `shared/_sidebar_link` pattern; use `shared/_content_tabs` to connect related content and its
-   corresponding tag taxonomy. Keep the Configuration section for future organization/settings.
+   corresponding tag taxonomy. Put real settings, including the Members access manager, in the
+   Configuration section.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
 8. Development data: add or update `<model>.yml` in every relevant
    `db/data/<universe_slug>/` directory, update the shared model order/registry, and include
    representative records connected to existing universe/story/character/location/item/event
    records. Do not create a feature-level directory such as `db/data/dialog/`; a future Dialog
    model belongs in `db/data/dark/dialogs.yml` and the corresponding files for other universes.
+   If the feature changes access or persistence, also update `universe_memberships.yml` where a
+   sample universe should exercise private or delegated-admin access.
 
 ### Full-stack data contract for a new model
 

@@ -1,4 +1,5 @@
 class LocationsController < ApplicationController
+  allow_unauthenticated_access only: :index
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :location
 

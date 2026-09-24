@@ -1,0 +1,104 @@
+<% content_for :title, "Members" %>
+
+<%= render "shared/page_header",
+  title: "Members",
+  eyebrow: Current.universe.name,
+  description: "Grant read, write, or admin access to this universe. The owner always has admin access.",
+  count: @memberships.size + 1,
+  count_label: "member" do %>
+  <%= link_to "Back to universe", universe_path(Current.universe), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<% if @membership.errors.any? %>
+  <div class="alert alert-danger" role="alert">
+    <h2 class="h6"><%= pluralize(@membership.errors.count, "error") %> prevented access from being saved:</h2>
+    <ul class="mb-0">
+      <% @membership.errors.each do |error| %>
+        <li><%= error.full_message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="surface-card p-4">
+      <div class="page-eyebrow">Grant access</div>
+      <h2 class="h4">Add a member</h2>
+      <p class="text-body-secondary">
+        The user must already have an account. In a public universe every signed-in user can contribute;
+        an admin membership also grants control over members and universe settings.
+      </p>
+
+      <%= form_with scope: :membership,
+        url: universe_memberships_path(universe_slug: Current.universe.slug),
+        class: "form-surface" do |form| %>
+        <div class="mb-3">
+          <%= form.label :email_address, "Email address", class: "form-label" %>
+          <%= form.email_field :email_address, class: "form-control", required: true %>
+        </div>
+        <div class="mb-3">
+          <%= form.label :access_level, "Access level", class: "form-label" %>
+          <%= form.select :access_level,
+            UniverseMembership::ACCESS_LEVELS.keys.map { |level| [ level.to_s.titleize, level ] },
+            { include_blank: "Choose a level" },
+            class: "form-select", required: true %>
+        </div>
+        <%= form.submit "Grant access", class: "btn btn-primary" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="content-surface">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Member</th>
+              <th scope="col">Access</th>
+              <th scope="col" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="fw-semibold"><%= Current.universe.owner.name %></div>
+                <div class="small text-body-secondary"><%= Current.universe.owner.email_address %></div>
+              </td>
+              <td><span class="badge text-bg-primary">Admin</span></td>
+              <td class="text-end"><span class="small text-body-secondary">Owner</span></td>
+            </tr>
+
+            <% @memberships.each do |membership| %>
+              <tr>
+                <td>
+                  <div class="fw-semibold"><%= membership.user.name %></div>
+                  <div class="small text-body-secondary"><%= membership.user.email_address %></div>
+                </td>
+                <td>
+                  <%= form_with scope: :membership,
+                    url: universe_membership_path(universe_slug: Current.universe.slug, id: membership),
+                    method: :patch,
+                    class: "d-flex align-items-center gap-2" do |form| %>
+                    <%= form.select :access_level,
+                      UniverseMembership::ACCESS_LEVELS.keys.map { |level| [ level.to_s.titleize, level ] },
+                      { selected: membership.access_level },
+                      { class: "form-select form-select-sm", aria: { label: "Access level for #{membership.user.name}" } } %>
+                    <%= form.submit "Save", class: "btn btn-sm btn-outline-secondary" %>
+                  <% end %>
+                </td>
+                <td class="text-end">
+                  <%= button_to "Remove", universe_membership_path(universe_slug: Current.universe.slug, id: membership),
+                    method: :delete,
+                    class: "btn btn-sm btn-outline-danger",
+                    data: { turbo_confirm: "Remove #{membership.user.name} from this universe?" } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

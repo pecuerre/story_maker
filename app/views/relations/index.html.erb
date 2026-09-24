@@ -1,6 +1,8 @@
 <% content_for :title, "Relations" %>
+<% empty_description = can_write_universe? ? "Connect two characters to describe their relationship. Relation tags are optional but can make these connections easier to scan." : "Character relationships in this universe will appear here once they have been added." %>
 
-<div data-controller="modal-form"
+<div
+  <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="relation"
   data-modal-form-create-title-value="New relation">
   <%= render "shared/page_header",
@@ -9,15 +11,17 @@
     description: "Connect characters and record how their relationships change over time.",
     count: @relations.size,
     count_label: "relation" do %>
-    <button type="button" class="btn btn-primary"
-      data-action="modal-form#open"
-      data-modal-form-url="<%= universe_relations_path %>"
-      data-modal-form-method="post"
-      data-modal-form-title="New relation"
-      data-modal-form-values-value="{}">
-      <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      <span>Add relation</span>
-    </button>
+    <% if can_write_universe? %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_relations_path %>"
+        data-modal-form-method="post"
+        data-modal-form-title="New relation"
+        data-modal-form-values-value="{}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>Add relation</span>
+      </button>
+    <% end %>
   <% end %>
 
   <%= render "shared/content_tabs",
@@ -61,11 +65,12 @@
   <% else %>
     <%= render "shared/empty_state",
       title: "No relations yet",
-      description: "Connect two characters to describe their relationship. Relation tags are optional but can make these connections easier to scan.",
+      description: empty_description,
       icon: "people" %>
   <% end %>
 
-  <div class="modal fade" tabindex="-1"
+  <% if can_write_universe? %>
+    <div class="modal fade" tabindex="-1"
     aria-labelledby="relation-modal-title"
     aria-hidden="true"
     data-modal-form-target="modal">
@@ -121,4 +126,5 @@
       </div>
     </div>
   </div>
+  <% end %>
 </div>

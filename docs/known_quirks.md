@@ -7,23 +7,8 @@ survives. Index of all docs: [README.md](README.md).
 
 ## Correctness / security observations
 
-1. **cancancan is installed but never used.** `Ability` (`app/models/ability.rb`) includes
-   `CanCan::Ability`, but there is no `authorize!`/`current_ability`/`load_and_authorize` anywhere
-   in the app. Its rules are also wrong for this schema:
-   `can :manage, Universe, user_id: user.id` — universes have `owner_id`, not `user_id`.
-   Authorization today is effectively "any signed-in user may touch anything".
-
-2. **No authorization on universe-scoped content.** Content controllers only scope by the
-   `:universe_slug` param (`Current.universe.<assoc>.find(...)`). Any authenticated user (or, for
-   universes, see next point) who knows a slug can read/modify/delete any universe's content.
-
-3. **Universes are open even to guests, and private universes are readable by slug.**
-   `UniversesController` declares
-   `allow_unauthenticated_access only: %i[index show new create edit update destroy]` (i.e. all
-   actions) and `set_universe` looks up `Universe.find_by(slug: …)` **without** applying
-   `Universe.visible_to`. So `private: true` only hides a universe from the index/navbar —
-   anyone with the slug can open and even edit/destroy it. `create` falls back to
-   `Current.user || User.first`, so a logged-out creator's universe is owned by the first user.
+No open correctness or security observations are currently tracked. The former authorization and
+universe-visibility issues are recorded in [resolved_quirks.md](resolved_quirks.md).
 
 ## Development workflow observations
 

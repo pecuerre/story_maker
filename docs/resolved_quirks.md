@@ -61,6 +61,43 @@ in its generic API; this project-level guard prevents that footgun in its own co
 
 ## Resolved correctness issues
 
+### Former quirks #1–#3: Universe authorization and public/private access (fixed)
+
+**Then:** `Ability` was unused and its universe rule referenced the nonexistent `user_id` column.
+Universe-scoped controllers had no authorization callback, and `UniversesController` allowed
+anonymous access to every universe action. `private: true` therefore hid a universe from the index
+but did not protect its slug URL, and anonymous creation fell back to `User.first`.
+
+**Resolution:** Universe Maker now has an explicit three-level access policy. `UniverseMembership`
+stores read/write/admin membership for private universes and optional delegated public admins;
+the owner is always admin. `Ability` defines the same rules for universes and every universe- or
+story-scoped content class, and `UniverseAuthorization` applies them after resolving the universe
+but before loading stories or content. Public universes allow guest read and signed-in write;
+private universes allow only owners/members, with 404 for authenticated non-members and 403 for
+insufficient collaborator access. Guests attempting mutations are redirected to sign in. The
+membership manager is available to universe admins at `/u/:universe_slug/members`.
+
+### Universe-scoped content was not authorized (fixed)
+
+**Then:** every content controller only scoped records with `Current.universe`; knowing a universe
+slug was enough to read or mutate its content.
+
+**Resolution:** all universe-scoped controllers now pass through the shared universe authorization
+callback, and their existing association scopes preserve the universe/story boundary. The
+`Ability` object also checks the corresponding content instances, so a permission granted for a
+universe applies consistently to all of its components.
+
+### Private universes were readable and mutable by slug (fixed)
+
+**Then:** private universes were excluded from listings but `universes#show`, content routes, and
+mutations did not apply visibility, and anonymous universe creation selected the first user as
+owner.
+
+**Resolution:** `Universe.visible_to` includes explicit memberships, `set_universe` uses
+`find_by!`, private show/content requests pass through the shared policy, and universe creation
+requires a real signed-in `Current.user` as owner. Public/private visibility is editable only by a
+universe admin.
+
 ### `ApplicationHelper#visible?` always returned `true` (fixed)
 
 **Then:** `ApplicationHelper#visible?` (`app/helpers/application_helper.rb`) computed the

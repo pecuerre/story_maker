@@ -5,24 +5,26 @@
   eyebrow: "Story workspace",
   description: @story.description.presence || "Plan the plot and structure for this story." do %>
   <%= link_to "Open sections", universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
-  <%= link_to "Edit story", edit_universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
+  <% if can_write_universe? %>
+    <%= link_to "Edit story", edit_universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
 
-  <div class="dropdown">
-    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
-      data-bs-toggle="dropdown" aria-expanded="false" aria-label="Story actions">
-      <i class="bi bi-three-dots" aria-hidden="true"></i>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-      <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
-      <li><hr class="dropdown-divider"></li>
-      <li>
-        <%= button_to "Delete story", universe_story_path(id: @story),
-          method: :delete,
-          class: "dropdown-item text-danger",
-          data: { turbo_confirm: "Delete #{@story.name} and all of its sections?" } %>
-      </li>
-    </ul>
-  </div>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Story actions">
+        <i class="bi bi-three-dots" aria-hidden="true"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <%= button_to "Delete story", universe_story_path(id: @story),
+            method: :delete,
+            class: "dropdown-item text-danger",
+            data: { turbo_confirm: "Delete #{@story.name} and all of its sections?" } %>
+        </li>
+      </ul>
+    </div>
+  <% end %>
 <% end %>
 
 <div class="row g-3">
@@ -31,7 +33,7 @@
       <div class="page-eyebrow">Story structure</div>
       <h2 class="h3"><%= pluralize(@story.sections.size, "section") %></h2>
       <p class="text-body-secondary">Organize this story into a hierarchy such as acts, chapters, books, or scenes.</p>
-      <%= link_to "Manage sections", universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
+      <%= link_to can_write_universe? ? "Manage sections" : "View sections", universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
     </div>
   </div>
 

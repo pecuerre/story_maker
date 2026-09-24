@@ -11,11 +11,13 @@ has been, who they talked to and when, or how long a journey takes, and get an a
 the story as written. Locations, distances and chronology are first-class content, not background
 decoration.
 
-Two goals shape decisions even though neither has been started yet:
+Two goals shape decisions:
 
-- **Collaboration.** Several people will eventually write the same universe or story: public and
-  private stories, roles, permissions. Anything that hardcodes "one lone author" as a permanent
-  premise is the wrong direction.
+- **Collaboration.** Universes can be public or private. Public universes are readable by guests;
+  any signed-in user can contribute. Private universes are visible only to their owner and members.
+  Members have one of three access levels: **read**, **write**, or **admin**. Admins manage the
+  universe and its membership list; access granted to a universe applies uniformly to its stories
+  and all world-building components.
 - **Analyzers.** One day — likely several, each covering an aspect such as chronology, geography,
   character knowledge or causality — the tool should read a story, tell you whether it makes sense,
   explain why not, and propose fixes. That means what the story states should end up stored in a

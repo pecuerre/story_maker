@@ -1,4 +1,5 @@
 class OwnershipsController < ApplicationController
+  allow_unauthenticated_access only: :index
   before_action :set_ownership, only: %i[ update destroy ]
 
   def index

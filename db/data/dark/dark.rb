@@ -3,6 +3,7 @@ directory = Rails.root.join("db/data/dark")
 models_in_order = [
   User,
   Universe,
+  UniverseMembership,
   Story,
   SectionTag,
   Section,
@@ -20,19 +21,21 @@ models_in_order = [
   Event
 ]
 
-def extract_reference(value, model)
+def extract_reference(value, _model)
   object_regex = /\A([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\z/
   tag_slug = nil
 
   if value.is_a?(String) && value.match(object_regex)
     referenced_model_name = $1
-    slug = model.slugify($2)
-    tag_slug = slug if referenced_model_name.end_with?("Tag")
     referenced_model = referenced_model_name.camelize.constantize
+    # The referenced model owns slug normalization; the model currently being
+    # loaded may be a join/access model without a slug (e.g. UniverseMembership).
+    slug = referenced_model.respond_to?(:slugify) ? referenced_model.slugify($2) : $2
+    tag_slug = slug if referenced_model_name.end_with?("Tag")
     value = referenced_model.find_by(slug: slug)
   end
 
-  [value, tag_slug]
+  [ value, tag_slug ]
 end
 
 models_in_order.each do |model|
@@ -65,8 +68,8 @@ models_in_order.each do |model|
     if model_name.end_with?("tags")
       puts "- Created #{model.name}: #{attributes['slug'].cyan}"
     else
-      text = attributes['name'] || attributes['slug']
-      puts "- Created #{model.name}: #{text.blue} [#{tag_slugs.join(', ').cyan}]"
+      text = attributes["name"] || attributes["slug"] || attributes["access_level"] || "record"
+      puts "- Created #{model.name}: #{text.to_s.blue} [#{tag_slugs.join(', ').cyan}]"
     end
   end
 end

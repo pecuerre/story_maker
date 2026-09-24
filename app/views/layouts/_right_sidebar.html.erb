@@ -4,6 +4,19 @@
     <p>Additional collaboration, analytics, and AI tools will live here.</p>
   </div>
 
+  <section class="sidebar-section" aria-labelledby="settings-tools-title">
+    <h3 class="sidebar-section-title" id="settings-tools-title">Settings</h3>
+    <% if can_administer_universe? %>
+      <ul class="sidebar-list">
+        <%= render "shared/sidebar_link",
+          icon: "people",
+          label: "Members",
+          path: universe_memberships_path,
+          controllers: %i[ memberships ] %>
+      </ul>
+    <% end %>
+  </section>
+
   <section class="sidebar-section" aria-labelledby="collaboration-tools-title">
     <h3 class="sidebar-section-title" id="collaboration-tools-title">Collaboration</h3>
     <ul class="sidebar-list">

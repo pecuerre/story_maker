@@ -7,11 +7,8 @@
   count: Current.universe.location_tags.count,
   count_label: "tag",
   new_label: "Add location tag",
-  tabs_aria_label: "Location workspace",
-  tabs: [
-    { label: "Locations", path: universe_locations_path, controller: :locations },
-    { label: "Location tags", path: universe_location_tags_path, controller: :location_tags }
-  ],
+  tag_workspace_scope: "universe",
+  tag_workspace_taxonomy: "location",
   empty_description: "Tags are optional. Add one to group locations, or organize them later.",
   nodes: @location_tags,
   new_url: ->(parent = nil) { new_universe_location_tag_path(parent_id: parent&.id) },

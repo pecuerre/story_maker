@@ -7,11 +7,8 @@
   count: @story.section_tags.count,
   count_label: "tag",
   new_label: "Add section tag",
-  tabs_aria_label: "Story workspace",
-  tabs: [
-    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
-    { label: "Section tags", path: universe_story_section_tags_path(story_id: @story), controller: :section_tags }
-  ],
+  tag_workspace_scope: "story",
+  tag_workspace_taxonomy: "section",
   empty_description: "Tags are optional. Add one to classify sections, or build the section tree without them.",
   nodes: @section_tags,
   new_url: ->(parent = nil) { new_universe_story_section_tag_path(story_id: @story, parent_id: parent&.id) },

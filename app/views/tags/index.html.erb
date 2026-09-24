@@ -1,0 +1,36 @@
+<% content_for :title, "Tags" %>
+
+<% tag_config = tag_workspace_config(scope: @tag_scope, taxonomy: @tag_type) %>
+
+<%= render "shared/tag_workspace_navigation",
+  scope: @tag_scope,
+  taxonomy: @tag_type %>
+
+<% if tag_config.present? %>
+  <%= render "shared/taxonomy_tree",
+    title: "Tags",
+    eyebrow: @tag_scope == "story" ? "Story Tags" : "Universe Tags",
+    description: tag_config.fetch(:description),
+    count: tag_config.fetch(:count),
+    count_label: "tag",
+    new_label: tag_config.fetch(:new_label),
+    empty_description: tag_config.fetch(:empty_description),
+    nodes: tag_config.fetch(:nodes),
+    new_url: tag_config.fetch(:new_url),
+    create_url: tag_config.fetch(:create_url),
+    edit_url: tag_config.fetch(:edit_url),
+    update_url: tag_config.fetch(:update_url),
+    delete_url: tag_config.fetch(:delete_url),
+    model_param: tag_config.fetch(:model_param),
+    modal_fields: tag_config.fetch(:modal_fields) %>
+<% elsif @tag_scope == "story" %>
+  <%= render "shared/page_header",
+    title: "Tags",
+    eyebrow: "Story Tags",
+    description: "Choose a story before managing its section tags." %>
+
+  <%= render "shared/empty_state",
+    title: "Select a story",
+    description: "Section tags belong to an individual story. Select a story from the Story menu to continue.",
+    icon: "book" %>
+<% end %>

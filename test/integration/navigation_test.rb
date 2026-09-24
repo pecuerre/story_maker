@@ -62,18 +62,22 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_ownerships_path(universe_slug: @universe.slug), count: 0
 
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
-    assert_select "aside.workspace-sidebar #tag-navigation-menu", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link[href=?]",
+      universe_tags_path(universe_slug: @universe.slug)
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members", count: 0
 
     assert_select "aside.right-sidebar.offcanvas-xl.offcanvas-end", 1
     assert_select "button[data-bs-target='#workspace-tools-navigation']", text: /Tools/
+    assert_select "aside.right-sidebar .sidebar-section-title", text: "Settings"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Collaboration"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Analytics"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "AI"
+    assert_select "aside.right-sidebar section[aria-labelledby='settings-tools-title'] a.sidebar-link", text: "Members"
     assert_select "aside.right-sidebar a.sidebar-placeholder-link[href='#']", minimum: 3
   end
 
-  test "a selected story adds story structure while Configuration stays empty" do
+  test "a selected story adds story structure while Configuration contains Tags" do
     get universe_story_url(universe_slug: @universe.slug, id: @story)
 
     assert_response :success
@@ -89,8 +93,9 @@ class NavigationTest < ActionDispatch::IntegrationTest
       assert_select ".sidebar-count", text: "2"
     end
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
-    assert_select "aside.workspace-sidebar #tag-navigation-menu", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members", count: 0
+    assert_select "aside.right-sidebar section[aria-labelledby='settings-tools-title'] a.sidebar-link", text: "Members"
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0
 
@@ -123,17 +128,14 @@ class NavigationTest < ActionDispatch::IntegrationTest
       universe_characters_path(universe_slug: @universe.slug)
     assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
       universe_story_sections_path(universe_slug: @universe.slug, story_id: @story)
-    assert_select "nav.content-tabs a", 4
+    assert_select "nav.content-tabs a", 2
     assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
       universe_characters_path(universe_slug: @universe.slug)
     {
       characters: universe_characters_path(universe_slug: @universe.slug),
-      character_tags: universe_character_tags_path(universe_slug: @universe.slug),
-      relations: universe_relations_path(universe_slug: @universe.slug),
-      relation_tags: universe_relation_tags_path(universe_slug: @universe.slug)
+      relations: universe_relations_path(universe_slug: @universe.slug)
     }.each do |label, path|
-      assert_select "nav.content-tabs a[href=?]", path,
-        text: label.to_s.sub("_tags", " tags").capitalize
+      assert_select "nav.content-tabs a[href=?]", path, text: label.to_s.capitalize
     end
   end
 end

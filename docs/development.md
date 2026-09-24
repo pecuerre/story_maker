@@ -44,6 +44,8 @@ Layout:
   `sign_out` from `test/test_helpers/session_test_helper.rb`.
 - Route helpers in tests must be fully qualified:
   `universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)`.
+- `test/routing/universe_route_helper_arguments_test.rb` parses Ruby and ERB call sites and fails
+  if an application or test call uses positional arguments with a universe-scoped route helper.
 - `RecordNotFound` renders **404** in tests (`show_exceptions = :rescuable`): use
   `assert_response :not_found` to assert cross-scope/unknown-id rejections.
 - Unauthenticated access: some controllers use `allow_unauthenticated_access`; a request without

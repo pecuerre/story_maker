@@ -44,6 +44,21 @@ entry point for the project.
 **Fix:** the root README now provides a concise project overview, quick start, test commands, and
 links to the detailed documentation in `docs/`, which remains the source of truth.
 
+## Resolved conventions
+
+### Positional path-helper arguments in universe routes (resolved as an enforced convention)
+
+**Then:** `universe_story_sections_path(story)` looks like a natural nested-resource call, but
+Rails assigns positional arguments to dynamic segments from left to right. The Story is therefore
+assigned to `universe_slug`; outside request recall this raises a missing-`story_id` error, and in
+some scoped requests it can silently produce a URL with the wrong universe segment.
+
+**Resolution:** the route shape remains explicit (`/u/:universe_slug/s/:story_id/...`) and all
+universe-scoped route-helper calls use named keys. `test/routing/universe_route_helper_arguments_test.rb`
+parses Ruby and ERB sources and fails CI if an application or test call supplies positional
+arguments to a `universe_*_path`/`universe_*_url` helper. Rails still permits positional arguments
+in its generic API; this project-level guard prevents that footgun in its own code.
+
 ## Resolved correctness issues
 
 ### Building on an association leaked unsaved records into views (fixed)

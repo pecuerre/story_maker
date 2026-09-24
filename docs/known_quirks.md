@@ -52,10 +52,3 @@ survives. Index of all docs: [README.md](README.md).
 8. **CI runs a system-test job with no system tests.** `.github/workflows/ci.yml` has
    `system-test` (`test:system`) but there is no `test/system` directory yet (it will run zero
    tests; screenshots artifact is ignored).
-
-## Conventions that will bite you
-
-13. **Positional path-helper trap.** `universe_story_sections_path(story)` binds the Story to
-    `universe_slug` (first dynamic segment) and fails with
-    `missing required keys: [:story_id]`. Always pass named keys:
-    `universe_story_path(id: story)`, `universe_story_sections_path(story_id: story)`.

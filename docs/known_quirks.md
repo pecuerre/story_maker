@@ -59,8 +59,3 @@ survives. Index of all docs: [README.md](README.md).
     `universe_slug` (first dynamic segment) and fails with
     `missing required keys: [:story_id]`. Always pass named keys:
     `universe_story_path(id: story)`, `universe_story_sections_path(story_id: story)`.
-
-14. **Building on an association leaks into views.** `Current.universe.stories.new(...)` appends
-    the unsaved record to the association target, so a sidebar rendering
-    `Current.universe.stories.each` blows up on `id: nil`. Build with
-    `Story.new(universe: Current.universe)` instead (`StoriesController` does).

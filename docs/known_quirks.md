@@ -64,11 +64,3 @@ survives. Index of all docs: [README.md](README.md).
     the unsaved record to the association target, so a sidebar rendering
     `Current.universe.stories.each` blows up on `id: nil`. Build with
     `Story.new(universe: Current.universe)` instead (`StoriesController` does).
-
-15. **Fixture slugs use underscores** (`section_one`) while `HasSlug.slugify` converts `_` → `-`,
-    so the class-level finder `Section.section_one` would look for `section-one`. Keep new slugs
-    **dash-separated** (seed files already are).
-
-16. **`404` vs `RecordNotFound` in tests.** Because `show_exceptions = :rescuable` in
-    `config/environments/test.rb`, out-of-scope records render HTTP 404 — assert with
-    `assert_response :not_found`; `assert_raises(ActiveRecord::RecordNotFound)` will not trigger.

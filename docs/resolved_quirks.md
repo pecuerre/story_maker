@@ -136,3 +136,24 @@ relation/ownership tags).
 Deleting a tag simply leaves its records untagged, which is valid — no deferred failure, nothing
 breaks at the next save, and no controller force-assigns a default tag to compensate
 (see former #8).
+
+### Former #15 — Fixture slugs did not match the normalized slug format (fixed)
+
+**Then:** fixture rows explicitly stored underscore-separated slugs such as `section_one`, while
+`HasSlug.slugify` normalizes underscores to dashes. Because fixtures load directly, a class-level
+finder such as `Section.section_one` searched for `section-one` and could not find the row.
+
+**Fix:** all fixture `slug` values now use the same dash-separated format as application-created
+records. Fixture labels and association references remain unchanged, and a regression test verifies
+that a fixture is reachable through its normalized class-level finder.
+
+### Former #16 — `404` vs `RecordNotFound` in tests (resolved as a test convention)
+
+**Then:** `config.action_dispatch.show_exceptions = :rescuable` causes an out-of-scope
+`ActiveRecord::RecordNotFound` raised during a request to be rendered as HTTP 404, so an
+`assert_raises` expectation around the request would not observe the exception.
+
+**Resolution:** request tests assert the externally visible response with
+`assert_response :not_found`; only direct model or lower-level lookups assert
+`ActiveRecord::RecordNotFound`. The test configuration remains `:rescuable` because it reflects
+the response behavior users receive.

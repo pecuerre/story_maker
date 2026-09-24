@@ -5,6 +5,13 @@ class SectionTest < ActiveSupport::TestCase
     @story = stories(:story_one)
   end
 
+  test "can be found by its normalized fixture slug" do
+    section = sections(:section_one)
+
+    assert_equal "section-one", section.slug
+    assert_equal section, Section.section_one
+  end
+
   test "requires a story" do
     section = Section.new(name: "Orphan")
 

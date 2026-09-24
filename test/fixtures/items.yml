@@ -3,13 +3,13 @@
 item_one:
   name: Item one
   parent:
-  slug: "item_one"
+  slug: "item-one"
   universe: universe_one
   item_tags: item_tag_one
 
 item_two:
   name: Item two
   parent: item_one
-  slug: "item_two"
+  slug: "item-two"
   universe: universe_one
   item_tags: item_tag_two

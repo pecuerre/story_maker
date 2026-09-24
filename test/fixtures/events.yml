@@ -2,10 +2,10 @@ event_one:
   universe: universe_one
   title: The beginning
   start_datetime: 2026-09-11 09:00:00
-  slug: "event_one"
+  slug: "event-one"
 
 event_two:
   universe: universe_one
   title: The end
   start_datetime: 2026-09-11 10:00:00
-  slug: "event_two"
+  slug: "event-two"

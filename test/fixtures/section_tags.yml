@@ -3,14 +3,14 @@
 section_tag_one:
   story: story_one
   name: Section tag one
-  slug: "section_tag_one"
+  slug: "section-tag-one"
 
 section_tag_two:
   story: story_one
   name: Section tag two
-  slug: "section_tag_two"
+  slug: "section-tag-two"
 
 section_tag_three:
   story: story_two
   name: Section tag three
-  slug: "section_tag_three"
+  slug: "section-tag-three"

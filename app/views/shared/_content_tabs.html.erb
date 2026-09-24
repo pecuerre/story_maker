@@ -1,0 +1,9 @@
+<% tabs = local_assigns.fetch(:tabs) %>
+
+<nav class="nav nav-tabs content-tabs mb-4" aria-label="<%= local_assigns.fetch(:aria_label) %>">
+  <% tabs.each do |tab| %>
+    <%= link_to tab.fetch(:label), tab.fetch(:path),
+      class: "nav-link#{active_if(tab.fetch(:controller))}",
+      aria: aria_current_for(tab.fetch(:controller)) %>
+  <% end %>
+</nav>

@@ -15,7 +15,7 @@ class RelationTagsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".page-actions a[href=?]", universe_relations_path(universe_slug: @universe.slug), text: "Manage relations"
     assert_select ".page-actions button", text: "Add relation tag"
     assert_select ".empty-state", text: /No relation tags yet/
-    assert_select "aside.workspace-sidebar a.sidebar-link.active[href=?]",
+    assert_select "aside.workspace-sidebar #tag-navigation-menu a.dropdown-item.active[href=?]",
       universe_relation_tags_path(universe_slug: @universe.slug)
   end
 

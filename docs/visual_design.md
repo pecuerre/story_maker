@@ -19,9 +19,11 @@ The interface should feel like a calm writing workspace:
 - destructive actions are visually distinct from navigation categories;
 - the universe/story model is always explicit.
 
-The old permanent right sidebar was removed because it contained only placeholder links and
-consumed space on every page. Future contextual tooling should use a Bootstrap offcanvas or a
-purpose-built inspector; see [`backlog.md`](backlog.md).
+The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints so future
+collaboration, analytics, and AI tools have a stable home. Its current entries are deliberate,
+`aria-disabled` placeholders; they should become real destinations as the underlying product
+areas are defined. Below the `xl` breakpoint the panel becomes a Bootstrap `offcanvas-end`, so the
+main writing surface keeps priority on smaller screens.
 
 ## Theme tokens
 
@@ -87,9 +89,10 @@ heading uppercase.
 `app/views/layouts/application.html.erb` is the shell:
 
 1. a fixed dark Bootstrap navbar;
-2. a responsive workspace navigation;
+2. a responsive left workspace navigation;
 3. one flexible main content region with a `page-shell` wrapper;
-4. a skip link and one shared flash region.
+4. a responsive right utility navigation;
+5. a skip link and one shared flash region.
 
 The navbar is intentionally explicit about context:
 
@@ -98,15 +101,19 @@ The navbar is intentionally explicit about context:
 - `Story: <name or Select>` is the current story switcher;
 - `Account` contains the signed-in email and logout action.
 
-The navbar does not render placeholder links. A feature that is not implemented should not look
-like a live navigation item.
+The navbar does not render placeholder links. The right utility sidebar is the one intentional
+exception: its `aria-disabled` entries reserve space for future Collaboration, Analytics, and AI
+features without presenting them as implemented routes.
 
 ### Responsive behavior
 
 - At `lg` and above, the left workspace navigation is a 16rem sticky column.
 - Below `lg`, it becomes a Bootstrap `offcanvas-start`; the main area shows a compact `Menu`
   button and the current universe/story context.
-- There is no permanent right column.
+- At `xl` and above, the right utility navigation is a 14rem sticky column.
+- Below `xl`, it becomes a Bootstrap `offcanvas-end`; the workspace bar exposes it through a
+  `Tools` button. The `Menu` button is only shown below `lg`, when the left panel also needs an
+  offcanvas trigger.
 - The main column must have `min-width: 0` so long descriptions and tables do not break the grid.
 - Keep `scroll-padding-top`/sticky offsets aligned with the fixed navbar height.
 
@@ -122,40 +129,51 @@ The left navigation is task-oriented and scope-aware:
 When a story is selected:
 
 - Story overview;
-- Sections.
+- Sections;
+- Scenes (a reserved placeholder for future story structure).
 
 When no story is selected:
 
 - All stories;
 - a prompt explaining that a story must be selected for story-specific structure;
-- New story.
+- Scenes (a reserved placeholder).
+
+New story remains in the navbar's Story dropdown; it is not repeated as a sidebar button.
 
 ### Universe Bible
 
-Universe-scoped records are grouped as:
+The Bible is a direct record list without People/Places/Time/Objects group labels:
 
-- **People**: Characters, Relations;
-- **Places**: Locations;
-- **Time**: Events, Timeline;
-- **Objects**: Items, Ownerships.
+- Characters;
+- Locations;
+- Events;
+- Timeline;
+- Items.
 
-The Bible contains the records themselves. It does not contain taxonomy/configuration links nested
-under each record.
+Relations are reached from the Characters workspace tabs, and Ownerships from the Items workspace
+tabs. Those tabs are URL-backed navigation, not in-document tab panes, so each page keeps its
+canonical URL and mutation flow.
 
 ### Configuration
 
-Configuration is a separate sidebar section for organization and future settings. It currently
-contains:
+Configuration is a separate sidebar section for organization and future settings. Its current
+entry is one **Tags** dropdown containing:
 
-- **Story**: Section tags when a story is selected;
-- **Universe**: Character tags, Location tags, Item tags, Event tags, Relation tags, and Ownership
-  tags.
+- the six universe taxonomies: Character, Location, Item, Event, Relation, and Ownership tags;
+- Section tags when a story is selected.
 
 A taxonomy is a management layer, not a child navigation item of the record it classifies. New
-configuration tools should be added here as top-level links, grouped by scope when needed.
+configuration tools should be added as top-level entries, grouped by scope when needed.
 
 Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
-`aria-current="page"`; color is not the only state signal.
+`aria-current="page"`; color is not the only state signal. The reserved Scenes and right-sidebar
+entries are the intentional placeholders for future functionality.
+
+### Right utility sidebar
+
+The right sidebar is reserved for future **Collaboration**, **Analytics**, and **AI** tools. It
+contains a few `aria-disabled` links for now (Collaborators, Conflicts, Branches, Forks, Insights,
+Reports, and Assistant), giving those areas a stable visual home without adding fake routes.
 
 ## Shared view patterns
 
@@ -190,6 +208,13 @@ Characters, items, events, relations, and ownerships use:
 
 Relations should read naturally (`Character A → Character B`) rather than as an unlabeled database
 row. Ownerships use the same readable relationship treatment.
+
+### Related content navigation
+
+Use `shared/_content_tabs` on the Characters/Relations and Items/Ownerships page pairs. These are
+URL-backed Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not add
+`data-bs-toggle="tab"` because each destination is a separate request. This keeps related records
+inside their parent workspace without adding nested routes or changing mutation behavior.
 
 ### Taxonomy trees and other hierarchy pages
 
@@ -236,7 +261,8 @@ URL and meaningful navigation.
 2. Start with `shared/_page_header` and `shared/_empty_state` where applicable.
 3. Use the correct universe/story scope in every path.
 4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout.
-5. Add the record link to the Bible or Story workspace; add taxonomy/configuration links to the
-   separate Configuration section if the model needs them.
+5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for a related
+   page pair; add taxonomy/configuration links to the separate Configuration section if the model
+   needs them.
 6. Check keyboard focus, mobile width, empty state, and long text.
 7. Update the relevant docs and tests in the same change.

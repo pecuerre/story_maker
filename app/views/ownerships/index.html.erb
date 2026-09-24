@@ -5,7 +5,7 @@
   data-modal-form-create-title-value="New ownership">
   <%= render "shared/page_header",
     title: "Ownerships",
-    eyebrow: "Universe Bible",
+    eyebrow: "Items",
     description: "Track which characters own items and when those relationships change.",
     count: @ownerships.size,
     count_label: "ownership" do %>
@@ -19,6 +19,13 @@
       <span>Add ownership</span>
     </button>
   <% end %>
+
+  <%= render "shared/content_tabs",
+    aria_label: "Item workspace",
+    tabs: [
+      { label: "Items", path: universe_items_path, controller: :items },
+      { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships }
+    ] %>
 
   <% if @ownerships.any? %>
     <div class="content-surface entity-list">

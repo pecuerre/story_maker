@@ -11,7 +11,8 @@ class EventTagsControllerTest < ActionDispatch::IntegrationTest
     get universe_event_tags_url(universe_slug: @universe.slug)
     assert_response :success
     assert_select "h1", text: "Event tags"
-    assert_select "a.sidebar-link.active[href=?]", universe_event_tags_path(universe_slug: @universe.slug)
+    assert_select "aside.workspace-sidebar #tag-navigation-menu a.dropdown-item.active[href=?]",
+      universe_event_tags_path(universe_slug: @universe.slug)
     assert_select ".taxonomy-node", 2
   end
 

@@ -15,6 +15,10 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Items"
     assert_includes response.body, "Item tag"
     assert_includes response.body, @item.name
+    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
+      universe_items_path(universe_slug: @universe.slug)
+    assert_select "nav.content-tabs a[href=?]",
+      universe_ownerships_path(universe_slug: @universe.slug), text: "Ownerships"
   end
 
   test "should create item as json" do

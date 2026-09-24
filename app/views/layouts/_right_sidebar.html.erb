@@ -1,0 +1,66 @@
+<nav class="right-navigation" aria-label="Universe tools">
+  <div class="right-sidebar-intro">
+    <div class="sidebar-eyebrow">Universe tools</div>
+    <p>Collaboration, analytics, and AI tools will live here.</p>
+  </div>
+
+  <section class="sidebar-section" aria-labelledby="collaboration-tools-title">
+    <h3 class="sidebar-section-title" id="collaboration-tools-title">Collaboration</h3>
+    <ul class="sidebar-list">
+      <li>
+        <%= link_to icon_text_count("people", "Collaborators"), "#",
+          class: "sidebar-link sidebar-placeholder-link",
+          aria: { disabled: true },
+          data: { placeholder_link: true } %>
+      </li>
+      <li>
+        <%= link_to icon_text_count("exclamation-diamond", "Conflicts"), "#",
+          class: "sidebar-link sidebar-placeholder-link",
+          aria: { disabled: true },
+          data: { placeholder_link: true } %>
+      </li>
+      <li>
+        <%= link_to icon_text_count("diagram-2", "Branches"), "#",
+          class: "sidebar-link sidebar-placeholder-link",
+          aria: { disabled: true },
+          data: { placeholder_link: true } %>
+      </li>
+      <li>
+        <%= link_to icon_text_count("signpost-split", "Forks"), "#",
+          class: "sidebar-link sidebar-placeholder-link",
+          aria: { disabled: true },
+          data: { placeholder_link: true } %>
+      </li>
+    </ul>
+  </section>
+
+  <section class="sidebar-section" aria-labelledby="analytics-tools-title">
+    <h3 class="sidebar-section-title" id="analytics-tools-title">Analytics</h3>
+    <ul class="sidebar-list">
+      <li>
+        <%= link_to icon_text_count("bar-chart-line", "Insights"), "#",
+          class: "sidebar-link sidebar-placeholder-link",
+          aria: { disabled: true },
+          data: { placeholder_link: true } %>
+      </li>
+      <li>
+        <%= link_to icon_text_count("file-earmark-bar-graph", "Reports"), "#",
+          class: "sidebar-link sidebar-placeholder-link",
+          aria: { disabled: true },
+          data: { placeholder_link: true } %>
+      </li>
+    </ul>
+  </section>
+
+  <section class="sidebar-section" aria-labelledby="ai-tools-title">
+    <h3 class="sidebar-section-title" id="ai-tools-title">AI</h3>
+    <ul class="sidebar-list">
+      <li>
+        <%= link_to icon_text_count("stars", "Assistant"), "#",
+          class: "sidebar-link sidebar-placeholder-link",
+          aria: { disabled: true },
+          data: { placeholder_link: true } %>
+      </li>
+    </ul>
+  </section>
+</nav>

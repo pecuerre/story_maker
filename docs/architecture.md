@@ -111,10 +111,12 @@ Other global behavior: `allow_browser versions: :modern`,
 
 ## UI structure
 
-The UI is a Bootstrap 5.3 application shell with a fixed dark **navbar**, a responsive **left
-workspace navigation**, and one flexible **main content** area. There is no permanent right
-sidebar: the old panel contained only placeholder links and was removed. A contextual inspector
-may be added later as a Bootstrap offcanvas; see [`backlog.md`](backlog.md).
+The UI is a Bootstrap 5.3 application shell with a fixed dark **navbar**, responsive left and
+right workspace navigation columns, and one flexible **main content** area. The left column is
+the working navigation; the right column reserves space for future universe tools such as
+collaboration, analytics, and AI. The right column becomes a Bootstrap `offcanvas-end` below
+`xl`, and the left column becomes an `offcanvas-start` below `lg`. On narrower screens, the mobile
+workspace bar exposes **Tools** below `xl` and **Menu** below `lg`.
 
 Everything follows a two-step scope selection:
 
@@ -122,17 +124,19 @@ Everything follows a two-step scope selection:
    rendered and the main column takes the full width. The only initial task is selecting or
    creating a universe from the **Universes** dropdown.
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
-   and as a left offcanvas below the `lg` breakpoint. It contains **Story workspace**, **Universe
-   Bible**, and a separate **Configuration** section. The navbar adds explicit **Universe: …** and
-   **Story: …** context/switchers.
+   and as a left offcanvas below the `lg` breakpoint. At `xl` and above, a 14rem right utility
+   sidebar is also visible. The left sidebar contains **Story workspace**, **Universe Bible**, and
+   a separate **Configuration** section. The navbar adds explicit **Universe: …** and **Story: …**
+   context/switchers.
 3. **Story selected** (`Current.story`): Story workspace gains the story overview and Sections;
-   story-scoped Section tags appear under Configuration. The story is still remembered per
-   universe; no first-story fallback exists.
+   story-scoped Section tags appear in the Configuration **Tags** menu. The story is still
+   remembered per universe; no first-story fallback exists.
 
 The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
-switcher, and an **Account** menu. Nonfunctional dashboard/collaboration/analyzer placeholders
-are not rendered. Universe-scoped content is shared by every story; Sections and Section tags
-remain story-scoped.
+switcher, and an **Account** menu. It keeps **New story** in the Story dropdown rather than in the
+left sidebar. Universe-scoped content is shared by every story; Sections and Section tags remain
+story-scoped. Relations are reached from the Characters workspace tabs, and Ownerships from the
+Items workspace tabs.
 
 All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`, and
 `empty_state` patterns. Visual tokens and responsive/component conventions live in

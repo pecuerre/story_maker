@@ -36,9 +36,9 @@ bin/rails test:system         # browser-based system tests
 ```
 
 Layout:
-- `test/controllers`, `test/models` — the real coverage; `test/system` — browser-level smoke
-  coverage for the primary workspace journeys; `test/helpers`, `test/integration`,
-  `test/mailers/previews` are effectively empty.
+- `test/controllers`, `test/models`, and `test/integration` — model, request, navigation, and
+  workspace coverage; `test/system` — browser-level smoke coverage for the primary workspace
+  journeys; `test/helpers` and `test/mailers/previews` are effectively empty.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
   (both belong to `story_one`), all content + tag fixtures.
@@ -150,8 +150,8 @@ Dependabot config: `.github/dependabot.yml`.
 5. Views — pick one of the three patterns; for modal editors add `*_fields_json` /
    `*_tag_taxonomy_fields` to `app/helpers/modal_fields.rb`.
 6. Sidebar link in `app/views/layouts/_left_sidebar.html.erb` using the shared
-   `shared/_sidebar_link` pattern; add taxonomy/configuration entries to the Configuration
-   section (grouped under its **Tags** dropdown when appropriate).
+   `shared/_sidebar_link` pattern; use `shared/_content_tabs` to connect related content and its
+   corresponding tag taxonomy. Keep the Configuration section for future organization/settings.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
 8. Demo data: YAML entry handled by the loader (add the model to `models_in_order` in
    `db/data/<name>/<name>.rb`) or Ruby seed.

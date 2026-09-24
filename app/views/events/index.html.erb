@@ -20,6 +20,13 @@
     </button>
   <% end %>
 
+  <%= render "shared/content_tabs",
+    aria_label: "Event workspace",
+    tabs: [
+      { label: "Events", path: universe_events_path, controller: :events },
+      { label: "Event tags", path: universe_event_tags_path, controller: :event_tags }
+    ] %>
+
   <% if @events.any? %>
     <div class="content-surface entity-list">
       <div class="list-group list-group-flush">

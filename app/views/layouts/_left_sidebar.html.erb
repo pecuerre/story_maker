@@ -1,6 +1,5 @@
 <% menu_counts = Current.universe.menu_counts %>
 <% section_count = Current.story&.menu_section_count %>
-<% tag_controllers = %i[section_tags character_tags location_tags item_tags event_tags relation_tags ownership_tags] %>
 
 <div class="sidebar-context">
   <div class="sidebar-eyebrow">Current universe</div>
@@ -26,7 +25,7 @@
           label: "Sections",
           count: section_count,
           path: universe_story_sections_path(story_id: Current.story),
-          controllers: %i[ sections ] %>
+          controllers: %i[ sections section_tags ] %>
       <% else %>
         <%= render "shared/sidebar_link",
           icon: "books",
@@ -56,21 +55,21 @@
         label: "Characters",
         count: menu_counts[:characters],
         path: universe_characters_path,
-        controllers: %i[ characters ] %>
+        controllers: %i[ characters character_tags relations relation_tags ] %>
 
       <%= render "shared/sidebar_link",
         icon: "geo-alt",
         label: "Locations",
         count: menu_counts[:locations],
         path: universe_locations_path,
-        controllers: %i[ locations ] %>
+        controllers: %i[ locations location_tags ] %>
 
       <%= render "shared/sidebar_link",
         icon: "calendar-event",
         label: "Events",
         count: menu_counts[:events],
         path: universe_events_path,
-        controllers: %i[ events ] %>
+        controllers: %i[ events event_tags ] %>
 
       <%= render "shared/sidebar_link",
         icon: "calendar-range",
@@ -83,69 +82,11 @@
         label: "Items",
         count: menu_counts[:items],
         path: universe_items_path,
-        controllers: %i[ items ] %>
+        controllers: %i[ items item_tags ownerships ownership_tags ] %>
     </ul>
   </section>
 
   <section class="sidebar-section" aria-labelledby="configuration-title">
     <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
-    <p class="sidebar-hint">Choose a taxonomy to organize your records.</p>
-
-    <div class="dropdown sidebar-dropdown">
-      <%= button_tag type: "button",
-        id: "tag-navigation-menu-label",
-        class: "sidebar-link sidebar-dropdown-toggle#{active_if(*tag_controllers)}",
-        data: { bs_toggle: "dropdown" },
-        aria: { expanded: "false", controls: "tag-navigation-menu", haspopup: "true" }.merge(aria_current_for(*tag_controllers)) do %>
-        <i class="bi bi-tags" aria-hidden="true"></i>
-        <span class="sidebar-link-content">
-          <span class="sidebar-link-label">Tags</span>
-        </span>
-        <i class="bi bi-chevron-down sidebar-dropdown-chevron" aria-hidden="true"></i>
-      <% end %>
-
-      <ul class="dropdown-menu sidebar-tag-menu" id="tag-navigation-menu" aria-labelledby="tag-navigation-menu-label">
-        <% if Current.story.present? %>
-          <li><h6 class="dropdown-header">Story tags</h6></li>
-          <li>
-            <%= link_to "Section tags", universe_story_section_tags_path(story_id: Current.story),
-              class: "dropdown-item#{active_if(:section_tags)}",
-              aria: aria_current_for(:section_tags) %>
-          </li>
-        <% end %>
-
-        <li><h6 class="dropdown-header">Universe tags</h6></li>
-        <li>
-          <%= link_to "Character tags", universe_character_tags_path,
-            class: "dropdown-item#{active_if(:character_tags)}",
-            aria: aria_current_for(:character_tags) %>
-        </li>
-        <li>
-          <%= link_to "Location tags", universe_location_tags_path,
-            class: "dropdown-item#{active_if(:location_tags)}",
-            aria: aria_current_for(:location_tags) %>
-        </li>
-        <li>
-          <%= link_to "Item tags", universe_item_tags_path,
-            class: "dropdown-item#{active_if(:item_tags)}",
-            aria: aria_current_for(:item_tags) %>
-        </li>
-        <li>
-          <%= link_to "Event tags", universe_event_tags_path,
-            class: "dropdown-item#{active_if(:event_tags)}",
-            aria: aria_current_for(:event_tags) %>
-        </li>
-        <li>
-          <%= link_to "Relation tags", universe_relation_tags_path,
-            class: "dropdown-item#{active_if(:relation_tags)}",
-            aria: aria_current_for(:relation_tags) %>
-        </li>
-        <li>
-          <%= link_to "Ownership tags", universe_ownership_tags_path,
-            class: "dropdown-item#{active_if(:ownership_tags)}",
-            aria: aria_current_for(:ownership_tags) %>
-        </li>
-      </ul>
-    </div>
   </section>
 </nav>

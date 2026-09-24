@@ -151,19 +151,17 @@ The Bible is a direct record list without People/Places/Time/Objects group label
 - Items.
 
 Relations are reached from the Characters workspace tabs, and Ownerships from the Items workspace
-tabs. Those tabs are URL-backed navigation, not in-document tab panes, so each page keeps its
-canonical URL and mutation flow.
+tabs. Every content and taxonomy pair uses the same navigation: Locations / Location tags and
+Events / Event tags in the Universe Bible, plus Sections / Section tags in the Story workspace.
+These tabs are URL-backed navigation, not in-document tab panes, so each page keeps its canonical
+URL and mutation flow.
 
 ### Configuration
 
-Configuration is a separate sidebar section for organization and future settings. Its current
-entry is one **Tags** dropdown containing:
-
-- the six universe taxonomies: Character, Location, Item, Event, Relation, and Ownership tags;
-- Section tags when a story is selected.
-
-A taxonomy is a management layer, not a child navigation item of the record it classifies. New
-configuration tools should be added as top-level entries, grouped by scope when needed.
+Configuration is a separate, currently empty sidebar section reserved for future organization and
+settings. Tag management now lives next to the records it classifies in the corresponding content
+workspace. New configuration tools should be added as top-level entries here, grouped by scope when
+needed.
 
 Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
 `aria-current="page"`; color is not the only state signal. The reserved Scenes and right-sidebar
@@ -211,10 +209,11 @@ row. Ownerships use the same readable relationship treatment.
 
 ### Related content navigation
 
-Use `shared/_content_tabs` on the Characters/Relations and Items/Ownerships page pairs. These are
-URL-backed Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not add
-`data-bs-toggle="tab"` because each destination is a separate request. This keeps related records
-inside their parent workspace without adding nested routes or changing mutation behavior.
+Use `shared/_content_tabs` for every content-and-taxonomy workspace. The Character workspace has
+Characters, Character tags, Relations, and Relation tags; the Item workspace has Items, Item tags,
+Ownerships, and Ownership tags. Locations, Events, and Sections each pair with their tag taxonomy.
+These are URL-backed Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do
+not add `data-bs-toggle="tab"` because each destination is a separate request.
 
 ### Taxonomy trees and other hierarchy pages
 
@@ -222,7 +221,7 @@ Use `shared/_taxonomy_tree` and `shared/_taxonomy_node` for tag indexes, Section
 The shared tree provides:
 
 - a page header with explicit `title`, count, description, and human-readable add label;
-- a secondary link back to the related content list;
+- optional URL-backed workspace tabs via `tabs` and `tabs_aria_label` locals;
 - a consistent empty state;
 - drag handles, inline rename, add-child, edit, and delete actions;
 - a neutral overflow menu for edit/delete.
@@ -261,8 +260,8 @@ URL and meaningful navigation.
 2. Start with `shared/_page_header` and `shared/_empty_state` where applicable.
 3. Use the correct universe/story scope in every path.
 4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout.
-5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for a related
-   page pair; add taxonomy/configuration links to the separate Configuration section if the model
-   needs them.
+5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` to connect
+   related records and their corresponding tag taxonomy. Reserve the separate Configuration
+   section for future organization/settings tools.
 6. Check keyboard focus, mobile width, empty state, and long text.
 7. Update the relevant docs and tests in the same change.

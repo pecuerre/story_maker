@@ -24,7 +24,9 @@
     aria_label: "Character workspace",
     tabs: [
       { label: "Characters", path: universe_characters_path, controller: :characters },
-      { label: "Relations", path: universe_relations_path, controller: :relations }
+      { label: "Character tags", path: universe_character_tags_path, controller: :character_tags },
+      { label: "Relations", path: universe_relations_path, controller: :relations },
+      { label: "Relation tags", path: universe_relation_tags_path, controller: :relation_tags }
     ] %>
 
   <% if @characters.any? %>

@@ -128,17 +128,18 @@ Everything follows a two-step scope selection:
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
    and as a left offcanvas below the `lg` breakpoint. At `xl` and above, a 14rem right utility
    sidebar is also visible. The left sidebar contains **Story workspace**, **Universe Bible**, and
-   a separate **Configuration** section. The navbar adds explicit **Universe: …** and **Story: …**
-   context/switchers.
-3. **Story selected** (`Current.story`): Story workspace gains the story overview and Sections;
-   story-scoped Section tags appear in the Configuration **Tags** menu. The story is still
-   remembered per universe; no first-story fallback exists.
+   a separate, currently empty **Configuration** section reserved for future settings. The navbar
+   adds explicit **Universe: …** and **Story: …** context/switchers.
+3. **Story selected** (`Current.story`): Story workspace gains the story overview plus the
+   **Sections / Section tags** workspace tabs. The story is still remembered per universe; no
+   first-story fallback exists.
 
 The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
 switcher, and an **Account** menu. It keeps **New story** in the Story dropdown rather than in the
 left sidebar. Universe-scoped content is shared by every story; Sections and Section tags remain
-story-scoped. Relations are reached from the Characters workspace tabs, and Ownerships from the
-Items workspace tabs.
+story-scoped. Each workspace keeps related records and their tags together in URL-backed tabs:
+Characters / Character tags / Relations / Relation tags, Items / Item tags / Ownerships /
+Ownership tags, Locations / Location tags, Events / Event tags, and Sections / Section tags.
 
 All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`, and
 `empty_state` patterns. Visual tokens and responsive/component conventions live in

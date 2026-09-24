@@ -95,8 +95,9 @@ The three functional editing patterns are:
 
 **2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
-- Characters/Relations and Items/Ownerships use `shared/_content_tabs`: URL-backed Bootstrap
-  `nav-tabs` that preserve each canonical page while keeping related records discoverable.
+- Every record and taxonomy workspace uses `shared/_content_tabs`: URL-backed Bootstrap `nav-tabs`
+  that keep related records and their corresponding tag managers together while preserving each
+  canonical page.
 - Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`.
 
 **3. Plain full-page forms** (universes, stories):
@@ -153,10 +154,10 @@ navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas
 - **Story workspace**: Story overview + Sections when a story is selected; otherwise All stories
   plus a prompt to select one. **Scenes** is a reserved placeholder link. New story is available
   from the navbar's Story dropdown, not from the sidebar.
-- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Relations
-  live in the Characters workspace tabs, and Ownerships live in the Items workspace tabs.
-- **Configuration**: a separate organization/settings section with one **Tags** dropdown. It
-  contains the six universe taxonomies and, when a story is selected, Section tags.
+- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Relations,
+  Ownerships, and every tag taxonomy are reached from their corresponding workspace tabs.
+- **Configuration**: a separate, currently empty organization/settings section reserved for
+  future configuration tools.
 - Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
   background and `aria-current="page"`. The reserved Scenes and right-sidebar entries are the
   intentional `#` placeholders for future functionality.

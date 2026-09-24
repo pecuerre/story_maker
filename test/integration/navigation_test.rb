@@ -62,10 +62,8 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_ownerships_path(universe_slug: @universe.slug), count: 0
 
-    assert_select "aside.workspace-sidebar #tag-navigation-menu-label", text: /Tags/
-    assert_select "aside.workspace-sidebar #tag-navigation-menu .dropdown-item", 6
-    assert_select "aside.workspace-sidebar #tag-navigation-menu a[href=?]",
-      universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] :not(h3)", 0
+    assert_select "aside.workspace-sidebar #tag-navigation-menu", 0
 
     assert_select "aside.right-sidebar.offcanvas-xl.offcanvas-end", 1
     assert_select "button[data-bs-target='#workspace-tools-navigation']", text: /Tools/
@@ -75,7 +73,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.right-sidebar a.sidebar-placeholder-link[href='#']", minimum: 3
   end
 
-  test "a selected story adds story structure and the full tag menu" do
+  test "a selected story adds story structure while Configuration stays empty" do
     get universe_story_url(universe_slug: @universe.slug, id: @story)
 
     assert_response :success
@@ -91,22 +89,10 @@ class NavigationTest < ActionDispatch::IntegrationTest
       assert_select ".sidebar-count", text: "2"
     end
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/
-    assert_select "aside.workspace-sidebar #tag-navigation-menu .dropdown-item", 7
-    assert_select "aside.workspace-sidebar #tag-navigation-menu a[href=?]",
-      universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story),
-      text: "Section tags"
-
-    {
-      character_tags: universe_character_tags_path(universe_slug: @universe.slug),
-      relation_tags: universe_relation_tags_path(universe_slug: @universe.slug),
-      location_tags: universe_location_tags_path(universe_slug: @universe.slug),
-      event_tags: universe_event_tags_path(universe_slug: @universe.slug),
-      item_tags: universe_item_tags_path(universe_slug: @universe.slug),
-      ownership_tags: universe_ownership_tags_path(universe_slug: @universe.slug)
-    }.each do |label, path|
-      assert_select "aside.workspace-sidebar #tag-navigation-menu a[href=?]", path,
-        text: label.to_s.sub("_tags", " tags").capitalize
-    end
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] :not(h3)", 0
+    assert_select "aside.workspace-sidebar #tag-navigation-menu", 0
+    assert_select "aside.workspace-sidebar a[href=?]",
+      universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0
 
     {
       characters: universe_characters_path(universe_slug: @universe.slug),
@@ -137,9 +123,17 @@ class NavigationTest < ActionDispatch::IntegrationTest
       universe_characters_path(universe_slug: @universe.slug)
     assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
       universe_story_sections_path(universe_slug: @universe.slug, story_id: @story)
+    assert_select "nav.content-tabs a", 4
     assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
       universe_characters_path(universe_slug: @universe.slug)
-    assert_select "nav.content-tabs a[href=?]",
-      universe_relations_path(universe_slug: @universe.slug)
+    {
+      characters: universe_characters_path(universe_slug: @universe.slug),
+      character_tags: universe_character_tags_path(universe_slug: @universe.slug),
+      relations: universe_relations_path(universe_slug: @universe.slug),
+      relation_tags: universe_relation_tags_path(universe_slug: @universe.slug)
+    }.each do |label, path|
+      assert_select "nav.content-tabs a[href=?]", path,
+        text: label.to_s.sub("_tags", " tags").capitalize
+    end
   end
 end

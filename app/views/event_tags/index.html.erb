@@ -7,8 +7,11 @@
   count: Current.universe.event_tags.count,
   count_label: "tag",
   new_label: "Add event tag",
-  secondary_label: "Manage events",
-  secondary_url: universe_events_path,
+  tabs_aria_label: "Event workspace",
+  tabs: [
+    { label: "Events", path: universe_events_path, controller: :events },
+    { label: "Event tags", path: universe_event_tags_path, controller: :event_tags }
+  ],
   empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead.",
   nodes: @event_tags,
   new_url: ->(parent = nil) { new_universe_event_tag_path(parent_id: parent&.id) },

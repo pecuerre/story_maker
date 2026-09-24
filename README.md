@@ -33,6 +33,7 @@ you do not need the CSS watcher.
 
 ```bash
 bin/rails test       # Minitest models, controllers, and integration tests
+bin/rails test:system # browser-based smoke tests (requires Chrome)
 bin/rubocop          # Ruby style checks
 bin/brakeman --no-pager
 bin/bundler-audit

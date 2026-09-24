@@ -1,7 +1,9 @@
 require "test_helper"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
-  driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ]
+  driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
+    options.binary = ENV["SE_CHROME_PATH"] if ENV["SE_CHROME_PATH"].present?
+  end
 
   private
     def sign_in_via_form(user, password: "password")

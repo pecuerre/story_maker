@@ -233,8 +233,8 @@ module ModalFields
       character_id: ownership.character_id,
       ownership_tag_ids: ownership.ownership_tag_ids,
       description: ownership.description,
-      from_date: ownership.from_date&.strftime('%Y-%m-%dT%H:%M'),
-      to_date: ownership.to_date&.strftime('%Y-%m-%dT%H:%M')
+      from_date: ownership.from_date&.strftime("%Y-%m-%dT%H:%M"),
+      to_date: ownership.to_date&.strftime("%Y-%m-%dT%H:%M")
     }.to_json
   end
 
@@ -287,8 +287,8 @@ module ModalFields
       character2_id: relation.character2_id,
       relation_tag_ids: relation.relation_tag_ids,
       description: relation.description,
-      from_date: relation.from_date&.strftime('%Y-%m-%dT%H:%M'),
-      to_date: relation.to_date&.strftime('%Y-%m-%dT%H:%M')
+      from_date: relation.from_date&.strftime("%Y-%m-%dT%H:%M"),
+      to_date: relation.to_date&.strftime("%Y-%m-%dT%H:%M")
     }.to_json
   end
 

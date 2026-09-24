@@ -9,7 +9,7 @@ Dir[Rails.root.join("db/seeds/**/*.rb")].sort.each do |file|
 end
 
 # Transitional development-only data loader
-universes = ["dark", "lotr"]
+universes = [ "dark", "lotr" ]
 universes.each do |name|
   file = Rails.root.join("db/data/#{name}/#{name}.rb")
   puts "Loading #{file}".yellow

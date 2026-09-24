@@ -19,6 +19,7 @@ The current architecture and conventions are documented in:
 | [0002](0002-json-crud-with-stimulus-editors.md) | Accepted | Use JSON CRUD with Stimulus for taxonomy and modal editors |
 | [0003](0003-disposable-schema-and-seed-data.md) | Accepted | Keep migrations schema-only and rebuild demo data from `db/data/` |
 | [0004](0004-universe-data-and-demo-seeding.md) | Accepted | Organize disposable data by universe and separate it from production seeds |
+| [0005](0005-universe-access-levels.md) | Accepted | Use universe-level public/private access with three membership levels |
 
 ## Format
 

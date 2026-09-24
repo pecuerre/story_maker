@@ -4,7 +4,9 @@ Universe Maker is a Rails application for building and maintaining consistent st
 keeps characters, locations, events, items, relationships, sections, and their tags in a searchable
 structure so writers can track continuity and spot contradictions as a story grows.
 
-The project uses Rails 8, Hotwire, SQLite, import maps, and Bun for the CSS build. See the
+The project uses Rails 8, Hotwire, SQLite, import maps, and Bun for the CSS build. Universes
+can be public (guest read, signed-in contribution) or private, with read/write/admin membership
+levels applied across all of their stories and components. See the
 [development guide](docs/development.md) for the full setup, test, seeding, CI, and deployment
 workflows.
 

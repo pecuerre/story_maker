@@ -19,6 +19,7 @@ Rails.application.routes.draw do
     resources :relations, only: %i[ index create update destroy ]
     resources :ownership_tags
     resources :ownerships, only: %i[ index create update destroy ]
+    resources :memberships, only: %i[ index new create update destroy ], path: "members"
     resources :event_tags
     resources :events
     get "timeline", to: "timeline#index", as: :timeline

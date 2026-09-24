@@ -1,28 +1,37 @@
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 <% taxonomy_field = local_assigns[:taxonomy_field] %>
+<% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(node) || Current.universe) } %>
 
 <li class="taxonomy-node"
-  draggable="true"
+  <% if editable %>
+    draggable="true"
+    data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop dragend->taxonomy-tree#endDrag"
+  <% end %>
   data-taxonomy-tree-target="node"
-  data-action="dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop dragend->taxonomy-tree#endDrag"
   data-node-id="<%= node.id %>"
-  data-update-url="<%= update_url.call(node) %>"
-  data-edit-url="<%= edit_url.call(node) %>"
-  data-create-url="<%= create_url %>"
+  <% if editable %>
+    data-update-url="<%= update_url.call(node) %>"
+    data-edit-url="<%= edit_url.call(node) %>"
+    data-create-url="<%= create_url %>"
+  <% end %>
   data-name="<%= node.name %>"
   data-description="<%= node.description %>"
   data-taxonomy-values="<%= modal_fields.to_h { |field| [field[:name], node.public_send(field[:name])] }.to_json %>"
   <% if taxonomy_field %>data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"<% end %>>
 
   <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom">
-    <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
+    <% if editable %>
+      <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
+    <% end %>
 
     <span class="flex-grow-1 text-break"
-      role="button"
-      tabindex="0"
-      aria-label="Rename <%= node.name %>"
-      data-taxonomy-tree-target="name"
-      data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName">
+      <% if editable %>
+        role="button"
+        tabindex="0"
+        aria-label="Rename <%= node.name %>"
+        data-taxonomy-tree-target="name"
+        data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName"
+      <% end %>>
       <% if node.respond_to?(:bgcolor) %>
         <%= entity_tag_badge(node) %>
       <% else %>
@@ -34,48 +43,50 @@
       <% end %>
     </span>
 
-    <span class="taxonomy-actions d-flex align-items-center gap-1">
-      <% if new_url %>
-        <%= button_tag type: "button",
-          class: "btn btn-sm btn-light border",
-          title: "Add child",
-          aria: { label: "Add child to #{node.name}" },
-          data: { action: "taxonomy-tree#add" } do %>
-          <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <% if editable %>
+      <span class="taxonomy-actions d-flex align-items-center gap-1">
+        <% if new_url %>
+          <%= button_tag type: "button",
+            class: "btn btn-sm btn-light border",
+            title: "Add child",
+            aria: { label: "Add child to #{node.name}" },
+            data: { action: "taxonomy-tree#add" } do %>
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+          <% end %>
         <% end %>
-      <% end %>
 
-      <div class="dropdown">
-        <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
-          id="taxonomy-<%= node.id %>-actions"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-          aria-label="Actions for <%= node.name %>">
-          <i class="bi bi-three-dots" aria-hidden="true"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
-          <li>
-            <button type="button" class="dropdown-item"
-              data-action="taxonomy-tree#edit">
-              <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
-            </button>
-          </li>
-          <li><hr class="dropdown-divider"></li>
-          <li>
-            <button type="button" class="dropdown-item text-danger"
-              data-action="taxonomy-tree#remove">
-              <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
-            </button>
-          </li>
-        </ul>
-      </div>
-    </span>
+        <div class="dropdown">
+          <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+            id="taxonomy-<%= node.id %>-actions"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            aria-label="Actions for <%= node.name %>">
+            <i class="bi bi-three-dots" aria-hidden="true"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
+            <li>
+              <button type="button" class="dropdown-item"
+                data-action="taxonomy-tree#edit">
+                <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+              </button>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <button type="button" class="dropdown-item text-danger"
+                data-action="taxonomy-tree#remove">
+                <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+              </button>
+            </li>
+          </ul>
+        </div>
+      </span>
+    <% end %>
   </div>
 
   <% children = node.public_send(children_method) %>
   <% if children.any? %>
     <ul class="taxonomy-list list-unstyled ms-4 ps-3"
-      data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
+      <% if editable %>data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"<% end %>
       data-drop-parent-id="<%= node.id %>">
       <% children.each do |child| %>
         <%= render "shared/taxonomy_node",
@@ -88,7 +99,8 @@
           create_url: create_url,
           model_param: model_param,
           modal_fields: modal_fields,
-          taxonomy_field: taxonomy_field %>
+          taxonomy_field: taxonomy_field,
+          editable: editable %>
       <% end %>
     </ul>
   <% end %>

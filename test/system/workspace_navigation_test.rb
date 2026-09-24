@@ -49,4 +49,23 @@ class WorkspaceNavigationTest < ApplicationSystemTestCase
     assert_current_path universe_timeline_path(universe_slug: universe.slug)
     assert_selector ".timeline-node", minimum: 2
   end
+
+  test "a private read member can browse without mutation controls" do
+    universe = Universe.create!(owner: users(:user_one), name: "Private browser universe", slug: "private-browser", private: true)
+    story = Story.create!(universe: universe, name: "Private browser story")
+    UniverseMembership.create!(universe: universe, user: users(:user_two), access_level: :read)
+
+    sign_in_via_form(users(:user_two))
+    visit universe_characters_path(universe_slug: universe.slug)
+
+    assert_selector ".access-notice", text: "read-only"
+    assert_no_selector "button", text: "Add character"
+    assert_no_selector ".modal"
+    assert_no_selector ".row-actions"
+
+    visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    assert_selector "h1", text: "Sections"
+    assert_no_selector ".taxonomy-separator-add"
+    assert_no_selector "[data-action*='dragstart']"
+  end
 end

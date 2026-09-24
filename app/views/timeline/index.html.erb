@@ -7,13 +7,15 @@
     description: "See how events are ordered from dates and explicit before, after, and simultaneous relationships.",
     count: @layers.sum(&:size),
     count_label: "event" do %>
-    <%= link_to "Add event", universe_events_path, class: "btn btn-primary" %>
+    <% if can_write_universe? %>
+      <%= link_to "Add event", universe_events_path, class: "btn btn-primary" %>
+    <% end %>
   <% end %>
 
   <% if @layers.blank? || @layers.all?(&:empty?) %>
     <%= render "shared/empty_state",
       title: "No events to place on the timeline",
-      description: "Add events with dates or relationships to each other, then return here to see their order.",
+      description: can_write_universe? ? "Add events with dates or relationships to each other, then return here to see their order." : "Events in this universe will appear on the timeline once they have been added.",
       icon: "calendar-range" %>
   <% else %>
     <div class="surface-card p-3 p-md-4">

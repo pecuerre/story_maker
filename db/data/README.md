@@ -17,11 +17,16 @@ db/data/
 ```
 
 A universe directory contains all data used to exercise that universe: its user/universe record,
-stories, sections, section tags, world-building records, taxonomies, and relationships. The
-current examples are:
+memberships when explicit private or delegated-admin access is needed, stories, sections, section
+tags, world-building records, taxonomies, and relationships. The current examples are:
 
 - `dark/` — the more complete YAML-based Dark dataset;
 - `lotr/` — the smaller Lord of the Rings dataset, currently written as Ruby.
+
+The Dark directory includes a delegated-admin example: after the current transitional development
+load (`bin/rails db:prepare`), sign in as the synthetic `collaborator@dark` / `collaborator` account
+and open `/u/dark/members` to exercise membership management. Do not rerun the create-only demo
+loader without deliberately rebuilding the disposable database.
 
 A subdirectory represents a **universe**, not a feature. There should not be a separate
 `db/data/dialog/` directory for a Dialog feature.
@@ -40,7 +45,7 @@ wiring is transitional; the intended lifecycle is an explicit development-only l
 ## Adding or changing a model
 
 A new persisted model gets a data file in every universe directory where it should be exercised.
-The file name follows the model/table name, for example:
+The file name follows the model/table name, for example if we have a new model called Dialog then:
 
 ```text
 db/data/dark/dialogs.yml
@@ -54,6 +59,10 @@ db/data/lotr/dialogs.yml
 
 Do not create `db/data/dialog/` merely because the model is named `Dialog`. Update the shared
 model load order/registry as well as the per-universe files.
+
+`universe_memberships.yml` is used when
+a sample universe should exercise private read/write/admin access; owner access is implicit and does
+not need a membership row.
 
 Dialog records must use the actual associations decided for the model. A story-scoped model uses
 `story: Story.<slug>`; a universe-scoped model uses `universe: Universe.<slug>`. Include connected

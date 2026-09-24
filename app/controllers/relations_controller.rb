@@ -1,4 +1,5 @@
 class RelationsController < ApplicationController
+  allow_unauthenticated_access only: :index
   before_action :set_relation, only: %i[ update destroy ]
 
   def index

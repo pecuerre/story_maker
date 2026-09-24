@@ -1,4 +1,5 @@
 class StoriesController < ApplicationController
+  allow_unauthenticated_access only: %i[ index show ]
   before_action :set_story, only: %i[ show edit update destroy ]
 
   # GET /u/:universe_slug/s

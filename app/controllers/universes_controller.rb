@@ -1,7 +1,8 @@
 class UniversesController < ApplicationController
   before_action :set_universe, only: %i[ show edit update destroy ]
-  allow_unauthenticated_access only: %i[index show new create edit update destroy]
-  skip_before_action :set_current_universe, only: %i[index]
+  allow_unauthenticated_access only: %i[ index show ]
+  skip_before_action :set_current_universe, only: %i[ index ]
+  skip_before_action :authorize_universe_access, only: %i[ index ]
 
   # GET /universes or /universes.json
   def index
@@ -23,8 +24,9 @@ class UniversesController < ApplicationController
 
   # POST /universes or /universes.json
   def create
+    authorize! :create, Universe
     @universe = Universe.new(universe_params)
-    @universe.owner = Current.user || User.first
+    @universe.owner = Current.user
 
     respond_to do |format|
       if @universe.save
@@ -68,11 +70,11 @@ class UniversesController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_universe
-    @universe = Universe.find_by(slug: params.expect(:universe_slug))
+    @universe = Universe.find_by!(slug: params.expect(:universe_slug))
   end
 
   # Only allow a list of trusted parameters through.
   def universe_params
-    params.expect(universe: [ :name ])
+    params.expect(universe: [ :name, :private ])
   end
 end

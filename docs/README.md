@@ -3,8 +3,8 @@
 Everything learned about this project lives in this directory. The root `README.md` is a short
 quick start; this directory is the source of truth for project knowledge. Facts were verified
 against the code — last full pass: September 2026, after the Bootstrap visual-shell refresh, the
-*stories / story-scoped sections* rework, the *tags are optional everywhere* change, and the
-per-universe development-data convention.
+*stories / story-scoped sections* rework, the *tags are optional everywhere* change, the
+per-universe development-data convention, and the public/private universe access policy.
 
 | File | Contents |
 |---|---|

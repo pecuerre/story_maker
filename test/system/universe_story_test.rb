@@ -12,7 +12,7 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_selector ".alert-success", text: "Universe was successfully created."
     click_link "Browse stories"
 
-    assert_selector "h1", text: "Stories"
+    assert_selector "h1", text: "Stories", wait: 5
     click_link "New story"
     fill_in "Name", with: "System Test Story"
     fill_in "Description", with: "A story created by a system test."

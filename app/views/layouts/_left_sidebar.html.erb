@@ -4,6 +4,9 @@
 <div class="sidebar-context">
   <div class="sidebar-eyebrow">Current universe</div>
   <h2 class="sidebar-universe-name"><%= Current.universe.name %></h2>
+  <div class="small text-body-secondary">
+    <%= Current.universe.private? ? "Private" : "Public" %> · <%= universe_access_label %>
+  </div>
   <% if Current.story.present? %>
     <p class="sidebar-story-name">Story: <%= Current.story.name %></p>
   <% end %>
@@ -88,5 +91,14 @@
 
   <section class="sidebar-section" aria-labelledby="configuration-title">
     <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
+    <% if can_administer_universe? %>
+      <ul class="sidebar-list">
+        <%= render "shared/sidebar_link",
+          icon: "people",
+          label: "Members",
+          path: universe_memberships_path,
+          controllers: %i[ memberships ] %>
+      </ul>
+    <% end %>
   </section>
 </nav>

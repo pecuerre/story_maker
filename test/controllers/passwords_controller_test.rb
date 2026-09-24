@@ -26,6 +26,12 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_notice "reset instructions sent"
   end
 
+  test "password routes ignore an arbitrary universe scope" do
+    get new_password_path(universe_slug: universes(:universe_one).slug)
+
+    assert_response :success
+  end
+
   test "edit" do
     get edit_password_path(@user.password_reset_token)
     assert_response :success

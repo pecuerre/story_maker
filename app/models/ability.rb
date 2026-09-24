@@ -3,52 +3,101 @@
 class Ability
   include CanCan::Ability
 
+  # The policy is object-based: callers pass the concrete universe or content
+  # record so private membership and owner checks are evaluated against the
+  # correct scope. The custom :write and :admin actions represent the two
+  # collaboration levels used by the request authorization concern.
+
+  CONTENT_CLASS_NAMES = %w[
+    Story
+    Section
+    SectionTag
+    Character
+    CharacterTag
+    Location
+    LocationTag
+    Item
+    ItemTag
+    Event
+    EventTag
+    Relation
+    RelationTag
+    Ownership
+    OwnershipTag
+  ].freeze
+
   def initialize(user)
-    # Define abilities for the user here. For example:
-    #
-    #   return unless user.present?
-    #   can :read, :all
-    #   return unless user.admin?
-    #   can :manage, :all
-    #
-    # The first argument to `can` is the action you are giving the user
-    # permission to do.
-    # If you pass :manage it will apply to every action. Other common actions
-    # here are :read, :create, :update and :destroy.
-    #
-    # The second argument is the resource the user can perform the action on.
-    # If you pass :all it will apply to every resource. Otherwise pass a Ruby
-    # class of the resource.
-    #
-    # The third argument is an optional hash of conditions to further filter the
-    # objects.
-    # For example, here the user can only update published articles.
-    #
-    #   can :update, Article, published: true
-    #
-    # See the wiki for details:
-    # https://github.com/CanCanCommunity/cancancan/blob/develop/docs/define_check_abilities.md
+    @user = user
 
-    if user
-      if user.admin?
-        define_admin_abilities(user)
-      else
-        define_logged_user_abilities(user)
+    define_universe_abilities
+    define_content_abilities
+    define_membership_abilities
+  end
+
+  def access_level_for(universe)
+    universe&.access_level_for(@user)
+  end
+
+  private
+
+    def define_universe_abilities
+      can [ :read, :index, :show ], Universe do |universe|
+        universe.present? && universe.readable_by?(@user)
       end
-    else
-      define_guest_abilities
+
+      if @user
+        can [ :write, :new ], Universe do |universe|
+          universe.present? && universe.writable_by?(@user)
+        end
+        can :create, Universe
+        can [ :admin, :edit, :update, :destroy, :manage ], Universe do |universe|
+          universe.present? && universe.administrable_by?(@user)
+        end
+      end
     end
-  end
 
-  def define_logged_user_abilities(user)
-    can :manage, Universe, user_id: user.id
-  end
+    def define_content_abilities
+      CONTENT_CLASS_NAMES.each do |class_name|
+        content_class = class_name.constantize
 
-  def define_admin_abilities(user)
-    can :manage, :all
-  end
+        can [ :read, :index, :show ], content_class do |record|
+          universe = universe_for(record)
+          universe.present? && universe.readable_by?(@user)
+        end
 
-  def define_guest_abilities
-    can :read, Universe, private: false
-  end
+        next unless @user
+
+        can [ :write, :new, :create, :update, :destroy ], content_class do |record|
+          universe = universe_for(record)
+          universe.present? && universe.writable_by?(@user)
+        end
+        can :admin, content_class do |record|
+          universe = universe_for(record)
+          universe.present? && universe.administrable_by?(@user)
+        end
+        can :manage, content_class do |record|
+          universe = universe_for(record)
+          universe.present? && universe.administrable_by?(@user)
+        end
+      end
+    end
+
+    def define_membership_abilities
+      return unless @user
+
+      can [ :read, :index, :show ], UniverseMembership do |membership|
+        membership.present? && membership.universe.administrable_by?(@user)
+      end
+      can [ :admin, :manage, :create, :update, :destroy ], UniverseMembership do |membership|
+        membership.present? && membership.universe.administrable_by?(@user)
+      end
+    end
+
+    def universe_for(record)
+      return if record.nil?
+      return record.universe if record.respond_to?(:universe)
+      return record.story&.universe if record.respond_to?(:story)
+
+      nil
+    end
 end

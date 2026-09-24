@@ -44,18 +44,26 @@
 - Universe scoping via `Current.universe` (set from the `:universe_slug` param in
   `ApplicationController#set_current_universe`); sections and section tags add
   `Current.story`/`@story` scoping.
+- `ApplicationController#authorize_universe_access` runs after universe resolution and before story
+  selection. Universe-scoped controllers explicitly allow only public read actions at the
+  authentication layer, then `Ability` enforces read/write/admin access. Do not add a
+  controller-specific visibility check that bypasses this callback.
 - Positioned/hierarchical controllers include `MaintainsSiblingPositions`
   (`maintains_sibling_positions_for :model`) and override `sibling_collection` when the scope is
   not the universe (Sections and SectionTags use `@story.sections` / `@story.section_tags`).
 - Strong params use Rails 8 `params.expect(model: [ ... ])`.
+- Universe authorization is a three-level policy: `read`, `write`, and `admin`. Public universes
+  grant guest read and signed-in write access; private universes require an owner or membership.
+  The owner is always admin, and a membership's level applies uniformly to all universe/story
+  components. Admin membership management is an HTML flow at `/u/:universe_slug/members`.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
     Characters, Locations, Items, Events, Sections. The page renders HTML; create/update/destroy
     are called by Stimulus with `as: :json`.
-  - **HTML flow** (redirect / re-render): Universes, Stories, Relations, Ownership, Sessions,
-    Passwords.
-- Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors,
-  `show/edit` exist only for Universes and Stories.
+  - **HTML flow** (redirect / re-render): Universes, Stories, Relations, Ownerships, Universe
+    memberships, Sessions, Passwords.
+- Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
+  memberships, `show/edit` exist only for Universes and Stories.
 
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
@@ -72,15 +80,20 @@
   arguments to `universe_*_path`/`universe_*_url` helpers.
 - All section and section-tag URLs include the story id (`/u/:universe_slug/s/:story_id/...`).
   The universe-level `/u/:universe_slug/sections` path is intentionally invalid.
-- Relations/Ownerships are limited to `index, create, update, destroy`; timeline is
-  `get "timeline", to: "timeline#index"`; `root` → `universes#index`; health check `/up`.
+- Relations/Ownerships are limited to `index, create, update, destroy`; memberships are mounted at
+  `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and are
+  admin-only; timeline is `get "timeline", to: "timeline#index"`; `root` → `universes#index`;
+  health check `/up`.
 - `Universe#to_param` returns the slug; content models are addressed by numeric `id`.
 
 ### Views - Three Patterns
 
 Every work page starts with `shared/_page_header` (eyebrow, sentence-case title, optional count and
 description, right-aligned actions) and uses `shared/_empty_state` instead of bare “No records yet”
-text. Flat entity rows use `shared/_row_actions`: neutral overflow menus for edit/delete, with
+text. Mutation controls are rendered only when `can_write_universe?`; universe settings and member
+controls use `can_administer_universe?`. The shared row/taxonomy partials enforce this so read-only
+members and public guests see the same content without misleading edit affordances. Flat entity
+rows use `shared/_row_actions`: neutral overflow menus for edit/delete, with
 destructive actions marked by text/icon rather than a permanently red button. Flash messages are
 rendered once by the application layout through `shared/_flash`.
 
@@ -119,9 +132,11 @@ The three functional editing patterns are:
     `event_fields_json`, `character_fields_json`, `item_fields_json`,
     `ownership_fields_json`, `relation_fields_json`.
 - `app/helpers/application_helper.rb` — `active_if`, `aria_current_for`, `visible?`, `icon`,
-  `icon_text_count`, `nav_universes`, `nav_stories` (top bar dropdowns), `entity_tag_badge`
-  (renders a record's tags as colored badges). Counts are right-aligned pills, not parenthesized
-  text; current links carry both `.active` and `aria-current="page"`.
+  `icon_text_count`, `nav_universes`, `nav_stories` (top bar dropdowns), universe access helpers
+  (`can_read_universe?`, `can_write_universe?`, `can_administer_universe?`,
+  `universe_access_level`, `universe_access_label`), and `entity_tag_badge` (renders a record's tags
+  as colored badges). Counts are right-aligned pills, not parenthesized text; current links carry
+  both `.active` and `aria-current="page"`.
 - `app/views/shared/_content_tabs.html.erb` renders related universe pages as URL-backed
   Bootstrap navigation; it does not use `data-bs-toggle="tab"` because each tab is a separate
   request and canonical URL.
@@ -136,7 +151,7 @@ The three functional editing patterns are:
 ### Navigation (Top bar) — `app/views/layouts/_navbar.html.erb`
 Left to right:
 - **Universes** — dropdown: `nav_universes` list (current universe highlighted), *All universes*,
-  *New universe*.
+  and *New universe* for signed-in users. The current-universe menu also exposes *Members* to admins.
 - **Universe: [name]** — present when `Current.universe` exists; makes the current universe scope
   explicit and links back to the universe overview/all universes.
 - **Story: [name or Select]** — present when `Current.universe` exists; lists `nav_stories`, *All
@@ -145,7 +160,7 @@ Left to right:
 - **Account** — signed-in email and logout action, or **Log in** for guests.
 
 Nonfunctional dashboard links do not appear in the navbar. The right utility sidebar is the
-intentional home for temporary collaboration, analytics, and AI placeholders; those entries are
+intentional home for future richer collaboration, analytics, and AI placeholders; those entries are
 `aria-disabled` and should be replaced with real destinations as the product areas are defined.
 
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
@@ -156,8 +171,8 @@ navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas
   from the navbar's Story dropdown, not from the sidebar.
 - **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Relations,
   Ownerships, and every tag taxonomy are reached from their corresponding workspace tabs.
-- **Configuration**: a separate, currently empty organization/settings section reserved for
-  future configuration tools.
+- **Configuration**: a separate organization/settings section. Universe admins see **Members**;
+  it opens the read/write/admin access manager.
 - Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
   background and `aria-current="page"`. The reserved Scenes and right-sidebar entries are the
   intentional `#` placeholders for future functionality.

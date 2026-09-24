@@ -72,6 +72,9 @@ development database.
 
 - Characters, locations, items, events, relations, ownerships, and their tag taxonomies belong
   to a universe and are shared by that universe's stories.
+- Universe access is read/write/admin: public universes allow guest read and signed-in write;
+  private universes require owner or membership. A user's access applies to every story and
+  component in that universe.
 - Sections and section tags belong directly to a story. A section URL must include its story
   scope.
 - A story becomes current only when explicitly selected or remembered; never fall back to the
@@ -86,8 +89,8 @@ development database.
   `universe_story_sections_path(story_id: story)`, not a positional story argument.
 - Use `params.expect(...)` for strong parameters.
 - Choose the established response pattern deliberately: taxonomy, character, location, item,
-  event, and section mutations are JSON-only; universes, stories, relations, and ownerships use
-  the HTML redirect/re-render flow. Do not silently mix the two.
+  event, and section mutations are JSON-only; universes, stories, relations, ownerships, and
+  universe memberships use the HTML redirect/re-render flow. Do not silently mix the two.
 - New hierarchical or positioned controllers use the existing concerns and sibling-position
   conventions.
 - Use the existing three view patterns: taxonomy tree, flat list with modal, or plain full-page
@@ -103,8 +106,8 @@ development database.
 - Generate `db/schema.rb` through Rails migrations; do not edit it manually.
 - Demo data lives under `db/data/<universe_slug>/`: one subdirectory per universe. The current
   examples are `db/data/dark/` and `db/data/lotr/`; a universe directory contains all data used to
-  exercise that universe, including its stories, sections, tags, world-building records, and
-  relationships.
+  exercise that universe, including its memberships, stories, sections, tags, world-building
+  records, and relationships.
 - Do not create a feature directory such as `db/data/dialog/`. If a new `Dialog` model is added,
   its development data belongs in `db/data/dark/dialogs.yml` and in the corresponding file for
   every other universe directory where it should be exercised; update the shared model
@@ -152,7 +155,9 @@ development database.
 - Never expose or modify credentials, `.env` files, Rails keys, or deployment secrets.
 - Do not push, reset, rewrite history, or deploy without explicit approval.
 - Do not edit generated files under `public/assets` or `app/assets/builds` by hand.
-- Do not assume the installed `cancancan` gem provides authorization; read
-  [`docs/known_quirks.md`](docs/known_quirks.md) and test access boundaries explicitly.
+- Authorization is defined in `app/models/ability.rb` and enforced by
+  `UniverseAuthorization`; do not bypass those checks with controller-specific visibility logic.
+  Read [`docs/adr/0005-universe-access-levels.md`](docs/adr/0005-universe-access-levels.md) and test
+  public/private read-write-admin boundaries explicitly.
 - Before handing off, summarize changed files, behavior, tests/checks run, checks not run, and
   any follow-up work that was deliberately deferred.

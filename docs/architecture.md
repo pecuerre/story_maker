@@ -20,7 +20,7 @@ UI patterns and the Timeline algorithm. Conventions are in
 | Jobs/cache/cable | `solid_queue`, `solid_cache`, `solid_cable` (DB-backed) |
 | Mail | `PasswordsMailer` (`deliver_later`) |
 | Deploy | **Kamal** (`config/deploy.yml`, service `universe_maker`) + Dockerfile |
-| Extras | `cancancan` (**unused** — see [known_quirks.md](known_quirks.md)), `colorize` (seed output), `image_processing` |
+| Extras | `cancancan` (universe authorization), `colorize` (seed output), `image_processing` |
 | Tooling | RuboCop (`rubocop-rails-omakase` style), Brakeman, bundler-audit, importmap audit |
 
 ## Request lifecycle
@@ -29,15 +29,21 @@ UI patterns and the Timeline algorithm. Conventions are in
 
 1. **`require_authentication`** (from the `Authentication` concern, registered first) — reads the
    signed cookie `session_id` → `Current.session`; redirects to `/session/new` unless the action
-   is listed in `allow_unauthenticated_access` (universes: everything except nothing —
-   it allows all its actions; sessions/passwords: `new/create/…`; timeline & content controllers
-   require sign-in).
+   is listed in `allow_unauthenticated_access`. Universe content controllers explicitly allow only
+   their read actions so public pages can render; every write still requires a session before the
+   authorization callback runs.
 2. **`resume_session`** — loads the session again for public pages so `Current.user` is available
    in views (navbar).
 3. **`set_current_universe`** — if `params[:universe_slug]` is present:
    `Current.universe = Universe.find_by!(slug: …)` (404 via `RecordNotFound` when unknown).
-   Skipped by `SessionsController` and by `UniversesController#index`.
-4. **`set_current_story`** — when a universe is present, resolves `Current.story`:
+   Skipped by `SessionsController`, `PasswordsController`, and by `UniversesController#index`;
+   those non-universe controllers also skip the authorization callback.
+4. **`authorize_universe_access`** (from `UniverseAuthorization`) — checks the resolved universe
+   through `Ability`/`current_ability`: public universes grant read access to guests and write
+   access to signed-in users; private universes require an owner or membership. Guests are sent
+   to sign in, authenticated non-members receive 404 for private universes, and authenticated
+   users without the required level receive 403.
+5. **`set_current_story`** — when a universe is present, resolves `Current.story`:
    - explicit `params[:story_id]` (sections) or `params[:id]` on the `stories` controller wins and
      is remembered in the session (`session[:current_story_ids]` keyed by universe id);
    - otherwise the remembered story, if it still exists;
@@ -55,9 +61,9 @@ Other global behavior: `allow_browser versions: :modern`,
 `sessions#create` and `passwords#create`.
 
 ### Test-env behavior (matters when writing tests)
-- `config.action_dispatch.show_exceptions = :rescuable` → `ActiveRecord::RecordNotFound`
-  renders **404** instead of raising: assert with `assert_response :not_found`
-  (`assert_raises` will **not** fire).
+- `config.action_dispatch.show_exceptions = :rescuable` and the application-level
+  `ActiveRecord::RecordNotFound` handler render **404** instead of raising: assert with
+  `assert_response :not_found` (`assert_raises` will **not** fire).
 - `config.action_controller.raise_on_missing_callback_actions = true` → every
   `before_action`/`skip_before_action` must reference a method that exists.
 
@@ -72,9 +78,21 @@ Other global behavior: `allow_browser versions: :modern`,
 - Sign-out destroys the `Current.session` and deletes the cookie.
 - Password reset: `passwords#create` mails a token link, `passwords#edit/update` change the
   password and destroy all of that user's sessions.
-- Visibility: `Universe.visible_to(user)` (public or owned) is applied to the universes index and
-  the navbar dropdown. **It is not applied on `universes#show` or on any content controller** —
-  see [known_quirks.md](known_quirks.md).
+- Visibility and authorization are centralized in `Ability` plus `UniverseAuthorization`:
+  - public universe: guests may read; every signed-in user may write; only the owner or an admin
+    member may change universe settings or memberships;
+  - private universe: only the owner and members may enter; read members cannot mutate, write
+    members can contribute, and admin members can also manage access;
+  - access is inherited by every story and component in the universe; story-scoped records are
+    authorized through their story's universe.
+- `Universe.visible_to(user)` applies the same policy to the universes index and navbar dropdown.
+  Universe show and all universe-scoped content callbacks apply the policy before loading records.
+- Guests attempting a write are redirected to sign in; authenticated users who lack a private
+  universe's read access receive 404, while a member with insufficient write/admin access receives
+  403. The distinction avoids disclosing private universe membership while making permission
+  failures explicit for known collaborators.
+- The membership admin screen lives at `/u/:universe_slug/members` and is linked for universe
+  admins from the universe view/navigation.
 - In tests use `sign_in_as(users(:user_one))` / `sign_out`
   (`test/test_helpers/session_test_helper.rb`, mixed into integration tests).
 
@@ -101,13 +119,15 @@ Other global behavior: `allow_browser versions: :modern`,
   story-scoped content paths `/u/:slug/s/:story_id/sections` and
   `/u/:slug/s/:story_id/section_tags`. The universe-level `/u/:slug/sections` path is intentionally
   not routed; every section URL must include its story id.
+- Universe memberships live at `/u/:universe_slug/members`; only universe admins can reach the
+  membership index and mutations.
 
 ## Response formats per controller
 
 | Flow | Controllers | Behavior |
 |---|---|---|
 | JSON-only mutations | all `*_tags`, characters, locations, items, events, sections | `index/new` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, relations, ownerships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| HTML flow | universes, **stories**, relations, ownerships, universe memberships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | timeline, sessions, passwords | |
 
@@ -115,7 +135,7 @@ Other global behavior: `allow_browser versions: :modern`,
 
 The UI is a Bootstrap 5.3 application shell with a fixed dark **navbar**, responsive left and
 right workspace navigation columns, and one flexible **main content** area. The left column is
-the working navigation; the right column reserves space for future universe tools such as
+the working navigation; the right column reserves space for future universe tools such as richer
 collaboration, analytics, and AI. The right column becomes a Bootstrap `offcanvas-end` below
 `xl`, and the left column becomes an `offcanvas-start` below `lg`. On narrower screens, the mobile
 workspace bar exposes **Tools** below `xl` and **Menu** below `lg`.
@@ -128,7 +148,7 @@ Everything follows a two-step scope selection:
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
    and as a left offcanvas below the `lg` breakpoint. At `xl` and above, a 14rem right utility
    sidebar is also visible. The left sidebar contains **Story workspace**, **Universe Bible**, and
-   a separate, currently empty **Configuration** section reserved for future settings. The navbar
+   a separate **Configuration** section containing **Members** for universe admins. The navbar
    adds explicit **Universe: …** and **Story: …** context/switchers.
 3. **Story selected** (`Current.story`): Story workspace gains the story overview plus the
    **Sections / Section tags** workspace tabs. The story is still remembered per universe; no
@@ -136,7 +156,8 @@ Everything follows a two-step scope selection:
 
 The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
 switcher, and an **Account** menu. It keeps **New story** in the Story dropdown rather than in the
-left sidebar. Universe-scoped content is shared by every story; Sections and Section tags remain
+left sidebar, and only shows contribution/admin actions when the current user has the required
+level. Universe-scoped content is shared by every story; Sections and Section tags remain
 story-scoped. Each workspace keeps related records and their tags together in URL-backed tabs:
 Characters / Character tags / Relations / Relation tags, Items / Item tags / Ownerships /
 Ownership tags, Locations / Location tags, Events / Event tags, and Sections / Section tags.

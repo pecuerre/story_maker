@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   include Authentication
+  include UniverseAuthorization
   helper ModalFields
 
   allow_browser versions: :modern
@@ -8,10 +9,26 @@ class ApplicationController < ActionController::Base
   # Load the session (if any) on public pages too, so Current.user is available
   # in views for things like the universes navbar dropdown.
   before_action :resume_session
+
   before_action :set_current_universe
+  # Authorization must run after the universe is resolved, but before story
+  # selection or any controller loads scoped content.
+  before_action :authorize_universe_access
+
   before_action :set_current_story
 
+  rescue_from CanCan::AccessDenied do
+    head :forbidden
+  end
+  rescue_from ActiveRecord::RecordNotFound do
+    head :not_found
+  end
+
   protected
+
+  def current_ability
+    @current_ability ||= Ability.new(Current.user)
+  end
 
   def set_current_universe
     return unless params[:universe_slug].present?

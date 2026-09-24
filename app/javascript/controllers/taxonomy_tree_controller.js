@@ -3,19 +3,22 @@ import "bootstrap"
 import "tom-select"
 
 export default class extends Controller {
-  static values = { modelParam: String, createUrl: String, modalFields: String, fieldName: String }
+  static values = { modelParam: String, createUrl: String, modalFields: String, fieldName: String, editable: Boolean }
 
   connect() {
+    if (!this.editableValue) return
+
     this.handleOutsideClick = this.handleOutsideClick.bind(this)
     document.addEventListener("pointerdown", this.handleOutsideClick)
     this.refreshSeparators()
   }
 
   disconnect() {
-    document.removeEventListener("pointerdown", this.handleOutsideClick)
+    if (this.handleOutsideClick) document.removeEventListener("pointerdown", this.handleOutsideClick)
   }
 
   add(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     if (this.element.querySelector(".taxonomy-new")) return
     const source = event.currentTarget
@@ -29,6 +32,7 @@ export default class extends Controller {
   }
 
   insertAt(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     if (this.element.querySelector(".taxonomy-new")) return
 
@@ -69,6 +73,7 @@ export default class extends Controller {
   }
 
   async editName(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
     if (this.inlineEditor && this.inlineEditor !== node) await this.saveInlineEditor()
@@ -92,6 +97,7 @@ export default class extends Controller {
   }
 
   async edit(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
     if (this.inlineEditor) await this.saveInlineEditor()
@@ -197,6 +203,7 @@ export default class extends Controller {
   }
 
   async create(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     const form = event.currentTarget
     const response = await this.request(form.dataset.url, "POST", { name: form.name.value, parent_id: form.dataset.parentId })
@@ -215,6 +222,7 @@ export default class extends Controller {
   }
 
   async update(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     const form = event.currentTarget
     const node = form.closest("[data-node-id]")
@@ -228,6 +236,7 @@ export default class extends Controller {
   }
 
   async saveInlineEditor() {
+    if (!this.editableValue) return
     const node = this.inlineEditor
     const form = node?.querySelector("form")
     if (!form) {
@@ -245,6 +254,7 @@ export default class extends Controller {
   }
 
   async remove(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
     if (!window.confirm(`Delete ${node.dataset.name} and its children?`)) return
@@ -335,6 +345,7 @@ export default class extends Controller {
   // Separators sit between every pair of adjacently rendered nodes (regardless of nesting depth)
   // and expose a "+" button to insert a new node at that exact position.
   refreshSeparators() {
+    if (!this.editableValue) return
     this.element.querySelectorAll(".taxonomy-separator").forEach((el) => el.remove())
     const nodes = [...this.element.querySelectorAll(".taxonomy-node")]
     nodes.slice(1).forEach((node) => node.before(this.buildSeparator()))
@@ -354,6 +365,7 @@ export default class extends Controller {
   }
 
   startDrag(event) {
+    if (!this.editableValue) return
     event.stopPropagation()
     this.draggedNode = event.currentTarget
     this.dragOriginalParent = this.draggedNode.parentElement
@@ -367,6 +379,7 @@ export default class extends Controller {
   }
 
   allowDrop(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
     if (!this.draggedNode) return
@@ -417,6 +430,7 @@ export default class extends Controller {
   }
 
   async drop(event) {
+    if (!this.editableValue) return
     event.preventDefault()
     event.stopPropagation()
     if (!this.draggedNode) return
@@ -441,7 +455,7 @@ export default class extends Controller {
   }
 
   endDrag() {
-    if (!this.draggedNode) return
+    if (!this.editableValue || !this.draggedNode) return
     if (!this.dropHandled) {
       // Drag ended without a valid drop (e.g. released outside the tree) so put the node back.
       if (this.dragOriginalNext) this.dragOriginalNext.before(this.draggedNode)

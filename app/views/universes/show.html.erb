@@ -5,22 +5,25 @@
   eyebrow: "Universe",
   description: "The shared world and story collection for this workspace." do %>
   <%= link_to "All stories", universe_stories_path, class: "btn btn-primary" %>
-  <div class="dropdown">
-    <button class="btn btn-outline-secondary dropdown-toggle" type="button"
-      data-bs-toggle="dropdown" aria-expanded="false" aria-label="Universe actions">
-      <i class="bi bi-three-dots" aria-hidden="true"></i>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-      <li><%= link_to "Edit universe", edit_universe_path(@universe), class: "dropdown-item" %></li>
-      <li><hr class="dropdown-divider"></li>
-      <li>
-        <%= button_to "Delete universe", universe_path(@universe),
-          method: :delete,
-          class: "dropdown-item text-danger",
-          data: { turbo_confirm: "Delete #{@universe.name} and all of its content?" } %>
-      </li>
-    </ul>
-  </div>
+  <% if can_administer_universe? %>
+    <%= link_to "Members", universe_memberships_path, class: "btn btn-outline-secondary" %>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" type="button"
+        data-bs-toggle="dropdown" aria-expanded="false" aria-label="Universe actions">
+        <i class="bi bi-three-dots" aria-hidden="true"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><%= link_to "Edit universe", edit_universe_path(@universe), class: "dropdown-item" %></li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <%= button_to "Delete universe", universe_path(@universe),
+            method: :delete,
+            class: "dropdown-item text-danger",
+            data: { turbo_confirm: "Delete #{@universe.name} and all of its content?" } %>
+        </li>
+      </ul>
+    </div>
+  <% end %>
 <% end %>
 
 <div class="row g-3">
@@ -28,6 +31,9 @@
     <div class="surface-card h-100 p-4">
       <div class="page-eyebrow">Story collection</div>
       <h2 class="h4"><%= pluralize(nav_stories.size, "story") %></h2>
+      <p class="small text-body-secondary">
+        <%= @universe.private? ? "Private" : "Public" %> · <%= universe_access_label(@universe) %>
+      </p>
       <p class="text-body-secondary">Each story has its own sections and section tags while sharing this universe's world.</p>
       <%= link_to "Browse stories", universe_stories_path, class: "btn btn-outline-primary" %>
     </div>

@@ -12,13 +12,22 @@
 <% count = local_assigns[:count] %>
 <% count_label = local_assigns[:count_label] || model_param.humanize.downcase.pluralize %>
 <% new_label = local_assigns[:new_label] || "Add #{model_param.humanize.downcase}" %>
+<% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(nodes.first) || Current.universe) } %>
+<% empty_description = if editable
+  local_assigns[:empty_description] || "Create the first one to start building this hierarchy."
+else
+  "There are no #{model_param.humanize.downcase.pluralize} to show yet."
+end %>
 
 <div class="taxonomy-tree"
-  data-controller="taxonomy-tree"
+  <% if editable %>data-controller="taxonomy-tree"<% end %>
   data-taxonomy-tree-model-param-value="<%= model_param %>"
-  data-taxonomy-tree-create-url-value="<%= create_url %>"
-  data-taxonomy-tree-modal-fields-value="<%= modal_fields.to_json %>"
-  <% if taxonomy_field %>data-taxonomy-tree-field-name-value="<%= taxonomy_field %>"<% end %>>
+  <% if editable %>
+    data-taxonomy-tree-create-url-value="<%= create_url %>"
+    data-taxonomy-tree-modal-fields-value="<%= modal_fields.to_json %>"
+  <% end %>
+  data-taxonomy-tree-editable-value="<%= editable %>"
+  <% if editable && taxonomy_field %>data-taxonomy-tree-field-name-value="<%= taxonomy_field %>"<% end %>>
 
   <%= render "shared/page_header",
     title: title,
@@ -30,7 +39,7 @@
       <%= link_to local_assigns.fetch(:secondary_label), local_assigns.fetch(:secondary_url),
         class: "btn btn-outline-secondary" %>
     <% end %>
-    <% if new_url %>
+    <% if editable && new_url %>
       <%= button_tag type: "button",
         class: "btn btn-primary",
         data: { action: "taxonomy-tree#add" } do %>
@@ -47,21 +56,23 @@
   <% end %>
 
   <div class="taxonomy-surface">
-    <p class="taxonomy-hint">
-      Drag rows to reorder them. Drop near the top or bottom of a row to nest it as a child.
-    </p>
+    <% if editable %>
+      <p class="taxonomy-hint">
+        Drag rows to reorder them. Drop near the top or bottom of a row to nest it as a child.
+      </p>
+    <% end %>
 
     <% if nodes.empty? %>
       <div class="p-3 p-md-4" data-taxonomy-tree-empty>
         <%= render "shared/empty_state",
           title: "No #{model_param.humanize.downcase.pluralize} yet",
-          description: local_assigns[:empty_description] || "Create the first one to start building this hierarchy.",
+          description: empty_description,
           icon: "diagram-3" %>
       </div>
     <% end %>
 
     <ul class="taxonomy-list list-unstyled mb-0"
-      data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"
+      <% if editable %>data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"<% end %>
       data-drop-parent-id="">
       <% nodes.each do |node| %>
         <%= render "shared/taxonomy_node",
@@ -74,7 +85,8 @@
           create_url: create_url,
           model_param: model_param,
           modal_fields: modal_fields,
-          taxonomy_field: taxonomy_field %>
+          taxonomy_field: taxonomy_field,
+          editable: editable %>
       <% end %>
     </ul>
   </div>

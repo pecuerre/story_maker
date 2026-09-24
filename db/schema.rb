@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_130018) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -279,6 +279,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_130018) do
     t.index ["universe_id"], name: "index_stories_on_universe_id"
   end
 
+  create_table "universe_memberships", force: :cascade do |t|
+    t.integer "access_level", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.integer "universe_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["universe_id", "user_id"], name: "index_universe_memberships_on_universe_id_and_user_id", unique: true
+    t.index ["universe_id"], name: "index_universe_memberships_on_universe_id"
+    t.index ["user_id"], name: "index_universe_memberships_on_user_id"
+  end
+
   create_table "universes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
@@ -336,5 +347,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_130018) do
   add_foreign_key "sections", "stories"
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "universes"
+  add_foreign_key "universe_memberships", "universes"
+  add_foreign_key "universe_memberships", "users"
   add_foreign_key "universes", "users", column: "owner_id"
 end

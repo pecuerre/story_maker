@@ -40,15 +40,25 @@
         </aside>
 
         <main class="workspace-main" id="main-content">
-          <div class="mobile-workspace-bar d-lg-none">
-            <button class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2"
-              type="button"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#workspace-navigation"
-              aria-controls="workspace-navigation">
-              <i class="bi bi-list" aria-hidden="true"></i>
-              Menu
-            </button>
+          <div class="mobile-workspace-bar d-xl-none">
+            <div class="mobile-workspace-actions">
+              <button class="btn btn-outline-primary btn-sm d-lg-none d-inline-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#workspace-navigation"
+                aria-controls="workspace-navigation">
+                <i class="bi bi-list" aria-hidden="true"></i>
+                Menu
+              </button>
+              <button class="btn btn-outline-secondary btn-sm d-xl-none d-inline-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#workspace-tools-navigation"
+                aria-controls="workspace-tools-navigation">
+                <i class="bi bi-stars" aria-hidden="true"></i>
+                Tools
+              </button>
+            </div>
             <span class="mobile-workspace-context">
               <%= Current.universe.name %><% if Current.story %> · <%= Current.story.name %><% end %>
             </span>
@@ -59,6 +69,19 @@
             <%= yield %>
           </div>
         </main>
+
+        <aside class="right-sidebar offcanvas-xl offcanvas-end"
+          tabindex="-1"
+          id="workspace-tools-navigation"
+          aria-labelledby="workspace-tools-navigation-title">
+          <div class="offcanvas-header border-bottom">
+            <h2 class="offcanvas-title h5 mb-0" id="workspace-tools-navigation-title">Universe tools</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close tools"></button>
+          </div>
+          <div class="offcanvas-body p-0">
+            <%= render "layouts/right_sidebar" %>
+          </div>
+        </aside>
       </div>
     <% else %>
       <main class="workspace-main workspace-main--full" id="main-content">

@@ -16,6 +16,10 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Relations"
     assert_includes response.body, @character_one.name
     assert_includes response.body, @relation_tag.name
+    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
+      universe_relations_path(universe_slug: @universe.slug)
+    assert_select "nav.content-tabs a[href=?]",
+      universe_characters_path(universe_slug: @universe.slug), text: "Characters"
   end
 
   test "should create relation and redirect" do

@@ -22,6 +22,10 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
         universe_character_path(universe_slug: @universe.slug, id: @character)
     end
     assert_select ".page-actions button", text: "Add character"
+    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
+      universe_characters_path(universe_slug: @universe.slug)
+    assert_select "nav.content-tabs a[href=?]",
+      universe_relations_path(universe_slug: @universe.slug), text: "Relations"
   end
 
   test "should create character as json" do

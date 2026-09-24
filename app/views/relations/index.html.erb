@@ -5,7 +5,7 @@
   data-modal-form-create-title-value="New relation">
   <%= render "shared/page_header",
     title: "Relations",
-    eyebrow: "Universe Bible",
+    eyebrow: "Characters",
     description: "Connect characters and record how their relationships change over time.",
     count: @relations.size,
     count_label: "relation" do %>
@@ -19,6 +19,13 @@
       <span>Add relation</span>
     </button>
   <% end %>
+
+  <%= render "shared/content_tabs",
+    aria_label: "Character workspace",
+    tabs: [
+      { label: "Characters", path: universe_characters_path, controller: :characters },
+      { label: "Relations", path: universe_relations_path, controller: :relations }
+    ] %>
 
   <% if @relations.any? %>
     <div class="content-surface entity-list">

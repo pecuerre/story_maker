@@ -30,11 +30,13 @@ FUTURE WORK
 
 ### Contextual inspector / right-side utility panel
 
-Add a real, contextual inspector instead of restoring the old permanent placeholder sidebar. It
-should show information relevant to the current page: selected entity details, related records,
-taxonomy usage, filters, or quick actions. It should become a Bootstrap `offcanvas-end` on smaller
-screens and should be hidden when there is nothing useful to show. Candidate data includes
-selected-character relations/ownerships, relation-tag usage counts, and story outline progress.
+The right utility sidebar now reserves a stable home for future collaboration, analytics, and AI
+tools. Replace its temporary `aria-disabled` links with a real contextual inspector as the
+underlying product areas become concrete. The inspector should show information relevant to the
+current page: selected entity details, related records, taxonomy usage, filters, or quick actions.
+It remains a Bootstrap `offcanvas-end` below `xl` and can be hidden when there is nothing useful
+to show. Candidate data includes selected-character relations/ownerships, relation-tag usage
+counts, and story outline progress.
 
 ### Search, filtering, and sorting for large lists
 
@@ -75,15 +77,17 @@ replacement for scoped list filters.
 
 ### Story-planning and world-building tools
 
-The old sidebar showed placeholder ideas such as Plot, Scenes, Tropes, Routes, Map, Distances,
-Meetings, and Dialogs. Revisit them only with a concrete domain decision: define what each record
-means, which scope owns it, how it appears in the current three page patterns, and whether it is
-worth adding to the data model. Do not restore the old `#` links as visual placeholders.
+The sidebar now reserves a Scenes entry in the Story workspace. Revisit it and other ideas such
+as Plot, Tropes, Routes, Map, Distances, Meetings, and Dialogs only with a concrete domain
+decision: define what each record means, which scope owns it, how it appears in the current
+page patterns, and whether it is worth adding to the data model. Replace the reserved link when
+the feature has a real destination.
 
 ### Collaboration and universe analysis
 
-The old right sidebar also listed Tracking, Analyzer, Collaboration, Graphs, Analytics, and Drafts.
-These remain future product areas. Before adding navigation, specify the underlying records and
-permissions: inconsistency detection, incomplete/undefined records, collaborators, submissions,
-changes/forks, graphs, analytics, and drafts. A feature should appear in navigation only when it
-has a useful destination and clear empty/loading/error states.
+The right sidebar now reserves temporary links for Tracking, Analyzer, Collaboration, Graphs,
+Analytics, and AI tools. These remain future product areas. Before replacing the placeholders
+with navigation, specify the underlying records and permissions: inconsistency detection,
+incomplete/undefined records, collaborators, submissions, changes/forks, graphs, analytics, and
+drafts. A feature should appear as a live navigation item when it has a useful destination and
+clear empty/loading/error states.

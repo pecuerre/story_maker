@@ -20,6 +20,13 @@
     </button>
   <% end %>
 
+  <%= render "shared/content_tabs",
+    aria_label: "Item workspace",
+    tabs: [
+      { label: "Items", path: universe_items_path, controller: :items },
+      { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships }
+    ] %>
+
   <% if @items.any? %>
     <div class="content-surface entity-list">
       <div class="list-group list-group-flush">

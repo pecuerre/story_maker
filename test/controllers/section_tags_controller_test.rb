@@ -21,7 +21,8 @@ class SectionTagsControllerTest < ActionDispatch::IntegrationTest
     get section_tags_url_for
     assert_response :success
     assert_select "h1", text: "Section tags"
-    assert_select "a.sidebar-link.active[href=?]", universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story)
+    assert_select "aside.workspace-sidebar #tag-navigation-menu a.dropdown-item.active[href=?]",
+      universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story)
     assert_select ".taxonomy-node", 2
   end
 

@@ -146,8 +146,8 @@ Dependabot config: `.github/dependabot.yml`.
 5. Views — pick one of the three patterns; for modal editors add `*_fields_json` /
    `*_tag_taxonomy_fields` to `app/helpers/modal_fields.rb`.
 6. Sidebar link in `app/views/layouts/_left_sidebar.html.erb` using the shared
-   `shared/_sidebar_link` pattern; add taxonomy/configuration links to the separate Configuration
-   section when the model needs them.
+   `shared/_sidebar_link` pattern; add taxonomy/configuration entries to the Configuration
+   section (grouped under its **Tags** dropdown when appropriate).
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
 8. Demo data: YAML entry handled by the loader (add the model to `models_in_order` in
    `db/data/<name>/<name>.rb`) or Ruby seed.

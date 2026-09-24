@@ -94,6 +94,8 @@ The three functional editing patterns are:
 
 **2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
+- Characters/Relations and Items/Ownerships use `shared/_content_tabs`: URL-backed Bootstrap
+  `nav-tabs` that preserve each canonical page while keeping related records discoverable.
 - Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`.
 
 **3. Plain full-page forms** (universes, stories):
@@ -118,6 +120,9 @@ The three functional editing patterns are:
   `icon_text_count`, `nav_universes`, `nav_stories` (top bar dropdowns), `entity_tag_badge`
   (renders a record's tags as colored badges). Counts are right-aligned pills, not parenthesized
   text; current links carry both `.active` and `aria-current="page"`.
+- `app/views/shared/_content_tabs.html.erb` renders related universe pages as URL-backed
+  Bootstrap navigation; it does not use `data-bs-toggle="tab"` because each tab is a separate
+  request and canonical URL.
 - `app/helpers/timeline_helper.rb` — popover title/content for timeline events.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
@@ -137,22 +142,30 @@ Left to right:
   current-story link.
 - **Account** — signed-in email and logout action, or **Log in** for guests.
 
-Nonfunctional Dashboard, analyzer, collaboration, and tool links are not rendered. A future
-contextual inspector belongs offcanvas rather than in a permanent third column.
+Nonfunctional dashboard links do not appear in the navbar. The right utility sidebar is the
+intentional home for temporary collaboration, analytics, and AI placeholders; those entries are
+`aria-disabled` and should be replaced with real destinations as the product areas are defined.
 
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
 The workspace sidebar renders only when `Current.universe` is present. It is one continuous
 navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas below `lg`:
 - **Story workspace**: Story overview + Sections when a story is selected; otherwise All stories
-  plus a prompt to select one. New story is always available.
-- **Universe Bible**: People (Characters, Relations), Places (Locations), Time (Events, Timeline),
-  and Objects (Items, Ownerships). These are the records themselves; taxonomy links do not appear
-  beneath them.
-- **Configuration**: a separate organization/settings section. It contains Story configuration
-  (Section tags when a story is selected) and Universe configuration (Character tags, Location tags,
-  Item tags, Event tags, Relation tags, Ownership tags). Future configuration tools belong here.
+  plus a prompt to select one. **Scenes** is a reserved placeholder link. New story is available
+  from the navbar's Story dropdown, not from the sidebar.
+- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Relations
+  live in the Characters workspace tabs, and Ownerships live in the Items workspace tabs.
+- **Configuration**: a separate organization/settings section with one **Tags** dropdown. It
+  contains the six universe taxonomies and, when a story is selected, Section tags.
 - Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
-  background and `aria-current="page"`. There are no placeholder `#` links.
+  background and `aria-current="page"`. The reserved Scenes and right-sidebar entries are the
+  intentional `#` placeholders for future functionality.
+
+### Navigation (Right sidebar) — `app/views/layouts/_right_sidebar.html.erb`
+The right utility sidebar renders only when `Current.universe` is present. It is a permanent
+14rem column at `xl` and above, and a Bootstrap `offcanvas-end` below `xl`. It currently groups
+future **Collaboration**, **Analytics**, and **AI** links; no model or route exists for these
+entries yet. On smaller screens, the **Tools** button opens the panel from the mobile workspace
+bar.
 
 ## Event Model (implemented)
 

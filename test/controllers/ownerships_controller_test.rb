@@ -16,6 +16,10 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Ownerships"
     assert_includes response.body, @item.name
     assert_includes response.body, @ownership_tag.name
+    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
+      universe_ownerships_path(universe_slug: @universe.slug)
+    assert_select "nav.content-tabs a[href=?]",
+      universe_items_path(universe_slug: @universe.slug), text: "Items"
   end
 
   test "should create ownership and redirect" do

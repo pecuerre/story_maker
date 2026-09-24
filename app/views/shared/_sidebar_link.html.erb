@@ -1,8 +1,13 @@
 <% controllers = local_assigns.fetch(:controllers, []) %>
+<% active_class = active_if(*controllers) %>
+<% classes = [ "sidebar-link", active_class&.strip ].compact %>
+<% classes << "sidebar-placeholder-link" if local_assigns[:placeholder] %>
+<% aria = aria_current_for(*controllers) %>
+<% aria = aria.merge(disabled: true) if local_assigns[:placeholder] %>
+<% link_options = { class: classes.join(" "), aria: aria } %>
+<% link_options[:data] = { placeholder_link: true } if local_assigns[:placeholder] %>
 
 <li>
   <%= link_to icon_text_count(local_assigns.fetch(:icon), local_assigns.fetch(:label), local_assigns[:count]),
-    local_assigns.fetch(:path),
-    class: "sidebar-link#{active_if(*controllers)}",
-    aria: aria_current_for(*controllers) %>
+    local_assigns.fetch(:path), **link_options %>
 </li>

@@ -43,7 +43,7 @@ class RecordDetailsTest < ApplicationSystemTestCase
     end
   end
 
-  test "the sidebar groups the universe, the story, and the tools" do
+  test "the left sidebar groups the universe and the story, and Configuration is on the right" do
     universe = universes(:universe_one)
     story = stories(:story_one)
 
@@ -51,18 +51,34 @@ class RecordDetailsTest < ApplicationSystemTestCase
     visit universe_story_path(universe_slug: universe.slug, id: story)
 
     within "aside.workspace-sidebar" do
-      # The two context blocks carry the name and one important fact each.
+      # Each context block states its scope and names the current record in it.
+      # The scope labels are uppercase in the rendered text, like every eyebrow.
+      assert_selector ".sidebar-context--universe .sidebar-eyebrow", text: "CURRENT UNIVERSE"
       assert_selector ".sidebar-context--universe .sidebar-universe-name", text: universe.name
+      assert_selector ".sidebar-context--story .sidebar-eyebrow", text: "CURRENT STORY"
       assert_selector ".sidebar-context--story .sidebar-story-name", text: story.name
-      assert_selector ".sidebar-context--story", text: "sections"
-      assert_selector ".sidebar-context--story", text: "scenes"
 
       # Universe Bible comes first, then the story context, then the story
-      # workspace, and Configuration last.
+      # workspace. Configuration and Tags are not in this column.
       # The titles are uppercase in the rendered text, like every section header.
-      assert_equal [ "UNIVERSE BIBLE", "STORY WORKSPACE", "CONFIGURATION" ],
+      assert_equal [ "UNIVERSE BIBLE", "STORY WORKSPACE" ],
         all(".workspace-navigation .sidebar-section-title").map { |title| title.text.strip }
       assert_selector ".workspace-navigation .sidebar-context--story", count: 1
+      assert_no_selector ".workspace-navigation .sidebar-section--tools"
+      assert_no_selector "a", text: "Tags"
+    end
+
+    # The right utility sidebar owns the tools scope: a green context block
+    # followed by Configuration with the shared taxonomy entry and Members.
+    within "aside.right-sidebar" do
+      assert_selector ".sidebar-context--tools .sidebar-eyebrow", text: "UNIVERSE TOOLS"
+      assert_equal [ "CONFIGURATION", "COLLABORATION", "ANALYTICS", "AI" ],
+        all(".sidebar-section-title").map { |title| title.text.strip }
+      within "section[aria-labelledby='configuration-title']" do
+        assert_selector "a.sidebar-link[href='#{universe_tags_path(universe_slug: universe.slug)}']", text: "Tags"
+        assert_selector "a.sidebar-link[href='#{universe_memberships_path(universe_slug: universe.slug)}']",
+          text: "Members"
+      end
     end
   end
 

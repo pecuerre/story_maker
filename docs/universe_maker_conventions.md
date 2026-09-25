@@ -356,36 +356,42 @@ intentional home for future richer collaboration, analytics, and AI placeholders
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
 The workspace sidebar renders only when `Current.universe` is present. It is one continuous
 navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas below `lg`. It is
-ordered as three scoped blocks — universe, story, tools — and each block is a context header plus
-the section it introduces, so the reader always knows which scope a link belongs to:
-- **Current universe** context: universe name, visibility plus access label, and the story count
-  (from the navbar's memoized story list, so it costs no query).
+ordered as two scoped blocks — universe, story — and each block is a context header plus the
+section it introduces, so the reader always knows which scope a link belongs to:
+- **Current universe** context: the universe name. The navbar already states the universe's
+  visibility and access level, and the universe page lists the stories, so the context block stays a
+  statement of scope.
 - **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Characters
   and Items open their related record tabs (Relations and Ownerships respectively); Locations,
   Events, and Sections remain single-record workspaces.
-- **Current story** context: the story name, its cached section/scene counts, and a short
-  description — or an explicit **None selected** state with a prompt when no story is current.
+- **Current story** context: the story name — or an explicit **None selected** state with a prompt
+  when no story is current. The section/scene counts and the description stay out of this block and
+  live on the story's own pages.
 - **Story workspace**: Story overview + Sections + Scenes when a story is selected; otherwise All
   stories plus a prompt to select one. New story is available from the navbar's Story dropdown, not
   from the sidebar. **Scenes** is a real story-scoped link with its own cached count once a story is
   selected, and an `aria-disabled` `#` placeholder while no story is current — it never falls back
   to the universe's first story.
-- **Configuration**: a separate organization/settings section. **Tags** opens the shared taxonomy
-  workspace, with **Universe Tags** selected by default and **Story Tags** for story-scoped
-  taxonomies. Universe admins see **Members** in the right-side **Settings** section.
+- Configuration is **not** in this column. **Tags** and the admin **Members** link live in the right
+  utility sidebar, so this column stays about universe and story content only.
 - Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
   background and `aria-current="page"`. Placeholder entries are flat gray with no hover emphasis, and
   the right-sidebar entries are the intentional `#` placeholders for future functionality.
-- Each block has one hue: universe blue, story muted crimson, tools green. The crimson is
-  deliberately not the danger red reserved for destructive actions.
+- Each block has one hue: universe blue, story muted crimson, and the right utility sidebar's tools
+  green. The crimson is deliberately not the danger red reserved for destructive actions.
 
 ### Navigation (Right sidebar) — `app/views/layouts/_right_sidebar.html.erb`
 The right utility sidebar renders only when `Current.universe` is present. It is a permanent
-14rem column at `xl` and above, and a Bootstrap `offcanvas-end` below `xl`. Its **Settings** section
-contains the universe **Members** access manager for admins. It also keeps the future
-**Collaboration**, **Analytics**, and **AI** placeholder groups; no model or route exists for those
-entries yet. On smaller screens, the **Tools** button opens the panel from the mobile workspace
-bar.
+14rem column at `xl` and above, and a Bootstrap `offcanvas-end` below `xl`. It is one continuous
+tools scope, so it opens with a green **Universe tools** context block and then the sections that
+follow it:
+- **Configuration**: **Tags**, which opens the shared taxonomy workspace with **Universe Tags**
+  selected by default and **Story Tags** for story-scoped taxonomies, plus the universe **Members**
+  access manager, which only admins see. The list itself is unconditional, so a guest or read-only
+  member still gets **Tags** without an empty Configuration header.
+- **Collaboration**, **Analytics**, and **AI** placeholder groups; no model or route exists for
+  those entries yet.
+- On smaller screens, the **Tools** button opens the panel from the mobile workspace bar.
 
 ## Event Model (implemented)
 

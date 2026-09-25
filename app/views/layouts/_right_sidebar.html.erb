@@ -1,23 +1,35 @@
-<nav class="right-navigation" aria-label="Universe tools">
-  <div class="right-sidebar-intro">
+<% tag_controllers = %i[
+  tags character_tags relation_tags location_tags event_tags item_tags ownership_tags section_tags scene_tags
+] %>
+
+<nav class="right-navigation" aria-label="Universe configuration and tools">
+  <div class="sidebar-context sidebar-context--tools right-sidebar-intro">
     <div class="sidebar-eyebrow">Universe tools</div>
     <p>Additional collaboration, analytics, and AI tools will live here.</p>
   </div>
 
-  <section class="sidebar-section" aria-labelledby="settings-tools-title">
-    <h3 class="sidebar-section-title" id="settings-tools-title">Settings</h3>
-    <% if can_administer_universe? %>
-      <ul class="sidebar-list">
+  <section class="sidebar-section sidebar-section--tools" aria-labelledby="configuration-title">
+    <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
+    <ul class="sidebar-list">
+      <%= render "shared/sidebar_link",
+        icon: "tags",
+        label: "Tags",
+        path: universe_tags_path,
+        controllers: tag_controllers %>
+
+      <%# Members is the admin-only half of Configuration: a guest or read-only
+          member still gets Tags, so the list itself is never conditional. %>
+      <% if can_administer_universe? %>
         <%= render "shared/sidebar_link",
           icon: "people",
           label: "Members",
           path: universe_memberships_path,
           controllers: %i[ memberships ] %>
-      </ul>
-    <% end %>
+      <% end %>
+    </ul>
   </section>
 
-  <section class="sidebar-section" aria-labelledby="collaboration-tools-title">
+  <section class="sidebar-section sidebar-section--tools" aria-labelledby="collaboration-tools-title">
     <h3 class="sidebar-section-title" id="collaboration-tools-title">Collaboration</h3>
     <ul class="sidebar-list">
       <li>
@@ -47,7 +59,7 @@
     </ul>
   </section>
 
-  <section class="sidebar-section" aria-labelledby="analytics-tools-title">
+  <section class="sidebar-section sidebar-section--tools" aria-labelledby="analytics-tools-title">
     <h3 class="sidebar-section-title" id="analytics-tools-title">Analytics</h3>
     <ul class="sidebar-list">
       <li>
@@ -65,7 +77,7 @@
     </ul>
   </section>
 
-  <section class="sidebar-section" aria-labelledby="ai-tools-title">
+  <section class="sidebar-section sidebar-section--tools" aria-labelledby="ai-tools-title">
     <h3 class="sidebar-section-title" id="ai-tools-title">AI</h3>
     <ul class="sidebar-list">
       <li>

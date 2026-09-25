@@ -106,6 +106,15 @@ Labels used below:
   order, strict YAML/file/reference/scope validation, normalized sibling positions, explicit
   `db:demo:check/load/reset` tasks, and common YAML data for Dark and LOTR.
 
+- **[changed]** Moved **Configuration** out of the left workspace sidebar and into the right
+  utility sidebar, which was renamed from **Settings** to match. **Tags** now opens the shared
+  taxonomy workspace from the right column, beside the admin-only **Members** access manager, and
+  the left column is left with the two universe/story scope blocks only. The right sidebar's
+  **Universe tools** block became a real `sidebar-context--tools` scope header wearing the muted
+  green `--um-scope-tools` pair, so all three scope blocks now read the same way; the section-header
+  hue moved from a `.right-sidebar` container selector to the explicit `sidebar-section--tools`
+  modifier already used for the other scopes. **Tags** is rendered unconditionally, so a guest or
+  read-only member keeps the taxonomy entry while **Members** stays admin-only.
 - **[changed]** Completed backlog item 21, the taxonomy editor's visual pass. A taxonomy row now
   carries only the name, the **Details** link, and one overflow menu holding Add child, Insert
   before/after, Move up, Move down, Edit, and Delete. Move up/Move down became disabled menu items
@@ -203,6 +212,14 @@ Labels used below:
   confirmation guards to destructive development database tasks; CI now validates checked-in data
   manifests instead of replanting demo records.
 
+- **[docs]** Updated the architecture, conventions, visual design, and development docs for the
+  sidebar move: the left workspace sidebar is two universe/story scope blocks, and the right
+  utility sidebar is the tools scope with a green **Universe tools** context block followed by
+  **Configuration** (Tags plus the admin Members manager) and the reserved Collaboration,
+  Analytics, and AI groups. The two left context blocks now state only their scope and the current
+  name, so the docs no longer promise a visibility/access/story-count line under the universe name
+  or section/scene counts and a description under the story name; those facts live on the navbar
+  and the story's own pages.
 - **[docs]** Separated consecutive date sections with a blank line, so every `##` heading is
   surrounded by one. The regrouped layout had left a date's last entry flush against the next
   heading; the blank-line rule is now "between label groups and between dates, never inside a
@@ -242,6 +259,13 @@ Labels used below:
   explicitly HTML, and flat ordering must extend the existing positioned-controller concern rather
   than bypass it.
 
+- **[chore]** Added a focused browser test for the sidebar scope hues: each context block must
+  share the computed background of the section it introduces, the three scopes must stay
+  visually distinct, and the right utility sidebar's context must be the greenish one. The
+  navigation and workspace-tab integration tests now look for **Tags** in the right sidebar,
+  including a guest case that keeps **Tags** while **Members** stays admin-only, and the record
+  details browser test asserts each left context block by its scope label and current name instead
+  of by the removed counts and description.
 - **[chore]** Added model, request, routing-independent, and focused browser coverage for the new
   details pages, the Details links and their counts, `TaggedRecordCounts`, `tagged_records`, and
   the sidebar structure; updated the architecture, conventions, visual design, data model,

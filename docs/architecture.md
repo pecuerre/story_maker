@@ -183,8 +183,9 @@ question for a whole taxonomy in one grouped query, which is what the tree row's
 
 The UI is a Bootstrap 5.3 application shell with a fixed dark **navbar**, responsive left and
 right workspace navigation columns, and one flexible **main content** area. The left column is
-the working navigation; the right column contains **Settings** plus reserved space for future
-universe tools such as richer collaboration, analytics, and AI. The right column becomes a
+the working navigation; the right column contains **Configuration** (Tags plus the Members access
+manager) plus reserved space for future universe tools such as richer collaboration, analytics, and
+AI. The right column becomes a
 Bootstrap `offcanvas-end` below `xl`, and the left column becomes an `offcanvas-start` below `lg`.
 On narrower screens, the mobile workspace bar exposes **Tools** below `xl` and **Menu** below `lg`.
 
@@ -195,18 +196,19 @@ Everything follows a two-step scope selection:
    creating a universe from the **Universes** dropdown.
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
    and as a left offcanvas below the `lg` breakpoint. At `xl` and above, a 14rem right utility
-   sidebar is also visible. The left sidebar is one continuous navigation surface read as three
+   sidebar is also visible. The left sidebar is one continuous navigation surface read as two
    scoped blocks, each with its own hue:
 
-   1. **Current universe** context (name, visibility/access, story count);
+   1. **Current universe** context (universe name);
    2. **Universe Bible** (Characters, Locations, Events, Timeline, Items);
-   3. **Current story** context (name, section/scene counts, description) or an explicit
+   3. **Current story** context (story name) or an explicit
       "None selected" state;
-   4. **Story workspace** (Story overview, Sections, Scenes) or All stories plus a prompt;
-   5. **Configuration** (**Tags**).
+   4. **Story workspace** (Story overview, Sections, Scenes) or All stories plus a prompt.
 
-   The right utility sidebar has a **Settings** section containing **Members** for universe admins.
-   The navbar adds explicit **Universe: …** and **Story: …** context/switchers.
+   The right utility sidebar is the tools scope and the third hue: a green **Universe tools**
+   context block followed by a **Configuration** section with **Tags** for everyone and
+   **Members** for universe admins, then the future **Collaboration**, **Analytics**, and **AI**
+   placeholder groups. The navbar adds explicit **Universe: …** and **Story: …** context/switchers.
 3. **Story selected** (`Current.story`): Story workspace gains the story overview plus **Sections**
    and **Scenes** workspace tabs. The story is still remembered per universe; no first-story
    fallback exists. The **Scenes** sidebar entry is a real story-scoped link only while a story is
@@ -224,8 +226,9 @@ left sidebar, and only shows contribution/admin actions when the current user ha
 level. Universe-scoped content is shared by every story; Sections and Section tags remain
 story-scoped. Related record workspaces now keep only the records together in URL-backed tabs:
 Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
-lives under **Configuration → Tags**, with **Universe Tags** (Character, Relation, Location, Event,
-Item, and Ownership tags) and **Story Tags** (Section and Scene tags) selectors.
+lives under the right sidebar's **Configuration → Tags**, with **Universe Tags** (Character,
+Relation, Location, Event, Item, and Ownership tags) and **Story Tags** (Section and Scene tags)
+selectors.
 
 All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`,
 `empty_state`, and `record_details`/`detail_section` patterns. Visual tokens and

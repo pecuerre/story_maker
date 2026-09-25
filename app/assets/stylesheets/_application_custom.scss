@@ -7,10 +7,10 @@
   --um-primary-strong: #263da8;
   --um-sidebar-bg: #ffffff;
   --um-hover-bg: #f3f5f9;
-  // Sidebar scopes: the universe context/Bible, the current story/workspace,
-  // and Configuration plus the right utility sidebar each get one hue. The story
-  // hue is a muted crimson, deliberately not the danger red reserved for
-  // destructive actions, and the tools hue is a muted green.
+  // Sidebar scopes: the universe context/Bible, the current story/workspace, and the
+  // right utility sidebar (its context block, Configuration, and the future tool
+  // groups) each get one hue. The story hue is a muted crimson, deliberately not the
+  // danger red reserved for destructive actions, and the tools hue is a muted green.
   --um-scope-universe: #263da8;
   --um-scope-universe-soft: #edf0ff;
   --um-scope-story: #8c2f39;
@@ -98,11 +98,8 @@ body {
   flex-direction: column;
 }
 
-.right-sidebar-intro {
-  padding: 1.25rem 1rem 1rem;
-  border-bottom: 1px solid var(--bs-border-color);
-}
-
+// The intro is the right column's context block, so it wears the shared context
+// padding and border; only its own copy needs styling here.
 .right-sidebar-intro p {
   margin: 0;
   color: var(--bs-body-secondary-color);
@@ -186,10 +183,14 @@ body {
   font-weight: 700;
 }
 
-// The two sidebar context blocks are scope headers, so each one wears the same
-// hue as the section that follows it: universe context + Universe Bible,
-// story context + Story workspace, Configuration + the right utility sidebar.
+// The three sidebar context blocks are scope headers, so each one wears the same
+// hue as the section that follows it: universe context + Universe Bible, story
+// context + Story workspace, and the right utility sidebar's tools context +
+// Configuration/Collaboration/Analytics/AI.
 .sidebar-context--universe {
+  background: var(--um-scope-universe-soft);
+  border-bottom: 1px solid var(--bs-border-color);
+
   .sidebar-eyebrow {
     color: var(--um-scope-universe);
   }
@@ -206,6 +207,15 @@ body {
 
 .sidebar-context--story .sidebar-story-name {
   color: var(--um-scope-story);
+}
+
+.sidebar-context--tools {
+  background: var(--um-scope-tools-soft);
+  border-bottom: 1px solid var(--bs-border-color);
+
+  .sidebar-eyebrow {
+    color: var(--um-scope-tools);
+  }
 }
 
 .sidebar-context-info {
@@ -238,7 +248,8 @@ body {
 }
 
 // The default section-title hue is the universe scope, so the mapping stays
-// readable at a glance: universe (default blue), story, tools.
+// readable at a glance: universe (default blue), story, tools. The tools hue
+// covers the whole right utility sidebar, which owns Configuration.
 .sidebar-section--universe .sidebar-section-title {
   border-inline-start-color: var(--um-scope-universe);
   background: var(--um-scope-universe-soft);
@@ -252,12 +263,6 @@ body {
 }
 
 .sidebar-section--tools .sidebar-section-title {
-  border-inline-start-color: var(--um-scope-tools);
-  background: var(--um-scope-tools-soft);
-  color: var(--um-scope-tools);
-}
-
-.right-sidebar .sidebar-section-title {
   border-inline-start-color: var(--um-scope-tools);
   background: var(--um-scope-tools-soft);
   color: var(--um-scope-tools);

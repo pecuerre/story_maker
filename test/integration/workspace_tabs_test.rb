@@ -54,7 +54,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Event tags"
     assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Item tags"
     assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Ownership tags"
-    assert_select "aside.workspace-sidebar a.sidebar-link.active .sidebar-link-label", text: "Tags"
+    assert_select "aside.right-sidebar a.sidebar-link.active .sidebar-link-label", text: "Tags"
 
     get universe_story_url(universe_slug: @universe.slug, id: @story)
     get universe_tags_url(universe_slug: @universe.slug, scope: "story")
@@ -73,7 +73,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "main h1", text: "Tags"
     assert_includes response.body, @story.section_tags.first.name
-    assert_select "aside.workspace-sidebar a.sidebar-link.active .sidebar-link-label", text: "Tags"
+    assert_select "aside.right-sidebar a.sidebar-link.active .sidebar-link-label", text: "Tags"
   end
 
   test "every universe taxonomy selector has a working editor" do

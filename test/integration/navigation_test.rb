@@ -35,7 +35,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
 
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story workspace"
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Universe Bible"
-    assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Configuration"
+    assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Configuration", count: 0
     assert_select "aside.workspace-sidebar a", text: "All stories"
     assert_select "aside.workspace-sidebar a", text: "New story", count: 0
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#'][aria-disabled=true][data-placeholder-link=true]",
@@ -65,22 +65,40 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_ownerships_path(universe_slug: @universe.slug), count: 0
 
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link[href=?]",
-      universe_tags_path(universe_slug: @universe.slug)
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members", count: 0
+    # Configuration and Tags moved to the right utility sidebar, so the left
+    # column keeps no tools section and no taxonomy entry.
+    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title']", count: 0
+    assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
+      universe_tags_path(universe_slug: @universe.slug), count: 0
+    assert_select "aside.workspace-sidebar a", text: "Tags", count: 0
+    assert_select "aside.workspace-sidebar a", text: "Members", count: 0
 
     assert_select "aside.right-sidebar.offcanvas-xl.offcanvas-end", 1
     assert_select "button[data-bs-target='#workspace-tools-navigation']", text: /Tools/
-    assert_select "aside.right-sidebar .sidebar-section-title", text: "Settings"
+    assert_select "aside.right-sidebar .sidebar-section-title", text: "Configuration"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Collaboration"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Analytics"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "AI"
-    assert_select "aside.right-sidebar section[aria-labelledby='settings-tools-title'] a.sidebar-link", text: "Members"
+    assert_select "aside.right-sidebar .sidebar-section-title", text: "Settings", count: 0
+    assert_select "aside.right-sidebar .sidebar-context--tools .sidebar-eyebrow", text: "Universe tools"
+    assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
+    assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link[href=?]",
+      universe_tags_path(universe_slug: @universe.slug)
+    assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
     assert_select "aside.right-sidebar a.sidebar-placeholder-link[href='#']", minimum: 3
   end
 
-  test "a selected story adds story structure while Configuration contains Tags" do
+  test "a guest keeps Tags in the right Configuration section without Members" do
+    sign_out
+    get universe_url(@universe)
+
+    assert_response :success
+    assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
+    assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link",
+      text: "Members", count: 0
+  end
+
+  test "a selected story adds story structure while the right Configuration contains Tags" do
     get universe_story_url(universe_slug: @universe.slug, id: @story)
 
     assert_response :success
@@ -101,9 +119,10 @@ class NavigationTest < ActionDispatch::IntegrationTest
       assert_select ".sidebar-count", text: "3"
     end
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/, count: 0
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
-    assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members", count: 0
-    assert_select "aside.right-sidebar section[aria-labelledby='settings-tools-title'] a.sidebar-link", text: "Members"
+    assert_select "aside.workspace-sidebar a[href=?]",
+      universe_tags_path(universe_slug: @universe.slug), count: 0
+    assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
+    assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0
     assert_select "aside.workspace-sidebar a[href=?]",

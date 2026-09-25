@@ -23,8 +23,9 @@ The sidebar is the one place where color carries structure: the universe, the cu
 configuration/tools area each own one hue, so a reader can tell at a glance which scope a section
 belongs to. Everything else stays in the neutral palette.
 
-The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints. Its **Settings**
-section contains the real Members access manager, while the remaining Collaboration, Analytics,
+The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints. Its
+**Configuration** section contains the real Tags entry and the Members access manager, while the
+remaining Collaboration, Analytics,
 and AI entries are deliberate `aria-disabled` placeholders rendered in the flat disabled gray.
 They should become real destinations as the underlying product areas are defined. Below the `xl`
 breakpoint the panel becomes a Bootstrap `offcanvas-end`, so the main writing surface keeps priority
@@ -58,7 +59,7 @@ color is set in one place:
 |---|---:|---:|---|
 | Universe | `#263da8` | `#edf0ff` | the universe context block and the Universe Bible header |
 | Story | `#8c2f39` | `#fbeaec` | the story context block and the Story workspace header |
-| Tools | `#1f6f4a` | `#e6f4ec` | the Configuration header and every right-sidebar header |
+| Tools | `#1f6f4a` | `#e6f4ec` | the right-sidebar context block and every right-sidebar header |
 | Disabled | `#98a2b3` | — | placeholder navigation and disabled menu items |
 
 The story hue is a muted crimson, deliberately **not** the danger red: scope must never be confused
@@ -142,16 +143,18 @@ shell classes and let the main region grow.
 
 ## Navigation and information architecture
 
-The left navigation is task-oriented and scope-aware. It is one continuous surface read as three
+The left navigation is task-oriented and scope-aware. It is one continuous surface read as two
 scoped blocks, and each block is a **context header** followed by the **section** it introduces, so
 the reader can always tell which scope a link belongs to:
 
-1. **Current universe** context — universe name, visibility plus access label, story count.
+1. **Current universe** context — universe name.
 2. **Universe Bible** — Characters, Locations, Events, Timeline, Items.
-3. **Current story** context — story name, section/scene counts, short description, or an explicit
+3. **Current story** context — story name, or an explicit
    **None selected** state.
 4. **Story workspace** — Story overview, Sections, Scenes (or All stories plus a prompt).
-5. **Configuration** — Tags.
+
+Configuration is not in this column: it belongs to the right utility sidebar, so the left column
+carries universe and story content only.
 
 ### Universe Bible
 
@@ -170,13 +173,13 @@ mutation flow.
 
 ### Configuration
 
-Configuration is a separate sidebar section. **Tags** opens the shared taxonomy workspace:
-**Universe Tags** is selected by default and contains Character, Relation, Location, Event, Item,
-and Ownership tag tabs; **Story Tags** contains separate story-scoped Section tags and Scene tags
-tabs. The right-side
-**Settings** section contains **Members** for universe admins, where the read/write/admin access
-list is managed. New configuration tools should be added as top-level entries here, grouped by
-scope when needed.
+Configuration is the first section of the right utility sidebar. **Tags** opens the shared taxonomy
+workspace: **Universe Tags** is selected by default and contains Character, Relation, Location,
+Event, Item, and Ownership tag tabs; **Story Tags** contains separate story-scoped Section tags and
+Scene tags tabs. The same section holds **Members** for universe admins, where the read/write/admin
+access list is managed, and the entry itself is always rendered so **Tags** stays available to a
+guest or read-only member. New configuration tools should be added as top-level entries here,
+grouped by scope when needed.
 
 Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
 `aria-current="page"`; color is not the only state signal. **Scenes** is a real link with its own
@@ -186,10 +189,13 @@ disabled gray so they never look like something to click.
 
 ### Right utility sidebar
 
-The right sidebar contains a real **Settings** section with the universe **Members** access manager
-for admins. Its other space is reserved for future **Analytics** and **AI** tools. Keeping the
-access manager here leaves Configuration focused on shared taxonomy management while preserving a
-stable home for richer collaboration and analysis features without adding fake routes.
+The right sidebar is the tools scope, so it is one continuous surface: a green **Universe tools**
+context block, then the **Configuration** section with **Tags** and the universe **Members** access
+manager for admins, then **Collaboration**, **Analytics**, and **AI** placeholders. Its green hue is
+the same `--um-scope-tools` pair the section headers use, so the block reads like the two left-hand
+scopes. Keeping Configuration and the access manager here leaves the left column purely about
+universe and story content while preserving a stable home for richer collaboration and analysis
+features without adding fake routes.
 
 ## Shared view patterns
 
@@ -386,7 +392,7 @@ later dependents are added.
 4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout, and
    render `record_details_link` on every row so the record's own page stays one click away.
 5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for related
-   records and `shared/_tag_workspace_navigation` for taxonomy management. Put the Members access
-   manager in the right-side Settings section.
+   records and `shared/_tag_workspace_navigation` for taxonomy management. Put configuration
+   tools and the Members access manager in the right sidebar's **Configuration** section.
 6. Check keyboard focus, mobile width, empty state, and long text.
 7. Update the relevant docs and tests in the same change.

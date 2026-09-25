@@ -269,11 +269,13 @@ up/Move down reorder the sequence and are disabled at the boundaries; the delete
 states the full ADR 0007 consequences; and a guest or read-only member sees the list and details
 with no mutation controls.
 
-The universe page, the sidebar's three scoped blocks, and the record details pages can be checked the
+The universe page, the sidebar's scoped blocks, and the record details pages can be checked the
 same way: the universe page lists the universe's stories with an **Open** action and keeps **All
 stories** in the header; the left sidebar reads current universe → Universe Bible → current story →
-Story workspace → Configuration with one hue per scope; the left column's Universe Bible, Sections,
-and Configuration rows and every `_tag` row carry a **Details** link labelled with the number of
+Story workspace with one hue per scope, and the right utility sidebar reads its green **Universe
+tools** context block → Configuration → Collaboration → Analytics → AI, with **Tags** (and, for an
+admin, **Members**) in Configuration; the left column's Universe Bible, Sections, and every `_tag`
+row carry a **Details** link labelled with the number of
 records that page will list, and following it lands on the record's own read-only page (a tag lists
 the records carrying it, a Section lists the scenes grouped under it). Placeholder navigation in the
 right utility sidebar stays flat gray with no hover emphasis, and a guest or read-only member sees
@@ -430,10 +432,11 @@ Dependabot config: `.github/dependabot.yml`.
    Remember: path helpers need **named** keys.
 5. Views — pick one of the three patterns; for modal editors add `*_fields_json` /
    `*_tag_taxonomy_fields` to `app/helpers/modal_fields.rb`.
-6. Sidebar link in `app/views/layouts/_left_sidebar.html.erb` using the shared
-   `shared/_sidebar_link` pattern; use `shared/_content_tabs` for related records and
-   `shared/_tag_workspace_navigation` for taxonomy management. Put the Members access manager in
-   the right-side Settings section.
+6. Sidebar link using the shared `shared/_sidebar_link` pattern — in
+   `app/views/layouts/_left_sidebar.html.erb` for universe/story content, or in
+   `app/views/layouts/_right_sidebar.html.erb` under **Configuration** for configuration tools and
+   the Members access manager; use `shared/_content_tabs` for related records and
+   `shared/_tag_workspace_navigation` for taxonomy management.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
 8. Development data: add or update `<model>.yml` in every relevant
    `db/data/<universe_slug>/` directory, update the shared model order/registry, and include

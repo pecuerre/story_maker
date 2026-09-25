@@ -1,20 +1,15 @@
 <% menu_counts = Current.universe.menu_counts %>
 <% section_count = Current.story&.menu_section_count %>
 <% scene_count = Current.story&.menu_scene_count %>
-<% tag_controllers = %i[
-  tags character_tags relation_tags location_tags event_tags item_tags ownership_tags section_tags scene_tags
-] %>
 
-<%# The sidebar reads as three scoped blocks — universe, story, tools — and each
+<%# The sidebar reads as two scoped blocks — universe and story — and each
     context block is followed by the section it introduces. The hue is the only
-    thing that tells them apart, so it is per block and never per record. %>
+    thing that tells them apart, so it is per block and never per record.
+    Configuration and Tags live in the right utility sidebar, which owns the
+    tools scope, so this column stays purely about universe and story content. %>
 <div class="sidebar-context sidebar-context--universe">
   <div class="sidebar-eyebrow">Current universe</div>
   <h2 class="sidebar-universe-name"><%= Current.universe.name %></h2>
-  <div class="sidebar-context-info">
-    <%= Current.universe.private? ? "Private" : "Public" %> · <%= universe_access_label %>
-  </div>
-  <div class="sidebar-context-info"><%= pluralize(nav_stories.size, "story") %></div>
 </div>
 
 <nav class="workspace-navigation" aria-label="Universe and story navigation">
@@ -61,12 +56,7 @@
     <div class="sidebar-eyebrow">Current story</div>
     <% if Current.story.present? %>
       <h2 class="sidebar-universe-name sidebar-story-name"><%= Current.story.name %></h2>
-      <div class="sidebar-context-info">
-        <%= pluralize(section_count, "section") %> · <%= pluralize(scene_count, "scene") %>
-      </div>
-      <% if Current.story.description.present? %>
-        <div class="sidebar-context-info"><%= truncate(Current.story.description, length: 90) %></div>
-      <% end %>
+
     <% else %>
       <%# The prompt that belongs with these links lives in the Story workspace
           section below, so the context block stays a statement of scope. %>
@@ -118,16 +108,5 @@
     <% unless Current.story.present? %>
       <p class="sidebar-hint">Select a story to work on its sections and story-specific structure.</p>
     <% end %>
-  </section>
-
-  <section class="sidebar-section sidebar-section--tools" aria-labelledby="configuration-title">
-    <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
-    <ul class="sidebar-list">
-      <%= render "shared/sidebar_link",
-        icon: "tags",
-        label: "Tags",
-        path: universe_tags_path,
-        controllers: tag_controllers %>
-    </ul>
   </section>
 </nav>

@@ -1,0 +1,12 @@
+- story: Story.the-lord-of-the-rings
+  name: Book
+  slug: book
+- story: Story.the-lord-of-the-rings
+  name: Part
+  slug: part
+- story: Story.the-lord-of-the-rings
+  name: Chapter
+  slug: chapter
+- story: Story.the-lord-of-the-rings
+  name: Section
+  slug: section

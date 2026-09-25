@@ -1,0 +1,12 @@
+- story: Story.the-lord-of-the-rings
+  name: The Fellowship of the Ring
+  slug: the-fellowship-of-the-ring
+  section_tags: [ SectionTag.book ]
+- story: Story.the-lord-of-the-rings
+  name: The Two Towers
+  slug: the-two-towers
+  section_tags: [ SectionTag.book ]
+- story: Story.the-lord-of-the-rings
+  name: The Return of the King
+  slug: the-return-of-the-king
+  section_tags: [ SectionTag.book ]

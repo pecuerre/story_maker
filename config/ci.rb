@@ -9,7 +9,8 @@ CI.run do
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Tests: Rails", "bin/rails test"
-  step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
+  step "Checks: Dark development data", "env RAILS_ENV=test UNIVERSE=dark bin/rails db:demo:check"
+  step "Checks: LOTR development data", "env RAILS_ENV=test UNIVERSE=lotr bin/rails db:demo:check"
 
   # Optional: Run system tests
   # step "Tests: System", "bin/rails test:system"

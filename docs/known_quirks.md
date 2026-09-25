@@ -14,21 +14,9 @@ issues from lower-priority hardening and contract decisions.
 
 ## Development workflow observations
 
-4. **Disposable universe data is still coupled to `db:seed`.** `db/data/` is intentionally
-   development-only: one subdirectory per universe (`dark/`, `lotr/`, and future universe slugs)
-   contains the records used to exercise that universe. The current `dark` and `lotr` loaders use
-   `create`/`create!`, and `db/seeds.rb` still loads a hardcoded `["dark", "lotr"]` list, so the
-   loaders are not safe to rerun. The container entrypoint also runs `db:prepare` at server start,
-   so a fresh production database can receive development users and data. The checked-in loader
-   bypasses `MaintainsSiblingPositions`; the Dark YAML omits `position`, so sibling groups are
-   seeded with the database default `0` rather than the documented contiguous positions. This is
-   not a request to make temporary feature data production-idempotent; the intended fix is an
-   explicit, environment-guarded development load/reset task that keeps `db/seeds.rb` production-safe.
-   There is also no shared model/universe registry yet: the Dark order is local to
-   `db/data/dark/dark.rb:3-22`, LOTR has a separate hand-written loader, and a new universe must be
-   added to the hard-coded seed list. A new YAML file in an otherwise supported universe directory
-   is not automatically loaded, and a missing file aborts the Dark loader at `YAML.load_file`.
-   The current coupling is tracked as a transitional implementation gap in [ADR 0004](adr/0004-universe-data-and-demo-seeding.md).
+The former disposable-data coupling and unguarded reset findings were rechecked and resolved on
+2026-09-25. They are preserved in [resolved_quirks.md](resolved_quirks.md); the current loader is
+`Development::UniverseDataLoader` with registry-driven, environment-guarded tasks.
 
 ## Critical security observations
 
@@ -86,12 +74,6 @@ issues from lower-priority hardening and contract decisions.
     reset, or user deletion, and old rows have no cleanup path. No session-expiration or
     cookie-attribute tests exist.
 
-16. **High safety issue — `db:restart` has no environment guard.** `lib/tasks/db.rake:1-9` invokes
-    `db:drop`, `db:create`, `db:migrate`, and `db:seed` without checking `Rails.env` or requiring an
-    explicit destructive-operation acknowledgement. The task description says “development DB,” but
-    `RAILS_ENV=production bin/rails db:restart` is not prevented by the task itself. This is separate
-    from the known seed coupling above and is especially important before adding features.
-
 ## Mutation, route, and data-contract observations
 
 17. **High — flat Character/Item/Event modals submit HTML to JSON-only endpoints.** Their forms are
@@ -143,10 +125,9 @@ issues from lower-priority hardening and contract decisions.
     normalizes during controller updates but destroy actions call `destroy!` directly, leaving gaps
     (`app/controllers/concerns/maintains_sibling_positions.rb:12-35`). There is no transaction,
     lock, unique position index, or database constraint for concurrent creates/moves; partial
-    `update_columns` normalization can also leave inconsistent positions. The current development
-    data loader bypasses the concern and seeds sibling groups with duplicate default positions.
-    Existing tests cover a move and cache invalidation, not destruction, concurrency, or seeded
-    positions.
+    `update_columns` normalization can also leave inconsistent positions. The development data
+    loader now normalizes its imported sibling groups, but the application concern still lacks
+    destruction/concurrency coverage.
 
 23. **Medium — HABTM join tables have no database integrity constraints.** All seven join tables
     contain only two integer columns and no indexes, foreign keys, or uniqueness constraints (for
@@ -310,10 +291,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
   internally consistent, but a concurrent slug rename or scope mutation could create a TOCTOU
   mismatch between the object authorized and the object acted on; no deterministic exploit was
   demonstrated.
-- **Development symbolic references are globally resolved.** `db/data/dark/dark.rb:24-37` and
-  `HasSlug.method_missing` look up slugs without a universe/story qualifier. The checked-in data
-  currently avoids collisions, but duplicate slugs across universe directories could resolve to
-  the wrong record; loader scope validation is still missing.
 - **Accessibility invariants are not fully represented in the navbar/tree.** Current universe/story
   dropdown items use visual `.active` classes without `aria-current` on the links
   (`app/views/layouts/_navbar.html.erb:23-27,48-51,69-74`), and drag/drop reordering has no keyboard
@@ -426,12 +403,12 @@ used with a frozen install in CI and Docker.
     `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`,
     devcontainer, or value-free `.env.example`. A fresh clone therefore still depends on the
     documented host toolchain, and there is no clean-checkout proof that the image, SQLite paths,
-    CSS assets, and `/up` work together. The compose path must not run transitional development
-    seeds in production; see backlog item 15.
+    CSS assets, and `/up` work together. The compose path must not run development data in
+    production; see backlog item 15.
 
 53. **Low/conditional — local demo and smoke-test credentials are literal values.** The LOTR
-    development loader uses a password literal (`db/data/lotr/lotr.rb:1`), the Dark fixture users
-    contain literal passwords (`db/data/dark/users.yml:1-10`), and
+    development users contain literal passwords (`db/data/lotr/users.yml:1-6`), the Dark fixture
+    users contain literal passwords (`db/data/dark/users.yml:1-10`), and
     `docs/smoke_test_stories.sh:17,28-29` documents/defaults a real-looking password. These are
     disposable fixtures rather than production credentials, but literals are easy to reuse and
     trigger security hygiene checks. Require an explicit environment value or generate a local
@@ -465,3 +442,20 @@ Not run: destructive development tasks (`db:restart`, `db:reset`, `db:drop`, `db
 `db:seed:replant`), demo-data loaders, Docker/Kamal deployment, production SMTP delivery, a clean
 migration-from-zero job, or a live hostile-browser exploit. No production data or secret value was
 modified as part of documenting these findings; disposable test probes were rolled back or cleaned.
+
+## Follow-up verification (2026-09-25)
+
+The explicit development-data loader follow-up was verified after ADR 0008:
+
+- `bin/rails test` — 280 tests, 1,701 assertions, 0 failures/errors/skips.
+- `bin/rubocop` — 166 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `bin/bundler-audit` — no known vulnerabilities.
+- `bin/importmap audit` — no reported vulnerabilities; vendored Tom Select remains ignored as noted above.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed in
+  development and test environments.
+- `RAILS_ENV=test bin/rails db:seed` passed without loading development data.
+
+Destructive `db:demo:reset`, `db:restart`, Docker/Kamal deployment, production SMTP delivery, a clean
+migration-from-zero job, and a live hostile-browser exploit were not run. The loader's transactional
+load and rollback paths were covered in the test environment instead.

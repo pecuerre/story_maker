@@ -108,11 +108,11 @@ isolated SQLite database, persists the correct local data/storage paths, exposes
 port, and passes a health check. Document it as an alternative to the `mise`/`bundle`/`bun` path in
 the root README.
 
-The compose design must be development-safe: do not run the transitional production `db:seed`
-path, mount a developer's real production data, or claim a clean production boot. The current
-Dockerfile is production-oriented and its server entrypoint runs the transitional `db:prepare` path;
-use a development-specific service/command or fix that boundary first, and verify the exact startup
-sequence before documenting Compose. Test from a clean checkout, including CSS assets, migrations,
+The compose design must be development-safe: do not run development data in a production
+container, mount a developer's real production data, or claim a clean production boot. The current
+Dockerfile is production-oriented; its `db:prepare` path now loads only production-safe seeds, so
+use a development-specific service/command for demo universes and verify the exact startup sequence
+before documenting Compose. Test from a clean checkout, including CSS assets, migrations,
 and `/up`; report any Docker or browser limitation. A devcontainer is optional and should follow the
 same environment and data-boundary rules.
 
@@ -160,7 +160,7 @@ it. Add focused tests/configuration checks and run the security scans after the 
 
 ### 5. Credential-like literals and environment documentation — priority: now when touched/low risk
 
-The report flagged literal local/demo passwords in `db/data/lotr/lotr.rb`,
+The report flagged literal local/demo passwords in `db/data/lotr/users.yml`,
 `db/data/dark/users.yml`, and `docs/smoke_test_stories.sh`, plus a missing environment template.
 These are synthetic development fixtures, but treat every credential-like string as potentially real
 until reviewed. The project intentionally documents some synthetic logins for manual verification;
@@ -228,7 +228,7 @@ starting a quality task, check the relevant entries in [`known_quirks.md`](known
 - taxonomy modal `innerHTML` XSS and stale serialized state;
 - password-reset tokens in request logs;
 - production TLS/cookie assumptions and mailer URL/SMTP configuration;
-- environment-guarded demo loading and the unguarded destructive `db:restart` task;
+- environment-guarded demo loading and destructive database reset confirmation;
 - JSON/HTML response contracts and cross-universe/cross-story authorization.
 
 The report's credential warning is narrower than these issues. A higher automated score is not an

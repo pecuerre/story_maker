@@ -1,0 +1,4 @@
+- name: lotr
+  owner: User.lotr_user
+  slug: lotr
+  private: false

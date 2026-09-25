@@ -1,0 +1,5 @@
+- name: LOTR User
+  slug: lotr-user
+  email_address: lotr@lotr
+  password: lotr
+  password_confirmation: lotr

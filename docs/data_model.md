@@ -257,10 +257,13 @@ db/data/star_wars/
 A new persisted model adds its data file to every universe directory where it should be exercised.
 For example, a future `Dialog` model uses `db/data/dark/dialogs.yml` and, if applicable,
 `db/data/lotr/dialogs.yml`; it does not get a `db/data/dialog/` feature directory. The shared
-loader order must place the model after its dependencies, and references must preserve the model's
-universe/story scope. Universe membership data follows the same convention
-(`universe_memberships.yml`) when a sample universe needs explicit private access or delegated
-admin access. Development data is for browser/manual validation only; automated tests use
+`Development::UniverseDataRegistry` order must place the model after its dependencies, and every
+registered universe directory must include its file (use `[]` when intentionally unused).
+References must preserve the model's universe/story scope. Universe membership data follows the
+same convention (`universe_memberships.yml`) when a sample universe needs explicit private access
+or delegated admin access. Validate and load one named universe with `UNIVERSE=<slug> bin/rails
+db:demo:check` and `UNIVERSE=<slug> bin/rails db:demo:load`; neither `db:seed` nor `db:prepare`
+loads `db/data/`. Development data is for browser/manual validation only; automated tests use
 `test/fixtures/`, and production bootstrap data belongs in `db/seeds.rb`/`db/seeds/`.
 
 Hand-maintained sketch of the core entities: [schema.txt](schema.txt).

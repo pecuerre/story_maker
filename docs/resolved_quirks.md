@@ -304,6 +304,8 @@ schema-only and the history is consolidated into one create migration per persis
 story slug and the `story_id` foreign keys are defined directly in the corresponding create
 migrations; the record-copying migrations were removed. Existing databases must be recreated with
 `bin/rails db:restart`, which migrates the schema and then reloads `db/data/` through `db:seed`.
+This historical workflow was later replaced by [ADR 0008](adr/0008-explicit-development-universe-loader.md):
+`db:restart` is now schema-only and `db:demo:reset` is the explicit data-loading reset.
 
 ### Deleting a section tag silently un-tagged its sections (fixed, in two steps)
 
@@ -344,3 +346,26 @@ that a fixture is reachable through its normalized class-level finder.
 `assert_response :not_found`; only direct model or lower-level lookups assert
 `ActiveRecord::RecordNotFound`. The test configuration remains `:rescuable` because it reflects
 the response behavior users receive.
+
+### Former quirk #4: Disposable universe data was coupled to `db:seed` (resolved)
+
+**Then:** `db/seeds.rb` loaded a hard-coded Dark/LOTR list, Dark and LOTR had separate Ruby/YAML
+loaders, missing or unknown data files were not governed by one registry, and the development
+loader bypassed the documented sibling-position contract. A fresh `db:prepare` could therefore
+load temporary users and data into a database that was not being used for local development.
+
+**Resolution:** `db/seeds.rb` now loads only production-safe files under `db/seeds/`.
+`Development::UniverseDataLoader` uses the shared `Development::UniverseDataRegistry` for model
+order, file names, and supported universes; it validates references and scope before writing,
+normalizes hierarchical positions, and is invoked only through explicit tasks. `db:demo:check` is
+read-only in development/test, while `db:demo:load` and `db:demo:reset` require development.
+The old per-universe Ruby loaders were removed and LOTR now uses the same YAML format as Dark.
+
+### Former quirk #16: `db:restart` had no environment or confirmation guard (resolved)
+
+**Then:** `db:restart` dropped, recreated, migrated, and seeded without checking `Rails.env` or an
+explicit acknowledgement. The task description alone could not prevent a production invocation.
+
+**Resolution:** `db:restart` now runs only in development with `CONFIRM_DB_RESET=1` and resets schema
+without loading demo data. `db:demo:reset` has the same explicit confirmation and additionally
+requires a registered `UNIVERSE` before dropping the database; it never invokes `db:seed`.

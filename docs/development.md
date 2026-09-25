@@ -13,7 +13,8 @@ Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirk
 - Setup & run:
 
 ```bash
-bin/rails db:prepare          # create + migrate + current transitional seed (first run)
+bin/rails db:prepare          # create + migrate + production-safe seeds only
+UNIVERSE=dark bin/rails db:demo:load  # optional development data (development only)
 bin/rails server              # http://localhost:3000
 bin/rails console
 bun run watch:css             # rebuild CSS on .scss changes (Procfile.dev: foreman start)
@@ -37,8 +38,9 @@ bin/rails test:system         # browser-based system tests
 
 Layout:
 - `test/controllers`, `test/models`, and `test/integration` — model, request, navigation, and
-  workspace coverage; `test/system` — browser-level smoke coverage for the primary workspace
-  journeys; `test/helpers` and `test/mailers/previews` are effectively empty.
+  workspace coverage; `test/services` — development-data registry/loader coverage; `test/system` —
+  browser-level smoke coverage for the primary workspace journeys; `test/helpers` and
+  `test/mailers/previews` are effectively empty.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
   (both belong to `story_one`), all content + tag fixtures.
@@ -80,8 +82,8 @@ add ceremonial dependencies or Git history. Its actionable recommendations are d
 Verify each recommendation against the current tree before acting. In particular, `/up` is already
 routed and `bun.lock` is already committed and used with `--frozen-lockfile` in CI and Docker.
 
-The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, Minitest, and a
-browser smoke suite. It does **not** yet measure coverage, audit the complete Bun/npm graph or
+The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, Minitest, checked-in
+development-data manifest checks, and a browser smoke suite. It does **not** yet measure coverage, audit the complete Bun/npm graph or
 build/boot the production image, provide a one-command Compose setup, or enable structured
 request/error tracking. Those are follow-up work, not current capabilities; do not claim them in
 release or onboarding copy until they are implemented and documented.
@@ -90,13 +92,14 @@ When planning one of those improvements, preserve the development-only data boun
 universe/story authorization model, and the no-secrets rules. A value-free `.env.example` may be
 committed only after an explicit `.gitignore` exception; real `.env` files, credentials, DSNs, and
 deployment keys remain local/secret. Do not use a hardcoded demo password as a fallback, and do not
-let a production container run the transitional demo seed path.
+let a production container run the development data path.
 
 ## Seeding / development data
 
 `db/data/` contains checked-in but **disposable development data**. It is not production seed data,
-and it is not loaded by the test suite. The preferred local lifecycle is to rebuild the disposable
-database and then load one universe directory for browser testing.
+and it is not a fixture source for the Rails test suite; focused service tests validate and
+transactionally exercise it. The preferred local lifecycle is to rebuild the disposable database
+and then load one universe directory for browser testing.
 
 ### One directory per universe
 
@@ -115,48 +118,41 @@ directory is not a feature directory. For example, a future `Dialog` model belon
 `db/data/dark/dialogs.yml` (and in `db/data/lotr/dialogs.yml` when that universe should exercise
 it), not in `db/data/dialog/`.
 
-The current implementation has two different loaders:
+The shared development loader is `Development::UniverseDataLoader`, configured by
+`app/services/development/universe_data_registry.rb`. It walks one registry order for every
+universe (User → Universe → UniverseMembership → Story → SectionTag → Section → … → Event),
+requires every registered YAML file, resolves `Model.slug` references in memory, validates model
+order and universe/story scope before writing, and normalizes hierarchical sibling positions from
+file order (or validates explicit positions when every sibling supplies one). The Dark and LOTR
+directories now use the same format; the old per-universe Ruby loaders have been removed.
 
-- `db/data/dark/dark.rb` is a generic YAML loader. It walks `models_in_order`
-  (User → Universe → UniverseMembership → **Story** → SectionTag → Section → … → Event), reads
-  `db/data/<model>.yml`, and resolves reference strings such as `"Model.some_slug"` with
-  `Model.find_by(slug: …)`. Arrays are supported, and a `"Tag.*"` reference is also recorded for
-  colored output. Referenced models therefore need a stable **slug**.
-- `db/data/lotr/lotr.rb` is plain Ruby containing the user, universe, story, section tags, and
-  three book sections.
+New model data must use stable symbolic references and preserve the model's universe/story scope.
+If `Dialog` is story-scoped, its records use `story: Story.<slug>`; if it is universe-scoped, they
+use `universe: Universe.<slug>`. Include related characters, locations, items, events, sections,
+and tags where those associations exist so the browser scenario exercises the real feature graph.
+Add the model to the shared registry and provide its file in every registered universe directory,
+using `[]` where the model is intentionally not exercised.
 
-The intended model order is shared by the universe data rather than duplicated as a
-feature-specific loader. The current Dark loader keeps that order in `dark/dark.rb`; the LOTR Ruby
-loader is a smaller transitional exception. New model work should centralize the shared order in
-the development loader/registry. New model data must use stable symbolic references and preserve
-the model's universe/story scope. If `Dialog` is story-scoped, its records use
-`story: Story.<slug>`; if it is universe-scoped, they use `universe: Universe.<slug>`. Include
-related characters, locations, items, events, sections, and tags where those associations exist
-so the browser scenario exercises the real feature graph.
+### Explicit development data tasks
 
-### Current and target execution paths
-
-`bin/rails db:seed` currently loads `db/seeds/**/*.rb` and then the hardcoded list
-`["dark", "lotr"]` from `db/seeds.rb`. This is transitional. The loaders use `create`/`create!` on
-every run, so the demo data is not safe to rerun; that is acceptable for disposable data only when
-the database is deliberately rebuilt. It must not be treated as a production seed path.
-
-The intended replacement is an explicit, environment-guarded development task, conceptually:
+`db:demo:check` is read-only and may run in development or test. `db:demo:load` and
+`db:demo:reset` are write-capable tasks restricted to development:
 
 ```bash
-bin/rails db:demo:check UNIVERSE=dark       # proposed; validate without committing data
-bin/rails db:demo:load UNIVERSE=dark        # proposed; load one universe directory
-bin/rails db:demo:reset UNIVERSE=dark       # proposed; rebuild, migrate, and load it
+UNIVERSE=dark bin/rails db:demo:check
+UNIVERSE=dark bin/rails db:demo:load
+CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset
 ```
 
-These task names are a design target and are not implemented yet. The eventual task must refuse
-to run in production, and `db:seed`/`db:prepare` must not load temporary development records.
-Until that separation is implemented, use `bin/rails db:restart` only with approval; it currently
-drops, recreates, migrates, and seeds the development database.
+`db:demo:load` is create-only and refuses an existing target universe. `db:demo:reset` requires
+`CONFIRM_DB_RESET=1`, drops/recreates/migrates the database, and loads only the named universe;
+it never invokes `db:seed`. `db:seed` and `db:prepare` load only production-safe files under
+`db/seeds/` and never load `db/data/`. The guarded `db:restart` task resets the schema without
+loading demo data.
 
 The Rails test suite uses `test/fixtures/` so automated tests remain deterministic; these mutable
-universe files are not its fixture source. The local `config/ci.rb` still contains a transitional
-`db:seed:replant` check, which should be revisited when the seed boundary is separated.
+universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
+test mode instead of replanting demo records.
 
 ## Planned Scene delivery (slice 11.0 contract)
 
@@ -184,9 +180,9 @@ When data is added, put it in the relevant `db/data/<universe_slug>/` files (`sc
 `scene_tags.yml`, `scene_elements.yml`, and the applicable speaker/presence-link files), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, Narration, Dialogue,
-multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. The explicit
-environment-guarded demo loader (backlog item 1) is required before final manual verification; do
-not run the transitional `db:restart` without approval.
+multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. Use the explicit
+`UNIVERSE=<slug> bin/rails db:demo:load` task for a prepared development database; the loader
+refuses production/test writes and does not load another universe.
 
 ## Database migrations
 
@@ -197,9 +193,9 @@ table owned by that model. Migrations must not read or write application records
 application models. The `universes.private` NOT NULL migration deliberately refuses to guess how
 legacy NULL rows should be classified; resolve each such row explicitly before migrating an older
 database. The Event self-reference check-constraint migration likewise fails rather than deleting
-or rewriting an existing corrupt loop. After changing a schema, rebuild the development database
-and reload the relevant universe data with approval; do not run `bin/rails db:restart` without
-approval.
+or rewriting an existing corrupt loop. After changing a schema, use
+`CONFIRM_DB_RESET=1 UNIVERSE=<slug> bin/rails db:demo:reset` with approval when the disposable
+universe should be rebuilt and reloaded. The guarded `db:restart` task resets schema only.
 
 ## Smoke test (end-to-end over HTTP)
 
@@ -225,6 +221,7 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | `scan_js` | `bin/importmap audit` |
 | `lint` | `bin/rubocop -f github` (cached) |
 | `test` | `bin/rails db:test:prepare test` |
+| `data-check` | `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` |
 | `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure) |
 
 The system-test job passes the exact Chrome and ChromeDriver paths emitted by

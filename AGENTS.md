@@ -105,8 +105,9 @@ finishing shared model, controller, routing, authorization, or shared JavaScript
 Report every check that was not run. The CSS build requires the JavaScript dependencies to be
 installed.
 
-Do not run `bin/rails db:restart` without approval: it drops, recreates, migrates, and seeds the
-development database.
+Do not run `bin/rails db:restart` or `db:demo:reset` without approval: both are destructive. The
+former resets schema only; the latter drops, recreates, migrates, and loads one explicitly named
+development universe.
 
 ## Domain and architecture invariants
 
@@ -168,17 +169,16 @@ development database.
 - The preferred data lifecycle is explicit and environment-guarded: rebuild or reset the disposable
   development database, then load one named universe directory. Do not rely on a production seed
   task to load temporary demo data, and never run a destructive database rebuild without approval.
-- The current `db:seed`/`db:restart` wiring still loads `db/data`; treat that as transitional. The
-  explicit development-only demo task described in the proposal is required before calling the
-  production boundary complete.
+- The current `db:seed`/`db:restart` wiring is no longer a development-data path. `db:demo:check`,
+  `db:demo:load`, and `db:demo:reset` are the explicit development-only entry points; `db:seed`
+  and `db:prepare` load production-safe seeds only. Never run a destructive reset without approval.
 
 ## Testing conventions
 
 - Add or update tests for behavior changes.
 - Use the existing fixtures. Request tests use `sign_in_as` / `sign_out`; system tests use the
   real sign-in form when authentication behavior is part of the scenario. `db/data` is not a test
-  fixture source; the local `config/ci.rb` seed-replant step is transitional and should be revisited
-  with the explicit development-data task.
+  fixture source; `config/ci.rb` validates the checked-in development manifests in test mode.
 - In the test environment, cross-scope `ActiveRecord::RecordNotFound` requests render as HTTP
   404; assert `assert_response :not_found` rather than expecting an exception.
 - Keep route helpers fully qualified in tests when the current request does not provide the

@@ -435,47 +435,6 @@ decisions and should not delay the basic ordered Scene workflow.
   - back in the day i remember i used solar or elastic search for that. i don't know what is used for that now.
     but probably we have to use some of that
 
-22. **fix the top bar navigation**
-  - currently (from left to right)
-    - universe maker -> universe list
-    - universes (drown down)
-      - universe 1 -> details
-      - universe 2 -> details
-      - all universes -> universe list
-      - new universe
-    - universe: [current universe] (drowndown)
-      - current universe -> details
-      - all universes -> universe list
-      - new universe
-      - manage members
-    - story [current story] (dropdown)
-      - current story -> details
-      - all stories -> story list
-      - new story
-  - what i want (from left to right)
-    - universe maker -> landing page (list of universes and a search area for now)
-    - universe: [current universe] -> universe details / universe main page
-    - story: [current story] -> story details / story main page
-  - note: to change universes, the user has to click in the home "universe maker"
-  - note: to create a new universe the user also has to do it in the landing page
-
-23. **other visual fixes**
-  - in the pages characters, events, items, ownerships the list always show the
-    - the details link
-    - the [...] with the actions
-    - all align to the right
-  - in pages locations, sections and all the element tags
-    - the details link is align to the left and always visible
-    - the [...] with the actions is only visible if you hover the mouse
-  - in page scenes there is no "details" link
-  - so i want all to look like the charactes, events, items pages
-    - so in all cases i want the [...] with the actions to ve visible all the time
-    - and the details link to be visible all the time to and aligned to the right
-    - in the case of scenes details link, please create the scene details page. with minimum information
-      for now, and a link to edit. this page will be very important later on
-    - the counter should not be part of the link, and the counter should be aligned left.
-      next to the name and the tags
-
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

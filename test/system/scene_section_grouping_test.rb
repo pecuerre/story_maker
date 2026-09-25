@@ -13,8 +13,12 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     assert_selector "h2", text: "Ungrouped scenes"
     assert_selector ".scene-grouping", text: "Ungrouped"
     assert_selector ".scene-grouping", text: "Scene three"
+    assert_selector ".scene-grouping .list-group-item .badge", text: "1 ungrouped scene"
 
-    select "3. Scene three (Ungrouped)", from: "Scene"
+    # The form lives in the Ungrouped surface, so it only offers an ungrouped
+    # scene: a grouped scene is regrouped from its own section's page.
+    assert_selector "select[name=scene_id] option", count: 1
+    select "3. Scene three", from: "Ungrouped scene"
     select "Section one", from: "Move to"
     click_button "Move scene"
 
@@ -33,14 +37,16 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     assert_selector ".entity-row", text: "Scene three"
     assert_no_selector ".entity-row", text: "Ungrouped"
 
-    # And it can be moved back to ungrouped from the same workspace.
-    visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
-    select "3. Scene three (Section one)", from: "Scene"
-    select "Ungrouped", from: "Move to"
-    click_button "Move scene"
+    # A grouped scene comes back to Ungrouped from the scene editor, which is
+    # where its Section selector lives.
+    visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
+    select "Ungrouped", from: "Section"
+    click_button "Update Scene"
 
-    assert_selector ".alert-success", text: "is now ungrouped"
-    assert_selector ".scene-grouping", text: "Scene three"
+    assert_selector ".alert-success", text: "Scene was successfully updated."
+    visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    assert_selector ".scene-grouping .list-group-item", text: "Scene three"
+    assert_selector ".scene-grouping .list-group-item .badge", text: "1 ungrouped scene"
     visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
     assert_selector ".entity-row", text: "Ungrouped"
   end
@@ -88,7 +94,8 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     long_section = story.sections.create!(name: "A very long section name that must not break the outline")
     long_scene = story.scenes.create!(
       name: "A deliberately very long scene title that should wrap instead of widening the row",
-      description: "A deliberately very long short description. " * 12
+      description: "A deliberately very long short description. " * 12,
+      position: 3
     )
 
     sign_in_via_form(users(:user_one))
@@ -101,6 +108,13 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
     assert_selector ".scene-grouping", text: long_section.name
 
+    # The source selector offers only the two ungrouped scenes of this story, in
+    # narrative order, and a long title stays inside its own option instead of
+    # widening the page.
+    assert_selector "select[name=scene_id] option", count: 2
+    assert_selector "select[name=scene_id] option:first-child", text: "3. Scene three"
+    assert_selector "select[name=scene_id] option", text: /A deliberately very long scene title/
+
     # Keyboard only. Home/End move through a select without a pointer, and the
     # submit must be reachable by tabbing, not only by clicking.
     find("#scene_grouping_scene_id").send_keys(:home)
@@ -111,7 +125,8 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     find("input[type=submit][value='Move scene']").send_keys(:return)
 
     assert_selector ".alert-success", text: "is now grouped under A very long section name"
-    assert_equal long_section, scenes(:scene_one).reload.section
+    # The first ungrouped scene of the story is the one that moved.
+    assert_equal long_section, scenes(:scene_three).reload.section
   end
 
   test "a read-only member sees grouping and details without mutation controls" do

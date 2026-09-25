@@ -2,9 +2,9 @@
     A Section is a group, not a story record with a scenes list of its own, so
     the scenes inside a Section are listed on that Section's own page. Only the
     scenes that belong to no Section are listed here, next to the move form that
-    can group or ungroup any scene of the story. This is a second organization
-    view, not a second source of order: within the group the scenes stay in
-    canonical narrative order, and grouping never changes a scene's position. %>
+    groups one of them. This is a second organization view, not a second source
+    of order: within the group the scenes stay in canonical narrative order, and
+    grouping never changes a scene's position. %>
 <% scenes = local_assigns.fetch(:scenes) %>
 <% section_paths = local_assigns.fetch(:section_paths) %>
 <% story = local_assigns.fetch(:story) %>
@@ -29,21 +29,24 @@
 
     <% if scenes.empty? %>
       <%# Nothing to move yet; the empty state below carries the only action. %>
+    <% elsif ungrouped.empty? %>
+      <%# Everything is grouped, so there is no ungrouped scene to offer. %>
     <% elsif editable %>
       <%# One selector-driven form keeps a single accessible move path for
-          grouping. Drag-and-drop is optional and is not the only way to move a
-          scene between Ungrouped, a section, and another section, so it still
-          offers every scene of the story and not only the ungrouped ones. %>
+          grouping, and it only offers the scenes this surface actually lists:
+          the form moves a scene out of Ungrouped, and a scene that is already
+          grouped is read and regrouped from its own section's page, where its
+          editor carries the Section selector. Offering grouped scenes here would
+          contradict the section this form lives in. %>
       <%= form_with url: group_universe_story_scenes_path(story_id: story),
         method: :patch,
         class: "row g-2 align-items-end mt-3 scene-grouping-form" do %>
         <div class="col-12 col-md">
-          <label class="form-label" for="scene_grouping_scene_id">Scene</label>
+          <label class="form-label" for="scene_grouping_scene_id">Ungrouped scene</label>
           <select class="form-select" name="scene_id" id="scene_grouping_scene_id">
-            <% scenes.each do |scene| %>
-              <% current_group = scene_grouping_label(scene, section_paths) || SectionPaths::UNGROUPED_LABEL %>
+            <% ungrouped.each do |scene| %>
               <option value="<%= scene.id %>">
-                <%= "#{scene.position + 1}. #{scene.name} (#{current_group})" %>
+                <%= "#{scene.position + 1}. #{scene.name}" %>
               </option>
             <% end %>
           </select>
@@ -84,9 +87,13 @@
   <% else %>
     <div class="list-group list-group-flush">
       <div class="list-group-item">
+        <%# The badge states what the list holds instead of a bare number, because
+            this list is a subset of the story and the bare figure is ambiguous
+            next to the story's own scene count. %>
         <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-          <span class="badge rounded-pill text-bg-light border"
-            aria-label="<%= pluralize(ungrouped.size, "scene") %>"><%= ungrouped.size %></span>
+          <span class="badge rounded-pill text-bg-light border">
+            <%= pluralize(ungrouped.size, "ungrouped scene") %>
+          </span>
         </div>
         <%# The narrative-position pill carries the order, so the list stays
             unordered rather than being an ordered list with its own markers

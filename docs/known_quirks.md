@@ -211,7 +211,7 @@ resolution and test are recorded in [`resolved_quirks.md`](resolved_quirks.md).
     backlogged search/filter work.
     The new record details pages deliberately added none of this: tag usage counts come from
     `TaggedRecordCounts` (one grouped query) and the Section tree's scene counts from one
-    `group(:section_id).count`, and the universe page reuses the navbar's memoized story list
+    `group(:section_id).count`, and the universe page reuses its memoized story list
     instead of re-counting. The row-level authorization and recursive-children costs above are
     unchanged.
 
@@ -312,12 +312,14 @@ through the current normal UI. They are recorded so they are not mistaken for se
   internally consistent, but a concurrent slug rename or scope mutation could create a TOCTOU
   mismatch between the object authorized and the object acted on; no deterministic exploit was
   demonstrated.
-- **Accessibility invariants are not fully represented in the navbar/tree.** Current universe/story
-  dropdown items use visual `.active` classes without `aria-current` on the links
-  (`app/views/layouts/_navbar.html.erb:23-27,48-51,69-74`), and drag/drop reordering has no keyboard
-  equivalent (`app/javascript/controllers/taxonomy_tree_controller.js:367-455`). User-selected tag
-  colors are format-validated but not contrast-validated (`app/models/concerns/has_color.rb:4-7`).
-  These are review items for new UI work rather than security findings.
+- **Tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
+  `#rrggbb` pair for a taxonomy tag's background and foreground
+  (`app/models/concerns/has_color.rb:4-7`), so an author can choose a combination that fails
+  WCAG contrast. The badge shape still identifies the tag, and color is never the only signal, so
+  this is a legibility review item rather than a security finding. The navbar/tree accessibility
+  invariants that shared this bullet were fixed when the top bar became three plain links and every
+  row's Details link and action menu became always visible; see
+  [`resolved_quirks.md`](resolved_quirks.md).
 - **Framework routes are broader than the current domain.** `config/application.rb:3` loads
   `rails/all`, exposing unused Active Storage/Action Mailbox/Action Text routes. Their default
   protections reduce immediate risk, but the application has no route allowlist or production

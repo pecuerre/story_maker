@@ -5,6 +5,11 @@
 <% details_count = local_assigns[:details_count] %>
 <% details_count_label = local_assigns.fetch(:details_count_label, "item") %>
 <% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(node) || Current.universe) } %>
+<%# The formatted count is serialized on the node so the tree controller can
+    rebuild the rename button exactly as the server rendered it when an inline
+    rename is cancelled. The server formats it, so JavaScript never has to
+    pluralize anything. %>
+<% record_count = details_count&.call(node) %>
 
 <li class="taxonomy-node"
   <% if editable %>
@@ -21,6 +26,9 @@
   <% end %>
   data-name="<%= node.name %>"
   data-description="<%= node.description %>"
+  <% if record_count %>
+    data-record-count-label="<%= record_count_text(record_count, details_count_label) %>"
+  <% end %>
   data-taxonomy-values="<%= modal_fields.to_h { |field| [field[:name], node.public_send(field[:name])] }.to_json %>"
   <% if taxonomy_field %>data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"<% end %>>
 
@@ -43,6 +51,9 @@
             <span class="entity-title"><%= node.name %></span>
             <%= entity_tag_badge(node) %>
           <% end %>
+          <%# The count is a fact about this record, so it sits with the name and
+              the tags on the left instead of inside the Details link. %>
+          <%= record_count_badge(record_count, details_count_label) %>
           <% if node.description.present? %>
             <span class="entity-description d-block"><%= node.description %></span>
           <% end %>
@@ -55,79 +66,82 @@
             <span class="entity-title"><%= node.name %></span>
             <%= entity_tag_badge(node) %>
           <% end %>
+          <%= record_count_badge(record_count, details_count_label) %>
           <% if node.description.present? %>
             <span class="entity-description d-block"><%= node.description %></span>
           <% end %>
         </span>
       <% end %>
-
-      <%# Details is real navigation, so it stays visible for every access level
-          and never hides behind the row's hover-revealed action menu. %>
-      <% if details_url %>
-        <%= record_details_link details_url.call(node),
-          record: node,
-          count: details_count&.call(node),
-          count_label: details_count_label %>
-      <% end %>
     </span>
 
-    <% if editable %>
-      <span class="taxonomy-actions ms-auto d-flex align-items-center gap-1">
-        <div class="dropdown">
-          <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
-            id="taxonomy-<%= node.id %>-actions"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            aria-label="Actions for <%= node.name %>">
-            <i class="bi bi-three-dots" aria-hidden="true"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
-            <% if new_url %>
+    <%# The row's right-hand group is always visible and always in the same
+        order: Details is navigation, the menu is mutation. Neither depends on
+        hover, so the row works with a keyboard, on touch, and on a narrow
+        viewport, and both are rendered for writers while Details is rendered
+        for every access level. %>
+    <span class="taxonomy-row-end ms-auto d-flex align-items-center gap-2">
+      <% if details_url %>
+        <%= record_details_link details_url.call(node), record: node %>
+      <% end %>
+
+      <% if editable %>
+        <span class="taxonomy-actions d-flex align-items-center gap-1">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+              id="taxonomy-<%= node.id %>-actions"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+              aria-label="Actions for <%= node.name %>">
+              <i class="bi bi-three-dots" aria-hidden="true"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
+              <% if new_url %>
+                <li>
+                  <button type="button" class="dropdown-item" data-action="taxonomy-tree#add" data-taxonomy-action="add-child">
+                    <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Add child
+                  </button>
+                </li>
+              <% end %>
               <li>
-                <button type="button" class="dropdown-item" data-action="taxonomy-tree#add" data-taxonomy-action="add-child">
-                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Add child
+                <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="before">
+                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert before
                 </button>
               </li>
-            <% end %>
-            <li>
-              <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="before">
-                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert before
-              </button>
-            </li>
-            <li>
-              <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="after">
-                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert after
-              </button>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <button type="button" class="dropdown-item"
-                data-action="taxonomy-tree#move" data-move-direction="up" data-taxonomy-action="move-up">
-                <i class="bi bi-arrow-up me-2" aria-hidden="true"></i>Move up
-              </button>
-            </li>
-            <li>
-              <button type="button" class="dropdown-item"
-                data-action="taxonomy-tree#move" data-move-direction="down" data-taxonomy-action="move-down">
-                <i class="bi bi-arrow-down me-2" aria-hidden="true"></i>Move down
-              </button>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <button type="button" class="dropdown-item" data-action="taxonomy-tree#edit">
-                <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
-              </button>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <button type="button" class="dropdown-item text-danger" data-action="taxonomy-tree#remove">
-                <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
-              </button>
-            </li>
-          </ul>
-        </div>
-      </span>
-    <% end %>
+              <li>
+                <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="after">
+                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert after
+                </button>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button type="button" class="dropdown-item"
+                  data-action="taxonomy-tree#move" data-move-direction="up" data-taxonomy-action="move-up">
+                  <i class="bi bi-arrow-up me-2" aria-hidden="true"></i>Move up
+                </button>
+              </li>
+              <li>
+                <button type="button" class="dropdown-item"
+                  data-action="taxonomy-tree#move" data-move-direction="down" data-taxonomy-action="move-down">
+                  <i class="bi bi-arrow-down me-2" aria-hidden="true"></i>Move down
+                </button>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button type="button" class="dropdown-item" data-action="taxonomy-tree#edit">
+                  <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+                </button>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button type="button" class="dropdown-item text-danger" data-action="taxonomy-tree#remove">
+                  <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+                </button>
+              </li>
+            </ul>
+          </div>
+        </span>
+      <% end %>
+    </span>
   </div>
 
   <% children = node.public_send(children_method) %>

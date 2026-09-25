@@ -30,12 +30,9 @@ module ApplicationHelper
     end
   end
 
-  # Universes listed in the top bar dropdown, respecting visibility rules.
-  def nav_universes
-    @nav_universes ||= Universe.visible_to(Current.user).order(:name)
-  end
-
-  # Stories listed in the top bar dropdown of the current universe.
+  # Stories listed on the universe page, so that page can be the story picker
+  # without paying for a second query. Memoized per request; the top bar no
+  # longer needs a list of its own.
   def nav_stories
     return [] if Current.universe.nil?
 
@@ -116,24 +113,36 @@ module ApplicationHelper
 
   # The one "Details" link used by every record's list row and taxonomy node.
   # It is real navigation to that record's own page, so it renders for read-only
-  # members and guests too, and it never hides behind a hover-only action menu.
+  # members and guests too, it sits on the right of the row next to the actions,
+  # and it never hides behind a hover-only menu.
   #
-  # `count` is the number of related records the destination will list. It is
-  # part of the visible label — "Details (10 characters)" — because the count is
-  # what makes a taxonomy scannable, and it is repeated in the accessible name
-  # together with the record name so many identical-looking links stay
-  # distinguishable in a long list.
-  def record_details_link(path, record:, count: nil, count_label: "item", classes: %w[details-link])
-    summary = count.nil? ? nil : "(#{pluralize(count, count_label)})"
+  # The link carries no count. A count is a fact about the record rather than
+  # about its destination, so it renders next to the name and tags as
+  # `record_count_badge` and the link label stays short in a long list.
+  def record_details_link(path, record:, classes: %w[details-link])
     record_name = record.try(:display_string) || record.try(:name) || record.to_s
-    accessible_name = [ "Details for #{record_name}", summary ].compact.join(" ")
 
-    link_to path, class: classes.join(" "), aria: { label: accessible_name } do
+    link_to path, class: classes.join(" "), aria: { label: "Details for #{record_name}" } do
       concat content_tag(:i, "", class: "bi bi-box-arrow-up-right", aria: { hidden: true })
       concat content_tag(:span, "Details")
-      # The leading space keeps the visible label readable as "Details (3 items)".
-      concat content_tag(:span, " #{summary}", class: "details-link-count") if summary
     end
+  end
+
+  # The number of related records a record's own page will list: "(4
+  # characters)". The label is part of the text, so a bare figure is never
+  # ambiguous in a list of many rows.
+  def record_count_text(count, label = "item")
+    "(#{pluralize(count, label)})"
+  end
+
+  # That count as a left-aligned pill next to the name and its tag badges. It is
+  # never part of the Details link, and the visible text is its own accessible
+  # name, so nothing is announced twice. A nil count (a page with nothing to
+  # list) renders nothing rather than a zero.
+  def record_count_badge(count, label = "item")
+    return if count.nil?
+
+    content_tag(:span, record_count_text(count, label), class: "record-count")
   end
 
   private

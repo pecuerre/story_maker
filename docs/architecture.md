@@ -94,7 +94,7 @@ Other global behavior: `allow_browser versions: :modern`,
     members can contribute, and admin members can also manage access;
   - access is inherited by every story and component in the universe; story-scoped records are
     authorized through their story's universe.
-- `Universe.visible_to(user)` applies the same policy to the universes index and navbar dropdown.
+- `Universe.visible_to(user)` applies the same policy to the universes index (the landing page).
   Universe show and all universe-scoped content callbacks apply the policy before loading records.
 - Guests attempting a public-universe write are redirected to sign in. Every non-member,
   including a guest, receives 404 for a private universe; a member with insufficient
@@ -167,8 +167,8 @@ will appear later. A Section additionally lists the scenes grouped under it, eac
 narrative position, because grouping never sets order. A tag page lists the
 records that carry it through `HasManyTags#tagged_records`, the scoped inverse association, so it
 cannot disclose another universe's or story's records. `TaggedRecordCounts` answers the same
-question for a whole taxonomy in one grouped query, which is what the tree row's
-`Details (10 characters)` label uses.
+question for a whole taxonomy in one grouped query, which is what the row's `.record-count` pill
+uses.
 
 ## Response formats per controller
 
@@ -208,7 +208,7 @@ Everything follows a two-step scope selection:
    The right utility sidebar is the tools scope and the third hue: a green **Universe tools**
    context block followed by a **Configuration** section with **Tags** for everyone and
    **Members** for universe admins, then the future **Collaboration**, **Analytics**, and **AI**
-   placeholder groups. The navbar adds explicit **Universe: …** and **Story: …** context/switchers.
+   placeholder groups.
 3. **Story selected** (`Current.story`): Story workspace gains the story overview plus **Sections**
    and **Scenes** workspace tabs. The story is still remembered per universe; no first-story
    fallback exists. The **Scenes** sidebar entry is a real story-scoped link only while a story is
@@ -217,18 +217,46 @@ Everything follows a two-step scope selection:
 
 The universe page is the landing page for a universe, so it lists the universe's own stories with an
 **Open** action each instead of a summary card that links onward; the header keeps **All stories**
-for the full page. It reuses the navbar's memoized story list, so the page adds no query and no
-`COUNT` — the per-story section and scene counts stay in the cached sidebar metrics.
+for the full page and carries **New story** for writers. It reuses the memoized story list, so the
+page adds no query and no `COUNT` — the per-story section and scene counts stay in the cached
+sidebar metrics.
 
-The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
-switcher, and an **Account** menu. It keeps **New story** in the Story dropdown rather than in the
-left sidebar, and only shows contribution/admin actions when the current user has the required
-level. Universe-scoped content is shared by every story; Sections and Section tags remain
-story-scoped. Related record workspaces now keep only the records together in URL-backed tabs:
+The navbar is deliberately three items and no switchers: the **Universe Maker** brand links to the
+landing page (`/`, the universes index, which is also where a universe is created), and
+**Universe: …** / **Story: …** are plain links to the current universe page and the current story
+page. There is no universe or story dropdown, so changing universes happens on the landing page and
+changing stories happens on the universe page, which lists them. A scope link carries `.active` and
+`aria-current="page"` only on the page it points at, and the account menu is the navbar's only
+dropdown. Related record workspaces keep only the records together in URL-backed tabs:
 Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
 lives under the right sidebar's **Configuration → Tags**, with **Universe Tags** (Character,
 Relation, Location, Event, Item, and Ownership tags) and **Story Tags** (Section and Scene tags)
 selectors.
+
+## List rows
+
+Every list row — flat entity lists, taxonomy nodes, and the Scenes list — has the same shape, so a
+row means the same thing in every workspace:
+
+- **left**: the record's name (plain text, not a link) followed by its tag badges and, for a
+  taxonomy node or a section, a `.record-count` pill holding the number of related records its own
+  page will list together with what it counts — "(4 characters)", "(3 scenes)". A bare figure next to
+  a name is ambiguous in a list of many rows, so the label is part of the visible text and therefore
+  the pill's own accessible name. `record_count_text(count, label)` formats it and
+  `record_count_badge(count, label)` wraps it in the pill, which is styled like the sidebar's
+  `.sidebar-count` pills;
+- **right**: `record_details_link` — real navigation to that record's own page, rendered for
+  read-only members and public guests too, labelled **Details** only, with the record name in its
+  accessible name — followed by the action menu (`shared/_row_actions` for flat lists, the taxonomy
+  row's own menu for trees, and the Scenes row's Edit/Delete menu).
+
+Both halves of the right-hand group are always visible: nothing on a row depends on hover, so the
+list works with a keyboard, on touch, and at a narrow width. A count is never part of the Details
+label, which keeps the link short in a long list and keeps the count where it can be scanned next to
+the name it belongs to. The taxonomy tree serializes the formatted count onto the node
+(`data-record-count-label`) because the tree controller rebuilds the rename button when an inline
+rename is cancelled; the text is formatted by the server, so nothing is pluralized in JavaScript.
+
 
 All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`,
 `empty_state`, and `record_details`/`detail_section` patterns. Visual tokens and
@@ -243,14 +271,14 @@ Data flow for the tree/modal editors: `modal_fields.rb` serializes field descrip
 descriptions, option labels, and ARIA values are assigned as text/attributes, never interpolated
 into `innerHTML`) → `fetch` submits to the JSON endpoints → a successful mutation uses a
 same-URL Turbo visit so serialized parent/tag descriptors and all counts are refreshed from the
-server. A taxonomy row now carries only the name, the **Details** link, and one overflow menu
-(Add child, Insert before/after, Move up/Move down, Edit, Delete); the row itself no longer holds
-add/move buttons, and the name is sized to its own text so only hovering the name starts an inline
-rename. Insertion, move, and edit controls are available by pointer, touch, and keyboard; HTML5
-drag/drop is an optional enhancement. Position changes use the transactional ordering service
-described in ADR 0009. The Story Tags scope now presents **Section tags** and **Scene
-tags** as separate story-scoped taxonomy tabs; both use the same DOM-safe tree and JSON mutation
-contract, while Scene assignment stays in the HTML Scene form.
+server. A taxonomy row now carries only the name, the tags, the count, the **Details** link, and one
+overflow menu (Add child, Insert before/after, Move up/Move down, Edit, Delete); the row itself no
+longer holds add/move buttons, and the name is sized to its own text so only hovering the name
+starts an inline rename. Insertion, move, and edit controls are available by pointer, touch, and
+keyboard; HTML5 drag/drop is an optional enhancement. Position changes use the transactional
+ordering service described in ADR 0009. The Story Tags scope now presents **Section tags** and
+**Scene tags** as separate story-scoped taxonomy tabs; both use the same DOM-safe tree and JSON
+mutation contract, while Scene assignment stays in the HTML Scene form.
 
 ## Scene architecture (slices 11.1–11.4 implemented)
 
@@ -346,7 +374,10 @@ has real foreign keys and a unique `[scene_id, scene_tag_id]` index.
 
 The Story workspace gained a flat **Scenes** list with Title/short-description previews, a 1-based
 narrative-position badge, a Section-group or **Ungrouped** badge, optional Scene Tag badges, and
-add/edit/delete actions. Visible Move up/Move down buttons are real `button_to` forms (keyboard
+add/edit/delete actions. The Title is plain text, exactly like every other list, and the row's
+right-hand group holds the **Details** link into Scene Details followed by Move up/Move down and the
+action menu; all of it is rendered for every access level except the mutation controls. Visible Move
+up/Move down buttons are real `button_to` forms (keyboard
 operable, no drag required) and are disabled at the sequence boundaries. The page states that the
 order is the order the story is told, not in-world chronography, and that a section group only
 organizes a scene. Read-only users and public guests see the same list with no mutation controls and
@@ -366,13 +397,17 @@ title until their slices add a real destination. A tab is never rendered as a li
 does not exist, and it is never an in-document Bootstrap pane.
 
 The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** list below it:
-only the scenes that belong to no Section, in canonical narrative order, with the count of grouped
-scenes and the pointer to each Section's own page. A Section is a group rather than a record with a
-list of its own, so a grouped scene is read on that Section's details page and is not repeated here.
-For writers the list keeps one selector-driven move form (Scene → group) offering **Ungrouped** plus
-every Section path, and that form still offers every scene of the story, because regrouping is how a
-grouped scene comes back; drag-and-drop is not offered, so the move is always available by keyboard
-and on touch. Read-only members and guests see the same list with no controls. The tree's read-only
+only the scenes that belong to no Section, in canonical narrative order, headed by a badge that says
+how many that is ("3 ungrouped scenes") and carrying the pointer to each Section's own page. A Section
+is a group rather than a record with a list of its own, so a grouped scene is read on that Section's
+details page and is not repeated here. For writers the list keeps one selector-driven move form
+(**Ungrouped scene** → group) offering **Ungrouped** plus every Section path. That form offers only
+the ungrouped scenes it lists, because the surface is the Ungrouped end of the workspace: offering a
+grouped scene here would contradict the block the reader is in. A grouped scene is regrouped from its
+own Section's page, where its editor carries the Section selector with **Ungrouped**, so nothing
+became unreachable. Drag-and-drop is not offered, so the move is always available by keyboard and on
+touch. Read-only members and guests see the same list with no controls, and when every scene is
+grouped the form disappears with the list rather than offering an empty selector. The tree's read-only
 empty state now has its own copy, so a read-only member is not told to add or drag sections.
 
 ### The story's Scene list is filtered, never re-ordered
@@ -440,7 +475,7 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
 ## Caching / performance notes
 
 - `stale_when_importmap_changes` (HTTP caching keyed on the importmap).
-- `solid_cache` store in production; `nav_universes` and `nav_stories` are memoized per request.
+- `solid_cache` store in production; `nav_stories` is memoized per request.
 - Sidebar count data is stored in `Rails.cache`: one grouped entry for the current universe, and
   one entry per scalar story metric. A story caches its section count and its scene count under
   two distinct keys (`Story::SECTION_MENU_COUNT_SCOPE` and `Story::SCENE_MENU_COUNT_SCOPE`) so a
@@ -450,13 +485,12 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
   destroyed (and when a record moves to another scope). Open transactions calculate without
   filling the cache, and entries have a one-hour safety expiry. See
   [former quirk #18](resolved_quirks.md#former-18--sidebar-issued-count-queries-on-every-page-fixed).
-- The navbar adds one `stories` query per render (`nav_stories`). The universe page reuses that
-  memoized list instead of querying the same stories again.
+- The navbar is three links and the account menu, so it issues no query. Only the universe page
+  loads stories (`nav_stories`), and it reuses that memoized list instead of querying them again.
 - `TaggedRecordCounts.for(tags)` answers "how many records carry each tag" with one grouped query
   over the HABTM table, because the scoped tag associations have an instance-dependent scope and
   cannot be eager loaded or grouped through Active Record. Every taxonomy index and the shared
-  taxonomy workspace load it once, so a row's `Details (N records)` label is not an N+1. The
-  Section tree's scene counts come from one `@story.scenes.group(:section_id).count` for the same
-  reason. Row-level authorization in `shared/_row_actions` and the recursive taxonomy partial
-  remain N+1 and are still tracked in
-  [`known_quirks.md`](known_quirks.md).
+  taxonomy workspace load it once, so a row's count pill is not an N+1. The Section tree's scene
+  counts come from one `@story.scenes.group(:section_id).count` for the same reason. Row-level
+  authorization in `shared/_row_actions` and the recursive taxonomy partial remain N+1 and are still
+  tracked in [`known_quirks.md`](known_quirks.md).

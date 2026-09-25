@@ -289,7 +289,7 @@ always has a readable label in list rows, row-action confirmations, and its deta
 `TaggedRecordCounts` (`app/models/tagged_record_counts.rb`) is a value object, not a table: it answers
 "how many records carry each tag" for a whole taxonomy with one grouped query, because the
 instance-dependent `HasManyTags` scopes cannot be eager loaded or grouped through Active Record. Its
-result is a `tag id => count` hash used by the taxonomy rows' `Details (N records)` label. The
+result is a `tag id => count` hash used by the taxonomy rows' `(N records)` count pill. The
 per-record read side is `HasManyTags#tagged_records`, the scoped inverse association ordered by name
 (`none` on a content model), which is what a tag's details page lists.
 

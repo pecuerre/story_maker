@@ -11,6 +11,11 @@ class RecordDetailsTest < ApplicationSystemTestCase
     assert_stimulus_loaded
 
     within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
+      # The count sits with the name on the left and spells out what it counts;
+      # the link itself says only "Details" and is visible without hovering.
+      assert_selector ".record-count", text: "(1 character)", visible: :visible
+      assert_selector "a.details-link", text: "Details", visible: :visible
+      assert_selector ".taxonomy-actions .dropdown-toggle", visible: :visible
       click_link "Details"
     end
 
@@ -32,7 +37,8 @@ class RecordDetailsTest < ApplicationSystemTestCase
     visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
 
     within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
-      click_link "Details (1 scene)"
+      assert_selector ".record-count", text: "(1 scene)", visible: :visible
+      click_link "Details"
     end
 
     assert_selector "h1", text: section.name

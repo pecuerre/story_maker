@@ -231,7 +231,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_no_selector ".taxonomy-new"
   end
 
-  test "touch-sized taxonomy controls remain available without hover" do
+  test "row controls and the Details link stay visible without hover at any width" do
     user = users(:user_one)
     universe = universes(:universe_one)
 
@@ -241,8 +241,31 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_stimulus_loaded
 
     assert_selector ".taxonomy-separator-add", visible: :visible
-    # Row mutations moved into the overflow menu, so the menu toggle is the row
-    # control that must be visible without hover.
-    assert_selector ".taxonomy-actions .dropdown-toggle", visible: :visible
+    # Row mutations moved into the overflow menu, and neither the menu nor the
+    # Details link is a hover affordance: both are always rendered.
+    assert_selector ".taxonomy-row-end .taxonomy-actions .dropdown-toggle", visible: :visible
+    assert_selector ".taxonomy-row-end a.details-link", text: "Details", visible: :visible
+    # The count belongs to the record, so it sits with the name on the left.
+    assert_selector ".taxonomy-name-area .record-count", visible: :visible
+  end
+
+  test "cancelling an inline rename restores the row's count" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
+      find("button.taxonomy-name-trigger").click
+      assert_selector ".record-count", count: 0
+      click_button "Cancel"
+      # The count is part of the rename button the controller rebuilds, so it has
+      # to come back with the button instead of waiting for a page load.
+      assert_selector "button.taxonomy-name-trigger .record-count", text: "(1 character)"
+      assert_selector "a.details-link", text: "Details"
+    end
   end
 end

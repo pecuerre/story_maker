@@ -367,7 +367,10 @@ body {
   white-space: nowrap;
 }
 
-.sidebar-count {
+// Sidebar entries and list rows show their counts the same way: a bare number in
+// a quiet pill, with the pluralized label repeated for assistive technology.
+.sidebar-count,
+.record-count {
   min-width: 1.5rem;
   padding: .15rem .4rem;
   border-radius: 999px;
@@ -377,6 +380,10 @@ body {
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
+}
+
+.record-count {
+  flex-shrink: 0;
 }
 
 .sidebar-link.active .sidebar-count {
@@ -536,6 +543,32 @@ body {
 
 .row-actions {
   flex-shrink: 0;
+}
+
+// Every list row and taxonomy node ends with the same right-hand group: the
+// Details link into the record's own page, then the action menu. Both are
+// always visible at every access level, so a row never depends on hover and the
+// right edge of a list reads the same way in every workspace.
+.entity-row-actions {
+  flex-shrink: 0;
+}
+
+.details-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  flex-shrink: 0;
+  color: var(--bs-body-secondary-color);
+  font-size: .8125rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.details-link:hover,
+.details-link:focus {
+  color: var(--um-primary-strong);
+  text-decoration: underline;
+  text-underline-offset: .15em;
 }
 
 .row-actions .dropdown-toggle::after {

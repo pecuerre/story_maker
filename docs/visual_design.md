@@ -115,12 +115,19 @@ heading uppercase.
 4. a responsive right utility navigation;
 5. a skip link and one shared flash region.
 
-The navbar is intentionally explicit about context:
+The navbar is intentionally small: three links and the account menu.
 
-- `Universes` is the global picker;
-- `Universe: <name>` is the current universe switcher;
-- `Story: <name or Select>` is the current story switcher;
+- `Universe Maker` is the brand and the **landing page** — the universes list, which is also where a
+  universe is created;
+- `Universe: <name>` links to the current universe page;
+- `Story: <name>` links to the current story page and exists only while a story is current;
 - `Account` contains the signed-in email and logout action.
+
+There is no universe or story switcher in the top bar: changing universes happens on the landing
+page, and changing or creating stories happens on the universe page, which lists the universe's
+stories. A scope link is marked current with `.active` **and** `aria-current="page"` only on the
+page it points at, so the bar never claims a scope that is not the page being viewed. The account
+menu is the navbar's only dropdown, which also means the top bar issues no query.
 
 The navbar does not render placeholder links. The right utility sidebar is the one intentional
 exception: its `aria-disabled` entries reserve space for future Collaboration, Analytics, and AI
@@ -181,7 +188,8 @@ access list is managed, and the entry itself is always rendered so **Tags** stay
 guest or read-only member. New configuration tools should be added as top-level entries here,
 grouped by scope when needed.
 
-Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
+Counts use aligned `.sidebar-count` pills, and a list row's own count uses the identical
+`.record-count` pill. Current links use a soft primary background and
 `aria-current="page"`; color is not the only state signal. **Scenes** is a real link with its own
 count while a story is selected and an `aria-disabled` placeholder otherwise; the right-sidebar
 entries are the intentional placeholders for future functionality and are rendered in the flat
@@ -218,6 +226,28 @@ Use `shared/_empty_state` for no records. It must explain what the record belong
 useful. Tags remain optional in every empty-state message. Do not imply that a default tag is
 required.
 
+### List rows
+
+Every list row in the application — Characters, Relations, Locations, Events, Items, Ownerships,
+Sections, every tag tree, and Scenes — has the same shape, so a row means the same thing wherever
+it appears:
+
+- **left**: the record's name as plain text, followed by its tag badges and, where a count exists
+  (a tag, a Section), a `.record-count` pill that names what it counts — `(4 characters)`,
+  `(3 scenes)` — next to the name it belongs to;
+- **right**: the **Details** link into the record's own page, then the overflow action menu.
+
+Both parts of the right-hand group are always visible at every access level. Nothing on a row
+depends on hover, so a list reads the same with a pointer, a keyboard, on touch, and at a narrow
+width, and a read-only member sees the same right edge as a writer. The name is never a link: the
+Details link is the single, predictable way into a record, which is why it repeats the record name in
+its accessible name.
+
+A count is a quiet pill, never part of a link label. Keeping it out of the Details label leaves that
+label short in a long list and puts the number where it can be compared across rows. It always says
+what it counts — a bare figure beside a name is ambiguous once a list has more than a few rows — and
+because the label is visible text, the pill is its own accessible name.
+
 ### Flat entity lists
 
 Characters, items, events, relations, and ownerships use:
@@ -227,7 +257,8 @@ Characters, items, events, relations, and ownerships use:
 - a short description clamped to a readable number of lines;
 - a `content-surface`/`list-group` wrapper;
 - a modal for quick create/edit, preserving the existing JSON-only mutation flow;
-- mutation controls hidden for guests and read-only members, while the record content remains visible.
+- mutation controls hidden for guests and read-only members, while the record content and the Details
+  link remain visible.
 
 Relations should read naturally (`Character A → Character B`) rather than as an unlabeled database
 row. Ownerships use the same readable relationship treatment.
@@ -271,13 +302,18 @@ The shared tree provides:
 - a native rename button with inline rename for users with write access. The button is sized to its
   own text, so only hovering or focusing the name starts a rename — clicking the rest of the row
   does nothing;
-- a **Details** link on every row, visible at every access level, labelled with the number of
-  records that page will list (`Details (10 characters)`) when there are any;
+- a `.record-count` pill next to the name and its tags, naming the number of records that page will
+  list (`(4 characters)`, `(3 scenes)`), and a **Details** link on the right that is visible at every
+  access level;
 - one neutral overflow menu per row holding Add child, Insert before, Insert after, Move up, Move
   down, Edit, and Delete. Move up/down are disabled menu items at the sequence boundaries; the row
   itself carries no add or arrow buttons, and drag handles remain an optional enhancement;
 - successful mutations refresh the same URL so counts and serialized parent/tag options are never
   stale; dynamic names and option labels are rendered as text, not HTML.
+
+The row's right-hand group (Details + menu) is never a hover affordance. A hover-revealed control is
+not usable on touch and is invisible to a keyboard user scanning a long list, so both are always
+rendered and the row is the same shape as a flat list row.
 
 The first insert target of the tree needs room for its 44px button, so the root list keeps top
 padding; otherwise the button would hang over the hint paragraph above it.
@@ -286,7 +322,8 @@ The add action must be human-readable (`Add relation tag`), never generated dire
 model parameter (`Add Relation_tag`). The tree Stimulus controller owns the inline add form and
 must keep the empty-state removal, hierarchy indentation, and keyboard/focus behavior in sync with
 the rendered node partial. It must not grow a second JavaScript copy of the row: a successful
-create always refreshes the same URL, so only the rename button is ever built in JavaScript.
+create always refreshes the same URL, so only the rename button is ever built in JavaScript, and
+that button's content is rebuilt from the node's data attributes when a rename is cancelled.
 
 ### Full-page forms
 
@@ -311,12 +348,13 @@ shared page header, content surface, entity rows, and empty state. Rows show:
 
 - the 1-based narrative position as a bordered pill with an
   `aria-label="Narrative position N of M"`, where both numbers come from the whole sequence;
-- the required Title as a link to Scene Details and a clamped description preview;
+- the required Title as plain text and a clamped description preview, like every other list;
 - a bordered grouping badge showing the Scene's full nested Section path, or **Ungrouped** with an
   open-folder icon. The `title` states that grouping does not change the narrative order;
 - optional Scene Tag badges using the taxonomy colors, with untagged Scenes remaining valid;
-- edit/delete controls only for writers;
-- visible Move up/Move down controls with a clear disabled state at sequence boundaries.
+- a right-hand group with the **Details** link into Scene Details for every access level, followed by
+  the writer-only Move up/Move down controls and the Edit/Delete menu, with a clear disabled state at
+  the sequence boundaries.
 
 Element/participant counts arrive with slice 11.6; do not render placeholder counts for them.
 
@@ -362,13 +400,18 @@ changes the narrative position, Scene Tags do not change order, and the event li
 time never write or clear each other.
 
 The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** surface below it: only
-the Scenes that belong to no Section, with a count, each row showing its narrative position and Title
+the Scenes that belong to no Section, headed by a badge that says how many that is
+("3 ungrouped scenes") because a bare figure next to the story's own Scene count is ambiguous, each
+row showing its narrative position and Title
 in canonical order, and a line saying how many Scenes are grouped and that they are listed on their
 own Section's page. A grouped Scene is therefore never shown twice: the tree's **Details** link is
 the way in. When nothing is ungrouped the surface says so instead of showing an empty list. A long
 Section name wraps instead of pushing the layout. Writers also get one selector-driven move form
-(Scene → group, offering **Ungrouped** plus every Section path and every Scene of the story) with a
-real submit button; drag-and-drop is not offered, so the move always works by keyboard and on touch.
+(**Ungrouped scene** → group, offering **Ungrouped** plus every Section path) with a
+real submit button; it offers only the ungrouped Scenes the surface above lists, because the form
+belongs to that block — a grouped Scene is regrouped from its own Section's page, where the editor
+carries the Section selector. Drag-and-drop is not offered, so the move always works by keyboard and
+on touch.
 Read-only members and guests see the same surface with no controls and no instruction to add scenes.
 
 Narration and Dialogue Elements will use one Bootstrap modal. The form has a kind selector,
@@ -386,16 +429,20 @@ later dependents are added.
 ## Accessibility and interaction
 
 - Every icon-only control has an accessible label or visually hidden text.
-- Current navigation uses `aria-current="page"` and a non-color indicator.
+- Current navigation uses `aria-current="page"` and a non-color indicator, including the top bar's
+  scope links, which are current only on the page they point at.
 - Dropdown menus have unique IDs and `aria-labelledby` targets.
 - Delete actions are labeled as destructive and retain confirmation.
-- The Details link repeats the record name and its count in its accessible name, so many identical
-  looking links stay distinguishable in a long list.
+- The Details link repeats the record name in its accessible name, so many identical looking links
+  stay distinguishable in a long list. A count is a separate pill whose visible text names what it
+  counts, so it is announced as a fact about the record rather than as part of the link.
 - Placeholder navigation keeps `aria-disabled` and is additionally styled as unavailable, so the
   visual state and the semantics agree.
-- Keep focus states visible; do not use hover as the only way to discover an action.
-- Taxonomy actions become visible on keyboard focus and on touch devices; insertion targets are at
-  least 44×44 CSS pixels and reordering never depends on hover or drag/drop.
+- Keep focus states visible; do not use hover as the only way to discover an action. A row's Details
+  link and overflow menu are always rendered, so no list control depends on hover, on a pointer
+  device, or on a wide viewport.
+- Taxonomy insertion targets are at least 44×44 CSS pixels and reordering never depends on
+  hover/drag or a drag-only path.
 - Preserve `prefers-reduced-motion` handling for transitions and drag feedback.
 - Tag color is supplementary information, never the only way to identify a record.
 
@@ -407,7 +454,8 @@ later dependents are added.
 2. Start with `shared/_page_header` and `shared/_empty_state` where applicable.
 3. Use the correct universe/story scope in every path.
 4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout, and
-   render `record_details_link` on every row so the record's own page stays one click away.
+   render `record_details_link` on every row so the record's own page stays one click away. Keep the
+   [list row shape](#list-rows): plain-text name on the left, Details then actions on the right.
 5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for related
    records and `shared/_tag_workspace_navigation` for taxonomy management. Put configuration
    tools and the Members access manager in the right sidebar's **Configuration** section.

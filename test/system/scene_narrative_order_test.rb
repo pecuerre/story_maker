@@ -70,8 +70,11 @@ class SceneNarrativeOrderTest < ApplicationSystemTestCase
     visit universe_story_scenes_path(universe_slug: private_universe.slug, story_id: story)
 
     assert_selector "h1", text: "Scenes"
-    assert_selector ".entity-list a[href='#{universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: scene)}']",
-      text: "Private scene"
+    assert_selector ".entity-list .entity-title", text: "Private scene"
+    # The row is plain text plus a Details link, so a read-only member can reach
+    # the scene page and the link never waits for a hover.
+    assert_selector ".entity-list a.details-link[href='#{universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: scene)}']",
+      text: "Details", visible: :visible
     assert_no_link "Add scene"
     assert_no_selector "form[action$='/move']"
     assert_no_selector ".dropdown.row-actions"

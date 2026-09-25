@@ -526,7 +526,9 @@ export default class extends Controller {
   // puts the native rename button back. Every other part of a row (the Details
   // link and the action menu) is server-rendered and then refreshed by the
   // same-URL Turbo visit, so there is deliberately no second JS copy of the row
-  // layout that could drift from `shared/_taxonomy_node`.
+  // layout that could drift from `shared/_taxonomy_node`. The button's own
+  // content is rebuilt from the node's data attributes, including the count
+  // pill, so a cancelled rename restores exactly what the server rendered.
   buildNameTrigger(data) {
     const trigger = document.createElement("button")
     trigger.type = "button"
@@ -582,6 +584,13 @@ export default class extends Controller {
       fragment.append(title)
     }
 
+    if (data.recordCountLabel) {
+      const count = document.createElement("span")
+      count.className = "record-count"
+      count.textContent = data.recordCountLabel
+      fragment.append(count)
+    }
+
     if (data.description) {
       const description = document.createElement("span")
       description.className = "entity-description d-block"
@@ -599,7 +608,11 @@ export default class extends Controller {
     const node = form.closest("[data-node-id]")
     if (!node) return
     const values = this.parseJson(node.dataset.taxonomyValues, {})
-    const trigger = this.buildNameTrigger({ ...values, name: form.querySelector("input")?.value || node.dataset.name, description: node.dataset.description })
+    const data = { ...values, name: form.querySelector("input")?.value || node.dataset.name, description: node.dataset.description }
+    // The server sends the already-formatted count text, so no pluralization is
+    // duplicated here.
+    if (node.dataset.recordCountLabel) data.recordCountLabel = node.dataset.recordCountLabel
+    const trigger = this.buildNameTrigger(data)
     form.replaceWith(trigger)
     this.updateMoveControls()
     trigger.focus()

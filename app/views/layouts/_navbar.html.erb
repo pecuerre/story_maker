@@ -1,5 +1,7 @@
 <nav class="navbar navbar-expand-lg fixed-top border-bottom bg-dark navbar-dark" aria-label="Primary navigation">
   <div class="container-fluid px-3 px-lg-4">
+    <%# The brand is the landing page: it lists the universes the visitor may
+        open and is the only place a new universe is created. %>
     <%= link_to "Universe Maker", root_path, class: "navbar-brand fw-bold" %>
 
     <button class="navbar-toggler" type="button"
@@ -13,75 +15,29 @@
 
     <div class="collapse navbar-collapse" id="primary-navigation">
       <ul class="navbar-nav me-auto align-items-lg-center gap-lg-1">
-        <li class="nav-item dropdown">
-          <button class="nav-link dropdown-toggle" type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false">
-            Universes
-          </button>
-          <ul class="dropdown-menu dropdown-menu-dark">
-            <% nav_universes.each do |universe| %>
-              <li>
-                <%= link_to universe.name, universe_path(universe),
-                  class: "dropdown-item#{' active' if Current.universe == universe}" %>
-              </li>
-            <% end %>
-            <% if nav_universes.empty? %>
-              <li><span class="dropdown-item-text text-body-secondary">No universes yet</span></li>
-            <% end %>
-            <li><hr class="dropdown-divider"></li>
-            <li><%= link_to "All universes", universes_path, class: "dropdown-item" %></li>
-            <% if Current.user.present? %>
-              <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
-            <% end %>
-          </ul>
-        </li>
-
+        <%# The top bar only states the current scope and links to that scope's
+            own page. Changing universes and creating one happen on the landing
+            page the brand links to, and changing stories happens on the universe
+            page, so there is no switcher dropdown here. %>
         <% if Current.universe.present? %>
-          <li class="nav-item dropdown">
-            <button class="nav-link dropdown-toggle active" type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-              aria-current="true">
+          <% on_universe_page = controller_name == "universes" && action_name == "show" %>
+          <li class="nav-item">
+            <%= link_to universe_path(Current.universe),
+              class: "nav-link#{' active' if on_universe_page}",
+              aria: (on_universe_page ? { current: "page" } : {}) do %>
               Universe: <span class="navbar-context"><%= Current.universe.name %></span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-dark">
-              <li>
-                <%= link_to Current.universe.name, universe_path(Current.universe), class: "dropdown-item active" %>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-              <li><%= link_to "All universes", universes_path, class: "dropdown-item" %></li>
-              <% if Current.user.present? %>
-                <li><%= link_to "New universe", new_universe_path, class: "dropdown-item" %></li>
-              <% end %>
-              <% if can_administer_universe? %>
-                <li><%= link_to "Manage members", universe_memberships_path, class: "dropdown-item" %></li>
-              <% end %>
-            </ul>
+            <% end %>
           </li>
+        <% end %>
 
-          <li class="nav-item dropdown">
-            <button class="nav-link dropdown-toggle<%= ' active' if Current.story.present? %>" type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"<% if Current.story.present? %> aria-current="true"<% end %>>
-              Story: <span class="navbar-context"><%= Current.story&.name || "Select" %></span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-dark">
-              <% nav_stories.each do |story| %>
-                <li>
-                  <%= link_to story.name, universe_story_path(id: story),
-                    class: "dropdown-item#{' active' if Current.story == story}" %>
-                </li>
-              <% end %>
-              <% if nav_stories.empty? %>
-                <li><span class="dropdown-item-text text-body-secondary">No stories yet</span></li>
-              <% end %>
-              <li><hr class="dropdown-divider"></li>
-              <li><%= link_to "All stories", universe_stories_path, class: "dropdown-item" %></li>
-              <% if can_write_universe? %>
-                <li><%= link_to "New story", new_universe_story_path, class: "dropdown-item" %></li>
-              <% end %>
-            </ul>
+        <% if Current.story.present? %>
+          <% on_story_page = controller_name == "stories" && action_name == "show" %>
+          <li class="nav-item">
+            <%= link_to universe_story_path(id: Current.story),
+              class: "nav-link#{' active' if on_story_page}",
+              aria: (on_story_page ? { current: "page" } : {}) do %>
+              Story: <span class="navbar-context"><%= Current.story.name %></span>
+            <% end %>
           </li>
         <% end %>
       </ul>

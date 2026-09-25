@@ -41,6 +41,36 @@ Labels used below:
   filters repeated and a **Clear filters** action — which is never reused for a story without scenes.
   Added value-object, request, helper, and browser coverage, including a guest filtering with the
   keyboard alone at a 420px width.
+- **[changed]** The Sections workspace **Move scene** form now offers only the ungrouped scenes its
+  own surface lists, and its source selector is labelled **Ungrouped scene** so the control matches
+  the block it lives in. This supersedes the same-day 11.4.1(b) note below that the form offered
+  every scene of the story: a grouped scene is now put back to Ungrouped from its own Section's page,
+  where the scene editor carries the Section selector, so nothing became unreachable. The form is not
+  rendered at all when every scene is grouped, instead of offering an empty selector. Request and
+  browser coverage now assert that a grouped scene is never offered, that the badge states the
+  subset, and that the ungroup path goes through the scene editor.
+- **[changed]** Completed backlog item 22. The top bar is now three links and the account menu, with
+  no switcher dropdown: **Universe Maker** is the brand and the landing page, and **Universe: …** /
+  **Story: …** are plain links to the current universe page and the current story page. A scope link
+  carries `.active` together with `aria-current="page"` only on the page it points at, so the bar
+  never claims a scope that is not being viewed, and the story link exists only while a story is
+  current instead of rendering a "Select" placeholder. Changing universes and creating one happen on
+  the landing page, and changing stories happens on the universe page, which lists them with an
+  **Open** action each; because removing the Story dropdown would otherwise have lost the only
+  create entry point, the universe page header gained **New story** for writers, and the navbar's
+  now-dead `nav_universes` helper was removed, so the top bar issues no query at all.
+- **[changed]** Completed backlog item 23. Every list row now has one shape: a plain-text name with
+  its tag badges and, where a count exists, a `.record-count` pill on the left, and a right-hand
+  group holding an always-visible **Details** link followed by an always-visible `[…]` action menu.
+  Locations, Sections, and every tag tree lost their hover-only `opacity: 0` menu, and the Scenes
+  list gained the **Details** link every other list already had, so a read-only member and a guest
+  can reach a scene's page from the list. The count is no longer part of the Details label: it is
+  rendered by the new `record_count_badge(count, label)` next to the name it belongs to, which keeps
+  the link label short in a long list and makes counts comparable across rows. The taxonomy node
+  serializes the count onto the node, so cancelling an inline
+  rename rebuilds the rename button with the count intact instead of silently dropping it.
+  Browser coverage pins the no-hover visibility of both halves of a row, the count's return after a
+  cancelled rename, and the read-only Scene row.
 - **[changed]** Completed backlog item 11.4.1, part (b) for the Sections workspace. A Section is a
   group, not a record with a scenes list of its own, so the surface below the tree is now
   **Ungrouped scenes**: it lists only the scenes that belong to no section, says how many are grouped,
@@ -49,6 +79,22 @@ Labels used below:
   still offers every scene of the story because regrouping is how a grouped scene comes back. The
   `scenes/_section_outline` partial is now `scenes/_ungrouped_scenes`, and `SectionPaths#ids` exposes
   the ids the list already loaded so a filter value can be validated without a second query.
+- **[fixed]** A count on a row now says what it counts instead of showing a bare figure. The taxonomy
+  and Section pills read `Family Nielsen (4 characters)` and `Episode 1 (3 scenes)` rather than `4`
+  and `3`, because a number beside a name is ambiguous as soon as a list has more than a few rows.
+  `record_count_text(count, label)` formats it and `record_count_badge(count, label)` renders the
+  pill; the visible text is the pill's own accessible name, so nothing is announced twice, and the
+  tree controller still restores the pill from server-formatted text when a rename is cancelled. The
+  **Ungrouped scenes** badge above that list likewise reads `3 ungrouped scenes` rather than `3`, so a
+  subset count is never mistaken for the story's own scene count.
+- **[docs]** Updated every place the list-row contract is written down after the count-label and
+  Sections-workspace changes, so the count pill, the ungrouped-only move form, and the badge wording
+  are described the same way in each: `docs/architecture.md` (the "List rows" section and the
+  Sections-workspace paragraph), `docs/universe_maker_conventions.md`, `docs/visual_design.md` (its
+  list-row rules, the taxonomy-tree row, the Scene workspace, and the accessibility list),
+  `docs/data_model.md`, `docs/development.md`'s manual checks, the ADR 0007 execution note, and the
+  `TaggedRecordCounts` / `tags_helper` comments. The same-day 11.4.1(b) changelog entry is left as
+  written and the new entry above states what superseded it.
 - **[docs]** Recorded the delivered slice in the Scene architecture (a new "The story's Scene list is
   filtered, never re-ordered" section), the conventions, the visual design, the development guide,
   and an ADR 0007 execution note that states how the "separate grouped outline" decision is now

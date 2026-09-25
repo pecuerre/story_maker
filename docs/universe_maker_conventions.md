@@ -35,8 +35,10 @@
   writing; it normalizes hierarchical sibling positions from file order, or requires complete
   unique explicit positions for a sibling group.
 - Use `UNIVERSE=<slug> bin/rails db:demo:check` for read-only validation and the explicit
-  development-only load/reset tasks for browser data. `db:seed` and `db:prepare` never load
-  `db/data/`.
+  development-only load/reset tasks for browser data. After any `db/data/**/*.yml` add/delete/update,
+  rebuild the local development database rather than expecting a file watch or create-only load to
+  synchronize it. UI-only changes are intentionally discarded. `db:seed` and `db:prepare` never
+  load `db/data/`.
 
 ### Models
 - Models that own a hierarchy include `Hierarchical` (parent/children, cycle & scope validations).

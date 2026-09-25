@@ -238,6 +238,7 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   templates are recorded in the ADR. No application code, schema, or development data was added by
   this decision slice. Backlog item 1 is complete and supplies the explicit loader for final
   development-data/manual verification.
+
 - **11.1 — Core Scene vertical slice (completed 2026-09-25).** Shipped the schema-only `scenes`
   migration, the `Scene` model (`belongs_to :story`, `HasSlug`, required Title, optional short
   description, no `parent_id`), the `Story has_many :scenes` association, and a
@@ -258,6 +259,7 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   menu-count, ordering-service, and focused system coverage plus connected `db/data/dark/scenes.yml`
   and `db/data/lotr/scenes.yml` with a title-only scene, and updated the architecture, data model,
   conventions, visual design, and development docs.
+
 - **11.2 — Scene Details, references, and time.** Extend the stable editor with the optional
   same-story Section link, optional same-Universe Event link, and independent optional single-point
   `datetime` using the confirmed Event-compatible precision/timezone semantics.
@@ -265,34 +267,42 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   malformed optional IDs as 422 validation errors rather than allowing a database exception. Add
   the authorization/helper adapter for Scene-owned records so nested models resolve their Universe
   through Scene.
+
 - **11.3 — Section grouping workspace.** Let authors group already-written Scenes under optional
   Sections and move a Scene between “Ungrouped,” a Section, or another Section. Show nested Section
   paths and preserve the canonical Scene order. Update the Sections workspace to show grouped Scenes
   while retaining the existing tree. Use selectors/move controls first; drag-and-drop is optional.
+
 - **11.4 — Scene Tag taxonomy and assignment.** Add Scene Tag schema/model, story-scoped optional
   tag association, hierarchical editor under **Configuration → Tags → Story Tags**, and per-Scene
   tag assignment on Details. Depend on taxonomy hardening tasks 12 and 13 below; do not copy the
   current stored-DOM, stale-option/count, insertion, touch, or keyboard behavior into a new tree.
+
 - **11.5 — Modal JSON reliability for Element editing.** Make the shared modal flow submit JSON
   correctly, show 422 errors, handle loading/network failures, and remove rows and update counts
   reliably. This is a shared infrastructure slice with browser regressions for existing modal
   consumers; it must be complete before Scene Elements depend on it.
+
 - **11.6 — Scene Elements and Dialogue speakers.** Add Scene Elements with the same transactional
   ordering guarantees as Scenes and the many-to-many speaker join. Implement Narration and Dialogue
   creation, editing, deletion, and accessible reordering in Bootstrap modals. A Dialogue may have
   many speakers but no turn structure; apply the minimum-speaker rule confirmed in 11.0, and Narration
   cannot retain speakers. Do not copy the taxonomy tree controller or assume
   `MaintainsSiblingPositions` supports a flat parentless sequence.
+
 - **11.7 — Character presence and speaker coherence.** Add `SceneCharacter` with nullable free-text
   role, the Characters tab, scoped same-Universe validation, and a derived view of explicit
   participants plus Element speakers without duplicate rows. Keep speaker links and participant
   roles distinguishable.
+
 - **11.8 — Item presence.** Add `SceneItem` with nullable free-text role, the Items tab, scoped
   same-Universe validation, and add/remove/role-edit behavior. Include duplicate-link and deletion
   tests.
+
 - **11.9 — Location presence.** Add `SceneLocation` with nullable free-text role, the plural
   Locations tab, scoped same-Universe validation, and add/remove/role-edit behavior. Include
   duplicate-link and deletion tests.
+
 - **11.10 — Continuity integration and reverse links.** Add “Appears in Scenes” links to relevant
   Character, Item, Location, and Event workspaces, always with Story context and authorization. Add
   analyzer-oriented query tests proving that multiple Scenes can reference one Event while Scene

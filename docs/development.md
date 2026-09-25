@@ -105,8 +105,40 @@ let a production container run the development data path.
 
 `db/data/` contains checked-in but **disposable development data**. It is not production seed data,
 and it is not a fixture source for the Rails test suite; focused service tests validate and
-transactionally exercise it. The preferred local lifecycle is to rebuild the disposable database
-and then load one universe directory for browser testing.
+transactionally exercise it. The YAML files are the source of truth for the local demo database, but
+Rails does not watch or synchronize them. After **every** add/delete/update under `db/data/**/*.yml`,
+validate the changed universe and rebuild the local development database before checking the result
+in the app.
+
+### Required workflow after editing demo YAML
+
+Run the read-only check for every changed universe first:
+
+```bash
+UNIVERSE=dark bin/rails db:demo:check
+UNIVERSE=lotr bin/rails db:demo:check
+```
+
+Then reset the disposable database so the change is actually applied. The reset drops the entire
+development database, migrates the schema, and loads the named universe:
+
+```bash
+CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset
+```
+
+If both current sample universes should remain available locally, create-only load the other one
+after the reset:
+
+```bash
+UNIVERSE=lotr bin/rails db:demo:load
+```
+
+The reset target may be either registered universe. `db:demo:load` refuses a universe that already
+exists; the loader has no update, merge, or UI-export mode. Consequently, a record added or changed
+only in the UI is intentionally discarded by a later reset. The project owner accepts that loss for
+this disposable local database. Never use these commands on production or any other real database,
+and verify the rebuilt database (for example with a scoped Rails query) before reporting demo data as
+available in the app.
 
 ### One directory per universe
 
@@ -193,13 +225,15 @@ feature directory. Records must use stable symbolic references and demonstrate t
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, Narration, Dialogue,
 multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. `scenes.yml`
 records already reference their story and use explicit `position` values so the narrative order is
-visible in the file. Use the explicit `UNIVERSE=<slug> bin/rails db:demo:load` task for a prepared
-development database; the loader refuses production/test writes and does not load another universe.
+visible in the file. For an already prepared but empty development database, use the explicit
+`UNIVERSE=<slug> bin/rails db:demo:load` task. After changing any `scenes.yml`, follow the required
+check-and-reset workflow above instead: `load` is create-only and will not update the existing
+Dark/LOTR universe. The loader refuses production/test writes and does not load another universe.
 
 Manual verification for the shipped slice:
 
 ```bash
-CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset   # destructive: needs approval
+CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset   # drops/reloads local demo data
 bin/rails server
 ```
 
@@ -363,6 +397,8 @@ at the migration and model class:
    characters, locations, events, sections, and tags rather than being an isolated placeholder.
 6. Update the shared loader order/registry and the documentation that describes the new model or
    relationship.
-7. Rebuild/load the disposable development data, open the feature in the browser, and report the
-   exact load command, URL, local login, and checks performed. Do not run a destructive rebuild
-   without approval.
+7. Validate every changed YAML manifest, rebuild/load the disposable development data, verify the
+   rebuilt rows with a scoped query, open the feature in the browser, and report the exact reset/load
+   commands, URL, local login, and checks performed. The owner has granted standing approval for a
+   local development `db:demo:reset` used to apply `db/data/**/*.yml`; that approval never extends
+   to production, test, or another real database.

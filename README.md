@@ -45,10 +45,14 @@ UNIVERSE=dark bin/rails db:demo:check # validate checked-in development data
 UNIVERSE=lotr bin/rails db:demo:check
 ```
 
-Development data is disposable and explicit. `db:demo:load` is development-only and loads one
-named universe; `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` deliberately rebuilds
-and loads that universe. `db:prepare`/`db:seed` never load `db/data/`. The guarded `db:restart`
-task resets schema without demo data. Application-data migrations are intentionally not used.
+Development data is disposable and explicit. After adding, deleting, or updating any
+`db/data/**/*.yml` file, run `UNIVERSE=<slug> bin/rails db:demo:check`, then rebuild the local
+development database with
+`CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset`; load any additional desired universe
+afterward with `UNIVERSE=<slug> bin/rails db:demo:load`. The reset discards UI-only records because
+YAML is the source of truth. `db:prepare`/`db:seed` never load `db/data/`. The guarded
+`db:restart` task resets schema without demo data. Application-data migrations are intentionally
+not used.
 
 ## Documentation
 

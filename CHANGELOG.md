@@ -46,6 +46,11 @@ Labels used below:
 - **[chore]** Added `scenes.yml` development data for the Dark (8 scenes) and LOTR (5 scenes)
   universes, including a title-only scene and explicit narrative positions, registered `Scene` as
   a flat story-scoped position group in the development-data registry, and added scene fixtures.
+- **[docs]** Made the demo-YAML lifecycle explicit across contributor and agent guidance: every
+  add/delete/update under `db/data/**/*.yml` must be validated and followed by a local development
+  database reset (plus create-only loads for any additional universes wanted locally). YAML is the
+  source of truth, UI-only records are intentionally discarded, and loaded rows must be verified
+  before demo data is reported as available.
 - **[chore]** Added model, request, routing, ability, menu-count, ordering-service, and browser
   coverage for the slice, and updated the architecture, data model, conventions, visual design,
   development, backlog, and known-quirks documentation.

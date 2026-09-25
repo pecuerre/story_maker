@@ -4,6 +4,11 @@
 and it is not the source of truth for the Rails test fixtures. The files exist so a developer can
 load one universe, exercise a feature in the browser, and test relationships between records.
 
+> **After any YAML change, rebuild the development database.** Rails does not watch or synchronize
+> these files. Validate the changed universe, then run the destructive reset below before opening
+> the app. The YAML files are the source of truth; records created only in the UI are not exported,
+> merged, or preserved and will be lost by that reset.
+
 ## Directory convention
 
 There is one subdirectory per universe, named with the universe slug:
@@ -85,19 +90,31 @@ browser scenario exercises more than an isolated row.
 
 ## Lifecycle and safety
 
-The development loader is explicit and environment-guarded. `check` is read-only and may run in
-development or test; `load` and `reset` may write only in development:
+YAML edits are not hot-reloaded or synchronized to an existing database. **After adding, deleting,
+or updating any file under `db/data/**/*.yml`, validate every changed universe and rebuild the local
+development database before testing the change in the app:**
 
 ```bash
 UNIVERSE=dark bin/rails db:demo:check
-UNIVERSE=dark bin/rails db:demo:load
+UNIVERSE=lotr bin/rails db:demo:check
+
+# Drops the entire development database, migrates it, and loads Dark.
 CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset
+
+# Optional: add LOTR back when both sample universes should be available locally.
+UNIVERSE=lotr bin/rails db:demo:load
 ```
 
-`db:demo:load` is create-only and refuses to load a universe that already exists. Run
-`db:demo:reset` only after deliberately accepting that the development database will be dropped;
-the confirmation variable is required. The reset task migrates the schema and loads only the named
-universe. It does not invoke `db:seed`.
+The reset target can be either registered universe. It drops all records and loads only the named
+universe, so load each additional universe once after the reset if it should remain available. The
+loader is create-only: `db:demo:load` refuses an existing universe, and there is no update, merge,
+or UI-export mode. A record created only through the UI is therefore intentionally lost on reset.
+The owner accepts that loss for this disposable local database; this workflow must never target a
+production or other real database.
+
+The development loader remains explicit and environment-guarded. `check` is read-only and may run in
+development or test; `load` and `reset` may write only in development. `db:demo:reset` requires the
+explicit confirmation value above and does not invoke `db:seed`.
 
 `db:prepare` and `db:seed` load only production-safe files under `db/seeds/`. They never load
 `db/data/`. The guarded `db:restart` task resets the schema without demo data; use

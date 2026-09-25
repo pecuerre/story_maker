@@ -68,7 +68,9 @@
   - **HTML flow** (redirect / re-render): Universes, Stories, Relations, Ownerships, Universe
     memberships, Sessions, Passwords.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
-  memberships, `show/edit` exist only for Universes and Stories.
+  memberships. In the current implementation, `show/edit` exist only for Universes and Stories;
+  the accepted Scene contract in slice 11.0 adds the documented Scene list/editor actions in later
+  delivery slices.
 
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
@@ -128,6 +130,50 @@ The three functional editing patterns are:
 
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
+
+### Planned Scene conventions (slice 11.0; not implemented)
+
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first Scene contract. Keep the
+current disabled **Scenes** sidebar placeholder until slice 11.1 provides a real, selected-Story
+route.
+
+- **Model:** `Scene belongs_to :story`, includes `HasSlug`, and is flat rather than hierarchical. A
+  required `name` is labelled **Title**; description, same-Story Section, same-Universe Event,
+  datetime, Tags, and world-record links are optional. Do not add `Hierarchical` or
+  `MaintainsSiblingPositions` to Scene or SceneElement; their contiguous `position` sequences need
+  a dedicated transactional flat-ordering implementation.
+- **Elements:** `SceneElement belongs_to :scene`; it is an ordered child component rather than a
+  standalone navigable content model and has no public slug requirement. Its `kind` is `narration`
+  or `dialogue`, `name` is required and labelled **Title**, `body` is optional, and `position` is
+  flat. Narration rejects speakers; Dialogue requires at least one same-Universe Character speaker.
+- **Tags:** `SceneTag` and `Scene` use the existing `has_many_tags` / `has_many_tagd` DSL with
+  mandatory `scope: :story_id`; tags are optional and have no default. Scene Tag definitions belong
+  under Configuration → Tags → Story Tags, while assignment belongs on Scene Details.
+- **World links:** use real join models for `SceneCharacter`, `SceneItem`, and `SceneLocation` so
+  their nullable free-text `role` is persisted. Use a unique join model for
+  `SceneElementSpeaker`. Validate same-Universe scope in application code and resolve it through
+  Scene in both `Ability` and shared helpers.
+- **Controller scope:** resolve `@story` through `Current.universe.stories.find(...)`, then resolve
+  Scenes and related records through that Story. Never use `Scene.find`, a universe-level Scene
+  route, or a controller-specific visibility rule. Public read actions still pass through the
+  shared authorization callback.
+- **Routes:** nest Scenes under Stories and related records under Scenes. Canonical paths are
+  `/u/:universe_slug/s/:story_id/scenes`, `/u/:universe_slug/s/:story_id/scenes/:scene_id`,
+  `/characters`, `/items`, `/locations`, and `/elements` beneath the Scene path. Pass `story_id`,
+  `scene_id`, and any record id as named route-helper keys; never use positional records.
+- **Responses:** Scene index/show/new/create/edit/update and narrative moves use HTML
+  redirect/re-render. Element and role-bearing presence-link create/update/destroy use JSON-only
+  Stimulus modals with `422` error hashes. Do not add an action that ambiguously accepts both.
+- **Ordering:** the global Scene list is ordered by `(position, id)` and is not grouped by Section.
+  Section assignment changes only `section_id`. Visible Move up/Move down controls and keyboard
+  behavior are required; drag-and-drop is optional. Element ordering is independent within Scene.
+- **UI:** use the existing flat-list and full-page form patterns for the Scene list/editor, and the
+  existing modal pattern for Elements and role-bearing links. Do not create a fourth page pattern.
+  URL-backed Details/Characters/Items/Locations tabs preserve canonical URLs and `aria-current`.
+- **Helpers:** add only the Scene-specific field/JSON descriptors needed by the new forms. Scene
+  JSON must not be used to mix the stable HTML Details form with mutation responsibilities. Update
+  shared count/preload behavior without copying the current taxonomy stale-option or modal 406
+  weaknesses.
 
 ### Helpers
 - `app/helpers/modal_fields.rb` — field descriptors consumed by the JS controllers:

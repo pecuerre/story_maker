@@ -158,6 +158,35 @@ The Rails test suite uses `test/fixtures/` so automated tests remain determinist
 universe files are not its fixture source. The local `config/ci.rb` still contains a transitional
 `db:seed:replant` check, which should be revisited when the seed boundary is separated.
 
+## Planned Scene delivery (slice 11.0 contract)
+
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and backlog Epic 11 define the Scene
+contract, but slice 11.0 is documentation-only. There is no Scene schema, route, controller, view,
+fixture, or development-data file yet, and the sidebar placeholder must remain non-functional until
+slice 11.1. The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
+`name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
+has none; Scene datetime follows the current Event contract; roles remain nullable; and the ADR's
+detailed deletion confirmations are mandatory.
+
+Delivery remains staged in [`backlog.md`](backlog.md):
+
+- 11.1 adds the core Scene migration/model, canonical list, ordering controls, editor shell, tests,
+  and connected development data.
+- Later slices add references, Section grouping, Tags, reliable JSON modals, Elements, speaker and
+  presence links, and reverse links in that order.
+- Slice 11.5 must fix JSON modal submission/error/delete behavior before Element UI depends on the
+  shared modal controller. Do not copy the current 406/stale-DOM behavior into Scene Elements.
+- Every slice preserves public/private read-write-admin behavior and updates all model registries,
+  authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
+
+When data is added, put it in the relevant `db/data/<universe_slug>/` files (`scenes.yml`,
+`scene_tags.yml`, `scene_elements.yml`, and the applicable speaker/presence-link files), not in a
+feature directory. Records must use stable symbolic references and demonstrate title-only,
+Ungrouped, Section-assigned, independent Event/datetime, shared-Event, Narration, Dialogue,
+multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. The explicit
+environment-guarded demo loader (backlog item 1) is required before final manual verification; do
+not run the transitional `db:restart` without approval.
+
 ## Database migrations
 
 The database is intentionally disposable: schema migrations only define the structure. Demo

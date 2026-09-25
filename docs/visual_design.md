@@ -249,6 +249,45 @@ Universes, Stories, and universe membership management use the existing form pat
 Do not replace these with a modal: full-page forms remain appropriate for objects with a stable
 URL and meaningful navigation.
 
+### Planned Scene workspace (slice 11.0 contract; not implemented)
+
+The accepted [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines a calm, explicit
+Scene workspace. The existing **Scenes** sidebar entry remains an `aria-disabled` placeholder
+until the slice 11.1 vertical slice exists.
+
+The global Scenes page is a flat list in narrative order, not a Section-grouped tree. It uses the
+shared page header, content surface, row actions, and empty state. Rows show:
+
+- required Title and a clamped description preview;
+- **Ungrouped** or the full Section ancestor path;
+- Scene Tag badges;
+- Element and participant counts;
+- edit/delete controls only for writers;
+- visible Move up/Move down controls with a clear disabled state at sequence boundaries.
+
+The page's primary **Add scene** action opens the stable new Scene form. The list must state that
+order is the order the story is told, not in-world chronology. At narrow widths, order controls and
+actions wrap without hiding the title or relying on hover.
+
+Scene Details uses URL-backed tabs for **Details**, **Characters**, **Items**, and **Locations**.
+Details contains the HTML form and the ordered Element list. Characters/Items/Locations show the
+linked record, its optional free-text role, and writer-only add/remove/edit controls. Empty states
+link to the relevant Universe Bible workspace; read-only users see the same information without
+mutation instructions.
+
+The Section selector includes **Ungrouped** and indented Section paths. A Section-grouped outline
+may be added in the Sections workspace later, but it is a second organization view: it must never
+replace or visually imply that the global Scene list is ordered by Section position.
+
+Narration and Dialogue Elements use one Bootstrap modal. The form has a kind selector, required
+**Title**, optional plain-text **Content**, and a multi-speaker picker visible and required only
+for Dialogue. Narration has no speaker control. Error summaries stay in the modal with the entered
+values; a failed request does not close it. Element rows show kind, Title, a body preview,
+speakers for Dialogue, and accessible Move up/Move down controls.
+
+The Scene/Story/Section/Event/shared-record destructive copy from ADR 0007 is mandatory. Do not
+replace the consequences with only “Delete {record}?” merely to save space.
+
 ## Accessibility and interaction
 
 - Every icon-only control has an accessible label or visually hidden text.

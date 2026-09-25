@@ -101,6 +101,12 @@ jobs:
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
+      - name: Check development data manifests
+        env:
+          RAILS_ENV: test
+        run: |
+          UNIVERSE=dark bin/rails db:demo:check
+          UNIVERSE=lotr bin/rails db:demo:check
 
   system-test:
     runs-on: ubuntu-latest

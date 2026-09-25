@@ -18,14 +18,16 @@ still pending.
 
 ## PENDING WORK
 
-1. **Explicit development universe-data loader**
+1. **Explicit development universe-data loader (completed 2026-09-25)**
 
-Replace the transitional `db:seed`/`db:restart` coupling with an environment-guarded development
-loader. Discover or register one `db/data/<universe_slug>/` directory per universe, support loading
-one named universe after a deliberate reset, validate model order and symbolic references, and
-keep temporary data out of production seed/deploy paths. Preserve the convention that a new model
-gets files such as `db/data/dark/dialogs.yml` in each relevant universe directory rather than a
-feature-level `db/data/dialog/` directory.
+`Development::UniverseDataRegistry` and `Development::UniverseDataLoader` now provide one ordered,
+YAML-based contract for every registered universe. `db:demo:check` validates without writing;
+`db:demo:load` loads one named universe in development; `db:demo:reset` requires
+`CONFIRM_DB_RESET=1`, rebuilds the schema, and loads only that universe. `db:seed`/`db:prepare` no
+longer load `db/data/`, `db:restart` is a guarded schema-only reset, and the Dark/LOTR special
+Ruby loaders were replaced by validated YAML data. The new model/data convention remains: a model
+gets files such as `db/data/dark/dialogs.yml` in each relevant universe directory, never a
+feature-level `db/data/dialog/` directory. See [ADR 0008](adr/0008-explicit-development-universe-loader.md).
 
 2. **add "fixed" attribute to all _tags models**
 
@@ -234,9 +236,8 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   `datetime` with the current Event storage/editor precision and timezone semantics rather than
   copying Event's `start_datetime`/`end_datetime` pair. The exact detailed deletion confirmation
   templates are recorded in the ADR. No application code, schema, or development data was added by
-  this decision slice.
-  Backlog item 1 remains a prerequisite for the final development-data/manual-verification slice,
-  not a reason to delay the domain design.
+  this decision slice. Backlog item 1 is complete and supplies the explicit loader for final
+  development-data/manual verification.
 - **11.1 — Core Scene vertical slice.** Add a schema-only Scene migration and model, Story
   association, stable `name`/slug, and a transactionally maintained contiguous position with
   deterministic `position, id` ordering. Generalize/refactor `MaintainsSiblingPositions` or add a
@@ -309,9 +310,9 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   Scenes, deliberately independent Event/datetime values, multiple Scenes sharing one Event, a
   Narration without speakers, a Dialogue with many speakers, multiple Locations, and both blank and
   populated roles. Do not add isolated placeholder rows.
-- Treat backlog item 1 as a hard prerequisite before final development-data/manual verification.
-  Keep temporary Scene data out of production seed/deploy paths, and never run a destructive reset
-  without approval.
+- Backlog item 1 is complete; keep using its explicit environment-guarded loader for final
+  development-data/manual verification. Keep temporary Scene data out of production seed/deploy
+  paths, and never run a destructive reset without approval.
 - Update the matching architecture, data model, conventions, visual design, development, and ADR
   documentation in the same change. Replace the old copy that describes Scenes merely as an
   example of a Section, and move fixed shared-editor quirks from `known_quirks.md` to
@@ -393,11 +394,11 @@ decisions and should not delay the basic ordered Scene workflow.
    Add and verify a development-safe `docker compose up` path using a development-specific service
    or command. It must prepare an isolated SQLite database, persist the correct local
    database/storage paths, expose the app, pass `/up`, build CSS assets, and work from a clean
-   checkout. The existing Dockerfile is production-oriented and its server entrypoint currently
-   calls the transitional `db:prepare`/seed path; do not document that as a safe development
-   command until the seed boundary is separated. Document the verified command as an alternative
-   to the `mise`/`bundle`/`bun` setup. Do not run transitional demo seeds in a production
-   container, mount real data, or duplicate the existing entrypoint's `db:prepare` blindly. A
+   checkout. The existing Dockerfile is production-oriented and its server entrypoint calls
+   `db:prepare`, which now loads production-safe seeds only; do not present that production
+   entrypoint as a development data workflow. Document the verified development-specific command
+   as an alternative to the `mise`/`bundle`/`bun` setup. Do not run development data in a
+   production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
 16. **Structured logging and runtime observability (DataFactor follow-up)**
@@ -412,7 +413,7 @@ decisions and should not delay the basic ordered Scene workflow.
 
 17. **Development credential and environment hygiene (DataFactor follow-up)**
 
-   Replace hardcoded local/demo passwords in the LOTR loader, Dark user data, and smoke script
+   Replace hardcoded local/demo passwords in the LOTR development users, Dark user data, and smoke script
    with an explicit environment variable or a generated local-only value. Make missing values fail
    clearly. Preserve or update the documented synthetic development login and exact load/verification
    instructions in the same change. Add a value-free `.env.example` only with an intentional

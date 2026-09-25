@@ -20,6 +20,7 @@ mise install
 bundle install
 bun install
 bin/rails db:prepare
+UNIVERSE=dark bin/rails db:demo:load  # optional development universe (development only)
 ```
 
 Start Rails and the CSS watcher together:
@@ -40,13 +41,14 @@ bin/rubocop          # Ruby style checks
 bin/brakeman --no-pager
 bin/bundler-audit
 bin/importmap audit
+UNIVERSE=dark bin/rails db:demo:check # validate checked-in development data
+UNIVERSE=lotr bin/rails db:demo:check
 ```
 
-`bin/rails db:restart` recreates the disposable database, migrates it, and reloads the current demo
-data. It is destructive and must be used only with explicit approval. The database is rebuilt from
-`db/data/`; that directory is organized as one disposable development directory per universe (for
-example `db/data/dark/` and `db/data/lotr/`) and is not production seed data. Application-data
-migrations are intentionally not used.
+Development data is disposable and explicit. `db:demo:load` is development-only and loads one
+named universe; `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` deliberately rebuilds
+and loads that universe. `db:prepare`/`db:seed` never load `db/data/`. The guarded `db:restart`
+task resets schema without demo data. Application-data migrations are intentionally not used.
 
 ## Documentation
 

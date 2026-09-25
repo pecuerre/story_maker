@@ -49,6 +49,15 @@ Labels used below:
   point, shared-record deletion copy now discloses existing dependent destroys, Scene destroy is
   explicitly HTML, and flat ordering must extend the existing positioned-controller concern rather
   than bypass it.
+- **[added]** Implemented ADR 0008's registry-driven development universe loader: shared model
+  order, strict YAML/file/reference/scope validation, normalized sibling positions, explicit
+  `db:demo:check/load/reset` tasks, and common YAML data for Dark and LOTR.
+- **[security]** Removed development data from `db:seed`/`db:prepare` and added environment and
+  confirmation guards to destructive development database tasks; CI now validates checked-in data
+  manifests instead of replanting demo records.
+- **[fixed]** Hardened the development loader after review: reset tasks guard before any drop,
+  environment overrides are test-only, association types/targets are validated, file/position
+  contracts are strict, and incomplete schemas can be repaired by the reset path.
 
 ## 2026-09-24
 

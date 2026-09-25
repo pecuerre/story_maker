@@ -21,6 +21,19 @@
   column on the content tables — the pairs are joined with HABTM join tables.
 - `position` defaults to 0 and enables ordered lists; siblings are normalized to 0..n-1.
 
+### Development data
+
+- `Development::UniverseDataRegistry` is the shared model-order/file/universe registry.
+- Every registered universe directory contains every registered model YAML file; use `[]` for an
+  intentionally unused model. A new model updates the registry and all relevant universe files.
+- Development data uses `Model.slug` references only in association fields. The loader validates
+  the exact file set, identifiers, forward references, attributes, and universe/story scope before
+  writing; it normalizes hierarchical sibling positions from file order, or requires complete
+  unique explicit positions for a sibling group.
+- Use `UNIVERSE=<slug> bin/rails db:demo:check` for read-only validation and the explicit
+  development-only load/reset tasks for browser data. `db:seed` and `db:prepare` never load
+  `db/data/`.
+
 ### Models
 - Models that own a hierarchy include `Hierarchical` (parent/children, cycle & scope validations).
   `Relation` and `Ownership` do **not** (they are link records between two entities);

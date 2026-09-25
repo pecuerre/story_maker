@@ -2,7 +2,7 @@
 
 `db/data/` contains checked-in but disposable development data. It is not production seed data,
 and it is not the source of truth for the Rails test fixtures. The files exist so a developer can
-rebuild a local universe, exercise a feature in the browser, and test relationships between records.
+load one universe, exercise a feature in the browser, and test relationships between records.
 
 ## Directory convention
 
@@ -12,21 +12,25 @@ There is one subdirectory per universe, named with the universe slug:
 db/data/
   dark/
   lotr/
-  star_wars/
+  star_wars/  # after it is registered in the development registry
   a_song_of_ice_and_fire/
 ```
 
 A universe directory contains all data used to exercise that universe: its user/universe record,
 memberships when explicit private or delegated-admin access is needed, stories, sections, section
-tags, world-building records, taxonomies, and relationships. The current examples are:
+tags, world-building records, taxonomies, and relationships. Every registered universe directory
+must contain one YAML file for every model in the shared registry; use `[]` for a model that the
+universe intentionally does not exercise.
+
+The current examples are:
 
 - `dark/` — the more complete YAML-based Dark dataset;
-- `lotr/` — the smaller Lord of the Rings dataset, currently written as Ruby.
+- `lotr/` — the smaller Lord of the Rings dataset, now expressed in the same YAML format.
 
-The Dark directory includes a delegated-admin example: after the current transitional development
-load (`bin/rails db:prepare`), sign in as the synthetic `collaborator@dark` / `collaborator` account
-and open `/u/dark/members` to exercise membership management. Do not rerun the create-only demo
-loader without deliberately rebuilding the disposable database.
+The Dark directory includes a delegated-admin example: after loading it with the explicit
+development task, sign in as the synthetic `collaborator@dark` / `collaborator` account and open
+`/u/dark/members` to exercise membership management. These credentials are disposable development
+values, not production secrets.
 
 A subdirectory represents a **universe**, not a feature. There should not be a separate
 `db/data/dialog/` directory for a Dialog feature.
@@ -34,13 +38,17 @@ A subdirectory represents a **universe**, not a feature. There should not be a s
 ## Adding a universe
 
 1. Create `db/data/<universe_slug>/`.
-2. Add the universe record and all data needed to make that universe useful in the browser.
-3. Use stable slugs and symbolic references rather than database numeric ids.
-4. Register the universe with the development loader or its directory registry. Do not add the
-   data to `db/seeds/` or a production data migration.
+2. Add every registered model file to that directory, using `[]` for intentionally unused models.
+3. Use stable slugs and symbolic `Model.slug` references rather than database numeric ids.
+4. Register the universe in `app/services/development/universe_data_registry.rb`.
+5. Validate it before loading it:
 
-The current `db/seeds.rb` still loads the `dark` and `lotr` directories from a hardcoded list. That
-wiring is transitional; the intended lifecycle is an explicit development-only load/reset task.
+   ```bash
+   UNIVERSE=<universe_slug> bin/rails db:demo:check
+   ```
+
+Do not add the data to `db/seeds/`, a migration, a deploy command, or the hard-coded production
+seed path.
 
 ## Adding or changing a model
 
@@ -58,11 +66,14 @@ db/data/lotr/dialogs.yml
 ```
 
 Do not create `db/data/dialog/` merely because the model is named `Dialog`. Update the shared
-model load order/registry as well as the per-universe files.
+`Development::UniverseDataRegistry` model order/registry as well as the per-universe files. The
+loader rejects missing files, unknown files, duplicate identifiers, forward references, malformed
+references, cross-scope associations, raw foreign-key IDs, and unknown attributes before it writes
+records. Hierarchical positions use file order unless every sibling supplies a unique non-negative
+integer position.
 
-`universe_memberships.yml` is used when
-a sample universe should exercise private read/write/admin access; owner access is implicit and does
-not need a membership row.
+`universe_memberships.yml` is used when a sample universe should exercise private read/write/admin
+access; owner access is implicit and does not need a membership row.
 
 Dialog records must use the actual associations decided for the model. A story-scoped model uses
 `story: Story.<slug>`; a universe-scoped model uses `universe: Universe.<slug>`. Include connected
@@ -71,11 +82,24 @@ browser scenario exercises more than an isolated row.
 
 ## Lifecycle and safety
 
-The preferred local workflow is to rebuild or reset the disposable database and then load one
-universe directory. Temporary data may be create-only; it does not need production-style
-idempotence when the database is deliberately rebuilt. Use synthetic local credentials only, and
-never run a destructive reset without approval.
+The development loader is explicit and environment-guarded. `check` is read-only and may run in
+development or test; `load` and `reset` may write only in development:
 
-Automated tests use `test/fixtures/`, not these mutable development files. The local
-`config/ci.rb` seed-replant check is a transitional exception and should be updated with the
-explicit development-data task.
+```bash
+UNIVERSE=dark bin/rails db:demo:check
+UNIVERSE=dark bin/rails db:demo:load
+CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset
+```
+
+`db:demo:load` is create-only and refuses to load a universe that already exists. Run
+`db:demo:reset` only after deliberately accepting that the development database will be dropped;
+the confirmation variable is required. The reset task migrates the schema and loads only the named
+universe. It does not invoke `db:seed`.
+
+`db:prepare` and `db:seed` load only production-safe files under `db/seeds/`. They never load
+`db/data/`. The guarded `db:restart` task resets the schema without demo data; use
+`db:demo:reset` when a disposable universe should be loaded.
+
+Temporary data may be create-only because the supported operation is an explicit reset followed by
+a load. The loader normalizes hierarchical sibling positions from YAML/file order. Automated tests
+use `test/fixtures/`, not these mutable development files.

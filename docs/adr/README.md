@@ -22,6 +22,7 @@ The current architecture and conventions are documented in:
 | [0005](0005-universe-access-levels.md) | Accepted | Use universe-level public/private access with three membership levels |
 | [0006](0006-data-factor-quality-guidance.md) | Accepted | Treat external repository scores as directional signals and prioritize verified quality work |
 | [0007](0007-story-owned-scenes-and-elements.md) | Accepted | Add story-owned ordered Scenes, optional Elements, links, and grouping without duplicating universe records |
+| [0008](0008-explicit-development-universe-loader.md) | Accepted | Use a registry-driven, environment-guarded loader for disposable development universes |
 
 ## Format
 

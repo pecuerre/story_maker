@@ -1,0 +1,197 @@
+require "test_helper"
+require "fileutils"
+require "tmpdir"
+
+class UniverseDataLoaderTest < ActiveSupport::TestCase
+  test "checks every registered development universe without writing records" do
+    assert_no_difference -> { User.count + Universe.count + Story.count } do
+      Development::UniverseDataRegistry::UNIVERSES.each_key do |universe|
+        Development::UniverseDataLoader.new(universe: universe, environment: :test).check!
+      end
+    end
+  end
+
+  test "supports a schema-independent preflight for reset" do
+    assert_nothing_raised do
+      Development::UniverseDataLoader.check!(universe: "dark", validate_schema: false, environment: :test)
+    end
+  end
+
+  test "loads the Dark universe and normalizes sibling positions" do
+    assert_difference -> { Universe.where(slug: "dark").count }, 1 do
+      Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+    end
+
+    universe = Universe.find_by!(slug: "dark")
+    story = universe.stories.first
+
+    assert_equal "Dark", universe.name
+    assert_equal 1, universe.stories.count
+    assert_equal 15, story.sections.count
+    assert_equal 0, Universe.where(slug: "lotr").count
+    assert_equal [ 0, 1, 2 ], story.sections.where(parent_id: nil).order(:position, :id).pluck(:position)
+    assert_equal [ 0, 1, 2 ], story.section_tags.order(:position, :id).pluck(:position)
+  end
+
+  test "loads the LOTR universe with stable converted slugs" do
+    Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
+
+    universe = Universe.find_by!(slug: "lotr")
+    story = universe.stories.first
+
+    assert_equal "The Lord of the Rings", story.name
+    assert_equal "the-lord-of-the-rings", story.slug
+    assert_equal [ "the-fellowship-of-the-ring", "the-two-towers", "the-return-of-the-king" ], story.sections.order(:position, :id).pluck(:slug)
+  end
+
+  test "rejects loading outside the development environment" do
+    error = assert_raises(Development::UniverseDataLoader::EnvironmentError) do
+      Development::UniverseDataLoader.new(universe: "dark", environment: :production).load!
+    end
+
+    assert_match(/only be loaded in development/, error.message)
+  end
+
+  test "rejects unknown universes before touching the data directory" do
+    error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+      Development::UniverseDataLoader.new(universe: "missing", environment: :test).check!
+    end
+
+    assert_match(/Unknown development universe/, error.message)
+    assert_match(/dark, lotr/, error.message)
+  end
+
+  test "rejects missing symbolic references" do
+    with_data_copy do |directory|
+      characters_path = File.join(directory, "db/data/dark/characters.yml")
+      contents = File.read(characters_path)
+      File.write(characters_path, contents.sub("CharacterTag.family_kahnwald", "CharacterTag.missing"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/references missing CharacterTag\.missing/, error.message)
+    end
+  end
+
+  test "rejects missing and unexpected model files" do
+    with_data_copy do |directory|
+      FileUtils.rm(File.join(directory, "db/data/dark/items.yml"))
+      File.write(File.join(directory, "db/data/dark/extra.yml"), "[]\n")
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/missing: items\.yml/, error.message)
+      assert_match(/unexpected: extra\.yml/, error.message)
+    end
+  end
+
+  test "rejects raw foreign-key ids in association fields" do
+    with_data_copy do |directory|
+      characters_path = File.join(directory, "db/data/dark/characters.yml")
+      contents = File.read(characters_path)
+      File.write(characters_path, contents.sub("universe: Universe.dark", "universe: Universe.dark\n  universe_id: 1"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/use the association name instead of universe_id/, error.message)
+    end
+  end
+
+  test "rejects non-string association values" do
+    with_data_copy do |directory|
+      universes_path = File.join(directory, "db/data/dark/universes.yml")
+      contents = File.read(universes_path)
+      File.write(universes_path, contents.sub("owner: User.dark_admin", "owner: 1"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/owner.*Model\.slug reference/, error.message)
+    end
+  end
+
+  test "rejects scalar values for collection associations" do
+    with_data_copy do |directory|
+      characters_path = File.join(directory, "db/data/dark/characters.yml")
+      contents = File.read(characters_path)
+      File.write(characters_path, contents.sub("character_tags: [ CharacterTag.family_kahnwald, CharacterTag.sic_mundus ]", "character_tags: CharacterTag.family_kahnwald"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/character_tags.*array/, error.message)
+    end
+  end
+
+  test "rejects references to the wrong association target class" do
+    with_data_copy do |directory|
+      ownerships_path = File.join(directory, "db/data/dark/ownerships.yml")
+      contents = File.read(ownerships_path)
+      File.write(ownerships_path, contents.sub("character: Character.jonas", "character: Item.jonas_key"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/must reference Character, not Item/, error.message)
+    end
+  end
+
+  test "rejects references to records outside the selected universe" do
+    with_data_copy do |directory|
+      sections_path = File.join(directory, "db/data/dark/sections.yml")
+      contents = File.read(sections_path)
+      File.write(sections_path, contents.sub("story: Story.dark", "story: Story.the-lord-of-the-rings"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/references missing Story\.the-lord-of-the-rings/, error.message)
+    end
+  end
+
+  test "rolls back all records when a model validation fails late in the load" do
+    with_data_copy do |directory|
+      event_tags_path = File.join(directory, "db/data/dark/event_tags.yml")
+      contents = File.read(event_tags_path)
+      File.write(event_tags_path, contents.sub('bgcolor: "#3357FF"', 'bgcolor: "not-a-color"'))
+
+      assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :development, verbose: false).load!
+      end
+
+      assert_not Universe.exists?(slug: "dark")
+    end
+  end
+
+  test "refuses to load a universe that already exists" do
+    user = User.create!(name: "Existing owner", email_address: "existing-owner@example.com", password: "password")
+    Universe.create!(name: "Existing Dark", slug: "dark", owner: user, private: false)
+
+    error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+      Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+    end
+
+    assert_match(/already exists/, error.message)
+  end
+
+  private
+    def with_data_copy
+      Dir.mktmpdir("universe-data") do |directory|
+        data_root = File.join(directory, "db/data")
+        FileUtils.mkdir_p(data_root)
+        FileUtils.cp_r(Rails.root.join("db/data/dark"), File.join(data_root, "dark"))
+        FileUtils.cp_r(Rails.root.join("db/data/lotr"), File.join(data_root, "lotr"))
+        yield directory
+      end
+    end
+end

@@ -27,6 +27,10 @@ Keep demo data under `db/data/` and reconstruct it through the documented seed l
 `bin/rails db:restart` when a deliberate disposable database rebuild is needed, after confirming
 that development data may be discarded. Keep tests independent of seeds by using fixtures.
 
+> **Execution note (2026-09-25):** ADR 0008 supersedes the old `db:restart`/`db:seed` execution
+> path described here. `db:restart` is now schema-only; use the explicit environment-guarded
+> `db:demo:reset` task to load a disposable universe.
+
 ## Consequences
 
 ### Benefits

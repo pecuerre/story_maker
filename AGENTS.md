@@ -119,8 +119,8 @@ named development universe.
 - Universe access is read/write/admin: public universes allow guest read and signed-in write;
   private universes require owner or membership. A user's access applies to every story and
   component in that universe.
-- Sections and section tags belong directly to a story. A section URL must include its story
-  scope.
+- Sections, scenes, section tags, and scene tags belong directly to a story. Their URLs must
+  include the story scope.
 - A story becomes current only when explicitly selected or remembered; never fall back to the
   universe's first story.
 - Tags are optional on every content model. Do not add default-tag creation or tag presence

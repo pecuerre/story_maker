@@ -106,6 +106,8 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.right-sidebar section[aria-labelledby='settings-tools-title'] a.sidebar-link", text: "Members"
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0
+    assert_select "aside.workspace-sidebar a[href=?]",
+      universe_story_scene_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0
 
     {
       characters: universe_characters_path(universe_slug: @universe.slug),

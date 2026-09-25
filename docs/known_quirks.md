@@ -102,8 +102,10 @@ verification requirements. The resolution is recorded in [`resolved_quirks.md`](
     `datetime_is_a_valid_point` rejects an unparseable in-world time that Active Record would
     otherwise cast to `nil` and silently discard, so those values render `422` field errors with the
     submitted input preserved. The `#group` action instead resolves the Section through
-    `@story.sections.find`, making a foreign or unknown target a `404`. The remaining unprotected
-    paths are the hierarchical `parent_id` and the Event temporal references above.
+    `@story.sections.find`, making a foreign or unknown target a `404`. Slice 11.4 also adds
+    collection-id guards on Scene/Scene Tag assignment, so unknown, duplicate, and cross-story tag
+    ids become ordinary validation errors before the constrained join can raise. The remaining
+    unprotected paths are the hierarchical `parent_id` and the Event temporal references above.
 
 20. **Medium — generated routes advertise unsupported actions and templates.** `config/routes.rb:2-25`
     uses broad session, password, and content resources even though the documented action surface is
@@ -134,15 +136,17 @@ verification requirements. The resolution is recorded in [`resolved_quirks.md`](
     portable row-lock/unique-position guarantee. Do not treat those paths as normalized without an
     explicit import/console workflow; see ADR 0009 and [`resolved_quirks.md`](resolved_quirks.md).
 
-23. **Medium — HABTM join tables have no database integrity constraints.** All seven join tables
-    contain only two integer columns and no indexes, foreign keys, or uniqueness constraints (for
-    example `db/schema.rb:42-45,84-87,117-120,150-153,186-189,224-227,257-260`; the migrations use
-    bare `create_join_table`, e.g. `db/migrate/20260923130012_create_characters.rb:14`). Direct SQL,
-    imports, failed association replacement, or duplicate IDs can create orphan/duplicate join rows.
-    Scoped association reads prevent foreign tags from being disclosed through ordinary model/view
-    paths, and controller saves roll back rejected ID replacements. A direct HABTM collection
-    writer can still write a join row before a later validation failure, however, because the
-    database has no constraints to reject it.
+23. **Medium — legacy HABTM join tables have no database integrity constraints.** The seven
+    pre-Scene join tables contain only two integer columns and no indexes, foreign keys, or
+    uniqueness constraints (for example `db/schema.rb:42-45,84-87,117-120,150-153,186-189,224-227`;
+    the migrations use bare `create_join_table`, e.g.
+    `db/migrate/20260923130012_create_characters.rb:14`). The new `scenes_scene_tags` table is the
+    exception: it has real Scene/SceneTag foreign keys and a unique pair index. Direct SQL,
+    imports, failed association replacement, or duplicate IDs can still create orphan/duplicate rows
+    in the legacy tables. Scoped association reads prevent foreign tags from being disclosed through
+    ordinary model/view paths, and controller saves roll back rejected ID replacements. A direct
+    HABTM collection writer can still write a join row before a later validation failure in a
+    legacy table, however, because the database has no constraints to reject it.
 
 24. **Medium — Timeline output can contradict its layer ordering.** `TimelineLayout` rejects an
     edge that would create a cycle (`app/models/timeline_layout.rb:33-40`), but later rebuilds
@@ -525,3 +529,70 @@ Not run: `bin/bundler-audit`, `bin/importmap audit`, `bun audit` (no dependency 
 changed in these slices), Docker/Kamal deployment, production SMTP delivery, proxy/log-retention
 verification, and a browser manual pass against the reloaded development data. No destructive task
 was run beyond the standing `db:demo:reset` approval.
+
+## Follow-up verification (2026-09-25, Scene Tag slice 11.4)
+
+- `bin/rails test` — 440 tests, 2,544 assertions, 1 failure. The remaining failure is the
+  pre-existing Dark story-name expectation documented above; the new Scene Tag model, request,
+  assignment, loader, authorization, routing, and helper coverage passed.
+- `bin/rails test:system` — 18 tests, 225 assertions, 0 failures/errors/skips on the final
+  run with a temporary 10-second Capybara wait; the default two-second wait intermittently timed
+  out under local browser load. The focused Scene Tag browser file passed with the default wait.
+  Coverage includes the Scene Tag taxonomy create/assign journey and read-only path.
+- `bin/rubocop` — 196 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings; `bin/bundler-audit`, `bin/importmap audit`, and
+  `bun audit` reported no vulnerabilities.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed. The
+  local development database was rebuilt with the approved Dark reset and LOTR create-only load;
+  queries confirmed 8 Dark/5 LOTR Scenes, 4 Scene Tags per Story, nested tags, and tagged/untagged
+  Scene assignments. `bin/rails db:migrate:status` shows `CreateSceneTags` applied.
+- `git diff --check` — clean.
+
+Not run: Docker/Kamal deployment or boot, production SMTP delivery, proxy/log-retention
+verification, and a separate manual browser pass outside the automated system suite. The only
+known full-suite failure is the pre-existing `UniverseDataLoaderTest` Dark story-name expectation
+recorded in the 11.2/11.3 verification section.
+
+## Follow-up verification (2026-09-25, Dark story-name test fix)
+
+- `bin/rails test` — 440 tests, 2,552 assertions, 0 failures, 0 errors, 0 skips. This clears the
+  standing failure recorded in the 11.2/11.3 and 11.4 verification sections above. The assertion
+  count rose by 8 because the previously failing test aborted at its first bad expectation and
+  never ran its remaining assertions.
+- Root cause: commit `0a236a9` renamed the `dark` universe's development story to `Netflix Dark`
+  in `db/data/dark/stories.yml` but wrote the loader test expectation as the lowercase
+  `netflix dark`. The manifest value was always correct, so only the assertion was changed. No
+  application code, schema, or demo data was touched.
+- `UNIVERSE=dark bin/rails db:demo:check` passed; no YAML manifest changed, so the local
+  development database did not need a rebuild.
+
+Not run: `bin/rails test:system` (no behavior, view, or JavaScript change), `bin/rubocop`,
+`bin/brakeman`, the dependency audits, `db:demo:reset`/`db:demo:load` (destructive, needs
+approval), and Docker/Kamal deployment. `db:demo:check` was re-run for the test-only change
+because the assertion reads the checked-in Dark manifest.
+
+## Follow-up verification (2026-09-25, cssbundling rake constant warnings)
+
+- `bin/rails test` — 440 tests, 2,552 assertions, 0 failures, 0 errors, 0 skips, run three
+  consecutive times with no `already initialized constant` output. The count is unchanged from the
+  Dark story-name fix above; this change only removes the noise.
+- `bin/rubocop` — 196 files, no offenses.
+- Root cause was in the test suite, not the gem. `DevelopmentDataTasksTest`'s `setup` block called
+  `Rails.application.load_tasks` before each of its three tests. That re-runs the Rakefile and
+  re-loads every bundled gem's rake file, and `cssbundling-rails` 1.4.3's
+  `lib/tasks/cssbundling/build.rake` assigns `Cssbundling::Tasks::LOCK_FILES` without an
+  idempotency guard, so every re-load re-defined the constant and warned. Because the parallel
+  test workers are separate processes that start with an empty Rake registry, the
+  `unless Rake::Task.task_defined?("db:demo:check")` guard never short-circuited and the number of
+  warnings varied run to run.
+- Fix: the test now loads only this application's own `lib/tasks/**/*.rake`, memoized once per
+  process, which is the only thing it asserts about. Gem rake files are never loaded, so no gem
+  constant is redefined. `db:demo:check`, `db:demo:load`, and `db:demo:reset` are still registered
+  and asserted exactly as before.
+- Not a gem upgrade: `cssbundling-rails` stays pinned at 1.4.3, because the application never
+  double-loads rake tasks in normal operation. Fixing the constant redefinition inside the gem was
+  judged out of scope.
+
+Not run: `bin/rails test:system`, `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit`,
+`bun audit` (no behavior, view, JavaScript, dependency, or schema change), and Docker/Kamal
+deployment.

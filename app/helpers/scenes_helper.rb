@@ -31,6 +31,13 @@ module ScenesHelper
     scene.datetime.strftime("%Y-%m-%d %H:%M")
   end
 
+  # [ label, value ] pairs for the optional Scene Tag selector. The path is
+  # built from the already-loaded Story list so a nested tag does not trigger a
+  # parent query for every checkbox/option.
+  def scene_tag_choices(tags, paths = SceneTagPaths.build(tags))
+    paths.choices.presence || tags.map { |tag| [ paths.label_for(tag) || tag.name, tag.id ] }
+  end
+
   # What the datetime-local field must render. A rejected value is kept as the
   # author typed it, so a validation error never silently clears the input.
   def scene_datetime_field_value(scene)

@@ -12,10 +12,11 @@ class ScenesController < ApplicationController
   # descriptors as `new` and `edit`.
   before_action :set_section_paths, only: %i[ index show new edit create update group ]
   before_action :set_event_options, only: %i[ show new edit create update ]
+  before_action :set_scene_tag_data, only: %i[ show new edit create update ]
 
   # GET /u/:universe_slug/s/:story_id/scenes
   def index
-    @scenes = @story.scenes.reorder(:position, :id).to_a
+    @scenes = @story.scenes.includes(:scene_tags).reorder(:position, :id).to_a
   end
 
   # GET /u/:universe_slug/s/:story_id/scenes/:id
@@ -113,7 +114,7 @@ class ScenesController < ApplicationController
   end
 
   def set_scene
-    @scene = @story.scenes.find(params.expect(:id))
+    @scene = @story.scenes.includes(:scene_tags).find(params.expect(:id))
   end
 
   # The grouping form posts the chosen scene next to the chosen group, so the
@@ -137,6 +138,14 @@ class ScenesController < ApplicationController
       .to_a
   end
 
+  # Scene Tag definitions and their paths are story-scoped. One ordered tag
+  # query serves the form and Details page; the Scenes list preloads each
+  # Scene's tag association separately.
+  def set_scene_tag_data
+    @scene_tags = @story.scene_tags.order(:position, :id).to_a
+    @scene_tag_paths = SceneTagPaths.build(@scene_tags)
+  end
+
   # Scenes form one flat sequence inside their story, not a universe-level
   # collection and not a section hierarchy.
   def sibling_collection
@@ -148,7 +157,7 @@ class ScenesController < ApplicationController
   end
 
   def scene_params
-    params.expect(scene: [ :name, :description, :section_id, :event_id, :datetime ])
+    params.expect(scene: [ :name, :description, :section_id, :event_id, :datetime, { scene_tag_ids: [] } ])
   end
 
   def move_direction

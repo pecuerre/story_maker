@@ -52,4 +52,12 @@ class StoryTest < ActiveSupport::TestCase
       story.destroy!
     end
   end
+
+  test "destroying a story destroys its scene tags" do
+    story = stories(:story_one)
+
+    assert_difference("SceneTag.count", -2) do
+      story.destroy!
+    end
+  end
 end

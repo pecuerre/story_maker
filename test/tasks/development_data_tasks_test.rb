@@ -2,8 +2,23 @@ require "test_helper"
 
 class DevelopmentDataTasksTest < ActiveSupport::TestCase
   setup do
+    self.class.register_development_tasks
+  end
+
+  # Registers this application's own `lib/tasks/*.rake` definitions, once per process.
+  #
+  # `Rails.application.load_tasks` is deliberately not used here. It re-runs the Rakefile and
+  # re-loads every bundled gem's rake files, and those gem files are not idempotent: the
+  # repeated load re-defines `Cssbundling::Tasks::LOCK_FILES` and prints
+  # "already initialized constant" warnings from the parallel `bin/rails test` workers.
+  def self.register_development_tasks
+    return if @development_tasks_registered
+
     require "rake"
-    Rails.application.load_tasks unless Rake::Task.task_defined?("db:demo:check")
+    return if Rake::Task.task_defined?("db:demo:check")
+
+    Dir[Rails.root.join("lib/tasks/**/*.rake")].sort.each { |task_file| load task_file }
+    @development_tasks_registered = true
   end
 
   test "keeps development data out of the production seed path" do

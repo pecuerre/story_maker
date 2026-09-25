@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_09_24_130100`) and the models in `app/models/`.
+`2026_09_25_180000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -12,7 +12,8 @@ User (owner)
       ├── UniverseMembership ──> User (read/write/admin)
       ├── Story ── Section ──> Section's parent Section (tree)
       │   │                     └── HABTM SectionTag ──┐
-      │   └── SectionTag (tree, story-scoped) ←────────┘
+      │   ├── SceneTag (tree, story-scoped) ── HABTM SceneTag assignment
+      │   └── Scene (contiguous narrative position) ──> Section / Event
       ├── Character ──> parent Character   ── HABTM CharacterTag (tree)
       ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
       ├── Item      ──> parent Item        ── HABTM ItemTag      (tree)
@@ -23,10 +24,10 @@ User (owner)
 ```
 
 **The one rule to remember:** world building (characters, locations, items, events, relations,
-ownerships **and every `_tag` model except SectionTag**) belongs to the **universe** and is
-shared by all of its stories. Only **sections** (the script: books → chapters → scenes …) and
-their **section tags** (chapter/book/episode labels) belong to a **story** — each story owns its
-own section taxonomy.
+ownerships **and every `_tag` model except SectionTag and SceneTag**) belongs to the **universe** and
+is shared by all of its stories. Only **sections** (the script: books → chapters → scenes …),
+**scenes**, and their **section/scene tags** (chapter/book/episode or scene-beat labels) belong to a
+**story** — each story owns its own structure taxonomy.
 
 ### Universe access
 
@@ -61,16 +62,17 @@ admin grants; it is not a replacement for the public-universe baseline.
 | `stories` | `universe_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL) | unique index on `[universe_id, slug]`; `has_many :scenes, dependent: :destroy` |
 | `sections` | `story_id` FK (NOT NULL), `name`, `description`, `slug`, `parent_id` self-FK, `position` (default 0) | sections belong directly to a story; `has_many :scenes, dependent: :nullify` (deleting a section only ungroups scenes) |
 | `section_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its chapter/book/episode labels |
+| `scene_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its scene-beat/mood labels; parent and position are story-local |
 | `scenes` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `position` (default 0, NOT NULL), `section_id` FK (nullable), `event_id` FK (nullable), `datetime` (nullable) | narrative order is `position`; indexes on `[story_id, position]`, `[story_id, section_id]`, `section_id`, `event_id`; no `parent_id` |
 
 ### Tag tables (`*_tags`) — all identical shape
 `name`, `description`, `slug`, `parent_id` (self-FK), `position` (default 0),
 `bgcolor` (default `#d3d3d3`), `fgcolor` (default `#000000`), `universe_id` FK —
-**except `section_tags`, which has `story_id` instead of `universe_id`**.
+**except `section_tags` and `scene_tags`, which have `story_id` instead of `universe_id`**.
 `relation_tags` additionally has `symmetric` (bool, default `true`) and `inverse` (string).
 
-Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `event_tags`,
-`relation_tags`, `ownership_tags`.
+Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `scene_tags`,
+`event_tags`, `relation_tags`, `ownership_tags`.
 
 ### Content tables
 | Table | Columns | Notes |
@@ -84,12 +86,14 @@ Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `eve
 
 ### HABTM join tables (no PK, two integer columns)
 `characters_character_tags`, `locations_location_tags`, `items_item_tags`,
-`sections_section_tags`, `events_event_tags`, `relations_relation_tags`,
+`sections_section_tags`, `scenes_scene_tags`, `events_event_tags`, `relations_relation_tags`,
 `ownerships_ownership_tags` — pattern `"<content table>_<tag table>"`, declared by
-`has_many_tags` and reused by `has_many_tagd`. Every declaration supplies an explicit shared
-scope (`:universe_id`, or `:story_id` for Section/SectionTag), and both sides of each association
-validate every assigned member against that scope. Association reads also apply the scope, hiding
-foreign rows even if a raw/import path has already inserted a corrupt join.
+`has_many_tags` and reused by `has_many_tagd`. The legacy join tables have no database integrity
+constraints; the new `scenes_scene_tags` table adds real foreign keys and a unique
+`[scene_id, scene_tag_id]` index. Every declaration supplies an explicit shared scope
+(`:universe_id`, or `:story_id` for Section/Scene tags), and both sides of each association validate
+every assigned member against that scope. Association reads also apply the scope, hiding foreign
+rows even if a raw/import path has already inserted a corrupt join.
 
 ### Non-app tables
 `solid_cache` / `solid_cable` / `solid_queue` live in their own schema files
@@ -100,6 +104,7 @@ foreign rows even if a raw/import path has already inserted a corrupt join.
 | Content model | Tag model (`has_many_tags`) | Join table | Tag required? |
 |---|---|---|---|
 | Section | `:section_tag` | `sections_section_tags` | **no** |
+| Scene | `:scene_tag` | `scenes_scene_tags` | **no** |
 | Character | `:character_tag` | `characters_character_tags` | **no** |
 | Location | `:location_tag` | `locations_location_tags` | **no** |
 | Item | `:item_tag` | `items_item_tags` | **no** |
@@ -110,16 +115,16 @@ foreign rows even if a raw/import path has already inserted a corrupt join.
 
 Tags are **optional on every content model**: `has_many_tags` declares only the HABTM (no
 presence validation), and no controller force-assigns a default tag — creating a character,
-location, item, section, relation or ownership without picking a tag simply saves it untagged.
-A simple story therefore works without any taxonomy: add a few characters, locations, sections,
-etc. and tag them later (or never). Deleting a tag just leaves its records untagged; they stay
-valid.
+location, item, section, scene, relation or ownership without picking a tag simply saves it
+untagged. A simple story therefore works without any taxonomy: add a few characters, locations,
+sections, scenes, etc. and tag them later (or never). Deleting a tag just leaves its records
+untagged; they stay valid.
 
 ## Hierarchies & positions
 
 Models including the `Hierarchical` concern (own `parent_id` self-FK + `children` +
-`position`): **Section, SectionTag, Character, CharacterTag, Location, LocationTag, Item,
-ItemTag, Event, EventTag, RelationTag, OwnershipTag**.
+`position`): **Section, SectionTag, SceneTag, Character, CharacterTag, Location, LocationTag,
+Item, ItemTag, Event, EventTag, RelationTag, OwnershipTag**.
 
 Validations added by the concern:
 1. parent must be in the **same owning scope** — same `universe_id` by default,
@@ -146,7 +151,8 @@ sequence), **Story**, **Universe**, **User**, **Session**.
 | `UniverseMembership` | user/universe presence; access level in read/write/admin; unique user per universe; owner cannot be a separate member |
 | `Story` | `name` presence + unique per universe; `slug` unique per universe |
 | `Section` | `name` presence; `story` required; parent rules scoped to the story; `section_tags` optional, but when present they must all belong to the section's story through the shared HABTM scope; `has_many :scenes, dependent: :nullify` |
-| `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; an unknown optional `section_id`/`event_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |
+| `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |
+| `SceneTag` | `name` presence; `story` required; parent rules scoped to the story; `scenes` optional and, when present, all belong to the story; `HasColor`, `Hierarchical`, and slug behavior |
 | `Character` / `Location` / `Item` | `name` presence; `*_tags` optional and, when present, all belong to the content's universe; `Hierarchical` rules |
 | `_tag` models | `name` presence; `bgcolor`/`fgcolor` must be `#rrggbb` (`HasColor`); `Hierarchical` rules (for `SectionTag` the parent must share the **story**); `relation_tags` also requires `inverse` unless `symmetric` |
 | `Event` | `must_be_identifiable` (title **or** start/end datetime **or** a before/after/simultaneous relation); referenced events must be in the same universe; model validation and three DB check constraints reject self references (including unsaved/future IDs); `Hierarchical` rules; *no* name-presence rule. Destroying an event nullifies all incoming temporal references; a relation-only referrer that would become unidentifiable is destroyed first |
@@ -188,21 +194,22 @@ hosts *Game of Thrones* and *House of the Dragon*): characters/relations/locatio
 are defined once per universe, while each story has its own section tree (its plot structure) and
 its own ordered scene sequence, plus its own section tags (chapter/book/episode labels). This
 ownership split is defined directly by
-the schema-only create migrations: `stories` owns its slug, and `sections`, `section_tags`, and
-`scenes` reference `stories`. Data is disposable and reconstructed from the per-universe directories under
-`db/data/`; it is not backfilled by migrations. Section tags, sections, and scenes are reachable
-only under
-the explicit story path (`/u/<slug>/s/<story_id>/section_tags`,
+the schema-only create migrations: `stories` owns its slug, and `sections`, `section_tags`,
+`scene_tags`, and `scenes` reference `stories`. Data is disposable and reconstructed from the
+per-universe directories under `db/data/`; it is not backfilled by migrations. Section tags, Scene
+Tags, sections, and scenes are reachable only under the explicit story path
+(`/u/<slug>/s/<story_id>/section_tags`, `/u/<slug>/s/<story_id>/scene_tags`,
 `/u/<slug>/s/<story_id>/sections`, and `/u/<slug>/s/<story_id>/scenes`). The universe-level
-`/u/<slug>/section_tags`, `/u/<slug>/sections`, and `/u/<slug>/scenes` routes are intentionally
-invalid.
+`/u/<slug>/section_tags`, `/u/<slug>/scene_tags`, `/u/<slug>/sections`, and `/u/<slug>/scenes`
+routes are intentionally invalid.
 
-## Writing model (Scene core and references implemented; later slices pending)
+## Writing model (Scene core, references, grouping, and tags implemented; later slices pending)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the first Scene model. Slices
-11.1–11.3 have landed the `scenes` table with its optional Section/Event/datetime references, the
-`Scene` model, and the story-scoped routes; the remaining tables, associations, and validations
-below belong to slices 11.4–11.10 and are **not** in the current schema yet.
+11.1–11.4 have landed the `scenes` and `scene_tags` tables, the `Scene` and `SceneTag` models,
+optional Section/Event/datetime references, story-scoped tag assignment, and the story-scoped
+routes; the remaining tables, associations, and validations below belong to slices 11.5–11.10 and
+are **not** in the current schema yet.
 
 ```text
 Story
@@ -214,7 +221,7 @@ Story
   │   ├── SceneCharacter ────────────> Character   (optional role)
   │   ├── SceneItem ─────────────────> Item        (optional role)
   │   └── SceneLocation ─────────────> Location    (optional role)
-  └── SceneTag (story-scoped hierarchy; Scene assignment via join)
+  └── SceneTag (story-scoped hierarchy; optional Scene assignment via join) # implemented in 11.4
 ```
 
 The persisted fields and relationships are:
@@ -222,8 +229,8 @@ The persisted fields and relationships are:
 | Model/table | Intended fields and constraints |
 |---|---|
 | `scenes` | **implemented in 11.1–11.3**: required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`; optional `section_id` (same Story), optional `event_id` (same Universe), and one optional `datetime` point using Event-compatible storage/editor precision and timezone semantics (not Event's `start_datetime`/`end_datetime` pair). The event reference and the datetime are independent: neither writes, clears, nor validates against the other |
-| `scene_tags` | story-scoped hierarchical/colored tag shape; optional assignment only (11.4) |
-| `scenes_scene_tags` | story-scoped HABTM join; tags remain optional (11.4) |
+| `scene_tags` | **implemented in 11.4**: story-scoped hierarchical/colored tag shape; optional assignment only |
+| `scenes_scene_tags` | **implemented in 11.4**: story-scoped HABTM join with real FKs and a unique `[scene_id, scene_tag_id]` index; tags remain optional |
 | `scene_elements` | required `scene_id`, `kind` (`narration`/`dialogue`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body`, indexed `position` (11.6) |
 | `scene_element_speakers` | SceneElement-to-Character links with a unique pair; the same Universe rule is checked through the Element's Scene (11.6) |
 | `scene_characters` | unique `[scene_id, character_id]`, nullable free-text `role` (11.7) |
@@ -254,9 +261,20 @@ unknown optional id becomes "must exist" instead of a foreign-key exception), an
 deleting a Section only ungroups and deleting an Event only clears the reference; neither removes a
 Scene or changes a narrative position.
 
+`SceneTag` adds the story-scoped hierarchy, color, slug, and inverse tag association. The
+`CreateSceneTags` migration is schema-only and creates both `scene_tags` and the constrained
+`scenes_scene_tags` join. `Scene` declares `has_many_tags :scene_tag, scope: :story_id`; the shared
+validation rejects tags from another Story, while the unique pair index and scoped association reads
+keep duplicate or foreign join rows from becoming visible. Scene and Scene Tag collection-id writers
+also turn unknown, duplicate, or cross-story ids into ordinary validation errors before the database
+constraint can raise. `Story` cascades Scene Tag definitions; deleting a Scene or Scene Tag removes
+assignments but never a shared world record.
+
 `SectionPaths` (`app/models/section_paths.rb`) is a value object, not a table: it builds every
 root-first Section path and the depth-indented selector options from one ordered Section list, so
-neither the Scenes list nor the Sections workspace walks ancestors per Scene.
+neither the Scenes list nor the Sections workspace walks ancestors per Scene. `SceneTagPaths` is the
+analogous Scene Tag value object: it builds root-first tag labels and selector choices from one
+ordered tag list without walking parents per Scene.
 `UniverseScopeResolver` (`app/models/universe_scope_resolver.rb`) is the shared answer to which
 universe owns a record and is used by both `Ability` and the view helpers, so a Scene-owned
 component can never lose its mutation controls or be denied a valid mutation.
@@ -267,8 +285,10 @@ respectively. They are not `parent_id` hierarchies and must not include `Hierarc
 `PositionedResourceOrder` service supports an explicit flat mode for these sequences; slice 11.1
 uses that mode with the Story as scope owner rather than adding a fake parent or a second
 ordering algorithm. The development-data registry also distinguishes flat position groups and loads
-`Scene` after `Event`, because a Scene may reference a shared universe event and a symbolic
-reference may not point at a later model file. The ordering contract is flat and transactional. A
+`SceneTag` before `Scene`, and `Scene` after `Event`, because a Scene may reference both a
+story-scoped tag and a shared universe event and a symbolic reference may not point at a later model
+file. The loader proves the Section and every assigned Scene Tag belong to the Scene's Story before
+writing. The ordering contract is flat and transactional. A
 title-only Scene is valid. A Scene's optional Event and single-point datetime are independent, and
 multiple Scenes may reference one Event.
 

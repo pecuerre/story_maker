@@ -34,6 +34,15 @@ class ScenesHelperTest < ActionView::TestCase
     assert_nil scene_in_world_time(Scene.new(story: stories(:story_one), name: "No time"))
   end
 
+  test "offers Scene Tag paths in root-first order" do
+    tags = [ scene_tags(:scene_tag_two), scene_tags(:scene_tag_one) ]
+
+    assert_equal [
+      [ "Scene tag one", scene_tags(:scene_tag_one).id ],
+      [ "Scene tag one / Scene tag two", scene_tags(:scene_tag_two).id ]
+    ], scene_tag_choices(tags)
+  end
+
   private
     def universe_events
       @universe_events ||= universes(:universe_one).events.reorder(:name, :id).to_a

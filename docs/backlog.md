@@ -286,10 +286,14 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   removing Scenes, with the matching confirmation copy. Selectors are the only required move path;
   drag-and-drop stays optional.
 
-- **11.4 — Scene Tag taxonomy and assignment.** Add Scene Tag schema/model, story-scoped optional
-  tag association, hierarchical editor under **Configuration → Tags → Story Tags**, and per-Scene
-  tag assignment on Details. Depend on taxonomy hardening tasks 12 and 13 below; do not copy the
-  current stored-DOM, stale-option/count, insertion, touch, or keyboard behavior into a new tree.
+- **11.4 — Scene Tag taxonomy and assignment (completed 2026-09-25).** Added the story-scoped
+  `SceneTag` schema/model, its hierarchical tree editor under **Configuration → Tags → Story Tags**,
+  and optional assignment from Scene Details. The new story-scoped `scenes_scene_tags` join has
+  real foreign keys and a unique pair index; both sides of the association apply the Story scope.
+  Scene lists and Details show preloaded tag badges, the editor offers a native optional selector,
+  and Dark/LOTR manifests now exercise nested Scene Tags, tagged and untagged Scenes, and the
+  story boundary. Added model, request, authorization, loader, routing, and focused browser coverage.
+  Elements and world-presence links remain for slices 11.5–11.10.
 
 - **11.5 — Modal JSON reliability for Element editing.** Make the shared modal flow submit JSON
   correctly, show 422 errors, handle loading/network failures, and remove rows and update counts

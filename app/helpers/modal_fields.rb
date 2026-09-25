@@ -330,6 +330,38 @@ module ModalFields
     ]
   end
 
+  def scene_tag_taxonomy_fields(nodes = [])
+    [
+      {
+        name: "name",
+        label: "Name",
+        type: "text",
+        required: true
+      },
+      {
+        name: "description",
+        label: "Description",
+        type: "textarea"
+      },
+      {
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
+      }
+    ]
+  end
+
   def section_taxonomy_fields(section_tags, sections = [])
     [
       {

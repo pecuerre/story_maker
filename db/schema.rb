@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_180000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -229,6 +229,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_170000) do
     t.integer "relation_tag_id", null: false
   end
 
+  create_table "scene_tags", force: :cascade do |t|
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "fgcolor", default: "#000000", null: false
+    t.string "name"
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.string "slug", null: false
+    t.integer "story_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_scene_tags_on_parent_id"
+    t.index ["story_id"], name: "index_scene_tags_on_story_id"
+  end
+
   create_table "scenes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "datetime"
@@ -245,6 +260,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_170000) do
     t.index ["story_id", "position"], name: "index_scenes_on_story_id_and_position"
     t.index ["story_id", "section_id"], name: "index_scenes_on_story_id_and_section_id"
     t.index ["story_id"], name: "index_scenes_on_story_id"
+  end
+
+  create_table "scenes_scene_tags", id: false, force: :cascade do |t|
+    t.integer "scene_id", null: false
+    t.integer "scene_tag_id", null: false
+    t.index ["scene_id", "scene_tag_id"], name: "index_scenes_scene_tags_on_scene_id_and_scene_tag_id", unique: true
+    t.index ["scene_id"], name: "index_scenes_scene_tags_on_scene_id"
+    t.index ["scene_tag_id"], name: "index_scenes_scene_tags_on_scene_tag_id"
   end
 
   create_table "section_tags", force: :cascade do |t|
@@ -362,9 +385,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_170000) do
   add_foreign_key "relations", "characters", column: "character1_id"
   add_foreign_key "relations", "characters", column: "character2_id"
   add_foreign_key "relations", "universes"
+  add_foreign_key "scene_tags", "scene_tags", column: "parent_id"
+  add_foreign_key "scene_tags", "stories"
   add_foreign_key "scenes", "events"
   add_foreign_key "scenes", "sections"
   add_foreign_key "scenes", "stories"
+  add_foreign_key "scenes_scene_tags", "scene_tags"
+  add_foreign_key "scenes_scene_tags", "scenes"
   add_foreign_key "section_tags", "section_tags", column: "parent_id"
   add_foreign_key "section_tags", "stories"
   add_foreign_key "sections", "sections", column: "parent_id"

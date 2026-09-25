@@ -33,6 +33,23 @@
       <% end %>
     </div>
     <div class="col-12">
+      <div class="page-eyebrow">Scene tags</div>
+      <% if @scene.scene_tags.any? %>
+        <div class="d-flex flex-wrap gap-1">
+          <%= entity_tag_badge(@scene) %>
+        </div>
+      <% else %>
+        <p class="mb-0 text-body-secondary">No scene tags assigned yet.</p>
+      <% end %>
+      <div class="form-text">
+        Tags are optional and belong to this story.
+        <% if can_write_universe? %>
+          Change them from the <%= link_to "scene editor", edit_universe_story_scene_path(story_id: @story, id: @scene) %>.
+        <% end %>
+        The taxonomy is available in the <%= link_to "Scene Tags workspace", universe_tags_path(scope: "story", taxonomy: "scene") %>.
+      </div>
+    </div>
+    <div class="col-12">
       <div class="page-eyebrow">Section group</div>
       <% grouping = scene_grouping_label(@scene, @section_paths) %>
       <% if grouping.present? %>

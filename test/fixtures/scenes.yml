@@ -7,6 +7,7 @@ scene_one:
   description: "The first scene of the story"
   section: section_one
   event: event_one
+  scene_tags: [ scene_tag_one, scene_tag_two ]
   datetime: 2026-09-11 09:00:00
   position: 0
 

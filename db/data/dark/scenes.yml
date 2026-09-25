@@ -4,6 +4,7 @@
   description: "Jonas Kahnwald arrives in Winden and meets the Nielsen family."
   section: Section.s1e1
   event: Event.jonas_meets_bartosz
+  scene_tags: [ SceneTag.mood, SceneTag.mystery ]
   datetime: "1986-09-01T10:00"
   position: 0
 
@@ -13,6 +14,7 @@
   description: "Martha Nielsen and Hannah lie about the night Noah disappeared."
   section: Section.s1e2
   event: Event.ulrich_meets_hannah
+  scene_tags: [ SceneTag.mystery ]
   position: 1
 
 - story: Story.netflix-dark
@@ -22,6 +24,7 @@
   # No event on purpose: this scene carries an in-world time of its own so the
   # event link and the datetime can be seen to disagree independently.
   section: Section.s1e3
+  scene_tags: [ SceneTag.turning-point, SceneTag.revelation ]
   datetime: "2019-11-05T21:00"
   position: 2
 
@@ -36,6 +39,7 @@
   description: "Jonas and Martha find the second Noah alive in the cave beneath the Sic Mundus ruins."
   section: Section.s1e5
   event: Event.time_travel
+  scene_tags: [ SceneTag.revelation ]
   datetime: "2019-11-07T18:00"
   position: 4
 

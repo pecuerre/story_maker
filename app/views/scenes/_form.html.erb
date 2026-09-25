@@ -25,6 +25,26 @@
   </div>
 
   <fieldset class="mb-3">
+    <legend class="h6">Scene tags</legend>
+    <div class="mb-3">
+      <%= form.label :scene_tag_ids, "Scene tags", class: "form-label" %>
+      <% if @scene_tags.any? %>
+        <%= form.select :scene_tag_ids,
+          scene_tag_choices(@scene_tags, @scene_tag_paths),
+          { include_hidden: true },
+          { multiple: true, class: "form-select", size: [ @scene_tags.size, 6 ].min } %>
+        <div class="form-text">
+          Optional. Assign any labels that describe this scene. Tags belong to this story and can
+          be managed under Configuration → Tags → Story Tags → Scene tags.
+        </div>
+      <% else %>
+        <p class="text-body-secondary mb-2">No scene tags are defined for this story yet.</p>
+        <%= link_to "Manage Scene Tags", universe_tags_path(scope: "story", taxonomy: "scene"), class: "btn btn-sm btn-outline-secondary" %>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <fieldset class="mb-3">
     <legend class="h6">Organization</legend>
     <div class="mb-3">
       <%= form.label :section_id, "Section", class: "form-label" %>

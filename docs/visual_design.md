@@ -159,7 +159,8 @@ mutation flow.
 
 Configuration is a separate sidebar section. **Tags** opens the shared taxonomy workspace:
 **Universe Tags** is selected by default and contains Character, Relation, Location, Event, Item,
-and Ownership tag tabs; **Story Tags** contains the story-scoped Section tags tab. The right-side
+and Ownership tag tabs; **Story Tags** contains separate story-scoped Section tags and Scene tags
+tabs. The right-side
 **Settings** section contains **Members** for universe admins, where the read/write/admin access
 list is managed. New configuration tools should be added as top-level entries here, grouped by
 scope when needed.
@@ -216,8 +217,8 @@ row. Ownerships use the same readable relationship treatment.
 Use `shared/_content_tabs` for related record workspaces. The Character workspace has Characters
 and Relations; the Item workspace has Items and Ownerships. Locations, Events, and Sections each
 have one record tab. Use `shared/_tag_workspace_navigation` for Configuration → Tags: the outer
-Universe/Story selector is followed by the six universe taxonomy tabs or the single story Section
-tags tab. All tabs are URL-backed Bootstrap `nav-tabs`: use the active class and
+Universe/Story selector is followed by the six universe taxonomy tabs or the two story taxonomy
+(Section/Scene) tabs. All tabs are URL-backed Bootstrap `nav-tabs`: use the active class and
 `aria-current="page"`, but do not add `data-bs-toggle="tab"` because each destination is a separate
 request.
 
@@ -254,7 +255,7 @@ Universes, Stories, and universe membership management use the existing form pat
 Do not replace these with a modal: full-page forms remain appropriate for objects with a stable
 URL and meaningful navigation.
 
-### Scene workspace (core and references shipped in 11.1–11.3; later slices pending)
+### Scene workspace (core, references, grouping, and tags shipped in 11.1–11.4; later slices pending)
 
 The accepted [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines a calm, explicit
 Scene workspace. The **Scenes** sidebar entry is a real story-scoped link with its own count while a
@@ -268,11 +269,11 @@ shared page header, content surface, entity rows, and empty state. Rows currentl
 - the required Title as a link to Scene Details and a clamped description preview;
 - a bordered grouping badge showing the Scene's full nested Section path, or **Ungrouped** with an
   open-folder icon. The `title` states that grouping does not change the narrative order;
+- optional Scene Tag badges using the taxonomy colors, with untagged Scenes remaining valid;
 - edit/delete controls only for writers;
 - visible Move up/Move down controls with a clear disabled state at sequence boundaries.
 
-Scene Tag badges and Element/participant counts arrive with slices 11.4 and 11.6; do not render
-placeholder badges for them.
+Element/participant counts arrive with slice 11.6; do not render placeholder counts for them.
 
 The page's primary **Add scene** action opens the stable new Scene form. The page header states
 that the order is the order the story is told, not in-world chronology, and that a section group
@@ -280,23 +281,25 @@ only organizes a scene. Move controls are real forms, so they work with a keyboa
 the action group wraps below the title at narrow widths instead of hiding it or relying on hover.
 
 Scene Details (`/scenes/:id`) is the canonical, inspectable page: the Title, narrative position,
-short description, Section group, linked Event, in-world time, and story context render for every
-access level, and only writers get the **Edit scene** action. `/scenes/:id/edit` is the full-page
-editor form and `new` reuses the same partial, so the Title/Description/Section/Event/time fields
-exist in exactly one place. The Details page labels narrative position and in-world time separately
-and says explicitly that the two values are independent and that a disagreement between them is not
-detected.
+short description, Section group, Scene Tag badges, linked Event, in-world time, and story context
+render for every access level, and only writers get the **Edit scene** action. `/scenes/:id/edit` is
+the full-page editor form and `new` reuses the same partial, so the Title/Description/Section/Event/
+time/Scene Tag fields exist in exactly one place. The Details page labels narrative position and
+in-world time separately and says explicitly that the two values are independent and that a
+disagreement between them is not detected. Scene Tags are optional; an empty tag state remains
+valid and never receives a default.
 
 The editor's **Scene Details / Characters / Items / Locations** shell is a URL-backed
 `shared/_content_tabs` nav. **Scene Details** is a live link; the other three are `aria-disabled`
 placeholders with an explanatory `title` until their slices add a destination. A tab is never a link
 to a route that does not exist.
 
-The Scene form groups its fields: **Organization** holds the Section selector (with **Ungrouped**
-and depth-indented Section names), and **In-world time** holds the Event selector (with **None**)
-and the `datetime-local` field. Each field has copy that states what it does *not* do — grouping
-never changes the narrative position, and the event link and the in-world time never write or clear
-each other.
+The Scene form groups its fields: **Scene tags** holds the optional native multi-select with
+root-first tag paths, **Organization** holds the Section selector (with **Ungrouped** and
+depth-indented Section names), and **In-world time** holds the Event selector (with **None**) and
+the `datetime-local` field. Each field has copy that states what it does *not* do — grouping never
+changes the narrative position, Scene Tags do not change order, and the event link and the in-world
+time never write or clear each other.
 
 The Sections workspace keeps its taxonomy tree and adds a **Grouped scenes** surface below it:
 ungrouped scenes first, then each Section's nested path as a heading with a scene count, and each

@@ -126,8 +126,9 @@ Other global behavior: `allow_browser versions: :modern`,
   Content models are addressed by numeric id.
 - Story URLs use the short `/s` resource path: `/u/:slug/s`, `/u/:slug/s/:story_id`, and the
   story-scoped content paths `/u/:slug/s/:story_id/sections`, `/u/:slug/s/:story_id/section_tags`,
-  and `/u/:slug/s/:story_id/scenes`. The universe-level `/u/:slug/sections` and `/u/:slug/scenes`
-  paths are intentionally not routed; every section and scene URL must include its story id.
+  `/u/:slug/s/:story_id/scene_tags`, and `/u/:slug/s/:story_id/scenes`. The universe-level
+  `/u/:slug/sections`, `/u/:slug/scene_tags`, and `/u/:slug/scenes` paths are intentionally not
+  routed; every section, tag, and scene URL must include its story id.
 - Universe memberships live at `/u/:universe_slug/members`; only universe admins can reach the
   membership index and mutations. The taxonomy workspace lives at `/u/:universe_slug/tags`; its
   `scope` and `taxonomy` query parameters select the Universe/Story scope and taxonomy editor.
@@ -136,8 +137,8 @@ Other global behavior: `allow_browser versions: :modern`,
 
 | Flow | Controllers | Behavior |
 |---|---|---|
-| JSON-only mutations | all `*_tags`, characters, locations, items, events, sections | `index/new` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes**, relations, ownerships, universe memberships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections | `index/new` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | tags, timeline, sessions, passwords | |
 
@@ -174,7 +175,7 @@ level. Universe-scoped content is shared by every story; Sections and Section ta
 story-scoped. Related record workspaces now keep only the records together in URL-backed tabs:
 Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
 lives under **Configuration → Tags**, with **Universe Tags** (Character, Relation, Location, Event,
-Item, and Ownership tags) and **Story Tags** (Section tags) selectors.
+Item, and Ownership tags) and **Story Tags** (Section and Scene tags) selectors.
 
 All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`, and
 `empty_state` patterns. Visual tokens and responsive/component conventions live in
@@ -190,15 +191,18 @@ into `innerHTML`) → `fetch` submits to the JSON endpoints → a successful mut
 same-URL Turbo visit so serialized parent/tag descriptors and all counts are refreshed from the
 server. Taxonomy insertion, move, and edit controls are available by pointer, touch, and keyboard;
 HTML5 drag/drop is an optional enhancement. Position changes use the transactional ordering
-service described in ADR 0009.
+service described in ADR 0009. The Story Tags scope now presents **Section tags** and **Scene
+tags** as separate story-scoped taxonomy tabs; both use the same DOM-safe tree and JSON mutation
+contract, while Scene assignment stays in the HTML Scene form.
 
-## Scene architecture (slices 11.1–11.3 implemented)
+## Scene architecture (slices 11.1–11.4 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first-version Scene domain and
-UX contract. Slices 11.1–11.3 implement its core, references, and Section grouping: the `scenes`
-table, the `Scene` model, the story-scoped routes, the canonical Scenes list, the Scene Details
-editor with its URL-backed tab shell, narrative-order moves, and both Section-grouping paths. Scene
-Tags, Elements, and world-presence links remain in slices 11.4–11.10 and are **not** routed yet.
+UX contract. Slices 11.1–11.4 implement its core, references, Section grouping, and Scene Tag
+taxonomy: the `scenes` and `scene_tags` tables, the `Scene` and `SceneTag` models, story-scoped
+routes, the canonical Scenes list, the Scene Details editor with its URL-backed tab shell,
+narrative-order moves, both Section-grouping paths, and optional tag assignment. Elements and
+world-presence links remain in slices 11.5–11.10 and are **not** routed yet.
 
 ### Ownership and resolution
 
@@ -212,7 +216,11 @@ Tags, Elements, and world-presence links remain in slices 11.4–11.10 and are *
   permitted.
 - A Scene persists a required title (`name`, labelled **Title**), an optional short description, a
   `slug`, its narrative `position`, an optional same-Story `section_id`, an optional same-Universe
-  `event_id`, and one optional in-world `datetime`.
+  `event_id`, one optional in-world `datetime`, and zero or many optional same-Story `SceneTag`
+  assignments.
+- A `SceneTag belongs_to Story` and follows the same hierarchical/colored taxonomy conventions as
+  `SectionTag`; it resolves its Universe through that Story and is managed only through the
+  story-scoped taxonomy workspace.
 - `UniverseScopeResolver` is the single answer to "which universe owns this record?". `Ability` and
   `ApplicationHelper#universe_for_record` both call it, so record-level authorization and the
   mutation controls a view renders cannot disagree. It resolves a record directly through
@@ -223,6 +231,7 @@ Tags, Elements, and world-presence links remain in slices 11.4–11.10 and are *
   root-first ancestor path and the depth-indented selector options. Preloading an arbitrary tree
   depth with `includes` is not possible, and `Section#ancestor_chain` would query per level per
   Scene, so both the Scenes list and the Sections workspace build the index from a single query.
+  `SceneTagPaths` does the same for the story-scoped Scene Tag hierarchy used by the assignment form.
 - The global Scene list is ordered by `(position, id)` and is never grouped by Section.
 
 ### Implemented routes and response split
@@ -233,16 +242,20 @@ Tags, Elements, and world-presence links remain in slices 11.4–11.10 and are *
 | Scene Details | `/u/:universe_slug/s/:story_id/scenes/:scene_id` | HTML |
 | Narrative-order move | `PATCH /u/:universe_slug/s/:story_id/scenes/:id/move` | HTML |
 | Section grouping | `PATCH /u/:universe_slug/s/:story_id/scenes/group` | HTML |
+| Scene Tag taxonomy | `/u/:universe_slug/s/:story_id/scene_tags` | JSON mutations, HTML index |
 | New / Edit Scene | `.../scenes/new`, `.../scenes/:id/edit` | HTML |
 | Characters / Items / Locations tabs, Elements (later slices) | not routed yet | JSON when added |
 
-Scenes have no Universe-level route. Every Scene route includes its Story, and all route-helper
-keys are passed by name. `ScenesController` answers HTML only and follows the redirect/re-render
-flow: successful create/update redirect to Scene Details, a move redirects back to the list with a
-`303`, and grouping redirects back to the Sections workspace with a `303`. Because the Scene flow
-never uses the shared JSON modal path, it does not inherit the current modal submission,
-error-display, or stale-DOM behavior in [`known_quirks.md`](known_quirks.md); slice 11.5 must
-still fix that path before Elements depend on it.
+Scenes have no Universe-level route. Every Scene and Scene Tag route includes its Story, and all
+route-helper keys are passed by name. `ScenesController` answers HTML only and follows the
+redirect/re-render flow: successful create/update redirect to Scene Details, a move redirects back
+to the list with a `303`, and grouping redirects back to the Sections workspace with a `303`.
+`SceneTagsController` follows the established taxonomy JSON mutation contract while its index uses
+the shared tree; it rejects a non-JSON mutation before the positioned service can commit anything.
+Because the Scene flow never uses the shared JSON modal path, it does not inherit
+the current modal submission, error-display, or stale-DOM behavior in
+[`known_quirks.md`](known_quirks.md); slice 11.5 must still fix that path before Elements depend on
+it.
 
 A move is a single transactional service call. The controller converts `direction=up|down` into
 the neighboring target position and lets `PositionedResourceOrder` clamp and normalize the group,
@@ -267,23 +280,28 @@ therefore renders a `422` field error through the ordinary HTML re-render flow i
 foreign-key exception, and an unparseable `datetime` is reported instead of being silently cast to
 `nil` and discarded. The editor re-renders the submitted raw value, so a rejected entry is never
 cleared from the field. The form's selectors, the delete confirmations, and the development-data
-loader enforce the same rules.
+loader enforce the same rules. `SceneTag` uses the shared hierarchical Story scope validation, and
+`Scene`/`SceneTag` use the shared `has_many_tags` DSL so a foreign-story assignment is a normal
+model error rather than a cross-scope disclosure. The Story-scoped `scenes_scene_tags` table also
+has real foreign keys and a unique `[scene_id, scene_tag_id]` index.
 
 ### UX
 
 The Story workspace gained a flat **Scenes** list with Title/short-description previews, a 1-based
-narrative-position badge, a Section-group or **Ungrouped** badge, add/edit/delete actions, and
-visible Move up/Move down buttons that are real `button_to` forms (keyboard operable, no drag
-required) and are disabled at the sequence boundaries. The page states that the order is the order
-the story is told, not in-world chronography, and that a section group only organizes a scene. Read
-only users and public guests see the same list with no mutation controls and a non-instructional
-empty state.
+narrative-position badge, a Section-group or **Ungrouped** badge, optional Scene Tag badges, and
+add/edit/delete actions. Visible Move up/Move down buttons are real `button_to` forms (keyboard
+operable, no drag required) and are disabled at the sequence boundaries. The page states that the
+order is the order the story is told, not in-world chronography, and that a section group only
+organizes a scene. Read-only users and public guests see the same list with no mutation controls and
+a non-instructional empty state.
 
 Scene Details (`/scenes/:id`) is the canonical, inspectable destination: it renders the Title,
-narrative position, short description, Section group, linked Event, formatted in-world time, and
-story context for writers, read-only members, and guests, and gives only writers an **Edit scene**
-action. The Title/Description/Section/Event/time form lives once, at `/scenes/:id/edit`
-(`scenes/_form`, reused by `new`), so there is no second edit surface.
+narrative position, short description, Section group, Scene Tags, linked Event, formatted in-world
+time, and story context for writers, read-only members, and guests, and gives only writers an **Edit
+scene** action. The Title/Description/Section/Event/time/Scene Tag form lives once, at
+`/scenes/:id/edit` (`scenes/_form`, reused by `new`), so there is no second edit surface. Scene
+Tag definitions are edited separately in the story-scoped taxonomy workspace; assignment remains
+optional and never receives a default.
 
 The editor shell is URL-backed through `shared/_content_tabs`: **Scene Details** is a live link and
 **Characters**, **Items**, and **Locations** are `aria-disabled` placeholders with an explanatory

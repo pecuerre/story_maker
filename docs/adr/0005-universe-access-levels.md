@@ -28,10 +28,14 @@ Authorization is defined at the universe level and has three levels: **read**, *
   memberships.
 - The owner is always an admin. The owner does not need a duplicate membership row.
 - A user's effective access applies to every story and every universe- or story-scoped component
-  in that universe. Sections and section tags continue to resolve their universe through their
-  story.
+  in that universe. Sections, section tags, scenes, and scene tags continue to resolve their
+  universe through their story.
 - `Ability` is the single policy definition used by the request authorization concern. Universe
   membership management is an admin-only HTML flow at `/u/:universe_slug/members`.
+
+> **Slice 11.4 clarification (2026-09-25):** `SceneTag` is a story-scoped content component and
+> therefore inherits the same Universe access level as its Story; it does not introduce a separate
+> permission boundary.
 
 ## Consequences
 

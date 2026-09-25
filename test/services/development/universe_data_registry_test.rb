@@ -10,6 +10,7 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
     assert_equal "Scene", model_names.last
     assert_operator model_names.index("Event"), :<, model_names.index("Scene")
     assert_operator model_names.index("Section"), :<, model_names.index("Scene")
+    assert_operator model_names.index("SceneTag"), :<, model_names.index("Scene")
     assert_not_includes model_names, "Session"
     assert_equal %w[dark lotr], Development::UniverseDataRegistry::UNIVERSES.keys
     assert Development::UniverseDataRegistry.registered_universe?("dark")

@@ -193,16 +193,16 @@ The Rails test suite uses `test/fixtures/` so automated tests remain determinist
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
 test mode instead of replanting demo records.
 
-## Scene delivery (slices 11.1–11.3 implemented)
+## Scene delivery (slices 11.1–11.4 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and backlog Epic 11 define the Scene
-contract. Slices 11.1–11.3 have landed the core (`scenes` migration, `Scene` model, story-scoped
+contract. Slices 11.1–11.4 have landed the core (`scenes` migration, `Scene` model, story-scoped
 routes/controller, canonical list, narrative-order moves, Scene Details page and its editor form,
 the real sidebar link with its own cached count), the optional Section/Event/datetime references
-with their validation and the URL-backed tab shell, and the Section grouping workspace. Scene Tags,
-reliable JSON modals, Elements, and world-presence links are still pending and are deliberately
-**not** routed yet. The confirmed first-version defaults are: Scene `name` labelled **Title**;
-Element
+with their validation and the URL-backed tab shell, the Section grouping workspace, and the
+story-scoped Scene Tag taxonomy/assignment. Reliable JSON modals, Elements, and world-presence links
+are still pending and are deliberately **not** routed yet. The confirmed first-version defaults
+are: Scene `name` labelled **Title**; Element
 `name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
 has none; Scene uses one optional single-point `datetime` with the current Event storage/editor
 precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
@@ -214,8 +214,10 @@ Delivery remains staged in [`backlog.md`](backlog.md):
   tests, and connected development data.
 - 11.2 and 11.3 (done) add the Section/Event/datetime references, the URL-backed tab shell, and the
   Section grouping workspace.
-- Later slices add Tags, reliable JSON modals, Elements, speaker and presence links, and reverse
-  links in that order.
+- 11.4 (done) adds the story-scoped Scene Tag schema/model, hierarchical Story Tags workspace,
+  optional Scene Details assignment, badges, fixtures, and development data.
+- Later slices add reliable JSON modals, Elements, speaker and presence links, and reverse links in
+  that order.
 - Slice 11.5 must fix JSON modal submission/error/delete behavior before Element UI depends on the
   shared modal controller. Do not copy the current 406/stale-DOM behavior into Scene Elements.
 - Every slice preserves public/private read-write-admin behavior and updates all model registries,
@@ -238,13 +240,14 @@ already shipped.
 When data is added, put it in the relevant `db/data/<universe_slug>/` files (`scenes.yml`,
 `scene_tags.yml`, `scene_elements.yml`, and the applicable speaker/presence-link files), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
-Ungrouped, Section-assigned, independent Event/datetime, shared-Event, Narration, Dialogue,
-multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. `scenes.yml`
-records already reference their story, may now reference `section:` and `event:` with
-`Model.slug` references and an independent `datetime:`, and use explicit `position` values so the
-narrative order is visible in the file. `Scene` is loaded **after** `Event` in
-`Development::UniverseDataRegistry` because a symbolic reference may not point at a later model
-file, and the loader proves the Section belongs to the Scene's story before writing anything.
+Ungrouped, Section-assigned, independent Event/datetime, shared-Event, tagged/untagged Scene,
+Narration, Dialogue, multi-speaker, multi-Location, and blank/populated-role cases at Epic
+completion. `scenes.yml` records already reference their story, may now reference `section:`,
+`event:`, and `scene_tags:` with `Model.slug` references and an independent `datetime:`, and use
+explicit `position` values so the narrative order is visible in the file. `SceneTag` is loaded before
+`Scene`, and `Scene` is loaded **after** `Event` in `Development::UniverseDataRegistry` because a
+symbolic reference may not point at a later model file. The loader proves the Section and every
+assigned Scene Tag belong to the Scene's story before writing anything.
 
 For an already prepared but empty development database, use the explicit
 `UNIVERSE=<slug> bin/rails db:demo:load` task. After changing any `scenes.yml`, follow the required
@@ -268,9 +271,15 @@ with no mutation controls.
 
 Open a Scene and check: the **Scene Details** tab is active while **Characters**, **Items**, and
 **Locations** are `aria-disabled` placeholders rather than dead links; Details shows the Section
-group, the linked event, and the in-world time as separate labelled values; and the editor's
-**Organization** and **In-world time** fieldsets let you set a Section, an Event, and a
-`datetime-local` value, or clear them, without the narrative position changing.
+group, Scene Tag badges, the linked event, and the in-world time as separate labelled values; and
+the editor's **Scene tags**, **Organization**, and **In-world time** fieldsets let you assign or
+clear optional tags, set a Section, set an Event, and set a `datetime-local` value without the
+narrative position changing.
+
+Open **Configuration → Tags → Story Tags → Scene tags** and check: the story-scoped Scene Tag
+hierarchy can be created, renamed, colored, nested, moved, inserted, and deleted with the shared
+keyboard/touch controls; a public guest or read-only member sees the tree without mutation controls;
+and the same tags appear as optional badges on the Scenes list and Details page.
 
 Open `/u/dark/s/<story_id>/sections` and check: the Section tree is still there; **Grouped scenes**
 lists ungrouped scenes first and then each nested Section path with the narrative order preserved
@@ -393,7 +402,8 @@ Dependabot config: `.github/dependabot.yml`.
    `has_many_tags :foo_tag, scope: :universe_id` / inverse
    `has_many_tagd :foo, scope: :universe_id`, `HasColor` for tags — the scope is mandatory and
    tags remain optional), `belongs_to :universe`, `validates :name, presence: true` (unless it has
-   custom identity rules). Story-scoped tag pairs use `scope: :story_id`. Sections and Scenes are
+   custom identity rules). Story-scoped tag pairs use `scope: :story_id`; Section/SectionTag and
+   Scene/SceneTag are the current examples. Sections, Scenes, and their tag definitions are
    the exceptions: they belong to a **story**. A flat ordered sequence uses
    `maintains_flat_positions_for` in its controller and must not include `Hierarchical`.
    A record narrower than those — anything a Scene or a Section owns — must resolve its Universe

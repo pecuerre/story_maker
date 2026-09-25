@@ -1,1 +1,31 @@
-[]
+- universe: Universe.lotr
+  item: Item.one_ring
+  character: Character.frodo_baggins
+  ownership_tags: [ OwnershipTag.is_holded_by ]
+  from_date: "3018-09-30T00:00"
+  to_date: "3019-03-25T00:00"
+  slug: "frodo_one_ring"
+
+- universe: Universe.lotr
+  item: Item.sting
+  character: Character.frodo_baggins
+  ownership_tags: [ OwnershipTag.belongs_to ]
+  slug: "frodo_sting"
+
+- universe: Universe.lotr
+  item: Item.anduril
+  character: Character.aragorn
+  ownership_tags: [ OwnershipTag.belongs_to ]
+  slug: "aragorn_anduril"
+
+- universe: Universe.lotr
+  item: Item.belthronding
+  character: Character.legolas
+  ownership_tags: [ OwnershipTag.is_holded_by ]
+  slug: "legolas_belthronding"
+
+- universe: Universe.lotr
+  item: Item.ring_of_barahir
+  character: Character.aragorn
+  ownership_tags: [ OwnershipTag.belongs_to ]
+  slug: "aragorn_ring_of_barahir"

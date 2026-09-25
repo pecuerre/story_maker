@@ -1,1 +1,23 @@
-[]
+- universe: Universe.lotr
+  slug: "council"
+  name: "Council"
+  bgcolor: "#FFD700" # "gold"
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  slug: "journey"
+  name: "Journey"
+  bgcolor: "#99cc66" # "light green"
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  slug: "battle"
+  name: "Battle"
+  bgcolor: "#FF5733" # "red orange"
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  slug: "quest"
+  name: "Quest"
+  bgcolor: "#6699cc" # "blue gray"
+  fgcolor: "#000000" # black

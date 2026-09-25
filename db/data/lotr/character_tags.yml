@@ -1,1 +1,53 @@
-[]
+- universe: Universe.lotr
+  name: Race
+  slug: race
+  bgcolor: "#b3b3b3" # light gray
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Hobbit
+  slug: hobbit
+  parent: CharacterTag.race
+  bgcolor: "#ffcc99" # light orange
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Man
+  slug: man
+  parent: CharacterTag.race
+  bgcolor: "#99ccff" # light blue
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Elf
+  slug: elf
+  parent: CharacterTag.race
+  bgcolor: "#99ffcc" # light green
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Dwarf
+  slug: dwarf
+  parent: CharacterTag.race
+  bgcolor: "#ff9966" # medium orange
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Allegiance
+  slug: allegiance
+  bgcolor: "#cccccc" # medium gray
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Fellowship of the Ring
+  slug: fellowship_of_the_ring
+  parent: CharacterTag.allegiance
+  bgcolor: "#6699cc" # blue gray
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Rangers of the North
+  slug: rangers_of_the_north
+  parent: CharacterTag.allegiance
+  bgcolor: "#336699" # dark blue gray
+  fgcolor: "#000000" # black

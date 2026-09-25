@@ -1,1 +1,22 @@
-[]
+- universe: Universe.lotr
+  name: "is ally of"
+  slug: "is_ally_of"
+  symmetric: true
+  bgcolor: "#d2FF18" # lime
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: "is leader of"
+  slug: "is_leader_of"
+  symmetric: false
+  inverse: "is led by"
+  bgcolor: "#FF5733" # red orange
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: "is master of"
+  slug: "is_master_of"
+  symmetric: false
+  inverse: "is servant of"
+  bgcolor: "#33FF57" # green
+  fgcolor: "#000000" # black

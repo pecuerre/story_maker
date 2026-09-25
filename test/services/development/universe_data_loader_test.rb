@@ -44,6 +44,42 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal [ "the-fellowship-of-the-ring", "the-two-towers", "the-return-of-the-king" ], story.sections.order(:position, :id).pluck(:slug)
   end
 
+  test "loads the LOTR world-building records with nested locations and a chained timeline" do
+    Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
+
+    universe = Universe.find_by!(slug: "lotr")
+
+    assert_equal 7, universe.characters.count
+    assert_equal 12, universe.locations.count
+    assert_equal 5, universe.items.count
+    assert_equal 5, universe.relations.count
+    assert_equal 5, universe.ownerships.count
+    assert_equal 6, universe.events.count
+
+    race = universe.character_tags.find_by!(name: "Race")
+    hobbit = universe.character_tags.find_by!(name: "Hobbit")
+    assert_equal race, hobbit.parent
+
+    regions = universe.locations.where(name: %w[Eriador Rohan Gondor Mordor]).order(:position)
+    assert_equal [ 0, 1, 2, 3 ], regions.pluck(:position)
+    assert_equal "Mordor", universe.locations.find_by!(name: "Barad-dûr").parent.name
+
+    ring = universe.ownerships.find_by!(slug: "frodo-one-ring")
+    assert_equal universe.items.find_by!(name: "The One Ring"), ring.item
+    assert_equal universe.characters.find_by!(name: "Frodo Baggins"), ring.character
+    assert ring.from_date < ring.to_date
+
+    leader_tag = universe.relation_tags.find_by!(name: "is leader of")
+    assert_not leader_tag.symmetric?
+    assert_equal "is led by", leader_tag.inverse
+
+    timeline = universe.events.order(:position).to_a
+    assert_equal "The Ring Is Given to Frodo", timeline.first.title
+    timeline.each_cons(2) do |previous, event|
+      assert_equal previous, event.after_event
+    end
+  end
+
   test "rejects loading outside the development environment" do
     error = assert_raises(Development::UniverseDataLoader::EnvironmentError) do
       Development::UniverseDataLoader.new(universe: "dark", environment: :production).load!

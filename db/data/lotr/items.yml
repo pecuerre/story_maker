@@ -1,1 +1,29 @@
-[]
+- universe: Universe.lotr
+  name: "The One Ring"
+  slug: "one_ring"
+  description: "The master Ring of the Lord of the Rings."
+  item_tags: [ ItemTag.ring ]
+
+- universe: Universe.lotr
+  name: "Sting"
+  slug: "sting"
+  description: "Frodo's Elvish blade."
+  item_tags: [ ItemTag.sword ]
+
+- universe: Universe.lotr
+  name: "Andúril"
+  slug: "anduril"
+  description: "Flame of the West, reforged for Aragorn."
+  item_tags: [ ItemTag.sword ]
+
+- universe: Universe.lotr
+  name: "Belthronding"
+  slug: "belthronding"
+  description: "Legolas's bow, strung with a single strand of his own hair."
+  item_tags: [ ItemTag.bow ]
+
+- universe: Universe.lotr
+  name: "Ring of Barahir"
+  slug: "ring_of_barahir"
+  description: "The heirloom Ring of Barahir passed down to Aragorn."
+  item_tags: [ ItemTag.ring ]

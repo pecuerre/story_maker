@@ -1,1 +1,72 @@
-[]
+- universe: Universe.lotr
+  name: Middle-earth
+  slug: middle_earth
+  location_tags: [ LocationTag.region ]
+
+- universe: Universe.lotr
+  name: Eriador
+  slug: eriador
+  location_tags: [ LocationTag.region ]
+  parent: Location.middle_earth
+
+- universe: Universe.lotr
+  name: The Shire
+  slug: the_shire
+  location_tags: [ LocationTag.region ]
+  parent: Location.eriador
+
+- universe: Universe.lotr
+  name: Hobbiton
+  slug: hobbiton
+  description: "The Shire village of the Baggins family."
+  location_tags: [ LocationTag.village ]
+  parent: Location.the_shire
+
+- universe: Universe.lotr
+  name: Rivendell
+  slug: rivendell
+  location_tags: [ LocationTag.stronghold ]
+  parent: Location.eriador
+
+- universe: Universe.lotr
+  name: Moria
+  slug: moria
+  description: "The ancient Dwarf city beneath the Misty Mountains."
+  location_tags: [ LocationTag.stronghold ]
+  parent: Location.eriador
+
+- universe: Universe.lotr
+  name: Rohan
+  slug: rohan
+  location_tags: [ LocationTag.region ]
+  parent: Location.middle_earth
+
+- universe: Universe.lotr
+  name: Helm's Deep
+  slug: helms_deep
+  location_tags: [ LocationTag.stronghold ]
+  parent: Location.rohan
+
+- universe: Universe.lotr
+  name: Gondor
+  slug: gondor
+  location_tags: [ LocationTag.region ]
+  parent: Location.middle_earth
+
+- universe: Universe.lotr
+  name: Minas Tirith
+  slug: minas_tirith
+  location_tags: [ LocationTag.city ]
+  parent: Location.gondor
+
+- universe: Universe.lotr
+  name: Mordor
+  slug: mordor
+  location_tags: [ LocationTag.region ]
+  parent: Location.middle_earth
+
+- universe: Universe.lotr
+  name: Barad-dûr
+  slug: barad_dur
+  location_tags: [ LocationTag.stronghold ]
+  parent: Location.mordor

@@ -86,6 +86,9 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     listed = css_select(".scene-grouping .list-group-item a").map { |link| link.text.squish }
     assert_equal [ "Scene three", "Later ungrouped scene" ], listed
     assert_select ".scene-grouping p", text: /are listed on\s+their own section's page/
+    # The badge says what the subset holds, so a bare figure is never read as the
+    # story's own scene count.
+    assert_select ".scene-grouping .list-group-item .badge", text: "2 ungrouped scenes"
   end
 
   test "the ungrouped list is empty once every scene is grouped" do
@@ -97,22 +100,27 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".scene-grouping h2", text: "Ungrouped scenes"
     assert_select ".scene-grouping .list-group-item", count: 0
     assert_select ".scene-grouping p", text: /nothing waiting to\s+be grouped here/
-    # The move form still offers every scene, so a scene can be ungrouped again.
-    assert_select "form.scene-grouping-form select[name=scene_id] option", @story.scenes.count
+    # There is no ungrouped scene to offer, so the move form is not rendered: a
+    # grouped scene is regrouped from its own section's page.
+    assert_select "form.scene-grouping-form", count: 0
   end
 
-  test "the move selectors in the grouping workspace are offered to writers only" do
+  test "the move form only offers the ungrouped scenes this surface lists" do
+    grouped = scenes(:scene_one)
+    ungrouped = scenes(:scene_three)
+
     get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
 
-    assert_select "form[action=?].scene-grouping-form", group_universe_story_scenes_path(
-      universe_slug: @universe.slug, story_id: @story
-    )
-    assert_select "select[name=scene_id] option", @story.scenes.count
+    assert_response :success
+    assert_select "select[name=scene_id] option", 1
+    assert_select "select[name=scene_id] option[value=?]", ungrouped.id, text: /Scene three/
+    assert_select "select[name=scene_id] option[value=?]", grouped.id, count: 0
     assert_select "select[name=section_id] option", @story.sections.count + 1
 
     universe, story = private_story
     story.sections.create!(name: "Private section")
-    story.scenes.create!(name: "Private scene")
+    story.scenes.create!(name: "Private ungrouped scene")
+    story.scenes.create!(name: "Private grouped scene", position: 1, section: story.sections.first)
     sign_in_read_only_member(universe)
 
     get universe_story_sections_url(universe_slug: universe.slug, story_id: story)
@@ -121,7 +129,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".scene-grouping", 1
     assert_select "form.scene-grouping-form", count: 0
     assert_select "select[name=scene_id]", count: 0
-    assert_includes response.body, "Private scene"
+    assert_includes response.body, "Private ungrouped scene"
   end
 
   test "the ungrouped list shows an empty state when the story has no scenes" do

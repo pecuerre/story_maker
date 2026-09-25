@@ -50,37 +50,16 @@
   outline-offset: 2px;
 }
 
-// Details is navigation, not a mutation, so it is never hidden behind the
-// hover-revealed action menu and it keeps a visible text label.
-.taxonomy-details-link {
+// The name, its tags, and its count are the left of the row. The right-hand
+// group (Details + the action menu) is always visible: it is not a hover
+// affordance, so the row is equally usable with a keyboard and on touch. It
+// never shrinks, so the name area wraps instead of squeezing the controls.
+.taxonomy-row-end {
   flex-shrink: 0;
-  color: var(--bs-body-secondary-color);
-  font-size: .8125rem;
-  text-decoration: none;
-}
-
-.taxonomy-details-link:hover,
-.taxonomy-details-link:focus {
-  color: var(--um-primary-strong);
-  text-decoration: underline;
-  text-underline-offset: .15em;
-}
-
-.taxonomy-details-link .details-link-count {
-  color: var(--bs-body-secondary-color);
 }
 
 .taxonomy-actions {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease-in-out;
-}
-
-.taxonomy-row:hover > .taxonomy-actions,
-.taxonomy-row:focus-within > .taxonomy-actions,
-.taxonomy-node.is-editing > .taxonomy-row > .taxonomy-actions {
-  opacity: 1;
-  pointer-events: auto;
+  flex-shrink: 0;
 }
 
 .taxonomy-actions .dropdown-item:disabled {
@@ -166,11 +145,6 @@
 }
 
 @media (hover: none), (pointer: coarse) {
-  .taxonomy-actions {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
   .taxonomy-separator-add {
     opacity: 1;
     pointer-events: auto;
@@ -178,7 +152,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .taxonomy-actions,
   .taxonomy-row,
   .taxonomy-separator-add {
     transition: none;

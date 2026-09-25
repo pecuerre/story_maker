@@ -5,7 +5,7 @@
 #
 # What it checks:
 #   1. login (CSRF token + signed session cookie)
-#   2. top bar exposes /u/<slug>/s (universe dropdown) and the current story's sections link
+#   2. the universe page exposes /u/<slug>/s (All stories) and lists the stories
 #   3. stories index renders (cards, counts, "New story")
 #   4. the universe-level /u/<slug>/sections URL is invalid (404)
 #   5. a story's sections page renders that story's sections only
@@ -51,10 +51,10 @@ LOGIN_CODE=$(curl -s -c "$JAR" -b "$JAR" -o /dev/null -w "%{http_code}" -X POST 
   --data-urlencode "password=$PASSWORD")
 check "login succeeds" "302" "$LOGIN_CODE"
 
-# --- 2. sidebar links -------------------------------------------------------
+# --- 2. universe page links -------------------------------------------------
 SIDEBAR=$(curl -s -b "$JAR" "$BASE/u/$UNIVERSE")
 echo "$SIDEBAR" | grep -oE 'href="/u/[^"]*/s[^"]*"' | sort -u > /tmp/smoke_sidebar.txt
-contains "top bar links to the stories index" "href=\"/u/$UNIVERSE/s\"" /tmp/smoke_sidebar.txt
+contains "universe page links to the stories index" "href=\"/u/$UNIVERSE/s\"" /tmp/smoke_sidebar.txt
 
 # --- 3. stories index -------------------------------------------------------
 curl -s -b "$JAR" "$BASE/u/$UNIVERSE/s" -o /tmp/smoke_index.html -w "%{http_code}" \

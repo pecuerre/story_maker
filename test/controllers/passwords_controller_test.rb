@@ -102,7 +102,10 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
 
     get universe_url(universe)
     assert_response :success
-    assert_select "span.navbar-context", text: "Select"
+    # Password reset also clears the remembered story, so the top bar states the
+    # universe only.
+    assert_select "nav .navbar-nav a.nav-link[href=?]", universe_path(universe)
+    assert_select "nav .navbar-nav .nav-item", 1
   end
 
   private

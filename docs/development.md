@@ -282,14 +282,19 @@ never confused with a story without scenes; a filter value that no longer exists
 section, an unreadable date) is reported instead of quietly emptying the list; and reordering or
 deleting inside a narrowed list returns to the same filter.
 
-The universe page, the sidebar's scoped blocks, and the record details pages can be checked the
-same way: the universe page lists the universe's stories with an **Open** action and keeps **All
-stories** in the header; the left sidebar reads current universe → Universe Bible → current story →
+The universe page, the top bar, the sidebar's scoped blocks, and the record details pages can be
+checked the same way: the top bar shows only the **Universe Maker** brand, **Universe: …**, and
+**Story: …** as plain links (no universe or story dropdown), and the brand lands on the universes
+list where **New universe** lives; the universe page lists the universe's stories with an **Open**
+action and keeps **New story** and **All stories** in the header, so it is where stories are switched
+and created; the left sidebar reads current universe → Universe Bible → current story →
 Story workspace with one hue per scope, and the right utility sidebar reads its green **Universe
 tools** context block → Configuration → Collaboration → Analytics → AI, with **Tags** (and, for an
-admin, **Members**) in Configuration; the left column's Universe Bible, Sections, and every `_tag`
-row carry a **Details** link labelled with the number of
-records that page will list, and following it lands on the record's own read-only page (a tag lists
+admin, **Members**) in Configuration; every list row — the left sidebar's Universe Bible lists aside,
+the left column's Sections, and every `_tag` row — shows a plain name with its tags and a count
+pill on the left that names what it counts ("(4 characters)") and an always-visible **Details** link
+plus an always-visible `[…]` menu on the
+right, and following Details lands on the record's own read-only page (a tag lists
 the records carrying it, a Section lists the scenes grouped under it). Placeholder navigation in the
 right utility sidebar stays flat gray with no hover emphasis, and a guest or read-only member sees
 the same pages with no mutation controls.
@@ -299,19 +304,23 @@ Open a Scene and check: the **Scene Details** tab is active while **Characters**
 group, Scene Tag badges, the linked event, and the in-world time as separate labelled values; and
 the editor's **Scene tags**, **Organization**, and **In-world time** fieldsets let you assign or
 clear optional tags, set a Section, set an Event, and set a `datetime-local` value without the
-narrative position changing.
+narrative position changing. On the Scenes list, the row's title is plain text and the **Details**
+link is the way into that page.
 
 Open **Configuration → Tags → Story Tags → Scene tags** and check: the story-scoped Scene Tag
 hierarchy can be created, renamed, colored, nested, moved, inserted, and deleted with the shared
 keyboard/touch controls; a public guest or read-only member sees the tree without mutation controls;
 and the same tags appear as optional badges on the Scenes list and Details page.
 
-Open `/u/dark/s/<story_id>/sections` and check: the Section tree is still there; **Ungrouped scenes**
-lists only the scenes that belong to no Section, says how many are grouped, and leaves a grouped
+Open `/u/dark/s/<story_id>/sections` and check: the Section tree is still there and each row's count
+pill names what it counts ("(3 scenes)"); **Ungrouped scenes**
+lists only the scenes that belong to no Section under a badge that says how many that is
+("2 ungrouped scenes"), says how many are grouped, and leaves a grouped
 scene to its own Section page (follow the row's **Details** link and the three scenes of Episode 1 are
-listed there in narrative order); the Scene → group selector moves a scene between Ungrouped, a
-Section, and another Section and still offers every scene of the story, while the flash states that
-the narrative position did not change; and the Section delete confirmation says that linked scenes
+listed there in narrative order); the **Ungrouped scene** → group selector offers only the ungrouped
+scenes of that list and moves one into a Section, while the flash states that
+the narrative position did not change; a grouped scene is put back to Ungrouped from the scene
+editor's Section selector; and the Section delete confirmation says that linked scenes
 become ungrouped without their narrative order changing.
 
 ## Taxonomy editor and ordering verification

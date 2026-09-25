@@ -52,7 +52,7 @@ end %>
                 aria-label="<%= "Narrative position #{scene.position + 1} of #{@scene_total}" %>">
                 <%= scene.position + 1 %>
               </span>
-              <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene), class: "entity-title" %>
+              <span class="entity-title"><%= scene.name %></span>
               <% grouping = scene_grouping_label(scene, @section_paths) %>
               <span class="badge rounded-pill text-bg-light border"
                 title="<%= grouping.present? ? "Grouped under #{grouping}. Grouping does not change the narrative order." : "Not grouped under a section. Grouping does not change the narrative order." %>">
@@ -66,32 +66,39 @@ end %>
             <% end %>
           </div>
 
-          <% if editable %>
-            <%# Boundary state is the Story's real first and last position, so a
-                filtered list never disables a move that has a neighbor. %>
-            <% at_first = scene.position <= @first_position %>
-            <% at_last = scene.position >= @last_position %>
-            <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
-              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, **filter_params),
-                method: :patch,
-                params: { direction: "up" },
-                class: "btn btn-sm btn-light border",
-                disabled: at_first,
-                title: at_first ? "Already first in the narrative order" : "Move up",
-                aria: { label: "Move #{scene.name} up in the narrative order" },
-                data: { scene_move: "up" } do %>
-                <i class="bi bi-arrow-up" aria-hidden="true"></i>
-              <% end %>
-              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, **filter_params),
-                method: :patch,
-                params: { direction: "down" },
-                class: "btn btn-sm btn-light border",
-                disabled: at_last,
-                title: at_last ? "Already last in the narrative order" : "Move down",
-                aria: { label: "Move #{scene.name} down in the narrative order" },
-                data: { scene_move: "down" } do %>
-                <i class="bi bi-arrow-down" aria-hidden="true"></i>
-              <% end %>
+          <%# The row's right-hand group matches every other list: Details is
+              navigation into the scene's own page and is rendered for every
+              access level, while the controls below it are for writers only. %>
+          <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            <%= record_details_link universe_story_scene_path(story_id: @story, id: scene), record: scene %>
+
+            <% if editable %>
+              <%# Boundary state is the Story's real first and last position, so a
+                  filtered list never disables a move that has a neighbor. %>
+              <% at_first = scene.position <= @first_position %>
+              <% at_last = scene.position >= @last_position %>
+              <div class="d-flex align-items-center gap-1">
+                <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, **filter_params),
+                  method: :patch,
+                  params: { direction: "up" },
+                  class: "btn btn-sm btn-light border",
+                  disabled: at_first,
+                  title: at_first ? "Already first in the narrative order" : "Move up",
+                  aria: { label: "Move #{scene.name} up in the narrative order" },
+                  data: { scene_move: "up" } do %>
+                  <i class="bi bi-arrow-up" aria-hidden="true"></i>
+                <% end %>
+                <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, **filter_params),
+                  method: :patch,
+                  params: { direction: "down" },
+                  class: "btn btn-sm btn-light border",
+                  disabled: at_last,
+                  title: at_last ? "Already last in the narrative order" : "Move down",
+                  aria: { label: "Move #{scene.name} down in the narrative order" },
+                  data: { scene_move: "down" } do %>
+                  <i class="bi bi-arrow-down" aria-hidden="true"></i>
+                <% end %>
+              </div>
 
               <div class="dropdown row-actions">
                 <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
@@ -118,8 +125,8 @@ end %>
                   </li>
                 </ul>
               </div>
-            </div>
-          <% end %>
+            <% end %>
+          </div>
         </div>
       <% end %>
     </div>

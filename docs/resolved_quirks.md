@@ -438,3 +438,27 @@ actual list and position, including first/last boundaries. Native rename buttons
 Space; Move up/Move down and Insert before/Insert after provide pointer, touch, and keyboard paths;
 touch media rules expose the controls and use 44px insertion targets. Browser regressions cover
 hostile names, stale options/counts, root boundaries, keyboard activation, and narrow viewports.
+
+### Hover-only row actions and an `aria-current`-less top bar (fixed)
+
+**Then:** two related accessibility gaps shared one entry in
+[`known_quirks.md`](known_quirks.md). A taxonomy row (Locations, Sections, and every tag tree)
+revealed its action menu only on hover, through a `opacity: 0; pointer-events: none` rule that a
+focus/touch media query had to undo. The top bar's universe and story dropdowns marked the current
+item with a visual `.active` class and no `aria-current` on the link, so the current scope was
+announced by color alone. The Scenes list also had no Details link, and the taxonomy Details link
+carried its count as parenthesized text.
+
+**Fix:** the top bar is now three links — the brand to the universes landing page, plus
+**Universe:** and **Story:** as plain links to their own pages — with no switcher dropdown, and a
+scope link carries `.active` together with `aria-current="page"` only on the page it points at.
+Every list row follows one shape: a plain-text name with its tags and a `.record-count` pill on the
+left, and an always-visible **Details** link followed by the action menu on the right. The count
+moved out of the link into `record_count_badge`, which names what it counts ("(4 characters)"), and
+the taxonomy node serializes that text onto the node
+so the tree controller can restore the rename button exactly as the server rendered it when a rename
+is cancelled. Browser regressions cover the no-hover visibility of both halves of the row, the
+count's return after a cancelled rename, and the read-only Scene row.
+
+Tag-color contrast validation remains open and is recorded in
+[`known_quirks.md`](known_quirks.md).

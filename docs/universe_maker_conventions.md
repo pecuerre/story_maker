@@ -157,12 +157,14 @@ The three functional editing patterns are:
 - Use the `shared/taxonomy_tree` partial (wraps `shared/_taxonomy_node`) with the
   `new_url`/`create_url`/`edit_url`/`update_url`/`delete_url` lambdas + `model_param` +
   `modal_fields` locals, plus `details_url`/`details_count`/`details_count_label` for the row's
-  **Details** link.
-- A row carries three things: the **name** (the only inline-rename target, sized to its own text so
-  clicking the empty space beside it does nothing), the **Details** link (visible at every access
-  level), and one **overflow menu** holding Add child, Insert before, Insert after, Move up, Move
-  down, Edit, and Delete. Move up/down are disabled menu items at the sequence boundaries, so the
-  row itself has no add or arrow buttons.
+  **Details** link and count pill.
+- A row carries five things: the **name** (the only inline-rename target, sized to its own text so
+  clicking the empty space beside it does nothing), the record's **tags**, its **count** pill when
+  the taxonomy has one ("(4 characters)", "(3 scenes)"), the **Details** link on the right, and one
+  **overflow menu** holding Add
+  child, Insert before, Insert after, Move up, Move down, Edit, and Delete. Move up/down are disabled
+  menu items at the sequence boundaries, so the row itself has no add or arrow buttons. The Details
+  link and the menu are both always visible: a row never depends on hover.
 - `taxonomy_tree_controller.js` provides safe DOM-built modal fields and nodes, inline name
   editing, insertion boundaries, and the move/insert menu actions. HTML5 drag/drop is an
   optional enhancement. After every successful mutation it performs a same-URL Turbo visit so
@@ -170,12 +172,15 @@ The three functional editing patterns are:
   render. User-controlled names and descriptions are assigned with `textContent`/DOM properties,
   never interpolated into `innerHTML`. The controller never builds a whole row: only the rename
   button is created in JavaScript, because a create always refreshes the same URL, so there is no
-  second copy of the row layout to drift.
+  second copy of the row layout to drift. That button's content is rebuilt from the node's data
+  attributes when a rename is cancelled, so a new element rendered there (the count pill) must be
+  serialized onto the node too.
 
 **2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
   Each row also renders `record_details_link` before its actions, so the record's own page is one
-  click away and visible to read-only viewers.
+  click away and visible to read-only viewers. The name is plain text; the Details link is the only
+  link into the record's own page.
 - Every record workspace uses `shared/_content_tabs`: URL-backed Bootstrap `nav-tabs` that keep
   related records together while preserving each canonical page. Tag management uses
   `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
@@ -288,7 +293,9 @@ added to an existing page instead of a new page being invented. See
   condition.
 - **UI:** the list uses the existing flat-list surface, Scene Details (`/scenes/:id`) is the
   canonical inspectable page with the same content for every access level, and the full-page form
-  pattern (`scenes/_form`, reused by `new` and `edit`) is the only editor. Scene Tag badges are
+  pattern (`scenes/_form`, reused by `new` and `edit`) is the only editor. A row is plain Title text
+  plus a right-hand group: the **Details** link into Scene Details for every access level, then the
+  writer-only move buttons and Edit/Delete menu. Scene Tag badges are
   preloaded in the list and Details; the form's native optional selector uses full root-first tag
   paths and is the only Scene assignment surface. Do not create a fourth page pattern or a second
   form for the same fields. The editor's workspace tabs go through
@@ -297,8 +304,11 @@ added to an existing page instead of a new page being invented. See
   never a link to a route that does not exist and never an in-document Bootstrap pane.
 - **Sections workspace:** the tree stays the record surface and `scenes/_ungrouped_scenes` lists
   only the Scenes that belong to no Section, because a grouped Scene is read on its own Section's
-  page. The move form keeps offering every Scene of the Story: regrouping a Scene is how it returns
-  to the ungrouped list.
+  page. The badge above that list states how many ungrouped Scenes it holds
+  (`pluralize(size, "ungrouped scene")`) rather than a bare figure, and the move form offers only
+  the ungrouped Scenes of that list: the form belongs to the Ungrouped block, so a grouped Scene is
+  regrouped from its own Section's page through the editor's Section selector instead. The form is not
+  rendered at all when nothing is ungrouped.
 - **Helpers:** add only the Scene-specific descriptors the new forms need. Scene JSON is not used to
   mix the stable HTML form with mutation responsibilities. Update shared count/preload behavior
   without copying the current taxonomy stale-option or modal 406 weaknesses.
@@ -320,14 +330,17 @@ added to an existing page instead of a new page being invented. See
   `scene_tag_choices`; the latter uses `SceneTagPaths` so nested tag options are root-first and
   query-free.
 - `app/helpers/application_helper.rb` — `active_if`, `aria_current_for`, `visible?`, `icon`,
-  `icon_text_count`, `nav_universes`, `nav_stories` (top bar dropdowns), universe access helpers
+  `icon_text_count`, `nav_stories` (the universe page's memoized story list), universe access helpers
   (`can_read_universe?`, `can_write_universe?`, `can_administer_universe?`,
   `universe_access_level`, `universe_access_label`), and `entity_tag_badge` (renders a record's tags
-  as colored badges). Counts are right-aligned pills, not parenthesized text; current links carry
-  both `.active` and `aria-current="page"`. Details pages add `record_details_link(path, record:,
-  count:, count_label:)` — the single Details link used by every row and tree node, with the count
-  repeated in its accessible name — plus `detail_fact(label, value, blank:)` for one identity value
-  and `in_world_range(from, to)` for the optional interval Event/Relation/Ownership share.
+  as colored badges). Sidebar counts are right-aligned pills; a row's own count is a pill too, so
+  both use the same quiet treatment. Current links carry
+  both `.active` and `aria-current="page"`. Details pages add `record_details_link(path, record:)` —
+  the single Details link used by every row and tree node, with the record name in its accessible
+  name and no count — plus `record_count_text(count, label)` / `record_count_badge(count, label)`
+  for the number that record's page will list and what it counts ("(4 characters)"),
+  `detail_fact(label, value, blank:)` for one identity value, and `in_world_range(from, to)`
+  for the optional interval Event/Relation/Ownership share.
 - `app/views/shared/_content_tabs.html.erb` renders related universe pages as URL-backed
   Bootstrap navigation; it does not use `data-bs-toggle="tab"` because each tab is a separate
   request and canonical URL. It accepts an optional `class_name` and explicit `active` tab state
@@ -336,8 +349,8 @@ added to an existing page instead of a new page being invented. See
 - `app/views/shared/_taxonomy_tree.html.erb` accepts an optional `confirm_message` lambda that
   supplies the destructive copy for each node, an optional `read_only_empty_description` so a
   read-only member is not told to add or drag records, and the `details_url`/`details_count`/
-  `details_count_label` trio that renders the row's Details link. `_row_actions` accepts the same
-  kind of `confirm_text`.
+  `details_count_label` trio that renders the row's Details link and count pill. `_row_actions`
+  accepts the same kind of `confirm_text`.
 - `app/views/shared/_record_details.html.erb`, `_detail_facts.html.erb`,
   `_detail_section.html.erb`, and `_tagged_record_list.html.erb` compose every record's details
   page. `_detail_section` renders its empty state whenever `count` is zero or no block is given, so
@@ -356,14 +369,21 @@ added to an existing page instead of a new page being invented. See
 
 ### Navigation (Top bar) — `app/views/layouts/_navbar.html.erb`
 Left to right:
-- **Universes** — dropdown: `nav_universes` list (current universe highlighted), *All universes*,
-  and *New universe* for signed-in users. The current-universe menu also exposes *Members* to admins.
-- **Universe: [name]** — present when `Current.universe` exists; makes the current universe scope
-  explicit and links back to the universe overview/all universes.
-- **Story: [name or Select]** — present when `Current.universe` exists; lists `nav_stories`, *All
-  stories*, and *New story*. A selected story is highlighted, but there is no duplicate standalone
-  current-story link.
+- **Universe Maker** — the brand, and the landing page (`/`, the universes index). It is where the
+  visitor sees the universes they may open and where a **New universe** is created, so there is no
+  universe picker in the top bar.
+- **Universe: [name]** — a plain link to the current universe page, present when
+  `Current.universe` exists. Changing universes happens on the landing page.
+- **Story: [name]** — a plain link to the current story page, present when `Current.story` exists.
+  Changing stories happens on the universe page, which lists the universe's stories with an **Open**
+  action each; the stories index carries **New story**. There is no **Select** placeholder: with no
+  current story there is simply no story link, because a story is never implied.
 - **Account** — signed-in email and logout action, or **Log in** for guests.
+
+A scope link carries `.active` plus `aria-current="page"` only on the page it points at, never as a
+permanent "you are in this scope" state. The account menu is the navbar's only dropdown, so the top
+bar issues no query. The left sidebar keeps **All stories** plus the prompt when no story is current,
+and the sidebar never gains a create action: creation belongs to the page that lists the records.
 
 Nonfunctional dashboard links do not appear in the navbar. The right utility sidebar is the
 intentional home for future richer collaboration, analytics, and AI placeholders; those entries are
@@ -384,8 +404,9 @@ section it introduces, so the reader always knows which scope a link belongs to:
   when no story is current. The section/scene counts and the description stay out of this block and
   live on the story's own pages.
 - **Story workspace**: Story overview + Sections + Scenes when a story is selected; otherwise All
-  stories plus a prompt to select one. New story is available from the navbar's Story dropdown, not
-  from the sidebar. **Scenes** is a real story-scoped link with its own cached count once a story is
+  stories plus a prompt to select one. Creating a story belongs to the universe page (and the
+  stories index), never to the sidebar. **Scenes** is a real story-scoped link with its own cached
+  count once a story is
   selected, and an `aria-disabled` `#` placeholder while no story is current — it never falls back
   to the universe's first story.
 - Configuration is **not** in this column. **Tags** and the admin **Members** link live in the right

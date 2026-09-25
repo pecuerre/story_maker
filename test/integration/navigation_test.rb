@@ -7,16 +7,22 @@ class NavigationTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
-  test "without a selected universe only the universe picker is offered" do
+  test "without a selected universe the top bar only offers the landing page" do
     get universes_url
 
     assert_response :success
     assert_select "aside.workspace-sidebar", 0
     assert_select "aside.right-sidebar", 0
     assert_select "main#main-content", 1
-    assert_select "nav .nav-item.dropdown", 1
-    assert_select "nav .nav-item.dropdown .dropdown-toggle", text: "Universes"
+    # The brand is the landing page, so it is the only scope link there is. There
+    # is no universe picker in the top bar: this page is the picker.
+    assert_select "nav a.navbar-brand[href=?]", root_path, text: "Universe Maker"
+    assert_select "nav .navbar-nav .nav-item", 0
+    assert_select "nav .navbar-nav a", 0
+    # The account menu is the top bar's only dropdown.
+    assert_select "nav .dropdown", 1
     assert_select ".page-header h1", text: "Universes"
+    assert_select ".page-actions a", text: /New universe/
     assert_select "a", text: "Dashboard", count: 0
     assert_select "aside", text: /Universe Analyzer/, count: 0
   end
@@ -25,13 +31,14 @@ class NavigationTest < ActionDispatch::IntegrationTest
     get universe_url(@universe)
 
     assert_response :success
-    assert_select "nav .nav-item.dropdown", 3
-    assert_select "nav .nav-item.dropdown .dropdown-toggle", text: /Universe: #{@universe.name}/
-    assert_select "nav .nav-item.dropdown .dropdown-toggle", text: /Story: Select/
-    assert_select "nav .dropdown-menu a[href=?]",
-      universe_story_path(universe_slug: @universe.slug, id: @story)
-    assert_select "nav .dropdown-menu a[href=?]",
-      new_universe_story_path(universe_slug: @universe.slug)
+    assert_select "nav a.navbar-brand[href=?]", root_path, text: "Universe Maker"
+    # The top bar states the current universe and links to its own page. It
+    # carries no switcher, so no story link exists until a story is current.
+    assert_select "nav .navbar-nav .nav-item", 1
+    assert_select "nav .navbar-nav a.nav-link[href=?]", universe_path(@universe),
+      text: /Universe: #{@universe.name}/
+    assert_select "nav .navbar-nav a.nav-link[aria-current=page]", 1
+    assert_select "nav .dropdown", 1
 
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story workspace"
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Universe Bible"
@@ -43,7 +50,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story),
       count: 0
-    assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
+    assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_sections_path(universe_slug: @universe.slug, story_id: @story),
       count: 0
 
@@ -68,7 +75,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
     # Configuration and Tags moved to the right utility sidebar, so the left
     # column keeps no tools section and no taxonomy entry.
     assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title']", count: 0
-    assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
+    assert_select "aside.workspace-sidebar a[href=?]",
       universe_tags_path(universe_slug: @universe.slug), count: 0
     assert_select "aside.workspace-sidebar a", text: "Tags", count: 0
     assert_select "aside.workspace-sidebar a", text: "Members", count: 0
@@ -88,6 +95,33 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.right-sidebar a.sidebar-placeholder-link[href='#']", minimum: 3
   end
 
+  test "the universe page is the story picker and owns New story" do
+    get universe_url(@universe)
+
+    assert_response :success
+    assert_select ".page-actions a[href=?]", new_universe_story_path(universe_slug: @universe.slug),
+      text: /New story/
+    assert_select ".page-actions a[href=?]", universe_stories_path(universe_slug: @universe.slug),
+      text: "All stories"
+    assert_select ".list-group a[href=?]",
+      universe_story_path(universe_slug: @universe.slug, id: @story), text: @story.name
+  end
+
+  test "a read-only member and a guest are not offered New story" do
+    private_universe = Universe.create!(owner: users(:user_two), name: "Private universe", private: true)
+    UniverseMembership.create!(universe: private_universe, user: users(:user_one), access_level: :read)
+
+    get universe_url(private_universe)
+    assert_response :success
+    assert_select ".page-actions a[href=?]", new_universe_story_path(universe_slug: private_universe.slug),
+      count: 0
+
+    sign_out
+    get universe_url(@universe)
+    assert_response :success
+    assert_select ".page-actions a[href=?]", new_universe_story_path(universe_slug: @universe.slug), count: 0
+  end
+
   test "a guest keeps Tags in the right Configuration section without Members" do
     sign_out
     get universe_url(@universe)
@@ -102,10 +136,16 @@ class NavigationTest < ActionDispatch::IntegrationTest
     get universe_story_url(universe_slug: @universe.slug, id: @story)
 
     assert_response :success
-    assert_select "nav .nav-item.dropdown", 3
-    assert_select "nav .nav-item.dropdown .dropdown-toggle", text: /Story: #{@story.name}/
-    assert_select "nav .dropdown-menu a.active[href=?]",
+    # Both scopes are plain links now, and only the page being viewed is current.
+    assert_select "nav .navbar-nav .nav-item", 2
+    assert_select "nav .navbar-nav a.nav-link[href=?]",
+      universe_story_path(universe_slug: @universe.slug, id: @story),
+      text: /Story: #{@story.name}/
+    assert_select "nav .navbar-nav a.nav-link[href=?][aria-current=page].active",
       universe_story_path(universe_slug: @universe.slug, id: @story)
+    assert_select "nav .navbar-nav a.nav-link[href=?][aria-current=page]",
+      universe_path(@universe), count: 0
+    assert_select "nav .dropdown", 1
 
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story workspace"
     assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
@@ -147,12 +187,15 @@ class NavigationTest < ActionDispatch::IntegrationTest
       text: /Story overview/
   end
 
-  test "another page of the same universe keeps the story context" do
+  test "another page of the same universe keeps the story context without claiming to be current" do
     get universe_story_url(universe_slug: @universe.slug, id: @story)
     get universe_characters_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "nav .nav-item.dropdown .dropdown-toggle", text: /Story: #{@story.name}/
+    assert_select "nav .navbar-nav a.nav-link[href=?]",
+      universe_story_path(universe_slug: @universe.slug, id: @story),
+      text: /Story: #{@story.name}/
+    assert_select "nav .navbar-nav a.nav-link[aria-current=page]", 0
     assert_select "aside.workspace-sidebar a.sidebar-link.active[aria-current=page][href=?]",
       universe_characters_path(universe_slug: @universe.slug)
     assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",

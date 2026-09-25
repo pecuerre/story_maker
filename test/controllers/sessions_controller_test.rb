@@ -57,7 +57,10 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     get universe_url(universe)
 
     assert_response :success
-    assert_select "span.navbar-context", text: "Select"
+    # With no story remembered, the top bar states the universe only: the story
+    # link exists exactly while a story is current.
+    assert_select "nav .navbar-nav a.nav-link[href=?]", universe_path(universe)
+    assert_select "nav .navbar-nav .nav-item", 1
   end
 
   test "invalid authentication clears stale story selections" do
@@ -72,6 +75,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_empty cookies[:session_id]
     assert_nil session[:current_story_ids]
-    assert_select "span.navbar-context", text: "Select"
+    assert_select "nav .navbar-nav a.nav-link[href=?]", universe_path(universe)
+    assert_select "nav .navbar-nav .nav-item", 1
   end
 end

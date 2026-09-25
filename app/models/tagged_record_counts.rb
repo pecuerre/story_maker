@@ -12,8 +12,8 @@
 # rule the association itself applies. All interpolated values go through
 # `sanitize_sql_array`.
 #
-# The result maps tag id => tagged record count, so a taxonomy row can show
-# "Details (10 characters)" without an N+1.
+# The result maps tag id => tagged record count, so a taxonomy row can show a
+# "(10 characters)" count pill without an N+1.
 class TaggedRecordCounts < ApplicationRecord
   self.abstract_class = true
 

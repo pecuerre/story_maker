@@ -1,16 +1,23 @@
 <% content_for :title, @universe.name %>
 <%# The stories of this universe are listed here instead of behind a second
-    click: entering a universe is the point where the next story is chosen. This
-    is the same ordered list the navbar's Story switcher shows, reused from its
-    per-request memo, and the header's "All stories" page stays for the full
-    list with its own actions. %>
+    click: entering a universe is the point where the next story is chosen. The
+    top bar links straight to this page, so it is the landing page for both
+    switching stories and starting a new one, and this same ordered story list
+    (memoized once per request) is that picker. The header's "All stories" page
+    stays for the full list with its own actions. %>
 <% stories = nav_stories %>
 
 <%= render "shared/page_header",
   title: @universe.name,
   eyebrow: "Universe",
   description: "The shared world and story collection for this workspace." do %>
-  <%= link_to "All stories", universe_stories_path, class: "btn btn-primary" %>
+  <% if can_write_universe? %>
+    <%= link_to new_universe_story_path, class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>New story</span>
+    <% end %>
+  <% end %>
+  <%= link_to "All stories", universe_stories_path, class: "btn btn-outline-secondary" %>
   <% if can_administer_universe? %>
     <%= link_to "Members", universe_memberships_path, class: "btn btn-outline-secondary" %>
     <div class="dropdown">
@@ -63,7 +70,7 @@
         <%= render "shared/empty_state",
           title: "No stories yet",
           description: can_write_universe? ?
-            "A story holds the plot, sections, and scenes of this universe while sharing its world. Create the first one from the Story menu." :
+            "A story holds the plot, sections, and scenes of this universe while sharing its world. Create the first one from the New story action above." :
             "This universe has no stories to show yet.",
           icon: "books" %>
       <% end %>

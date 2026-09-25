@@ -4,7 +4,8 @@ Universe Maker does not have release versions yet. This file is a date-based his
 project instead. It records application code, site/UI behavior, schema and data, tests,
 documentation, configuration, security, and tooling. Entries are grouped by calendar date in
 reverse chronological order; related commits from the same day are consolidated into summaries.
-The initial history was reconstructed from the repository's Git history through 2026-09-25.
+The initial history was reconstructed from the repository's Git history through 2026-09-25. Dates
+without recorded project changes are omitted.
 
 Labels used below:
 
@@ -23,8 +24,10 @@ Labels used below:
 - **[security]** Hardened the authentication and request lifecycle: stale authentication cookies
   are invalidated, remembered story context is cleared at account boundaries, and password resets
   safely invalidate the current browser session.
-- **[security]** Made universe visibility fail closed, centralized public/private read-write-admin
-  authorization, and enforced same-universe/same-story scope on tag associations and reads.
+- **[security]** Made the universe visibility flag explicit and non-null, centralized
+  public/private read-write-admin authorization, and enforced same-universe/same-story scope on
+  tag associations and reads. Private-universe non-members now receive the same 404 response as
+  an unknown universe.
 - **[fixed]** Hardened event temporal references with same-universe validation, model and database
   self-reference checks, and safe cleanup when referenced events are deleted.
 - **[planned]** Documented the Epic 11 Scenes domain model, UX contract, delivery slices, tests,
@@ -69,8 +72,8 @@ Labels used below:
   tightened cross-story hierarchy and tag validation.
 - **[changed]** Added Universe and Story context/switchers to the top bar and improved navigation
   for both the universe overview and story workspaces.
-- **[changed]** Made tags optional on every content model and removed default-tag creation so
-  untagged records remain valid.
+- **[changed]** Made tags optional on every content model and removed default-tag creation and
+  required-tag validation so untagged records remain valid.
 - **[added]** Added the project vision document and expanded the architecture, data-model, and
   development documentation around the new universe/story boundaries.
 - **[fixed]** Repaired section-tag associations and data loaders after moving them under stories.

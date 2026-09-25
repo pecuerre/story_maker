@@ -260,18 +260,31 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   and `db/data/lotr/scenes.yml` with a title-only scene, and updated the architecture, data model,
   conventions, visual design, and development docs.
 
-- **11.2 — Scene Details, references, and time.** Extend the stable editor with the optional
-  same-story Section link, optional same-Universe Event link, and independent optional single-point
-  `datetime` using the confirmed Event-compatible precision/timezone semantics.
-  Add the URL-backed tab shell and explicit “narrative order” versus “in-world time” copy. Reject
-  malformed optional IDs as 422 validation errors rather than allowing a database exception. Add
-  the authorization/helper adapter for Scene-owned records so nested models resolve their Universe
-  through Scene.
+- **11.2 — Scene Details, references, and time (completed 2026-09-25).** The schema-only
+  `AddSceneReferencesToScenes` migration added the optional `section_id`, `event_id`, and single-point
+  `datetime` with real foreign keys plus a `[story_id, section_id]` index. `Scene` gained
+  `belongs_to :section, optional: true`, `belongs_to :event, optional: true`, and application-level
+  same-Story/same-Universe validations, so an unknown optional ID or an unparseable datetime becomes
+  a documented `422` field error instead of a foreign-key `500` or a silently dropped value. The
+  editor gained **Organization** and **In-world time** fieldsets with explicit narrative-order versus
+  in-world-time copy, a **Scene Details / Characters / Items / Locations** URL-backed tab shell whose
+  not-yet-routable tabs stay `aria-disabled` placeholders, and a Details page that shows the section
+  group, linked event, and formatted in-world time. `UniverseScopeResolver` replaced the duplicated
+  `Ability#universe_for` and `ApplicationHelper#universe_for_record` logic and resolves Scene-owned
+  records through Scene; `SectionPaths` builds every ancestor path from one ordered query. The
+  Story, Section, and Event delete confirmations now use the mandatory ADR 0007 consequence
+  templates.
 
-- **11.3 — Section grouping workspace.** Let authors group already-written Scenes under optional
-  Sections and move a Scene between “Ungrouped,” a Section, or another Section. Show nested Section
-  paths and preserve the canonical Scene order. Update the Sections workspace to show grouped Scenes
-  while retaining the existing tree. Use selectors/move controls first; drag-and-drop is optional.
+- **11.3 — Section grouping workspace (completed 2026-09-25).** A Scene's Details form assigns it to
+  **Ungrouped** or one Section in the current Story, and the Sections workspace gained a separate
+  **Grouped scenes** outline that keeps the existing tree. One selector-driven form
+  (`PATCH /u/:universe_slug/s/:story_id/scenes/group`) moves a Scene between Ungrouped, a Section, and
+  another Section; the target is resolved through the current Story, so a foreign or unknown Section
+  is a `404` and the model's own validation always holds. The global Scenes list stays canonical and
+  now labels each row with its full nested Section path or an explicit **Ungrouped** indicator, and
+  grouping provably never changes `position`. Deleting a Section nullifies Scene grouping instead of
+  removing Scenes, with the matching confirmation copy. Selectors are the only required move path;
+  drag-and-drop stays optional.
 
 - **11.4 — Scene Tag taxonomy and assignment.** Add Scene Tag schema/model, story-scoped optional
   tag association, hierarchical editor under **Configuration → Tags → Story Tags**, and per-Scene

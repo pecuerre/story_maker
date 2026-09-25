@@ -9,7 +9,7 @@ end %>
 <%= render "shared/page_header",
   title: "Scenes",
   eyebrow: "Story: #{@story.name}",
-  description: "The order below is the order #{@story.name} is told, not in-world chronology. A scene only needs a title; other details can be added later.",
+  description: "The order below is the order #{@story.name} is told, not in-world chronology. A section group only organizes a scene; it never changes this order.",
   count: @scenes.size,
   count_label: "scene" do %>
   <% if editable %>
@@ -39,6 +39,12 @@ end %>
                 <%= index + 1 %>
               </span>
               <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene), class: "entity-title" %>
+              <% grouping = scene_grouping_label(scene, @section_paths) %>
+              <span class="badge rounded-pill text-bg-light border"
+                title="<%= grouping.present? ? "Grouped under #{grouping}. Grouping does not change the narrative order." : "Not grouped under a section. Grouping does not change the narrative order." %>">
+                <i class="bi <%= grouping.present? ? "bi-folder2" : "bi-folder2-open" %>" aria-hidden="true"></i>
+                <span class="text-truncate"><%= grouping || SectionPaths::UNGROUPED_LABEL %></span>
+              </span>
             </div>
             <% if scene.description.present? %>
               <div class="entity-description"><%= scene.description %></div>

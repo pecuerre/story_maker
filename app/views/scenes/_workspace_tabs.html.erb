@@ -1,0 +1,13 @@
+<%# The Scene editor's URL-backed workspace tabs. Every tab is its own canonical
+    request, never an in-document Bootstrap pane. The Characters, Items, and
+    Locations tabs stay aria-disabled placeholders until their slices add a real
+    destination, so no tab ever links to a route that does not exist yet. %>
+<%= render "shared/content_tabs",
+  aria_label: "Scene workspace",
+  class_name: "scene-workspace-tabs",
+  tabs: [
+    { label: "Scene Details", path: universe_story_scene_path(story_id: @story, id: @scene), active: @scene_tab == "details" },
+    { label: "Characters", pending_reason: "Character presence is not available yet." },
+    { label: "Items", pending_reason: "Item presence is not available yet." },
+    { label: "Locations", pending_reason: "Location presence is not available yet." }
+  ] %>

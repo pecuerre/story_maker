@@ -24,6 +24,47 @@
     <div class="form-text">An optional one-line summary shown in the scene list.</div>
   </div>
 
+  <fieldset class="mb-3">
+    <legend class="h6">Organization</legend>
+    <div class="mb-3">
+      <%= form.label :section_id, "Section", class: "form-label" %>
+      <%= form.select :section_id, section_paths.grouping_options, {}, class: "form-select" %>
+      <div class="form-text">
+        Optional. A Section groups this scene, for example under a book, chapter, season, or
+        episode. Grouping changes organization only: it never changes this scene's narrative
+        position, and a nested Section also places the scene inside its ancestor path.
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="mb-3">
+    <legend class="h6">In-world time</legend>
+    <div class="mb-3">
+      <%= form.label :event_id, "Event", class: "form-label" %>
+      <%= form.select :event_id, scene_event_choices(event_options), {}, class: "form-select" %>
+      <div class="form-text">
+        Optional. Links this scene to a shared universe event. Several scenes can reference the
+        same event, and nothing else in this form changes when you pick one.
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :datetime, "In-world time", class: "form-label" %>
+      <%= form.datetime_local_field :datetime, value: scene_datetime_field_value(scene), class: "form-control" %>
+      <div class="form-text">
+        Optional. A single point in story time, stored with the same precision and without a
+        timezone as event dates. It is independent of the event above: choosing or clearing one
+        never writes, clears, or checks the other, so you can deliberately keep them different.
+      </div>
+    </div>
+  </fieldset>
+
+  <p class="form-text">
+    This scene's narrative position is set only by the Move up/Move down controls on the
+    <%= link_to "scenes list", universe_story_scenes_path(story_id: scene.story) %>. It is the
+    order the story is told in, not in-world chronology.
+  </p>
+
   <div class="form-actions">
     <%= form.submit class: "btn btn-primary" %>
     <%= link_to "Cancel", scene.persisted? ? universe_story_scene_path(story_id: scene.story, id: scene) : universe_story_scenes_path(story_id: scene.story),

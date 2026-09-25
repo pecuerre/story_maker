@@ -2,18 +2,26 @@
   name: A Long-expected Party
   slug: a-long-expected-party
   description: "Bilbo's birthday party brings Gandalf and the Ring to the Shire."
+  section: Section.the-fellowship-of-the-ring
+  event: Event.ring_given_to_frodo
+  datetime: "3018-09-29T00:00"
   position: 0
 
 - story: Story.the-lord-of-the-rings
   name: The Shadow of the Past
   slug: the-shadow-of-the-past
   description: "Gandalf's warning sends Frodo away from the Shire."
+  section: Section.the-fellowship-of-the-ring
+  event: Event.ring_given_to_frodo
   position: 1
 
 - story: Story.the-lord-of-the-rings
   name: Three is Company
   slug: three-is-company
   description: "Frodo, Sam, and Merry set out for Bree with help from the pony cart."
+  section: Section.the-fellowship-of-the-ring
+  event: Event.fellowship_is_formed
+  datetime: "3018-10-02T00:00"
   position: 2
 
 - story: Story.the-lord-of-the-rings
@@ -25,4 +33,6 @@
   name: The Council of Elrond
   slug: the-council-of-elrond
   description: "The Fellowship of the Ring is formed at Rivendell."
+  section: Section.the-return-of-the-king
+  event: Event.breaking_of_the_fellowship
   position: 4

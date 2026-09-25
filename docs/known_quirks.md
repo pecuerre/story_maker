@@ -18,6 +18,19 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
 2026-09-25. They are preserved in [resolved_quirks.md](resolved_quirks.md); the current loader is
 `Development::UniverseDataLoader` with registry-driven, environment-guarded tasks.
 
+55. **Medium — editing an applied migration silently does nothing on a fresh database.**
+    `ActiveRecord::Tasks::DatabaseTasks.initialize_database` in Rails 8.1
+    (`activerecord-8.1.3.1/lib/active_record/tasks/database_tasks.rb:651-669`) loads
+    `db/schema.rb` when the target database has no `schema_migrations` table and a schema dump
+    exists. `db:migrate`, the guarded `db:restart`, and `db:demo:reset` therefore **load the
+    checked-in schema instead of executing the migration files** on a database they just created.
+    An amended create migration is never run, the regenerated `db/schema.rb` keeps the old shape,
+    and the only symptom is a later "unknown column"/"unknown attribute" failure in a form,
+    manifest, or test. This was hit while adding the Scene Section/Event/datetime references, which
+    is why they arrived in a separate `AddSceneReferencesToScenes` migration. Add a new migration
+    for any change to a table whose create migration has already shipped, and verify the column is
+    present before trusting a manifest or a form that uses it.
+
 ## Critical security observations
 
 5. **Critical — the exposed Kamal master key still requires owner rotation and history cleanup.**
@@ -84,6 +97,13 @@ verification requirements. The resolution is recorded in [`resolved_quirks.md`](
     `CanCan::AccessDenied` (`app/controllers/application_controller.rb:20-25`), so malformed
     `parent_id`, `before_event_id`, `after_event_id`, or `simultaneous_event_id` values can become
     500s instead of documented 422 error hashes. No such request tests exist.
+    **Scenes are now covered** (slices 11.2/11.3): `Scene` validates `optional_references_exist`,
+    `section_belongs_to_story`, and `event_belongs_to_story_universe`, and
+    `datetime_is_a_valid_point` rejects an unparseable in-world time that Active Record would
+    otherwise cast to `nil` and silently discard, so those values render `422` field errors with the
+    submitted input preserved. The `#group` action instead resolves the Section through
+    `@story.sections.find`, making a foreign or unknown target a `404`. The remaining unprotected
+    paths are the hierarchical `parent_id` and the Event temporal references above.
 
 20. **Medium — generated routes advertise unsupported actions and templates.** `config/routes.rb:2-25`
     uses broad session, password, and content resources even though the documented action surface is
@@ -257,12 +277,15 @@ through the current normal UI. They are recorded so they are not mistaken for se
   `UniverseAuthorization` passes concrete universe objects, so no active route bypass was found.
   The content-class registry is also hard-coded (`app/models/ability.rb:11-27`), while the documented
   new-model workflow does not explicitly require updating it.
-- **Section-owned models need an undocumented authorization/helper adapter.** The new-model contract
-  permits a section ownership scope (`docs/development.md:227-228`), but `Ability#universe_for` and
-  `ApplicationHelper#universe_for_record` only understand direct `universe` or `story` ownership
-  (`app/models/ability.rb:96-101`, `app/helpers/application_helper.rb:72-77`). A section-owned model
-  can therefore resolve to no universe and lose read/write UI and authorization unless it supplies
-  custom delegation/handling.
+- **Ownership-scope resolution now has one shared adapter.** `UniverseScopeResolver`
+  (`app/models/universe_scope_resolver.rb`) answers which universe owns a record, and both
+  `Ability#universe_for` and `ApplicationHelper#universe_for_record` delegate to it, so
+  record-level authorization and rendered mutation controls cannot drift. It resolves a record
+  through its own `#universe` or through a declared owner association (`story`, `scene`,
+  `section`). Two limits remain: a model nested deeper than one of those must define its own
+  `#universe` (otherwise it resolves to nothing and silently loses controls and checks), and the
+  content-class registry in `app/models/ability.rb:11-28` is still hard-coded, so a new model must
+  be added to it or CanCan will not match a rule for it at all.
 - **Implicit owner access is missing from association APIs.** `User#universes` and
   `Universe#members` are membership-only associations (`app/models/user.rb:6-8`,
   `app/models/universe.rb:41-43`), while the owner is intentionally not stored as a membership row.
@@ -307,11 +330,13 @@ non-drag paths. The resolutions and browser coverage are recorded in
 [`resolved_quirks.md`](resolved_quirks.md).
 
 45. **Medium — read-only empty taxonomy pages still instruct users to add or drag records.** The
-    shared partial has a read-only empty-state fallback, but Locations, Sections, and taxonomy views
-    pass explicit copy containing “Add”/“drag” instructions (for example
-    `app/views/locations/index.html.erb:15`, `sections/index.html.erb:15`, and
-    `character_tags/index.html.erb:17`). Guests and read-only members see mutation instructions even
-    though no mutation controls are rendered.
+    shared partial has a read-only empty-state fallback, but Locations and taxonomy views pass
+    explicit copy containing “Add”/“drag” instructions (for example
+    `app/views/locations/index.html.erb:15` and `app/views/character_tags/index.html.erb:17`).
+    Guests and read-only members see mutation instructions even
+    though no mutation controls are rendered. The Sections workspace was fixed in slice 11.3 by
+    passing both `empty_description` and the new `read_only_empty_description` local; the remaining
+    callers still need it.
 
 46. **Medium — the documented Timeline pan/zoom interaction is not implemented, and nodes lack an
     accessible name.** `docs/architecture.md:177-190` describes pan/zoom, but
@@ -476,3 +501,27 @@ Not run: `bin/bundler-audit`, `bin/importmap audit`, `bun audit` (no dependency 
 changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs approval), a browser
 manual pass against loaded development data, Docker/Kamal deployment, and any production SMTP or
 proxy verification.
+
+## Follow-up verification (2026-09-25, Scene references and grouping slices 11.2/11.3)
+
+- `bin/rails test` — 405 tests, 2,344 assertions, 1 failure. The single failure is pre-existing and
+  unrelated: `UniverseDataLoaderTest#test_loads_the_Dark_universe_and_normalizes_sibling_positions`
+  still expects the story name `netflix dark` after commit `0a236a9` renamed it to `Netflix Dark`
+  in `db/data/dark/stories.yml`. It was already failing on a clean tree before this work.
+- `bin/rails test:system` — 16 tests, 202 assertions, 0 failures/errors/skips, including the new
+  Scene Section-grouping, in-world-time, narrow-viewport with a long title/description,
+  keyboard-only, and read-only coverage.
+- `bin/rubocop` — 187 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `node --check app/javascript/controllers/taxonomy_tree_controller.js` — passed.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed in
+  development with the new `scenes.yml` references.
+- `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` and `UNIVERSE=lotr bin/rails
+  db:demo:load` rebuilt the local development database from the amended/added migrations, and the
+  loaded Dark and LOTR universes were queried to confirm the section paths, event links, and
+  independent in-world times. `bin/rails db:migrate:status` shows both Scene migrations applied.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, `bun audit` (no dependency or importmap pin
+changed in these slices), Docker/Kamal deployment, production SMTP delivery, proxy/log-retention
+verification, and a browser manual pass against the reloaded development data. No destructive task
+was run beyond the standing `db:demo:reset` approval.

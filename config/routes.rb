@@ -10,6 +10,9 @@ Rails.application.routes.draw do
       resources :section_tags
       resources :scenes do
         patch :move, on: :member
+        # Collection action: the Section workspace submits the chosen scene and
+        # the chosen group together, so grouping needs no client-side scripting.
+        patch :group, on: :collection
       end
     end
     get "tags", to: "tags#index", as: :tags

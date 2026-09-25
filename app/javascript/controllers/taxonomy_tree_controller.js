@@ -431,7 +431,11 @@ export default class extends Controller {
     if (!this.editableValue) return
     event.preventDefault()
     const node = event.currentTarget.closest("[data-node-id]")
-    if (!node || !window.confirm(`Delete ${node.dataset.name} and its children?`)) return
+    if (!node) return
+    // The server owns the consequence copy when the record has dependents; the
+    // generic message stays only as a fallback for an unrendered node.
+    const consequence = node.dataset.confirmMessage?.trim()
+    if (!window.confirm(consequence || `Delete ${node.dataset.name} and its children?`)) return
 
     const nextFocus = this.nextTaxonomyNode(node)?.dataset.nodeId || this.previousTaxonomyNode(node)?.dataset.nodeId
     const response = await this.request(node.dataset.updateUrl, "DELETE")

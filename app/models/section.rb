@@ -8,6 +8,9 @@ class Section < ApplicationRecord
 
   belongs_to :story
   has_many_tags :section_tag, scope: :story_id
+  # Deleting a Section only clears Scene grouping. It never removes a Scene and
+  # never changes a Scene's narrative position.
+  has_many :scenes, dependent: :nullify
 
   validates :name, presence: true
 

@@ -3,9 +3,18 @@
 
 <nav class="<%= tab_classes %>" aria-label="<%= local_assigns.fetch(:aria_label) %>">
   <% tabs.each do |tab| %>
-    <% is_active = tab.key?(:active) ? tab.fetch(:active) : controller.controller_name == tab.fetch(:controller).to_s %>
-    <%= link_to tab.fetch(:label), tab.fetch(:path),
-      class: "nav-link#{' active' if is_active}",
-      aria: is_active ? { current: "page" } : {} %>
+    <%# A tab is a separate request and a canonical URL. A tab whose destination
+        does not exist yet is rendered as an aria-disabled placeholder rather
+        than a link to a missing route, and it is never a live nav item. %>
+    <% if tab[:path].nil? %>
+      <span class="nav-link disabled" aria-disabled="true" title="<%= tab[:pending_reason] %>">
+        <%= tab.fetch(:label) %>
+      </span>
+    <% else %>
+      <% is_active = tab.key?(:active) ? tab.fetch(:active) : controller.controller_name == tab.fetch(:controller).to_s %>
+      <%= link_to tab.fetch(:label), tab.fetch(:path),
+        class: "nav-link#{' active' if is_active}",
+        aria: is_active ? { current: "page" } : {} %>
+    <% end %>
   <% end %>
 </nav>

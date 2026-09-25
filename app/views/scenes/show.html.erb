@@ -10,6 +10,8 @@
   <% end %>
 <% end %>
 
+<%= render "scenes/workspace_tabs" %>
+
 <%# Scene Details is the canonical, inspectable destination: the same content is
     shown to writers and read-only viewers, and only writers get the editor link. %>
 <div class="surface-card p-4">
@@ -29,6 +31,45 @@
       <% else %>
         <p class="mb-0 text-body-secondary">No short description yet.</p>
       <% end %>
+    </div>
+    <div class="col-12">
+      <div class="page-eyebrow">Section group</div>
+      <% grouping = scene_grouping_label(@scene, @section_paths) %>
+      <% if grouping.present? %>
+        <p class="mb-0"><%= link_to grouping, universe_story_sections_path(story_id: @story), class: "text-break" %></p>
+      <% else %>
+        <p class="mb-0 text-body-secondary">
+          Ungrouped. A Section is optional and only organizes this scene; it does not change its
+          narrative position.
+        </p>
+      <% end %>
+    </div>
+    <div class="col-12">
+      <div class="page-eyebrow">In-world event</div>
+      <% if @scene.event.present? %>
+        <p class="mb-0">
+          <%= @scene.event.display_string %>
+          <span class="text-body-secondary"> — see the</span>
+          <%= link_to "Events workspace", universe_events_path %>
+          <span class="text-body-secondary">. Several scenes can depict the same event.</span>
+        </p>
+      <% else %>
+        <p class="mb-0 text-body-secondary">No event linked yet.</p>
+      <% end %>
+    </div>
+    <div class="col-12">
+      <div class="page-eyebrow">In-world time</div>
+      <% in_world_time = scene_in_world_time(@scene) %>
+      <% if in_world_time.present? %>
+        <p class="mb-0"><%= in_world_time %></p>
+      <% else %>
+        <p class="mb-0 text-body-secondary">No in-world time set yet.</p>
+      <% end %>
+      <div class="form-text">
+        This is the order in world time, kept separate from the narrative position above. The
+        event and the in-world time are independent values; neither one is derived from the other
+        and a disagreement between them is not detected here.
+      </div>
     </div>
     <div class="col-12">
       <div class="page-eyebrow">Story</div>

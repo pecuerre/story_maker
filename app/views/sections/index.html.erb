@@ -13,6 +13,10 @@
     { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ],
   empty_description: "Add a section, then drag rows to create the outline for this story.",
+  read_only_empty_description: "This story has no sections to show yet.",
+  confirm_message: ->(section) {
+    "Delete “#{section.name}”? Its child sections and tag assignments will be removed, and linked scenes will become ungrouped. Their narrative order will not change."
+  },
   nodes: @sections,
   new_url: ->(parent = nil) { new_universe_story_section_path(story_id: @story, parent_id: parent&.id) },
   create_url: universe_story_sections_path(story_id: @story),
@@ -22,3 +26,9 @@
   model_param: "section",
   taxonomy_field: "section_tag_ids",
   modal_fields: section_taxonomy_fields(@section_tags, @section_options) %>
+
+<%= render "scenes/section_outline",
+  story: @story,
+  scenes: @scenes,
+  section_paths: @section_paths,
+  editable: can_write_universe? %>

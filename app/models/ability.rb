@@ -95,10 +95,6 @@ class Ability
     end
 
     def universe_for(record)
-      return if record.nil?
-      return record.universe if record.respond_to?(:universe)
-      return record.story&.universe if record.respond_to?(:story)
-
-      nil
+      UniverseScopeResolver.universe_for(record)
     end
 end

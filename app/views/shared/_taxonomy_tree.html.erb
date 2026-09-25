@@ -8,6 +8,7 @@
 <% model_param = local_assigns.fetch(:model_param) %>
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 <% taxonomy_field = local_assigns[:taxonomy_field] %>
+<% confirm_message = local_assigns[:confirm_message] %>
 <% title = local_assigns.fetch(:title, model_param.humanize) %>
 <% count = local_assigns[:count] %>
 <% count_label = local_assigns[:count_label] || model_param.humanize.downcase.pluralize %>
@@ -16,7 +17,7 @@
 <% empty_description = if editable
   local_assigns[:empty_description] || "Create the first one to start building this hierarchy."
 else
-  "There are no #{model_param.humanize.downcase.pluralize} to show yet."
+  local_assigns[:read_only_empty_description] || "There are no #{model_param.humanize.downcase.pluralize} to show yet."
 end %>
 
 <div class="taxonomy-tree"
@@ -91,6 +92,7 @@ end %>
           model_param: model_param,
           modal_fields: modal_fields,
           taxonomy_field: taxonomy_field,
+          confirm_message: confirm_message,
           editable: editable %>
       <% end %>
     </ul>

@@ -193,16 +193,16 @@ The Rails test suite uses `test/fixtures/` so automated tests remain determinist
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
 test mode instead of replanting demo records.
 
-## Scene delivery (slice 11.1 implemented)
+## Scene delivery (slices 11.1–11.3 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and backlog Epic 11 define the Scene
-contract. Slice 11.1 has landed the core: the schema-only `scenes` migration, the `Scene` model, the
-story-scoped routes/controller, the canonical Scenes list, narrative-order moves, the Scene Details
-page and its editor form, the real sidebar link with its own cached count, fixtures, tests, and
-connected development data. Section/Event/datetime references, tags, reliable JSON modals,
-Elements, and
-world-presence links are still pending and are deliberately **not** routed yet. The confirmed
-first-version defaults are: Scene `name` labelled **Title**; Element
+contract. Slices 11.1–11.3 have landed the core (`scenes` migration, `Scene` model, story-scoped
+routes/controller, canonical list, narrative-order moves, Scene Details page and its editor form,
+the real sidebar link with its own cached count), the optional Section/Event/datetime references
+with their validation and the URL-backed tab shell, and the Section grouping workspace. Scene Tags,
+reliable JSON modals, Elements, and world-presence links are still pending and are deliberately
+**not** routed yet. The confirmed first-version defaults are: Scene `name` labelled **Title**;
+Element
 `name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
 has none; Scene uses one optional single-point `datetime` with the current Event storage/editor
 precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
@@ -212,37 +212,72 @@ Delivery remains staged in [`backlog.md`](backlog.md):
 
 - 11.1 (done) adds the core Scene migration/model, canonical list, ordering controls, editor shell,
   tests, and connected development data.
-- Later slices add references and the tab shell, Section grouping, Tags, reliable JSON modals,
-  Elements, speaker and presence links, and reverse links in that order.
+- 11.2 and 11.3 (done) add the Section/Event/datetime references, the URL-backed tab shell, and the
+  Section grouping workspace.
+- Later slices add Tags, reliable JSON modals, Elements, speaker and presence links, and reverse
+  links in that order.
 - Slice 11.5 must fix JSON modal submission/error/delete behavior before Element UI depends on the
   shared modal controller. Do not copy the current 406/stale-DOM behavior into Scene Elements.
 - Every slice preserves public/private read-write-admin behavior and updates all model registries,
   authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
+
+### Amending a shipped migration does not work here
+
+`scenes` already shipped its create migration in slice 11.1, so 11.2/11.3 added the references with
+a separate schema-only alter migration (`AddSceneReferencesToScenes`). This is not just tidiness.
+Rails 8.1's `ActiveRecord::Tasks::DatabaseTasks.initialize_database` loads `db/schema.rb` when a
+database has no `schema_migrations` table, so on a **freshly created** database `db:migrate`,
+`db:restart`, and `db:demo:reset` load the checked-in schema instead of executing the migration
+files. Editing an applied migration therefore changes nothing on a fresh database, the regenerated
+`db/schema.rb` silently keeps the old shape, and the mismatch is only visible when a manifest or a
+form references a column that does not exist. Add a new migration for any change to a table that has
+already shipped.
+
+### Scene data and manual verification
 
 When data is added, put it in the relevant `db/data/<universe_slug>/` files (`scenes.yml`,
 `scene_tags.yml`, `scene_elements.yml`, and the applicable speaker/presence-link files), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, Narration, Dialogue,
 multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. `scenes.yml`
-records already reference their story and use explicit `position` values so the narrative order is
-visible in the file. For an already prepared but empty development database, use the explicit
+records already reference their story, may now reference `section:` and `event:` with
+`Model.slug` references and an independent `datetime:`, and use explicit `position` values so the
+narrative order is visible in the file. `Scene` is loaded **after** `Event` in
+`Development::UniverseDataRegistry` because a symbolic reference may not point at a later model
+file, and the loader proves the Section belongs to the Scene's story before writing anything.
+
+For an already prepared but empty development database, use the explicit
 `UNIVERSE=<slug> bin/rails db:demo:load` task. After changing any `scenes.yml`, follow the required
 check-and-reset workflow above instead: `load` is create-only and will not update the existing
 Dark/LOTR universe. The loader refuses production/test writes and does not load another universe.
 
-Manual verification for the shipped slice:
+Manual verification for the shipped slices:
 
 ```bash
 CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset   # drops/reloads local demo data
+UNIVERSE=lotr bin/rails db:demo:load                       # optional second universe
 bin/rails server
 ```
 
-Log in with the documented Dark development user, open
-`/u/dark/s/<story_id>/scenes`, and check: the sidebar **Scenes** entry links to the selected story
-and shows the scene count; the list is in narrative order with position pills; Move up/Move down
-reorder the sequence and are disabled at the boundaries; the delete confirmation states the full
-ADR 0007 consequences; and a guest or read-only member sees the list and details with no mutation
-controls.
+Log in with the documented Dark development user, open `/u/dark/s/<story_id>/scenes`, and check:
+the sidebar **Scenes** entry links to the selected story and shows the scene count; the list is in
+narrative order with position pills; each row shows its nested Section path or **Ungrouped**; Move
+up/Move down reorder the sequence and are disabled at the boundaries; the delete confirmation
+states the full ADR 0007 consequences; and a guest or read-only member sees the list and details
+with no mutation controls.
+
+Open a Scene and check: the **Scene Details** tab is active while **Characters**, **Items**, and
+**Locations** are `aria-disabled` placeholders rather than dead links; Details shows the Section
+group, the linked event, and the in-world time as separate labelled values; and the editor's
+**Organization** and **In-world time** fieldsets let you set a Section, an Event, and a
+`datetime-local` value, or clear them, without the narrative position changing.
+
+Open `/u/dark/s/<story_id>/sections` and check: the Section tree is still there; **Grouped scenes**
+lists ungrouped scenes first and then each nested Section path with the narrative order preserved
+inside every group; the Scene → group selector moves a scene between Ungrouped, a Section, and
+another Section, and the flash states that the narrative position did not change; and the Section
+delete confirmation says that linked scenes become ungrouped without their narrative order
+changing.
 
 ## Taxonomy editor and ordering verification
 
@@ -266,7 +301,11 @@ record does not need a `parent_id` column. It does not make `section_id` an orde
 The database is intentionally disposable: schema migrations only define the structure. Demo
 records are reconstructed from the per-universe files under `db/data/`; they are not backfilled by
 migrations. Keep one schema-only create migration per persisted model, including any HABTM join
-table owned by that model. Migrations must not read or write application records or reference
+table owned by that model. Once that create migration has shipped, add **new** migrations for later
+column changes: Rails 8.1's `initialize_database` loads `db/schema.rb` when a database has no
+`schema_migrations` table, so editing an applied migration has no effect on a freshly created
+database (see [Amending a shipped migration does not work here](#amending-a-shipped-migration-does-not-work-here)).
+Migrations must not read or write application records or reference
 application models. The `universes.private` NOT NULL migration deliberately refuses to guess how
 legacy NULL rows should be classified; resolve each such row explicitly before migrating an older
 database. The Event self-reference check-constraint migration likewise fails rather than deleting
@@ -357,6 +396,11 @@ Dependabot config: `.github/dependabot.yml`.
    custom identity rules). Story-scoped tag pairs use `scope: :story_id`. Sections and Scenes are
    the exceptions: they belong to a **story**. A flat ordered sequence uses
    `maintains_flat_positions_for` in its controller and must not include `Hierarchical`.
+   A record narrower than those — anything a Scene or a Section owns — must resolve its Universe
+   through `UniverseScopeResolver`: give it its own `#universe` that delegates to its owner, or give
+   it an owner association named `story`, `scene`, or `section`. Register it in
+   `Ability::CONTENT_CLASS_NAMES` as well, and validate any shared scope in the model rather than
+   trusting a foreign key.
 3. Controller in `app/controllers/` — `Current.universe.<assoc>` scoping,
    `include MaintainsSiblingPositions` + `maintains_sibling_positions_for :model` (or
    `maintains_flat_positions_for` for a parentless sequence) if positioned,

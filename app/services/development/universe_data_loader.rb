@@ -357,6 +357,7 @@ module Development
           validate_parent_scope!(record)
           validate_tag_scopes!(record)
           validate_association_scopes!(record)
+          validate_story_reference_scopes!(record)
         end
       end
 
@@ -429,6 +430,31 @@ module Development
           next if universe_for(association) == universe_for(record)
 
           raise ValidationError, "#{record_label(record)} #{field} must belong to the same universe"
+        end
+      end
+
+      # Story-scoped records may reference other story-scoped records (a Scene
+      # grouped under a Section). That shared story scope is an application-level
+      # rule, so the loader proves it before writing. A reference to a
+      # universe-scoped record (a Scene's Event) is already scope-checked by
+      # validate_universe_scoped_record!, and a reference to another universe is
+      # already rejected because a manifest may only resolve records from its own
+      # universe directory.
+      def validate_story_reference_scopes!(record)
+        return unless record.definition.scope == :story
+
+        record.resolved_attributes.each do |field, value|
+          # `story` and `parent` are proved by their own checks, and tag
+          # collections are proved by validate_tag_scopes!.
+          next if %w[ story parent ].include?(field)
+          next if field.end_with?("_tags")
+
+          referenced = value.is_a?(Array) ? value.first : value
+          next unless referenced.is_a?(Record)
+          next unless story_scoped_model?(referenced.definition.model_name)
+          next if story_for(referenced) == story_for(record)
+
+          raise ValidationError, "#{record_label(record)} #{field} must belong to the same story"
         end
       end
 

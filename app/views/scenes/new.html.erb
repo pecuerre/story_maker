@@ -12,4 +12,4 @@
     { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ] %>
 
-<%= render "form", scene: @scene %>
+<%= render "form", scene: @scene, section_paths: @section_paths, event_options: @event_options %>

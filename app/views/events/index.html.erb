@@ -49,6 +49,7 @@
               record: event,
               label: "event",
               record_name: event.display_string,
+              confirm_text: "Delete “#{event.display_string}”? Its child events, tag assignments, and any temporal referrers that would become unidentifiable will be permanently removed; other temporal references and Scene links will be cleared. Scenes will remain.",
               edit_url: universe_event_path(id: event),
               delete_url: universe_event_path(id: event),
               values: event_fields_json(event) %>

@@ -3,7 +3,7 @@
 <%= render "shared/page_header",
   title: "Edit scene",
   eyebrow: "Story: #{@story.name}",
-  description: "Update the title and short description of this scene. Its narrative position changes only through the Move up/Move down controls on the scenes list." %>
+  description: "Update the title, short description, Section group, event link, and in-world time of this scene. Its narrative position changes only through the Move up/Move down controls on the scenes list." %>
 
 <%= render "shared/content_tabs",
   aria_label: "Story workspace",
@@ -12,4 +12,6 @@
     { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ] %>
 
-<%= render "form", scene: @scene %>
+<%= render "scenes/workspace_tabs" %>
+
+<%= render "form", scene: @scene, section_paths: @section_paths, event_options: @event_options %>

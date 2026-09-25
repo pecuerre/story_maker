@@ -9,3 +9,9 @@ event_two:
   title: The end
   start_datetime: 2026-09-11 10:00:00
   slug: "event-two"
+
+event_other_universe:
+  universe: universe_two
+  title: The other beginning
+  start_datetime: 2026-09-12 09:00:00
+  slug: "event-other-universe"

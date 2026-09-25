@@ -69,12 +69,11 @@ module ApplicationHelper
     end
   end
 
+  # Universe authorization and this helper must resolve a record's Universe the
+  # same way, or a writer sees missing controls while a record-level check
+  # denies an allowed mutation. Both use the shared resolver.
   def universe_for_record(record)
-    return if record.nil?
-    return record.universe if record.respond_to?(:universe)
-    return record.story.universe if record.respond_to?(:story) && record.story
-
-    nil
+    UniverseScopeResolver.universe_for(record)
   end
 
   def entity_tag_badge(entity)

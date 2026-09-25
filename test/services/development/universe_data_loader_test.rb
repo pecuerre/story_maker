@@ -209,6 +209,68 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     end
   end
 
+  test "rejects a scene grouped under a section from another story" do
+    with_data_copy do |directory|
+      stories_path = File.join(directory, "db/data/dark/stories.yml")
+      File.write(stories_path, "#{File.read(stories_path)}\n- universe: Universe.dark\n  name: Second story\n  slug: second-story\n")
+
+      sections_path = File.join(directory, "db/data/dark/sections.yml")
+      File.write(sections_path, "#{File.read(sections_path)}\n- story: Story.second-story\n  name: Elsewhere\n  slug: elsewhere\n")
+
+      scenes_path = File.join(directory, "db/data/dark/scenes.yml")
+      File.write(scenes_path, <<~YAML)
+        - story: Story.netflix-dark
+          name: Borrowed group
+          slug: borrowed-group
+          section: Section.elsewhere
+          position: 0
+      YAML
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/section must belong to the same story/, error.message)
+    end
+  end
+
+  test "rejects a scene linked to an event from another universe" do
+    with_data_copy do |directory|
+      scenes_path = File.join(directory, "db/data/dark/scenes.yml")
+      contents = File.read(scenes_path)
+      File.write(scenes_path, contents.sub("event: Event.time_travel", "event: Event.ring_given_to_frodo"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/references missing Event\.ring_given_to_frodo/, error.message)
+    end
+  end
+
+  test "loads Scene grouping and in-world references from the manifests" do
+    Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+
+    story = Universe.find_by!(slug: "dark").stories.first
+    scenes = story.scenes.reorder(:position, :id).to_a
+    paths = SectionPaths.build(story.sections.reorder(:position, :id).to_a)
+
+    assert_equal "Season 1 / Episode 1: Secrets", paths.label_for(scenes.first.section_id)
+    assert_equal "Jonas meets Bartosz - 2024-01-01 10:00", scenes.first.event.display_string
+    assert_equal Time.utc(1986, 9, 1, 10), scenes.first.datetime
+
+    # A datetime without an event, an event without a datetime, and a shared event.
+    assert_nil scenes[2].event
+    assert_equal Time.utc(2019, 11, 5, 21), scenes[2].datetime
+    assert_equal scenes[4].event, scenes[5].event
+
+    # A title-only, ungrouped scene.
+    assert_equal "Double Lives", scenes[3].name
+    assert_nil scenes[3].section
+    assert_nil scenes[3].event
+    assert_nil scenes[3].datetime
+  end
+
   test "rejects references to records outside the selected universe" do
     with_data_copy do |directory|
       sections_path = File.join(directory, "db/data/dark/sections.yml")

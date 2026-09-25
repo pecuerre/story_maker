@@ -163,8 +163,8 @@ without inventing a new page pattern:
 - `shared/_tagged_record_list` — the records carrying a tag, each linking to its own page.
 
 A content page currently identifies the record and then states honestly that the related information
-will appear later. A Section additionally lists the scenes grouped under it (backlog 11.4.1(b)),
-each still showing its narrative position, because grouping never sets order. A tag page lists the
+will appear later. A Section additionally lists the scenes grouped under it, each still showing its
+narrative position, because grouping never sets order. A tag page lists the
 records that carry it through `HasManyTags#tagged_records`, the scoped inverse association, so it
 cannot disclose another universe's or story's records. `TaggedRecordCounts` answers the same
 question for a whole taxonomy in one grouped query, which is what the tree row's

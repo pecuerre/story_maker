@@ -13,10 +13,9 @@
   back_url: universe_story_sections_path(story_id: @story),
   back_label: "All sections" %>
 
-<%# Backlog 11.4.1(b): "Details" on a Section in the tree leads here, so the
-    scenes grouped under this Section are visible on their own. The number shown
-    is the scene's narrative position in the story, which this Section does not
-    influence. %>
+<%# "Details" on a Section in the tree leads here, so the scenes grouped under this
+    Section are visible on their own. The number shown is the scene's narrative
+    position in the story, which this Section does not influence. %>
 <%= render "shared/detail_section",
   title: "Scenes in this section",
   count: @scenes.size,

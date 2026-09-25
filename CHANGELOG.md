@@ -37,6 +37,14 @@ Labels used below:
   self-reference checks, and safe cleanup when referenced events are deleted.
 - **[planned]** Documented the Epic 11 Scenes domain model, UX contract, delivery slices, tests,
   and development-data requirements in the shared backlog; the feature is not implemented yet.
+- **[docs]** Completed Epic 11 slice 11.0 as a documentation-only decision: ADR 0007 fixes
+  story-owned narrative ordering, the Scene/Scene Element field contract, independent Event/time
+  references, URL-backed workspace and JSON/HTML response boundaries, Section grouping, and the
+  detailed deletion confirmations. No Scene schema, routes, controllers, views, fixtures, or demo
+  data were added.
+- **[planned]** Kept the newly recorded soft-delete/recycle-bin idea as later work; it is not part
+  of slice 11.0 and requires a separate persistence, restore, authorization, and relation-tracking
+  decision before implementation.
 
 ## 2026-09-24
 

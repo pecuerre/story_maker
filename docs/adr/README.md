@@ -21,6 +21,7 @@ The current architecture and conventions are documented in:
 | [0004](0004-universe-data-and-demo-seeding.md) | Accepted | Organize disposable data by universe and separate it from production seeds |
 | [0005](0005-universe-access-levels.md) | Accepted | Use universe-level public/private access with three membership levels |
 | [0006](0006-data-factor-quality-guidance.md) | Accepted | Treat external repository scores as directional signals and prioritize verified quality work |
+| [0007](0007-story-owned-scenes-and-elements.md) | Accepted | Add story-owned ordered Scenes, optional Elements, links, and grouping without duplicating universe records |
 
 ## Format
 

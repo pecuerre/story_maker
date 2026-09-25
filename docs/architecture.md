@@ -183,6 +183,64 @@ Data flow for the tree/modal editors: `modal_fields.rb` serializes field descrip
 → response JSON `{ id, name, …, url }` updates the DOM. Drag & drop sends `{ position: n }`
 patches handled by `MaintainsSiblingPositions`.
 
+## Planned Scene architecture (slice 11.0 contract; not implemented)
+
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first-version Scene domain and
+UX contract. The current left-sidebar **Scenes** item remains a disabled placeholder until slice
+11.1 ships the model, route, controller, and view.
+
+### Ownership and resolution
+
+- A required `Story` owns the contiguous, narrative-order `Scene.position`. A Scene never causes a
+  Story to be selected implicitly.
+- A Scene belongs to one Story and may reference one same-Story Section, one same-Universe Event,
+  one independent optional datetime, optional story-scoped Scene Tags, and same-Universe Character,
+  Item, and Location presence links.
+- A Scene owns an independently ordered sequence of Narration or Dialogue `SceneElement` records.
+  Dialogue Elements have one or more same-Universe speakers; Narration Elements have none. Element
+  Title (`name`) is required and plain-text Content (`body`) is optional.
+- Section assignment is organizational only. The global Scene list remains ordered by Scene
+  `position`; Section position and Event chronology never determine narrative order.
+- Every Scene-owned model resolves its Universe through `scene.story.universe` for authorization
+  and shared helper decisions. Controllers load Scenes through
+  `Current.universe.stories.find(...).scenes.find(...)`; unscoped record lookup is not permitted.
+
+### Target routes and response split
+
+| Purpose | Canonical URL | Mutation response |
+|---|---|---|
+| Global Scene list | `/u/:universe_slug/s/:story_id/scenes` | HTML |
+| Scene Details | `/u/:universe_slug/s/:story_id/scenes/:scene_id` | HTML |
+| Characters / Items / Locations tabs | `/u/:universe_slug/s/:story_id/scenes/:scene_id/{characters,items,locations}` | JSON for role-bearing link CRUD |
+| Elements | `/u/:universe_slug/s/:story_id/scenes/:scene_id/elements` and member URLs | JSON |
+
+Scenes have no Universe-level route. Every Section and Scene route includes its Story; every
+Element and presence-link route includes its Scene. All route-helper keys are passed by name.
+
+The stable Scene Details form, create/edit flows, and narrative-order moves use the established
+HTML redirect/re-render flow. Element and role-bearing presence-link editors use the established
+Stimulus/Bootstrap-modal JSON flow. These are separate controller contracts; an action does not
+accept both formats ambiguously. Slice 11.5 must make the shared JSON modal path reliable before
+Elements depend on it.
+
+### UX skeleton
+
+The Story workspace gains a flat **Scenes** list with Title/description previews, an **Ungrouped**
+or full Section-path indicator, Tag badges, Element and participant counts, and visible/keyboard
+Move up/Move down controls. Story selection remains explicit; the placeholder does not link to the
+first Story.
+
+Scene Details uses URL-backed tabs for **Details**, **Characters**, **Items**, and **Locations**.
+Details contains the stable HTML form plus the ordered Element list. Its optional Section selector
+and the separate Section-grouped outline both change only `section_id`; they never rewrite Scene
+`position`. Presence tabs show optional free-text roles and omit mutation controls for read-only
+users.
+
+The Element modal contains kind, required Title, optional Content, and a speaker picker that is
+shown and required only for Dialogue. It must display `422` and network failures without losing the
+author's input. The accepted deletion behavior and exact confirmation templates are recorded in
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md).
+
 ## Timeline
 
 Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`TimelineLayout`**

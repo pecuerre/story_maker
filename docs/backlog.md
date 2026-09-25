@@ -137,9 +137,9 @@ reviewable and testable.
 - A speaker is also a participant in the Scene. The Characters tab should make that relationship
   obvious and should not require the author to maintain the same person twice.
 
-#### Recommended target domain model
+#### Accepted target domain model
 
-Finalize exact column and association names in slice 11.0, but the intended ownership graph is:
+The slice 11.0 contract fixes the first-version ownership graph and field defaults:
 
 - `Scene belongs_to Story`; `Scene belongs_to Section, optional: true`; `Scene belongs_to Event,
   optional: true`; and Story owns the ordered `has_many :scenes` collection. Scene includes
@@ -149,13 +149,12 @@ Finalize exact column and association names in slice 11.0, but the intended owne
   conventions. **Configuration → Tags → Story Tags** manages tag definitions; assigning tags to an
   individual Scene belongs on Scene Details. `Scene`/`SceneTag` use optional story-scoped tag
   associations and the `scenes_scene_tags` join table.
-- `SceneElement belongs_to Scene`; ordered by `position`; stores an element kind, optional title,
-  and text content. Prefer persisted `name` labelled **Title** and a required `body` labelled
-  **Content**; confirm those defaults in slice 11.0. Never name the kind column `type`, because
-  Active Record reserves that name for single-table inheritance. Prefer `kind` or `element_type`,
-  constrain it to `narration` or `dialogue` in model/database checks, and forbid speakers on
-  Narration. Changing Dialogue to Narration with speakers must fail clearly or remove them only
-  after explicit confirmation in an atomic update.
+- `SceneElement belongs_to Scene`; ordered by `position`; stores an element kind, required `name`
+  labelled **Title**, and optional plain-text `body` labelled **Content**. An Element can be saved
+  without a body. Never name the kind column `type`, because Active Record reserves that name for
+  single-table inheritance. Constrain it to `narration` or `dialogue` in model/database checks, and
+  forbid speakers on Narration. Changing Dialogue to Narration with speakers must fail clearly or
+  remove them only after explicit confirmation in an atomic update.
 - `SceneCharacter`, `SceneItem`, and `SceneLocation` are join records that preserve a nullable
   free-text `role` and enforce that every linked Universe record belongs to the Scene's Universe.
   Blank role input means no role; do not validate it against a controlled vocabulary. Join models
@@ -170,10 +169,11 @@ Finalize exact column and association names in slice 11.0, but the intended owne
   lookup, and unique indexes for each presence/speaker pair. Do not rely on SQLite foreign keys to
   prove same-Universe or same-Story application scope.
 - Recommended deletion contract: deleting a Scene removes its Elements, tag joins, speaker links,
-  and presence links; deleting a Story cascades its story-owned Scenes; deleting a Section or Event
-  nullifies Scene references; deleting a Character, Item, or Location removes its Scene/speaker join
-  records but never the Scene. Shared world records always survive Scene deletion. Add confirmation
-  copy and model/request tests for each path rather than relying on an unannounced database error.
+  and presence links; deleting a Story cascades its Sections, Section Tags, Scene Tags, Scenes, and
+  story-owned descendants; deleting a Section or Event nullifies Scene references; deleting a
+  Character, Item, or Location removes its Scene/speaker join records but never the Scene. Shared
+  world records always survive Scene deletion. Add confirmation copy and model/request tests for
+  each path rather than relying on an unannounced database error.
 
 #### Frontend and interaction contract
 
@@ -221,15 +221,16 @@ Finalize exact column and association names in slice 11.0, but the intended owne
 
 #### Delivery slices
 
-- **11.0 — Domain contract and UX skeleton.** Add an ADR that extends the accepted
-  Universe/Story scope decision without rewriting its history. Confirm the remaining defaults:
-  Scene title storage/label, whether Element body is required, whether Dialogue requires at least
-  one speaker, datetime timezone/precision, and the exact confirmation copy for the recommended
-  deletion contract. Sketch the global Scene list, URL-backed tabs, Element modal, and Section
-  grouping flow. Recommended defaults are: persist Scene title as `name`; require Element body but
-  not Element title; require one or more speakers for Dialogue; keep role nullable; follow the
-  existing Event datetime precision for now. Backlog item 1 is a prerequisite for the final
-  development-data/manual-verification slice, not a reason to delay the domain design.
+- **11.0 — Domain contract and UX skeleton (completed 2026-09-25).** [ADR 0007](adr/0007-story-owned-scenes-and-elements.md)
+  extends the accepted Universe/Story scope decision and sketches the global Scene list, URL-backed
+  tabs, Element modal, Section grouping flow, ordering, access rules, and deletion behavior. The
+  confirmed defaults are: persist Scene title as `name` and label it **Title**; require Element
+  `name`/Title while allowing an Element to be saved without a body; require one or more speakers
+  for Dialogue; forbid speakers on Narration; keep roles nullable; and follow the existing Event
+  datetime precision for now. The exact detailed deletion confirmation templates are recorded in
+  the ADR. No application code, schema, or development data was added by this decision slice.
+  Backlog item 1 remains a prerequisite for the final development-data/manual-verification slice,
+  not a reason to delay the domain design.
 - **11.1 — Core Scene vertical slice.** Add a schema-only Scene migration and model, Story
   association, stable `name`/slug, and a transactionally maintained contiguous position with
   deterministic `position, id` ordering. Add Story-scoped routes/controllers, the canonical Scenes
@@ -424,6 +425,16 @@ decisions and should not delay the basic ordered Scene workflow.
    remove real drift risk, with focused model/request/browser regressions. Preserve the existing
    three UI patterns, JSON-only mutation contracts, optional tags, authorization, and accessible
    error states. Do not refactor solely to improve a line-count metric.
+
+20. **Include a soft delete. with a deleted_at column in tables**
+
+   when users click delete, instead of actually deleting the records. we will just mark them as
+   deleted, by setting the deleted_at column. add a default scope to models to only show "not deleted"
+   records. add also a "recycle bin" where you can see those deleted elements. in the recycle bin
+   you can actually delete for real. it is very important to track the relations that were deleted.
+   for instance if i delete a story, the scenes and sections will be deleted. but later if i decide
+   to recover the story, i shuold be ask "there are related elements associated with this, do you want
+   to recover them too?"
 
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

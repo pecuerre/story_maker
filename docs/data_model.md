@@ -189,6 +189,57 @@ the explicit story path (`/u/<slug>/s/<story_id>/section_tags` and
 `/u/<slug>/s/<story_id>/sections`). The universe-level `/u/<slug>/section_tags` and
 `/u/<slug>/sections` routes are intentionally invalid.
 
+## Planned writing model (accepted, not present in the schema)
+
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the first Scene model. Slice 11.0
+records this contract only; none of these tables, associations, routes, or validations exists in
+the current schema yet.
+
+```text
+Story
+  ├── Scene (contiguous narrative position)
+  │   ├── SceneElement (contiguous flat position)
+  │   │   └── SceneElementSpeaker ──> Character
+  │   ├── SceneCharacter ────────────> Character   (optional role)
+  │   ├── SceneItem ─────────────────> Item        (optional role)
+  │   ├── SceneLocation ─────────────> Location    (optional role)
+  │   ├── Section ───────────────────> optional same-Story grouping
+  │   └── Event ────────────────────> optional same-Universe in-world fact
+  └── SceneTag (story-scoped hierarchy; Scene assignment via join)
+```
+
+The intended persisted fields and relationships are:
+
+| Model/table | Intended fields and constraints |
+|---|---|
+| `scenes` | required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`, optional same-Story `section_id`, optional same-Universe `event_id`, optional `datetime` |
+| `scene_tags` | story-scoped hierarchical/colored tag shape; optional assignment only |
+| `scenes_scene_tags` | story-scoped HABTM join; tags remain optional |
+| `scene_elements` | required `scene_id`, `kind` (`narration`/`dialogue`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body`, indexed `position` |
+| `scene_element_speakers` | SceneElement-to-Character links with a unique pair; the same Universe rule is checked through the Element's Scene |
+| `scene_characters` | unique `[scene_id, character_id]`, nullable free-text `role` |
+| `scene_items` | unique `[scene_id, item_id]`, nullable free-text `role` |
+| `scene_locations` | unique `[scene_id, location_id]`, nullable free-text `role` |
+
+`SceneElement` is an ordered child component rather than a standalone navigable content model, so
+it has no public slug requirement. `Scene.position` and `SceneElement.position` are contiguous `0..n-1` within their Story and Scene
+respectively. They are not `parent_id` hierarchies and must not include `Hierarchical` or
+`MaintainsSiblingPositions`; their ordering contract is flat and transactional. A title-only Scene
+is valid. A Scene's optional Event and datetime are independent, and multiple Scenes may reference
+one Event.
+
+Narration Elements have no speakers. Dialogue Elements require at least one same-Universe Character
+speaker; the server must reject a Dialogue-to-Narration change while speakers remain. Presence
+roles are free text and are not analyzer vocabularies. All same-Story/same-Universe relationships
+remain application-level validations, even when the individual foreign keys are real and indexed.
+Unknown optional references become documented validation/not-found errors rather than database 500s.
+
+The deletion contract is asymmetric: Scene-owned Elements, tag assignments, speaker links, and
+presence links cascade with Scene/Story deletion; Scene Tag definitions are removed with their
+Story; deleting a Section or Event clears Scene references while preserving Scene narrative order;
+deleting a shared Character, Item, or Location removes only its links and never a Scene. The exact
+confirmation copy is in [ADR 0007](adr/0007-story-owned-scenes-and-elements.md).
+
 ## Development data convention
 
 `db/data/` is checked-in but disposable development data, organized as one directory per universe:

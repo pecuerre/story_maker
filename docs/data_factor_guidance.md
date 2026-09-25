@@ -186,11 +186,13 @@ result does not prove that a client-side DOM or log-redaction issue is absent.
 ### 6. Dependency, JavaScript, and container supply-chain checks — priority: later/medium
 
 The report's lockfile warning is outdated for the current tree: keep `bun.lock` committed and use
-`--frozen-lockfile` in CI and Docker. The broader gap remains that Importmap Audit does not inspect
-the vendored Tom Select asset and the Bun/npm dependency graph is not currently covered by the CI
-workflow. Consider a `bun audit` (or an equivalent supported audit) step, inventory vendored assets,
-and add the appropriate npm/Bun and Docker Dependabot ecosystems. Keep updates reviewable and
-reproducible rather than pinning arbitrary versions.
+`--frozen-lockfile` in CI and Docker. The local Tom Select pin now includes machine-readable
+`# @2.6.2` metadata, so Importmap Audit includes that direct package/version; the audit still does
+not verify the provenance of the vendored bytes or cover the complete Bun/npm dependency graph.
+That graph is not currently covered by the CI workflow. Consider a `bun audit` (or an equivalent
+supported audit) step, inventory vendored assets, and add the appropriate npm/Bun and Docker
+Dependabot ecosystems. Keep updates reviewable and reproducible rather than pinning arbitrary
+versions.
 
 A deploy job is not automatically an improvement: a real deployment requires an owner-approved
 target, credentials, rollback plan, and Kamal validation. A container build/boot smoke test and

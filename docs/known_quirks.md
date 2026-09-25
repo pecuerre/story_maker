@@ -212,15 +212,16 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
     disables forgery protection, so system tests do not verify that fetch requests carry valid CSRF
     tokens. Brakeman's clean result does not inspect the client-side `innerHTML` path.
 
-34. **Medium — dependency auditing does not cover the vendored/runtime JavaScript asset.**
-    `config/importmap.rb:9` pins `vendor/javascript/tom-select.js` without version metadata, and
-    `bin/importmap audit` explicitly reports that it ignores the vendored package. The Bun/npm
-    dependency graph is not audited in CI, and `.github/dependabot.yml:1-12` has no JavaScript/Bun
-    or Docker ecosystem entry. A local `bun audit` currently reports no vulnerabilities, but that
-    check is absent from the workflow. The DataFactor report's observation that no JavaScript
-    lockfile exists is stale: `bun.lock` is committed and CI/Docker use
-    `bun install --frozen-lockfile`. The missing audit/Dependabot coverage remains a backlog item
-    (see `docs/backlog.md`, item 18).
+34. **Medium — dependency auditing does not cover the complete JavaScript dependency graph.**
+    The local Tom Select pin now carries `# @2.6.2` version metadata in `config/importmap.rb:9`,
+    so `bin/importmap audit` includes that direct package/version in its advisory request. The
+    audit still does not verify that the vendored file's bytes came from that npm release, and it
+    does not replace an audit of the complete Bun/npm graph. That graph is not audited in CI, and
+    `.github/dependabot.yml:1-12` has no JavaScript/Bun or Docker ecosystem entry. A local
+    `bun audit` currently reports no vulnerabilities, but that check is absent from the workflow.
+    The DataFactor report's observation that no JavaScript lockfile exists is stale: `bun.lock` is
+    committed and CI/Docker use `bun install --frozen-lockfile`. The remaining audit/Dependabot
+    coverage is still a backlog item (see `docs/backlog.md`, item 18).
 
 35. **Medium — the production image retains test and build artifacts.** `Dockerfile:24-28` excludes
     only the `development` bundle group, not `development:test`, so Capybara/Selenium and shared
@@ -432,8 +433,8 @@ The following non-destructive checks passed during this pass:
 - `bin/rubocop` — 158 files, no offenses.
 - `bin/brakeman --no-pager` — 0 security warnings; it does not cover the client-side DOM XSS path.
 - `bin/bundler-audit` — no known vulnerabilities.
-- `bin/importmap audit` — no reported vulnerabilities, but it explicitly ignored vendored Tom Select
-  as described above.
+- `bin/importmap audit` — no reported vulnerabilities; at this checkpoint it explicitly ignored
+  vendored Tom Select (fixed in the follow-up below).
 - `bun audit` — no current vulnerabilities across 97 packages; not part of CI.
 - `bin/rails db:migrate:status` — all application migrations up.
 - `git diff --check` and final `git status` — clean before this documentation-only edit.
@@ -451,7 +452,8 @@ The explicit development-data loader follow-up was verified after ADR 0008:
 - `bin/rubocop` — 166 files, no offenses.
 - `bin/brakeman --no-pager` — 0 security warnings.
 - `bin/bundler-audit` — no known vulnerabilities.
-- `bin/importmap audit` — no reported vulnerabilities; vendored Tom Select remains ignored as noted above.
+- `bin/importmap audit` — no reported vulnerabilities; at this checkpoint vendored Tom Select
+  remained ignored (fixed in the follow-up below).
 - `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed in
   development and test environments.
 - `RAILS_ENV=test bin/rails db:seed` passed without loading development data.
@@ -459,3 +461,22 @@ The explicit development-data loader follow-up was verified after ADR 0008:
 Destructive `db:demo:reset`, `db:restart`, Docker/Kamal deployment, production SMTP delivery, a clean
 migration-from-zero job, and a live hostile-browser exploit were not run. The loader's transactional
 load and rollback paths were covered in the test environment instead.
+
+## Follow-up verification (2026-09-25, Tom Select audit metadata)
+
+The local Tom Select pin was annotated with its locked version and the importmap regression test
+was added:
+
+- `bin/importmap packages` reports `tom-select 2.6.2`.
+- `bin/importmap audit` reports no vulnerable packages and no longer prints an
+  `Ignoring tom-select` notice.
+- `bin/rails test test/importmap_audit_test.rb` — 1 test, 4 assertions, 0 failures/errors/skips.
+- `bin/rails test` — 281 tests, 1,707 assertions, 0 failures/errors/skips.
+- `bin/rubocop` — 167 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `bin/bundler-audit` — no known vulnerabilities.
+- `git diff --check` — clean.
+
+The broader Bun/npm graph audit, vendored-file provenance verification, and Dependabot coverage
+remain open under backlog item 18. No destructive database, container, deployment, or browser
+operations were run for this tooling-only fix.

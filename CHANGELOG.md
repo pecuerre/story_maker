@@ -19,6 +19,10 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[security]** Added machine-readable Tom Select version metadata to the local importmap pin and a
+  regression test, so `bin/importmap audit` includes Tom Select 2.6.2 instead of skipping it.
+  Complete Bun/npm graph, vendored-file provenance, and Dependabot coverage remain separate follow-up
+  work.
 - **[docs]** Distilled the 2026-09-25 DataFactor report into the agent guide, a durable quality
   guidance document, ADR 0006, focused backlog items, and verified follow-up quirks. The guidance
   keeps the report directional, reconciles stale health/lockfile signals, prioritizes real tested

@@ -21,6 +21,39 @@ Labels used below:
 
 ## 2026-09-26
 
+- **[added]** Completed backlog item 11.4.1, part (b) — the Scenes workspace gained a **Find scenes**
+  search area, because a story can hold hundreds or thousands of scenes. The new `SceneFilter` value
+  object owns the whole query contract on the canonical index URL: `q` (case-insensitive text over
+  the title and short description, with `%`/`_` matched literally), `section_id` (a Section of this
+  story or the explicit `ungrouped` group), `scene_tag_id` (a Scene Tag of this story — the scene
+  "type" label, since `Scene` has no type column), and inclusive in-world `from`/`to` **days**. A
+  filter value that cannot be used is dropped and reported on the page instead of quietly emptying
+  the list: a Section or Scene Tag from another story, or a date that is not an ISO day. A scene
+  without an in-world time is never inside a date range. Filtering is reading, so the search area is
+  rendered for writers, read-only members, and guests on a public universe and adds no mutation
+  control. Active filters stay in the URL, a plain form submission is redirected once to the
+  canonical query, and a reorder or delete inside a narrowed list returns to the same filter.
+- **[added]** The filtered list keeps the story's canonical meaning. The narrative-position badge and
+  the "of N" total come from one aggregate query over the whole sequence rather than from the
+  filtered rows, and Move up/Move down are disabled from the story's real first and last position, so
+  a narrowed list can neither renumber a scene nor disable a move that has a neighbour. A filter that
+  matches nothing now has its own empty state — **No scenes match these filters**, with the active
+  filters repeated and a **Clear filters** action — which is never reused for a story without scenes.
+  Added value-object, request, helper, and browser coverage, including a guest filtering with the
+  keyboard alone at a 420px width.
+- **[changed]** Completed backlog item 11.4.1, part (b) for the Sections workspace. A Section is a
+  group, not a record with a scenes list of its own, so the surface below the tree is now
+  **Ungrouped scenes**: it lists only the scenes that belong to no section, says how many are grouped,
+  and points at each Section's own page (already shipped) for the rest. Grouping a scene therefore
+  removes it from that list instead of duplicating it, and the selector-driven **Move scene** form
+  still offers every scene of the story because regrouping is how a grouped scene comes back. The
+  `scenes/_section_outline` partial is now `scenes/_ungrouped_scenes`, and `SectionPaths#ids` exposes
+  the ids the list already loaded so a filter value can be validated without a second query.
+- **[docs]** Recorded the delivered slice in the Scene architecture (a new "The story's Scene list is
+  filtered, never re-ordered" section), the conventions, the visual design, the development guide,
+  and an ADR 0007 execution note that states how the "separate grouped outline" decision is now
+  implemented. `db/data/README.md` and the development guide's manual verification steps describe the
+  new sample data, the search area, and the ungrouped-only Sections list.
 - **[docs]** Adopted the known-quirks discipline for the shared backlog: `docs/backlog.md` now holds
   pending work only, and finished work leaves it. The rule is written into the backlog header,
   `AGENTS.md`, and `docs/README.md`: in the change that delivers an item, add the dated changelog
@@ -39,6 +72,11 @@ Labels used below:
 - **[docs]** Dropped the now-done backlog pointers from `docs/architecture.md` and from the
   `SectionsController#show` and `sections/show.html.erb` comments; they described shipped behavior
   as pending. No application behavior, schema, or data changed.
+- **[chore]** Reworked the Dark `db/data/dark/scenes.yml` sample data (12 scenes) so grouping and
+  narrative order are visibly different things: three scenes share Season 1 / Episode 1, three are
+  ungrouped — including one told last but set in 1953 and one unfinished title-only scene — and each
+  remaining section keeps a single scene. Two scenes now also share one Event, and the loader tests
+  assert the grouped/ungrouped shapes and the flashback ordering.
 
 ## 2026-09-25
 

@@ -43,16 +43,15 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     story = Universe.find_by!(slug: "dark").stories.first
     scenes = story.scenes.reorder(:position, :id).to_a
 
-    assert_equal 8, scenes.size
-    assert_equal (0...8).to_a, scenes.map(&:position)
+    assert_equal 12, scenes.size
+    assert_equal (0...12).to_a, scenes.map(&:position)
     assert_equal "Secrets", scenes.first.name
-    assert_equal "The Golden Beast", scenes.last.name
+    assert_equal "Interlude", scenes.last.name
     assert_equal [ "Mood", "Mystery" ], scenes.first.scene_tags.order(:position, :id).pluck(:name)
     assert_equal [ "Mystery" ], scenes[1].scene_tags.pluck(:name)
-    assert_empty scenes[3].scene_tags
+    assert_empty scenes[7].scene_tags
 
-    assert_equal 1, scenes.count { |scene| scene.description.blank? }
-    assert_equal [ "Double Lives" ], scenes.select { |scene| scene.description.blank? }.map(&:name)
+    assert_equal [ "Double Lives", "Interlude" ], scenes.select { |scene| scene.description.blank? }.map(&:name)
     assert_equal 0, Universe.where(slug: "lotr").joins(:stories).sum { |universe| universe.scenes.count }
   end
 
@@ -285,16 +284,39 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal "Jonas meets Bartosz - 2024-01-01 10:00", scenes.first.event.display_string
     assert_equal Time.utc(1986, 9, 1, 10), scenes.first.datetime
 
-    # A datetime without an event, an event without a datetime, and a shared event.
-    assert_nil scenes[2].event
-    assert_equal Time.utc(2019, 11, 5, 21), scenes[2].datetime
-    assert_equal scenes[4].event, scenes[5].event
+    # A datetime without an event, an event without a datetime, and shared events.
+    assert_nil scenes[4].event
+    assert_equal Time.utc(2019, 11, 5, 21), scenes[4].datetime
+    assert_equal scenes[6].event, scenes[7].event
+    assert_equal scenes[0].event, scenes[2].event
 
     # A title-only, ungrouped scene.
-    assert_equal "Double Lives", scenes[3].name
-    assert_nil scenes[3].section
-    assert_nil scenes[3].event
-    assert_nil scenes[3].datetime
+    assert_equal "Double Lives", scenes[5].name
+    assert_nil scenes[5].section
+    assert_nil scenes[5].event
+    assert_nil scenes[5].datetime
+  end
+
+  test "loads grouped and ungrouped Dark scenes so grouping and order stay separate" do
+    Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+
+    story = Universe.find_by!(slug: "dark").stories.first
+    scenes = story.scenes.reorder(:position, :id).to_a
+    paths = SectionPaths.build(story.sections.reorder(:position, :id).to_a)
+
+    # Several scenes share one section, and one scene is still alone in a section
+    # of its own, so both shapes can be exercised in the browser.
+    first_episode = "Season 1 / Episode 1: Secrets"
+    assert_equal [ "Secrets", "The Search in the Woods", "Michael's Waltz" ],
+      scenes.select { |scene| paths.label_for(scene.section_id) == first_episode }.map(&:name)
+    assert_equal [ "Lies" ], scenes.select { |scene| paths.label_for(scene.section_id) == "Season 1 / Episode 2: Lies" }
+      .map(&:name)
+
+    # Several scenes are ungrouped, including one told last that happens first.
+    assert_equal [ "Double Lives", "The Grotto", "Interlude" ],
+      scenes.select { |scene| scene.section_id.nil? }.map(&:name)
+    grotto = scenes.find { |scene| scene.name == "The Grotto" }
+    assert_operator grotto.datetime, :<, scenes.first.datetime
   end
 
   test "rejects references to records outside the selected universe" do

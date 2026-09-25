@@ -51,7 +51,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "Other story section"
   end
 
-  test "index keeps the section tree and adds a grouped scene outline" do
+  test "index keeps the section tree and lists only the ungrouped scenes below it" do
     get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_response :success
@@ -60,26 +60,48 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".taxonomy-node", 2
 
     assert_select ".scene-grouping" do
-      assert_select "h2", text: "Grouped scenes"
-      assert_includes response.body, "Ungrouped"
-      assert_includes response.body, "Section one / Section two"
+      assert_select "h2", text: "Ungrouped scenes"
+      # A grouped scene is listed on its own section's page, reachable from the
+      # tree's Details link, so it is not repeated here.
+      assert_select "a[href=?]", universe_story_scene_path(
+        universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three)
+      ), text: "Scene three"
       assert_select "a[href=?]", universe_story_scene_path(
         universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_one)
-      ), text: "Scene one"
+      ), count: 0
+      assert_select "a[href=?]", universe_story_scene_path(
+        universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two)
+      ), count: 0
     end
+
+    assert_select ".taxonomy-node a[href=?]",
+      universe_story_section_path(universe_slug: @universe.slug, story_id: @story, id: sections(:section_one))
   end
 
-  test "the grouped outline shows ungrouped scenes first and keeps narrative order inside a group" do
+  test "the ungrouped list keeps narrative order and says where grouped scenes went" do
+    @story.scenes.create!(name: "Later ungrouped scene", position: 3)
+
     get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
 
-    groups = css_select(".scene-grouping .list-group-item").map { |item| item.text.squish }
-    ungrouped_index = groups.index { |text| text.start_with?("Ungrouped") }
-
-    assert ungrouped_index, "expected an Ungrouped group"
-    assert_includes groups[ungrouped_index], "Scene three"
+    listed = css_select(".scene-grouping .list-group-item a").map { |link| link.text.squish }
+    assert_equal [ "Scene three", "Later ungrouped scene" ], listed
+    assert_select ".scene-grouping p", text: /are listed on\s+their own section's page/
   end
 
-  test "the grouped outline offers accessible move selectors for writers only" do
+  test "the ungrouped list is empty once every scene is grouped" do
+    scenes(:scene_three).update!(section: sections(:section_two))
+
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_select ".scene-grouping h2", text: "Ungrouped scenes"
+    assert_select ".scene-grouping .list-group-item", count: 0
+    assert_select ".scene-grouping p", text: /nothing waiting to\s+be grouped here/
+    # The move form still offers every scene, so a scene can be ungrouped again.
+    assert_select "form.scene-grouping-form select[name=scene_id] option", @story.scenes.count
+  end
+
+  test "the move selectors in the grouping workspace are offered to writers only" do
     get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_select "form[action=?].scene-grouping-form", group_universe_story_scenes_path(
@@ -102,7 +124,7 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Private scene"
   end
 
-  test "the grouped outline shows an empty state when the story has no scenes" do
+  test "the ungrouped list shows an empty state when the story has no scenes" do
     @story.scenes.destroy_all
 
     get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)

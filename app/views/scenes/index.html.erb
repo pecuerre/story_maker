@@ -1,5 +1,6 @@
 <% content_for :title, "Scenes" %>
 <% editable = can_write_universe? %>
+<% filtered = @scene_filter.active? %>
 <% empty_description = if editable
   "Scenes are the ordered units of this story. Add the first one to start its narrative order."
 else
@@ -27,16 +28,29 @@ end %>
     { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ] %>
 
+<%= render "scenes/filter",
+  story: @story,
+  filter: @scene_filter,
+  section_paths: @section_paths,
+  scene_tags: @scene_tags,
+  scene_tag_paths: @scene_tag_paths,
+  total: @scene_total,
+  shown: @scenes.size %>
+
 <% if @scenes.any? %>
   <div class="content-surface entity-list">
     <div class="list-group list-group-flush">
-      <% @scenes.each_with_index do |scene, index| %>
+      <% filter_params = @scene_filter.query_params %>
+      <% @scenes.each do |scene| %>
         <div class="list-group-item entity-row d-flex align-items-start gap-3">
           <div class="entity-copy flex-grow-1">
             <div class="d-flex align-items-center gap-2 flex-wrap">
+              <%# The position and the totals come from the whole sequence, not from
+                  the filtered rows, so a narrowed view still says where the scene
+                  sits in the order the story is told. %>
               <span class="badge rounded-pill text-bg-light border"
-                aria-label="<%= "Narrative position #{index + 1} of #{@scenes.size}" %>">
-                <%= index + 1 %>
+                aria-label="<%= "Narrative position #{scene.position + 1} of #{@scene_total}" %>">
+                <%= scene.position + 1 %>
               </span>
               <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene), class: "entity-title" %>
               <% grouping = scene_grouping_label(scene, @section_paths) %>
@@ -53,23 +67,27 @@ end %>
           </div>
 
           <% if editable %>
+            <%# Boundary state is the Story's real first and last position, so a
+                filtered list never disables a move that has a neighbor. %>
+            <% at_first = scene.position <= @first_position %>
+            <% at_last = scene.position >= @last_position %>
             <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
-              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene),
+              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, **filter_params),
                 method: :patch,
                 params: { direction: "up" },
                 class: "btn btn-sm btn-light border",
-                disabled: index.zero?,
-                title: index.zero? ? "Already first in the narrative order" : "Move up",
+                disabled: at_first,
+                title: at_first ? "Already first in the narrative order" : "Move up",
                 aria: { label: "Move #{scene.name} up in the narrative order" },
                 data: { scene_move: "up" } do %>
                 <i class="bi bi-arrow-up" aria-hidden="true"></i>
               <% end %>
-              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene),
+              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, **filter_params),
                 method: :patch,
                 params: { direction: "down" },
                 class: "btn btn-sm btn-light border",
-                disabled: index == @scenes.size - 1,
-                title: index == @scenes.size - 1 ? "Already last in the narrative order" : "Move down",
+                disabled: at_last,
+                title: at_last ? "Already last in the narrative order" : "Move down",
                 aria: { label: "Move #{scene.name} down in the narrative order" },
                 data: { scene_move: "down" } do %>
                 <i class="bi bi-arrow-down" aria-hidden="true"></i>
@@ -91,7 +109,7 @@ end %>
                   </li>
                   <li><hr class="dropdown-divider"></li>
                   <li>
-                    <%= button_to universe_story_scene_path(story_id: @story, id: scene),
+                    <%= button_to universe_story_scene_path(story_id: @story, id: scene, **filter_params),
                       method: :delete,
                       class: "dropdown-item text-danger",
                       data: { turbo_confirm: "Delete “#{scene.name}”? Its elements, tag assignments, and links to story and universe records will be permanently removed. Linked records will not be deleted." } do %>
@@ -105,6 +123,22 @@ end %>
         </div>
       <% end %>
     </div>
+  </div>
+<% elsif filtered %>
+  <%# A filtered list with no match is not the same as a story without scenes,
+      so it says which filters produced nothing and offers the way back. %>
+  <div class="content-surface p-3 p-md-4">
+    <%= render "shared/empty_state",
+      title: "No scenes match these filters",
+      description: "#{@story.name} has #{pluralize(@scene_total, 'scene')}, but none of them match the filters above. Clear them to see the whole narrative order.",
+      icon: "filter" do %>
+      <span class="d-block mb-3">
+        <% scene_filter_summaries(@scene_filter, @section_paths, @scene_tag_paths).each do |summary| %>
+          <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+        <% end %>
+      </span>
+      <%= link_to "Clear filters", universe_story_scenes_path(story_id: @story), class: "btn btn-primary" %>
+    <% end %>
   </div>
 <% else %>
   <%= render "shared/empty_state",

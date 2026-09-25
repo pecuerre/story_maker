@@ -1,0 +1,87 @@
+<%# The Scenes search area. It is a GET form over the same canonical index URL, so
+    a filter is visible in the address, shareable, and removable in one click. It
+    only narrows what the list shows: the order below is always the order the
+    Story is told, and the Story's scene total is counted from the whole
+    sequence. Visible to every access level, because filtering is reading. %>
+<% story = local_assigns.fetch(:story) %>
+<% filter = local_assigns.fetch(:filter) %>
+<% section_paths = local_assigns.fetch(:section_paths) %>
+<% scene_tags = local_assigns.fetch(:scene_tags) %>
+<% scene_tag_paths = local_assigns.fetch(:scene_tag_paths) %>
+<% total = local_assigns.fetch(:total) %>
+<% shown = local_assigns.fetch(:shown) %>
+<% filters_path = universe_story_scenes_path(story_id: story) %>
+
+<div class="content-surface scene-filter p-3 p-md-4 mb-4">
+  <h2 class="h6 mb-1">Find scenes</h2>
+  <p class="text-body-secondary">
+    A story can hold hundreds or thousands of scenes. Narrow the list by text, section, scene tag,
+    or in-world date range. Filtering never changes the narrative order, and a scene without an
+    in-world time is not in a date range.
+  </p>
+
+  <%= form_with url: filters_path, method: :get, class: "row g-2 align-items-end" do %>
+    <div class="col-12 col-lg">
+      <label class="form-label" for="scene_filter_q">Search</label>
+      <input type="search" class="form-control" id="scene_filter_q" name="q"
+        value="<%= filter.text %>" placeholder="Title or short description" autocomplete="off">
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="scene_filter_section_id">Section</label>
+      <select class="form-select" id="scene_filter_section_id" name="section_id">
+        <option value="">All sections</option>
+        <option value="<%= SceneFilter::UNGROUPED %>"<%= " selected" if filter.ungrouped? %>>Ungrouped</option>
+        <% section_paths.grouping_options.drop(1).each do |label, value| %>
+          <option value="<%= value %>"<%= " selected" if filter.section_id == value %>><%= label %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="scene_filter_scene_tag_id">Scene tag</label>
+      <select class="form-select" id="scene_filter_scene_tag_id" name="scene_tag_id">
+        <option value="">All scene tags</option>
+        <% scene_tag_choices(scene_tags, scene_tag_paths).each do |label, value| %>
+          <option value="<%= value %>"<%= " selected" if filter.scene_tag_id == value %>><%= label %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col-6 col-sm-3 col-lg">
+      <label class="form-label" for="scene_filter_from">In-world from</label>
+      <input type="date" class="form-control" id="scene_filter_from" name="from"
+        value="<%= filter.from_date&.iso8601 %>">
+    </div>
+
+    <div class="col-6 col-sm-3 col-lg">
+      <label class="form-label" for="scene_filter_to">In-world to</label>
+      <input type="date" class="form-control" id="scene_filter_to" name="to"
+        value="<%= filter.to_date&.iso8601 %>">
+    </div>
+
+    <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+      <%= submit_tag "Filter scenes", class: "btn btn-primary", name: nil %>
+      <%# With no result there is nothing to clear from here, so the empty state
+          below offers the only way back. %>
+      <% if filter.active? && shown.positive? %>
+        <%= link_to "Clear filters", filters_path, class: "btn btn-light border" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if filter.active? %>
+    <p class="text-body-secondary mb-0 mt-3">
+      Showing <%= pluralize(shown, "scene") %> of <%= pluralize(total, "scene") %>.
+      <%# The active filters are repeated as text so a result set is never
+          ambiguous, and so an author can see which value produced an empty
+          result. %>
+      <span class="d-block mt-1">
+        Filtered by
+        <% scene_filter_summaries(filter, section_paths, scene_tag_paths).each do |summary| %>
+          <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+        <% end %>
+      </span>
+    </p>
+  <% end %>
+</div>

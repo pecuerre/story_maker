@@ -55,7 +55,9 @@ Add client- or server-backed search/filter/sort controls to Characters, Location
 Relations, Ownerships, and taxonomy trees. Preserve universe/story scope, make filters removable
 and visible in the URL where practical, and define behavior for empty results separately from an
 empty database. Start with the fields already exposed by each model; do not add opaque global
-search before the scoped lists are usable at scale.
+search before the scoped lists are usable at scale. The story-owned Scenes list already has this
+shape (text, Section group, Scene Tag, inclusive in-world date range, canonical query in the URL);
+reuse its `SceneFilter` conventions here instead of inventing a second filter pattern.
 
 5. **Richer relationship and entity rows**
 
@@ -236,29 +238,12 @@ first-version ownership graph and field defaults:
 #### Delivery slices
 
 Slices **11.0-11.4** (domain contract, core Scene vertical slice, Scene references and time,
-Section grouping, and the Scene Tag taxonomy) are finished and no longer tracked here: their
-delivered state lives in [`../CHANGELOG.md`](../CHANGELOG.md) and in
+Section grouping, and the Scene Tag taxonomy) and the first Scenes/Sections improvement pass
+(**11.4.1**: richer Dark sample data, an ungrouped-only Sections list, and the Scenes search area)
+are finished and no longer tracked here: their delivered state lives in
+[`../CHANGELOG.md`](../CHANGELOG.md) and in
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) / [ADR 0009](adr/0009-transactional-position-maintenance.md).
 The remaining slices are:
-
-- **11.4.1 - Improve Scenes / Sections**.
-  a) change the scenes.yml file in dark and
-    - include several scenes in the same section (season 1, episode 1)
-    - include several ungrouped scenes
-    - the rest one scene per section (as of right now)
-  b) in the UI in the Sections Tab
-    - for other elements, like characters, the character is a the important part
-      the character tag is just a label, or grouping
-    - sections are "a little" different, because section have their own tags. but they are
-      per se, like tags for the scenes too.
-    - leave only there the "upgrouped" scenes, the rest we will be able to see if we click
-      the corresponding section. the "move scene" button. remains there. it is perfect
-      **(the Sections workspace still lists ungrouped scenes together with the grouped
-      outline; only that part is left to do)**
-    - in the UI in the Scene tab
-      - add a search are that allow the user to narrow the amount of elements they will see
-      - as a note to yourself (for your knowledge), one story can have hundreds or even thousands of scenes
-      - in that search (for now) allow to filter by section, scene type and date range.
 
 - **11.5 — Modal JSON reliability for Element editing.** Make the shared modal flow submit JSON
   correctly, show 422 errors, handle loading/network failures, and remove rows and update counts
@@ -437,12 +422,66 @@ decisions and should not delay the basic ordered Scene workflow.
    to recover the story, i shuold be ask "there are related elements associated with this, do you want
    to recover them too?"
 
+
+21. **include a "magic" search bar in the top bar**
+  - it sould have a drop down near it to choose between
+    - entire platform
+    - current universe [default]
+    - current story
+    - only characters
+    - only locations
+    - ...
+  - it should be the type of search bar that autocompletes as i type and looks into every object and every field
+  - back in the day i remember i used solar or elastic search for that. i don't know what is used for that now.
+    but probably we have to use some of that
+
+22. **fix the top bar navigation**
+  - currently (from left to right)
+    - universe maker -> universe list
+    - universes (drown down)
+      - universe 1 -> details
+      - universe 2 -> details
+      - all universes -> universe list
+      - new universe
+    - universe: [current universe] (drowndown)
+      - current universe -> details
+      - all universes -> universe list
+      - new universe
+      - manage members
+    - story [current story] (dropdown)
+      - current story -> details
+      - all stories -> story list
+      - new story
+  - what i want (from left to right)
+    - universe maker -> landing page (list of universes and a search area for now)
+    - universe: [current universe] -> universe details / universe main page
+    - story: [current story] -> story details / story main page
+  - note: to change universes, the user has to click in the home "universe maker"
+  - note: to create a new universe the user also has to do it in the landing page
+
+23. **other visual fixes**
+  - in the pages characters, events, items, ownerships the list always show the
+    - the details link
+    - the [...] with the actions
+    - all align to the right
+  - in pages locations, sections and all the element tags
+    - the details link is align to the left and always visible
+    - the [...] with the actions is only visible if you hover the mouse
+  - in page scenes there is no "details" link
+  - so i want all to look like the charactes, events, items pages
+    - so in all cases i want the [...] with the actions to ve visible all the time
+    - and the details link to be visible all the time to and aligned to the right
+    - in the case of scenes details link, please create the scene details page. with minimum information
+      for now, and a link to edit. this page will be very important later on
+    - the counter should not be part of the link, and the counter should be aligned left.
+      next to the name and the tags
+
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
 ## FUTURE WORK
-
+- **change universes to subdomains**. replace the /u/universe_slug for universe_slug.<website>.com
 - **Structured dialogue turns.** Replace or augment free-text Dialogue elements with ordered lines,
   speaker changes, parentheticals, and optional character attribution once the MVP reveals real usage.
 - **Scene point-of-view/focus Character.** Record whose perspective presents a Scene separately from

@@ -21,6 +21,12 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_two))
   end
 
+  # The titles in the order the list rendered them, so a filter assertion says
+  # which scenes survived it without depending on row markup.
+  def listed_scene_titles
+    css_select(".entity-list .entity-title").map { |title| title.text.squish }
+  end
+
   test "index lists the story scenes in narrative order with writer controls" do
     get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
 
@@ -93,6 +99,218 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".entity-list .entity-row", 1
     assert_select ".entity-title", text: "Alt scene"
+  end
+
+  test "index renders a search area scoped to the current story" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_select "form[action=?][method=?]",
+      universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story), "get" do
+      assert_select "input[type=search][name=q]"
+      assert_select "select[name=section_id] option[value='']", text: "All sections"
+      assert_select "select[name=section_id] option[value=?]", SceneFilter::UNGROUPED, text: "Ungrouped"
+      assert_select "select[name=section_id] option[value=?]", sections(:section_one).id, text: "Section one"
+      assert_select "select[name=section_id] option[value=?]", sections(:section_two).id, text: "— Section two"
+      assert_select "select[name=scene_tag_id] option[value=?]", scene_tags(:scene_tag_two).id,
+        text: "Scene tag one / Scene tag two"
+      assert_select "select[name=scene_tag_id] option[value=?]", scene_tags(:scene_tag_three).id, count: 0
+      assert_select "input[type=date][name=from]"
+      assert_select "input[type=date][name=to]"
+      assert_select "input[type=submit][value=?]", "Filter scenes"
+    end
+  end
+
+  test "index narrows the list by text over the title and description" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "second")
+
+    assert_response :success
+    assert_equal [ "Scene two" ], listed_scene_titles
+    assert_select ".scene-filter", text: /Showing 1 scene of 3 scenes/
+
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "FIRST SCENE")
+
+    assert_equal [ "Scene one" ], listed_scene_titles
+  end
+
+  test "index redirects a form submission to the canonical filter query" do
+    # Every search field is submitted, including the empty ones.
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story,
+      q: "second", section_id: "", scene_tag_id: "", from: "", to: "")
+
+    assert_redirected_to universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "second")
+
+    follow_redirect!
+
+    assert_response :success
+    assert_equal [ "Scene two" ], listed_scene_titles
+
+    # An all-empty submission is the unfiltered list, and a canonical query never
+    # redirects again.
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "")
+
+    assert_redirected_to universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+  end
+
+  test "index filters by section group, including the ungrouped group" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story,
+      section_id: sections(:section_two).id)
+
+    assert_response :success
+    assert_equal [ "Scene two" ], listed_scene_titles
+    assert_select ".scene-filter", text: /Section: Section one \/ Section two/
+
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, section_id: SceneFilter::UNGROUPED)
+
+    assert_equal [ "Scene three" ], listed_scene_titles
+    assert_select ".scene-filter", text: /Section: Ungrouped/
+  end
+
+  test "index filters by scene tag" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story,
+      scene_tag_id: scene_tags(:scene_tag_one).id)
+
+    assert_response :success
+    assert_equal [ "Scene one" ], listed_scene_titles
+    assert_select ".scene-filter", text: /Scene tag: Scene tag one/
+  end
+
+  test "index filters by an inclusive in-world date range and leaves untimed scenes out" do
+    url = universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+
+    get url, params: { from: "2026-09-11", to: "2026-09-11" }
+
+    assert_response :success
+    assert_equal [ "Scene one", "Scene three" ], listed_scene_titles
+    assert_select ".scene-filter", text: /In-world from 2026-09-11/
+    assert_select ".scene-filter", text: /In-world to 2026-09-11/
+
+    get url, params: { from: "2026-09-12" }
+
+    assert_equal [], listed_scene_titles
+    assert_select ".empty-title", text: "No scenes match these filters"
+  end
+
+  test "index combines the filters without changing the story's order" do
+    @story.scenes.create!(name: "Another ungrouped secret", position: 3)
+
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story,
+      q: "secret", section_id: SceneFilter::UNGROUPED)
+
+    assert_response :success
+    assert_equal [ "Another ungrouped secret" ], listed_scene_titles
+  end
+
+  test "index keeps the story totals and the real move boundaries while filtered" do
+    url = universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "three")
+
+    get url
+
+    assert_response :success
+    # The last scene of the story is the last visible row, so its position and
+    # its boundary state come from the whole sequence, not from the filter.
+    assert_select ".entity-row .badge[aria-label=?]", "Narrative position 3 of 3"
+    assert_select "form[action^=?] button[data-scene-move=up][disabled]",
+      "#{universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story)}/", count: 0
+    assert_select "form[action^=?] button[data-scene-move=down][disabled]",
+      "#{universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story)}/", count: 1
+    # The list-embedded mutations carry the filter, so the author stays here.
+    assert_select "form[action=?]", move_universe_story_scene_path(
+      universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three), q: "three"
+    )
+  end
+
+  test "a move and a delete inside a filtered list return to the same filter" do
+    patch move_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { direction: "down", q: "second" }
+
+    assert_redirected_to universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "second")
+
+    delete universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene,
+      section_id: SceneFilter::UNGROUPED)
+
+    assert_redirected_to universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story,
+      section_id: SceneFilter::UNGROUPED)
+  end
+
+  test "index reports a filter value it could not use instead of showing an empty list" do
+    url = universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+
+    get url, params: { section_id: sections(:section_alt).id }
+    assert_response :success
+    assert_equal [ "Scene one", "Scene two", "Scene three" ], listed_scene_titles
+    assert_select ".alert-danger", text: /section filter was ignored because it is not a section of this story/
+
+    get url, params: { scene_tag_id: scene_tags(:scene_tag_three).id }
+    assert_response :success
+    assert_equal [ "Scene one", "Scene two", "Scene three" ], listed_scene_titles
+    assert_select ".alert-danger", text: /scene tag filter was ignored because it is not a scene tag of this story/
+
+    get url, params: { from: "yesterday" }
+    assert_response :success
+    assert_equal [ "Scene one", "Scene two", "Scene three" ], listed_scene_titles
+    assert_select ".alert-danger", text: /in-world start date .yesterday. could not be read/
+  end
+
+  test "index does not redirect a filter value it had to drop" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story,
+      section_id: sections(:section_alt).id, from: "nonsense")
+
+    # The unusable values are reported on the page itself instead of bouncing the
+    # author through a redirect to a query they never asked for.
+    assert_response :success
+    assert_select ".alert-danger", text: /section filter was ignored/
+    assert_select ".alert-danger", text: /could not be read/
+  end
+
+  test "index separates a filtered empty result from a story without scenes" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "no such scene")
+
+    assert_response :success
+    assert_select ".empty-title", text: "No scenes match these filters"
+    assert_select ".empty-description", text: /has 3 scenes, but none of them match/
+    assert_select ".empty-state .badge", text: /Search: .no such scene./
+    assert_select "a[href=?]", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story),
+      text: "Clear filters"
+    # The empty result is the only way back, so the search area does not repeat it.
+    assert_select ".scene-filter a", text: "Clear filters", count: 0
+
+    stories(:story_alt).scenes.destroy_all
+
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: stories(:story_alt))
+
+    assert_response :success
+    assert_select ".empty-title", text: "No scenes yet"
+  end
+
+  test "read-only members and guests can filter and see no mutation control" do
+    universe, story = private_story
+    story.scenes.create!(name: "Private scene", description: "Only members see this")
+    sign_in_read_only_member(universe)
+
+    get universe_story_scenes_url(universe_slug: universe.slug, story_id: story, q: "private")
+
+    assert_response :success
+    assert_equal [ "Private scene" ], listed_scene_titles
+    # Filtering is reading, so the search area is there for every access level
+    # and no mutation control is.
+    assert_select "form[action=?][method=get]", universe_story_scenes_path(
+      universe_slug: universe.slug, story_id: story
+    )
+    assert_select "form[action^=?]",
+      "#{universe_story_scenes_path(universe_slug: universe.slug, story_id: story)}/", count: 0
+
+    sign_out
+
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, q: "second")
+
+    assert_response :success
+    assert_equal [ "Scene two" ], listed_scene_titles
+    assert_select "form[action=?][method=get]", universe_story_scenes_path(
+      universe_slug: @universe.slug, story_id: @story
+    )
+    assert_select "form[action^=?]",
+      "#{universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story)}/", count: 0
   end
 
   test "index shows a writer empty state without mutation instructions for read-only users" do

@@ -1,0 +1,28 @@
+- story: Story.the-lord-of-the-rings
+  name: A Long-expected Party
+  slug: a-long-expected-party
+  description: "Bilbo's birthday party brings Gandalf and the Ring to the Shire."
+  position: 0
+
+- story: Story.the-lord-of-the-rings
+  name: The Shadow of the Past
+  slug: the-shadow-of-the-past
+  description: "Gandalf's warning sends Frodo away from the Shire."
+  position: 1
+
+- story: Story.the-lord-of-the-rings
+  name: Three is Company
+  slug: three-is-company
+  description: "Frodo, Sam, and Merry set out for Bree with help from the pony cart."
+  position: 2
+
+- story: Story.the-lord-of-the-rings
+  name: A Long Walk in the Dark
+  slug: a-long-walk-in-the-dark
+  position: 3
+
+- story: Story.the-lord-of-the-rings
+  name: The Council of Elrond
+  slug: the-council-of-elrond
+  description: "The Fellowship of the Ring is formed at Rivendell."
+  position: 4

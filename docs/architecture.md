@@ -125,9 +125,9 @@ Other global behavior: `allow_browser versions: :modern`,
 - `Universe#to_param` → slug (the route uses `param: :universe_slug` and looks up by slug).
   Content models are addressed by numeric id.
 - Story URLs use the short `/s` resource path: `/u/:slug/s`, `/u/:slug/s/:story_id`, and the
-  story-scoped content paths `/u/:slug/s/:story_id/sections` and
-  `/u/:slug/s/:story_id/section_tags`. The universe-level `/u/:slug/sections` path is intentionally
-  not routed; every section URL must include its story id.
+  story-scoped content paths `/u/:slug/s/:story_id/sections`, `/u/:slug/s/:story_id/section_tags`,
+  and `/u/:slug/s/:story_id/scenes`. The universe-level `/u/:slug/sections` and `/u/:slug/scenes`
+  paths are intentionally not routed; every section and scene URL must include its story id.
 - Universe memberships live at `/u/:universe_slug/members`; only universe admins can reach the
   membership index and mutations. The taxonomy workspace lives at `/u/:universe_slug/tags`; its
   `scope` and `taxonomy` query parameters select the Universe/Story scope and taxonomy editor.
@@ -137,7 +137,7 @@ Other global behavior: `allow_browser versions: :modern`,
 | Flow | Controllers | Behavior |
 |---|---|---|
 | JSON-only mutations | all `*_tags`, characters, locations, items, events, sections | `index/new` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, relations, ownerships, universe memberships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| HTML flow | universes, **stories**, **scenes**, relations, ownerships, universe memberships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | tags, timeline, sessions, passwords | |
 
@@ -161,9 +161,11 @@ Everything follows a two-step scope selection:
    a separate **Configuration** section containing **Tags**. The right utility sidebar has a
    **Settings** section containing **Members** for universe admins. The navbar adds explicit
    **Universe: …** and **Story: …** context/switchers.
-3. **Story selected** (`Current.story`): Story workspace gains the story overview plus a
-   **Sections** workspace tab. The story is still remembered per universe; no first-story fallback
-   exists.
+3. **Story selected** (`Current.story`): Story workspace gains the story overview plus **Sections**
+   and **Scenes** workspace tabs. The story is still remembered per universe; no first-story
+   fallback exists. The **Scenes** sidebar entry is a real story-scoped link only while a story is
+   selected; with no current story it stays an `aria-disabled` placeholder beside the explicit
+   "select a story" prompt.
 
 The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
 switcher, and an **Account** menu. It keeps **New story** in the Story dropdown rather than in the
@@ -190,66 +192,67 @@ server. Taxonomy insertion, move, and edit controls are available by pointer, to
 HTML5 drag/drop is an optional enhancement. Position changes use the transactional ordering
 service described in ADR 0009.
 
-## Planned Scene architecture (slice 11.0 contract; not implemented)
+## Scene architecture (slice 11.1 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first-version Scene domain and
-UX contract. The current left-sidebar **Scenes** item remains a disabled placeholder until slice
-11.1 ships the model, route, controller, and view.
+UX contract, and slice 11.1 implements its core: the `scenes` table, the `Scene` model, the
+story-scoped routes, the canonical Scenes list, the Scene Details editor, and narrative-order
+moves. Section grouping, Event/datetime references, Scene Tags, Elements, and world-presence
+links remain in slices 11.2–11.10 and are **not** routed yet.
 
 ### Ownership and resolution
 
 - A required `Story` owns the contiguous, narrative-order `Scene.position`. A Scene never causes a
-  Story to be selected implicitly. Scene and Element controllers use the flat mode of
-  `PositionedResourceOrder`; they do not inherit `Hierarchical` or use `section_id` as an ordering
-  parent.
-- A Scene belongs to one Story and may reference one same-Story Section, one same-Universe Event,
-  one independent optional single-point `datetime` (using Event-compatible storage/editor
-  precision and timezone semantics, not Event's start/end pair), optional story-scoped Scene Tags,
-  and same-Universe Character, Item, and Location presence links.
-- A Scene owns an independently ordered sequence of Narration or Dialogue `SceneElement` records.
-  Dialogue Elements have one or more same-Universe speakers; Narration Elements have none. Element
-  Title (`name`) is required and plain-text Content (`body`) is optional.
-- Section assignment is organizational only. The global Scene list remains ordered by Scene
-  `position`; Section position and Event chronology never determine narrative order.
-- Every Scene-owned model resolves its Universe through `scene.story.universe` for authorization
-  and shared helper decisions. Controllers load Scenes through
-  `Current.universe.stories.find(...).scenes.find(...)`; unscoped record lookup is not permitted.
+  Story to be selected implicitly. `ScenesController` uses the flat mode of `PositionedResourceOrder`
+  through `maintains_flat_positions_for :scene`; it does not inherit `Hierarchical` and does not
+  use `section_id` as an ordering parent.
+- `Scene belongs_to :story` and resolves its Universe through `scene.story.universe`
+  (`Scene#universe`) for authorization and shared helper decisions. Controllers load Scenes
+  through `Current.universe.stories.find(...).scenes.find(...)`; unscoped record lookup is not
+  permitted.
+- A Scene persists only its required title (`name`, labelled **Title**), an optional short
+  description, a `slug`, and its narrative `position` in this slice.
+- The global Scene list is ordered by `(position, id)` and is never grouped by Section.
 
-### Target routes and response split
+### Implemented routes and response split
 
 | Purpose | Canonical URL | Mutation response |
 |---|---|---|
 | Global Scene list | `/u/:universe_slug/s/:story_id/scenes` | HTML |
 | Scene Details | `/u/:universe_slug/s/:story_id/scenes/:scene_id` | HTML |
-| Characters / Items / Locations tabs | `/u/:universe_slug/s/:story_id/scenes/:scene_id/{characters,items,locations}` | JSON for role-bearing link CRUD |
-| Elements | `/u/:universe_slug/s/:story_id/scenes/:scene_id/elements` and member URLs | JSON |
+| Narrative-order move | `PATCH /u/:universe_slug/s/:story_id/scenes/:id/move` | HTML |
+| New / Edit Scene | `.../scenes/new`, `.../scenes/:id/edit` | HTML |
+| Characters / Items / Locations tabs, Elements (later slices) | not routed yet | JSON when added |
 
-Scenes have no Universe-level route. Every Section and Scene route includes its Story; every
-Element and presence-link route includes its Scene. All route-helper keys are passed by name.
+Scenes have no Universe-level route. Every Scene route includes its Story, and all route-helper
+keys are passed by name. `ScenesController` answers HTML only and follows the redirect/re-render
+flow: successful create/update redirect to Scene Details, and a move redirects back to the list
+with a `303`. Because the Scene flow never uses the shared JSON modal path, it does not inherit
+the current modal submission, error-display, or stale-DOM behavior in
+[`known_quirks.md`](known_quirks.md); slice 11.5 must still fix that path before Elements depend
+on it.
 
-The stable Scene Details form, create/edit/destroy flows, and narrative-order moves use the
-established HTML redirect/re-render flow. Element and role-bearing presence-link editors use the
-established Stimulus/Bootstrap-modal JSON flow. These are separate controller contracts; an action
-does not accept both formats ambiguously. Slice 11.5 must make the shared JSON modal path reliable
-before Elements depend on it.
+A move is a single transactional service call. The controller converts `direction=up|down` into
+the neighboring target position and lets `PositionedResourceOrder` clamp and normalize the group,
+so a move at a sequence boundary is a no-op with explicit flash copy rather than a partial write.
+An unknown `direction` is a `400` (`ActionController::ParameterMissing`), never a silent success.
 
-### UX skeleton
+### UX
 
-The Story workspace gains a flat **Scenes** list with Title/description previews, an **Ungrouped**
-or full Section-path indicator, Tag badges, Element and participant counts, and visible/keyboard
-Move up/Move down controls. Story selection remains explicit; the placeholder does not link to the
-first Story.
+The Story workspace gained a flat **Scenes** list with Title/short-description previews, a
+1-based narrative-position badge, add/edit/delete actions, and visible Move up/Move down buttons
+that are real `button_to` forms (keyboard operable, no drag required) and are disabled at the
+sequence boundaries. The page states that the order is the order the story is told, not in-world
+chronography. Read-only users and public guests see the same list with no mutation controls and a
+non-instructional empty state.
 
-Scene Details uses URL-backed tabs for **Details**, **Characters**, **Items**, and **Locations**.
-Details contains the stable HTML form plus the ordered Element list. Its optional Section selector
-and the separate Section-grouped outline both change only `section_id`; they never rewrite Scene
-`position`. Presence tabs show optional free-text roles and omit mutation controls for read-only
-users.
+Scene Details (`/scenes/:id`) is the canonical, inspectable destination: it renders the same Title,
+narrative position, short description, and story context for writers, read-only members, and
+guests, and gives only writers an **Edit scene** action. The Title/Description form lives once, at
+`/scenes/:id/edit` (`scenes/_form`), so there is no second edit surface; `new` reuses the same
+partial. Slice 11.2 adds the Section/Event/datetime fields and the URL-backed
+**Details / Characters / Items / Locations** tab shell to these destinations.
 
-The Element modal contains kind, required Title, optional Content, and a speaker picker that is
-shown and required only for Dialogue. It must display `422` and network failures without losing the
-author's input. The accepted deletion behavior and exact confirmation templates are recorded in
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md).
 
 ## Production boundary
 
@@ -284,8 +287,13 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
 
 - `stale_when_importmap_changes` (HTTP caching keyed on the importmap).
 - `solid_cache` store in production; `nav_universes` and `nav_stories` are memoized per request.
-- Sidebar count data is stored in `Rails.cache`: one grouped entry for the current universe and one
-  for the current story. `InvalidatesMenuCounts` expires the relevant entry after committed creates,
-  destroys, and scope moves. Open transactions calculate without filling the cache, and entries have
-  a one-hour safety expiry. See [former quirk #18](resolved_quirks.md#former-18--sidebar-issued-count-queries-on-every-page-fixed).
+- Sidebar count data is stored in `Rails.cache`: one grouped entry for the current universe, and
+  one entry per scalar story metric. A story caches its section count and its scene count under
+  two distinct keys (`Story::SECTION_MENU_COUNT_SCOPE` and `Story::SCENE_MENU_COUNT_SCOPE`) so a
+  second scalar metric on the same owner can never overwrite the first; `InvalidatesMenuCounts`
+  takes an optional `cache_scope:` for exactly that reason and expires the correct entry.
+  Expiration happens from model `after_commit` callbacks when a counted record is created or
+  destroyed (and when a record moves to another scope). Open transactions calculate without
+  filling the cache, and entries have a one-hour safety expiry. See
+  [former quirk #18](resolved_quirks.md#former-18--sidebar-issued-count-queries-on-every-page-fixed).
 - The navbar adds one `stories` query per render (`nav_stories`).

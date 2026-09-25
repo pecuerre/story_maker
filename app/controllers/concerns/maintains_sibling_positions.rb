@@ -19,7 +19,7 @@ module MaintainsSiblingPositions
         resource,
         sibling_collection,
         scope_owner: sibling_position_scope_owner,
-        parent_id: resource.parent_id,
+        parent_id: position_parent_id_for(resource),
         requested_position: requested_position,
         hierarchical: sibling_position_hierarchical?
       )
@@ -40,9 +40,18 @@ module MaintainsSiblingPositions
         resource,
         sibling_collection,
         scope_owner: sibling_position_scope_owner,
-        parent_id: resource.parent_id,
+        parent_id: position_parent_id_for(resource),
         hierarchical: sibling_position_hierarchical?
       )
+    end
+
+    # Flat sequences (Story-owned Scenes and Scene Elements) have no ordering
+    # parent, and a flat record has no `parent_id` column at all.
+    def position_parent_id_for(resource)
+      return unless sibling_position_hierarchical?
+      return unless resource.respond_to?(:parent_id)
+
+      resource.parent_id
     end
 
     def sibling_collection

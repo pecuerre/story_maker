@@ -9,7 +9,8 @@
   new_label: "Add section",
   tabs_aria_label: "Story workspace",
   tabs: [
-    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections }
+    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ],
   empty_description: "Add a section, then drag rows to create the outline for this story.",
   nodes: @sections,

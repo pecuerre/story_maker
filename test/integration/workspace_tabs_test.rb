@@ -33,10 +33,11 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     ], sidebar_label: "Events"
   end
 
-  test "section workspace has one record tab" do
+  test "story workspace keeps sections and scenes together" do
     assert_workspace_tabs [
-      [ "Sections", universe_story_sections_path(universe_slug: @universe.slug, story_id: @story) ]
-    ], sidebar_label: "Sections"
+      [ "Sections", universe_story_sections_path(universe_slug: @universe.slug, story_id: @story), "Sections" ],
+      [ "Scenes", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story), "Scenes" ]
+    ]
   end
 
   test "tags workspace has universe and story selectors" do
@@ -96,8 +97,12 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def assert_workspace_tabs(tabs, sidebar_label:)
-      tabs.each do |active_label, path|
+    # Each tab is [label, path] or [label, path, sidebar_label] when the workspace
+    # sidebar highlights a different entry than the tab label.
+    def assert_workspace_tabs(tabs, sidebar_label: nil)
+      tabs.each do |tab|
+        active_label, path, tab_sidebar_label = tab
+        tab_sidebar_label ||= sidebar_label || active_label
         get path
 
         assert_response :success
@@ -109,7 +114,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
         end
         assert_select "main nav.content-tabs a.active[aria-current='page']", text: active_label
         assert_select "aside.workspace-sidebar a.sidebar-link.active[aria-current='page'] .sidebar-link-label",
-          text: sidebar_label
+          text: tab_sidebar_label
       end
     end
 end

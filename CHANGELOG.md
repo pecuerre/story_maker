@@ -19,6 +19,36 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[added]** Completed Epic 11 slice 11.1, the core Scene vertical slice: a schema-only `scenes`
+  migration (real `story_id` foreign key, indexed `position`, `slug`) and `Scene` model with a
+  required Title, optional short description, and no `parent_id`. A Story now owns its contiguous
+  narrative-order Scenes, maintained transactionally in flat mode by `PositionedResourceOrder`
+  with the Story as scope owner.
+- **[added]** Added story-scoped Scene routes and `ScenesController` on the HTML redirect/re-render
+  flow: the canonical `/u/:universe_slug/s/:story_id/scenes` list with narrative-position badges,
+  short-description previews, a full add/edit/delete journey, the stable Scene editor shell
+  (Scene Details is the canonical inspectable page and one shared `_form` is the only editor), and
+  a member `move` action driven by keyboard- and touch-operable Move up/Move down controls that
+  are disabled at the sequence boundaries. Section/Event/datetime, tags, Elements, and world links
+  are intentionally not routed yet.
+- **[changed]** The left-sidebar **Scenes** entry is now a real story-scoped link with its own
+  cached count while a Story is selected, and stays an `aria-disabled` placeholder with the
+  existing "select a story" prompt when no Story is current — it never falls back to the first
+  Story. The story overview links to both Sections and Scenes.
+- **[fixed]** `MaintainsSiblingPositions` no longer assumes a `parent_id`: flat sequences omit the
+  ordering parent entirely, so a parentless flat record works through the shared service.
+- **[fixed]** Gave `Story` two separate sidebar count cache entries. `menu_scene_count` uses its own
+  `cache_scope`, so adding a second scalar metric can no longer overwrite the section count;
+  `InvalidatesMenuCounts` takes an optional `cache_scope:` for exactly this case.
+- **[security]** Registered `Scene` in the `Ability` content registry; Scenes resolve their Universe
+  through `scene.story.universe`, so public read stays open to guests while every mutation still
+  requires the shared universe read/write/admin policy. Cross-scope story/scene lookups return 404.
+- **[chore]** Added `scenes.yml` development data for the Dark (8 scenes) and LOTR (5 scenes)
+  universes, including a title-only scene and explicit narrative positions, registered `Scene` as
+  a flat story-scoped position group in the development-data registry, and added scene fixtures.
+- **[chore]** Added model, request, routing, ability, menu-count, ordering-service, and browser
+  coverage for the slice, and updated the architecture, data model, conventions, visual design,
+  development, backlog, and known-quirks documentation.
 - **[added]** Populated the disposable LOTR development universe with world-building sample data so
   every content model is exercised: 7 characters and 8 character tags, 12 hierarchically nested
   locations and 6 location tags, 5 items and 5 item tags, 5 relations with symmetric/asymmetric

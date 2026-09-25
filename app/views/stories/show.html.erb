@@ -5,6 +5,7 @@
   eyebrow: "Story workspace",
   description: @story.description.presence || "Plan the plot and structure for this story." do %>
   <%= link_to "Open sections", universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
+  <%= link_to "Open scenes", universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
   <% if can_write_universe? %>
     <%= link_to "Edit story", edit_universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
 
@@ -31,9 +32,12 @@
   <div class="col-md-5">
     <div class="surface-card h-100 p-4">
       <div class="page-eyebrow">Story structure</div>
-      <h2 class="h3"><%= pluralize(@story.sections.size, "section") %></h2>
-      <p class="text-body-secondary">Organize this story into a hierarchy such as acts, chapters, books, or scenes.</p>
-      <%= link_to can_write_universe? ? "Manage sections" : "View sections", universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
+      <h2 class="h3"><%= pluralize(@story.sections.size, "section") %>, <%= pluralize(@story.menu_scene_count, "scene") %></h2>
+      <p class="text-body-secondary">Organize this story into a hierarchy such as acts, chapters, books, or seasons, and write it as an ordered sequence of scenes.</p>
+      <div class="d-flex flex-wrap gap-2">
+        <%= link_to can_write_universe? ? "Manage sections" : "View sections", universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
+        <%= link_to can_write_universe? ? "Manage scenes" : "View scenes", universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
+      </div>
     </div>
   </div>
 

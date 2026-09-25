@@ -8,6 +8,9 @@ Rails.application.routes.draw do
     resources :stories, path: "s" do
       resources :sections
       resources :section_tags
+      resources :scenes do
+        patch :move, on: :member
+      end
     end
     get "tags", to: "tags#index", as: :tags
     resources :item_tags

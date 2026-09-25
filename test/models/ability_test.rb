@@ -74,6 +74,7 @@ class AbilityTest < ActiveSupport::TestCase
       stories(:story_one),
       sections(:section_one),
       section_tags(:section_tag_one),
+      scenes(:scene_one),
       characters(:character_one),
       character_tags(:character_tag_one),
       locations(:location_one),
@@ -93,5 +94,29 @@ class AbilityTest < ActiveSupport::TestCase
       assert reader.can?(:read, record), record.class.name
       assert reader.can?(:write, record), record.class.name
     end
+  end
+
+  test "a scene resolves its universe through its story" do
+    private_story = Story.create!(universe: @private_universe, name: "Private story")
+    scene = private_story.scenes.create!(name: "Private scene")
+
+    non_member_ability = Ability.new(@read_user)
+    assert_not non_member_ability.can?(:read, scene)
+    assert_not non_member_ability.can?(:write, scene)
+
+    UniverseMembership.create!(universe: @private_universe, user: @read_user, access_level: :read)
+    read_ability = Ability.new(@read_user)
+    assert read_ability.can?(:read, scene)
+    assert_not read_ability.can?(:write, scene)
+    assert_not read_ability.can?(:destroy, scene)
+
+    UniverseMembership.find_by!(universe: @private_universe, user: @read_user).update!(access_level: :admin)
+    admin_ability = Ability.new(@read_user)
+    assert admin_ability.can?(:admin, scene)
+    assert admin_ability.can?(:manage, scene)
+
+    guest_ability = Ability.new(nil)
+    assert guest_ability.can?(:read, scenes(:scene_one))
+    assert_not guest_ability.can?(:write, scenes(:scene_one))
   end
 end

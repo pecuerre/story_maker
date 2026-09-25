@@ -44,6 +44,7 @@ class Universe < ApplicationRecord
   has_many :members, through: :memberships, source: :user
   has_many :stories, dependent: :destroy
   has_many :sections, through: :stories
+  has_many :scenes, through: :stories
   has_many :item_tags, dependent: :destroy
   has_many :items, dependent: :destroy
   has_many :location_tags, dependent: :destroy

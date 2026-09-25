@@ -106,8 +106,11 @@ Report every check that was not run. The CSS build requires the JavaScript depen
 installed.
 
 Do not run `bin/rails db:restart` or `db:demo:reset` without approval: both are destructive. The
-former resets schema only; the latter drops, recreates, migrates, and loads one explicitly named
-development universe.
+owner has granted standing approval to reset the **local development database** with
+`CONFIRM_DB_RESET=1 UNIVERSE=<slug> bin/rails db:demo:reset` when needed to apply a change under
+`db/data/**/*.yml`; that approval never extends to production, test, or any real database. The
+former task resets schema only; `db:demo:reset` drops, recreates, migrates, and loads one explicitly
+named development universe.
 
 ## Domain and architecture invariants
 
@@ -157,6 +160,17 @@ development universe.
   features and relationships; do not put temporary demo records in migrations or production
   seed/deploy paths. `db/seeds.rb` and `db/seeds/` are reserved for production-safe, idempotent
   bootstrap data.
+- Treat `db/data/**/*.yml` as the source of truth for demo data, not as files that Rails hot-reloads.
+  After **any** YAML addition, deletion, or update, run `UNIVERSE=<slug> bin/rails db:demo:check`
+  and then rebuild/reset the local development database so the checked-in data is actually loaded.
+  UI-only records are not exported or merged back into YAML and are intentionally lost on reset.
+  Never tell the owner that a data change is available in the app until the rebuilt database has
+  been queried or otherwise verified.
+- When both registered universes should remain available locally, reset one and then create-only
+  load the other, for example:
+  `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` followed by
+  `UNIVERSE=lotr bin/rails db:demo:load`. A second `db:demo:load` fails if that universe already
+  exists; there is no update/merge mode.
 - When adding or changing a model, table, association, or persisted field, update every relevant
   `db/data/<universe_slug>/` data file, the shared loader order/registry, and the documentation in
   the same change. Sample data must include representative records connected to existing

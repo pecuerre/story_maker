@@ -276,9 +276,12 @@ For example, a future `Dialog` model uses `db/data/dark/dialogs.yml` and, if app
 registered universe directory must include its file (use `[]` when intentionally unused).
 References must preserve the model's universe/story scope. Universe membership data follows the
 same convention (`universe_memberships.yml`) when a sample universe needs explicit private access
-or delegated admin access. Validate and load one named universe with `UNIVERSE=<slug> bin/rails
-db:demo:check` and `UNIVERSE=<slug> bin/rails db:demo:load`; neither `db:seed` nor `db:prepare`
-loads `db/data/`. Development data is for browser/manual validation only; automated tests use
-`test/fixtures/`, and production bootstrap data belongs in `db/seeds.rb`/`db/seeds/`.
+or delegated admin access. After any YAML add/delete/update, run
+`UNIVERSE=<slug> bin/rails db:demo:check` and then reset the local development database so the files
+are actually loaded; create-only `db:demo:load` is for an additional universe after that reset.
+Records made only in the UI are intentionally lost and are not merged back into YAML. Neither
+`db:seed` nor `db:prepare` loads `db/data/`. Development data is for browser/manual validation only;
+automated tests use `test/fixtures/`, and production bootstrap data belongs in
+`db/seeds.rb`/`db/seeds/`.
 
 Hand-maintained sketch of the core entities: [schema.txt](schema.txt).

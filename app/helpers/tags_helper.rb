@@ -73,6 +73,13 @@ module TagsHelper
     controller_name.to_s.delete_suffix("_tags")
   end
 
+  # How many records carry each tag, from one grouped query. See
+  # `TaggedRecordCounts`: the scoped HABTM sides cannot be eager loaded, so this
+  # exists to keep a taxonomy row's "(10 characters)" count out of an N+1.
+  def tagged_record_counts(records)
+    TaggedRecordCounts.for(records)
+  end
+
   private
     def normalized_tag_workspace_type(scope, taxonomy)
       if scope.to_s == "story"
@@ -100,7 +107,9 @@ module TagsHelper
           create_url: universe_character_tags_path,
           edit_url: ->(tag) { edit_universe_character_tag_path(id: tag) },
           update_url: ->(tag) { universe_character_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_character_tag_path(id: tag) }
+          delete_url: ->(tag) { universe_character_tag_path(id: tag) },
+          details_url: ->(tag) { universe_character_tag_path(id: tag) },
+          details_count_label: "character"
         }
       when "relation"
         {
@@ -114,7 +123,9 @@ module TagsHelper
           create_url: universe_relation_tags_path,
           edit_url: ->(tag) { edit_universe_relation_tag_path(id: tag) },
           update_url: ->(tag) { universe_relation_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_relation_tag_path(id: tag) }
+          delete_url: ->(tag) { universe_relation_tag_path(id: tag) },
+          details_url: ->(tag) { universe_relation_tag_path(id: tag) },
+          details_count_label: "relation"
         }
       when "location"
         {
@@ -128,7 +139,9 @@ module TagsHelper
           create_url: universe_location_tags_path,
           edit_url: ->(tag) { edit_universe_location_tag_path(id: tag) },
           update_url: ->(tag) { universe_location_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_location_tag_path(id: tag) }
+          delete_url: ->(tag) { universe_location_tag_path(id: tag) },
+          details_url: ->(tag) { universe_location_tag_path(id: tag) },
+          details_count_label: "location"
         }
       when "event"
         {
@@ -142,7 +155,9 @@ module TagsHelper
           create_url: universe_event_tags_path,
           edit_url: ->(tag) { edit_universe_event_tag_path(id: tag) },
           update_url: ->(tag) { universe_event_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_event_tag_path(id: tag) }
+          delete_url: ->(tag) { universe_event_tag_path(id: tag) },
+          details_url: ->(tag) { universe_event_tag_path(id: tag) },
+          details_count_label: "event"
         }
       when "item"
         {
@@ -156,7 +171,9 @@ module TagsHelper
           create_url: universe_item_tags_path,
           edit_url: ->(tag) { edit_universe_item_tag_path(id: tag) },
           update_url: ->(tag) { universe_item_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_item_tag_path(id: tag) }
+          delete_url: ->(tag) { universe_item_tag_path(id: tag) },
+          details_url: ->(tag) { universe_item_tag_path(id: tag) },
+          details_count_label: "item"
         }
       when "ownership"
         {
@@ -170,7 +187,9 @@ module TagsHelper
           create_url: universe_ownership_tags_path,
           edit_url: ->(tag) { edit_universe_ownership_tag_path(id: tag) },
           update_url: ->(tag) { universe_ownership_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_ownership_tag_path(id: tag) }
+          delete_url: ->(tag) { universe_ownership_tag_path(id: tag) },
+          details_url: ->(tag) { universe_ownership_tag_path(id: tag) },
+          details_count_label: "ownership"
         }
       end
 
@@ -197,7 +216,9 @@ module TagsHelper
           create_url: universe_story_scene_tags_path(story_id: story),
           edit_url: ->(tag) { edit_universe_story_scene_tag_path(story_id: story, id: tag) },
           update_url: ->(tag) { universe_story_scene_tag_path(story_id: story, id: tag) },
-          delete_url: ->(tag) { universe_story_scene_tag_path(story_id: story, id: tag) }
+          delete_url: ->(tag) { universe_story_scene_tag_path(story_id: story, id: tag) },
+          details_url: ->(tag) { universe_story_scene_tag_path(story_id: story, id: tag) },
+          details_count_label: "scene"
         })
       else
         tag_workspace_base(story.section_tags, {
@@ -211,7 +232,9 @@ module TagsHelper
           create_url: universe_story_section_tags_path(story_id: story),
           edit_url: ->(tag) { edit_universe_story_section_tag_path(story_id: story, id: tag) },
           update_url: ->(tag) { universe_story_section_tag_path(story_id: story, id: tag) },
-          delete_url: ->(tag) { universe_story_section_tag_path(story_id: story, id: tag) }
+          delete_url: ->(tag) { universe_story_section_tag_path(story_id: story, id: tag) },
+          details_url: ->(tag) { universe_story_section_tag_path(story_id: story, id: tag) },
+          details_count_label: "section"
         })
       end
     end
@@ -219,10 +242,14 @@ module TagsHelper
     def tag_workspace_base(records, metadata)
       ordered_records = records.order(:position, :id).to_a
       nodes = records.where(parent_id: nil).includes(:children).order(:position, :id)
+      counts = tagged_record_counts(records)
 
       metadata.merge(
         count: ordered_records.length,
         nodes: nodes,
+        details_url: metadata.fetch(:details_url),
+        details_count: ->(tag) { counts.fetch(tag.id, 0) },
+        details_count_label: metadata.fetch(:details_count_label),
         modal_fields: public_send(metadata.fetch(:fields), ordered_records)
       )
     end

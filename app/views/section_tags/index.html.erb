@@ -17,4 +17,7 @@
   update_url: ->(section_tag) { universe_story_section_tag_path(story_id: @story, id: section_tag) },
   delete_url: ->(section_tag) { universe_story_section_tag_path(story_id: @story, id: section_tag) },
   model_param: "section_tag",
+  details_url: ->(section_tag) { universe_story_section_tag_path(story_id: @story, id: section_tag) },
+  details_count: ->(tag) { @tagged_counts.fetch(tag.id, 0) },
+  details_count_label: "section",
   modal_fields: section_tag_taxonomy_fields(@story.section_tags.order(:position, :id)) %>

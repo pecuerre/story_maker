@@ -1,0 +1,51 @@
+<% content_for :title, @section.name %>
+
+<%= render "shared/record_details",
+  record: @section,
+  eyebrow: "Story: #{@story.name}",
+  label: "Section",
+  facts: [
+    detail_fact("Story", link_to(@story.name, universe_story_path(id: @story))),
+    detail_fact("Section path", @section_path || @section.name),
+    detail_fact("Section tags", entity_tag_badge(@section), blank: "No tags assigned. Tags are optional."),
+    detail_fact("Description", @section.description, blank: "No description yet.")
+  ],
+  back_url: universe_story_sections_path(story_id: @story),
+  back_label: "All sections" %>
+
+<%# Backlog 11.4.1(b): "Details" on a Section in the tree leads here, so the
+    scenes grouped under this Section are visible on their own. The number shown
+    is the scene's narrative position in the story, which this Section does not
+    influence. %>
+<%= render "shared/detail_section",
+  title: "Scenes in this section",
+  count: @scenes.size,
+  count_label: "scene",
+  icon: "film",
+  empty_title: "No scenes in this section",
+  empty_description: "A section only groups scenes; it never sets their order. Scenes assigned to it will be listed here in the order the story is told." do %>
+  <div class="list-group list-group-flush">
+    <% @scenes.each do |scene| %>
+      <div class="list-group-item entity-row d-flex align-items-center gap-3">
+        <span class="badge rounded-pill text-bg-light border"
+          aria-label="<%= "Narrative position #{scene.position + 1} of #{@scene_total}" %>">
+          <%= scene.position + 1 %>
+        </span>
+        <div class="entity-copy flex-grow-1">
+          <span class="entity-title">
+            <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene), class: "text-break" %>
+          </span>
+          <% if scene.description.present? %>
+            <div class="entity-description"><%= scene.description %></div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<%= render "shared/detail_section",
+  title: "Related information",
+  icon: "diagram-3",
+  empty_title: "Nothing related yet",
+  empty_description: "Anything else worth knowing about this section will be listed here later." %>

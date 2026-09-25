@@ -9,6 +9,9 @@
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 <% taxonomy_field = local_assigns[:taxonomy_field] %>
 <% confirm_message = local_assigns[:confirm_message] %>
+<% details_url = local_assigns[:details_url] %>
+<% details_count = local_assigns[:details_count] %>
+<% details_count_label = local_assigns.fetch(:details_count_label, "item") %>
 <% title = local_assigns.fetch(:title, model_param.humanize) %>
 <% count = local_assigns[:count] %>
 <% count_label = local_assigns[:count_label] || model_param.humanize.downcase.pluralize %>
@@ -63,7 +66,7 @@ end %>
   <div class="taxonomy-surface">
     <% if editable %>
       <p class="taxonomy-hint">
-        Use Move up/Move down or Insert before/Insert after for keyboard and touch editing. Drag rows when you want a visual reorder; dropping near the top or bottom nests a row as a child.
+        Use the row menu for Add child, Insert before/after, Move up/Move down, Edit, and Delete. Inline rename is available by clicking the name itself. Drag rows when you want a visual reorder; dropping near the top or bottom nests a row as a child.
       </p>
       <p class="visually-hidden" data-taxonomy-tree-status aria-live="polite"></p>
     <% end %>
@@ -93,6 +96,9 @@ end %>
           modal_fields: modal_fields,
           taxonomy_field: taxonomy_field,
           confirm_message: confirm_message,
+          details_url: details_url,
+          details_count: details_count,
+          details_count_label: details_count_label,
           editable: editable %>
       <% end %>
     </ul>

@@ -24,9 +24,11 @@ Rails.application.routes.draw do
     resources :character_tags
     resources :characters
     resources :relation_tags
-    resources :relations, only: %i[ index create update destroy ]
+    # Relations and Ownerships are link records between two entities; they have a
+    # read-only details page but no separate editor.
+    resources :relations, only: %i[ index show create update destroy ]
     resources :ownership_tags
-    resources :ownerships, only: %i[ index create update destroy ]
+    resources :ownerships, only: %i[ index show create update destroy ]
     resources :memberships, only: %i[ index new create update destroy ], path: "members"
     resources :event_tags
     resources :events

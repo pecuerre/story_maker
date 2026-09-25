@@ -1,10 +1,10 @@
 class SectionsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :section
 
   before_action :set_story
-  before_action :set_section, only: %i[ update destroy ]
+  before_action :set_section, only: %i[ show update destroy ]
 
   def index
     @sections = @story.sections
@@ -20,6 +20,10 @@ class SectionsController < ApplicationController
     # Story's Scenes and never a query per Scene.
     @section_paths = SectionPaths.build(@section_options)
     @scenes = @story.scenes.reorder(:position, :id).to_a
+    # Every Section row links to its own details page and says how many scenes
+    # are grouped there, so the counts come from one grouped query instead of
+    # one COUNT per row in the tree.
+    @scene_counts = @story.scenes.group(:section_id).count
   end
 
   def new
@@ -28,6 +32,17 @@ class SectionsController < ApplicationController
     @section_tags = @story.section_tags
     @section_tags = @section_tags.order(:name)
     @section_options = @story.sections.reorder(:position, :id).to_a
+  end
+
+  # GET /sections/:id — the Section's own details page. Following backlog item
+  # 11.4.1(b) this is where "Details" leads from the Section tree, and it lists
+  # the scenes grouped under this Section in canonical narrative order.
+  # Grouping is organization only: the position shown on each scene is its place
+  # in the story's sequence, not a value derived from this Section.
+  def show
+    @section_path = SectionPaths.build(@story.sections.reorder(:position, :id).to_a).label_for(@section)
+    @scenes = @section.scenes.reorder(:position, :id).to_a
+    @scene_total = @story.scenes.count
   end
 
   def create

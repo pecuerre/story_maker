@@ -49,6 +49,8 @@
               <% end %>
             </div>
 
+            <%= record_details_link universe_relation_path(id: relation), record: relation %>
+
             <%= render "shared/row_actions",
               record: relation,
               label: "relation",

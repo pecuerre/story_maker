@@ -1,0 +1,25 @@
+<% content_for :title, @section_tag.name %>
+
+<%= render "shared/record_details",
+  record: @section_tag,
+  eyebrow: "Story: @story.name",
+  label: "Section tag",
+  facts: [
+    detail_fact("Scope", "Tags are optional labels and belong to this story, not to the universe."),
+    detail_fact("Description", @section_tag.description, blank: "No description yet."),
+    detail_fact("Color", @section_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+  ],
+  back_url: universe_story_section_tags_path(story_id: @story),
+  back_label: "All section tags" %>
+
+<%= render "shared/detail_section",
+  title: "Sections with this tag",
+  count: @tagged_records.size,
+  count_label: "section",
+  icon: "list-nested",
+  empty_title: "No sections carry this tag",
+  empty_description: "Nothing uses this tag yet. Tags are optional, so sections can stay untagged." do %>
+  <%= render "shared/tagged_record_list",
+    records: @tagged_records,
+    path: ->(record) { universe_story_section_path(story_id: @story, id: record) } %>
+<% end %>

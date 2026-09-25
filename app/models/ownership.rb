@@ -16,6 +16,13 @@ class Ownership < ApplicationRecord
   validates :item, :character, presence: true
   validate :associated_records_belong_to_universe
 
+  # An Ownership is a link between a character and an item and its own name is
+  # optional, so the two endpoints are the reliable label. Row actions, delete
+  # confirmations, and the details page all read this instead of a blank name.
+  def display_string
+    name.presence || "#{character&.name} owns #{item&.name}"
+  end
+
   private
 
   def generate_slug

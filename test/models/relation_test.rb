@@ -57,4 +57,14 @@ class RelationTest < ActiveSupport::TestCase
     assert Relation.create!(attributes)
     assert Relation.create!(attributes)
   end
+
+  test "display_string falls back to its two endpoints because the name is optional" do
+    other = characters(:character_two)
+    relation = Relation.create!(universe: @universe, character1: @character, character2: other)
+
+    assert_equal "#{@character.name} → #{other.name}", relation.display_string
+
+    relation.update!(name: "Sworn oath")
+    assert_equal "Sworn oath", relation.display_string
+  end
 end

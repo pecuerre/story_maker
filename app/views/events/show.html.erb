@@ -1,0 +1,21 @@
+<% content_for :title, @event.display_string %>
+
+<%= render "shared/record_details",
+  record: @event,
+  eyebrow: "Universe Bible",
+  label: "Event",
+  facts: [
+    detail_fact("Title", @event.title.presence || @event.display_string, blank: "No title yet."),
+    detail_fact("Universe", link_to(Current.universe.name, universe_path(id: Current.universe))),
+    detail_fact("Event tags", entity_tag_badge(@event), blank: "No tags assigned. Tags are optional."),
+    detail_fact("In-world time", in_world_range(@event.start_datetime, @event.end_datetime)),
+    detail_fact("Description", @event.description, blank: "No description yet.")
+  ],
+  back_url: universe_events_path,
+  back_label: "All events" %>
+
+<%= render "shared/detail_section",
+  title: "Related information",
+  icon: "calendar-event",
+  empty_title: "Nothing related yet",
+  empty_description: "The scenes that depict this event, and the events it points at, will be listed here as the universe grows." %>

@@ -8,6 +8,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     sign_in_via_form(user)
     visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
 
     assert_selector "h1", text: "Character tags"
     click_button "Add character tag"
@@ -42,8 +43,9 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     sign_in_via_form(user)
     visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
 
-    within "li[data-node-id='#{tag.id}']" do
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
       find("button.taxonomy-name-trigger").click
       find("form.taxonomy-update-form input[name='name']").set("Renamed browser tag")
       click_button "Save"
@@ -62,7 +64,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     end
   end
 
-  test "root insertion uses the list boundary and move controls persist order" do
+  test "root insertion uses the list boundary and the row menu moves items" do
     user = users(:user_one)
     universe = universes(:universe_one)
     story = stories(:story_one)
@@ -74,6 +76,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     sign_in_via_form(user)
     visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    assert_stimulus_loaded
 
     find(".taxonomy-separator[data-parent-id=''][data-position='1'] button").click
     within ".taxonomy-new" do
@@ -84,12 +87,112 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_selector "button.taxonomy-name-trigger", text: "Boundary root"
     assert_equal [ "Section one", "Boundary root", "Root B" ], all("ul.taxonomy-list[data-drop-parent-id=''] > .taxonomy-node").map { |node| node[:"data-name"] }
 
-    within "li[data-node-id='#{root_a.id}']" do
-      find("button[aria-label='Move down #{root_a.name}']").click
+    # Move up/down live in the row menu, and the boundary state is a disabled
+    # menu item rather than a missing button. The menu is collapsed here, so the
+    # items are asserted as present in the DOM rather than as visible.
+    within "li[data-node-id='#{root_a.id}'] > .taxonomy-row" do
+      assert_selector "[data-taxonomy-action='move-up'][disabled]", visible: :all
+      assert_selector "[data-taxonomy-action='move-down']:not([disabled])", visible: :all
+      find("button[aria-expanded='false']").click
+      click_button "Move down"
     end
 
-    assert_selector "li[data-name='Section one'] [data-taxonomy-action='move-up']:not([disabled])"
+    assert_selector "li[data-name='Section one'] [data-taxonomy-action='move-up']:not([disabled])", visible: :all
     assert_equal [ "Boundary root", "Section one", "Root B" ], all("ul.taxonomy-list[data-drop-parent-id=''] > .taxonomy-node").map { |node| node[:"data-name"] }
+  end
+
+  test "the row menu holds every mutation and the name alone starts a rename" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
+      # The row carries the name and the Details link only: the plus sign and the
+      # move arrows are not row buttons any more.
+      assert_selector "button.taxonomy-name-trigger"
+      assert_no_selector "button[title='Add child']"
+      assert_no_selector "button[title='Move up']"
+      assert_no_selector "button[title='Move down']"
+      find("button[aria-expanded='false']").click
+
+      within ".dropdown-menu.show" do
+        assert_text "Add child"
+        assert_text "Insert before"
+        assert_text "Insert after"
+        assert_text "Move up"
+        assert_text "Move down"
+        assert_text "Edit"
+        assert_text "Delete"
+      end
+    end
+  end
+
+  test "Add child from the row menu creates a nested record" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
+      find("button[aria-expanded='false']").click
+      click_button "Add child"
+    end
+
+    within ".taxonomy-new" do
+      find("input[name='name']").set("Child from the menu")
+      click_button "Save"
+    end
+
+    # The create is a fetch followed by a same-URL refresh, so wait for the
+    # refreshed row before reading the database.
+    assert_selector "li[data-node-id='#{tag.id}'] .taxonomy-name-trigger", text: "Child from the menu"
+    child = CharacterTag.find_by(name: "Child from the menu")
+    assert_not_nil child
+    assert_equal tag.id, child.parent_id
+  end
+
+  test "renaming keeps the element's tags" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+    section = sections(:section_one)
+
+    sign_in_via_form(user)
+    visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    assert_stimulus_loaded
+
+    within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
+      assert_selector ".taxonomy-tag", text: "Section tag one"
+      find("button.taxonomy-name-trigger").click
+      find("form.taxonomy-update-form input[name='name']").set("Renamed section")
+      click_button "Save"
+    end
+
+    within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
+      assert_selector ".taxonomy-tag", text: "Section tag one"
+    end
+
+    # The modal editor sends the whole record, so a rename that only changes the
+    # description must not clear the assignment either.
+    within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
+      find("button[aria-expanded='false']").click
+      click_button "Edit"
+    end
+    within ".modal.show" do
+      fill_in "Description", with: "Described from the modal"
+      click_button "Save changes"
+    end
+
+    within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
+      assert_selector ".taxonomy-tag", text: "Section tag one"
+      assert_selector ".entity-description", text: "Described from the modal"
+    end
   end
 
   test "new taxonomy nodes can be renamed with the keyboard" do
@@ -98,6 +201,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     sign_in_via_form(user)
     visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
     click_button "Add character tag"
     within ".taxonomy-new" do
       find("input[name='name']").set("Keyboard tag")
@@ -115,6 +219,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     sign_in_via_form(user)
     visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
     assert_selector "[data-taxonomy-tree-empty]"
 
     click_button "Add character tag"
@@ -133,8 +238,11 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     sign_in_via_form(user)
     page.current_window.resize_to(390, 844)
     visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
 
     assert_selector ".taxonomy-separator-add", visible: :visible
-    assert_selector "[data-taxonomy-action='move-down']", visible: :visible
+    # Row mutations moved into the overflow menu, so the menu toggle is the row
+    # control that must be visible without hover.
+    assert_selector ".taxonomy-actions .dropdown-toggle", visible: :visible
   end
 end

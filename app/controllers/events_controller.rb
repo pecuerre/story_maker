@@ -1,14 +1,20 @@
 class EventsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :event
 
-  before_action :set_event, only: %i[ update destroy ]
+  before_action :set_event, only: %i[ show update destroy ]
 
   def index
     @events = Current.universe.events.includes(:event_tags).order(:id)
     @events_for_select = @events
     @event_tags = Current.universe.event_tags.order(:position, :id)
+  end
+
+  # GET /events/:id — the record's own read-only details page. It identifies the
+  # record and is the destination of every "Details" link; later slices add
+  # the related-records sections without changing this URL.
+  def show
   end
 
   def new

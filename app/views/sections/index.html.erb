@@ -25,6 +25,9 @@
   delete_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
   model_param: "section",
   taxonomy_field: "section_tag_ids",
+  details_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
+  details_count: ->(section) { @scene_counts.fetch(section.id, 0) },
+  details_count_label: "scene",
   modal_fields: section_taxonomy_fields(@section_tags, @section_options) %>
 
 <%= render "scenes/section_outline",

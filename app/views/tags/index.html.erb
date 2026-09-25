@@ -23,6 +23,9 @@
     update_url: tag_config.fetch(:update_url),
     delete_url: tag_config.fetch(:delete_url),
     model_param: tag_config.fetch(:model_param),
+    details_url: tag_config.fetch(:details_url),
+    details_count: tag_config.fetch(:details_count),
+    details_count_label: tag_config.fetch(:details_count_label),
     modal_fields: tag_config.fetch(:modal_fields) %>
 <% elsif @tag_scope == "story" %>
   <%= render "shared/page_header",

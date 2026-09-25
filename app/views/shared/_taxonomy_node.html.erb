@@ -1,6 +1,9 @@
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 <% taxonomy_field = local_assigns[:taxonomy_field] %>
 <% confirm_message = local_assigns[:confirm_message] %>
+<% details_url = local_assigns[:details_url] %>
+<% details_count = local_assigns[:details_count] %>
+<% details_count_label = local_assigns.fetch(:details_count_label, "item") %>
 <% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(node) || Current.universe) } %>
 
 <li class="taxonomy-node"
@@ -26,62 +29,50 @@
       <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
     <% end %>
 
-    <% if editable %>
-      <%= button_tag type: "button",
-        class: "taxonomy-name-trigger flex-grow-1 text-break",
-        aria: { label: "Rename #{node.name}" },
-        data: { taxonomy_tree_target: "name", action: "click->taxonomy-tree#editName" } do %>
-        <% if node.respond_to?(:bgcolor) %>
-          <%= entity_tag_badge(node) %>
-        <% else %>
-          <span class="entity-title"><%= node.name %></span>
-          <%= entity_tag_badge(node) %>
-        <% end %>
-        <% if node.description.present? %>
-          <span class="entity-description d-block"><%= node.description %></span>
-        <% end %>
-      <% end %>
-    <% else %>
-      <span class="flex-grow-1 text-break">
-        <% if node.respond_to?(:bgcolor) %>
-          <%= entity_tag_badge(node) %>
-        <% else %>
-          <span class="entity-title"><%= node.name %></span>
-          <%= entity_tag_badge(node) %>
-        <% end %>
-        <% if node.description.present? %>
-          <span class="entity-description d-block"><%= node.description %></span>
-        <% end %>
-      </span>
-    <% end %>
-
-    <% if editable %>
-      <span class="taxonomy-actions d-flex align-items-center gap-1">
-        <% if new_url %>
-          <%= button_tag type: "button",
-            class: "btn btn-sm btn-light border",
-            title: "Add child",
-            aria: { label: "Add child to #{node.name}" },
-            data: { action: "taxonomy-tree#add", taxonomy_action: "add-child" } do %>
-            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <%# The inline-rename trigger is deliberately sized to its own content: only
+        hovering or focusing the name itself starts a rename, never the whole row. %>
+    <span class="taxonomy-name-area d-flex align-items-center gap-2 flex-wrap">
+      <% if editable %>
+        <%= button_tag type: "button",
+          class: "taxonomy-name-trigger text-break",
+          aria: { label: "Rename #{node.name}" },
+          data: { taxonomy_tree_target: "name", action: "click->taxonomy-tree#editName" } do %>
+          <% if node.respond_to?(:bgcolor) %>
+            <%= entity_tag_badge(node) %>
+          <% else %>
+            <span class="entity-title"><%= node.name %></span>
+            <%= entity_tag_badge(node) %>
+          <% end %>
+          <% if node.description.present? %>
+            <span class="entity-description d-block"><%= node.description %></span>
           <% end %>
         <% end %>
+      <% else %>
+        <span class="taxonomy-name-text text-break">
+          <% if node.respond_to?(:bgcolor) %>
+            <%= entity_tag_badge(node) %>
+          <% else %>
+            <span class="entity-title"><%= node.name %></span>
+            <%= entity_tag_badge(node) %>
+          <% end %>
+          <% if node.description.present? %>
+            <span class="entity-description d-block"><%= node.description %></span>
+          <% end %>
+        </span>
+      <% end %>
 
-        <%= button_tag type: "button",
-          class: "btn btn-sm btn-light border",
-          title: "Move up",
-          aria: { label: "Move up #{node.name}" },
-          data: { action: "taxonomy-tree#move", move_direction: "up", taxonomy_action: "move-up" } do %>
-          <i class="bi bi-arrow-up" aria-hidden="true"></i>
-        <% end %>
-        <%= button_tag type: "button",
-          class: "btn btn-sm btn-light border",
-          title: "Move down",
-          aria: { label: "Move down #{node.name}" },
-          data: { action: "taxonomy-tree#move", move_direction: "down", taxonomy_action: "move-down" } do %>
-          <i class="bi bi-arrow-down" aria-hidden="true"></i>
-        <% end %>
+      <%# Details is real navigation, so it stays visible for every access level
+          and never hides behind the row's hover-revealed action menu. %>
+      <% if details_url %>
+        <%= record_details_link details_url.call(node),
+          record: node,
+          count: details_count&.call(node),
+          count_label: details_count_label %>
+      <% end %>
+    </span>
 
+    <% if editable %>
+      <span class="taxonomy-actions ms-auto d-flex align-items-center gap-1">
         <div class="dropdown">
           <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
             id="taxonomy-<%= node.id %>-actions"
@@ -91,11 +82,13 @@
             <i class="bi bi-three-dots" aria-hidden="true"></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
-            <li>
-              <button type="button" class="dropdown-item" data-action="taxonomy-tree#edit">
-                <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
-              </button>
-            </li>
+            <% if new_url %>
+              <li>
+                <button type="button" class="dropdown-item" data-action="taxonomy-tree#add" data-taxonomy-action="add-child">
+                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Add child
+                </button>
+              </li>
+            <% end %>
             <li>
               <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="before">
                 <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert before
@@ -104,6 +97,25 @@
             <li>
               <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="after">
                 <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert after
+              </button>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <button type="button" class="dropdown-item"
+                data-action="taxonomy-tree#move" data-move-direction="up" data-taxonomy-action="move-up">
+                <i class="bi bi-arrow-up me-2" aria-hidden="true"></i>Move up
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item"
+                data-action="taxonomy-tree#move" data-move-direction="down" data-taxonomy-action="move-down">
+                <i class="bi bi-arrow-down me-2" aria-hidden="true"></i>Move down
+              </button>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <button type="button" class="dropdown-item" data-action="taxonomy-tree#edit">
+                <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
               </button>
             </li>
             <li><hr class="dropdown-divider"></li>
@@ -136,6 +148,9 @@
           modal_fields: modal_fields,
           taxonomy_field: taxonomy_field,
           confirm_message: confirm_message,
+          details_url: details_url,
+          details_count: details_count,
+          details_count_label: details_count_label,
           editable: editable %>
       <% end %>
     </ul>

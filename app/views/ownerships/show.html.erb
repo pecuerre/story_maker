@@ -1,0 +1,21 @@
+<% content_for :title, @ownership.display_string %>
+
+<%= render "shared/record_details",
+  record: @ownership,
+  eyebrow: "Universe Bible",
+  label: "Ownership",
+  facts: [
+    detail_fact("Item", link_to(@ownership.item.name, universe_item_path(id: @ownership.item))),
+    detail_fact("Owner", link_to(@ownership.character.name, universe_character_path(id: @ownership.character))),
+    detail_fact("Ownership tags", entity_tag_badge(@ownership), blank: "No tags assigned. Tags are optional."),
+    detail_fact("In-world dates", in_world_range(@ownership.from_date, @ownership.to_date)),
+    detail_fact("Description", @ownership.description, blank: "No description yet.")
+  ],
+  back_url: universe_ownerships_path,
+  back_label: "All ownerships" %>
+
+<%= render "shared/detail_section",
+  title: "Related information",
+  icon: "person-check",
+  empty_title: "Nothing related yet",
+  empty_description: "This ownership is a link between a character and an item. Anything else worth knowing about it will be listed here later." %>

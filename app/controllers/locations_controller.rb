@@ -1,9 +1,9 @@
 class LocationsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :location
 
-  before_action :set_location, only: %i[ update destroy ]
+  before_action :set_location, only: %i[ show update destroy ]
 
   def index
     @locations = Current.universe.locations
@@ -14,6 +14,12 @@ class LocationsController < ApplicationController
     @location_tags = Current.universe.location_tags
     @location_tags = @location_tags.order(:name)
     @location_options = Current.universe.locations.reorder(:position, :id).to_a
+  end
+
+  # GET /locations/:id — the record's own read-only details page. It identifies the
+  # record and is the destination of every "Details" link; later slices add
+  # the related-records sections without changing this URL.
+  def show
   end
 
   def create

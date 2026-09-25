@@ -1,0 +1,25 @@
+<% content_for :title, @item_tag.name %>
+
+<%= render "shared/record_details",
+  record: @item_tag,
+  eyebrow: "Configuration · Tags",
+  label: "Item tag",
+  facts: [
+    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
+    detail_fact("Description", @item_tag.description, blank: "No description yet."),
+    detail_fact("Color", @item_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+  ],
+  back_url: universe_item_tags_path,
+  back_label: "All item tags" %>
+
+<%= render "shared/detail_section",
+  title: "Items with this tag",
+  count: @tagged_records.size,
+  count_label: "item",
+  icon: "box-seam",
+  empty_title: "No items carry this tag",
+  empty_description: "Nothing uses this tag yet. Tags are optional, so items can stay untagged." do %>
+  <%= render "shared/tagged_record_list",
+    records: @tagged_records,
+    path: ->(record) { universe_item_path(id: record) } %>
+<% end %>

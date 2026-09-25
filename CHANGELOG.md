@@ -19,6 +19,58 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[changed]** Completed backlog item 21, the taxonomy editor's visual pass. A taxonomy row now
+  carries only the name, the **Details** link, and one overflow menu holding Add child, Insert
+  before/after, Move up, Move down, Edit, and Delete. Move up/Move down became disabled menu items
+  at the sequence boundaries instead of row buttons, the name is sized to its own text so only
+  hovering the name itself starts an inline rename, and the tree's first insert target no longer
+  hangs over the hint paragraph. The reported "the tag disappears when I rename" behavior was not
+  reproducible on the current tree (an inline rename sends only `name`, and the modal editor
+  re-populates the tag selector from the record's own values), so it is now locked in by a
+  permanent browser regression for both paths instead of a code change. The Stimulus controller's
+  dead JavaScript copy of the row builder was removed, so the row layout has one owner.
+- **[added]** Completed backlog item 22. Every standard element and every element tag now has its
+  own read-only details page — Character, Location, Item, Event, Relation, Ownership, Section, and
+  the Character, Relation, Location, Event, Item, Ownership, Section, and Scene tags. A content page
+  identifies the record and states which related information will appear later; a tag page lists the
+  records carrying it; a Section page lists the scenes grouped under it, each still showing its
+  narrative position (this also completes backlog 11.4.1(b)). Every flat-list row and taxonomy node
+  renders a `Details (N records)` link that repeats the record name and count in its accessible
+  name, and the new pages are composed from the shared `record_details`, `detail_facts`,
+  `detail_section`, and `tagged_record_list` partials so each record type can keep adding
+  information to the same URL. Details pages are HTML-only, guest-readable on a public universe,
+  and render no mutation control; a record from another universe or story is a 404.
+- **[added]** `HasManyTags#tagged_records` (the scoped inverse association, ordered by name) backs
+  each tag's page and cannot disclose another universe's or story's records.
+  `TaggedRecordCounts.for(tags)` answers "how many records carry each tag" with one grouped query,
+  because the scoped HABTM sides have an instance-dependent scope and cannot be eager loaded or
+  grouped through Active Record; the Section tree's scene counts come from one
+  `group(:section_id).count`. `Relation#display_string` and `Ownership#display_string` fall back to
+  their two endpoints, so a link record with its optional name still has a readable label in row
+  actions, delete confirmations, and its details page.
+- **[changed]** Completed backlog item 23. Placeholder navigation is flat disabled gray with no
+  hover emphasis, matching its `aria-disabled` semantics. The universe page replaced the "Story
+  collection" card with the universe's actual story list, each with an **Open** action, and keeps
+  **All stories** in the header; the "Browse stories" button was removed because the list it led to
+  is now on that page, and the page reuses the navbar's memoized story list so it adds no query and
+  no `COUNT`. The left sidebar is now three scoped blocks — current universe context, Universe
+  Bible, current story context, Story workspace, Configuration — where each context is followed by
+  the section it introduces: universe blue, story muted crimson (deliberately not the danger red
+  reserved for destructive actions), and Configuration plus the right utility sidebar green.
+- **[chore]** Added model, request, routing-independent, and focused browser coverage for the new
+  details pages, the Details links and their counts, `TaggedRecordCounts`, `tagged_records`, and
+  the sidebar structure; updated the architecture, conventions, visual design, data model,
+  known-quirk annotations, and backlog entries. The taxonomy system tests now wait for Stimulus's
+  `stimulus-loading` readiness signal before clicking, instead of racing the connection.
+
+- **[docs]** Removed the completed backlog item for the explicit development universe-data loader
+  after verifying the delivered state: `Development::UniverseDataRegistry`/`UniverseDataLoader`,
+  the guarded `db:demo:check/load/reset` tasks, and YAML-only `db/data/dark` and `db/data/lotr`
+  manifests, whose `db:demo:check` runs both pass. Remaining backlog numbers were intentionally
+  left unchanged, and the two internal "backlog item 1" references in the Scene slices now cite
+  [ADR 0008](docs/adr/0008-explicit-development-universe-loader.md) directly. No application code,
+  schema, or data changed.
+
 - **[fixed]** Corrected the `UniverseDataLoaderTest` Dark story-name expectation to
   `Netflix Dark`. Commit `0a236a9` renamed the `dark` universe's development story to
   `Netflix Dark` (slug `netflix-dark`) in `db/data/dark/stories.yml` but asserted the lowercase

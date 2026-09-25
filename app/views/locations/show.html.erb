@@ -1,0 +1,21 @@
+<% content_for :title, @location.name %>
+
+<%= render "shared/record_details",
+  record: @location,
+  eyebrow: "Universe Bible",
+  label: "Location",
+  facts: [
+    detail_fact("Universe", link_to(Current.universe.name, universe_path(id: Current.universe))),
+    detail_fact("Location tags", entity_tag_badge(@location), blank: "No tags assigned. Tags are optional."),
+    detail_fact("Parent location", @location.parent && @location.parent.name, blank: "This location is a top-level place."),
+    detail_fact("Child locations", pluralize(@location.children.size, "location"), blank: "No nested places yet."),
+    detail_fact("Description", @location.description, blank: "No description yet.")
+  ],
+  back_url: universe_locations_path,
+  back_label: "All locations" %>
+
+<%= render "shared/detail_section",
+  title: "Related information",
+  icon: "geo-alt",
+  empty_title: "Nothing related yet",
+  empty_description: "The characters, events, and items set in this location will be listed here as the universe grows." %>

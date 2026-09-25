@@ -1,0 +1,25 @@
+<% content_for :title, @location_tag.name %>
+
+<%= render "shared/record_details",
+  record: @location_tag,
+  eyebrow: "Configuration · Tags",
+  label: "Location tag",
+  facts: [
+    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
+    detail_fact("Description", @location_tag.description, blank: "No description yet."),
+    detail_fact("Color", @location_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+  ],
+  back_url: universe_location_tags_path,
+  back_label: "All location tags" %>
+
+<%= render "shared/detail_section",
+  title: "Locations with this tag",
+  count: @tagged_records.size,
+  count_label: "location",
+  icon: "geo-alt",
+  empty_title: "No locations carry this tag",
+  empty_description: "Nothing uses this tag yet. Tags are optional, so locations can stay untagged." do %>
+  <%= render "shared/tagged_record_list",
+    records: @tagged_records,
+    path: ->(record) { universe_location_path(id: record) } %>
+<% end %>

@@ -8,10 +8,10 @@ class WorkspaceNavigationTest < ApplicationSystemTestCase
 
     sign_in_via_form(user)
     visit universe_path(universe)
-    click_link "Browse stories"
-    within("article", text: story.name) do
-      click_link "Open story"
-    end
+    # The universe page lists its own stories, so reaching a story is one click
+    # instead of "Browse stories" then "Open story".
+    assert_selector "#universe-stories-title", text: "#{universe.stories.count} #{"story".pluralize(universe.stories.count)}"
+    find("#universe-stories-title ~ .list-group a[aria-label='Open #{story.name}']").click
 
     assert_selector "h1", text: story.name
     assert_selector ".sidebar-story-name", text: story.name

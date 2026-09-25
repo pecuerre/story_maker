@@ -16,6 +16,13 @@ class Relation < ApplicationRecord
   validates :character1, :character2, presence: true
   validate :associated_records_belong_to_universe
 
+  # A Relation is a link between two characters and its own name is optional, so
+  # the endpoints are the reliable label. Row actions, delete confirmations, and
+  # the details page all read this instead of a blank name.
+  def display_string
+    name.presence || "#{character1&.name} → #{character2&.name}"
+  end
+
   private
 
   def generate_slug

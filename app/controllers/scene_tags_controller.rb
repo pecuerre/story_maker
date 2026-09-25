@@ -1,10 +1,10 @@
 class SceneTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :scene_tag
 
   before_action :set_story
-  before_action :set_scene_tag, only: %i[ update destroy ]
+  before_action :set_scene_tag, only: %i[ show update destroy ]
   before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def new
@@ -16,6 +16,13 @@ class SceneTagsController < ApplicationController
       .includes(:children)
       .where(parent_id: nil)
       .order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(@story.scene_tags)
+  end
+
+  # GET /scene_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @scene_tag.tagged_records
   end
 
   def create

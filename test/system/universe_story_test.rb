@@ -10,7 +10,11 @@ class UniverseStoryTest < ApplicationSystemTestCase
 
     assert_selector "h1", text: "System Test Universe"
     assert_selector ".alert-success", text: "Universe was successfully created."
-    click_link "Browse stories"
+    # The universe page lists its stories directly and keeps an "All stories"
+    # link to the full page.
+    within ".page-actions" do
+      click_link "All stories"
+    end
 
     assert_selector "h1", text: "Stories", wait: 5
     click_link "New story"

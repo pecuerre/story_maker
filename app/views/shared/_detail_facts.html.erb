@@ -1,0 +1,11 @@
+<%# The identity block every details page starts with. `facts` is a list of
+    [ label, value ] pairs so each record type can add or reorder its own
+    information as the page grows, without changing this partial. %>
+<dl class="detail-facts">
+  <% local_assigns.fetch(:facts).each do |fact| %>
+    <div class="detail-fact">
+      <dt class="page-eyebrow"><%= fact.fetch(:label) %></dt>
+      <dd class="detail-fact-value text-break"><%= fact.fetch(:value) %></dd>
+    </div>
+  <% end %>
+</dl>

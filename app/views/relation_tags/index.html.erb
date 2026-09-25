@@ -17,4 +17,7 @@
   update_url: ->(relation_tag) { universe_relation_tag_path(id: relation_tag) },
   delete_url: ->(relation_tag) { universe_relation_tag_path(id: relation_tag) },
   model_param: "relation_tag",
+  details_url: ->(relation_tag) { universe_relation_tag_path(id: relation_tag) },
+  details_count: ->(tag) { @tagged_counts.fetch(tag.id, 0) },
+  details_count_label: "relation",
   modal_fields: relation_tag_taxonomy_fields(Current.universe.relation_tags.order(:position, :id)) %>

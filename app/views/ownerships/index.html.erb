@@ -49,6 +49,8 @@
               <% end %>
             </div>
 
+            <%= record_details_link universe_ownership_path(id: ownership), record: ownership %>
+
             <%= render "shared/row_actions",
               record: ownership,
               label: "ownership",

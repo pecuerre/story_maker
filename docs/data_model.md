@@ -93,7 +93,10 @@ constraints; the new `scenes_scene_tags` table adds real foreign keys and a uniq
 `[scene_id, scene_tag_id]` index. Every declaration supplies an explicit shared scope
 (`:universe_id`, or `:story_id` for Section/Scene tags), and both sides of each association validate
 every assigned member against that scope. Association reads also apply the scope, hiding foreign
-rows even if a raw/import path has already inserted a corrupt join.
+rows even if a raw/import path has already inserted a corrupt join. Because both scopes are
+instance-dependent lambdas, Active Record refuses to eager load or group through these
+associations; `TaggedRecordCounts` exists for the grouped read, and `tagged_records` for the
+per-record read.
 
 ### Non-app tables
 `solid_cache` / `solid_cable` / `solid_queue` live in their own schema files
@@ -278,6 +281,17 @@ ordered tag list without walking parents per Scene.
 `UniverseScopeResolver` (`app/models/universe_scope_resolver.rb`) is the shared answer to which
 universe owns a record and is used by both `Ability` and the view helpers, so a Scene-owned
 component can never lose its mutation controls or be denied a valid mutation.
+
+`Relation#display_string` and `Ownership#display_string` fall back to their two endpoints because
+both `name` columns are optional; `Event#display_string` already existed. A link record therefore
+always has a readable label in list rows, row-action confirmations, and its details page.
+
+`TaggedRecordCounts` (`app/models/tagged_record_counts.rb`) is a value object, not a table: it answers
+"how many records carry each tag" for a whole taxonomy with one grouped query, because the
+instance-dependent `HasManyTags` scopes cannot be eager loaded or grouped through Active Record. Its
+result is a `tag id => count` hash used by the taxonomy rows' `Details (N records)` label. The
+per-record read side is `HasManyTags#tagged_records`, the scoped inverse association ordered by name
+(`none` on a content model), which is what a tag's details page lists.
 
 `SceneElement` is an ordered child component rather than a standalone navigable content model, so
 it has no public slug requirement. `Scene.position` and `SceneElement.position` are contiguous `0..n-1` within their Story and Scene

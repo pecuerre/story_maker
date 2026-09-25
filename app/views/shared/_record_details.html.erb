@@ -1,0 +1,32 @@
+<%# The header and identity block shared by every record's own details page.
+
+    Local contract:
+      record     - the record being shown
+      eyebrow    - scope label, e.g. "Universe Bible" or "Story: <name>"
+      label      - record type, e.g. "Character"
+      facts      - [ label, value ] pairs for shared/detail_facts
+      back_url / back_label - where the list this page was opened from lives
+      edit_url / edit_label - optional editor link, writers only %>
+<% record = local_assigns.fetch(:record) %>
+<% title = local_assigns[:title] || (record.try(:display_string) || record.name) %>
+
+<%= render "shared/page_header",
+  title: title,
+  eyebrow: local_assigns.fetch(:eyebrow),
+  description: local_assigns[:description] || record.description do %>
+  <%= link_to local_assigns.fetch(:back_label), local_assigns.fetch(:back_url),
+    class: "btn btn-outline-secondary" %>
+  <% if local_assigns[:edit_url].present? && can_write_universe? %>
+    <%= link_to local_assigns.fetch(:edit_label), local_assigns.fetch(:edit_url),
+      class: "btn btn-primary" %>
+  <% end %>
+<% end %>
+
+<div class="surface-card p-4">
+  <% if local_assigns[:label].present? %>
+    <div class="page-eyebrow"><%= local_assigns.fetch(:label) %></div>
+    <h2 class="h4 text-break mb-3"><%= title %></h2>
+  <% end %>
+
+  <%= render "shared/detail_facts", facts: local_assigns.fetch(:facts) %>
+</div>

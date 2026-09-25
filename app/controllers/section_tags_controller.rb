@@ -1,11 +1,11 @@
 class SectionTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :section_tag
 
   before_action :set_story
   before_action :set_section_tag,
-    only: %i[ update destroy ]
+    only: %i[ show update destroy ]
 
   # GET /section_tags/new
   def new
@@ -18,9 +18,16 @@ class SectionTagsController < ApplicationController
     @section_tags = @section_tags.includes(:children)
     @section_tags = @section_tags.where(parent_id: nil)
     @section_tags = @section_tags.order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(@story.section_tags)
   end
 
   # POST /section_tags or /section_tags.json
+  # GET /section_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @section_tag.tagged_records
+  end
+
   def create
     attributes = section_tag_params
     @section_tag = @story.section_tags.new(attributes)

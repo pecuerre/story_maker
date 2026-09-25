@@ -1,20 +1,27 @@
 class RelationTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :relation_tag
 
-  before_action :set_relation_tag, only: %i[ update destroy ]
+  before_action :set_relation_tag, only: %i[ show update destroy ]
 
   def index
     @relation_tags = Current.universe.relation_tags
     @relation_tags = @relation_tags.includes(:children)
     @relation_tags = @relation_tags.where(parent_id: nil)
     @relation_tags = @relation_tags.order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(Current.universe.relation_tags)
   end
 
   def new
     relation_tags = Current.universe.relation_tags
     @relation_tag = relation_tags.new(parent_id: params[:parent_id])
+  end
+
+  # GET /relation_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @relation_tag.tagged_records
   end
 
   def create

@@ -1,0 +1,25 @@
+<% content_for :title, @relation_tag.name %>
+
+<%= render "shared/record_details",
+  record: @relation_tag,
+  eyebrow: "Configuration · Tags",
+  label: "Relation tag",
+  facts: [
+    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
+    detail_fact("Description", @relation_tag.description, blank: "No description yet."),
+    detail_fact("Color", @relation_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+  ],
+  back_url: universe_relation_tags_path,
+  back_label: "All relation tags" %>
+
+<%= render "shared/detail_section",
+  title: "Relations with this tag",
+  count: @tagged_records.size,
+  count_label: "relation",
+  icon: "diagram-2",
+  empty_title: "No relations carry this tag",
+  empty_description: "Nothing uses this tag yet. Tags are optional, so relations can stay untagged." do %>
+  <%= render "shared/tagged_record_list",
+    records: @tagged_records,
+    path: ->(record) { universe_relation_path(id: record) } %>
+<% end %>

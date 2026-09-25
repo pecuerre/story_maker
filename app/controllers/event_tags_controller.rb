@@ -1,10 +1,10 @@
 class EventTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :event_tag
 
   before_action :set_event_tag,
-    only: %i[ update destroy ]
+    only: %i[ show update destroy ]
 
   # GET /event_tags/new
   def new
@@ -18,9 +18,16 @@ class EventTagsController < ApplicationController
     @event_tags = @event_tags.includes(:children)
     @event_tags = @event_tags.where(parent_id: nil)
     @event_tags = @event_tags.order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(Current.universe.event_tags)
   end
 
   # POST /event_tags or /event_tags.json
+  # GET /event_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @event_tag.tagged_records
+  end
+
   def create
     attributes = event_tag_params
     @event_tag = Current.universe.event_tags.new(attributes)

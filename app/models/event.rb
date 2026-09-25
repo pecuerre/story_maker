@@ -8,6 +8,10 @@ class Event < ApplicationRecord
 
   belongs_to :universe
   has_many_tags :event_tag, scope: :universe_id
+  # Deleting an Event only clears Scene references. The shared world record is
+  # never removed because a Scene depicted it, and the Scene keeps its own
+  # narrative position and (independent) in-world datetime.
+  has_many :scenes, dependent: :nullify
   belongs_to :before_event, class_name: "Event", inverse_of: :before_event_references, optional: true
   belongs_to :after_event, class_name: "Event", inverse_of: :after_event_references, optional: true
   belongs_to :simultaneous_event, class_name: "Event", inverse_of: :simultaneous_event_references, optional: true

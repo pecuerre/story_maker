@@ -4,6 +4,10 @@
   <% label = local_assigns[:label] || record.model_name.human.downcase %>
   <% record_name = local_assigns[:record_name] || record.try(:display_string) || record.name %>
   <% values = local_assigns.fetch(:values, "{}") %>
+  <%# Deletion consequences are mandatory copy for records with dependents: the
+      default stays short, and a caller that owns dependents passes the full
+      template so an unannounced cascade is never possible. %>
+  <% confirm_text = local_assigns[:confirm_text] || "Delete #{record_name}?" %>
   <% actions_id = "#{dom_id(record)}-actions" %>
 
   <div class="dropdown row-actions">
@@ -30,7 +34,7 @@
         <%= button_to local_assigns.fetch(:delete_url),
           method: :delete,
           class: "dropdown-item text-danger",
-          data: { turbo_confirm: "Delete #{record_name}?" } do %>
+          data: { turbo_confirm: confirm_text } do %>
           <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
         <% end %>
       </li>

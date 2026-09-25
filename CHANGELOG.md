@@ -19,6 +19,63 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[added]** Completed Epic 11 slices 11.2 and 11.3, the Scene references and Section grouping
+  work. A schema-only `AddSceneReferencesToScenes` migration added the optional `section_id`,
+  `event_id`, and single-point `datetime` to `scenes` with real foreign keys, a `datetime` column
+  using Event-compatible storage, and a `[story_id, section_id]` index beside the existing
+  narrative-order index.
+- **[added]** `Scene` now belongs to an optional `Section` (same Story) and an optional `Event`
+  (same Universe). Same-Story and same-Universe scope is validated in the model, so a malformed
+  `section_id`/`event_id` renders a documented `422` field error through the ordinary editor instead
+  of a foreign-key `500`, and an unparseable in-world time is reported rather than being silently
+  cast to `nil`; the editor re-renders the submitted value so a rejected entry is never cleared.
+  The event link and the in-world time stay fully independent, and several Scenes may reference the
+  same Event.
+- **[added]** The Scene editor gained **Organization** and **In-world time** fieldsets (Section
+  selector with **Ungrouped** and depth-indented Section paths, Event selector with **None**, and a
+  `datetime-local` field) plus explicit copy separating narrative order from in-world time, and a
+  URL-backed **Scene Details / Characters / Items / Locations** tab shell. The three not-yet-routable
+  tabs render as `aria-disabled` placeholders, so no tab ever links to a route that does not exist.
+  Scene Details is now the canonical inspectable page for the group, the linked event, and the
+  formatted in-world time.
+- **[added]** Section grouping shipped with two complementary paths, as ADR 0007 specifies: the
+  Scene Details form assigns a Scene to **Ungrouped** or one Section, and the Sections workspace
+  gained a **Grouped scenes** outline that keeps the existing taxonomy tree. One selector-driven
+  form (`PATCH /u/:universe_slug/s/:story_id/scenes/group`) moves a Scene between Ungrouped, a
+  Section, and another Section; the target is resolved through the current Story, so a foreign or
+  unknown Section is a `404` and the flash always states that the narrative position did not change.
+  Drag-and-drop is not offered, so the move works by keyboard and on touch.
+- **[added]** `SectionPaths` builds every root-first Section ancestor path and the depth-indented
+  selector options from one ordered query, so list pages never walk ancestors per Scene. The global
+  Scenes list now labels each row with its nested Section path or an explicit **Ungrouped**
+  indicator, and grouping provably never changes `position`.
+- **[changed]** `UniverseScopeResolver` is now the single answer to which universe owns a record;
+  `Ability#universe_for` and `ApplicationHelper#universe_for_record` both delegate to it instead of
+  duplicating the walk, and it resolves Scene-owned and Section-owned records through their owner.
+  A model nested deeper defines its own `#universe` delegation.
+- **[changed]** Deleting a Section or an Event now nullifies its Scene references instead of being
+  silent about it, and the Story, Section, and Event delete confirmations use the mandatory ADR 0007
+  consequence templates. Deleting a shared record still never removes a Scene.
+- **[changed]** The shared tree accepts a per-node `confirm_message` and a `read_only_empty_description`,
+  and the shared row actions accept a `confirm_text`, so destructive copy and read-only empty states
+  come from the server. The Sections workspace read-only empty state no longer tells a read-only
+  member to add or drag sections.
+- **[changed]** `shared/_content_tabs` can render a tab without a destination as an `aria-disabled`
+  placeholder, which keeps a workspace tab from becoming a dead link.
+- **[chore]** `Development::UniverseDataRegistry` loads `Scene` after `Event` so a Scene can reference
+  a shared universe event, and the loader proves a Scene's Section belongs to the same story before
+  writing. `db/data/dark/scenes.yml` and `db/data/lotr/scenes.yml` now exercise grouped, ungrouped,
+  event-only, datetime-only, and shared-event Scenes, and the local development database was rebuilt
+  and verified.
+- **[chore]** Documented that editing an applied migration silently does nothing on a fresh
+  database in this project: Rails 8.1's `initialize_database` loads `db/schema.rb` when the database
+  has no `schema_migrations` table, so the Scene references needed a new migration. The finding and
+  its consequence are recorded in `known_quirks.md` and `development.md`.
+- **[docs]** Updated the architecture, data model, conventions, visual design, and development docs
+  for the two slices, marked backlog items 11.2 and 11.3 complete, and refreshed the known-quirk
+  entries for optional-reference errors and ownership-scope resolution.
+
+
 - **[added]** Completed Epic 11 slice 11.1, the core Scene vertical slice: a schema-only `scenes`
   migration (real `story_id` foreign key, indexed `position`, `slug`) and `Scene` model with a
   required Title, optional short description, and no `parent_id`. A Story now owns its contiguous

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_170000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -231,13 +231,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
 
   create_table "scenes", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "datetime"
     t.text "description"
+    t.integer "event_id"
     t.string "name"
     t.integer "position", default: 0, null: false
+    t.integer "section_id"
     t.string "slug", null: false
     t.integer "story_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_scenes_on_event_id"
+    t.index ["section_id"], name: "index_scenes_on_section_id"
     t.index ["story_id", "position"], name: "index_scenes_on_story_id_and_position"
+    t.index ["story_id", "section_id"], name: "index_scenes_on_story_id_and_section_id"
     t.index ["story_id"], name: "index_scenes_on_story_id"
   end
 
@@ -356,6 +362,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_120000) do
   add_foreign_key "relations", "characters", column: "character1_id"
   add_foreign_key "relations", "characters", column: "character2_id"
   add_foreign_key "relations", "universes"
+  add_foreign_key "scenes", "events"
+  add_foreign_key "scenes", "sections"
   add_foreign_key "scenes", "stories"
   add_foreign_key "section_tags", "section_tags", column: "parent_id"
   add_foreign_key "section_tags", "stories"

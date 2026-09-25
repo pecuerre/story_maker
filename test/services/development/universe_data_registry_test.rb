@@ -2,9 +2,15 @@ require "test_helper"
 
 class UniverseDataRegistryTest < ActiveSupport::TestCase
   test "registers the dependency order and supported universes" do
-    assert_equal "User", Development::UniverseDataRegistry.definitions.first.model_name
-    assert_equal "Event", Development::UniverseDataRegistry.definitions.last.model_name
-    assert_not_includes Development::UniverseDataRegistry.model_names, "Session"
+    model_names = Development::UniverseDataRegistry.model_names
+
+    assert_equal "User", model_names.first
+    # Scene is loaded last because it may reference a shared universe Event, and
+    # a symbolic reference may not point at a later model file.
+    assert_equal "Scene", model_names.last
+    assert_operator model_names.index("Event"), :<, model_names.index("Scene")
+    assert_operator model_names.index("Section"), :<, model_names.index("Scene")
+    assert_not_includes model_names, "Session"
     assert_equal %w[dark lotr], Development::UniverseDataRegistry::UNIVERSES.keys
     assert Development::UniverseDataRegistry.registered_universe?("dark")
     assert_not Development::UniverseDataRegistry.registered_universe?("star_wars")

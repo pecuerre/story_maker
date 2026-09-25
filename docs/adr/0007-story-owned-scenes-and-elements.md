@@ -85,7 +85,6 @@ change chronology, and an Element is not a world record.
 ### Target URLs
 
 Scenes are mounted only beneath an explicit Story. There is no Universe-level Scene route.
-
 | Purpose | Canonical URL |
 |---|---|
 | Global narrative Scene list | `/u/:universe_slug/s/:story_id/scenes` |
@@ -206,7 +205,6 @@ Soft deletion is deliberately deferred as backlog item 20 and is not part of sli
 hard-deletion behavior and confirmations below are the contract for the future implementation; a
 future soft-delete ADR must revisit restore behavior, relation tracking, visibility, and uniqueness
 before any model gains `deleted_at`.
-
 Destructive controls use these exact templates, substituting the displayed record name:
 
 - **Scene:** `Delete “#{scene.name}”? Its elements, tag assignments, and links to story and universe records will be permanently removed. Linked records will not be deleted.`
@@ -219,6 +217,29 @@ Destructive controls use these exact templates, substituting the displayed recor
 
 The implementation may add surrounding accessibility text, but it does not omit the consequences
 shown in these confirmations.
+
+> **Execution note (2026-09-25, slices 11.1–11.3):** this decision is implemented in three
+> slices and is not superseded. Slice 11.1 landed the `scenes` table, the `Scene` model, the
+> story-scoped routes, the canonical narrative-order list with accessible Move controls, and the
+> Scene Details editor. Slices 11.2 and 11.3 landed the optional same-Story Section, optional
+> same-Universe Event, and independent single-point `datetime` references (with the model-level
+> validations that make a malformed optional ID or datetime a `422` rather than a database
+> exception), the URL-backed **Scene Details / Characters / Items / Locations** tab shell, and both
+> Section-grouping paths. Two decisions above are implemented literally and are worth restating
+> because they are easy to break:
+>
+> - The three not-yet-routable workspace tabs are `aria-disabled` placeholders, not live links to
+>   missing routes, and the Editor is reachable only by the visible tab labels.
+> - Grouping is a **collection** action (`PATCH .../scenes/group`) rather than a member action,
+>   because the Sections workspace form posts the chosen `scene_id` next to the chosen `section_id`.
+>   That keeps the move working with no client-side scripting, which the keyboard/touch requirement
+>   above depends on.
+>
+> The `Character`, `Item`, `Location`, Element, speaker, and Scene Tag routes remain unrouted until
+> their slices add a real destination. `Section` and `Event` now declare
+> `has_many :scenes, dependent: :nullify`, so the asymmetric deletion contract and the confirmation
+> templates below are live for those two records; the Character/Item/Location templates still
+> describe Scene links that slices 11.7–11.9 will add.
 
 ## Consequences
 

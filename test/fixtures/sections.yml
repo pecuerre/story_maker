@@ -13,3 +13,8 @@ section_two:
   story: story_one
   slug: "section-two"
   section_tags: section_tag_two
+
+section_alt:
+  name: Section alt
+  story: story_alt
+  slug: "section-alt"

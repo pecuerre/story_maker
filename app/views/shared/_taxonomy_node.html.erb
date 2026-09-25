@@ -1,5 +1,6 @@
 <% modal_fields = local_assigns.fetch(:modal_fields, []) %>
 <% taxonomy_field = local_assigns[:taxonomy_field] %>
+<% confirm_message = local_assigns[:confirm_message] %>
 <% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(node) || Current.universe) } %>
 
 <li class="taxonomy-node"
@@ -9,6 +10,7 @@
   <% end %>
   data-taxonomy-tree-target="node"
   data-node-id="<%= node.id %>"
+  <% if confirm_message %>data-confirm-message="<%= confirm_message.call(node) %>"<% end %>
   <% if editable %>
     data-update-url="<%= update_url.call(node) %>"
     data-edit-url="<%= edit_url.call(node) %>"
@@ -133,6 +135,7 @@
           model_param: model_param,
           modal_fields: modal_fields,
           taxonomy_field: taxonomy_field,
+          confirm_message: confirm_message,
           editable: editable %>
       <% end %>
     </ul>

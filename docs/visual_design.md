@@ -130,13 +130,13 @@ When a story is selected:
 
 - Story overview;
 - Sections;
-- Scenes (a reserved placeholder for future story structure).
+- Scenes (the canonical narrative-order list, with its own cached count).
 
 When no story is selected:
 
 - All stories;
 - a prompt explaining that a story must be selected for story-specific structure;
-- Scenes (a reserved placeholder).
+- Scenes (an `aria-disabled` placeholder; it never falls back to the universe's first story).
 
 New story remains in the navbar's Story dropdown; it is not repeated as a sidebar button.
 
@@ -165,7 +165,8 @@ list is managed. New configuration tools should be added as top-level entries he
 scope when needed.
 
 Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
-`aria-current="page"`; color is not the only state signal. The reserved Scenes and right-sidebar
+`aria-current="page"`; color is not the only state signal. **Scenes** is a real link with its own
+count while a story is selected and an `aria-disabled` placeholder otherwise; the right-sidebar
 entries are the intentional placeholders for future functionality.
 
 ### Right utility sidebar
@@ -253,7 +254,7 @@ Universes, Stories, and universe membership management use the existing form pat
 Do not replace these with a modal: full-page forms remain appropriate for objects with a stable
 URL and meaningful navigation.
 
-### Scene workspace (core shipped in 11.1; later slices pending)
+### Scene workspace (core and references shipped in 11.1–11.3; later slices pending)
 
 The accepted [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines a calm, explicit
 Scene workspace. The **Scenes** sidebar entry is a real story-scoped link with its own count while a
@@ -265,26 +266,45 @@ shared page header, content surface, entity rows, and empty state. Rows currentl
 - the 1-based narrative position as a bordered pill with an
   `aria-label="Narrative position N of M"`;
 - the required Title as a link to Scene Details and a clamped description preview;
+- a bordered grouping badge showing the Scene's full nested Section path, or **Ungrouped** with an
+  open-folder icon. The `title` states that grouping does not change the narrative order;
 - edit/delete controls only for writers;
 - visible Move up/Move down controls with a clear disabled state at sequence boundaries.
 
-The **Ungrouped**/Section-path indicator, Scene Tag badges, and Element/participant counts arrive
-with slices 11.3, 11.4, and 11.6; do not render placeholder badges for them.
+Scene Tag badges and Element/participant counts arrive with slices 11.4 and 11.6; do not render
+placeholder badges for them.
 
 The page's primary **Add scene** action opens the stable new Scene form. The page header states
-that the order is the order the story is told, not in-world chronology. Move controls are real
-forms, so they work with a keyboard and on touch, and the action group wraps below the title at
-narrow widths instead of hiding it or relying on hover.
+that the order is the order the story is told, not in-world chronology, and that a section group
+only organizes a scene. Move controls are real forms, so they work with a keyboard and on touch, and
+the action group wraps below the title at narrow widths instead of hiding it or relying on hover.
 
-Scene Details (`/scenes/:id`) is the canonical, inspectable page: the same Title, narrative
-position, short description, and story context render for every access level, and only writers get
-the **Edit scene** action. `/scenes/:id/edit` is the full-page editor form and `new` reuses the
-same partial, so the Title/Description fields exist in exactly one place. The URL-backed
-**Details / Characters / Items / Locations** tab shell, the
-optional Section selector (including **Ungrouped** and indented Section paths), and the Element
-list arrive with slices 11.2, 11.3, and 11.6. A Section-grouped outline in the Sections workspace
-is a second organization view: it must never replace or visually imply that the global Scene list
-is ordered by Section position.
+Scene Details (`/scenes/:id`) is the canonical, inspectable page: the Title, narrative position,
+short description, Section group, linked Event, in-world time, and story context render for every
+access level, and only writers get the **Edit scene** action. `/scenes/:id/edit` is the full-page
+editor form and `new` reuses the same partial, so the Title/Description/Section/Event/time fields
+exist in exactly one place. The Details page labels narrative position and in-world time separately
+and says explicitly that the two values are independent and that a disagreement between them is not
+detected.
+
+The editor's **Scene Details / Characters / Items / Locations** shell is a URL-backed
+`shared/_content_tabs` nav. **Scene Details** is a live link; the other three are `aria-disabled`
+placeholders with an explanatory `title` until their slices add a destination. A tab is never a link
+to a route that does not exist.
+
+The Scene form groups its fields: **Organization** holds the Section selector (with **Ungrouped**
+and depth-indented Section names), and **In-world time** holds the Event selector (with **None**)
+and the `datetime-local` field. Each field has copy that states what it does *not* do — grouping
+never changes the narrative position, and the event link and the in-world time never write or clear
+each other.
+
+The Sections workspace keeps its taxonomy tree and adds a **Grouped scenes** surface below it:
+ungrouped scenes first, then each Section's nested path as a heading with a scene count, and each
+Scene row showing its narrative position and Title in canonical order. A long Section name wraps
+instead of pushing the layout. Writers also get one selector-driven move form (Scene → group,
+offering **Ungrouped** plus every Section path) with a real submit button; drag-and-drop is not
+offered, so the move always works by keyboard and on touch. Read-only members and guests see the
+same outline with no controls and no instruction to add scenes.
 
 Narration and Dialogue Elements will use one Bootstrap modal. The form has a kind selector,
 required
@@ -294,8 +314,9 @@ values; a failed request does not close it. Element rows show kind, Title, a bod
 speakers for Dialogue, and accessible Move up/Move down controls.
 
 The Scene/Story/Section/Event/shared-record destructive copy from ADR 0007 is mandatory. Do not
-replace the consequences with only “Delete {record}?” merely to save space. Scene rows already use
-the full Scene template, and it must keep that wording as later dependents are added.
+replace the consequences with only “Delete {record}?” merely to save space. Scene, Story, and
+Event rows and the Section tree already use the full templates, and they must keep that wording as
+later dependents are added.
 
 ## Accessibility and interaction
 

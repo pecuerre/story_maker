@@ -21,7 +21,7 @@
           <%= button_to "Delete story", universe_story_path(id: @story),
             method: :delete,
             class: "dropdown-item text-danger",
-            data: { turbo_confirm: "Delete #{@story.name} and all of its sections?" } %>
+            data: { turbo_confirm: "Delete “#{@story.name}”? Its sections, section tags, scene tags, scenes, scene elements, and story-owned links will be permanently deleted. Shared universe records will not be deleted." } %>
         </li>
       </ul>
     </div>

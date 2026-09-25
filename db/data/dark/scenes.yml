@@ -2,18 +2,27 @@
   name: Secrets
   slug: secrets
   description: "Jonas Kahnwald arrives in Winden and meets the Nielsen family."
+  section: Section.s1e1
+  event: Event.jonas_meets_bartosz
+  datetime: "1986-09-01T10:00"
   position: 0
 
 - story: Story.netflix-dark
   name: Lies
   slug: lies
   description: "Martha Nielsen and Hannah lie about the night Noah disappeared."
+  section: Section.s1e2
+  event: Event.ulrich_meets_hannah
   position: 1
 
 - story: Story.netflix-dark
   name: "Past and Present"
   slug: past-and-present
   description: "The kindergarten argument reaches its breaking point in 1986 and again in 2019."
+  # No event on purpose: this scene carries an in-world time of its own so the
+  # event link and the datetime can be seen to disagree independently.
+  section: Section.s1e3
+  datetime: "2019-11-05T21:00"
   position: 2
 
 - story: Story.netflix-dark
@@ -25,22 +34,31 @@
   name: Truths
   slug: truths
   description: "Jonas and Martha find the second Noah alive in the cave beneath the Sic Mundus ruins."
+  section: Section.s1e5
+  event: Event.time_travel
+  datetime: "2019-11-07T18:00"
   position: 4
 
 - story: Story.netflix-dark
   name: Sic Mundus Creatus Est
   slug: sic-mundus-creatus-est
   description: "The Sic Mundus cave is opened and the traveler's origin is revealed."
+  section: Section.s1e6
+  event: Event.time_travel
   position: 5
 
 - story: Story.netflix-dark
   name: "The Journey"
   slug: the-journey
   description: "Season 2 opens with the search for Jonas in the alternate timeline."
+  section: Section.s2e1
+  event: Event.explosion
   position: 6
 
 - story: Story.netflix-dark
   name: "The Golden Beast"
   slug: the-golden-beast
   description: "The alt-world Jonas is approached by the German whose childhood he lived through."
+  section: Section.s3e3
+  event: Event.explosion
   position: 7

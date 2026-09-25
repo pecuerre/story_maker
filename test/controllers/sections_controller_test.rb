@@ -51,6 +51,90 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "Other story section"
   end
 
+  test "index keeps the section tree and adds a grouped scene outline" do
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    # The existing tree is retained.
+    assert_select ".taxonomy-tree"
+    assert_select ".taxonomy-node", 2
+
+    assert_select ".scene-grouping" do
+      assert_select "h2", text: "Grouped scenes"
+      assert_includes response.body, "Ungrouped"
+      assert_includes response.body, "Section one / Section two"
+      assert_select "a[href=?]", universe_story_scene_path(
+        universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_one)
+      ), text: "Scene one"
+    end
+  end
+
+  test "the grouped outline shows ungrouped scenes first and keeps narrative order inside a group" do
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    groups = css_select(".scene-grouping .list-group-item").map { |item| item.text.squish }
+    ungrouped_index = groups.index { |text| text.start_with?("Ungrouped") }
+
+    assert ungrouped_index, "expected an Ungrouped group"
+    assert_includes groups[ungrouped_index], "Scene three"
+  end
+
+  test "the grouped outline offers accessible move selectors for writers only" do
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_select "form[action=?].scene-grouping-form", group_universe_story_scenes_path(
+      universe_slug: @universe.slug, story_id: @story
+    )
+    assert_select "select[name=scene_id] option", @story.scenes.count
+    assert_select "select[name=section_id] option", @story.sections.count + 1
+
+    universe, story = private_story
+    story.sections.create!(name: "Private section")
+    story.scenes.create!(name: "Private scene")
+    sign_in_read_only_member(universe)
+
+    get universe_story_sections_url(universe_slug: universe.slug, story_id: story)
+
+    assert_response :success
+    assert_select ".scene-grouping", 1
+    assert_select "form.scene-grouping-form", count: 0
+    assert_select "select[name=scene_id]", count: 0
+    assert_includes response.body, "Private scene"
+  end
+
+  test "the grouped outline shows an empty state when the story has no scenes" do
+    @story.scenes.destroy_all
+
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_select ".scene-grouping .empty-title", text: "No scenes yet"
+    assert_select "form.scene-grouping-form", count: 0
+    assert_select "a[href=?]", new_universe_story_scene_path(universe_slug: @universe.slug, story_id: @story)
+  end
+
+  test "the section delete confirmation states that linked scenes become ungrouped" do
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_select "li.taxonomy-node[data-confirm-message=?]",
+      "Delete “Section one”? Its child sections and tag assignments will be removed, and linked " \
+      "scenes will become ungrouped. Their narrative order will not change."
+  end
+
+  test "destroying a section ungroups its scenes without removing or reordering them" do
+    scene = scenes(:scene_one)
+    original_positions = @story.scenes.reorder(:position, :id).pluck(:position)
+
+    assert_difference("Scene.count", 0) do
+      delete universe_story_section_url(universe_slug: @universe.slug, story_id: @story, id: @section),
+        as: :json
+    end
+
+    assert_response :no_content
+    assert_nil scene.reload.section
+    assert_equal original_positions, @story.scenes.reorder(:position, :id).pluck(:position)
+  end
+
   test "should create section as json" do
     assert_difference("Section.count") do
       post universe_story_sections_url(universe_slug: @universe.slug, story_id: @story),
@@ -157,4 +241,18 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  private
+    # A read-only collaborator needs a private universe; a public universe grants
+    # write access to every signed-in user.
+    def private_story
+      universe = Universe.create!(owner: users(:user_one), name: "Private sections", slug: "private-sections", private: true)
+      [ universe, Story.create!(universe: universe, name: "Private story") ]
+    end
+
+    def sign_in_read_only_member(universe)
+      UniverseMembership.create!(universe: universe, user: users(:user_two), access_level: :read)
+      sign_out
+      sign_in_as(users(:user_two))
+    end
 end

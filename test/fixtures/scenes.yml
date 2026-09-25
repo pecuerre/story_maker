@@ -5,6 +5,9 @@ scene_one:
   name: "Scene one"
   slug: "scene-one"
   description: "The first scene of the story"
+  section: section_one
+  event: event_one
+  datetime: 2026-09-11 09:00:00
   position: 0
 
 scene_two:
@@ -12,12 +15,17 @@ scene_two:
   name: "Scene two"
   slug: "scene-two"
   description: "The second scene of the story"
+  section: section_two
+  event: event_two
   position: 1
 
 scene_three:
   story: story_one
   name: "Scene three"
   slug: "scene-three"
+  # Ungrouped, and with an in-world time but no event: the two in-world values
+  # are independent.
+  datetime: 2026-09-11 10:00:00
   position: 2
 
 scene_alt:

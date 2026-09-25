@@ -96,6 +96,24 @@ class AbilityTest < ActiveSupport::TestCase
     end
   end
 
+  test "a scene-owned record resolves its universe through its scene" do
+    private_story = Story.create!(universe: @private_universe, name: "Private story")
+    scene = private_story.scenes.create!(name: "Private scene")
+    # Stands in for the Scene-owned component models added in later slices. The
+    # class must also be registered in CONTENT_CLASS_NAMES for CanCan to match
+    # it; what is proven here is that the Ability resolves its Universe through
+    # Scene, the same way the shared view helper does.
+    scene_owned = Struct.new(:scene).new(scene)
+
+    assert_equal @private_universe, Ability.new(@read_user).send(:universe_for, scene_owned)
+    assert_equal @private_universe, Ability.new(@read_user).send(:universe_for, scene)
+
+    UniverseMembership.create!(universe: @private_universe, user: @read_user, access_level: :write)
+    write_ability = Ability.new(@read_user)
+    assert write_ability.can?(:write, scene)
+    assert_equal @private_universe, write_ability.send(:universe_for, scene_owned)
+  end
+
   test "a scene resolves its universe through its story" do
     private_story = Story.create!(universe: @private_universe, name: "Private story")
     scene = private_story.scenes.create!(name: "Private scene")

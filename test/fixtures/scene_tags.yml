@@ -1,0 +1,18 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+scene_tag_one:
+  story: story_one
+  name: Scene tag one
+  slug: "scene-tag-one"
+
+scene_tag_two:
+  story: story_one
+  name: Scene tag two
+  slug: "scene-tag-two"
+  parent: scene_tag_one
+  position: 0
+
+scene_tag_three:
+  story: story_two
+  name: Scene tag three
+  slug: "scene-tag-three"

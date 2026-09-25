@@ -75,6 +75,7 @@ class AbilityTest < ActiveSupport::TestCase
       sections(:section_one),
       section_tags(:section_tag_one),
       scenes(:scene_one),
+      scene_tags(:scene_tag_one),
       characters(:character_one),
       character_tags(:character_tag_one),
       locations(:location_one),

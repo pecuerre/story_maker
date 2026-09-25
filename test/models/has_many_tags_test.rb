@@ -17,6 +17,14 @@ class HasManyTagsTest < ActiveSupport::TestCase
     assert_equal [ section_tag.id ], section.reload.section_tag_ids
     assert_equal section.story_id, section.section_tags.build(name: "Built section tag").story_id
     assert_equal section_tag.story_id, section_tag.sections.build(name: "Built section").story_id
+
+    scene = scenes(:scene_one)
+    scene_tag = scene_tags(:scene_tag_two)
+
+    scene.update!(scene_tag_ids: [ scene_tag.id ])
+    assert_equal [ scene_tag.id ], scene.reload.scene_tag_ids
+    assert_equal scene.story_id, scene.scene_tags.build(name: "Built scene tag").story_id
+    assert_equal scene_tag.story_id, scene_tag.scenes.build(name: "Built scene").story_id
   end
 
   test "rejects tag IDs from another universe on every universe-scoped content model" do
@@ -60,6 +68,15 @@ class HasManyTagsTest < ActiveSupport::TestCase
 
     assert_not_includes section.reload.section_tags, foreign_tag
     assert_not_includes foreign_tag.reload.sections, section
+  end
+
+  test "scene tag associations use story scope on both sides" do
+    scene = scenes(:scene_one)
+    foreign_tag = scene_tags(:scene_tag_three)
+    insert_join_row(:scenes_scene_tags, scene, foreign_tag)
+
+    assert_not_includes scene.reload.scene_tags, foreign_tag
+    assert_not_includes foreign_tag.reload.scenes, scene
   end
 
   test "inverse assignments reject content from another owning scope" do

@@ -218,14 +218,16 @@ Destructive controls use these exact templates, substituting the displayed recor
 The implementation may add surrounding accessibility text, but it does not omit the consequences
 shown in these confirmations.
 
-> **Execution note (2026-09-25, slices 11.1–11.3):** this decision is implemented in three
+> **Execution note (2026-09-25, slices 11.1–11.4):** this decision is implemented in four
 > slices and is not superseded. Slice 11.1 landed the `scenes` table, the `Scene` model, the
 > story-scoped routes, the canonical narrative-order list with accessible Move controls, and the
 > Scene Details editor. Slices 11.2 and 11.3 landed the optional same-Story Section, optional
 > same-Universe Event, and independent single-point `datetime` references (with the model-level
 > validations that make a malformed optional ID or datetime a `422` rather than a database
 > exception), the URL-backed **Scene Details / Characters / Items / Locations** tab shell, and both
-> Section-grouping paths. Two decisions above are implemented literally and are worth restating
+> Section-grouping paths. Slice 11.4 landed the story-scoped `SceneTag` hierarchy, its constrained
+> `scenes_scene_tags` join, the separate Story Tags taxonomy tab, optional Scene Details assignment,
+> and preloaded tag badges. Two decisions above are implemented literally and are worth restating
 > because they are easy to break:
 >
 > - The three not-yet-routable workspace tabs are `aria-disabled` placeholders, not live links to
@@ -235,8 +237,9 @@ shown in these confirmations.
 >   That keeps the move working with no client-side scripting, which the keyboard/touch requirement
 >   above depends on.
 >
-> The `Character`, `Item`, `Location`, Element, speaker, and Scene Tag routes remain unrouted until
-> their slices add a real destination. `Section` and `Event` now declare
+> The `Character`, `Item`, `Location`, Element, and speaker routes remain unrouted until their
+> slices add a real destination. Scene Tag definitions and assignment are now routed in slice 11.4.
+> `Section` and `Event` declare
 > `has_many :scenes, dependent: :nullify`, so the asymmetric deletion contract and the confirmation
 > templates below are live for those two records; the Character/Item/Location templates still
 > describe Scene links that slices 11.7–11.9 will add.

@@ -8,6 +8,7 @@ Rails.application.routes.draw do
     resources :stories, path: "s" do
       resources :sections
       resources :section_tags
+      resources :scene_tags
       resources :scenes do
         patch :move, on: :member
         # Collection action: the Section workspace submits the chosen scene and

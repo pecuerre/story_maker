@@ -9,9 +9,10 @@
 ## Core Patterns
 
 ### Database Schema
-- Content records are scoped to a **universe**; the two exceptions are `Section` and `Scene`, which
-  are scoped to a **Story** (`Section belongs_to :story`, `Scene belongs_to :story`,
-  `Story belongs_to :universe`). A universe holds many
+- Content records are scoped to a **universe**; the story-scoped exceptions are `Section`, `Scene`,
+  `SectionTag`, and `SceneTag` (`Section belongs_to :story`, `Scene belongs_to :story`,
+  `SectionTag belongs_to :story`, `SceneTag belongs_to :story`, and `Story belongs_to :universe`). A
+  universe holds many
   stories (e.g. universe *A Song of Ice and Fire* → stories *Game of Thrones*, *House of the Dragon*),
   which share the universe's characters/locations/events/items but each own their sections (the script/plot)
   and their ordered scenes.
@@ -50,12 +51,13 @@
   *"must belong to the same story"*).
 - Content ↔ tag pairs are declared with the `HasManyTags` DSL:
   content model: `has_many_tags :character_tag, scope: :universe_id`, tag model:
-  `has_many_tagd :character, scope: :universe_id` (inverse side). Section/SectionTag use
-  `scope: :story_id`. The scope is mandatory and is applied to reads/builds on both sides; a shared
-  validation also rejects foreign members assigned in memory or through an ID writer. Tags are
-  **optional on every content model** — the DSL adds no presence validation and no controller
-  force-assigns a default tag, so records are saved untagged when the user picks none.
+  `has_many_tagd :character, scope: :universe_id` (inverse side). Section/SectionTag and
+  Scene/SceneTag use `scope: :story_id`. The scope is mandatory and is applied to reads/builds on
+  both sides; a shared validation also rejects foreign members assigned in memory or through an ID
+  writer. Tags are **optional on every content model** — the DSL adds no presence validation and no
+  controller force-assigns a default tag, so records are saved untagged when the user picks none.
 - `_tag` models include `HasColor` (validated `#rrggbb` `bgcolor`/`fgcolor`) and `HasSlug`.
+  `SectionTag` and `SceneTag` additionally use the story-scoped `Hierarchical` scope.
 - Name presence is validated on: Universe, Character, Location, Item, Section, Story and all
   `_tag` models. Not on: Event (see below), Relation and Ownership (name optional).
 - `Relation`, `Ownership` and `Event` add custom validators that keep their non-tag associated
@@ -88,8 +90,10 @@
   proxy/access-log retention remains an external deployment responsibility.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
-    Characters, Locations, Items, Events, Sections. The page renders HTML; create/update/destroy
-    are called by Stimulus with `as: :json`.
+    Characters, Locations, Items, Events, Sections, including `SceneTagsController`. The page
+    renders HTML; create/update/destroy are called by Stimulus with `as: :json`. `SceneTagsController`
+    checks the request format before entering the positioned service so a rejected HTML mutation
+    cannot commit first.
   - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Universe
     memberships, Sessions, Passwords.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
@@ -101,12 +105,12 @@
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
   `universe_*` and URLs look like `/u/<universe-slug>/...` (see `config/routes.rb`).
-- Stories are a full resource in that scope with sections, section tags, and scenes nested
+- Stories are a full resource in that scope with sections, section tags, Scene Tags, and scenes nested
   underneath:
-  `resources :stories, path: "s" do resources :sections; resources :section_tags; resources :scenes end`
+  `resources :stories, path: "s" do resources :sections; resources :section_tags; resources :scene_tags; resources :scenes end`
   → `/u/:universe_slug/s/:story_id/sections`, helpers `universe_story_*`,
-  `universe_story_section(s)`, `universe_story_section_tag(s)`, `universe_story_scene(s)`,
-  `move_universe_story_scene_path` for the narrative-order move, and
+  `universe_story_section(s)`, `universe_story_section_tag(s)`, `universe_story_scene_tag(s)`,
+  `universe_story_scene(s)`, `move_universe_story_scene_path` for the narrative-order move, and
   `group_universe_story_scenes_path` for the Section grouping form.
 - **Path helpers must receive their keys explicitly** (`universe_story_path(id: story)`,
   `universe_story_sections_path(story_id: story)`): a positional record is assigned to the first
@@ -114,9 +118,10 @@
   from the current request (recall) — that is why `universe_characters_path()` with no arguments
   works on any page inside a universe. A test scans Ruby and ERB call sites and rejects positional
   arguments to `universe_*_path`/`universe_*_url` helpers.
-- All section, section-tag, and scene URLs include the story id (`/u/:universe_slug/s/:story_id/...`).
-  The universe-level `/u/:universe_slug/sections` and `/u/:universe_slug/scenes` paths are
-  intentionally invalid.
+- All section, section-tag, Scene Tag, and scene URLs include the story id
+  (`/u/:universe_slug/s/:story_id/...`). The universe-level `/u/:universe_slug/sections`,
+  `/u/:universe_slug/section_tags`, `/u/:universe_slug/scene_tags`, and
+  `/u/:universe_slug/scenes` paths are intentionally invalid.
 - Relations/Ownerships are limited to `index, create, update, destroy`; memberships are mounted at
   `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and are
   admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
@@ -165,7 +170,7 @@ The three functional editing patterns are:
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
 
-### Scene conventions (core and references shipped in 11.1–11.3; later slices pending)
+### Scene conventions (core, references, grouping, and tags shipped in 11.1–11.4; later slices pending)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first Scene contract. The
 **Scenes** sidebar entry is a real story-scoped link when a story is selected and stays an
@@ -175,7 +180,8 @@ The three functional editing patterns are:
   `parent_id`). A required `name` is labelled **Title**; `description` is optional and a title-only
   Scene is valid. `belongs_to :section, optional: true` and `belongs_to :event, optional: true`
   carry the organizational group and the in-world fact, and the single optional `datetime` carries
-  the in-world time point. `Scene#universe` resolves through `story.universe`; register `Scene` in
+  the in-world time point. `has_many_tags :scene_tag, scope: :story_id` supplies optional Story
+  Tag assignments. `Scene#universe` resolves through `story.universe`; register `Scene` in
   `Ability::CONTENT_CLASS_NAMES` and `MaintainsSiblingPositions` with
   `maintains_flat_positions_for :scene` and `@story` as the sibling collection and scope owner.
 - **Scope is application-level.** `section_belongs_to_story`, `event_belongs_to_story_universe`,
@@ -184,6 +190,10 @@ The three functional editing patterns are:
   re-render flow rather than a foreign-key `500` or a silently dropped value. `Section` and `Event`
   both declare `has_many :scenes, dependent: :nullify`: the deletion contract is asymmetric and
   never removes a shared world record or a Scene.
+- **Scene Tags:** `SceneTag belongs_to :story`, includes `Hierarchical`, `HasColor`, `HasSlug`, and
+  the inverse `has_many_tagd :scene, scope: :story_id`. Definitions use the same positioned
+  controller contract as Section Tags, while the Scene form uses `scene_tag_ids` and the shared
+  scoped association; no default tag is assigned.
 - **Ownership resolution:** `UniverseScopeResolver` is the single answer to which universe owns a
   record. `Ability#universe_for` and `ApplicationHelper#universe_for_record` both delegate to it, so
   record-level authorization and the mutation controls a view renders cannot drift. It resolves a
@@ -200,10 +210,10 @@ The three functional editing patterns are:
   `narration` or `dialogue`, `name` is required and labelled **Title**, `body` is optional, and
   `position` is
   flat. Narration rejects speakers; Dialogue requires at least one same-Universe Character speaker.
-- **Tags (planned):** `SceneTag` and `Scene` use the existing `has_many_tags` / `has_many_tagd` DSL
-  with
-  mandatory `scope: :story_id`; tags are optional and have no default. Scene Tag definitions belong
-  under Configuration → Tags → Story Tags, while assignment belongs on Scene Details.
+- **Tags (implemented in 11.4):** `SceneTag` definitions are hierarchical, story-scoped, and
+  managed under Configuration → Tags → Story Tags → Scene tags. The same workspace keeps Section
+  Tags as a separate tab. Scene Details shows preloaded badges, and its one stable HTML form owns
+  optional `scene_tag_ids` assignment; tags are never required or automatically assigned.
 - **World links (planned):** use real join models for `SceneCharacter`, `SceneItem`, and
   `SceneLocation` so
   their nullable free-text `role` is persisted. Use a unique join model for
@@ -213,20 +223,22 @@ The three functional editing patterns are:
   Scenes through that Story. Never use `Scene.find`, a universe-level Scene route, or a
   controller-specific visibility rule. Public read actions still pass through the shared
   authorization callback.
-- **Routes:** Scenes are nested under Stories. Canonical paths are
+- **Routes:** Scenes and Scene Tags are nested under Stories. Canonical Scene paths are
   `/u/:universe_slug/s/:story_id/scenes`, `/u/:universe_slug/s/:story_id/scenes/:scene_id`,
   `.../scenes/new`, `.../scenes/:id/edit`, the member `PATCH .../scenes/:id/move`, and the
-  collection `PATCH .../scenes/group`. Grouping is a collection action because the workspace form
-  posts the chosen `scene_id` next to the chosen `section_id`, which keeps the move working without
-  client-side scripting. Pass `story_id`, `id`, and any record id as named route-helper keys; never
-  use positional records. Do not add Character/Item/Location/Element routes until the slice that
-  implements them exists.
-- **Responses:** Scene index/show/new/create/edit/update/destroy, narrative moves, and grouping use
-  the HTML redirect/re-render flow (`303` for PATCH/DELETE). Element and role-bearing presence-link
-  create/update/destroy will use JSON-only Stimulus modals with `422` error hashes. Do not add an
-  action that ambiguously accepts both. Documented per-action failures: a malformed `section_id`/
-  `event_id`/`datetime` in the editor is a `422` re-render; a foreign or unknown grouping target or
-  scene is a `404`; a missing `direction` or a missing grouping key is a `400`.
+  collection `PATCH .../scenes/group`. The Scene Tag workspace is
+  `/u/:universe_slug/s/:story_id/scene_tags`; its index renders HTML and its mutations are
+  JSON-only. Grouping is a collection action because the workspace form posts the chosen `scene_id`
+  next to the chosen `section_id`, which keeps the move working without client-side scripting. Pass
+  `story_id`, `id`, and any record id as named route-helper keys; never use positional records. Do
+  not add Character/Item/Location/Element routes until the slice that implements them exists.
+- **Responses:** Scene index/show/new/create/edit/update/destroy, narrative moves, grouping, and
+  Scene Tag assignment use the HTML redirect/re-render flow (`303` for PATCH/DELETE). Scene Tag
+  definition mutations are JSON-only, as are Element and role-bearing presence-link mutations in
+  later slices; both return `422` error hashes. Do not add an action that ambiguously accepts both.
+  Documented per-action failures: a malformed `section_id`/`event_id`/`datetime` or foreign Scene
+  Tag assignment in the editor is a `422` re-render; a foreign or unknown grouping target or scene
+  is a `404`; a missing `direction` or a missing grouping key is a `400`.
 - **Ordering:** the global Scene list is ordered by `(position, id)` and is not grouped by Section.
   Move up/Move down are real `button_to` forms that post `direction=up|down` to the member `move`
   action; they are keyboard operable, disabled at the boundaries, and never the only way to
@@ -236,8 +248,10 @@ The three functional editing patterns are:
   `position`.
 - **UI:** the list uses the existing flat-list surface, Scene Details (`/scenes/:id`) is the
   canonical inspectable page with the same content for every access level, and the full-page form
-  pattern (`scenes/_form`, reused by `new` and `edit`) is the only editor. Do not create a fourth
-  page pattern or a second form for the same fields. The editor's workspace tabs go through
+  pattern (`scenes/_form`, reused by `new` and `edit`) is the only editor. Scene Tag badges are
+  preloaded in the list and Details; the form's native optional selector uses full root-first tag
+  paths and is the only Scene assignment surface. Do not create a fourth page pattern or a second
+  form for the same fields. The editor's workspace tabs go through
   `shared/_content_tabs`: **Scene Details** is a live link, and **Characters**, **Items**, and
   **Locations** are `aria-disabled` placeholders until their slices add a destination. A tab is
   never a link to a route that does not exist and never an in-document Bootstrap pane.
@@ -252,12 +266,15 @@ The three functional editing patterns are:
 ### Helpers
 - `app/helpers/modal_fields.rb` — field descriptors consumed by the JS controllers:
   - `*_tag_taxonomy_fields(nodes)` — editors for a tag model (name/description/colors/parent),
-    e.g. `event_tag_taxonomy_fields`, `section_tag_taxonomy_fields`.
+    e.g. `event_tag_taxonomy_fields`, `section_tag_taxonomy_fields`, `scene_tag_taxonomy_fields`.
   - `*_taxonomy_fields(tags)` — content editors with tag selectors, e.g.
     `location_taxonomy_fields`, `section_taxonomy_fields`.
   - `*_fields_json(record)` — serializes a record for modal pre-filling:
     `event_fields_json`, `character_fields_json`, `item_fields_json`,
     `ownership_fields_json`, `relation_fields_json`.
+- `app/helpers/scenes_helper.rb` — Scene grouping/event/time descriptors and
+  `scene_tag_choices`; the latter uses `SceneTagPaths` so nested tag options are root-first and
+  query-free.
 - `app/helpers/application_helper.rb` — `active_if`, `aria_current_for`, `visible?`, `icon`,
   `icon_text_count`, `nav_universes`, `nav_stories` (top bar dropdowns), universe access helpers
   (`can_read_universe?`, `can_write_universe?`, `can_administer_universe?`,

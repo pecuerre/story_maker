@@ -26,13 +26,15 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     story = universe.stories.first
 
     assert_equal "Dark", universe.name
-    assert_equal "netflix dark", story.name
+    assert_equal "Netflix Dark", story.name
     assert_equal "netflix-dark", story.slug
     assert_equal 1, universe.stories.count
     assert_equal 15, story.sections.count
+    assert_equal 4, story.scene_tags.count
     assert_equal 0, Universe.where(slug: "lotr").count
     assert_equal [ 0, 1, 2 ], story.sections.where(parent_id: nil).order(:position, :id).pluck(:position)
     assert_equal [ 0, 1, 2 ], story.section_tags.order(:position, :id).pluck(:position)
+    assert_equal [ 0, 1 ], story.scene_tags.where(parent_id: nil).order(:position, :id).pluck(:position)
   end
 
   test "loads the Dark scenes as a contiguous flat narrative sequence" do
@@ -45,6 +47,9 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal (0...8).to_a, scenes.map(&:position)
     assert_equal "Secrets", scenes.first.name
     assert_equal "The Golden Beast", scenes.last.name
+    assert_equal [ "Mood", "Mystery" ], scenes.first.scene_tags.order(:position, :id).pluck(:name)
+    assert_equal [ "Mystery" ], scenes[1].scene_tags.pluck(:name)
+    assert_empty scenes[3].scene_tags
 
     assert_equal 1, scenes.count { |scene| scene.description.blank? }
     assert_equal [ "Double Lives" ], scenes.select { |scene| scene.description.blank? }.map(&:name)
@@ -59,6 +64,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal 5, story.scenes.count
     assert_equal [ 0, 1, 2, 3, 4 ], story.scenes.reorder(:position, :id).pluck(:position)
     assert_equal "A Long-expected Party", story.scenes.reorder(:position, :id).first.name
+    assert_equal [ "Adventure", "Fellowship" ], story.scenes.first.scene_tags.order(:position, :id).pluck(:name)
   end
 
   test "loads the LOTR universe with stable converted slugs" do
@@ -245,6 +251,26 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
       end
 
       assert_match(/references missing Event\.ring_given_to_frodo/, error.message)
+    end
+  end
+
+  test "rejects a scene tag from another story" do
+    with_data_copy do |directory|
+      stories_path = File.join(directory, "db/data/dark/stories.yml")
+      File.write(stories_path, "#{File.read(stories_path)}\n- universe: Universe.dark\n  name: Second story\n  slug: second-story\n")
+
+      scene_tags_path = File.join(directory, "db/data/dark/scene_tags.yml")
+      File.write(scene_tags_path, "#{File.read(scene_tags_path)}\n- story: Story.second-story\n  name: Foreign scene tag\n  slug: foreign-scene-tag\n")
+
+      scenes_path = File.join(directory, "db/data/dark/scenes.yml")
+      contents = File.read(scenes_path)
+      File.write(scenes_path, contents.sub("scene_tags: [ SceneTag.mood, SceneTag.mystery ]", "scene_tags: [ SceneTag.foreign-scene-tag ]"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/tag 'foreign-scene-tag' must belong to the same story/, error.message)
     end
   end
 

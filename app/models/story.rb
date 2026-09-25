@@ -8,6 +8,7 @@ class Story < ApplicationRecord
   belongs_to :universe
   has_many :sections, dependent: :destroy
   has_many :section_tags, dependent: :destroy
+  has_many :scene_tags, dependent: :destroy
   has_many :scenes, dependent: :destroy
 
   validates :name, presence: true, uniqueness: { scope: :universe_id }

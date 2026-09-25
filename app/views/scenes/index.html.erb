@@ -45,6 +45,7 @@ end %>
                 <i class="bi <%= grouping.present? ? "bi-folder2" : "bi-folder2-open" %>" aria-hidden="true"></i>
                 <span class="text-truncate"><%= grouping || SectionPaths::UNGROUPED_LABEL %></span>
               </span>
+              <%= entity_tag_badge(scene) %>
             </div>
             <% if scene.description.present? %>
               <div class="entity-description"><%= scene.description %></div>

@@ -19,6 +19,34 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[fixed]** Corrected the `UniverseDataLoaderTest` Dark story-name expectation to
+  `Netflix Dark`. Commit `0a236a9` renamed the `dark` universe's development story to
+  `Netflix Dark` (slug `netflix-dark`) in `db/data/dark/stories.yml` but asserted the lowercase
+  `netflix dark`, so the full `bin/rails test` run had one standing failure since that commit. Only
+  the assertion was wrong; the manifest name and slug were already correct and are unchanged.
+- **[fixed]** Stopped `DevelopmentDataTasksTest` from calling `Rails.application.load_tasks` once
+  per test. That call re-ran the Rakefile and re-loaded every bundled gem's rake files, and gem
+  rake files are not idempotent, so each parallel `bin/rails test` worker re-defined
+  `Cssbundling::Tasks::LOCK_FILES` and printed `already initialized constant` warnings. The test
+  now loads only this application's own `lib/tasks/*.rake`, memoized once per process, which still
+  registers `db:demo:check`, `db:demo:load`, and `db:demo:reset`. `bin/rails test` output is now
+  warning-free; the registered task set and every assertion are unchanged.
+
+- **[added]** Completed Epic 11 slice 11.4, Scene Tag taxonomy and assignment. Added the
+  story-scoped `SceneTag` schema/model and constrained `scenes_scene_tags` join, registered the
+  model and story-scoped routes, and exposed **Configuration → Tags → Story Tags → Scene tags** as
+  a hierarchical, colored, JSON-mutation taxonomy workspace alongside Section tags. Scene Tag
+  mutations reject non-JSON requests before the positioned service can commit a record.
+- **[added]** Scene Details and the canonical Scenes list now show preloaded Scene Tag badges, and
+  the single HTML Scene editor can assign or clear optional same-story tags without changing
+  narrative position. Public read, private read/write/admin authorization, same-story validation,
+  untagged title-only Scenes, and the existing taxonomy DOM/accessibility hardening are preserved.
+- **[chore]** Added Scene Tag fixtures and connected nested/tagged/untagged Dark and LOTR
+  development data, updated the shared loader registry, and verified both `db:demo:check` manifests.
+- **[added]** Added model, request, authorization, routing, development-loader, helper, and focused
+  browser coverage for the new taxonomy and assignment paths; updated the Scene architecture, data
+  model, conventions, visual design, development guide, ADR execution note, and known-quirk boundary.
+
 - **[added]** Completed Epic 11 slices 11.2 and 11.3, the Scene references and Section grouping
   work. A schema-only `AddSceneReferencesToScenes` migration added the optional `section_id`,
   `event_id`, and single-point `datetime` to `scenes` with real foreign keys, a `datetime` column

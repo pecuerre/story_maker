@@ -1,0 +1,25 @@
+- story: Story.the-lord-of-the-rings
+  name: Adventure
+  slug: adventure
+  bgcolor: "#7a9e7a"
+  fgcolor: "#000000" # black
+  position: 0
+
+- story: Story.the-lord-of-the-rings
+  name: Fellowship
+  slug: fellowship
+  parent: SceneTag.adventure
+  position: 0
+
+- story: Story.the-lord-of-the-rings
+  name: Loss
+  slug: loss
+  bgcolor: "#9b8aa6"
+  fgcolor: "#000000" # black
+  position: 1
+
+- story: Story.the-lord-of-the-rings
+  name: Homecoming
+  slug: homecoming
+  parent: SceneTag.loss
+  position: 0

@@ -57,6 +57,14 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_includes grouping_badges, "Ungrouped"
   end
 
+  test "index shows scene tag badges for tagged scenes" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_select ".entity-row .taxonomy-tag", text: "Scene tag one"
+    assert_select ".entity-row .taxonomy-tag", text: "Scene tag two"
+  end
+
   test "index does not confuse section order with narrative order" do
     # A section created later still cannot reorder the sequence.
     stories(:story_one).sections.create!(name: "Later section")
@@ -220,6 +228,19 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".page-eyebrow", text: "In-world time"
   end
 
+  test "scene details shows optional scene tags and an empty state" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select ".page-eyebrow", text: "Scene tags"
+    assert_select ".taxonomy-tag", text: "Scene tag one"
+    assert_select ".taxonomy-tag", text: "Scene tag two"
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
+
+    assert_includes response.body, "No scene tags assigned yet."
+  end
+
   test "scene details links a grouped scene to its section and marks an ungrouped scene" do
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
 
@@ -339,6 +360,80 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='scene[section_id]'] option[selected=selected][value=?]",
       sections(:section_one).id
     assert_select "input[type=datetime-local][name='scene[datetime]'][value=?]", "2026-09-11T09:00"
+  end
+
+  test "the scene forms expose only current-story scene tags and preserve assignments" do
+    other_tag = scene_tags(:scene_tag_three)
+
+    get new_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_select "select[name='scene[scene_tag_ids][]'] option[value=?]", scene_tags(:scene_tag_one).id,
+      text: "Scene tag one"
+    assert_select "select[name='scene[scene_tag_ids][]'] option[value=?]", scene_tags(:scene_tag_two).id,
+      text: "Scene tag one / Scene tag two"
+    assert_select "select[name='scene[scene_tag_ids][]'] option[value=?]", other_tag.id, count: 0
+
+    get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_select "select[name='scene[scene_tag_ids][]'] option[selected=selected][value=?]",
+      scene_tags(:scene_tag_one).id
+    assert_select "select[name='scene[scene_tag_ids][]'] option[selected=selected][value=?]",
+      scene_tags(:scene_tag_two).id
+  end
+
+  test "creates a scene with optional scene tag assignments" do
+    tag_ids = [ scene_tags(:scene_tag_one).id, scene_tags(:scene_tag_two).id ]
+
+    assert_difference("Scene.count") do
+      post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+        params: { scene: { name: "Tagged scene", scene_tag_ids: tag_ids } }
+    end
+    created = @story.scenes.find_by!(name: "Tagged scene")
+    assert_equal tag_ids.sort, created.scene_tag_ids.sort
+  end
+
+  test "updates and clears scene tag assignments without changing narrative position" do
+    original_position = @scene.position
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { scene_tag_ids: [ scene_tags(:scene_tag_two).id ] } }
+
+    assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+    assert_equal [ scene_tags(:scene_tag_two).id ], @scene.reload.scene_tag_ids
+    assert_equal original_position, @scene.position
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { scene_tag_ids: [] } }
+
+    assert_empty @scene.reload.scene_tag_ids
+    assert_equal original_position, @scene.position
+  end
+
+  test "rejects a scene tag from another story without changing the scene" do
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { name: "Cross-story tag", scene_tag_ids: [ scene_tags(:scene_tag_three).id ] } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger", text: /Scene tags must belong to the same story/
+    assert_equal "Scene one", @scene.reload.name
+
+    assert_no_difference("Scene.count") do
+      post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+        params: { scene: { name: "Cross-story create", scene_tag_ids: [ scene_tags(:scene_tag_three).id ] } }
+    end
+    assert_response :unprocessable_content
+    assert_select ".alert-danger", text: /Scene tags must belong to the same story/
+  end
+
+  test "reports unknown and duplicate scene tag ids as validation errors" do
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { scene_tag_ids: [ "0" ] } }
+    assert_response :unprocessable_content
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { scene_tag_ids: [ scene_tags(:scene_tag_one).id, scene_tags(:scene_tag_one).id ] } }
+    assert_response :unprocessable_content
   end
 
   test "the section selector only offers sections of the current story" do

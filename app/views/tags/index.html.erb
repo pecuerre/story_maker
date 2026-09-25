@@ -15,6 +15,7 @@
     count_label: "tag",
     new_label: tag_config.fetch(:new_label),
     empty_description: tag_config.fetch(:empty_description),
+    confirm_message: tag_config[:confirm_message],
     nodes: tag_config.fetch(:nodes),
     new_url: tag_config.fetch(:new_url),
     create_url: tag_config.fetch(:create_url),
@@ -27,10 +28,10 @@
   <%= render "shared/page_header",
     title: "Tags",
     eyebrow: "Story Tags",
-    description: "Choose a story before managing its section tags." %>
+    description: "Choose a story before managing its section or scene tags." %>
 
   <%= render "shared/empty_state",
     title: "Select a story",
-    description: "Section tags belong to an individual story. Select a story from the Story menu to continue.",
+    description: "Story tags belong to an individual story. Select a story from the Story menu to continue.",
     icon: "book" %>
 <% end %>

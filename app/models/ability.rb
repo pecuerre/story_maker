@@ -13,6 +13,7 @@ class Ability
     Section
     SectionTag
     Scene
+    SceneTag
     Character
     CharacterTag
     Location

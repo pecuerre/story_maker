@@ -23,10 +23,9 @@ db/data/
 
 A universe directory contains all data used to exercise that universe: its user/universe record,
 memberships when explicit private or delegated-admin access is needed, stories, sections, section
-tags, scenes, world-building records, taxonomies, and relationships. Every registered universe
-directory
-must contain one YAML file for every model in the shared registry; use `[]` for a model that the
-universe intentionally does not exercise.
+tags, scenes, scene tags, world-building records, taxonomies, and relationships. Every registered
+universe directory must contain one YAML file for every model in the shared registry; use `[]` for a
+model that the universe intentionally does not exercise.
 
 The current examples are:
 
@@ -78,7 +77,9 @@ references, cross-scope associations, raw foreign-key IDs, and unknown attribute
 records. Hierarchical positions use file order unless every sibling supplies a unique non-negative
 integer position. Flat position groups — currently the story-owned `scenes` sequence — are declared
 in the registry with `position_mode: :flat` and are grouped per story, never per parent; supply
-explicit `position` values when the file should state the order directly.
+explicit `position` values when the file should state the order directly. Story-scoped Scene Tag
+files are hierarchical and may be referenced from `scenes.yml` through `SceneTag.<slug>` entries;
+the loader proves every assignment shares the Scene's Story.
 
 `universe_memberships.yml` is used when a sample universe should exercise private read/write/admin
 access; owner access is implicit and does not need a membership row.

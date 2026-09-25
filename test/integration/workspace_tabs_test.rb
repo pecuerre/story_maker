@@ -61,7 +61,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "main nav[aria-label='Tag scope'] a.active[aria-current='page']", text: "Story Tags"
-    assert_select "main nav[aria-label='Story tag workspace'] a", 1
+    assert_select "main nav[aria-label='Story tag workspace'] a", 2
     assert_select "main nav[aria-label='Story tag workspace'] a.active[aria-current='page']", text: "Section tags"
     assert_select "main h1", text: "Tags"
   end
@@ -92,7 +92,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "main nav[aria-label='Tag scope'] a.active[aria-current='page']", text: "Story Tags"
-    assert_select "main nav[aria-label='Story tag workspace'] a", 1
+    assert_select "main nav[aria-label='Story tag workspace'] a", 2
     assert_select "main .empty-state", text: /Select a story/
   end
 

@@ -19,11 +19,16 @@ would make the current navigation state surprising and could expose content in t
 
 A universe owns the shared world-building records and their tag taxonomies. This includes
 characters, locations, items, events, relations, ownerships, and all corresponding tag models
-except section tags.
+except section tags and scene tags.
 
-A story owns its sections and section tags. Sections form the story's script hierarchy, and each
-story has its own section taxonomy. Section and section-tag routes must therefore include an
-explicit story id.
+A story owns its sections, scenes, section tags, and scene tags. Sections form the story's script
+hierarchy, while Scenes form its ordered narrative sequence; each story has its own structure
+taxonomies. Section, Scene, Section Tag, and Scene Tag routes must therefore include an explicit
+story id.
+
+> **Slice 11.4 clarification (2026-09-25):** `Scene` and `SceneTag` apply the same story-scope
+> boundary to the ordered Scene sequence and its optional tag taxonomy. The underlying
+> world-building scope decision is unchanged.
 
 The current story is selected explicitly or remembered for the current user and universe. There
 is no fallback to the universe's first story.

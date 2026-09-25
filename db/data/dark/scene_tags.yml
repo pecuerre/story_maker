@@ -1,0 +1,25 @@
+- story: Story.netflix-dark
+  name: Mood
+  slug: mood
+  bgcolor: "#6c8ebf"
+  fgcolor: "#ffffff" # white
+  position: 0
+
+- story: Story.netflix-dark
+  name: Mystery
+  slug: mystery
+  parent: SceneTag.mood
+  position: 0
+
+- story: Story.netflix-dark
+  name: Turning point
+  slug: turning-point
+  bgcolor: "#c96b6b"
+  fgcolor: "#000000" # black
+  position: 1
+
+- story: Story.netflix-dark
+  name: Revelation
+  slug: revelation
+  parent: SceneTag.turning-point
+  position: 0

@@ -15,6 +15,8 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
 
   test "resolves a story-scoped record through its story" do
     assert_equal @universe, UniverseScopeResolver.universe_for(sections(:section_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(section_tags(:section_tag_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_tags(:scene_tag_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scenes(:scene_one))
   end
 

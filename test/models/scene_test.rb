@@ -155,4 +155,17 @@ class SceneTest < ActiveSupport::TestCase
     assert_nil scene.reload.event
     assert_equal Time.utc(2026, 9, 11, 9), scene.datetime
   end
+
+  test "deleting a scene removes its tag assignments but not the tag definitions" do
+    scene = scenes(:scene_one)
+    tag_ids = scene.scene_tag_ids
+
+    assert_difference("Scene.count", -1) do
+      scene.destroy!
+    end
+
+    assert_equal tag_ids.length, SceneTag.where(id: tag_ids).count
+    assert_equal 2, SceneTag.where(story_id: @story).count
+    assert SceneTag.where(id: tag_ids).all? { |tag| tag.scenes.empty? }
+  end
 end

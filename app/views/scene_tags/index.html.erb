@@ -1,0 +1,23 @@
+<% content_for :title, "Scene Tags" %>
+
+<%= render "shared/taxonomy_tree",
+  title: "Scene tags",
+  description: "Define optional labels for this story's scenes, such as mood, turning point, or story beat.",
+  eyebrow: "Story: #{@story.name}",
+  count: @story.scene_tags.count,
+  count_label: "tag",
+  new_label: "Add scene tag",
+  tag_workspace_scope: "story",
+  tag_workspace_taxonomy: "scene",
+  empty_description: "Tags are optional. Add one to classify scenes, or write scenes without a tag.",
+  confirm_message: ->(scene_tag) {
+    "Delete “#{scene_tag.name}”? Its child tags and assignments will be removed. Scenes will remain."
+  },
+  nodes: @scene_tags,
+  new_url: ->(parent = nil) { new_universe_story_scene_tag_path(story_id: @story, parent_id: parent&.id) },
+  create_url: universe_story_scene_tags_path(story_id: @story),
+  edit_url: ->(scene_tag) { edit_universe_story_scene_tag_path(story_id: @story, id: scene_tag) },
+  update_url: ->(scene_tag) { universe_story_scene_tag_path(story_id: @story, id: scene_tag) },
+  delete_url: ->(scene_tag) { universe_story_scene_tag_path(story_id: @story, id: scene_tag) },
+  model_param: "scene_tag",
+  modal_fields: scene_tag_taxonomy_fields(@story.scene_tags.order(:position, :id)) %>

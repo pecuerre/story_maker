@@ -71,6 +71,27 @@ bin/bundler-audit            # vulnerable gems
 bin/importmap audit          # vulnerable JS pins
 ```
 
+## Repository quality and DataFactor follow-up
+
+The 2026-09-25 DataFactor report is a point-in-time snapshot, not a release gate or a reason to
+add ceremonial dependencies or Git history. Its actionable recommendations are distilled in
+[`data_factor_guidance.md`](data_factor_guidance.md); deferred work is tracked in
+[`backlog.md`](backlog.md) and verified gaps are recorded in [`known_quirks.md`](known_quirks.md).
+Verify each recommendation against the current tree before acting. In particular, `/up` is already
+routed and `bun.lock` is already committed and used with `--frozen-lockfile` in CI and Docker.
+
+The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, Minitest, and a
+browser smoke suite. It does **not** yet measure coverage, audit the complete Bun/npm graph or
+build/boot the production image, provide a one-command Compose setup, or enable structured
+request/error tracking. Those are follow-up work, not current capabilities; do not claim them in
+release or onboarding copy until they are implemented and documented.
+
+When planning one of those improvements, preserve the development-only data boundary, the
+universe/story authorization model, and the no-secrets rules. A value-free `.env.example` may be
+committed only after an explicit `.gitignore` exception; real `.env` files, credentials, DSNs, and
+deployment keys remain local/secret. Do not use a hardcoded demo password as a fallback, and do not
+let a production container run the transitional demo seed path.
+
 ## Seeding / development data
 
 `db/data/` contains checked-in but **disposable development data**. It is not production seed data,

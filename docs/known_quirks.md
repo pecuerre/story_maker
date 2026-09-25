@@ -7,8 +7,10 @@ survives. Index of all docs: [README.md](README.md).
 
 This re-audit was performed on 2026-09-24 against commit `8fcf4d4`. It is an observation record
 only: no application, test, configuration, dependency, or generated-asset fixes were made in this
-pass. Any later documentation-only commit is not part of the audited code baseline. Severity labels
-distinguish reachable security/data-loss issues from lower-priority hardening and contract decisions.
+pass. Any later documentation-only commit is not part of the audited code baseline. The separate
+DataFactor follow-up section below was checked against the current tree on 2026-09-25; it is not a
+full replacement for the original audit. Severity labels distinguish reachable security/data-loss
+issues from lower-priority hardening and contract decisions.
 
 ## Development workflow observations
 
@@ -234,7 +236,10 @@ distinguish reachable security/data-loss issues from lower-priority hardening an
     `bin/importmap audit` explicitly reports that it ignores the vendored package. The Bun/npm
     dependency graph is not audited in CI, and `.github/dependabot.yml:1-12` has no JavaScript/Bun
     or Docker ecosystem entry. A local `bun audit` currently reports no vulnerabilities, but that
-    check is absent from the workflow.
+    check is absent from the workflow. The DataFactor report's observation that no JavaScript
+    lockfile exists is stale: `bun.lock` is committed and CI/Docker use
+    `bun install --frozen-lockfile`. The missing audit/Dependabot coverage remains a backlog item
+    (see `docs/backlog.md`, item 18).
 
 35. **Medium — the production image retains test and build artifacts.** `Dockerfile:24-28` excludes
     only the `development` bundle group, not `development:test`, so Capybara/Selenium and shared
@@ -248,7 +253,9 @@ distinguish reachable security/data-loss issues from lower-priority hardening an
     from-zero migration run, Docker build, production asset boot, Solid Cache/Queue/Cable setup,
     Kamal validation, or production mailer URL/SMTP behavior. There is no coverage measurement or
     threshold. The local migration status is currently clean, but those deployment paths remain
-    untested.
+    untested. The DataFactor coverage recommendation is tracked as backlog item 14; the container
+    and supply-chain follow-ups are items 15 and 18. A green test job is not evidence that a clean
+    production image or the full runtime can boot.
 
 37. **Low — development fixtures and documentation overstate baseline coverage.**
     `docs/development.md:42-44` says all content and tag fixtures are present, but relation,
@@ -256,9 +263,9 @@ distinguish reachable security/data-loss issues from lower-priority hardening an
     many of those records ad hoc. `docs/README.md:19` and `docs/data_model.md:207` link to missing
     `docs/schema.txt`, and `docs/README.md:23` advertises an absent `docs/images-to-ai/` directory.
     The development guide also calls `test/helpers` and mailer previews effectively empty even though
-    `test/helpers/application_helper_test.rb` and a mailer preview are present. The root README presents
-    `db:restart` without the explicit approval warning present in `AGENTS.md` and
-    `docs/development.md`.
+    `test/helpers/application_helper_test.rb` and a mailer preview are present. The root README's
+    destructive `db:restart` warning has been clarified; the fixture and missing-link issues in
+    this finding remain open.
 
 38. **Low — setup and supply-chain reproducibility has gaps.** `bin/dev:3-5` installs an unpinned
     `foreman` gem at runtime; the Dockerfile comment refers to a nonexistent `.ruby-version` while
@@ -398,7 +405,47 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
 
-## Audit evidence and clean checks
+## DataFactor report follow-up observations (2026-09-25)
+
+The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They were
+checked against the current tree and are recorded here as open follow-ups, not as requirements to
+maximize an automated score. The distilled policy is in
+[`data_factor_guidance.md`](data_factor_guidance.md), and the corresponding implementation work is
+in [`backlog.md`](backlog.md), items 14–19. The report's claims that no `/up` route or JavaScript
+lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
+used with a frozen install in CI and Docker.
+
+51. **Medium — production observability is minimal.** Production logs to tagged `STDOUT`
+    (`config/environments/production.rb:36-44`), but there is no structured request formatter,
+    error-tracking integration, or metrics contract in the application. The existing `/up` route
+    and health-log silencing are useful foundations; they need a regression test and a deliberate
+    privacy/redaction policy before logs or external tracking are added. See backlog item 16 and
+    the password-reset/logging findings above.
+
+52. **Medium — clean container onboarding is absent.** The repository has a production-oriented
+    `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`,
+    devcontainer, or value-free `.env.example`. A fresh clone therefore still depends on the
+    documented host toolchain, and there is no clean-checkout proof that the image, SQLite paths,
+    CSS assets, and `/up` work together. The compose path must not run transitional development
+    seeds in production; see backlog item 15.
+
+53. **Low/conditional — local demo and smoke-test credentials are literal values.** The LOTR
+    development loader uses a password literal (`db/data/lotr/lotr.rb:1`), the Dark fixture users
+    contain literal passwords (`db/data/dark/users.yml:1-10`), and
+    `docs/smoke_test_stories.sh:17,28-29` documents/defaults a real-looking password. These are
+    disposable fixtures rather than production credentials, but literals are easy to reuse and
+    trigger security hygiene checks. Require an explicit environment value or generate a local
+    value instead, while preserving the documented synthetic development login and load commands
+    for manual verification. A value-free template is not a secret. The separate critical tracked
+    `.kamal/secrets` issue remains an independent rotation/removal task. See backlog item 17.
+
+54. **Low — taxonomy field-builder duplication creates maintenance drift risk.** The DataFactor
+    report identified repeated per-type descriptor logic in `app/helpers/modal_fields.rb` and
+    `app/helpers/tags_helper.rb`. The current small-file profile is otherwise a strength, so this
+    is a refactoring opportunity rather than a correctness finding. Characterize the serialized
+    field/JSON and form contracts before extracting shared declarative behavior; see backlog item
+    19.
+
 
 The following non-destructive checks passed during this pass:
 

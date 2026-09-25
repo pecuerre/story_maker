@@ -48,6 +48,33 @@ When behavior changes, update the matching document in `docs/` in the same chang
 - When reconstructing the first historical entries, use the repository's Git history and existing
   documentation. Mark future work as `[planned]` rather than describing it as implemented.
 
+## Repository quality and DataFactor guidance
+
+The DataFactor report received on 2026-09-25 is a point-in-time snapshot, not a product
+specification, an offer guarantee, or a target to game. Read
+[`docs/data_factor_guidance.md`](docs/data_factor_guidance.md) and
+[`docs/adr/0006-data-factor-quality-guidance.md`](docs/adr/0006-data-factor-quality-guidance.md)
+before work involving CI, tests, coverage, dependencies, containers, onboarding, logging,
+observability, security, or large shared helpers. Verify every report claim against the current
+tree; some findings (notably the existing
+`/up` health route and committed `bun.lock`) are already stale.
+
+- Continue with small, real, useful changes. Pair behavior with Minitest coverage in the same
+  change, keep the matching docs current, and add the required dated `CHANGELOG.md` entry.
+- Prefer security, authorization, data integrity, privacy, and reproducible operations over score
+  improvements. The higher-severity findings in [`docs/known_quirks.md`](docs/known_quirks.md)
+  take priority over automated quality signals.
+- Put deferred quality work in [`docs/backlog.md`](docs/backlog.md) and use the existing
+  **NOW / LATER / NEVER** decision. Do not silently add services, dependencies, refactors, release
+  tags, or deployment actions just because a report suggests them.
+- Do not fabricate history, alter author identities, backdate commits, or create cosmetic releases.
+  Genuine teammate contributions should retain their own identities. Never commit credentials,
+  tokens, DSNs, Rails keys, or real `.env` files. A value-free `.env.example` is documentation,
+  not a secret.
+- When adding coverage, structured logs, health/metrics, error tracking, or a container setup,
+  define redaction, privacy, failure behavior, clean-environment verification, and rollback/stop
+  behavior before implementation. Do not assume a clean Brakeman run covers browser or log paths.
+
 ## Setup and verification commands
 
 Install the pinned tools and dependencies:
@@ -165,8 +192,10 @@ development database.
   **LATER**, or **NEVER**, following [`docs/backlog.md`](docs/backlog.md).
 - Do not silently add refactors, dependency changes, or security fixes outside the requested
   scope.
-- Never expose or modify credentials, `.env` files, Rails keys, or deployment secrets.
-- Do not push, reset, rewrite history, or deploy without explicit approval.
+- Never expose or modify credentials, real `.env` files, Rails keys, or deployment secrets. A
+  value-free `.env.example` is allowed only as a documented template with an explicit ignore-file
+  exception; never put a real value in it.
+- Do not push, reset, rewrite history, create release tags, or deploy without explicit approval.
 - Do not edit generated files under `public/assets` or `app/assets/builds` by hand.
 - Authorization is defined in `app/models/ability.rb` and enforced by
   `UniverseAuthorization`; do not bypass those checks with controller-specific visibility logic.

@@ -43,9 +43,10 @@ bin/importmap audit
 ```
 
 `bin/rails db:restart` recreates the disposable database, migrates it, and reloads the current demo
-data. The database is rebuilt from `db/data/`; that directory is organized as one disposable
-development directory per universe (for example `db/data/dark/` and `db/data/lotr/`) and is not
-production seed data. Application-data migrations are intentionally not used.
+data. It is destructive and must be used only with explicit approval. The database is rebuilt from
+`db/data/`; that directory is organized as one disposable development directory per universe (for
+example `db/data/dark/` and `db/data/lotr/`) and is not production seed data. Application-data
+migrations are intentionally not used.
 
 ## Documentation
 
@@ -59,5 +60,7 @@ production seed data. Application-data migrations are intentionally not used.
 - [Conventions](docs/universe_maker_conventions.md) — patterns for adding and changing features
 - [Known quirks](docs/known_quirks.md) and [resolved quirks](docs/resolved_quirks.md) — verified
   caveats and fix history
+- [DataFactor guidance](docs/data_factor_guidance.md) — maintenance, quality, onboarding, and
+  security priorities distilled from the 2026-09-25 repository score report
 
 When behavior changes, update the relevant document in the same change.

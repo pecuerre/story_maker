@@ -366,6 +366,69 @@ decisions and should not delay the basic ordered Scene workflow.
     focused browser tests. Complete this before the Scene Tag editor reuses the taxonomy controller;
     an existing green desktop drag/drop test is not evidence that the interaction is usable.
 
+14. **Coverage measurement and CI gate (DataFactor follow-up)**
+
+   Measure the current Minitest baseline with a real coverage tool (SimpleCov is a reasonable
+   starting point), start collection before Rails loads, and decide whether the report's suggested
+   80% threshold is appropriate for this codebase. Add the threshold only after measuring, upload
+   the HTML report from CI, and add tests for meaningful uncovered behavior rather than padding
+   assertions. Keep generated coverage out of Git and document the local command, exclusions, and
+   the limits of the smoke system suite.
+
+15. **One-command containerized onboarding (DataFactor follow-up)**
+
+   Add and verify a development-safe `docker compose up` path using a development-specific service
+   or command. It must prepare an isolated SQLite database, persist the correct local
+   database/storage paths, expose the app, pass `/up`, build CSS assets, and work from a clean
+   checkout. The existing Dockerfile is production-oriented and its server entrypoint currently
+   calls the transitional `db:prepare`/seed path; do not document that as a safe development
+   command until the seed boundary is separated. Document the verified command as an alternative
+   to the `mise`/`bundle`/`bun` setup. Do not run transitional demo seeds in a production
+   container, mount real data, or duplicate the existing entrypoint's `db:prepare` blindly. A
+   devcontainer is optional and should follow the same boundary.
+
+16. **Structured logging and runtime observability (DataFactor follow-up)**
+
+   Preserve the existing `/up` health route and add a regression test. Evaluate structured request
+   logging, request IDs, and optional error tracking with explicit redaction for password-reset
+   tokens, cookies, credentials, DSNs, and personal data. Initialize an external tracker only when
+   an environment variable is supplied. Define authentication, cardinality, retention, and privacy
+   rules before adding metrics; do not add a public endpoint or dependency merely because a report
+   names one. This work must coordinate with the logging, transport, and mailer findings in
+   `known_quirks.md`.
+
+17. **Development credential and environment hygiene (DataFactor follow-up)**
+
+   Replace hardcoded local/demo passwords in the LOTR loader, Dark user data, and smoke script
+   with an explicit environment variable or a generated local-only value. Make missing values fail
+   clearly. Preserve or update the documented synthetic development login and exact load/verification
+   instructions in the same change. Add a value-free `.env.example` only with an intentional
+   `.gitignore` exception and document variable names/purposes without values. Never commit real
+   `.env` files. This item is separate from the critical tracked `.kamal/secrets` rotation/removal
+   work already recorded in `known_quirks.md`.
+
+18. **Complete dependency, JavaScript, and container supply-chain checks (DataFactor follow-up)**
+
+   Preserve the committed `bun.lock` and frozen installs. Add a supported Bun/npm audit path,
+   inventory or audit vendored JavaScript that Importmap Audit ignores, and add appropriate
+   npm/Bun and Docker Dependabot ecosystems. Consider a clean production-image build/boot smoke
+   check and Kamal configuration validation. Do not add a deploy job or typecheck job without an
+   approved deployment contract or a real static-type toolchain; avoid unpinned or ceremonial CI
+   steps. Coordinate with the existing known findings about vendored assets, image size, and
+   reproducibility.
+
+19. **Reduce shared editor/helper duplication (DataFactor follow-up)**
+
+   Characterize the serialized field and JSON contracts used by `modal_fields.rb` and
+   `tags_helper.rb` before changing them. Then extract declarative/shared helpers only where they
+   remove real drift risk, with focused model/request/browser regressions. Preserve the existing
+   three UI patterns, JSON-only mutation contracts, optional tags, authorization, and accessible
+   error states. Do not refactor solely to improve a line-count metric.
+
+These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
+before expanding a feature task; the DataFactor report is directional evidence, not an automatic
+work order.
+
 ## FUTURE WORK
 
 - **Structured dialogue turns.** Replace or augment free-text Dialogue elements with ordered lines,

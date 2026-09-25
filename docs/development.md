@@ -43,7 +43,8 @@ Layout:
   `test/mailers/previews` are effectively empty.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
-  (both belong to `story_one`), all content + tag fixtures.
+  (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), all content +
+  tag fixtures.
 - Sign in with `sign_in_as(users(:user_one))` /
   `sign_out` from `test/test_helpers/session_test_helper.rb`.
 - Route helpers in tests must be fully qualified:
@@ -160,12 +161,16 @@ The Rails test suite uses `test/fixtures/` so automated tests remain determinist
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
 test mode instead of replanting demo records.
 
-## Planned Scene delivery (slice 11.0 contract)
+## Scene delivery (slice 11.1 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and backlog Epic 11 define the Scene
-contract, but slice 11.0 is documentation-only. There is no Scene schema, route, controller, view,
-fixture, or development-data file yet, and the sidebar placeholder must remain non-functional until
-slice 11.1. The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
+contract. Slice 11.1 has landed the core: the schema-only `scenes` migration, the `Scene` model, the
+story-scoped routes/controller, the canonical Scenes list, narrative-order moves, the Scene Details
+page and its editor form, the real sidebar link with its own cached count, fixtures, tests, and
+connected development data. Section/Event/datetime references, tags, reliable JSON modals,
+Elements, and
+world-presence links are still pending and are deliberately **not** routed yet. The confirmed
+first-version defaults are: Scene `name` labelled **Title**; Element
 `name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
 has none; Scene uses one optional single-point `datetime` with the current Event storage/editor
 precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
@@ -173,10 +178,10 @@ detailed deletion confirmations are mandatory.
 
 Delivery remains staged in [`backlog.md`](backlog.md):
 
-- 11.1 adds the core Scene migration/model, canonical list, ordering controls, editor shell, tests,
-  and connected development data.
-- Later slices add references, Section grouping, Tags, reliable JSON modals, Elements, speaker and
-  presence links, and reverse links in that order.
+- 11.1 (done) adds the core Scene migration/model, canonical list, ordering controls, editor shell,
+  tests, and connected development data.
+- Later slices add references and the tab shell, Section grouping, Tags, reliable JSON modals,
+  Elements, speaker and presence links, and reverse links in that order.
 - Slice 11.5 must fix JSON modal submission/error/delete behavior before Element UI depends on the
   shared modal controller. Do not copy the current 406/stale-DOM behavior into Scene Elements.
 - Every slice preserves public/private read-write-admin behavior and updates all model registries,
@@ -186,9 +191,24 @@ When data is added, put it in the relevant `db/data/<universe_slug>/` files (`sc
 `scene_tags.yml`, `scene_elements.yml`, and the applicable speaker/presence-link files), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, Narration, Dialogue,
-multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. Use the explicit
-`UNIVERSE=<slug> bin/rails db:demo:load` task for a prepared development database; the loader
-refuses production/test writes and does not load another universe.
+multi-speaker, multi-Location, and blank/populated-role cases at Epic completion. `scenes.yml`
+records already reference their story and use explicit `position` values so the narrative order is
+visible in the file. Use the explicit `UNIVERSE=<slug> bin/rails db:demo:load` task for a prepared
+development database; the loader refuses production/test writes and does not load another universe.
+
+Manual verification for the shipped slice:
+
+```bash
+CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset   # destructive: needs approval
+bin/rails server
+```
+
+Log in with the documented Dark development user, open
+`/u/dark/s/<story_id>/scenes`, and check: the sidebar **Scenes** entry links to the selected story
+and shows the scene count; the list is in narrative order with position pills; Move up/Move down
+reorder the sequence and are disabled at the boundaries; the delete confirmation states the full
+ADR 0007 consequences; and a guest or read-only member sees the list and details with no mutation
+controls.
 
 ## Taxonomy editor and ordering verification
 
@@ -202,8 +222,10 @@ user-controlled values.
 
 Positioned controller mutations use `PositionedResourceOrder` and ADR 0009. Run
 `test/services/positioned_resource_order_test.rb` plus the positioned controller tests after
-changing ordering behavior. The service supports explicit flat mode for future Story-owned
-Scenes/Scene Elements; it does not make `section_id` an ordering parent.
+changing ordering behavior. The service supports explicit flat mode, which the Story-owned Scene
+sequence now uses with `@story` as scope owner; the same flat mode is reserved for Scene Elements.
+`MaintainsSiblingPositions#position_parent_id_for` omits the ordering parent in flat mode, so a flat
+record does not need a `parent_id` column. It does not make `section_id` an ordering parent.
 
 ## Database migrations
 
@@ -298,12 +320,14 @@ Dependabot config: `.github/dependabot.yml`.
    `has_many_tags :foo_tag, scope: :universe_id` / inverse
    `has_many_tagd :foo, scope: :universe_id`, `HasColor` for tags — the scope is mandatory and
    tags remain optional), `belongs_to :universe`, `validates :name, presence: true` (unless it has
-   custom identity rules). Story-scoped tag pairs use `scope: :story_id`. Sections are the
-   exception: they belong to a **story**.
+   custom identity rules). Story-scoped tag pairs use `scope: :story_id`. Sections and Scenes are
+   the exceptions: they belong to a **story**. A flat ordered sequence uses
+   `maintains_flat_positions_for` in its controller and must not include `Hierarchical`.
 3. Controller in `app/controllers/` — `Current.universe.<assoc>` scoping,
-   `include MaintainsSiblingPositions` + `maintains_sibling_positions_for :model` if positioned,
+   `include MaintainsSiblingPositions` + `maintains_sibling_positions_for :model` (or
+   `maintains_flat_positions_for` for a parentless sequence) if positioned,
    `params.expect(model: [ … ])`, JSON-only `respond_to` for tree/modal UIs (or HTML flow like
-   stories/relations/ownerships).
+   stories/relations/ownerships/scenes).
 4. Route inside `scope "u/:universe_slug", as: :universe` (nest under stories if story-scoped).
    Remember: path helpers need **named** keys.
 5. Views — pick one of the three patterns; for modal editors add `*_fields_json` /

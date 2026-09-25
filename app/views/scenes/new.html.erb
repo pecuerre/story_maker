@@ -1,0 +1,15 @@
+<% content_for :title, "New scene" %>
+
+<%= render "shared/page_header",
+  title: "New scene",
+  eyebrow: "Story: #{@story.name}",
+  description: "Add the next scene to #{@story.name}. Its position is the order in which the story is told, not in-world chronology." %>
+
+<%= render "shared/content_tabs",
+  aria_label: "Story workspace",
+  tabs: [
+    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
+  ] %>
+
+<%= render "form", scene: @scene %>

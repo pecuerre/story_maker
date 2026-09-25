@@ -185,7 +185,7 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
 
 - Replace the reserved Scenes entry with a real Story-scoped link only when a Story is selected.
   With no current Story, keep the existing explicit “select a Story” flow; never fall back to the
-  first Story.
+  first Story. **(Shipped in 11.1.)**
 - The Scenes index is a flat list in canonical Scene order, with an explicit **Ungrouped** indicator
   where appropriate, clear title and short-description previews, Section and tag badges,
   element/participant counts, and add/edit/delete actions. Its main list is ordered only by Scene
@@ -238,16 +238,26 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   templates are recorded in the ADR. No application code, schema, or development data was added by
   this decision slice. Backlog item 1 is complete and supplies the explicit loader for final
   development-data/manual verification.
-- **11.1 — Core Scene vertical slice.** Add a schema-only Scene migration and model, Story
-  association, stable `name`/slug, and a transactionally maintained contiguous position with
-  deterministic `position, id` ordering. Use the flat mode and Story scope owner provided by
-  ADR 0009 / `PositionedResourceOrder`; preserve the existing sibling-position conventions and
-  destroy/create/move coverage rather than bypassing the positioned-controller decision. Add
-  Story-scoped routes/controllers, the canonical Scenes index, accessible move controls, a
-  title/description create-edit-delete journey, the stable Scene editor shell, the real sidebar
-  link and scene count/cache invalidation, and basic empty and read-only states. Keep
-  Section/Event/datetime, tags, Elements, and world links out of this slice. Include model/request/
-  route tests, connected development data, and matching docs.
+- **11.1 — Core Scene vertical slice (completed 2026-09-25).** Shipped the schema-only `scenes`
+  migration, the `Scene` model (`belongs_to :story`, `HasSlug`, required Title, optional short
+  description, no `parent_id`), the `Story has_many :scenes` association, and a
+  transactionally maintained contiguous position with deterministic `position, id` ordering. The
+  sequence uses the flat mode and Story scope owner from ADR 0009 / `PositionedResourceOrder`
+  through `maintains_flat_positions_for :scene`; the concern now omits the ordering parent in flat
+  mode, and the service gained flat create/move/destroy/rollback coverage with a real parentless
+  record. Added story-scoped routes and `ScenesController` (HTML redirect/re-render only), the
+  canonical Scenes index with accessible Move up/Move down `button_to` controls that are disabled
+  at the sequence boundaries, a title/description create-edit-delete journey, and the stable Scene
+  editor shell (Scene Details is the canonical inspectable page; `scenes/_form`, reused by `new` and
+  `edit`, is the only editor). The real sidebar link plus a separately cached
+  `Story#menu_scene_count` and basic empty and read-only states landed with it. `Scene` is
+  registered in
+  `Ability::CONTENT_CLASS_NAMES`; the story scene count uses its own `cache_scope` so it cannot
+  overwrite the section count. Section/Event/datetime, tags, Elements, and world links were kept
+  out of this slice and are deliberately not routed. Added model, request, routing, ability,
+  menu-count, ordering-service, and focused system coverage plus connected `db/data/dark/scenes.yml`
+  and `db/data/lotr/scenes.yml` with a title-only scene, and updated the architecture, data model,
+  conventions, visual design, and development docs.
 - **11.2 — Scene Details, references, and time.** Extend the stable editor with the optional
   same-story Section link, optional same-Universe Event link, and independent optional single-point
   `datetime` using the confirmed Event-compatible precision/timezone semantics.

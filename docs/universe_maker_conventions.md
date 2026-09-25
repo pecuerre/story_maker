@@ -9,10 +9,12 @@
 ## Core Patterns
 
 ### Database Schema
-- Content records are scoped to a **universe**; the one exception is `Section`, which is scoped
-  to a **Story** (`Section belongs_to :story`, `Story belongs_to :universe`). A universe holds many
+- Content records are scoped to a **universe**; the two exceptions are `Section` and `Scene`, which
+  are scoped to a **Story** (`Section belongs_to :story`, `Scene belongs_to :story`,
+  `Story belongs_to :universe`). A universe holds many
   stories (e.g. universe *A Song of Ice and Fire* → stories *Game of Thrones*, *House of the Dragon*),
-  which share the universe's characters/locations/events/items but each own their sections (the script/plot).
+  which share the universe's characters/locations/events/items but each own their sections (the script/plot)
+  and their ordered scenes.
 - Every content model and every `_tag` taxonomy model has its own `slug` (see `HasSlug`).
 - Typical content columns: `name`, `description`, `universe_id` (FK), `parent_id` (self FK),
   `position` (default 0), `slug`, timestamps. Exceptions (Relation, Ownership, Event, Story) are
@@ -68,9 +70,10 @@
   controller-specific visibility check that bypasses this callback.
 - Positioned/hierarchical controllers include `MaintainsSiblingPositions`
   (`maintains_sibling_positions_for :model`) and override `sibling_collection` and
-  `sibling_position_scope_owner` when the scope is not the universe (Sections and SectionTags use
-  `@story` as owner). Use `maintains_flat_positions_for` for a parentless sequence; do not infer
-  flat ordering from `section_id` or another organizational association.
+  `sibling_position_scope_owner` when the scope is not the universe (Sections, SectionTags, and
+  Scenes use `@story` as owner). Use `maintains_flat_positions_for` for a parentless sequence; the
+  concern then omits the ordering parent entirely, so a flat resource does not need a `parent_id`
+  column. Do not infer flat ordering from `section_id` or another organizational association.
 - Strong params use Rails 8 `params.expect(model: [ ... ])`.
 - Universe authorization is a three-level policy: `read`, `write`, and `admin`. Public universes
   grant guest read and signed-in write access; private universes require an owner or membership.
@@ -85,28 +88,31 @@
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
     Characters, Locations, Items, Events, Sections. The page renders HTML; create/update/destroy
     are called by Stimulus with `as: :json`.
-  - **HTML flow** (redirect / re-render): Universes, Stories, Relations, Ownerships, Universe
+  - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Universe
     memberships, Sessions, Passwords.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
-  memberships. In the current implementation, `show/edit` exist only for Universes and Stories;
-  the accepted Scene contract in slice 11.0 adds the documented Scene list/editor actions in later
-  delivery slices.
+  memberships. In the current implementation, `show/edit` exist for Universes, Stories, and Scenes;
+  the accepted Scene contract adds the documented Scene list/editor actions in later delivery
+  slices (`ScenesController#move` is the one member action beyond that set).
 
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
   `universe_*` and URLs look like `/u/<universe-slug>/...` (see `config/routes.rb`).
-- Stories are a full resource in that scope with sections and section tags nested underneath:
-  `resources :stories, path: "s" do resources :sections; resources :section_tags end` →
-  `/u/:universe_slug/s/:story_id/sections`, helpers `universe_story_*`,
-  `universe_story_section(s)`, `universe_story_section_tag(s)`.
+- Stories are a full resource in that scope with sections, section tags, and scenes nested
+  underneath:
+  `resources :stories, path: "s" do resources :sections; resources :section_tags; resources :scenes end`
+  → `/u/:universe_slug/s/:story_id/sections`, helpers `universe_story_*`,
+  `universe_story_section(s)`, `universe_story_section_tag(s)`, `universe_story_scene(s)`, and
+  `move_universe_story_scene_path` for the narrative-order move.
 - **Path helpers must receive their keys explicitly** (`universe_story_path(id: story)`,
   `universe_story_sections_path(story_id: story)`): a positional record is assigned to the first
   path segment (`universe_slug`) and breaks the URL. The `universe_slug` itself is then filled in
   from the current request (recall) — that is why `universe_characters_path()` with no arguments
   works on any page inside a universe. A test scans Ruby and ERB call sites and rejects positional
   arguments to `universe_*_path`/`universe_*_url` helpers.
-- All section and section-tag URLs include the story id (`/u/:universe_slug/s/:story_id/...`).
-  The universe-level `/u/:universe_slug/sections` path is intentionally invalid.
+- All section, section-tag, and scene URLs include the story id (`/u/:universe_slug/s/:story_id/...`).
+  The universe-level `/u/:universe_slug/sections` and `/u/:universe_slug/scenes` paths are
+  intentionally invalid.
 - Relations/Ownerships are limited to `index, create, update, destroy`; memberships are mounted at
   `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and are
   admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
@@ -155,51 +161,65 @@ The three functional editing patterns are:
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
 
-### Planned Scene conventions (slice 11.0; not implemented)
+### Scene conventions (core implemented in 11.1; later slices pending)
 
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first Scene contract. Keep the
-current disabled **Scenes** sidebar placeholder until slice 11.1 provides a real, selected-Story
-route.
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first Scene contract. The
+**Scenes** sidebar entry is a real story-scoped link when a story is selected and stays an
+`aria-disabled` placeholder (with the existing "select a story" hint) when no story is current.
 
-- **Model:** `Scene belongs_to :story`, includes `HasSlug`, and is flat rather than hierarchical. A
-  required `name` is labelled **Title**; description, same-Story Section, same-Universe Event, one
-  optional single-point `datetime` using Event-compatible storage/editor precision and timezone
-  semantics, Tags, and world-record links are optional. Use the flat mode of
-  `PositionedResourceOrder` with the Story as scope owner. Do not add `Hierarchical` to Scene or
-  SceneElement; their contiguous `position` sequences need dedicated transactional flat-ordering
-  behavior.
-- **Elements:** `SceneElement belongs_to :scene`; it is an ordered child component rather than a
-  standalone navigable content model and has no public slug requirement. Its `kind` is `narration`
-  or `dialogue`, `name` is required and labelled **Title**, `body` is optional, and `position` is
+- **Model:** `Scene belongs_to :story`, includes `HasSlug`, and is flat rather than hierarchical (no
+  `parent_id`). A required `name` is labelled **Title**; `description` is optional and a title-only
+  Scene is valid. The optional same-Story Section, same-Universe Event, single-point `datetime`,
+  Tags, and world-record links arrive in later slices. `Scene#universe` resolves through
+  `story.universe`; register `Scene` in `Ability::CONTENT_CLASS_NAMES` and
+  `MaintainsSiblingPositions` with `maintains_flat_positions_for :scene` and `@story` as the
+  sibling collection and scope owner.
+- **Elements (planned):** `SceneElement belongs_to :scene`; it is an ordered child component rather
+  than a standalone navigable content model and has no public slug requirement. Its `kind` is
+  `narration` or `dialogue`, `name` is required and labelled **Title**, `body` is optional, and
+  `position` is
   flat. Narration rejects speakers; Dialogue requires at least one same-Universe Character speaker.
-- **Tags:** `SceneTag` and `Scene` use the existing `has_many_tags` / `has_many_tagd` DSL with
+- **Tags (planned):** `SceneTag` and `Scene` use the existing `has_many_tags` / `has_many_tagd` DSL
+  with
   mandatory `scope: :story_id`; tags are optional and have no default. Scene Tag definitions belong
   under Configuration → Tags → Story Tags, while assignment belongs on Scene Details.
-- **World links:** use real join models for `SceneCharacter`, `SceneItem`, and `SceneLocation` so
+- **World links (planned):** use real join models for `SceneCharacter`, `SceneItem`, and
+  `SceneLocation` so
   their nullable free-text `role` is persisted. Use a unique join model for
   `SceneElementSpeaker`. Validate same-Universe scope in application code and resolve it through
   Scene in both `Ability` and shared helpers.
 - **Controller scope:** resolve `@story` through `Current.universe.stories.find(...)`, then resolve
-  Scenes and related records through that Story. Never use `Scene.find`, a universe-level Scene
-  route, or a controller-specific visibility rule. Public read actions still pass through the
-  shared authorization callback.
-- **Routes:** nest Scenes under Stories and related records under Scenes. Canonical paths are
+  Scenes through that Story. Never use `Scene.find`, a universe-level Scene route, or a
+  controller-specific visibility rule. Public read actions still pass through the shared
+  authorization callback.
+- **Routes:** Scenes are nested under Stories. Canonical paths are
   `/u/:universe_slug/s/:story_id/scenes`, `/u/:universe_slug/s/:story_id/scenes/:scene_id`,
-  `/characters`, `/items`, `/locations`, and `/elements` beneath the Scene path. Pass `story_id`,
-  `scene_id`, and any record id as named route-helper keys; never use positional records.
-- **Responses:** Scene index/show/new/create/edit/update/destroy and narrative moves use HTML
-  redirect/re-render. Element and role-bearing presence-link create/update/destroy use JSON-only
-  Stimulus modals with `422` error hashes. Do not add an action that ambiguously accepts both.
+  `.../scenes/new`, `.../scenes/:id/edit`, and the member
+  `PATCH .../scenes/:id/move`. Pass `story_id`, `id`, and any record id as named route-helper keys;
+  never use positional records. Do not add Character/Item/Location/Element routes until the slice
+  that implements them exists.
+- **Responses:** Scene index/show/new/create/edit/update/destroy and narrative moves use the HTML
+  redirect/re-render flow (`303` for PATCH/DELETE). Element and role-bearing presence-link
+  create/update/destroy will use JSON-only Stimulus modals with `422` error hashes. Do not add an
+  action that ambiguously accepts both.
 - **Ordering:** the global Scene list is ordered by `(position, id)` and is not grouped by Section.
-  Section assignment changes only `section_id`. Visible Move up/Move down controls and keyboard
-  behavior are required; drag-and-drop is optional. Element ordering is independent within Scene.
-- **UI:** use the existing flat-list and full-page form patterns for the Scene list/editor, and the
-  existing modal pattern for Elements and role-bearing links. Do not create a fourth page pattern.
-  URL-backed Details/Characters/Items/Locations tabs preserve canonical URLs and `aria-current`.
-- **Helpers:** add only the Scene-specific field/JSON descriptors needed by the new forms. Scene
-  JSON must not be used to mix the stable HTML Details form with mutation responsibilities. Update
-  shared count/preload behavior without copying the current taxonomy stale-option or modal 406
-  weaknesses.
+  Move up/Move down are real `button_to` forms that post `direction=up|down` to the member `move`
+  action; they are keyboard operable, disabled at the boundaries, and never the only way to
+  reorder. The controller converts a direction into the neighboring position and lets
+  `PositionedResourceOrder` clamp and normalize, so a boundary move is an explicit no-op.
+  Section assignment (later slices) will change only `section_id`.
+- **UI:** the list uses the existing flat-list surface, Scene Details (`/scenes/:id`) is the
+  canonical inspectable page with the same content for every access level, and the full-page form
+  pattern (`scenes/_form`, reused by `new` and `edit`) is the only editor. Do not create a fourth
+  page pattern or a second form for the same fields. URL-backed
+  Details/Characters/Items/Locations tabs arrive with slice 11.2.
+- **Helpers:** add only the Scene-specific descriptors the new forms need. Scene JSON is not used to
+  mix the stable HTML form with mutation responsibilities. Update shared count/preload behavior
+  without copying the current taxonomy stale-option or modal 406 weaknesses.
+- **Sidebar count:** `Story#menu_scene_count` uses its own cache scope
+  (`Story::SCENE_MENU_COUNT_SCOPE`, referenced by `Scene` itself) so it never overwrites
+  `menu_section_count`; `Scene` declares
+  `invalidates_menu_counts_for :story, cache_scope: Story::SCENE_MENU_COUNT_SCOPE`.
 
 ### Helpers
 - `app/helpers/modal_fields.rb` — field descriptors consumed by the JS controllers:
@@ -248,9 +268,11 @@ intentional home for future richer collaboration, analytics, and AI placeholders
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
 The workspace sidebar renders only when `Current.universe` is present. It is one continuous
 navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas below `lg`:
-- **Story workspace**: Story overview + Sections when a story is selected; otherwise All stories
-  plus a prompt to select one. **Scenes** is a reserved placeholder link. New story is available
-  from the navbar's Story dropdown, not from the sidebar.
+- **Story workspace**: Story overview + Sections + Scenes when a story is selected; otherwise All
+  stories plus a prompt to select one. New story is available from the navbar's Story dropdown, not
+  from the sidebar. **Scenes** is a real story-scoped link with its own cached count once a story is
+  selected, and an `aria-disabled` `#` placeholder while no story is current — it never falls back
+  to the universe's first story.
 - **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Characters
   and Items open their related record tabs (Relations and Ownerships respectively); Locations,
   Events, and Sections remain single-record workspaces.
@@ -258,8 +280,8 @@ navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas
   workspace, with **Universe Tags** selected by default and **Story Tags** for story-scoped
   taxonomies. Universe admins see **Members** in the right-side **Settings** section.
 - Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
-  background and `aria-current="page"`. The reserved Scenes and right-sidebar entries are the
-  intentional `#` placeholders for future functionality.
+  background and `aria-current="page"`. The right-sidebar entries are the intentional `#`
+  placeholders for future functionality.
 
 ### Navigation (Right sidebar) — `app/views/layouts/_right_sidebar.html.erb`
 The right utility sidebar renders only when `Current.universe` is present. It is a permanent

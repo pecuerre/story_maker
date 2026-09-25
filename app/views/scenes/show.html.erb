@@ -1,0 +1,38 @@
+<% content_for :title, @scene.name %>
+
+<%= render "shared/page_header",
+  title: @scene.name,
+  eyebrow: "Story: #{@story.name}",
+  description: "Scene #{@scene.position + 1} of #{@scene_total} in the order #{@story.name} is told. Narrative order is not in-world chronology." do %>
+  <%= link_to "All scenes", universe_story_scenes_path(story_id: @story), class: "btn btn-outline-secondary" %>
+  <% if can_write_universe? %>
+    <%= link_to "Edit scene", edit_universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-primary" %>
+  <% end %>
+<% end %>
+
+<%# Scene Details is the canonical, inspectable destination: the same content is
+    shown to writers and read-only viewers, and only writers get the editor link. %>
+<div class="surface-card p-4">
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="page-eyebrow">Title</div>
+      <p class="mb-0 text-break"><%= @scene.name %></p>
+    </div>
+    <div class="col-md-6">
+      <div class="page-eyebrow">Narrative position</div>
+      <p class="mb-0"><%= @scene.position + 1 %> of <%= @scene_total %></p>
+    </div>
+    <div class="col-12">
+      <div class="page-eyebrow">Short description</div>
+      <% if @scene.description.present? %>
+        <p class="mb-0 text-break"><%= @scene.description %></p>
+      <% else %>
+        <p class="mb-0 text-body-secondary">No short description yet.</p>
+      <% end %>
+    </div>
+    <div class="col-12">
+      <div class="page-eyebrow">Story</div>
+      <p class="mb-0"><%= link_to @story.name, universe_story_path(id: @story) %></p>
+    </div>
+  </div>
+</div>

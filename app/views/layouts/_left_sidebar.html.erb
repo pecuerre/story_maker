@@ -1,5 +1,6 @@
 <% menu_counts = Current.universe.menu_counts %>
 <% section_count = Current.story&.menu_section_count %>
+<% scene_count = Current.story&.menu_scene_count %>
 <% tag_controllers = %i[
   tags character_tags relation_tags location_tags event_tags item_tags ownership_tags section_tags
 ] %>
@@ -40,12 +41,23 @@
           controllers: %i[ stories ] %>
       <% end %>
 
-      <%= render "shared/sidebar_link",
-        icon: "film",
-        label: "Scenes",
-        path: "#",
-        controllers: [],
-        placeholder: true %>
+      <% if Current.story.present? %>
+        <%= render "shared/sidebar_link",
+          icon: "film",
+          label: "Scenes",
+          count: scene_count,
+          path: universe_story_scenes_path(story_id: Current.story),
+          controllers: %i[ scenes ] %>
+      <% else %>
+        <%# Scenes are story-scoped: stay a placeholder until a story is selected,
+            and never fall back to the universe's first story. %>
+        <%= render "shared/sidebar_link",
+          icon: "film",
+          label: "Scenes",
+          path: "#",
+          controllers: [],
+          placeholder: true %>
+      <% end %>
     </ul>
 
     <% unless Current.story.present? %>

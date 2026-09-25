@@ -33,6 +33,32 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal [ 0, 1, 2 ], story.section_tags.order(:position, :id).pluck(:position)
   end
 
+  test "loads the Dark scenes as a contiguous flat narrative sequence" do
+    Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+
+    story = Universe.find_by!(slug: "dark").stories.first
+    scenes = story.scenes.reorder(:position, :id).to_a
+
+    assert_equal 8, scenes.size
+    assert_equal (0...8).to_a, scenes.map(&:position)
+    assert_equal "Secrets", scenes.first.name
+    assert_equal "The Golden Beast", scenes.last.name
+
+    assert_equal 1, scenes.count { |scene| scene.description.blank? }
+    assert_equal [ "Double Lives" ], scenes.select { |scene| scene.description.blank? }.map(&:name)
+    assert_equal 0, Universe.where(slug: "lotr").joins(:stories).sum { |universe| universe.scenes.count }
+  end
+
+  test "loads the LOTR scenes in narrative order" do
+    Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
+
+    story = Universe.find_by!(slug: "lotr").stories.first
+
+    assert_equal 5, story.scenes.count
+    assert_equal [ 0, 1, 2, 3, 4 ], story.scenes.reorder(:position, :id).pluck(:position)
+    assert_equal "A Long-expected Party", story.scenes.reorder(:position, :id).first.name
+  end
+
   test "loads the LOTR universe with stable converted slugs" do
     Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
 

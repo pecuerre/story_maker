@@ -1,0 +1,114 @@
+<% content_for :title, "Scenes" %>
+<% editable = can_write_universe? %>
+<% empty_description = if editable
+  "Scenes are the ordered units of this story. Add the first one to start its narrative order."
+else
+  "This story has no scenes to show yet."
+end %>
+
+<%= render "shared/page_header",
+  title: "Scenes",
+  eyebrow: "Story: #{@story.name}",
+  description: "The order below is the order #{@story.name} is told, not in-world chronology. A scene only needs a title; other details can be added later.",
+  count: @scenes.size,
+  count_label: "scene" do %>
+  <% if editable %>
+    <%= link_to new_universe_story_scene_path(story_id: @story), class: "btn btn-primary" do %>
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>Add scene</span>
+    <% end %>
+  <% end %>
+<% end %>
+
+<%= render "shared/content_tabs",
+  aria_label: "Story workspace",
+  tabs: [
+    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
+  ] %>
+
+<% if @scenes.any? %>
+  <div class="content-surface entity-list">
+    <div class="list-group list-group-flush">
+      <% @scenes.each_with_index do |scene, index| %>
+        <div class="list-group-item entity-row d-flex align-items-start gap-3">
+          <div class="entity-copy flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge rounded-pill text-bg-light border"
+                aria-label="<%= "Narrative position #{index + 1} of #{@scenes.size}" %>">
+                <%= index + 1 %>
+              </span>
+              <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene), class: "entity-title" %>
+            </div>
+            <% if scene.description.present? %>
+              <div class="entity-description"><%= scene.description %></div>
+            <% end %>
+          </div>
+
+          <% if editable %>
+            <div class="d-flex align-items-center gap-1 flex-wrap justify-content-end">
+              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene),
+                method: :patch,
+                params: { direction: "up" },
+                class: "btn btn-sm btn-light border",
+                disabled: index.zero?,
+                title: index.zero? ? "Already first in the narrative order" : "Move up",
+                aria: { label: "Move #{scene.name} up in the narrative order" },
+                data: { scene_move: "up" } do %>
+                <i class="bi bi-arrow-up" aria-hidden="true"></i>
+              <% end %>
+              <%= button_to move_universe_story_scene_path(story_id: @story, id: scene),
+                method: :patch,
+                params: { direction: "down" },
+                class: "btn btn-sm btn-light border",
+                disabled: index == @scenes.size - 1,
+                title: index == @scenes.size - 1 ? "Already last in the narrative order" : "Move down",
+                aria: { label: "Move #{scene.name} down in the narrative order" },
+                data: { scene_move: "down" } do %>
+                <i class="bi bi-arrow-down" aria-hidden="true"></i>
+              <% end %>
+
+              <div class="dropdown row-actions">
+                <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                  id="<%= dom_id(scene) %>-actions"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  aria-label="Actions for <%= scene.name %>">
+                  <i class="bi bi-three-dots" aria-hidden="true"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(scene) %>-actions">
+                  <li>
+                    <%= link_to edit_universe_story_scene_path(story_id: @story, id: scene), class: "dropdown-item" do %>
+                      <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+                    <% end %>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <%= button_to universe_story_scene_path(story_id: @story, id: scene),
+                      method: :delete,
+                      class: "dropdown-item text-danger",
+                      data: { turbo_confirm: "Delete “#{scene.name}”? Its elements, tag assignments, and links to story and universe records will be permanently removed. Linked records will not be deleted." } do %>
+                      <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+                    <% end %>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+    title: "No scenes yet",
+    description: empty_description,
+    icon: "film" do %>
+    <% if editable %>
+      <%= link_to new_universe_story_scene_path(story_id: @story), class: "btn btn-primary" do %>
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>Add scene</span>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

@@ -33,6 +33,30 @@ class MenuCountCacheTest < ActiveSupport::TestCase
     assert_no_queries { assert_equal 2, @story.menu_section_count }
   end
 
+  test "a story's scene count uses its own cache entry" do
+    @story.menu_section_count
+
+    assert_equal 3, @story.menu_scene_count
+    assert_no_queries { assert_equal 3, @story.menu_scene_count }
+
+    section_key = MenuCountCache.key(Story::SECTION_MENU_COUNT_SCOPE, @story.id)
+    scene_key = MenuCountCache.key(Story::SCENE_MENU_COUNT_SCOPE, @story.id)
+    assert_not_equal section_key, scene_key
+    assert Rails.cache.exist?(section_key)
+    assert Rails.cache.exist?(scene_key)
+  end
+
+  test "a story scene count refreshes when scenes are created or destroyed" do
+    original_count = @story.menu_scene_count
+    scene = @story.scenes.create!(name: "Cached scene")
+
+    assert_equal original_count + 1, @story.menu_scene_count
+    assert_equal 2, @story.menu_section_count, "creating a scene must not change the section count"
+
+    scene.destroy!
+    assert_equal original_count, @story.menu_scene_count
+  end
+
   test "universe menu counts refresh after every counted model is created or destroyed" do
     counted_records = {
       characters: -> { Character.create!(universe: @universe, name: "Cached character") },
@@ -207,15 +231,19 @@ class MenuCountCacheTest < ActiveSupport::TestCase
     universe = Universe.create!(owner: users(:user_one), name: "Empty cache owner")
     story = universe.stories.create!(name: "Empty cache owner")
     universe_key = MenuCountCache.key(:universe, universe.id)
-    story_key = MenuCountCache.key(:story, story.id)
+    section_key = MenuCountCache.key(Story::SECTION_MENU_COUNT_SCOPE, story.id)
+    scene_key = MenuCountCache.key(Story::SCENE_MENU_COUNT_SCOPE, story.id)
 
     universe.menu_counts
     story.menu_section_count
+    story.menu_scene_count
     assert Rails.cache.exist?(universe_key)
-    assert Rails.cache.exist?(story_key)
+    assert Rails.cache.exist?(section_key)
+    assert Rails.cache.exist?(scene_key)
 
     story.destroy!
-    assert_not Rails.cache.exist?(story_key)
+    assert_not Rails.cache.exist?(section_key)
+    assert_not Rails.cache.exist?(scene_key)
 
     universe.destroy!
     assert_not Rails.cache.exist?(universe_key)

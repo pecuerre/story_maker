@@ -2,12 +2,21 @@ module InvalidatesMenuCounts
   extend ActiveSupport::Concern
 
   class_methods do
-    def invalidates_menu_counts_for(scope)
+    # `scope` names the owning association. `cache_scope` names the cache entry
+    # that holds the count for that scope; it defaults to the association but
+    # must differ when one owner already caches a second scalar metric under
+    # the same key (Story caches both its section and its scene count).
+    def invalidates_menu_counts_for(scope, cache_scope: nil)
       @menu_count_scope = scope
+      @menu_count_cache_scope = cache_scope || scope
     end
 
     def menu_count_scope
       @menu_count_scope
+    end
+
+    def menu_count_cache_scope
+      @menu_count_cache_scope
     end
   end
 
@@ -26,7 +35,7 @@ module InvalidatesMenuCounts
 
       scope_ids << menu_count_scope_id
       scope_ids.compact.uniq.each do |scope_id|
-        MenuCountCache.expire(menu_count_scope, scope_id)
+        MenuCountCache.expire(menu_count_cache_scope, scope_id)
       end
     ensure
       clear_tracked_menu_counts
@@ -56,6 +65,10 @@ module InvalidatesMenuCounts
 
     def menu_count_scope
       self.class.menu_count_scope
+    end
+
+    def menu_count_cache_scope
+      self.class.menu_count_cache_scope
     end
 
     def menu_count_scope_id

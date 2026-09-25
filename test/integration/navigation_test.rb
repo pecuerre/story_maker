@@ -40,6 +40,9 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar a", text: "New story", count: 0
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#'][aria-disabled=true][data-placeholder-link=true]",
       text: /Scenes/
+    assert_select "aside.workspace-sidebar a[href=?]",
+      universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story),
+      count: 0
     assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
       universe_story_sections_path(universe_slug: @universe.slug, story_id: @story),
       count: 0
@@ -92,7 +95,12 @@ class NavigationTest < ActionDispatch::IntegrationTest
       assert_select ".sidebar-link-label", text: "Sections"
       assert_select ".sidebar-count", text: "2"
     end
-    assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/
+    assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
+      universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story) do
+      assert_select ".sidebar-link-label", text: "Scenes"
+      assert_select ".sidebar-count", text: "3"
+    end
+    assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/, count: 0
     assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
     assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members", count: 0
     assert_select "aside.right-sidebar section[aria-labelledby='settings-tools-title'] a.sidebar-link", text: "Members"

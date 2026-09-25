@@ -1,0 +1,15 @@
+<% content_for :title, "Edit #{@scene.name}" %>
+
+<%= render "shared/page_header",
+  title: "Edit scene",
+  eyebrow: "Story: #{@story.name}",
+  description: "Update the title and short description of this scene. Its narrative position changes only through the Move up/Move down controls on the scenes list." %>
+
+<%= render "shared/content_tabs",
+  aria_label: "Story workspace",
+  tabs: [
+    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
+  ] %>
+
+<%= render "form", scene: @scene %>

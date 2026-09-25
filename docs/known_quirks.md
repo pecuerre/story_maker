@@ -106,8 +106,11 @@ verification requirements. The resolution is recorded in [`resolved_quirks.md`](
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
     maintenance.** The controller-facing `PositionedResourceOrder` service now transactionally
     handles create, move, reparent, and destroy for current positioned controllers, and the
-    `Hierarchical` callback closes gaps after direct hierarchical destroys. Direct SQL, association
-    manipulation, and future flat records do not pass through that service, and SQLite has no
+    `Hierarchical` callback closes gaps after direct hierarchical destroys. Slice 11.1 added the
+    flat Story-owned `Scene` sequence, which is normalized only when a mutation goes through
+    `ScenesController`; unlike `Hierarchical`, `Scene` has no model callback that repairs positions
+    after a direct destroy. Direct SQL, association manipulation, and direct-model writes therefore
+    still bypass the service for both hierarchies and flat sequences, and SQLite has no
     portable row-lock/unique-position guarantee. Do not treat those paths as normalized without an
     explicit import/console workflow; see ADR 0009 and [`resolved_quirks.md`](resolved_quirks.md).
 
@@ -292,6 +295,10 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `items_controller.rb:47-50`, `events_controller.rb:43-46`). Turbo receives no redirect or HTML
     replacement, so the deleted row and sidebar count can remain visible until a manual reload; a
     second click can then target a missing record. There is no browser delete regression test.
+    The Scene list added in slice 11.1 is **not** affected: it uses the HTML redirect flow
+    (`ScenesController#destroy` redirects with `303`), so its delete regression test is
+    `test/system/scene_narrative_order_test.rb`. Findings 17 and 18 still apply to every
+    modal/JSON consumer and remain the reason slice 11.5 must land before Scene Elements exist.
 
 Former findings **#41–#44** were fixed in the taxonomy hardening pass. Successful mutations now
 refresh server-rendered descriptors/counts, boundary insertion uses the actual list, native rename
@@ -452,3 +459,20 @@ operations were run for this tooling-only fix.
 - Password-reset path filtering, multipart mail rendering, cookie flags, ordering service, and
   loader tests passed. No destructive database task, Docker/Kamal deployment, real SMTP delivery,
   credential rotation, Git-history rewrite, or proxy/log-retention verification was performed.
+
+## Follow-up verification (2026-09-25, Scene core slice 11.1)
+
+- `bin/rails test` — 341 tests, 2,034 assertions, 0 failures/errors/skips.
+- `bin/rails test:system` — 12 tests, 151 assertions, 0 failures/errors/skips, including the new
+  Scene narrative-order and read-only browser coverage.
+- `bin/rubocop` — 179 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed in the
+  test environment with the new `scenes.yml` manifests.
+- `bin/rails db:migrate` applied the schema-only `CreateScenes` migration and regenerated
+  `db/schema.rb`; no data operations were added to the migration.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, `bun audit` (no dependency or JavaScript pin
+changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs approval), a browser
+manual pass against loaded development data, Docker/Kamal deployment, and any production SMTP or
+proxy verification.

@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+scene_one:
+  story: story_one
+  name: "Scene one"
+  slug: "scene-one"
+  description: "The first scene of the story"
+  position: 0
+
+scene_two:
+  story: story_one
+  name: "Scene two"
+  slug: "scene-two"
+  description: "The second scene of the story"
+  position: 1
+
+scene_three:
+  story: story_one
+  name: "Scene three"
+  slug: "scene-three"
+  position: 2
+
+scene_alt:
+  story: story_alt
+  name: "Alt scene"
+  slug: "alt-scene"
+  position: 0

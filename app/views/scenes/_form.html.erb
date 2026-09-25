@@ -1,0 +1,32 @@
+<%= form_with model: scene,
+  url: scene.persisted? ? universe_story_scene_path(story_id: scene.story, id: scene) : universe_story_scenes_path(story_id: scene.story),
+  class: "form-surface" do |form| %>
+  <% if scene.errors.any? %>
+    <div class="alert alert-danger" role="alert">
+      <h2 class="h6"><%= pluralize(scene.errors.count, "error") %> prevented this scene from being saved:</h2>
+      <ul class="mb-0">
+        <% scene.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= form.label :name, "Title", class: "form-label" %>
+    <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
+    <div class="form-text">The scene's title in the narrative order. Only a title is required.</div>
+  </div>
+
+  <div class="mb-3">
+    <%= form.label :description, "Short description", class: "form-label" %>
+    <%= form.text_area :description, class: "form-control", rows: 5 %>
+    <div class="form-text">An optional one-line summary shown in the scene list.</div>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", scene.persisted? ? universe_story_scene_path(story_id: scene.story, id: scene) : universe_story_scenes_path(story_id: scene.story),
+      class: "btn btn-link" %>
+  </div>
+<% end %>

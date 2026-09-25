@@ -183,25 +183,29 @@ columns are the exception: SQLite check constraints enforce that they cannot poi
 
 One universe can host several stories that share the same world (e.g. *A Song of Ice and Fire*
 hosts *Game of Thrones* and *House of the Dragon*): characters/relations/locations/events/items
-are defined once per universe, while each story has its own section tree (its plot/scenes) and
-its own section tags (chapter/book/episode labels). This ownership split is defined directly by
-the schema-only create migrations: `stories` owns its slug, and `sections` and `section_tags`
-reference `stories`. Data is disposable and reconstructed from the per-universe directories under
-`db/data/`; it is not backfilled by migrations. Section tags and sections are reachable only under
-the explicit story path (`/u/<slug>/s/<story_id>/section_tags` and
-`/u/<slug>/s/<story_id>/sections`). The universe-level `/u/<slug>/section_tags` and
-`/u/<slug>/sections` routes are intentionally invalid.
+are defined once per universe, while each story has its own section tree (its plot structure) and
+its own ordered scene sequence, plus its own section tags (chapter/book/episode labels). This
+ownership split is defined directly by
+the schema-only create migrations: `stories` owns its slug, and `sections`, `section_tags`, and
+`scenes` reference `stories`. Data is disposable and reconstructed from the per-universe directories under
+`db/data/`; it is not backfilled by migrations. Section tags, sections, and scenes are reachable
+only under
+the explicit story path (`/u/<slug>/s/<story_id>/section_tags`,
+`/u/<slug>/s/<story_id>/sections`, and `/u/<slug>/s/<story_id>/scenes`). The universe-level
+`/u/<slug>/section_tags`, `/u/<slug>/sections`, and `/u/<slug>/scenes` routes are intentionally
+invalid.
 
-## Planned writing model (accepted, not present in the schema)
+## Writing model (Scene core implemented; later slices pending)
 
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the first Scene model. Slice 11.0
-records this contract only; none of these tables, associations, routes, or validations exists in
-the current schema yet.
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the first Scene model. Slice 11.1
+has landed the `scenes` table, the `Scene` model, and the story-scoped routes; the remaining
+tables, associations, and validations below belong to slices 11.2–11.10 and are **not** in the
+current schema yet.
 
 ```text
 Story
-  ├── Scene (contiguous narrative position)
-  │   ├── SceneElement (contiguous flat position)
+  ├── Scene (contiguous narrative position)          # implemented in 11.1
+  │   ├── SceneElement (contiguous flat position)     # planned
   │   │   └── SceneElementSpeaker ──> Character
   │   ├── SceneCharacter ────────────> Character   (optional role)
   │   ├── SceneItem ─────────────────> Item        (optional role)
@@ -215,18 +219,25 @@ The intended persisted fields and relationships are:
 
 | Model/table | Intended fields and constraints |
 |---|---|
-| `scenes` | required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`, optional same-Story `section_id`, optional same-Universe `event_id`, one optional `datetime` point using Event-compatible storage/editor precision and timezone semantics (not Event's `start_datetime`/`end_datetime` pair) |
-| `scene_tags` | story-scoped hierarchical/colored tag shape; optional assignment only |
-| `scenes_scene_tags` | story-scoped HABTM join; tags remain optional |
-| `scene_elements` | required `scene_id`, `kind` (`narration`/`dialogue`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body`, indexed `position` |
-| `scene_element_speakers` | SceneElement-to-Character links with a unique pair; the same Universe rule is checked through the Element's Scene |
-| `scene_characters` | unique `[scene_id, character_id]`, nullable free-text `role` |
-| `scene_items` | unique `[scene_id, item_id]`, nullable free-text `role` |
-| `scene_locations` | unique `[scene_id, location_id]`, nullable free-text `role` |
+| `scenes` | **implemented in 11.1**: required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`. The optional same-Story `section_id`, optional same-Universe `event_id`, and one optional `datetime` point using Event-compatible storage/editor precision and timezone semantics (not Event's `start_datetime`/`end_datetime` pair) arrive in 11.2 |
+| `scene_tags` | story-scoped hierarchical/colored tag shape; optional assignment only (11.4) |
+| `scenes_scene_tags` | story-scoped HABTM join; tags remain optional (11.4) |
+| `scene_elements` | required `scene_id`, `kind` (`narration`/`dialogue`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body`, indexed `position` (11.6) |
+| `scene_element_speakers` | SceneElement-to-Character links with a unique pair; the same Universe rule is checked through the Element's Scene (11.6) |
+| `scene_characters` | unique `[scene_id, character_id]`, nullable free-text `role` (11.7) |
+| `scene_items` | unique `[scene_id, item_id]`, nullable free-text `role` (11.8) |
+| `scene_locations` | unique `[scene_id, location_id]`, nullable free-text `role` (11.9) |
+
+The `scenes` migration is schema-only: a real `story_id` foreign key, `null: false` `position`
+with a `0` default, `null: false` `slug`, timestamps, and a composite `[story_id, position]`
+index. `Scene` includes `HasSlug`, validates title presence, resolves its Universe through
+`story.universe`, and has no `parent_id`: a flat narrative sequence is not a hierarchy. `Story`
+declares `has_many :scenes, dependent: :destroy`; `Universe` exposes
+`has_many :scenes, through: :stories` for scope checks only.
 
 `SceneElement` is an ordered child component rather than a standalone navigable content model, so
 it has no public slug requirement. `Scene.position` and `SceneElement.position` are contiguous `0..n-1` within their Story and Scene
-respectively. They are not `parent_id` hierarchies and must not include `Hierarchical`. The current
+respectively. They are not `parent_id` hierarchies and must not include `Hierarchical`. The
 `PositionedResourceOrder` service supports an explicit flat mode for these sequences; slice 11.1
 uses that mode with the Story as scope owner rather than adding a fake parent or a second
 ordering algorithm. The development-data registry also distinguishes flat position groups. The

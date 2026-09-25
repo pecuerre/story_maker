@@ -1,1 +1,41 @@
-[]
+- universe: Universe.lotr
+  name: Frodo Baggins
+  slug: frodo_baggins
+  description: "Hobbit Ring-bearer of the Fellowship."
+  character_tags: [ CharacterTag.hobbit, CharacterTag.fellowship_of_the_ring ]
+
+- universe: Universe.lotr
+  name: Samwise Gamgee
+  slug: samwise_gamgee
+  description: "Frodo's gardener and closest companion."
+  character_tags: [ CharacterTag.hobbit, CharacterTag.fellowship_of_the_ring ]
+
+- universe: Universe.lotr
+  name: Gandalf the Grey
+  slug: gandalf_the_grey
+  description: "Wizard who leads the Fellowship out of the Shire."
+  character_tags: [ CharacterTag.man, CharacterTag.fellowship_of_the_ring ]
+
+- universe: Universe.lotr
+  name: Aragorn
+  slug: aragorn
+  description: "Ranger of the North and heir to the throne of Gondor."
+  character_tags: [ CharacterTag.man, CharacterTag.rangers_of_the_north, CharacterTag.fellowship_of_the_ring ]
+
+- universe: Universe.lotr
+  name: Legolas
+  slug: legolas
+  description: "Prince of the Woodland Realm."
+  character_tags: [ CharacterTag.elf, CharacterTag.fellowship_of_the_ring ]
+
+- universe: Universe.lotr
+  name: Gimli
+  slug: gimli
+  description: "Dwarf of the Lonely Mountain."
+  character_tags: [ CharacterTag.dwarf, CharacterTag.fellowship_of_the_ring ]
+
+- universe: Universe.lotr
+  name: Gollum
+  slug: gollum
+  description: "Former owner of the One Ring."
+  character_tags: [ CharacterTag.hobbit ]

@@ -1,1 +1,40 @@
-[]
+- universe: Universe.lotr
+  name: Geographic
+  slug: geographic
+  bgcolor: "#b3b3b3" # light gray
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Region
+  slug: region
+  parent: LocationTag.geographic
+  bgcolor: "#99cc66" # light green
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Settlement
+  slug: settlement
+  parent: LocationTag.geographic
+  bgcolor: "#cc9966" # light brown
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Village
+  slug: village
+  parent: LocationTag.settlement
+  bgcolor: "#ffcc99" # light orange
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: City
+  slug: city
+  parent: LocationTag.settlement
+  bgcolor: "#ff9966" # medium orange
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: Stronghold
+  slug: stronghold
+  parent: LocationTag.settlement
+  bgcolor: "#ff6600" # dark orange
+  fgcolor: "#000000" # black

@@ -1,1 +1,38 @@
-[]
+- universe: Universe.lotr
+  title: "The Ring Is Given to Frodo"
+  slug: "ring_given_to_frodo"
+  start_datetime: "3018-09-30T00:00"
+  end_datetime: "3018-09-30T00:00"
+  event_tags: [ EventTag.quest ]
+
+- universe: Universe.lotr
+  title: "The Fellowship Is Formed"
+  slug: "fellowship_is_formed"
+  after_event: Event.ring_given_to_frodo
+  event_tags: [ EventTag.council ]
+
+- universe: Universe.lotr
+  title: "The Breaking of the Fellowship"
+  slug: "breaking_of_the_fellowship"
+  after_event: Event.fellowship_is_formed
+  event_tags: [ EventTag.journey ]
+
+- universe: Universe.lotr
+  title: "The Battle of Helm's Deep"
+  slug: "battle_of_helms_deep"
+  after_event: Event.breaking_of_the_fellowship
+  event_tags: [ EventTag.battle ]
+
+- universe: Universe.lotr
+  title: "The Battle of the Black Gate"
+  slug: "battle_of_the_black_gate"
+  after_event: Event.battle_of_helms_deep
+  event_tags: [ EventTag.battle ]
+
+- universe: Universe.lotr
+  title: "The One Ring Is Destroyed"
+  slug: "one_ring_destroyed"
+  after_event: Event.battle_of_the_black_gate
+  start_datetime: "3019-03-25T00:00"
+  end_datetime: "3019-03-25T00:00"
+  event_tags: [ EventTag.quest ]

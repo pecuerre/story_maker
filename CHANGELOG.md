@@ -19,6 +19,12 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[added]** Populated the disposable LOTR development universe with world-building sample data so
+  every content model is exercised: 7 characters and 8 character tags, 12 hierarchically nested
+  locations and 6 location tags, 5 items and 5 item tags, 5 relations with symmetric/asymmetric
+  relation tags, 5 ownerships with date ranges, and 6 events forming a chained timeline with event
+  tags. Added loader coverage asserting the counts, tag and location parentage, ownership links,
+  and the event chain.
 - **[security]** Removed `.kamal/secrets` from Git tracking, added an ignore rule and CI guard,
   restricted the preserved local file to mode `0600`, and documented that master-key rotation and
   history cleanup remain owner actions. The secret value was not read or changed.

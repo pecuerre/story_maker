@@ -1,1 +1,29 @@
-[]
+- universe: Universe.lotr
+  slug: "frodo_samwise"
+  character1: Character.frodo_baggins
+  character2: Character.samwise_gamgee
+  relation_tags: [ RelationTag.is_ally_of ]
+
+- universe: Universe.lotr
+  slug: "aragorn_gimli"
+  character1: Character.aragorn
+  character2: Character.gimli
+  relation_tags: [ RelationTag.is_ally_of ]
+
+- universe: Universe.lotr
+  slug: "gandalf_aragorn"
+  character1: Character.gandalf_the_grey
+  character2: Character.aragorn
+  relation_tags: [ RelationTag.is_ally_of ]
+
+- universe: Universe.lotr
+  slug: "gandalf_leads_aragorn"
+  character1: Character.gandalf_the_grey
+  character2: Character.aragorn
+  relation_tags: [ RelationTag.is_leader_of ]
+
+- universe: Universe.lotr
+  slug: "samwise_gollum"
+  character1: Character.samwise_gamgee
+  character2: Character.gollum
+  relation_tags: [ RelationTag.is_master_of ]

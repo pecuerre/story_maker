@@ -1,1 +1,32 @@
-[]
+- universe: Universe.lotr
+  name: "Artifact"
+  slug: "artifact"
+  bgcolor: "#FFD700" # "gold"
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: "Ring"
+  slug: "ring"
+  parent: ItemTag.artifact
+  bgcolor: "#C0C0C0" # "silver"
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: "Weapon"
+  slug: "weapon"
+  bgcolor: "#A52A2A" # "brown"
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: "Sword"
+  slug: "sword"
+  parent: ItemTag.weapon
+  bgcolor: "#808080" # "gray"
+  fgcolor: "#000000" # black
+
+- universe: Universe.lotr
+  name: "Bow"
+  slug: "bow"
+  parent: ItemTag.weapon
+  bgcolor: "#8B4513" # "saddle brown"
+  fgcolor: "#000000" # black

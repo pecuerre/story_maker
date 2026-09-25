@@ -212,7 +212,7 @@ The intended persisted fields and relationships are:
 
 | Model/table | Intended fields and constraints |
 |---|---|
-| `scenes` | required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`, optional same-Story `section_id`, optional same-Universe `event_id`, optional `datetime` |
+| `scenes` | required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`, optional same-Story `section_id`, optional same-Universe `event_id`, one optional `datetime` point using Event-compatible storage/editor precision and timezone semantics (not Event's `start_datetime`/`end_datetime` pair) |
 | `scene_tags` | story-scoped hierarchical/colored tag shape; optional assignment only |
 | `scenes_scene_tags` | story-scoped HABTM join; tags remain optional |
 | `scene_elements` | required `scene_id`, `kind` (`narration`/`dialogue`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body`, indexed `position` |
@@ -223,10 +223,12 @@ The intended persisted fields and relationships are:
 
 `SceneElement` is an ordered child component rather than a standalone navigable content model, so
 it has no public slug requirement. `Scene.position` and `SceneElement.position` are contiguous `0..n-1` within their Story and Scene
-respectively. They are not `parent_id` hierarchies and must not include `Hierarchical` or
-`MaintainsSiblingPositions`; their ordering contract is flat and transactional. A title-only Scene
-is valid. A Scene's optional Event and datetime are independent, and multiple Scenes may reference
-one Event.
+respectively. They are not `parent_id` hierarchies and must not include `Hierarchical`. The current
+`MaintainsSiblingPositions` implementation also assumes a hierarchy; slice 11.1 must generalize or
+replace it with a compatible flat-ordering concern that preserves the existing sibling-position
+conventions and tests. The ordering contract is flat and transactional. A title-only Scene is
+valid. A Scene's optional Event and single-point datetime are independent, and multiple Scenes may
+reference one Event.
 
 Narration Elements have no speakers. Dialogue Elements require at least one same-Universe Character
 speaker; the server must reject a Dialogue-to-Narration change while speakers remain. Presence
@@ -237,8 +239,10 @@ Unknown optional references become documented validation/not-found errors rather
 The deletion contract is asymmetric: Scene-owned Elements, tag assignments, speaker links, and
 presence links cascade with Scene/Story deletion; Scene Tag definitions are removed with their
 Story; deleting a Section or Event clears Scene references while preserving Scene narrative order;
-deleting a shared Character, Item, or Location removes only its links and never a Scene. The exact
-confirmation copy is in [ADR 0007](adr/0007-story-owned-scenes-and-elements.md).
+deleting a shared Character, Item, or Location removes its Scene links in addition to the existing
+model-dependent hierarchy/relation/ownership behavior and never removes a Scene. Event retains its
+existing child and temporal-referrer cleanup. The exact confirmation copy is in
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md).
 
 ## Development data convention
 

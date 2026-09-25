@@ -43,3 +43,8 @@ ideas. The owner can write rough notes without worrying about formatting. If an 
 worthwhile improvement while working, it should ask whether to do it **now**, **later**, or
 **never**. A **later** item is added under `FUTURE WORK`; a **never** item is not added, and extra
 work is never silently added to the current task.
+
+The backlog is a pending-work list only. When an item is finished, add its dated
+[`../CHANGELOG.md`](../CHANGELOG.md) entry and then delete the item — the same discipline
+[known_quirks.md](known_quirks.md) uses when a finding is fixed. Finished items are not kept here as
+"completed" prose, and the remaining numbers are never renumbered or reused.

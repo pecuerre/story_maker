@@ -19,6 +19,27 @@ Labels used below:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-09-26
+
+- **[docs]** Adopted the known-quirks discipline for the shared backlog: `docs/backlog.md` now holds
+  pending work only, and finished work leaves it. The rule is written into the backlog header,
+  `AGENTS.md`, and `docs/README.md`: in the change that delivers an item, add the dated changelog
+  entry and then delete the item, with no "completed" prose, archive heading, or status marker left
+  behind. The changelog is the only record of delivered work. Remaining item numbers are never
+  renumbered or reused.
+- **[docs]** Cleaned the backlog accordingly. Removed the already-finished items 12 (taxonomy modal
+  XSS/stale state), 13 (taxonomy tree insertion and reordering), 21 (taxonomy editor visuals), 22
+  (details pages for every element and tag), and 23 (navigation/sidebar visual pass), plus the
+  delivered write-ups for Epic 11 slices 11.0-11.4 and the finished 11.4.1(b) sub-bullet; all of
+  them were already recorded in the 2026-09-25 changelog entries. The open work is unchanged: items
+  2-11, 11.4.1, slices 11.5-11.10, items 14-20, and the FUTURE WORK list. The remaining references
+  to slice 11.0 now cite ADR 0007 and the epic's target domain model, which also states the
+  one-or-more-speaker rule for Dialogue directly, and the epic's definition of done now says a
+  delivered slice is deleted from the delivery-slices list after its changelog entry.
+- **[docs]** Dropped the now-done backlog pointers from `docs/architecture.md` and from the
+  `SectionsController#show` and `sections/show.html.erb` comments; they described shipped behavior
+  as pending. No application behavior, schema, or data changed.
+
 ## 2026-09-25
 
 - **[added]** Completed backlog item 22. Every standard element and every element tag now has its

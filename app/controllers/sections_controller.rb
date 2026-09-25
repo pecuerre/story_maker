@@ -34,11 +34,11 @@ class SectionsController < ApplicationController
     @section_options = @story.sections.reorder(:position, :id).to_a
   end
 
-  # GET /sections/:id — the Section's own details page. Following backlog item
-  # 11.4.1(b) this is where "Details" leads from the Section tree, and it lists
-  # the scenes grouped under this Section in canonical narrative order.
-  # Grouping is organization only: the position shown on each scene is its place
-  # in the story's sequence, not a value derived from this Section.
+  # GET /sections/:id — the Section's own details page. This is where "Details"
+  # leads from the Section tree, and it lists the scenes grouped under this
+  # Section in canonical narrative order. Grouping is organization only: the
+  # position shown on each scene is its place in the story's sequence, not a
+  # value derived from this Section.
   def show
     @section_path = SectionPaths.build(@story.sections.reorder(:position, :id).to_a).label_for(@section)
     @scenes = @section.scenes.reorder(:position, :id).to_a

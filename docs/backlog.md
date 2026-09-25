@@ -1,15 +1,28 @@
 # SHARED BACKLOG
 
-This is the one place for pending work, rough ideas, and things we may want
+This is the one place for **pending** work, rough ideas, and things we may want
 to do in the future. The owner can append ideas without worrying about format.
+
+## How finished work leaves this file
+
+This file follows the same discipline as [known_quirks.md](known_quirks.md), where a fixed
+finding is no longer an open item. When work is finished it does not stay here as a
+"completed" paragraph. In the same change that delivers it:
+
+1. add or update the dated entry in [`../CHANGELOG.md`](../CHANGELOG.md), then
+2. delete the item from this file.
+
+The changelog is the durable record of delivered work, so nothing else has to track it
+here. Do not archive finished items under a separate heading, and do not leave a
+completion summary behind.
 
 ## How AI assistants should use this file
 
 When you notice another worthwhile improvement while working on a task, ask
 the owner whether to do it NOW, LATER, or NEVER.
 
-- NOW: do the extra work as part of the current task, then remove or mark the
-  item as completed.
+- NOW: do the extra work as part of the current task, then update the changelog and
+  remove the item.
 - LATER: add it under FUTURE WORK below.
 - NEVER: do not implement it and do not add it to this file.
 
@@ -18,8 +31,9 @@ still pending.
 
 ## PENDING WORK
 
-Items are numbered and the numbers are stable: completed items are removed and the remaining
-numbers are intentionally left as they are, so a number never silently refers to a different idea.
+Items are numbered and the numbers are stable: a finished item is deleted without
+renumbering, so the remaining numbers are left as they are and a number is never reused or
+made to mean a different idea.
 
 2. **add "fixed" attribute to all _tags models**
 
@@ -135,7 +149,8 @@ reviewable and testable.
 
 #### Accepted target domain model
 
-The slice 11.0 contract fixes the first-version ownership graph and field defaults:
+The confirmed contract, decided in [ADR 0007](adr/0007-story-owned-scenes-and-elements.md), fixes the
+first-version ownership graph and field defaults:
 
 - `Scene belongs_to Story`; `Scene belongs_to Section, optional: true`; `Scene belongs_to Event,
   optional: true`; and Story owns the ordered `has_many :scenes` collection. Scene includes
@@ -148,9 +163,10 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
 - `SceneElement belongs_to Scene`; ordered by `position`; stores an element kind, required `name`
   labelled **Title**, and optional plain-text `body` labelled **Content**. An Element can be saved
   without a body. Never name the kind column `type`, because Active Record reserves that name for
-  single-table inheritance. Constrain it to `narration` or `dialogue` in model/database checks, and
-  forbid speakers on Narration. Changing Dialogue to Narration with speakers must fail clearly or
-  remove them only after explicit confirmation in an atomic update.
+  single-table inheritance. Constrain it to `narration` or `dialogue` in model/database checks,
+  require at least one speaker for a Dialogue Element, and forbid speakers on Narration. Changing
+  Dialogue to Narration with speakers must fail clearly or remove them only after explicit
+  confirmation in an atomic update.
 - `SceneCharacter`, `SceneItem`, and `SceneLocation` are join records that preserve a nullable
   free-text `role` and enforce that every linked Universe record belongs to the Scene's Universe.
   Blank role input means no role; do not validate it against a controlled vocabulary. Join models
@@ -177,7 +193,7 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
 
 - Replace the reserved Scenes entry with a real Story-scoped link only when a Story is selected.
   With no current Story, keep the existing explicit “select a Story” flow; never fall back to the
-  first Story. **(Shipped in 11.1.)**
+  first Story.
 - The Scenes index is a flat list in canonical Scene order, with an explicit **Ungrouped** indicator
   where appropriate, clear title and short-description previews, Section and tag badges,
   element/participant counts, and add/edit/delete actions. Its main list is ordered only by Scene
@@ -219,74 +235,11 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
 
 #### Delivery slices
 
-- **11.0 — Domain contract and UX skeleton (completed 2026-09-25).** [ADR 0007](adr/0007-story-owned-scenes-and-elements.md)
-  extends the accepted Universe/Story scope decision and sketches the global Scene list, URL-backed
-  tabs, Element modal, Section grouping flow, ordering, access rules, and deletion behavior. The
-  confirmed defaults are: persist Scene title as `name` and label it **Title**; require Element
-  `name`/Title while allowing an Element to be saved without a body; require one or more speakers
-  for Dialogue; forbid speakers on Narration; keep roles nullable; and use one optional Scene
-  `datetime` with the current Event storage/editor precision and timezone semantics rather than
-  copying Event's `start_datetime`/`end_datetime` pair. The exact detailed deletion confirmation
-  templates are recorded in the ADR. No application code, schema, or development data was added by
-  this decision slice. The explicit environment-guarded development-data loader
-  ([ADR 0008](adr/0008-explicit-development-universe-loader.md)) is complete and supplies the
-  final development-data/manual verification path.
-
-- **11.1 — Core Scene vertical slice (completed 2026-09-25).** Shipped the schema-only `scenes`
-  migration, the `Scene` model (`belongs_to :story`, `HasSlug`, required Title, optional short
-  description, no `parent_id`), the `Story has_many :scenes` association, and a
-  transactionally maintained contiguous position with deterministic `position, id` ordering. The
-  sequence uses the flat mode and Story scope owner from ADR 0009 / `PositionedResourceOrder`
-  through `maintains_flat_positions_for :scene`; the concern now omits the ordering parent in flat
-  mode, and the service gained flat create/move/destroy/rollback coverage with a real parentless
-  record. Added story-scoped routes and `ScenesController` (HTML redirect/re-render only), the
-  canonical Scenes index with accessible Move up/Move down `button_to` controls that are disabled
-  at the sequence boundaries, a title/description create-edit-delete journey, and the stable Scene
-  editor shell (Scene Details is the canonical inspectable page; `scenes/_form`, reused by `new` and
-  `edit`, is the only editor). The real sidebar link plus a separately cached
-  `Story#menu_scene_count` and basic empty and read-only states landed with it. `Scene` is
-  registered in
-  `Ability::CONTENT_CLASS_NAMES`; the story scene count uses its own `cache_scope` so it cannot
-  overwrite the section count. Section/Event/datetime, tags, Elements, and world links were kept
-  out of this slice and are deliberately not routed. Added model, request, routing, ability,
-  menu-count, ordering-service, and focused system coverage plus connected `db/data/dark/scenes.yml`
-  and `db/data/lotr/scenes.yml` with a title-only scene, and updated the architecture, data model,
-  conventions, visual design, and development docs.
-
-- **11.2 — Scene Details, references, and time (completed 2026-09-25).** The schema-only
-  `AddSceneReferencesToScenes` migration added the optional `section_id`, `event_id`, and single-point
-  `datetime` with real foreign keys plus a `[story_id, section_id]` index. `Scene` gained
-  `belongs_to :section, optional: true`, `belongs_to :event, optional: true`, and application-level
-  same-Story/same-Universe validations, so an unknown optional ID or an unparseable datetime becomes
-  a documented `422` field error instead of a foreign-key `500` or a silently dropped value. The
-  editor gained **Organization** and **In-world time** fieldsets with explicit narrative-order versus
-  in-world-time copy, a **Scene Details / Characters / Items / Locations** URL-backed tab shell whose
-  not-yet-routable tabs stay `aria-disabled` placeholders, and a Details page that shows the section
-  group, linked event, and formatted in-world time. `UniverseScopeResolver` replaced the duplicated
-  `Ability#universe_for` and `ApplicationHelper#universe_for_record` logic and resolves Scene-owned
-  records through Scene; `SectionPaths` builds every ancestor path from one ordered query. The
-  Story, Section, and Event delete confirmations now use the mandatory ADR 0007 consequence
-  templates.
-
-- **11.3 — Section grouping workspace (completed 2026-09-25).** A Scene's Details form assigns it to
-  **Ungrouped** or one Section in the current Story, and the Sections workspace gained a separate
-  **Grouped scenes** outline that keeps the existing tree. One selector-driven form
-  (`PATCH /u/:universe_slug/s/:story_id/scenes/group`) moves a Scene between Ungrouped, a Section, and
-  another Section; the target is resolved through the current Story, so a foreign or unknown Section
-  is a `404` and the model's own validation always holds. The global Scenes list stays canonical and
-  now labels each row with its full nested Section path or an explicit **Ungrouped** indicator, and
-  grouping provably never changes `position`. Deleting a Section nullifies Scene grouping instead of
-  removing Scenes, with the matching confirmation copy. Selectors are the only required move path;
-  drag-and-drop stays optional.
-
-- **11.4 — Scene Tag taxonomy and assignment (completed 2026-09-25).** Added the story-scoped
-  `SceneTag` schema/model, its hierarchical tree editor under **Configuration → Tags → Story Tags**,
-  and optional assignment from Scene Details. The new story-scoped `scenes_scene_tags` join has
-  real foreign keys and a unique pair index; both sides of the association apply the Story scope.
-  Scene lists and Details show preloaded tag badges, the editor offers a native optional selector,
-  and Dark/LOTR manifests now exercise nested Scene Tags, tagged and untagged Scenes, and the
-  story boundary. Added model, request, authorization, loader, routing, and focused browser coverage.
-  Elements and world-presence links remain for slices 11.5–11.10.
+Slices **11.0-11.4** (domain contract, core Scene vertical slice, Scene references and time,
+Section grouping, and the Scene Tag taxonomy) are finished and no longer tracked here: their
+delivered state lives in [`../CHANGELOG.md`](../CHANGELOG.md) and in
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) / [ADR 0009](adr/0009-transactional-position-maintenance.md).
+The remaining slices are:
 
 - **11.4.1 - Improve Scenes / Sections**.
   a) change the scenes.yml file in dark and
@@ -298,19 +251,14 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
       the character tag is just a label, or grouping
     - sections are "a little" different, because section have their own tags. but they are
       per se, like tags for the scenes too.
-    - so in the taxonomy list when i click "details" of a section it should take me to a page
-      where i can see all the scenes in that section
-      **(done 2026-09-25 with backlog item 22: a Section's Details page lists the scenes grouped
-      under it, each with its narrative position, and the tree row says how many)**
     - leave only there the "upgrouped" scenes, the rest we will be able to see if we click
       the corresponding section. the "move scene" button. remains there. it is perfect
-      **(not done: the Sections workspace still lists ungrouped scenes together with the grouped
-      outline, as decided for slice 11.3)**
+      **(the Sections workspace still lists ungrouped scenes together with the grouped
+      outline; only that part is left to do)**
     - in the UI in the Scene tab
       - add a search are that allow the user to narrow the amount of elements they will see
       - as a note to yourself (for your knowledge), one story can have hundreds or even thousands of scenes
       - in that search (for now) allow to filter by section, scene type and date range.
-
 
 - **11.5 — Modal JSON reliability for Element editing.** Make the shared modal flow submit JSON
   correctly, show 422 errors, handle loading/network failures, and remove rows and update counts
@@ -320,9 +268,9 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
 - **11.6 — Scene Elements and Dialogue speakers.** Add Scene Elements with the same transactional
   ordering guarantees as Scenes and the many-to-many speaker join. Implement Narration and Dialogue
   creation, editing, deletion, and accessible reordering in Bootstrap modals. A Dialogue may have
-  many speakers but no turn structure; apply the minimum-speaker rule confirmed in 11.0, and Narration
-  cannot retain speakers. Do not copy the taxonomy tree controller or assume
-  `MaintainsSiblingPositions` supports a flat parentless sequence.
+  many speakers but no turn structure; apply the minimum-speaker rule confirmed in the target
+  domain model above, and Narration cannot retain speakers. Do not copy the taxonomy tree
+  controller or assume `MaintainsSiblingPositions` supports a flat parentless sequence.
 
 - **11.7 — Character presence and speaker coherence.** Add `SceneCharacter` with nullable free-text
   role, the Characters tab, scoped same-Universe validation, and a derived view of explicit
@@ -372,6 +320,8 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   documentation in the same change. Replace the old copy that describes Scenes merely as an
   example of a Section, and move fixed shared-editor quirks from `known_quirks.md` to
   `resolved_quirks.md` rather than deleting their history.
+- Record the delivered slice in [`../CHANGELOG.md`](../CHANGELOG.md) and then delete its paragraph
+  from the delivery-slices list above. The epic keeps only what is still pending.
 - Preload Sections/tags and calculate Element/participant counts without N+1 queries and without
   double-counting derived speakers in every list-bearing slice. Keep the existing Story count-cache
   key collision from being copied into a second scalar metric.
@@ -400,8 +350,8 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   `known_quirks.md`; new code would inherit known 406s, silent validation failures, and stale DOM.
   Complete the modal reliability slice before Elements depend on it.
 - Do not use a `type` discriminator, default Scene Tags, or default/required generic presence links.
-  Tags and world-presence links remain optional; the one-or-more-speaker rule confirmed in slice
-  11.0 applies only after an author creates a Dialogue Element.
+  Tags and world-presence links remain optional; the one-or-more-speaker rule confirmed in the
+  target domain model applies only after an author creates a Dialogue Element.
 - Do not add a nested authorization adapter only in a view. SceneElement, speaker, and presence
   records must resolve their Universe through Scene in both Ability and shared helper paths, or
   writers may see missing controls and record-level checks may deny valid mutations.
@@ -417,23 +367,6 @@ Do not add a full manuscript/rich-text editor, turn-level dialogue, multiple Eve
 overlapping Section memberships, a controlled role ontology, real-time collaboration, new Story
 permissions, automatic chronology reconciliation, or AI analysis. Those require separate domain
 decisions and should not delay the basic ordered Scene workflow.
-
-12. **Eliminate taxonomy modal XSS and stale editor state (completed 2026-09-25)**
-
-    The taxonomy editor now builds dynamic fields/options/nodes by DOM construction, treats
-    user-controlled names and descriptions as text, refreshes the same URL after every successful
-    mutation, and has hostile-name, count, and reopen-after-CRUD browser regressions. The resolved
-    findings are preserved in `resolved_quirks.md`; this is a prerequisite for adding Scene Tags,
-    not a Scene-specific cleanup.
-
-13. **Make taxonomy tree insertion and reordering correct and accessible (completed 2026-09-25)**
-
-    Root/boundary insertion now uses the actual target list, rename controls are native buttons
-    with Enter/Space support, and Move up/Move down plus Insert before/Insert after provide
-    keyboard/touch alternatives to drag/drop. Touch-visible targets, focus restoration, scoped
-    Section/Location parent selectors, and focused browser regressions are in place. The resolved
-    findings are preserved in `resolved_quirks.md`; the taxonomy editor is ready for the later
-    Scene Tag slice.
 
 14. **Coverage measurement and CI gate (DataFactor follow-up)**
 
@@ -503,48 +436,6 @@ decisions and should not delay the basic ordered Scene workflow.
    for instance if i delete a story, the scenes and sections will be deleted. but later if i decide
    to recover the story, i shuold be ask "there are related elements associated with this, do you want
    to recover them too?"
-
-21. **visual improvements in the taxonomy editor (completed 2026-09-25)**
-
-   A row now carries exactly three things: the **name** (the only inline-rename target, sized to
-   its own text so only hovering the name starts a rename), the **Details** link (see item 22), and
-   one overflow menu holding Add child, Insert before, Insert after, Move up, Move down, Edit, and
-   Delete. Move up/down became disabled menu items at the sequence boundaries instead of row
-   buttons, and the tree's first insert target no longer hangs over the hint paragraph. The
-   reported "the tag disappears when I rename" behavior was **not** reproducible on the current
-   tree: an inline rename sends only `name`, the modal editor re-populates the tag selector from
-   the record's own serialized values, and both paths keep the assignment. That is now locked in by
-   a permanent browser regression for both paths. The Stimulus controller no longer carries a
-   second, dead copy of the row builder, so the row layout cannot drift.
-
-22. **visual improvement for the taxonomy visuals and other related stuff, part 2 (completed
-    2026-09-25)**
-
-   Every standard element and every element tag has its own details page (Character, Location, Item,
-   Event, Relation, Ownership, Section; and the Character, Relation, Location, Event, Item,
-   Ownership, Section, and Scene tags). A content page identifies the record and states honestly
-   which related information will appear later; a Section additionally lists the scenes grouped
-   under it (which also completes 11.4.1(b)); a tag page lists the records that carry it. Every
-   list row and taxonomy node renders a `Details (N records)` link that repeats the record name and
-   count in its accessible name, and the count is query-free through `TaggedRecordCounts`. The
-   pages are composed from `shared/_record_details`, `_detail_facts`, `_detail_section`, and
-   `_tagged_record_list`, so each record type can keep adding information to the same URL without a
-   second page pattern. `Relation` and `Ownership` also gained a `display_string`, so a link record
-   with its optional name still has a readable label everywhere.
-
-23. **other minor visual improvements (completed 2026-09-25)**
-
-   Placeholder navigation is now flat disabled gray with no hover emphasis, matching its
-   `aria-disabled` semantics. The universe page replaced the "Story collection" summary card with the
-   universe's actual story list, each with an **Open** action, and the header keeps **All
-   stories**; the separate "Browse stories" button was removed because the list it led to is now on
-   that page, and the page deliberately reuses the navbar's memoized story list so it adds no query
-   and no `COUNT`. The left sidebar is now three scoped blocks — current universe context, Universe
-   Bible, current story context, Story workspace, Configuration — each context followed by the
-   section it introduces: universe blue, story muted crimson (deliberately not danger red), and
-   configuration plus the right utility sidebar green.
-
-
 
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

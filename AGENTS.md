@@ -72,6 +72,10 @@ tree; some findings (notably the existing
 - Put deferred quality work in [`docs/backlog.md`](docs/backlog.md) and use the existing
   **NOW / LATER / NEVER** decision. Do not silently add services, dependencies, refactors, release
   tags, or deployment actions just because a report suggests them.
+- When a backlog item is finished, add its `CHANGELOG.md` entry and then delete the item, the same
+  way a fixed known quirk leaves `docs/known_quirks.md`. The backlog holds pending work only: do not
+  leave "completed" prose, an archive heading, or a status marker behind, and do not renumber the
+  remaining items.
 - Do not fabricate history, alter author identities, backdate commits, or create cosmetic releases.
   Genuine teammate contributions should retain their own identities. Never commit credentials,
   tokens, DSNs, Rails keys, or real `.env` files. A value-free `.env.example` is documentation,
@@ -221,4 +225,6 @@ named development universe.
   Read [`docs/adr/0005-universe-access-levels.md`](docs/adr/0005-universe-access-levels.md) and test
   public/private read-write-admin boundaries explicitly.
 - Before handing off, summarize changed files, behavior, tests/checks run, checks not run, and
-  any follow-up work that was deliberately deferred.
+  any follow-up work that was deliberately deferred. Work delivered from
+  [`docs/backlog.md`](docs/backlog.md) leaves that file: changelog entry first, then the item is
+  deleted, so the backlog only ever lists pending work.

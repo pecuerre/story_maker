@@ -19,6 +19,11 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[docs]** Distilled the 2026-09-25 DataFactor report into the agent guide, a durable quality
+  guidance document, ADR 0006, focused backlog items, and verified follow-up quirks. The guidance
+  keeps the report directional, reconciles stale health/lockfile signals, prioritizes real tested
+  work over score gaming, makes security, privacy, and development-data boundaries explicit, and
+  clarifies the destructive `db:restart` warning in the root README.
 - **[added]** Created this date-based `CHANGELOG.md` and added a standing rule to record every
   future code, site, data, test, documentation, configuration, security, and tooling change.
 - **[security]** Hardened the authentication and request lifecycle: stale authentication cookies

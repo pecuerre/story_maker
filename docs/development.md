@@ -73,6 +73,12 @@ bin/bundler-audit            # vulnerable gems
 bin/importmap audit          # vulnerable JS pins
 ```
 
+For a locally vendored npm asset, keep a same-line version comment on its importmap pin, for
+example `pin "tom-select", to: "tom-select.js" # @2.6.2`. Importmap Audit reads this metadata
+from `config/importmap.rb`; it does not infer a version from a version banner inside the
+JavaScript file. Keep the comment, `bun.lock`, and the vendored asset synchronized when updating
+Tom Select.
+
 ## Repository quality and DataFactor follow-up
 
 The 2026-09-25 DataFactor report is a point-in-time snapshot, not a release gate or a reason to

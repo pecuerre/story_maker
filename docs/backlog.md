@@ -424,7 +424,7 @@ decisions and should not delay the basic ordered Scene workflow.
 18. **Complete dependency, JavaScript, and container supply-chain checks (DataFactor follow-up)**
 
    Preserve the committed `bun.lock` and frozen installs. Add a supported Bun/npm audit path,
-   inventory or audit vendored JavaScript that Importmap Audit ignores, and add appropriate
+   verify the provenance and version consistency of locally vendored JavaScript, and add appropriate
    npm/Bun and Docker Dependabot ecosystems. Consider a clean production-image build/boot smoke
    check and Kamal configuration validation. Do not add a deploy job or typecheck job without an
    approved deployment contract or a real static-type toolchain; avoid unpinned or ceremonial CI

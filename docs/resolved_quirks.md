@@ -369,3 +369,16 @@ explicit acknowledgement. The task description alone could not prevent a product
 **Resolution:** `db:restart` now runs only in development with `CONFIRM_DB_RESET=1` and resets schema
 without loading demo data. `db:demo:reset` has the same explicit confirmation and additionally
 requires a registered `UNIVERSE` before dropping the database; it never invokes `db:seed`.
+
+### Importmap Audit ignored the local Tom Select pin (fixed)
+
+**Then:** `config/importmap.rb` mapped the bare `tom-select` import to
+`vendor/javascript/tom-select.js` without a version annotation. Although the vendored file
+identified itself as Tom Select `v2.6.2`, `bin/importmap audit` does not read version banners from
+JavaScript files. It printed an "Ignoring tom-select" notice and did not include the direct package
+in its npm advisory request.
+
+**Resolution:** the local pin now carries the recognized `# @2.6.2` metadata comment.
+`test/importmap_audit_test.rb` verifies that Importmap Audit sees the version and no longer emits
+the warning. This closes the direct Tom Select audit blind spot; complete Bun/npm graph coverage,
+vendored-file provenance checks, and Dependabot configuration remain separate follow-up work.

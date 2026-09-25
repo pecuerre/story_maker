@@ -274,6 +274,18 @@ added to an existing page instead of a new page being invented. See
   `PositionedResourceOrder` clamp and normalize, so a boundary move is an explicit no-op.
   Section assignment is a separate action that changes only `section_id` and never touches
   `position`.
+- **List filter:** a Story can hold hundreds of Scenes, so the canonical list narrows with a GET
+  search area instead of growing without limit. `SceneFilter` is the value object that owns the
+  contract: `q` (title and short description), `section_id` (a Section of this Story or the literal
+  `ungrouped`), `scene_tag_id` (a Scene Tag of this Story), and inclusive in-world `from`/`to` **days**.
+  Rules that must not drift: the filter never reorders, regroups, or renumbers; a filter value is
+  validated against the already-loaded story-scoped lists, so a foreign id is dropped and reported
+  instead of reaching the query; a scene without an in-world time is never inside a date range; the
+  position badge, the story total, and the Move boundary state come from the whole sequence, never
+  from the filtered rows; and `query_params` is the only source of the filter in a link or a
+  redirect, which is why the index redirects a form submission once to the canonical query. Add a new
+  key in `SceneFilter::PARAMS`, in the form, and in the helper that labels it — not in a controller
+  condition.
 - **UI:** the list uses the existing flat-list surface, Scene Details (`/scenes/:id`) is the
   canonical inspectable page with the same content for every access level, and the full-page form
   pattern (`scenes/_form`, reused by `new` and `edit`) is the only editor. Scene Tag badges are
@@ -283,6 +295,10 @@ added to an existing page instead of a new page being invented. See
   `shared/_content_tabs`: **Scene Details** is a live link, and **Characters**, **Items**, and
   **Locations** are `aria-disabled` placeholders until their slices add a destination. A tab is
   never a link to a route that does not exist and never an in-document Bootstrap pane.
+- **Sections workspace:** the tree stays the record surface and `scenes/_ungrouped_scenes` lists
+  only the Scenes that belong to no Section, because a grouped Scene is read on its own Section's
+  page. The move form keeps offering every Scene of the Story: regrouping a Scene is how it returns
+  to the ungrouped list.
 - **Helpers:** add only the Scene-specific descriptors the new forms need. Scene JSON is not used to
   mix the stable HTML form with mutation responsibilities. Update shared count/preload behavior
   without copying the current taxonomy stale-option or modal 406 weaknesses.

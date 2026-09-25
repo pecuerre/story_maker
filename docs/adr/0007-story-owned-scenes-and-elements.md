@@ -127,8 +127,10 @@ validation errors in the interface.
 The first Section-grouping flow has two complementary paths:
 
 1. A Scene's Details form assigns it directly to **Ungrouped** or one Section in the current Story.
-2. The Sections workspace provides a separate grouped outline with accessible move controls that
-   change only the Scene's `section_id`.
+2. The Sections workspace provides a separate grouping workspace with accessible move controls that
+   change only the Scene's `section_id`. It lists the scenes that belong to no Section; a grouped
+   scene is read on its own Section's page, and any scene can still be moved from or into a group
+   there.
 
 The global Scenes list remains canonical and keeps narrative order after any grouping change. No
 first slice depends on drag-and-drop.
@@ -243,6 +245,22 @@ shown in these confirmations.
 > `has_many :scenes, dependent: :nullify`, so the asymmetric deletion contract and the confirmation
 > templates below are live for those two records; the Character/Item/Location templates still
 > describe Scene links that slices 11.7–11.9 will add.
+
+> **Execution note (2026-09-26, backlog item 11.4.1):** the first improvement pass over the two
+> shipped Scene/Section workspaces is delivered and does not change the domain. Two parts of the
+> decision above were read more literally:
+>
+> - "a separate grouped outline" is now the **ungrouped** list plus the move form. A Section is a
+>   group, not a story record with a list of its own, so the scenes inside one are listed on that
+>   Section's own details page (the **Details** link on its tree row). The Sections workspace no
+>   longer repeats a grouped scene, and the move form still offers every scene of the story, because
+>   regrouping a scene is exactly how it comes back.
+> - The global Scenes list stays the canonical narrative order under every view. It gained a GET
+>   search area (text, Section group, Scene Tag, inclusive in-world date range) that narrows what is
+>   shown without reordering, regrouping, or renumbering anything: the position badge, the story
+>   total, and the Move boundary state all come from the whole sequence, and a list-embedded move or
+>   delete returns to the same filter. A Story may hold hundreds of scenes, so narrowing the list is
+>   a list capability, not a second order.
 
 ## Consequences
 

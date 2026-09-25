@@ -46,4 +46,23 @@ module ScenesHelper
     raw = scene.read_attribute_before_type_cast(:datetime)
     raw.is_a?(String) ? raw : nil
   end
+
+  # "Label: value" descriptions of the filters currently in effect, in the order
+  # the search area lists them. The result set of a long story is otherwise
+  # ambiguous, and an empty result has to be able to say what caused it.
+  def scene_filter_summaries(filter, section_paths, scene_tag_paths)
+    summaries = []
+    summaries << "Search: “#{filter.text}”" if filter.text.present?
+    if filter.ungrouped?
+      summaries << "Section: #{SectionPaths::UNGROUPED_LABEL}"
+    elsif filter.section_id
+      summaries << "Section: #{section_paths.label_for(filter.section_id)}"
+    end
+    if filter.scene_tag
+      summaries << "Scene tag: #{scene_tag_paths.label_for(filter.scene_tag)}"
+    end
+    summaries << "In-world from #{filter.from_date.iso8601}" if filter.from_date
+    summaries << "In-world to #{filter.to_date.iso8601}" if filter.to_date
+    summaries
+  end
 end

@@ -1,0 +1,106 @@
+<%# The ungrouped end of the Section-grouping workspace.
+    A Section is a group, not a story record with a scenes list of its own, so
+    the scenes inside a Section are listed on that Section's own page. Only the
+    scenes that belong to no Section are listed here, next to the move form that
+    can group or ungroup any scene of the story. This is a second organization
+    view, not a second source of order: within the group the scenes stay in
+    canonical narrative order, and grouping never changes a scene's position. %>
+<% scenes = local_assigns.fetch(:scenes) %>
+<% section_paths = local_assigns.fetch(:section_paths) %>
+<% story = local_assigns.fetch(:story) %>
+<% editable = local_assigns.fetch(:editable) %>
+<% ungrouped = scenes.reject { |scene| scene.section_id.present? } %>
+<% grouped = scenes.size - ungrouped.size %>
+
+<div class="content-surface scene-grouping mt-4">
+  <div class="p-3 p-md-4 border-bottom">
+    <h2 class="h5 mb-1">Ungrouped scenes</h2>
+    <p class="text-body-secondary mb-0">
+      <% if grouped.positive? %>
+        Only the scenes that belong to no section are listed here. The other
+        <%= pluralize(grouped, "scene") %> in <%= story.name %> are grouped and are listed on
+        their own section's page, which the Details link on a section above opens.
+      <% else %>
+        Only the scenes that belong to no section are listed here.
+      <% end %>
+      Grouping is organization only: it never changes the order in the
+      <%= link_to "scenes list", universe_story_scenes_path(story_id: story) %>.
+    </p>
+
+    <% if scenes.empty? %>
+      <%# Nothing to move yet; the empty state below carries the only action. %>
+    <% elsif editable %>
+      <%# One selector-driven form keeps a single accessible move path for
+          grouping. Drag-and-drop is optional and is not the only way to move a
+          scene between Ungrouped, a section, and another section, so it still
+          offers every scene of the story and not only the ungrouped ones. %>
+      <%= form_with url: group_universe_story_scenes_path(story_id: story),
+        method: :patch,
+        class: "row g-2 align-items-end mt-3 scene-grouping-form" do %>
+        <div class="col-12 col-md">
+          <label class="form-label" for="scene_grouping_scene_id">Scene</label>
+          <select class="form-select" name="scene_id" id="scene_grouping_scene_id">
+            <% scenes.each do |scene| %>
+              <% current_group = scene_grouping_label(scene, section_paths) || SectionPaths::UNGROUPED_LABEL %>
+              <option value="<%= scene.id %>">
+                <%= "#{scene.position + 1}. #{scene.name} (#{current_group})" %>
+              </option>
+            <% end %>
+          </select>
+        </div>
+        <div class="col-12 col-md">
+          <label class="form-label" for="scene_grouping_section_id">Move to</label>
+          <select class="form-select" name="section_id" id="scene_grouping_section_id">
+            <% section_paths.grouping_options.each do |label, value| %>
+              <option value="<%= value %>"><%= label %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <%= submit_tag "Move scene", class: "btn btn-primary", name: nil %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if scenes.empty? %>
+    <div class="p-3 p-md-4">
+      <%= render "shared/empty_state",
+        title: "No scenes yet",
+        description: "This story has no scenes to group yet. Add one and it will appear here as ungrouped.",
+        icon: "film" do %>
+        <% if editable %>
+          <%= link_to "Add the first scene", new_universe_story_scene_path(story_id: story), class: "btn btn-primary" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% elsif ungrouped.empty? %>
+    <div class="p-3 p-md-4">
+      <p class="text-body-secondary mb-0">
+        Every scene in <%= story.name %> is grouped under a section, so there is nothing waiting to
+        be grouped here. Open a section above to read the scenes grouped under it.
+      </p>
+    </div>
+  <% else %>
+    <div class="list-group list-group-flush">
+      <div class="list-group-item">
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+          <span class="badge rounded-pill text-bg-light border"
+            aria-label="<%= pluralize(ungrouped.size, "scene") %>"><%= ungrouped.size %></span>
+        </div>
+        <%# The narrative-position pill carries the order, so the list stays
+            unordered rather than being an ordered list with its own markers
+            suppressed. %>
+        <ul class="list-unstyled mb-0">
+          <% ungrouped.each do |scene| %>
+            <li class="d-flex align-items-center gap-2 py-1">
+              <span class="badge rounded-pill text-bg-light border"
+                aria-label="<%= "Narrative position #{scene.position + 1}" %>"><%= scene.position + 1 %></span>
+              <%= link_to scene.name, universe_story_scene_path(story_id: story, id: scene), class: "text-break" %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+</div>

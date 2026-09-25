@@ -15,9 +15,11 @@ class SectionsController < ApplicationController
     @section_tags = @story.section_tags
     @section_tags = @section_tags.order(:name)
     @section_options = @story.sections.reorder(:position, :id).to_a
-    # The Section tree above and the grouped Scene outline below share one
+    # The Section tree above and the ungrouped Scene list below share one
     # ordered Section list, so ancestor paths cost a single extra query for the
-    # Story's Scenes and never a query per Scene.
+    # Story's Scenes and never a query per Scene. The move form needs every Scene
+    # of the Story; the list below shows only the ungrouped ones, because a
+    # grouped Scene is listed on its own Section's page.
     @section_paths = SectionPaths.build(@section_options)
     @scenes = @story.scenes.reorder(:position, :id).to_a
     # Every Section row links to its own details page and says how many scenes

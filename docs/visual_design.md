@@ -307,10 +307,10 @@ Scene workspace. The **Scenes** sidebar entry is a real story-scoped link with i
 story is selected, and remains an `aria-disabled` placeholder with no story.
 
 The global Scenes page is a flat list in narrative order, not a Section-grouped tree. It uses the
-shared page header, content surface, entity rows, and empty state. Rows currently show:
+shared page header, content surface, entity rows, and empty state. Rows show:
 
 - the 1-based narrative position as a bordered pill with an
-  `aria-label="Narrative position N of M"`;
+  `aria-label="Narrative position N of M"`, where both numbers come from the whole sequence;
 - the required Title as a link to Scene Details and a clamped description preview;
 - a bordered grouping badge showing the Scene's full nested Section path, or **Ungrouped** with an
   open-folder icon. The `title` states that grouping does not change the narrative order;
@@ -319,6 +319,21 @@ shared page header, content surface, entity rows, and empty state. Rows currentl
 - visible Move up/Move down controls with a clear disabled state at sequence boundaries.
 
 Element/participant counts arrive with slice 11.6; do not render placeholder counts for them.
+
+A Story can hold hundreds or thousands of Scenes, so the list is preceded by a **Find scenes**
+surface (`scenes/_filter`): a full-width `search` field, a **Section** select, a **Scene Tag**
+select, two `date` fields labelled **In-world from** and **In-world to**, a **Filter scenes**
+submit, and a **Clear filters** link that appears only while a filter is in effect. The fields fold
+into one column below the `sm` breakpoint with the two date fields side by side, and the area never
+depends on hover or a wide viewport. One sentence states the two rules an author needs: filtering
+does not change the narrative order, and a Scene without an in-world time is not in a date range.
+Every access level sees it, because filtering is reading.
+
+While a filter is active the surface adds `Showing N scenes of M scenes.` followed by the active
+filters as neutral badges, so a result set is never ambiguous. A filter that matches nothing gets
+its own empty state — **No scenes match these filters**, the story's total, the same filter badges,
+and a **Clear filters** action — which is never reused for a Story that has no Scenes
+(**No scenes yet**).
 
 The page's primary **Add scene** action opens the stable new Scene form. The page header states
 that the order is the order the story is told, not in-world chronology, and that a section group
@@ -346,13 +361,15 @@ the `datetime-local` field. Each field has copy that states what it does *not* d
 changes the narrative position, Scene Tags do not change order, and the event link and the in-world
 time never write or clear each other.
 
-The Sections workspace keeps its taxonomy tree and adds a **Grouped scenes** surface below it:
-ungrouped scenes first, then each Section's nested path as a heading with a scene count, and each
-Scene row showing its narrative position and Title in canonical order. A long Section name wraps
-instead of pushing the layout. Writers also get one selector-driven move form (Scene → group,
-offering **Ungrouped** plus every Section path) with a real submit button; drag-and-drop is not
-offered, so the move always works by keyboard and on touch. Read-only members and guests see the
-same outline with no controls and no instruction to add scenes.
+The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** surface below it: only
+the Scenes that belong to no Section, with a count, each row showing its narrative position and Title
+in canonical order, and a line saying how many Scenes are grouped and that they are listed on their
+own Section's page. A grouped Scene is therefore never shown twice: the tree's **Details** link is
+the way in. When nothing is ungrouped the surface says so instead of showing an empty list. A long
+Section name wraps instead of pushing the layout. Writers also get one selector-driven move form
+(Scene → group, offering **Ungrouped** plus every Section path and every Scene of the story) with a
+real submit button; drag-and-drop is not offered, so the move always works by keyboard and on touch.
+Read-only members and guests see the same surface with no controls and no instruction to add scenes.
 
 Narration and Dialogue Elements will use one Bootstrap modal. The form has a kind selector,
 required

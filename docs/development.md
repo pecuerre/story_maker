@@ -244,7 +244,9 @@ Ungrouped, Section-assigned, independent Event/datetime, shared-Event, tagged/un
 Narration, Dialogue, multi-speaker, multi-Location, and blank/populated-role cases at Epic
 completion. `scenes.yml` records already reference their story, may now reference `section:`,
 `event:`, and `scene_tags:` with `Model.slug` references and an independent `datetime:`, and use
-explicit `position` values so the narrative order is visible in the file. `SceneTag` is loaded before
+explicit `position` values so the narrative order is visible in the file. The Dark file is the worked
+example: three scenes share Season 1 / Episode 1, three scenes are ungrouped (one of them told last
+but set in 1953), and each remaining Section keeps a single scene. `SceneTag` is loaded before
 `Scene`, and `Scene` is loaded **after** `Event` in `Development::UniverseDataRegistry` because a
 symbolic reference may not point at a later model file. The loader proves the Section and every
 assigned Scene Tag belong to the Scene's story before writing anything.
@@ -267,7 +269,18 @@ the sidebar **Scenes** entry links to the selected story and shows the scene cou
 narrative order with position pills; each row shows its nested Section path or **Ungrouped**; Move
 up/Move down reorder the sequence and are disabled at the boundaries; the delete confirmation
 states the full ADR 0007 consequences; and a guest or read-only member sees the list and details
-with no mutation controls.
+with no mutation controls. The Dark data has several Scenes in Season 1 / Episode 1, several
+ungrouped Scenes, and one Scene per remaining Section, so grouping and narrative order are visibly
+different things.
+
+On the same page check the **Find scenes** area: it narrows the list by title/description text, by
+Section (including **Ungrouped**), by Scene Tag, and by an inclusive in-world date range; the active
+filters stay in the URL and **Clear filters** restores the full list; a narrowed row still shows its
+real narrative position and story total, and Move up/Move down stay enabled whenever the scene
+really has a neighbour; a filter that matches nothing says **No scenes match these filters** and is
+never confused with a story without scenes; a filter value that no longer exists (another story's
+section, an unreadable date) is reported instead of quietly emptying the list; and reordering or
+deleting inside a narrowed list returns to the same filter.
 
 The universe page, the sidebar's scoped blocks, and the record details pages can be checked the
 same way: the universe page lists the universe's stories with an **Open** action and keeps **All
@@ -293,12 +306,13 @@ hierarchy can be created, renamed, colored, nested, moved, inserted, and deleted
 keyboard/touch controls; a public guest or read-only member sees the tree without mutation controls;
 and the same tags appear as optional badges on the Scenes list and Details page.
 
-Open `/u/dark/s/<story_id>/sections` and check: the Section tree is still there; **Grouped scenes**
-lists ungrouped scenes first and then each nested Section path with the narrative order preserved
-inside every group; the Scene → group selector moves a scene between Ungrouped, a Section, and
-another Section, and the flash states that the narrative position did not change; and the Section
-delete confirmation says that linked scenes become ungrouped without their narrative order
-changing.
+Open `/u/dark/s/<story_id>/sections` and check: the Section tree is still there; **Ungrouped scenes**
+lists only the scenes that belong to no Section, says how many are grouped, and leaves a grouped
+scene to its own Section page (follow the row's **Details** link and the three scenes of Episode 1 are
+listed there in narrative order); the Scene → group selector moves a scene between Ungrouped, a
+Section, and another Section and still offers every scene of the story, while the flash states that
+the narrative position did not change; and the Section delete confirmation says that linked scenes
+become ungrouped without their narrative order changing.
 
 ## Taxonomy editor and ordering verification
 

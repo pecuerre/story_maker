@@ -365,14 +365,48 @@ The editor shell is URL-backed through `shared/_content_tabs`: **Scene Details**
 title until their slices add a real destination. A tab is never rendered as a link to a route that
 does not exist, and it is never an in-document Bootstrap pane.
 
-The Sections workspace keeps its taxonomy tree and adds a **Grouped scenes** outline below it:
-ungrouped scenes first, then each Section's nested path, with the narrative position and Title of
-every scene in canonical order inside its group. For writers it adds one selector-driven move form
-(Scene → group) offering **Ungrouped** plus every Section path; drag-and-drop is not offered, so the
-move is always available by keyboard and on touch. Read-only members and guests see the same outline
-with no controls. The tree's read-only empty state now has its own copy, so a read-only member is
-not told to add or drag sections.
+The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** list below it:
+only the scenes that belong to no Section, in canonical narrative order, with the count of grouped
+scenes and the pointer to each Section's own page. A Section is a group rather than a record with a
+list of its own, so a grouped scene is read on that Section's details page and is not repeated here.
+For writers the list keeps one selector-driven move form (Scene → group) offering **Ungrouped** plus
+every Section path, and that form still offers every scene of the story, because regrouping is how a
+grouped scene comes back; drag-and-drop is not offered, so the move is always available by keyboard
+and on touch. Read-only members and guests see the same list with no controls. The tree's read-only
+empty state now has its own copy, so a read-only member is not told to add or drag sections.
 
+### The story's Scene list is filtered, never re-ordered
+
+A Story can hold hundreds of scenes, so the canonical list carries a search area instead of growing
+without limit. `SceneFilter` (`app/models/scene_filter.rb`) is the value object behind it, and the
+list stays the Story's canonical narrative order under every view:
+
+- Query keys on `GET /u/:universe_slug/s/:story_id/scenes`: `q` (free text over the title and short
+  description), `section_id` (a Section of this Story or the literal `ungrouped`), `scene_tag_id` (a
+  Scene Tag of this Story, the author's label for a scene), and `from`/`to` (inclusive in-world
+  **days**, applied to the scene's own `datetime`). Filters combine with `AND`.
+- A filter is validated against the lists the index already loaded (`SectionPaths#ids` and the
+  story-scoped Scene Tags), so a foreign or unknown id is dropped instead of reaching the query, and
+  a value that cannot be used is reported on the page (`flash.now[:alert]`) rather than silently
+  emptying the list. An unreadable date is the same case. A scene without an in-world time is
+  outside any date range: a null is never inside a range.
+- The tag filter narrows through the scoped inverse association
+  (`SceneTag#tagged_records.select(:id)`), so it cannot disclose another Story's scenes, and the
+  section filter uses an in-memory membership check rather than a second query.
+- A plain GET form submission arrives with blank values for the untouched fields, so the index
+  redirects once (`302`) to the canonical query built from `SceneFilter#query_params`. The address
+  bar, a bookmark, and a shared link therefore carry only the filters really in effect, and the
+  recognized keys of a `move` or `destroy` request are carried back to the same list, so a reordered
+  or deleted scene does not dump the author on the full story.
+- Position, totals, and boundaries never come from the filtered rows: one aggregate query
+  (`COUNT(*)`, `MIN(position)`, `MAX(position)`) answers the Story total shown by the position
+  badges and the real first/last position that disables Move up/Move down. A narrowed list therefore
+  cannot mistake its first visible row for the first scene of the Story.
+- Two empty states are kept apart: a Story without scenes says **No scenes yet** (and only a writer
+  is told to add one), while a filter that matches nothing says **No scenes match these filters**,
+  repeats the active filters, and offers **Clear filters**.
+- The list itself costs one filtered query plus one aggregate, and the preloaded tag associations
+  and Section paths keep it free of N+1 work.
 
 ## Production boundary
 

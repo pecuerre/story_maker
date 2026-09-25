@@ -23,6 +23,12 @@ class SectionPaths
     collect(nil, [], [], 0)
   end
 
+  # Every Section id this index knows, in tree order. The Scenes list uses it to
+  # validate a filter value against the Story's own tree without a second query.
+  def ids
+    @labels.keys
+  end
+
   # Accepts a Section or a section id. Returns nil when the Scene is ungrouped
   # or when the id is not part of this Story's tree.
   def label_for(section_or_id)

@@ -10,7 +10,7 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     sign_in_via_form(users(:user_one))
     visit universe_story_sections_path(universe_slug: universe.slug, story_id: story)
 
-    assert_selector "h2", text: "Grouped scenes"
+    assert_selector "h2", text: "Ungrouped scenes"
     assert_selector ".scene-grouping", text: "Ungrouped"
     assert_selector ".scene-grouping", text: "Scene three"
 
@@ -21,9 +21,12 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     assert_selector ".alert-success", text: "is now grouped under Section one"
     assert_selector ".alert-success", text: "narrative position did not change"
 
-    # The grouped outline keeps the canonical narrative order inside the group.
-    assert_selector ".scene-grouping .list-group-item", text: "Section one"
-    assert_selector ".scene-grouping", text: "1. Scene one (Section one)"
+    # A grouped scene leaves this list: it is listed on its own section's page.
+    assert_no_selector ".scene-grouping .list-group-item", text: "Scene three"
+    assert_selector ".scene-grouping", text: "nothing waiting to"
+    find("a.details-link[aria-label^='Details for Section one']").click
+    assert_selector "h1", text: "Section one"
+    assert_selector ".detail-section", text: "Scene three"
 
     visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
     assert_equal [ "Scene one", "Scene two", "Scene three" ], scene_titles
@@ -37,6 +40,7 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     click_button "Move scene"
 
     assert_selector ".alert-success", text: "is now ungrouped"
+    assert_selector ".scene-grouping", text: "Scene three"
     visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
     assert_selector ".entity-row", text: "Ungrouped"
   end
@@ -117,21 +121,27 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     story = Story.create!(universe: private_universe, name: "Private story")
     section = story.sections.create!(name: "Private section")
     scene = story.scenes.create!(name: "Private scene", section: section)
+    ungrouped = story.scenes.create!(name: "Ungrouped private scene")
     UniverseMembership.create!(universe: private_universe, user: reader, access_level: :read)
 
     sign_in_via_form(reader)
     visit universe_story_sections_path(universe_slug: private_universe.slug, story_id: story)
 
-    assert_selector "h2", text: "Grouped scenes"
-    assert_selector ".scene-grouping", text: "Private section"
-    assert_selector ".scene-grouping", text: "Private scene"
+    assert_selector "h2", text: "Ungrouped scenes"
+    assert_selector ".scene-grouping", text: "Ungrouped private scene"
+    assert_no_selector ".scene-grouping", text: "Private scene"
     assert_no_selector "form.scene-grouping-form"
     assert_no_selector "select[name=scene_id]"
 
-    visit universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: scene)
+    visit universe_story_section_path(universe_slug: private_universe.slug, story_id: story, id: section)
 
-    assert_selector "h1", text: "Private scene"
-    assert_text "Private section"
+    assert_selector "h1", text: "Private section"
+    assert_selector ".detail-section", text: "Private scene"
+
+    visit universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: ungrouped)
+
+    assert_selector "h1", text: "Ungrouped private scene"
+    assert_text "Ungrouped."
     assert_no_link "Edit scene"
   end
 

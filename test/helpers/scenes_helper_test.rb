@@ -43,8 +43,32 @@ class ScenesHelperTest < ActionView::TestCase
     ], scene_tag_choices(tags)
   end
 
+  test "describes the filters in effect with readable labels" do
+    story = stories(:story_one)
+    section_paths = SectionPaths.build(story.sections.reorder(:position, :id).to_a)
+    tag_paths = SceneTagPaths.build(story.scene_tags.order(:position, :id).to_a)
+
+    assert_empty scene_filter_summaries(filter_for(story, section_paths), section_paths, tag_paths)
+    assert_equal [ "Search: “cave”" ], scene_filter_summaries(
+      filter_for(story, section_paths, q: "cave"), section_paths, tag_paths
+    )
+    assert_equal [ "Section: Ungrouped" ],
+      scene_filter_summaries(filter_for(story, section_paths, section_id: SceneFilter::UNGROUPED), section_paths, tag_paths)
+    assert_equal [ "Section: Section one / Section two", "Scene tag: Scene tag one / Scene tag two",
+      "In-world from 1986-01-01", "In-world to 1986-12-31" ], scene_filter_summaries(
+      filter_for(story, section_paths, section_id: sections(:section_two).id,
+        scene_tag_id: scene_tags(:scene_tag_two).id, from: "1986-01-01", to: "1986-12-31"),
+      section_paths, tag_paths
+    )
+  end
+
   private
     def universe_events
       @universe_events ||= universes(:universe_one).events.reorder(:name, :id).to_a
+    end
+
+    def filter_for(story, section_paths, **params)
+      SceneFilter.new(params, section_ids: section_paths.ids,
+        scene_tags: story.scene_tags.order(:position, :id).to_a)
     end
 end

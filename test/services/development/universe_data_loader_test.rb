@@ -26,6 +26,8 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     story = universe.stories.first
 
     assert_equal "Dark", universe.name
+    assert_equal "netflix dark", story.name
+    assert_equal "netflix-dark", story.slug
     assert_equal 1, universe.stories.count
     assert_equal 15, story.sections.count
     assert_equal 0, Universe.where(slug: "lotr").count
@@ -211,7 +213,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     with_data_copy do |directory|
       sections_path = File.join(directory, "db/data/dark/sections.yml")
       contents = File.read(sections_path)
-      File.write(sections_path, contents.sub("story: Story.dark", "story: Story.the-lord-of-the-rings"))
+      File.write(sections_path, contents.sub("story: Story.netflix-dark", "story: Story.the-lord-of-the-rings"))
 
       error = assert_raises(Development::UniverseDataLoader::ValidationError) do
         Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!

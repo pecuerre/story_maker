@@ -1,16 +1,16 @@
-- story: Story.dark
+- story: Story.netflix-dark
   name: Season
   slug: season
   bgcolor: "#b3b3b3"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: Episode
   slug: episode
   bgcolor: "#d3d3d3"
   fgcolor: "#000000" # black
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: Finale
   slug: finale
   bgcolor: "#6699cc" # blue gray

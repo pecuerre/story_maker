@@ -43,6 +43,9 @@ Labels used below:
 - **[security]** Registered `Scene` in the `Ability` content registry; Scenes resolve their Universe
   through `scene.story.universe`, so public read stays open to guests while every mutation still
   requires the shared universe read/write/admin policy. Cross-scope story/scene lookups return 404.
+- **[chore]** Renamed the main development story in the `dark` universe to `netflix dark` (slug
+  `netflix-dark`) and updated every story-scoped YAML reference so the universe and story are
+  distinct in the UI.
 - **[chore]** Added `scenes.yml` development data for the Dark (8 scenes) and LOTR (5 scenes)
   universes, including a title-only scene and explicit narrative positions, registered `Scene` as
   a flat story-scoped position group in the development-data registry, and added scene fixtures.

@@ -1,45 +1,45 @@
-- story: Story.dark
+- story: Story.netflix-dark
   name: Secrets
   slug: secrets
   description: "Jonas Kahnwald arrives in Winden and meets the Nielsen family."
   position: 0
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: Lies
   slug: lies
   description: "Martha Nielsen and Hannah lie about the night Noah disappeared."
   position: 1
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: "Past and Present"
   slug: past-and-present
   description: "The kindergarten argument reaches its breaking point in 1986 and again in 2019."
   position: 2
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: Double Lives
   slug: double-lives
   position: 3
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: Truths
   slug: truths
   description: "Jonas and Martha find the second Noah alive in the cave beneath the Sic Mundus ruins."
   position: 4
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: Sic Mundus Creatus Est
   slug: sic-mundus-creatus-est
   description: "The Sic Mundus cave is opened and the traveler's origin is revealed."
   position: 5
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: "The Journey"
   slug: the-journey
   description: "Season 2 opens with the search for Jonas in the alternate timeline."
   position: 6
 
-- story: Story.dark
+- story: Story.netflix-dark
   name: "The Golden Beast"
   slug: the-golden-beast
   description: "The alt-world Jonas is approached by the German whose childhood he lived through."

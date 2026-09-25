@@ -18,16 +18,8 @@ still pending.
 
 ## PENDING WORK
 
-1. **Explicit development universe-data loader (completed 2026-09-25)**
-
-`Development::UniverseDataRegistry` and `Development::UniverseDataLoader` now provide one ordered,
-YAML-based contract for every registered universe. `db:demo:check` validates without writing;
-`db:demo:load` loads one named universe in development; `db:demo:reset` requires
-`CONFIRM_DB_RESET=1`, rebuilds the schema, and loads only that universe. `db:seed`/`db:prepare` no
-longer load `db/data/`, `db:restart` is a guarded schema-only reset, and the Dark/LOTR special
-Ruby loaders were replaced by validated YAML data. The new model/data convention remains: a model
-gets files such as `db/data/dark/dialogs.yml` in each relevant universe directory, never a
-feature-level `db/data/dialog/` directory. See [ADR 0008](adr/0008-explicit-development-universe-loader.md).
+Items are numbered and the numbers are stable: completed items are removed and the remaining
+numbers are intentionally left as they are, so a number never silently refers to a different idea.
 
 2. **add "fixed" attribute to all _tags models**
 
@@ -236,8 +228,9 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   `datetime` with the current Event storage/editor precision and timezone semantics rather than
   copying Event's `start_datetime`/`end_datetime` pair. The exact detailed deletion confirmation
   templates are recorded in the ADR. No application code, schema, or development data was added by
-  this decision slice. Backlog item 1 is complete and supplies the explicit loader for final
-  development-data/manual verification.
+  this decision slice. The explicit environment-guarded development-data loader
+  ([ADR 0008](adr/0008-explicit-development-universe-loader.md)) is complete and supplies the
+  final development-data/manual verification path.
 
 - **11.1 — Core Scene vertical slice (completed 2026-09-25).** Shipped the schema-only `scenes`
   migration, the `Scene` model (`belongs_to :story`, `HasSlug`, required Title, optional short
@@ -295,6 +288,30 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   story boundary. Added model, request, authorization, loader, routing, and focused browser coverage.
   Elements and world-presence links remain for slices 11.5–11.10.
 
+- **11.4.1 - Improve Scenes / Sections**.
+  a) change the scenes.yml file in dark and
+    - include several scenes in the same section (season 1, episode 1)
+    - include several ungrouped scenes
+    - the rest one scene per section (as of right now)
+  b) in the UI in the Sections Tab
+    - for other elements, like characters, the character is a the important part
+      the character tag is just a label, or grouping
+    - sections are "a little" different, because section have their own tags. but they are
+      per se, like tags for the scenes too.
+    - so in the taxonomy list when i click "details" of a section it should take me to a page
+      where i can see all the scenes in that section
+      **(done 2026-09-25 with backlog item 22: a Section's Details page lists the scenes grouped
+      under it, each with its narrative position, and the tree row says how many)**
+    - leave only there the "upgrouped" scenes, the rest we will be able to see if we click
+      the corresponding section. the "move scene" button. remains there. it is perfect
+      **(not done: the Sections workspace still lists ungrouped scenes together with the grouped
+      outline, as decided for slice 11.3)**
+    - in the UI in the Scene tab
+      - add a search are that allow the user to narrow the amount of elements they will see
+      - as a note to yourself (for your knowledge), one story can have hundreds or even thousands of scenes
+      - in that search (for now) allow to filter by section, scene type and date range.
+
+
 - **11.5 — Modal JSON reliability for Element editing.** Make the shared modal flow submit JSON
   correctly, show 422 errors, handle loading/network failures, and remove rows and update counts
   reliably. This is a shared infrastructure slice with browser regressions for existing modal
@@ -347,7 +364,8 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   Scenes, deliberately independent Event/datetime values, multiple Scenes sharing one Event, a
   Narration without speakers, a Dialogue with many speakers, multiple Locations, and both blank and
   populated roles. Do not add isolated placeholder rows.
-- Backlog item 1 is complete; keep using its explicit environment-guarded loader for final
+- The explicit environment-guarded development-data loader ([ADR
+  0008](adr/0008-explicit-development-universe-loader.md)) is complete; keep using it for final
   development-data/manual verification. Keep temporary Scene data out of production seed/deploy
   paths, and never run a destructive reset without approval.
 - Update the matching architecture, data model, conventions, visual design, development, and ADR
@@ -485,6 +503,48 @@ decisions and should not delay the basic ordered Scene workflow.
    for instance if i delete a story, the scenes and sections will be deleted. but later if i decide
    to recover the story, i shuold be ask "there are related elements associated with this, do you want
    to recover them too?"
+
+21. **visual improvements in the taxonomy editor (completed 2026-09-25)**
+
+   A row now carries exactly three things: the **name** (the only inline-rename target, sized to
+   its own text so only hovering the name starts a rename), the **Details** link (see item 22), and
+   one overflow menu holding Add child, Insert before, Insert after, Move up, Move down, Edit, and
+   Delete. Move up/down became disabled menu items at the sequence boundaries instead of row
+   buttons, and the tree's first insert target no longer hangs over the hint paragraph. The
+   reported "the tag disappears when I rename" behavior was **not** reproducible on the current
+   tree: an inline rename sends only `name`, the modal editor re-populates the tag selector from
+   the record's own serialized values, and both paths keep the assignment. That is now locked in by
+   a permanent browser regression for both paths. The Stimulus controller no longer carries a
+   second, dead copy of the row builder, so the row layout cannot drift.
+
+22. **visual improvement for the taxonomy visuals and other related stuff, part 2 (completed
+    2026-09-25)**
+
+   Every standard element and every element tag has its own details page (Character, Location, Item,
+   Event, Relation, Ownership, Section; and the Character, Relation, Location, Event, Item,
+   Ownership, Section, and Scene tags). A content page identifies the record and states honestly
+   which related information will appear later; a Section additionally lists the scenes grouped
+   under it (which also completes 11.4.1(b)); a tag page lists the records that carry it. Every
+   list row and taxonomy node renders a `Details (N records)` link that repeats the record name and
+   count in its accessible name, and the count is query-free through `TaggedRecordCounts`. The
+   pages are composed from `shared/_record_details`, `_detail_facts`, `_detail_section`, and
+   `_tagged_record_list`, so each record type can keep adding information to the same URL without a
+   second page pattern. `Relation` and `Ownership` also gained a `display_string`, so a link record
+   with its optional name still has a readable label everywhere.
+
+23. **other minor visual improvements (completed 2026-09-25)**
+
+   Placeholder navigation is now flat disabled gray with no hover emphasis, matching its
+   `aria-disabled` semantics. The universe page replaced the "Story collection" summary card with the
+   universe's actual story list, each with an **Open** action, and the header keeps **All
+   stories**; the separate "Browse stories" button was removed because the list it led to is now on
+   that page, and the page deliberately reuses the navbar's memoized story list so it adds no query
+   and no `COUNT`. The left sidebar is now three scoped blocks — current universe context, Universe
+   Bible, current story context, Story workspace, Configuration — each context followed by the
+   section it introduces: universe blue, story muted crimson (deliberately not danger red), and
+   configuration plus the right utility sidebar green.
+
+
 
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

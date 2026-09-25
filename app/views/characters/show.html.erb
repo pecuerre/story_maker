@@ -1,0 +1,19 @@
+<% content_for :title, @character.name %>
+
+<%= render "shared/record_details",
+  record: @character,
+  eyebrow: "Universe Bible",
+  label: "Character",
+  facts: [
+    detail_fact("Universe", link_to(Current.universe.name, universe_path(id: Current.universe))),
+    detail_fact("Character tags", entity_tag_badge(@character), blank: "No tags assigned. Tags are optional."),
+    detail_fact("Description", @character.description, blank: "No description yet.")
+  ],
+  back_url: universe_characters_path,
+  back_label: "All characters" %>
+
+<%= render "shared/detail_section",
+  title: "Related information",
+  icon: "people",
+  empty_title: "Nothing related yet",
+  empty_description: "Relations, events, and the other records that involve this character will be listed here as the universe grows." %>

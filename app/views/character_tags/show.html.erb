@@ -1,0 +1,25 @@
+<% content_for :title, @character_tag.name %>
+
+<%= render "shared/record_details",
+  record: @character_tag,
+  eyebrow: "Configuration · Tags",
+  label: "Character tag",
+  facts: [
+    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
+    detail_fact("Description", @character_tag.description, blank: "No description yet."),
+    detail_fact("Color", @character_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+  ],
+  back_url: universe_character_tags_path,
+  back_label: "All character tags" %>
+
+<%= render "shared/detail_section",
+  title: "Characters with this tag",
+  count: @tagged_records.size,
+  count_label: "character",
+  icon: "person",
+  empty_title: "No characters carry this tag",
+  empty_description: "Nothing uses this tag yet. Tags are optional, so characters can stay untagged." do %>
+  <%= render "shared/tagged_record_list",
+    records: @tagged_records,
+    path: ->(record) { universe_character_path(id: record) } %>
+<% end %>

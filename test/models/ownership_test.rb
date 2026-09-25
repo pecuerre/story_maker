@@ -84,4 +84,15 @@ class OwnershipTest < ActiveSupport::TestCase
     assert Ownership.create!(attributes)
     assert Ownership.create!(attributes)
   end
+
+  test "display_string falls back to its two endpoints because the name is optional" do
+    item = items(:item_one)
+    character = characters(:character_one)
+    ownership = Ownership.create!(universe: @universe, character: character, item: item)
+
+    assert_equal "#{character.name} owns #{item.name}", ownership.display_string
+
+    ownership.update!(name: "Heirloom")
+    assert_equal "Heirloom", ownership.display_string
+  end
 end

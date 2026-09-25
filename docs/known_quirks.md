@@ -115,6 +115,10 @@ verification requirements. The resolution is recorded in [`resolved_quirks.md`](
     that cannot render a supported page; direct requests can produce 404, unsupported-format, or
     missing-template responses. The existing route test checks positional helper arguments, not
     route/action/template contracts.
+    Partly reduced on 2026-09-25: every content model and every tag model now has a real, tested
+    `show` action, so the `show` half of the content surface is no longer an empty route. The
+    `edit` routes for modal-edited content, the session/password actions, and the `new` routes
+    without templates are unchanged and still need either an action or a route restriction.
 
 21. **Medium — changing an owning scope does not migrate dependent graphs.** The hierarchy validator
     checks the current record's parent but not descendants or relationship endpoints
@@ -205,6 +209,11 @@ resolution and test are recorded in [`resolved_quirks.md`](resolved_quirks.md).
     performs three pairwise event passes with reachability checks
     (`app/models/timeline_layout.rb:46-81,126-153`). These costs are separate from the explicitly
     backlogged search/filter work.
+    The new record details pages deliberately added none of this: tag usage counts come from
+    `TaggedRecordCounts` (one grouped query) and the Section tree's scene counts from one
+    `group(:section_id).count`, and the universe page reuses the navbar's memoized story list
+    instead of re-counting. The row-level authorization and recursive-children costs above are
+    unchanged.
 
 32. **Medium — the existing flat-list system smoke test still masks a failed mutation response.**
     The Character modal request is processed as `TURBO_STREAM`, commits, and returns 406; the test

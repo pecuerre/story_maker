@@ -1,0 +1,25 @@
+<% content_for :title, @scene_tag.name %>
+
+<%= render "shared/record_details",
+  record: @scene_tag,
+  eyebrow: "Story: @story.name",
+  label: "Scene tag",
+  facts: [
+    detail_fact("Scope", "Tags are optional labels and belong to this story, not to the universe."),
+    detail_fact("Description", @scene_tag.description, blank: "No description yet."),
+    detail_fact("Color", @scene_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+  ],
+  back_url: universe_story_scene_tags_path(story_id: @story),
+  back_label: "All scene tags" %>
+
+<%= render "shared/detail_section",
+  title: "Scenes with this tag",
+  count: @tagged_records.size,
+  count_label: "scene",
+  icon: "film",
+  empty_title: "No scenes carry this tag",
+  empty_description: "Nothing uses this tag yet. Tags are optional, so scenes can stay untagged." do %>
+  <%= render "shared/tagged_record_list",
+    records: @tagged_records,
+    path: ->(record) { universe_story_scene_path(story_id: @story, id: record) } %>
+<% end %>

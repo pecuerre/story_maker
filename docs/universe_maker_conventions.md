@@ -56,6 +56,11 @@
   both sides; a shared validation also rejects foreign members assigned in memory or through an ID
   writer. Tags are **optional on every content model** — the DSL adds no presence validation and no
   controller force-assigns a default tag, so records are saved untagged when the user picks none.
+  `has_many_tagd` also records the inverse association name
+  (`Model.tagged_records_association`, e.g. `:characters`), and `tagged_records` is the read side
+  used by a tag's details page: the scoped association ordered by name, or `none` on a content
+  model. Because both scopes are instance-dependent lambdas, Rails cannot eager load or group
+  through these associations; use `TaggedRecordCounts` for a whole taxonomy at once.
 - `_tag` models include `HasColor` (validated `#rrggbb` `bgcolor`/`fgcolor`) and `HasSlug`.
   `SectionTag` and `SceneTag` additionally use the story-scoped `Hierarchical` scope.
 - Name presence is validated on: Universe, Character, Location, Item, Section, Story and all
@@ -97,10 +102,16 @@
   - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Universe
     memberships, Sessions, Passwords.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
-  memberships. In the current implementation, `show/edit` exist for Universes, Stories, and Scenes;
-  `ScenesController#move` (narrative order) and `#group` (Section grouping) are the two member and
-  collection actions beyond that set, and the accepted Scene contract adds the remaining documented
-  Scene actions in later delivery slices.
+  memberships. `show/edit` exist for Universes, Stories, and Scenes; `show` also exists for every
+  content model (Character, Location, Item, Event, Relation, Ownership, Section) and every tag
+  model, because each record has exactly one details page. `ScenesController#move` (narrative
+  order) and `#group` (Section grouping) are the two member and collection actions beyond that set,
+  and the accepted Scene contract adds the remaining documented Scene actions in later delivery
+  slices.
+- A `show` action is **read-only and guest-readable** (`allow_unauthenticated_access only: %i[index
+  show]`), loads its record through the authorized scope, and renders no mutation control. Because
+  a details page has no form, `can_write_universe?` only decides whether an editor link is
+  rendered, and read-only members and guests see identical content.
 
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
@@ -122,9 +133,9 @@
   (`/u/:universe_slug/s/:story_id/...`). The universe-level `/u/:universe_slug/sections`,
   `/u/:universe_slug/section_tags`, `/u/:universe_slug/scene_tags`, and
   `/u/:universe_slug/scenes` paths are intentionally invalid.
-- Relations/Ownerships are limited to `index, create, update, destroy`; memberships are mounted at
-  `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and are
-  admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
+- Relations/Ownerships are limited to `index, show, create, update, destroy`; memberships are
+  mounted at `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and
+  are admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
   and `taxonomy=character|relation|location|event|item|ownership|section` query parameters;
   timeline is `get "timeline", to: "timeline#index"`; `root` → `universes#index`; health check `/up`.
 - `Universe#to_param` returns the slug; content models are addressed by numeric `id`.
@@ -145,16 +156,26 @@ The three functional editing patterns are:
 **1. Taxonomy tree** (all `_tag` indexes, plus `sections` and `locations`):
 - Use the `shared/taxonomy_tree` partial (wraps `shared/_taxonomy_node`) with the
   `new_url`/`create_url`/`edit_url`/`update_url`/`delete_url` lambdas + `model_param` +
-  `modal_fields` locals.
+  `modal_fields` locals, plus `details_url`/`details_count`/`details_count_label` for the row's
+  **Details** link.
+- A row carries three things: the **name** (the only inline-rename target, sized to its own text so
+  clicking the empty space beside it does nothing), the **Details** link (visible at every access
+  level), and one **overflow menu** holding Add child, Insert before, Insert after, Move up, Move
+  down, Edit, and Delete. Move up/down are disabled menu items at the sequence boundaries, so the
+  row itself has no add or arrow buttons.
 - `taxonomy_tree_controller.js` provides safe DOM-built modal fields and nodes, inline name
-  editing, insertion boundaries, and accessible Move up/Move down controls. HTML5 drag/drop is an
+  editing, insertion boundaries, and the move/insert menu actions. HTML5 drag/drop is an
   optional enhancement. After every successful mutation it performs a same-URL Turbo visit so
   serialized parent/tag descriptors, page counts, and sidebar counts come from one fresh server
   render. User-controlled names and descriptions are assigned with `textContent`/DOM properties,
-  never interpolated into `innerHTML`.
+  never interpolated into `innerHTML`. The controller never builds a whole row: only the rename
+  button is created in JavaScript, because a create always refreshes the same URL, so there is no
+  second copy of the row layout to drift.
 
 **2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
+  Each row also renders `record_details_link` before its actions, so the record's own page is one
+  click away and visible to read-only viewers.
 - Every record workspace uses `shared/_content_tabs`: URL-backed Bootstrap `nav-tabs` that keep
   related records together while preserving each canonical page. Tag management uses
   `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
@@ -169,6 +190,13 @@ The three functional editing patterns are:
 
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
+
+**Record details pages** are a fourth *page* shape, not a fourth editing pattern: a details page has
+no editor, so it is built from the shared read-only partials `shared/_record_details`,
+`shared/_detail_facts`, `shared/_detail_section`, and `shared/_tagged_record_list` and never from a
+modal. Each record type supplies its own `facts` array and its own sections, so new information is
+added to an existing page instead of a new page being invented. See
+[architecture.md](architecture.md#record-details-pages) for the URL table and the scoping rules.
 
 ### Scene conventions (core, references, grouping, and tags shipped in 11.1–11.4; later slices pending)
 
@@ -280,18 +308,28 @@ The three functional editing patterns are:
   (`can_read_universe?`, `can_write_universe?`, `can_administer_universe?`,
   `universe_access_level`, `universe_access_label`), and `entity_tag_badge` (renders a record's tags
   as colored badges). Counts are right-aligned pills, not parenthesized text; current links carry
-  both `.active` and `aria-current="page"`.
+  both `.active` and `aria-current="page"`. Details pages add `record_details_link(path, record:,
+  count:, count_label:)` — the single Details link used by every row and tree node, with the count
+  repeated in its accessible name — plus `detail_fact(label, value, blank:)` for one identity value
+  and `in_world_range(from, to)` for the optional interval Event/Relation/Ownership share.
 - `app/views/shared/_content_tabs.html.erb` renders related universe pages as URL-backed
   Bootstrap navigation; it does not use `data-bs-toggle="tab"` because each tab is a separate
   request and canonical URL. It accepts an optional `class_name` and explicit `active` tab state
   for nested selectors. A tab hash without `:path` renders an `aria-disabled` placeholder with its
   `:pending_reason` as the title, so a workspace never links to a route that does not exist yet.
 - `app/views/shared/_taxonomy_tree.html.erb` accepts an optional `confirm_message` lambda that
-  supplies the destructive copy for each node, and an optional `read_only_empty_description` so a
-  read-only member is not told to add or drag records. `_row_actions` accepts the same kind of
-  `confirm_text`.
+  supplies the destructive copy for each node, an optional `read_only_empty_description` so a
+  read-only member is not told to add or drag records, and the `details_url`/`details_count`/
+  `details_count_label` trio that renders the row's Details link. `_row_actions` accepts the same
+  kind of `confirm_text`.
+- `app/views/shared/_record_details.html.erb`, `_detail_facts.html.erb`,
+  `_detail_section.html.erb`, and `_tagged_record_list.html.erb` compose every record's details
+  page. `_detail_section` renders its empty state whenever `count` is zero or no block is given, so
+  a page states what it does not know instead of showing an empty box.
 - `app/views/shared/_tag_workspace_navigation.html.erb` and `app/helpers/tags_helper.rb` build the
   Configuration → Tags scope/taxonomy navigation and the model-specific tree configuration.
+  `TagsHelper#tagged_record_counts` and `app/models/tagged_record_counts.rb` answer the "how many
+  records carry this tag" question for a whole taxonomy in one grouped query.
 - `app/helpers/timeline_helper.rb` — popover title/content for timeline events.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
@@ -317,21 +355,29 @@ intentional home for future richer collaboration, analytics, and AI placeholders
 
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
 The workspace sidebar renders only when `Current.universe` is present. It is one continuous
-navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas below `lg`:
+navigation surface (not a stack of cards) and becomes a left Bootstrap offcanvas below `lg`. It is
+ordered as three scoped blocks — universe, story, tools — and each block is a context header plus
+the section it introduces, so the reader always knows which scope a link belongs to:
+- **Current universe** context: universe name, visibility plus access label, and the story count
+  (from the navbar's memoized story list, so it costs no query).
+- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Characters
+  and Items open their related record tabs (Relations and Ownerships respectively); Locations,
+  Events, and Sections remain single-record workspaces.
+- **Current story** context: the story name, its cached section/scene counts, and a short
+  description — or an explicit **None selected** state with a prompt when no story is current.
 - **Story workspace**: Story overview + Sections + Scenes when a story is selected; otherwise All
   stories plus a prompt to select one. New story is available from the navbar's Story dropdown, not
   from the sidebar. **Scenes** is a real story-scoped link with its own cached count once a story is
   selected, and an `aria-disabled` `#` placeholder while no story is current — it never falls back
   to the universe's first story.
-- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Characters
-  and Items open their related record tabs (Relations and Ownerships respectively); Locations,
-  Events, and Sections remain single-record workspaces.
 - **Configuration**: a separate organization/settings section. **Tags** opens the shared taxonomy
   workspace, with **Universe Tags** selected by default and **Story Tags** for story-scoped
   taxonomies. Universe admins see **Members** in the right-side **Settings** section.
 - Real entries show `icon_text_count`; counts are aligned pills. Active entries use a soft primary
-  background and `aria-current="page"`. The right-sidebar entries are the intentional `#`
-  placeholders for future functionality.
+  background and `aria-current="page"`. Placeholder entries are flat gray with no hover emphasis, and
+  the right-sidebar entries are the intentional `#` placeholders for future functionality.
+- Each block has one hue: universe blue, story muted crimson, tools green. The crimson is
+  deliberately not the danger red reserved for destructive actions.
 
 ### Navigation (Right sidebar) — `app/views/layouts/_right_sidebar.html.erb`
 The right utility sidebar renders only when `Current.universe` is present. It is a permanent

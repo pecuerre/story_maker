@@ -1,10 +1,16 @@
 class OwnershipsController < ApplicationController
-  allow_unauthenticated_access only: :index
-  before_action :set_ownership, only: %i[ update destroy ]
+  allow_unauthenticated_access only: %i[ index show ]
+  before_action :set_ownership, only: %i[ show update destroy ]
 
   def index
     load_form_options
     @ownerships = Current.universe.ownerships.includes(:item, :character, :ownership_tags).order(:id)
+  end
+
+  # GET /ownerships/:id — the record's own read-only details page. It identifies the
+  # record and is the destination of every "Details" link; later slices add
+  # the related-records sections without changing this URL.
+  def show
   end
 
   def create

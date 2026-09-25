@@ -1,0 +1,25 @@
+<% content_for :title, @event_tag.name %>
+
+<%= render "shared/record_details",
+  record: @event_tag,
+  eyebrow: "Configuration · Tags",
+  label: "Event tag",
+  facts: [
+    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
+    detail_fact("Description", @event_tag.description, blank: "No description yet."),
+    detail_fact("Color", @event_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+  ],
+  back_url: universe_event_tags_path,
+  back_label: "All event tags" %>
+
+<%= render "shared/detail_section",
+  title: "Events with this tag",
+  count: @tagged_records.size,
+  count_label: "event",
+  icon: "calendar-event",
+  empty_title: "No events carry this tag",
+  empty_description: "Nothing uses this tag yet. Tags are optional, so events can stay untagged." do %>
+  <%= render "shared/tagged_record_list",
+    records: @tagged_records,
+    path: ->(record) { universe_event_path(id: record) } %>
+<% end %>

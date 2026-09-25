@@ -10,6 +10,11 @@ class UniversesController < ApplicationController
   end
 
   # GET /universes/1 or /universes/1.json
+  # The page lists this universe's own stories, so entering a universe is one
+  # click away from the story to work on. It reuses the navbar's memoized story
+  # list (`nav_stories`) instead of loading them a second time, and deliberately
+  # issues no COUNT query: the per-story section and scene counts are already
+  # cached for the sidebar, so this page must not re-count every story.
   def show
   end
 

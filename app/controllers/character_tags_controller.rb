@@ -1,20 +1,27 @@
 class CharacterTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :character_tag
 
-  before_action :set_character_tag, only: %i[ update destroy ]
+  before_action :set_character_tag, only: %i[ show update destroy ]
 
   def index
     @character_tags = Current.universe.character_tags
     @character_tags = @character_tags.includes(:children)
     @character_tags = @character_tags.where(parent_id: nil)
     @character_tags = @character_tags.order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(Current.universe.character_tags)
   end
 
   def new
     character_tags = Current.universe.character_tags
     @character_tag = character_tags.new(parent_id: params[:parent_id])
+  end
+
+  # GET /character_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @character_tag.tagged_records
   end
 
   def create

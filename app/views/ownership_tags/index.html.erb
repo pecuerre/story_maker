@@ -17,4 +17,7 @@
   update_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },
   delete_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },
   model_param: "ownership_tag",
+  details_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },
+  details_count: ->(tag) { @tagged_counts.fetch(tag.id, 0) },
+  details_count_label: "ownership",
   modal_fields: ownership_tag_taxonomy_fields(Current.universe.ownership_tags.order(:position, :id)) %>

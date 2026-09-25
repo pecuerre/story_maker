@@ -1,20 +1,27 @@
 class ItemTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :item_tag
 
-  before_action :set_item_tag, only: %i[ update destroy ]
+  before_action :set_item_tag, only: %i[ show update destroy ]
 
   def index
     @item_tags = Current.universe.item_tags
     @item_tags = @item_tags.includes(:children)
     @item_tags = @item_tags.where(parent_id: nil)
     @item_tags = @item_tags.order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(Current.universe.item_tags)
   end
 
   def new
     item_tags = Current.universe.item_tags
     @item_tag = item_tags.new(parent_id: params[:parent_id])
+  end
+
+  # GET /item_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @item_tag.tagged_records
   end
 
   def create

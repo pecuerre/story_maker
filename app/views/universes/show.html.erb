@@ -1,4 +1,10 @@
 <% content_for :title, @universe.name %>
+<%# The stories of this universe are listed here instead of behind a second
+    click: entering a universe is the point where the next story is chosen. This
+    is the same ordered list the navbar's Story switcher shows, reused from its
+    per-request memo, and the header's "All stories" page stays for the full
+    list with its own actions. %>
+<% stories = nav_stories %>
 
 <%= render "shared/page_header",
   title: @universe.name,
@@ -27,19 +33,44 @@
 <% end %>
 
 <div class="row g-3">
-  <div class="col-md-6">
-    <div class="surface-card h-100 p-4">
-      <div class="page-eyebrow">Story collection</div>
-      <h2 class="h4"><%= pluralize(nav_stories.size, "story") %></h2>
-      <p class="small text-body-secondary">
-        <%= @universe.private? ? "Private" : "Public" %> · <%= universe_access_label(@universe) %>
-      </p>
-      <p class="text-body-secondary">Each story has its own sections and section tags while sharing this universe's world.</p>
-      <%= link_to "Browse stories", universe_stories_path, class: "btn btn-outline-primary" %>
-    </div>
+  <div class="col-lg-7">
+    <section class="surface-card h-100 p-4" aria-labelledby="universe-stories-title">
+      <div class="page-eyebrow">Stories</div>
+      <h2 class="h4 mb-3" id="universe-stories-title"><%= pluralize(stories.size, "story") %></h2>
+
+      <% if stories.any? %>
+        <div class="list-group list-group-flush">
+          <% stories.each do |story| %>
+            <div class="list-group-item entity-row px-0 d-flex align-items-center gap-3">
+              <div class="entity-copy flex-grow-1">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <%= link_to story.name, universe_story_path(id: story), class: "entity-title text-break" %>
+                  <% if Current.story == story %>
+                    <span class="badge text-bg-primary">Current</span>
+                  <% end %>
+                </div>
+                <% if story.description.present? %>
+                  <div class="entity-description"><%= story.description %></div>
+                <% end %>
+              </div>
+              <%= link_to "Open", universe_story_path(id: story),
+                class: "btn btn-sm btn-outline-primary flex-shrink-0",
+                aria: { label: "Open #{story.name}" } %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <%= render "shared/empty_state",
+          title: "No stories yet",
+          description: can_write_universe? ?
+            "A story holds the plot, sections, and scenes of this universe while sharing its world. Create the first one from the Story menu." :
+            "This universe has no stories to show yet.",
+          icon: "books" %>
+      <% end %>
+    </section>
   </div>
 
-  <div class="col-md-6">
+  <div class="col-lg-5">
     <div class="surface-card h-100 p-4">
       <div class="page-eyebrow">Universe Bible</div>
       <h2 class="h4">Shared world</h2>

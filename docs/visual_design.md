@@ -19,11 +19,16 @@ The interface should feel like a calm writing workspace:
 - destructive actions are visually distinct from navigation categories;
 - the universe/story model is always explicit.
 
+The sidebar is the one place where color carries structure: the universe, the current story, and the
+configuration/tools area each own one hue, so a reader can tell at a glance which scope a section
+belongs to. Everything else stays in the neutral palette.
+
 The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints. Its **Settings**
 section contains the real Members access manager, while the remaining Collaboration, Analytics,
-and AI entries are deliberate `aria-disabled` placeholders that should become real destinations
-as the underlying product areas are defined. Below the `xl` breakpoint the panel becomes a
-Bootstrap `offcanvas-end`, so the main writing surface keeps priority on smaller screens.
+and AI entries are deliberate `aria-disabled` placeholders rendered in the flat disabled gray.
+They should become real destinations as the underlying product areas are defined. Below the `xl`
+breakpoint the panel becomes a Bootstrap `offcanvas-end`, so the main writing surface keeps priority
+on smaller screens.
 
 ## Theme tokens
 
@@ -46,9 +51,24 @@ Current starting palette:
 | Warning | `#9a6700` | warning/attention status only |
 | Danger | `#c92a2a` | destructive actions and errors |
 
+The sidebar also has three **scope** hues, declared as `--um-scope-*` custom properties so a block's
+color is set in one place:
+
+| Scope | Strong | Soft | Used by |
+|---|---:|---:|---|
+| Universe | `#263da8` | `#edf0ff` | the universe context block and the Universe Bible header |
+| Story | `#8c2f39` | `#fbeaec` | the story context block and the Story workspace header |
+| Tools | `#1f6f4a` | `#e6f4ec` | the Configuration header and every right-sidebar header |
+| Disabled | `#98a2b3` | — | placeholder navigation and disabled menu items |
+
+The story hue is a muted crimson, deliberately **not** the danger red: scope must never be confused
+with "this will delete something". Placeholder navigation uses the disabled gray with no hover
+emphasis, because those entries are not implemented.
+
 Rules:
 
-- Do not use danger red as a general category color for Characters, Locations, Events, or Items.
+- Do not use danger red as a general category color for Characters, Locations, Events, or Items, and
+  do not use a scope hue for anything other than its sidebar block.
 - User-defined tag colors are data, not theme colors. They may be rendered as colored badges, but
   they must not be used for active navigation or buttons.
 - Check text/background contrast when adding a tag color. The badge shape and text must remain
@@ -122,23 +142,16 @@ shell classes and let the main region grow.
 
 ## Navigation and information architecture
 
-The left navigation is task-oriented and scope-aware:
+The left navigation is task-oriented and scope-aware. It is one continuous surface read as three
+scoped blocks, and each block is a **context header** followed by the **section** it introduces, so
+the reader can always tell which scope a link belongs to:
 
-### Story workspace
-
-When a story is selected:
-
-- Story overview;
-- Sections;
-- Scenes (the canonical narrative-order list, with its own cached count).
-
-When no story is selected:
-
-- All stories;
-- a prompt explaining that a story must be selected for story-specific structure;
-- Scenes (an `aria-disabled` placeholder; it never falls back to the universe's first story).
-
-New story remains in the navbar's Story dropdown; it is not repeated as a sidebar button.
+1. **Current universe** context — universe name, visibility plus access label, story count.
+2. **Universe Bible** — Characters, Locations, Events, Timeline, Items.
+3. **Current story** context — story name, section/scene counts, short description, or an explicit
+   **None selected** state.
+4. **Story workspace** — Story overview, Sections, Scenes (or All stories plus a prompt).
+5. **Configuration** — Tags.
 
 ### Universe Bible
 
@@ -168,7 +181,8 @@ scope when needed.
 Counts use aligned `.sidebar-count` pills. Current links use a soft primary background and
 `aria-current="page"`; color is not the only state signal. **Scenes** is a real link with its own
 count while a story is selected and an `aria-disabled` placeholder otherwise; the right-sidebar
-entries are the intentional placeholders for future functionality.
+entries are the intentional placeholders for future functionality and are rendered in the flat
+disabled gray so they never look like something to click.
 
 ### Right utility sidebar
 
@@ -222,6 +236,24 @@ Universe/Story selector is followed by the six universe taxonomy tabs or the two
 `aria-current="page"`, but do not add `data-bs-toggle="tab"` because each destination is a separate
 request.
 
+### Record details pages
+
+Every record has exactly one details page, and every list row and taxonomy node links to it. Build
+the page from `shared/_record_details` plus `shared/_detail_section`, so the shape stays the same as
+more information is added to it:
+
+- the shared page header, with the record's name as the title and a link back to the list it was
+  opened from;
+- an identity card: the record type, then a `.detail-facts` grid of labelled values. A value that is
+  not set renders explicit copy instead of an empty cell;
+- one or more related-records sections, each with a count badge and an empty state when there is
+  nothing to list yet. The empty copy states what will appear later and must not tell a guest or a
+  read-only member to add records.
+
+A details page renders no mutation control, so read-only members and public guests see exactly the
+same page. A tag's page lists the records carrying it; a Section's page lists the scenes grouped
+under it, each still showing its narrative position.
+
 ### Taxonomy trees and other hierarchy pages
 
 Use `shared/_taxonomy_tree` and `shared/_taxonomy_node` for tag indexes, Sections, and Locations.
@@ -230,18 +262,25 @@ The shared tree provides:
 - a page header with explicit `title`, count, description, and human-readable add label;
 - optional URL-backed workspace tabs via `tabs` and `tabs_aria_label` locals;
 - a consistent empty state;
-- a native rename button with inline rename for users with write access;
-- visible Move up/Move down controls, Insert before/Insert after actions, and add-child controls;
-  drag handles remain an optional enhancement;
-- a neutral overflow menu for edit/delete. Read-only viewers see the hierarchy without mutation
-  controls.
+- a native rename button with inline rename for users with write access. The button is sized to its
+  own text, so only hovering or focusing the name starts a rename — clicking the rest of the row
+  does nothing;
+- a **Details** link on every row, visible at every access level, labelled with the number of
+  records that page will list (`Details (10 characters)`) when there are any;
+- one neutral overflow menu per row holding Add child, Insert before, Insert after, Move up, Move
+  down, Edit, and Delete. Move up/down are disabled menu items at the sequence boundaries; the row
+  itself carries no add or arrow buttons, and drag handles remain an optional enhancement;
 - successful mutations refresh the same URL so counts and serialized parent/tag options are never
   stale; dynamic names and option labels are rendered as text, not HTML.
+
+The first insert target of the tree needs room for its 44px button, so the root list keeps top
+padding; otherwise the button would hang over the hint paragraph above it.
 
 The add action must be human-readable (`Add relation tag`), never generated directly from a
 model parameter (`Add Relation_tag`). The tree Stimulus controller owns the inline add form and
 must keep the empty-state removal, hierarchy indentation, and keyboard/focus behavior in sync with
-the rendered node partial.
+the rendered node partial. It must not grow a second JavaScript copy of the row: a successful
+create always refreshes the same URL, so only the rename button is ever built in JavaScript.
 
 ### Full-page forms
 
@@ -327,6 +366,10 @@ later dependents are added.
 - Current navigation uses `aria-current="page"` and a non-color indicator.
 - Dropdown menus have unique IDs and `aria-labelledby` targets.
 - Delete actions are labeled as destructive and retain confirmation.
+- The Details link repeats the record name and its count in its accessible name, so many identical
+  looking links stay distinguishable in a long list.
+- Placeholder navigation keeps `aria-disabled` and is additionally styled as unavailable, so the
+  visual state and the semantics agree.
 - Keep focus states visible; do not use hover as the only way to discover an action.
 - Taxonomy actions become visible on keyboard focus and on touch devices; insertion targets are at
   least 44×44 CSS pixels and reordering never depends on hover or drag/drop.
@@ -335,10 +378,13 @@ later dependents are added.
 
 ## Change checklist for a new page
 
-1. Choose the existing functional pattern (tree, flat modal list, or full-page form).
+1. Choose the existing functional pattern (tree, flat modal list, or full-page form). A read-only
+   details page is composed from `shared/_record_details` and `shared/_detail_section`, never from
+   a modal and never with its own editor.
 2. Start with `shared/_page_header` and `shared/_empty_state` where applicable.
 3. Use the correct universe/story scope in every path.
-4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout.
+4. Use `shared/_row_actions` for modal-list rows rather than inventing another action layout, and
+   render `record_details_link` on every row so the record's own page stays one click away.
 5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for related
    records and `shared/_tag_workspace_navigation` for taxonomy management. Put the Members access
    manager in the right-side Settings section.

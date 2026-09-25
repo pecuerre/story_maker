@@ -1,20 +1,27 @@
 class OwnershipTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :ownership_tag
 
-  before_action :set_ownership_tag, only: %i[ update destroy ]
+  before_action :set_ownership_tag, only: %i[ show update destroy ]
 
   def index
     @ownership_tags = Current.universe.ownership_tags
     @ownership_tags = @ownership_tags.includes(:children)
     @ownership_tags = @ownership_tags.where(parent_id: nil)
     @ownership_tags = @ownership_tags.order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(Current.universe.ownership_tags)
   end
 
   def new
     ownership_tags = Current.universe.ownership_tags
     @ownership_tag = ownership_tags.new(parent_id: params[:parent_id])
+  end
+
+  # GET /ownership_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @ownership_tag.tagged_records
   end
 
   def create

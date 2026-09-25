@@ -2,6 +2,13 @@ module HasManyTags
   extend ActiveSupport::Concern
 
   class_methods do
+    # The inverse side a tag model uses to list the records carrying it, e.g.
+    # `:characters` on `CharacterTag`. A content model that only declares
+    # `has_many_tags` has no inverse side and returns nil.
+    def tagged_records_association
+      @tagged_records_association
+    end
+
     # Declares a many-to-many relationship to a taxonomy "tag" model, e.g.
     # `has_many_tags :character_tag, scope: :universe_id` on Character.
     # on Character. Backed by a habtm join table named "<element_table>_<tag_table>".
@@ -24,6 +31,7 @@ module HasManyTags
     # `has_many_tagd :character, scope: :universe_id` on CharacterTag.
     def has_many_tagd(element_name, scope:)
       association = element_name.to_s.pluralize.to_sym
+      @tagged_records_association = association
 
       declare_scoped_habtm(
         association,
@@ -47,5 +55,15 @@ module HasManyTags
           end
         end
       end
+  end
+
+  # The records carrying this tag, for the tag's own details page. It is the
+  # scoped inverse association, so it can never disclose a record from another
+  # universe or story. A content model has no inverse side and returns none.
+  def tagged_records
+    association = self.class.tagged_records_association
+    return self.class.none if association.nil?
+
+    public_send(association).reorder(:name, :id)
   end
 end

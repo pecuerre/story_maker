@@ -1,15 +1,22 @@
 class LocationTagsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :location_tag
 
-  before_action :set_location_tag, only: %i[ update destroy ]
+  before_action :set_location_tag, only: %i[ show update destroy ]
 
   def index
     @location_tags = Current.universe.location_tags
     @location_tags = @location_tags.includes(:children)
     @location_tags = @location_tags.where(parent_id: nil)
     @location_tags = @location_tags.order(:position, :id)
+    @tagged_counts = TaggedRecordCounts.for(Current.universe.location_tags)
+  end
+
+  # GET /location_tags/:id — the tag's own details page: the records that carry it.
+  # The taxonomy tree links here with that count.
+  def show
+    @tagged_records = @location_tag.tagged_records
   end
 
   def create

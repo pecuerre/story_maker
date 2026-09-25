@@ -97,6 +97,39 @@ class HasManyTagsTest < ActiveSupport::TestCase
     assert_equal original_section_ids, section_tag.reload.section_ids
   end
 
+  test "a tag lists the records carrying it and a content model has no such list" do
+    character_tag = character_tags(:character_tag_one)
+    character = characters(:character_one)
+    character.update!(character_tag_ids: [ character_tag.id ])
+
+    assert_equal [ character.id ], character_tag.tagged_records.pluck(:id)
+    assert_equal [ character ], character_tag.tagged_records.to_a
+    assert_empty characters(:character_one).tagged_records
+    assert_nil Character.tagged_records_association
+    assert_equal :characters, CharacterTag.tagged_records_association
+  end
+
+  test "a tag's record list stays inside its own universe and story" do
+    character_tag = character_tags(:character_tag_one)
+    insert_join_row(:characters_character_tags, characters(:character_one), character_tags(:character_tag_three))
+
+    assert_empty character_tags(:character_tag_three).tagged_records
+    assert_equal [ characters(:character_one).id ], character_tag.tagged_records.pluck(:id)
+
+    section_tag = section_tags(:section_tag_one)
+    insert_join_row(:sections_section_tags, sections(:section_one), section_tags(:section_tag_three))
+
+    assert_empty section_tags(:section_tag_three).tagged_records
+    assert_equal [ sections(:section_one).id ], section_tag.tagged_records.pluck(:id)
+  end
+
+  test "a tag's record list is ordered by name" do
+    tag = character_tags(:character_tag_one)
+    tag.update!(character_ids: [ characters(:character_one).id, characters(:character_two).id ])
+
+    assert_equal characters(:character_one, :character_two).map(&:name), tag.tagged_records.map(&:name)
+  end
+
   private
     def insert_join_row(join_table, record, tag)
       connection = ActiveRecord::Base.connection

@@ -20,4 +20,5 @@
   delete_url: ->(location) { universe_location_path(id: location) },
   model_param: "location",
   taxonomy_field: "location_tag_ids",
+  details_url: ->(location) { universe_location_path(id: location) },
   modal_fields: location_taxonomy_fields(@location_tags, @location_options) %>

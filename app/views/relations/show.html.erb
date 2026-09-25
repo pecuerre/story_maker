@@ -1,0 +1,21 @@
+<% content_for :title, @relation.display_string %>
+
+<%= render "shared/record_details",
+  record: @relation,
+  eyebrow: "Universe Bible",
+  label: "Relation",
+  facts: [
+    detail_fact("First character", link_to(@relation.character1.name, universe_character_path(id: @relation.character1))),
+    detail_fact("Second character", link_to(@relation.character2.name, universe_character_path(id: @relation.character2))),
+    detail_fact("Relation tags", entity_tag_badge(@relation), blank: "No tags assigned. Tags are optional."),
+    detail_fact("In-world dates", in_world_range(@relation.from_date, @relation.to_date)),
+    detail_fact("Description", @relation.description, blank: "No description yet.")
+  ],
+  back_url: universe_relations_path,
+  back_label: "All relations" %>
+
+<%= render "shared/detail_section",
+  title: "Related information",
+  icon: "diagram-2",
+  empty_title: "Nothing related yet",
+  empty_description: "This relation is a link between two characters. Anything else worth knowing about it will be listed here later." %>

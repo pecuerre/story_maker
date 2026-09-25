@@ -1,0 +1,28 @@
+<%# One related-records section on a details page. A section with nothing to list
+    yet renders its empty copy instead of an empty box, so a page can be honest
+    about what it does not know. The empty copy must not tell a guest or
+    read-only member to add records: no mutation controls are rendered for them
+    either.
+
+    A `count` of zero always renders the empty state, so a caller does not have
+    to decide twice whether it has records. %>
+<section class="detail-section">
+  <% count = local_assigns[:count] %>
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <h2 class="h5 mb-0"><%= local_assigns.fetch(:title) %></h2>
+    <% unless count.nil? %>
+      <span class="badge rounded-pill text-bg-light border" aria-label="<%= pluralize(count, local_assigns.fetch(:count_label, "record")) %>">
+        <%= count %>
+      </span>
+    <% end %>
+  </div>
+
+  <% if block_given? && count.to_i.positive? %>
+    <div class="content-surface"><%= yield %></div>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: local_assigns.fetch(:empty_title),
+      description: local_assigns[:empty_description],
+      icon: local_assigns[:icon] %>
+  <% end %>
+</section>

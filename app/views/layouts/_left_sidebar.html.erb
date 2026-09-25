@@ -5,67 +5,20 @@
   tags character_tags relation_tags location_tags event_tags item_tags ownership_tags section_tags scene_tags
 ] %>
 
-<div class="sidebar-context">
+<%# The sidebar reads as three scoped blocks — universe, story, tools — and each
+    context block is followed by the section it introduces. The hue is the only
+    thing that tells them apart, so it is per block and never per record. %>
+<div class="sidebar-context sidebar-context--universe">
   <div class="sidebar-eyebrow">Current universe</div>
   <h2 class="sidebar-universe-name"><%= Current.universe.name %></h2>
-  <div class="small text-body-secondary">
+  <div class="sidebar-context-info">
     <%= Current.universe.private? ? "Private" : "Public" %> · <%= universe_access_label %>
   </div>
-  <% if Current.story.present? %>
-    <p class="sidebar-story-name">Story: <%= Current.story.name %></p>
-  <% end %>
+  <div class="sidebar-context-info"><%= pluralize(nav_stories.size, "story") %></div>
 </div>
 
 <nav class="workspace-navigation" aria-label="Universe and story navigation">
-  <section class="sidebar-section" aria-labelledby="story-workspace-title">
-    <h3 class="sidebar-section-title" id="story-workspace-title">Story workspace</h3>
-    <ul class="sidebar-list">
-      <% if Current.story.present? %>
-        <%= render "shared/sidebar_link",
-          icon: "house",
-          label: "Story overview",
-          path: universe_story_path(id: Current.story),
-          controllers: %i[ stories ] %>
-
-        <%= render "shared/sidebar_link",
-          icon: "list-nested",
-          label: "Sections",
-          count: section_count,
-          path: universe_story_sections_path(story_id: Current.story),
-          controllers: %i[ sections ] %>
-      <% else %>
-        <%= render "shared/sidebar_link",
-          icon: "books",
-          label: "All stories",
-          path: universe_stories_path,
-          controllers: %i[ stories ] %>
-      <% end %>
-
-      <% if Current.story.present? %>
-        <%= render "shared/sidebar_link",
-          icon: "film",
-          label: "Scenes",
-          count: scene_count,
-          path: universe_story_scenes_path(story_id: Current.story),
-          controllers: %i[ scenes ] %>
-      <% else %>
-        <%# Scenes are story-scoped: stay a placeholder until a story is selected,
-            and never fall back to the universe's first story. %>
-        <%= render "shared/sidebar_link",
-          icon: "film",
-          label: "Scenes",
-          path: "#",
-          controllers: [],
-          placeholder: true %>
-      <% end %>
-    </ul>
-
-    <% unless Current.story.present? %>
-      <p class="sidebar-hint">Select a story to work on its sections and story-specific structure.</p>
-    <% end %>
-  </section>
-
-  <section class="sidebar-section" aria-labelledby="universe-bible-title">
+  <section class="sidebar-section sidebar-section--universe" aria-labelledby="universe-bible-title">
     <h3 class="sidebar-section-title" id="universe-bible-title">Universe Bible</h3>
     <ul class="sidebar-list">
       <%= render "shared/sidebar_link",
@@ -104,7 +57,70 @@
     </ul>
   </section>
 
-  <section class="sidebar-section" aria-labelledby="configuration-title">
+  <div class="sidebar-context sidebar-context--story">
+    <div class="sidebar-eyebrow">Current story</div>
+    <% if Current.story.present? %>
+      <h2 class="sidebar-universe-name sidebar-story-name"><%= Current.story.name %></h2>
+      <div class="sidebar-context-info">
+        <%= pluralize(section_count, "section") %> · <%= pluralize(scene_count, "scene") %>
+      </div>
+      <% if Current.story.description.present? %>
+        <div class="sidebar-context-info"><%= truncate(Current.story.description, length: 90) %></div>
+      <% end %>
+    <% else %>
+      <%# The prompt that belongs with these links lives in the Story workspace
+          section below, so the context block stays a statement of scope. %>
+      <h2 class="sidebar-universe-name sidebar-story-name text-body-secondary">None selected</h2>
+    <% end %>
+  </div>
+
+  <section class="sidebar-section sidebar-section--story" aria-labelledby="story-workspace-title">
+    <h3 class="sidebar-section-title" id="story-workspace-title">Story workspace</h3>
+    <ul class="sidebar-list">
+      <% if Current.story.present? %>
+        <%= render "shared/sidebar_link",
+          icon: "house",
+          label: "Story overview",
+          path: universe_story_path(id: Current.story),
+          controllers: %i[ stories ] %>
+
+        <%= render "shared/sidebar_link",
+          icon: "list-nested",
+          label: "Sections",
+          count: section_count,
+          path: universe_story_sections_path(story_id: Current.story),
+          controllers: %i[ sections ] %>
+
+        <%= render "shared/sidebar_link",
+          icon: "film",
+          label: "Scenes",
+          count: scene_count,
+          path: universe_story_scenes_path(story_id: Current.story),
+          controllers: %i[ scenes ] %>
+      <% else %>
+        <%= render "shared/sidebar_link",
+          icon: "books",
+          label: "All stories",
+          path: universe_stories_path,
+          controllers: %i[ stories ] %>
+
+        <%# Scenes are story-scoped: stay a placeholder until a story is selected,
+            and never fall back to the universe's first story. %>
+        <%= render "shared/sidebar_link",
+          icon: "film",
+          label: "Scenes",
+          path: "#",
+          controllers: [],
+          placeholder: true %>
+      <% end %>
+    </ul>
+
+    <% unless Current.story.present? %>
+      <p class="sidebar-hint">Select a story to work on its sections and story-specific structure.</p>
+    <% end %>
+  </section>
+
+  <section class="sidebar-section sidebar-section--tools" aria-labelledby="configuration-title">
     <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
     <ul class="sidebar-list">
       <%= render "shared/sidebar_link",

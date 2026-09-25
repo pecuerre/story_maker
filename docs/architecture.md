@@ -133,12 +133,49 @@ Other global behavior: `allow_browser versions: :modern`,
   membership index and mutations. The taxonomy workspace lives at `/u/:universe_slug/tags`; its
   `scope` and `taxonomy` query parameters select the Universe/Story scope and taxonomy editor.
 
+## Record details pages
+
+Every standard element and every element tag has exactly one details page, and it is the
+destination of the **Details** link that every list row and taxonomy node renders. The URLs are the
+ordinary nested resource show routes:
+
+| Record | Details URL |
+|---|---|
+| Character, Location, Item, Event | `/u/:universe_slug/characters\|locations\|items\|events/:id` |
+| Relation, Ownership | `/u/:universe_slug/relations\|ownerships/:id` |
+| Character/Relation/Location/Event/Item/Ownership tag | `/u/:universe_slug/<element>_tags/:id` |
+| Section, Section Tag, Scene Tag | `/u/:universe_slug/s/:story_id/sections\|section_tags\|scene_tags/:id` |
+| Universe, Story, Scene | `/u/:universe_slug`, `/u/:universe_slug/s/:story_id`, `.../scenes/:id` |
+
+A details page is HTML-only, guest-readable on a public universe, and read-only: it renders no
+mutation control at all, so authorization only decides whether the page is reachable. The record is
+always loaded through the authorized scope (`Current.universe.<plural>.find` or
+`@story.<plural>.find`), so another universe's or story's id is a `404`.
+
+The page is composed from four shared partials, so each record type can keep adding information
+without inventing a new page pattern:
+
+- `shared/_record_details` — page header (eyebrow, title, back link) plus the identity card;
+- `shared/_detail_facts` — the `[ label, value ]` grid, fed by the `detail_fact` helper so a
+  missing value renders explicit copy instead of a blank row;
+- `shared/_detail_section` — one related-records section, with a `count` badge, and its empty state
+  whenever the count is zero or no block was given;
+- `shared/_tagged_record_list` — the records carrying a tag, each linking to its own page.
+
+A content page currently identifies the record and then states honestly that the related information
+will appear later. A Section additionally lists the scenes grouped under it (backlog 11.4.1(b)),
+each still showing its narrative position, because grouping never sets order. A tag page lists the
+records that carry it through `HasManyTags#tagged_records`, the scoped inverse association, so it
+cannot disclose another universe's or story's records. `TaggedRecordCounts` answers the same
+question for a whole taxonomy in one grouped query, which is what the tree row's
+`Details (10 characters)` label uses.
+
 ## Response formats per controller
 
 | Flow | Controllers | Behavior |
 |---|---|---|
-| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections | `index/new` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships | `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | tags, timeline, sessions, passwords | |
 
@@ -158,15 +195,28 @@ Everything follows a two-step scope selection:
    creating a universe from the **Universes** dropdown.
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
    and as a left offcanvas below the `lg` breakpoint. At `xl` and above, a 14rem right utility
-   sidebar is also visible. The left sidebar contains **Story workspace**, **Universe Bible**, and
-   a separate **Configuration** section containing **Tags**. The right utility sidebar has a
-   **Settings** section containing **Members** for universe admins. The navbar adds explicit
-   **Universe: …** and **Story: …** context/switchers.
+   sidebar is also visible. The left sidebar is one continuous navigation surface read as three
+   scoped blocks, each with its own hue:
+
+   1. **Current universe** context (name, visibility/access, story count);
+   2. **Universe Bible** (Characters, Locations, Events, Timeline, Items);
+   3. **Current story** context (name, section/scene counts, description) or an explicit
+      "None selected" state;
+   4. **Story workspace** (Story overview, Sections, Scenes) or All stories plus a prompt;
+   5. **Configuration** (**Tags**).
+
+   The right utility sidebar has a **Settings** section containing **Members** for universe admins.
+   The navbar adds explicit **Universe: …** and **Story: …** context/switchers.
 3. **Story selected** (`Current.story`): Story workspace gains the story overview plus **Sections**
    and **Scenes** workspace tabs. The story is still remembered per universe; no first-story
    fallback exists. The **Scenes** sidebar entry is a real story-scoped link only while a story is
    selected; with no current story it stays an `aria-disabled` placeholder beside the explicit
    "select a story" prompt.
+
+The universe page is the landing page for a universe, so it lists the universe's own stories with an
+**Open** action each instead of a summary card that links onward; the header keeps **All stories**
+for the full page. It reuses the navbar's memoized story list, so the page adds no query and no
+`COUNT` — the per-story section and scene counts stay in the cached sidebar metrics.
 
 The navbar contains **Universes**, the current **Universe** switcher, the current **Story**
 switcher, and an **Account** menu. It keeps **New story** in the Story dropdown rather than in the
@@ -177,8 +227,9 @@ Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Tax
 lives under **Configuration → Tags**, with **Universe Tags** (Character, Relation, Location, Event,
 Item, and Ownership tags) and **Story Tags** (Section and Scene tags) selectors.
 
-All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`, and
-`empty_state` patterns. Visual tokens and responsive/component conventions live in
+All work pages use the shared `page_header`, `content_surface`/`entity-list`, `row_actions`,
+`empty_state`, and `record_details`/`detail_section` patterns. Visual tokens and
+responsive/component conventions live in
 [`visual_design.md`](visual_design.md). Three functional page patterns + their Stimulus
 controllers are described in
 [universe_maker_conventions.md](universe_maker_conventions.md#views---three-patterns):
@@ -189,9 +240,12 @@ Data flow for the tree/modal editors: `modal_fields.rb` serializes field descrip
 descriptions, option labels, and ARIA values are assigned as text/attributes, never interpolated
 into `innerHTML`) → `fetch` submits to the JSON endpoints → a successful mutation uses a
 same-URL Turbo visit so serialized parent/tag descriptors and all counts are refreshed from the
-server. Taxonomy insertion, move, and edit controls are available by pointer, touch, and keyboard;
-HTML5 drag/drop is an optional enhancement. Position changes use the transactional ordering
-service described in ADR 0009. The Story Tags scope now presents **Section tags** and **Scene
+server. A taxonomy row now carries only the name, the **Details** link, and one overflow menu
+(Add child, Insert before/after, Move up/Move down, Edit, Delete); the row itself no longer holds
+add/move buttons, and the name is sized to its own text so only hovering the name starts an inline
+rename. Insertion, move, and edit controls are available by pointer, touch, and keyboard; HTML5
+drag/drop is an optional enhancement. Position changes use the transactional ordering service
+described in ADR 0009. The Story Tags scope now presents **Section tags** and **Scene
 tags** as separate story-scoped taxonomy tabs; both use the same DOM-safe tree and JSON mutation
 contract, while Scene assignment stays in the HTML Scene form.
 
@@ -359,4 +413,13 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
   destroyed (and when a record moves to another scope). Open transactions calculate without
   filling the cache, and entries have a one-hour safety expiry. See
   [former quirk #18](resolved_quirks.md#former-18--sidebar-issued-count-queries-on-every-page-fixed).
-- The navbar adds one `stories` query per render (`nav_stories`).
+- The navbar adds one `stories` query per render (`nav_stories`). The universe page reuses that
+  memoized list instead of querying the same stories again.
+- `TaggedRecordCounts.for(tags)` answers "how many records carry each tag" with one grouped query
+  over the HABTM table, because the scoped tag associations have an instance-dependent scope and
+  cannot be eager loaded or grouped through Active Record. Every taxonomy index and the shared
+  taxonomy workspace load it once, so a row's `Details (N records)` label is not an N+1. The
+  Section tree's scene counts come from one `@story.scenes.group(:section_id).count` for the same
+  reason. Row-level authorization in `shared/_row_actions` and the recursive taxonomy partial
+  remain N+1 and are still tracked in
+  [`known_quirks.md`](known_quirks.md).

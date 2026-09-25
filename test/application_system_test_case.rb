@@ -27,4 +27,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       assert_current_path root_path
       assert_selector "button", text: "Account"
     end
+
+    # `stimulus-loading` sits on <html> from the first inline script until
+    # Stimulus has registered its controllers and connected the page, and
+    # Stimulus removes it only then. Waiting for that class to disappear is the
+    # supported readiness signal, so a click cannot be delivered to a page whose
+    # controllers are not listening yet and turn a slow machine into a flake.
+    def assert_stimulus_loaded(timeout: 10)
+      assert_selector "html:not(.stimulus-loading)", visible: :all, wait: timeout
+    end
 end

@@ -1,9 +1,9 @@
 class ItemsController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :item
 
-  before_action :set_item, only: %i[ update destroy ]
+  before_action :set_item, only: %i[ show update destroy ]
 
   def index
     @items = Current.universe.items
@@ -12,6 +12,12 @@ class ItemsController < ApplicationController
 
     @item_tags = Current.universe.item_tags
     @item_tags = @item_tags.order(:name)
+  end
+
+  # GET /items/:id — the record's own read-only details page. It identifies the
+  # record and is the destination of every "Details" link; later slices add
+  # the related-records sections without changing this URL.
+  def show
   end
 
   def new

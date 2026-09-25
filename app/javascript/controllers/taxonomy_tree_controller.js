@@ -522,88 +522,20 @@ export default class extends Controller {
     return values
   }
 
-  buildNode(data) {
-    const node = document.createElement("li")
-    node.className = "taxonomy-node"
-    node.draggable = true
-    node.dataset.taxonomyTreeTarget = "node"
-    node.dataset.action = "dragstart->taxonomy-tree#startDrag dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop dragend->taxonomy-tree#endDrag"
-    node.dataset.nodeId = data.id
-    node.dataset.updateUrl = data.url
-    node.dataset.createUrl = this.createUrlValue
-    node.dataset.name = data.name
-    node.dataset.description = data.description || ""
-    node.dataset.taxonomyValues = JSON.stringify(data)
-    if (this.hasFieldNameValue) node.dataset.taxonomyFieldValue = JSON.stringify(data[this.fieldNameValue] ?? null)
-
-    const row = document.createElement("div")
-    row.className = "taxonomy-row d-flex align-items-center gap-2 border-bottom"
-    row.append(this.icon("bi-grip-vertical", "text-body-secondary"), this.buildNameTrigger(data, true), this.buildActions(data, true))
-    node.append(row)
-    return node
-  }
-
-  buildNameTrigger(data, editable) {
-    const trigger = document.createElement(editable ? "button" : "span")
-    trigger.className = editable ? "taxonomy-name-trigger flex-grow-1 text-break" : "flex-grow-1 text-break"
-    if (editable) {
-      trigger.type = "button"
-      trigger.dataset.taxonomyTreeTarget = "name"
-      trigger.dataset.action = "click->taxonomy-tree#editName"
-      trigger.setAttribute("aria-label", `Rename ${data.name}`)
-    }
+  // The only row fragment this controller builds: cancelling an inline rename
+  // puts the native rename button back. Every other part of a row (the Details
+  // link and the action menu) is server-rendered and then refreshed by the
+  // same-URL Turbo visit, so there is deliberately no second JS copy of the row
+  // layout that could drift from `shared/_taxonomy_node`.
+  buildNameTrigger(data) {
+    const trigger = document.createElement("button")
+    trigger.type = "button"
+    trigger.className = "taxonomy-name-trigger text-break"
+    trigger.dataset.taxonomyTreeTarget = "name"
+    trigger.dataset.action = "click->taxonomy-tree#editName"
+    trigger.setAttribute("aria-label", `Rename ${data.name}`)
     trigger.append(this.buildNameContent(data))
     return trigger
-  }
-
-  buildActions(data, editable) {
-    const actions = document.createElement("span")
-    actions.className = "taxonomy-actions d-flex align-items-center gap-1"
-    if (!editable) return actions
-
-    const add = this.iconButton("bi-plus-lg", "Add child", "taxonomy-tree#add")
-    add.dataset.taxonomyAction = "add-child"
-    const up = this.iconButton("bi-arrow-up", "Move up", "taxonomy-tree#move")
-    up.dataset.moveDirection = "up"
-    up.dataset.taxonomyAction = "move-up"
-    const down = this.iconButton("bi-arrow-down", "Move down", "taxonomy-tree#move")
-    down.dataset.moveDirection = "down"
-    down.dataset.taxonomyAction = "move-down"
-    actions.append(add, up, down)
-
-    const dropdown = document.createElement("div")
-    dropdown.className = "dropdown"
-    const toggle = this.iconButton("bi-three-dots", `Actions for ${data.name}`)
-    toggle.id = `taxonomy-${data.id}-actions`
-    toggle.dataset.bsToggle = "dropdown"
-    toggle.setAttribute("aria-expanded", "false")
-    const menu = document.createElement("ul")
-    menu.className = "dropdown-menu dropdown-menu-end"
-    menu.setAttribute("aria-labelledby", toggle.id)
-    menu.append(
-      this.menuItem("Edit", "bi-pencil", "taxonomy-tree#edit", ""),
-      this.menuItem("Insert before", "bi-plus-lg", "taxonomy-tree#insertRelative", "before"),
-      this.menuItem("Insert after", "bi-plus-lg", "taxonomy-tree#insertRelative", "after")
-    )
-    const divider = document.createElement("li")
-    divider.className = "dropdown-divider"
-    const remove = this.menuItem("Delete", "bi-trash", "taxonomy-tree#remove", "", "text-danger")
-    menu.append(divider, remove)
-    dropdown.append(toggle, menu)
-    actions.append(dropdown)
-    return actions
-  }
-
-  menuItem(label, icon, action, insertPosition = "", className = "") {
-    const item = document.createElement("li")
-    const button = document.createElement("button")
-    button.type = "button"
-    button.className = `dropdown-item ${className}`.trim()
-    button.dataset.action = action
-    if (insertPosition) button.dataset.insertPosition = insertPosition
-    button.append(this.icon(icon, "me-2"), document.createTextNode(label))
-    item.append(button)
-    return item
   }
 
   iconButton(icon, label, action = null) {
@@ -667,7 +599,7 @@ export default class extends Controller {
     const node = form.closest("[data-node-id]")
     if (!node) return
     const values = this.parseJson(node.dataset.taxonomyValues, {})
-    const trigger = this.buildNameTrigger({ ...values, name: form.querySelector("input")?.value || node.dataset.name, description: node.dataset.description }, true)
+    const trigger = this.buildNameTrigger({ ...values, name: form.querySelector("input")?.value || node.dataset.name, description: node.dataset.description })
     form.replaceWith(trigger)
     this.updateMoveControls()
     trigger.focus()
@@ -752,6 +684,8 @@ export default class extends Controller {
       if (!list?.matches(".taxonomy-list")) return
       const nodes = this.directNodes(list)
       const index = nodes.indexOf(node)
+      // Move up/Move down live in the row menu now, so the boundary state is
+      // expressed by disabling the menu item instead of a row button.
       const up = node.querySelector('[data-taxonomy-action="move-up"]')
       const down = node.querySelector('[data-taxonomy-action="move-down"]')
       if (up) up.disabled = index <= 0

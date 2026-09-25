@@ -269,6 +269,16 @@ up/Move down reorder the sequence and are disabled at the boundaries; the delete
 states the full ADR 0007 consequences; and a guest or read-only member sees the list and details
 with no mutation controls.
 
+The universe page, the sidebar's three scoped blocks, and the record details pages can be checked the
+same way: the universe page lists the universe's stories with an **Open** action and keeps **All
+stories** in the header; the left sidebar reads current universe → Universe Bible → current story →
+Story workspace → Configuration with one hue per scope; the left column's Universe Bible, Sections,
+and Configuration rows and every `_tag` row carry a **Details** link labelled with the number of
+records that page will list, and following it lands on the record's own read-only page (a tag lists
+the records carrying it, a Section lists the scenes grouped under it). Placeholder navigation in the
+right utility sidebar stays flat gray with no hover emphasis, and a guest or read-only member sees
+the same pages with no mutation controls.
+
 Open a Scene and check: the **Scene Details** tab is active while **Characters**, **Items**, and
 **Locations** are `aria-disabled` placeholders rather than dead links; Details shows the Section
 group, Scene Tag badges, the linked event, and the in-world time as separate labelled values; and

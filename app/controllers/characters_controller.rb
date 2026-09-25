@@ -1,9 +1,9 @@
 class CharactersController < ApplicationController
-  allow_unauthenticated_access only: :index
+  allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :character
 
-  before_action :set_character, only: %i[ update destroy ]
+  before_action :set_character, only: %i[ show update destroy ]
 
   def index
     @characters = Current.universe.characters
@@ -12,6 +12,12 @@ class CharactersController < ApplicationController
 
     @character_tags = Current.universe.character_tags
     @character_tags = @character_tags.order(:name)
+  end
+
+  # GET /characters/:id — the record's own read-only details page. It identifies the
+  # record and is the destination of every "Details" link; later slices add
+  # the related-records sections without changing this URL.
+  def show
   end
 
   def new

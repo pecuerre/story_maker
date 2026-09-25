@@ -18,11 +18,11 @@ class OwnershipTagsController < ApplicationController
   end
 
   def create
-    @ownership_tag = Current.universe.ownership_tags.new(ownership_tag_params)
-    @ownership_tag.position = sibling_count(@ownership_tag.parent_id)
+    attributes = ownership_tag_params
+    @ownership_tag = Current.universe.ownership_tags.new(attributes)
 
     respond_to do |format|
-      if @ownership_tag.save
+      if create_with_sibling_position(@ownership_tag, requested_position: attributes[:position])
         format.json { render json: ownership_tag_json, status: :created }
       else
         format.json { render json: @ownership_tag.errors, status: :unprocessable_content }
@@ -41,7 +41,7 @@ class OwnershipTagsController < ApplicationController
   end
 
   def destroy
-    @ownership_tag.destroy!
+    destroy_with_sibling_position(@ownership_tag)
     head :no_content
   end
 

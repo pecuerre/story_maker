@@ -228,9 +228,13 @@ The shared tree provides:
 - a page header with explicit `title`, count, description, and human-readable add label;
 - optional URL-backed workspace tabs via `tabs` and `tabs_aria_label` locals;
 - a consistent empty state;
-- drag handles, inline rename, add-child, edit, and delete actions for users with write access;
-  read-only viewers see the hierarchy without mutation controls.
-- a neutral overflow menu for edit/delete.
+- a native rename button with inline rename for users with write access;
+- visible Move up/Move down controls, Insert before/Insert after actions, and add-child controls;
+  drag handles remain an optional enhancement;
+- a neutral overflow menu for edit/delete. Read-only viewers see the hierarchy without mutation
+  controls.
+- successful mutations refresh the same URL so counts and serialized parent/tag options are never
+  stale; dynamic names and option labels are rendered as text, not HTML.
 
 The add action must be human-readable (`Add relation tag`), never generated directly from a
 model parameter (`Add Relation_tag`). The tree Stimulus controller owns the inline add form and
@@ -295,7 +299,8 @@ replace the consequences with only “Delete {record}?” merely to save space.
 - Dropdown menus have unique IDs and `aria-labelledby` targets.
 - Delete actions are labeled as destructive and retain confirmation.
 - Keep focus states visible; do not use hover as the only way to discover an action.
-- Taxonomy actions become visible on keyboard focus and on touch devices.
+- Taxonomy actions become visible on keyboard focus and on touch devices; insertion targets are at
+  least 44×44 CSS pixels and reordering never depends on hover or drag/drop.
 - Preserve `prefers-reduced-motion` handling for transitions and drag feedback.
 - Tag color is supplementary information, never the only way to identify a record.
 

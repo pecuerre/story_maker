@@ -240,12 +240,12 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   development-data/manual verification.
 - **11.1 — Core Scene vertical slice.** Add a schema-only Scene migration and model, Story
   association, stable `name`/slug, and a transactionally maintained contiguous position with
-  deterministic `position, id` ordering. Generalize/refactor `MaintainsSiblingPositions` or add a
-  compatible flat-ordering concern before wiring Scene moves; preserve its sibling-position
-  conventions and test destroy/create/move behavior rather than bypassing the positioned-controller
-  decision. Add Story-scoped routes/controllers, the canonical Scenes index, accessible move
-  controls, a title/description create-edit-delete journey, the stable Scene editor shell, the real
-  sidebar link and scene count/cache invalidation, and basic empty and read-only states. Keep
+  deterministic `position, id` ordering. Use the flat mode and Story scope owner provided by
+  ADR 0009 / `PositionedResourceOrder`; preserve the existing sibling-position conventions and
+  destroy/create/move coverage rather than bypassing the positioned-controller decision. Add
+  Story-scoped routes/controllers, the canonical Scenes index, accessible move controls, a
+  title/description create-edit-delete journey, the stable Scene editor shell, the real sidebar
+  link and scene count/cache invalidation, and basic empty and read-only states. Keep
   Section/Event/datetime, tags, Elements, and world links out of this slice. Include model/request/
   route tests, connected development data, and matching docs.
 - **11.2 — Scene Details, references, and time.** Extend the stable editor with the optional
@@ -363,22 +363,22 @@ overlapping Section memberships, a controlled role ontology, real-time collabora
 permissions, automatic chronology reconciliation, or AI analysis. Those require separate domain
 decisions and should not delay the basic ordered Scene workflow.
 
-12. **Eliminate taxonomy modal XSS and stale editor state**
+12. **Eliminate taxonomy modal XSS and stale editor state (completed 2026-09-25)**
 
-    The current taxonomy editor has a documented stored-DOM XSS path and returns stale serialized
-    parent/tag options and counts after CRUD. Escape text by construction (do not interpolate user
-    names into `innerHTML`), refresh dependent descriptors and counts after every mutation, and add
-    hostile-name and reopen-after-CRUD browser regressions. Move the resolved findings from
-    `known_quirks.md` to `resolved_quirks.md`. This is a prerequisite for adding Scene Tags, not a
-    Scene-specific cleanup.
+    The taxonomy editor now builds dynamic fields/options/nodes by DOM construction, treats
+    user-controlled names and descriptions as text, refreshes the same URL after every successful
+    mutation, and has hostile-name, count, and reopen-after-CRUD browser regressions. The resolved
+    findings are preserved in `resolved_quirks.md`; this is a prerequisite for adding Scene Tags,
+    not a Scene-specific cleanup.
 
-13. **Make taxonomy tree insertion and reordering correct and accessible**
+13. **Make taxonomy tree insertion and reordering correct and accessible (completed 2026-09-25)**
 
-    Fix root insertion after a subtree, restore inline rename and keyboard semantics on newly
-    created nodes, and provide touch and keyboard alternatives to hidden insertion/reorder controls.
-    Cover boundary insertion, focus retention, Enter/Space behavior, and drag-free reordering with
-    focused browser tests. Complete this before the Scene Tag editor reuses the taxonomy controller;
-    an existing green desktop drag/drop test is not evidence that the interaction is usable.
+    Root/boundary insertion now uses the actual target list, rename controls are native buttons
+    with Enter/Space support, and Move up/Move down plus Insert before/Insert after provide
+    keyboard/touch alternatives to drag/drop. Touch-visible targets, focus restoration, scoped
+    Section/Location parent selectors, and focused browser regressions are in place. The resolved
+    findings are preserved in `resolved_quirks.md`; the taxonomy editor is ready for the later
+    Scene Tag slice.
 
 14. **Coverage measurement and CI gate (DataFactor follow-up)**
 

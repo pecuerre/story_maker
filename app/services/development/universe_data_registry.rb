@@ -7,6 +7,7 @@ module Development
       :file_name,
       :scope,
       :positioned,
+      :position_mode,
       keyword_init: true
     ) do
       def model
@@ -15,6 +16,10 @@ module Development
 
       def positioned?
         positioned
+      end
+
+      def hierarchical_position?
+        position_mode.to_s != "flat"
       end
     end
 

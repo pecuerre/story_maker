@@ -18,11 +18,11 @@ class RelationTagsController < ApplicationController
   end
 
   def create
-    @relation_tag = Current.universe.relation_tags.new(relation_tag_params)
-    @relation_tag.position = sibling_count(@relation_tag.parent_id)
+    attributes = relation_tag_params
+    @relation_tag = Current.universe.relation_tags.new(attributes)
 
     respond_to do |format|
-      if @relation_tag.save
+      if create_with_sibling_position(@relation_tag, requested_position: attributes[:position])
         format.json { render json: relation_tag_json, status: :created }
       else
         format.json { render json: @relation_tag.errors, status: :unprocessable_content }
@@ -41,7 +41,7 @@ class RelationTagsController < ApplicationController
   end
 
   def destroy
-    @relation_tag.destroy!
+    destroy_with_sibling_position(@relation_tag)
     head :no_content
   end
 

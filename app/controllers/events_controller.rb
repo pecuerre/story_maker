@@ -18,11 +18,11 @@ class EventsController < ApplicationController
   end
 
   def create
-    @event = Current.universe.events.new(event_params)
-    @event.position = sibling_count(@event.parent_id)
+    attributes = event_params
+    @event = Current.universe.events.new(attributes)
 
     respond_to do |format|
-      if @event.save
+      if create_with_sibling_position(@event, requested_position: attributes[:position])
         format.json { render json: event_json, status: :created }
       else
         format.json { render json: @event.errors, status: :unprocessable_content }
@@ -41,7 +41,7 @@ class EventsController < ApplicationController
   end
 
   def destroy
-    @event.destroy!
+    destroy_with_sibling_position(@event)
     head :no_content
   end
 

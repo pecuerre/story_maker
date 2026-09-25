@@ -18,11 +18,11 @@ class CharacterTagsController < ApplicationController
   end
 
   def create
-    @character_tag = Current.universe.character_tags.new(character_tag_params)
-    @character_tag.position = sibling_count(@character_tag.parent_id)
+    attributes = character_tag_params
+    @character_tag = Current.universe.character_tags.new(attributes)
 
     respond_to do |format|
-      if @character_tag.save
+      if create_with_sibling_position(@character_tag, requested_position: attributes[:position])
         format.json { render json: character_tag_json, status: :created }
       else
         format.json { render json: @character_tag.errors, status: :unprocessable_content }
@@ -41,7 +41,7 @@ class CharacterTagsController < ApplicationController
   end
 
   def destroy
-    @character_tag.destroy!
+    destroy_with_sibling_position(@character_tag)
     head :no_content
   end
 

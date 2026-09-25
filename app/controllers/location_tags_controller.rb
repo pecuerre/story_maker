@@ -13,11 +13,11 @@ class LocationTagsController < ApplicationController
   end
 
   def create
-    @location_tag = Current.universe.location_tags.new(location_tag_params)
-    @location_tag.position = sibling_count(@location_tag.parent_id)
+    attributes = location_tag_params
+    @location_tag = Current.universe.location_tags.new(attributes)
 
     respond_to do |format|
-      if @location_tag.save
+      if create_with_sibling_position(@location_tag, requested_position: attributes[:position])
         format.json { render json: location_tag_json, status: :created }
       else
         format.json { render json: @location_tag.errors, status: :unprocessable_content }
@@ -36,7 +36,7 @@ class LocationTagsController < ApplicationController
   end
 
   def destroy
-    @location_tag.destroy!
+    destroy_with_sibling_position(@location_tag)
     head :no_content
   end
 

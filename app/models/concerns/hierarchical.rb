@@ -11,6 +11,8 @@ module Hierarchical
     validate :parent_belongs_to_same_universe
     validate :parent_cannot_be_self
     validate :parent_cannot_be_descendant
+
+    after_destroy :normalize_sibling_positions_after_destroy
   end
 
   def root?
@@ -66,5 +68,20 @@ module Hierarchical
     return if parent.nil? || new_record? || parent_id == id
 
     errors.add(:parent, "cannot be a descendant") if parent.ancestor_chain.include?(self)
+  end
+
+  def normalize_sibling_positions_after_destroy
+    scope = hierarchy_scope
+    return unless scope&.persisted?
+
+    siblings = scope.public_send(self.class.table_name)
+      .where(parent_id: parent_id)
+      .where.not(id: id)
+      .reorder(:position, :id)
+      .lock
+
+    siblings.each_with_index do |sibling, index|
+      sibling.update_columns(position: index) unless sibling.position == index
+    end
   end
 end

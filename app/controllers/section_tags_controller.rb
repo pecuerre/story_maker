@@ -22,11 +22,11 @@ class SectionTagsController < ApplicationController
 
   # POST /section_tags or /section_tags.json
   def create
-    @section_tag = @story.section_tags.new(section_tag_params)
-    @section_tag.position = sibling_count(@section_tag.parent_id)
+    attributes = section_tag_params
+    @section_tag = @story.section_tags.new(attributes)
 
     respond_to do |format|
-      if @section_tag.save
+      if create_with_sibling_position(@section_tag, requested_position: attributes[:position])
         format.json { render json: section_tag_json, status: :created }
       else
         format.json { render json: @section_tag.errors, status: :unprocessable_content }
@@ -47,7 +47,7 @@ class SectionTagsController < ApplicationController
 
   # DELETE /section_tags/1 or /section_tags/1.json
   def destroy
-    @section_tag.destroy!
+    destroy_with_sibling_position(@section_tag)
 
     respond_to do |format|
       format.json { head :no_content }
@@ -68,6 +68,10 @@ class SectionTagsController < ApplicationController
   # Positions are maintained among the story's section tags, not the universe's.
   def sibling_collection
     @story.section_tags
+  end
+
+  def sibling_position_scope_owner
+    @story
   end
 
   def section_tag_json

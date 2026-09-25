@@ -82,8 +82,11 @@ Other global behavior: `allow_browser versions: :modern`,
   selections. Starting a new authenticated session performs the same context cleanup, and a
   request with a stale/deleted authentication session clears its cookie and story context.
 - Password reset: `passwords#create` mails a token link, `passwords#edit/update` change the
-  password and destroy all of that user's sessions. If the reset is completed in that user's
-  current browser, its authentication cookie and remembered story selections are cleared too.
+  password and destroy all of that user's sessions. Password-reset responses set `Cache-Control:
+  no-store` and `Referrer-Policy: no-referrer`. The custom `PasswordResetPathFilter` redacts the
+  token path segment in Rails request logs; production proxy/access-log configuration must also
+  avoid retaining reset URLs. If the reset is completed in that user's current browser, its
+  authentication cookie and remembered story selections are cleared too.
 - Visibility and authorization are centralized in `Ability` plus `UniverseAuthorization`:
   - public universe: guests may read; every signed-in user may write; only the owner or an admin
     member may change universe settings or memberships;
@@ -179,9 +182,13 @@ controllers are described in
 taxonomy tree (`taxonomy_tree`), flat list + modal (`modal_form` + `tom_select`), plain forms.
 
 Data flow for the tree/modal editors: `modal_fields.rb` serializes field descriptors into
-`data-*-value` attributes → Stimulus builds the form → `fetch`/form submit to the JSON endpoints
-→ response JSON `{ id, name, …, url }` updates the DOM. Drag & drop sends `{ position: n }`
-patches handled by `MaintainsSiblingPositions`.
+`data-*-value` attributes → Stimulus builds every dynamic field and node by DOM APIs (user names,
+descriptions, option labels, and ARIA values are assigned as text/attributes, never interpolated
+into `innerHTML`) → `fetch` submits to the JSON endpoints → a successful mutation uses a
+same-URL Turbo visit so serialized parent/tag descriptors and all counts are refreshed from the
+server. Taxonomy insertion, move, and edit controls are available by pointer, touch, and keyboard;
+HTML5 drag/drop is an optional enhancement. Position changes use the transactional ordering
+service described in ADR 0009.
 
 ## Planned Scene architecture (slice 11.0 contract; not implemented)
 
@@ -192,7 +199,9 @@ UX contract. The current left-sidebar **Scenes** item remains a disabled placeho
 ### Ownership and resolution
 
 - A required `Story` owns the contiguous, narrative-order `Scene.position`. A Scene never causes a
-  Story to be selected implicitly.
+  Story to be selected implicitly. Scene and Element controllers use the flat mode of
+  `PositionedResourceOrder`; they do not inherit `Hierarchical` or use `section_id` as an ordering
+  parent.
 - A Scene belongs to one Story and may reference one same-Story Section, one same-Universe Event,
   one independent optional single-point `datetime` (using Event-compatible storage/editor
   precision and timezone semantics, not Event's start/end pair), optional story-scoped Scene Tags,
@@ -241,6 +250,20 @@ The Element modal contains kind, required Title, optional Content, and a speaker
 shown and required only for Dialogue. It must display `422` and network failures without losing the
 author's input. The accepted deletion behavior and exact confirmation templates are recorded in
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md).
+
+## Production boundary
+
+Production fails closed when `APP_HOST`, `MAILER_FROM`, or `SMTP_ADDRESS` is missing. It uses
+`APP_HOST` with HTTPS for generated mailer URLs, configures SMTP from the documented environment
+variables, enables `assume_ssl` and `force_ssl`, keeps `/up` available to the health check, and
+sets the production session cookie `Secure` explicitly. The Kamal/deployment host must provide a
+TLS-terminating proxy and the required environment variables; the application does not provide a
+development or placeholder mail host fallback.
+
+The Rails request logger redacts password-reset path tokens through
+`lib/password_reset_path_filter.rb`. This protects application logs, not an upstream proxy's
+access log or a browser's external history; production logging and retention must be configured
+accordingly.
 
 ## Timeline
 

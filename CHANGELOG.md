@@ -19,6 +19,26 @@ Labels used below:
 
 ## 2026-09-25
 
+- **[security]** Removed `.kamal/secrets` from Git tracking, added an ignore rule and CI guard,
+  restricted the preserved local file to mode `0600`, and documented that master-key rotation and
+  history cleanup remain owner actions. The secret value was not read or changed.
+- **[security]** Redacted password-reset tokens from Rails request paths, added no-store/no-referrer
+  reset headers, strong-parameter validation, and regression coverage for blank resets and rendered
+  multipart mail.
+- **[security]** Made production mail/URL/SMTP settings explicit and fail-closed, enabled HTTPS
+  redirects/HSTS behavior, restricted the production host allowlist, and marked the session cookie
+  `Secure`; added mailer, cookie, and production-configuration coverage.
+- **[fixed]** Added ADR 0009 and `PositionedResourceOrder`: positioned controller mutations now
+  maintain hierarchical and explicitly flat sequences transactionally across create, move,
+  reparent, and destroy, with focused service/controller tests and flat development-data metadata.
+- **[security]** Rebuilt taxonomy dynamic fields and nodes with DOM APIs instead of `innerHTML`,
+  added hostile-name browser coverage, and refreshed server-rendered taxonomy state after every
+  successful mutation.
+- **[fixed]** Completed backlog items 12 and 13: taxonomy parent/tag options and counts no longer
+  remain stale, boundary insertion uses the actual list, native rename supports Enter/Space, and
+  Move/Insert controls plus touch-visible targets provide non-drag editing. Added ADRs 0010 and
+  focused keyboard/touch/system regressions.
+
 - **[security]** Added machine-readable Tom Select version metadata to the local importmap pin and a
   regression test, so `bin/importmap audit` includes Tom Select 2.6.2 instead of skipping it.
   Complete Bun/npm graph, vendored-file provenance, and Dependabot coverage remain separate follow-up

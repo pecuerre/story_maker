@@ -15,8 +15,8 @@ servers:
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
 # If used with Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
-#
-# Using an SSL proxy like this requires turning on config.assume_ssl and config.force_ssl in production.rb!
+# Production requires this proxy (or an equivalent external TLS terminator); Rails HTTPS enforcement
+# is defense in depth and does not replace a configured certificate/host.
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
 #
@@ -36,7 +36,9 @@ registry:
   # password:
   #   - KAMAL_REGISTRY_PASSWORD
 
-# Inject ENV variables into containers (secrets come from .kamal/secrets).
+# Inject ENV variables into containers.
+# `.kamal/secrets` is a local, ignored file. Never commit it; rotate the master
+# key and purge it from repository history if it has ever been exposed.
 env:
   secret:
     - RAILS_MASTER_KEY
@@ -44,6 +46,12 @@ env:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
+
+    # Production also requires APP_HOST, MAILER_FROM, and SMTP_ADDRESS. Add those
+    # names to Kamal's env.clear list (and SMTP_USERNAME/SMTP_PASSWORD to env.secret
+    # when authentication is used) using the host environment or approved secret
+    # store. Optional SMTP variables are documented in docs/development.md; do not
+    # put their values in this file.
 
     # Set number of processes dedicated to Solid Queue (default: 1)
     # JOB_CONCURRENCY: 3

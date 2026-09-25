@@ -493,7 +493,7 @@ module Development
       end
 
       def static_position_group_key(record)
-        parent = reference_identifier(record.resolved_attributes["parent"])
+        parent = reference_identifier(record.resolved_attributes["parent"]) if record.definition.hierarchical_position?
         if story_scoped_model?(record.definition.model_name)
           story = reference_identifier(record.resolved_attributes["story"])
           [ record.definition.model_name, :story, story, parent ]
@@ -518,7 +518,7 @@ module Development
 
       def normalize_positions!
         positioned_records = @records.select { |record| record.definition.positioned? && record.loaded_record }
-        positioned_records.group_by { |record| position_group_key(record.loaded_record) }.each_value do |group|
+        positioned_records.group_by { |record| position_group_key(record.loaded_record, record.definition) }.each_value do |group|
           ordered = ordered_position_records(group)
           ordered.each_with_index do |record, index|
             record.loaded_record.update_column(:position, index) unless record.loaded_record.position == index
@@ -526,11 +526,11 @@ module Development
         end
       end
 
-      def position_group_key(record)
+      def position_group_key(record, definition)
         scope = if story_scoped_model?(record.class.name)
-          [ record.story_id, record.parent_id ]
+          [ record.story_id, definition.hierarchical_position? ? record.parent_id : nil ]
         else
-          [ record.universe_id, record.parent_id ]
+          [ record.universe_id, definition.hierarchical_position? ? record.parent_id : nil ]
         end
 
         [ record.class.name, *scope ]

@@ -18,11 +18,11 @@ class ItemTagsController < ApplicationController
   end
 
   def create
-    @item_tag = Current.universe.item_tags.new(item_tag_params)
-    @item_tag.position = sibling_count(@item_tag.parent_id)
+    attributes = item_tag_params
+    @item_tag = Current.universe.item_tags.new(attributes)
 
     respond_to do |format|
-      if @item_tag.save
+      if create_with_sibling_position(@item_tag, requested_position: attributes[:position])
         format.json { render json: item_tag_json, status: :created }
       else
         format.json { render json: @item_tag.errors, status: :unprocessable_content }
@@ -41,7 +41,7 @@ class ItemTagsController < ApplicationController
   end
 
   def destroy
-    @item_tag.destroy!
+    destroy_with_sibling_position(@item_tag)
     head :no_content
   end
 

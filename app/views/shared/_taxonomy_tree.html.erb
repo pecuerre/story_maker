@@ -62,8 +62,9 @@ end %>
   <div class="taxonomy-surface">
     <% if editable %>
       <p class="taxonomy-hint">
-        Drag rows to reorder them. Drop near the top or bottom of a row to nest it as a child.
+        Use Move up/Move down or Insert before/Insert after for keyboard and touch editing. Drag rows when you want a visual reorder; dropping near the top or bottom nests a row as a child.
       </p>
+      <p class="visually-hidden" data-taxonomy-tree-status aria-live="polite"></p>
     <% end %>
 
     <% if nodes.empty? %>

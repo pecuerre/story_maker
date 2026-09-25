@@ -190,6 +190,21 @@ multi-speaker, multi-Location, and blank/populated-role cases at Epic completion
 `UNIVERSE=<slug> bin/rails db:demo:load` task for a prepared development database; the loader
 refuses production/test writes and does not load another universe.
 
+## Taxonomy editor and ordering verification
+
+Taxonomy mutations remain JSON-only. The shared tree builds dynamic fields and nodes through DOM
+APIs, treats names/descriptions as text, and refreshes the same URL after every successful mutation
+so parent/tag options and counts are server-authoritative. Section and Location editors include
+scoped parent selectors; Move up/Move down and Insert before/Insert after provide non-drag paths.
+Run `test/system/taxonomy_tree_test.rb` for hostile-name, stale-state, boundary insertion,
+keyboard, and narrow/touch regressions. Do not reintroduce hover-only controls or `innerHTML` for
+user-controlled values.
+
+Positioned controller mutations use `PositionedResourceOrder` and ADR 0009. Run
+`test/services/positioned_resource_order_test.rb` plus the positioned controller tests after
+changing ordering behavior. The service supports explicit flat mode for future Story-owned
+Scenes/Scene Elements; it does not make `section_id` an ordering parent.
+
 ## Database migrations
 
 The database is intentionally disposable: schema migrations only define the structure. Demo
@@ -247,14 +262,31 @@ Dependabot config: `.github/dependabot.yml`.
 ## Deployment (Kamal)
 
 - `config/deploy.yml`: service/image `universe_maker`, target host `192.168.0.1`, image registry
-  `localhost:5555`, `asset_path: /rails/public/assets`, amd64 builder, secrets from
-  `.kamal/secrets`, sample hooks in `.kamal/hooks/`.
+  `localhost:5555`, `asset_path: /rails/public/assets`, amd64 builder, and a local-only
+  `.kamal/secrets` file. The secrets file is ignored, must be mode `0600` or stricter, and must
+  never be committed. If it was ever exposed, rotate the Rails master key, the affected
+  `secret_key_base`/signed artifacts, and any credentials protected by it before deployment;
+  untracking the file does not rotate it or remove it from history.
+- Production requires these explicit environment variables (names only; never put values in this
+  repository): `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`; `SMTP_PORT` defaults to `587`,
+  `SMTP_DOMAIN` defaults to `APP_HOST`, and `SMTP_USERNAME`/`SMTP_PASSWORD` must be supplied as a
+  pair when authentication is used. `SMTP_ENABLE_STARTTLS_AUTO` defaults to `true`, and
+  `SMTP_OPENSSL_VERIFY_MODE` defaults to `peer`.
+- Production enables `assume_ssl` and `force_ssl`, uses HTTPS for generated mailer URLs, restricts
+  the host allowlist to `APP_HOST`, keeps `/up` available to the health check, and marks the
+  signed session cookie `Secure`. The deployment must provide a TLS-terminating proxy; do not
+  expose the container directly to untrusted HTTP traffic.
+- `config/initializers/filter_parameter_logging.rb` redacts password-reset path segments from
+  Rails request logs. Password-reset pages also send `Cache-Control: no-store` and
+  `Referrer-Policy: no-referrer`. Configure proxy/access-log retention separately; application
+  filtering cannot erase a token from an upstream proxy or browser history.
+- `config/deploy.yml` must receive the variables above through its `env.clear`/`env.secret` lists,
+  backed by the host environment or an approved secret store. Do not run `bin/kamal config` in
+  shared CI or paste its output into tickets: the resolved configuration can contain secrets.
 - `Dockerfile` builds the app (comments show `docker build -t universe_maker .`); the image runs
   Rails behind **thruster**; volume `universe_maker_storage:/rails/storage` persists Active
-  Storage (local disk per `config/storage.yml`).
-- Production config highlights (`config/environments/production.rb`): `solid_cache` store,
-  `solid_queue` adapter (separate `queue` DB), 1-year cache headers for public assets,
-  `assume_ssl`/`force_ssl` present but **commented out**.
+  Storage (local disk per `config/storage.yml`). A clean production image/Kamal boot remains a
+  separate verification item.
 - A MySQL accessory is sketched in `deploy.yml` but commented; the app itself is SQLite.
 
 ## Adding a new content model (checklist)

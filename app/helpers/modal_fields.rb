@@ -170,7 +170,7 @@ module ModalFields
     ]
   end
 
-  def location_taxonomy_fields(location_tags)
+  def location_taxonomy_fields(location_tags, locations = [])
     [
       {
         name: "name",
@@ -182,6 +182,12 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(locations)
       },
       {
         name: "location_tag_ids",
@@ -324,7 +330,7 @@ module ModalFields
     ]
   end
 
-  def section_taxonomy_fields(section_tags)
+  def section_taxonomy_fields(section_tags, sections = [])
     [
       {
         name: "name",
@@ -336,6 +342,12 @@ module ModalFields
         name: "description",
         label: "Description",
         type: "textarea"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(sections)
       },
       {
         name: "section_tag_ids",

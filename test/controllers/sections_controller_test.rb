@@ -36,6 +36,17 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "Section of another story"
   end
 
+  test "index serializes only same-story parent options" do
+    Section.create!(story: stories(:story_alt), name: "Other story section")
+
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_includes response.body, "Section one"
+    assert_includes response.body, "Section two"
+    assert_not_includes response.body, "Other story section"
+  end
+
   test "should create section as json" do
     assert_difference("Section.count") do
       post universe_story_sections_url(universe_slug: @universe.slug, story_id: @story),
@@ -90,6 +101,21 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Renamed", "Updated", [ @section_tag.id ] ], [ @section.name, @section.description, @section.section_tag_ids ]
   end
 
+  test "creates a section at the requested position in one request" do
+    section_one = sections(:section_one)
+    first = @story.sections.create!(name: "First sibling", position: 1)
+    second = @story.sections.create!(name: "Second sibling", position: 2)
+
+    post universe_story_sections_url(universe_slug: @universe.slug, story_id: @story),
+      params: { section: { name: "Inserted sibling", position: 0 } },
+      as: :json
+
+    assert_response :created
+    assert_equal 0, response.parsed_body["position"]
+    inserted = Section.find_by!(name: "Inserted sibling")
+    assert_equal [ inserted, section_one, first, second ], @story.sections.where(parent_id: nil).order(:position, :id).to_a
+  end
+
   test "should update section position as json" do
     patch universe_story_section_url(universe_slug: @universe.slug, story_id: @story, id: @section),
       params: { section: { position: 0 } },
@@ -97,6 +123,18 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal 0, @section.reload.position
+  end
+
+  test "can reparent a section through the scoped JSON editor" do
+    parent = @story.sections.create!(name: "New parent", position: 1)
+
+    patch universe_story_section_url(universe_slug: @universe.slug, story_id: @story, id: @section),
+      params: { section: { parent_id: parent.id, position: 0 } },
+      as: :json
+
+    assert_response :success
+    assert_equal parent, @section.reload.parent
+    assert_equal 0, @section.position
   end
 
   test "cannot manage a section through a different story" do

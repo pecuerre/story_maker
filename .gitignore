@@ -32,6 +32,8 @@
 
 # Ignore key files for decrypting credentials and more.
 /config/*.key
+# Kamal reads deployment secrets from this local-only file; never commit it.
+/.kamal/secrets
 
 
 /app/assets/builds/*

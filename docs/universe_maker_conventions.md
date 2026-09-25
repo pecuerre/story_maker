@@ -19,7 +19,9 @@
   listed in [data_model.md](data_model.md).
 - `"_tag"` models are their own hierarchical tables (`parent_id` self-FK); there is no `tag_id`
   column on the content tables — the pairs are joined with HABTM join tables.
-- `position` defaults to 0 and enables ordered lists; siblings are normalized to 0..n-1.
+- `position` defaults to 0 and enables ordered lists; positioned controller mutations delegate to
+  `PositionedResourceOrder`, which transactionally maintains contiguous positions for hierarchical
+  and explicitly configured flat collections.
 
 ### Development data
 
@@ -65,8 +67,10 @@
   authentication layer, then `Ability` enforces read/write/admin access. Do not add a
   controller-specific visibility check that bypasses this callback.
 - Positioned/hierarchical controllers include `MaintainsSiblingPositions`
-  (`maintains_sibling_positions_for :model`) and override `sibling_collection` when the scope is
-  not the universe (Sections and SectionTags use `@story.sections` / `@story.section_tags`).
+  (`maintains_sibling_positions_for :model`) and override `sibling_collection` and
+  `sibling_position_scope_owner` when the scope is not the universe (Sections and SectionTags use
+  `@story` as owner). Use `maintains_flat_positions_for` for a parentless sequence; do not infer
+  flat ordering from `section_id` or another organizational association.
 - Strong params use Rails 8 `params.expect(model: [ ... ])`.
 - Universe authorization is a three-level policy: `read`, `write`, and `admin`. Public universes
   grant guest read and signed-in write access; private universes require an owner or membership.
@@ -74,6 +78,9 @@
   distinguish it from an unknown universe. The owner is always admin, and a membership's level
   applies uniformly to all universe/story components. Admin membership management is an HTML flow
   at `/u/:universe_slug/members`.
+- Password-reset responses set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+  `PasswordResetPathFilter` redacts reset-token path segments from Rails request logs; upstream
+  proxy/access-log retention remains an external deployment responsibility.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
     Characters, Locations, Items, Events, Sections. The page renders HTML; create/update/destroy
@@ -124,8 +131,12 @@ The three functional editing patterns are:
 - Use the `shared/taxonomy_tree` partial (wraps `shared/_taxonomy_node`) with the
   `new_url`/`create_url`/`edit_url`/`update_url`/`delete_url` lambdas + `model_param` +
   `modal_fields` locals.
-- `taxonomy_tree_controller.js` provides drag/drop reordering, inline name editing and the
-  modal editor (fields come from `data-taxonomy-tree-modal-fields-value`).
+- `taxonomy_tree_controller.js` provides safe DOM-built modal fields and nodes, inline name
+  editing, insertion boundaries, and accessible Move up/Move down controls. HTML5 drag/drop is an
+  optional enhancement. After every successful mutation it performs a same-URL Turbo visit so
+  serialized parent/tag descriptors, page counts, and sidebar counts come from one fresh server
+  render. User-controlled names and descriptions are assigned with `textContent`/DOM properties,
+  never interpolated into `innerHTML`.
 
 **2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
@@ -153,11 +164,10 @@ route.
 - **Model:** `Scene belongs_to :story`, includes `HasSlug`, and is flat rather than hierarchical. A
   required `name` is labelled **Title**; description, same-Story Section, same-Universe Event, one
   optional single-point `datetime` using Event-compatible storage/editor precision and timezone
-  semantics, Tags, and world-record links are optional. Do not use the current hierarchical
-  `MaintainsSiblingPositions` implementation unchanged: slice 11.1 must generalize/refactor it or
-  add a compatible flat-ordering concern that preserves its sibling-position conventions and tests.
-  Do not add `Hierarchical` to Scene or SceneElement; their contiguous `position` sequences need
-  dedicated transactional flat-ordering behavior.
+  semantics, Tags, and world-record links are optional. Use the flat mode of
+  `PositionedResourceOrder` with the Story as scope owner. Do not add `Hierarchical` to Scene or
+  SceneElement; their contiguous `position` sequences need dedicated transactional flat-ordering
+  behavior.
 - **Elements:** `SceneElement belongs_to :scene`; it is an ordered child component rather than a
   standalone navigable content model and has no public slug requirement. Its `kind` is `narration`
   or `dialogue`, `name` is required and labelled **Title**, `body` is optional, and `position` is

@@ -13,14 +13,15 @@ class LocationsController < ApplicationController
 
     @location_tags = Current.universe.location_tags
     @location_tags = @location_tags.order(:name)
+    @location_options = Current.universe.locations.reorder(:position, :id).to_a
   end
 
   def create
-    @location = Current.universe.locations.new(location_params)
-    @location.position = sibling_count(@location.parent_id)
+    attributes = location_params
+    @location = Current.universe.locations.new(attributes)
 
     respond_to do |format|
-      if @location.save
+      if create_with_sibling_position(@location, requested_position: attributes[:position])
         format.json { render json: location_json, status: :created }
       else
         format.json { render json: @location.errors, status: :unprocessable_content }
@@ -39,7 +40,7 @@ class LocationsController < ApplicationController
   end
 
   def destroy
-    @location.destroy!
+    destroy_with_sibling_position(@location)
     head :no_content
   end
 

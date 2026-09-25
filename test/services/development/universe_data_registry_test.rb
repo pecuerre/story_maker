@@ -10,6 +10,25 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
     assert_not Development::UniverseDataRegistry.registered_universe?("star_wars")
   end
 
+  test "distinguishes hierarchical and flat position groups" do
+    hierarchical = Development::UniverseDataRegistry::ModelDefinition.new(
+      model_name: "Section",
+      file_name: "sections",
+      scope: :story,
+      positioned: true
+    )
+    flat = Development::UniverseDataRegistry::ModelDefinition.new(
+      model_name: "Scene",
+      file_name: "scenes",
+      scope: :story,
+      positioned: true,
+      position_mode: :flat
+    )
+
+    assert hierarchical.hierarchical_position?
+    assert_not flat.hierarchical_position?
+  end
+
   test "normalizes universe names before looking them up" do
     assert_equal "dark", Development::UniverseDataRegistry.directory_name_for(" DARK ")
   end

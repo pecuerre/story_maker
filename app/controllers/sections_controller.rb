@@ -14,6 +14,7 @@ class SectionsController < ApplicationController
 
     @section_tags = @story.section_tags
     @section_tags = @section_tags.order(:name)
+    @section_options = @story.sections.reorder(:position, :id).to_a
   end
 
   def new
@@ -21,14 +22,15 @@ class SectionsController < ApplicationController
 
     @section_tags = @story.section_tags
     @section_tags = @section_tags.order(:name)
+    @section_options = @story.sections.reorder(:position, :id).to_a
   end
 
   def create
-    @section = @story.sections.new(section_params)
-    @section.position = sibling_count(@section.parent_id)
+    attributes = section_params
+    @section = @story.sections.new(attributes)
 
     respond_to do |format|
-      if @section.save
+      if create_with_sibling_position(@section, requested_position: attributes[:position])
         format.json { render json: section_json, status: :created }
       else
         format.json { render json: @section.errors, status: :unprocessable_content }
@@ -47,7 +49,7 @@ class SectionsController < ApplicationController
   end
 
   def destroy
-    @section.destroy!
+    destroy_with_sibling_position(@section)
     respond_to do |format|
       format.json { head :no_content }
     end
@@ -68,6 +70,10 @@ class SectionsController < ApplicationController
     @story.sections
   end
 
+  def sibling_position_scope_owner
+    @story
+  end
+
   def section_params
     params.expect(section: [ :name, :description, { section_tag_ids: [] }, :parent_id, :position ])
   end
@@ -84,6 +90,7 @@ class SectionsController < ApplicationController
       description: @section.description,
       section_tag_ids: @section.section_tag_ids,
       parent_id: @section.parent_id,
+      position: @section.position,
       url: universe_story_section_path(story_id: @story, id: @section)
     }
   end

@@ -18,6 +18,19 @@
   background: #fafbfe;
 }
 
+.taxonomy-name-trigger {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.taxonomy-name-trigger:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
 .taxonomy-actions {
   opacity: 0;
   pointer-events: none;
@@ -56,8 +69,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 1px solid var(--bs-primary);
   border-radius: 50%;
@@ -101,8 +114,13 @@
   background: var(--um-primary-soft, rgba(52, 84, 209, .08));
 }
 
-@media (hover: none) {
+@media (hover: none), (pointer: coarse) {
   .taxonomy-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .taxonomy-separator-add {
     opacity: 1;
     pointer-events: auto;
   }

@@ -13,6 +13,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_path
     assert cookies[:session_id]
+    set_cookie = Array(response.headers["Set-Cookie"]).join("\n")
+    assert_match(/HttpOnly/i, set_cookie)
+    assert_match(/SameSite=Lax/i, set_cookie)
   end
 
   test "create with invalid credentials" do

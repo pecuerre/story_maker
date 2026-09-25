@@ -22,11 +22,11 @@ class CharactersController < ApplicationController
   end
 
   def create
-    @character = Current.universe.characters.new(character_params)
-    @character.position = sibling_count(@character.parent_id)
+    attributes = character_params
+    @character = Current.universe.characters.new(attributes)
 
     respond_to do |format|
-      if @character.save
+      if create_with_sibling_position(@character, requested_position: attributes[:position])
         format.json { render json: character_json, status: :created }
       else
         format.json { render json: @character.errors, status: :unprocessable_content }
@@ -45,7 +45,7 @@ class CharactersController < ApplicationController
   end
 
   def destroy
-    @character.destroy!
+    destroy_with_sibling_position(@character)
     head :no_content
   end
 

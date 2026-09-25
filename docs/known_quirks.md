@@ -20,59 +20,41 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
 
 ## Critical security observations
 
-5. **Critical — the Kamal master-key file is version-controlled.** `git ls-files` reports
-   `.kamal/secrets`, and the file is not covered by `.gitignore`; `config/deploy.yml:39-42` uses
-   that file to inject `RAILS_MASTER_KEY`. The audit confirmed a non-empty master-key assignment
-   without reproducing its value. The file is mode `0644`, so anyone with repository or Git-history
-   access may be able to decrypt `config/credentials.yml.enc` and forge Rails signed cookies,
-   reset tokens, or other signed messages. Treat the value as exposed until the owner verifies and
-   rotates it. No secret value is reproduced in this document.
+5. **Critical — the exposed Kamal master key still requires owner rotation and history cleanup.**
+   The current tree now ignores and untracks `.kamal/secrets`, keeps the local copy mode `0600`,
+   and CI rejects a tracked secrets path. Those containment changes do not invalidate prior
+   repository/history copies or rotate `RAILS_MASTER_KEY`; the owner must rotate the key, the
+   affected `secret_key_base`/signed artifacts, and any credentials it protects before deployment.
+   No secret value is reproduced in this document.
+   See [`resolved_quirks.md`](resolved_quirks.md) for the repository-containment change and
+   [`config/deploy.yml`](../config/deploy.yml) for the local secret contract.
 
-8. **High — taxonomy edit modals have a stored DOM XSS path.** User-controlled taxonomy names are
-   returned as option labels (`app/helpers/modal_fields.rb:3-13,173-195,327-349`). The Stimulus
-   controller interpolates those labels into an HTML string and assigns it through `innerHTML`
-   (`app/javascript/controllers/taxonomy_tree_controller.js:106-116,147-166`, especially line 157).
-   Names are only presence-validated, and the application CSP is commented out
-   (`config/initializers/content_security_policy.rb:7-29`). A name containing markup can create
-   elements/event handlers when another writer or administrator opens a taxonomy edit modal. The
-   page exposes a CSRF token (`app/views/layouts/application.html.erb:9`), so script execution can
-   use the victim's authenticated browser for same-origin mutations. There is no hostile-name
-   browser regression test.
+Former finding **#8** was fixed by constructing taxonomy fields and nodes with DOM APIs, assigning
+user-controlled values as text/attributes, and adding hostile-name browser regressions. The
+resolution is recorded in [`resolved_quirks.md`](resolved_quirks.md).
 
-9. **High — password-reset bearer tokens are written to request logs.** Reset tokens are URL path
-   segments (`config/routes.rb:3`, `app/controllers/passwords_controller.rb:32-35`,
-   `app/views/passwords_mailer/reset.html.erb:3`). `filter_parameter_logging` filters request
-   parameters, not path segments, while production logs requests at info level
-   (`config/initializers/filter_parameter_logging.rb:6-8`,
-   `config/environments/production.rb:36-41`). A logged `GET` or failed `PUT` can therefore expose a
-   still-valid reset token to anyone with log access. The audit did not reproduce any token value
-   in this document.
+Former finding **#9** was fixed for Rails application request logs by
+`lib/password_reset_path_filter.rb`; password-reset pages also set `no-store` and `no-referrer`.
+The path-token redaction, tests, and residual upstream proxy/browser-history risk are recorded in
+[`resolved_quirks.md`](resolved_quirks.md).
 
-10. **High when deployed — password-reset mail and URLs are placeholder configuration.**
-    `PasswordsController#create` queues mail (`app/controllers/passwords_controller.rb:11-16`),
-    but production uses the default SMTP target `localhost:25` and hardcodes
-    `default_url_options = { host: "example.com" }` (`config/environments/production.rb:56-70`).
-    `ApplicationMailer` also uses `from@example.com` (`app/mailers/application_mailer.rb:1-4`),
-    and `config/deploy.yml` supplies no SMTP or application-host setting. On the committed
-    production configuration, delivery is likely to fail and any externally delivered link points
-    at the wrong host. The existing controller test only checks that a message was enqueued.
+Former finding **#10** was fixed by requiring explicit production host, sender, and SMTP settings,
+using HTTPS mailer URLs, and testing the rendered multipart message. Live provider delivery remains
+an external deployment verification and is documented in [`development.md`](development.md). The
+resolution is recorded in [`resolved_quirks.md`](resolved_quirks.md).
 
-11. **High if no external TLS terminator is assumed — production transport is not enforced.**
-    The Kamal proxy/SSL block is commented out (`config/deploy.yml:16-25`), as are
-    `config.assume_ssl` and `config.force_ssl` (`config/environments/production.rb:27-34`); the
-    runtime host allowlist is empty (`production.rb:82-89`), and the container exposes port 80
-    (`Dockerfile:77-83`). The signed authentication cookie is written without `secure: true`
-    (`app/controllers/concerns/authentication.rb:41-45`). Unless an external proxy supplies strict
-    HTTPS, sessions and password-reset tokens can travel over cleartext HTTP and the application
-    does not redirect to HTTPS or set HSTS.
+Former finding **#11** was fixed in the Rails production boundary by enabling `assume_ssl` and
+`force_ssl`, setting the session cookie `Secure`, restricting the host allowlist, and preserving
+the `/up` exception. A real TLS-terminating proxy and deployment smoke test remain external
+verification requirements. The resolution is recorded in [`resolved_quirks.md`](resolved_quirks.md).
 
 12. **Medium — sessions have no application-enforced expiry or source binding.** Login creates a
-    permanent cookie and stores only its session ID (`app/controllers/concerns/authentication.rb:41-45`).
-    The `sessions` table has no expiry or last-used field (`db/schema.rb:262-269`,
+    permanent cookie and stores only its session ID (`app/controllers/concerns/authentication.rb:41-50`).
+    The `sessions` table has no expiry or last-used field (`db/schema.rb:265-272`,
     `app/models/session.rb:1-3`), and lookup validates neither the recorded IP address nor user
     agent (`authentication.rb:24-30,42`). A stolen cookie remains usable until logout, password
-    reset, or user deletion, and old rows have no cleanup path. No session-expiration or
-    cookie-attribute tests exist.
+    reset, or user deletion, and old rows have no cleanup path. Basic cookie flags now have a
+    request regression, but no idle/absolute expiration policy or source-binding test exists.
 
 ## Mutation, route, and data-contract observations
 
@@ -87,13 +69,13 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
     reach the UI. The green system test checks the row after a subsequent GET rather than the
     mutation response (`test/system/workspace_navigation_test.rb:32-43`).
 
-18. **Medium — mutation validation failures are silent.** The taxonomy Stimulus controller returns
-    immediately for every non-OK response and has no network-error handling
-    (`app/javascript/controllers/taxonomy_tree_controller.js:129-145,205-265`). Relation and
-    ownership failures re-render their indexes, but neither view renders the model's errors or
-    preserves the invalid form (`app/controllers/relations_controller.rb:13-29`,
-    `app/controllers/ownerships_controller.rb:13-29`, and their index views). Users receive a 422 or
-    stale page with no explanation. Request tests do not cover the error UI.
+18. **Medium — mutation validation failures are still not rendered in every editor.** The taxonomy
+    controller now announces non-OK/network failures and keeps the form open, but it does not yet
+    render the server's field-error hash. Relation and ownership failures still re-render their
+    indexes without a model error summary or preserved invalid form
+    (`app/controllers/relations_controller.rb:13-29`,
+    `app/controllers/ownerships_controller.rb:13-29`, and their index views). Request tests do not
+    cover the complete error UI.
 
 19. **Medium — nonexistent optional association IDs escape the JSON error contract.** Hierarchical
     parents and event temporal references are optional, but an unknown ID can pass model validation
@@ -121,13 +103,13 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
     violates the graph-wide scope rules in ADR 0001 and the cache tests currently move only
     unassociated records.
 
-22. **Medium — sibling positions are not a maintained invariant.** `MaintainsSiblingPositions`
-    normalizes during controller updates but destroy actions call `destroy!` directly, leaving gaps
-    (`app/controllers/concerns/maintains_sibling_positions.rb:12-35`). There is no transaction,
-    lock, unique position index, or database constraint for concurrent creates/moves; partial
-    `update_columns` normalization can also leave inconsistent positions. The development data
-    loader now normalizes its imported sibling groups, but the application concern still lacks
-    destruction/concurrency coverage.
+22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
+    maintenance.** The controller-facing `PositionedResourceOrder` service now transactionally
+    handles create, move, reparent, and destroy for current positioned controllers, and the
+    `Hierarchical` callback closes gaps after direct hierarchical destroys. Direct SQL, association
+    manipulation, and future flat records do not pass through that service, and SQLite has no
+    portable row-lock/unique-position guarantee. Do not treat those paths as normalized without an
+    explicit import/console workflow; see ADR 0009 and [`resolved_quirks.md`](resolved_quirks.md).
 
 23. **Medium — HABTM join tables have no database integrity constraints.** All seven join tables
     contain only two integer columns and no indexes, foreign keys, or uniqueness constraints (for
@@ -147,11 +129,9 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
     (`app/views/timeline/index.html.erb:3,31-45`). The model has no temporal-consistency validation
     for this contradiction, and timeline tests do not cover conflicting dates/relations.
 
-25. **Low — blank password-reset submissions are reported as successful.** `has_secure_password`
-    ignores an empty string, so `@user.update` can return true while retaining the old digest;
-    `PasswordsController#update` then destroys all sessions and reports success
-    (`app/controllers/passwords_controller.rb:22-28`). The HTML form marks the fields required, but
-    an API/malformed request can still trigger the false-success path. No blank-reset test exists.
+Former finding **#25** was fixed: blank reset submissions now use strong parameter expectations and
+return a bad-request response without changing the password digest or destroying sessions. The
+resolution and test are recorded in [`resolved_quirks.md`](resolved_quirks.md).
 
 26. **Low — duplicate universe names become uncaught uniqueness exceptions.** `HasSlug` derives a
     global universe slug from the name, but `Universe` has no slug-uniqueness validation
@@ -178,8 +158,7 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
     with tags supplied in a different order can produce different slugs, which matters for
     symbolic development-data references and class-level lookup.
 
-30. **Low — JSON/field contracts have several silent omissions.** `SectionsController#section_json`
-    omits `position` (`app/controllers/sections_controller.rb:80-88`), Relation/Ownership parameter
+30. **Low — JSON/field contracts have several silent omissions.** Relation/Ownership parameter
     lists omit their optional `name` fields (`app/controllers/relations_controller.rb:43-45`,
     `app/controllers/ownerships_controller.rb:43-45`), and modal datetime helpers format only to
     minutes (`app/helpers/modal_fields.rb:16-26,230-292`), silently discarding stored seconds.
@@ -200,17 +179,19 @@ The former disposable-data coupling and unguarded reset findings were rechecked 
     (`app/models/timeline_layout.rb:46-81,126-153`). These costs are separate from the explicitly
     backlogged search/filter work.
 
-32. **Medium — the green system suite masks a failed mutation response.** The four system tests
-    (55 assertions) pass, but the Character modal request is processed as `TURBO_STREAM`, commits,
-    and returns 406. The test asserts the reloaded DOM and never checks response status or error UI.
-    There is no browser coverage for Item/Event modals, taxonomy CRUD/drag/drop, relations,
-    ownerships, memberships, password reset, mobile breakpoints, or keyboard behavior.
+32. **Medium — the existing flat-list system smoke test still masks a failed mutation response.**
+    The Character modal request is processed as `TURBO_STREAM`, commits, and returns 406; the test
+    asserts the reloaded DOM and never checks response status or error UI. The taxonomy editor now
+    has focused CRUD/XSS/accessibility browser coverage, but there is still no browser coverage for
+    Item/Event modals, relations, ownerships, memberships, password reset, or mobile behavior for
+    those flat lists.
 
 33. **Medium — JavaScript has no test/lint pipeline and test mode disables CSRF.** `package.json:16-20`
-    has only CSS build/watch scripts and there are no JavaScript test/spec files, despite the
+    has only CSS build/watch scripts and there are no JavaScript unit/spec files, despite the
     security-sensitive code living in Stimulus controllers. `config/environments/test.rb:28-29`
     disables forgery protection, so system tests do not verify that fetch requests carry valid CSRF
-    tokens. Brakeman's clean result does not inspect the client-side `innerHTML` path.
+    tokens. Brakeman's clean result does not inspect client-side DOM behavior; the new taxonomy
+    hostile-name browser test covers that specific sink but not the entire JavaScript surface.
 
 34. **Medium — dependency auditing does not cover the complete JavaScript dependency graph.**
     The local Tom Select pin now carries `# @2.6.2` version metadata in `config/importmap.rb:9`,
@@ -312,31 +293,11 @@ through the current normal UI. They are recorded so they are not mistaken for se
     replacement, so the deleted row and sidebar count can remain visible until a manual reload; a
     second click can then target a missing record. There is no browser delete regression test.
 
-41. **Medium — taxonomy tree updates do not refresh all dependent UI state.** Inline create/delete
-    operations update the tree DOM but not the page-header count, sidebar count, or serialized
-    parent/tag option descriptors (`app/javascript/controllers/taxonomy_tree_controller.js:205-222,256-265`,
-    `app/views/shared/_taxonomy_tree.html.erb:22-37`, `app/views/layouts/_left_sidebar.html.erb:1-2`).
-    Counts can remain stale until navigation, and a later edit modal can show deleted or outdated
-    options. No browser test performs tree CRUD and then reopens an editor or checks counts.
-
-42. **Medium — insertion between a subtree and the next root can choose the wrong parent.**
-    `insertAt` uses the previous node in the flattened preorder list as its anchor
-    (`app/javascript/controllers/taxonomy_tree_controller.js:34-60`). After a root with children,
-    the previous node is the last descendant, so the visual root-level insertion can create a child
-    under that descendant instead of a root sibling. No boundary-case browser test exists.
-
-43. **Medium — newly created taxonomy nodes lose inline rename and keyboard semantics.** The
-    server-rendered name span has `role="button"`, `tabindex="0"`, and click/Enter actions
-    (`app/views/shared/_taxonomy_node.html.erb:27-34`), but `buildNode()` omits all three
-    (`app/javascript/controllers/taxonomy_tree_controller.js:294-312`). A node created through the
-    inline form is not immediately renameable by clicking or keyboard; the overflow Edit action
-    still works. The server-rendered control also responds to Enter but not Space.
-
-44. **Medium — touch users cannot use the taxonomy insertion separators or reorder the tree.** The
-    separator buttons are hidden with `opacity: 0` and `pointer-events: none` until hover/focus, and
-    the touch media query exposes `.taxonomy-actions` but not `.taxonomy-separator-add`
-    (`app/assets/stylesheets/_taxonomy_tree.scss:41-77,104-109`). Reordering is HTML5-drag based with
-    no touch or keyboard alternative. System tests use a desktop viewport only.
+Former findings **#41–#44** were fixed in the taxonomy hardening pass. Successful mutations now
+refresh server-rendered descriptors/counts, boundary insertion uses the actual list, native rename
+buttons support Enter/Space, and Move/Insert controls plus touch-visible separators provide
+non-drag paths. The resolutions and browser coverage are recorded in
+[`resolved_quirks.md`](resolved_quirks.md).
 
 45. **Medium — read-only empty taxonomy pages still instruct users to add or drag records.** The
     shared partial has a read-only empty-state fallback, but Locations, Sections, and taxonomy views
@@ -374,11 +335,8 @@ through the current normal UI. They are recorded so they are not mistaken for se
     another tab or by expiry, without a fresh authorization request. This depends on Turbo/runtime
     cache behavior and needs a multi-tab browser test before being treated as a confirmed leak.
 
-50. **Low — dynamic taxonomy modal semantics and dead PWA/UI assets drift from the conventions.**
-    The dynamic modal uses an `<h1>` while static modals use `<h2>`, and `required_unless` is treated
-    as a visible required label even when the symmetric checkbox makes the field optional
-    (`app/javascript/controllers/taxonomy_tree_controller.js:106-113,147-165`,
-    `app/helpers/modal_fields.rb:241-281`). `app/views/pwa/manifest.json.erb` and
+50. **Low — dead PWA/UI assets still drift from the conventions.** The dynamic taxonomy modal now uses
+    consistent heading/required-field semantics, but `app/views/pwa/manifest.json.erb` and
     `app/views/pwa/service-worker.js` have no route or layout link, and the PWA palette contains a
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
@@ -393,12 +351,12 @@ in [`backlog.md`](backlog.md), items 14–19. The report's claims that no `/up` 
 lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
 used with a frozen install in CI and Docker.
 
-51. **Medium — production observability is minimal.** Production logs to tagged `STDOUT`
-    (`config/environments/production.rb:36-44`), but there is no structured request formatter,
-    error-tracking integration, or metrics contract in the application. The existing `/up` route
-    and health-log silencing are useful foundations; they need a regression test and a deliberate
-    privacy/redaction policy before logs or external tracking are added. See backlog item 16 and
-    the password-reset/logging findings above.
+51. **Medium — production observability is minimal.** Production logs to tagged `STDOUT`, and the
+    application now redacts password-reset path segments before request logging, but there is no
+    structured request formatter, error-tracking integration, or metrics contract. The existing
+    `/up` route and health-log silencing are useful foundations; they need a regression test and a
+    deliberate privacy/redaction policy before external tracking or metrics are added. See backlog
+    item 16.
 
 52. **Medium — clean container onboarding is absent.** The repository has a production-oriented
     `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`,
@@ -414,8 +372,8 @@ used with a frozen install in CI and Docker.
     disposable fixtures rather than production credentials, but literals are easy to reuse and
     trigger security hygiene checks. Require an explicit environment value or generate a local
     value instead, while preserving the documented synthetic development login and load commands
-    for manual verification. A value-free template is not a secret. The separate critical tracked
-    `.kamal/secrets` issue remains an independent rotation/removal task. See backlog item 17.
+    for manual verification. A value-free template is not a secret. The separate critical master-key
+    rotation/history task remains open. See backlog item 17.
 
 54. **Low — taxonomy field-builder duplication creates maintenance drift risk.** The DataFactor
     report identified repeated per-type descriptor logic in `app/helpers/modal_fields.rb` and
@@ -480,3 +438,17 @@ was added:
 The broader Bun/npm graph audit, vendored-file provenance verification, and Dependabot coverage
 remain open under backlog item 18. No destructive database, container, deployment, or browser
 operations were run for this tooling-only fix.
+
+## Follow-up verification (2026-09-25, ordering/security/taxonomy hardening)
+
+- `bin/rails test` — 300 tests, 1,781 assertions, 0 failures/errors/skips.
+- `bin/rails test:system` — 10 tests, 107 assertions, 0 failures/errors/skips, including the new
+  taxonomy hostile-name, stale-state, boundary insertion, keyboard, and narrow/touch coverage.
+- `bin/rubocop` — 173 files, no offenses.
+- `node --check app/javascript/controllers/taxonomy_tree_controller.js` — passed.
+- A production-configuration smoke boot with dummy non-secret settings confirmed HTTPS mailer URL
+  options, `force_ssl`, `assume_ssl`, SMTP address, and the production host allowlist. Missing
+  `APP_HOST` fails with only the variable name in the error.
+- Password-reset path filtering, multipart mail rendering, cookie flags, ordering service, and
+  loader tests passed. No destructive database task, Docker/Kamal deployment, real SMTP delivery,
+  credential rotation, Git-history rewrite, or proxy/log-retention verification was performed.

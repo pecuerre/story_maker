@@ -45,6 +45,26 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_notice "reset link is invalid"
   end
 
+  test "password reset pages are not cached and do not send referrers" do
+    get edit_password_path(@user.password_reset_token)
+
+    assert_response :success
+    assert_equal "no-store", response.headers["Cache-Control"]
+    assert_equal "no-referrer", response.headers["Referrer-Policy"]
+  end
+
+  test "blank password does not report a successful reset" do
+    original_digest = @user.password_digest
+    token = @user.password_reset_token
+
+    assert_no_changes -> { @user.reload.password_digest } do
+      put password_path(token), params: { password: "", password_confirmation: "" }
+    end
+
+    assert_response :bad_request
+    assert_equal original_digest, @user.reload.password_digest
+  end
+
   test "update" do
     assert_changes -> { @user.reload.password_digest } do
       put password_path(@user.password_reset_token), params: { password: "new", password_confirmation: "new" }

@@ -22,11 +22,11 @@ class ItemsController < ApplicationController
   end
 
   def create
-    @item = Current.universe.items.new(item_params)
-    @item.position = sibling_count(@item.parent_id)
+    attributes = item_params
+    @item = Current.universe.items.new(attributes)
 
     respond_to do |format|
-      if @item.save
+      if create_with_sibling_position(@item, requested_position: attributes[:position])
         format.json { render json: item_json, status: :created }
       else
         format.json { render json: @item.errors, status: :unprocessable_content }
@@ -45,7 +45,7 @@ class ItemsController < ApplicationController
   end
 
   def destroy
-    @item.destroy!
+    destroy_with_sibling_position(@item)
     head :no_content
   end
 

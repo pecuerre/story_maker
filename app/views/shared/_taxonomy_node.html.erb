@@ -24,24 +24,34 @@
       <i class="bi bi-grip-vertical text-body-secondary" aria-hidden="true"></i>
     <% end %>
 
-    <span class="flex-grow-1 text-break"
-      <% if editable %>
-        role="button"
-        tabindex="0"
-        aria-label="Rename <%= node.name %>"
-        data-taxonomy-tree-target="name"
-        data-action="click->taxonomy-tree#editName keydown.enter->taxonomy-tree#editName"
-      <% end %>>
-      <% if node.respond_to?(:bgcolor) %>
-        <%= entity_tag_badge(node) %>
-      <% else %>
-        <span class="entity-title"><%= node.name %></span>
-        <%= entity_tag_badge(node) %>
+    <% if editable %>
+      <%= button_tag type: "button",
+        class: "taxonomy-name-trigger flex-grow-1 text-break",
+        aria: { label: "Rename #{node.name}" },
+        data: { taxonomy_tree_target: "name", action: "click->taxonomy-tree#editName" } do %>
+        <% if node.respond_to?(:bgcolor) %>
+          <%= entity_tag_badge(node) %>
+        <% else %>
+          <span class="entity-title"><%= node.name %></span>
+          <%= entity_tag_badge(node) %>
+        <% end %>
+        <% if node.description.present? %>
+          <span class="entity-description d-block"><%= node.description %></span>
+        <% end %>
       <% end %>
-      <% if node.description.present? %>
-        <div class="entity-description"><%= node.description %></div>
-      <% end %>
-    </span>
+    <% else %>
+      <span class="flex-grow-1 text-break">
+        <% if node.respond_to?(:bgcolor) %>
+          <%= entity_tag_badge(node) %>
+        <% else %>
+          <span class="entity-title"><%= node.name %></span>
+          <%= entity_tag_badge(node) %>
+        <% end %>
+        <% if node.description.present? %>
+          <span class="entity-description d-block"><%= node.description %></span>
+        <% end %>
+      </span>
+    <% end %>
 
     <% if editable %>
       <span class="taxonomy-actions d-flex align-items-center gap-1">
@@ -50,9 +60,24 @@
             class: "btn btn-sm btn-light border",
             title: "Add child",
             aria: { label: "Add child to #{node.name}" },
-            data: { action: "taxonomy-tree#add" } do %>
+            data: { action: "taxonomy-tree#add", taxonomy_action: "add-child" } do %>
             <i class="bi bi-plus-lg" aria-hidden="true"></i>
           <% end %>
+        <% end %>
+
+        <%= button_tag type: "button",
+          class: "btn btn-sm btn-light border",
+          title: "Move up",
+          aria: { label: "Move up #{node.name}" },
+          data: { action: "taxonomy-tree#move", move_direction: "up", taxonomy_action: "move-up" } do %>
+          <i class="bi bi-arrow-up" aria-hidden="true"></i>
+        <% end %>
+        <%= button_tag type: "button",
+          class: "btn btn-sm btn-light border",
+          title: "Move down",
+          aria: { label: "Move down #{node.name}" },
+          data: { action: "taxonomy-tree#move", move_direction: "down", taxonomy_action: "move-down" } do %>
+          <i class="bi bi-arrow-down" aria-hidden="true"></i>
         <% end %>
 
         <div class="dropdown">
@@ -65,15 +90,23 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
             <li>
-              <button type="button" class="dropdown-item"
-                data-action="taxonomy-tree#edit">
+              <button type="button" class="dropdown-item" data-action="taxonomy-tree#edit">
                 <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="before">
+                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert before
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="after">
+                <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert after
               </button>
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-              <button type="button" class="dropdown-item text-danger"
-                data-action="taxonomy-tree#remove">
+              <button type="button" class="dropdown-item text-danger" data-action="taxonomy-tree#remove">
                 <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
               </button>
             </li>

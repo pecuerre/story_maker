@@ -65,5 +65,9 @@ class WorkspaceNavigationTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Sections"
     assert_no_selector ".taxonomy-separator-add"
     assert_no_selector "[data-action*='dragstart']"
+    assert_no_selector "[data-taxonomy-action='move-up']"
+    assert_no_selector "[data-taxonomy-action='move-down']"
+    assert_no_selector "[data-action='taxonomy-tree#insertRelative']"
+    assert_no_selector ".taxonomy-name-trigger[role='button']"
   end
 end

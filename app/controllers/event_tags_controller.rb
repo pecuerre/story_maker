@@ -22,11 +22,11 @@ class EventTagsController < ApplicationController
 
   # POST /event_tags or /event_tags.json
   def create
-    @event_tag = Current.universe.event_tags.new(event_tag_params)
-    @event_tag.position = sibling_count(@event_tag.parent_id)
+    attributes = event_tag_params
+    @event_tag = Current.universe.event_tags.new(attributes)
 
     respond_to do |format|
-      if @event_tag.save
+      if create_with_sibling_position(@event_tag, requested_position: attributes[:position])
         format.json { render json: event_tag_json, status: :created }
       else
         format.json { render json: @event_tag.errors, status: :unprocessable_content }
@@ -47,7 +47,7 @@ class EventTagsController < ApplicationController
 
   # DELETE /event_tags/1 or /event_tags/1.json
   def destroy
-    @event_tag.destroy!
+    destroy_with_sibling_position(@event_tag)
 
     respond_to do |format|
       format.json { head :no_content }

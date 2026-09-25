@@ -18,6 +18,13 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Ensure deployment secrets are not tracked
+        run: |
+          if git ls-files --error-unmatch -- .kamal/secrets >/dev/null 2>&1; then
+            echo "::error::.kamal/secrets must remain untracked"
+            exit 1
+          fi
+
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
       

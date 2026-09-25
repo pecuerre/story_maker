@@ -20,4 +20,4 @@
   delete_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
   model_param: "section",
   taxonomy_field: "section_tag_ids",
-  modal_fields: section_taxonomy_fields(@section_tags) %>
+  modal_fields: section_taxonomy_fields(@section_tags, @section_options) %>

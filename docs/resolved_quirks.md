@@ -382,3 +382,59 @@ in its npm advisory request.
 `test/importmap_audit_test.rb` verifies that Importmap Audit sees the version and no longer emits
 the warning. This closes the direct Tom Select audit blind spot; complete Bun/npm graph coverage,
 vendored-file provenance checks, and Dependabot configuration remain separate follow-up work.
+
+## Resolved security and interaction findings (2026-09-25)
+
+### Former quirk #5: Kamal secrets were tracked (repository containment fixed; rotation pending)
+
+The current tree adds `/.kamal/secrets` to `.gitignore`, removes the path from the Git index while
+preserving the local file, restricts the local file to mode `0600`, and adds a CI guard that fails
+if the path is tracked. The secret value was never read or reproduced. This does not rotate the
+master key or remove prior copies from Git history, forks, CI artifacts, or backups; those are
+explicit owner actions before deployment and remain recorded in `known_quirks.md`.
+
+### Former quirk #8: taxonomy stored DOM XSS (fixed)
+
+The taxonomy Stimulus controller now constructs options, fields, nodes, labels, descriptions, and
+ARIA values with DOM APIs. User-controlled values are assigned as text or attributes and are never
+interpolated into `innerHTML`. The browser regression stores a hostile option name, reopens another
+node's editor, and verifies that the name remains text with no injected image/marker element.
+
+### Former quirk #9: password-reset tokens in Rails request logs (fixed for application logs)
+
+`PasswordResetPathFilter` redacts the dynamic `/passwords/:token` path segment in Rails' filtered
+request path, including failed update targets, while ordinary `/passwords/new` remains readable.
+Password-reset responses also set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
+Upstream proxy/access logs and browser history remain deployment responsibilities and are called
+out in the production documentation.
+
+### Former quirks #10 and #11: placeholder mail/URL and unenforced TLS (fixed in configuration)
+
+Production now fails closed without `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`; uses HTTPS
+mailer URLs, explicit SMTP settings, and a non-placeholder sender; enables `assume_ssl` and
+`force_ssl`; restricts the host allowlist; preserves `/up`; and sets the session cookie `Secure`.
+A dummy production boot and configuration assertions passed. Real certificate/proxy setup and SMTP
+provider delivery were not run and remain deployment verification steps.
+
+### Former quirk #22: positioned sibling gaps and partial normalization (fixed for application paths)
+
+`PositionedResourceOrder` now owns transactional create, move, reparent, and destroy maintenance,
+locks the persisted scope owner, supports explicit flat mode, and is covered by service and
+controller regressions. `Hierarchical` also normalizes siblings after direct model destroys. Raw
+SQL/import and future flat direct-model paths remain a documented residual under
+`known_quirks.md`; ADR 0009 records the boundary.
+
+### Former quirk #25: blank password reset false success (fixed)
+
+Password reset updates now use strong parameter expectations. Blank/malformed submissions return a
+bad-request response without changing the digest or destroying sessions, and the controller test
+covers that behavior.
+
+### Former quirks #41–#44: stale taxonomy state and inaccessible insertion/reordering (fixed)
+
+Successful taxonomy mutations now perform a same-URL Turbo visit, refreshing serialized
+parent/tag descriptors, hierarchy state, page counts, and sidebar counts. Separators use their
+actual list and position, including first/last boundaries. Native rename buttons support Enter and
+Space; Move up/Move down and Insert before/Insert after provide pointer, touch, and keyboard paths;
+touch media rules expose the controls and use 44px insertion targets. Browser regressions cover
+hostile names, stale options/counts, root boundaries, keyboard activation, and narrow viewports.

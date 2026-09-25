@@ -126,10 +126,13 @@ Validations added by the concern:
 2. parent cannot be itself;
 3. parent cannot be a descendant (walks `ancestor_chain`).
 
-Ordering: `position` defaults to 0; `MaintainsSiblingPositions` (controller concern) keeps
-positions as contiguous 0..n-1 among siblings — `sibling_count` when creating,
-`update_with_sibling_position` for moves (reorders the old and new parent's children), using the
-model's `sibling_scope`. Drag & drop in the tree UI sends `{ position: n }` patches.
+Ordering: `position` defaults to 0; `MaintainsSiblingPositions` delegates create, move, reparent,
+and destroy normalization to `PositionedResourceOrder`. The service runs each operation in a
+transaction while locking the persisted scope owner, supports explicit hierarchical and flat
+modes, and maintains contiguous 0..n-1 positions ordered by `(position, id)`. Drag/drop and the
+accessible Move controls send the same `{ parent_id, position }` contract. Direct SQL/import and
+some model-dependent destroy paths remain outside the controller service and require separate
+maintenance if they become supported workflows.
 
 Not hierarchical: **Relation**, **Ownership** (link records), **Story**, **Universe**, **User**,
 **Session**.
@@ -224,9 +227,10 @@ The intended persisted fields and relationships are:
 `SceneElement` is an ordered child component rather than a standalone navigable content model, so
 it has no public slug requirement. `Scene.position` and `SceneElement.position` are contiguous `0..n-1` within their Story and Scene
 respectively. They are not `parent_id` hierarchies and must not include `Hierarchical`. The current
-`MaintainsSiblingPositions` implementation also assumes a hierarchy; slice 11.1 must generalize or
-replace it with a compatible flat-ordering concern that preserves the existing sibling-position
-conventions and tests. The ordering contract is flat and transactional. A title-only Scene is
+`PositionedResourceOrder` service supports an explicit flat mode for these sequences; slice 11.1
+uses that mode with the Story as scope owner rather than adding a fake parent or a second
+ordering algorithm. The development-data registry also distinguishes flat position groups. The
+ordering contract is flat and transactional. A title-only Scene is
 valid. A Scene's optional Event and single-point datetime are independent, and multiple Scenes may
 reference one Event.
 

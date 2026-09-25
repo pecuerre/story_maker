@@ -165,7 +165,8 @@ contract, but slice 11.0 is documentation-only. There is no Scene schema, route,
 fixture, or development-data file yet, and the sidebar placeholder must remain non-functional until
 slice 11.1. The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
 `name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
-has none; Scene datetime follows the current Event contract; roles remain nullable; and the ADR's
+has none; Scene uses one optional single-point `datetime` with the current Event storage/editor
+precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
 detailed deletion confirmations are mandatory.
 
 Delivery remains staged in [`backlog.md`](backlog.md):

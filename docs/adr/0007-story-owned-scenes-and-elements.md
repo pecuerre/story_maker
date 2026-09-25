@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-25
-- **Related:** [`0001-universe-and-story-scope.md`](0001-universe-and-story-scope.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md), [`../backlog.md`](../backlog.md)
+- **Related:** [`0001-universe-and-story-scope.md`](0001-universe-and-story-scope.md), [`0002-json-crud-with-stimulus-editors.md`](0002-json-crud-with-stimulus-editors.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md), [`../backlog.md`](../backlog.md)
 
 ## Context
 
@@ -32,7 +32,10 @@ It does not add a schema, route, controller, view, fixture, or development-data 
 - A `Scene` may belong to at most one optional Section. Sections organize Scenes but never define
   their narrative order. Section and Scene must belong to the same Story.
 - A `Scene` may reference one optional universe Event and may separately store one optional
-  in-world datetime. These fields are independent in the first version; selecting one never writes,
+  `datetime` column as a single in-world time point. This is intentionally not Event's two-field
+  `start_datetime`/`end_datetime` shape. It uses the same ordinary `t.datetime` storage and current
+  minute-precision `datetime-local` editor semantics as Events, with no explicit timezone. The Event
+  reference and Scene datetime are independent in the first version; selecting one never writes,
   clears, or validates against the other.
 - A Story still becomes current only through the existing explicit selection or remembered-story
   flow. Scenes never cause fallback to a Story's first record or first Scene.
@@ -44,7 +47,8 @@ uses `HasSlug`, has a short optional description, and has the following optional
 
 - one same-Story Section;
 - one same-Universe Event;
-- one in-world datetime;
+- one optional in-world `datetime` (a single point, using Event-compatible storage/editor
+  precision and timezone semantics, rather than Event's start/end pair);
 - zero or many story-scoped Scene Tags;
 - zero or many same-Universe Character, Item, and Location presence links.
 
@@ -150,7 +154,7 @@ The response architecture is deliberately per controller:
 
 | Flow | Actions | Response |
 |---|---|---|
-| HTML | Scenes index/show/new/create/edit/update and narrative-order moves | redirect or re-render with errors |
+| HTML | Scenes index/show/new/create/edit/update/destroy and narrative-order moves | redirect or re-render with errors |
 | JSON | SceneElement CRUD and role-bearing SceneCharacter/SceneItem/SceneLocation CRUD | JSON success payloads or `422` error hashes |
 
 No action accepts ambiguous HTML and JSON mutations merely to make a form work.
@@ -179,15 +183,24 @@ No action accepts ambiguous HTML and JSON mutations merely to make a form work.
 
 ### Deletion contract and confirmation copy
 
-Deletion remains asymmetric so shared world records survive:
+Deletion remains asymmetric so shared world records survive Scene deletion. The Scene feature does
+not change existing shared-model dependent behavior:
 
 - deleting a Scene removes its Elements, tag assignments, speaker links, and presence links;
-- deleting a Story cascades its Sections, Section Tags, Scene Tags, Scenes, and all Scene-owned descendants;
+- deleting a Story cascades its Sections, Section Tags, Scene Tags, Scenes, and all Scene-owned
+  descendants;
 - deleting a Section removes its child Sections and clears Scene grouping while preserving Scene
   narrative positions;
-- deleting an Event clears Scene Event references but never deletes a Scene;
-- deleting a Character, Item, or Location removes its Scene presence/speaker links but never deletes
-  a Scene or any other shared world record.
+- deleting an Event clears Scene Event references but never deletes a Scene; its existing child,
+  tag-assignment, and temporal-referrer cleanup remains in effect;
+- deleting a Character removes its descendant Characters, Relations, Ownerships, tag assignments,
+  and future Scene links;
+- deleting an Item removes its descendant Items, Ownerships, tag assignments, and future Scene links;
+- deleting a Location removes its descendant Locations, tag assignments, and future Scene links.
+
+None of these shared-record deletions removes a Scene. The shared-record confirmation templates
+below describe both the existing model dependents and the future Scene links. If a later slice
+changes those dependencies, it must update the copy and its tests in the same change.
 
 Soft deletion is deliberately deferred as backlog item 20 and is not part of slice 11.0. The
 hard-deletion behavior and confirmations below are the contract for the future implementation; a
@@ -199,8 +212,10 @@ Destructive controls use these exact templates, substituting the displayed recor
 - **Scene:** `Delete “#{scene.name}”? Its elements, tag assignments, and links to story and universe records will be permanently removed. Linked records will not be deleted.`
 - **Story:** `Delete “#{story.name}”? Its sections, section tags, scene tags, scenes, scene elements, and story-owned links will be permanently deleted. Shared universe records will not be deleted.`
 - **Section:** `Delete “#{section.name}”? Its child sections and tag assignments will be removed, and linked scenes will become ungrouped. Their narrative order will not change.`
-- **Event:** `Delete “#{event.display_string}”? Scenes linked to this event will remain, but their event links will be cleared.`
-- **Character, Item, or Location:** `Delete “#{record.name}”? Its links to scenes will be removed. The scenes and all other shared universe records will remain.`
+- **Event:** `Delete “#{event.display_string}”? Its child events, tag assignments, and any temporal referrers that would become unidentifiable will be permanently removed; other temporal references and Scene links will be cleared. Scenes will remain.`
+- **Character:** `Delete “#{character.name}”? Its descendant characters, relations, ownerships, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain.`
+- **Item:** `Delete “#{item.name}”? Its descendant items, ownerships, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain.`
+- **Location:** `Delete “#{location.name}”? Its descendant locations, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain.`
 
 The implementation may add surrounding accessibility text, but it does not omit the consequences
 shown in these confirmations.
@@ -218,16 +233,25 @@ shown in these confirmations.
 
 ### Costs and constraints
 
+This extends ADR 0002's positioned-controller convention; it does not waive the requirement to use
+and test the project's sibling-position behavior.
+
 - The feature spans several persisted models and requires a staged delivery sequence.
-- Flat Scene and Element ordering needs its own transactional maintenance; the existing
-  `Hierarchical` and `MaintainsSiblingPositions` contracts must not be reused as though these
-  sequences were parent/child trees.
+- Flat Scene and Element ordering needs its own transactional maintenance. The existing
+  `MaintainsSiblingPositions` concern assumes a `parent_id` hierarchy and cannot be reused unchanged
+  for these flat sequences. Slice 11.1 must generalize/refactor that concern or add a compatible
+  flat-ordering concern that preserves its sibling-position conventions and tests; it must not
+  silently bypass the project's positioned-controller decision. `Hierarchical` remains reserved for
+  actual parent/child models.
 - The same-Universe application validations, authorization resolvers, and uniqueness indexes must
   be applied consistently across every presence and speaker link.
 - The first version stores free-text roles and dialogue blocks that are useful for continuity but
   cannot prove turn-level attribution, causality, or prose consistency.
-- Scene datetime initially follows the existing Event contract. A later shared precision/timezone
-  decision must update Events and Scenes together rather than creating a Scene-only exception.
+- Scene deliberately uses one `datetime` field while Events use `start_datetime` and
+  `end_datetime`. It follows the current Event storage/editor precision and timezone ambiguity for
+  compatibility, but this is a deliberate field-shape choice rather than an accidental omission. A
+  later shared precision/timezone decision must update Events and Scenes together rather than
+  creating a Scene-only exception.
 
 ## Alternatives considered
 
@@ -269,6 +293,7 @@ unfinished Scene structure is represented by an Element-free or optional-field S
 ## Related documentation
 
 - [`0001-universe-and-story-scope.md`](0001-universe-and-story-scope.md)
+- [`0002-json-crud-with-stimulus-editors.md`](0002-json-crud-with-stimulus-editors.md)
 - [`../architecture.md`](../architecture.md)
 - [`../data_model.md`](../data_model.md)
 - [`../universe_maker_conventions.md`](../universe_maker_conventions.md)

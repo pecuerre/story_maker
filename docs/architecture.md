@@ -194,8 +194,9 @@ UX contract. The current left-sidebar **Scenes** item remains a disabled placeho
 - A required `Story` owns the contiguous, narrative-order `Scene.position`. A Scene never causes a
   Story to be selected implicitly.
 - A Scene belongs to one Story and may reference one same-Story Section, one same-Universe Event,
-  one independent optional datetime, optional story-scoped Scene Tags, and same-Universe Character,
-  Item, and Location presence links.
+  one independent optional single-point `datetime` (using Event-compatible storage/editor
+  precision and timezone semantics, not Event's start/end pair), optional story-scoped Scene Tags,
+  and same-Universe Character, Item, and Location presence links.
 - A Scene owns an independently ordered sequence of Narration or Dialogue `SceneElement` records.
   Dialogue Elements have one or more same-Universe speakers; Narration Elements have none. Element
   Title (`name`) is required and plain-text Content (`body`) is optional.
@@ -217,11 +218,11 @@ UX contract. The current left-sidebar **Scenes** item remains a disabled placeho
 Scenes have no Universe-level route. Every Section and Scene route includes its Story; every
 Element and presence-link route includes its Scene. All route-helper keys are passed by name.
 
-The stable Scene Details form, create/edit flows, and narrative-order moves use the established
-HTML redirect/re-render flow. Element and role-bearing presence-link editors use the established
-Stimulus/Bootstrap-modal JSON flow. These are separate controller contracts; an action does not
-accept both formats ambiguously. Slice 11.5 must make the shared JSON modal path reliable before
-Elements depend on it.
+The stable Scene Details form, create/edit/destroy flows, and narrative-order moves use the
+established HTML redirect/re-render flow. Element and role-bearing presence-link editors use the
+established Stimulus/Bootstrap-modal JSON flow. These are separate controller contracts; an action
+does not accept both formats ambiguously. Slice 11.5 must make the shared JSON modal path reliable
+before Elements depend on it.
 
 ### UX skeleton
 

@@ -45,6 +45,10 @@ Labels used below:
 - **[planned]** Kept the newly recorded soft-delete/recycle-bin idea as later work; it is not part
   of slice 11.0 and requires a separate persistence, restore, authorization, and relation-tracking
   decision before implementation.
+- **[docs]** Clarified the slice 11.0 review findings: Scene uses one Event-compatible datetime
+  point, shared-record deletion copy now discloses existing dependent destroys, Scene destroy is
+  explicitly HTML, and flat ordering must extend the existing positioned-controller concern rather
+  than bypass it.
 
 ## 2026-09-24
 

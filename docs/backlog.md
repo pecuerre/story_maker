@@ -117,9 +117,11 @@ reviewable and testable.
   example, the same Event can appear once from one character's point of view in Season 1 and
   again from another character's point of view in Season 3. Do not deduplicate or merge those
   Scenes merely because their Event is the same.
-- A Scene has one optional link to a Universe Event and one optional in-world datetime. These two
-  fields are intentionally independent for this version: selecting or changing one must not
-  overwrite or validate against the other.
+- A Scene has one optional link to a Universe Event and one optional single-point in-world
+  `datetime` field using the current Event-compatible storage/editor precision and timezone
+  semantics. The field is intentionally not Event's `start_datetime`/`end_datetime` pair, and the
+  two values are independent for this version: selecting or changing one must not overwrite or
+  validate against the other.
 - A Scene can involve zero or many Characters, Items, and Locations. Each presence link can carry
   an optional, free-text role such as “setting,” “enters,” “carries,” or “objective.” Roles are
   author annotations, not a controlled vocabulary in this version.
@@ -170,8 +172,10 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   prove same-Universe or same-Story application scope.
 - Recommended deletion contract: deleting a Scene removes its Elements, tag joins, speaker links,
   and presence links; deleting a Story cascades its Sections, Section Tags, Scene Tags, Scenes, and
-  story-owned descendants; deleting a Section or Event nullifies Scene references; deleting a
-  Character, Item, or Location removes its Scene/speaker join records but never the Scene. Shared
+  story-owned descendants; deleting a Section nullifies Scene grouping; deleting an Event nullifies
+  Scene references while retaining the existing Event hierarchy/temporal cleanup; deleting a
+  Character, Item, or Location removes Scene/speaker join records in addition to its existing
+  model-dependent children, Relations, Ownerships, or temporal cleanup, but never a Scene. Shared
   world records always survive Scene deletion. Add confirmation copy and model/request tests for
   each path rather than relying on an unannounced database error.
 
@@ -226,20 +230,26 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
   tabs, Element modal, Section grouping flow, ordering, access rules, and deletion behavior. The
   confirmed defaults are: persist Scene title as `name` and label it **Title**; require Element
   `name`/Title while allowing an Element to be saved without a body; require one or more speakers
-  for Dialogue; forbid speakers on Narration; keep roles nullable; and follow the existing Event
-  datetime precision for now. The exact detailed deletion confirmation templates are recorded in
-  the ADR. No application code, schema, or development data was added by this decision slice.
+  for Dialogue; forbid speakers on Narration; keep roles nullable; and use one optional Scene
+  `datetime` with the current Event storage/editor precision and timezone semantics rather than
+  copying Event's `start_datetime`/`end_datetime` pair. The exact detailed deletion confirmation
+  templates are recorded in the ADR. No application code, schema, or development data was added by
+  this decision slice.
   Backlog item 1 remains a prerequisite for the final development-data/manual-verification slice,
   not a reason to delay the domain design.
 - **11.1 — Core Scene vertical slice.** Add a schema-only Scene migration and model, Story
   association, stable `name`/slug, and a transactionally maintained contiguous position with
-  deterministic `position, id` ordering. Add Story-scoped routes/controllers, the canonical Scenes
-  index, accessible move controls, a title/description create-edit-delete journey, the stable Scene
-  editor shell, the real sidebar link and scene count/cache invalidation, and basic empty and
-  read-only states. Keep Section/Event/datetime, tags, Elements, and world links out of this slice.
-  Include model/request/route tests, connected development data, and matching docs.
+  deterministic `position, id` ordering. Generalize/refactor `MaintainsSiblingPositions` or add a
+  compatible flat-ordering concern before wiring Scene moves; preserve its sibling-position
+  conventions and test destroy/create/move behavior rather than bypassing the positioned-controller
+  decision. Add Story-scoped routes/controllers, the canonical Scenes index, accessible move
+  controls, a title/description create-edit-delete journey, the stable Scene editor shell, the real
+  sidebar link and scene count/cache invalidation, and basic empty and read-only states. Keep
+  Section/Event/datetime, tags, Elements, and world links out of this slice. Include model/request/
+  route tests, connected development data, and matching docs.
 - **11.2 — Scene Details, references, and time.** Extend the stable editor with the optional
-  same-story Section link, optional same-Universe Event link, and independent optional datetime.
+  same-story Section link, optional same-Universe Event link, and independent optional single-point
+  `datetime` using the confirmed Event-compatible precision/timezone semantics.
   Add the URL-backed tab shell and explicit “narrative order” versus “in-world time” copy. Reject
   malformed optional IDs as 422 validation errors rather than allowing a database exception. Add
   the authorization/helper adapter for Scene-owned records so nested models resolve their Universe
@@ -327,13 +337,15 @@ The slice 11.0 contract fixes the first-version ownership graph and field defaul
 - Many speakers attached to one free-text Dialogue block cannot answer “which exact line did this
   Character say?” Keep that limitation visible and do not market the MVP as structured dialogue.
 - A Scene and its Elements are flat ordered sequences. Reusing a hierarchy concern that assumes
-  `parent_id` can corrupt positions; maintain destroy, transaction, and concurrency behavior too.
+  `parent_id` can corrupt positions; generalize/refactor the existing positioned concern or add a
+  compatible flat-ordering concern before implementation, while maintaining destroy, transaction,
+  and concurrency behavior too.
 - Do not copy the current modal submission, error, or delete weaknesses documented in
   `known_quirks.md`; new code would inherit known 406s, silent validation failures, and stale DOM.
   Complete the modal reliability slice before Elements depend on it.
 - Do not use a `type` discriminator, default Scene Tags, or default/required generic presence links.
-  Tags and world-presence links remain optional; the proposed one-or-more-speaker rule applies only
-  after an author creates a Dialogue Element and must be confirmed in slice 11.0.
+  Tags and world-presence links remain optional; the one-or-more-speaker rule confirmed in slice
+  11.0 applies only after an author creates a Dialogue Element.
 - Do not add a nested authorization adapter only in a view. SceneElement, speaker, and presence
   records must resolve their Universe through Scene in both Ability and shared helper paths, or
   writers may see missing controls and record-level checks may deny valid mutations.

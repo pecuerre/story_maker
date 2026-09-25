@@ -138,10 +138,13 @@ current disabled **Scenes** sidebar placeholder until slice 11.1 provides a real
 route.
 
 - **Model:** `Scene belongs_to :story`, includes `HasSlug`, and is flat rather than hierarchical. A
-  required `name` is labelled **Title**; description, same-Story Section, same-Universe Event,
-  datetime, Tags, and world-record links are optional. Do not add `Hierarchical` or
-  `MaintainsSiblingPositions` to Scene or SceneElement; their contiguous `position` sequences need
-  a dedicated transactional flat-ordering implementation.
+  required `name` is labelled **Title**; description, same-Story Section, same-Universe Event, one
+  optional single-point `datetime` using Event-compatible storage/editor precision and timezone
+  semantics, Tags, and world-record links are optional. Do not use the current hierarchical
+  `MaintainsSiblingPositions` implementation unchanged: slice 11.1 must generalize/refactor it or
+  add a compatible flat-ordering concern that preserves its sibling-position conventions and tests.
+  Do not add `Hierarchical` to Scene or SceneElement; their contiguous `position` sequences need
+  dedicated transactional flat-ordering behavior.
 - **Elements:** `SceneElement belongs_to :scene`; it is an ordered child component rather than a
   standalone navigable content model and has no public slug requirement. Its `kind` is `narration`
   or `dialogue`, `name` is required and labelled **Title**, `body` is optional, and `position` is
@@ -161,7 +164,7 @@ route.
   `/u/:universe_slug/s/:story_id/scenes`, `/u/:universe_slug/s/:story_id/scenes/:scene_id`,
   `/characters`, `/items`, `/locations`, and `/elements` beneath the Scene path. Pass `story_id`,
   `scene_id`, and any record id as named route-helper keys; never use positional records.
-- **Responses:** Scene index/show/new/create/edit/update and narrative moves use HTML
+- **Responses:** Scene index/show/new/create/edit/update/destroy and narrative moves use HTML
   redirect/re-render. Element and role-bearing presence-link create/update/destroy use JSON-only
   Stimulus modals with `422` error hashes. Do not add an action that ambiguously accepts both.
 - **Ordering:** the global Scene list is ordered by `(position, id)` and is not grouped by Section.

@@ -181,10 +181,15 @@ uses.
 
 | Flow | Controllers | Behavior |
 |---|---|---|
-| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
+| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
 | HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | tags, timeline, sessions, passwords | |
+
+`scene_elements` has no read action at all, because Elements are read on Scene Details; every one of
+its actions is a mutation and therefore authenticated. `scene_characters` mixes the two: its `index`
+is a real HTML read page and its mutations are JSON-only, the same hybrid the Scene record flow is.
+No action accepts an ambiguous HTML-and-JSON mutation merely to make a form work.
 
 ## UI structure
 
@@ -298,11 +303,12 @@ marks the submit button pending, renders a `422` error hash both in a focused su
 the control that caused it, reports a request that never reached the server or a non-validation
 failure, and performs the same-URL Turbo visit after a successful create, update, or delete. A
 JSON-only row's delete is issued by the same controller, because a `204` destroy gives Turbo no
-replacement to apply. Every part of that path is asserted per page in
+replacement to apply. An ordered JSON-only row's **Move up/Move down** is issued there too, for the
+same reason: a `PATCH` move with no form to follow. Every part of that path is asserted per page in
 `test/controllers/modal_json_contract_test.rb` and in the browser suite, because a request test
 cannot see the error UI, the pending state, or the refresh.
 
-## Scene architecture (slices 11.1–11.4 implemented)
+## Scene architecture (slices 11.1–11.7 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first-version Scene domain and
 UX contract. Slices 11.1–11.4 implement its core, references, Section grouping, and Scene Tag
@@ -310,7 +316,10 @@ taxonomy: the `scenes` and `scene_tags` tables, the `Scene` and `SceneTag` model
 routes, the canonical Scenes list, the Scene Details editor with its URL-backed tab shell,
 narrative-order moves, both Section-grouping paths, and optional tag assignment. Slice 11.5 then
 made the shared modal JSON path reliable for the Element and presence-link modals that come next.
-Elements and world-presence links remain in slices 11.6–11.10 and are **not** routed yet.
+Slices 11.6 and 11.7 add the `scene_elements` and `scene_characters` tables, the `SceneElement` and
+`SceneCharacter` models, the Dialogue speaker link, the ordered Element list on Scene Details, and
+the Characters tab. Item and Location presence remain in slices 11.8–11.10 and are **not** routed
+yet.
 
 ### Ownership and resolution
 
@@ -329,12 +338,34 @@ Elements and world-presence links remain in slices 11.6–11.10 and are **not** 
 - A `SceneTag belongs_to Story` and follows the same hierarchical/colored taxonomy conventions as
   `SectionTag`; it resolves its Universe through that Story and is managed only through the
   story-scoped taxonomy workspace.
+- A `SceneElement belongs_to Scene` and forms its own flat, contiguous sequence inside that Scene.
+  It stores a `kind` restricted to `narration` or `dialogue` — never a column named `type`, which
+  Active Record reserves for single-table inheritance — a required `name` labelled **Title**, and an
+  optional plain-text `body` labelled **Content`. It does not inherit `Hierarchical` and has no
+  `parent_id`; `SceneElementsController` uses the flat mode of `PositionedResourceOrder` with the
+  Scene as the scope owner, and `position` is not a permitted form field so only the Move controls can
+  change it.
+- A Dialogue's speakers are a plain many-to-many link (`scene_element_speakers`) because the link
+  carries no data of its own and records no turn order. A Dialogue must name at least one
+  same-Universe Character, Narration may name none, and a Dialogue cannot become Narration while
+  speakers remain unless the request carries the modal's explicit `remove_speakers` confirmation —
+  which clears them in the same atomic update. `Character` declares the same link from its side, so
+  deleting a Character removes its speaker links and its presence links and never a Scene or an
+  Element.
+- A `SceneCharacter belongs_to Scene` and `belongs_to Character`, and carries a nullable free-text
+  `role`. It is a join model rather than a HABTM association precisely because the role is part of the
+  decision; a blank role means no role and is never checked against a vocabulary.
+- Participation has **two independent sources**, and nothing merges them into one stored row: an
+  explicit `SceneCharacter` link, and a Character who speaks in one of the Scene's Dialogue
+  Elements. `SceneParticipants` reads both, labels which is which, and reports the **union** — a
+  Character who both participates and speaks is one participant, never two.
 - `UniverseScopeResolver` is the single answer to "which universe owns this record?". `Ability` and
   `ApplicationHelper#universe_for_record` both call it, so record-level authorization and the
   mutation controls a view renders cannot disagree. It resolves a record directly through
-  `#universe`, or through a declared owner association (`story`, `scene`, `section`). A model
-  nested deeper than one of those — a speaker link under a Scene Element, for example — defines its
-  own `universe` method that delegates through its owner, and the first step of the walk finds it.
+  `#universe`, or through a declared owner association (`story`, `scene`, `section`). `SceneElement`
+  and `SceneCharacter` both reach their Universe through `scene`, so neither needs a new entry; a
+  model nested deeper than one of those defines its own `universe` method that delegates through its
+  owner, and the first step of the walk finds it.
 - `SectionPaths` (a value object, not a record) turns one ordered Section list into every
   root-first ancestor path and the depth-indented selector options. Preloading an arbitrary tree
   depth with `includes` is not possible, and `Section#ancestor_chain` would query per level per
@@ -352,7 +383,9 @@ Elements and world-presence links remain in slices 11.6–11.10 and are **not** 
 | Section grouping | `PATCH /u/:universe_slug/s/:story_id/scenes/group` | HTML |
 | Scene Tag taxonomy | `/u/:universe_slug/s/:story_id/scene_tags` | JSON mutations, HTML index |
 | New / Edit Scene | `.../scenes/new`, `.../scenes/:id/edit` | HTML |
-| Characters / Items / Locations tabs, Elements (later slices) | not routed yet | JSON when added |
+| Scene Elements | `.../scenes/:scene_id/elements`, `.../elements/:id`, `.../elements/:id/move` | JSON only |
+| Scene Characters tab | `.../scenes/:scene_id/characters`, `.../characters/:id` | HTML index, JSON mutations |
+| Items / Locations tabs (later slices) | not routed yet | JSON when added |
 
 Scenes have no Universe-level route. Every Scene and Scene Tag route includes its Story, and all
 route-helper keys are passed by name. `ScenesController` answers HTML only and follows the
@@ -360,11 +393,19 @@ redirect/re-render flow: successful create/update redirect to Scene Details, a m
 to the list with a `303`, and grouping redirects back to the Sections workspace with a `303`.
 `SceneTagsController` follows the established taxonomy JSON mutation contract while its index uses
 the shared tree; it rejects a non-JSON mutation before the positioned service can commit anything.
-The Scene flow itself never uses the shared modal path, so it inherits nothing from it. The Element
-and presence-link modals added from slice 11.6 on do: they reuse `modal_form_controller.js` under
-[ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of a second editor, so their JSON
-submission, `422` rendering, pending state, and post-mutation refresh are the same contract that is
-already covered for Characters, Items, and Events.
+The Scene record flow itself never uses the shared modal path, so it inherits nothing from it. The
+Element and presence-link mutations added in slices 11.6 and 11.7 do: they reuse
+`modal_form_controller.js` under [ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of a
+second editor, so their JSON submission, `422` rendering, pending state, and post-mutation refresh
+are the same contract that is already covered for Characters, Items, and Events.
+
+`SceneElementsController` has no read action at all: Elements are read on Scene Details, so every one
+of its actions is a mutation, every one requires a session and the shared Universe write policy, and
+`RequiresJsonMutationFormat` refuses an HTML request before the positioned service can commit
+anything. `SceneCharactersController#index` is a real read page (guests and read-only members see it),
+while its mutations are JSON-only like the other presence flows. Both load their records through
+`Current.universe.stories.find(...).scenes.find(...)` and the Scene's own association, so a record
+from another Scene, Story, or Universe is a `404` rather than a cross-scope write.
 
 A move is a single transactional service call. The controller converts `direction=up|down` into
 the neighboring target position and lets `PositionedResourceOrder` clamp and normalize the group,
@@ -394,6 +435,19 @@ loader enforce the same rules. `SceneTag` uses the shared hierarchical Story sco
 model error rather than a cross-scope disclosure. The Story-scoped `scenes_scene_tags` table also
 has real foreign keys and a unique `[scene_id, scene_tag_id]` index.
 
+The Scene-owned records prove their shared Universe the same way, because no foreign key can:
+`SceneElement#speakers_belong_to_the_scene_universe` and
+`SceneCharacter#character_belongs_to_the_scene_universe` compare against `scene.story.universe_id`.
+A `character_ids` writer on `SceneElement` turns an unknown, duplicated, or cross-Universe id into an
+ordinary field error instead of a driver exception, exactly as `Scene#scene_tag_ids=` does, and a
+direct association assignment is checked by the same validation. The same-Universe rule is also in
+the controller, where a foreign `character_id` is a `404` because the Character is resolved through
+`Current.universe.characters`. The development-data loader proves it a third time: a Scene-owned
+record's Universe is resolved through its Scene, and a manifest may only reference records from its
+own universe directory. `scene_elements` additionally carries a database `check_constraint` on
+`kind`, and both `scene_element_speakers` and `scene_characters` carry real foreign keys and a unique
+pair index, so the uniqueness rule is proved in the model *and* the database.
+
 ### UX
 
 The Story workspace gained a flat **Scenes** list with Title/short-description previews, a 1-based
@@ -415,10 +469,59 @@ scene** action. The Title/Description/Section/Event/time/Scene Tag form lives on
 Tag definitions are edited separately in the story-scoped taxonomy workspace; assignment remains
 optional and never receives a default.
 
-The editor shell is URL-backed through `shared/_content_tabs`: **Scene Details** is a live link and
-**Characters**, **Items**, and **Locations** are `aria-disabled` placeholders with an explanatory
-title until their slices add a real destination. A tab is never rendered as a link to a route that
-does not exist, and it is never an in-document Bootstrap pane.
+The editor shell is URL-backed through `shared/_content_tabs`: **Scene Details** and **Characters**
+are live links, while **Items** and **Locations** stay `aria-disabled` placeholders with an
+explanatory title until their slices add a real destination. A tab is never rendered as a link to a
+route that does not exist, and it is never an in-document Bootstrap pane.
+
+### Scene Elements live under Scene Details
+
+The ordered Element list renders on Scene Details rather than on a page of its own: the Scene above
+it already carries the identity, the references, and the tags, so the prose blocks belong to the same
+page. A Scene may hold any number of Elements, including none, so the empty state says so instead of
+implying that a Scene is unfinished. Each row shows its 1-based position in **this Scene's**
+sequence, its kind, its content (or an explicit "no content yet"), the speakers of a Dialogue, and
+— for writers only — Move up/Move down, **Edit**, and **Delete**.
+
+The Move controls are the same visible, boundary-aware buttons the Scenes list uses, but they cannot
+be Turbo forms: the Element endpoint is JSON-only, so `modal_form_controller.js#move` issues the
+`PATCH` itself and then performs the same-URL refresh a save performs. A move past either end is a
+deliberate no-op — the view disables the control and the service clamps the position — and a rejected
+move announces the server's own message in the page-level live region, because a row with no form has
+no error summary to render into.
+
+**Narration and Dialogue are the same editor with two different sets of rules**, so the modal offers
+an **Element type** selector, a required **Title**, an optional **Content** textarea, and a
+many-speaker **Speakers** picker. `scene_element_form_controller.js` owns one small piece of that
+form: it shows the picker only for Dialogue and offers the "remove the speakers" confirmation only
+when a Dialogue that has speakers is switched to Narration. The server is what enforces the rule. A
+hidden picker is deliberately *not* disabled, so a hidden selection is still submitted and the server
+can see there is something to confirm; the confirmation then sends an empty speaker list in the same
+request, which is the only way a Dialogue becomes Narration. A dialogue's own copy states the
+limitation out loud: the link records who is in the conversation, not which line belongs to whom.
+
+### The Characters tab shows two kinds of participation
+
+`/characters` is a real read page, so a guest and a read-only member see exactly what a writer sees
+minus the controls. Its rows are the **union** of the two participation sources, one per Character:
+
+- a stored `SceneCharacter` link, labelled **Participant**, showing its role or **No role recorded**;
+- a Character who only speaks, labelled **Speaks in N element(s)** and naming the Elements, with no
+  add/edit/remove menu at all, because there is no stored row to act on.
+
+A Character who is both carries both labels on a single row, which is why the count on the page and
+the count in the Scenes list are the union and never the sum. Writers add a link, edit the Character
+and its role, and remove the link. The Character and the role are both editable, because the editor
+offers both controls and a control that looks editable but is ignored would be worse than none; a
+duplicate is the model's uniqueness error rendered in the modal rather than a hidden option, since a
+stale page or a second window can submit one anyway. The picker offers every Universe Character
+because Characters are shared by every Story in the Universe. Removing a link never removes a
+Character, and never changes who speaks in an Element: those are separate links with separate
+consequences.
+
+The Scenes list gained two per-row counts from these two sources: an Element count and a participant
+count. Both are read in one grouped query each for the whole page, never per row, and the
+participant count is the same union the tab shows.
 
 The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** list below it:
 only the scenes that belong to no Section, in canonical narrative order, headed by a badge that says

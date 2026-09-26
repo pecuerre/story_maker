@@ -90,10 +90,12 @@ reachable security/data-loss issues from lower-priority hardening and contract d
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
     maintenance.** The controller-facing `PositionedResourceOrder` service now transactionally
     handles create, move, reparent, and destroy for current positioned controllers, and the
-    `Hierarchical` callback closes gaps after direct hierarchical destroys. Slice 11.1 added the
-    flat Story-owned `Scene` sequence, which is normalized only when a mutation goes through
-    `ScenesController`; unlike `Hierarchical`, `Scene` has no model callback that repairs positions
-    after a direct destroy. Direct SQL, association manipulation, and direct-model writes therefore
+    `Hierarchical` callback closes gaps after direct hierarchical destroys. Slices 11.1 and 11.6
+    added two flat sequences — the Story-owned `Scene` order and the Scene-owned `SceneElement`
+    order — which are normalized only when a mutation goes through `ScenesController` or
+    `SceneElementsController`; unlike `Hierarchical`, neither `Scene` nor `SceneElement` has a model
+    callback that repairs positions after a direct destroy. Direct SQL, association manipulation,
+    and direct-model writes therefore
     still bypass the service for both hierarchies and flat sequences, and SQLite has no
     portable row-lock/unique-position guarantee. Do not treat those paths as normalized without an
     explicit import/console workflow; see ADR 0009 and [`resolved_quirks.md`](resolved_quirks.md).
@@ -102,8 +104,10 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     pre-Scene join tables contain only two integer columns and no indexes, foreign keys, or
     uniqueness constraints (for example `db/schema.rb:42-45,84-87,117-120,150-153,186-189,224-227`;
     the migrations use bare `create_join_table`, e.g.
-    `db/migrate/20260923130012_create_characters.rb:14`). The new `scenes_scene_tags` table is the
-    exception: it has real Scene/SceneTag foreign keys and a unique pair index. Direct SQL,
+    `db/migrate/20260923130012_create_characters.rb:14`). The Scene-owned and Scene-tag tables are
+    the exception: `scenes_scene_tags`, `scene_element_speakers`, and `scene_characters` all have
+    real foreign keys and a unique pair index, and `scene_elements` adds a `check_constraint` on
+    `kind`. Direct SQL,
     imports, failed association replacement, or duplicate IDs can still create orphan/duplicate rows
     in the legacy tables. Scoped association reads prevent foreign tags from being disclosed through
     ordinary model/view paths, and controller saves roll back rejected ID replacements. A direct

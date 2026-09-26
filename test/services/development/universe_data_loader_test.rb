@@ -231,6 +231,12 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
           position: 0
       YAML
 
+      # The Scene's own components belong to the manifest scenes that were just
+      # replaced, so they are emptied rather than left referencing missing scenes.
+      %w[scene_elements scene_characters].each do |file|
+        File.write(File.join(directory, "db/data/dark/#{file}.yml"), "[]\n")
+      end
+
       error = assert_raises(Development::UniverseDataLoader::ValidationError) do
         Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
       end
@@ -251,6 +257,86 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
       assert_match(/references missing Event\.ring_given_to_frodo/, error.message)
     end
+  end
+
+  test "rejects a scene component that cannot reach a scene" do
+    with_data_copy do |directory|
+      scenes_path = File.join(directory, "db/data/dark/scenes.yml")
+      File.write(scenes_path, "[]\n")
+
+      elements_path = File.join(directory, "db/data/dark/scene_elements.yml")
+      File.write(elements_path, "- name: Orphan\n  kind: narration\n")
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/references missing Scene/, error.message)
+    end
+  end
+
+  test "rejects a scene component that does not declare its scene" do
+    with_data_copy do |directory|
+      elements_path = File.join(directory, "db/data/dark/scene_elements.yml")
+      File.write(elements_path, "- name: Orphan\n  kind: narration\n")
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/scene_elements\.yml:1 must declare its scene/, error.message)
+    end
+  end
+
+  test "loads scene elements and presence links as connected, ordered records" do
+    Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+
+    story = Universe.find_by!(slug: "dark").stories.first
+    secrets = story.scenes.find_by!(slug: "secrets")
+    waltz = story.scenes.find_by!(slug: "michaels-waltz")
+    grotto = story.scenes.find_by!(slug: "the-grotto")
+
+    # Element positions are contiguous inside their own Scene, and a Scene with
+    # no elements is valid.
+    assert_equal [ 0, 1, 2 ], secrets.scene_elements.reorder(:position, :id).pluck(:position)
+    assert_equal [ 0, 1, 2 ], waltz.scene_elements.reorder(:position, :id).pluck(:position)
+    assert_empty grotto.scene_elements
+
+    dialogue = secrets.scene_elements.find_by!(kind: "dialogue")
+    assert_equal [ "Katharina", "Martha" ], dialogue.characters.order(:name).pluck(:name)
+    assert_predicate dialogue.body, :present?
+
+    # A title-only narration loads with no content, which is a valid element.
+    assert_nil secrets.scene_elements.find_by!(name: "The photograph").body
+    # A single-speaker dialogue is as valid as the three-speaker one.
+    assert_equal [ "Jonas" ], waltz.scene_elements.find_by!(kind: "dialogue").characters.pluck(:name)
+
+    # Presence links carry a free-text role, and a blank role loads as no role.
+    link = secrets.scene_characters.find_by!(character: story.universe.characters.find_by!(slug: "martha"))
+    assert_equal "opens the door", link.role
+    assert_nil waltz.scene_characters.find_by!(character: story.universe.characters.find_by!(slug: "jonas")).role
+
+    # Katharina speaks in the dialogue above and is deliberately not a stored
+    # participant, so the derived and stored sources stay distinguishable.
+    assert_not_includes secrets.scene_characters.pluck(:character_id),
+      story.universe.characters.find_by!(slug: "katharina").id
+    participants = SceneParticipants.for(secrets)
+    assert_equal [ "Jonas", "Katharina", "Martha" ], participants.entries.map { |entry| entry.character.name }
+    assert_equal 3, participants.count
+  end
+
+  test "the Lord of the Rings manifest loads four speakers into one dialogue" do
+    Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
+
+    story = Universe.find_by!(slug: "lotr").stories.first
+    council = story.scenes.find_by!(slug: "the-council-of-elrond")
+
+    assert_equal [ 0, 1, 2 ], council.scene_elements.reorder(:position, :id).pluck(:position)
+    dialogue = council.scene_elements.find_by!(kind: "dialogue")
+    assert_equal [ "Aragorn", "Gandalf the Grey", "Gimli", "Legolas" ], dialogue.characters.order(:name).pluck(:name)
+    # Legolas and Gimli speak here without ever being stored as participants.
+    assert_equal [ "Aragorn", "Frodo Baggins" ], council.scene_characters.includes(:character)
+      .map { |link| link.character.name }.sort
   end
 
   test "rejects a scene tag from another story" do

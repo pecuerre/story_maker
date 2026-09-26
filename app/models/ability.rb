@@ -14,6 +14,8 @@ class Ability
     SectionTag
     Scene
     SceneTag
+    SceneElement
+    SceneCharacter
     Character
     CharacterTag
     Location

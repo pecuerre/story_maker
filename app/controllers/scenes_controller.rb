@@ -16,6 +16,8 @@ class ScenesController < ApplicationController
   before_action :set_section_paths, only: %i[ index show new edit create update group ]
   before_action :set_event_options, only: %i[ show new edit create update ]
   before_action :set_scene_tag_data, only: %i[ index show new edit create update ]
+  # Scene Details hosts the ordered Element list and its speaker picker.
+  before_action :set_element_data, only: %i[ show ]
 
   # GET /u/:universe_slug/s/:story_id/scenes
   #
@@ -37,6 +39,7 @@ class ScenesController < ApplicationController
     @scene_total, @first_position, @last_position = @story.scenes.pick(
       Arel.sql("COUNT(*)"), Arel.sql("MIN(position)"), Arel.sql("MAX(position)")
     )
+    set_scene_listing_counts
     flash.now[:alert] = @scene_filter.discarded.to_sentence if @scene_filter.discarded.any?
   end
 
@@ -45,7 +48,6 @@ class ScenesController < ApplicationController
     @scene_total = @story.scenes.count
     @scene_tab = "details"
   end
-
   # GET /u/:universe_slug/s/:story_id/scenes/new
   def new
     @scene = @story.scenes.new
@@ -199,6 +201,24 @@ class ScenesController < ApplicationController
   def set_scene_tag_data
     @scene_tags = @story.scene_tags.order(:position, :id).to_a
     @scene_tag_paths = SceneTagPaths.build(@scene_tags)
+  end
+
+  # The ordered Element list and the speaker picker that fills a Dialogue. Both
+  # are preloaded here: every row shows its Element's speakers, so a page that
+  # queried per Element would be a query per row.
+  def set_element_data
+    @scene_elements = @scene.scene_elements.includes(:characters).reorder(:position, :id).to_a
+    @element_total = @scene_elements.size
+    @character_options = Current.universe.characters.reorder(:name, :id).to_a
+  end
+
+  # Two grouped queries answer both row counts for the whole list, once the rows
+  # themselves are known. The participant count is the union of stored presence
+  # links and derived speakers, so a Character who both participates and speaks is
+  # counted once.
+  def set_scene_listing_counts
+    @element_counts = SceneElement.where(scene_id: @scenes.map(&:id)).group(:scene_id).count
+    @participant_counts = SceneParticipants.counts_by_scene(@scenes)
   end
 
   # Scenes form one flat sequence inside their story, not a universe-level

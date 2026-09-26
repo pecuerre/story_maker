@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_09_25_180000`) and the models in `app/models/`.
+`2026_09_27_120100`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -14,6 +14,8 @@ User (owner)
       │   │                     └── HABTM SectionTag ──┐
       │   ├── SceneTag (tree, story-scoped) ── HABTM SceneTag assignment
       │   └── Scene (contiguous narrative position) ──> Section / Event
+      │       ├── SceneElement (contiguous flat position) ── HABTM Character (dialogue speakers)
+      │       └── SceneCharacter (explicit presence, optional free-text role) ──> Character
       ├── Character ──> parent Character   ── HABTM CharacterTag (tree)
       ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
       ├── Item      ──> parent Item        ── HABTM ItemTag      (tree)
@@ -27,7 +29,8 @@ User (owner)
 ownerships **and every `_tag` model except SectionTag and SceneTag**) belongs to the **universe** and
 is shared by all of its stories. Only **sections** (the script: books → chapters → scenes …),
 **scenes**, and their **section/scene tags** (chapter/book/episode or scene-beat labels) belong to a
-**story** — each story owns its own structure taxonomy.
+**story** — each story owns its own structure taxonomy. A Scene's own components (Elements and
+presence links) are narrower still: they belong to one **Scene** and reach the Universe through it.
 
 ### Universe access
 
@@ -64,6 +67,9 @@ admin grants; it is not a replacement for the public-universe baseline.
 | `section_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its chapter/book/episode labels |
 | `scene_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its scene-beat/mood labels; parent and position are story-local |
 | `scenes` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `position` (default 0, NOT NULL), `section_id` FK (nullable), `event_id` FK (nullable), `datetime` (nullable) | narrative order is `position`; indexes on `[story_id, position]`, `[story_id, section_id]`, `section_id`, `event_id`; no `parent_id` |
+| `scene_elements` | `scene_id` FK (NOT NULL), `kind` (NOT NULL, default `narration`), `name`, `body`, `position` (default 0, NOT NULL) | one flat ordered block of a Scene's prose; index on `[scene_id, position]`; `check_constraint` on `kind`; no `parent_id` |
+| `scene_element_speakers` | `scene_element_id` FK (NOT NULL), `character_id` FK (NOT NULL) | no PK; unique `[scene_element_id, character_id]`; a plain many-to-many link with no data of its own |
+| `scene_characters` | `scene_id` FK (NOT NULL), `character_id` FK (NOT NULL), `role` (nullable) | explicit presence; unique `[scene_id, character_id]`; `role` is free text and blank means no role |
 
 ### Tag tables (`*_tags`) — all identical shape
 `name`, `description`, `slug`, `parent_id` (self-FK), `position` (default 0),
@@ -90,7 +96,8 @@ Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `sce
 `ownerships_ownership_tags` — pattern `"<content table>_<tag table>"`, declared by
 `has_many_tags` and reused by `has_many_tagd`. The legacy join tables have no database integrity
 constraints; the new `scenes_scene_tags` table adds real foreign keys and a unique
-`[scene_id, scene_tag_id]` index. Every declaration supplies an explicit shared scope
+`[scene_id, scene_tag_id]` index, as do the Scene-owned tables `scene_element_speakers` and
+`scene_characters`. Every declaration supplies an explicit shared scope
 (`:universe_id`, or `:story_id` for Section/Scene tags), and both sides of each association validate
 every assigned member against that scope. Association reads also apply the scope, hiding foreign
 rows even if a raw/import path has already inserted a corrupt join. Because both scopes are
@@ -143,8 +150,9 @@ accessible Move controls send the same `{ parent_id, position }` contract. Direc
 some model-dependent destroy paths remain outside the controller service and require separate
 maintenance if they become supported workflows.
 
-Not hierarchical: **Relation**, **Ownership** (link records), **Scene** (a flat story-owned
-sequence), **Story**, **Universe**, **User**, **Session**.
+Not hierarchical: **Relation**, **Ownership** (link records), **Scene** and **SceneElement** (flat
+story- and scene-owned sequences), **SceneCharacter** (a link record), **Story**, **Universe**,
+**User**, **Session**.
 
 ## Validations & invariants (per model)
 
@@ -156,6 +164,8 @@ sequence), **Story**, **Universe**, **User**, **Session**.
 | `Section` | `name` presence; `story` required; parent rules scoped to the story; `section_tags` optional, but when present they must all belong to the section's story through the shared HABTM scope; `has_many :scenes, dependent: :nullify` |
 | `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |
 | `SceneTag` | `name` presence; `story` required; parent rules scoped to the story; `scenes` optional and, when present, all belong to the story; `HasColor`, `Hierarchical`, and slug behavior |
+| `SceneElement` | `name` presence; `scene` required; `kind` presence and `inclusion` in `narration`/`dialogue` (plus a database check constraint); a Dialogue needs at least one speaker ("Speakers is required for a dialogue element"); Narration may not keep speakers ("Element type cannot be Narration while speakers are still assigned") unless the request explicitly confirms it; an unknown, duplicated, or cross-universe `character_ids` entry is an ordinary field error; speakers must belong to the scene's universe; no `parent_id` |
+| `SceneCharacter` | `scene` and `character` required; `character_id` unique per scene ("is already in this scene"); `character` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |
 | `Character` / `Location` / `Item` | `name` presence; `*_tags` optional and, when present, all belong to the content's universe; `Hierarchical` rules |
 | `_tag` models | `name` presence; `bgcolor`/`fgcolor` must be `#rrggbb` (`HasColor`); `Hierarchical` rules (for `SectionTag` the parent must share the **story**); `relation_tags` also requires `inverse` unless `symmetric` |
 | `Event` | `must_be_identifiable` (title **or** start/end datetime **or** a before/after/simultaneous relation); referenced events must be in the same universe; model validation and three DB check constraints reject self references (including unsaved/future IDs); `Hierarchical` rules; *no* name-presence rule. Destroying an event nullifies all incoming temporal references; a relation-only referrer that would become unidentifiable is destroyed first |
@@ -206,24 +216,26 @@ Tags, sections, and scenes are reachable only under the explicit story path
 `/u/<slug>/section_tags`, `/u/<slug>/scene_tags`, `/u/<slug>/sections`, and `/u/<slug>/scenes`
 routes are intentionally invalid.
 
-## Writing model (Scene core, references, grouping, and tags implemented; later slices pending)
+## Writing model (Scene core, references, grouping, tags, Elements, and presence implemented; later slices pending)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the first Scene model. Slices
 11.1–11.4 have landed the `scenes` and `scene_tags` tables, the `Scene` and `SceneTag` models,
 optional Section/Event/datetime references, story-scoped tag assignment, and the story-scoped
-routes; the remaining tables, associations, and validations below belong to slices 11.5–11.10 and
-are **not** in the current schema yet.
+routes. Slices 11.6 and 11.7 have landed `scene_elements`, `scene_element_speakers`, and
+`scene_characters`, the `SceneElement` and `SceneCharacter` models, and the derived participant view.
+The remaining tables, associations, and validations below belong to slices 11.8–11.10 and are
+**not** in the current schema yet.
 
 ```text
 Story
   ├── Scene (contiguous narrative position)          # implemented in 11.1
   │   ├── Section ───────────────────> optional same-Story grouping  # 11.2/11.3
   │   ├── Event ────────────────────> optional same-Universe in-world fact
-  │   ├── SceneElement (contiguous flat position)     # planned
-  │   │   └── SceneElementSpeaker ──> Character
-  │   ├── SceneCharacter ────────────> Character   (optional role)
-  │   ├── SceneItem ─────────────────> Item        (optional role)
-  │   └── SceneLocation ─────────────> Location    (optional role)
+  │   ├── SceneElement (contiguous flat position)     # implemented in 11.6
+  │   │   └── characters (HABTM via scene_element_speakers)
+  │   ├── SceneCharacter ────────────> Character   (optional role)  # implemented in 11.7
+  │   ├── SceneItem ─────────────────> Item        (optional role)  # planned
+  │   └── SceneLocation ─────────────> Location    (optional role)  # planned
   └── SceneTag (story-scoped hierarchy; optional Scene assignment via join) # implemented in 11.4
 ```
 
@@ -234,11 +246,11 @@ The persisted fields and relationships are:
 | `scenes` | **implemented in 11.1–11.3**: required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`; optional `section_id` (same Story), optional `event_id` (same Universe), and one optional `datetime` point using Event-compatible storage/editor precision and timezone semantics (not Event's `start_datetime`/`end_datetime` pair). The event reference and the datetime are independent: neither writes, clears, nor validates against the other |
 | `scene_tags` | **implemented in 11.4**: story-scoped hierarchical/colored tag shape; optional assignment only |
 | `scenes_scene_tags` | **implemented in 11.4**: story-scoped HABTM join with real FKs and a unique `[scene_id, scene_tag_id]` index; tags remain optional |
-| `scene_elements` | required `scene_id`, `kind` (`narration`/`dialogue`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body`, indexed `position` (11.6) |
-| `scene_element_speakers` | SceneElement-to-Character links with a unique pair; the same Universe rule is checked through the Element's Scene (11.6) |
-| `scene_characters` | unique `[scene_id, character_id]`, nullable free-text `role` (11.7) |
-| `scene_items` | unique `[scene_id, item_id]`, nullable free-text `role` (11.8) |
-| `scene_locations` | unique `[scene_id, location_id]`, nullable free-text `role` (11.9) |
+| `scene_elements` | **implemented in 11.6**: required `scene_id`, `kind` (`narration`/`dialogue` by model validation *and* a database `check_constraint`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body` (interface label **Content**), indexed `[scene_id, position]` |
+| `scene_element_speakers` | **implemented in 11.6**: a plain many-to-many join — real FKs and a unique `[scene_element_id, character_id]` index. It carries no data of its own and records no turn order, so a HABTM association is the right shape; the same-Universe rule is checked through the Element's Scene |
+| `scene_characters` | **implemented in 11.7**: `scene_id` and `character_id` with real FKs, a unique `[scene_id, character_id]` index, and a nullable free-text `role` |
+| `scene_items` | unique `[scene_id, item_id]`, nullable free-text `role` (planned, 11.8) |
+| `scene_locations` | unique `[scene_id, location_id]`, nullable free-text `role` (planned, 11.9) |
 
 The `scenes` create migration is schema-only: a real `story_id` foreign key, `null: false` `position`
 with a `0` default, `null: false` `slug`, timestamps, and a composite `[story_id, position]` index.
@@ -292,6 +304,13 @@ instance-dependent `HasManyTags` scopes cannot be eager loaded or grouped throug
 result is a `tag id => count` hash used by the taxonomy rows' `(N records)` count pill. The
 per-record read side is `HasManyTags#tagged_records`, the scoped inverse association ordered by name
 (`none` on a content model), which is what a tag's details page lists.
+
+`SceneParticipants` (`app/models/scene_participants.rb`) is a value object, not a table: it answers
+"who takes part in this Scene" from the two independent sources the domain allows — the stored
+`SceneCharacter` links and the Characters who speak in a Dialogue Element — and reports their
+**union**, never their sum. A Character who both participates and speaks is one participant, and the
+same object therefore backs both the Characters tab's rows and the Scenes list's per-row count. For a
+list of Scenes it answers from two grouped queries for the whole page instead of one query per row.
 
 `SceneElement` is an ordered child component rather than a standalone navigable content model, so
 it has no public slug requirement. `Scene.position` and `SceneElement.position` are contiguous `0..n-1` within their Story and Scene

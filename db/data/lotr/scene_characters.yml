@@ -1,0 +1,32 @@
+# Explicit Character presence in a Lord of the Rings Scene. Roles are the
+# author's own free text, and one link deliberately has none. These links are
+# separate from dialogue speakers: Legolas and Gimli speak in the council scene
+# without ever being stored as participants of it.
+
+- scene: Scene.a-long-expected-party
+  character: Character.frodo_baggins
+  role: host
+
+- scene: Scene.a-long-expected-party
+  character: Character.gandalf_the_grey
+  role: arrives out of the rain
+
+- scene: Scene.the-shadow-of-the-past
+  character: Character.frodo_baggins
+  role:
+
+- scene: Scene.three-is-company
+  character: Character.samwise_gamgee
+  role: drives the cart
+
+- scene: Scene.three-is-company
+  character: Character.frodo_baggins
+  role: leaves the Shire
+
+- scene: Scene.the-council-of-elrond
+  character: Character.frodo_baggins
+  role: takes the ring
+
+- scene: Scene.the-council-of-elrond
+  character: Character.aragorn
+  role: swears to return

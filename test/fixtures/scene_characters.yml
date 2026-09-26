@@ -1,0 +1,14 @@
+# Explicit Character presence. `character_one` is also a speaker in
+# `dialogue_one`, so the derived participation and the stored participation
+# overlap here on purpose: the two are never summed.
+scene_character_one:
+  scene: scene_one
+  character: character_one
+  role: "setting"
+
+# A blank role is valid: the author recorded that the character takes part
+# without saying how.
+scene_character_two:
+  scene: scene_one
+  character: character_two
+  role:

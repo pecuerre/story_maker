@@ -76,6 +76,10 @@ class AbilityTest < ActiveSupport::TestCase
       section_tags(:section_tag_one),
       scenes(:scene_one),
       scene_tags(:scene_tag_one),
+      scene_elements(:narration_one),
+      scene_elements(:dialogue_one),
+      scene_characters(:scene_character_one),
+      scene_characters(:scene_character_two),
       characters(:character_one),
       character_tags(:character_tag_one),
       locations(:location_one),
@@ -100,7 +104,7 @@ class AbilityTest < ActiveSupport::TestCase
   test "a scene-owned record resolves its universe through its scene" do
     private_story = Story.create!(universe: @private_universe, name: "Private story")
     scene = private_story.scenes.create!(name: "Private scene")
-    # Stands in for the Scene-owned component models added in later slices. The
+    # Stands in for a Scene-owned component that is not in the registry yet. The
     # class must also be registered in CONTENT_CLASS_NAMES for CanCan to match
     # it; what is proven here is that the Ability resolves its Universe through
     # Scene, the same way the shared view helper does.
@@ -113,6 +117,34 @@ class AbilityTest < ActiveSupport::TestCase
     write_ability = Ability.new(@read_user)
     assert write_ability.can?(:write, scene)
     assert_equal @private_universe, write_ability.send(:universe_for, scene_owned)
+  end
+
+  test "an element and a presence link are authorized exactly as their scene is" do
+    private_story = Story.create!(universe: @private_universe, name: "Private story")
+    scene = private_story.scenes.create!(name: "Private scene")
+    element = scene.scene_elements.create!(name: "A beat")
+    link = scene.scene_characters.create!(character: @private_universe.characters.create!(name: "Somebody"))
+
+    non_member = Ability.new(@read_user)
+    [ element, link ].each do |record|
+      assert_not non_member.can?(:read, record), record.class.name
+      assert_not non_member.can?(:write, record), record.class.name
+    end
+
+    UniverseMembership.create!(universe: @private_universe, user: @read_user, access_level: :read)
+    reader = Ability.new(@read_user)
+    [ element, link ].each do |record|
+      assert reader.can?(:read, record), record.class.name
+      assert_not reader.can?(:write, record), record.class.name
+      assert_not reader.can?(:destroy, record), record.class.name
+    end
+
+    UniverseMembership.find_by!(universe: @private_universe, user: @read_user).update!(access_level: :write)
+    writer = Ability.new(@read_user)
+    [ element, link ].each do |record|
+      assert writer.can?(:write, record), record.class.name
+      assert_not writer.can?(:admin, record), record.class.name
+    end
   end
 
   test "a scene resolves its universe through its story" do

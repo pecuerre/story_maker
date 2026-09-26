@@ -75,6 +75,65 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a scene element mutation is accepted with the page's own token" do
+    with_forgery_protection do
+      scene = scenes(:scene_one)
+      token = fetch_page_token(universe_story_scene_path(universe_slug: @universe.slug,
+        story_id: scene.story, id: scene))
+
+      assert_difference("SceneElement.count", 1) do
+        post universe_story_scene_scene_elements_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene),
+          params: { scene_element: { kind: "narration", name: "Token verified" } },
+          headers: { "X-CSRF-Token" => token },
+          as: :json
+      end
+
+      assert_response :created
+    end
+  end
+
+  test "a scene element mutation without a token is refused and saves nothing" do
+    with_forgery_protection do
+      scene = scenes(:scene_one)
+      fetch_page_token(universe_story_scene_path(universe_slug: @universe.slug,
+        story_id: scene.story, id: scene))
+
+      assert_no_difference("SceneElement.count") do
+        post universe_story_scene_scene_elements_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene),
+          params: { scene_element: { kind: "narration", name: "Never saved" } },
+          as: :json
+      end
+
+      assert_response :forbidden
+      assert_nil SceneElement.find_by(name: "Never saved")
+    end
+  end
+
+  test "a scene character mutation is refused without a token and accepted with one" do
+    with_forgery_protection do
+      scene = scenes(:scene_one)
+      character = @universe.characters.create!(name: "Token test character")
+      payload = { scene_character: { character_id: character.id, role: "setting" } }
+      token = fetch_page_token(universe_story_scene_scene_characters_path(universe_slug: @universe.slug,
+        story_id: scene.story, scene_id: scene))
+
+      assert_no_difference("SceneCharacter.count") do
+        post universe_story_scene_scene_characters_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload, as: :json
+      end
+      assert_response :forbidden
+
+      assert_difference("SceneCharacter.count", 1) do
+        post universe_story_scene_scene_characters_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload,
+          headers: { "X-CSRF-Token" => token }, as: :json
+      end
+      assert_response :created
+    end
+  end
+
   test "an html request keeps Rails' own handling of a rejected token" do
     with_forgery_protection do
       fetch_page_token
@@ -94,8 +153,8 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
   private
     # Loads a page so the session holds a CSRF token, and returns the value the
     # page published for its own JavaScript.
-    def fetch_page_token
-      get universe_characters_url(universe_slug: @universe.slug)
+    def fetch_page_token(path = universe_characters_path(universe_slug: @universe.slug))
+      get path
       assert_response :success
       token = csrf_token_from(response.body)
       assert token.present?, "a rendered page must publish a CSRF token for its fetch requests"

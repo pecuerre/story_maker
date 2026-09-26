@@ -151,6 +151,56 @@ export default class extends Controller {
     this.refresh()
   }
 
+  // An ordered row's Move up/Move down control, for a list whose mutations are
+  // JSON-only. There is no Turbo form to follow here either, so the request is
+  // issued the same way a delete is: one button, one request, one refresh that
+  // puts the row and the counts back from the server. The direction travels in
+  // the URL, because the server clamps a move past the end of the sequence to a
+  // deliberate no-op and the view disables the control there.
+  async move(event) {
+    if (!this.jsonResponse) return
+    event.preventDefault()
+    const trigger = event.currentTarget
+    if (trigger.disabled) return
+
+    this.closeMenu(trigger)
+    trigger.disabled = true
+    const direction = trigger.dataset.modalFormDirection === "up" ? "up" : "down"
+    this.pageStatus(`Moving ${direction}…`)
+    const response = await this.request(trigger.dataset.modalFormUrl, "PATCH", new URLSearchParams())
+    if (!response) {
+      trigger.disabled = false
+      this.pageStatus("The row could not be moved: the request could not be sent. Check your connection and try again.", true)
+      return
+    }
+
+    if (response.status === 404) {
+      this.pageStatus("That row no longer exists. Refreshing the list…")
+      this.refresh()
+      return
+    }
+
+    if (!response.ok) {
+      trigger.disabled = false
+      this.pageStatus(await this.mutationMessage(response, "The row could not be moved."), true)
+      return
+    }
+
+    this.pageStatus("Moved. Refreshing the list…")
+    this.refresh()
+  }
+
+  // A JSON-only move has no form and therefore no error summary to render into,
+  // so the server's own message is announced on the page instead of being
+  // replaced by a generic sentence.
+  async mutationMessage(response, fallback) {
+    if (response.status !== 422) return this.statusMessage(response, fallback)
+
+    const entries = this.errorEntries(await this.readBody(response))
+    if (entries.length === 0) return fallback
+    return entries.map(([ , messages ]) => messages.join(" ")).join(" ")
+  }
+
   setMethod(method) {
     let methodField = this.formTarget.querySelector("input[name='_method']")
     if (method.toLowerCase() === "post") {

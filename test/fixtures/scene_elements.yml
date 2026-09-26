@@ -1,0 +1,41 @@
+# Scene Elements. `kind` is a plain column, not a `type` discriminator, and a
+# Dialogue names its speakers through the same many-to-many join the
+# development data uses.
+narration_one:
+  scene: scene_one
+  name: "The hollow tree"
+  body: "Jonas wedges the box into the hollow of the oak and keeps his hand on it."
+  kind: narration
+  position: 0
+
+dialogue_one:
+  scene: scene_one
+  name: "Michael teaches the waltz"
+  body: "Count with me. One, two, three. Again, and slower this time."
+  kind: dialogue
+  position: 1
+  characters: [ character_one, character_two ]
+
+# A Dialogue needs at least one speaker, so a second Narration follows it to
+# prove the two kinds coexist in one Scene's flat sequence.
+narration_two:
+  scene: scene_one
+  name: "The adults argue"
+  kind: narration
+  position: 2
+
+# A title-only Element: Content is optional, so an unfinished block is valid.
+narration_three:
+  scene: scene_one
+  name: "Interlude"
+  kind: narration
+  position: 3
+
+# A second story of the same universe, so cross-scope lookups have something to
+# reject and the Scene Details page is not the only place Elements exist.
+dialogue_alt:
+  scene: scene_alt
+  name: "A warning at the gate"
+  kind: dialogue
+  position: 0
+  characters: [ character_one ]

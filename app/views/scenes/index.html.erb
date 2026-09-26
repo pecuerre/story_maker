@@ -59,6 +59,19 @@ end %>
                 <i class="bi <%= grouping.present? ? "bi-folder2" : "bi-folder2-open" %>" aria-hidden="true"></i>
                 <span class="text-truncate"><%= grouping || SectionPaths::UNGROUPED_LABEL %></span>
               </span>
+              <%# Both counts are per-row facts, and a row with none says so
+                  rather than showing a zero that looks like a measurement. %>
+              <span class="badge rounded-pill text-bg-light border"
+                aria-label="<%= "#{pluralize(@element_counts.fetch(scene.id, 0), "element")}" %>">
+                <i class="bi bi-text-paragraph" aria-hidden="true"></i>
+                <%= @element_counts.fetch(scene.id, 0) %>
+              </span>
+              <span class="badge rounded-pill text-bg-light border"
+                title="<%= "Characters that take part in this scene, whether they are stored participants or only speakers in a dialogue. Counted once." %>"
+                aria-label="<%= "#{pluralize(@participant_counts.fetch(scene.id, 0), "character")} taking part" %>">
+                <i class="bi bi-people" aria-hidden="true"></i>
+                <%= @participant_counts.fetch(scene.id, 0) %>
+              </span>
               <%= entity_tag_badge(scene) %>
             </div>
             <% if scene.description.present? %>

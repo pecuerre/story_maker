@@ -1,0 +1,43 @@
+# Explicit Character presence in a Dark Scene. A role is the author's own free
+# text, so this file uses the words an author would actually write, and one link
+# deliberately has none: participation without a role is a valid state.
+#
+# These links are separate from dialogue speakers. A character may appear in both
+# lists, in which case the Characters tab shows one row labelled as both, and
+# several characters here appear only as speakers and therefore have no row here.
+
+# Jonas is a stored participant and also, in other scenes, a speaker.
+- scene: Scene.secrets
+  character: Character.jonas
+  role: carries the box
+
+# Martha opens the door in the dialogue above, so she is both here and a speaker.
+- scene: Scene.secrets
+  character: Character.martha
+  role: opens the door
+
+- scene: Scene.michaels-waltz
+  character: Character.jonas
+  role:
+
+- scene: Scene.lies
+  character: Character.martha
+  role: lies
+
+- scene: Scene.lies
+  character: Character.hannah
+  role: lies
+
+# Ulrich is not linked here even though he speaks in the scene: a speaker is a
+# participant without becoming a second stored row.
+- scene: Scene.truths
+  character: Character.jonas
+  role: finds the cave
+
+- scene: Scene.truths
+  character: Character.martha
+  role:
+
+- scene: Scene.the-grotto
+  character: Character.hannah
+  role: gives birth

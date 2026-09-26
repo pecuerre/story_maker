@@ -361,7 +361,7 @@ Universes, Stories, and universe membership management use the existing form pat
 Do not replace these with a modal: full-page forms remain appropriate for objects with a stable
 URL and meaningful navigation.
 
-### Scene workspace (core, references, grouping, and tags shipped in 11.1–11.4; later slices pending)
+### Scene workspace (core, references, grouping, tags, Elements, and presence shipped in 11.1–11.7; later slices pending)
 
 The accepted [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines a calm, explicit
 Scene workspace. The **Scenes** sidebar entry is a real story-scoped link with its own count while a
@@ -376,11 +376,15 @@ shared page header, content surface, entity rows, and empty state. Rows show:
 - a bordered grouping badge showing the Scene's full nested Section path, or **Ungrouped** with an
   open-folder icon. The `title` states that grouping does not change the narrative order;
 - optional Scene Tag badges using the taxonomy colors, with untagged Scenes remaining valid;
+- two small bordered count pills: the Scene's **Element** count and how many **Characters take part**
+  in it. A derived speaker counts once, so the figure is the union the Characters tab shows, never
+  the sum of the two sources;
 - a right-hand group with the **Details** link into Scene Details for every access level, followed by
   the writer-only Move up/Move down controls and the Edit/Delete menu, with a clear disabled state at
   the sequence boundaries.
 
-Element/participant counts arrive with slice 11.6; do not render placeholder counts for them.
+Item and Location counts arrive with slices 11.8 and 11.9; do not render placeholder counts for
+them.
 
 A Story can hold hundreds or thousands of Scenes, so the list is preceded by a **Find scenes**
 surface (`scenes/_filter`): a full-width `search` field, a **Section** select, a **Scene Tag**
@@ -412,9 +416,9 @@ disagreement between them is not detected. Scene Tags are optional; an empty tag
 valid and never receives a default.
 
 The editor's **Scene Details / Characters / Items / Locations** shell is a URL-backed
-`shared/_content_tabs` nav. **Scene Details** is a live link; the other three are `aria-disabled`
-placeholders with an explanatory `title` until their slices add a destination. A tab is never a link
-to a route that does not exist.
+`shared/_content_tabs` nav. **Scene Details** and **Characters** are live links; **Items** and
+**Locations** are `aria-disabled` placeholders with an explanatory `title` until their slices add a
+destination. A tab is never a link to a route that does not exist.
 
 The Scene form groups its fields: **Scene tags** holds the optional native multi-select with
 root-first tag paths, **Organization** holds the Section selector (with **Ungrouped** and
@@ -439,11 +443,30 @@ on touch.
 Read-only members and guests see the same surface with no controls and no instruction to add scenes.
 
 Narration and Dialogue Elements use one Bootstrap modal and the shared modal contract, not a second
-editor: the form has a kind selector, required
-**Title**, optional plain-text **Content**, and a multi-speaker picker visible and required only
-for Dialogue. Narration has no speaker control. Error summaries stay in the modal with the entered
-values; a failed request does not close it. Element rows show kind, Title, a body preview,
-speakers for Dialogue, and accessible Move up/Move down controls.
+editor: the form has an **Element type** selector, a required
+**Title**, optional plain-text **Content**, and a multi-speaker **Speakers** picker shown only for
+Dialogue. A one-line hint under the type selector states what each kind is, and the same line changes
+with the selection. Narration has no speaker control; switching a Dialogue that has speakers to
+Narration reveals a single **Remove the speakers and make this narration** confirmation rather than
+dropping them silently. Error summaries stay in the modal with the entered
+values; a failed request does not close it. The Element list renders on Scene Details, below the
+Scene's own facts, as a `detail-section` with its own count badge and an **Add element** action. Rows
+show a 1-based position in this Scene's sequence, the kind, the content (or an explicit "No content
+yet. A title is all an element needs."), a Dialogue's speakers with the sentence that says the link
+records who is in the conversation and not which line belongs to whom, and accessible Move up/Move
+down controls plus the Edit/Delete menu for writers. An empty Element list gets its own empty state:
+a Scene may hold any number of Elements, including none.
+
+The **Characters** tab (`/scenes/:id/characters`) is a real read page. Rows are one per Character
+in the union of the two participation sources, ordered by name, each with a neutral **Participant**
+badge for a stored link, a **Speaks in N element(s)** badge for a Dialogue speaker, the role (or
+**No role recorded**), and a line naming the Elements a speaker speaks in. A Character who is both
+carries both badges on one row. Only a stored link offers the Edit/Delete menu, because a derived
+speaker has no row of its own to act on; the row still links to the Character's own details page for
+every access level. Writers also get **Add character**; the picker offers every Universe Character
+and says plainly that a duplicate is reported in the window, because Characters are shared by every
+Story in the Universe. Read-only members and guests see the same list with no controls and a
+non-instructional empty state.
 
 The Scene/Story/Section/Event/shared-record destructive copy from ADR 0007 is mandatory. Do not
 replace the consequences with only “Delete {record}?” merely to save space. Scene, Story, and

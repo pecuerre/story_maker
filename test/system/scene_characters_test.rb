@@ -66,8 +66,7 @@ class SceneCharactersTest < ApplicationSystemTestCase
     visit universe_story_scene_scene_characters_path(universe_slug: @universe.slug, story_id: @story, scene_id: scene)
 
     assert_selector ".entity-row", text: "Passer-by"
-    within ".entity-list" do
-      row = find(".entity-row", text: "Passer-by")
+    within find(".entity-row", text: "Passer-by") do
       assert_no_selector "span.badge", text: "Participant"
       assert_text "Speaks in 1 element"
       assert_no_selector ".dropdown.row-actions"
@@ -101,8 +100,7 @@ class SceneCharactersTest < ApplicationSystemTestCase
     # Both stored participants also speak in `dialogue_one`, and the union is two
     # rows rather than four.
     assert_character_names [ "Character one", "Character two" ]
-    within ".entity-list" do
-      row = find(".entity-row", text: "Character one")
+    within find(".entity-row", text: "Character one") do
       assert_text "Participant"
       assert_text "Speaks in 1 element"
       assert_text "Role: setting"
@@ -141,8 +139,8 @@ class SceneCharactersTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Characters"
     within "nav[aria-label='Scene workspace']" do
       assert_selector "a.active[aria-current='page']", text: "Characters"
-      # The two presence tabs that have not shipped stay placeholders.
-      assert_selector "span.nav-link.disabled[aria-disabled='true']", count: 2
+      # Every workspace tab has a real destination now, so none is a placeholder.
+      assert_selector "span.nav-link.disabled[aria-disabled='true']", count: 0
     end
   end
 

@@ -233,7 +233,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
       # The Scene's own components belong to the manifest scenes that were just
       # replaced, so they are emptied rather than left referencing missing scenes.
-      %w[scene_elements scene_characters].each do |file|
+      %w[scene_elements scene_characters scene_items scene_locations].each do |file|
         File.write(File.join(directory, "db/data/dark/#{file}.yml"), "[]\n")
       end
 
@@ -272,6 +272,48 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
       end
 
       assert_match(/references missing Scene/, error.message)
+    end
+  end
+
+  test "rejects an item presence link that points at the wrong record type" do
+    with_data_copy do |directory|
+      items_path = File.join(directory, "db/data/dark/scene_items.yml")
+      contents = File.read(items_path)
+      File.write(items_path, contents.sub("item: Item.jonas_key", "item: Character.jonas"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/field 'item' must reference Item, not Character/, error.message)
+    end
+  end
+
+  test "rejects a location presence link that points at the wrong record type" do
+    with_data_copy do |directory|
+      locations_path = File.join(directory, "db/data/dark/scene_locations.yml")
+      contents = File.read(locations_path)
+      File.write(locations_path, contents.sub("location: Location.jonas_house", "location: Item.jonas_key"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/field 'location' must reference Location, not Item/, error.message)
+    end
+  end
+
+  test "rejects an item presence link that resolves outside the target universe" do
+    with_data_copy do |directory|
+      items_path = File.join(directory, "db/data/dark/scene_items.yml")
+      contents = File.read(items_path)
+      File.write(items_path, contents.sub("item: Item.jonas_key", "item: Item.one_ring"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/references missing Item\.one_ring/, error.message)
     end
   end
 
@@ -337,6 +379,62 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     # Legolas and Gimli speak here without ever being stored as participants.
     assert_equal [ "Aragorn", "Frodo Baggins" ], council.scene_characters.includes(:character)
       .map { |link| link.character.name }.sort
+  end
+
+  test "loads item and location presence as connected records with free-text roles" do
+    Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+
+    universe = Universe.find_by!(slug: "dark")
+    story = universe.stories.first
+    secrets = story.scenes.find_by!(slug: "secrets")
+    interlude = story.scenes.find_by!(slug: "interlude")
+
+    # The same item is linked into two scenes, and one scene holds two items, so
+    # neither the unique-per-scene index nor the plural tab is exercised only in
+    # its simplest case.
+    god_particle_scenes = Item.find_by!(name: "The God Particle").scene_items.includes(:scene)
+      .map { |link| link.scene }.sort_by { |scene| [ scene.position, scene.id ] }.map(&:name)
+    assert_equal [ "Truths", "Sic Mundus Creatus Est" ], god_particle_scenes
+    assert_equal [ "Sphere Machine", "The God Particle" ],
+      story.scenes.find_by!(slug: "sic-mundus-creatus-est").scene_items.includes(:item)
+        .map { |link| link.item.name }.sort
+    assert_equal "carries the box", secrets.scene_items.joins(:item)
+      .find_by(items: { name: "Jonas Key" }).role
+    # A blank role loads as no role rather than an empty annotation.
+    assert_nil story.scenes.find_by!(slug: "lies").scene_items.joins(:item)
+      .find_by(items: { name: "Jonas Key" }).role
+
+    # Locations nest, so the tab has to name each linked place with its ancestor
+    # path. One scene holds a top-level place, a nested room, and a region, and
+    # one of the three deliberately has no role.
+    paths = LocationPaths.build(universe.locations.reorder(:position, :id).to_a)
+    waltz = story.scenes.find_by!(slug: "michaels-waltz").scene_locations.includes(:location).to_a
+    assert_equal [ "Winden / Nielsen House", "Winden / Nielsen House / Magnus Room" ],
+      waltz.map { |link| paths.label_for(link.location) }.sort
+    assert_equal "dances in the kitchen", waltz.find { |link| link.location.name == "Nielsen House" }.role
+    assert_nil waltz.find { |link| link.location.name == "Magnus Room" }.role
+
+    # Both tabs reach their empty state without inventing a record.
+    assert_empty interlude.scene_items
+    assert_empty interlude.scene_locations
+  end
+
+  test "loads the Lord of the Rings item and location presence links" do
+    Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
+
+    universe = Universe.find_by!(slug: "lotr")
+    story = universe.stories.first
+    party = story.scenes.find_by!(slug: "a-long-expected-party")
+    walk = story.scenes.find_by!(slug: "a-long-walk-in-the-dark")
+
+    assert_equal [ "Sting", "The One Ring" ], party.scene_items.includes(:item)
+      .map { |link| link.item.name }.sort
+    assert_equal "on the table", party.scene_items.joins(:item).find_by(items: { name: "The One Ring" }).role
+    # A nested place beside the region it sits in, one of them with no role.
+    assert_equal [ "Eriador", "Rivendell" ], story.scenes.find_by!(slug: "the-council-of-elrond")
+      .scene_locations.includes(:location).map { |link| link.location.name }.sort
+    assert_empty walk.scene_items
+    assert_empty walk.scene_locations
   end
 
   test "rejects a scene tag from another story" do

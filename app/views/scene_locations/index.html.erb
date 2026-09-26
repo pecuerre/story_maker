@@ -1,0 +1,145 @@
+<% content_for :title, "Locations in #{@scene.name}" %>
+<% editable = can_write_universe? %>
+
+<%# The editor's wrapper has to contain the modal *and* every control that opens
+    it, which is why the page header is inside it rather than beside it. %>
+<div
+  <% if editable %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="scene_location"
+  data-modal-form-response-value="json"
+  data-modal-form-create-title-value="Add location">
+  <%= render "shared/page_header",
+    title: "Locations",
+    eyebrow: "Scene: #{@scene.name}",
+    description: "The places this scene happens in. A location belongs to the universe and is shared by every story in it, so linking one here never copies it. A scene can use any number of them, and each link can carry an optional role in your own words.",
+    count: @scene_locations.size,
+    count_label: "location" do %>
+    <%= link_to "Scene details", universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-outline-secondary" %>
+    <% if editable %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_story_scene_scene_locations_path(story_id: @story, scene_id: @scene) %>"
+        data-modal-form-method="post"
+        data-modal-form-title="Add location"
+        data-modal-form-values-value="{}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>Add location</span>
+      </button>
+    <% end %>
+  <% end %>
+
+  <%= render "scenes/workspace_tabs" %>
+
+  <%# Locations nest, so each row is named with its full ancestor path: a scene in
+      "Jonas Room" is a different fact from one in "Martha Room". %>
+  <% if @scene_locations.any? %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @scene_locations.each do |link| %>
+          <div class="list-group-item entity-row d-flex align-items-start gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= scene_location_label(link.location, @location_paths) %></span>
+                <span class="badge rounded-pill text-bg-light border">Linked</span>
+              </div>
+              <div class="entity-description">
+                Role: <%= scene_location_role_label(link) %>
+              </div>
+            </div>
+
+            <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+              <%= record_details_link universe_location_path(id: link.location), record: link.location %>
+
+              <% if editable %>
+                <div class="dropdown row-actions">
+                  <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                    id="<%= dom_id(link) %>-actions"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Actions for <%= link.location.name %> in <%= @scene.name %>">
+                    <i class="bi bi-three-dots" aria-hidden="true"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(link) %>-actions">
+                    <li>
+                      <button type="button" class="dropdown-item"
+                        data-action="modal-form#open"
+                        data-modal-form-url="<%= universe_story_scene_scene_location_path(story_id: @story, scene_id: @scene, id: link) %>"
+                        data-modal-form-method="patch"
+                        data-modal-form-title="Edit location"
+                        data-modal-form-values-value="<%= scene_location_fields_json(link) %>">
+                        <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit location
+                      </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <button type="button" class="dropdown-item text-danger"
+                        data-action="modal-form#destroy"
+                        data-modal-form-url="<%= universe_story_scene_scene_location_path(story_id: @story, scene_id: @scene, id: link) %>"
+                        data-modal-form-confirm="Remove <%= link.location.name %> from <%= @scene.name %>? The location stays in the universe, with its nested places, and in every other scene.">
+                        <i class="bi bi-trash me-2" aria-hidden="true"></i>Remove
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: "No locations in this scene yet",
+      description: "Add a location to record that the scene happens there, with an optional role such as “setting,” “arrives at,” or “left behind.” The location itself is shared by every story in the universe, together with its nested places.",
+      icon: "geo-alt" %>
+  <% end %>
+
+  <% if editable %>
+    <div class="modal fade" tabindex="-1"
+      aria-labelledby="scene-location-modal-title"
+      aria-hidden="true"
+      data-modal-form-target="modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="scene-location-modal-title" data-modal-form-target="title">Add location</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <%= form_with scope: :scene_location,
+            url: universe_story_scene_scene_locations_path(story_id: @story, scene_id: @scene),
+            method: :post,
+            data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
+            <div class="modal-body">
+              <%= render "shared/modal_errors" %>
+
+              <div class="mb-3">
+                <%= form.label :location_id, "Location", class: "form-label" %>
+                <%= form.select :location_id, scene_location_choices(@location_paths),
+                  { include_blank: "Choose a location" },
+                  class: "form-select", required: true %>
+                <div class="form-text">
+                  Nested places are indented under their parent, so a room is recognizable from the house it
+                  belongs to. A location can only be in a scene once; choosing one that already is is reported
+                  here, in this window.
+                </div>
+              </div>
+
+              <div>
+                <%= form.label :role, "Role", class: "form-label" %>
+                <%= form.text_field :role, class: "form-control" %>
+                <div class="form-text">
+                  Optional, in your own words: “setting,” “arrives at,” “left behind.” Leave it blank if you
+                  do not want to say. Nothing here is interpreted by the application.
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <%= form.submit "Save location", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

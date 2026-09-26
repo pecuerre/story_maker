@@ -1,0 +1,59 @@
+# Explicit Location presence in a Dark Scene. A location belongs to the universe
+# and is shared by every story in it, so linking one here records that this Scene
+# happens there rather than copying it or its nested places. A role is the
+# author's own free text, and one link deliberately has none.
+#
+# Several Scenes list more than one place, and a nested place is linked through
+# its own row rather than by expanding its parent: Jonas Room and Jonas House are
+# separate facts, and the Locations tab shows each with its ancestor path.
+#
+# Double Lives and Interlude deliberately have no linked locations, so the empty
+# state is reachable without inventing a record.
+
+- scene: Scene.secrets
+  location: Location.jonas_house
+  role: arrives at
+
+- scene: Scene.secrets
+  location: Location.martha_room
+  role: waits in
+
+- scene: Scene.the-search-in-the-woods
+  location: Location.winden_forest
+  role: setting
+
+- scene: Scene.the-search-in-the-woods
+  location: Location.jonas_room
+  role: comes back to
+
+# A top-level region and one of its nested places in the same scene.
+- scene: Scene.michaels-waltz
+  location: Location.nielsen_house
+  role: dances in the kitchen
+
+# A nested room with no role at all: the place is simply where the scene is set.
+- scene: Scene.michaels-waltz
+  location: Location.magnus_room
+  role:
+
+- scene: Scene.lies
+  location: Location.nielsen_house
+  role: the argument
+
+- scene: Scene.past-and-present
+  location: Location.winden
+  role:
+
+- scene: Scene.truths
+  location: Location.winden_cave
+  role: the second Noah
+
+- scene: Scene.sic-mundus-creatus-est
+  location: Location.winden_cave
+  role: opens
+
+# A region rather than a building, to show that a Scene may link anywhere in the
+# universe's tree.
+- scene: Scene.the-golden-beast
+  location: Location.winden
+  role: the alternate world

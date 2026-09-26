@@ -12,8 +12,4 @@
   back_url: universe_items_path,
   back_label: "All items" %>
 
-<%= render "shared/detail_section",
-  title: "Related information",
-  icon: "box-seam",
-  empty_title: "Nothing related yet",
-  empty_description: "Who owns this item, and which events it appears in, will be listed here as the universe grows." %>
+<%= render "scene_appearances/section", record: @item %>

@@ -14,8 +14,4 @@
   back_url: universe_locations_path,
   back_label: "All locations" %>
 
-<%= render "shared/detail_section",
-  title: "Related information",
-  icon: "geo-alt",
-  empty_title: "Nothing related yet",
-  empty_description: "The characters, events, and items set in this location will be listed here as the universe grows." %>
+<%= render "scene_appearances/section", record: @location %>

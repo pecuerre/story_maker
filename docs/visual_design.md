@@ -383,8 +383,29 @@ shared page header, content surface, entity rows, and empty state. Rows show:
   the writer-only Move up/Move down controls and the Edit/Delete menu, with a clear disabled state at
   the sequence boundaries.
 
-Item and Location counts arrive with slices 11.8 and 11.9; do not render placeholder counts for
-them.
+The three Scene workspace tabs — **Characters**, **Items**, and **Locations** — share one row shape:
+the linked record's name as plain text, a bordered **Linked** badge, and `Role: …` with **No role
+recorded** when the author recorded the fact without annotating it. Writers get the same
+**Edit**/**Remove** dropdown as every other JSON-only row, and the details link renders for every
+access level. The Characters tab is the exception to the badge, because it has a second source: a
+Character who only speaks carries **Speaks in N element(s)** instead of **Linked** and has no
+dropdown, because there is no stored row to act on.
+
+The Locations tab is the only one of the three whose rows are hierarchical, so its title is the full
+ancestor path (`Winden / Nielsen House / Martha Room`) and its picker is depth-indented in
+root-first order. Two places called "Room" are never ambiguous there.
+
+A shared universe record's details page ends with an **Appears in scenes of &lt;Story&gt;** section:
+the same entity rows, prefixed with the same 1-based narrative-position pill, so the order the Story
+is told in is visible from a record that knows nothing about that order. Its reason badges
+(**Linked**, **Speaks in N element(s)**, **Depicted**) are listed, never collapsed. The section is
+read-only navigation, so it carries no mutation control for any access level. Without a current
+Story it renders the shared empty state with a link to the story list, because a Scene has no
+Universe-level URL to point at.
+
+The global Scenes list keeps the two count pills it already had. Item and Location counts are
+deliberately absent: they would need one extra grouped query each per page, and the three workspace
+tabs are the place that detail belongs. Do not render placeholder counts for them.
 
 A Story can hold hundreds or thousands of Scenes, so the list is preceded by a **Find scenes**
 surface (`scenes/_filter`): a full-width `search` field, a **Section** select, a **Scene Tag**

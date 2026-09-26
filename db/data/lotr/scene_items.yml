@@ -1,0 +1,32 @@
+# Explicit Item presence in a Lord of the Rings Scene. An item belongs to the
+# universe and is shared by every story in it, so linking one here records that
+# this Scene uses it rather than copying it. One link deliberately has no role:
+# the item simply appears.
+#
+# A Long Walk in the Dark deliberately has no linked items, so the empty state of
+# the Items tab is reachable without inventing a record.
+
+- scene: Scene.a-long-expected-party
+  item: Item.one_ring
+  role: on the table
+
+- scene: Scene.a-long-expected-party
+  item: Item.sting
+  role: drawn at the fire
+
+- scene: Scene.the-shadow-of-the-past
+  item: Item.one_ring
+  role: in Frodo's pocket
+
+# Two items in one scene, one of them with no role at all.
+- scene: Scene.three-is-company
+  item: Item.one_ring
+  role: Frodo's burden
+
+- scene: Scene.three-is-company
+  item: Item.ring_of_barahir
+  role:
+
+- scene: Scene.the-council-of-elrond
+  item: Item.anduril
+  role: not yet reforged

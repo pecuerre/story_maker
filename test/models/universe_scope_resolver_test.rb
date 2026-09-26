@@ -32,9 +32,13 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_elements(:dialogue_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_two))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_items(:scene_item_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_locations(:scene_location_one))
     # Unsaved records own nothing yet, so there is no universe to resolve.
     assert_nil UniverseScopeResolver.universe_for(SceneElement.new(name: "Unsaved"))
     assert_nil UniverseScopeResolver.universe_for(SceneCharacter.new)
+    assert_nil UniverseScopeResolver.universe_for(SceneItem.new)
+    assert_nil UniverseScopeResolver.universe_for(SceneLocation.new)
   end
 
   test "a deeper component resolves through its own universe delegation" do

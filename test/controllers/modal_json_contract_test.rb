@@ -28,13 +28,16 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
-  # The two Scene workspaces are story-scoped rather than universe-scoped, so
+  # The four Scene workspaces are story-scoped rather than universe-scoped, so
   # they are pinned by their own routes. Scene Elements are read on Scene Details
-  # and mutated through the same modal; the Characters tab is its own page.
+  # and mutated through the same modal; the Characters, Items, and Locations tabs
+  # are their own pages.
   def scene_pages(universe_slug:, story:, scene:)
     {
       "scene details elements" => [ universe_story_scene_path(universe_slug: universe_slug, story_id: story, id: scene), "scene_element" ],
-      "scene characters" => [ universe_story_scene_scene_characters_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_character" ]
+      "scene characters" => [ universe_story_scene_scene_characters_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_character" ],
+      "scene items" => [ universe_story_scene_scene_items_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_item" ],
+      "scene locations" => [ universe_story_scene_scene_locations_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_location" ]
     }
   end
 
@@ -60,7 +63,7 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the scene element and scene character workspaces declare the json contract" do
+  test "every scene workspace declares the json contract" do
     scene_pages(universe_slug: @universe.slug, story: stories(:story_one), scene: scenes(:scene_one)).each do |name, (path, model_param)|
       get path
 
@@ -149,6 +152,23 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     assert_no_difference("SceneCharacter.count") do
       post universe_story_scene_scene_characters_url(universe_slug: @universe.slug, story_id: story, scene_id: scene),
         params: { scene_character: { character_id: @universe.characters.first.id } }
+    end
+    assert_response :not_acceptable
+  end
+
+  test "the scene item and scene location endpoints also refuse an html mutation" do
+    story = stories(:story_one)
+    scene = scenes(:scene_one)
+
+    assert_no_difference("SceneItem.count") do
+      post universe_story_scene_scene_items_url(universe_slug: @universe.slug, story_id: story, scene_id: scene),
+        params: { scene_item: { item_id: @universe.items.first.id } }
+    end
+    assert_response :not_acceptable
+
+    assert_no_difference("SceneLocation.count") do
+      post universe_story_scene_scene_locations_url(universe_slug: @universe.slug, story_id: story, scene_id: scene),
+        params: { scene_location: { location_id: @universe.locations.first.id } }
     end
     assert_response :not_acceptable
   end

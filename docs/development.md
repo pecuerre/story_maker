@@ -236,24 +236,27 @@ The Rails test suite uses `test/fixtures/` so automated tests remain determinist
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
 test mode instead of replanting demo records.
 
-## Scene delivery (slices 11.1–11.7 implemented)
+## Scene delivery (complete: slices 11.1–11.10)
 
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and backlog Epic 11 define the Scene
-contract. Slices 11.1–11.4 have landed the core (`scenes` migration, `Scene` model, story-scoped
-routes/controller, canonical list, narrative-order moves, Scene Details page and its editor form,
-the real sidebar link with its own cached count), the optional Section/Event/datetime references
-with their validation and the URL-backed tab shell, the Section grouping workspace, and the
-story-scoped Scene Tag taxonomy/assignment. Slice 11.5 made the shared modal JSON path reliable.
-Slices 11.6 and 11.7 have landed `scene_elements` with its Dialogue speaker link, `scene_characters`,
-the ordered Element list and its modal on Scene Details, and the Characters tab. Item and Location
-presence and the reverse **Appears in Scenes** links are still pending and are deliberately **not**
-routed yet. The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the Scene contract, and the epic is
+now delivered. Slices 11.1–11.4 have landed the core (`scenes` migration,
+`Scene` model, story-scoped routes/controller, canonical list, narrative-order moves, Scene Details
+page and its editor form, the real sidebar link with its own cached count), the optional
+Section/Event/datetime references with their validation and the URL-backed tab shell, the Section
+grouping workspace, and the story-scoped Scene Tag taxonomy/assignment. Slice 11.5 made the shared
+modal JSON path reliable. Slices 11.6 and 11.7 landed `scene_elements` with its Dialogue speaker
+link, `scene_characters`, the ordered Element list and its modal on Scene Details, and the Characters
+tab. Slices 11.8 and 11.9 landed `scene_items` and `scene_locations` with the Items and plural
+Locations tabs, so all four workspace tabs are live. Slice 11.10 landed `SceneAppearances` and the
+reverse **Appears in scenes** section on the Character, Item, Location, and Event details pages.
+The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
 `name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
 has none; Scene uses one optional single-point `datetime` with the current Event storage/editor
 precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
 detailed deletion confirmations are mandatory.
 
-Delivery remains staged in [`backlog.md`](backlog.md):
+The slice-by-slice record is in [`backlog.md`](backlog.md) and, for the delivered state, in
+[`../CHANGELOG.md`](../CHANGELOG.md):
 
 - 11.1 (done) adds the core Scene migration/model, canonical list, ordering controls, editor shell,
   tests, and connected development data.
@@ -269,12 +272,17 @@ Delivery remains staged in [`backlog.md`](backlog.md):
   Scene Details, and the shared modal controller's JSON move action.
 - 11.7 (done) adds the `scene_characters` join model, the Characters tab, the derived participant
   view, and the Scenes list's Element and participant counts.
-- Later slices add Item and Location presence and the reverse links, in that order.
-- Every slice preserves public/private read-write-admin behavior and updates all model registries,
-  authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
+- 11.8 (done) adds the `scene_items` join model and the Items tab.
+- 11.9 (done) adds the `scene_locations` join model, the plural Locations tab, and `LocationPaths`.
+- 11.10 (done) adds `SceneAppearances`, the reverse section on four record pages, and the
+  analyzer-oriented query tests for shared Events and narrative order.
+
+Every slice preserved public/private read-write-admin behavior and updated all model registries,
+authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
 
 The new tables shipped as their own create migrations (`CreateSceneElements`, which also creates the
-`scene_element_speakers` join, and `CreateSceneCharacters`). See below for why that matters here.
+`scene_element_speakers` join, `CreateSceneCharacters`, `CreateSceneItems`, and
+`CreateSceneLocations`). See below for why that matters here.
 
 ### Amending a shipped migration does not work here
 
@@ -291,11 +299,12 @@ already shipped.
 ### Scene data and manual verification
 
 When data is added, put it in the relevant `db/data/<universe_slug>/` files (`scenes.yml`,
-`scene_tags.yml`, `scene_elements.yml`, and `scene_characters.yml`), not in a
+`scene_tags.yml`, `scene_elements.yml`, `scene_characters.yml`, `scene_items.yml`, and
+`scene_locations.yml`), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, tagged/untagged Scene,
-Narration, Dialogue, multi-speaker, multi-Location, and blank/populated-role cases at Epic
-completion. `scenes.yml` records already reference their story, may now reference `section:`,
+Narration, Dialogue, multi-speaker, multi-Location, multi-Item, and blank/populated-role cases at
+Epic completion. `scenes.yml` records already reference their story, may now reference `section:`,
 `event:`, and `scene_tags:` with `Model.slug` references and an independent `datetime:`, and use
 explicit `position` values so the narrative order is visible in the file. The Dark file is the worked
 example: three scenes share Season 1 / Episode 1, three scenes are ungrouped (one of them told last
@@ -304,14 +313,21 @@ but set in 1953), and each remaining Section keeps a single scene. `SceneTag` is
 symbolic reference may not point at a later model file. The loader proves the Section and every
 assigned Scene Tag belong to the Scene's story before writing anything.
 
-`scene_elements.yml` and `scene_characters.yml` are **scene-scoped** registry entries: every record
+`scene_elements.yml`, `scene_characters.yml`, `scene_items.yml`, and `scene_locations.yml` are
+**scene-scoped** registry entries: every record
 declares its `scene:` with a `Scene.slug` reference, the loader resolves its Universe through that
 Scene, and Element `position` values are flat and contiguous **inside their own Scene**. A Dialogue
-names its speakers with `characters: [ Character.slug, ... ]`, the same join the app uses, and a
-`SceneCharacter` declares `character:` plus an optional `role:` — leave `role:` empty to record
-participation without one. The Dark manifests deliberately include a Scene with no elements at all, a
+names its speakers with `characters: [ Character.slug, ... ]`, the same join the app uses. A
+`SceneCharacter` declares `character:`, a `SceneItem` declares `item:`, and a `SceneLocation` declares
+`location:` — each with an optional `role:`; leave `role:` empty to record the appearance without
+one. The Dark manifests deliberately include a Scene with no elements at all, a
 Dialogue whose speakers are not stored participants, a one-speaker dialogue, a three-speaker
-dialogue, two title-only Element blocks, a populated role, and two blank roles.
+dialogue, two title-only Element blocks, a populated role and blank roles, the same Item in two
+Scenes, two Items in one Scene, one Scene with three linked Locations, a nested Location beside a
+top-level one, and Scenes with no Item or Location at all so each tab's empty state is reachable.
+The loader's own log names a join record by the records it joins
+(`Created SceneItem: scene.secrets -> item.jonas-key`) rather than printing `record`, so a load can
+be verified by reading it.
 
 For an already prepared but empty development database, use the explicit
 `UNIVERSE=<slug> bin/rails db:demo:load` task. After changing any `scenes.yml`, follow the required

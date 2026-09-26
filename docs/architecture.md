@@ -181,15 +181,16 @@ uses.
 
 | Flow | Controllers | Behavior |
 |---|---|---|
-| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
+| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
 | HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | tags, timeline, sessions, passwords | |
 
 `scene_elements` has no read action at all, because Elements are read on Scene Details; every one of
-its actions is a mutation and therefore authenticated. `scene_characters` mixes the two: its `index`
-is a real HTML read page and its mutations are JSON-only, the same hybrid the Scene record flow is.
-No action accepts an ambiguous HTML-and-JSON mutation merely to make a form work.
+its actions is a mutation and therefore authenticated. `scene_characters`, `scene_items`, and
+`scene_locations` mix the two: each `index` is a real HTML read page and each one's mutations are
+JSON-only, the same hybrid the Scene record flow is. No action accepts an ambiguous
+HTML-and-JSON mutation merely to make a form work.
 
 ## UI structure
 
@@ -308,7 +309,7 @@ same reason: a `PATCH` move with no form to follow. Every part of that path is a
 `test/controllers/modal_json_contract_test.rb` and in the browser suite, because a request test
 cannot see the error UI, the pending state, or the refresh.
 
-## Scene architecture (slices 11.1–11.7 implemented)
+## Scene architecture (slices 11.1–11.10 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first-version Scene domain and
 UX contract. Slices 11.1–11.4 implement its core, references, Section grouping, and Scene Tag
@@ -318,8 +319,11 @@ narrative-order moves, both Section-grouping paths, and optional tag assignment.
 made the shared modal JSON path reliable for the Element and presence-link modals that come next.
 Slices 11.6 and 11.7 add the `scene_elements` and `scene_characters` tables, the `SceneElement` and
 `SceneCharacter` models, the Dialogue speaker link, the ordered Element list on Scene Details, and
-the Characters tab. Item and Location presence remain in slices 11.8–11.10 and are **not** routed
-yet.
+the Characters tab. Slices 11.8 and 11.9 add `scene_items` and `scene_locations` with the Items and
+plural Locations tabs, completing the four workspace tabs. Slice 11.10 adds `SceneAppearances` and
+the "Appears in scenes" section on the Character, Item, Location, and Event details pages, so a
+shared universe record can be traced forward into the Story's narrative sequence. Every Scene-owned
+route in [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) is now live.
 
 ### Ownership and resolution
 
@@ -355,6 +359,10 @@ yet.
 - A `SceneCharacter belongs_to Scene` and `belongs_to Character`, and carries a nullable free-text
   `role`. It is a join model rather than a HABTM association precisely because the role is part of the
   decision; a blank role means no role and is never checked against a vocabulary.
+- `SceneItem belongs_to Scene` and `belongs_to Item`, and `SceneLocation belongs_to Scene` and
+  `belongs_to Location`, with the same nullable free-text `role` and the same same-Universe rule.
+  They are join models for the same reason as `SceneCharacter`. Unlike a Character, neither an Item
+  nor a Location has a second derived source, so their tabs have no union to reconcile.
 - Participation has **two independent sources**, and nothing merges them into one stored row: an
   explicit `SceneCharacter` link, and a Character who speaks in one of the Scene's Dialogue
   Elements. `SceneParticipants` reads both, labels which is which, and reports the **union** — a
@@ -362,15 +370,16 @@ yet.
 - `UniverseScopeResolver` is the single answer to "which universe owns this record?". `Ability` and
   `ApplicationHelper#universe_for_record` both call it, so record-level authorization and the
   mutation controls a view renders cannot disagree. It resolves a record directly through
-  `#universe`, or through a declared owner association (`story`, `scene`, `section`). `SceneElement`
-  and `SceneCharacter` both reach their Universe through `scene`, so neither needs a new entry; a
-  model nested deeper than one of those defines its own `universe` method that delegates through its
-  owner, and the first step of the walk finds it.
+  `#universe`, or through a declared owner association (`story`, `scene`, `section`). `SceneElement`,
+  `SceneCharacter`, `SceneItem`, and `SceneLocation` all reach their Universe through `scene`, so
+  none needs a new entry; a model nested deeper than one of those defines its own `universe` method
+  that delegates through its owner, and the first step of the walk finds it.
 - `SectionPaths` (a value object, not a record) turns one ordered Section list into every
   root-first ancestor path and the depth-indented selector options. Preloading an arbitrary tree
   depth with `includes` is not possible, and `Section#ancestor_chain` would query per level per
   Scene, so both the Scenes list and the Sections workspace build the index from a single query.
-  `SceneTagPaths` does the same for the story-scoped Scene Tag hierarchy used by the assignment form.
+  `SceneTagPaths` does the same for the story-scoped Scene Tag hierarchy used by the assignment form,
+  and `LocationPaths` for the universe-scoped Location hierarchy the Locations tab shows and offers.
 - The global Scene list is ordered by `(position, id)` and is never grouped by Section.
 
 ### Implemented routes and response split
@@ -385,7 +394,8 @@ yet.
 | New / Edit Scene | `.../scenes/new`, `.../scenes/:id/edit` | HTML |
 | Scene Elements | `.../scenes/:scene_id/elements`, `.../elements/:id`, `.../elements/:id/move` | JSON only |
 | Scene Characters tab | `.../scenes/:scene_id/characters`, `.../characters/:id` | HTML index, JSON mutations |
-| Items / Locations tabs (later slices) | not routed yet | JSON when added |
+| Scene Items tab | `.../scenes/:scene_id/items`, `.../items/:id` | HTML index, JSON mutations |
+| Scene Locations tab | `.../scenes/:scene_id/locations`, `.../locations/:id` | HTML index, JSON mutations |
 
 Scenes have no Universe-level route. Every Scene and Scene Tag route includes its Story, and all
 route-helper keys are passed by name. `ScenesController` answers HTML only and follows the
@@ -394,7 +404,7 @@ to the list with a `303`, and grouping redirects back to the Sections workspace 
 `SceneTagsController` follows the established taxonomy JSON mutation contract while its index uses
 the shared tree; it rejects a non-JSON mutation before the positioned service can commit anything.
 The Scene record flow itself never uses the shared modal path, so it inherits nothing from it. The
-Element and presence-link mutations added in slices 11.6 and 11.7 do: they reuse
+Element and presence-link mutations added in slices 11.6–11.9 do: they reuse
 `modal_form_controller.js` under [ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of a
 second editor, so their JSON submission, `422` rendering, pending state, and post-mutation refresh
 are the same contract that is already covered for Characters, Items, and Events.
@@ -436,17 +446,20 @@ model error rather than a cross-scope disclosure. The Story-scoped `scenes_scene
 has real foreign keys and a unique `[scene_id, scene_tag_id]` index.
 
 The Scene-owned records prove their shared Universe the same way, because no foreign key can:
-`SceneElement#speakers_belong_to_the_scene_universe` and
-`SceneCharacter#character_belongs_to_the_scene_universe` compare against `scene.story.universe_id`.
+`SceneElement#speakers_belong_to_the_scene_universe`,
+`SceneCharacter#character_belongs_to_the_scene_universe`,
+`SceneItem#item_belongs_to_the_scene_universe`, and
+`SceneLocation#location_belongs_to_the_scene_universe` compare against `scene.story.universe_id`.
 A `character_ids` writer on `SceneElement` turns an unknown, duplicated, or cross-Universe id into an
 ordinary field error instead of a driver exception, exactly as `Scene#scene_tag_ids=` does, and a
 direct association assignment is checked by the same validation. The same-Universe rule is also in
-the controller, where a foreign `character_id` is a `404` because the Character is resolved through
-`Current.universe.characters`. The development-data loader proves it a third time: a Scene-owned
-record's Universe is resolved through its Scene, and a manifest may only reference records from its
-own universe directory. `scene_elements` additionally carries a database `check_constraint` on
-`kind`, and both `scene_element_speakers` and `scene_characters` carry real foreign keys and a unique
-pair index, so the uniqueness rule is proved in the model *and* the database.
+each controller, where a foreign `character_id`, `item_id`, or `location_id` is a `404` because the
+record is resolved through `Current.universe`. The development-data loader proves it a third time: a
+Scene-owned record's Universe is resolved through its Scene, and a manifest may only reference
+records from its own universe directory. `scene_elements` additionally carries a database
+`check_constraint` on `kind`, and `scene_element_speakers`, `scene_characters`, `scene_items`, and
+`scene_locations` all carry real foreign keys and a unique pair index, so every uniqueness rule is
+proved in the model *and* the database.
 
 ### UX
 
@@ -522,6 +535,47 @@ consequences.
 The Scenes list gained two per-row counts from these two sources: an Element count and a participant
 count. Both are read in one grouped query each for the whole page, never per row, and the
 participant count is the same union the tab shows.
+
+### The Items and Locations tabs have one source each
+
+`/items` and `/locations` follow the Characters tab's page shape — a read page whose mutations are
+JSON-only — with one difference that follows from the domain: neither an Item nor a Location has a
+derived second source, so there is no union to reconcile and no row without a link. Every row is a
+stored `SceneItem` or `SceneLocation` link showing its role or **No role recorded**, and the row list,
+the page count, and the count a mutation changes are the same rows.
+
+The Locations tab is plural because a Scene may use any number of places, and it is the only Scene
+workspace whose rows are hierarchical. Each row is named with its full ancestor path
+(`Winden / Jonas House / Jonas Room`), and the picker is depth-indented in root-first order, so a
+nested place is never ambiguous. The row *list* is a flat name order rather than tree order: a flat
+list is easier to scan, and the path in each row is what disambiguates two places with the same
+name. The picker still walks the tree so a child is never offered before its parent.
+
+Both tabs offer every Universe Item/Location, because those records are shared by every Story in
+the Universe. A duplicate is the model's uniqueness error rendered in the modal rather than a hidden
+option, for the same reason as the Characters tab. Removing a link never removes the Item or the
+Location, and never removes a Location's nested places: each is a shared record, and a link only
+withdraws one Scene's claim on it.
+
+### "Appears in scenes" traces a record forward
+
+The Character, Item, Location, and Event details pages each end with an **Appears in scenes of
+<Story>** section, the reverse of the three tabs. It is the one place where a shared universe
+record is read through the Story's narrative sequence, and it is deliberately not a new workspace:
+the same links would be broken if it were.
+
+`SceneAppearances` is the single query object behind it. It reports the **union** of a stored
+presence link, a derived Dialogue speaker, and an Event reference — one row per Scene, never a sum
+— ordered by Scene `position`, which is the order the Story is told and not the order the Event
+happened. A row is labelled with the reason(s) it appears, so **Linked**, **Speaks in N element(s)**,
+and **Depicted** are never collapsed into a single word, and a role is only ever shown for a stored
+link. The whole section is read-only navigation, so it renders for every access level: the Scenes it
+points at are readable by exactly the people who can read the record it is attached to, and every
+link carries an explicit `story_id` because a Scene has no Universe-level URL.
+
+The section is scoped to `Current.story`. With no Story selected there is nothing to list, so the
+section says so and offers the story list — the same explicit selection the sidebar asks for, never
+a fallback to the Universe's first Story.
 
 The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** list below it:
 only the scenes that belong to no Section, in canonical narrative order, headed by a badge that says

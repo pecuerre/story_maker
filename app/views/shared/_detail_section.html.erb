@@ -23,6 +23,11 @@
     <%= render "shared/empty_state",
       title: local_assigns.fetch(:empty_title),
       description: local_assigns[:empty_description],
-      icon: local_assigns[:icon] %>
+      icon: local_assigns[:icon] do %>
+      <%# An optional pre-rendered action for the empty case. The section's own
+          block is the record list, which is exactly what an empty section has no
+          use for, so the two cannot share it. %>
+      <%= local_assigns[:empty_action] %>
+    <% end %>
   <% end %>
 </section>

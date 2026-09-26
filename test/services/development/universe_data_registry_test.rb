@@ -8,12 +8,17 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
     # Scene is loaded after Event because it may reference a shared universe
     # Event, and a symbolic reference may not point at a later model file. Its
     # own components follow it for the same reason: they reference a Scene.
-    assert_equal "SceneCharacter", model_names.last
+    assert_equal "SceneLocation", model_names.last
     assert_operator model_names.index("Event"), :<, model_names.index("Scene")
     assert_operator model_names.index("Section"), :<, model_names.index("Scene")
     assert_operator model_names.index("SceneTag"), :<, model_names.index("Scene")
     assert_operator model_names.index("Scene"), :<, model_names.index("SceneElement")
     assert_operator model_names.index("SceneElement"), :<, model_names.index("SceneCharacter")
+    # Item and Location are universe-scoped, so their presence links may only
+    # reference them once they have already been loaded.
+    assert_operator model_names.index("Item"), :<, model_names.index("SceneItem")
+    assert_operator model_names.index("Location"), :<, model_names.index("SceneLocation")
+    assert_operator model_names.index("SceneItem"), :<, model_names.index("SceneLocation")
     assert_not_includes model_names, "Session"
     assert_equal %w[dark lotr], Development::UniverseDataRegistry::UNIVERSES.keys
     assert Development::UniverseDataRegistry.registered_universe?("dark")
@@ -23,12 +28,20 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
   test "a scene-owned model is scoped to a scene and positioned flat" do
     element = Development::UniverseDataRegistry.definition_for_model("SceneElement")
     link = Development::UniverseDataRegistry.definition_for_model("SceneCharacter")
+    item = Development::UniverseDataRegistry.definition_for_model("SceneItem")
+    place = Development::UniverseDataRegistry.definition_for_model("SceneLocation")
 
     assert_equal :scene, element.scope
     assert_predicate element, :positioned?
     assert_not element.hierarchical_position?
     assert_equal :scene, link.scope
     assert_not link.positioned?
+    # The two remaining world-presence links are the same shape: Scene-owned,
+    # unpositioned, and reaching the Universe through their Scene.
+    assert_equal :scene, item.scope
+    assert_not item.positioned?
+    assert_equal :scene, place.scope
+    assert_not place.positioned?
   end
 
   test "distinguishes hierarchical and flat position groups" do

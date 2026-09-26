@@ -1,0 +1,28 @@
+# Explicit Location presence in a Lord of the Rings Scene. A location belongs to
+# the universe and is shared by every story in it, so linking one here records
+# that this Scene happens there rather than copying it. One link deliberately has
+# no role: the place is simply where the scene is set.
+#
+# A Long Walk in the Dark deliberately has no linked locations, so the empty
+# state of the Locations tab is reachable without inventing a record.
+
+- scene: Scene.a-long-expected-party
+  location: Location.hobbiton
+  role: the party
+
+- scene: Scene.the-shadow-of-the-past
+  location: Location.hobbiton
+  role: warns Frodo to leave
+
+- scene: Scene.three-is-company
+  location: Location.the_shire
+  role: sets out from
+
+# Two places in one scene, and a nested place linked beside the region it sits in.
+- scene: Scene.the-council-of-elrond
+  location: Location.rivendell
+  role:
+
+- scene: Scene.the-council-of-elrond
+  location: Location.eriador
+  role: the road to

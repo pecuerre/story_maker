@@ -80,6 +80,8 @@ class AbilityTest < ActiveSupport::TestCase
       scene_elements(:dialogue_one),
       scene_characters(:scene_character_one),
       scene_characters(:scene_character_two),
+      scene_items(:scene_item_one),
+      scene_locations(:scene_location_one),
       characters(:character_one),
       character_tags(:character_tag_one),
       locations(:location_one),
@@ -119,21 +121,25 @@ class AbilityTest < ActiveSupport::TestCase
     assert_equal @private_universe, write_ability.send(:universe_for, scene_owned)
   end
 
-  test "an element and a presence link are authorized exactly as their scene is" do
+  test "an element and every presence link are authorized exactly as their scene is" do
     private_story = Story.create!(universe: @private_universe, name: "Private story")
     scene = private_story.scenes.create!(name: "Private scene")
-    element = scene.scene_elements.create!(name: "A beat")
-    link = scene.scene_characters.create!(character: @private_universe.characters.create!(name: "Somebody"))
+    records = [
+      scene.scene_elements.create!(name: "A beat"),
+      scene.scene_characters.create!(character: @private_universe.characters.create!(name: "Somebody")),
+      scene.scene_items.create!(item: @private_universe.items.create!(name: "A prop")),
+      scene.scene_locations.create!(location: @private_universe.locations.create!(name: "A place"))
+    ]
 
     non_member = Ability.new(@read_user)
-    [ element, link ].each do |record|
+    records.each do |record|
       assert_not non_member.can?(:read, record), record.class.name
       assert_not non_member.can?(:write, record), record.class.name
     end
 
     UniverseMembership.create!(universe: @private_universe, user: @read_user, access_level: :read)
     reader = Ability.new(@read_user)
-    [ element, link ].each do |record|
+    records.each do |record|
       assert reader.can?(:read, record), record.class.name
       assert_not reader.can?(:write, record), record.class.name
       assert_not reader.can?(:destroy, record), record.class.name
@@ -141,7 +147,7 @@ class AbilityTest < ActiveSupport::TestCase
 
     UniverseMembership.find_by!(universe: @private_universe, user: @read_user).update!(access_level: :write)
     writer = Ability.new(@read_user)
-    [ element, link ].each do |record|
+    records.each do |record|
       assert writer.can?(:write, record), record.class.name
       assert_not writer.can?(:admin, record), record.class.name
     end

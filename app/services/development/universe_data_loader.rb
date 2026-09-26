@@ -616,7 +616,37 @@ module Development
         value = loaded_record.name if loaded_record.respond_to?(:name)
         value = loaded_record.title if value.blank? && loaded_record.respond_to?(:title)
         value = loaded_record.slug if value.blank? && loaded_record.respond_to?(:slug)
-        value.presence || record.identifier || "record"
+        return value.presence || record.identifier if value.present?
+
+        # A join record has no name, title, or slug of its own, so name the
+        # records it joins. Without this the log says "Created SceneItem: record"
+        # for every row, which is not enough to verify a load by reading it.
+        endpoints = joined_endpoints(loaded_record)
+        return endpoints.join(" -> ") if endpoints.any?
+
+        record.identifier || "record"
+      end
+
+      # "Scene.secrets -> Item.jonas_key" for a presence link. Only `belongs_to`
+      # owners are used: a link row is identified by the records on either side of
+      # it, not by the collections it holds.
+      def joined_endpoints(loaded_record)
+        loaded_record.class.reflect_on_all_associations(:belongs_to).filter_map do |association|
+          owner = loaded_record.public_send(association.name)
+          next if owner.nil?
+
+          "#{association.name}.#{owner_identifier(owner)}"
+        end
+      end
+
+      # The stable identifier the manifest uses for a record: its slug, falling
+      # back to the name it would have been resolved from.
+      def owner_identifier(owner)
+        return owner.slug if owner.respond_to?(:slug) && owner.slug.present?
+        return owner.name if owner.respond_to?(:name) && owner.name.present?
+        return owner.title if owner.respond_to?(:title) && owner.title.present?
+
+        owner.id
       end
 
       def reference_key(model_name, identifier)

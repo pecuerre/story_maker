@@ -1,0 +1,5 @@
+<%# One error region per modal form. The controller fills it with the server's
+    error hash, keeps the entered values in place, and moves focus here so the
+    reason a save was rejected is announced instead of being lost. It is rendered
+    empty and hidden, so a modal that never fails shows nothing. %>
+<div class="modal-errors mb-3" data-modal-form-target="errors" role="alert" tabindex="-1" hidden></div>

@@ -1,9 +1,11 @@
 class CharactersController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
+  include RequiresJsonMutationFormat
   maintains_sibling_positions_for :character
 
   before_action :set_character, only: %i[ show update destroy ]
+  before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
     @characters = Current.universe.characters

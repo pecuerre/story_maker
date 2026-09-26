@@ -8,6 +8,10 @@
       default stays short, and a caller that owns dependents passes the full
       template so an unannounced cascade is never possible. %>
   <% confirm_text = local_assigns[:confirm_text] || "Delete #{record_name}?" %>
+  <%# `:turbo` is the HTML redirect/re-render flow. `:json` is for a row whose
+      destroy action is JSON-only: there is no Turbo form to follow, so the modal
+      controller issues the DELETE, confirms the copy, and refreshes the list. %>
+  <% delete_via = local_assigns.fetch(:delete_via, :turbo) %>
   <% actions_id = "#{dom_id(record)}-actions" %>
 
   <div class="dropdown row-actions">
@@ -31,11 +35,20 @@
       </li>
       <li><hr class="dropdown-divider"></li>
       <li>
-        <%= button_to local_assigns.fetch(:delete_url),
-          method: :delete,
-          class: "dropdown-item text-danger",
-          data: { turbo_confirm: confirm_text } do %>
-          <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+        <% if delete_via == :json %>
+          <button type="button" class="dropdown-item text-danger"
+            data-action="modal-form#destroy"
+            data-modal-form-url="<%= local_assigns.fetch(:delete_url) %>"
+            data-modal-form-confirm="<%= confirm_text %>">
+            <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+          </button>
+        <% else %>
+          <%= button_to local_assigns.fetch(:delete_url),
+            method: :delete,
+            class: "dropdown-item text-danger",
+            data: { turbo_confirm: confirm_text } do %>
+            <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+          <% end %>
         <% end %>
       </li>
     </ul>

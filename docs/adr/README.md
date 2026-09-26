@@ -25,6 +25,7 @@ The current architecture and conventions are documented in:
 | [0008](0008-explicit-development-universe-loader.md) | Accepted | Use a registry-driven, environment-guarded loader for disposable development universes |
 | [0009](0009-transactional-position-maintenance.md) | Accepted | Maintain hierarchical and flat ordered collections through one transactional service |
 | [0010](0010-safe-taxonomy-editing-and-state-refresh.md) | Accepted | Build taxonomy UI safely and refresh server state after mutations |
+| [0011](0011-modal-json-mutation-contract.md) | Accepted | Submit the shared modal as JSON, explain rejections in the modal, and refresh from the server |
 
 ## Format
 

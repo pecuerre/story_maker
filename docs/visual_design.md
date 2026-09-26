@@ -260,6 +260,24 @@ Characters, items, events, relations, and ownerships use:
 - mutation controls hidden for guests and read-only members, while the record content and the Details
   link remain visible.
 
+A modal has three states, and none of them is a dead end
+([ADR 0011](adr/0011-modal-json-mutation-contract.md)):
+
+- **Open** — the first field is focused, and an existing record's text is selected so a rename can be
+  typed over it. Nothing depends on hover or a wide viewport.
+- **Saving** — the submit button is disabled, carries a spinner, and the form is `aria-busy`. The
+  entered values stay visible.
+- **Rejected** — the modal stays open. A `danger` alert at the top of the body lists the reasons and
+  takes focus, and each message also appears next to the control that caused it with `aria-invalid`
+  and `aria-describedby`. A record-level message, or a rejection with no field of its own, appears
+  only in the summary. A request that never reached the server, a `403`, and a `5xx` each get their
+  own wording, and none of them closes the modal or discards the input.
+
+A failed delete has no modal to stay open, so it reports itself in the page-level live region beside
+the flash messages as a visible `danger` alert, and the row is left alone. A short confirmation
+("Saved. Refreshing the list…") is visually hidden and only announced, because the refreshed render
+that follows is the real confirmation.
+
 Relations should read naturally (`Character A → Character B`) rather than as an unlabeled database
 row. Ownerships use the same readable relationship treatment.
 
@@ -414,8 +432,8 @@ carries the Section selector. Drag-and-drop is not offered, so the move always w
 on touch.
 Read-only members and guests see the same surface with no controls and no instruction to add scenes.
 
-Narration and Dialogue Elements will use one Bootstrap modal. The form has a kind selector,
-required
+Narration and Dialogue Elements use one Bootstrap modal and the shared modal contract, not a second
+editor: the form has a kind selector, required
 **Title**, optional plain-text **Content**, and a multi-speaker picker visible and required only
 for Dialogue. Narration has no speaker control. Error summaries stay in the modal with the entered
 values; a failed request does not close it. Element rows show kind, Title, a body preview,

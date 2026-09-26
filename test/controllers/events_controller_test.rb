@@ -76,7 +76,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy event" do
     assert_difference("Event.count", -1) do
-      delete universe_event_url(universe_slug: @universe.slug, id: @event)
+      delete universe_event_url(universe_slug: @universe.slug, id: @event), as: :json
     end
 
     assert_response :no_content
@@ -86,7 +86,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     reference = Event.create!(universe: @universe, title: "Reference", before_event: @event)
 
     assert_difference("Event.count", -1) do
-      delete universe_event_url(universe_slug: @universe.slug, id: @event)
+      delete universe_event_url(universe_slug: @universe.slug, id: @event), as: :json
     end
 
     assert_response :no_content
@@ -99,7 +99,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference("Event.count", -1) do
       assert_no_difference("Scene.count") do
-        delete universe_event_url(universe_slug: @universe.slug, id: @event)
+        delete universe_event_url(universe_slug: @universe.slug, id: @event), as: :json
       end
     end
 
@@ -111,7 +111,10 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     get universe_events_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "form[action=?] [data-turbo-confirm=?]",
+    # The event row is a JSON-only workspace, so its delete control is the modal
+    # controller's button rather than a Turbo `button_to`. The mandatory
+    # consequence copy is carried by that control and must not be weakened.
+    assert_select "button[data-action='modal-form#destroy'][data-modal-form-url=?][data-modal-form-confirm=?]",
       universe_event_path(universe_slug: @universe.slug, id: @event),
       "Delete “#{@event.display_string}”? Its child events, tag assignments, and any temporal " \
       "referrers that would become unidentifiable will be permanently removed; other temporal " \

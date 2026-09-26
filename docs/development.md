@@ -216,10 +216,10 @@ Delivery remains staged in [`backlog.md`](backlog.md):
   Section grouping workspace.
 - 11.4 (done) adds the story-scoped Scene Tag schema/model, hierarchical Story Tags workspace,
   optional Scene Details assignment, badges, fixtures, and development data.
-- Later slices add reliable JSON modals, Elements, speaker and presence links, and reverse links in
-  that order.
-- Slice 11.5 must fix JSON modal submission/error/delete behavior before Element UI depends on the
-  shared modal controller. Do not copy the current 406/stale-DOM behavior into Scene Elements.
+- 11.5 (done) makes the shared modal submit JSON, render a `422` in the modal, report a request that
+  never lands, and remove a row with its counts, with request and browser regressions for Characters,
+  Items, and Events. See [ADR 0011](adr/0011-modal-json-mutation-contract.md).
+- Later slices add Elements, speaker and presence links, and reverse links in that order.
 - Every slice preserves public/private read-write-admin behavior and updates all model registries,
   authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
 

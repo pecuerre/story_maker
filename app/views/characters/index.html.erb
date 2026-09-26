@@ -4,6 +4,7 @@
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="character"
+  data-modal-form-response-value="json"
   data-modal-form-create-title-value="New character">
   <%= render "shared/page_header",
     title: "Characters",
@@ -54,6 +55,7 @@
               record_name: character.name,
               edit_url: universe_character_path(id: character),
               delete_url: universe_character_path(id: character),
+              delete_via: :json,
               values: character_fields_json(character) %>
           </div>
         <% end %>
@@ -80,8 +82,9 @@
         <%= form_with scope: :character,
           url: universe_characters_path,
           method: :post,
-          data: { modal_form_target: "form" } do |form| %>
+          data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
           <div class="modal-body">
+            <%= render "shared/modal_errors" %>
             <div class="mb-3">
               <%= form.label :name, class: "form-label" %>
               <%= form.text_field :name, class: "form-control", required: true %>
@@ -99,7 +102,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= form.submit "Save character", class: "btn btn-primary" %>
+            <%= form.submit "Save character", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
           </div>
         <% end %>
       </div>

@@ -4,6 +4,7 @@
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="item"
+  data-modal-form-response-value="json"
   data-modal-form-create-title-value="New item">
   <%= render "shared/page_header",
     title: "Items",
@@ -54,6 +55,7 @@
               record_name: item.name,
               edit_url: universe_item_path(id: item),
               delete_url: universe_item_path(id: item),
+              delete_via: :json,
               values: item_fields_json(item) %>
           </div>
         <% end %>
@@ -78,8 +80,9 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <%= form_with scope: :item, url: universe_items_path, method: :post,
-          data: { modal_form_target: "form" } do |form| %>
+          data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
           <div class="modal-body">
+            <%= render "shared/modal_errors" %>
             <div class="mb-3">
               <%= form.label :name, class: "form-label" %>
               <%= form.text_field :name, class: "form-control", required: true %>
@@ -97,7 +100,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= form.submit "Save item", class: "btn btn-primary" %>
+            <%= form.submit "Save item", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
           </div>
         <% end %>
       </div>

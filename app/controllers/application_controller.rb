@@ -24,6 +24,18 @@ class ApplicationController < ActionController::Base
     head :not_found
   end
 
+  # A JSON mutation that arrives without a valid CSRF token is a refusal, not a
+  # validation failure, and the shared modal contract already explains a `403` as
+  # "reload the page and sign in again" — the right advice for a stale token.
+  # Without this, the request would render the generic `422` exception page and the
+  # editor would report that the server "did not explain why". HTML requests keep
+  # Rails' own handling, because a browser form carries its token in the body.
+  rescue_from ActionController::InvalidAuthenticityToken do |exception|
+    raise exception unless request.format.json?
+
+    head :forbidden
+  end
+
   protected
 
   def current_ability

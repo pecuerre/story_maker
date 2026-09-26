@@ -19,6 +19,56 @@ Labels used below:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-09-27
+
+- **[added]** Closed known quirk 33 with a real client-side pipeline, recorded as
+  [ADR 0012](docs/adr/0012-client-side-verification-and-csrf.md). The Stimulus controllers now have
+  unit tests on Bun's built-in test runner (`bun run test:js`, 62 cases in `test/javascript/`) that
+  run in a happy-dom DOM, and Biome (`bun run lint:js`) checks them and the controllers in a new
+  `js-check` CI job. `test/javascript/setup.js` provides the DOM and stubs `@hotwired/stimulus` and
+  `bootstrap`, because the application serves both from the import map rather than `node_modules` —
+  the tested controller is the file the browser loads, with no second copy of the framework.
+- **[added]** `test/javascript/no_html_sink_test.js` fails when a new
+  `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write` sink appears in `app/javascript`
+  without a reviewed exception, so the DOM-API-only rule behind the resolved DOM-XSS finding is
+  enforced rather than advisory.
+- **[fixed]** Three defects the new unit tests found in the code they were written for. Cancelling
+  an inline taxonomy rename restored the author's unsaved text instead of the name the server had
+  rendered, so a row could show a name the database did not have. A `belongs_to` error keyed on
+  `:parent` was labelled `parent` instead of the editor's own **Parent tag** label, even though the
+  message was placed on the right control. A `422` body whose `errors` was not an object was read as
+  an error on an attribute literally called `errors` instead of as a response that explains nothing.
+  Each has a unit test, and the cancelled-rename case also has a browser regression.
+- **[fixed]** The taxonomy editor's `fetch` always sent an `X-CSRF-Token` header, so a page without
+  the meta tag would have sent the literal string `undefined` and been refused as an invalid token
+  rather than a missing one. It now omits the header, as the flat-list modal already did.
+- **[security]** A mutation that arrives without a valid CSRF token is now refused as a refusal
+  rather than as a validation failure: `ApplicationController` answers `403` for a JSON request
+  whose token Rails rejects, so the shared editor says the change was refused and keeps the author's
+  input instead of reporting that the server explained nothing. `test/controllers/csrf_mutation_test.rb`
+  and `test/system/csrf_token_test.rb` turn forgery protection on for their own window and prove
+  that the page's `csrf-token` meta tag is sent by both `fetch` implementations, accepted by the
+  server, and that a missing or forged token is refused with nothing written — the browser cases by
+  removing the meta tag, the request cases by replaying the token a real page published.
+- **[docs]** `docs/known_quirks.md` now holds only open findings. Every "former finding was fixed"
+  paragraph was removed and its history already recorded in `docs/resolved_quirks.md`, the dated
+  follow-up verification log moved there as a **Verification history** section, and the 2026-09-24
+  audit baseline is labeled as the evidence behind the findings rather than a capability list.
+  Quirk 33 itself moved to `docs/resolved_quirks.md`. The rules stay in `AGENTS.md` and are now
+  stated in the file itself: a fixed entry is moved whole, and nothing about it is left behind.
+- **[docs]** `docs/development.md` documents the client-side commands, the test layout, and the
+  `js-check` job; `docs/architecture.md` records the test-environment CSRF rule and the token in the
+  editor data flow; `docs/universe_maker_conventions.md` states the client-side rules every editor
+  follows.
+- **[chore]** Biome's first run reported twelve real problems, all fixed here: two self-assigning
+  `window.location.href = window.location.href` reload fallbacks became `window.location.reload()`,
+  and ten `forEach` callbacks that returned a value gained braced bodies. Linting is deliberately
+  not formatting — the controllers keep their hand-written style.
+- **[chore]** `@biomejs/biome` and `@happy-dom/global-registrator` are the project's first
+  development-only JavaScript dependencies, pinned through the committed `bun.lock`;
+  `bun install --frozen-lockfile` is clean, and `bun audit` reports no vulnerabilities across 116
+  packages.
+
 ## 2026-09-26
 
 - **[fixed]** Closed known quirk 18 — a rejected mutation now explains itself in every editor

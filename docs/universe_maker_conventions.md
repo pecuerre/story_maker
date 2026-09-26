@@ -416,6 +416,21 @@ added to an existing page instead of a new page being invented. See
 - `timeline_controller.js` — pan/zoom + popovers for the Timeline view.
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
 
+Both editors that mutate through `fetch` send the page's `csrf-token` meta tag as `X-CSRF-Token`
+from the same code path, and a page without a token sends no header at all rather than the string
+`"undefined"`.
+
+Client-side rules:
+- A user-controlled value is only ever text or an attribute. `test/javascript/no_html_sink_test.js`
+  fails if a new `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write` sink appears in
+  `app/javascript` without a reviewed, commented exception; the only one is the Timeline's static
+  SVG arrow markers.
+- Every shared editor's serialization, error-rendering, and DOM-building logic has a `bun test`
+  case in `test/javascript/`, next to the controller it covers. Browser tests are for what only a
+  browser can show (focus, Turbo navigation, a real token on the wire).
+- `bun run lint:js` (Biome, recommended rules) is part of CI alongside `bin/rubocop`.
+
+
 ### Navigation (Top bar) — `app/views/layouts/_navbar.html.erb`
 Left to right:
 - **Universe Maker** — the brand, and the landing page (`/`, the universes index). It is where the

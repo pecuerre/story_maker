@@ -62,7 +62,9 @@ export default class extends Controller {
     this.pageStatus(null)
     this.shown = false
     this.focusSummaryOnShow = false
-    this.formTarget.querySelectorAll("select[multiple]").forEach((select) => select.tomselect?.clear(true))
+    this.formTarget.querySelectorAll("select[multiple]").forEach((select) => {
+      select.tomselect?.clear(true)
+    })
 
     Object.entries(values).forEach(([name, value]) => {
       const field = this.namedControl(`${this.modelParamValue}[${name}]`)
@@ -235,14 +237,22 @@ export default class extends Controller {
       return
     }
 
-    entries.forEach(([attribute, messages]) => this.markInvalid(attribute, messages))
+    entries.forEach(([ attribute, messages ]) => {
+      this.markInvalid(attribute, messages)
+    })
     this.showSummary(entries, "The change could not be saved. Fix the following and try again.")
   }
 
+  // A `{ errors: ... }` envelope is only unwrapped when `errors` really is the
+  // message hash. A body whose `errors` is anything else — or an array — explains
+  // nothing, and reporting that beats marking a field invalid for an attribute
+  // literally called "errors".
   errorEntries(payload) {
     const body = payload && typeof payload === "object" ? payload : null
-    const errors = body?.errors && typeof body.errors === "object" ? body.errors : body
-    if (!errors || typeof errors !== "object") return []
+    if (!body) return []
+
+    const errors = "errors" in body ? body.errors : body
+    if (!errors || typeof errors !== "object" || Array.isArray(errors)) return []
 
     return Object.entries(errors).map(([attribute, value]) => [ attribute, this.errorMessages(attribute, value) ]).filter(([ , messages ]) => messages.length > 0)
   }
@@ -320,7 +330,9 @@ export default class extends Controller {
   }
 
   clearErrors() {
-    this.formTarget.querySelectorAll("[data-modal-form-error-for]").forEach((element) => element.remove())
+    this.formTarget.querySelectorAll("[data-modal-form-error-for]").forEach((element) => {
+      element.remove()
+    })
     this.formTarget.querySelectorAll("[data-modal-form-error-ids]").forEach((field) => {
       const errorIds = field.dataset.modalFormErrorIds.split(" ").filter(Boolean)
       const described = (field.getAttribute("aria-describedby") || "").split(" ").filter((id) => id && !errorIds.includes(id))
@@ -451,7 +463,7 @@ export default class extends Controller {
 
   refresh() {
     if (window.Turbo?.visit) window.Turbo.visit(window.location.href, { action: "replace" })
-    else window.location.href = window.location.href
+    else window.location.reload()
   }
 
   parseJson(value, fallback) {

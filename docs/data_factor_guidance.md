@@ -43,6 +43,10 @@ Several observations in the report are already stale or have changed in this rep
 - The report's `package.json` lockfile observation, the exact test-file count, the exact commit
   span, and the exact score are historical measurements. Do not repeat them as current facts
   without checking the repository.
+- The client-side code is no longer unchecked: the Stimulus controllers are linted with Biome and
+  unit tested on Bun's runner, and the browser suite proves a real CSRF token is sent
+  ([ADR 0012](adr/0012-client-side-verification-and-csrf.md)). What remains open there is breadth —
+  the browser suite is a smoke suite, not exhaustive UI coverage — not tooling.
 
 The report also does not replace the more urgent project findings in
 [`known_quirks.md`](known_quirks.md). In particular, the tracked Kamal secret, taxonomy DOM XSS,

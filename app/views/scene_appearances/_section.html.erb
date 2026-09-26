@@ -1,0 +1,64 @@
+<%# A Scene has no Universe-level URL, so this section is always scoped to the
+    Story the request selected, and it says so. Without a current Story there is
+    nothing to list and the record says so, rather than falling back to the
+    Universe's first Story.
+
+    The whole section is read-only navigation: it renders for every access level,
+    because the Scenes it points at are readable by exactly the people who can
+    read the record it is attached to. The page's own authorization has already
+    established that the reader may see this record, and a Scene in the same
+    Story is readable by the same reader. %>
+<% appearances = SceneAppearances.for(record, story: Current.story) %>
+<% story_selected = Current.story.present? %>
+<%# Without a current Story the section can only offer the way to pick one, so
+    the empty case gets a real action rather than a dead end. %>
+<% empty_action = link_to("All stories", universe_stories_path, class: "btn btn-primary") unless story_selected %>
+<%= render "shared/detail_section",
+  title: story_selected ? scene_appearances_title(appearances, Current.story) : "Appears in scenes",
+  icon: "film",
+  count: appearances.count,
+  count_label: "scene",
+  empty_title: story_selected ? "Not in any scene of #{Current.story.name} yet" : "Select a story to see its scenes",
+  empty_description: if story_selected
+    "This record is shared by every story in the universe, so it can appear in as many scenes as you like. Link it from a scene's Characters, Items, or Locations tab, or point a scene at this event, and it will be listed here."
+  else
+    "Scenes belong to a story, so a record can only say where it appears once a story is the current one. Pick a story to see which of its scenes use this record."
+  end,
+  empty_action: empty_action do %>
+  <%# The block only renders when the section has appearances, which is only ever
+      possible with a current Story: without one there is nothing to point at. %>
+  <% scene_total = Current.story.scenes.count %>
+  <div class="list-group list-group-flush">
+    <% appearances.entries.each do |entry| %>
+      <div class="list-group-item entity-row d-flex align-items-start gap-3">
+        <div class="entity-copy flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <%# The narrative position badge, so the order the Story is told in is
+                visible from a record that knows nothing about that order. %>
+            <span class="badge rounded-pill text-bg-light border"
+              aria-label="<%= "Narrative position #{entry.scene.position + 1} of #{scene_total}" %>">
+              <%= entry.scene.position + 1 %>
+            </span>
+            <span class="entity-title">
+              <%= link_to entry.scene.name, universe_story_scene_path(story_id: Current.story, id: entry.scene), class: "text-break" %>
+            </span>
+            <% scene_appearance_badges(entry).each do |badge| %>
+              <span class="badge rounded-pill text-bg-light border"><%= badge %></span>
+            <% end %>
+          </div>
+          <% role_label = scene_appearance_role_label(entry) %>
+          <% if role_label.present? %>
+            <div class="entity-description">Role: <%= role_label %></div>
+          <% end %>
+          <% if entry.speaks? %>
+            <div class="form-text">Speaks in <%= scene_appearance_speaking_in(entry).to_sentence %>.</div>
+          <% end %>
+        </div>
+
+        <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+          <%= record_details_link universe_story_scene_path(story_id: Current.story, id: entry.scene), record: entry.scene %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,20 @@
+# Explicit Item presence. An item belongs to the universe and is shared by every
+# story, so the same item may be linked to several scenes, and one scene may hold
+# more than one item.
+scene_item_one:
+  scene: scene_one
+  item: item_one
+  role: "carries"
+
+# A blank role is valid: the author recorded that the item appears without saying
+# how it is used.
+scene_item_two:
+  scene: scene_one
+  item: item_two
+  role:
+
+# The same item in a second scene, which the unique-per-scene index must allow.
+scene_item_three:
+  scene: scene_three
+  item: item_one
+  role: "still missing"

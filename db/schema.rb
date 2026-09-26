@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -261,6 +261,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120100) do
     t.check_constraint "kind IN ('narration', 'dialogue')", name: "scene_elements_kind_is_known"
   end
 
+  create_table "scene_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "item_id", null: false
+    t.string "role"
+    t.integer "scene_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["item_id"], name: "index_scene_items_on_item_id"
+    t.index ["scene_id", "item_id"], name: "index_scene_items_on_scene_id_and_item_id", unique: true
+    t.index ["scene_id"], name: "index_scene_items_on_scene_id"
+  end
+
+  create_table "scene_locations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "location_id", null: false
+    t.string "role"
+    t.integer "scene_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["location_id"], name: "index_scene_locations_on_location_id"
+    t.index ["scene_id", "location_id"], name: "index_scene_locations_on_scene_id_and_location_id", unique: true
+    t.index ["scene_id"], name: "index_scene_locations_on_scene_id"
+  end
+
   create_table "scene_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -422,6 +444,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120100) do
   add_foreign_key "scene_element_speakers", "characters"
   add_foreign_key "scene_element_speakers", "scene_elements"
   add_foreign_key "scene_elements", "scenes"
+  add_foreign_key "scene_items", "items"
+  add_foreign_key "scene_items", "scenes"
+  add_foreign_key "scene_locations", "locations"
+  add_foreign_key "scene_locations", "scenes"
   add_foreign_key "scene_tags", "scene_tags", column: "parent_id"
   add_foreign_key "scene_tags", "stories"
   add_foreign_key "scenes", "events"

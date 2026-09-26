@@ -23,6 +23,10 @@ Rails.application.routes.draw do
         # The Characters tab is its own canonical page. Only the role is editable
         # afterwards: a link is added, given a role, or removed.
         resources :scene_characters, path: "characters", only: %i[ index create update destroy ]
+        # Items and Locations follow the same read-page/JSON-mutation contract.
+        # The Locations tab is plural because a Scene may use any number of them.
+        resources :scene_items, path: "items", only: %i[ index create update destroy ]
+        resources :scene_locations, path: "locations", only: %i[ index create update destroy ]
       end
     end
     get "tags", to: "tags#index", as: :tags

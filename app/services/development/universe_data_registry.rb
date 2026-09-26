@@ -50,7 +50,11 @@ module Development
       # or the Universe, so they load after Scene and reach the Universe through
       # it. Element positions are flat and contiguous inside their own Scene.
       ModelDefinition.new(model_name: "SceneElement", file_name: "scene_elements", scope: :scene, positioned: true, position_mode: :flat),
-      ModelDefinition.new(model_name: "SceneCharacter", file_name: "scene_characters", scope: :scene)
+      ModelDefinition.new(model_name: "SceneCharacter", file_name: "scene_characters", scope: :scene),
+      # The remaining two world-presence links. Same shape as SceneCharacter: a
+      # Scene owns them and they reach the Universe through it.
+      ModelDefinition.new(model_name: "SceneItem", file_name: "scene_items", scope: :scene),
+      ModelDefinition.new(model_name: "SceneLocation", file_name: "scene_locations", scope: :scene)
     ].freeze
 
     UNIVERSES = {

@@ -134,8 +134,53 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "an html request keeps Rails' own handling of a rejected token" do
+  test "a scene item mutation is refused without a token and accepted with one" do
     with_forgery_protection do
+      scene = scenes(:scene_one)
+      item = @universe.items.create!(name: "Token test item")
+      payload = { scene_item: { item_id: item.id, role: "carries" } }
+      token = fetch_page_token(universe_story_scene_scene_items_path(universe_slug: @universe.slug,
+        story_id: scene.story, scene_id: scene))
+
+      assert_no_difference("SceneItem.count") do
+        post universe_story_scene_scene_items_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload, as: :json
+      end
+      assert_response :forbidden
+
+      assert_difference("SceneItem.count", 1) do
+        post universe_story_scene_scene_items_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload,
+          headers: { "X-CSRF-Token" => token }, as: :json
+      end
+      assert_response :created
+    end
+  end
+
+  test "a scene location mutation is refused without a token and accepted with one" do
+    with_forgery_protection do
+      scene = scenes(:scene_one)
+      location = @universe.locations.create!(name: "Token test place")
+      payload = { scene_location: { location_id: location.id, role: "setting" } }
+      token = fetch_page_token(universe_story_scene_scene_locations_path(universe_slug: @universe.slug,
+        story_id: scene.story, scene_id: scene))
+
+      assert_no_difference("SceneLocation.count") do
+        post universe_story_scene_scene_locations_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload, as: :json
+      end
+      assert_response :forbidden
+
+      assert_difference("SceneLocation.count", 1) do
+        post universe_story_scene_scene_locations_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload,
+          headers: { "X-CSRF-Token" => token }, as: :json
+      end
+      assert_response :created
+    end
+  end
+
+  test "an html request keeps Rails' own handling of a rejected token" do    with_forgery_protection do
       fetch_page_token
 
       assert_no_difference("Character.count") do

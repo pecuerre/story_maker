@@ -1,0 +1,20 @@
+# Explicit Location presence. A location belongs to the universe and is shared by
+# every story, so the same location may be linked to several scenes, and one scene
+# may hold more than one location.
+scene_location_one:
+  scene: scene_one
+  location: location_one
+  role: "setting"
+
+# A second place in the same scene, with a blank role, which is valid: the author
+# recorded that the scene happens there without saying how.
+scene_location_two:
+  scene: scene_one
+  location: location_two
+  role:
+
+# The same location in a second scene, which the unique-per-scene index must allow.
+scene_location_three:
+  scene: scene_three
+  location: location_one
+  role: "arrives at"

@@ -62,7 +62,11 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     submitted input preserved. The `#group` action instead resolves the Section through
     `@story.sections.find`, making a foreign or unknown target a `404`. Slice 11.4 also adds
     collection-id guards on Scene/Scene Tag assignment, so unknown, duplicate, and cross-story tag
-    ids become ordinary validation errors before the constrained join can raise. The remaining
+    ids become ordinary validation errors before the constrained join can raise. The Scene-owned
+    presence links are covered the same way from slices 11.7–11.9: an unknown or foreign
+    `character_id`, `item_id`, or `location_id` is a `404` because the record is resolved through
+    `Current.universe`, and a duplicate pair is a `422` field error before the unique index can raise.
+    The remaining
     unprotected paths are the hierarchical `parent_id` and the Event temporal references above.
 
 20. **Medium — generated routes advertise unsupported actions and templates.** `config/routes.rb:2-25`
@@ -105,7 +109,8 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     uniqueness constraints (for example `db/schema.rb:42-45,84-87,117-120,150-153,186-189,224-227`;
     the migrations use bare `create_join_table`, e.g.
     `db/migrate/20260923130012_create_characters.rb:14`). The Scene-owned and Scene-tag tables are
-    the exception: `scenes_scene_tags`, `scene_element_speakers`, and `scene_characters` all have
+    the exception: `scenes_scene_tags`, `scene_element_speakers`, `scene_characters`, `scene_items`,
+    and `scene_locations` all have
     real foreign keys and a unique pair index, and `scene_elements` adds a `check_constraint` on
     `kind`. Direct SQL,
     imports, failed association replacement, or duplicate IDs can still create orphan/duplicate rows

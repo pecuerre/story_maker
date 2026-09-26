@@ -16,6 +16,8 @@ class Ability
     SceneTag
     SceneElement
     SceneCharacter
+    SceneItem
+    SceneLocation
     Character
     CharacterTag
     Location

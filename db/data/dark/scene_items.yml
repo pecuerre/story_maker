@@ -1,0 +1,47 @@
+# Explicit Item presence in a Dark Scene. An item belongs to the universe and is
+# shared by every story in it, so linking one here records that this Scene uses
+# it rather than copying it. A role is the author's own free text, so this file
+# uses the words an author would actually write, and one link deliberately has
+# none: an item that simply appears is a valid state.
+#
+# The Grotto and Double Lives deliberately have no linked items, so the empty
+# state of the Items tab is reachable without inventing a record.
+
+- scene: Scene.secrets
+  item: Item.jonas_key
+  role: carries the box
+
+- scene: Scene.the-search-in-the-woods
+  item: Item.jonas_key
+  role: hidden in the hollow tree
+
+- scene: Scene.michaels-waltz
+  item: Item.sphere_machine
+  role: powers the dance
+
+# An item with no role: it is on stage and the author did not say what it does.
+- scene: Scene.lies
+  item: Item.jonas_key
+  role:
+
+- scene: Scene.past-and-present
+  item: Item.tannhaus_clockwork_device
+  role: still missing in 1986
+
+- scene: Scene.truths
+  item: Item.the_god_particle
+  role: makes the stone give way
+
+# The same item in two different scenes, and two items in one scene, so neither
+# the unique index nor the plural tab is exercised only in its simplest case.
+- scene: Scene.sic-mundus-creatus-est
+  item: Item.the_god_particle
+  role:
+
+- scene: Scene.sic-mundus-creatus-est
+  item: Item.sphere_machine
+  role: left running
+
+- scene: Scene.the-journey
+  item: Item.st_christopher_medal
+  role: around Hannah's neck

@@ -477,14 +477,22 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       assert_select "a.active[aria-current=page][href=?]",
         universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene),
         text: "Scene Details"
-      # The Characters tab has a real destination now; the two presence tabs that
-      # have not shipped stay aria-disabled placeholders, never dead links.
-      assert_select "a[href=?]", universe_story_scene_scene_characters_path(
-        universe_slug: @universe.slug, story_id: @story, scene_id: @scene
-      ), text: "Characters"
-      %w[Items Locations].each do |label|
-        assert_select "span.nav-link.disabled[aria-disabled=true]", text: label
+      # All four workspace tabs have real destinations now, so none is an
+      # aria-disabled placeholder and none is a dead link.
+      {
+        "Characters" => universe_story_scene_scene_characters_path(
+          universe_slug: @universe.slug, story_id: @story, scene_id: @scene
+        ),
+        "Items" => universe_story_scene_scene_items_path(
+          universe_slug: @universe.slug, story_id: @story, scene_id: @scene
+        ),
+        "Locations" => universe_story_scene_scene_locations_path(
+          universe_slug: @universe.slug, story_id: @story, scene_id: @scene
+        )
+      }.each do |label, path|
+        assert_select "a[href=?]", path, text: label
       end
+      assert_select "span.nav-link.disabled[aria-disabled=true]", count: 0
     end
   end
 

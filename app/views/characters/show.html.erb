@@ -12,8 +12,4 @@
   back_url: universe_characters_path,
   back_label: "All characters" %>
 
-<%= render "shared/detail_section",
-  title: "Related information",
-  icon: "people",
-  empty_title: "Nothing related yet",
-  empty_description: "Relations, events, and the other records that involve this character will be listed here as the universe grows." %>
+<%= render "scene_appearances/section", record: @character %>

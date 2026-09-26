@@ -21,6 +21,92 @@ Labels used below:
 
 ## 2026-09-27
 
+- **[added]** Backlog slices **11.8, 11.9, and 11.10**, which complete **Epic 11 — Add Scenes to a
+  Story** in every slice it specified. Item presence, Location presence, and the reverse continuity
+  links are delivered; the epic now leaves `docs/backlog.md` and its delivered state lives here and
+  in [ADR 0007](docs/adr/0007-story-owned-scenes-and-elements.md).
+- **[added]** `SceneItem` (`scene_items`: `scene_id` + `item_id` with real foreign keys, a unique
+  pair index, and a nullable free-text `role`) is a join model for the same reason `SceneCharacter`
+  is: the role is part of the decision, and a blank role means no role rather than an empty
+  annotation. The **Items** tab is its own canonical read page with add, role-edit, and remove
+  through the shared modal contract from [ADR 0011](docs/adr/0011-modal-json-mutation-contract.md).
+  Unlike the Characters tab it has one participation source, so every row is a stored link and the
+  row list, the page count, and the count a mutation changes are the same rows.
+- **[added]** `SceneLocation` (`scene_locations`, the same shape) with the **plural Locations** tab,
+  because a Scene may use any number of places. It is the only Scene workspace whose rows are
+  hierarchical, so a linked place is named with its full ancestor path (`Winden / Nielsen House /
+  Martha Room`) and the picker is depth-indented in root-first order. The new `LocationPaths` value
+  object builds both from one ordered universe query, the same shape as `SectionPaths` and
+  `SceneTagPaths`; the row *list* stays a flat name order, because the path is what disambiguates
+  two places with the same name. An Item and a Location are shared universe records, so linking one
+  records that a Scene uses it and never copies it or its nested places.
+- **[added]** `SceneAppearances` and the **Appears in scenes of &lt;Story&gt;** section on the
+  Character, Item, Location, and Event details pages: the reverse of the three workspace tabs, so a
+  shared universe record can be traced forward into the Story's narrative sequence. It reports the
+  **union** of a stored presence link, a derived Dialogue speaker, and an `event` reference — one
+  row per Scene, never a sum — in Scene `position` order, with **Linked**, **Speaks in N element(s)**,
+  and **Depicted** listed separately so the reason is never collapsed into one word. The section is
+  read-only navigation, so it renders for every access level, and it is scoped to `Current.story`:
+  a Scene has no Universe-level URL, so with no Story selected the section says so and offers the
+  story list rather than falling back to the Universe's first Story.
+- **[added]** Analyzer-oriented query coverage in `test/models/scene_continuity_queries_test.rb` for
+  the shape a later checker will read: several Scenes may depict one Event and none is merged,
+  narrative order is Scene `position` even when in-world `datetime`s say the opposite, the Event
+  reference and the Scene datetime stay independent, one shared record can appear in many Scenes
+  across Stories, an appearance query never blends two Stories, and every Scene-owned world link
+  stays inside the Scene's own Universe.
+- **[added]** Connected development data for all three new models in `db/data/dark` and
+  `db/data/lotr`: the same Item in two Scenes, two Items in one Scene, a Scene with three linked
+  Locations, a nested Location beside a top-level one, populated and blank roles across all three
+  tabs, and Scenes with no Item or Location so each empty state is reachable without inventing a
+  record. The loader's reference order is now Scene → SceneElement → SceneCharacter → SceneItem →
+  SceneLocation.
+- **[changed]** All four Scene workspace tabs are now live links, so the tab shell renders no
+  `aria-disabled` placeholder and no tab ever points at a route that does not exist. The Scenes list
+  keeps exactly the two count pills it has (Element and participant); Item and Location counts are
+  deliberately absent, because they would cost an extra grouped query per page and the tabs are
+  where that detail belongs.
+- **[changed]** `shared/detail_section` accepts a pre-rendered `empty_action` for the empty case. The
+  section's own block is the record list, which an empty section has no use for, so the two could
+  not share it; existing callers pass no `empty_action` and are unaffected.
+- **[fixed]** The development-data loader logged every join record as `Created SceneItem: record`,
+  which made a load impossible to verify by reading its own output and applied to `SceneCharacter`
+  since slice 11.7. It now names a link row by the records it joins
+  (`Created SceneItem: scene.secrets -> item.jonas-key`).
+- **[security]** Both new endpoints refuse an HTML mutation with `406` **before** anything is
+  written, refuse a mutation without a valid CSRF token with `403` and write nothing, and resolve
+  every record through the authorized Universe → Story → Scene path, so a foreign Scene, presence
+  link, Item, or Location is a `404` rather than a cross-scope write. `Item` and `Location` declare
+  their presence links from their side with `dependent: :delete_all`, so deleting one removes its
+  links and never a Scene, and the ADR's `Item` and `Location` deletion confirmations are now live.
+  A same-Universe target is proved in the model, in the controller, and by real foreign keys plus a
+  unique pair index in the database. The reverse section adds no new surface: it is read-only
+  navigation rendered on a page the shared authorization has already allowed, and every link it
+  emits carries an explicit `story_id`.
+- **[docs]** `docs/architecture.md`, `docs/data_model.md`, `docs/universe_maker_conventions.md`,
+  `docs/visual_design.md`, `docs/development.md`, `docs/known_quirks.md`, and
+  [ADR 0007](docs/adr/0007-story-owned-scenes-and-elements.md) record the delivered state: every
+  Scene-owned route in the ADR's target-URL table is live, the third presence link, the plural
+  hierarchical Locations tab, `LocationPaths`, the `SceneAppearances` union and its story scoping,
+  and the manual verification steps. `docs/known_quirks.md` findings 19 and 23 now name the new
+  constrained join tables and the covered presence-link paths. The Epic 11 entry is deleted from
+  `docs/backlog.md`, and item 9 keeps only the adjacent ideas the epic deliberately did not decide.
+- **[chore]** New coverage for the delivered slices: `test/models/scene_item_test.rb`,
+  `test/models/scene_location_test.rb`, `test/models/location_paths_test.rb`,
+  `test/models/scene_appearances_test.rb`, `test/models/scene_continuity_queries_test.rb`,
+  `test/controllers/scene_items_controller_test.rb`,
+  `test/controllers/scene_locations_controller_test.rb`,
+  `test/controllers/scene_appearances_section_test.rb`, `test/system/scene_items_test.rb`,
+  `test/system/scene_locations_test.rb`, and `test/system/scene_appearances_section_test.rb`. The
+  request cases cover the full public/private read-write-admin matrix for both tabs, including
+  cross-scene, cross-story, and cross-universe link management; the browser cases cover the modal
+  add/edit/remove round trip, the duplicate explained in the modal, the ancestor path, the
+  read-only member, and the unselected-story prompt. `test/fixtures/scene_items.yml` and
+  `test/fixtures/scene_locations.yml` link the same shared record into two Scenes, and the shared
+  suites (`ability_test`, `universe_scope_resolver_test`, `csrf_mutation_test`,
+  `modal_json_contract_test`, `scenes_controller_test`, and the development-data registry and
+  loader tests) were widened rather than forked. No client-side code changed, so `bun run check:js`
+  is unchanged at 75 cases.
 - **[added]** Backlog slices **11.6 and 11.7** — Scene Elements with Dialogue speakers, and
   Character presence in a Scene. `scene_elements` stores a flat ordered block of a Scene's prose
   (`kind` restricted to `narration`/`dialogue` in the model *and* by a database check constraint,

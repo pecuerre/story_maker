@@ -14,8 +14,6 @@
   back_url: universe_events_path,
   back_label: "All events" %>
 
-<%= render "shared/detail_section",
-  title: "Related information",
-  icon: "calendar-event",
-  empty_title: "Nothing related yet",
-  empty_description: "The scenes that depict this event, and the events it points at, will be listed here as the universe grows." %>
+<%# Several Scenes may depict one Event, and they are never merged: the section
+    lists each Scene in the order its Story is told, not in the Event's timeline. %>
+<%= render "scene_appearances/section", record: @event %>

@@ -15,6 +15,8 @@ class Scene < ApplicationRecord
   # removes them, and a shared universe record it referred to always survives.
   has_many :scene_elements, dependent: :destroy
   has_many :scene_characters, dependent: :destroy
+  has_many :scene_items, dependent: :destroy
+  has_many :scene_locations, dependent: :destroy
   # Section is optional organizational grouping only. A nested Section also
   # places the Scene inside that Section's ancestor path; it is not a second
   # stored membership, and it never changes the narrative position.

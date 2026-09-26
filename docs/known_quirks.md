@@ -71,27 +71,12 @@ verification requirements. The resolution is recorded in [`resolved_quirks.md`](
 
 ## Mutation, route, and data-contract observations
 
-Former finding **#17** was fixed on 2026-09-26 by
-[ADR 0011](adr/0011-modal-json-mutation-contract.md): `modal_form_controller.js` now submits the
-form as JSON itself, and a `422` body is rendered in the modal instead of being lost behind a `406`.
-`CharactersController`, `ItemsController`, and `EventsController` also include
-`RequiresJsonMutationFormat`, so a non-JSON mutation is refused with `406` **before** it can
-commit. The resolution and its request/browser coverage are recorded in
-[`resolved_quirks.md`](resolved_quirks.md).
-
-Former finding **#40** was fixed in the same change: a JSON-only row's Delete is issued by the modal
-controller and followed by a same-URL Turbo visit, so the row and the page/sidebar counts cannot stay
-stale, and the deletion consequences still travel with the control. The Event row's mandatory
-confirmation copy is asserted in `events_controller_test.rb` on the new button.
-
-18. **Medium — mutation validation failures are still not rendered in every editor.** The flat-list
-    modal now renders the server's field-error hash, keeps the entered values, and focuses the
-    summary, but the taxonomy tree's modal editor still only announces a non-OK/network failure
-    instead of rendering the field errors it is sent, and relation/ownership failures still re-render
-    their indexes without a model error summary or a preserved invalid form
-    (`app/controllers/relations_controller.rb:16-35`,
-    `app/controllers/ownerships_controller.rb`, and their index views). Request tests do not
-    cover the complete error UI.
+Former findings **#17**, **#18**, **#32** and **#40** were all fixed on 2026-09-26 by
+[ADR 0011](adr/0011-modal-json-mutation-contract.md) and the follow-up work recorded in
+[`resolved_quirks.md`](resolved_quirks.md). The short version: the flat-list modal submits JSON and
+renders a `422` in place, the taxonomy editor renders its own field errors, the two HTML-flow
+editors state the reason and keep the rejected entry, and each of those paths now has browser
+coverage.
 
 19. **Medium — nonexistent optional association IDs escape the JSON error contract.** Hierarchical
     parents and event temporal references are optional, but an unknown ID can pass model validation
@@ -218,15 +203,13 @@ resolution and test are recorded in [`resolved_quirks.md`](resolved_quirks.md).
     instead of re-counting. The row-level authorization and recursive-children costs above are
     unchanged.
 
-32. **Medium — browser coverage is still concentrated on the taxonomy tree and the Scenes
-    workspaces.** The flat-list modal now has its own focused regressions
-    (`test/system/modal_json_flow_test.rb`: JSON create, a record-level `422`, a field error on the
-    control that caused it, a request that never reaches the server, a failed delete, a delete that
-    removes the row and its counts, clearing the last tag, and a 390px viewport), and the earlier
-    Character smoke test can no longer pass on a committed-but-`406` write, because the row only
-    appears after a real `201`. There is still no browser coverage for relations, ownerships,
-    memberships, password reset, or mobile behavior for the other flat lists, and the taxonomy
-    editor's rejection copy is not yet asserted in a browser.
+Former finding **#32** was fixed on 2026-09-26. The flat-list modal, both HTML-flow editors, the
+Members workspace, the password-reset journey, and the taxonomy editor's rejection copy each have
+focused browser coverage now (`test/system/modal_json_flow_test.rb`,
+`modal_html_flow_test.rb`, `membership_access_test.rb`, `password_reset_test.rb`, and
+`taxonomy_tree_test.rb`), and the earlier Character smoke test can no longer pass on a
+committed-but-`406` write because the row only appears after a real `201`. JavaScript still has no
+test/lint pipeline and the smoke suite is still not exhaustive; those are the next entries.
 
 33. **Medium — JavaScript has no test/lint pipeline and test mode disables CSRF.** `package.json:16-20`
     has only CSS build/watch scripts and there are no JavaScript unit/spec files, despite the
@@ -628,3 +611,32 @@ Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no depende
 or vendored asset changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs
 approval; no `db/data` manifest changed either), Docker/Kamal deployment, and a manual browser pass
 outside the automated system suite.
+
+## Follow-up verification (2026-09-26, error UI in every editor, quirks 18 and 32)
+
+- `bin/rails test` — 521 tests, 3,149 assertions, 0 failures, 0 errors, 0 skips.
+- `bin/rails test:system` — 50 tests, 596 assertions, 0 failures, 0 errors, 0 skips, on four
+  separate full runs of the final code (with `SE_CHROME_NO_SANDBOX=1`, which this machine needs).
+  The suite grew by 11 browser tests.
+- `bin/rubocop` — 212 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `node --check` for `modal_form_controller.js` and `taxonomy_tree_controller.js` — passed.
+- `git diff --check` — clean.
+
+Two notes for whoever reads the failure history of this file, because both were real and only one
+of them was the application's fault. First, a long stretch of intermittent browser failures in this
+session was diagnosed as dropped input and turned out to be a method-name collision in the new
+taxonomy code: the three tests that click **Edit** in a row menu failed every time, which looks like
+an input problem and was not. Second, a genuinely intermittent input problem also exists here: in
+some full runs Chrome delivers no `mousedown`/`click` to the page at all, and the affected failures
+land in pre-existing tests (`SceneTagsTest`, `WorkspaceNavigationTest`) with "the row/modal never
+appeared" symptoms. A recurrence of that shape should be re-run once before it is believed.
+
+The browser suite can also only assert what a browser can see: `page.status_code` exists only on
+Capybara's rack-test driver, so the membership browser test asserts the visible refusal and the
+request test owns the exact `403`.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin,
+or vendored asset changed), `bun run build:css` (no SCSS change), `db:demo:reset`/`db:demo:load`
+(destructive, needs approval; no `db/data` manifest changed), Docker/Kamal deployment, and a manual
+browser pass outside the automated suite.

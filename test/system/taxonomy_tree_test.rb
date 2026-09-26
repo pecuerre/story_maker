@@ -268,4 +268,47 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
       assert_selector "a.details-link", text: "Details"
     end
   end
+
+  test "a rejected edit keeps the modal open and renders the server's field errors" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    within "li[data-node-id='#{tag.id}']" do
+      find("button[aria-expanded='false']").click
+      click_button "Edit"
+    end
+
+    within ".modal.show" do
+      # The editor's own `required` attribute is the only thing that keeps a blank
+      # name from reaching the server, so it is removed here to exercise the
+      # rejection the controller has to render.
+      execute_script(%(document.querySelector(".modal.show input[data-taxonomy-field=name]").removeAttribute("required")))
+      fill_in "Name", with: ""
+      fill_in "Description", with: "Rejected, so this text must survive"
+      click_button "Save changes"
+
+      assert_selector "[data-taxonomy-tree-errors] .alert-danger", text: "This change could not be saved"
+      assert_selector "[data-taxonomy-tree-errors] .alert-danger li", text: "Name can't be blank"
+      assert_selector "input[data-taxonomy-field=name][aria-invalid='true']"
+      assert_selector ".modal-body p.invalid-feedback", text: "can't be blank", visible: :visible
+      assert_selector "[data-taxonomy-tree-errors]:focus"
+      # The entered values are kept, so the author can fix the name and retry.
+      assert_field "Description", with: "Rejected, so this text must survive"
+    end
+    assert_selector ".modal.show"
+    assert_equal "Character tag one", tag.reload.name
+
+    # The same editor then succeeds, so the rejection was reported, not fatal.
+    within ".modal.show" do
+      fill_in "Name", with: "Character tag one renamed"
+      click_button "Save changes"
+    end
+    assert_selector "li[data-node-id='#{tag.id}'] .taxonomy-name-trigger", text: "Character tag one renamed"
+    assert_equal "Character tag one renamed", tag.reload.name
+  end
 end

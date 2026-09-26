@@ -63,4 +63,38 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to universe_relations_url(universe_slug: @universe.slug)
     assert_equal "Updated description", relation.reload.description
   end
+
+  test "a rejected create states the reason and keeps the entered values in the editor" do
+    assert_no_difference("Relation.count") do
+      post universe_relations_url(universe_slug: @universe.slug), params: {
+        relation: { character1_id: @character_one.id, character2_id: "", description: "Kept for another try" }
+      }
+    end
+
+    assert_response :unprocessable_content
+    # The reason is stated on the page the author lands on, and again inside the
+    # editor they reopen, because this workspace re-renders after a rejection.
+    assert_select ".alert-danger[role=alert]", text: /prevented this relation from being saved/
+    assert_select ".alert-danger[role=alert] li", text: /Character2/
+    assert_select "[data-modal-form-target='modal'] .alert-danger li", text: /Character2/
+    # The invalid values are serialized into the Add trigger, so reopening the
+    # editor does not silently discard the entry.
+    assert_select "button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",
+      universe_relations_path(universe_slug: @universe.slug), "Kept for another try"
+  end
+
+  test "a rejected update prefill reaches only the edited row" do
+    relation = Relation.create!(universe: @universe, character1: @character_one, character2: @character_two)
+    other = Relation.create!(universe: @universe, character1: @character_two, character2: @character_one, description: "Stored text")
+
+    patch universe_relation_url(universe_slug: @universe.slug, id: relation), params: {
+      relation: { character2_id: "", description: "Rejected text" }
+    }
+
+    assert_response :unprocessable_content
+    assert_select ".row-actions button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",
+      universe_relation_path(universe_slug: @universe.slug, id: relation), "Rejected text"
+    assert_select ".row-actions button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",
+      universe_relation_path(universe_slug: @universe.slug, id: other), "Stored text", count: 1
+  end
 end

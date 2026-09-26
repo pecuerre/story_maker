@@ -8,11 +8,6 @@ require "application_system_test_case"
 # a 422 is explained in the modal, a request that never lands is reported, and a
 # delete really removes the row and its counts.
 class ModalJsonFlowTest < ApplicationSystemTestCase
-  # A successful mutation ends in a full same-URL navigation, so the first
-  # assertion after it waits longer than Capybara's default. This only affects how
-  # long a passing refresh may take; a genuinely broken refresh still fails.
-  REFRESH_WAIT = 10
-
   setup do
     @user = users(:user_one)
     @universe = universes(:universe_one)

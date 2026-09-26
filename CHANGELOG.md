@@ -21,6 +21,38 @@ Labels used below:
 
 ## 2026-09-26
 
+- **[fixed]** Closed known quirk 18 — a rejected mutation now explains itself in every editor
+  instead of only announcing that something went wrong. The taxonomy tree's modal editor renders the
+  server's `422` the same way the flat-list modal does: a focused `danger` summary plus the message
+  on the control that caused it, with an association error (`parent`) resolved to the `parent_id`
+  field it belongs to. Its single-field paths — inline rename, create, move, delete — now announce
+  the server's own message instead of a generic sentence, and the editor claims focus back when a
+  rejection arrived while the modal was still opening.
+- **[fixed]** Closed the other half of quirk 18 for the two HTML-flow modal workspaces. Relations and
+  ownerships re-render their index after a refused submission, so they now render the new shared
+  `shared/_error_summary` twice: once on the page the author lands on, once inside the editor, and
+  they serialize the rejected values into the trigger that reopens it — the **Add** trigger for a
+  rejected create, and only the row being edited for a rejected update. A refused form no longer
+  has to be retyped from scratch. The same summary is now the one shared model error summary, used by
+  the flat-page forms as well.
+- **[fixed]** Closed known quirk 32 — the browser suite had only covered the taxonomy tree and the
+  Scenes workspaces, and its one flat-list test passed even while its mutation was committed and
+  answered `406`. Each previously uncovered journey now has focused coverage: a rejected relation
+  that reopens with its values, an ownership created through the modal, the row and editor at a 390px
+  viewport, granting and refusing universe access (including a read-only member's access notice and
+  the admin-only Members page), the whole password-reset journey with its mismatched-confirmation and
+  invalid-token paths, and a rejected taxonomy edit. The suite grew from 39 to 50 browser tests.
+- **[fixed]** Two defects in this work were found only by the browser coverage and are fixed here.
+  A new taxonomy controller method initially reused the name of an existing one, silently replacing
+  its label builder, so every taxonomy editor raised a `TypeError` and no modal opened — the
+  symptom looked like flaky browser input rather than a name collision. And Bootstrap's focus trap
+  focuses the dialog when a modal finishes opening, so a save rejected during the opening transition
+  lost the error summary's focus.
+- **[chore]** Post-mutation browser assertions now use a shared `REFRESH_WAIT` in
+  `ApplicationSystemTestCase`: a mutation ends in a full same-URL navigation, so the first assertion
+  after one waits ten seconds instead of Capybara's two. It only changes how long a passing refresh
+  may take.
+
 - **[added]** Completed backlog item 11.5, the shared modal reliability slice that Scene Elements
   depend on, recorded as [ADR 0011](docs/adr/0011-modal-json-mutation-contract.md). A modal page now
   declares its own mutation contract with `data-modal-form-response-value`, and the flat-list modal

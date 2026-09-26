@@ -153,6 +153,7 @@ export default class extends Controller {
 
     const modal = this.buildModal(node)
     document.body.append(modal)
+    this.modalElement = modal
     this.populateModalFields(modal, node)
     modal.querySelectorAll("select[multiple]").forEach((select) => new window.TomSelect(select, { plugins: [ "remove_button" ], create: false }))
 
@@ -161,7 +162,15 @@ export default class extends Controller {
       modal.querySelectorAll("select[multiple]").forEach((select) => select.tomselect?.destroy())
       modal.remove()
       this.modal = null
+      this.modalElement = null
     }, { once: true })
+    modal.addEventListener("shown.bs.modal", () => {
+      // Bootstrap activates its own focus trap on this event, which focuses the
+      // dialog. A save rejected while the editor was still opening would lose the
+      // error summary to it, so the focus is claimed back.
+      const region = modal.querySelector("[data-taxonomy-tree-errors]")
+      if (region && !region.hidden) region.focus()
+    })
     modal.querySelector("form").addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
     this.modal.show()
   }
@@ -193,7 +202,15 @@ export default class extends Controller {
     form.method = "post"
     const body = document.createElement("div")
     body.className = "modal-body"
-    body.append(this.modalFields(node))
+    // One error region for the editor. It is rendered empty and hidden, and the
+    // controller fills it from the server's error hash when a save is rejected.
+    const errors = document.createElement("div")
+    errors.className = "modal-errors mb-3"
+    errors.setAttribute("data-taxonomy-tree-errors", "")
+    errors.setAttribute("role", "alert")
+    errors.tabIndex = -1
+    errors.hidden = true
+    body.append(errors, this.modalFields(node))
     const footer = document.createElement("div")
     footer.className = "modal-footer"
     const cancel = this.button("Cancel", "btn btn-secondary", "button")
@@ -343,17 +360,129 @@ export default class extends Controller {
     update()
   }
 
+  // A rejected save keeps the editor open and explains itself: a `422` error hash
+  // is rendered both in a summary and on the control that caused it, so a failure
+  // is never only an announcement. The entered values stay where the author left
+  // them, and the modal is not closed.
   async updateDetails(event, node) {
     event.preventDefault()
     const form = event.currentTarget
     const response = await this.request(form.action, "PATCH", this.formValues(form))
-    if (!response || !response.ok) {
-      this.announce("The changes could not be saved.", true)
+    if (!response) return
+
+    if (response.status === 422 && this.modalElement) {
+      this.renderFieldErrors(this.modalElement, await this.parseResponse(response))
+      return
+    }
+
+    if (!response.ok) {
+      this.announce(await this.mutationMessage(response, "The changes could not be saved."), true)
       return
     }
 
     this.modal?.hide()
     this.refreshAndFocus(node.dataset.nodeId, "name")
+  }
+
+  renderFieldErrors(modal, payload) {
+    const entries = this.errorEntries(payload)
+    if (entries.length === 0) {
+      this.announce("The change was rejected but the server did not explain why.", true)
+      return
+    }
+
+    entries.forEach(([ attribute, messages ]) => this.markFieldInvalid(modal, attribute, messages))
+
+    const list = document.createElement("ul")
+    list.className = "mb-0 ps-3"
+    entries.forEach(([ , messages ]) => {
+      const item = document.createElement("li")
+      item.textContent = messages.join(" ")
+      list.append(item)
+    })
+
+    const alert = document.createElement("div")
+    alert.className = "alert alert-danger mb-0"
+    alert.setAttribute("role", "alert")
+    const heading = document.createElement("p")
+    heading.className = "mb-1"
+    heading.textContent = "This change could not be saved. Fix the following and try again."
+    alert.append(heading, list)
+
+    // The editor is built in `document.body`, outside this controller's element,
+    // so its error region is looked up inside the editor rather than as a
+    // Stimulus target.
+    const region = modal.querySelector("[data-taxonomy-tree-errors]")
+    if (!region) return
+
+    region.replaceChildren(alert)
+    region.hidden = false
+    region.focus()
+  }
+
+  // An error is keyed by the model attribute, while an association's form field
+  // is its foreign key: the hierarchy scope validation reports on `:parent`, so
+  // the `parent_id` selector is where its message belongs.
+  fieldFor(modal, attribute) {
+    if (attribute === "base") return null
+    for (const candidate of [ attribute, `${attribute}_id`, `${attribute}_ids` ]) {
+      const field = this.findInput(modal, `${this.modelParamValue}[${candidate}]`, { type: "text" })
+      if (field) return field
+    }
+    return null
+  }
+
+  markFieldInvalid(modal, attribute, messages) {
+    const field = this.fieldFor(modal, attribute)
+    if (!field) return
+
+    const host = field.closest(".mb-3, .form-check") || field.parentElement || modal
+    const message = document.createElement("p")
+    message.className = "invalid-feedback d-block mb-0"
+    message.id = `${field.id}-error`
+    message.textContent = messages.join(" ")
+    host.append(message)
+
+    field.setAttribute("aria-invalid", "true")
+    field.setAttribute("aria-describedby", `${field.getAttribute("aria-describedby") || ""} ${message.id}`.trim())
+  }
+
+  // The label of the modal field an error belongs to, taken from the serialized
+  // field descriptors so the message reads the way the editor labels the input.
+  // It is deliberately not named `fieldLabel`, which builds a label element for a
+  // dynamic field.
+  errorFieldLabel(attribute) {
+    const fields = this.parseJson(this.modalFieldsValue, [])
+    const descriptor = fields.find((field) => field.name === attribute) ||
+      fields.find((field) => `${field.name}_id` === attribute)
+    return String(descriptor?.label || attribute).replace(/\s*\*\s*$/, "").trim()
+  }
+
+  errorEntries(payload) {
+    const body = payload && typeof payload === "object" ? payload : null
+    const errors = body?.errors && typeof body.errors === "object" ? body.errors : body
+    if (!errors || typeof errors !== "object") return []
+
+    return Object.entries(errors)
+      .map(([ attribute, value ]) => {
+        const raw = Array.isArray(value) ? value : [ value ]
+        const messages = raw
+          .map((message) => (typeof message === "string" ? message.trim() : ""))
+          .filter((message) => message.length > 0)
+          .map((message) => attribute === "base" ? `the ${this.modelParamValue.replace(/_/g, " ")} ${message}` : `${this.errorFieldLabel(attribute)} ${message}`)
+        return [ attribute, messages ]
+      })
+      .filter(([ , messages ]) => messages.length > 0)
+  }
+
+  // A single-field path (inline rename, create, move, delete) has no summary to
+  // render, so the server's own message is announced instead of a generic one.
+  async mutationMessage(response, fallback) {
+    if (response.status !== 422) return fallback
+
+    const entries = this.errorEntries(await this.parseResponse(response))
+    if (entries.length === 0) return fallback
+    return entries.map(([ , messages ]) => messages.join(" ")).join(" ")
   }
 
   cancel(event) {
@@ -386,8 +515,9 @@ export default class extends Controller {
     if (form.dataset.position !== undefined) values.position = Number(form.dataset.position)
 
     const response = await this.request(form.dataset.url, "POST", values)
-    if (!response || !response.ok) {
-      this.announce("The item could not be created.", true)
+    if (!response) return
+    if (!response.ok) {
+      this.announce(await this.mutationMessage(response, "The item could not be created."), true)
       return
     }
 
@@ -401,8 +531,9 @@ export default class extends Controller {
     const form = event.currentTarget
     const node = form.closest("[data-node-id]")
     const response = await this.request(node.dataset.updateUrl, "PATCH", { name: form.querySelector("[name='name']")?.value || "" })
-    if (!response || !response.ok) {
-      this.announce("The name could not be saved.", true)
+    if (!response) return
+    if (!response.ok) {
+      this.announce(await this.mutationMessage(response, "The name could not be saved."), true)
       return
     }
 
@@ -419,8 +550,9 @@ export default class extends Controller {
     }
 
     const response = await this.request(node.dataset.updateUrl, "PATCH", { name: form.querySelector("[name='name']")?.value || "" })
-    if (!response || !response.ok) {
-      this.announce("The name could not be saved.", true)
+    if (!response) return
+    if (!response.ok) {
+      this.announce(await this.mutationMessage(response, "The name could not be saved."), true)
       return
     }
 
@@ -439,8 +571,9 @@ export default class extends Controller {
 
     const nextFocus = this.nextTaxonomyNode(node)?.dataset.nodeId || this.previousTaxonomyNode(node)?.dataset.nodeId
     const response = await this.request(node.dataset.updateUrl, "DELETE")
-    if (!response || !response.ok) {
-      this.announce("The item could not be deleted.", true)
+    if (!response) return
+    if (!response.ok) {
+      this.announce(await this.mutationMessage(response, "The item could not be deleted."), true)
       return
     }
 
@@ -464,8 +597,9 @@ export default class extends Controller {
       parent_id: list.dataset.dropParentId || "",
       position: target
     })
-    if (!response || !response.ok) {
-      this.announce("The item could not be moved.", true)
+    if (!response) return
+    if (!response.ok) {
+      this.announce(await this.mutationMessage(response, "The item could not be moved."), true)
       return
     }
 
@@ -804,11 +938,14 @@ export default class extends Controller {
     }
 
     const response = await this.request(updateUrl, "PATCH", { parent_id: parentId, position })
-    if (response?.ok) this.refreshAndFocus(node.dataset.nodeId, "name")
-    else {
-      restore()
-      this.announce("The item could not be moved.", true)
+    if (response?.ok) {
+      this.refreshAndFocus(node.dataset.nodeId, "name")
+      return
     }
+
+    restore()
+    if (!response) return
+    this.announce(await this.mutationMessage(response, "The item could not be moved."), true)
   }
 
   endDrag() {

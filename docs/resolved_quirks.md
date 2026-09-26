@@ -557,3 +557,290 @@ count's return after a cancelled rename, and the read-only Scene row.
 
 Tag-color contrast validation remains open and is recorded in
 [`known_quirks.md`](known_quirks.md).
+
+## Resolved client-side verification and CSRF findings (2026-09-27)
+
+### Former quirk #33: client-side code had no tests, no linter, and an unverified CSRF path (fixed)
+
+**Then:** the security-sensitive half of every mutation lived in Stimulus controllers with nothing
+checking it. `package.json` had only the CSS build and watch scripts, there were no JavaScript
+spec files, and no JavaScript linter, so a controller regression surfaced as a browser test that
+already looked green or as a production report. The test environment also disabled
+`allow_forgery_protection`, so nothing proved that a `fetch` from those editors carried a token at
+all, and Brakeman does not read client-side code.
+
+**Fix:** [ADR 0012](adr/0012-client-side-verification-and-csrf.md) records the decision.
+
+- `bun run test:js` runs Bun's built-in test runner over `test/javascript/`, one file per
+  controller, in a happy-dom DOM. `test/javascript/setup.js` provides that DOM and replaces
+  `@hotwired/stimulus` and `bootstrap` with minimal stubs, because the application serves both from
+  the import map rather than `node_modules`; `bunfig.toml` preloads it. The 62 cases cover the
+  request the editors build (token, verb, payload, cleared multi-select), the `422` rendering
+  contract, the page-level status region, the drawn Timeline geometry, and the taxonomy row builders
+  with a hostile name.
+- `bun run lint:js` runs Biome's recommended rules over `app/javascript` and `test/javascript` in
+  the new `js-check` CI job. Linting is not formatting: the controllers keep their hand-written
+  style.
+- `test/javascript/no_html_sink_test.js` fails when a new `innerHTML`/`outerHTML`/
+  `insertAdjacentHTML`/`document.write` sink appears in `app/javascript` without a reviewed
+  exception, which keeps the DOM-API-only rule from former quirk #8 enforceable.
+- `test/controllers/csrf_mutation_test.rb` and `test/system/csrf_token_test.rb` wrap their own
+  window in `with_forgery_protection` (`test/test_helpers/forgery_protection_test_helper.rb`).
+  Between them they prove that the page's `csrf-token` meta tag is sent by both `fetch`
+  implementations, that the server accepts it, and that a missing or forged token is refused with
+  `403` and writes nothing — the browser cases do it by removing the meta tag, the request cases by
+  replaying the token a real page published.
+- A JSON mutation whose token is refused now answers `403` instead of the generic `422` page
+  (`ApplicationController`), so the shared editor reports a refusal and keeps the author's input
+  rather than claiming the server explained nothing. HTML requests keep Rails' own handling.
+
+The new unit tests also found three defects in the code they were written for, all fixed here:
+cancelling an inline taxonomy rename restored the author's unsaved text instead of the name the
+server had rendered, a `belongs_to` error keyed on `:parent` was labelled `parent` instead of the
+editor's own **Parent tag** label, and a `422` body whose `errors` was not an object was read as an
+error on an attribute literally called `errors`. The taxonomy editor's `fetch` also always sent an
+`X-CSRF-Token` header, so a page without the meta tag would have sent the literal string
+`undefined`; it now omits the header, as the flat-list modal already did. The linter's first run
+reported the two self-assigning reload fallbacks and ten `forEach` callbacks that returned a value,
+all replaced with `window.location.reload()` and braced bodies.
+
+The deliberately unchanged part: `allow_forgery_protection` is still off for the fast request suite,
+so a new mutation path has to be added to one of the two CSRF files on purpose. The browser suite
+also remains an initial smoke suite, not exhaustive UI coverage.
+
+## Verification history
+
+The dated runs below recorded what was checked after each resolved entry. They are kept as evidence
+that a fix was verified, not as a description of today's capabilities; the current commands are in
+[`development.md`](development.md).
+
+## Follow-up verification (2026-09-27, client-side verification and CSRF — quirk 33)
+
+- `bun run lint:js` (Biome 2.5.14, recommended rules) — clean over 13 files. Its first run reported
+  12 real findings, all fixed in this change.
+- `bun run test:js` — 62 tests, 170 assertions, 0 failures, across 4 files.
+- `bin/rails test` — 526 tests, 3,185 assertions, 0 failures, 0 errors, 0 skips.
+- `bin/rails test:system` — 54 tests, 636 assertions, 0 failures, 0 errors, 0 skips
+  (`SE_CHROME_NO_SANDBOX=1`, which this machine needs).
+- `bin/rubocop` — 215 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `bin/bundler-audit`, `bin/importmap audit`, `bun audit` — no known vulnerabilities; `bun audit`
+  now covers 116 packages including the two new dev dependencies.
+- `bun install --frozen-lockfile` — clean against the updated `bun.lock`, which is what CI uses.
+
+Not run: `UNIVERSE=dark|lotr bin/rails db:demo:check` (no `db/data` manifest, schema, or seed file
+changed), a destructive `db:demo:reset`/`db:load`, Docker/Kamal build or deployment, production SMTP
+delivery, a clean migration-from-zero job, and a browser pass against loaded development data. The
+`js-check` CI job itself was not executed here: the same two commands were run locally with the
+pinned Bun 1.4.2 that the job installs.
+
+## Follow-up verification (2026-09-25)
+
+The explicit development-data loader follow-up was verified after ADR 0008:
+
+- `bin/rails test` — 280 tests, 1,701 assertions, 0 failures/errors/skips.
+- `bin/rubocop` — 166 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `bin/bundler-audit` — no known vulnerabilities.
+- `bin/importmap audit` — no reported vulnerabilities; at this checkpoint vendored Tom Select
+  remained ignored (fixed in the follow-up below).
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed in
+  development and test environments.
+- `RAILS_ENV=test bin/rails db:seed` passed without loading development data.
+
+Destructive `db:demo:reset`, `db:restart`, Docker/Kamal deployment, production SMTP delivery, a clean
+migration-from-zero job, and a live hostile-browser exploit were not run. The loader's transactional
+load and rollback paths were covered in the test environment instead.
+
+## Follow-up verification (2026-09-25, Tom Select audit metadata)
+
+The local Tom Select pin was annotated with its locked version and the importmap regression test
+was added:
+
+- `bin/importmap packages` reports `tom-select 2.6.2`.
+- `bin/importmap audit` reports no vulnerable packages and no longer prints an
+  `Ignoring tom-select` notice.
+- `bin/rails test test/importmap_audit_test.rb` — 1 test, 4 assertions, 0 failures/errors/skips.
+- `bin/rails test` — 281 tests, 1,707 assertions, 0 failures/errors/skips.
+- `bin/rubocop` — 167 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `bin/bundler-audit` — no known vulnerabilities.
+- `git diff --check` — clean.
+
+The broader Bun/npm graph audit, vendored-file provenance verification, and Dependabot coverage
+remain open under backlog item 18. No destructive database, container, deployment, or browser
+operations were run for this tooling-only fix.
+
+## Follow-up verification (2026-09-25, ordering/security/taxonomy hardening)
+
+- `bin/rails test` — 300 tests, 1,781 assertions, 0 failures/errors/skips.
+- `bin/rails test:system` — 10 tests, 107 assertions, 0 failures/errors/skips, including the new
+  taxonomy hostile-name, stale-state, boundary insertion, keyboard, and narrow/touch coverage.
+- `bin/rubocop` — 173 files, no offenses.
+- `node --check app/javascript/controllers/taxonomy_tree_controller.js` — passed.
+- A production-configuration smoke boot with dummy non-secret settings confirmed HTTPS mailer URL
+  options, `force_ssl`, `assume_ssl`, SMTP address, and the production host allowlist. Missing
+  `APP_HOST` fails with only the variable name in the error.
+- Password-reset path filtering, multipart mail rendering, cookie flags, ordering service, and
+  loader tests passed. No destructive database task, Docker/Kamal deployment, real SMTP delivery,
+  credential rotation, Git-history rewrite, or proxy/log-retention verification was performed.
+
+## Follow-up verification (2026-09-25, Scene core slice 11.1)
+
+- `bin/rails test` — 341 tests, 2,034 assertions, 0 failures/errors/skips.
+- `bin/rails test:system` — 12 tests, 151 assertions, 0 failures/errors/skips, including the new
+  Scene narrative-order and read-only browser coverage.
+- `bin/rubocop` — 179 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed in the
+  test environment with the new `scenes.yml` manifests.
+- `bin/rails db:migrate` applied the schema-only `CreateScenes` migration and regenerated
+  `db/schema.rb`; no data operations were added to the migration.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, `bun audit` (no dependency or JavaScript pin
+changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs approval), a browser
+manual pass against loaded development data, Docker/Kamal deployment, and any production SMTP or
+proxy verification.
+
+## Follow-up verification (2026-09-25, Scene references and grouping slices 11.2/11.3)
+
+- `bin/rails test` — 405 tests, 2,344 assertions, 1 failure. The single failure is pre-existing and
+  unrelated: `UniverseDataLoaderTest#test_loads_the_Dark_universe_and_normalizes_sibling_positions`
+  still expects the story name `netflix dark` after commit `0a236a9` renamed it to `Netflix Dark`
+  in `db/data/dark/stories.yml`. It was already failing on a clean tree before this work.
+- `bin/rails test:system` — 16 tests, 202 assertions, 0 failures/errors/skips, including the new
+  Scene Section-grouping, in-world-time, narrow-viewport with a long title/description,
+  keyboard-only, and read-only coverage.
+- `bin/rubocop` — 187 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `node --check app/javascript/controllers/taxonomy_tree_controller.js` — passed.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed in
+  development with the new `scenes.yml` references.
+- `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` and `UNIVERSE=lotr bin/rails
+  db:demo:load` rebuilt the local development database from the amended/added migrations, and the
+  loaded Dark and LOTR universes were queried to confirm the section paths, event links, and
+  independent in-world times. `bin/rails db:migrate:status` shows both Scene migrations applied.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, `bun audit` (no dependency or importmap pin
+changed in these slices), Docker/Kamal deployment, production SMTP delivery, proxy/log-retention
+verification, and a browser manual pass against the reloaded development data. No destructive task
+was run beyond the standing `db:demo:reset` approval.
+
+## Follow-up verification (2026-09-25, Scene Tag slice 11.4)
+
+- `bin/rails test` — 440 tests, 2,544 assertions, 1 failure. The remaining failure is the
+  pre-existing Dark story-name expectation documented above; the new Scene Tag model, request,
+  assignment, loader, authorization, routing, and helper coverage passed.
+- `bin/rails test:system` — 18 tests, 225 assertions, 0 failures/errors/skips on the final
+  run with a temporary 10-second Capybara wait; the default two-second wait intermittently timed
+  out under local browser load. The focused Scene Tag browser file passed with the default wait.
+  Coverage includes the Scene Tag taxonomy create/assign journey and read-only path.
+- `bin/rubocop` — 196 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings; `bin/bundler-audit`, `bin/importmap audit`, and
+  `bun audit` reported no vulnerabilities.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` passed. The
+  local development database was rebuilt with the approved Dark reset and LOTR create-only load;
+  queries confirmed 8 Dark/5 LOTR Scenes, 4 Scene Tags per Story, nested tags, and tagged/untagged
+  Scene assignments. `bin/rails db:migrate:status` shows `CreateSceneTags` applied.
+- `git diff --check` — clean.
+
+Not run: Docker/Kamal deployment or boot, production SMTP delivery, proxy/log-retention
+verification, and a separate manual browser pass outside the automated system suite. The only
+known full-suite failure is the pre-existing `UniverseDataLoaderTest` Dark story-name expectation
+recorded in the 11.2/11.3 verification section.
+
+## Follow-up verification (2026-09-25, Dark story-name test fix)
+
+- `bin/rails test` — 440 tests, 2,552 assertions, 0 failures, 0 errors, 0 skips. This clears the
+  standing failure recorded in the 11.2/11.3 and 11.4 verification sections above. The assertion
+  count rose by 8 because the previously failing test aborted at its first bad expectation and
+  never ran its remaining assertions.
+- Root cause: commit `0a236a9` renamed the `dark` universe's development story to `Netflix Dark`
+  in `db/data/dark/stories.yml` but wrote the loader test expectation as the lowercase
+  `netflix dark`. The manifest value was always correct, so only the assertion was changed. No
+  application code, schema, or demo data was touched.
+- `UNIVERSE=dark bin/rails db:demo:check` passed; no YAML manifest changed, so the local
+  development database did not need a rebuild.
+
+Not run: `bin/rails test:system` (no behavior, view, or JavaScript change), `bin/rubocop`,
+`bin/brakeman`, the dependency audits, `db:demo:reset`/`db:demo:load` (destructive, needs
+approval), and Docker/Kamal deployment. `db:demo:check` was re-run for the test-only change
+because the assertion reads the checked-in Dark manifest.
+
+## Follow-up verification (2026-09-25, cssbundling rake constant warnings)
+
+- `bin/rails test` — 440 tests, 2,552 assertions, 0 failures, 0 errors, 0 skips, run three
+  consecutive times with no `already initialized constant` output. The count is unchanged from the
+  Dark story-name fix above; this change only removes the noise.
+- `bin/rubocop` — 196 files, no offenses.
+- Root cause was in the test suite, not the gem. `DevelopmentDataTasksTest`'s `setup` block called
+  `Rails.application.load_tasks` before each of its three tests. That re-runs the Rakefile and
+  re-loads every bundled gem's rake file, and `cssbundling-rails` 1.4.3's
+  `lib/tasks/cssbundling/build.rake` assigns `Cssbundling::Tasks::LOCK_FILES` without an
+  idempotency guard, so every re-load re-defined the constant and warned. Because the parallel
+  test workers are separate processes that start with an empty Rake registry, the
+  `unless Rake::Task.task_defined?("db:demo:check")` guard never short-circuited and the number of
+  warnings varied run to run.
+- Fix: the test now loads only this application's own `lib/tasks/**/*.rake`, memoized once per
+  process, which is the only thing it asserts about. Gem rake files are never loaded, so no gem
+  constant is redefined. `db:demo:check`, `db:demo:load`, and `db:demo:reset` are still registered
+  and asserted exactly as before.
+- Not a gem upgrade: `cssbundling-rails` stays pinned at 1.4.3, because the application never
+  double-loads rake tasks in normal operation. Fixing the constant redefinition inside the gem was
+  judged out of scope.
+
+Not run: `bin/rails test:system`, `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit`,
+`bun audit` (no behavior, view, JavaScript, dependency, or schema change), and Docker/Kamal
+deployment.
+
+## Follow-up verification (2026-09-26, shared modal JSON reliability — slice 11.5)
+
+- `bin/rails test` — 516 tests, 3,110 assertions, 0 failures, 0 errors, 0 skips.
+- `bin/rails test:system` — 39 tests, 492 assertions, 0 failures, 0 errors, 0 skips on three
+  consecutive full runs, including the new Character/Item/Event modal regressions.
+  `SE_CHROME_NO_SANDBOX=1` was used because this machine blocks Chrome's user namespace. During
+  development one run behaved as if no real mouse input reached the page (dropdown and button clicks
+  were ignored) and was not reproducible afterwards; the same symptom appeared in the untouched
+  taxonomy suite, so it was an environment problem, not an application one. That work uncovered two
+  real races in the new error path, both fixed and both covered: the browser moves focus off a
+  submit button that has just been disabled, and Bootstrap's own focus trap focuses the dialog when
+  a modal finishes opening, so a save rejected during the opening transition lost the error
+  summary's focus to it.
+- `bin/rubocop` — 209 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `node --check app/javascript/controllers/modal_form_controller.js` — passed.
+- `git diff --check` — clean.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin,
+or vendored asset changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs
+approval; no `db/data` manifest changed either), Docker/Kamal deployment, and a manual browser pass
+outside the automated system suite.
+
+## Follow-up verification (2026-09-26, error UI in every editor, quirks 18 and 32)
+
+- `bin/rails test` — 521 tests, 3,149 assertions, 0 failures, 0 errors, 0 skips.
+- `bin/rails test:system` — 50 tests, 596 assertions, 0 failures, 0 errors, 0 skips, on four
+  separate full runs of the final code (with `SE_CHROME_NO_SANDBOX=1`, which this machine needs).
+  The suite grew by 11 browser tests.
+- `bin/rubocop` — 212 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `node --check` for `modal_form_controller.js` and `taxonomy_tree_controller.js` — passed.
+- `git diff --check` — clean.
+
+Two notes for whoever reads the failure history of this file, because both were real and only one
+of them was the application's fault. First, a long stretch of intermittent browser failures in this
+session was diagnosed as dropped input and turned out to be a method-name collision in the new
+taxonomy code: the three tests that click **Edit** in a row menu failed every time, which looks like
+an input problem and was not. Second, a genuinely intermittent input problem also exists here: in
+some full runs Chrome delivers no `mousedown`/`click` to the page at all, and the affected failures
+land in pre-existing tests (`SceneTagsTest`, `WorkspaceNavigationTest`) with "the row/modal never
+appeared" symptoms. A recurrence of that shape should be re-run once before it is believed.
+
+The browser suite can also only assert what a browser can see: `page.status_code` exists only on
+Capybara's rack-test driver, so the membership browser test asserts the visible refusal and the
+request test owns the exact `403`.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin,
+or vendored asset changed), `bun run build:css` (no SCSS change), `db:demo:reset`/`db:demo:load`
+(destructive, needs approval; no `db/data` manifest changed), Docker/Kamal deployment, and a manual
+browser pass outside the automated suite.

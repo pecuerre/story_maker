@@ -102,6 +102,7 @@ bin/rails test                         # all Minitest tests
 bin/rails test test/path/to/file_test.rb
 bin/rails test:system                  # browser-based smoke tests (requires Chrome)
 bin/rubocop                            # Ruby style
+bun run check:js                       # Biome lint + Bun unit tests for app/javascript
 bin/brakeman --no-pager                # Rails security analysis
 bin/bundler-audit                      # vulnerable gems
 bin/importmap audit                    # vulnerable JavaScript pins
@@ -111,7 +112,9 @@ bun run watch:css                      # CSS watcher
 
 Use the smallest relevant test while iterating, then run the full relevant suite before
 finishing shared model, controller, routing, authorization, or shared JavaScript changes.
-Report every check that was not run. The CSS build requires the JavaScript dependencies to be
+A client-side change is covered by `bun run check:js` first and a `test/system` case for
+whatever only a browser can show; both are required before such a change is finished. Report
+every check that was not run. The CSS build requires the JavaScript dependencies to be
 installed.
 
 Do not run `bin/rails db:restart` or `db:demo:reset` without approval: both are destructive. The
@@ -206,6 +209,12 @@ named development universe.
   404; assert `assert_response :not_found` rather than expecting an exception.
 - Keep route helpers fully qualified in tests when the current request does not provide the
   universe slug.
+- Client-side changes follow [ADR 0012](docs/adr/0012-client-side-verification-and-csrf.md): a
+  `bun test` case in `test/javascript/` beside the controller, plus a `test/system` case for what
+  only a browser can show. Build DOM with DOM APIs — a new `innerHTML`-style sink fails
+  `no_html_sink_test.js` unless it is a reviewed, commented exception. A new mutation path also
+  belongs in `test/controllers/csrf_mutation_test.rb` or `test/system/csrf_token_test.rb`, because
+  the request suite does not verify CSRF tokens.
 - Do not claim exhaustive UI coverage from the system-test job: it currently covers the initial
   smoke journeys only.
 

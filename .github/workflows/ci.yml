@@ -72,6 +72,27 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  js-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install JavaScript dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint the client-side code
+        run: bun run lint:js
+
+      - name: Run the client-side unit tests
+        run: bun run test:js
+
   test:
     runs-on: ubuntu-latest
 

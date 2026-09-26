@@ -69,6 +69,13 @@ Other global behavior: `allow_browser versions: :modern`,
   `assert_response :not_found` (`assert_raises` will **not** fire).
 - `config.action_controller.raise_on_missing_callback_actions = true` → every
   `before_action`/`skip_before_action` must reference a method that exists.
+- `allow_forgery_protection` is **off** for the fast request suite. The two files that must prove a
+  real token is sent and accepted wrap their own window in `with_forgery_protection`:
+  `test/controllers/csrf_mutation_test.rb` (server side) and
+  `test/system/csrf_token_test.rb` (a real browser, for both `fetch` implementations). A passing
+  request test therefore does **not** mean a token was verified. A JSON mutation whose token is
+  rejected answers **403**, so the shared editor can say "reload the page and sign in again" instead
+  of reporting a validation error the server never produced.
 
 ## Authentication & sessions
 
@@ -269,9 +276,12 @@ taxonomy tree (`taxonomy_tree`), flat list + modal (`modal_form` + `tom_select`)
 Data flow for the tree/modal editors: `modal_fields.rb` serializes field descriptors into
 `data-*-value` attributes → Stimulus builds every dynamic field and node by DOM APIs (user names,
 descriptions, option labels, and ARIA values are assigned as text/attributes, never interpolated
-into `innerHTML`) → `fetch` submits to the JSON endpoints → a successful mutation uses a
+into `innerHTML`) → `fetch` submits to the JSON endpoints, with the page's `csrf-token` meta tag
+sent as `X-CSRF-Token` → a successful mutation uses a
 same-URL Turbo visit so serialized parent/tag descriptors and all counts are refreshed from the
-server. A taxonomy row now carries only the name, the tags, the count, the **Details** link, and one
+server. The client side of that contract is verified by `bun run test:js` and
+`bun run lint:js` (see [development.md](development.md#client-side-tests-and-lint-bun--biome)),
+including a gate that fails if a new HTML-parsing sink appears in `app/javascript`. A taxonomy row now carries only the name, the tags, the count, the **Details** link, and one
 overflow menu (Add child, Insert before/after, Move up/Move down, Edit, Delete); the row itself no
 longer holds add/move buttons, and the name is sized to its own text so only hovering the name
 starts an inline rename. Insertion, move, and edit controls are available by pointer, touch, and

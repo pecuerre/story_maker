@@ -64,11 +64,49 @@ Layout:
 - Authentication tests must verify that remembered stories survive ordinary navigation but are
   cleared on sign-out, when a new account session starts, after current-user password reset, and
   when a stale authentication session is encountered.
+- CSRF: the request suite runs with `allow_forgery_protection = false`, so a passing request test
+  does **not** mean a token was verified. `test/controllers/csrf_mutation_test.rb` and
+  `test/system/csrf_token_test.rb` wrap their own window in `with_forgery_protection` to prove that
+  the page's token is accepted, that a missing or forged token is refused with `403` and writes
+  nothing, and that both `fetch` implementations really send it. Put a new mutation path in one of
+  those two files rather than assuming the fast suite covers it.
+
+## Client-side tests and lint (Bun + Biome)
+
+```bash
+bun run lint:js        # Biome, recommended rules, over app/javascript and test/javascript
+bun run test:js        # Bun's built-in test runner
+bun run check:js       # both
+bun test test/javascript/modal_form_controller_test.js   # one file
+```
+
+The Stimulus controllers carry the security-sensitive client-side code, so they are unit tested
+without booting Rails or a browser:
+
+- `test/javascript/setup.js` registers a DOM (happy-dom) and stubs the two specifiers the
+  application serves from the import map rather than `node_modules` (`@hotwired/stimulus`,
+  `bootstrap`). Only the base class is needed to instantiate a controller, and no unit test opens a
+  dialog. `bunfig.toml` preloads it.
+- Cases build a small host element and assign the Stimulus targets the method under test reads
+  (`formTarget`, `errorsTarget`, `submitTargets`, `element`, `modalFieldsValue`, …).
+- happy-dom's `FormData` does not repeat a multi-select's selected options the way a browser's
+  does, so those cases stub `FormData` with the real browser contract instead of asserting against
+  the emulation.
+- `test/javascript/no_html_sink_test.js` is a gate, not a behavior test: it fails when a new
+  `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write` sink appears in `app/javascript`
+  without a reviewed exception.
+- Biome lints but does not format. The controllers are hand-formatted to the existing house style;
+  reformatting them is a separate, deliberate change. `biome.json` limits the check to
+  `app/javascript` and `test/javascript`, so vendored assets are never touched.
+
+CI runs `bun run lint:js` and `bun run test:js` in the `js-check` job. The browser suite still owns
+what only a browser can show: focus, Turbo navigation, and a real CSRF token on the wire.
 
 ## Lint & security scans
 
 ```bash
 bin/rubocop                  # rubocop-rails-omakase house style
+bun run lint:js              # Biome over the Stimulus controllers and their unit tests
 bin/brakeman --no-pager      # static security analysis
 bin/bundler-audit            # vulnerable gems
 bin/importmap audit          # vulnerable JS pins
@@ -380,6 +418,7 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | `scan_ruby` | `bin/brakeman --no-pager`, `bin/bundler-audit` |
 | `scan_js` | `bin/importmap audit` |
 | `lint` | `bin/rubocop -f github` (cached) |
+| `js-check` | `bun run lint:js`, `bun run test:js` |
 | `test` | `bin/rails db:test:prepare test` |
 | `data-check` | `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` |
 | `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure) |

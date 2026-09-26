@@ -269,6 +269,26 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     end
   end
 
+  test "cancelling an inline rename discards the typed name" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
+      find("button.taxonomy-name-trigger").click
+      find("form.taxonomy-update-form input[name='name']").set("Never saved")
+      click_button "Cancel"
+      # A cancelled rename puts back what the server rendered. Keeping the typed
+      # text would show a name the database does not have.
+      assert_selector "button.taxonomy-name-trigger", text: tag.name
+    end
+    assert_equal tag.name, tag.reload.name
+  end
+
   test "a rejected edit keeps the modal open and renders the server's field errors" do
     user = users(:user_one)
     universe = universes(:universe_one)

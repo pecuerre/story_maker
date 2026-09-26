@@ -155,11 +155,15 @@ export default class extends Controller {
     document.body.append(modal)
     this.modalElement = modal
     this.populateModalFields(modal, node)
-    modal.querySelectorAll("select[multiple]").forEach((select) => new window.TomSelect(select, { plugins: [ "remove_button" ], create: false }))
+    modal.querySelectorAll("select[multiple]").forEach((select) => {
+      new window.TomSelect(select, { plugins: [ "remove_button" ], create: false })
+    })
 
     this.modal = new window.bootstrap.Modal(modal)
     modal.addEventListener("hidden.bs.modal", () => {
-      modal.querySelectorAll("select[multiple]").forEach((select) => select.tomselect?.destroy())
+      modal.querySelectorAll("select[multiple]").forEach((select) => {
+        select.tomselect?.destroy()
+      })
       modal.remove()
       this.modal = null
       this.modalElement = null
@@ -391,7 +395,9 @@ export default class extends Controller {
       return
     }
 
-    entries.forEach(([ attribute, messages ]) => this.markFieldInvalid(modal, attribute, messages))
+    entries.forEach(([ attribute, messages ]) => {
+      this.markFieldInvalid(modal, attribute, messages)
+    })
 
     const list = document.createElement("ul")
     list.className = "mb-0 ps-3"
@@ -449,19 +455,30 @@ export default class extends Controller {
 
   // The label of the modal field an error belongs to, taken from the serialized
   // field descriptors so the message reads the way the editor labels the input.
+  // A `belongs_to` rejection is keyed by the association (`:parent`) while the
+  // descriptor is its foreign key (`parent_id`), so the same spellings
+  // `fieldFor` uses to find the control are tried here too. An attribute with no
+  // descriptor keeps the name the server used.
   // It is deliberately not named `fieldLabel`, which builds a label element for a
   // dynamic field.
   errorFieldLabel(attribute) {
     const fields = this.parseJson(this.modalFieldsValue, [])
-    const descriptor = fields.find((field) => field.name === attribute) ||
-      fields.find((field) => `${field.name}_id` === attribute)
+    const candidates = [ attribute, `${attribute}_id`, String(attribute).replace(/_ids?$/, "") ]
+    const descriptor = candidates
+      .map((name) => fields.find((field) => field.name === name || `${field.name}_id` === name))
+      .find(Boolean)
     return String(descriptor?.label || attribute).replace(/\s*\*\s*$/, "").trim()
   }
 
+  // A `{ errors: ... }` envelope is only unwrapped when `errors` really is the
+  // message hash, so a body that explains nothing is reported as such instead of
+  // being read as an error on an attribute literally called "errors".
   errorEntries(payload) {
     const body = payload && typeof payload === "object" ? payload : null
-    const errors = body?.errors && typeof body.errors === "object" ? body.errors : body
-    if (!errors || typeof errors !== "object") return []
+    if (!body) return []
+
+    const errors = "errors" in body ? body.errors : body
+    if (!errors || typeof errors !== "object" || Array.isArray(errors)) return []
 
     return Object.entries(errors)
       .map(([ attribute, value ]) => {
@@ -611,21 +628,27 @@ export default class extends Controller {
     Object.entries(values).forEach(([name, value]) => {
       if (value === undefined || value === null) return
       if (Array.isArray(value)) {
-        value.forEach((item) => params.append(`${this.modelParamValue}[${name}][]`, item))
+        value.forEach((item) => {
+          params.append(`${this.modelParamValue}[${name}][]`, item)
+        })
       } else {
         params.set(`${this.modelParamValue}[${name}]`, value)
       }
     })
 
+    const headers = {
+      "Accept": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+    }
+    // A missing meta tag must not become the literal string "undefined", which the
+    // server refuses as an invalid token rather than as a missing one.
     const token = document.querySelector("meta[name='csrf-token']")?.content
+    if (token) headers["X-CSRF-Token"] = token
+
     try {
       return await fetch(url, {
         method,
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-          "X-CSRF-Token": token
-        },
+        headers,
         body: new URLSearchParams(params)
       })
     } catch (_error) {
@@ -742,7 +765,9 @@ export default class extends Controller {
     const node = form.closest("[data-node-id]")
     if (!node) return
     const values = this.parseJson(node.dataset.taxonomyValues, {})
-    const data = { ...values, name: form.querySelector("input")?.value || node.dataset.name, description: node.dataset.description }
+    // Cancelling a rename puts back what the server rendered, not the text the
+    // author was typing: a row must never show a name the database does not have.
+    const data = { ...values, name: values.name || node.dataset.name, description: node.dataset.description }
     // The server sends the already-formatted count text, so no pluralization is
     // duplicated here.
     if (node.dataset.recordCountLabel) data.recordCountLabel = node.dataset.recordCountLabel
@@ -801,7 +826,9 @@ export default class extends Controller {
 
   refreshSeparators() {
     if (!this.editableValue) return
-    this.element.querySelectorAll(".taxonomy-separator").forEach((element) => element.remove())
+    this.element.querySelectorAll(".taxonomy-separator").forEach((element) => {
+      element.remove()
+    })
     const root = this.rootList()
     if (!root) return
     const lists = [ root, ...root.querySelectorAll(".taxonomy-list") ]
@@ -809,7 +836,9 @@ export default class extends Controller {
       const nodes = this.directNodes(list)
       if (nodes.length === 0) return
       list.insertBefore(this.buildSeparator(list, 0), nodes[0])
-      nodes.slice(1).forEach((node, index) => list.insertBefore(this.buildSeparator(list, index + 1), node))
+      nodes.slice(1).forEach((node, index) => {
+        list.insertBefore(this.buildSeparator(list, index + 1), node)
+      })
       list.append(this.buildSeparator(list, nodes.length))
     })
   }
@@ -976,7 +1005,7 @@ export default class extends Controller {
     this.storePendingFocus(nodeId, target)
     this.announce("Saved. Refreshing the taxonomy…")
     if (window.Turbo?.visit) window.Turbo.visit(window.location.href, { action: "replace" })
-    else window.location.href = window.location.href
+    else window.location.reload()
   }
 
   storePendingFocus(nodeId, target) {

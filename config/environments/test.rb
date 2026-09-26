@@ -25,7 +25,14 @@ Rails.application.configure do
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 
-  # Disable request forgery protection in test environment.
+  # Request forgery protection is off for the fast request suite, so those tests
+  # are not coupled to token plumbing. The cases that must prove a real token is
+  # sent and accepted turn it back on for their own window with
+  # `with_forgery_protection` (see test/test_helpers/forgery_protection_test_helper.rb):
+  # `test/controllers/csrf_mutation_test.rb` on the server side and
+  # `test/system/csrf_token_test.rb` in a real browser. Keep new mutation paths
+  # reachable from those two files rather than assuming a passing request test
+  # proves a token was verified.
   config.action_controller.allow_forgery_protection = false
 
   # Store uploaded files on the local file system in a temporary directory.

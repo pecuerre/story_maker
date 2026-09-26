@@ -26,7 +26,9 @@ export default class extends Controller {
   disconnect() {
     window.removeEventListener("resize", this.redraw)
     this.resizeObserver?.disconnect()
-    this.popovers?.forEach((popover) => popover.dispose())
+    this.popovers?.forEach((popover) => {
+      popover.dispose()
+    })
   }
 
   draw() {

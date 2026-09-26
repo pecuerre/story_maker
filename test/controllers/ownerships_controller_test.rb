@@ -52,4 +52,19 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to universe_ownerships_url(universe_slug: @universe.slug)
     assert_empty Ownership.order(:id).last.ownership_tags
   end
+
+  test "a rejected create states the reason and keeps the entered values in the editor" do
+    assert_no_difference("Ownership.count") do
+      post universe_ownerships_url(universe_slug: @universe.slug), params: {
+        ownership: { item_id: @item.id, character_id: "", description: "Kept for another try" }
+      }
+    end
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert]", text: /prevented this ownership from being saved/
+    assert_select ".alert-danger[role=alert] li", text: /Character/
+    assert_select "[data-modal-form-target='modal'] .alert-danger li", text: /Character/
+    assert_select "button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",
+      universe_ownerships_path(universe_slug: @universe.slug), "Kept for another try"
+  end
 end

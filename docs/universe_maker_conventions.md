@@ -203,13 +203,20 @@ The three functional editing patterns are:
     same-URL Turbo visit after a successful create, update, or delete.
   - **`html`** (relations, ownerships): the documented redirect/re-render flow is untouched. The
     controller only opens the modal and pre-fills it; the browser submits, and `shared/_row_actions`
-    keeps its Turbo `button_to` delete with `data-turbo-confirm`.
+    keeps its Turbo `button_to` delete with `data-turbo-confirm`. A refused submission re-renders the
+    whole index, so the workspace renders `shared/_error_summary` twice — once on the page the author
+    lands on, once inside the editor — and serializes the rejected values into the trigger that
+    reopens it: the **Add** trigger for a rejected create, and only the row being edited for a
+    rejected update. Nothing is ever silently discarded.
   - `test/controllers/modal_json_contract_test.rb` asserts the declared mode, the error region, the
     submit target, the row's delete control, and that a JSON-only endpoint refuses an HTML mutation
     **before** writing, so a new modal page cannot drift back to the old behavior.
 - A multi-select is filled and read through the visible `<select>`, never through Rails' hidden
   companion field that carries the same name. An empty multi-select sends one explicit blank value,
   because otherwise clearing the last tag would leave the stored ids untouched.
+- `shared/_error_summary` is the one server-rendered model error summary: "N errors prevented this
+  X from being saved" plus each full message. It is shared by the flat-page forms and by the
+  HTML-flow modal workspaces, and it is what a re-rendered editor shows when the author reopens it.
 
 **3. Plain full-page forms** (universes, stories):
 - `new/edit` pages rendering an `_form` partial with `form_with`, error list on top.
@@ -396,7 +403,13 @@ added to an existing page instead of a new page being invented. See
 - `app/helpers/timeline_helper.rb` — popover title/content for timeline events.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
-- `taxonomy_tree_controller.js` — hierarchy editing: drag/drop, inline rename, modal, JSON CRUD.
+- `taxonomy_tree_controller.js` — hierarchy editing: drag/drop, inline rename, modal, JSON CRUD. A
+  rejected modal save renders the same summary-plus-field-message contract as the flat-list modal,
+  and the editor claims focus back on `shown.bs.modal` when the rejection arrived while the modal
+  was still opening. Its single-field paths (inline rename, create, move, delete) announce the
+  server's own message when the response body carries one. Its editor is built in `document.body`,
+  outside the controller element, so anything it looks up inside the editor is queried on the editor,
+  not read as a Stimulus target.
 - `modal_form_controller.js` — Bootstrap modal CRUD for the flat list views, including the JSON
   submission, `422` error rendering, pending state, JSON delete, and the same-URL refresh described
   in [ADR 0011](adr/0011-modal-json-mutation-contract.md).

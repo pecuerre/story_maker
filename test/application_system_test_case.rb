@@ -1,6 +1,12 @@
 require "test_helper"
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  # A mutation in this application is a fetch followed by a same-URL navigation
+  # (ADR 0011), so the first assertion after one waits longer than Capybara's
+  # default. This only changes how long a passing refresh may take; a genuinely
+  # broken flow still fails.
+  REFRESH_WAIT = 10
+
   driven_by :selenium, using: :headless_chrome, screen_size: [ 1400, 1400 ] do |options|
     options.binary = ENV["SE_CHROME_PATH"] if ENV["SE_CHROME_PATH"].present?
     # Chrome for Testing on Ubuntu 24.04+ can be blocked by the AppArmor

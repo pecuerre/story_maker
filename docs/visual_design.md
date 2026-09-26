@@ -278,6 +278,12 @@ the flash messages as a visible `danger` alert, and the row is left alone. A sho
 ("Saved. Refreshing the list…") is visually hidden and only announced, because the refreshed render
 that follows is the real confirmation.
 
+Relations and ownerships keep the HTML re-render flow, so their rejected submission lands on a
+re-rendered page instead of an open modal. They follow the same rules: the reason is stated with
+`shared/_error_summary` under the page header, the same summary is rendered inside the editor, and
+the entry is preserved in the editor that reopens, so the author never retypes a rejected form. The
+taxonomy tree's editor uses the identical summary-and-field-message contract.
+
 Relations should read naturally (`Character A → Character B`) rather than as an unlabeled database
 row. Ownerships use the same readable relationship treatment.
 

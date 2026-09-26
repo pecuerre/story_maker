@@ -1,0 +1,15 @@
+<%# One model error summary. A workspace whose form re-renders after a rejected
+    submission renders this so the reason is stated where the author lands, and
+    the editor renders it again so reopening the editor keeps the reason next to
+    the values it rejected. `subject` names the record for the sentence, because
+    the copy is what an author reads first. %>
+<% record = local_assigns.fetch(:record) %>
+<% subject = local_assigns.fetch(:subject) { record.model_name.human.downcase } %>
+<div class="alert alert-danger" role="alert">
+  <h2 class="h6"><%= pluralize(record.errors.count, "error") %> prevented this <%= subject %> from being saved:</h2>
+  <ul class="mb-0">
+    <% record.errors.each do |error| %>
+      <li><%= error.full_message %></li>
+    <% end %>
+  </ul>
+</div>

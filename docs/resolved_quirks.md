@@ -478,6 +478,62 @@ The taxonomy editor's rejection copy and the relation/ownership re-render still 
 error summary; that gap is still open in
 [`known_quirks.md`](known_quirks.md).
 
+### Former quirk #18: mutation failures were not rendered in every editor (fixed)
+
+**Then:** three editors reported a rejected save in three different inadequate ways. The taxonomy
+tree's modal announced "The changes could not be saved." and closed nothing, but never rendered the
+error hash it had been sent, and its single-field paths (inline rename, create, move, delete) used
+the same generic wording for every server message. Relations and ownerships re-rendered their index
+with `422` and nothing else: no model error summary, and the rejected entry discarded, so an author
+had to retype it.
+
+**Fix:** the one error-rendering contract now covers all of them.
+`taxonomy_tree_controller.js` renders a `422` inside the editor the same way the flat-list modal
+does — a focused `danger` summary plus the message on the control that caused it, resolving an
+association error to its foreign-key field, because the hierarchy scope validation reports on
+`:parent` while the field is `parent_id`. Its inline paths announce the server's own message when
+the body carries one. The relations and ownerships workspaces keep the HTML re-render flow, and now
+render the shared `shared/_error_summary` twice: once on the page the author lands on and once
+inside the editor, with the rejected values serialized into the trigger that reopens it — the **Add**
+trigger for a rejected create, and only the row being edited for a rejected update, so no other row
+is affected.
+
+Two things the browser coverage caught while doing this. The new taxonomy method
+`errorFieldLabel` was first named `fieldLabel`, which silently replaced the controller's existing
+`fieldLabel(field, id, className)` label builder; every taxonomy editor that opened raised
+`TypeError: ((intermediate value) || attribute).replace is not a function` and no modal appeared at
+all, which looked like flaky input rather than a name collision. And Bootstrap's focus trap focuses
+the dialog when a modal finishes opening, so a save rejected during the opening transition lost the
+error summary's focus; the editor now claims it back on `shown.bs.modal`.
+
+Request coverage asserts the `422` error-hash shape and that a rejected entry reaches the trigger
+that reopens the editor. Browser coverage lives in `test/system/modal_html_flow_test.rb` and
+`test/system/taxonomy_tree_test.rb`.
+
+### Former quirk #32: browser coverage was concentrated on the taxonomy tree (fixed)
+
+**Then:** the browser suite exercised the taxonomy tree and the Scenes workspaces, so the flat-list
+modals, relations, ownerships, memberships, and the password-reset journey were untested. The one
+flat-list test passed even while its mutation was committed and answered `406`, because it asserted
+the row after a later navigation.
+
+**Fix:** each of those journeys now has a focused file or case:
+`modal_json_flow_test.rb` (JSON create with refreshed counts, a record-level `422`, a field error on
+its control, a request that never reaches the server, a delete that fails, a delete that removes the
+row and its counts, clearing the last tag, and a 390px viewport), `modal_html_flow_test.rb` (a
+rejected relation that reopens with its values, an ownership created through the modal, and the
+row/editor at a 390px viewport), `membership_access_test.rb` (granting a level, an unknown address
+refused with its reason, a granted member writing without reaching the Members page, and a read-only
+member seeing the access notice and no mutation), `password_reset_test.rb` (the whole reset journey,
+the mismatched confirmation, and an invalid token), and a rejected taxonomy edit in
+`taxonomy_tree_test.rb`.
+
+The suite grew from 39 to 50 browser tests. The request tests keep the exact status codes, which a
+browser cannot see: `page.status_code` is only implemented by Capybara's rack-test driver, so the
+membership browser test asserts the visible refusal instead and the request test owns the `403`.
+Membership and password-reset browser coverage proves the visible behavior only; the request and
+model tests remain the authority for authorization, tokens, and rate limiting.
+
 ### Hover-only row actions and an `aria-current`-less top bar (fixed)
 
 **Then:** two related accessibility gaps shared one entry in

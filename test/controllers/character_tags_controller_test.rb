@@ -35,4 +35,26 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal [ "Renamed", "Updated" ], @character_tag.reload.values_at(:name, :description)
   end
+
+  test "a rejected taxonomy mutation answers 422 with the error hash the editor renders" do
+    patch universe_character_tag_url(universe_slug: @universe.slug, id: @character_tag),
+      params: { character_tag: { name: "" } },
+      as: :json
+
+    assert_response :unprocessable_content
+    assert_equal [ "can't be blank" ], response.parsed_body["name"]
+    assert_equal "Character tag one", @character_tag.reload.name
+  end
+
+  test "an association rejection is keyed on the association so the editor can find the field" do
+    foreign_tag = character_tags(:character_tag_three)
+    child = CharacterTag.create!(universe: @universe, name: "Nested tag", parent: @character_tag)
+
+    patch universe_character_tag_url(universe_slug: @universe.slug, id: child),
+      params: { character_tag: { name: child.name, parent_id: foreign_tag.id } },
+      as: :json
+
+    assert_response :unprocessable_content
+    assert_equal [ "must belong to the same universe" ], response.parsed_body["parent"]
+  end
 end

@@ -1,6 +1,7 @@
 class SceneTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
+  include RequiresJsonMutationFormat
   maintains_sibling_positions_for :scene_tag
 
   before_action :set_story
@@ -57,12 +58,6 @@ class SceneTagsController < ApplicationController
   end
 
   private
-    # Reject a non-JSON mutation before the positioned service runs. Otherwise a
-    # 406 response could be returned only after a record had already committed.
-    def require_json_mutation_format
-      head :not_acceptable unless request.format.json?
-    end
-
     def set_story
       @story = Current.universe.stories.find(params.expect(:story_id))
     end

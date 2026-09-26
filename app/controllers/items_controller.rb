@@ -1,9 +1,11 @@
 class ItemsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
   include MaintainsSiblingPositions
+  include RequiresJsonMutationFormat
   maintains_sibling_positions_for :item
 
   before_action :set_item, only: %i[ show update destroy ]
+  before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
     @items = Current.universe.items

@@ -4,6 +4,7 @@
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="ownership"
+  data-modal-form-response-value="html"
   data-modal-form-create-title-value="New ownership">
   <%= render "shared/page_header",
     title: "Ownerships",

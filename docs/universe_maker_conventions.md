@@ -83,6 +83,12 @@
   Scenes use `@story` as owner). Use `maintains_flat_positions_for` for a parentless sequence; the
   concern then omits the ordering parent entirely, so a flat resource does not need a `parent_id`
   column. Do not infer flat ordering from `section_id` or another organizational association.
+- A JSON-only mutation controller includes `RequiresJsonMutationFormat` and calls
+  `before_action :require_json_mutation_format, only: %i[ create update destroy ]` after its record
+  lookup, so a request that does not ask for JSON is refused with `406` **before** anything is
+  written. Without the guard, `respond_to` raises `ActionController::UnknownFormat` only after the
+  record has been saved, so the write commits behind the error and a retry duplicates it. Keep the
+  guard an explicit `before_action` rather than a blanket filter so the callback order stays visible.
 - Strong params use Rails 8 `params.expect(model: [ ... ])`.
 - Universe authorization is a three-level policy: `read`, `write`, and `admin`. Public universes
   grant guest read and signed-in write access; private universes require an owner or membership.
@@ -96,9 +102,9 @@
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
     Characters, Locations, Items, Events, Sections, including `SceneTagsController`. The page
-    renders HTML; create/update/destroy are called by Stimulus with `as: :json`. `SceneTagsController`
-    checks the request format before entering the positioned service so a rejected HTML mutation
-    cannot commit first.
+    renders HTML; create/update/destroy are called by Stimulus with `Accept: application/json`.
+    `SceneTagsController`, `CharactersController`, `ItemsController`, and `EventsController` also
+    include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
   - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Universe
     memberships, Sessions, Passwords.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
@@ -185,7 +191,25 @@ The three functional editing patterns are:
   related records together while preserving each canonical page. Tag management uses
   `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
   scope tabs and the scope-specific taxonomy selector.
-- Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`.
+- Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`. The
+  controller's mutation contract is the one decided in
+  [ADR 0011](adr/0011-modal-json-mutation-contract.md), and every modal page declares it with
+  `data-modal-form-response-value`:
+  - **`json`** (characters, items, events): the form carries `data-action="modal-form#save"`, the
+    submit input carries `data-modal-form-target="submit"`, the modal body starts with
+    `shared/_modal_errors`, and `shared/_row_actions` receives `delete_via: :json`. The controller
+    submits the form itself as `application/x-www-form-urlencoded` with `Accept: application/json`
+    and the CSRF token, renders a `422` error hash in the modal, and refreshes the page with a
+    same-URL Turbo visit after a successful create, update, or delete.
+  - **`html`** (relations, ownerships): the documented redirect/re-render flow is untouched. The
+    controller only opens the modal and pre-fills it; the browser submits, and `shared/_row_actions`
+    keeps its Turbo `button_to` delete with `data-turbo-confirm`.
+  - `test/controllers/modal_json_contract_test.rb` asserts the declared mode, the error region, the
+    submit target, the row's delete control, and that a JSON-only endpoint refuses an HTML mutation
+    **before** writing, so a new modal page cannot drift back to the old behavior.
+- A multi-select is filled and read through the visible `<select>`, never through Rails' hidden
+  companion field that carries the same name. An empty multi-select sends one explicit blank value,
+  because otherwise clearing the last tag would leave the stored ids untouched.
 
 **3. Plain full-page forms** (universes, stories):
 - `new/edit` pages rendering an `_form` partial with `form_with`, error list on top.
@@ -311,7 +335,9 @@ added to an existing page instead of a new page being invented. See
   rendered at all when nothing is ungrouped.
 - **Helpers:** add only the Scene-specific descriptors the new forms need. Scene JSON is not used to
   mix the stable HTML form with mutation responsibilities. Update shared count/preload behavior
-  without copying the current taxonomy stale-option or modal 406 weaknesses.
+  without copying the taxonomy tree's stale-option weakness; the modal 406/stale-DOM weaknesses are
+  fixed by [ADR 0011](adr/0011-modal-json-mutation-contract.md), so Element and presence-link modals
+  reuse `modal_form_controller.js` instead of a second editor.
 - **Sidebar count:** `Story#menu_scene_count` uses its own cache scope
   (`Story::SCENE_MENU_COUNT_SCOPE`, referenced by `Scene` itself) so it never overwrites
   `menu_section_count`; `Scene` declares
@@ -355,6 +381,14 @@ added to an existing page instead of a new page being invented. See
   `_detail_section.html.erb`, and `_tagged_record_list.html.erb` compose every record's details
   page. `_detail_section` renders its empty state whenever `count` is zero or no block is given, so
   a page states what it does not know instead of showing an empty box.
+- `app/views/shared/_modal_errors.html.erb` is the one error region inside a modal form
+  (`data-modal-form-target="errors"`, `role="alert"`, `tabindex="-1"`, rendered hidden). The modal
+  controller fills it with the server's error hash and moves focus here; the region is never
+  duplicated per error, and the per-control message is built next to its own field.
+  `app/views/shared/_mutation_status.html.erb` is the page-level live region rendered once by the
+  layout next to `shared/_flash`: it reports a mutation that never went through a form (a row
+  delete) or a request that failed outside a modal. A short confirmation is visually hidden and only
+  announced; a failure renders a visible alert and takes focus.
 - `app/views/shared/_tag_workspace_navigation.html.erb` and `app/helpers/tags_helper.rb` build the
   Configuration → Tags scope/taxonomy navigation and the model-specific tree configuration.
   `TagsHelper#tagged_record_counts` and `app/models/tagged_record_counts.rb` answer the "how many
@@ -363,7 +397,9 @@ added to an existing page instead of a new page being invented. See
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
 - `taxonomy_tree_controller.js` — hierarchy editing: drag/drop, inline rename, modal, JSON CRUD.
-- `modal_form_controller.js` — Bootstrap modal CRUD for the flat list views.
+- `modal_form_controller.js` — Bootstrap modal CRUD for the flat list views, including the JSON
+  submission, `422` error rendering, pending state, JSON delete, and the same-URL refresh described
+  in [ADR 0011](adr/0011-modal-json-mutation-contract.md).
 - `timeline_controller.js` — pan/zoom + popovers for the Timeline view.
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
 

@@ -4,6 +4,7 @@
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="event"
+  data-modal-form-response-value="json"
   data-modal-form-create-title-value="New event">
   <%= render "shared/page_header",
     title: "Events",
@@ -54,6 +55,7 @@
               confirm_text: "Delete “#{event.display_string}”? Its child events, tag assignments, and any temporal referrers that would become unidentifiable will be permanently removed; other temporal references and Scene links will be cleared. Scenes will remain.",
               edit_url: universe_event_path(id: event),
               delete_url: universe_event_path(id: event),
+              delete_via: :json,
               values: event_fields_json(event) %>
           </div>
         <% end %>
@@ -80,8 +82,9 @@
         <%= form_with scope: :event,
           url: universe_events_path,
           method: :post,
-          data: { modal_form_target: "form" } do |form| %>
+          data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
           <div class="modal-body">
+            <%= render "shared/modal_errors" %>
             <p class="text-body-secondary small">
               An event needs at least a title, a start or end date, or a relationship to another event below.
             </p>
@@ -132,7 +135,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= form.submit "Save event", class: "btn btn-primary" %>
+            <%= form.submit "Save event", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
           </div>
         <% end %>
       </div>

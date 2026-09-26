@@ -174,7 +174,7 @@ uses.
 
 | Flow | Controllers | Behavior |
 |---|---|---|
-| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only (an HTML POST would 406); errors → `unprocessable_content` + error hash |
+| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
 | HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | tags, timeline, sessions, passwords | |
@@ -280,14 +280,27 @@ ordering service described in ADR 0009. The Story Tags scope now presents **Sect
 **Scene tags** as separate story-scoped taxonomy tabs; both use the same DOM-safe tree and JSON
 mutation contract, while Scene assignment stays in the HTML Scene form.
 
+The shared flat-list modal has its own reliability contract, decided in
+[ADR 0011](adr/0011-modal-json-mutation-contract.md): a modal page declares
+`data-modal-form-response-value="json"|"html"`, and in `json` mode `modal_form_controller.js`
+submits the form itself (`Accept: application/json`, the CSRF token, the form's own field names),
+marks the submit button pending, renders a `422` error hash both in a focused summary and next to
+the control that caused it, reports a request that never reached the server or a non-validation
+failure, and performs the same-URL Turbo visit after a successful create, update, or delete. A
+JSON-only row's delete is issued by the same controller, because a `204` destroy gives Turbo no
+replacement to apply. Every part of that path is asserted per page in
+`test/controllers/modal_json_contract_test.rb` and in the browser suite, because a request test
+cannot see the error UI, the pending state, or the refresh.
+
 ## Scene architecture (slices 11.1–11.4 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first-version Scene domain and
 UX contract. Slices 11.1–11.4 implement its core, references, Section grouping, and Scene Tag
 taxonomy: the `scenes` and `scene_tags` tables, the `Scene` and `SceneTag` models, story-scoped
 routes, the canonical Scenes list, the Scene Details editor with its URL-backed tab shell,
-narrative-order moves, both Section-grouping paths, and optional tag assignment. Elements and
-world-presence links remain in slices 11.5–11.10 and are **not** routed yet.
+narrative-order moves, both Section-grouping paths, and optional tag assignment. Slice 11.5 then
+made the shared modal JSON path reliable for the Element and presence-link modals that come next.
+Elements and world-presence links remain in slices 11.6–11.10 and are **not** routed yet.
 
 ### Ownership and resolution
 
@@ -337,10 +350,11 @@ redirect/re-render flow: successful create/update redirect to Scene Details, a m
 to the list with a `303`, and grouping redirects back to the Sections workspace with a `303`.
 `SceneTagsController` follows the established taxonomy JSON mutation contract while its index uses
 the shared tree; it rejects a non-JSON mutation before the positioned service can commit anything.
-Because the Scene flow never uses the shared JSON modal path, it does not inherit
-the current modal submission, error-display, or stale-DOM behavior in
-[`known_quirks.md`](known_quirks.md); slice 11.5 must still fix that path before Elements depend on
-it.
+The Scene flow itself never uses the shared modal path, so it inherits nothing from it. The Element
+and presence-link modals added from slice 11.6 on do: they reuse `modal_form_controller.js` under
+[ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of a second editor, so their JSON
+submission, `422` rendering, pending state, and post-mutation refresh are the same contract that is
+already covered for Characters, Items, and Events.
 
 A move is a single transactional service call. The controller converts `direction=up|down` into
 the neighboring target position and lets `PositionedResourceOrder` clamp and normalize the group,

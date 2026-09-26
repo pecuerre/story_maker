@@ -71,23 +71,26 @@ verification requirements. The resolution is recorded in [`resolved_quirks.md`](
 
 ## Mutation, route, and data-contract observations
 
-17. **High — flat Character/Item/Event modals submit HTML to JSON-only endpoints.** Their forms are
-    ordinary Turbo forms (`app/views/characters/index.html.erb:80-103`,
-    `app/views/items/index.html.erb:80-102`, `app/views/events/index.html.erb:78-135`), and
-    `modal_form_controller.js:16-61` changes the action/method but does not fetch JSON or set an
-    `Accept` header. The controllers define only `format.json` branches
-    (`app/controllers/characters_controller.rb:24-34`, `items_controller.rb:24-34`,
-    `events_controller.rb:20-47`). A browser create/update is saved and then answered with 406
-    `ActionController::UnknownFormat`; retrying can create duplicates, and validation errors do not
-    reach the UI. The green system test checks the row after a subsequent GET rather than the
-    mutation response (`test/system/workspace_navigation_test.rb:32-43`).
+Former finding **#17** was fixed on 2026-09-26 by
+[ADR 0011](adr/0011-modal-json-mutation-contract.md): `modal_form_controller.js` now submits the
+form as JSON itself, and a `422` body is rendered in the modal instead of being lost behind a `406`.
+`CharactersController`, `ItemsController`, and `EventsController` also include
+`RequiresJsonMutationFormat`, so a non-JSON mutation is refused with `406` **before** it can
+commit. The resolution and its request/browser coverage are recorded in
+[`resolved_quirks.md`](resolved_quirks.md).
 
-18. **Medium — mutation validation failures are still not rendered in every editor.** The taxonomy
-    controller now announces non-OK/network failures and keeps the form open, but it does not yet
-    render the server's field-error hash. Relation and ownership failures still re-render their
-    indexes without a model error summary or preserved invalid form
-    (`app/controllers/relations_controller.rb:13-29`,
-    `app/controllers/ownerships_controller.rb:13-29`, and their index views). Request tests do not
+Former finding **#40** was fixed in the same change: a JSON-only row's Delete is issued by the modal
+controller and followed by a same-URL Turbo visit, so the row and the page/sidebar counts cannot stay
+stale, and the deletion consequences still travel with the control. The Event row's mandatory
+confirmation copy is asserted in `events_controller_test.rb` on the new button.
+
+18. **Medium — mutation validation failures are still not rendered in every editor.** The flat-list
+    modal now renders the server's field-error hash, keeps the entered values, and focuses the
+    summary, but the taxonomy tree's modal editor still only announces a non-OK/network failure
+    instead of rendering the field errors it is sent, and relation/ownership failures still re-render
+    their indexes without a model error summary or a preserved invalid form
+    (`app/controllers/relations_controller.rb:16-35`,
+    `app/controllers/ownerships_controller.rb`, and their index views). Request tests do not
     cover the complete error UI.
 
 19. **Medium — nonexistent optional association IDs escape the JSON error contract.** Hierarchical
@@ -215,12 +218,15 @@ resolution and test are recorded in [`resolved_quirks.md`](resolved_quirks.md).
     instead of re-counting. The row-level authorization and recursive-children costs above are
     unchanged.
 
-32. **Medium — the existing flat-list system smoke test still masks a failed mutation response.**
-    The Character modal request is processed as `TURBO_STREAM`, commits, and returns 406; the test
-    asserts the reloaded DOM and never checks response status or error UI. The taxonomy editor now
-    has focused CRUD/XSS/accessibility browser coverage, but there is still no browser coverage for
-    Item/Event modals, relations, ownerships, memberships, password reset, or mobile behavior for
-    those flat lists.
+32. **Medium — browser coverage is still concentrated on the taxonomy tree and the Scenes
+    workspaces.** The flat-list modal now has its own focused regressions
+    (`test/system/modal_json_flow_test.rb`: JSON create, a record-level `422`, a field error on the
+    control that caused it, a request that never reaches the server, a failed delete, a delete that
+    removes the row and its counts, clearing the last tag, and a 390px viewport), and the earlier
+    Character smoke test can no longer pass on a committed-but-`406` write, because the row only
+    appears after a real `201`. There is still no browser coverage for relations, ownerships,
+    memberships, password reset, or mobile behavior for the other flat lists, and the taxonomy
+    editor's rejection copy is not yet asserted in a browser.
 
 33. **Medium — JavaScript has no test/lint pipeline and test mode disables CSRF.** `package.json:16-20`
     has only CSS build/watch scripts and there are no JavaScript unit/spec files, despite the
@@ -327,16 +333,8 @@ through the current normal UI. They are recorded so they are not mistaken for se
 
 ## Additional UI and interaction observations
 
-40. **Medium — flat-list deletes leave stale rows in the current DOM.** The shared delete control is
-    a Turbo `button_to` (`app/views/shared/_row_actions.html.erb:30-35`), while Character/Item/Event
-    destroy actions return a bare `204` (`app/controllers/characters_controller.rb:47-50`,
-    `items_controller.rb:47-50`, `events_controller.rb:43-46`). Turbo receives no redirect or HTML
-    replacement, so the deleted row and sidebar count can remain visible until a manual reload; a
-    second click can then target a missing record. There is no browser delete regression test.
-    The Scene list added in slice 11.1 is **not** affected: it uses the HTML redirect flow
-    (`ScenesController#destroy` redirects with `303`), so its delete regression test is
-    `test/system/scene_narrative_order_test.rb`. Findings 17 and 18 still apply to every
-    modal/JSON consumer and remain the reason slice 11.5 must land before Scene Elements exist.
+Former finding **#40** was fixed on 2026-09-26 with the shared modal reliability work described
+above; see [`resolved_quirks.md`](resolved_quirks.md).
 
 Former findings **#41–#44** were fixed in the taxonomy hardening pass. Successful mutations now
 refresh server-rendered descriptors/counts, boundary insertion uses the actual list, native rename
@@ -607,3 +605,26 @@ because the assertion reads the checked-in Dark manifest.
 Not run: `bin/rails test:system`, `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit`,
 `bun audit` (no behavior, view, JavaScript, dependency, or schema change), and Docker/Kamal
 deployment.
+
+## Follow-up verification (2026-09-26, shared modal JSON reliability — slice 11.5)
+
+- `bin/rails test` — 516 tests, 3,110 assertions, 0 failures, 0 errors, 0 skips.
+- `bin/rails test:system` — 39 tests, 492 assertions, 0 failures, 0 errors, 0 skips on three
+  consecutive full runs, including the new Character/Item/Event modal regressions.
+  `SE_CHROME_NO_SANDBOX=1` was used because this machine blocks Chrome's user namespace. During
+  development one run behaved as if no real mouse input reached the page (dropdown and button clicks
+  were ignored) and was not reproducible afterwards; the same symptom appeared in the untouched
+  taxonomy suite, so it was an environment problem, not an application one. That work uncovered two
+  real races in the new error path, both fixed and both covered: the browser moves focus off a
+  submit button that has just been disabled, and Bootstrap's own focus trap focuses the dialog when
+  a modal finishes opening, so a save rejected during the opening transition lost the error
+  summary's focus to it.
+- `bin/rubocop` — 209 files, no offenses.
+- `bin/brakeman --no-pager` — 0 security warnings.
+- `node --check app/javascript/controllers/modal_form_controller.js` — passed.
+- `git diff --check` — clean.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin,
+or vendored asset changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs
+approval; no `db/data` manifest changed either), Docker/Kamal deployment, and a manual browser pass
+outside the automated system suite.

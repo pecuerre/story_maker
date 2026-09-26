@@ -439,6 +439,45 @@ Space; Move up/Move down and Insert before/Insert after provide pointer, touch, 
 touch media rules expose the controls and use 44px insertion targets. Browser regressions cover
 hostile names, stale options/counts, root boundaries, keyboard activation, and narrow viewports.
 
+### Former quirks #17 and #40: the flat-list modal committed behind a 406 and left stale rows (fixed)
+
+**Then:** `modal_form_controller.js` only rewrote the form's action and method, so a browser create
+or update reached a JSON-only controller as HTML. `respond_to` raised
+`ActionController::UnknownFormat` **after** the record had been saved: the write committed, the
+caller received `406 Not Acceptable`, validation errors never reached the form, and a retry created a
+duplicate. Separately, the shared row Delete was a Turbo `button_to` against a destroy action that
+answered a bare `204 No Content`, so Turbo had no replacement to apply and the row plus its counts
+stayed in the DOM until a manual reload. The browser suite passed anyway, because the Character smoke
+test asserted the row after a later navigation instead of looking at the mutation.
+
+**Fix:** [ADR 0011](adr/0011-modal-json-mutation-contract.md) defines the shared modal contract. A
+modal page declares `data-modal-form-response-value="json"|"html"`; in `json` mode the controller
+submits the form itself as `application/x-www-form-urlencoded` with `Accept: application/json` and
+the CSRF token, using the form's `_method` for the verb. A `422` error hash is rendered in a focused
+summary and next to the control that caused it (association errors resolve to their foreign-key
+field), the modal stays open with the entered values, and the submit button is never left disabled. A
+request that never landed, a `403`, a `5xx`, and an unreadable body each report their own message.
+Delete is issued by the same controller and a successful create, update, or delete performs a
+same-URL Turbo visit, so rows, page counts, and cached sidebar counts come from one server render.
+`RequiresJsonMutationFormat` makes the four flat-list and Scene Tag controllers refuse a non-JSON
+mutation with `406` **before** writing, so the original duplicate-on-retry hazard cannot come back.
+The mandatory deletion consequences now travel in `data-modal-form-confirm` on the new control.
+
+`test/controllers/modal_json_contract_test.rb` pins the declared mode, the error region, the submit
+target, and the row's delete control for all five modal workspaces, and asserts that an HTML mutation
+to a JSON-only endpoint changes nothing. `test/system/modal_json_flow_test.rb` covers the browser
+behavior: a real JSON create with refreshed counts, a record-level `422`, a field error rendered on
+its control, a request that never reaches the server, a delete that fails and one that removes the row
+and its counts, clearing the last tag, and a 390px viewport. Two smaller defects were found by that
+coverage and fixed in the same change: the modal filled Rails' hidden companion field instead of the
+multi-select (so a tag picker looked empty), and a multi-select name that already ends in `[]` was
+given a second `[]`, which made the "clear the last tag" blank unparseable and left the old
+assignment in place.
+
+The taxonomy editor's rejection copy and the relation/ownership re-render still do not show a field
+error summary; that gap is still open in
+[`known_quirks.md`](known_quirks.md).
+
 ### Hover-only row actions and an `aria-current`-less top bar (fixed)
 
 **Then:** two related accessibility gaps shared one entry in

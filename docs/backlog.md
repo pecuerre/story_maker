@@ -237,25 +237,24 @@ first-version ownership graph and field defaults:
 
 #### Delivery slices
 
-Slices **11.0-11.4** (domain contract, core Scene vertical slice, Scene references and time,
-Section grouping, and the Scene Tag taxonomy) and the first Scenes/Sections improvement pass
-(**11.4.1**: richer Dark sample data, an ungrouped-only Sections list, and the Scenes search area)
-are finished and no longer tracked here: their delivered state lives in
+Slices **11.0-11.5** (domain contract, core Scene vertical slice, Scene references and time,
+Section grouping, the Scene Tag taxonomy, the first Scenes/Sections improvement pass
+(**11.4.1**: richer Dark sample data, an ungrouped-only Sections list, and the Scenes search area),
+and the shared modal JSON reliability work) are finished and no longer tracked here: their delivered
+state lives in
 [`../CHANGELOG.md`](../CHANGELOG.md) and in
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) / [ADR 0009](adr/0009-transactional-position-maintenance.md).
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) / [ADR 0009](adr/0009-transactional-position-maintenance.md)
+/ [ADR 0011](adr/0011-modal-json-mutation-contract.md).
 The remaining slices are:
-
-- **11.5 — Modal JSON reliability for Element editing.** Make the shared modal flow submit JSON
-  correctly, show 422 errors, handle loading/network failures, and remove rows and update counts
-  reliably. This is a shared infrastructure slice with browser regressions for existing modal
-  consumers; it must be complete before Scene Elements depend on it.
 
 - **11.6 — Scene Elements and Dialogue speakers.** Add Scene Elements with the same transactional
   ordering guarantees as Scenes and the many-to-many speaker join. Implement Narration and Dialogue
   creation, editing, deletion, and accessible reordering in Bootstrap modals. A Dialogue may have
   many speakers but no turn structure; apply the minimum-speaker rule confirmed in the target
   domain model above, and Narration cannot retain speakers. Do not copy the taxonomy tree
-  controller or assume `MaintainsSiblingPositions` supports a flat parentless sequence.
+  controller or assume `MaintainsSiblingPositions` supports a flat parentless sequence. The modal
+  contract is already shared infrastructure: reuse `modal_form_controller.js` under
+  [ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of building a second editor.
 
 - **11.7 — Character presence and speaker coherence.** Add `SceneCharacter` with nullable free-text
   role, the Characters tab, scoped same-Universe validation, and a derived view of explicit
@@ -331,9 +330,12 @@ The remaining slices are:
   `parent_id` can corrupt positions; generalize/refactor the existing positioned concern or add a
   compatible flat-ordering concern before implementation, while maintaining destroy, transaction,
   and concurrency behavior too.
-- Do not copy the current modal submission, error, or delete weaknesses documented in
-  `known_quirks.md`; new code would inherit known 406s, silent validation failures, and stale DOM.
-  Complete the modal reliability slice before Elements depend on it.
+- The shared modal JSON path is now reliable and is documented in
+  [ADR 0011](adr/0011-modal-json-mutation-contract.md): submit through
+  `modal_form_controller.js`, render the `422` in the modal, and let the same-URL refresh update rows
+  and counts. The 406s, silent validation failures, and stale DOM it used to cause are resolved and
+  recorded in [`resolved_quirks.md`](resolved_quirks.md); do not reintroduce them by hand-rolling a
+  second submission path for Elements or presence links.
 - Do not use a `type` discriminator, default Scene Tags, or default/required generic presence links.
   Tags and world-presence links remain optional; the one-or-more-speaker rule confirmed in the
   target domain model applies only after an author creates a Dialogue Element.

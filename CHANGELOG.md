@@ -21,6 +21,60 @@ Labels used below:
 
 ## 2026-09-26
 
+- **[added]** Completed backlog item 11.5, the shared modal reliability slice that Scene Elements
+  depend on, recorded as [ADR 0011](docs/adr/0011-modal-json-mutation-contract.md). A modal page now
+  declares its own mutation contract with `data-modal-form-response-value`, and the flat-list modal
+  (`modal_form_controller.js`) submits JSON itself: the form's own field names go out as
+  `application/x-www-form-urlencoded` with `Accept: application/json` and the CSRF token, and the
+  verb comes from the form's `_method`, so create and update share one path. Relations and
+  ownerships keep the documented HTML redirect/re-render flow and declare `html`; nothing is
+  intercepted there. `test/controllers/modal_json_contract_test.rb` pins the declared mode, the error
+  region, the submit target, and the row's delete control for all five modal workspaces, so a new
+  page cannot drift back to the old submission.
+- **[added]** A rejected save is now visible, explained, and recoverable in the modal it came from. A
+  `422` error hash is rendered as a focused `danger` summary at the top of the modal body **and** next
+  to the control that caused it, with `aria-invalid` and `aria-describedby`; a record-level message
+  and a rejection with no field of its own are summarized only. A model reports an association
+  rejection on the association (`before_event`) while the form field is the foreign key
+  (`before_event_id`), so both spellings resolve to the same control — the "an event cannot point at
+  itself" rejection now appears on **Happens before**. While a request is in flight the submit button
+  is disabled with a spinner and the form is `aria-busy`; a request that never reached the server, a
+  `403`, a `5xx`, and an unreadable body each report their own wording. The modal stays open with
+  the entered values, and the error summary keeps focus: a save rejected while the modal is still
+  opening does not lose the summary to Bootstrap's own focus trap, and a submit button that has just
+  been disabled does not pull focus back to the dialog. Eight browser regressions cover the whole
+  path, including a 390px viewport.
+- **[added]** A mutation that never went through a form — a row delete — or a request that failed
+  outside a modal now reports itself in one page-level live region rendered by the layout beside the
+  flash messages: a short confirmation is visually hidden and only announced, a failure renders a
+  visible alert and takes focus, and the refreshed page starts empty again.
+- **[changed]** Delete in a JSON-only workspace is a first-class mutation instead of a Turbo form
+  against a `204`. `shared/_row_actions` takes an explicit `delete_via:`: a JSON row's Delete is a
+  button the modal controller issues, with the same mandatory consequence copy in
+  `data-modal-form-confirm`, and a `404` is treated as "already gone" and refreshes rather than
+  reporting a failure. After any successful create, update, or delete the controller performs a
+  same-URL Turbo visit, so rows, page counts, and cached sidebar counts come from one fresh server
+  render rather than a local update that can drift.
+- **[changed]** A JSON-only mutation controller can no longer commit behind its own error. The new
+  `RequiresJsonMutationFormat` concern gives one guard, added to `CharactersController`,
+  `ItemsController`, `EventsController`, and `SceneTagsController` (which had its own copy), that
+  answers `406 Not Acceptable` for a request that does not ask for JSON **before** anything is
+  written, as an explicit `before_action` so the callback order stays visible. The response matrix
+  itself is unchanged.
+
+- **[fixed]** The flat-list modal committed a write and then answered `406 ActionController::UnknownFormat`,
+  so a browser create or update saved the record, showed no error, and duplicated the record on a
+  retry. Validation failures now reach the form instead of disappearing.
+- **[fixed]** Deleting a row in Characters, Items, or Events left the row and the counts in the DOM
+  until a manual reload, and a second click could target a missing record. The row is now removed and
+  the page and sidebar counts refreshed from the server.
+- **[fixed]** Two smaller defects the new browser coverage found. Opening the editor filled Rails'
+  hidden companion field instead of the visible multi-select, so a tag picker looked empty in the
+  modal even though the record had tags. And a multi-select whose name already ends in `[]` was given
+  a second `[]`, which made the "clear the last tag" blank unparseable, so removing the last tag left
+  the stored assignment in place; an empty multi-select now sends exactly one explicit blank value.
+  The old Character smoke test could also pass on a committed-but-`406` write; the row now only
+  appears after a real `201`, and the new regressions assert the refreshed counts.
 - **[added]** Completed backlog item 11.4.1, part (b) — the Scenes workspace gained a **Find scenes**
   search area, because a story can hold hundreds or thousands of scenes. The new `SceneFilter` value
   object owns the whole query contract on the canonical index URL: `q` (case-insensitive text over
@@ -41,6 +95,7 @@ Labels used below:
   filters repeated and a **Clear filters** action — which is never reused for a story without scenes.
   Added value-object, request, helper, and browser coverage, including a guest filtering with the
   keyboard alone at a 420px width.
+
 - **[changed]** The Sections workspace **Move scene** form now offers only the ungrouped scenes its
   own surface lists, and its source selector is labelled **Ungrouped scene** so the control matches
   the block it lives in. This supersedes the same-day 11.4.1(b) note below that the form offered
@@ -79,6 +134,7 @@ Labels used below:
   still offers every scene of the story because regrouping is how a grouped scene comes back. The
   `scenes/_section_outline` partial is now `scenes/_ungrouped_scenes`, and `SectionPaths#ids` exposes
   the ids the list already loaded so a filter value can be validated without a second query.
+
 - **[fixed]** A count on a row now says what it counts instead of showing a bare figure. The taxonomy
   and Section pills read `Family Nielsen (4 characters)` and `Episode 1 (3 scenes)` rather than `4`
   and `3`, because a number beside a name is ambiguous as soon as a list has more than a few rows.
@@ -87,6 +143,7 @@ Labels used below:
   tree controller still restores the pill from server-formatted text when a rename is cancelled. The
   **Ungrouped scenes** badge above that list likewise reads `3 ungrouped scenes` rather than `3`, so a
   subset count is never mistaken for the story's own scene count.
+
 - **[docs]** Updated every place the list-row contract is written down after the count-label and
   Sections-workspace changes, so the count pill, the ungrouped-only move form, and the badge wording
   are described the same way in each: `docs/architecture.md` (the "List rows" section and the
@@ -118,6 +175,7 @@ Labels used below:
 - **[docs]** Dropped the now-done backlog pointers from `docs/architecture.md` and from the
   `SectionsController#show` and `sections/show.html.erb` comments; they described shipped behavior
   as pending. No application behavior, schema, or data changed.
+
 - **[chore]** Reworked the Dark `db/data/dark/scenes.yml` sample data (12 scenes) so grouping and
   narrative order are visibly different things: three scenes share Season 1 / Episode 1, three are
   ungrouped — including one told last but set in 1953 and one unfinished title-only scene — and each

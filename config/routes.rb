@@ -14,6 +14,15 @@ Rails.application.routes.draw do
         # Collection action: the Section workspace submits the chosen scene and
         # the chosen group together, so grouping needs no client-side scripting.
         patch :group, on: :collection
+        # Elements live under Scene Details rather than on a page of their own,
+        # so this collection only mutates. Their dialogue speakers travel in the
+        # same payload; there is no separate speaker route.
+        resources :scene_elements, path: "elements", only: %i[ create update destroy ] do
+          patch :move, on: :member
+        end
+        # The Characters tab is its own canonical page. Only the role is editable
+        # afterwards: a link is added, given a role, or removed.
+        resources :scene_characters, path: "characters", only: %i[ index create update destroy ]
       end
     end
     get "tags", to: "tags#index", as: :tags

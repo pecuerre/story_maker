@@ -237,29 +237,16 @@ first-version ownership graph and field defaults:
 
 #### Delivery slices
 
-Slices **11.0-11.5** (domain contract, core Scene vertical slice, Scene references and time,
+Slices **11.0-11.7** (domain contract, core Scene vertical slice, Scene references and time,
 Section grouping, the Scene Tag taxonomy, the first Scenes/Sections improvement pass
 (**11.4.1**: richer Dark sample data, an ungrouped-only Sections list, and the Scenes search area),
-and the shared modal JSON reliability work) are finished and no longer tracked here: their delivered
+the shared modal JSON reliability work, Scene Elements with Dialogue speakers, and Character
+presence) are finished and no longer tracked here: their delivered
 state lives in
 [`../CHANGELOG.md`](../CHANGELOG.md) and in
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) / [ADR 0009](adr/0009-transactional-position-maintenance.md)
 / [ADR 0011](adr/0011-modal-json-mutation-contract.md).
 The remaining slices are:
-
-- **11.6 — Scene Elements and Dialogue speakers.** Add Scene Elements with the same transactional
-  ordering guarantees as Scenes and the many-to-many speaker join. Implement Narration and Dialogue
-  creation, editing, deletion, and accessible reordering in Bootstrap modals. A Dialogue may have
-  many speakers but no turn structure; apply the minimum-speaker rule confirmed in the target
-  domain model above, and Narration cannot retain speakers. Do not copy the taxonomy tree
-  controller or assume `MaintainsSiblingPositions` supports a flat parentless sequence. The modal
-  contract is already shared infrastructure: reuse `modal_form_controller.js` under
-  [ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of building a second editor.
-
-- **11.7 — Character presence and speaker coherence.** Add `SceneCharacter` with nullable free-text
-  role, the Characters tab, scoped same-Universe validation, and a derived view of explicit
-  participants plus Element speakers without duplicate rows. Keep speaker links and participant
-  roles distinguishable.
 
 - **11.8 — Item presence.** Add `SceneItem` with nullable free-text role, the Items tab, scoped
   same-Universe validation, and add/remove/role-edit behavior. Include duplicate-link and deletion

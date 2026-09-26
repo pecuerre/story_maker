@@ -5,16 +5,30 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
     model_names = Development::UniverseDataRegistry.model_names
 
     assert_equal "User", model_names.first
-    # Scene is loaded last because it may reference a shared universe Event, and
-    # a symbolic reference may not point at a later model file.
-    assert_equal "Scene", model_names.last
+    # Scene is loaded after Event because it may reference a shared universe
+    # Event, and a symbolic reference may not point at a later model file. Its
+    # own components follow it for the same reason: they reference a Scene.
+    assert_equal "SceneCharacter", model_names.last
     assert_operator model_names.index("Event"), :<, model_names.index("Scene")
     assert_operator model_names.index("Section"), :<, model_names.index("Scene")
     assert_operator model_names.index("SceneTag"), :<, model_names.index("Scene")
+    assert_operator model_names.index("Scene"), :<, model_names.index("SceneElement")
+    assert_operator model_names.index("SceneElement"), :<, model_names.index("SceneCharacter")
     assert_not_includes model_names, "Session"
     assert_equal %w[dark lotr], Development::UniverseDataRegistry::UNIVERSES.keys
     assert Development::UniverseDataRegistry.registered_universe?("dark")
     assert_not Development::UniverseDataRegistry.registered_universe?("star_wars")
+  end
+
+  test "a scene-owned model is scoped to a scene and positioned flat" do
+    element = Development::UniverseDataRegistry.definition_for_model("SceneElement")
+    link = Development::UniverseDataRegistry.definition_for_model("SceneCharacter")
+
+    assert_equal :scene, element.scope
+    assert_predicate element, :positioned?
+    assert_not element.hierarchical_position?
+    assert_equal :scene, link.scope
+    assert_not link.positioned?
   end
 
   test "distinguishes hierarchical and flat position groups" do

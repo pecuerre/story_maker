@@ -1,0 +1,98 @@
+# Scene Elements for the Dark universe. They are the ordered prose blocks of a
+# Scene: a narration describes what happens, a dialogue names the characters who
+# speak in it. Positions are flat and contiguous inside their own Scene, and a
+# Dialogue's speakers are ordinary universe Characters rather than copies.
+#
+# The data deliberately includes every state the editor has to handle: a dialogue
+# with one speaker and with three, a narration with no content, a Scene with no
+# elements at all, and a speaker who is not a stored participant of the Scene.
+
+# A Scene with three elements, including a Dialogue whose two speakers are not
+# stored participants: they are derived from the dialogue alone.
+- scene: Scene.secrets
+  name: The arrival
+  kind: narration
+  body: "Jonas Kahnwald drives into Winden with a suitcase he will not explain, and a box he will not put down."
+  position: 0
+
+- scene: Scene.secrets
+  name: "At the kitchen door"
+  kind: dialogue
+  body: "You found the map, didn't you. I found a map. In a drawer that was empty last Tuesday."
+  characters: [ Character.katharina, Character.martha ]
+  position: 1
+
+# A title-only narration: Content is optional, so a half-written block is valid.
+- scene: Scene.secrets
+  name: The photograph
+  kind: narration
+  position: 2
+
+# A one-speaker dialogue beside a narration, and a title-only closing beat.
+- scene: Scene.michaels-waltz
+  name: "The kitchen, after dark"
+  kind: narration
+  body: "Jonas pushes the dining table aside and dances with a chair, counting the beat under his breath."
+  position: 0
+
+- scene: Scene.michaels-waltz
+  name: "One, two, three"
+  kind: dialogue
+  body: "You are not dancing with a chair. I am dancing with the count."
+  characters: [ Character.jonas ]
+  position: 1
+
+- scene: Scene.michaels-waltz
+  name: "The adults in the hallway"
+  kind: narration
+  position: 2
+
+# Three speakers in one block. The link records who is in the conversation; it
+# does not say which line belongs to whom.
+- scene: Scene.lies
+  name: "What happened in 1986"
+  kind: dialogue
+  body: "She was never here. You were never here. We were all somewhere else, and now we are here."
+  characters: [ Character.martha, Character.hannah, Character.ulrich ]
+  position: 0
+
+- scene: Scene.past-and-present
+  name: "The same argument, twice"
+  kind: narration
+  body: "The sentences are identical in 1986 and in 2019, and the people saying them are not."
+  position: 0
+
+# Two speakers, and one of them is also a stored participant of the Scene, so
+# the Characters tab shows one row that is both.
+- scene: Scene.truths
+  name: "The second Noah"
+  kind: dialogue
+  body: "He is alive. We have been looking at an empty cave for thirty years."
+  characters: [ Character.jonas, Character.martha ]
+  position: 0
+
+- scene: Scene.sic-mundus-creatus-est
+  name: The cave opens
+  kind: narration
+  body: "The stone gives way to air, and the air gives way to a light that does not belong to 1953."
+  position: 0
+
+- scene: Scene.the-journey
+  name: "Season two opens"
+  kind: narration
+  body: "The alternate Jonas is found in a field, walking north with a suitcase he will not put down."
+  position: 0
+
+- scene: Scene.the-golden-beast
+  name: "A voice in the corridor"
+  kind: dialogue
+  body: "Do not be afraid of me. I am the child you will never have."
+  characters: [ Character.jonas, Character.ulrich ]
+  position: 0
+
+# "The Grotto" and "Double Lives" are left with no elements on purpose: a Scene
+# may hold any number of them, including none.
+- scene: Scene.interlude
+  name: No music
+  kind: narration
+  position: 0

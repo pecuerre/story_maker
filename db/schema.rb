@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_120100) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -229,6 +229,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_180000) do
     t.integer "relation_tag_id", null: false
   end
 
+  create_table "scene_characters", force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.datetime "created_at", null: false
+    t.string "role"
+    t.integer "scene_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_scene_characters_on_character_id"
+    t.index ["scene_id", "character_id"], name: "index_scene_characters_on_scene_id_and_character_id", unique: true
+    t.index ["scene_id"], name: "index_scene_characters_on_scene_id"
+  end
+
+  create_table "scene_element_speakers", id: false, force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.integer "scene_element_id", null: false
+    t.index ["character_id"], name: "index_scene_element_speakers_on_character_id"
+    t.index ["scene_element_id", "character_id"], name: "index_scene_element_speakers_on_element_and_character", unique: true
+    t.index ["scene_element_id"], name: "index_scene_element_speakers_on_scene_element_id"
+  end
+
+  create_table "scene_elements", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.string "kind", default: "narration", null: false
+    t.string "name"
+    t.integer "position", default: 0, null: false
+    t.integer "scene_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scene_id", "position"], name: "index_scene_elements_on_scene_id_and_position"
+    t.index ["scene_id"], name: "index_scene_elements_on_scene_id"
+    t.check_constraint "kind IN ('narration', 'dialogue')", name: "scene_elements_kind_is_known"
+  end
+
   create_table "scene_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -385,6 +417,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_180000) do
   add_foreign_key "relations", "characters", column: "character1_id"
   add_foreign_key "relations", "characters", column: "character2_id"
   add_foreign_key "relations", "universes"
+  add_foreign_key "scene_characters", "characters"
+  add_foreign_key "scene_characters", "scenes"
+  add_foreign_key "scene_element_speakers", "characters"
+  add_foreign_key "scene_element_speakers", "scene_elements"
+  add_foreign_key "scene_elements", "scenes"
   add_foreign_key "scene_tags", "scene_tags", column: "parent_id"
   add_foreign_key "scene_tags", "stories"
   add_foreign_key "scenes", "events"

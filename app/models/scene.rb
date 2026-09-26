@@ -11,6 +11,10 @@ class Scene < ApplicationRecord
 
   belongs_to :story
   has_many_tags :scene_tag, scope: :story_id
+  # Elements and explicit presence links belong to this Scene. Deleting a Scene
+  # removes them, and a shared universe record it referred to always survives.
+  has_many :scene_elements, dependent: :destroy
+  has_many :scene_characters, dependent: :destroy
   # Section is optional organizational grouping only. A nested Section also
   # places the Scene inside that Section's ancestor path; it is not a second
   # stored membership, and it never changes the narrative position.

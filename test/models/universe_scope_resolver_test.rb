@@ -27,6 +27,16 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
     assert_equal @universe, UniverseScopeResolver.universe_for(component)
   end
 
+  test "resolves the real scene-owned models through their scene" do
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_elements(:narration_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_elements(:dialogue_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_two))
+    # Unsaved records own nothing yet, so there is no universe to resolve.
+    assert_nil UniverseScopeResolver.universe_for(SceneElement.new(name: "Unsaved"))
+    assert_nil UniverseScopeResolver.universe_for(SceneCharacter.new)
+  end
+
   test "a deeper component resolves through its own universe delegation" do
     # A speaker link belongs to a Scene Element rather than directly to a Scene.
     # It therefore delegates through its owner instead of adding an entry here,

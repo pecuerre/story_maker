@@ -43,7 +43,8 @@ Layout:
   `test/mailers/previews` are effectively empty.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
-  (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), all content +
+  (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements and
+  scene characters (both belong to `story_one`'s first Scene), all content +
   tag fixtures.
 - Sign in with `sign_in_as(users(:user_one))` /
   `sign_out` from `test/test_helpers/session_test_helper.rb`.
@@ -70,6 +71,10 @@ Layout:
   the page's token is accepted, that a missing or forged token is refused with `403` and writes
   nothing, and that both `fetch` implementations really send it. Put a new mutation path in one of
   those two files rather than assuming the fast suite covers it.
+- `ApplicationSystemTestCase#visit` waits for the `stimulus-loading` readiness signal after every
+  navigation. A native click delivered before Stimulus and Turbo have connected is silently dropped
+  on some machines, so a case that forgot the wait failed for a reason that had nothing to do with the
+  flow under test. The wait lives in the base class, so a new case does not have to remember it.
 
 ## Client-side tests and lint (Bun + Biome)
 
@@ -231,16 +236,18 @@ The Rails test suite uses `test/fixtures/` so automated tests remain determinist
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
 test mode instead of replanting demo records.
 
-## Scene delivery (slices 11.1–11.4 implemented)
+## Scene delivery (slices 11.1–11.7 implemented)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and backlog Epic 11 define the Scene
 contract. Slices 11.1–11.4 have landed the core (`scenes` migration, `Scene` model, story-scoped
 routes/controller, canonical list, narrative-order moves, Scene Details page and its editor form,
 the real sidebar link with its own cached count), the optional Section/Event/datetime references
 with their validation and the URL-backed tab shell, the Section grouping workspace, and the
-story-scoped Scene Tag taxonomy/assignment. Reliable JSON modals, Elements, and world-presence links
-are still pending and are deliberately **not** routed yet. The confirmed first-version defaults
-are: Scene `name` labelled **Title**; Element
+story-scoped Scene Tag taxonomy/assignment. Slice 11.5 made the shared modal JSON path reliable.
+Slices 11.6 and 11.7 have landed `scene_elements` with its Dialogue speaker link, `scene_characters`,
+the ordered Element list and its modal on Scene Details, and the Characters tab. Item and Location
+presence and the reverse **Appears in Scenes** links are still pending and are deliberately **not**
+routed yet. The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
 `name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
 has none; Scene uses one optional single-point `datetime` with the current Event storage/editor
 precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
@@ -257,9 +264,17 @@ Delivery remains staged in [`backlog.md`](backlog.md):
 - 11.5 (done) makes the shared modal submit JSON, render a `422` in the modal, report a request that
   never lands, and remove a row with its counts, with request and browser regressions for Characters,
   Items, and Events. See [ADR 0011](adr/0011-modal-json-mutation-contract.md).
-- Later slices add Elements, speaker and presence links, and reverse links in that order.
+- 11.6 (done) adds the `scene_elements` schema/model with its flat position, the many-to-many
+  Dialogue speaker link, the JSON-only Element controller with `move`, the Element list and modal on
+  Scene Details, and the shared modal controller's JSON move action.
+- 11.7 (done) adds the `scene_characters` join model, the Characters tab, the derived participant
+  view, and the Scenes list's Element and participant counts.
+- Later slices add Item and Location presence and the reverse links, in that order.
 - Every slice preserves public/private read-write-admin behavior and updates all model registries,
   authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
+
+The new tables shipped as their own create migrations (`CreateSceneElements`, which also creates the
+`scene_element_speakers` join, and `CreateSceneCharacters`). See below for why that matters here.
 
 ### Amending a shipped migration does not work here
 
@@ -276,7 +291,7 @@ already shipped.
 ### Scene data and manual verification
 
 When data is added, put it in the relevant `db/data/<universe_slug>/` files (`scenes.yml`,
-`scene_tags.yml`, `scene_elements.yml`, and the applicable speaker/presence-link files), not in a
+`scene_tags.yml`, `scene_elements.yml`, and `scene_characters.yml`), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, tagged/untagged Scene,
 Narration, Dialogue, multi-speaker, multi-Location, and blank/populated-role cases at Epic
@@ -288,6 +303,15 @@ but set in 1953), and each remaining Section keeps a single scene. `SceneTag` is
 `Scene`, and `Scene` is loaded **after** `Event` in `Development::UniverseDataRegistry` because a
 symbolic reference may not point at a later model file. The loader proves the Section and every
 assigned Scene Tag belong to the Scene's story before writing anything.
+
+`scene_elements.yml` and `scene_characters.yml` are **scene-scoped** registry entries: every record
+declares its `scene:` with a `Scene.slug` reference, the loader resolves its Universe through that
+Scene, and Element `position` values are flat and contiguous **inside their own Scene**. A Dialogue
+names its speakers with `characters: [ Character.slug, ... ]`, the same join the app uses, and a
+`SceneCharacter` declares `character:` plus an optional `role:` — leave `role:` empty to record
+participation without one. The Dark manifests deliberately include a Scene with no elements at all, a
+Dialogue whose speakers are not stored participants, a one-speaker dialogue, a three-speaker
+dialogue, two title-only Element blocks, a populated role, and two blank roles.
 
 For an already prepared but empty development database, use the explicit
 `UNIVERSE=<slug> bin/rails db:demo:load` task. After changing any `scenes.yml`, follow the required
@@ -337,13 +361,35 @@ the records carrying it, a Section lists the scenes grouped under it). Placehold
 right utility sidebar stays flat gray with no hover emphasis, and a guest or read-only member sees
 the same pages with no mutation controls.
 
-Open a Scene and check: the **Scene Details** tab is active while **Characters**, **Items**, and
-**Locations** are `aria-disabled` placeholders rather than dead links; Details shows the Section
+Open a Scene and check: the **Scene Details** tab is active while **Characters** is a live link and
+**Items** and **Locations** are `aria-disabled` placeholders rather than dead links; Details shows
+the Section
 group, Scene Tag badges, the linked event, and the in-world time as separate labelled values; and
 the editor's **Scene tags**, **Organization**, and **In-world time** fieldsets let you assign or
 clear optional tags, set a Section, set an Event, and set a `datetime-local` value without the
 narrative position changing. On the Scenes list, the row's title is plain text and the **Details**
-link is the way into that page.
+link is the way into that page. Each row also shows an Element count and a Characters-taking-part
+count; the second is the union of stored participants and dialogue speakers, so a character who
+both participates and speaks is counted once.
+
+Below the Scene's facts, check the **Scene elements** list: the ordered blocks are in this Scene's
+own sequence, each with its position, kind, content (or an explicit "No content yet"), and — for a
+dialogue — its speakers plus the sentence saying the link records who is in the conversation and not
+which line belongs to whom. **Add element** opens the modal; a narration saves with only a title; a
+dialogue reveals the speaker picker and refuses to save without a speaker, keeping the modal open
+and rendering the server's own message on the Speakers control. Switching a dialogue that has
+speakers to narration reveals the **Remove the speakers and make this narration** confirmation and
+only then saves. Move up/Move down reorder the blocks and are disabled at the boundaries; the delete
+confirmation says the content and speaker links go but characters do not.
+
+Then follow the **Characters** tab and check: the rows are one per character in the union of the two
+participation sources; a stored participant is badged **Participant** and shows its role or **No role
+recorded**; a character who only speaks is badged **Speaks in N element(s)**, names the elements, and
+offers no edit or remove menu; a character who is both carries both badges on one row. **Add
+character** adds a link with an optional role, **Edit role** changes it, and **Remove** takes the
+link away without removing the character or changing who speaks. Choosing a character that is already
+in the scene is reported in the modal instead of creating a second row. A guest or read-only member
+sees the same list with no controls.
 
 Open **Configuration → Tags → Story Tags → Scene tags** and check: the story-scoped Scene Tag
 hierarchy can be created, renamed, colored, nested, moved, inserted, and deleted with the shared

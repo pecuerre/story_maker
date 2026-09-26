@@ -21,6 +21,55 @@ Labels used below:
 
 ## 2026-09-27
 
+- **[added]** Backlog slices **11.6 and 11.7** — Scene Elements with Dialogue speakers, and
+  Character presence in a Scene. `scene_elements` stores a flat ordered block of a Scene's prose
+  (`kind` restricted to `narration`/`dialogue` in the model *and* by a database check constraint,
+  never a column named `type`; a required **Title**; an optional plain-text **Content**; a
+  contiguous `position` inside its own Scene), plus the `scene_element_speakers` join for a
+  Dialogue's speakers. `scene_characters` is a join model with a nullable free-text `role`, because
+  the role is part of the decision. The Element list and its modal render on Scene Details; the
+  Characters tab is its own canonical read page. Both flows reuse the shared modal contract from
+  [ADR 0011](docs/adr/0011-modal-json-mutation-contract.md) rather than building a second editor, and
+  the Elements endpoint is JSON-only, so `modal_form_controller.js` gained a `move` action that
+  issues the `PATCH` and performs the same-URL refresh a save performs — a JSON-only ordered row has
+  no Turbo form to follow, exactly like a JSON-only delete. A Dialogue must name at least one
+  same-Universe speaker, Narration may keep none, and a Dialogue becomes Narration only through the
+  modal's explicit "remove the speakers" confirmation, which clears them in the same atomic request.
+  The **Characters** tab is a URL-backed workspace tab now; **Items** and **Locations** remain
+  `aria-disabled` placeholders.
+- **[added]** Participation in a Scene is read from its two independent sources — an explicit
+  `SceneCharacter` link and a Character who speaks in a Dialogue Element — and reported as their
+  **union** through the new `SceneParticipants` value object. A Character who both participates and
+  speaks is one participant carrying two labels, never two rows and never a double count, and
+  speaking never creates a stored presence row. The Scenes list gained an Element count and a
+  participant count, each read for the whole page in one grouped query.
+- **[added]** Connected development data for both new models in `db/data/dark` and `db/data/lotr`:
+  a Scene with no Elements, a Dialogue whose speakers are not stored participants, a one-speaker and
+  a three-speaker dialogue, two title-only Element blocks, a populated role, and two blank roles. The
+  development-data registry gained a `:scene` scope, so a Scene-owned record declares its `scene:`
+  and the loader resolves its Universe through it, groups Element positions inside their own Scene,
+  and keeps the reference order Scene → SceneElement → SceneCharacter.
+- **[fixed]** A system-test click delivered before Stimulus and Turbo had connected was silently
+  dropped on some machines, so a case that had not waited for the page to be interactive failed for
+  a reason that had nothing to do with the flow under test — the existing Scene tests failed this way
+  on a clean checkout. `ApplicationSystemTestCase#visit` now waits for the `stimulus-loading`
+  readiness signal after every navigation, so the wait lives in the base class instead of in each
+  case.
+- **[security]** Both new endpoints refuse an HTML mutation with `406` **before** anything is
+  written, refuse a mutation without a valid CSRF token with `403` and write nothing, and resolve
+  every record through the authorized Universe → Story → Scene path, so a foreign Scene, Element,
+  presence link, or Character is a `404` rather than a cross-scope write. A same-Universe speaker or
+  presence target is proved in the model, in the controller, and by real foreign keys plus a unique
+  pair index in the database.
+- **[docs]** `docs/architecture.md`, `docs/data_model.md`, `docs/universe_maker_conventions.md`,
+  `docs/visual_design.md`, `docs/development.md`, and
+  [ADR 0007](docs/adr/0007-story-owned-scenes-and-elements.md) record the delivered slices, the
+  hybrid response split, the two flat ordered sequences, the participation union, and the manual
+  verification steps. `docs/known_quirks.md` findings 22 and 23 now name the second flat sequence
+  and the two new constrained join tables.
+- **[chore]** New client-side coverage: `test/javascript/scene_element_form_controller_test.js` and
+  five cases for the shared modal controller's `move` action, bringing the Bun suite to 75 cases.
+
 - **[added]** Closed known quirk 33 with a real client-side pipeline, recorded as
   [ADR 0012](docs/adr/0012-client-side-verification-and-csrf.md). The Stimulus controllers now have
   unit tests on Bun's built-in test runner (`bun run test:js`, 62 cases in `test/javascript/`) that

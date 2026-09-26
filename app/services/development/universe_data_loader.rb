@@ -352,6 +352,8 @@ module Development
             validate_universe_scoped_record!(record)
           when :story
             validate_story_scoped_record!(record)
+          when :scene
+            validate_scene_scoped_record!(record)
           end
 
           validate_parent_scope!(record)
@@ -375,6 +377,20 @@ module Development
       def validate_story_scoped_record!(record)
         unless record.attributes.key?("story")
           raise ValidationError, "#{record_label(record)} must declare its story"
+        end
+
+        actual_universe = universe_for(record)
+        return if actual_universe == target_identifier
+
+        raise ValidationError, "#{record_label(record)} belongs to universe '#{actual_universe || "(none)"}', expected '#{target_identifier}'"
+      end
+
+      # A Scene-owned record declares its Scene rather than its Story or its
+      # Universe, and reaches both through it. The scope key is the Scene because
+      # a Scene is the narrowest owner any persisted record has.
+      def validate_scene_scoped_record!(record)
+        unless record.attributes.key?("scene")
+          raise ValidationError, "#{record_label(record)} must declare its scene"
         end
 
         actual_universe = universe_for(record)
@@ -436,10 +452,12 @@ module Development
       # Story-scoped records may reference other story-scoped records (a Scene
       # grouped under a Section). That shared story scope is an application-level
       # rule, so the loader proves it before writing. A reference to a
-      # universe-scoped record (a Scene's Event) is already scope-checked by
+      # universe-scoped record (a Scene's Event, a Dialogue's speakers, a
+      # presence link's Character) is already scope-checked by
       # validate_universe_scoped_record!, and a reference to another universe is
       # already rejected because a manifest may only resolve records from its own
-      # universe directory.
+      # universe directory. A Scene-owned record reaches its Universe through its
+      # Scene, so the same two rules cover it.
       def validate_story_reference_scopes!(record)
         return unless record.definition.scope == :story
 
@@ -462,10 +480,15 @@ module Development
         UniverseDataRegistry.definition_for_model(model_name)&.scope == :story
       end
 
+      def scene_scoped_model?(model_name)
+        UniverseDataRegistry.definition_for_model(model_name)&.scope == :scene
+      end
+
       def universe_for(record)
         return if record.nil?
         return record.identifier if record.definition.model_name == "Universe"
         return if record.definition.model_name == "User"
+        return universe_for(record.resolved_attributes["scene"]) if scene_scoped_model?(record.definition.model_name)
         return universe_for(record.resolved_attributes["story"]) if story_scoped_model?(record.definition.model_name)
 
         universe_for(record.resolved_attributes["universe"])
@@ -473,9 +496,22 @@ module Development
 
       def story_for(record)
         return if record.nil?
-        return unless story_scoped_model?(record.definition.model_name)
+        return record.resolved_attributes["story"] if story_scoped_model?(record.definition.model_name)
 
-        record.resolved_attributes["story"]
+        story_for(record.resolved_attributes["scene"]) if scene_scoped_model?(record.definition.model_name)
+      end
+
+      # The owner whose siblings a positioned record shares, as a scope key and
+      # the owner's stable identifier. A hierarchical group also carries the
+      # parent, because siblings are one parent's children.
+      def position_owner(record)
+        if story_scoped_model?(record.definition.model_name)
+          [ :story, reference_identifier(record.resolved_attributes["story"]) ]
+        elsif scene_scoped_model?(record.definition.model_name)
+          [ :scene, reference_identifier(record.resolved_attributes["scene"]) ]
+        else
+          [ :universe, reference_identifier(record.resolved_attributes["universe"]) ]
+        end
       end
 
       def create_record(record)
@@ -520,13 +556,8 @@ module Development
 
       def static_position_group_key(record)
         parent = reference_identifier(record.resolved_attributes["parent"]) if record.definition.hierarchical_position?
-        if story_scoped_model?(record.definition.model_name)
-          story = reference_identifier(record.resolved_attributes["story"])
-          [ record.definition.model_name, :story, story, parent ]
-        else
-          universe = reference_identifier(record.resolved_attributes["universe"])
-          [ record.definition.model_name, :universe, universe, parent ]
-        end
+
+        [ record.definition.model_name, *position_owner(record), parent ]
       end
 
       def reference_identifier(record)
@@ -555,6 +586,8 @@ module Development
       def position_group_key(record, definition)
         scope = if story_scoped_model?(record.class.name)
           [ record.story_id, definition.hierarchical_position? ? record.parent_id : nil ]
+        elsif scene_scoped_model?(record.class.name)
+          [ record.scene_id, nil ]
         else
           [ record.universe_id, definition.hierarchical_position? ? record.parent_id : nil ]
         end

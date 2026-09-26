@@ -21,6 +21,18 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     super
   end
 
+  # Every case in this suite visits a page and then interacts with it, and a
+  # native click delivered before Stimulus and Turbo have connected is silently
+  # dropped on some machines: the click never reaches the page at all, so the
+  # next assertion fails for a reason that has nothing to do with the flow under
+  # test. Waiting for the readiness signal `stimulus-loading` exposes after every
+  # navigation makes the whole suite independent of that race, instead of each
+  # case having to remember the wait.
+  def visit(path, **options)
+    super
+    assert_stimulus_loaded
+  end
+
   private
     def sign_in_via_form(user, password: "password")
       visit new_session_path

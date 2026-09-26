@@ -2,7 +2,7 @@ require "test_helper"
 
 # `modal_form_controller.js` submits JSON itself, so every modal page has to
 # declare which mutation contract its controller actually implements. These tests
-# pin that shared contract once, for all five modal workspaces:
+# pin that shared contract once, for all modal workspaces:
 #
 # - a JSON-only page declares `json`, renders the modal error region the
 #   controller fills from a 422 body, and destroys through the controller's
@@ -28,19 +28,44 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
+  # The two Scene workspaces are story-scoped rather than universe-scoped, so
+  # they are pinned by their own routes. Scene Elements are read on Scene Details
+  # and mutated through the same modal; the Characters tab is its own page.
+  def scene_pages(universe_slug:, story:, scene:)
+    {
+      "scene details elements" => [ universe_story_scene_path(universe_slug: universe_slug, story_id: story, id: scene), "scene_element" ],
+      "scene characters" => [ universe_story_scene_scene_characters_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_character" ]
+    }
+  end
+
+  def assert_json_modal(name, model_param:)
+    assert_select "[data-controller='modal-form'][data-modal-form-response-value='json']", 1,
+      "#{name} must declare the JSON mutation contract"
+    assert_select "[data-modal-form-target='modal'] [data-modal-form-target='errors'][role='alert']", 1,
+      "#{name} must render the shared modal error region"
+    assert_select "form[data-modal-form-target='form'][data-action='modal-form#save']", 1,
+      "#{name} must submit through the modal controller"
+    assert_select "input[type='submit'][data-modal-form-target='submit']", 1,
+      "#{name} must mark the submit button so it can show the pending state"
+    assert_select "[data-modal-form-model-param-value=?]", model_param, { count: 1 },
+      "#{name} must scope the payload to its own model"
+  end
+
   test "a json-only modal workspace declares the json contract and its own error region" do
     JSON_PAGES.each do |name, helper|
       get public_send(helper, universe_slug: @universe.slug)
 
       assert_response :success
-      assert_select "[data-controller='modal-form'][data-modal-form-response-value='json']", 1,
-        "#{name} must declare the JSON mutation contract"
-      assert_select "[data-modal-form-target='modal'] [data-modal-form-target='errors'][role='alert']", 1,
-        "#{name} must render the shared modal error region"
-      assert_select "form[data-modal-form-target='form'][data-action='modal-form#save']", 1,
-        "#{name} must submit through the modal controller"
-      assert_select "input[type='submit'][data-modal-form-target='submit']", 1,
-        "#{name} must mark the submit button so it can show the pending state"
+      assert_json_modal(name, model_param: name.singularize)
+    end
+  end
+
+  test "the scene element and scene character workspaces declare the json contract" do
+    scene_pages(universe_slug: @universe.slug, story: stories(:story_one), scene: scenes(:scene_one)).each do |name, (path, model_param)|
+      get path
+
+      assert_response :success
+      assert_json_modal(name, model_param: model_param)
     end
   end
 
@@ -53,6 +78,26 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
       "Delete #{characters(:character_one).name}?"
     assert_select "form[action=?] input[name='_method'][value='delete']", universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
       count: 0, message: "a JSON-only row must not keep a Turbo delete form that answers 204 with no replacement"
+  end
+
+  test "an ordered json-only row moves through the controller and keeps no Turbo form" do
+    story = stories(:story_one)
+    scene = scenes(:scene_one)
+    element = scene_elements(:narration_one)
+
+    get universe_story_scene_path(universe_slug: @universe.slug, story_id: story, id: scene)
+
+    assert_response :success
+    assert_select "button[data-action='modal-form#move'][data-modal-form-url=?][data-modal-form-direction=?]",
+      move_universe_story_scene_scene_element_path(universe_slug: @universe.slug, story_id: story,
+        scene_id: scene, id: element, direction: "down"), "down"
+    assert_select "button[data-action='modal-form#move'][data-modal-form-url=?]",
+      move_universe_story_scene_scene_element_path(universe_slug: @universe.slug, story_id: story,
+        scene_id: scene, id: scene_elements(:dialogue_one), direction: "up")
+    # A JSON-only move has no Turbo form to follow, so the page must not carry a
+    # `button_to` that would submit HTML to the JSON-only endpoint.
+    assert_select "form[action*='/move'] input[name='_method'][value='patch']", 0,
+      "a JSON-only move must not leave a Turbo form behind"
   end
 
   test "an html-flow modal workspace keeps the redirect flow" do
@@ -87,6 +132,23 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("Event.count") do
       post universe_events_url(universe_slug: @universe.slug), params: { event: { title: "Html submit" } }
+    end
+    assert_response :not_acceptable
+  end
+
+  test "the scene element and scene character endpoints also refuse an html mutation" do
+    story = stories(:story_one)
+    scene = scenes(:scene_one)
+
+    assert_no_difference("SceneElement.count") do
+      post universe_story_scene_scene_elements_url(universe_slug: @universe.slug, story_id: story, scene_id: scene),
+        params: { scene_element: { kind: "narration", name: "Html submit" } }
+    end
+    assert_response :not_acceptable
+
+    assert_no_difference("SceneCharacter.count") do
+      post universe_story_scene_scene_characters_url(universe_slug: @universe.slug, story_id: story, scene_id: scene),
+        params: { scene_character: { character_id: @universe.characters.first.id } }
     end
     assert_response :not_acceptable
   end
@@ -134,5 +196,26 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     assert_select "[data-modal-form-target='errors']", 0
     assert_select "button[data-action='modal-form#destroy']", 0
     assert_select "[data-mutation-status]", 1, "the page-level mutation status is part of the layout, not the editor"
+  end
+
+  test "a read-only member sees the scene workspaces without any control" do
+    private_universe = Universe.create!(owner: users(:user_one), name: "Read-only scene contract", slug: "read-only-scene-contract", private: true)
+    UniverseMembership.create!(universe: private_universe, user: users(:user_two), access_level: :read)
+    story = Story.create!(universe: private_universe, name: "Private story")
+    scene = story.scenes.create!(name: "Private scene")
+    scene.scene_elements.create!(name: "A beat", kind: "narration")
+    sign_out
+    sign_in_as(users(:user_two))
+
+    scene_pages(universe_slug: private_universe.slug, story: story, scene: scene).each do |name, (path, _)|
+      get path
+
+      assert_response :success, "#{name} must stay readable for a read-only member"
+      assert_select "[data-controller='modal-form']", 0, "#{name} must not render the editor"
+      assert_select "[data-modal-form-target='errors']", 0, "#{name} must not render the error region"
+      assert_select "button[data-action='modal-form#open']", 0, "#{name} must not offer an add action"
+      assert_select "button[data-action='modal-form#move']", 0, "#{name} must not offer a move control"
+      assert_select "button[data-action='modal-form#destroy']", 0, "#{name} must not offer a delete control"
+    end
   end
 end

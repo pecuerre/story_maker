@@ -414,6 +414,97 @@ describe("modal form status reporting", () => {
   })
 })
 
+describe("modal form move", () => {
+  function moveButton(direction, url = "/u/dark/s/1/scenes/2/elements/3/move?direction=down", disabled = false) {
+    const host = document.createElement("div")
+    host.innerHTML = `
+      <div data-mutation-status hidden class="visually-hidden"></div>
+      <div class="dropdown"><button class="btn dropdown-toggle" data-bs-toggle="dropdown" type="button"></button></div>
+      <button type="button" data-modal-form-direction="${direction}" data-modal-form-url="${url}" ${disabled ? "disabled" : ""}></button>
+    `
+    document.body.append(host)
+    return host.querySelector("button[data-modal-form-direction]")
+  }
+
+  test("sends the move as a PATCH with the page's token and then refreshes", async () => {
+    const meta = csrfMeta("token-from-meta")
+    const calls = captureFetch(new Response("{}", { status: 200 }))
+    let refreshed = 0
+    globalThis.Turbo = { visit: () => { refreshed += 1 } }
+    const { controller, host } = build("<form></form>")
+    const trigger = moveButton("down")
+    controller.closeMenu = () => {}
+    controller.modalTarget = host.querySelector(".dropdown")
+
+    await controller.move({ preventDefault() {}, currentTarget: trigger })
+
+    expect(calls).toHaveLength(1)
+    expect(calls[0].options.method).toBe("PATCH")
+    expect(calls[0].options.headers["X-CSRF-Token"]).toBe("token-from-meta")
+    expect(calls[0].url).toContain("/elements/3/move?direction=down")
+    expect(refreshed).toBe(1)
+    delete globalThis.Turbo
+    meta.remove()
+  })
+
+  test("a disabled control is not a move the controller performs", async () => {
+    const calls = captureFetch()
+    const { controller } = build("<form></form>")
+    const trigger = moveButton("up", undefined, true)
+    controller.closeMenu = () => {}
+
+    await controller.move({ preventDefault() {}, currentTarget: trigger })
+
+    expect(calls).toHaveLength(0)
+  })
+
+  test("a rejected move reports the server's own message, not a generic one", async () => {
+    captureFetch(new Response(JSON.stringify({ errors: { character_ids: [ "is required for a dialogue element" ] } }), { status: 422 }))
+    const { controller, host } = build("<form></form>", { withSummary: false })
+    const trigger = moveButton("down")
+    controller.closeMenu = () => {}
+    controller.modalTarget = host.querySelector(".dropdown")
+
+    await controller.move({ preventDefault() {}, currentTarget: trigger })
+
+    const region = host.querySelector("[data-mutation-status]")
+    expect(region.hidden).toBe(false)
+    expect(region.textContent).toContain("is required for a dialogue element")
+    // The row stays where it is, and the control comes back so the author can
+    // try again.
+    expect(trigger.disabled).toBe(false)
+  })
+
+  test("a move that never reached the server says so and re-enables the control", async () => {
+    captureFetch(new Error("offline"))
+    const { controller, host } = build("<form></form>", { withSummary: false })
+    const trigger = moveButton("down")
+    controller.closeMenu = () => {}
+    controller.modalTarget = host.querySelector(".dropdown")
+
+    await controller.move({ preventDefault() {}, currentTarget: trigger })
+
+    expect(host.querySelector("[data-mutation-status]").textContent).toContain("could not be sent")
+    expect(trigger.disabled).toBe(false)
+  })
+
+  test("a row that is already gone refreshes instead of reporting a failure", async () => {
+    captureFetch(new Response("{}", { status: 404 }))
+    let refreshed = 0
+    globalThis.Turbo = { visit: () => { refreshed += 1 } }
+    const { controller, host } = build("<form></form>", { withSummary: false })
+    const trigger = moveButton("down")
+    controller.closeMenu = () => {}
+    controller.modalTarget = host.querySelector(".dropdown")
+
+    await controller.move({ preventDefault() {}, currentTarget: trigger })
+
+    expect(refreshed).toBe(1)
+    expect(host.querySelector("[data-mutation-status]").textContent).toContain("no longer exists")
+    delete globalThis.Turbo
+  })
+})
+
 describe("modal form open", () => {
   test("fills a multi-select through Tom Select when the editor has one", () => {
     const { controller, form } = build(`

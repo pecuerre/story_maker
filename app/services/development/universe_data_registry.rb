@@ -45,7 +45,12 @@ module Development
       ModelDefinition.new(model_name: "Event", file_name: "events", scope: :universe, positioned: true),
       # Loaded after Event because a Scene may reference a shared universe
       # event; a symbolic reference may not point at a later model file.
-      ModelDefinition.new(model_name: "Scene", file_name: "scenes", scope: :story, positioned: true, position_mode: :flat)
+      ModelDefinition.new(model_name: "Scene", file_name: "scenes", scope: :story, positioned: true, position_mode: :flat),
+      # A Scene's own components. They belong to a Scene rather than to the Story
+      # or the Universe, so they load after Scene and reach the Universe through
+      # it. Element positions are flat and contiguous inside their own Scene.
+      ModelDefinition.new(model_name: "SceneElement", file_name: "scene_elements", scope: :scene, positioned: true, position_mode: :flat),
+      ModelDefinition.new(model_name: "SceneCharacter", file_name: "scene_characters", scope: :scene)
     ].freeze
 
     UNIVERSES = {

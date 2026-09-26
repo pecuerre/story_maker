@@ -477,12 +477,105 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       assert_select "a.active[aria-current=page][href=?]",
         universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene),
         text: "Scene Details"
-      # Not-yet-routable tabs stay aria-disabled placeholders, never dead links.
-      assert_select "a", count: 1
-      %w[Characters Items Locations].each do |label|
+      # The Characters tab has a real destination now; the two presence tabs that
+      # have not shipped stay aria-disabled placeholders, never dead links.
+      assert_select "a[href=?]", universe_story_scene_scene_characters_path(
+        universe_slug: @universe.slug, story_id: @story, scene_id: @scene
+      ), text: "Characters"
+      %w[Items Locations].each do |label|
         assert_select "span.nav-link.disabled[aria-disabled=true]", text: label
       end
     end
+  end
+
+  test "scene details lists the ordered elements with their kind and speakers" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select ".scene-elements .badge[aria-label=?]", "4 elements"
+    assert_select ".scene-elements .entity-row", 4
+    assert_select ".scene-elements .entity-title" do |titles|
+      assert_equal [ "The hollow tree", "Michael teaches the waltz", "The adults argue", "Interlude" ],
+        titles.map { |title| title.text.squish }
+    end
+    assert_select ".scene-elements .badge", text: /Narration/
+    assert_select ".scene-elements .badge", text: /Dialogue/
+    assert_includes response.body, "Character one and Character two speak in this block"
+    assert_includes response.body, "not which line belongs to whom"
+    # A content-free element says so rather than showing an empty box.
+    assert_includes response.body, "No content yet"
+  end
+
+  test "scene details gives writers the element modal and no guest any control" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select "button[data-action='modal-form#open'][data-modal-form-url=?]",
+      universe_story_scene_scene_elements_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene),
+      text: "Add element"
+    assert_select "select[name='scene_element[kind]'] option", 2
+    assert_select "select[name='scene_element[kind]'] option[value=?]", "dialogue", text: "Dialogue"
+    assert_select "input[name='scene_element[name]'][required]"
+    assert_select "textarea[name='scene_element[body]']"
+    assert_select "select[name='scene_element[character_ids][]'][multiple]"
+    assert_select "[data-modal-form-target='errors']", 1
+
+    sign_out
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select ".scene-elements .entity-row", 4
+    assert_select "button[data-action='modal-form#open']", count: 0
+    assert_select "button[data-action='modal-form#move']", count: 0
+    assert_select "button[data-action='modal-form#destroy']", count: 0
+    assert_select "[data-controller='scene-element-form']", count: 0
+  end
+
+  test "scene details disables the element move controls at the sequence boundaries" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_select ".scene-elements button[data-action='modal-form#move'][data-modal-form-direction=up][disabled]", count: 1
+    assert_select ".scene-elements button[data-action='modal-form#move'][data-modal-form-direction=down][disabled]", count: 1
+    assert_select ".scene-elements button[data-action='modal-form#move'][data-modal-form-url=?]",
+      move_universe_story_scene_scene_element_path(universe_slug: @universe.slug, story_id: @story,
+        scene_id: @scene, id: scene_elements(:narration_three), direction: "up")
+  end
+
+  test "scene details tells a read-only member about an empty element list" do
+    universe, story = private_story
+    scene = story.scenes.create!(name: "Private scene")
+    sign_in_read_only_member(universe)
+
+    get universe_story_scene_url(universe_slug: universe.slug, story_id: story, id: scene)
+
+    assert_response :success
+    assert_select ".scene-elements .empty-title", text: "No elements yet"
+    assert_select "button[data-action='modal-form#open']", count: 0
+  end
+
+  test "index shows an element count and a participant count on every row" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    # Scene one has four elements and two participants, even though both
+    # characters are stored participants who also speak in a dialogue. The other
+    # two scenes have neither, and still say so on their own row.
+    assert_select ".entity-row .badge[aria-label=?]", "4 elements", count: 1
+    assert_select ".entity-row .badge[aria-label=?]", "2 characters taking part", count: 1
+    assert_select ".entity-row .badge[aria-label=?]", "0 elements", count: 2
+    assert_select ".entity-row .badge[aria-label=?]", "0 characters taking part", count: 2
+  end
+
+  test "index counts a character who both participates and speaks once" do
+    scene_characters(:scene_character_one).destroy!
+
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    # Only Character one is linked now, and Character two is still a participant
+    # because she speaks, so the union is still two.
+    assert_select ".entity-row .badge[aria-label=?]", "2 characters taking part", count: 1
   end
 
   test "the scene editor also renders the workspace tab shell" do

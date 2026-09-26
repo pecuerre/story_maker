@@ -246,6 +246,35 @@ shown in these confirmations.
 > templates below are live for those two records; the Character/Item/Location templates still
 > describe Scene links that slices 11.7–11.9 will add.
 
+> **Execution note (2026-09-27, slices 11.6 and 11.7):** Scene Elements and Character presence are
+> delivered and do not change the domain. Four decisions above were implemented and are worth
+> restating because they are easy to break:
+>
+> - The Dialogue speaker link is a **plain many-to-many association** (`scene_element_speakers`),
+>   not a join model, because it carries no data of its own and records no turn order. `Character`
+>   declares the same link from its side, so deleting a Character removes its speaker links and its
+>   presence links and never a Scene or an Element.
+> - "the Speakers picker shown and required for Dialogue" is one native multi-select rendered by
+>   the same modal for both kinds and revealed by `scene_element_form_controller.js`. The picker is
+>   **hidden, never disabled**, so a hidden selection is still submitted and the server can see that
+>   there is something to confirm. That confirmation is a checkbox which sends `remove_speakers`,
+>   which the controller turns into an empty speaker list in the same request — the only way a
+>   Dialogue becomes Narration, and it is atomic.
+> - A Scene's Element sequence uses the shared service's **flat** mode with the **Scene** as the scope
+>   owner, exactly as a Story is the scope owner for the Scene sequence. `position` is not a
+>   permitted form field, so the Move controls are the only way to order Elements. Because the
+>   endpoint is JSON-only those controls cannot be Turbo forms: `modal_form_controller.js#move`
+>   issues the `PATCH` and performs the same-URL refresh a save performs, reusing the same request,
+>   token, status, and refresh path as a JSON-only delete.
+> - "The Characters tab should derive participation from explicit presence links plus Element
+>   speakers" is implemented as `SceneParticipants`, which reports the **union** of the two sources
+>   and never their sum. Speaking never creates a `SceneCharacter` row. The same object backs the
+>   tab's rows and the Scenes list's per-row participant count, so the two can never disagree.
+>
+> The `Character` deletion confirmation above is now live: `Character` declares the speaker link and
+> `has_many :scene_characters, dependent: :delete_all`. The `Item` and `Location` templates still
+> describe Scene links that slices 11.8–11.9 will add.
+
 > **Execution note (2026-09-26, backlog item 11.4.1):** the first improvement pass over the two
 > shipped Scene/Section workspaces is delivered and does not change the domain. Two parts of the
 > decision above were read more literally:

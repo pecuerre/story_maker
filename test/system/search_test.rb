@@ -213,6 +213,103 @@ class SearchTest < ApplicationSystemTestCase
     assert_selector ".search-group-title", text: /2 matches/i
   end
 
+  # A run's legibility is a question about the colors a reader actually receives,
+  # and a browser is the only thing that can answer it: a translucent fill is
+  # resolved onto whatever is painted beneath it, so the color that decides the
+  # ratio is not the one written in the stylesheet. This composites the mark and
+  # the line it sits in the way they are really painted and returns every ratio
+  # the case below needs.
+  MATCH_CONTRAST_PROBE = <<~JS
+    (function() {
+      var parse = function(css) {
+        var p = css.match(/[\\d.]+/g).map(Number);
+        return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+      };
+      var over = function(top, bottom) {
+        var a = top.a + bottom.a * (1 - top.a);
+        if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
+        return {
+          r: (top.r * top.a + bottom.r * bottom.a * (1 - top.a)) / a,
+          g: (top.g * top.a + bottom.g * bottom.a * (1 - top.a)) / a,
+          b: (top.b * top.a + bottom.b * bottom.a * (1 - top.a)) / a,
+          a: a
+        };
+      };
+      // The surface behind an element: its own fill at whatever share it is
+      // opaque, over the nearest ancestor that finally is.
+      var behind = function(el) {
+        var stack = [];
+        for (var node = el; node; node = node.parentElement) {
+          var fill = parse(getComputedStyle(node).backgroundColor);
+          if (fill.a === 0) continue;
+          stack.push(fill);
+          if (fill.a === 1) break;
+        }
+        var result = { r: 255, g: 255, b: 255, a: 1 };
+        for (var i = stack.length - 1; i >= 0; i--) result = over(stack[i], result);
+        return result;
+      };
+      var luminance = function(c) {
+        var f = function(v) {
+          v /= 255;
+          return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        };
+        return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+      };
+      var ratio = function(one, other) {
+        var a = luminance(one), b = luminance(other);
+        return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100;
+      };
+      var contrast = function(el) {
+        var surface = behind(el);
+        return ratio(over(parse(getComputedStyle(el).color), surface), surface);
+      };
+
+      var panel = "[data-search-target='results'] ";
+      var mark = document.querySelector(panel + ".navbar-search-result-title mark");
+      if (!mark) return null;
+      var context = document.querySelector(panel + ".navbar-search-result-context");
+
+      return {
+        marked: contrast(mark),
+        // The context line is the panel's dimmest text, and it shares the mark's
+        // surface, so the two are a fair thing to set side by side.
+        dimmest: contrast(context || mark.parentElement),
+        separation: ratio(behind(mark), behind(mark.parentElement))
+      };
+    })()
+  JS
+
+  test "the matched run is more readable than the line it sits in, not less" do
+    stub_engine
+    sign_in_via_form(users(:user_one))
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    search_box.fill_in with: "hannah"
+    assert_selector "[data-search-target='results'] .navbar-search-result-title mark", text: "Hannah"
+
+    contrast = page.evaluate_script(MATCH_CONTRAST_PROBE)
+
+    # The run is the one thing in the panel the reader is looking for, so it has
+    # to clear the bar on its own fill...
+    assert_operator contrast["marked"], :>=, 4.5,
+      "the marked run is only #{contrast['marked']}:1 against its own background"
+    # ...it has to be the *most* legible thing on the panel rather than the
+    # least, which is what a translucent amber did: 35% amber over the panel's
+    # near-black resolves to a brown around #6a571b, and white on that measures
+    # 6.9:1, a step *below* the panel's own dimmest line at 7.9:1, so the word
+    # the reader was hunting for was the hardest thing in the list to read. In a
+    # stylesheet that still looks like a highlight.
+    assert_operator contrast["marked"], :>=, contrast["dimmest"],
+      "the marked run is #{contrast['marked']}:1 while the panel's dimmest line is " \
+      "#{contrast['dimmest']}:1, so the highlight is the least legible thing on screen"
+    # And the fill has to be visibly different from the panel, or there is no
+    # box to see and the reader is left guessing where the match began. The
+    # brown was 2.4:1 against the panel, which is very nearly invisible.
+    assert_operator contrast["separation"], :>=, 3.0,
+      "the mark's fill is only #{contrast['separation']}:1 against the panel behind it"
+  end
+
   test "a guest can use the box on a public universe" do
     stub_engine
     visit universe_characters_path(universe_slug: @universe.slug)

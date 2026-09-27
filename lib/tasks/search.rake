@@ -35,7 +35,19 @@ namespace :search do
     end
 
     $stdout.puts("Health:         #{backend.health.inspect}")
-    $stdout.puts("Index exists:   #{backend.index_exists?}")
-    $stdout.puts("Documents:      #{backend.stats&.fetch("numberOfDocuments", "(unknown)")}")
+
+    # The document count is a question about an index, and before the first
+    # reindex there is no index to count: the engine answers `stats` for a
+    # missing index with `index_not_found`, which `Search::Client` honestly
+    # re-raises. So the state is reported instead, because this is the command
+    # a person is told to run first when search returns nothing — it has to
+    # answer that question, not abort on it.
+    if backend.index_exists?
+      $stdout.puts("Index exists:   true")
+      $stdout.puts("Documents:      #{backend.stats&.fetch("numberOfDocuments", "(unknown)")}")
+    else
+      $stdout.puts("Index exists:   false")
+      $stdout.puts("Documents:      (none — the index is created by bin/rails search:reindex)")
+    end
   end
 end

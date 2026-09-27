@@ -206,8 +206,14 @@ scrolled to 24rem, and it is painted above the actions to its right.
 The panel is one listbox holding two labelled groups — **Go to** for navigation destinations and
 **Results** for records — separated by a hairline, with an uppercase group heading and a kind badge
 (`Character`, `Scene element`, `Character tag`) on every row, the record's context underneath, and a
-one-line excerpt. The matched run in a title is `<mark>`ed. A panel with nothing to show says so in
-muted text: "No matches for …" or "Search is not available." **See all results** appears only when
+one-line excerpt. The matched run in a title is `<mark>`ed, in the full-strength amber with the app's
+own dark on top of it. A highlight has to be *more* legible than the line it sits in, so the fill and
+the text are both opaque: a translucent amber over the panel's near-black resolves to a brown the run is
+harder to read on than the near-white beside it, and it would also pick up the row's hover tint from
+beneath it, moving the one run the reader is tracking. `test/system/search_test.rb` measures the
+resolved colors in a browser and holds the run to AA, to at least the legibility of the panel's dimmest
+line, and to a fill that is visibly distinguishable from the panel. A panel with nothing to show says so
+in muted text: "No matches for …" or "Search is not available." **See all results** appears only when
 there is an answer to open, and sits below the panel rather than on top of it.
 
 On the results page the same content uses the ordinary theme-aware surfaces: a `content-surface` form

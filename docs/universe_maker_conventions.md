@@ -538,6 +538,14 @@ that must not drift:
   passes `navbar-search-scope`, painted for the always-dark navbar, and the results page passes
   nothing and gets the ordinary theme-aware form control. A bar-only treatment hard-coded into the
   partial lands on a page that follows the theme, so keep it in the caller's class.
+- **A highlight raises contrast; it never lowers it.** The matched run in the dropdown wears an opaque
+  fill and an opaque text color, both declared in Sass next to the rest of the bar's colors. A
+  translucent fill is resolved by the browser onto the panel beneath it, which turns a 35% amber into a
+  brown the run is *harder* to read on than the near-white beside it — and it also picks up the row's
+  hover tint, so the one run the reader is tracking moves under the cursor. `test/system/search_test.rb`
+  composites the real painted colors in the browser and holds the run to WCAG AA, to at least the
+  legibility of the panel's dimmest line, and to a fill distinguishable from the panel. A color here is
+  an assertion someone has to measure, not a value a stylesheet review can approve.
 - **Documents hold ids and their own path, never a universe's or story's name.** Displayed context
   is resolved per request (`Search::Catalog#describe`); a rename needs no reindex.
 - **A model that becomes searchable declares it once**, next to its fields:

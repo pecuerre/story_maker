@@ -60,6 +60,56 @@ Labels used below:
   `Universe.visible_to`, the same rule `Ability` enforces) rather than as a post-filter, so a private
   universe's records are never fetched and then hidden, and a reader with no readable universe is
   not asked at all. The engine's key stays server-side.
+- **[changed]** **`bin/dev` now starts the search engine too**, as a third process beside `web` and
+  `css`, and the engine no longer lives in `/tmp`. The engine used to be launched by hand as a
+  detached background process, which produced three recurring failures: a stale engine outliving the
+  session that started it (one such engine was still holding port 7700 long after its terminal closed,
+  and re-parented onto `systemd --user`, which is what made it look unkillable), an engine silently
+  missing after a reboot because `/tmp` had been cleared, and two engines fighting over the port when
+  the second one exited immediately. Under foreman it starts, logs as `meilisearch.1`, and stops on
+  `Ctrl-C` with everything else. The **data path is now `tmp/meili-data`**, inside the repository and
+  out of git (`.gitignore` covers `/tmp/*`); it is derived data, so `bin/rails tmp:clear` may delete
+  it and `search:reindex` rebuilds it. The documented install route moved from `/tmp/meilisearch` to
+  `~/.local/bin/meilisearch`, and the Procfile names the bare command `meilisearch` rather than an
+  absolute path — a tracked file must not carry one machine's path, and this way the line reads
+  correctly for a Homebrew install, a `cargo` install, or a hand-placed binary alike. The
+  `--master-key` on that line is the same local-only value the `web` line passes as
+  `MEILISEARCH_API_KEY`, so the two cannot drift. `web` and `meilisearch` start concurrently, so a
+  request in a session's first moments can get the honest "Search is not available" state until the
+  engine says `Server listening on`; nothing falls back to SQL. `docs/development.md` records the
+  one-time setup, the by-hand command, and both failure modes.
+- **[changed]** `Procfile.dev` now carries `MEILISEARCH_URL` and `MEILISEARCH_API_KEY` on its `web`
+  line, so `bin/dev` reaches a local engine without the developer exporting anything first. There is
+  no `.env` loader in this application — `bin/dev` runs foreman with `--env /dev/null` — so a variable
+  set in a shell is invisible to a `bin/dev` session, and a bare `bin/rails server` still sees neither
+  source. The key is the same local-only value `docs/development.md` already publishes, never a
+  deployed credential. `docs/development.md` now also documents a **non-Docker** route to the same
+  pinned `v1.54` engine, for a machine that can neither run a container nor install one: the official
+  static binary needs no privileges, where rootful Docker needs `sudo` and rootless Docker needs user
+  namespaces that a locked-down host denies outright.
+- **[fixed]** `bin/rails search:status` **crashed** in the state it exists to diagnose. It asked the
+  engine for a document count unconditionally, but the engine answers `stats` for an index that was
+  never created with `index_not_found`, which `Search::Client` honestly re-raised as
+  `Search::Unavailable` — so the command a person is told to run *first* when search returns nothing
+  died with a stack trace, immediately after printing `Index exists: false`. The count is now asked
+  for only when the index exists, and the missing case is reported as the state it is, with the
+  command that fixes it. Covered by `test/tasks/search_tasks_test.rb`, which pins all three outcomes
+  (no index, indexed, unconfigured engine).
+- **[fixed]** The search dropdown's **matched run was harder to read than the rest of the title**, which
+  is the opposite of a highlight. The fill was `rgba(255, 193, 7, .35)`, and 35% amber over the
+  panel's near-black `#1b1f27` resolves to a muddy brown around `#6a571b` — a box that was only 2.4:1
+  against the panel behind it, so the reader could not even see where the match began, and white text
+  on that brown is 6.9:1 where the unmarked near-white title beside it is 15.7:1. The run the reader
+  was hunting for was therefore the *least* legible thing on the panel, dimmer even than its own
+  context line, and the brown smear read as a redaction across the middle of the name. The run now
+  wears the full-strength amber with the app's own `$dark` on top of it, 9:1 and unmistakably a
+  highlight, with both colors **opaque** on purpose: a translucent fill also picks up the row's hover
+  tint from `.navbar-search-result:hover` beneath it, so the one run the reader is tracking would be
+  the one run that moved under the cursor. The new `test/system/search_test.rb` case is the first
+  thing in this suite that measures a color rather than a class, because legibility is the only
+  outcome here that a stylesheet cannot assert: it composites the mark and the line it sits in the
+  way the browser really paints them and holds the run to AA, to being at least as legible as the
+  panel's dimmest line, and to a fill that is actually distinguishable from the panel.
 - **[fixed]** The top-bar search box's **scope** dropdown rendered as an opaque, square-cornered panel
   inside the rounded search field — two controls wearing one outline, and a light box on an always-dark
   bar. The bar declared `--bs-form-select-*` custom properties, but Bootstrap 5.3 compiles

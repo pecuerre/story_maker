@@ -11,16 +11,23 @@ Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirk
 - **Bun** for CSS/JS assets: `bun install`; `bun.lock` is the committed source of truth. Use
   `bun install --frozen-lockfile` in CI and other reproducible environments.
 - **Meilisearch**, only if you want search to return anything. Everything else works without it; the
-  box says it is unavailable. See **Search engine** below.
+  box says it is unavailable. `bin/dev` starts the engine once it is installed — see **Search
+  engine** below.
 - Setup & run:
 
 ```bash
 bin/rails db:prepare          # create + migrate + production-safe seeds only
 UNIVERSE=dark bin/rails db:demo:load  # optional development data (development only)
-bin/rails server              # http://localhost:3000
+bin/dev                       # web + CSS watcher + Meilisearch, all with logs in one terminal
+bin/rails server              # http://localhost:3000, on its own, without the other two
 bin/rails console
 bun run watch:css             # rebuild CSS on .scss changes (Procfile.dev: foreman start)
 ```
+
+`bin/dev` is the one to reach for. It runs `web`, `css`, and `meilisearch` together, prefixes each
+line with its process name, and stops all three on `Ctrl-C`. Running `bin/rails server` on its own
+still works, but that path gets no CSS watcher and no engine, so a `.scss` change appears to do
+nothing and search reports itself unavailable until you start them.
 
 - CSS pipeline: `app/assets/stylesheets/application.bootstrap.scss` → sass → postcss/autoprefixer
   → `app/assets/builds/application.css`. Development keeps Propshaft on a dynamic manifest under
@@ -490,7 +497,8 @@ of the application works normally and the box states that search is unavailable 
 to SQL, because two ranking behaviours behind one question is worse than one honest answer.
 [ADR 0014](adr/0014-global-search-with-meilisearch.md) records the decision.
 
-Run a local engine (a single binary, no cluster):
+Run a local engine (a single binary, no cluster). `bin/dev` starts it for you — see **The engine under
+`bin/dev`** below for the one-time setup and for running it by hand.
 
 ```bash
 docker run --rm -p 7700:7700 \
@@ -498,6 +506,26 @@ docker run --rm -p 7700:7700 \
   -e MEILI_NO_ANALYTICS=true \
   getmeili/meilisearch:v1.54
 ```
+
+Without Docker — a host that will not run a container, or will not let you install one — the same
+pinned version is a static binary that needs no privileges. `sudo` is required for rootful Docker, and
+rootless Docker, Podman, and rootlesskit all need unprivileged user namespaces, which a locked-down
+host denies (`unshare: write failed /proc/self/uid_map`); check that before choosing the binary route:
+
+```bash
+curl -sSL -o ~/.local/bin/meilisearch \
+  https://github.com/meilisearch/meilisearch/releases/download/v1.54.0/meilisearch-linux-amd64
+chmod +x ~/.local/bin/meilisearch
+meilisearch --version   # 1.54.0
+```
+
+That release publishes no checksum file, so verify the version (`meilisearch --version`) rather
+than a hash. The container and the binary are the same engine on the same port with the same key.
+Install the binary somewhere on your `PATH` — `~/.local/bin` is the usual choice — because
+`Procfile.dev` names the bare command `meilisearch` and nothing else. That is deliberate: a tracked
+file must not carry one machine's absolute path, and this way the Procfile reads correctly for a
+Homebrew install, a `cargo` install, or a hand-placed binary equally. Nothing here lives in `/tmp`,
+which is cleared on reboot and would take the engine with it.
 
 Then point the application at it and build the index:
 
@@ -507,6 +535,39 @@ export MEILISEARCH_API_KEY=local_development_key
 bin/rails search:reindex     # required once per engine: creates the index, applies its settings, writes every document
 bin/rails search:status      # URL, key presence, index name, health, index presence, document count
 ```
+
+### The engine under `bin/dev`
+
+`Procfile.dev` has a third process, so `bin/dev` supervises the engine alongside `web` and `css`:
+
+```
+meilisearch: meilisearch --http-addr 127.0.0.1:7700 --db-path tmp/meili-data --master-key local_development_key --no-analytics
+```
+
+The engine used to be a separate, manually launched background process, which meant three recurring
+problems: a stale engine outliving the session that started it, an engine silently missing after a
+reboot, and two engines fighting over port 7700. Under foreman it starts, logs, and stops with
+everything else, and `Ctrl-C` leaves nothing behind.
+
+- The **data path is `tmp/meili-data`**, relative to the repository root, so the index lives with the
+  project and stays out of git (`.gitignore` covers `/tmp/*`). It is derived data: deleting it is
+  safe, and the next `search:reindex` rebuilds it. `bin/rails tmp:clear` does delete it.
+- The `--master-key` on that line is the same local-only value the `web` line passes as
+  `MEILISEARCH_API_KEY`, so the two cannot drift apart. It is never a deployed credential, and a real
+  key does not belong in a tracked file.
+- `web` and `meilisearch` start concurrently, so a request in the first moments of a session can
+  reach the app before the engine is listening and get the honest "Search is not available" state.
+  Nothing breaks and nothing falls back to SQL; retry once the `meilisearch.1` line says
+  `Server listening on`.
+- Running the engine by hand is still fine when you are not using `bin/dev` — run the command above
+  in its own terminal. Do not run both: the second one to bind port 7700 exits immediately.
+
+`Procfile.dev` already sets both variables on its `web` line, so `bin/dev` needs no `export` first.
+There is no `.env` loader here — `bin/dev` runs foreman with `--env /dev/null` — so a variable
+exported in one shell is invisible to a `bin/dev` session, and a bare `bin/rails server` sees neither
+the Procfile nor your shell. Run the same command the Procfile specifies, or export the variables
+yourself. The key in `Procfile.dev` is the same local-only value used above; it is never a deployed
+credential, and a real key does not belong in a tracked file.
 
 | Variable | Required | Purpose |
 |---|---|---|

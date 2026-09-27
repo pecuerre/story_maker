@@ -214,7 +214,13 @@ beneath it, moving the one run the reader is tracking. `test/system/search_test.
 resolved colors in a browser and holds the run to AA, to at least the legibility of the panel's dimmest
 line, and to a fill that is visibly distinguishable from the panel. A panel with nothing to show says so
 in muted text: "No matches for …" or "Search is not available." **See all results** appears only when
-there is an answer to open, and sits below the panel rather than on top of it.
+there is an answer to open, and is the panel's **footer**: the dropdown and the link are one box with one
+surface, the list scrolls inside a 24rem cap, and the link sits in flow beneath the results, divided from
+them by a hairline. It is in flow on purpose. Anything positioned against the form resolves against a form
+no taller than the field, because the results are out of flow — so a link positioned on its own lands on
+the bottom edge of the *field*, across the text being typed and the caret with it.
+`test/system/search_test.rb` measures both boxes in a browser and fails if the link starts above either
+one's bottom edge.
 
 On the results page the same content uses the ordinary theme-aware surfaces: a `content-surface` form
 block, an uppercase group heading in the secondary color, kind badges and titles in a row, and

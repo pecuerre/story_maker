@@ -1,3 +1,9 @@
+// The only Sass module this file needs. The global `mix` it used to call is a
+// deprecated global built-in, and the module that replaced it (`color.mix`) is
+// namespaced, so the file has to load the module itself. It goes first because
+// `@use` cannot follow a style rule, and this file opens with one.
+@use "sass:color";
+
 :root {
   --um-navbar-height: 3.5rem;
   --um-sidebar-width: 16rem;
@@ -122,13 +128,13 @@ $um-search-indicator: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000
 // options on white, and still does on hover, which is the state the control is in
 // when its list opens. The colors are therefore the white overlay composited onto
 // the bar's own color, derived here because CSS cannot resolve an overlay onto the
-// surface beneath it, and because `mix`'s weight is the share of the *first* color.
-// They land within one 8-bit step of what the browser resolves the translucent
-// versions to, which is the price of the option list being dark.
+// surface beneath it, and because `color.mix`'s weight is the share of the *first*
+// color. They land within one 8-bit step of what the browser resolves the
+// translucent versions to, which is the price of the option list being dark.
 $um-search-field-overlay: 8%;
 $um-search-field-hover-overlay: 18%;
-$um-search-field-surface: mix(#fff, $dark, $um-search-field-overlay);
-$um-search-field-surface-hover: mix(#fff, $dark, $um-search-field-hover-overlay);
+$um-search-field-surface: color.mix(#fff, $dark, $um-search-field-overlay);
+$um-search-field-surface-hover: color.mix(#fff, $dark, $um-search-field-hover-overlay);
 
 // The matched run's fill. Kept beside the other bar colors so the one place that
 // paints text on a bright surface has both halves of its pair next to each other:
@@ -240,18 +246,42 @@ $um-search-match: #ffc107;
   }
 }
 
-.navbar-search-results {
+// The dropdown and the link into the full answer are one box, so the two are
+// positioned together. The wrapper is what keeps the link *under* the results
+// rather than over them: everything positioned against the form resolves against a
+// form no taller than the field, because the results are out of flow. A link
+// positioned on its own and moved with `bottom` therefore landed on the bottom edge
+// of the *field* — across the text being typed, which is where the caret is too.
+//
+// The surface belongs to the wrapper so the results and the link read as one panel
+// with a footer, rather than as two boxes with a doubled border between them. It is
+// applied only when there is something to show: closed, the wrapper still exists,
+// and a box that painted itself would hang an empty sliver of panel under the field.
+.navbar-search-panel {
   position: absolute;
   inset-inline: 0;
   top: calc(100% + .375rem);
   z-index: 30;
+  display: flex;
+  flex-direction: column;
   max-height: 24rem;
+
+  &:has(> :not([hidden])) {
+    background: var(--um-search-panel-bg);
+    border: 1px solid var(--um-search-panel-border);
+    border-radius: .5rem;
+    box-shadow: 0 .75rem 1.5rem rgba(0, 0, 0, .3);
+  }
+}
+
+.navbar-search-results {
+  // The window onto the results rather than a surface of its own: it scrolls, and
+  // `min-height: 0` is what lets it shrink inside the wrapper's `max-height` to
+  // scroll instead of pushing the link below the fold.
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: .375rem;
-  background: var(--um-search-panel-bg);
-  border: 1px solid var(--um-search-panel-border);
-  border-radius: .5rem;
-  box-shadow: 0 .75rem 1.5rem rgba(0, 0, 0, .3);
 }
 
 .navbar-search-group + .navbar-search-group {
@@ -333,31 +363,22 @@ $um-search-match: #ffc107;
   background: $um-search-match;
 }
 
+// The panel's footer, in flow at the bottom of the box rather than positioned over
+// the field. It is shown only alongside results — the controller hides it for a
+// "no matches" or unavailable message, which has nothing to open — so the hairline
+// above it always has a list to divide from and never caps an empty footer.
 .navbar-search-all {
-  position: absolute;
-  inset-inline: 0;
-  top: calc(100% + .375rem);
-  z-index: 31;
+  flex: 0 0 auto;
   padding: .5rem;
   text-align: center;
   font-size: .8125rem;
   color: var(--um-search-muted);
   text-decoration: none;
-  background: var(--um-search-panel-bg);
-  border: 1px solid var(--um-search-panel-border);
-  border-radius: .5rem;
+  border-top: 1px solid var(--um-search-panel-border);
 
   &:hover {
     color: #fff;
   }
-}
-
-// When results are shown the "all results" link moves below the panel rather than
-// on top of it, so the two never overlap.
-.navbar-search-results:not([hidden]) ~ .navbar-search-all {
-  top: auto;
-  bottom: 0;
-  border-radius: 0 0 .5rem .5rem;
 }
 
 .search-page-scope-note {

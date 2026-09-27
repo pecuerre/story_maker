@@ -36,6 +36,11 @@ nothing and search reports itself unavailable until you start them.
   require `node_modules` + bun. Use `RAILS_ENV=production bin/rails assets:precompile` when
   checking the production asset manifest; do not run a development precompile as the local CSS
   workflow.
+- Sass modules: the pinned compiler no longer resolves the global built-in module namespaces
+  (`color`, `math`, …), so a call like `color.mix` needs an explicit `@use "sass:color";` in the file
+  that makes it — as the first rule, because `@use` cannot follow a style rule. The deprecated
+  global built-ins (`mix`, `darken`, `lighten`, `transparentize`, …) still work but warn on every
+  build, and the compile step only silences the `@import` deprecation.
 
 ## Test suite (Minitest)
 

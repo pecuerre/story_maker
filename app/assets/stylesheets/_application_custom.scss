@@ -107,24 +107,39 @@ body {
 // declared once and deliberately not re-tinted: a widget that changed colour
 // with the page theme inside an always-dark bar would look borrowed from the page
 // it sits above. The results page reuses the ordinary theme-aware surfaces.
+//
+// The bar's text color is a Sass variable as well as a token because the scope
+// dropdown's chevron has to be painted in it, and an SVG in a data URI cannot
+// read a CSS variable. Bootstrap's own chevron is a per-theme literal, so
+// borrowing it here would put a dark arrow on the always-dark bar.
+$um-search-text: #f8f9fa;
+$um-search-indicator: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='#{$um-search-text}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/></svg>");
+
+// The field, and the scope select inside it, are *opaque* surfaces rather than a
+// translucent overlay on the bar: a native select's option list is painted by the
+// browser from the element's own background, and any transparency there makes it
+// fall back to the browser's light panel — which leaves the bar's near-white
+// options on white, and still does on hover, which is the state the control is in
+// when its list opens. The colors are therefore the white overlay composited onto
+// the bar's own color, derived here because CSS cannot resolve an overlay onto the
+// surface beneath it, and because `mix`'s weight is the share of the *first* color.
+// They land within one 8-bit step of what the browser resolves the translucent
+// versions to, which is the price of the option list being dark.
+$um-search-field-overlay: 8%;
+$um-search-field-hover-overlay: 18%;
+$um-search-field-surface: mix(#fff, $dark, $um-search-field-overlay);
+$um-search-field-surface-hover: mix(#fff, $dark, $um-search-field-hover-overlay);
+
 :root {
-  --um-search-text: #f8f9fa;
+  --um-search-text: #{$um-search-text};
   --um-search-muted: rgba(248, 249, 250, .68);
-  --um-search-field-bg: rgba(255, 255, 255, .08);
+  --um-search-field-bg: #{$um-search-field-surface};
+  --um-search-field-bg-hover: #{$um-search-field-surface-hover};
   --um-search-field-border: rgba(255, 255, 255, .24);
   --um-search-panel-bg: #1b1f27;
   --um-search-panel-border: rgba(255, 255, 255, .16);
   --um-search-hover: rgba(255, 255, 255, .1);
-}
-
-.navbar-search-field,
-.navbar-search-results,
-.navbar-search-all {
-  --bs-form-select-bg: transparent;
-  --bs-form-select-color: var(--um-search-text);
-  --bs-form-select-border-color: transparent;
-  --bs-form-select-disabled-bg: transparent;
-  --bs-form-select-disabled-color: var(--um-search-muted);
+  --um-search-indicator: #{escape-svg($um-search-indicator)};
 }
 
 // The form is what positions the dropdown, and it is given a stacking order above
@@ -149,6 +164,13 @@ body {
   background: var(--um-search-field-bg);
   border: 1px solid var(--um-search-field-border);
   border-radius: 2rem;
+
+  // The scheme is part of the bar's own colors, for the same reason they are not
+  // re-tinted by the page theme. The scope's option list and the input's own
+  // clear button are drawn by the browser rather than by this stylesheet, and
+  // they take their palette from the used color scheme: without this, a light
+  // page theme leaves the bar's near-white options sitting on a light panel.
+  color-scheme: dark;
 
   &:focus-within {
     border-color: rgba(255, 255, 255, .55);
@@ -179,14 +201,38 @@ body {
 }
 
 // The scope sits inside the field rather than beside it, so the box reads as one
-// control that asks a scoped question.
+// control that asks a scoped question. It wears no surface the eye can see: the
+// field's own opaque color, no border except the hairline that divides it off, and
+// the field's trailing curve, so a hover follows the pill instead of drawing a
+// square panel inside it. The color is opaque rather than `transparent` only
+// because the browser paints the option list from it.
 .navbar-search-scope {
   flex: 0 0 auto;
   width: auto;
   padding-block: .125rem;
   font-size: .8125rem;
-  border-left: 1px solid var(--um-search-field-border);
-  border-radius: 0;
+  color: var(--um-search-text);
+  background-color: var(--um-search-field-bg);
+  background-image: var(--um-search-indicator);
+  border: 0;
+  border-inline-start: 1px solid var(--um-search-field-border);
+  border-start-end-radius: 1.5rem;
+  border-end-end-radius: 1.5rem;
+  box-shadow: none;
+
+  // Opaque too, so opening the list while the control is hovered cannot fall back
+  // to a translucent background and then to the browser's light panel.
+  &:hover {
+    background-color: var(--um-search-field-bg-hover);
+  }
+
+  // The field's own `:focus-within` border is the focus state for everything
+  // inside the pill, so the control must not add a second ring inside it.
+  &:focus,
+  &:focus-visible {
+    color: var(--um-search-text);
+    box-shadow: none;
+  }
 }
 
 .navbar-search-results {

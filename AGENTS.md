@@ -227,7 +227,14 @@ named development universe.
 - Never expose or modify credentials, real `.env` files, Rails keys, or deployment secrets. A
   value-free `.env.example` is allowed only as a documented template with an explicit ignore-file
   exception; never put a real value in it.
-- Do not push, reset, rewrite history, create release tags, or deploy without explicit approval.
+- **Never commit or push. The owner makes every commit and every push.** Leave the work in the
+  working tree and say plainly which files changed. Do not run `git commit`, `git push`, `git add`,
+  `git tag`, `git merge`, `git rebase`, `git checkout --`, or `git stash`: staging, amending, and
+  history rewriting are the owner's too, and a `git add`/`git stash` can quietly reshape what they
+  are about to commit. Reading history with `git log`/`git diff`/`git status` is expected and
+  welcome. Running services, restarting them, and resetting the local development database are
+  fine; the repository's history is not the agent's to touch.
+- Do not deploy, and do not push, reset, rewrite history, or create release tags.
 - Do not edit generated files under `public/assets` or `app/assets/builds` by hand.
 - Authorization is defined in `app/models/ability.rb` and enforced by
   `UniverseAuthorization`; do not bypass those checks with controller-specific visibility logic.

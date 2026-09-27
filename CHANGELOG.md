@@ -60,6 +60,27 @@ Labels used below:
   `Universe.visible_to`, the same rule `Ability` enforces) rather than as a post-filter, so a private
   universe's records are never fetched and then hidden, and a reader with no readable universe is
   not asked at all. The engine's key stays server-side.
+- **[fixed]** The top-bar search box's **scope** dropdown rendered as an opaque, square-cornered panel
+  inside the rounded search field — two controls wearing one outline, and a light box on an always-dark
+  bar. The bar declared `--bs-form-select-*` custom properties, but Bootstrap 5.3 compiles
+  `.form-select` from Sass variables and never reads them, so the rule was a no-op: the select kept the
+  page's background, text, and chevron. It now wears no surface of its own — no fill, no border except
+  the hairline that divides it off, the bar's own chevron (Bootstrap's is a per-theme literal, and the
+  bar is dark in both themes), and the field's trailing curve, so a hover follows the pill and the
+  field's own `:focus-within` border is the focus state for everything inside it. The shared
+  `searches/_scope_field` partial now takes the surface from the caller's optional `class`, so the
+  results page's copy of the same control stays the ordinary theme-aware form control;
+  `test/controllers/searches_controller_test.rb` holds both sides of that split, and the Search sections
+  of `visual_design.md` and `universe_maker_conventions.md` state the treatment and the rule. The field
+  also declares `color-scheme: dark`, and the field and scope colors are **opaque** rather than a
+  translucent white overlay, because the *open* option list is painted by the browser: it takes the
+  panel color from the element's own background and the rest of its palette from the used color scheme.
+  Bootstrap sets that scheme only on `[data-bs-theme="dark"]`, so a `transparent` background — or a
+  translucent one, which is the state the control is in when the list opens — left the bar's near-white
+  options on a light panel. The opaque colors are the overlay composited onto the bar in Sass, because
+  CSS cannot resolve an overlay onto the surface beneath it. The list's exact panel color and highlighted
+  row remain the browser's, since styling them in full would mean a custom listbox and losing the plain
+  GET form that works without scripting.
 - **[fixed]** Three engine-contract bugs that failed **silently**, all found by running against a
   real Meilisearch rather than a stand-in: a document id containing `:` is rejected by the engine, which
   refused *every* batch, so a reindex reported "indexed 214 documents" over an empty index — ids are
@@ -88,6 +109,11 @@ Labels used below:
   its own filter by id. `Searchable` sits in `app/models/concerns/` with the other five concerns, and
   the related value objects are grouped under the `Search` namespace, which
   `universe_maker_conventions.md` now states as the convention for both.
+- **[docs]** `AGENTS.md` now states that the owner makes **every** commit and push: an agent codes,
+  runs services, and resets the development database, and leaves the work in the working tree. Staging,
+  amending, and history rewriting are named explicitly (`git add`, `commit`, `push`, `tag`, `merge`,
+  `rebase`, `checkout --`, `stash`) because a staging or stashing command can quietly reshape what the
+  owner is about to commit, and reading history (`git log`, `git diff`, `git status`) stays expected.
 - **[docs]** New [ADR 0014](docs/adr/0014-global-search-with-meilisearch.md) records why Meilisearch
   rather than SQL `LIKE`, SQLite FTS5, or a SQL fallback behind the engine, and what an engine outage,
   a rename, and an index rebuild each cost. `architecture.md` gains a **Global search** section (the

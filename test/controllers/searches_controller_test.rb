@@ -310,6 +310,22 @@ class SearchesControllerTest < ActionDispatch::IntegrationTest
       universe_search_path(universe_slug: @universe.slug), @story.id.to_s
   end
 
+  test "only the top-bar scope is part of the pill, because only the bar is always dark" do
+    stub_search_backend
+
+    get universe_search_path(universe_slug: @universe.slug), params: { q: "hannah" }
+
+    assert_response :success
+    # The top bar is dark in both themes, so the scope inside the box is painted
+    # for the bar: the hairline, the bar's chevron, and the pill's trailing curve
+    # are what make it part of one control rather than a panel inside it.
+    assert_select "nav .navbar-search-field select.navbar-search-scope[name=scope]", 1
+    # The same control on the results page sits in the page's own theme, so it
+    # must not wear the bar's treatment there.
+    assert_select ".search-page-form select.navbar-search-scope[name=scope]", 0
+    assert_select ".search-page-form select.form-select[name=scope]:not(.navbar-search-scope)", 1
+  end
+
   test "the box keeps the resolved scope, not the requested one, after a widening" do
     stub_search_backend
 

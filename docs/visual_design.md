@@ -176,9 +176,27 @@ box renders from what the page already knows and asks the engine only for what a
 ### Search
 
 The box reads as one control: a rounded field with a search icon, the text input, and the scope
-dropdown as a compact select divided off by a hairline at the field's trailing edge. It sits between
-the scope links and the actions and grows into the space they leave, up to 30rem; the actions keep
-their own row and never wrap under it.
+dropdown as a compact select divided off by a hairline at the field's trailing edge. The dropdown wears
+**no surface of its own** — its background is the field's own color, so the two are one surface with no
+seam, and no border except that hairline; the field's trailing curve carries the hover, instead of a
+square panel inside the pill. Its chevron is the bar's, not Bootstrap's, because Bootstrap's is a
+per-theme literal and the bar is always dark. It sits between the scope links and the actions and grows
+into the space they leave, up to 30rem; the actions keep their own row and never wrap under it.
+
+The same dropdown is rendered on the search results page, and that copy is the **ordinary**
+theme-aware form control: the caller states which surface it sits on, so the bar's dark treatment never
+reaches a page that follows the theme.
+
+The field's color and the scope's are **opaque**, and the field declares `color-scheme: dark`. Both are
+for the same reason: the scope's **open** option list and the input's own clear button are painted by the
+browser, not by this stylesheet. The browser takes the list's panel color from the element's own
+background and the rest of its palette from the used color scheme, so a `transparent` background — or a
+translucent one, which is the state the control is in when the list opens — leaves the bar's near-white
+options on a light panel. The opaque colors are the white overlay composited onto the bar's own color in
+Sass, because CSS cannot resolve an overlay onto the surface beneath it. What the browser still owns —
+the list's exact panel color and its highlighted row — is the browser's choice; a dropdown styled in
+every detail would be a custom listbox, which would cost the plain GET form that works without
+scripting.
 
 The navbar is dark in both themes, so the box's colors are declared once and are **not** re-tinted by
 `data-bs-theme` — a widget that changed palette with the page theme inside an always-dark bar would

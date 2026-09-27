@@ -42,20 +42,27 @@
     <%= submit_tag "Search", class: "visually-hidden", name: nil %>
   </div>
 
-  <%# One listbox holding both groups, because a reader arrows through them as a
-      single list. The container is a div rather than a list so that a group and
-      its options are not illegally nested list items. %>
-  <div class="navbar-search-results" id="navbar_search_results" role="listbox"
-    aria-label="Search results" hidden data-search-target="results"></div>
+  <%# The dropdown and the link into the full answer are one box, positioned once.
+      The link is in flow at the bottom of that box rather than positioned on its
+      own: anything positioned against this form resolves against a form no taller
+      than the field, because the results are out of flow — so a link of its own
+      lands on top of the box being typed into. %>
+  <div class="navbar-search-panel">
+    <%# One listbox holding both groups, because a reader arrows through them as a
+        single list. The container is a div rather than a list so that a group and
+        its options are not illegally nested list items. %>
+    <div class="navbar-search-results" id="navbar_search_results" role="listbox"
+      aria-label="Search results" hidden data-search-target="results"></div>
+
+    <%# A path into the full answer, shown when there is something to see. The
+        dropdown is a preview; this is where the whole result set lives. %>
+    <a class="navbar-search-all" href="<%= search_path_for(Current.universe) %>" hidden
+      data-search-target="allLink">See all results</a>
+  </div>
 
   <%# One live region for the result count and for any problem with it, so a
       screen reader is told what the dropdown did without the reader having to go
       looking for it. %>
   <p class="visually-hidden" id="navbar_search_status" role="status" aria-live="polite"
     data-search-target="status"></p>
-
-  <%# A path into the full answer, shown when there is something to see. The
-      dropdown is a preview; this is where the whole result set lives. %>
-  <a class="navbar-search-all" href="<%= search_path_for(Current.universe) %>" hidden
-    data-search-target="allLink">See all results</a>
 <% end %>

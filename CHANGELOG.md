@@ -19,6 +19,38 @@ Labels used below:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-09-28
+
+- **[fixed]** The top-bar search box's **See all results** link was drawn across the bottom of the
+  search field, so the text being typed — and the caret with it — disappeared the moment results
+  arrived. The link was absolutely positioned against the form and then moved with `bottom`, and the
+  form is no taller than the field because the results are out of flow, so `bottom: 0` resolved to
+  the bottom edge of the *input* rather than to the foot of the results. The dropdown and the link
+  are now one box (`.navbar-search-panel`) carrying one surface: the list scrolls inside the same
+  24rem cap and the link is its footer, in flow beneath the results, so it is below them by
+  construction rather than by a distance the browser has to be told. The box's surface is applied
+  only while something is shown, so a closed search box leaves no empty sliver of panel under the
+  field, and an engine that is unreachable — which has no answer to open — leaves no empty footer
+  under its message.
+- **[chore]** `test/system/search_test.rb` asserted nothing about where the panel's parts land, and
+  four of its cases were intermittently failing: Stimulus resolves each controller through a dynamic
+  `import()` and connects it on a later turn of the router, so a keystroke delivered in between is
+  dropped and the box stays silent. The shared `assert_stimulus_loaded` cannot cover that — it waits
+  for a `stimulus-loading` class the pinned Stimulus never sets, so it is satisfied as soon as the
+  page is parsed. `search_box` now waits for the controller instance to be *connected* before a case
+  types, which is what lets a silent box mean "no answer" here rather than "asked too early"; three
+  consecutive runs of the file are green where two of three runs of the previous revision failed
+  three or four cases each. A new case reads the field, the panel and the link in one browser
+  evaluation and fails if the link starts above either bottom edge; against the previous stylesheet
+  it fails by 34.5px, and the failure screenshot is the reported bug exactly. The same case also holds
+  a closed panel to zero height — without the conditional surface it measures 4px, an empty strip under
+  the field on every page of the application — and the unavailable case now asserts there is no
+  "See all results" link under a message that has no answer to open.
+- **[docs]** `visual_design.md` describes the link as the panel's footer with the reason it is in
+  flow, and `universe_maker_conventions.md` states the rule behind it: nothing inside the dropdown is
+  positioned against the form, because anything that is resolves against a form no taller than the
+  field.
+
 ## 2026-09-27
 
 - **[added]** A **magic search bar** in the top bar, on every page and for guests. It is a plain GET
@@ -148,6 +180,16 @@ Labels used below:
   shows what was really searched — a box that displayed "this story" as a *disabled, selected* option
   described a search that was not happening. A one-character query now offers no commands either, so
   the dropdown and the page cannot give two different answers to one question.
+- **[chore]** The CSS build is **warning-free again**. The two `mix()` calls that derive the top-bar
+  search field's opaque surfaces were the project's last use of a deprecated global built-in, and
+  Sass's advice (`color.mix`) is only reachable here through an explicit `@use "sass:color"`: this
+  pinned compiler no longer resolves the global built-in *module* namespaces at all, so the
+  namespaced function is not optional. `_application_custom.scss` now loads the module on its first
+  line, before the `:root` rule it opens with, because `@use` cannot follow a style rule. The
+  compiled `app/assets/builds/application.css` is byte-identical to the build before the change —
+  `color.mix`'s weight is the share of the first color, exactly as `mix`'s was, and the two
+  variables already held `8%`/`18%` — so no color moved and the search bar's browser-measured
+  contrast is unchanged; `test/system/search_test.rb` (12 runs, 122 assertions) passes.
 - **[chore]** The test environment now uses the `:test` queue adapter, so the suite can assert what a
   save would have indexed without running anything, and `test/support/search_test_backend.rb` stands
   in for the engine: it records the query it was asked and replays chosen hits, proving what the
@@ -159,6 +201,10 @@ Labels used below:
   its own filter by id. `Searchable` sits in `app/models/concerns/` with the other five concerns, and
   the related value objects are grouped under the `Search` namespace, which
   `universe_maker_conventions.md` now states as the convention for both.
+- **[docs]** `development.md` now states the one Sass rule the warning above exposed: the pinned
+  compiler resolves no global built-in module namespace, so `color.mix` needs an explicit
+  `@use "sass:color";` as the file's first rule, and the compile step silences only the `@import`
+  deprecation, not the global-builtin one.
 - **[docs]** `AGENTS.md` now states that the owner makes **every** commit and push: an agent codes,
   runs services, and resets the development database, and leaves the work in the working tree. Staging,
   amending, and history rewriting are named explicitly (`git add`, `commit`, `push`, `tag`, `merge`,

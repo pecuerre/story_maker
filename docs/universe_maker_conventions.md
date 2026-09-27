@@ -546,6 +546,12 @@ that must not drift:
   composites the real painted colors in the browser and holds the run to WCAG AA, to at least the
   legibility of the panel's dimmest line, and to a fill distinguishable from the panel. A color here is
   an assertion someone has to measure, not a value a stylesheet review can approve.
+- **Nothing inside the dropdown is positioned against the form.** The results list and the "See all
+  results" link share one absolutely positioned wrapper (`.navbar-search-panel`), and it is the only
+  thing placed against the form. The form is no taller than the field, because the results are out of
+  flow, so a child positioned on its own resolves against the *field*: the link laid itself across the
+  bottom of the input and hid the text being typed, along with the caret. A new part of the panel goes
+  in that wrapper and sits in flow.
 - **Documents hold ids and their own path, never a universe's or story's name.** Displayed context
   is resolved per request (`Search::Catalog#describe`); a rename needs no reindex.
 - **A model that becomes searchable declares it once**, next to its fields:

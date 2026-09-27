@@ -10,6 +10,48 @@ require "application_system_test_case"
 # The engine is the test double (`SearchTestBackend`), because CI has no
 # Meilisearch. What is under test is the box, not the engine.
 class SearchTest < ApplicationSystemTestCase
+  # Whether the box is actually listening. Stimulus resolves each controller through
+  # a dynamic `import()` and then connects it on a later turn of the router, so
+  # "registered" and "connected" are two different moments and only the second one
+  # means a keystroke will be heard. Optional chaining, because the application
+  # itself is assigned by a module the page has to fetch first.
+  SEARCH_CONTROLLER_CONNECTED_JS = <<~JS
+    Boolean(window.Stimulus?.getControllerForElementAndIdentifier(
+      document.querySelector(".navbar-search"), "search"))
+  JS
+
+  # How tall the panel's box is while the search is closed. The wrapper is still in
+  # the document then, so a height of anything but zero is something painted under
+  # the field on every page.
+  SEARCH_CLOSED_PANEL_PROBE_JS = <<~JS
+    (function() {
+      var panel = document.querySelector(".navbar-search-panel");
+      if (!panel) return null;
+      var style = window.getComputedStyle(panel);
+      return panel.getBoundingClientRect().height
+        + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+    })()
+  JS
+
+  # Where the browser painted the three boxes that must not lie on top of each
+  # other: the field being typed into, the results, and the link into the full
+  # answer. Read together so they share a coordinate space.
+  SEARCH_OVERLAP_PROBE_JS = <<~JS
+    (function() {
+      var box = function(selector) {
+        var element = document.querySelector(selector);
+        if (!element) return null;
+        var rect = element.getBoundingClientRect();
+        return { top: rect.top, bottom: rect.bottom };
+      };
+      return [
+        box(".navbar-search-input"),
+        box("[data-search-target='results']"),
+        box("[data-search-target='allLink']")
+      ];
+    })()
+  JS
+
   setup do
     @universe = universes(:universe_one)
     @story = stories(:story_one)
@@ -32,8 +74,25 @@ class SearchTest < ApplicationSystemTestCase
       url: universe_characters_path(universe_slug: @universe.slug) }
   end
 
+  # The box the reader types in.
+  #
+  # Stimulus resolves each controller through a dynamic `import()` and connects it
+  # afterwards, so a keystroke delivered in between is simply dropped: the box stays
+  # silent and the case fails for a reason that has nothing to do with what it is
+  # checking. The shared `assert_stimulus_loaded` cannot cover that — it waits for a
+  # `stimulus-loading` class the pinned Stimulus never sets, so it is satisfied as
+  # soon as the page is parsed. Waiting for the connection is what lets a silent box
+  # mean "no answer" here rather than "asked too early".
   def search_box
+    wait_for_search_controller
     find(".navbar-search-input", visible: :all)
+  end
+
+  def wait_for_search_controller
+    connected = -> { page.evaluate_script(SEARCH_CONTROLLER_CONNECTED_JS) }
+    deadline = Time.now + 10
+    sleep 0.05 until connected.call || Time.now > deadline
+    assert connected.call, "the search controller never connected, so the box cannot answer"
   end
 
   test "typing opens a panel of results, and choosing one opens the record" do
@@ -85,6 +144,51 @@ class SearchTest < ApplicationSystemTestCase
     search_box.send_keys(:enter)
 
     assert_current_path universe_character_path(universe_slug: @universe.slug, id: 4)
+  end
+
+  # The "all results" link is the reader's way into the full answer, and it was
+  # absolutely positioned against the form and then moved with `bottom`, which
+  # resolves to the bottom of the *field*: the panel is out of flow, so the form is
+  # no taller than the input. As soon as results arrived, the link was laid across
+  # the bottom of the field, covering the text being typed and the caret with it.
+  # Only a browser can answer where two boxes actually land, so the geometry is
+  # measured here rather than argued about in the stylesheet.
+  test "the all-results link sits below the panel, never over the text being typed" do
+    stub_engine
+    sign_in_via_form(users(:user_one))
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    # A closed box has to leave nothing under the field. The panel's surface is
+    # applied only while something is shown, and the box is on every page of the
+    # application, so a surface that painted an empty wrapper would hang a dark
+    # strip under the search field everywhere.
+    closed = page.evaluate_script(SEARCH_CLOSED_PANEL_PROBE_JS)
+    assert_not_nil closed, "the search panel was not on the page"
+    assert_equal 0, closed,
+      "the closed search panel is #{closed}px tall, so it paints something under the field"
+
+    search_box.fill_in with: "hannah"
+    assert_selector "[data-search-target='results'] [role='option']"
+    assert_link "See all results"
+
+    # All three boxes are read in one evaluation, so they share one coordinate space
+    # and one rounding. Measured separately, each offset is rounded on its own and a
+    # sub-pixel disagreement reads as an overlap that is not there.
+    field, panel, all_link = page.evaluate_script(SEARCH_OVERLAP_PROBE_JS)
+    assert field, "the search field was not on the page"
+    assert panel, "the results panel was not on the page"
+    assert all_link, "the all-results link was not on the page"
+
+    # Sub-pixel layout rounding, so this is about the boxes being stacked rather than
+    # about a tenth of a pixel of flex arithmetic.
+    tolerance = 1
+
+    assert_operator all_link["top"], :>=, field["bottom"] - tolerance,
+      "the all-results link starts #{(field['bottom'] - all_link['top']).round(1)}px above the " \
+      "bottom of the search field, so it covers the text being typed"
+    assert_operator all_link["top"], :>=, panel["bottom"] - tolerance,
+      "the all-results link starts #{(panel['bottom'] - all_link['top']).round(1)}px above the " \
+      "bottom of the results panel, so the two overlap"
   end
 
   test "Escape closes the panel and hands the key back to the page" do
@@ -145,6 +249,10 @@ class SearchTest < ApplicationSystemTestCase
 
     search_box.fill_in with: "hannah"
     assert_selector "[data-search-target='results'] [role='option']", text: "Search is not available"
+    # The link is the panel's footer, drawn with a hairline above it. With nothing to
+    # open there must be no footer at all, or the panel ends in an empty strip under a
+    # message that already says there is no answer.
+    assert_no_link "See all results"
 
     # The page the reader was on is untouched, and navigation still works.
     click_link "Characters"

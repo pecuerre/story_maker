@@ -12,7 +12,9 @@ class SceneFilterTest < ApplicationSystemTestCase
     visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
     assert_scene_titles [ "Scene one", "Scene two", "Scene three" ]
 
-    fill_in "Search", with: "second"
+    # The top bar carries its own search field now, so this filter is addressed by
+    # its own id rather than by a label both fields answer to.
+    fill_in "scene_filter_q", with: "second"
     click_button "Filter scenes"
 
     assert_current_path scenes_path(universe, story, q: "second")
@@ -22,7 +24,7 @@ class SceneFilterTest < ApplicationSystemTestCase
     # A narrowed row still says where it sits in the whole narrative order.
     assert_selector ".entity-row .badge", text: "2"
 
-    fill_in "Search", with: ""
+    fill_in "scene_filter_q", with: ""
     select "Section one", from: "Section"
     click_button "Filter scenes"
 
@@ -43,7 +45,7 @@ class SceneFilterTest < ApplicationSystemTestCase
     sign_in_via_form(users(:user_one))
     visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
 
-    fill_in "Search", with: "no such scene"
+    fill_in "scene_filter_q", with: "no such scene"
     click_button "Filter scenes"
 
     assert_selector ".empty-title", text: "No scenes match these filters"
@@ -55,7 +57,7 @@ class SceneFilterTest < ApplicationSystemTestCase
 
     # Reordering inside a narrowed list moves the scene in the real sequence and
     # keeps the author in the same view.
-    fill_in "Search", with: "three"
+    fill_in "scene_filter_q", with: "three"
     click_button "Filter scenes"
     within ".entity-list" do
       find(".entity-row", text: "Scene three").find("button[data-scene-move='up']").click

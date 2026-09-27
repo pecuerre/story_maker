@@ -70,3 +70,9 @@ gem "cssbundling-rails", "~> 1.4"
 # Added by PQR
 gem "cancancan", "~> 3.6"
 gem "colorize"
+
+# The search engine. The official client only: this application wraps it in
+# `Search::Client` rather than using the `meilisearch-rails` integration, which
+# pins an older client and installs a global `searchable` DSL that would replace
+# the explicit `Searchable` declarations each model owns. See ADR 0014.
+gem "meilisearch", "~> 0.33.0"

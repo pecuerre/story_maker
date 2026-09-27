@@ -103,6 +103,264 @@ body {
   white-space: nowrap;
 }
 
+// The top-bar search box. The navbar is dark in *both* themes, so its tokens are
+// declared once and deliberately not re-tinted: a widget that changed colour
+// with the page theme inside an always-dark bar would look borrowed from the page
+// it sits above. The results page reuses the ordinary theme-aware surfaces.
+:root {
+  --um-search-text: #f8f9fa;
+  --um-search-muted: rgba(248, 249, 250, .68);
+  --um-search-field-bg: rgba(255, 255, 255, .08);
+  --um-search-field-border: rgba(255, 255, 255, .24);
+  --um-search-panel-bg: #1b1f27;
+  --um-search-panel-border: rgba(255, 255, 255, .16);
+  --um-search-hover: rgba(255, 255, 255, .1);
+}
+
+.navbar-search-field,
+.navbar-search-results,
+.navbar-search-all {
+  --bs-form-select-bg: transparent;
+  --bs-form-select-color: var(--um-search-text);
+  --bs-form-select-border-color: transparent;
+  --bs-form-select-disabled-bg: transparent;
+  --bs-form-select-disabled-color: var(--um-search-muted);
+}
+
+// The form is what positions the dropdown, and it is given a stacking order above
+// the actions to its right so an open panel is never painted underneath them.
+.navbar-search {
+  position: relative;
+  z-index: 20;
+  flex: 1 1 12rem;
+  max-width: 30rem;
+  margin-block: .75rem;
+
+  @media (min-width: 992px) {
+    margin-block: 0;
+  }
+}
+
+.navbar-search-field {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .125rem .5rem .125rem .75rem;
+  background: var(--um-search-field-bg);
+  border: 1px solid var(--um-search-field-border);
+  border-radius: 2rem;
+
+  &:focus-within {
+    border-color: rgba(255, 255, 255, .55);
+  }
+}
+
+.navbar-search-icon {
+  color: var(--um-search-muted);
+  flex: 0 0 auto;
+}
+
+.navbar-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--um-search-text);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+
+  &::placeholder {
+    color: var(--um-search-muted);
+  }
+
+  &:focus {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+// The scope sits inside the field rather than beside it, so the box reads as one
+// control that asks a scoped question.
+.navbar-search-scope {
+  flex: 0 0 auto;
+  width: auto;
+  padding-block: .125rem;
+  font-size: .8125rem;
+  border-left: 1px solid var(--um-search-field-border);
+  border-radius: 0;
+}
+
+.navbar-search-results {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% + .375rem);
+  z-index: 30;
+  max-height: 24rem;
+  overflow-y: auto;
+  padding: .375rem;
+  background: var(--um-search-panel-bg);
+  border: 1px solid var(--um-search-panel-border);
+  border-radius: .5rem;
+  box-shadow: 0 .75rem 1.5rem rgba(0, 0, 0, .3);
+}
+
+.navbar-search-group + .navbar-search-group {
+  margin-top: .375rem;
+  padding-top: .375rem;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+}
+
+.navbar-search-group-title {
+  padding: .25rem .5rem;
+  font-size: .6875rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--um-search-muted);
+}
+
+.navbar-search-result,
+.navbar-search-message {
+  display: block;
+  padding: .375rem .5rem;
+  color: var(--um-search-text);
+  text-decoration: none;
+  border-radius: .375rem;
+}
+
+.navbar-search-result:hover,
+.navbar-search-result.active {
+  color: var(--um-search-text);
+  background: var(--um-search-hover);
+}
+
+.navbar-search-message {
+  color: var(--um-search-muted);
+}
+
+.navbar-search-result-kind {
+  display: inline-block;
+  margin-right: .375rem;
+  font-size: .6875rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--um-search-muted);
+}
+
+.navbar-search-result-title {
+  font-weight: 600;
+}
+
+.navbar-search-result-context {
+  display: block;
+  font-size: .8125rem;
+  color: var(--um-search-muted);
+}
+
+.navbar-search-result-snippet {
+  display: block;
+  font-size: .8125rem;
+  color: var(--um-search-muted);
+}
+
+.navbar-search-result mark {
+  padding: 0;
+  color: #fff;
+  background: rgba(255, 193, 7, .35);
+}
+
+.navbar-search-all {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% + .375rem);
+  z-index: 31;
+  padding: .5rem;
+  text-align: center;
+  font-size: .8125rem;
+  color: var(--um-search-muted);
+  text-decoration: none;
+  background: var(--um-search-panel-bg);
+  border: 1px solid var(--um-search-panel-border);
+  border-radius: .5rem;
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+// When results are shown the "all results" link moves below the panel rather than
+// on top of it, so the two never overlap.
+.navbar-search-results:not([hidden]) ~ .navbar-search-all {
+  top: auto;
+  bottom: 0;
+  border-radius: 0 0 .5rem .5rem;
+}
+
+.search-page-scope-note {
+  font-size: .875rem;
+}
+
+.search-group-title {
+  font-size: .6875rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--bs-secondary-color);
+}
+
+.search-result {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--um-tag-badge-border);
+}
+
+.search-result:last-child {
+  border-bottom: 0;
+}
+
+.search-result-kind {
+  flex: 0 0 auto;
+}
+
+.search-result-title {
+  font-weight: 600;
+}
+
+.search-result-context {
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+}
+
+.search-result-snippet {
+  margin: .25rem 0 0;
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+}
+
+.search-commands {
+  margin-bottom: 1.5rem;
+}
+
+.search-command {
+  font-weight: 600;
+}
+
+.search-command-context {
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+}
+
+.search-pagination {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+
+.search-pagination-position {
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+}
+
 .workspace-shell {
   display: grid;
   grid-template-columns: var(--um-sidebar-width) minmax(0, 1fr);

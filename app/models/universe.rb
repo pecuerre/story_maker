@@ -2,6 +2,13 @@ class Universe < ApplicationRecord
   MENU_COUNT_ASSOCIATIONS = %i[characters relations locations events items ownerships].freeze
 
   include HasSlug
+  include Searchable
+  # A universe's slug appears in the stored path of every document under it, so a
+  # rename makes all of them dead links. This record's own document is re-indexed
+  # like any other update; the rest of the universe is one bounded job rather
+  # than a silent pile of 404s waiting for someone to remember a full reindex.
+  searchable kind: "universe", title: :name, scope: :self
+  after_update_commit :queue_search_reindex, if: :saved_change_to_slug?
 
   after_destroy_commit :expire_menu_counts
   validates :name, presence: true
@@ -113,5 +120,9 @@ class Universe < ApplicationRecord
   private
     def expire_menu_counts
       MenuCountCache.expire(:universe, id)
+    end
+
+    def queue_search_reindex
+      Search::ReindexUniverseJob.perform_later(id)
     end
 end

@@ -1,0 +1,19 @@
+<%# The scope dropdown: a plain control inside the plain GET form, rendered on the
+    server so the top bar and the results page offer exactly the same scopes.
+    A scope the page cannot honour is disabled rather than hidden, so the shape
+    of the dropdown is the same everywhere. %>
+<% id = local_assigns.fetch(:id) %>
+<% selected = local_assigns.fetch(:selected) %>
+<% universe = local_assigns.fetch(:universe) %>
+<% story = local_assigns.fetch(:story) %>
+
+<select class="form-select form-select-sm navbar-search-scope" name="scope" id="<%= id %>"
+  aria-label="Search scope"
+  data-search-target="scope"
+  data-action="change->search#query">
+  <% search_scope_options(universe: universe, story: story).each do |option| %>
+    <option value="<%= option[:value] %>"
+      <%= "selected" if option[:value] == selected %>
+      <%= "disabled" unless option[:available] %>><%= option[:label] %></option>
+  <% end %>
+</select>

@@ -19,12 +19,37 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "nav a.navbar-brand[href=?]", root_path, text: "Universe Maker"
     assert_select "nav .navbar-nav .nav-item", 0
     assert_select "nav .navbar-nav a", 0
-    # The account menu is the top bar's only dropdown.
+    # The account menu is still the navbar's only Bootstrap dropdown. The search
+    # results panel is the search box's own listbox, not a menu.
     assert_select "nav .dropdown", 1
     assert_select ".page-header h1", text: "Universes"
     assert_select ".page-actions a", text: /New universe/
     assert_select "a", text: "Dashboard", count: 0
     assert_select "aside", text: /Universe Analyzer/, count: 0
+  end
+
+  test "the search box is on every page, and offers the platform where there is no universe" do
+    {
+      universes_url => search_path,
+      universe_url(@universe) => universe_search_path(universe_slug: @universe.slug),
+      universe_story_url(universe_slug: @universe.slug, id: @story) => universe_search_path(universe_slug: @universe.slug)
+    }.each do |page, form_action|
+      get page
+
+      assert_response :success
+      assert_select "nav form.navbar-search[data-controller=search][action=?]", form_action, count: 1
+      assert_select "nav input[name=q][role=combobox][aria-expanded=false]", 1
+      # The results panel is a listbox the controller fills; it starts empty and
+      # hidden, so a reader without scripting never meets a stale answer.
+      assert_select "nav [role=listbox][data-search-target=results][hidden]", 1
+      assert_select "nav [role=status][aria-live=polite][data-search-target=status]", 1
+    end
+
+    get universes_url
+    assert_select "nav select[name=scope] option[value=platform][selected]", 1
+
+    get universe_url(@universe)
+    assert_select "nav select[name=scope] option[value=universe][selected]", 1
   end
 
   test "a selected universe shows the workspace, direct Bible links, and tools" do
@@ -33,7 +58,8 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "nav a.navbar-brand[href=?]", root_path, text: "Universe Maker"
     # The top bar states the current universe and links to its own page. It
-    # carries no switcher, so no story link exists until a story is current.
+    # carries no switcher, so no story link exists until a story is current; the
+    # search box's own results panel is a listbox, not a menu of links.
     assert_select "nav .navbar-nav .nav-item", 1
     assert_select "nav .navbar-nav a.nav-link[href=?]", universe_path(@universe),
       text: /Universe: #{@universe.name}/

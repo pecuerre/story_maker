@@ -157,19 +157,45 @@ heading uppercase.
 4. a responsive right utility navigation;
 5. a skip link and one shared flash region.
 
-The navbar is intentionally small: three links and the account menu.
+The navbar is intentionally small: three links, one search box, and the account menu.
 
 - `Universe Maker` is the brand and the **landing page** — the universes list, which is also where a
   universe is created;
 - `Universe: <name>` links to the current universe page;
 - `Story: <name>` links to the current story page and exists only while a story is current;
+- **Search** is one field with a scope dropdown inside it (see below);
 - `Account` contains the signed-in email and logout action.
 
 There is no universe or story switcher in the top bar: changing universes happens on the landing
 page, and changing or creating stories happens on the universe page, which lists the universe's
 stories. A scope link is marked current with `.active` **and** `aria-current="page"` only on the
 page it points at, so the bar never claims a scope that is not the page being viewed. The account
-menu is the navbar's only dropdown, which also means the top bar issues no query.
+menu is the navbar's only Bootstrap dropdown, and the top bar issues no query of its own — the search
+box renders from what the page already knows and asks the engine only for what a reader types.
+
+### Search
+
+The box reads as one control: a rounded field with a search icon, the text input, and the scope
+dropdown as a compact select divided off by a hairline at the field's trailing edge. It sits between
+the scope links and the actions and grows into the space they leave, up to 30rem; the actions keep
+their own row and never wrap under it.
+
+The navbar is dark in both themes, so the box's colors are declared once and are **not** re-tinted by
+`data-bs-theme` — a widget that changed palette with the page theme inside an always-dark bar would
+look borrowed from the page it sits above. The results panel is a raised dark surface with a shadow,
+scrolled to 24rem, and it is painted above the actions to its right.
+
+The panel is one listbox holding two labelled groups — **Go to** for navigation destinations and
+**Results** for records — separated by a hairline, with an uppercase group heading and a kind badge
+(`Character`, `Scene element`, `Character tag`) on every row, the record's context underneath, and a
+one-line excerpt. The matched run in a title is `<mark>`ed. A panel with nothing to show says so in
+muted text: "No matches for …" or "Search is not available." **See all results** appears only when
+there is an answer to open, and sits below the panel rather than on top of it.
+
+On the results page the same content uses the ordinary theme-aware surfaces: a `content-surface` form
+block, an uppercase group heading in the secondary color, kind badges and titles in a row, and
+`Previous` / `Next` with a `Page N` position. A truncated list always says "Showing 12 of 40 matches"
+— a short list that looks complete is how a reader concludes a universe is smaller than it is.
 
 The navbar does not render placeholder links. The right utility sidebar is the one intentional
 exception: its `aria-disabled` entries reserve space for future Collaboration, Analytics, and AI
@@ -180,6 +206,8 @@ features without presenting them as implemented routes.
 - At `lg` and above, the left workspace navigation is a 16rem sticky column.
 - Below `lg`, it becomes a Bootstrap `offcanvas-start`; the main area shows a compact `Menu`
   button and the current universe/story context.
+- Below `lg` the navbar collapses into the toggler menu, and the search box is inside it with the
+  account menu — it is one collapsed navigation surface, not a bar that stays partly usable.
 - At `xl` and above, the right utility navigation is a 14rem sticky column.
 - Below `xl`, it becomes a Bootstrap `offcanvas-end`; the workspace bar exposes it through a
   `Tools` button. The `Menu` button is only shown below `lg`, when the left panel also needs an

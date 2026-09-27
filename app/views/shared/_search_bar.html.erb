@@ -1,0 +1,61 @@
+<%# The top-bar search box. It is a plain GET form first: submitting it opens the
+    results page, which is shareable, keyboard-reachable, and works with scripting
+    turned off. The dropdown is the enhancement — the same URL, asked for as JSON
+    and rendered in place.
+
+    Nothing about the engine is decided here. An engine that is not configured,
+    or not answering, is reported by the results the controller returns, and the
+    box says so instead of silently showing nothing. %>
+<%= form_with url: search_path_for(Current.universe), method: :get, class: "navbar-search",
+  data: { controller: "search",
+    search_minimum_value: Search::Dropdown::MINIMUM_LENGTH,
+    search_delay_value: Search::Dropdown::DELAY_MILLISECONDS } do %>
+  <div class="navbar-search-field">
+    <i class="bi bi-search navbar-search-icon" aria-hidden="true"></i>
+
+    <%# Named for what it searches rather than for what it is called, because a
+        page can carry more than one search field — the Scenes list has its own —
+        and two fields announced as "Search" leave a reader guessing which is
+        which. %>
+    <label class="visually-hidden" for="navbar_search_q">Search Universe Maker</label>
+    <input type="search" class="form-control navbar-search-input" id="navbar_search_q" name="q"
+      value="<%= params[:q] %>"
+      placeholder="Search<%= Current.universe.present? ? " this universe" : "" %>"
+      autocomplete="off" spellcheck="false"
+      role="combobox" aria-expanded="false" aria-haspopup="listbox"
+      aria-controls="navbar_search_results" aria-autocomplete="list"
+      aria-describedby="navbar_search_status" aria-busy="false"
+      data-search-target="input"
+      data-action="input->search#query keydown->search#navigate">
+
+    <%= render "searches/scope_field", id: "navbar_search_scope", selected: search_selected_scope,
+      universe: Current.universe, story: Current.story %>
+
+    <%# The story boundary travels with the form so choosing "this story" from the
+        dropdown is a request rather than a page load. It is latent: the scope
+        decides whether it is a boundary, so the default universe search is
+        unaffected. %>
+    <% if Current.story %>
+      <%= hidden_field_tag :story_id, Current.story.id, id: "navbar_search_story_id" %>
+    <% end %>
+
+    <%= submit_tag "Search", class: "visually-hidden", name: nil %>
+  </div>
+
+  <%# One listbox holding both groups, because a reader arrows through them as a
+      single list. The container is a div rather than a list so that a group and
+      its options are not illegally nested list items. %>
+  <div class="navbar-search-results" id="navbar_search_results" role="listbox"
+    aria-label="Search results" hidden data-search-target="results"></div>
+
+  <%# One live region for the result count and for any problem with it, so a
+      screen reader is told what the dropdown did without the reader having to go
+      looking for it. %>
+  <p class="visually-hidden" id="navbar_search_status" role="status" aria-live="polite"
+    data-search-target="status"></p>
+
+  <%# A path into the full answer, shown when there is something to see. The
+      dropdown is a preview; this is where the whole result set lives. %>
+  <a class="navbar-search-all" href="<%= search_path_for(Current.universe) %>" hidden
+    data-search-target="allLink">See all results</a>
+<% end %>

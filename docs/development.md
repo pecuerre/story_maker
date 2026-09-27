@@ -10,6 +10,8 @@ Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirk
 - **Google Chrome** (or a compatible browser) for `bin/rails test:system`.
 - **Bun** for CSS/JS assets: `bun install`; `bun.lock` is the committed source of truth. Use
   `bun install --frozen-lockfile` in CI and other reproducible environments.
+- **Meilisearch**, only if you want search to return anything. Everything else works without it; the
+  box says it is unavailable. See **Search engine** below.
 - Setup & run:
 
 ```bash
@@ -481,6 +483,63 @@ bash docs/smoke_test_stories.sh
 It was moved from `/tmp/opencode/` into `docs/` so it is tracked by git. Note: it creates a real
 story in the development DB and deletes it again at the end.
 
+## Search engine
+
+The top-bar search answers from **Meilisearch**. It is optional: with no engine configured, the rest
+of the application works normally and the box states that search is unavailable — it never falls back
+to SQL, because two ranking behaviours behind one question is worse than one honest answer.
+[ADR 0014](adr/0014-global-search-with-meilisearch.md) records the decision.
+
+Run a local engine (a single binary, no cluster):
+
+```bash
+docker run --rm -p 7700:7700 \
+  -e MEILI_MASTER_KEY=local_development_key \
+  -e MEILI_NO_ANALYTICS=true \
+  getmeili/meilisearch:v1.54
+```
+
+Then point the application at it and build the index:
+
+```bash
+export MEILISEARCH_URL=http://127.0.0.1:7700
+export MEILISEARCH_API_KEY=local_development_key
+bin/rails search:reindex     # required once per engine: creates the index, applies its settings, writes every document
+bin/rails search:status      # URL, key presence, index name, health, index presence, document count
+```
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `MEILISEARCH_URL` | for search at all | Engine base URL. Unset means search is unavailable. |
+| `MEILISEARCH_API_KEY` | for writing | Any key allowed to search **and** index. A read-only key serves the application; `search:reindex` then refuses and says so. |
+| `MEILISEARCH_INDEX_PREFIX` | no | Index name prefix, default `universe_maker`. The environment is appended, so development, test, and production never share an index. |
+
+The index is **derived data**, rebuilt from the database, and it must be rebuilt after a fresh engine
+starts, after restoring a database, and after any period in which the application could not reach
+the engine. Indexing itself is queued (`Search::IndexRecordJob`), so a save never waits on it:
+
+- `bin/rails search:reindex` — full rebuild. Reports what it wrote, and fails loudly if the engine
+  refused anything.
+- `bin/rails search:reindex_universe[<slug>]` — one universe, which is the repair after a universe
+  rename (every document under it stores that universe's slug in its path).
+- `bin/rails search:status` — whether the engine is reachable, whether the index exists, and how many
+  documents it holds. This is the first thing to run when search returns nothing.
+
+Never commit a key or a real `.env` file; `.env*` is already ignored. A value-free `.env.example` is
+a documented template, not yet added — see the credential-hygiene item in
+[`backlog.md`](backlog.md).
+
+Verifying the engine itself, which the default suite deliberately does not do:
+
+```bash
+SEARCH_INTEGRATION=1 MEILISEARCH_URL=... MEILISEARCH_API_KEY=... bin/rails test test/search
+```
+
+`test/search/meilisearch_integration_test.rb` is skipped without `SEARCH_INTEGRATION=1`. It is the
+only coverage of the engine's own contract — that it accepts our document ids, that our settings are
+appliable, that a filter works once they are — and every one of those was found to be wrong at least
+once while this was built.
+
 ## CI (`.github/workflows/ci.yml`, runs on PR + push to main)
 
 The test jobs install the pinned Bun version and run `bun install --frozen-lockfile` before
@@ -523,6 +582,13 @@ Dependabot config: `.github/dependabot.yml`.
   `SMTP_DOMAIN` defaults to `APP_HOST`, and `SMTP_USERNAME`/`SMTP_PASSWORD` must be supplied as a
   pair when authentication is used. `SMTP_ENABLE_STARTTLS_AUTO` defaults to `true`, and
   `SMTP_OPENSSL_VERIFY_MODE` defaults to `peer`.
+- Search additionally needs `MEILISEARCH_URL` and a key with search and index rights, and a reachable
+  Meilisearch instance. The instance holds the universe's descriptions and scene prose in a second
+  store, so where it runs is a deployment decision: run it on the same host or a private network, and
+  do not point a deployed environment at a public hosted instance. The key is server-side only and is
+  never sent to a browser. Without those variables the application still boots and every page still
+  renders — search reports itself unavailable — so a missing engine cannot take a deployment down.
+  `bin/rails search:reindex` is part of a fresh deployment, not an optional step.
 - Production enables `assume_ssl` and `force_ssl`, uses HTTPS for generated mailer URLs, restricts
   the host allowlist to `APP_HOST`, keeps `/up` available to the health check, and marks the
   signed session cookie `Secure`. The deployment must provide a TLS-terminating proxy; do not
@@ -574,7 +640,13 @@ Dependabot config: `.github/dependabot.yml`.
    `shared/_tag_workspace_navigation` for taxonomy management, and
    `shared/_settings_navigation` for a new platform settings section.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
-8. Development data: add or update `<model>.yml` in every relevant
+8. Search, if the model is something a reader would look for: `include Searchable` and one
+   `searchable kind:, title:, body:, route:, scope:` declaration next to the model's fields, plus an
+   entry in `Search::Registry::MODELS`. A story-scoped model without its own `story_id` (reached
+   through an owner, like a Scene Element) also needs its own `search_scope`. `test/models/
+   searchable_test.rb` then builds the document and holds it to the engine's rules — see **Search
+   engine**.
+9. Development data: add or update `<model>.yml` in every relevant
    `db/data/<universe_slug>/` directory, update the shared model order/registry, and include
    representative records connected to existing universe/story/character/location/item/event
    records. Do not create a feature-level directory such as `db/data/dialog/`; a future Dialog
@@ -600,6 +672,8 @@ at the migration and model class:
    characters, locations, events, sections, and tags rather than being an isolated placeholder.
 6. Update the shared loader order/registry and the documentation that describes the new model or
    relationship.
+7. If the model should be findable, make it searchable in the same change (step 8 of the checklist
+   above) and run `bin/rails search:reindex` when verifying by hand.
 7. Validate every changed YAML manifest, rebuild/load the disposable development data, verify the
    rebuilt rows with a scoped query, open the feature in the browser, and report the exact reset/load
    commands, URL, local login, and checks performed. The owner has granted standing approval for a

@@ -148,6 +148,14 @@ Other global behavior: `allow_browser versions: :modern`,
   `PATCH /settings` stores a preference. It is the only page outside `/u/:universe_slug` that is not
   authentication, so it skips `set_current_universe` and `authorize_universe_access` and allows
   unauthenticated access. See [ADR 0013](adr/0013-platform-settings-and-browser-theme.md).
+- **Search is both**: `GET /search` searches the platform, and
+  `GET /u/:universe_slug/search` keeps a universe-scoped search inside that universe's URL so the
+  shared callbacks authorize it. A helper that builds both, for a form that must work on either,
+  is `search_path_for(universe, query)`; a search result's own link is the path stored in the
+  document, not a route rebuilt at render time. See **Global search** below.
+- Every `universe_*` route helper takes named keys, **including from a model**. Search builds paths
+  from `app/models/concerns/searchable.rb` and `app/models/search/commands.rb`, which are outside any
+  request, so `universe_slug` is passed explicitly there rather than relied on from recall.
 
 ## Record details pages
 
@@ -192,8 +200,13 @@ uses.
 |---|---|---|
 | JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
 | HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
-| Both | universes (also has `*.json.jbuilder`) | |
+| Both | universes (also has `*.json.jbuilder`), **searches** | |
 | No mutation | tags, timeline, sessions, passwords | |
+
+`searches` is the one read-only flow that deliberately serves both formats from one action:
+HTML is the shareable results page and JSON is the autocomplete dropdown. It never mutates, so
+there is no ambiguous HTML-and-JSON *mutation* to forbid, and
+`RequiresJsonMutationFormat` does not apply to it.
 
 `scene_elements` has no read action at all, because Elements are read on Scene Details; every one of
 its actions is a mutation and therefore authenticated. `scene_characters`, `scene_items`, and
@@ -243,21 +256,28 @@ for the full page and carries **New story** for writers. It reuses the memoized 
 page adds no query and no `COUNT` — the per-story section and scene counts stay in the cached
 sidebar metrics.
 
-The navbar is deliberately three items and no switchers: the **Universe Maker** brand links to the
+The navbar is deliberately three links and no scope switchers: the **Universe Maker** brand links to the
 landing page (`/`, the universes index, which is also where a universe is created), and
 **Universe: …** / **Story: …** are plain links to the current universe page and the current story
 page. There is no universe or story dropdown, so changing universes happens on the landing page and
 changing stories happens on the universe page, which lists them. A scope link carries `.active` and
 `aria-current="page"` only on the page it points at, and the account menu is the navbar's only
-dropdown. The **Settings** entry sits beside that account menu in `navbar-actions` and is the one
-platform-level navigation item: it is rendered for every visitor, including a guest, and it is
-deliberately absent from the right utility sidebar's **Configuration** section, which configures a
+Bootstrap dropdown. The **Settings** entry sits beside that account menu in `navbar-actions` and is
+the one platform-level navigation item: it is rendered for every visitor, including a guest, and it
+is deliberately absent from the right utility sidebar's **Configuration** section, which configures a
 universe ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). Related record workspaces keep
 only the records together in URL-backed tabs:
 Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
 lives under the right sidebar's **Configuration → Tags**, with **Universe Tags** (Character,
 Relation, Location, Event, Item, and Ownership tags) and **Story Tags** (Section and Scene tags)
 selectors.
+
+The one thing the top bar does add is the **search box** (`shared/_search_bar`), between the scope
+links and the actions. It is not a switcher and it issues no query of its own: it renders the scope
+list and the form, and a scope option the page cannot honour — "this story" with no story selected —
+is `disabled` rather than hidden, so the shape of the dropdown is the same on every page. The box is
+a plain GET form first; submitting it opens the results page. See **Global search** below and
+[ADR 0014](adr/0014-global-search-with-meilisearch.md).
 
 ## List rows
 
@@ -637,6 +657,62 @@ list stays the Story's canonical narrative order under every view:
 - The list itself costs one filtered query plus one aggregate, and the preloaded tag associations
   and Section paths keep it free of N+1 work.
 
+## Global search
+
+The top bar carries one search box, and it is a plain GET form before it is anything
+else. `GET /search` searches the whole platform; `GET /u/:universe_slug/search` keeps a
+universe-scoped search inside that universe's URL, so the shared universe callbacks
+resolve and authorize the scope exactly as they do for every other page of that
+universe. Both are a single `get` rather than a `resources` collection, so the route
+advertises no action that does not exist. `SearchesController#show` is the one read that
+answers in two formats:
+
+- **HTML** is the results page: shareable, keyboard-reachable, usable with scripting off,
+  and the only place a result set can be explained (the count, the scope, a dropped value,
+  an engine that is not answering).
+- **JSON** is the dropdown, asked for by `search_controller.js` as the reader types. It
+  carries `available`, `reason`, `query`, `scope`, `scope_label`, `total`, `discarded`,
+  `commands`, and `results`.
+
+The read never writes, so it has no mutation path, no mass assignment, and nothing for a
+CSRF token to protect.
+
+**The parts, and where each decision lives:**
+
+| Concern | Where |
+|---|---|
+| The request: text, scope, story boundary, and every value that could not be used | `Search::Query` (`PARAMS`, `discarded`, `query_params`) |
+| The scope dropdown: a boundary (platform / universe / story) or a kind ("only characters"), resolved rather than trusted | `Search::Scope` |
+| Authorization and display: the filter sent to the engine, and the context names of each hit | `Search::Catalog` |
+| Navigation destinations | `Search::Commands` |
+| The engine, and the one place that speaks to it | `Search::Client` / `Search::UnavailableBackend` |
+| Which models are indexed | `Search::Registry` |
+| What one record contributes | the model's own `searchable` declaration (`Searchable`) |
+| Rebuilding the index | `Search::Reindexer`, `bin/rails search:reindex` |
+| When a save or destroy reaches the index | `Search::IndexRecordJob`, `Search::RemoveRecordJob` |
+
+Four rules are worth knowing before changing any of it:
+
+1. **A platform search is filtered, not post-filtered.** The engine is asked only for
+   documents whose universe the reader may read (`Universe.visible_to`, the same rule
+   `Ability` enforces), and a reader with no readable universe is not asked at all.
+2. **A document stores ids, not names.** `Search::Catalog` resolves the displayed universe
+   and story names in two queries at read time, so a rename never leaves a stale name in
+   the index and never needs a reindex of the records that mention it.
+3. **A search never changes the current story.** `SearchesController` skips the shared
+   `set_current_story` callback — which would remember `params[:story_id]` in the session —
+   and resolves the story itself. The top-bar form still carries the current story so the
+   reader can pick "this story" without a page load, and a story id on its own does not
+   narrow the search: the scope decides whether it is a boundary.
+4. **A value that cannot be used is dropped and reported**, in the `discarded` list and as a
+   `flash.now[:alert]`, in the same spirit as `SceneFilter`. A missing scope is not an
+   error; an unrecognized one is.
+
+An engine that is not configured, not reachable, or refusing is a stated state
+(`Search::Unavailable` → "Search is not available"), never a failed request, because the box
+renders on every page. [ADR 0014](adr/0014-global-search-with-meilisearch.md) records why there
+is no SQL fallback behind it.
+
 ## Production boundary
 
 Production fails closed when `APP_HOST`, `MAILER_FROM`, or `SMTP_ADDRESS` is missing. It uses
@@ -679,8 +755,11 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
   destroyed (and when a record moves to another scope). Open transactions calculate without
   filling the cache, and entries have a one-hour safety expiry. See
   [former quirk #18](resolved_quirks.md#former-18--sidebar-issued-count-queries-on-every-page-fixed).
-- The navbar is three links and the account menu, so it issues no query. Only the universe page
-  loads stories (`nav_stories`), and it reuses that memoized list instead of querying them again.
+- The navbar is three links, the search box, and the account menu, so it issues no query. The
+  search box renders a form and a scope list from values it already has — `Current.universe`,
+  `Current.story`, and `Search::Scope` — and asks the engine only for what a reader types. Only the
+  universe page loads stories (`nav_stories`), and it reuses that memoized list instead of querying
+  them again.
 - `TaggedRecordCounts.for(tags)` answers "how many records carry each tag" with one grouped query
   over the HABTM table, because the scoped tag associations have an instance-dependent scope and
   cannot be eager loaded or grouped through Active Record. Every taxonomy index and the shared

@@ -3,6 +3,8 @@ class Story < ApplicationRecord
   SCENE_MENU_COUNT_SCOPE = :story_scenes
 
   include HasSlug
+  include Searchable
+  searchable kind: "story", title: :name, body: :description, route: "story"
 
   after_destroy_commit :expire_story_menu_counts
   belongs_to :universe

@@ -318,6 +318,39 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
 
+56. **Medium — an index write the engine refuses asynchronously is invisible to the job that queued
+    it.** `Search::IndexRecordJob` and `Search::RemoveRecordJob` hand a document to the engine and
+    return; the engine accepts the request and applies it later, so a *server-side* rejection — an
+    unusable document id, a field it will not index, a batch that broke on one document — surfaces
+    only in the engine's own task log. `Search::Reindexer` therefore awaits every task **and** checks
+    it, and `test/models/searchable_test.rb` holds every declared model's document id to the engine's
+    character rules; a job has neither. In practice this was the difference between a reindex
+    reporting "indexed 214 documents" with an empty index and one that fails loudly. If index drift
+    is ever suspected, `bin/rails search:status` reports the document count and
+    `bin/rails search:reindex` is the repair; there is no per-record verification. See
+    [ADR 0014](adr/0014-global-search-with-meilisearch.md).
+
+57. **Low — a rename changes a slug, so a universe rename invalidates every path stored below
+    it.** `HasSlug` regenerates a slug when a name changes, and each search document stores its own
+    `url`, which embeds its record's slug and its universe's. A universe rename is therefore repaired
+    by `Search::ReindexUniverseJob` (queued on `saved_change_to_slug?`), which is bounded but not
+    instant: between the rename and the job, results in that universe link to a 404. Records that
+    merely *mention* the universe are unaffected, because a document stores ids rather than names
+    and the displayed context is resolved per request.
+
+58. **Medium — the browser suite is unreliable when the machine is saturated, and it fails as
+    unrelated-looking errors.** `bin/rails test:system` parallelizes over
+    `number_of_processors`, and each worker holds its own SQLite test database and its own Chrome. On
+    an eight-core machine the box is saturated (load average 20+), SQLite's five-second busy timeout
+    (`config/database.yml`) expires inside a request, and the resulting `SQLite3::BusyException`
+    surfaces through Capybara as "expected `/session/new` to equal `/`", a modal that never opened, or
+    a heading that never appeared — in tests that have nothing to do with the database. Verified on a
+    pristine checkout of `aa224a2` (10 failures, 41 errors, unchanged by any later work), so it is not
+    caused by the change it was noticed during; `PARALLEL_WORKERS=2 bin/rails test:system` is green.
+    CI is less exposed because its runners have fewer cores and therefore fewer workers, which is also
+    why this has not been seen there. Do not read a single browser run as a verdict, and do not
+    "fix" a test that failed this way — re-run it with fewer workers first.
+
 ## DataFactor report follow-up observations (2026-09-25)
 
 The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They were

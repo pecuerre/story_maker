@@ -3,6 +3,8 @@ class Character < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "character", title: :name, body: :description, route: "character"
 
   invalidates_menu_counts_for :universe
 

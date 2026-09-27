@@ -3,6 +3,8 @@ class Location < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "location", title: :name, body: :description, route: "location"
 
   invalidates_menu_counts_for :universe
 

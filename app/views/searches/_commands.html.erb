@@ -1,0 +1,19 @@
+<%# The navigation half of the search. A list of destinations, not records, so it
+    is labelled as such and never counted among the matches. %>
+<% commands = local_assigns.fetch(:commands) %>
+
+<% if commands.any? %>
+  <section class="search-commands" aria-labelledby="search-commands-title">
+    <h2 class="search-group-title" id="search-commands-title">Go to</h2>
+    <ul class="list-unstyled mb-0">
+      <% commands.each do |command| %>
+        <li>
+          <%= link_to command.title, command.url, class: "search-command" %>
+          <% if command.subtitle.present? %>
+            <span class="search-command-context"><%= command.subtitle %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

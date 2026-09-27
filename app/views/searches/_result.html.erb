@@ -1,0 +1,18 @@
+<%# One record in a result list. The link target is the path the index stored when
+    the record was indexed, not a route rebuilt here: a hit must be able to point
+    at a page that this view knows nothing about. The excerpt is plain text and is
+    escaped by ERB like every other piece of an author's prose. %>
+<% hit = local_assigns.fetch(:hit) %>
+
+<li class="search-result">
+  <span class="badge rounded-pill text-bg-light border search-result-kind"><%= hit.kind_label %></span>
+  <div class="search-result-body">
+    <%= link_to hit.title, hit.url, class: "search-result-title" %>
+    <% if hit.subtitle.present? %>
+      <span class="search-result-context"><%= hit.subtitle %></span>
+    <% end %>
+    <% if hit.snippet.present? %>
+      <p class="search-result-snippet"><%= hit.snippet %></p>
+    <% end %>
+  </div>
+</li>

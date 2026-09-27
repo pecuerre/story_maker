@@ -205,7 +205,13 @@ $um-search-match: #ffc107;
     color: var(--um-search-muted);
   }
 
+  // Bootstrap's own `.form-control:focus` carries higher specificity than this
+  // class alone (a pseudo-class counts as one), and it repaints `color` from the
+  // page's body color — which is dark in light theme, on a bar that stays dark in
+  // both. Without restating it here, the typed text goes dark-on-dark the moment
+  // the field is focused, i.e. for as long as someone is actually typing into it.
   &:focus {
+    color: var(--um-search-text);
     background: transparent;
     box-shadow: none;
   }

@@ -21,6 +21,15 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[fixed]** Text typed into the top-bar search field **went dark on the bar's own dark
+  background the moment the field was focused** — i.e. for as long as someone was actually typing
+  into it. `.navbar-search-input` painted the bar's near-white text color, but Bootstrap's own
+  `.form-control:focus` repaints `color` from the page's body color and carries one more
+  pseudo-class than the plain class selector, so it won on specificity while the field had focus.
+  The bar stays dark in both page themes, so a light-theme body color landed almost unreadable on
+  it. The input's own `&:focus` block now restates the bar's text color alongside the
+  background/box-shadow resets it already carried, the same way the scope select's `:focus` block
+  already did.
 - **[fixed]** The search box's **"Go to" rows were dark on dark** — the theme's own link blue on the
   bar's near-black panel, 2.6:1, in a row that had no padding, no radius, and no cursor of its own. The
   controller names a row `navbar-search-#{kind}`, and the stylesheet only styled `result` and `message`,

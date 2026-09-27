@@ -1,2 +1,3 @@
-web: env RUBY_DEBUG_OPEN=true bin/rails server
+web: env RUBY_DEBUG_OPEN=true MEILISEARCH_URL=http://127.0.0.1:7700 MEILISEARCH_API_KEY=local_development_key bin/rails server
 css: bun run watch:css
+meilisearch: meilisearch --http-addr 127.0.0.1:7700 --db-path tmp/meili-data --master-key local_development_key --no-analytics

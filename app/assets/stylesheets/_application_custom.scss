@@ -130,6 +130,11 @@ $um-search-field-hover-overlay: 18%;
 $um-search-field-surface: mix(#fff, $dark, $um-search-field-overlay);
 $um-search-field-surface-hover: mix(#fff, $dark, $um-search-field-hover-overlay);
 
+// The matched run's fill. Kept beside the other bar colors so the one place that
+// paints text on a bright surface has both halves of its pair next to each other:
+// the amber here, and `$dark` for the text on it, in the rule that uses them.
+$um-search-match: #ffc107;
+
 :root {
   --um-search-text: #{$um-search-text};
   --um-search-muted: rgba(248, 249, 250, .68);
@@ -307,10 +312,25 @@ $um-search-field-surface-hover: mix(#fff, $dark, $um-search-field-hover-overlay)
   color: var(--um-search-muted);
 }
 
+// The matched run is the one thing in the panel the reader is looking for, so it
+// has to be *more* legible than the rest of the title, not less. A translucent
+// amber over the panel's near-black background resolves to a muddy brown around
+// #6a571b — a fill only 2.4:1 against the panel, so there is barely a box to see
+// — and white on that brown measures 6.9:1 where the unmarked near-white title
+// beside it measures 15.7:1. The "highlight" was therefore the least legible
+// thing in the panel, dimmer even than its own muted context line at 7.9:1, and
+// the brown read as a smudge across the middle of a name rather than as a match.
+// The run now wears the full-strength amber with the app's own dark on top of
+// it: 9:1, and a highlight that looks like one.
+//
+// Both colors are opaque on purpose. A translucent fill would also pick up the
+// row's hover tint from `.navbar-search-result:hover` beneath it, so the mark
+// would change under the cursor and the one run the reader is tracking would be
+// the one run that moved.
 .navbar-search-result mark {
   padding: 0;
-  color: #fff;
-  background: rgba(255, 193, 7, .35);
+  color: $dark;
+  background: $um-search-match;
 }
 
 .navbar-search-all {

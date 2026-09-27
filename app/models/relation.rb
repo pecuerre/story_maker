@@ -2,6 +2,8 @@ class Relation < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "relation", title: :display_string, body: :description, route: "relation"
 
   invalidates_menu_counts_for :universe
 

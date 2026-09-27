@@ -3,6 +3,8 @@ class Item < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "item", title: :name, body: :description, route: "item"
 
   invalidates_menu_counts_for :universe
 

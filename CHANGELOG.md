@@ -21,6 +21,85 @@ Labels used below:
 
 ## 2026-09-27
 
+- **[added]** A **magic search bar** in the top bar, on every page and for guests. It is a plain GET
+  form first — submitting it opens `/search`, or `/u/:universe_slug/search` inside a universe — so the
+  answer is shareable, reachable by keyboard, and works with scripting off; the dropdown is only the
+  enhancement of that, asking the same URL for JSON as the reader types. A **scope** dropdown narrows
+  the search to the **entire platform**, **this universe** (the default inside one), **this story**, or
+  a single kind — only universes, stories, characters, locations, items, events, relations, ownerships,
+  sections, scenes, or tags — and a kind search follows the page, so "only characters" means this
+  universe's characters inside a universe and the readable ones on the landing page. Alongside the
+  records, a **Go to** group offers the destinations the reader can reach: this universe's pages, its
+  stories and their Sections/Scenes, or the universes they may open. That closes backlog item 8
+  (command palette) together with item 21. The box is a form with a real `role="combobox"`: focus
+  stays in the input while `aria-activedescendant` moves a cursor through the options, Enter follows
+  the active one, Escape closes the list and then hands the key back, one live region announces the
+  count, and a stale answer to a retyped question is dropped rather than rendered.
+- **[added]** The search itself is **Meilisearch**, behind one `Search::Client` and a `Searchable`
+  model concern: 19 models declare, next to their own fields, what they contribute to the index
+  (`searchable kind:, title:, body:, route:, scope:, taxonomy:`), and `Search::Registry` holds the
+  list a reindex reads. A document holds `universe_id`/`story_id` and never a universe's or story's
+  *name*, so a rename needs no reindex and cannot show a stale name — `Search::Catalog` resolves the
+  displayed context in two queries per request — and it holds its own `url`, so a result is a link
+  without any view rebuilding routes. A universe's or story's name is deliberately not searchable:
+  context is not content. Writes are queued (`Search::IndexRecordJob` after commit, a removal by id on
+  destroy), so a save never blocks on a search service; `bin/rails search:reindex` is the bootstrap
+  and the repair, and `bin/rails search:status` says what the engine holds.
+- **[added]** Search is a **read that answers in two formats** — the results page and the dropdown —
+  which is a new response pattern for a controller with no mutation path at all, and the first
+  read-only flow here to serve both. It skips the shared `set_current_story` callback and resolves the
+  current story itself, because that callback *remembers* `params[:story_id]`: without the skip,
+  typing in the search box would silently switch the story the whole workspace is working in. A story
+  id on its own is not a boundary — the scope decides that — so the top-bar form can carry the current
+  story for a later scope choice without narrowing the default search.
+- **[added]** A missing or broken engine is a **stated state, not a failure**: `Search.backend` is
+  `Search::UnavailableBackend` when `MEILISEARCH_URL` is unset, every engine error is re-raised as
+  `Search::Unavailable`, and the page or payload says so with the reason while the rest of the page
+  renders. There is deliberately no SQL fallback — one query, one ranking, one answer — and the
+  authorization rule is applied as a **filter sent to the engine** (`universe_id IN [...]` from
+  `Universe.visible_to`, the same rule `Ability` enforces) rather than as a post-filter, so a private
+  universe's records are never fetched and then hidden, and a reader with no readable universe is
+  not asked at all. The engine's key stays server-side.
+- **[fixed]** Three engine-contract bugs that failed **silently**, all found by running against a
+  real Meilisearch rather than a stand-in: a document id containing `:` is rejected by the engine, which
+  refused *every* batch, so a reindex reported "indexed 214 documents" over an empty index — ids are
+  now built from the model name, and `test/models/searchable_test.rb` holds every declared model to
+  the engine's character rules and to id uniqueness (a kind-based id made the eight taxonomies
+  overwrite each other: 214 written, 161 stored). `Search::Reindexer` now also *checks* each task it
+  awaits and raises `Search::ReindexFailed`, because a refused write is otherwise indistinguishable
+  from a successful one. And `Array(hash)` converts a Hash into pairs, which broke a single-document
+  upsert. `Search::UnavailableBackend#upsert` had the same mistake.
+- **[fixed]** Search is available to guests and to read-only members: the top bar renders the box
+  everywhere, and `Authentication` denies a request without an explicit
+  `allow_unauthenticated_access`, so the search endpoint was redirecting every signed-out visitor to
+  the sign-in form. A dropped scope or story is also no longer reported as an empty result: the
+  request widens to the boundary that exists, keeps what was asked for in the URL, and the control
+  shows what was really searched — a box that displayed "this story" as a *disabled, selected* option
+  described a search that was not happening. A one-character query now offers no commands either, so
+  the dropdown and the page cannot give two different answers to one question.
+- **[chore]** The test environment now uses the `:test` queue adapter, so the suite can assert what a
+  save would have indexed without running anything, and `test/support/search_test_backend.rb` stands
+  in for the engine: it records the query it was asked and replays chosen hits, proving what the
+  application does with an answer without pretending to search. `test/search/meilisearch_integration_test.rb`
+  is the deliberate exception — skipped without `SEARCH_INTEGRATION=1` — and covers the engine's own
+  contract, which cannot be faked and which CI deliberately does not run. The navbar's search field is
+  labelled **Search Universe Maker** so a page with two search fields (the Scenes filter has its own)
+  no longer offers two fields announced as "Search", and `test/system/scene_filter_test.rb` addresses
+  its own filter by id. `Searchable` sits in `app/models/concerns/` with the other five concerns, and
+  the related value objects are grouped under the `Search` namespace, which
+  `universe_maker_conventions.md` now states as the convention for both.
+- **[docs]** New [ADR 0014](docs/adr/0014-global-search-with-meilisearch.md) records why Meilisearch
+  rather than SQL `LIKE`, SQLite FTS5, or a SQL fallback behind the engine, and what an engine outage,
+  a rename, and an index rebuild each cost. `architecture.md` gains a **Global search** section (the
+  parts, and the four rules that must not drift), a row in the response-format table, and the routing
+  edges; `universe_maker_conventions.md` gains a **Global search** section; `development.md` gains the
+  engine setup, the three environment variables, the reindex/status commands, and two checklist steps
+  for a new model; `visual_design.md` describes the box and the panel; and `known_quirks.md` records
+  the two open search costs (a refused write invisible to its job, and a universe rename invalidating
+  stored paths until the repair runs) plus a pre-existing one found while verifying this work: the
+  browser suite is unreliable on a saturated machine, where SQLite's busy timeout surfaces through
+  Capybara as unrelated-looking failures. That was reproduced on a pristine checkout of `aa224a2`
+  (10 failures, 41 errors) and is green with `PARALLEL_WORKERS=2`.
 - **[added]** A **Settings** page at `/settings` with vertical tabs, reached from one new **Settings**
   entry in the top bar next to the account menu and rendered for every visitor, guest included. The
   first and only section is **Appearance**, and its only control is **Theme**: a radio group of **Light**

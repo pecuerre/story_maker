@@ -42,6 +42,11 @@
         <% end %>
       </ul>
 
+      <%# The search box sits between the scope links and the actions, and grows
+          into the space they leave. It is one form: submitting it opens the
+          results page, and the dropdown is only the enhancement of that. %>
+      <%= render "shared/search_bar" %>
+
       <%# One row: the settings entry and the account menu sit side by side at
           every width, so the actions never stack under each other. %>
       <div class="navbar-actions ms-auto mt-3 mt-lg-0 d-flex align-items-center gap-2">

@@ -35,10 +35,6 @@ Items are numbered and the numbers are stable: a finished item is deleted withou
 renumbering, so the remaining numbers are left as they are and a number is never reused or
 made to mean a different idea.
 
-2. **add "fixed" attribute to all _tags models**
-
-the fixed ones should not be editable or deletable and should be shown as submenus of the respective objects.
-
 3. **Contextual inspector / right-side utility panel**
 
 The right utility sidebar now reserves a stable home for future collaboration, analytics, and AI
@@ -51,13 +47,19 @@ counts, and story outline progress.
 
 4. **Search, filtering, and sorting for large lists**
 
+The top-bar search is now implemented and answers across every model; see
+[ADR 0014](adr/0014-global-search-with-meilisearch.md) and the delivered work in
+[`../CHANGELOG.md`](../CHANGELOG.md). What is still missing is the *in-list* half: a list a reader
+has already landed on should be able to narrow, sort, and show its filters in the URL.
+
 Add client- or server-backed search/filter/sort controls to Characters, Locations, Events, Items,
 Relations, Ownerships, and taxonomy trees. Preserve universe/story scope, make filters removable
 and visible in the URL where practical, and define behavior for empty results separately from an
-empty database. Start with the fields already exposed by each model; do not add opaque global
-search before the scoped lists are usable at scale. The story-owned Scenes list already has this
-shape (text, Section group, Scene Tag, inclusive in-world date range, canonical query in the URL);
-reuse its `SceneFilter` conventions here instead of inventing a second filter pattern.
+empty database. Start with the fields already exposed by each model. The story-owned Scenes list
+already has this shape (text, Section group, Scene Tag, inclusive in-world date range, canonical
+query in the URL); reuse its `SceneFilter` conventions here instead of inventing a second filter
+pattern, and reuse `Search::Scope` for the boundary rather than re-deciding what "this universe"
+means.
 
 5. **Richer relationship and entity rows**
 
@@ -80,13 +82,6 @@ Make the Universes index useful for choosing a workspace. Add story and entity c
 recent activity, and a clear “Open universe” action. Consider eager-loading/caching the summary
 counts so the index does not issue one count query per universe. Keep the existing authorization
 and visibility rules in mind before exposing any summary data.
-
-8. **Global search / command palette**
-
-After scoped search is solid, add a global command palette for switching universes/stories and
-jumping to Characters, Locations, Events, Sections, or the Timeline. It must respect the current
-universe/story scope and should be keyboard accessible. This is a navigation enhancement, not a
-replacement for scoped list filters.
 
 9. **Story-planning and world-building tools**
 
@@ -181,18 +176,43 @@ it has a useful destination and clear empty/loading/error states.
    to recover the story, i shuold be ask "there are related elements associated with this, do you want
    to recover them too?"
 
+22. **change the dismissive alerts in the site for ... bubbles that appears and dissapear**
+  - they shuold no be in the page itself, they should be floating
+  - they successful ones should disappear after a few seconds
+  - the error ones ... i am not decided yet
 
-21. **include a "magic" search bar in the top bar**
-  - it sould have a drop down near it to choose between
-    - entire platform
-    - current universe [default]
-    - current story
-    - only characters
-    - only locations
-    - ...
-  - it should be the type of search bar that autocompletes as i type and looks into every object and every field
-  - back in the day i remember i used solar or elastic search for that. i don't know what is used for that now.
-    but probably we have to use some of that
+23. **visual improvements**
+  - move the seetings button on the top bar, under the account button
+  - if no user is logged in, instead of a button [log in] show the same combo [account] and the login button inside
+  - add a button "go back" in the settings, so when you finish changing settings you can continue where you left
+
+24. **tags improvements**
+  - in all tags add:
+    - a field "taggable" (or find a better name, i am open to suggestions)
+    - the idea of this field is that some tags with children tags are not supposed
+      to be used as tags, but more as a grupings for children tag.
+    - if the tag is not "taggable" (or the name you choose) then doesn't appear
+      in the dropbox when editing the corresponding element
+    - for instance
+      - i create character tag called "factions"
+      - some child tags can be "the good ones" and "the bad ones"
+      - i mark the "factions" one as taggable:false (or the name you choose)
+      - this means that i can not assign "factions" to a character.
+        but i can assign a children tag
+  - only in characters tags, locations tags, event tags, item tags do:
+    - add a field "fixed" or "show in menu" (or a better name suggested by you)
+    - the idea is that those tags should be shown in the tab selector
+    - for instance (using the same example as before)
+      - in the character form currently i see 2 tabs: characters, relations
+      - if i mark "show in menu" the tag "factions" (or the name you suggest)
+        i will see  characters, relations, factions
+      - when i click on the factions, i should see a same view when i click on the tag
+        on the configuration > tags > the corresponding tag
+  - in all the tag views
+    - currently when i click for instance in "character tags" i see
+      "caracters with this tag (4)" and the list of characters
+    - that is ok, but i would like to see all the tags next to the character
+    - this view is the one that should be "reused" when you add a "fixed" tag to the tabs
 
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

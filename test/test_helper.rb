@@ -3,6 +3,7 @@ require_relative "../config/environment"
 require "rails/test_help"
 require_relative "test_helpers/session_test_helper"
 require_relative "test_helpers/forgery_protection_test_helper"
+require_relative "support/search_test_backend"
 
 module ActiveSupport
   class TestCase
@@ -12,6 +13,12 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    # Search indexing is queued, so a test needs to be able to ask what a save
+    # would have written. The test environment uses the `:test` queue adapter
+    # (see `config/environments/test.rb`), so nothing runs and nothing needs an
+    # engine.
+    include ActiveJob::TestHelper
+
+    include SearchTestHelper
   end
 end

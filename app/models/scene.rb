@@ -6,6 +6,8 @@ class Scene < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "scene", title: :name, body: :description, route: "scene", scope: :story
 
   invalidates_menu_counts_for :story, cache_scope: Story::SCENE_MENU_COUNT_SCOPE
 

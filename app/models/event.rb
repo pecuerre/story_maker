@@ -3,6 +3,8 @@ class Event < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "event", title: :name, body: :description, route: "event"
 
   invalidates_menu_counts_for :universe
 

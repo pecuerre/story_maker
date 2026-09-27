@@ -2,6 +2,8 @@ class Ownership < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "ownership", title: :display_string, body: :description, route: "ownership"
 
   invalidates_menu_counts_for :universe
 

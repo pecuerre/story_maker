@@ -13,7 +13,16 @@ class SceneElement < ApplicationRecord
   DIALOGUE = "dialogue"
   KINDS = [ NARRATION, DIALOGUE ].freeze
 
+  include Searchable
+  # A Scene Element has no page of its own — the editor lives under Scene
+  # Details — so it declares no route and points a hit at the Scene that owns it.
+  searchable kind: "scene_element", title: :name, body: :body, scope: :story
+
   belongs_to :scene
+  # An Element belongs to a Scene, which belongs to a Story. Delegating the step
+  # keeps a story-scoped consumer — the search document, the universe resolver —
+  # from having to know how deep the Element actually sits.
+  delegate :story, to: :scene, allow_nil: true
   # `dependent:` is not an option on a HABTM association; Active Record removes
   # the join rows itself when the owner is destroyed, which is what stops a
   # Dialogue's speakers from outliving it.
@@ -58,6 +67,22 @@ class SceneElement < ApplicationRecord
 
   def universe
     scene&.universe
+  end
+
+  # An Element is story-scoped through the Scene that owns it, so it has to say
+  # how a reindex finds its records: there is no `story_id` column to filter on.
+  def self.search_scope(universe)
+    story_ids = universe.stories.select(:id)
+    where(scene_id: Scene.where(story_id: story_ids).select(:id))
+  end
+
+  # The stored path of a hit is the page a reader lands on, so an Element's hit
+  # opens its Scene. `search_document` still carries the Element's own id, so a
+  # reindex replaces the document rather than adding a second one.
+  def search_url
+    Rails.application.routes.url_helpers.universe_story_scene_path(
+      universe_slug: story.universe.to_param, story_id: story.id, id: scene_id
+    )
   end
 
   def narration?

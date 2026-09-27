@@ -70,6 +70,16 @@
 - `Relation`, `Ownership` and `Event` add custom validators that keep their non-tag associated
   records inside the same universe. `HasManyTags` independently enforces the shared universe or
   story scope in both directions for all seven content/tag pairs.
+- **A concern lives in `app/models/concerns/`**, beside `HasSlug`, `HasManyTags`, `Hierarchical`,
+  `HasColor`, and `InvalidatesMenuCounts`. A model that needs behaviour declares it with `include`
+  and, where the behaviour is configurable, a class-level DSL on itself — as
+  `app/models/concerns/searchable.rb` does.
+- **A group of related value objects gets its own namespace directory.** `Search` is the current
+  example: `app/models/search/` holds the query, scope, catalog, client, and the rest of one
+  subsystem, rather than sixteen top-level files. A standalone value object with no siblings to
+  group with stays flat (`SceneFilter`, `SectionPaths`, `TimelineLayout`). Zeitwerk resolves both,
+  so this is a readability choice — reach for a namespace as soon as a second class would otherwise
+  sit beside the first.
 
 ### Controllers
 - Universe scoping via `Current.universe` (set from the `:universe_slug` param in
@@ -495,6 +505,50 @@ added to an existing page instead of a new page being invented. See
   `TagsHelper#tagged_record_counts` and `app/models/tagged_record_counts.rb` answer the "how many
   records carry this tag" question for a whole taxonomy in one grouped query.
 - `app/helpers/timeline_helper.rb` — popover title/content for timeline events.
+- `app/helpers/searches_helper.rb` — the scope list both search surfaces render
+  (`search_scope_options`, which disables what the page cannot honour), the scope the top-bar box
+  shows (`search_selected_scope`, the *resolved* scope, so a widened search never displays a choice
+  that does not describe it), and `search_path_for(universe, query)`, which points a form at
+  `/search` or `/u/:universe_slug/search`.
+
+### Global search
+The search box is a GET form that opens a results page, plus a dropdown that answers while someone
+types. The two surfaces are one read (`SearchesController#show`), and the rules below are the ones
+that must not drift:
+
+- **The engine is reached through `Search.backend` and nowhere else.** A real
+  `Search::Client` when configured, `Search::UnavailableBackend` when not; every engine failure
+  becomes `Search::Unavailable`, which the controller states rather than raises, because the box
+  renders on every page. There is no SQL fallback: one query, one ranking, one answer.
+- **Authorization is a filter, not a post-filter.** `Search::Catalog` sends
+  `universe_id IN [...]` built from `Universe.visible_to(user)` — the same rule `Ability` enforces —
+  and a reader with no readable universe is not asked at all. The engine's key never reaches the
+  browser.
+- **`Search::Query` owns the request** (`q`, `scope`, `story_id`), `Search::Scope` owns the dropdown,
+  and a value that cannot be used is dropped and reported in `discarded`, exactly as `SceneFilter`
+  reports a foreign section id. `query_params` is the only source of the search in a link.
+- **A search never changes the current story.** `SearchesController` skips `set_current_story` and
+  resolves the story itself, because the shared callback remembers `params[:story_id]`. A story id
+  alone is not a boundary: the scope decides that, so the top-bar form can carry the current story
+  for a later scope choice without narrowing the default search.
+- **A scope is resolved, not trusted.** An unhonourable request widens to the boundary that exists
+  and says so; the URL keeps what was asked for; the control shows what was searched.
+- **Documents hold ids and their own path, never a universe's or story's name.** Displayed context
+  is resolved per request (`Search::Catalog#describe`); a rename needs no reindex.
+- **A model that becomes searchable declares it once**, next to its fields:
+  `searchable kind:, title:, body:, route:, scope:, taxonomy:` plus `include Searchable`. Add the
+  model to `Search::Registry::MODELS` in the same change, and if it is story-scoped without its own
+  `story_id` (a Scene Element is the only one), give it its own `search_scope`. The test that walks
+  the registry and builds every document is what keeps that list true.
+- **The reindex must check its tasks.** `Search::Reindexer` awaits each one and raises
+  `Search::ReindexFailed` on a failure, because the engine refuses a whole batch over one document
+  it dislikes and otherwise reports success while storing nothing.
+- **Client-side rules** ([ADR 0012](adr/0012-client-side-verification-and-csrf.md)):
+  `search_controller.js` builds every node with DOM APIs — a result carries the author's own words —
+  keeps focus in the input while `aria-activedescendant` moves a cursor through the options, drops a
+  stale answer to a question that has been retyped, and asks for nothing before
+  `Search::Dropdown::MINIMUM_LENGTH` characters. It has a `bun test` case in
+  `test/javascript/search_controller_test.js` and a browser case in `test/system/search_test.rb`.
 
 ### JavaScript Controllers (`app/javascript/controllers/`)
 - `taxonomy_tree_controller.js` — hierarchy editing: drag/drop, inline rename, modal, JSON CRUD. A
@@ -536,6 +590,10 @@ Left to right:
   Changing stories happens on the universe page, which lists the universe's stories with an **Open**
   action each; the stories index carries **New story**. There is no **Select** placeholder: with no
   current story there is simply no story link, because a story is never implied.
+- **Search** — one search box, between the scope links and the actions. It is a plain GET form
+  first: submitting it opens the results page (`/search`, or `/u/:universe_slug/search` inside a
+  universe), and `search_controller.js` only adds the dropdown that answers while someone types. It
+  is not a switcher, and it is not a second set of navigation links.
 - **Settings** — the platform settings page (`/settings`), rendered for every visitor including a
   guest, because its preferences belong to the browser rather than to a universe. It is the one
   platform-level entry, and it is deliberately not a **Configuration** link in the right utility
@@ -545,8 +603,10 @@ Left to right:
 `.navbar-actions` is a flex row, so the settings entry and the account menu never stack.
 
 A scope link carries `.active` plus `aria-current="page"` only on the page it points at, never as a
-permanent "you are in this scope" state. The account menu is the navbar's only dropdown, so the top
-bar issues no query. The left sidebar keeps **All stories** plus the prompt when no story is current,
+permanent "you are in this scope" state. The account menu is the navbar's only Bootstrap dropdown;
+the search results panel is the search box's own listbox, not a menu. The top bar issues no query of
+its own: the box renders from `Current`, from `Search::Scope`, and from what a reader types. The
+left sidebar keeps **All stories** plus the prompt when no story is current,
 and the sidebar never gains a create action: creation belongs to the page that lists the records.
 
 Nonfunctional dashboard links do not appear in the navbar. The right utility sidebar is the

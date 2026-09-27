@@ -38,6 +38,13 @@ Rails.application.configure do
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test
 
+  # Search indexing is queued, so the suite has to decide what happens to those
+  # jobs. The `:test` adapter keeps them out of the process: nothing runs, a test
+  # can assert what a save would have written, and the suite never needs a
+  # running search engine to pass. `test/support/search_test_backend.rb` covers
+  # the engine's answers; the engine's own behaviour is verified out of band.
+  config.active_job.queue_adapter = :test
+
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.

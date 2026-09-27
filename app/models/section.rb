@@ -3,6 +3,8 @@ class Section < ApplicationRecord
   include HasManyTags
   include HasSlug
   include InvalidatesMenuCounts
+  include Searchable
+  searchable kind: "section", title: :name, body: :description, route: "section", scope: :story
 
   invalidates_menu_counts_for :story
 

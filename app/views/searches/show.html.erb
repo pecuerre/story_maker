@@ -1,0 +1,116 @@
+<% content_for :title, "Search" %>
+
+<%# The results page. It is the answer without scripting, and the shareable
+    version of an answer: the form above it submits to the same URL the top-bar
+    dropdown fetches, so a link to a result set is a link anyone can open. A
+    search box in the top bar is not reachable by keyboard otherwise, and neither
+    is a result set worth discussing. %>
+<%= render "shared/page_header",
+  title: "Search",
+  eyebrow: "Find anything",
+  description: "Search every record in the scope you choose. Records carry their own name and description; a universe or story name is context, not something to match." %>
+
+<div class="content-surface search-page-form p-3 p-md-4 mb-4">
+  <%= form_with url: search_path_for(Current.universe), method: :get, class: "row g-2 align-items-end" do %>
+    <div class="col-12 col-lg">
+      <label class="form-label" for="search_page_q">Search</label>
+      <input type="search" class="form-control" id="search_page_q" name="q"
+        value="<%= @query.text %>" autocomplete="off"
+        placeholder="At least <%= Search::Query::MINIMUM_LENGTH %> characters">
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-auto">
+      <label class="form-label" for="search_page_scope">Scope</label>
+      <%= render "searches/scope_field", id: "search_page_scope", selected: @query.scope.display_value,
+        universe: Current.universe, story: @query.story %>
+    </div>
+
+    <%# The story boundary travels with the form so a scope of "this story" is a
+        plain query value. Nothing about it is remembered: searching inside a
+        story must not change the story the workspace is working in. %>
+    <% if @query.story %>
+      <input type="hidden" name="story_id" value="<%= @query.story.id %>">
+    <% end %>
+
+    <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+      <%= submit_tag "Search", class: "btn btn-primary", name: nil %>
+      <% if @query.applied? %>
+        <%= link_to "Clear", search_path_for(Current.universe), class: "btn btn-light border" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <p class="search-page-scope-note text-body-secondary mb-0 mt-3">
+    Searching <strong><%= @query.scope.label %></strong>.
+  </p>
+</div>
+
+<% if @search_unavailable.present? %>
+  <%# An engine that is not configured or not answering is stated, not hidden.
+      The rest of the page still works, which is the point of degrading rather
+      than failing. %>
+  <div class="content-surface search-empty p-4" role="status">
+    <h2 class="h6">Search is not available</h2>
+    <p class="text-body-secondary mb-0"><%= @search_unavailable %></p>
+  </div>
+<% elsif @query.too_short? %>
+  <div class="content-surface search-empty p-4" role="status">
+    <h2 class="h6">Keep typing</h2>
+    <p class="text-body-secondary mb-0">
+      A search needs at least <%= Search::Query::MINIMUM_LENGTH %> characters, because one character
+      matches nearly everything.
+    </p>
+  </div>
+<% elsif !@query.applied? %>
+  <div class="content-surface search-empty p-4" role="status">
+    <h2 class="h6">Search this universe</h2>
+    <p class="text-body-secondary mb-0">
+      Type at least <%= Search::Query::MINIMUM_LENGTH %> characters to look through characters, locations,
+      events, items, relations, ownerships, tags, and — inside a story — sections, scenes, and their
+      text. Narrow it with the scope above.
+    </p>
+  </div>
+<% elsif @search_results.any? || @search_commands.any? %>
+  <%= render "searches/commands", commands: @search_commands %>
+
+  <% if @search_results.any? %>
+    <section class="search-results" aria-labelledby="search-results-title">
+      <h2 class="search-group-title" id="search-results-title">
+        <% if @search_results.total > @search_results.size %>
+          Showing <%= @search_results.size %> of <%= pluralize(@search_results.total, "match", plural: "matches") %>
+        <% else %>
+          <%= pluralize(@search_results.total, "match", plural: "matches") %>
+        <% end %>
+      </h2>
+
+      <ul class="list-unstyled search-results-list mb-0">
+        <%= render partial: "searches/result", collection: @search_results.hits, as: :hit %>
+      </ul>
+
+      <%# Paging is stated, not implied: a truncated list that looks complete is
+          how a reader concludes a universe is smaller than it is. %>
+      <% if @search_results.total > Search::Catalog::PAGE_LIMIT %>
+        <nav class="search-pagination" aria-label="Search results pages">
+          <% if current_page > 1 %>
+            <%= link_to "Previous", search_path_for(Current.universe, @query.query_params.merge(page: current_page - 1)),
+              class: "btn btn-light border", rel: "prev" %>
+          <% end %>
+          <span class="search-pagination-position">Page <%= current_page %></span>
+          <% if @search_results.total > current_page * Search::Catalog::PAGE_LIMIT %>
+            <%= link_to "Next", search_path_for(Current.universe, @query.query_params.merge(page: current_page + 1)),
+              class: "btn btn-light border", rel: "next" %>
+          <% end %>
+        </nav>
+      <% end %>
+    </section>
+  <% end %>
+<% else %>
+  <div class="content-surface search-empty p-4" role="status">
+    <h2 class="h6">Nothing matched “<%= @query.text %>”</h2>
+    <p class="text-body-secondary mb-0">
+      Nothing in <strong><%= @query.scope.label.downcase %></strong> matched. Check the spelling, or widen
+      the scope above — <% if Current.universe.present? %>“Entire platform” searches every universe you can
+      read, not only this one.<% end %>
+    </p>
+  </div>
+<% end %>

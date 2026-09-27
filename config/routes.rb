@@ -7,7 +7,17 @@ Rails.application.routes.draw do
 
   resources :universes, param: :universe_slug, path: "u"
 
+  # The top-bar search. It is a read with no page of its own per resource, so it
+  # is a `get` rather than a `resources` collection: a route advertising actions
+  # that do not exist is exactly the known-quirk this avoids. The platform form
+  # is the default, and the nested one keeps a universe-scoped search inside the
+  # universe's own URL, where the shared universe callbacks resolve and
+  # authorize the scope.
+  get "search", to: "searches#show", as: :search
+
   scope "u/:universe_slug", as: :universe do
+    get "search", to: "searches#show", as: :search
+
     resources :stories, path: "s" do
       resources :sections
       resources :section_tags

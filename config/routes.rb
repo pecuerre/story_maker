@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   resource :session
   resources :passwords, param: :token
+  # Platform settings are not universe-scoped: a theme belongs to the browser,
+  # so the page is reachable before a universe is chosen and by a guest.
+  resource :settings, only: %i[ show update ]
 
   resources :universes, param: :universe_slug, path: "u"
 

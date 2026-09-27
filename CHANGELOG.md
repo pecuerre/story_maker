@@ -21,6 +21,48 @@ Labels used below:
 
 ## 2026-09-27
 
+- **[added]** A **Settings** page at `/settings` with vertical tabs, reached from one new **Settings**
+  entry in the top bar next to the account menu and rendered for every visitor, guest included. The
+  first and only section is **Appearance**, and its only control is **Theme**: a radio group of **Light**
+  and **Dark** labelled cards, each with a swatch of that theme's page color, saved by a plain
+  full-page form. The section list is declarative (`settings_tabs` plus `shared/_settings_navigation`,
+  the same URL-backed tab pattern as `shared/_content_tabs` turned vertical), so the next section is
+  one entry plus its panel. Settings is deliberately **not** a Configuration entry in the right
+  utility sidebar: it is a platform page outside `/u/:universe_slug` that skips the universe callbacks
+  and `authorize_universe_access`, because a display preference belongs to the browser rather than to
+  a universe and must work on the landing page and signed out.
+- **[added]** Dark mode. `AppTheme` holds the whole feature: two known names, `light` as the default,
+  and one **signed** cookie (`um_theme`, a year, `HttpOnly`, `SameSite=Lax`, `Secure` in production) —
+  no migration, no model, and no authorization. The application layout writes
+  `<html lang="en" data-bs-theme="…">`, so Bootstrap's own dark variables apply on the **first
+  paint** with no client-side script and no flash of the wrong palette; an unknown, unsigned, or
+  hand-edited cookie value resolves to the default on every read and write, so nothing but a known
+  theme can reach the document. `test/system/settings_theme_test.rb` proves in a real browser that
+  Bootstrap's variables actually follow the attribute, which is the part a request test cannot see.
+- **[fixed]** The settings form opts out of Turbo (`data: { turbo: false }`). Turbo Drive replaces the
+  body and head but not attributes on the **root** element, so a Turbo submission stored the new
+  theme and kept painting the old one — caught by the browser test, not by the request suite. Any
+  future client-side theme switch has to set `document.documentElement` itself.
+- **[fixed]** `.navbar-actions` is now a flex row, so the new settings entry and the account menu sit
+  side by side instead of stacking once the bar holds more than one action.
+- **[changed]** The light-only literal surfaces in the custom stylesheets became `--um-*` tokens
+  (`--um-surface-raised`, `--um-row-hover`, `--um-surface-veil`, `--um-tag-badge-border`) with a
+  `[data-bs-theme="dark"]` value, and every existing `--um-*` token that carried a light-only value is
+  re-tinted there. Each scope keeps its hue across themes — universe blue, story crimson, tools green —
+  so a block still reads as the same scope. Author-chosen data colors (tag badges, timeline nodes) are
+  deliberately untouched.
+- **[docs]** New [ADR 0013](docs/adr/0013-platform-settings-and-browser-theme.md) records why settings
+  is browser-owned, server-rendered, and outside the universe workspace, and what a later per-account
+  preference or instant toggle would have to change. `architecture.md` (routing, response formats,
+  request lifecycle, top bar), `universe_maker_conventions.md` (routes, the form and vertical-tab
+  patterns, top-bar and right-sidebar navigation), `visual_design.md` (the Settings page shape and the
+  full light/dark token table), and `development.md` (manual verification) follow it.
+- **[chore]** `test/models/app_theme_test.rb` pins the theme whitelist and the cookie contract,
+  `test/controllers/settings_controller_test.rb` covers the page for a guest and a signed-in user with
+  no universe, the redirect, the refusal of an unknown theme, a missing parameter, and a forged cookie,
+  `test/integration/navigation_test.rb` pins the top-bar entry on the landing page and inside a
+  universe (and its absence from both sidebars), and `csrf_mutation_test.rb` proves the new HTML
+  mutation is refused without a token and accepted with one.
 - **[added]** Backlog slices **11.8, 11.9, and 11.10**, which complete **Epic 11 — Add Scenes to a
   Story** in every slice it specified. Item presence, Location presence, and the reverse continuity
   links are delivered; the epic now leaves `docs/backlog.md` and its delivered state lives here and

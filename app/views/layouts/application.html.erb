@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<%# The chosen theme is server-rendered onto the root element, so the very first
+    paint is already in the right palette instead of flashing the default one. %>
+<html lang="en" data-bs-theme="<%= current_theme %>">
   <head>
     <title><%= content_for(:title) || "Universe Maker" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">

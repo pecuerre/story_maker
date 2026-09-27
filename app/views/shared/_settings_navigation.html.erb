@@ -1,0 +1,21 @@
+<%# The vertical section list of a settings page. Tabs are URL-backed like every
+    other tab strip in the application: the active class and aria-current say
+    where the reader is, and no data-bs-toggle turns a link into an in-document
+    pane that would have no address of its own. A new section is one entry in
+    `settings_tabs` plus the panel it belongs to. %>
+<nav class="settings-navigation" aria-label="Settings sections">
+  <ul class="nav nav-tabs flex-column settings-navigation-list">
+    <% tabs.each do |tab| %>
+      <li class="nav-item" role="presentation">
+        <%= link_to tab.fetch(:path),
+          class: "nav-link#{' active' if tab[:active]}",
+          aria: (tab[:active] ? { current: "page" } : {}) do %>
+          <span class="settings-navigation-link">
+            <i class="bi bi-<%= tab.fetch(:icon) %>" aria-hidden="true"></i>
+            <span><%= tab.fetch(:label) %></span>
+          </span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</nav>

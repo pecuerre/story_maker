@@ -15,7 +15,7 @@
 
 .taxonomy-row:hover,
 .taxonomy-node:focus-within > .taxonomy-row {
-  background: #fafbfe;
+  background: var(--um-row-hover);
 }
 
 // The name is the only inline-rename target, so it is sized to its own text

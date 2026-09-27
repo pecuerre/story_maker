@@ -377,6 +377,17 @@ the records carrying it, a Section lists the scenes grouped under it). Placehold
 right utility sidebar stays flat gray with no hover emphasis, and a guest or read-only member sees
 the same pages with no mutation controls.
 
+Open **Settings** from the top bar (it is rendered for a guest too, and it is not a Configuration
+link in the right sidebar) and check: the page has no workspace shell, its vertical navigation shows
+**Appearance** as the only section, and the **Theme** control offers exactly **Light** and **Dark** as
+labelled cards with the current one selected. Choosing **Dark** and pressing **Save theme** repaints
+the page immediately with no flash of the light palette, the choice is still selected when you come
+back, and it still applies after navigating to a universe page and to the landing page — it is
+remembered in this browser, so a signed-out visitor has it too. Switching back to **Light** restores
+the original palette. In dark mode the universe, story, and tools sidebar blocks keep their own hue,
+surfaces are dark rather than near-white, and tag badges keep the colors stored on the record. See
+[ADR 0013](adr/0013-platform-settings-and-browser-theme.md).
+
 Open a Scene and check: the **Scene Details** tab is active while **Characters** is a live link and
 **Items** and **Locations** are `aria-disabled` placeholders rather than dead links; Details shows
 the Section
@@ -558,9 +569,10 @@ Dependabot config: `.github/dependabot.yml`.
    `*_tag_taxonomy_fields` to `app/helpers/modal_fields.rb`.
 6. Sidebar link using the shared `shared/_sidebar_link` pattern — in
    `app/views/layouts/_left_sidebar.html.erb` for universe/story content, or in
-   `app/views/layouts/_right_sidebar.html.erb` under **Configuration** for configuration tools and
-   the Members access manager; use `shared/_content_tabs` for related records and
-   `shared/_tag_workspace_navigation` for taxonomy management.
+   `app/views/layouts/_right_sidebar.html.erb` under **Configuration** for universe configuration
+   tools and the Members access manager; use `shared/_content_tabs` for related records,
+   `shared/_tag_workspace_navigation` for taxonomy management, and
+   `shared/_settings_navigation` for a new platform settings section.
 7. Fixtures in `test/fixtures/` (dashed slugs), controller + model tests.
 8. Development data: add or update `<model>.yml` in every relevant
    `db/data/<universe_slug>/` directory, update the shared model order/registry, and include

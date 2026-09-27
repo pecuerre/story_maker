@@ -14,6 +14,25 @@ module ApplicationHelper
     controllers.include?(controller.controller_name)
   end
 
+  # The appearance this request renders with. It comes from a signed cookie
+  # rather than from `Current`, because it is a property of the browser and not
+  # of the session, universe, or story the request happens to carry. Memoized for
+  # the render: the layout and the settings form must not disagree.
+  def current_theme
+    @current_theme ||= AppTheme.read(cookies)
+  end
+
+  # The settings sections, in the order the vertical navigation lists them. Each
+  # one owns a real destination, so the navigation is URL-backed like every other
+  # tab strip in the application: no `data-bs-toggle`, no in-document panes. The
+  # first tab is the page itself, and a later tab that needs its own state gets a
+  # query parameter in the shape of the taxonomy workspace.
+  def settings_tabs
+    [
+      { label: "Appearance", icon: "palette", path: settings_path, active: controller_name == "settings" }
+    ]
+  end
+
   def icon(name)
     content_tag(:i, "", class: "bi bi-#{name}")
   end

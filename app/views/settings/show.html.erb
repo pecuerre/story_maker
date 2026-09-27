@@ -1,0 +1,62 @@
+<%# Settings is a platform page, not universe content, so it is reached from the top
+    bar and renders without a workspace. The page is the Appearance tab today; a
+    new section is one entry in `settings_tabs` plus a panel here. %>
+<%= render "shared/page_header",
+  title: "Settings",
+  eyebrow: "This browser",
+  description: "These preferences belong to this browser, not to a universe, so they are available on every page and to a guest." %>
+
+<div class="settings-layout">
+  <%= render "shared/settings_navigation", tabs: settings_tabs %>
+
+  <section class="settings-panel" aria-labelledby="appearance-title">
+    <h2 class="settings-panel-title" id="appearance-title">Appearance</h2>
+    <p class="settings-panel-description">
+      How this browser renders Universe Maker. Every page follows the choice, and
+      nothing else about the workspace changes with it.
+    </p>
+
+    <%# A plain full-page form: the theme is a preference, so it is submitted once
+        and answered with a redirect, the same shape as the other non-model forms.
+        It opts out of Turbo deliberately. The theme lives in an attribute on the
+        root element, and a Turbo Drive navigation replaces the body without
+        touching the root element's attributes, so a Turbo submission would leave
+        the new choice unapplied. A real page load is also the one navigation that
+        guarantees the first paint is already in the new palette. %>
+    <%= form_with url: settings_path, method: :patch, class: "form-surface settings-form",
+      data: { turbo: false } do |form| %>
+      <fieldset class="settings-fieldset">
+        <legend class="form-label">Theme</legend>
+        <p class="settings-hint" id="theme-hint">
+          Light and dark are the only two themes. The choice is remembered in this
+          browser; it is not an account setting and no universe admin can change it
+          for you.
+        </p>
+
+        <div class="theme-options">
+          <% AppTheme.names.each do |name| %>
+            <%# The label is the card, so the checked state is one adjacent-sibling
+                rule away and the control needs no scripting. %>
+            <div class="theme-option">
+              <%= form.radio_button :theme, name,
+                checked: name == current_theme,
+                class: "form-check-input",
+                aria: { describedby: "theme-hint" } %>
+              <label class="theme-option-label" for="theme_<%= name %>">
+                <span class="theme-option-swatch theme-option-swatch--<%= name %>" aria-hidden="true"></span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-name"><%= AppTheme.label_for(name) %></span>
+                  <span class="theme-option-description"><%= AppTheme.description_for(name) %></span>
+                </span>
+              </label>
+            </div>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <div class="form-actions">
+        <%= form.submit "Save theme", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </section>
+</div>

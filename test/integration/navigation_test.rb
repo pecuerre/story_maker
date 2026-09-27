@@ -210,4 +210,19 @@ class NavigationTest < ActionDispatch::IntegrationTest
       assert_select "nav.content-tabs a[href=?]", path, text: label.to_s.capitalize
     end
   end
+
+  test "settings is a top bar entry on every page, not a Configuration link" do
+    # A theme belongs to the browser rather than to a universe, so the entry
+    # follows the reader out of the workspace, and the Configuration section
+    # stays about universe configuration.
+    [ universes_url, universe_url(@universe), universe_story_url(universe_slug: @universe.slug, id: @story) ].each do |path|
+      get path
+
+      assert_response :success
+      assert_select "nav.navbar .navbar-actions a[href=?]", settings_path, text: /Settings/
+      assert_select "nav.navbar .navbar-actions a[href=?][aria-current=page]", settings_path, count: 0
+      assert_select "aside.right-sidebar a[href=?]", settings_path, count: 0
+      assert_select "aside.workspace-sidebar a[href=?]", settings_path, count: 0
+    end
+  end
 end

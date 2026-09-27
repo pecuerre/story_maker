@@ -21,6 +21,19 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[fixed]** The search box's **"Go to" rows were dark on dark** — the theme's own link blue on the
+  bar's near-black panel, 2.6:1, in a row that had no padding, no radius, and no cursor of its own. The
+  controller names a row `navbar-search-#{kind}`, and the stylesheet only styled `result` and `message`,
+  so the one group the reader reaches for first (a destination, before any record) was left with
+  whatever the *page* paints an anchor with: the panel does not inherit the bar's near-white, it sits
+  inside a light page's `<body>`, so a row kind nobody styled silently became the theme's blue. The
+  matched run in such a row was worse still — Bootstrap's own `mark`, a white box carrying the same
+  blue as its text, in a panel whose every other highlight is amber. Commands and results now share one
+  row treatment (block row, bar text, padding, radius, hover and keyboard-cursor tint), and the
+  highlight is keyed on `.navbar-search-result-title` rather than on a kind, so a run in a destination
+  title wears the same amber as a run in a record title. A kind added later has to be named in the row
+  selectors in the change that introduces it, and `docs/visual_design.md` and
+  `universe_maker_conventions.md` now say so.
 - **[fixed]** The top-bar search box's **See all results** link was drawn across the bottom of the
   search field, so the text being typed — and the caret with it — disappeared the moment results
   arrived. The link was absolutely positioned against the form and then moved with `bottom`, and the
@@ -32,6 +45,14 @@ Labels used below:
   only while something is shown, so a closed search box leaves no empty sliver of panel under the
   field, and an engine that is unreachable — which has no answer to open — leaves no empty footer
   under its message.
+- **[chore]** A new `test/system/search_test.rb` case measures **every** option in the list instead of
+  one named row: it composites the painted colors in the browser and holds the *worst* row — whichever
+  kind it is — to AA, holds the panel to a single highlight fill across kinds, and holds the keyboard
+  cursor to a visible change of surface. That is what makes the fix a guard rather than a patch: a kind
+  that loses its row treatment again fails here, and the failure names the row and the ratio
+  (`the navbar-search-command row "Go toCharactersUniverse one" is only 2.62:1 against the panel`)
+  with a screenshot that is the reported bug. The compositing math the color cases share is now one
+  constant instead of a copy per probe.
 - **[chore]** `test/system/search_test.rb` asserted nothing about where the panel's parts land, and
   four of its cases were intermittently failing: Stimulus resolves each controller through a dynamic
   `import()` and connects it on a later turn of the router, so a keystroke delivered in between is
@@ -46,6 +67,10 @@ Labels used below:
   a closed panel to zero height — without the conditional surface it measures 4px, an empty strip under
   the field on every page of the application — and the unavailable case now asserts there is no
   "See all results" link under a message that has no answer to open.
+- **[docs]** `visual_design.md` now says that both kinds of row in the panel wear the same row treatment
+  and why the highlight is keyed on the title rather than on a row kind, and `universe_maker_conventions.md`
+  states the rule behind it: every option row is painted by the panel and never inherits from the page,
+  so a new kind joins the row selectors in the change that introduces it.
 - **[docs]** `visual_design.md` describes the link as the panel's footer with the reason it is in
   flow, and `universe_maker_conventions.md` states the rule behind it: nothing inside the dropdown is
   positioned against the form, because anything that is resolves against a form no taller than the

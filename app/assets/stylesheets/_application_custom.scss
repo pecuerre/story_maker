@@ -298,7 +298,16 @@ $um-search-match: #ffc107;
   color: var(--um-search-muted);
 }
 
+// One row treatment for every kind of option. The controller names a row
+// `navbar-search-#{kind}` — a `command` in the "Go to" group, a `result` in the
+// "Results" group — so a kind missing from this list keeps whatever the *page*
+// paints an anchor with, not what the panel paints. That is the theme's link blue
+// on the bar's near-black panel: 2.7:1, dark on dark, and a row with no padding, no
+// radius, and no cursor of its own when the reader arrows onto it. A kind nobody
+// styled does not look like a slightly different row, it looks broken, so a new
+// kind joins this list in the change that introduces it.
 .navbar-search-result,
+.navbar-search-command,
 .navbar-search-message {
   display: block;
   padding: .375rem .5rem;
@@ -308,7 +317,9 @@ $um-search-match: #ffc107;
 }
 
 .navbar-search-result:hover,
-.navbar-search-result.active {
+.navbar-search-result.active,
+.navbar-search-command:hover,
+.navbar-search-command.active {
   color: var(--um-search-text);
   background: var(--um-search-hover);
 }
@@ -357,7 +368,13 @@ $um-search-match: #ffc107;
 // row's hover tint from `.navbar-search-result:hover` beneath it, so the mark
 // would change under the cursor and the one run the reader is tracking would be
 // the one run that moved.
-.navbar-search-result mark {
+//
+// The selector is the *title* rather than the row's kind, because the run is the
+// same thing wherever it lands: a destination title that matches wears the same
+// amber as a record title. Left to Bootstrap's own `mark`, a run in a "Go to" row
+// came out in a white box with the theme's link color in it — a second highlight
+// telling the reader something different about the same match.
+.navbar-search-result-title mark {
   padding: 0;
   color: $dark;
   background: $um-search-match;

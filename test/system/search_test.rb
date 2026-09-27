@@ -324,54 +324,66 @@ class SearchTest < ApplicationSystemTestCase
   # A run's legibility is a question about the colors a reader actually receives,
   # and a browser is the only thing that can answer it: a translucent fill is
   # resolved onto whatever is painted beneath it, so the color that decides the
-  # ratio is not the one written in the stylesheet. This composites the mark and
-  # the line it sits in the way they are really painted and returns every ratio
-  # the case below needs.
+  # ratio is not the one written in the stylesheet.
+  #
+  # The compositing itself is shared, because every probe below needs it and a
+  # second copy is a second thing to keep true. Each probe adds its own selectors
+  # and returns the ratios its case asserts on.
+  SEARCH_COLOR_PROBE_JS = <<~JS
+    var parse = function(css) {
+      var p = css.match(/[\\d.]+/g).map(Number);
+      return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+    };
+    var over = function(top, bottom) {
+      var a = top.a + bottom.a * (1 - top.a);
+      if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
+      return {
+        r: (top.r * top.a + bottom.r * bottom.a * (1 - top.a)) / a,
+        g: (top.g * top.a + bottom.g * bottom.a * (1 - top.a)) / a,
+        b: (top.b * top.a + bottom.b * bottom.a * (1 - top.a)) / a,
+        a: a
+      };
+    };
+    // The surface behind an element: its own fill at whatever share it is opaque,
+    // over the nearest ancestor that finally is.
+    var behind = function(el) {
+      var stack = [];
+      for (var node = el; node; node = node.parentElement) {
+        var fill = parse(getComputedStyle(node).backgroundColor);
+        if (fill.a === 0) continue;
+        stack.push(fill);
+        if (fill.a === 1) break;
+      }
+      var result = { r: 255, g: 255, b: 255, a: 1 };
+      for (var i = stack.length - 1; i >= 0; i--) result = over(stack[i], result);
+      return result;
+    };
+    var luminance = function(c) {
+      var f = function(v) {
+        v /= 255;
+        return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+    };
+    var ratio = function(one, other) {
+      var a = luminance(one), b = luminance(other);
+      return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100;
+    };
+    // What an element's own text measures against the surface behind it.
+    var contrast = function(el) {
+      var surface = behind(el);
+      return ratio(over(parse(getComputedStyle(el).color), surface), surface);
+    };
+    // What an element's own fill resolves to, which is not its background when
+    // that background is translucent.
+    var painted = function(el) {
+      return over(parse(getComputedStyle(el).backgroundColor), behind(el));
+    };
+  JS
+
   MATCH_CONTRAST_PROBE = <<~JS
     (function() {
-      var parse = function(css) {
-        var p = css.match(/[\\d.]+/g).map(Number);
-        return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
-      };
-      var over = function(top, bottom) {
-        var a = top.a + bottom.a * (1 - top.a);
-        if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
-        return {
-          r: (top.r * top.a + bottom.r * bottom.a * (1 - top.a)) / a,
-          g: (top.g * top.a + bottom.g * bottom.a * (1 - top.a)) / a,
-          b: (top.b * top.a + bottom.b * bottom.a * (1 - top.a)) / a,
-          a: a
-        };
-      };
-      // The surface behind an element: its own fill at whatever share it is
-      // opaque, over the nearest ancestor that finally is.
-      var behind = function(el) {
-        var stack = [];
-        for (var node = el; node; node = node.parentElement) {
-          var fill = parse(getComputedStyle(node).backgroundColor);
-          if (fill.a === 0) continue;
-          stack.push(fill);
-          if (fill.a === 1) break;
-        }
-        var result = { r: 255, g: 255, b: 255, a: 1 };
-        for (var i = stack.length - 1; i >= 0; i--) result = over(stack[i], result);
-        return result;
-      };
-      var luminance = function(c) {
-        var f = function(v) {
-          v /= 255;
-          return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-        };
-        return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
-      };
-      var ratio = function(one, other) {
-        var a = luminance(one), b = luminance(other);
-        return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100;
-      };
-      var contrast = function(el) {
-        var surface = behind(el);
-        return ratio(over(parse(getComputedStyle(el).color), surface), surface);
-      };
+      #{SEARCH_COLOR_PROBE_JS}
 
       var panel = "[data-search-target='results'] ";
       var mark = document.querySelector(panel + ".navbar-search-result-title mark");
@@ -416,6 +428,105 @@ class SearchTest < ApplicationSystemTestCase
     # brown was 2.4:1 against the panel, which is very nearly invisible.
     assert_operator contrast["separation"], :>=, 3.0,
       "the mark's fill is only #{contrast['separation']}:1 against the panel behind it"
+  end
+
+  # The whole list, as the reader receives it, and measured over *every* kind of
+  # option in it rather than one named row.
+  #
+  # The controller names a row `navbar-search-#{kind}` — a `command` in the "Go to"
+  # group, a `result` in the "Results" group — so a kind the stylesheet does not
+  # name keeps whatever the *page* paints an anchor with. That is the theme's link
+  # blue on the panel's near-black: 2.7:1, dark on dark, and a row with no padding,
+  # no radius, and no cursor of its own when the reader arrows onto it. A browser
+  # is the only thing that can measure what a reader is handed, so the case
+  # asserts the painted colors and the minimum over the list, and a new kind that
+  # nobody styled fails it rather than passing on a class name.
+  OPTION_PAINT_PROBE = <<~JS
+    (function() {
+      #{SEARCH_COLOR_PROBE_JS}
+
+      var options = Array.from(
+        document.querySelectorAll("[data-search-target='results'] [role='option']"));
+      var worst = null;
+      options.forEach(function(option) {
+        // The title, because that is the text the reader is looking at: a row's
+        // own inherited color can be perfectly legible while its content is not.
+        var text = option.querySelector(".navbar-search-result-title") || option;
+        var measured = {
+          label: (option.textContent || "").trim().slice(0, 40),
+          kind: option.className,
+          contrast: contrast(text)
+        };
+        if (!worst || measured.contrast < worst.contrast) worst = measured;
+      });
+
+      // One panel, one highlight. The same run in a destination title and in a
+      // record title is the same thing, and two fills for it tell the reader two
+      // different stories about what was matched — which is what a row kind left to
+      // Bootstrap's own `mark` did: a white box in a near-black panel, carrying
+      // the theme's link color as its text.
+      var marks = Array.from(document.querySelectorAll("[data-search-target='results'] mark"))
+        .map(painted);
+      var first = marks[0] || null;
+      var spread = marks.reduce(function(worstSoFar, color) {
+        if (!first) return 0;
+        return Math.max(worstSoFar, Math.abs(color.r - first.r),
+          Math.abs(color.g - first.g), Math.abs(color.b - first.b));
+      }, 0);
+
+      return { count: options.length, worst: worst, marks: marks.length, spread: spread };
+    })()
+  JS
+
+  # The row the arrow keys are on, and how far its own fill moves the surface
+  # behind it. A cursor the reader cannot see is a cursor they cannot use.
+  ACTIVE_ROW_PROBE = <<~JS
+    (function() {
+      #{SEARCH_COLOR_PROBE_JS}
+
+      var active = document.querySelector("[data-search-target='results'] [role='option'].active");
+      if (!active) return null;
+      return {
+        label: (active.textContent || "").trim().slice(0, 40),
+        fill: ratio(painted(active), painted(document.querySelector(".navbar-search-panel")))
+      };
+    })()
+  JS
+
+  test "every option in the list is painted by the panel, not by the page" do
+    # A query that matches a destination *and* a record title, so both kinds of row
+    # carry a highlighted run and the panel has two highlights to agree about.
+    Search.backend = SearchTestBackend.new(hits: [ character_hit(title: "Charlotte") ])
+    sign_in_via_form(users(:user_one))
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    search_box.fill_in with: "cha"
+    assert_selector "[role='group'][aria-label='Go to'] .navbar-search-command", text: "Characters"
+    assert_selector "[role='group'][aria-label='Results'] .navbar-search-result"
+
+    paint = page.evaluate_script(OPTION_PAINT_PROBE)
+    assert_equal 2, paint["count"], "the list was not one command and one result"
+
+    # The worst row in the list, whichever kind it is. A command left in the
+    # theme's own link color measures 2.7:1 here, where a row that takes the bar's
+    # text color measures 15.7:1 against the same panel.
+    assert_operator paint["worst"]["contrast"], :>=, 4.5,
+      "the #{paint['worst']['kind']} row #{paint['worst']['label'].inspect} is only " \
+      "#{paint['worst']['contrast']}:1 against the panel"
+    assert_equal 2, paint["marks"], "the two rows did not both carry a matched run"
+    assert_operator paint["spread"], :<=, 2,
+      "the matched runs in the panel are painted in fills up to #{paint['spread']} apart"
+
+    # Commands come first, so one keypress puts the cursor on one.
+    search_box.send_keys(:arrow_down)
+    active = page.evaluate_script(ACTIVE_ROW_PROBE)
+    assert_not_nil active, "no option took the keyboard cursor"
+    assert_match(/Characters/, active["label"])
+    # 10% white over the panel resolves to about 1.3:1, which is what a cursor on a
+    # near-black surface can be. A row the stylesheet does not name paints nothing
+    # at all, so the reader arrows onto a destination and nothing happens.
+    assert_operator active["fill"], :>=, 1.2,
+      "the active row's own fill is only #{active['fill']}:1 against the panel, so the cursor is invisible"
   end
 
   test "a guest can use the box on a public universe" do

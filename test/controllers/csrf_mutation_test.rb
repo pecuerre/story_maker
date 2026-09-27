@@ -195,6 +195,25 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the settings form is refused without a token and accepted with one" do
+    with_forgery_protection do
+      token = fetch_page_token(settings_path)
+
+      patch settings_url, params: { theme: "dark" }
+
+      assert_includes 406..422, response.status
+      # Nothing was written, so the next page still renders the default theme.
+      get settings_path
+      assert_equal "light", rendered_theme
+
+      patch settings_url, params: { theme: "dark" }, headers: { "X-CSRF-Token" => token }
+
+      assert_response :see_other
+      get settings_path
+      assert_equal "dark", rendered_theme
+    end
+  end
+
   private
     # Loads a page so the session holds a CSRF token, and returns the value the
     # page published for its own JavaScript.
@@ -204,5 +223,10 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
       token = csrf_token_from(response.body)
       assert token.present?, "a rendered page must publish a CSRF token for its fetch requests"
       token
+    end
+
+    # The theme the last response rendered onto the root element.
+    def rendered_theme
+      Nokogiri::HTML(response.body).at_css("html")["data-bs-theme"]
     end
 end

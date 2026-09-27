@@ -27,6 +27,7 @@ The current architecture and conventions are documented in:
 | [0010](0010-safe-taxonomy-editing-and-state-refresh.md) | Accepted | Build taxonomy UI safely and refresh server state after mutations |
 | [0011](0011-modal-json-mutation-contract.md) | Accepted | Submit the shared modal as JSON, explain rejections in the modal, and refresh from the server |
 | [0012](0012-client-side-verification-and-csrf.md) | Accepted | Verify client-side code with Bun tests, Biome, and a real browser CSRF check |
+| [0013](0013-platform-settings-and-browser-theme.md) | Accepted | Keep platform settings browser-owned, server-rendered, and out of the universe workspace |
 
 ## Format
 

@@ -59,6 +59,11 @@ Per-request state lives in **`Current`** (`ActiveSupport::CurrentAttributes`):
 `session`, `universe`, `story`, plus `delegate :user, to: :session`. It is reset between requests
 by the Rails executor — never cache objects from it across requests.
 
+The appearance preference is deliberately **not** part of `Current`: a theme belongs to the browser,
+not to the session, universe, or story a request carries. `AppTheme` reads it from the signed cookie
+`um_theme` and the layout renders it as `<html data-bs-theme>`; the `current_theme` helper memoizes it
+for the render. See [ADR 0013](adr/0013-platform-settings-and-browser-theme.md).
+
 Other global behavior: `allow_browser versions: :modern`,
 `stale_when_importmap_changes`, `rate_limit to: 10, within: 3.minutes` on
 `sessions#create` and `passwords#create`.
@@ -139,6 +144,10 @@ Other global behavior: `allow_browser versions: :modern`,
 - Universe memberships live at `/u/:universe_slug/members`; only universe admins can reach the
   membership index and mutations. The taxonomy workspace lives at `/u/:universe_slug/tags`; its
   `scope` and `taxonomy` query parameters select the Universe/Story scope and taxonomy editor.
+- **Platform settings are not universe-scoped**: `GET /settings` shows the page and
+  `PATCH /settings` stores a preference. It is the only page outside `/u/:universe_slug` that is not
+  authentication, so it skips `set_current_universe` and `authorize_universe_access` and allows
+  unauthenticated access. See [ADR 0013](adr/0013-platform-settings-and-browser-theme.md).
 
 ## Record details pages
 
@@ -182,7 +191,7 @@ uses.
 | Flow | Controllers | Behavior |
 |---|---|---|
 | JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 | Both | universes (also has `*.json.jbuilder`) | |
 | No mutation | tags, timeline, sessions, passwords | |
 
@@ -240,7 +249,11 @@ landing page (`/`, the universes index, which is also where a universe is create
 page. There is no universe or story dropdown, so changing universes happens on the landing page and
 changing stories happens on the universe page, which lists them. A scope link carries `.active` and
 `aria-current="page"` only on the page it points at, and the account menu is the navbar's only
-dropdown. Related record workspaces keep only the records together in URL-backed tabs:
+dropdown. The **Settings** entry sits beside that account menu in `navbar-actions` and is the one
+platform-level navigation item: it is rendered for every visitor, including a guest, and it is
+deliberately absent from the right utility sidebar's **Configuration** section, which configures a
+universe ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). Related record workspaces keep
+only the records together in URL-backed tabs:
 Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
 lives under the right sidebar's **Configuration → Tags**, with **Universe Tags** (Character,
 Relation, Location, Event, Item, and Ownership tags) and **Story Tags** (Section and Scene tags)

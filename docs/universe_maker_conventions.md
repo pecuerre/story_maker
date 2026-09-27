@@ -153,6 +153,10 @@
   are admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
   and `taxonomy=character|relation|location|event|item|ownership|section` query parameters;
   timeline is `get "timeline", to: "timeline#index"`; `root` → `universes#index`; health check `/up`.
+- Platform settings are `resource :settings, only: %i[show update]` at `/settings`, outside the
+  universe scope, because a display preference belongs to the browser rather than to a universe
+  ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). `SettingsController` skips
+  `set_current_universe` and `authorize_universe_access` and allows unauthenticated access.
 - `Universe#to_param` returns the slug; content models are addressed by numeric `id`.
 
 ### Views - Three Patterns
@@ -240,6 +244,20 @@ The three functional editing patterns are:
 
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
+
+**Settings** uses the plain full-page form shape with no record behind it: `app/views/settings/show.html.erb`
+posts a flat `theme` parameter to `PATCH /settings` with `params.expect(:theme)`, and the controller
+answers with a redirect (`see_other`) or a refusal. It carries `data: { turbo: false }` because the
+theme lives in an attribute on the root element and a Turbo Drive navigation does not update root
+attributes ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)).
+
+**Settings navigation** is its own small page shape. `settings_tabs` in `ApplicationHelper` declares
+the sections and `shared/_settings_navigation` renders them as a **vertical** Bootstrap tab strip:
+`nav nav-tabs flex-column`, the active class plus `aria-current="page"`, and no `data-bs-toggle`,
+because each destination is a real request like every other tab strip. Adding a section is one entry
+in `settings_tabs` plus its panel. The Appearance panel's **Theme** control is a radio group inside a
+`fieldset`/`legend`, and each option's `<label>` is the card, so the checked state is one adjacent
+sibling CSS rule and needs no script.
 
 **Record details pages** are a fourth *page* shape, not a fourth editing pattern: a details page has
 no editor, so it is built from the shared read-only partials `shared/_record_details`,
@@ -518,7 +536,13 @@ Left to right:
   Changing stories happens on the universe page, which lists the universe's stories with an **Open**
   action each; the stories index carries **New story**. There is no **Select** placeholder: with no
   current story there is simply no story link, because a story is never implied.
+- **Settings** — the platform settings page (`/settings`), rendered for every visitor including a
+  guest, because its preferences belong to the browser rather than to a universe. It is the one
+  platform-level entry, and it is deliberately not a **Configuration** link in the right utility
+  sidebar ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)).
 - **Account** — signed-in email and logout action, or **Log in** for guests.
+
+`.navbar-actions` is a flex row, so the settings entry and the account menu never stack.
 
 A scope link carries `.active` plus `aria-current="page"` only on the page it points at, never as a
 permanent "you are in this scope" state. The account menu is the navbar's only dropdown, so the top
@@ -569,6 +593,9 @@ follow it:
 - **Collaboration**, **Analytics**, and **AI** placeholder groups; no model or route exists for
   those entries yet.
 - On smaller screens, the **Tools** button opens the panel from the mobile workspace bar.
+
+Configuration is about **the universe**: Tags and Members only. Platform settings are the top bar's
+entry instead, because a theme is not universe state.
 
 ## Event Model (implemented)
 

@@ -7,6 +7,12 @@
   --um-primary-strong: #263da8;
   --um-sidebar-bg: #ffffff;
   --um-hover-bg: #f3f5f9;
+  // Surfaces that used to be a literal light-only color. They are tokens so the
+  // dark theme can re-tint them instead of inheriting a near-white.
+  --um-surface-raised: #fbfcfe;
+  --um-row-hover: #fafbfe;
+  --um-surface-veil: rgba(255, 255, 255, .72);
+  --um-tag-badge-border: rgba(31, 41, 55, .12);
   // Sidebar scopes: the universe context/Bible, the current story/workspace, and the
   // right utility sidebar (its context block, Configuration, and the future tool
   // groups) each get one hue. The story hue is a muted crimson, deliberately not the
@@ -18,6 +24,29 @@
   --um-scope-tools: #1f6f4a;
   --um-scope-tools-soft: #e6f4ec;
   --um-disabled-text: #98a2b3;
+}
+
+// The dark theme is the browser's own `data-bs-theme` choice on the root element,
+// which is why the page switches without a script. Bootstrap flips its own variables
+// for it; the `--um-*` tokens above are ours, so each one that carried a light-only
+// value is re-tinted here. Every scope keeps the hue it has in light mode and only
+// changes its value and background, so a block still reads as the same scope.
+[data-bs-theme="dark"] {
+  --um-primary-soft: rgba(52, 84, 209, .24);
+  --um-primary-strong: #aebcff;
+  --um-sidebar-bg: var(--bs-tertiary-bg);
+  --um-hover-bg: rgba(255, 255, 255, .06);
+  --um-surface-raised: rgba(255, 255, 255, .025);
+  --um-row-hover: rgba(255, 255, 255, .04);
+  --um-surface-veil: rgba(255, 255, 255, .03);
+  --um-tag-badge-border: rgba(255, 255, 255, .22);
+  --um-scope-universe: #9db1ff;
+  --um-scope-universe-soft: rgba(52, 84, 209, .22);
+  --um-scope-story: #eda3ab;
+  --um-scope-story-soft: rgba(140, 47, 57, .28);
+  --um-scope-tools: #84d3a8;
+  --um-scope-tools-soft: rgba(31, 111, 74, .26);
+  --um-disabled-text: #8a93a3;
 }
 
 html {
@@ -230,7 +259,7 @@ body {
 
 .sidebar-section:last-child {
   border-bottom: 0;
-  background: #fbfcfe;
+  background: var(--um-surface-raised);
 }
 
 .sidebar-section-title {
@@ -472,7 +501,7 @@ body {
   padding: .25rem;
   border: 1px solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
-  background: rgba(255, 255, 255, .72);
+  background: var(--um-surface-veil);
 }
 
 .tag-scope-tabs .nav-link {
@@ -515,7 +544,7 @@ body {
 .entity-row:hover,
 .entity-row:focus-within {
   z-index: 1;
-  background: #fafbfe;
+  background: var(--um-row-hover);
 }
 
 .entity-copy {
@@ -581,7 +610,7 @@ body {
 }
 
 .taxonomy-tag {
-  border: 1px solid rgba(31, 41, 55, .12);
+  border: 1px solid var(--um-tag-badge-border);
   font-weight: 600;
 }
 
@@ -609,7 +638,7 @@ body {
   padding: clamp(2rem, 6vw, 4rem) 1.25rem;
   border: 1px dashed var(--bs-border-color);
   border-radius: var(--bs-border-radius-lg);
-  background: rgba(255, 255, 255, .72);
+  background: var(--um-surface-veil);
   text-align: center;
 }
 
@@ -651,6 +680,163 @@ body {
   align-items: center;
   gap: .75rem;
   margin-top: 1.5rem;
+}
+
+// Settings: a vertical section navigation beside the panel it selects. The list is
+// a vertical tab strip, so the active section wears the same soft primary the
+// horizontal content tabs underline, and `aria-current="page"` carries the state
+// as well as the color. Below `md` it becomes a horizontal strip rather than a
+// narrow column, so a narrow window does not shrink the panel to nothing.
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .settings-layout {
+    grid-template-columns: 12rem minmax(0, 1fr);
+  }
+}
+
+.settings-navigation-list {
+  gap: .125rem;
+  padding: .375rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius-lg);
+  background: var(--bs-body-bg);
+}
+
+.settings-navigation .nav-link {
+  border: 0;
+  border-radius: var(--bs-border-radius);
+  color: var(--bs-body-secondary-color);
+  font-size: .875rem;
+  font-weight: 600;
+  text-align: start;
+}
+
+.settings-navigation .nav-link:hover {
+  background: var(--um-hover-bg);
+  color: var(--um-primary-strong);
+}
+
+.settings-navigation .nav-link.active {
+  background: var(--um-primary-soft);
+  color: var(--um-primary-strong);
+}
+
+.settings-navigation-link {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.settings-panel {
+  min-width: 0;
+}
+
+.settings-panel-title {
+  margin-bottom: .25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -.015em;
+}
+
+.settings-panel-description {
+  max-width: 46rem;
+  margin-bottom: 1.25rem;
+  color: var(--bs-body-secondary-color);
+}
+
+.settings-hint {
+  margin-bottom: 1rem;
+  color: var(--bs-body-secondary-color);
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+
+.settings-fieldset {
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+
+// Each theme is a labelled card rather than a bare radio, because the point of the
+// control is the two appearances it switches between. The swatch is the literal
+// page color of each theme, which is why it cannot be a variable: it previews a
+// theme the page is not currently using.
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: .75rem;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  margin: 0;
+}
+
+.theme-option .form-check-input {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.theme-option-label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: .625rem;
+  padding: .875rem 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-body-bg);
+  cursor: pointer;
+}
+
+.theme-option .form-check-input:checked + .theme-option-label {
+  border-color: var(--bs-primary);
+  background: var(--um-primary-soft);
+}
+
+.theme-option .form-check-input:focus-visible + .theme-option-label {
+  box-shadow: 0 0 0 .25rem rgba(52, 84, 209, .25);
+}
+
+.theme-option-copy {
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-option-name {
+  font-weight: 650;
+}
+
+.theme-option-description {
+  color: var(--bs-body-secondary-color);
+  font-size: .8125rem;
+}
+
+.theme-option-swatch {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .375rem;
+}
+
+.theme-option-swatch--light {
+  background: $body-bg;
+}
+
+// The dark theme's own page canvas, which is Bootstrap's `$gray-900` rather than
+// a token this stylesheet can read at render time: a swatch has to show the color
+// of a theme the page is not currently using.
+.theme-option-swatch--dark {
+  background: $gray-900;
 }
 
 // Details pages: one identity card followed by related-records sections. The

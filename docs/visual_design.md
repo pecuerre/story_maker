@@ -79,6 +79,48 @@ Rules:
 - Keep the custom `--um-*` variables for shell/layout values that are not Bootstrap component
   defaults.
 
+### Light and dark
+
+The page is rendered in one of two themes, **Light** (the default) and **Dark**, chosen per browser on
+the **Settings** page and applied by Bootstrap's own `data-bs-theme` attribute on the root element
+([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). The layout writes the attribute, so the
+first paint is already correct and no script is involved.
+
+Bootstrap flips its own variables; the `--um-*` tokens above are ours, so each one that carries a
+light-only value is re-tinted in the `[data-bs-theme="dark"]` block of
+[`app/assets/stylesheets/_application_custom.scss`](../app/assets/stylesheets/_application_custom.scss):
+
+| Token | Light | Dark | Used by |
+|---|---:|---:|---|
+| `--um-primary-soft` | `#edf0ff` | `rgba(52, 84, 209, .24)` | selected navigation, current-page fills |
+| `--um-primary-strong` | `#263da8` | `#aebcff` | selected navigation text |
+| `--um-sidebar-bg` | `#ffffff` | `--bs-tertiary-bg` | both sidebars |
+| `--um-hover-bg` | `#f3f5f9` | `rgba(255, 255, 255, .06)` | row and link hover |
+| `--um-surface-raised` | `#fbfcfe` | `rgba(255, 255, 255, .025)` | the last sidebar section |
+| `--um-row-hover` | `#fafbfe` | `rgba(255, 255, 255, .04)` | entity and taxonomy row hover |
+| `--um-surface-veil` | `rgba(255, 255, 255, .72)` | `rgba(255, 255, 255, .03)` | empty states, tag scope tabs |
+| `--um-tag-badge-border` | `rgba(31, 41, 55, .12)` | `rgba(255, 255, 255, .22)` | the tag badge's hairline |
+| `--um-scope-universe` | `#263da8` | `#9db1ff` | universe scope text |
+| `--um-scope-universe-soft` | `#edf0ff` | `rgba(52, 84, 209, .22)` | universe scope background |
+| `--um-scope-story` | `#8c2f39` | `#eda3ab` | story scope text |
+| `--um-scope-story-soft` | `#fbeaec` | `rgba(140, 47, 57, .28)` | story scope background |
+| `--um-scope-tools` | `#1f6f4a` | `#84d3a8` | tools scope text |
+| `--um-scope-tools-soft` | `#e6f4ec` | `rgba(31, 111, 74, .26)` | tools scope background |
+| `--um-disabled-text` | `#98a2b3` | `#8a93a3` | placeholder navigation |
+
+Rules for the dark theme:
+
+- **A light-only literal color is a bug.** Anything that needs a surface tint gets a `--um-*` token
+  with a dark value, not a literal `rgba(255, 255, 255, …)` or near-white hex.
+- A scope keeps its hue across themes. Only the value and the background change, so the universe is
+  still blue, the story still red, and the tools scope still green at a glance.
+- The navbar stays dark in both themes: it is the one dark surface that is part of the design, not a
+  theme choice.
+- Author-chosen data colors are left alone: tag badges and timeline nodes keep the colors stored on
+  the record, with the dark-text `rgba(0, 0, 0, .75)` node label that those backgrounds need.
+- A new component must be checked in both themes before it is finished; the browser suite is the
+  place to see it (`test/system/settings_theme_test.rb` proves the switch itself).
+
 ## Typography
 
 The default system sans-serif stack is intentional; no web-font dependency is required for the
@@ -185,8 +227,27 @@ workspace: **Universe Tags** is selected by default and contains Character, Rela
 Event, Item, and Ownership tag tabs; **Story Tags** contains separate story-scoped Section tags and
 Scene tags tabs. The same section holds **Members** for universe admins, where the read/write/admin
 access list is managed, and the entry itself is always rendered so **Tags** stays available to a
-guest or read-only member. New configuration tools should be added as top-level entries here,
-grouped by scope when needed.
+guest or read-only member. Configuration is about **the universe**: a new *universe* configuration
+tool belongs here, grouped by scope when needed, while a platform preference belongs in the top
+bar's **Settings** entry.
+
+### Settings
+
+**Settings** is a platform page, not universe content, so it is reached from the top bar next to the
+account menu and is rendered for every visitor including a guest. It has no workspace shell, which is
+why the page reads as one column with a lot of quiet space to the right of a single tab.
+
+The page is a **vertical** tab strip beside its panel: a 12rem navigation column at `md` and above,
+stacked above the panel below it, so a narrow window never squeezes the panel. Tabs are URL-backed
+links with the active class and `aria-current="page"` — no `data-bs-toggle`, no in-document panes. The
+active tab wears the same soft primary as the horizontal content tabs.
+
+**Appearance** is the first tab. Its only control is **Theme**: a radio group of two labelled cards,
+**Light** and **Dark**, each with a swatch of that theme's page color, and a **Save theme** button.
+The card is the option's `<label>`, so the chosen state is a border and background change on the
+label, a filled radio for the non-color signal, and the checked attribute for assistive technology.
+The page says plainly that the choice is remembered in this browser and that no universe admin can
+change it for someone else, because that is the whole scope of the setting.
 
 Counts use aligned `.sidebar-count` pills, and a list row's own count uses the identical
 `.record-count` pill. Current links use a soft primary background and
@@ -293,9 +354,10 @@ Use `shared/_content_tabs` for related record workspaces. The Character workspac
 and Relations; the Item workspace has Items and Ownerships. Locations, Events, and Sections each
 have one record tab. Use `shared/_tag_workspace_navigation` for Configuration → Tags: the outer
 Universe/Story selector is followed by the six universe taxonomy tabs or the two story taxonomy
-(Section/Scene) tabs. All tabs are URL-backed Bootstrap `nav-tabs`: use the active class and
-`aria-current="page"`, but do not add `data-bs-toggle="tab"` because each destination is a separate
-request.
+(Section/Scene) tabs. Use `shared/_settings_navigation` for the platform Settings page, whose tab
+strip is the same pattern turned vertical (`nav nav-tabs flex-column`). All tabs are URL-backed
+Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not add
+`data-bs-toggle="tab"` because each destination is a separate request.
 
 ### Record details pages
 
@@ -525,7 +587,9 @@ later dependents are added.
    render `record_details_link` on every row so the record's own page stays one click away. Keep the
    [list row shape](#list-rows): plain-text name on the left, Details then actions on the right.
 5. Add the record link to the Bible or Story workspace; use `shared/_content_tabs` for related
-   records and `shared/_tag_workspace_navigation` for taxonomy management. Put configuration
-   tools and the Members access manager in the right sidebar's **Configuration** section.
-6. Check keyboard focus, mobile width, empty state, and long text.
+   records and `shared/_tag_workspace_navigation` for taxonomy management. Put universe
+   configuration tools and the Members access manager in the right sidebar's **Configuration**
+   section, and a preference that belongs to the person rather than the universe in the top bar's
+   **Settings** page, behind `shared/_settings_navigation`.
+6. Check keyboard focus, mobile width, empty state, long text, and the page in **both** themes.
 7. Update the relevant docs and tests in the same change.

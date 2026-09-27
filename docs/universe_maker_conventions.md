@@ -546,6 +546,15 @@ that must not drift:
   composites the real painted colors in the browser and holds the run to WCAG AA, to at least the
   legibility of the panel's dimmest line, and to a fill distinguishable from the panel. A color here is
   an assertion someone has to measure, not a value a stylesheet review can approve.
+- **Every option row is painted by the panel, never inherited from the page.** `search_controller.js`
+  names a row `navbar-search-#{kind}` — `command` in the "Go to" group, `result` in the "Results" group
+  — so a kind missing from the row selectors keeps the theme's own anchor color: link blue on the bar's
+  near-black panel, 2.6:1, in a row with no padding, no radius, and no cursor of its own. A kind nobody
+  styled does not look like a slightly different row, it looks broken. A new kind joins the row
+  selectors in the change that introduces it, the highlight is keyed on
+  `.navbar-search-result-title` rather than on a kind so every marked run wears the same fill, and
+  `test/system/search_test.rb` holds the *worst* option in the list to AA, the panel to one highlight
+  fill, and the keyboard cursor to a visible change of surface.
 - **Nothing inside the dropdown is positioned against the form.** The results list and the "See all
   results" link share one absolutely positioned wrapper (`.navbar-search-panel`), and it is the only
   thing placed against the form. The form is no taller than the field, because the results are out of

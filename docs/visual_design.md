@@ -206,13 +206,21 @@ scrolled to 24rem, and it is painted above the actions to its right.
 The panel is one listbox holding two labelled groups — **Go to** for navigation destinations and
 **Results** for records — separated by a hairline, with an uppercase group heading and a kind badge
 (`Character`, `Scene element`, `Character tag`) on every row, the record's context underneath, and a
-one-line excerpt. The matched run in a title is `<mark>`ed, in the full-strength amber with the app's
-own dark on top of it. A highlight has to be *more* legible than the line it sits in, so the fill and
-the text are both opaque: a translucent amber over the panel's near-black resolves to a brown the run is
-harder to read on than the near-white beside it, and it would also pick up the row's hover tint from
-beneath it, moving the one run the reader is tracking. `test/system/search_test.rb` measures the
-resolved colors in a browser and holds the run to AA, to at least the legibility of the panel's dimmest
-line, and to a fill that is visibly distinguishable from the panel. A panel with nothing to show says so
+one-line excerpt. **Both kinds of row wear the same row treatment**, because the panel, not the page, is
+what paints them: the row is a block with the bar's near-white text, the same padding, the same radius,
+and the same hover and keyboard-cursor tint. The controller names a row `navbar-search-#{kind}`, so a
+kind the stylesheet does not name keeps whatever the *page* paints an anchor with — the theme's link
+blue on the bar's near-black, 2.6:1 and unreadable, in a row with no padding and no cursor. The
+matched run in a title is `<mark>`ed wherever the title is — a destination title that matches wears the
+same amber as a record title, in the full-strength amber with the app's own dark on top of it. A
+highlight has to be *more* legible than the line it sits in, so the fill and the text are both opaque: a
+translucent amber over the panel's near-black resolves to a brown the run is harder to read on than the
+near-white beside it, and it would also pick up the row's hover tint from beneath it, moving the one run
+the reader is tracking. Left to Bootstrap's own `mark`, the same run in a "Go to" row came out in a
+white box carrying the theme's link color — a second highlight saying something different about the same
+match. `test/system/search_test.rb` measures the resolved colors in a browser and holds **every** option
+in the list to AA — the worst row in the list, whichever kind it is — to one shared highlight fill, and
+to a keyboard cursor that is visible on it. A panel with nothing to show says so
 in muted text: "No matches for …" or "Search is not available." **See all results** appears only when
 there is an answer to open, and is the panel's **footer**: the dropdown and the link are one box with one
 surface, the list scrolls inside a 24rem cap, and the link sits in flow beneath the results, divided from

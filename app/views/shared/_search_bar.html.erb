@@ -29,7 +29,7 @@
       data-action="input->search#query keydown->search#navigate">
 
     <%= render "searches/scope_field", id: "navbar_search_scope", selected: search_selected_scope,
-      universe: Current.universe, story: Current.story %>
+      universe: Current.universe, story: Current.story, class: "navbar-search-scope" %>
 
     <%# The story boundary travels with the form so choosing "this story" from the
         dropdown is a request rather than a page load. It is latent: the scope

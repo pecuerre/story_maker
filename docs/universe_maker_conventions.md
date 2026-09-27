@@ -533,6 +533,11 @@ that must not drift:
   for a later scope choice without narrowing the default search.
 - **A scope is resolved, not trusted.** An unhonourable request widens to the boundary that exists
   and says so; the URL keeps what was asked for; the control shows what was searched.
+- **The scope dropdown states the surface it sits on.** `searches/_scope_field` is one partial for
+  both search surfaces, and the caller's optional `class` is what says which one this is: the top bar
+  passes `navbar-search-scope`, painted for the always-dark navbar, and the results page passes
+  nothing and gets the ordinary theme-aware form control. A bar-only treatment hard-coded into the
+  partial lands on a page that follows the theme, so keep it in the caller's class.
 - **Documents hold ids and their own path, never a universe's or story's name.** Displayed context
   is resolved per request (`Search::Catalog#describe`); a rename needs no reindex.
 - **A model that becomes searchable declares it once**, next to its fields:

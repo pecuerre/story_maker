@@ -46,6 +46,22 @@ class SectionTest < ActiveSupport::TestCase
     assert_includes section.errors[:parent], "must belong to the same story"
   end
 
+  test "rejects a story change while child sections exist" do
+    section = Section.create!(story: stories(:story_one), name: "Parent")
+    Section.create!(story: stories(:story_one), name: "Child", parent: section)
+
+    assert_not section.update(story: stories(:story_alt))
+    assert_includes section.errors[:story_id], "cannot be changed while child records exist"
+    assert_equal stories(:story_one).id, section.reload.story_id
+  end
+
+  test "allows a story change without dependents" do
+    section = Section.create!(story: stories(:story_one), name: "Mover")
+
+    assert section.update(story: stories(:story_alt))
+    assert_equal stories(:story_alt).id, section.reload.story_id
+  end
+
   test "rejects a section tag from another story" do
     section = Section.new(
       story: @story,

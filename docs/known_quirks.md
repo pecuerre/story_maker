@@ -82,15 +82,6 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     `edit` routes for modal-edited content, the session/password actions, and the `new` routes
     without templates are unchanged and still need either an action or a route restriction.
 
-21. **Medium — changing an owning scope does not migrate dependent graphs.** The hierarchy validator
-    checks the current record's parent but not descendants or relationship endpoints
-    (`app/models/concerns/hierarchical.rb:40-69`). A model probe moved a parent location to another
-    universe while its child remained in the old universe. The same pattern applies to character
-    relations/ownerships, section trees, and story-scoped tags. Web controllers do not currently
-    permit scope IDs, so this is primarily a model/import/console/association-API hazard, but it
-    violates the graph-wide scope rules in ADR 0001 and the cache tests currently move only
-    unassociated records.
-
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
     maintenance.** The controller-facing `PositionedResourceOrder` service now transactionally
     handles create, move, reparent, and destroy for current positioned controllers, and the

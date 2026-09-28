@@ -76,6 +76,11 @@ tree; some findings (notably the existing
   way a fixed known quirk leaves `docs/known_quirks.md`. The backlog holds pending work only: do not
   leave "completed" prose, an archive heading, or a status marker behind, and do not renumber the
   remaining items.
+- Before starting work on a [`docs/backlog.md`](docs/backlog.md) item, check
+  [`docs/known_quirks.md`](docs/known_quirks.md) for a related open quirk — same model, table,
+  controller, route, or code path — and ask the owner whether to fix it **NOW** (in the same change,
+  with the item's tests and changelog entry) or **LATER** (leave it open). Do not silently bundle
+  unrelated fixes into the item, and do not ignore a related quirk once it has been noticed.
 - Do not fabricate history, alter author identities, backdate commits, or create cosmetic releases.
   Genuine teammate contributions should retain their own identities. Never commit credentials,
   tokens, DSNs, Rails keys, or real `.env` files. A value-free `.env.example` is documentation,

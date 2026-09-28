@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -42,6 +42,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "characters_character_tags", id: false, force: :cascade do |t|
     t.integer "character_id", null: false
     t.integer "character_tag_id", null: false
+    t.index ["character_id", "character_tag_id"], name: "index_characters_character_tags_unique", unique: true
   end
 
   create_table "event_tags", force: :cascade do |t|
@@ -87,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "events_event_tags", id: false, force: :cascade do |t|
     t.integer "event_id", null: false
     t.integer "event_tag_id", null: false
+    t.index ["event_id", "event_tag_id"], name: "index_events_event_tags_unique", unique: true
   end
 
   create_table "item_tags", force: :cascade do |t|
@@ -120,6 +122,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "items_item_tags", id: false, force: :cascade do |t|
     t.integer "item_id", null: false
     t.integer "item_tag_id", null: false
+    t.index ["item_id", "item_tag_id"], name: "index_items_item_tags_unique", unique: true
   end
 
   create_table "location_tags", force: :cascade do |t|
@@ -153,6 +156,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "locations_location_tags", id: false, force: :cascade do |t|
     t.integer "location_id", null: false
     t.integer "location_tag_id", null: false
+    t.index ["location_id", "location_tag_id"], name: "index_locations_location_tags_unique", unique: true
   end
 
   create_table "ownership_tags", force: :cascade do |t|
@@ -189,6 +193,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "ownerships_ownership_tags", id: false, force: :cascade do |t|
     t.integer "ownership_id", null: false
     t.integer "ownership_tag_id", null: false
+    t.index ["ownership_id", "ownership_tag_id"], name: "index_ownerships_ownership_tags_unique", unique: true
   end
 
   create_table "relation_tags", force: :cascade do |t|
@@ -227,6 +232,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "relations_relation_tags", id: false, force: :cascade do |t|
     t.integer "relation_id", null: false
     t.integer "relation_tag_id", null: false
+    t.index ["relation_id", "relation_tag_id"], name: "index_relations_relation_tags_unique", unique: true
   end
 
   create_table "scene_characters", force: :cascade do |t|
@@ -355,6 +361,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   create_table "sections_section_tags", id: false, force: :cascade do |t|
     t.integer "section_id", null: false
     t.integer "section_tag_id", null: false
+    t.index ["section_id", "section_tag_id"], name: "index_sections_section_tags_unique", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -414,6 +421,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   add_foreign_key "character_tags", "universes"
   add_foreign_key "characters", "characters", column: "parent_id"
   add_foreign_key "characters", "universes"
+  add_foreign_key "characters_character_tags", "character_tags"
+  add_foreign_key "characters_character_tags", "characters"
   add_foreign_key "event_tags", "event_tags", column: "parent_id"
   add_foreign_key "event_tags", "universes"
   add_foreign_key "events", "events", column: "after_event_id"
@@ -421,24 +430,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   add_foreign_key "events", "events", column: "parent_id"
   add_foreign_key "events", "events", column: "simultaneous_event_id"
   add_foreign_key "events", "universes"
+  add_foreign_key "events_event_tags", "event_tags"
+  add_foreign_key "events_event_tags", "events"
   add_foreign_key "item_tags", "item_tags", column: "parent_id"
   add_foreign_key "item_tags", "universes"
   add_foreign_key "items", "items", column: "parent_id"
   add_foreign_key "items", "universes"
+  add_foreign_key "items_item_tags", "item_tags"
+  add_foreign_key "items_item_tags", "items"
   add_foreign_key "location_tags", "location_tags", column: "parent_id"
   add_foreign_key "location_tags", "universes"
   add_foreign_key "locations", "locations", column: "parent_id"
   add_foreign_key "locations", "universes"
+  add_foreign_key "locations_location_tags", "location_tags"
+  add_foreign_key "locations_location_tags", "locations"
   add_foreign_key "ownership_tags", "ownership_tags", column: "parent_id"
   add_foreign_key "ownership_tags", "universes"
   add_foreign_key "ownerships", "characters"
   add_foreign_key "ownerships", "items"
   add_foreign_key "ownerships", "universes"
+  add_foreign_key "ownerships_ownership_tags", "ownership_tags"
+  add_foreign_key "ownerships_ownership_tags", "ownerships"
   add_foreign_key "relation_tags", "relation_tags", column: "parent_id"
   add_foreign_key "relation_tags", "universes"
   add_foreign_key "relations", "characters", column: "character1_id"
   add_foreign_key "relations", "characters", column: "character2_id"
   add_foreign_key "relations", "universes"
+  add_foreign_key "relations_relation_tags", "relation_tags"
+  add_foreign_key "relations_relation_tags", "relations"
   add_foreign_key "scene_characters", "characters"
   add_foreign_key "scene_characters", "scenes"
   add_foreign_key "scene_element_speakers", "characters"
@@ -459,6 +478,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120300) do
   add_foreign_key "section_tags", "stories"
   add_foreign_key "sections", "sections", column: "parent_id"
   add_foreign_key "sections", "stories"
+  add_foreign_key "sections_section_tags", "section_tags"
+  add_foreign_key "sections_section_tags", "sections"
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "universes"
   add_foreign_key "universe_memberships", "universes"

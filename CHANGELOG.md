@@ -21,6 +21,13 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[fixed]** A delegated admin could **demote or remove their own membership** and be left
+  staring at a bodyless `403`: the membership page rendered change and remove controls on every
+  row, including the caller's own, and the post-mutation redirect re-ran the admin-only
+  authorization they had just lost. `MembershipsController` now refuses a self-mutation with a
+  redirect back to the landing page and an alert, and the membership view renders a "You" label
+  instead of change/remove controls on the caller's own row. The owner was already protected by a
+  hardcoded row; request tests cover self-demotion, self-removal, and the hidden own-row controls.
 - **[fixed]** Text typed into the top-bar search field **went dark on the bar's own dark
   background the moment the field was focused** — i.e. for as long as someone was actually typing
   into it. `.navbar-search-input` painted the bar's near-white text color, but Bootstrap's own
@@ -54,6 +61,32 @@ Labels used below:
   only while something is shown, so a closed search box leaves no empty sliver of panel under the
   field, and an engine that is unreachable — which has no answer to open — leaves no empty footer
   under its message.
+
+- **[security]** Changing a record's **owning scope no longer strands its dependents** in the old
+  universe or story. A model probe could move a parent Location to another universe while its child
+  stayed behind, violating the graph-wide scope rules in ADR 0001; `Hierarchical` now rejects a
+  `universe_id`/`story_id` change while child records exist, and `HasManyTags` rejects one while
+  join rows still link the record, so a move that would orphan a subtree or a tag assignment is
+  refused with a field error. Relation and Ownership endpoints were already covered by their
+  same-universe validators, and web controllers never permitted scope ids, so this closes the
+  model/import/console/association-API half. Unassociated records can still be moved — the
+  menu-count cache tests rely on exactly that.
+- **[security]** The seven **legacy tag join tables** (`characters_character_tags`,
+  `events_event_tags`, `items_item_tags`, `locations_location_tags`, `ownerships_ownership_tags`,
+  `relations_relation_tags`, `sections_section_tags`) now carry the **real foreign keys and a
+  unique-pair index** the Scene-era join tables already had, so a duplicate or orphan join row is
+  rejected by the database itself instead of only by the scoped association reads. One migration
+  adds both constraints to each table and `db/schema.rb` is regenerated; the scoped HABTM
+  declarations and the development-data loader are unchanged, and both development universes
+  still load.
+
+- **[chore]** CI now proves the migrations run from an empty database. A new `migrations-from-zero`
+  job drops, creates, and migrates the test database from scratch, asserts every migration is up,
+  and fails if the checked-in `db/schema.rb` differs from what the migrations produce — so a
+  migration that was edited in place, or a schema dump that was not regenerated, is caught instead
+  of silently loading the old shape. The local `bin/ci` runner gained the same from-zero step. The
+  production-boot half of the finding (a clean image boot with the four production databases and a
+  dummy master key) is deliberately not done here.
 - **[chore]** A new `test/system/search_test.rb` case measures **every** option in the list instead of
   one named row: it composites the painted colors in the browser and holds the *worst* row — whichever
   kind it is — to AA, holds the panel to a single highlight fill across kinds, and holds the keyboard
@@ -76,6 +109,10 @@ Labels used below:
   a closed panel to zero height — without the conditional surface it measures 4px, an empty strip under
   the field on every page of the application — and the unavailable case now asserts there is no
   "See all results" link under a message that has no answer to open.
+- **[docs]** `AGENTS.md` now requires checking [`docs/known_quirks.md`](docs/known_quirks.md) for a
+  related open quirk before starting any [`docs/backlog.md`](docs/backlog.md) item and asking the
+  owner whether to fix it in the same change, so a backlog task cannot silently inherit a known
+  hole in the same model, table, controller, route, or code path.
 - **[docs]** `visual_design.md` now says that both kinds of row in the panel wear the same row treatment
   and why the highlight is keyed on the title rather than on a row kind, and `universe_maker_conventions.md`
   states the rule behind it: every option row is painted by the panel and never inherits from the page,

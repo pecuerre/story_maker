@@ -136,6 +136,31 @@ jobs:
           UNIVERSE=dark bin/rails db:demo:check
           UNIVERSE=lotr bin/rails db:demo:check
 
+  migrations-from-zero:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Migrate an empty test database from zero
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:drop db:create db:migrate
+
+      - name: Verify every migration is up
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:migrate:status
+
+      - name: Verify the checked-in schema matches the migrations
+        run: git diff --exit-code db/schema.rb
+
   system-test:
     runs-on: ubuntu-latest
 

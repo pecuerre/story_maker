@@ -61,6 +61,34 @@ class HasManyTagsTest < ActiveSupport::TestCase
     end
   end
 
+  test "the database rejects a legacy join row that references a missing record" do
+    character_id = characters(:character_one).id
+
+    assert_raises(ActiveRecord::InvalidForeignKey) do
+      ActiveRecord::Base.connection.execute(<<~SQL.squish)
+        INSERT INTO characters_character_tags (character_id, character_tag_id)
+        VALUES (#{character_id}, 2147483647)
+      SQL
+    end
+
+    section_id = sections(:section_one).id
+
+    assert_raises(ActiveRecord::InvalidForeignKey) do
+      ActiveRecord::Base.connection.execute(<<~SQL.squish)
+        INSERT INTO sections_section_tags (section_id, section_tag_id)
+        VALUES (#{section_id}, 2147483647)
+      SQL
+    end
+  end
+
+  test "the database rejects a duplicate legacy join row" do
+    insert_join_row(:characters_character_tags, characters(:character_one), character_tags(:character_tag_two))
+
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      insert_join_row(:characters_character_tags, characters(:character_one), character_tags(:character_tag_two))
+    end
+  end
+
   test "section tag associations use story scope on both sides" do
     section = sections(:section_one)
     foreign_tag = section_tags(:section_tag_three)
@@ -128,6 +156,40 @@ class HasManyTagsTest < ActiveSupport::TestCase
     tag.update!(character_ids: [ characters(:character_one).id, characters(:character_two).id ])
 
     assert_equal characters(:character_one, :character_two).map(&:name), tag.tagged_records.map(&:name)
+  end
+
+  test "rejects a universe change while tag assignments exist" do
+    character = Character.create!(universe: universes(:universe_one), name: "Tagged mover",
+      character_tag_ids: [ character_tags(:character_tag_one).id ])
+
+    assert_not character.update(universe: universes(:universe_two))
+    assert_includes character.errors[:universe_id], "cannot be changed while tagged records exist"
+    assert_equal universes(:universe_one).id, character.reload.universe_id
+  end
+
+  test "rejects a universe change on the tag side while records carry the tag" do
+    tag = CharacterTag.create!(universe: universes(:universe_one), name: "Mover tag")
+    tag.update!(character_ids: [ characters(:character_one).id ])
+
+    assert_not tag.update(universe: universes(:universe_two))
+    assert_includes tag.errors[:universe_id], "cannot be changed while tagged records exist"
+    assert_equal universes(:universe_one).id, tag.reload.universe_id
+  end
+
+  test "rejects a story change on a section tag while sections carry the tag" do
+    tag = SectionTag.create!(story: stories(:story_one), name: "Mover section tag")
+    tag.update!(section_ids: [ sections(:section_one).id ])
+
+    assert_not tag.update(story: stories(:story_alt))
+    assert_includes tag.errors[:story_id], "cannot be changed while tagged records exist"
+    assert_equal stories(:story_one).id, tag.reload.story_id
+  end
+
+  test "allows a universe change without tag assignments" do
+    character = Character.create!(universe: universes(:universe_one), name: "Untagged mover")
+
+    assert character.update(universe: universes(:universe_two))
+    assert_equal universes(:universe_two).id, character.reload.universe_id
   end
 
   private

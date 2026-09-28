@@ -197,9 +197,11 @@ class ScenesController < ApplicationController
 
   # Scene Tag definitions and their paths are story-scoped. One ordered tag
   # query serves the form and Details page; the Scenes list preloads each
-  # Scene's tag association separately.
+  # Scene's tag association separately. The list filter keeps every tag, but
+  # the assignment editor offers assignable tags only.
   def set_scene_tag_data
     @scene_tags = @story.scene_tags.order(:position, :id).to_a
+    @taggable_scene_tags = @scene_tags.select(&:taggable)
     @scene_tag_paths = SceneTagPaths.build(@scene_tags)
   end
 

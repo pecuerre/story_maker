@@ -186,9 +186,17 @@ The three functional editing patterns are:
 
 **1. Taxonomy tree** (all `_tag` indexes, plus `sections` and `locations`):
 - Use the `shared/taxonomy_tree` partial (wraps `shared/_taxonomy_node`) with the
-  `new_url`/`create_url`/`edit_url`/`update_url`/`delete_url` lambdas + `model_param` +
+  `create_url`/`update_url` lambdas + `model_param` +
   `modal_fields` locals, plus `details_url`/`details_count`/`details_count_label` for the row's
-  **Details** link and count pill.
+  **Details** link and count pill. A row's only URL surface is `data-update-url` (update, move,
+  delete, inline rename) and the Details link; the editor is a DOM-built modal, so there are no
+  `new`/`edit` routes or per-row edit/delete URL attributes.
+- The tag editor's field descriptors come from `ModalFields#taxonomy_tag_fields` (shared by every
+  taxonomy) and `ModalFields#content_tag_taxonomy_fields` (Character/Location/Item/Event tags, which
+  add `show_in_menu`). Every tag editor carries a `taggable` checkbox: a tag with `taggable: false` is
+  a grouping for its children and is excluded from element tag editors, while staying in the tree and
+  on records that already carry it. A content tag with `show_in_menu: true` is pinned to its workspace
+  tab strip and links to the tag's own details page.
 - A row carries five things: the **name** (the only inline-rename target, sized to its own text so
   clicking the empty space beside it does nothing), the record's **tags**, its **count** pill when
   the taxonomy has one ("(4 characters)", "(3 scenes)"), the **Details** link on the right, and one
@@ -458,8 +466,10 @@ added to an existing page instead of a new page being invented. See
 
 ### Helpers
 - `app/helpers/modal_fields.rb` — field descriptors consumed by the JS controllers:
-  - `*_tag_taxonomy_fields(nodes)` — editors for a tag model (name/description/colors/parent),
-    e.g. `event_tag_taxonomy_fields`, `section_tag_taxonomy_fields`, `scene_tag_taxonomy_fields`.
+  - `taxonomy_tag_fields(nodes, extra)` — the shared tag-editor fields (name/description/colors/parent/
+    `taggable`); `content_tag_taxonomy_fields(nodes)` adds `show_in_menu` for the four content tags.
+    The per-type `*_tag_taxonomy_fields(nodes)` helpers delegate to these, e.g.
+    `event_tag_taxonomy_fields`, `section_tag_taxonomy_fields`, `scene_tag_taxonomy_fields`.
   - `*_taxonomy_fields(tags)` — content editors with tag selectors, e.g.
     `location_taxonomy_fields`, `section_taxonomy_fields`.
   - `*_fields_json(record)` — serializes a record for modal pre-filling:

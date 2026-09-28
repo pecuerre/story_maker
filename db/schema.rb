@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
@@ -19,7 +19,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.boolean "show_in_menu", default: false, null: false
     t.string "slug", null: false
+    t.boolean "taggable", default: true, null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_character_tags_on_parent_id"
@@ -53,7 +55,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.boolean "show_in_menu", default: false, null: false
     t.string "slug", null: false
+    t.boolean "taggable", default: true, null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_event_tags_on_parent_id"
@@ -99,7 +103,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.boolean "show_in_menu", default: false, null: false
     t.string "slug", null: false
+    t.boolean "taggable", default: true, null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_item_tags_on_parent_id"
@@ -133,7 +139,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.string "name"
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
+    t.boolean "show_in_menu", default: false, null: false
     t.string "slug", null: false
+    t.boolean "taggable", default: true, null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_location_tags_on_parent_id"
@@ -168,6 +176,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.integer "parent_id"
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
+    t.boolean "taggable", default: true, null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_ownership_tags_on_parent_id"
@@ -207,6 +216,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
     t.boolean "symmetric", default: true, null: false
+    t.boolean "taggable", default: true, null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_relation_tags_on_parent_id"
@@ -299,6 +309,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
     t.integer "story_id", null: false
+    t.boolean "taggable", default: true, null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_scene_tags_on_parent_id"
     t.index ["story_id"], name: "index_scene_tags_on_story_id"
@@ -340,6 +351,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_120000) do
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
     t.integer "story_id", null: false
+    t.boolean "taggable", default: true, null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_section_tags_on_parent_id"
     t.index ["story_id"], name: "index_section_tags_on_story_id"

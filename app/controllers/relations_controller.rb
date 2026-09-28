@@ -52,6 +52,6 @@ class RelationsController < ApplicationController
 
   def load_form_options
     @characters = Current.universe.characters.order(:name, :id)
-    @relation_tags = Current.universe.relation_tags.order(:name, :id)
+    @relation_tags = Current.universe.relation_tags.where(taggable: true).order(:name, :id)
   end
 end

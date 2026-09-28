@@ -11,13 +11,23 @@
   fgcolor: "#000000" # black
 
 - universe: Universe.lotr
+  slug: "conflict"
+  name: "Conflict"
+  bgcolor: "#FF5733" # "red orange"
+  fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
+
+- universe: Universe.lotr
   slug: "battle"
   name: "Battle"
+  parent: EventTag.conflict
   bgcolor: "#FF5733" # "red orange"
   fgcolor: "#000000" # black
 
 - universe: Universe.lotr
   slug: "quest"
   name: "Quest"
+  parent: EventTag.conflict
   bgcolor: "#6699cc" # "blue gray"
   fgcolor: "#000000" # black

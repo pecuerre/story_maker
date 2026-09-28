@@ -8,10 +8,6 @@ class SceneTagsController < ApplicationController
   before_action :set_scene_tag, only: %i[ show update destroy ]
   before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
-  def new
-    @scene_tag = @story.scene_tags.new(parent_id: params[:parent_id])
-  end
-
   def index
     @scene_tags = @story.scene_tags
       .includes(:children)
@@ -77,7 +73,7 @@ class SceneTagsController < ApplicationController
     end
 
     def scene_tag_params
-      params.expect(scene_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
+      params.expect(scene_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
     end
 
     def update_scene_tag
@@ -94,6 +90,7 @@ class SceneTagsController < ApplicationController
         fgcolor: @scene_tag.fgcolor,
         parent_id: @scene_tag.parent_id,
         position: @scene_tag.position,
+        taggable: @scene_tag.taggable,
         url: universe_story_scene_tag_path(story_id: @story, id: @scene_tag)
       }
     end

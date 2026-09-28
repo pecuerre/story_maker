@@ -13,11 +13,6 @@ class OwnershipTagsController < ApplicationController
     @tagged_counts = TaggedRecordCounts.for(Current.universe.ownership_tags)
   end
 
-  def new
-    ownership_tags = Current.universe.ownership_tags
-    @ownership_tag = ownership_tags.new(parent_id: params[:parent_id])
-  end
-
   # GET /ownership_tags/:id — the tag's own details page: the records that carry it.
   # The taxonomy tree links here with that count.
   def show
@@ -59,7 +54,7 @@ class OwnershipTagsController < ApplicationController
   end
 
   def ownership_tag_params
-    params.expect(ownership_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
+    params.expect(ownership_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
   end
 
   def update_ownership_tag
@@ -75,6 +70,7 @@ class OwnershipTagsController < ApplicationController
       fgcolor: @ownership_tag.fgcolor,
       parent_id: @ownership_tag.parent_id,
       position: @ownership_tag.position,
+      taggable: @ownership_tag.taggable,
       url: universe_ownership_tag_path(id: @ownership_tag)
     }
   end

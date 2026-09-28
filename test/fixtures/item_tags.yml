@@ -4,13 +4,17 @@ item_tag_one:
   universe: universe_one
   name: Item tag one
   slug: "item-tag-one"
+  taggable: true
+  show_in_menu: true
 
 item_tag_two:
   universe: universe_one
   name: Item tag two
   slug: "item-tag-two"
+  taggable: false
 
 item_tag_three:
   universe: universe_two
   name: Item tag three
   slug: "item-tag-three"
+  taggable: true

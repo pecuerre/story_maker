@@ -44,6 +44,23 @@ entry point for the project.
 **Fix:** the root README now provides a concise project overview, quick start, test commands, and
 links to the detailed documentation in `docs/`, which remains the source of truth.
 
+### Former quirk #54: taxonomy field-builder duplication (fixed)
+
+**Then:** `app/helpers/modal_fields.rb` held eight near-identical `*_tag_taxonomy_fields` helpers and
+`app/helpers/tags_helper.rb` held eight near-identical workspace-config blocks, so adding one field or
+URL to every taxonomy meant editing eight copies that could drift from each other and from the routes.
+The DataFactor report flagged the duplication as a maintenance drift risk rather than a correctness
+finding.
+
+**Fix:** the shared editor fields are now built by `ModalFields#taxonomy_tag_fields` (every taxonomy)
+and `ModalFields#content_tag_taxonomy_fields` (the four content tags, which add `show_in_menu`), with
+`extra_fields` for the relation tag's `symmetric`/`inverse`. The workspace config is declarative
+`TagsHelper` metadata (`UNIVERSE_TAG_METADATA`/`STORY_TAG_METADATA`) with the mechanical keys —
+`model_param`, the field-descriptor helper, the tag URLs, the count label — derived from the type name.
+Adding a field to every taxonomy is now a change in one helper. The serialized field/JSON contract and
+the three UI patterns are unchanged, and the extraction is what let `taggable` and `show_in_menu` land
+in one place per helper.
+
 ## Resolved conventions
 
 ### Positional path-helper arguments in universe routes (resolved as an enforced convention)
@@ -557,6 +574,19 @@ count's return after a cancelled rename, and the read-only Scene row.
 
 Tag-color contrast validation remains open and is recorded in
 [`known_quirks.md`](known_quirks.md).
+
+### Former quirk #45: read-only empty taxonomy pages instructed users to add or drag records (fixed)
+
+**Then:** the shared `shared/_taxonomy_tree` partial had a read-only empty-state fallback, but the
+Locations and taxonomy views passed explicit writer copy containing "Add"/"drag" instructions, so
+guests and read-only members saw mutation instructions even though no mutation controls were rendered.
+The Sections workspace had already been fixed by passing both `empty_description` and the new
+`read_only_empty_description` local; the remaining callers still needed it.
+
+**Fix:** every remaining `shared/taxonomy_tree` caller now passes `read_only_empty_description`, so an
+empty taxonomy shows mutation copy only to writers and a read-only "No … are defined yet." message to
+guests and read-only members. A system regression signs in as a read-only member of a private universe
+with no tags and asserts the read-only copy appears while the writer copy does not.
 
 ## Resolved client-side verification and CSRF findings (2026-09-27)
 

@@ -35,4 +35,19 @@ class ItemTagsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal [ "Renamed", "Updated" ], @item_tag.reload.values_at(:name, :description)
   end
+
+  test "creates a grouping tag that is not taggable and pins it to the menu" do
+    assert_difference("ItemTag.count") do
+      post universe_item_tags_url(universe_slug: @universe.slug),
+        params: { item_tag: { name: "Artifact", taggable: false, show_in_menu: true } },
+        as: :json
+    end
+
+    assert_response :created
+    created = ItemTag.find_by(name: "Artifact")
+    assert_equal false, response.parsed_body["taggable"]
+    assert_equal true, response.parsed_body["show_in_menu"]
+    assert_not created.taggable
+    assert created.show_in_menu
+  end
 end

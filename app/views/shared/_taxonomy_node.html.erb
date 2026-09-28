@@ -21,8 +21,6 @@
   <% if confirm_message %>data-confirm-message="<%= confirm_message.call(node) %>"<% end %>
   <% if editable %>
     data-update-url="<%= update_url.call(node) %>"
-    data-edit-url="<%= edit_url.call(node) %>"
-    data-create-url="<%= create_url %>"
   <% end %>
   data-name="<%= node.name %>"
   data-description="<%= node.description %>"
@@ -95,13 +93,11 @@
               <i class="bi bi-three-dots" aria-hidden="true"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
-              <% if new_url %>
-                <li>
-                  <button type="button" class="dropdown-item" data-action="taxonomy-tree#add" data-taxonomy-action="add-child">
-                    <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Add child
-                  </button>
-                </li>
-              <% end %>
+              <li>
+                <button type="button" class="dropdown-item" data-action="taxonomy-tree#add" data-taxonomy-action="add-child">
+                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Add child
+                </button>
+              </li>
               <li>
                 <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="before">
                   <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert before
@@ -153,11 +149,7 @@
         <%= render "shared/taxonomy_node",
           node: child,
           children_method: children_method,
-          new_url: new_url,
-          edit_url: edit_url,
           update_url: update_url,
-          delete_url: delete_url,
-          create_url: create_url,
           model_param: model_param,
           modal_fields: modal_fields,
           taxonomy_field: taxonomy_field,

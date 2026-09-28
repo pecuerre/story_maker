@@ -80,6 +80,11 @@ admin grants; it is not a replacement for the public-universe baseline.
 `bgcolor` (default `#d3d3d3`), `fgcolor` (default `#000000`), `universe_id` FK —
 **except `section_tags` and `scene_tags`, which have `story_id` instead of `universe_id`**.
 `relation_tags` additionally has `symmetric` (bool, default `true`) and `inverse` (string).
+Every tag has `taggable` (bool, default `true`): a tag with `taggable: false` is a grouping for its
+children — it stays in the taxonomy tree and on records that already carry it, but it is not offered
+in an element's tag editor. `character_tags`, `location_tags`, `item_tags`, and `event_tags`
+additionally have `show_in_menu` (bool, default `false`): a tag with `show_in_menu: true` appears as a
+tab on its workspace page and links to that tag's own details page.
 
 Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `scene_tags`,
 `event_tags`, `relation_tags`, `ownership_tags`.

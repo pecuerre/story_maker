@@ -13,7 +13,8 @@ class ItemsController < ApplicationController
     @items = @items.order(:name, :id)
 
     @item_tags = Current.universe.item_tags
-    @item_tags = @item_tags.order(:name)
+    @item_tags = @item_tags.where(taggable: true).order(:name)
+    @menu_item_tags = Current.universe.item_tags.where(show_in_menu: true).order(:position, :id)
   end
 
   # GET /items/:id — the record's own read-only details page. It identifies the

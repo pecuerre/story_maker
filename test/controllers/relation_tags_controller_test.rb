@@ -50,4 +50,17 @@ class RelationTagsControllerTest < ActionDispatch::IntegrationTest
     assert relation_tag.reload.symmetric
     assert_equal "", relation_tag.inverse
   end
+
+  test "creates a grouping tag that is not taggable" do
+    assert_difference("RelationTag.count") do
+      post universe_relation_tags_url(universe_slug: @universe.slug),
+        params: { relation_tag: { name: "Ally", symmetric: true, taggable: false } },
+        as: :json
+    end
+
+    assert_response :created
+    created = RelationTag.find_by(name: "Ally")
+    assert_equal false, response.parsed_body["taggable"]
+    assert_not created.taggable
+  end
 end

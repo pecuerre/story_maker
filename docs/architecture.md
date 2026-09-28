@@ -184,7 +184,9 @@ without inventing a new page pattern:
   missing value renders explicit copy instead of a blank row;
 - `shared/_detail_section` — one related-records section, with a `count` badge, and its empty state
   whenever the count is zero or no block was given;
-- `shared/_tagged_record_list` — the records carrying a tag, each linking to its own page.
+- `shared/_tagged_record_list` — the records carrying a tag, each linking to its own page and showing
+  every tag it carries (not just the one filtering the list), batch-loaded through `RecordTags` so the
+  badge row costs one grouped query rather than one per record.
 
 A content page currently identifies the record and then states honestly that the related information
 will appear later. A Section additionally lists the scenes grouped under it, each still showing its

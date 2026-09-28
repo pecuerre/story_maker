@@ -13,11 +13,6 @@ class RelationTagsController < ApplicationController
     @tagged_counts = TaggedRecordCounts.for(Current.universe.relation_tags)
   end
 
-  def new
-    relation_tags = Current.universe.relation_tags
-    @relation_tag = relation_tags.new(parent_id: params[:parent_id])
-  end
-
   # GET /relation_tags/:id — the tag's own details page: the records that carry it.
   # The taxonomy tree links here with that count.
   def show
@@ -59,7 +54,7 @@ class RelationTagsController < ApplicationController
   end
 
   def relation_tag_params
-    params.expect(relation_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :symmetric, :inverse ])
+    params.expect(relation_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :symmetric, :inverse ])
   end
 
   def update_relation_tag
@@ -77,6 +72,7 @@ class RelationTagsController < ApplicationController
       position: @relation_tag.position,
       symmetric: @relation_tag.symmetric,
       inverse: @relation_tag.inverse,
+      taggable: @relation_tag.taggable,
       url: universe_relation_tag_path(id: @relation_tag)
     }
   end

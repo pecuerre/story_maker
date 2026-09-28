@@ -3,6 +3,8 @@
   slug: race
   bgcolor: "#b3b3b3" # light gray
   fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
 
 - universe: Universe.lotr
   name: Hobbit
@@ -37,6 +39,7 @@
   slug: allegiance
   bgcolor: "#cccccc" # medium gray
   fgcolor: "#000000" # black
+  taggable: false
 
 - universe: Universe.lotr
   name: Fellowship of the Ring

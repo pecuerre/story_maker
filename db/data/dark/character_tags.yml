@@ -3,6 +3,7 @@
   slug: family
   bgcolor: "#99cc99" # light green
   fgcolor: "#000000" # black
+  taggable: false
 
 - universe: Universe.dark
   name: Family Nielsen
@@ -37,6 +38,8 @@
   slug: faction
   bgcolor: "#cc99cc" # light purple
   fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
 
 - universe: Universe.dark
   name: Sic Mundus
@@ -57,6 +60,7 @@
   slug: job
   bgcolor: "#ffcc99" # light orange
   fgcolor: "#000000" # black
+  taggable: false
 
 - universe: Universe.dark
   name: Police

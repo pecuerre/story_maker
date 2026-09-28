@@ -13,11 +13,6 @@ class ItemTagsController < ApplicationController
     @tagged_counts = TaggedRecordCounts.for(Current.universe.item_tags)
   end
 
-  def new
-    item_tags = Current.universe.item_tags
-    @item_tag = item_tags.new(parent_id: params[:parent_id])
-  end
-
   # GET /item_tags/:id — the tag's own details page: the records that carry it.
   # The taxonomy tree links here with that count.
   def show
@@ -59,7 +54,7 @@ class ItemTagsController < ApplicationController
   end
 
   def item_tag_params
-    params.expect(item_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
+    params.expect(item_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_item_tag
@@ -76,6 +71,8 @@ class ItemTagsController < ApplicationController
       fgcolor: @item_tag.fgcolor,
       parent_id: @item_tag.parent_id,
       position: @item_tag.position,
+      taggable: @item_tag.taggable,
+      show_in_menu: @item_tag.show_in_menu,
       url: universe_item_tag_path(id: @item_tag)
     }
   end

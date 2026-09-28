@@ -24,4 +24,19 @@ class CharacterTagTest < ActiveSupport::TestCase
     assert_not root.valid?
     assert_includes root.errors[:parent], "cannot be a descendant"
   end
+
+  test "a new tag is taggable and not in the menu by default" do
+    character_tag = CharacterTag.new(universe: universes(:universe_one), name: "Default")
+
+    assert character_tag.taggable
+    assert_not character_tag.show_in_menu
+  end
+
+  test "a grouping tag can be marked not taggable and pinned to the menu" do
+    character_tag = CharacterTag.new(universe: universes(:universe_one), name: "Factions",
+      taggable: false, show_in_menu: true)
+
+    assert_not character_tag.taggable
+    assert character_tag.show_in_menu
+  end
 end

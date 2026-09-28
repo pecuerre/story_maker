@@ -7,11 +7,6 @@ class SectionTagsController < ApplicationController
   before_action :set_section_tag,
     only: %i[ show update destroy ]
 
-  # GET /section_tags/new
-  def new
-    @section_tag = @story.section_tags.new(parent_id: params[:parent_id])
-  end
-
   # GET /section_tags or /section_tags.json
   def index
     @section_tags = @story.section_tags
@@ -90,13 +85,14 @@ class SectionTagsController < ApplicationController
       fgcolor: @section_tag.fgcolor,
       parent_id: @section_tag.parent_id,
       position: @section_tag.position,
+      taggable: @section_tag.taggable,
       url: universe_story_section_tag_path(story_id: @story, id: @section_tag)
     }
   end
 
   # Only allow a list of trusted parameters through.
   def section_tag_params
-    params.expect(section_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
+    params.expect(section_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
   end
 
   def update_section_tag

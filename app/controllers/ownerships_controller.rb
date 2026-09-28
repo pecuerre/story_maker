@@ -53,6 +53,6 @@ class OwnershipsController < ApplicationController
   def load_form_options
     @items = Current.universe.items.order(:name, :id)
     @characters = Current.universe.characters.order(:name, :id)
-    @ownership_tags = Current.universe.ownership_tags.order(:name, :id)
+    @ownership_tags = Current.universe.ownership_tags.where(taggable: true).order(:name, :id)
   end
 end

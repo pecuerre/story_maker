@@ -101,4 +101,17 @@ class SectionTagsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_not_equal "Hijacked", @section_tag.reload.name
   end
+
+  test "creates a grouping tag that is not taggable" do
+    assert_difference("SectionTag.count") do
+      post section_tags_url_for,
+        params: { section_tag: { name: "Arc", taggable: false } },
+        as: :json
+    end
+
+    assert_response :created
+    created = SectionTag.find_by(name: "Arc")
+    assert_equal false, response.parsed_body["taggable"]
+    assert_not created.taggable
+  end
 end

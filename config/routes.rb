@@ -20,8 +20,8 @@ Rails.application.routes.draw do
 
     resources :stories, path: "s" do
       resources :sections
-      resources :section_tags
-      resources :scene_tags
+      resources :section_tags, only: %i[ index show create update destroy ]
+      resources :scene_tags, only: %i[ index show create update destroy ]
       resources :scenes do
         patch :move, on: :member
         # Collection action: the Section workspace submits the chosen scene and
@@ -43,20 +43,20 @@ Rails.application.routes.draw do
       end
     end
     get "tags", to: "tags#index", as: :tags
-    resources :item_tags
+    resources :item_tags, only: %i[ index show create update destroy ]
     resources :items
-    resources :location_tags
+    resources :location_tags, only: %i[ index show create update destroy ]
     resources :locations
-    resources :character_tags
+    resources :character_tags, only: %i[ index show create update destroy ]
     resources :characters
-    resources :relation_tags
+    resources :relation_tags, only: %i[ index show create update destroy ]
     # Relations and Ownerships are link records between two entities; they have a
     # read-only details page but no separate editor.
     resources :relations, only: %i[ index show create update destroy ]
-    resources :ownership_tags
+    resources :ownership_tags, only: %i[ index show create update destroy ]
     resources :ownerships, only: %i[ index show create update destroy ]
     resources :memberships, only: %i[ index new create update destroy ], path: "members"
-    resources :event_tags
+    resources :event_tags, only: %i[ index show create update destroy ]
     resources :events
     get "timeline", to: "timeline#index", as: :timeline
   end

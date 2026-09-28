@@ -3,6 +3,8 @@
   slug: "artifact"
   bgcolor: "#FFD700" # "gold"
   fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
 
 - universe: Universe.lotr
   name: "Ring"
@@ -16,6 +18,7 @@
   slug: "weapon"
   bgcolor: "#A52A2A" # "brown"
   fgcolor: "#000000" # black
+  taggable: false
 
 - universe: Universe.lotr
   name: "Sword"

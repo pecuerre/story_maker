@@ -226,12 +226,13 @@ class NavigationTest < ActionDispatch::IntegrationTest
       universe_characters_path(universe_slug: @universe.slug)
     assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
       universe_story_sections_path(universe_slug: @universe.slug, story_id: @story)
-    assert_select "nav.content-tabs a", 2
+    assert_select "nav.content-tabs a", 3
     assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
       universe_characters_path(universe_slug: @universe.slug)
     {
       characters: universe_characters_path(universe_slug: @universe.slug),
-      relations: universe_relations_path(universe_slug: @universe.slug)
+      relations: universe_relations_path(universe_slug: @universe.slug),
+      "Character tag one": universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one))
     }.each do |label, path|
       assert_select "nav.content-tabs a[href=?]", path, text: label.to_s.capitalize
     end

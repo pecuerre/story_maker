@@ -148,4 +148,17 @@ class SceneTagsControllerTest < ActionDispatch::IntegrationTest
     get universe_story_scene_tags_url(universe_slug: universe.slug, story_id: story)
     assert_response :not_found
   end
+
+  test "creates a grouping tag that is not taggable" do
+    assert_difference("SceneTag.count") do
+      post scene_tags_url_for,
+        params: { scene_tag: { name: "Act", taggable: false } },
+        as: :json
+    end
+
+    assert_response :created
+    created = SceneTag.find_by(name: "Act")
+    assert_equal false, response.parsed_body["taggable"]
+    assert_not created.taggable
+  end
 end

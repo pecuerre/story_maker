@@ -2,13 +2,17 @@ character_tag_one:
   universe: universe_one
   slug: "character-tag-one"
   name: Character tag one
+  taggable: true
+  show_in_menu: true
 
 character_tag_two:
   universe: universe_one
   slug: "character-tag-two"
   name: Character tag two
+  taggable: false
 
 character_tag_three:
   universe: universe_two
   slug: "character-tag-three"
   name: Character tag three
+  taggable: true

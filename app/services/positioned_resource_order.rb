@@ -64,7 +64,7 @@ class PositionedResourceOrder
     def destroy(resource, collection, scope_owner:, parent_id:, hierarchical: true)
       transaction_with_scope_lock(scope_owner) do
         resource.lock!
-        resource.destroy!
+        resource.soft_delete
         normalize(ordered_siblings(collection, parent_id, resource, hierarchical:))
       end
 

@@ -47,10 +47,10 @@ class StoriesController < ApplicationController
 
   # DELETE /u/:universe_slug/s/:id
   def destroy
-    @story.destroy!
+    @story.soft_delete
 
     respond_to do |format|
-      format.html { redirect_to universe_stories_path, notice: "Story was successfully destroyed.", status: :see_other }
+      format.html { redirect_to universe_stories_path, notice: "Story was successfully deleted.", status: :see_other }
     end
   end
 

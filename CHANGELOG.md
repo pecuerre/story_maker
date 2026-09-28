@@ -21,6 +21,17 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[added]** Every content table with a user-facing delete action now carries a nullable `deleted_at`,
+  and a delete marks that column instead of removing the row. The shared `SoftDeletable` concern
+  (`app/models/concerns/soft_deletable.rb`) adds a default scope that hides soft-deleted records from
+  every ordinary query, `soft_delete`/`restore` to mark and unmark a record, `deleted?`, and
+  `with_deleted`/`only_deleted` scopes to opt back in. A model declares the associations that cascade
+  with `soft_deletes :assoc` — a Universe soft-deletes its stories, characters, tags, and memberships,
+  a Story its sections and scenes, a Scene its elements and presence links, a Character its relations,
+  ownerships, and presence links — so deleting a parent soft-deletes its whole subtree. A Section's
+  scenes are ungrouped and an Event's temporal references are cleared, matching the hard-delete
+  contract. The unique indexes that would otherwise block re-creating a record with the same key are
+  partial (`WHERE deleted_at IS NULL`), and the matching model validations carry the same condition.
 - **[added]** The settings page now has a **Go back** action in its header. The page remembers where
   it was opened from (a same-host referer), so finishing a theme change returns the reader to the page
   they were on rather than to the landing page. The destination survives a theme save and is
@@ -38,6 +49,11 @@ Labels used below:
   `show_in_menu: true` appears as a tab on its workspace page and links to that tag's own details page,
   the same view the taxonomy tree's Details link opens. A tag's details page now also shows **every
   tag badge next to each listed record**, not just the tag being viewed.
+- **[changed]** Controllers now call `soft_delete` instead of `destroy!`, and `PositionedResourceOrder`
+  soft-deletes through the same transaction that normalizes the remaining siblings' positions, so a
+  soft-deleted record leaves the same contiguous gap a hard delete would. A soft delete cascades to
+  the model's declared associations, so deleting a Universe soft-deletes its whole subtree; the
+  sidebar menu counts and the search index are updated on soft delete and restore.
 - **[changed]** The top bar's **Settings** entry moved into the **account dropdown**, which is now the
   bar's only action and is rendered for every visitor: a signed-in reader sees their email,
   **Settings**, and **Log out**, while a guest sees **Log in** and **Settings** instead of a standalone
@@ -122,6 +138,9 @@ Labels used below:
   declarations and the development-data loader are unchanged, and both development universes
   still load.
 
+- **[chore]** New `test/models/soft_deletable_test.rb` covers the default scope, the cascade, restore,
+  the Section/Event nullify behavior, and the partial-unique-index re-creation rule; the scene-elements
+  destroy test now asserts the element is soft-deleted and its speaker links are kept for restore.
 - **[chore]** Fixtures set `taggable`/`show_in_menu` on the tag fixtures, both development universes
   exercise grouping and menu tags (Dark: Family/Faction/Job, Indoor/Outdoor, Treasure, Social; LOTR:
   Race/Allegiance, Geographic, Artifact/Weapon, Conflict), and new model/controller/request/system

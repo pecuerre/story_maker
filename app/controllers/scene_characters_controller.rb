@@ -73,7 +73,7 @@ class SceneCharactersController < ApplicationController
   # Removing a presence link never removes a Character and never changes who
   # speaks in an Element: those are separate links with separate consequences.
   def destroy
-    @scene_character.destroy!
+    @scene_character.soft_delete
 
     respond_to do |format|
       format.json { head :no_content }

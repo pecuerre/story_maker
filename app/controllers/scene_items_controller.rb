@@ -75,7 +75,7 @@ class SceneItemsController < ApplicationController
   # Universe and is shared by every Story, so this only withdraws one Scene's
   # claim on it.
   def destroy
-    @scene_item.destroy!
+    @scene_item.soft_delete
 
     respond_to do |format|
       format.json { head :no_content }

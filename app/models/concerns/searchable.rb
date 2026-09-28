@@ -158,7 +158,13 @@ module Searchable
     # because the job must write the state that was committed and the record may
     # be edited again — or deleted — before the job runs.
     def queue_search_index_update
-      Search::IndexRecordJob.perform_later(search_document)
+      # A soft delete is an update that hides the record, so the document must
+      # leave the index rather than be re-indexed. A restore re-indexes it.
+      if respond_to?(:deleted?) && deleted?
+        queue_search_removal
+      else
+        Search::IndexRecordJob.perform_later(search_document)
+      end
     end
 
     def queue_search_removal

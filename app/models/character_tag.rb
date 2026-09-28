@@ -3,8 +3,11 @@ class CharacterTag < ApplicationRecord
   include HasColor
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include Searchable
   searchable kind: "tag", title: :name, body: :description, route: "character_tag", taxonomy: "Character"
+
+  soft_deletes :children
 
   belongs_to :universe
   has_many_tagd :character, scope: :universe_id

@@ -3,8 +3,11 @@ class EventTag < ApplicationRecord
   include HasColor
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include Searchable
   searchable kind: "tag", title: :name, body: :description, route: "event_tag", taxonomy: "Event"
+
+  soft_deletes :children
 
   belongs_to :universe
   has_many_tagd :event, scope: :universe_id

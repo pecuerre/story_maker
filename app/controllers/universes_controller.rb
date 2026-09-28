@@ -60,10 +60,10 @@ class UniversesController < ApplicationController
 
   # DELETE /universes/1 or /universes/1.json
   def destroy
-    @universe.destroy!
+    @universe.soft_delete
 
     respond_to do |format|
-      format.html { redirect_to universes_path, notice: "Universe was successfully destroyed.", status: :see_other }
+      format.html { redirect_to universes_path, notice: "Universe was successfully deleted.", status: :see_other }
       format.json { head :no_content }
     end
   end

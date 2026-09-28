@@ -2,11 +2,14 @@ class Location < ApplicationRecord
   include Hierarchical
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
   searchable kind: "location", title: :name, body: :description, route: "location"
 
   invalidates_menu_counts_for :universe
+
+  soft_deletes :children, :scene_locations
 
   belongs_to :universe
   has_many_tags :location_tag, scope: :universe_id

@@ -3,8 +3,11 @@ class Story < ApplicationRecord
   SCENE_MENU_COUNT_SCOPE = :story_scenes
 
   include HasSlug
+  include SoftDeletable
   include Searchable
   searchable kind: "story", title: :name, body: :description, route: "story"
+
+  soft_deletes :sections, :section_tags, :scene_tags, :scenes
 
   after_destroy_commit :expire_story_menu_counts
   belongs_to :universe
@@ -14,7 +17,7 @@ class Story < ApplicationRecord
   has_many :scenes, dependent: :destroy
 
   validates :name, presence: true, uniqueness: { scope: :universe_id }
-  validates :slug, uniqueness: { scope: :universe_id }
+  validates :slug, uniqueness: { scope: :universe_id, conditions: -> { where(deleted_at: nil) } }
 
   def menu_section_count
     MenuCountCache.fetch(MenuCountCache.key(SECTION_MENU_COUNT_SCOPE, id), connection: self.class.connection) do

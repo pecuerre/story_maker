@@ -36,7 +36,7 @@ class OwnershipsController < ApplicationController
   end
 
   def destroy
-    @ownership.destroy!
+    @ownership.soft_delete
     redirect_to universe_ownerships_path(), notice: "Ownership deleted."
   end
 

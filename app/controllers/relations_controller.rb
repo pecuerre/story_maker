@@ -36,7 +36,7 @@ class RelationsController < ApplicationController
   end
 
   def destroy
-    @relation.destroy!
+    @relation.soft_delete
     redirect_to universe_relations_path(), notice: "Relation deleted."
   end
 

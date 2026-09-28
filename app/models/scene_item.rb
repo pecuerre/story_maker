@@ -9,10 +9,13 @@
 # because the role is part of the decision, and it carries no second derived
 # source the way a Character's Dialogue speaker link does.
 class SceneItem < ApplicationRecord
+  include SoftDeletable
+
   belongs_to :scene
   belongs_to :item
 
-  validates :item_id, uniqueness: { scope: :scene_id, message: "is already in this scene" }
+  validates :item_id, uniqueness: { scope: :scene_id, conditions: -> { where(deleted_at: nil) },
+    message: "is already in this scene" }
   validate :item_belongs_to_the_scene_universe
 
   def universe

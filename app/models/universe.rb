@@ -2,6 +2,7 @@ class Universe < ApplicationRecord
   MENU_COUNT_ASSOCIATIONS = %i[characters relations locations events items ownerships].freeze
 
   include HasSlug
+  include SoftDeletable
   include Searchable
   # A universe's slug appears in the stored path of every document under it, so a
   # rename makes all of them dead links. This record's own document is re-indexed
@@ -9,6 +10,9 @@ class Universe < ApplicationRecord
   # than a silent pile of 404s waiting for someone to remember a full reindex.
   searchable kind: "universe", title: :name, scope: :self
   after_update_commit :queue_search_reindex, if: :saved_change_to_slug?
+
+  soft_deletes :stories, :characters, :locations, :items, :events, :relations, :ownerships,
+    :character_tags, :location_tags, :item_tags, :event_tags, :relation_tags, :ownership_tags, :memberships
 
   after_destroy_commit :expire_menu_counts
   validates :name, presence: true

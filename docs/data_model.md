@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_09_27_120100`) and the models in `app/models/`.
+`2026_09_28_150000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -50,6 +50,33 @@ Access is a property of the universe, not of an individual story or content reco
 application-level policy methods used by both the `Ability` class and the request authorization
 concern. The membership table only records explicit private-universe access and optional public
 admin grants; it is not a replacement for the public-universe baseline.
+
+## Soft delete
+
+Every content table that has a user-facing delete action carries a nullable `deleted_at` datetime
+(`NULL` means live). A delete marks the column instead of removing the row, so the data survives and
+can be restored. The `SoftDeletable` concern (`app/models/concerns/soft_deletable.rb`) provides:
+
+- a `default_scope` that hides soft-deleted records from every ordinary query;
+- `soft_delete` / `restore` to mark and unmark a record;
+- `deleted?`, and the `with_deleted` / `only_deleted` scopes to opt back in;
+- a `soft_deletes :assoc` declaration for the associations that cascade.
+
+Soft-deleting a parent cascades to its declared children (a Universe soft-deletes its stories,
+characters, tags, and memberships; a Story soft-deletes its sections and scenes; a Scene
+soft-deletes its elements and presence links; a Character soft-deletes its relations, ownerships,
+and presence links). Two associations are cleared rather than cascaded, matching the existing
+hard-delete contract: a Section's scenes are ungrouped (`section_id` nullified) and an Event's
+temporal references are cleared, so a referrer that was only identifiable through the deleted Event
+keeps its row and reports the missing identifier the next time it is saved.
+
+The unique indexes that would otherwise block re-creating a record with the same key after a soft
+delete are partial (`WHERE deleted_at IS NULL`): `universes.slug`, `stories.[universe_id, slug]`,
+`universe_memberships.[universe_id, user_id]`, and the `scene_characters` / `scene_items` /
+`scene_locations` presence-link pairs. The matching model validations carry the same condition.
+
+`users` and `sessions` are not soft-deletable: they have no user-facing delete action, and a
+session is an authentication token rather than content.
 
 ## Tables
 

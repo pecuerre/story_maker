@@ -58,7 +58,7 @@ class MembershipsController < ApplicationController
       return
     end
 
-    @membership.destroy!
+    @membership.soft_delete
     redirect_to universe_memberships_path(universe_slug: Current.universe.slug),
       notice: "Member access was successfully removed.", status: :see_other
   end

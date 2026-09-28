@@ -216,6 +216,18 @@ its actions is a mutation and therefore authenticated. `scene_characters`, `scen
 JSON-only, the same hybrid the Scene record flow is. No action accepts an ambiguous
 HTML-and-JSON mutation merely to make a form work.
 
+### Soft delete
+
+A delete is a soft delete: the controller calls `soft_delete` instead of `destroy!`, the record's
+`deleted_at` is set, and the row is kept. The `SoftDeletable` default scope hides soft-deleted
+records from every ordinary query, so a deleted record is invisible to lists, details pages,
+associations, and search exactly as if it were gone — but it can be restored. The positioned
+controllers (`destroy_with_sibling_position`) soft-delete through `PositionedResourceOrder`, which
+normalizes the remaining siblings' positions in the same transaction, so a soft-deleted record
+leaves the same contiguous gap a hard delete would. A soft delete cascades to the model's declared
+associations (`soft_deletes`), so deleting a Universe soft-deletes its whole subtree; see
+[data_model.md](data_model.md#soft-delete) for the full cascade and nullify rules.
+
 ## UI structure
 
 The UI is a Bootstrap 5.3 application shell with a fixed dark **navbar**, responsive left and

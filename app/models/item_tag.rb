@@ -3,8 +3,11 @@ class ItemTag < ApplicationRecord
   include HasColor
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include Searchable
   searchable kind: "tag", title: :name, body: :description, route: "item_tag", taxonomy: "Item"
+
+  soft_deletes :children
 
   belongs_to :universe
   has_many_tagd :item, scope: :universe_id

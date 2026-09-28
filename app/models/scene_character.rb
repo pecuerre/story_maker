@@ -9,10 +9,13 @@
 # without creating a second stored row, so the same Character can be both an
 # explicit participant and a speaker.
 class SceneCharacter < ApplicationRecord
+  include SoftDeletable
+
   belongs_to :scene
   belongs_to :character
 
-  validates :character_id, uniqueness: { scope: :scene_id, message: "is already in this scene" }
+  validates :character_id, uniqueness: { scope: :scene_id, conditions: -> { where(deleted_at: nil) },
+    message: "is already in this scene" }
   validate :character_belongs_to_the_scene_universe
 
   def universe

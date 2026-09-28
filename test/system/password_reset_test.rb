@@ -60,4 +60,32 @@ class PasswordResetTest < ApplicationSystemTestCase
     assert_current_path new_password_path
     assert_selector ".flash-stack", text: "Password reset link is invalid or has expired"
   end
+
+  test "a success toast floats and auto-dismisses after a few seconds" do
+    visit new_password_path
+    fill_in "Email address", with: @user.email_address
+    click_button "Email reset instructions"
+
+    assert_current_path new_session_path
+    stack = find(".flash-stack")
+    assert_equal "fixed", stack.evaluate_script("getComputedStyle(this).position")
+
+    # Success toasts disappear on their own after ~4 seconds.
+    assert_no_selector ".flash-stack .flash-toast", wait: 6
+  end
+
+  test "an error toast floats and auto-dismisses after a longer delay" do
+    visit new_password_path
+    visit edit_password_path(@user.password_reset_token)
+
+    fill_in "New password", with: "a-brand-new-password"
+    fill_in "Confirm new password", with: "something-else"
+    click_button "Save password"
+
+    stack = find(".flash-stack")
+    assert_equal "fixed", stack.evaluate_script("getComputedStyle(this).position")
+
+    # Error toasts disappear on their own after ~10 seconds.
+    assert_no_selector ".flash-stack .flash-toast", wait: 12
+  end
 end

@@ -176,11 +176,6 @@ it has a useful destination and clear empty/loading/error states.
    to recover the story, i shuold be ask "there are related elements associated with this, do you want
    to recover them too?"
 
-22. **change the dismissive alerts in the site for ... bubbles that appears and dissapear**
-  - they shuold no be in the page itself, they should be floating
-  - they successful ones should disappear after a few seconds
-  - the error ones ... i am not decided yet
-
 23. **visual improvements**
   - move the seetings button on the top bar, under the account button
   - if no user is logged in, instead of a button [log in] show the same combo [account] and the login button inside

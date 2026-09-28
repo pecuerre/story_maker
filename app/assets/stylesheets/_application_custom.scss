@@ -886,7 +886,24 @@ $um-search-match: #ffc107;
 }
 
 .flash-stack {
-  margin-bottom: 1.25rem;
+  position: fixed;
+  top: calc(var(--um-navbar-height) + 1rem);
+  right: 1rem;
+  z-index: 1080;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  width: min(24rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.flash-stack > * {
+  pointer-events: auto;
+}
+
+.flash-stack .flash-toast {
+  margin-bottom: 0;
+  box-shadow: 0 .25rem 1rem rgba(31, 41, 55, .12);
 }
 
 .content-surface,

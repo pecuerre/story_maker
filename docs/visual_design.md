@@ -155,7 +155,7 @@ heading uppercase.
 2. a responsive left workspace navigation;
 3. one flexible main content region with a `page-shell` wrapper;
 4. a responsive right utility navigation;
-5. a skip link and one shared flash region.
+5. a skip link and one shared floating toast region for flash messages.
 
 The navbar is intentionally small: three links, one search box, and the account menu.
 

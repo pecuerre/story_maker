@@ -21,6 +21,10 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[added]** The settings page now has a **Go back** action in its header. The page remembers where
+  it was opened from (a same-host referer), so finishing a theme change returns the reader to the page
+  they were on rather than to the landing page. The destination survives a theme save and is
+  refreshed on each visit, and an external site cannot choose it.
 - **[added]** Every tag details page now has an **"Include records from child tags" toggle**
   (enabled by default). When on, the "X with this tag" list also shows records carrying any
   descendant tag, so a parent tag like "Factions" can list characters tagged with its children
@@ -34,6 +38,10 @@ Labels used below:
   `show_in_menu: true` appears as a tab on its workspace page and links to that tag's own details page,
   the same view the taxonomy tree's Details link opens. A tag's details page now also shows **every
   tag badge next to each listed record**, not just the tag being viewed.
+- **[changed]** The top bar's **Settings** entry moved into the **account dropdown**, which is now the
+  bar's only action and is rendered for every visitor: a signed-in reader sees their email,
+  **Settings**, and **Log out**, while a guest sees **Log in** and **Settings** instead of a standalone
+  login button.
 - **[changed]** The taxonomy editor's field descriptors are now built by shared `ModalFields` helpers
   (`taxonomy_tag_fields` for every taxonomy, `content_tag_taxonomy_fields` for the four content tags)
   instead of eight hand-maintained copies, and the tag workspace config is declarative `TagsHelper`
@@ -44,6 +52,10 @@ Labels used below:
   can be closed manually. The flash partial renders once in the layout outside the page flow, and
   a new `flash_toast_controller.js` Stimulus controller manages the dismiss timers. The page-level
   mutation-status live region (for non-modal failures like row deletes) is unchanged.
+- **[fixed]** Signing in from any page now returns the reader to **that page** instead of the
+  landing page. The sign-in page remembers where it was opened from (a same-host referer), the same
+  way a protected action already remembered the page that refused access; an external site cannot
+  choose the destination.
 - **[fixed]** Read-only empty taxonomy pages no longer instruct guests and read-only members to
   "Add" or drag records. Every remaining `shared/taxonomy_tree` caller now passes
   `read_only_empty_description`, so an empty taxonomy shows mutation copy only to writers (quirk 45).

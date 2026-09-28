@@ -4,7 +4,15 @@
 <%= render "shared/page_header",
   title: "Settings",
   eyebrow: "This browser",
-  description: "These preferences belong to this browser, not to a universe, so they are available on every page and to a guest." %>
+  description: "These preferences belong to this browser, not to a universe, so they are available on every page and to a guest." do %>
+  <%# The page remembers where it was opened from, so finishing here returns the
+      reader to the page they were on rather than to the landing page. %>
+  <%= link_to after_settings_url,
+    class: "btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" do %>
+    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+    Go back
+  <% end %>
+<% end %>
 
 <div class="settings-layout">
   <%= render "shared/settings_navigation", tabs: settings_tabs %>

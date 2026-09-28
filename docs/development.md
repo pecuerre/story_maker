@@ -69,8 +69,11 @@ Layout:
 - `RecordNotFound` renders **404** in tests (`show_exceptions = :rescuable`): use
   `assert_response :not_found` to assert cross-scope/unknown-id rejections.
 - Unauthenticated access: public universe content is intentionally readable without a session;
-  mutations redirect (302) to `/session/new`. Universe-scoped controllers allow unauthenticated
-  access only for read actions; the shared authorization callback enforces the universe policy.
+  mutations redirect (302) to `/session/new`. Signing in returns the reader to the page they were on,
+  whether they opened the sign-in page directly or were redirected from a protected action; only a
+  same-host referer is remembered, and an external site cannot choose the destination. Universe-scoped
+  controllers allow unauthenticated access only for read actions; the shared authorization callback
+  enforces the universe policy.
 - Universe authorization tests must cover both public and private universes. Create explicit
   `UniverseMembership` records for read/write/admin cases; do not rely on a public fixture to stand
   in for a private collaboration scenario. Private non-members—including guests—receive 404;
@@ -391,8 +394,8 @@ the records carrying it, a Section lists the scenes grouped under it). Placehold
 right utility sidebar stays flat gray with no hover emphasis, and a guest or read-only member sees
 the same pages with no mutation controls.
 
-Open **Settings** from the top bar (it is rendered for a guest too, and it is not a Configuration
-link in the right sidebar) and check: the page has no workspace shell, its vertical navigation shows
+Open **Settings** from the top bar's account menu (it is rendered for a guest too, and it is not a
+Configuration link in the right sidebar) and check: the page has no workspace shell, its vertical navigation shows
 **Appearance** as the only section, and the **Theme** control offers exactly **Light** and **Dark** as
 labelled cards with the current one selected. Choosing **Dark** and pressing **Save theme** repaints
 the page immediately with no flash of the light palette, the choice is still selected when you come

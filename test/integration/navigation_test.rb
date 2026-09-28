@@ -241,15 +241,37 @@ class NavigationTest < ActionDispatch::IntegrationTest
   test "settings is a top bar entry on every page, not a Configuration link" do
     # A theme belongs to the browser rather than to a universe, so the entry
     # follows the reader out of the workspace, and the Configuration section
-    # stays about universe configuration.
+    # stays about universe configuration. It lives inside the account menu,
+    # which is the top bar's only action.
     [ universes_url, universe_url(@universe), universe_story_url(universe_slug: @universe.slug, id: @story) ].each do |path|
       get path
 
       assert_response :success
-      assert_select "nav.navbar .navbar-actions a[href=?]", settings_path, text: /Settings/
-      assert_select "nav.navbar .navbar-actions a[href=?][aria-current=page]", settings_path, count: 0
+      assert_select "nav.navbar .navbar-actions .dropdown a[href=?]", settings_path, text: /Settings/
+      assert_select "nav.navbar .navbar-actions .dropdown a[href=?][aria-current=page]", settings_path, count: 0
       assert_select "aside.right-sidebar a[href=?]", settings_path, count: 0
       assert_select "aside.workspace-sidebar a[href=?]", settings_path, count: 0
     end
+  end
+
+  test "the account menu is the top bar's only action and holds settings" do
+    sign_out
+    get universes_url
+
+    assert_select "nav .dropdown", 1
+    assert_select "nav .dropdown button", text: "Account"
+    assert_select "nav .dropdown a[href=?]", settings_path, text: /Settings/
+    assert_select "nav .dropdown a[href=?]", new_session_path, text: "Log in"
+    assert_select "nav .dropdown button", text: "Log out", count: 0
+  end
+
+  test "a signed-in account menu holds settings and logout but no login" do
+    get universes_url
+
+    assert_select "nav .dropdown", 1
+    assert_select "nav .dropdown .navbar-account-label", text: users(:user_one).email_address
+    assert_select "nav .dropdown a[href=?]", settings_path, text: /Settings/
+    assert_select "nav .dropdown a[href=?]", new_session_path, count: 0
+    assert_select "nav .dropdown button", text: "Log out"
   end
 end

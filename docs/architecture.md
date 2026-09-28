@@ -264,10 +264,12 @@ landing page (`/`, the universes index, which is also where a universe is create
 page. There is no universe or story dropdown, so changing universes happens on the landing page and
 changing stories happens on the universe page, which lists them. A scope link carries `.active` and
 `aria-current="page"` only on the page it points at, and the account menu is the navbar's only
-Bootstrap dropdown. The **Settings** entry sits beside that account menu in `navbar-actions` and is
-the one platform-level navigation item: it is rendered for every visitor, including a guest, and it
-is deliberately absent from the right utility sidebar's **Configuration** section, which configures a
-universe ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). Related record workspaces keep
+Bootstrap dropdown and its only action. The **Settings** entry lives inside that account menu in
+`navbar-actions` and is the one platform-level navigation item: it is rendered for every visitor,
+including a guest, and it is deliberately absent from the right utility sidebar's **Configuration**
+section, which configures a universe ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)).
+The settings page remembers where it was opened from and offers a **Go back** action that returns
+there, and signing in from any page returns the reader to that page. Related record workspaces keep
 only the records together in URL-backed tabs:
 Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
 lives under the right sidebar's **Configuration → Tags**, with **Universe Tags** (Character,

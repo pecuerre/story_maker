@@ -8,6 +8,45 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "opening the sign-in page remembers the page it was opened from" do
+    universe = universes(:universe_one)
+
+    get universe_url(universe)
+    get new_session_path, headers: { "Referer" => universe_url(universe) }
+
+    assert_response :success
+    assert_equal universe_url(universe), session[:return_to_after_authenticating]
+  end
+
+  test "signing in from a remembered page returns to that page" do
+    universe = universes(:universe_one)
+
+    get new_session_path, headers: { "Referer" => universe_url(universe) }
+    post session_path, params: { email_address: @user.email_address, password: "password" }
+
+    assert_redirected_to universe_url(universe)
+  end
+
+  test "an external referer is not remembered as the return destination" do
+    get new_session_path, headers: { "Referer" => "https://example.com/phishing" }
+
+    assert_response :success
+    assert_nil session[:return_to_after_authenticating]
+  end
+
+  test "a guest redirected from a write attempt returns to that page after signing in" do
+    universe = universes(:universe_one)
+
+    post universe_characters_path(universe_slug: universe.slug), params: { character: { name: "X" } }
+    assert_redirected_to new_session_path
+    follow_redirect!
+
+    assert_equal universe_characters_url(universe_slug: universe.slug), session[:return_to_after_authenticating]
+
+    post session_path, params: { email_address: @user.email_address, password: "password" }
+    assert_redirected_to universe_characters_url(universe_slug: universe.slug)
+  end
+
   test "create with valid credentials" do
     post session_path, params: { email_address: @user.email_address, password: "password" }
 

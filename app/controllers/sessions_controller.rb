@@ -5,6 +5,7 @@ class SessionsController < ApplicationController
   allow_unauthenticated_access only: %i[ new create ]
 
   def new
+    store_return_path
   end
 
   def create
@@ -20,4 +21,19 @@ class SessionsController < ApplicationController
     terminate_session
     redirect_to new_session_path, status: :see_other
   end
+
+  private
+    # A reader who opens the sign-in page directly (rather than being redirected
+    # from a page that required a session) has nowhere to return to yet, so the
+    # page they came from is remembered the same way `request_authentication`
+    # remembers the page that refused them. Only a same-host referer is stored,
+    # so an external site cannot choose the post-login destination.
+    def store_return_path
+      return if session[:return_to_after_authenticating].present?
+
+      referer = request.referer
+      return if referer.blank? || !referer.start_with?("#{request.base_url}/")
+
+      session[:return_to_after_authenticating] = referer
+    end
 end

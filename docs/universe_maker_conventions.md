@@ -634,13 +634,16 @@ Left to right:
   first: submitting it opens the results page (`/search`, or `/u/:universe_slug/search` inside a
   universe), and `search_controller.js` only adds the dropdown that answers while someone types. It
   is not a switcher, and it is not a second set of navigation links.
+- **Account** — the top bar's only action, a dropdown rendered for every visitor. A signed-in
+  reader sees their email, **Settings**, and **Log out**; a guest sees **Log in** and **Settings**.
+  The menu button carries `.active` and `aria-current="page"` on the settings page.
 - **Settings** — the platform settings page (`/settings`), rendered for every visitor including a
-  guest, because its preferences belong to the browser rather than to a universe. It is the one
-  platform-level entry, and it is deliberately not a **Configuration** link in the right utility
-  sidebar ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)).
-- **Account** — signed-in email and logout action, or **Log in** for guests.
+  guest, because its preferences belong to the browser rather than to a universe. It lives inside
+  the account menu, and it is deliberately not a **Configuration** link in the right utility
+  sidebar ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). The page remembers where
+  it was opened from and offers a **Go back** action that returns there.
 
-`.navbar-actions` is a flex row, so the settings entry and the account menu never stack.
+`.navbar-actions` is a flex row that holds the single account dropdown.
 
 A scope link carries `.active` plus `aria-current="page"` only on the page it points at, never as a
 permanent "you are in this scope" state. The account menu is the navbar's only Bootstrap dropdown;

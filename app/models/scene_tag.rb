@@ -3,8 +3,11 @@ class SceneTag < ApplicationRecord
   include HasColor
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include Searchable
   searchable kind: "tag", title: :name, body: :description, route: "scene_tag", taxonomy: "Scene", scope: :story
+
+  soft_deletes :children
 
   belongs_to :story
   has_many_tagd :scene, scope: :story_id

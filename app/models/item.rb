@@ -2,11 +2,14 @@ class Item < ApplicationRecord
   include Hierarchical
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
   searchable kind: "item", title: :name, body: :description, route: "item"
 
   invalidates_menu_counts_for :universe
+
+  soft_deletes :children, :ownerships, :scene_items
 
   belongs_to :universe
   has_many_tags :item_tag, scope: :universe_id

@@ -79,7 +79,7 @@ class SceneLocationsController < ApplicationController
   # place: a Location belongs to the Universe and is shared by every Story, so
   # this only withdraws one Scene's claim on it.
   def destroy
-    @scene_location.destroy!
+    @scene_location.soft_delete
 
     respond_to do |format|
       format.json { head :no_content }

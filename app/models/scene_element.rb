@@ -13,6 +13,7 @@ class SceneElement < ApplicationRecord
   DIALOGUE = "dialogue"
   KINDS = [ NARRATION, DIALOGUE ].freeze
 
+  include SoftDeletable
   include Searchable
   # A Scene Element has no page of its own — the editor lives under Scene
   # Details — so it declares no route and points a hit at the Scene that owns it.

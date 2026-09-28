@@ -7,10 +7,13 @@
 # never copied, and linking it here says nothing about which nested place inside
 # it a Scene used — that remains the author's own free-text role.
 class SceneLocation < ApplicationRecord
+  include SoftDeletable
+
   belongs_to :scene
   belongs_to :location
 
-  validates :location_id, uniqueness: { scope: :scene_id, message: "is already in this scene" }
+  validates :location_id, uniqueness: { scope: :scene_id, conditions: -> { where(deleted_at: nil) },
+    message: "is already in this scene" }
   validate :location_belongs_to_the_scene_universe
 
   def universe

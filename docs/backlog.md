@@ -166,16 +166,6 @@ it has a useful destination and clear empty/loading/error states.
    three UI patterns, JSON-only mutation contracts, optional tags, authorization, and accessible
    error states. Do not refactor solely to improve a line-count metric.
 
-20. **Include a soft delete. with a deleted_at column in tables**
-
-   when users click delete, instead of actually deleting the records. we will just mark them as
-   deleted, by setting the deleted_at column. add a default scope to models to only show "not deleted"
-   records. add also a "recycle bin" where you can see those deleted elements. in the recycle bin
-   you can actually delete for real. it is very important to track the relations that were deleted.
-   for instance if i delete a story, the scenes and sections will be deleted. but later if i decide
-   to recover the story, i shuold be ask "there are related elements associated with this, do you want
-   to recover them too?"
-
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

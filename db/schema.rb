@@ -10,10 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_150000) do
   create_table "character_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "name"
@@ -30,6 +31,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
 
   create_table "characters", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "name"
     t.integer "parent_id"
@@ -50,6 +52,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "event_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "name"
@@ -68,6 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
     t.integer "after_event_id"
     t.integer "before_event_id"
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.datetime "end_datetime"
     t.string "name"
@@ -98,6 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "item_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "name"
@@ -114,6 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
 
   create_table "items", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "name"
     t.integer "parent_id"
@@ -134,6 +140,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "location_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "name"
@@ -150,6 +157,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
 
   create_table "locations", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "name"
     t.integer "parent_id"
@@ -170,6 +178,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "ownership_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "name"
@@ -186,6 +195,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "ownerships", force: :cascade do |t|
     t.integer "character_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.datetime "from_date"
     t.integer "item_id", null: false
@@ -208,6 +218,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "relation_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "inverse"
@@ -227,6 +238,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
     t.integer "character1_id", null: false
     t.integer "character2_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.datetime "from_date"
     t.string "name"
@@ -248,11 +260,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "scene_characters", force: :cascade do |t|
     t.integer "character_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.string "role"
     t.integer "scene_id", null: false
     t.datetime "updated_at", null: false
     t.index ["character_id"], name: "index_scene_characters_on_character_id"
-    t.index ["scene_id", "character_id"], name: "index_scene_characters_on_scene_id_and_character_id", unique: true
+    t.index ["scene_id", "character_id"], name: "index_scene_characters_on_scene_id_and_character_id", unique: true, where: "deleted_at IS NULL"
     t.index ["scene_id"], name: "index_scene_characters_on_scene_id"
   end
 
@@ -267,6 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "scene_elements", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.string "kind", default: "narration", null: false
     t.string "name"
     t.integer "position", default: 0, null: false
@@ -279,29 +293,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
 
   create_table "scene_items", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.integer "item_id", null: false
     t.string "role"
     t.integer "scene_id", null: false
     t.datetime "updated_at", null: false
     t.index ["item_id"], name: "index_scene_items_on_item_id"
-    t.index ["scene_id", "item_id"], name: "index_scene_items_on_scene_id_and_item_id", unique: true
+    t.index ["scene_id", "item_id"], name: "index_scene_items_on_scene_id_and_item_id", unique: true, where: "deleted_at IS NULL"
     t.index ["scene_id"], name: "index_scene_items_on_scene_id"
   end
 
   create_table "scene_locations", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.integer "location_id", null: false
     t.string "role"
     t.integer "scene_id", null: false
     t.datetime "updated_at", null: false
     t.index ["location_id"], name: "index_scene_locations_on_location_id"
-    t.index ["scene_id", "location_id"], name: "index_scene_locations_on_scene_id_and_location_id", unique: true
+    t.index ["scene_id", "location_id"], name: "index_scene_locations_on_scene_id_and_location_id", unique: true, where: "deleted_at IS NULL"
     t.index ["scene_id"], name: "index_scene_locations_on_scene_id"
   end
 
   create_table "scene_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "name"
@@ -318,6 +335,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "scenes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "datetime"
+    t.datetime "deleted_at"
     t.text "description"
     t.integer "event_id"
     t.string "name"
@@ -344,6 +362,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   create_table "section_tags", force: :cascade do |t|
     t.string "bgcolor", default: "#d3d3d3", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "fgcolor", default: "#000000", null: false
     t.string "name"
@@ -359,6 +378,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
 
   create_table "sections", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "name"
     t.integer "parent_id"
@@ -387,35 +407,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
 
   create_table "stories", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.text "description"
     t.string "name"
     t.string "slug", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["universe_id", "slug"], name: "index_stories_on_universe_id_and_slug", unique: true
+    t.index ["universe_id", "slug"], name: "index_stories_on_universe_id_and_slug", unique: true, where: "deleted_at IS NULL"
     t.index ["universe_id"], name: "index_stories_on_universe_id"
   end
 
   create_table "universe_memberships", force: :cascade do |t|
     t.integer "access_level", default: 1, null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["universe_id", "user_id"], name: "index_universe_memberships_on_universe_id_and_user_id", unique: true
+    t.index ["universe_id", "user_id"], name: "index_universe_memberships_on_universe_id_and_user_id", unique: true, where: "deleted_at IS NULL"
     t.index ["universe_id"], name: "index_universe_memberships_on_universe_id"
     t.index ["user_id"], name: "index_universe_memberships_on_user_id"
   end
 
   create_table "universes", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.string "name"
     t.integer "owner_id", null: false
     t.boolean "private", default: false, null: false
     t.string "slug", null: false
     t.datetime "updated_at", null: false
     t.index ["owner_id"], name: "index_universes_on_owner_id"
-    t.index ["slug"], name: "index_universes_on_slug", unique: true
+    t.index ["slug"], name: "index_universes_on_slug", unique: true, where: "deleted_at IS NULL"
   end
 
   create_table "users", force: :cascade do |t|

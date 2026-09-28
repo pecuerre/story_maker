@@ -1,4 +1,6 @@
 class UniverseMembership < ApplicationRecord
+  include SoftDeletable
+
   ACCESS_LEVELS = {
     read: 1,
     write: 2,
@@ -12,7 +14,7 @@ class UniverseMembership < ApplicationRecord
   enum :access_level, ACCESS_LEVELS
 
   validates :access_level, presence: true, inclusion: { in: ACCESS_LEVELS.keys.map(&:to_s) }
-  validates :user_id, uniqueness: { scope: :universe_id }
+  validates :user_id, uniqueness: { scope: :universe_id, conditions: -> { where(deleted_at: nil) } }
   validate :user_is_not_universe_owner
   before_validation :set_default_access_level, on: :create
 

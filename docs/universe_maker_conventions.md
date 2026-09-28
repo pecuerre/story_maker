@@ -71,9 +71,17 @@
   records inside the same universe. `HasManyTags` independently enforces the shared universe or
   story scope in both directions for all seven content/tag pairs.
 - **A concern lives in `app/models/concerns/`**, beside `HasSlug`, `HasManyTags`, `Hierarchical`,
-  `HasColor`, and `InvalidatesMenuCounts`. A model that needs behaviour declares it with `include`
-  and, where the behaviour is configurable, a class-level DSL on itself — as
+  `HasColor`, `InvalidatesMenuCounts`, and `SoftDeletable`. A model that needs behaviour declares it
+  with `include` and, where the behaviour is configurable, a class-level DSL on itself — as
   `app/models/concerns/searchable.rb` does.
+- **Soft delete** is `SoftDeletable` (`app/models/concerns/soft_deletable.rb`): a `default_scope`
+  hides records with a non-null `deleted_at`, `soft_delete`/`restore` mark and unmark a record, and
+  `soft_deletes :assoc` declares the associations that cascade. A delete keeps the row, so a
+  soft-deleted record is invisible to ordinary queries but restorable. The unique indexes that would
+  block re-creating a record with the same key are partial (`WHERE deleted_at IS NULL`), and the
+  matching validations carry the same condition. Controllers call `soft_delete` instead of
+  `destroy!`; the positioned controllers go through `PositionedResourceOrder`, which normalizes the
+  remaining siblings in the same transaction. See [data_model.md](data_model.md#soft-delete).
 - **A group of related value objects gets its own namespace directory.** `Search` is the current
   example: `app/models/search/` holds the query, scope, catalog, client, and the rest of one
   subsystem, rather than sixteen top-level files. A standalone value object with no siblings to

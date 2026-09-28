@@ -3,8 +3,11 @@ class SectionTag < ApplicationRecord
   include HasColor
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include Searchable
   searchable kind: "tag", title: :name, body: :description, route: "section_tag", taxonomy: "Section", scope: :story
+
+  soft_deletes :children
 
   belongs_to :story
   has_many_tagd :section, scope: :story_id

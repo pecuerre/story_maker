@@ -24,6 +24,9 @@ module InvalidatesMenuCounts
     before_create :track_menu_count_for_invalidation
     before_destroy :track_menu_count_for_invalidation
     before_update :track_menu_count_scope_changes
+    # A soft delete (or restore) is a create/destroy equivalent for the sidebar
+    # counts, so it tracks the scope the same way.
+    before_update :track_menu_count_for_invalidation, if: :will_save_change_to_deleted_at?
     # Savepoint rollbacks also run after_rollback, so tracked outer-transaction scopes stay here.
     after_commit :invalidate_menu_counts, on: %i[ create destroy update ]
   end

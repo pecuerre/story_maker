@@ -2,11 +2,14 @@ class Event < ApplicationRecord
   include Hierarchical
   include HasManyTags
   include HasSlug
+  include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
   searchable kind: "event", title: :name, body: :description, route: "event"
 
   invalidates_menu_counts_for :universe
+
+  soft_deletes :children
 
   belongs_to :universe
   has_many_tags :event_tag, scope: :universe_id
@@ -65,6 +68,19 @@ class Event < ApplicationRecord
   end
 
   private
+
+  # A soft-deleted Event leaves every referrer in place but clears the
+  # references, exactly like a hard delete: Scenes lose their `event_id`, and
+  # temporal referrers lose the `before_event_id`/`after_event_id`/
+  # `simultaneous_event_id` that pointed here. A referrer that was only
+  # identifiable through this Event keeps its row and reports the missing
+  # identifier the next time it is saved, rather than being destroyed.
+  def soft_delete_dependencies
+    scenes.update_all(event_id: nil)
+    before_event_references.update_all(before_event_id: nil)
+    after_event_references.update_all(after_event_id: nil)
+    simultaneous_event_references.update_all(simultaneous_event_id: nil)
+  end
 
   def set_name
     self.name = title if new_record? || will_save_change_to_title?

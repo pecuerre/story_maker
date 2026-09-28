@@ -219,19 +219,20 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, element.reload.position
   end
 
-  test "destroying an element closes the gap and removes its speaker links" do
+  test "deleting an element closes the gap and keeps its speaker links for restore" do
     element = scene_elements(:dialogue_one)
 
-    assert_difference("SceneElement.count", -1) do
+    assert_no_difference("SceneElement.with_deleted.count") do
       delete element_url(element), as: :json
     end
 
     assert_response :no_content
+    assert element.reload.deleted?, "the element is soft-deleted, not removed"
     assert_equal [ 0, 1, 2 ], @scene.scene_elements.reorder(:position, :id).pluck(:position)
     assert_equal 3, @scene.universe.characters.count, "a shared character is never deleted with an element"
-    assert_equal 0, ActiveRecord::Base.connection.select_value(
+    assert_equal 2, ActiveRecord::Base.connection.select_value(
       "SELECT COUNT(*) FROM scene_element_speakers WHERE scene_element_id = #{element.id}"
-    ).to_i
+    ).to_i, "speaker links are kept so a restore brings them back"
   end
 
   test "an html mutation is refused before anything is written" do

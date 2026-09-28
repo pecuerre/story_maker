@@ -179,7 +179,9 @@ always loaded through the authorized scope (`Current.universe.<plural>.find` or
 The page is composed from four shared partials, so each record type can keep adding information
 without inventing a new page pattern:
 
-- `shared/_record_details` — page header (eyebrow, title, back link) plus the identity card;
+- `shared/_record_details` — page header (eyebrow, title, back link) plus the identity card. Its
+  optional block renders between the two, so a page that keeps a workspace tab strip open there puts
+  the navigation above the card and not below it;
 - `shared/_detail_facts` — the `[ label, value ]` grid, fed by the `detail_fact` helper so a
   missing value renders explicit copy instead of a blank row;
 - `shared/_detail_section` — one related-records section, with a `count` badge, and its empty state
@@ -192,9 +194,13 @@ A content page currently identifies the record and then states honestly that the
 will appear later. A Section additionally lists the scenes grouped under it, each still showing its
 narrative position, because grouping never sets order. A tag page lists the
 records that carry it through `HasManyTags#tagged_records`, the scoped inverse association, so it
-cannot disclose another universe's or story's records. `TaggedRecordCounts` answers the same
-question for a whole taxonomy in one grouped query, which is what the row's `.record-count` pill
-uses.
+cannot disclose another universe's or story's records. A non-taggable grouping tag instead lists
+records under each direct child tag; `TaggedRecordsByTag` batches that grouping through the scoped
+join table, and `RecordTags` loads each listed record's other badges in one query. Taggable tags
+retain the include-descendants toggle and flat list. Menu links carry `from=workspace`, which keeps
+their content tabs on the tag details page; a taxonomy Details link does not carry that marker.
+`TaggedRecordCounts` answers the same question for a whole taxonomy in one grouped query, which is
+what the row's `.record-count` pill uses.
 
 ## Response formats per controller
 
@@ -283,10 +289,13 @@ section, which configures a universe ([ADR 0013](adr/0013-platform-settings-and-
 The settings page remembers where it was opened from and offers a **Go back** action that returns
 there, and signing in from any page returns the reader to that page. Related record workspaces keep
 only the records together in URL-backed tabs:
-Characters / Relations, Locations, Events, Items / Ownerships, and Sections. Taxonomy management
-lives under the right sidebar's **Configuration → Tags**, with **Universe Tags** (Character,
-Relation, Location, Event, Item, and Ownership tags) and **Story Tags** (Section and Scene tags)
-selectors.
+Characters / Relations (including pinned Character tags), Locations, Events, Items / Ownerships,
+and Sections. A menu-tag details page keeps its workspace tabs only when reached through that
+workspace tab, and renders them between the page header and the tag's identity card so the strip is
+navigation rather than content; its taxonomy Details page remains a plain record details page.
+Taxonomy management lives under the right sidebar's **Configuration → Tags**, with **Universe Tags**
+(Character, Relation, Location, Event, Item, and Ownership tags) and **Story Tags** (Section and
+Scene tags) selectors.
 
 The one thing the top bar does add is the **search box** (`shared/_search_bar`), between the scope
 links and the actions. It is not a switcher and it issues no query of its own: it renders the scope

@@ -20,6 +20,9 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
       universe_relations_path(universe_slug: @universe.slug)
     assert_select "nav.content-tabs a[href=?]",
       universe_characters_path(universe_slug: @universe.slug), text: "Characters"
+    assert_select "nav.content-tabs a[href=?]",
+      universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one), from: "workspace"),
+      text: "Character tag one"
   end
 
   test "should create relation and redirect" do

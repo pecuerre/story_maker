@@ -229,7 +229,10 @@ The three functional editing patterns are:
   click away and visible to read-only viewers. The name is plain text; the Details link is the only
   link into the record's own page.
 - Every record workspace uses `shared/_content_tabs`: URL-backed Bootstrap `nav-tabs` that keep
-  related records together while preserving each canonical page. Tag management uses
+  related records together while preserving each canonical page. Character tags pinned with
+  `show_in_menu` also appear on the Relations page. Their links include `from=workspace`; the tag
+  details page renders the same workspace tabs only for that explicit navigation, while the
+  taxonomy tree's Details link stays canonical and omits them. Tag management uses
   `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
   scope tabs and the scope-specific taxonomy selector.
 - Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`. The
@@ -473,6 +476,11 @@ added to an existing page instead of a new page being invented. See
   `invalidates_menu_counts_for :story, cache_scope: Story::SCENE_MENU_COUNT_SCOPE`.
 
 ### Helpers
+
+- Taggable tag details retain the include-descendants toggle and flat record list. Non-taggable
+  grouping tags use `shared/_tagged_records_by_child_tag.html.erb` to render direct children and their
+  records without that toggle. `TaggedRecordsByTag` batches child assignments, while the shared
+  tagged-record list accepts a precomputed badge map so grouped pages do not query once per child.
 - `app/helpers/modal_fields.rb` — field descriptors consumed by the JS controllers:
   - `taxonomy_tag_fields(nodes, extra)` — the shared tag-editor fields (name/description/colors/parent/
     `taggable`); `content_tag_taxonomy_fields(nodes)` adds `show_in_menu` for the four content tags.
@@ -510,8 +518,11 @@ added to an existing page instead of a new page being invented. See
   accepts the same kind of `confirm_text`.
 - `app/views/shared/_record_details.html.erb`, `_detail_facts.html.erb`,
   `_detail_section.html.erb`, and `_tagged_record_list.html.erb` compose every record's details
-  page. `_detail_section` renders its empty state whenever `count` is zero or no block is given, so
-  a page states what it does not know instead of showing an empty box.
+  page. `_record_details` renders its optional block between the page header and the identity card,
+  which is where a menu tag page passes `shared/_menu_tag_content_tabs` so the tab strip stays with
+  the header instead of below the card. `_detail_section` renders its empty state whenever `count`
+  is zero or no block is given, so a page states what it does not know instead of showing an empty
+  box.
 - `app/views/shared/_modal_errors.html.erb` is the one error region inside a modal form
   (`data-modal-form-target="errors"`, `role="alert"`, `tabindex="-1"`, rendered hidden). The modal
   controller fills it with the server's error hash and moves focus here; the region is never

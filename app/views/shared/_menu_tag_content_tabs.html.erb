@@ -1,0 +1,8 @@
+<% tag = local_assigns.fetch(:tag) %>
+<% tag_type = local_assigns.fetch(:tag_type).to_s %>
+
+<% if tag.show_in_menu && params[:from] == "workspace" %>
+  <%= render "shared/content_tabs",
+    aria_label: "#{tag_type.titleize} workspace",
+    tabs: content_workspace_tabs(tag_type, active_tag: tag) %>
+<% end %>

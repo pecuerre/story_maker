@@ -14,7 +14,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     ], sidebar_label: "Characters"
     assert_menu_tab universe_characters_path(universe_slug: @universe.slug),
       "Character tag one",
-      universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one))
+      universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one), from: "workspace")
   end
 
   test "item workspace keeps items and ownerships together" do
@@ -24,7 +24,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     ], sidebar_label: "Items"
     assert_menu_tab universe_items_path(universe_slug: @universe.slug),
       "Item tag one",
-      universe_item_tag_path(universe_slug: @universe.slug, id: item_tags(:item_tag_one))
+      universe_item_tag_path(universe_slug: @universe.slug, id: item_tags(:item_tag_one), from: "workspace")
   end
 
   test "location workspace has one record tab" do
@@ -33,7 +33,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     ], sidebar_label: "Locations"
     assert_menu_tab universe_locations_path(universe_slug: @universe.slug),
       "Location tag one",
-      universe_location_tag_path(universe_slug: @universe.slug, id: location_tags(:location_tag_one))
+      universe_location_tag_path(universe_slug: @universe.slug, id: location_tags(:location_tag_one), from: "workspace")
   end
 
   test "event workspace has one record tab" do
@@ -42,7 +42,7 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     ], sidebar_label: "Events"
     assert_menu_tab universe_events_path(universe_slug: @universe.slug),
       "Event tag one",
-      universe_event_tag_path(universe_slug: @universe.slug, id: event_tags(:event_tag_one))
+      universe_event_tag_path(universe_slug: @universe.slug, id: event_tags(:event_tag_one), from: "workspace")
   end
 
   test "story workspace keeps sections and scenes together" do

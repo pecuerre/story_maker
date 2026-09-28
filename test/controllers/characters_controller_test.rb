@@ -103,7 +103,7 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "nav.content-tabs a[href=?]",
-      universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one)),
+      universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one), from: "workspace"),
       text: "Character tag one"
   end
 end

@@ -1,5 +1,6 @@
 class EventTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include TagDetails
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :event_tag
 
@@ -19,12 +20,7 @@ class EventTagsController < ApplicationController
   # GET /event_tags/:id — the tag's own details page: the records that carry it.
   # The taxonomy tree links here with that count.
   def show
-    @include_descendants = params[:include_descendants] != "0"
-    @tagged_records = if @include_descendants
-      @event_tag.tagged_records_including_descendants
-    else
-      @event_tag.tagged_records
-    end
+    load_tag_details(@event_tag)
   end
 
   def create

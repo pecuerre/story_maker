@@ -27,13 +27,7 @@
 
   <%= render "shared/content_tabs",
     aria_label: "Character workspace",
-    tabs: [
-      { label: "Characters", path: universe_characters_path, controller: :characters },
-      { label: "Relations", path: universe_relations_path, controller: :relations },
-      *@menu_character_tags.map { |tag|
-        { label: tag.name, path: universe_character_tag_path(id: tag), controller: :character_tags }
-      }
-    ] %>
+    tabs: content_workspace_tabs(:character) %>
 
   <% if @characters.any? %>
     <div class="content-surface entity-list">

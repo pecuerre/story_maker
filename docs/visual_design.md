@@ -441,6 +441,12 @@ more information is added to it:
   nothing to list yet. The empty copy states what will appear later and must not tell a guest or a
   read-only member to add records.
 
+`shared/_record_details` accepts an optional block rendered between the page header and the identity
+card. Give it the page's workspace tab strip when a related workspace stays open on a details page:
+the tab strip is navigation, so it belongs with the header above the content, and this keeps such a
+page the same shape as the workspace page it was reached from. Do not use the block for content — a
+fact belongs in `facts` and a record list belongs in a `shared/_detail_section`.
+
 A details page renders no mutation control, so read-only members and public guests see exactly the
 same page. A tag's page lists the records carrying it; a Section's page lists the scenes grouped
 under it, each still showing its narrative position.

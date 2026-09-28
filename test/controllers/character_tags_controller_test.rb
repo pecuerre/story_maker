@@ -92,6 +92,68 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Include records from child tags"
   end
 
+  test "a non-taggable grouping tag lists records under each direct child without a descendant toggle" do
+    grouping = CharacterTag.create!(universe: @universe, name: "Factions", taggable: false, show_in_menu: true)
+    sic_mundus = CharacterTag.create!(universe: @universe, name: "Sic Mundus", parent: grouping)
+    erit_lux = CharacterTag.create!(universe: @universe, name: "Erit Lux", parent: grouping)
+    sic_character = Character.create!(universe: @universe, name: "Sic character", character_tags: [ sic_mundus ])
+    erit_character = Character.create!(universe: @universe, name: "Erit character", character_tags: [ erit_lux ])
+
+    get universe_character_tag_url(universe_slug: @universe.slug, id: grouping)
+
+    assert_response :success
+    assert_includes response.body, sic_character.name
+    assert_includes response.body, erit_character.name
+    assert_not_includes response.body, "Include records from child tags"
+
+    document = Nokogiri::HTML(response.body)
+    sic_section = document.css(".detail-section").find { |section| section.at_css("h2")&.text == sic_mundus.name }
+    erit_section = document.css(".detail-section").find { |section| section.at_css("h2")&.text == erit_lux.name }
+    assert_includes sic_section.text, sic_character.name
+    assert_not_includes sic_section.text, erit_character.name
+    assert_includes erit_section.text, erit_character.name
+    assert_not_includes erit_section.text, sic_character.name
+  end
+
+  test "a workspace tag link keeps the content tabs while a taxonomy details link does not" do
+    menu_tag = CharacterTag.create!(universe: @universe, name: "Family Nielsen", taggable: true, show_in_menu: true)
+    workspace_path = universe_character_tag_url(universe_slug: @universe.slug, id: menu_tag, from: "workspace")
+
+    get workspace_path
+
+    assert_response :success
+    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
+      universe_character_tag_path(universe_slug: @universe.slug, id: menu_tag, from: "workspace"), text: "Family Nielsen"
+    assert_select "nav.content-tabs a[href=?]", universe_characters_path(universe_slug: @universe.slug), text: "Characters"
+
+    taxonomy_details_path = universe_character_tag_path(universe_slug: @universe.slug, id: menu_tag)
+    get universe_tags_url(universe_slug: @universe.slug, taxonomy: "character")
+
+    assert_response :success
+    assert_select "a[href=?]", taxonomy_details_path
+
+    get taxonomy_details_path
+
+    assert_response :success
+    assert_select "nav.content-tabs", count: 0
+  end
+
+  test "the workspace tab strip sits above the tag's identity card" do
+    menu_tag = CharacterTag.create!(universe: @universe, name: "Family Nielsen", taggable: true, show_in_menu: true)
+
+    get universe_character_tag_url(universe_slug: @universe.slug, id: menu_tag, from: "workspace")
+
+    assert_response :success
+    assert_equal [ :header, :tabs, :card ], main_blocks.first(3)
+  end
+
+  test "a taxonomy details link has no tab strip, so the identity card follows the page header" do
+    get universe_character_tag_url(universe_slug: @universe.slug, id: character_tags(:character_tag_one))
+
+    assert_response :success
+    assert_equal [ :header, :card ], main_blocks.first(2)
+  end
+
   test "show with include_descendants=0 excludes records from child tags" do
     get universe_character_tag_url(universe_slug: @universe.slug, id: @character_tag, include_descendants: "0")
 
@@ -107,4 +169,18 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Character one"
     assert_includes response.body, "Character three"
   end
+
+  private
+
+    # The tag page's own blocks in the order a reader meets them. The tab strip
+    # is page navigation, so it sits with the header above the identity card
+    # rather than below it.
+    def main_blocks
+      Nokogiri::HTML(response.body).css("main .page-shell > *").filter_map do |node|
+        classes = node["class"].to_s
+        next :header if classes.include?("page-header")
+        next :tabs if classes.include?("content-tabs")
+        next :card if classes.include?("surface-card")
+      end
+    end
 end

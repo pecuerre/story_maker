@@ -17,7 +17,6 @@ class CharactersController < ApplicationController
     # the author pinned with `show_in_menu`.
     @character_tags = Current.universe.character_tags
     @character_tags = @character_tags.where(taggable: true).order(:name)
-    @menu_character_tags = Current.universe.character_tags.where(show_in_menu: true).order(:position, :id)
   end
 
   # GET /characters/:id — the record's own read-only details page. It identifies the

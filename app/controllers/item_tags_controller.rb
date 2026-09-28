@@ -1,5 +1,6 @@
 class ItemTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include TagDetails
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :item_tag
 
@@ -16,12 +17,7 @@ class ItemTagsController < ApplicationController
   # GET /item_tags/:id — the tag's own details page: the records that carry it.
   # The taxonomy tree links here with that count.
   def show
-    @include_descendants = params[:include_descendants] != "0"
-    @tagged_records = if @include_descendants
-      @item_tag.tagged_records_including_descendants
-    else
-      @item_tag.tagged_records
-    end
+    load_tag_details(@item_tag)
   end
 
   def create

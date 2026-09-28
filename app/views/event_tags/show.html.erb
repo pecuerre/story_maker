@@ -10,18 +10,30 @@
     detail_fact("Color", @event_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
   ],
   back_url: universe_event_tags_path,
-  back_label: "All event tags" %>
+  back_label: "All event tags" do %>
+  <%= render "shared/menu_tag_content_tabs", tag_type: "event", tag: @event_tag %>
+<% end %>
 
-<%= render "shared/include_descendants_toggle" %>
+<% if @event_tag.taggable %>
+  <%= render "shared/include_descendants_toggle" %>
 
-<%= render "shared/detail_section",
-  title: "Events with this tag",
-  count: @tagged_records.size,
-  count_label: "event",
-  icon: "calendar-event",
-  empty_title: "No events carry this tag",
-  empty_description: "Nothing uses this tag yet. Tags are optional, so events can stay untagged." do %>
-  <%= render "shared/tagged_record_list",
-    records: @tagged_records,
+  <%= render "shared/detail_section",
+    title: "Events with this tag",
+    count: @tagged_records.size,
+    count_label: "event",
+    icon: "calendar-event",
+    empty_title: "No events carry this tag",
+    empty_description: "Nothing uses this tag yet. Tags are optional, so events can stay untagged." do %>
+    <%= render "shared/tagged_record_list",
+      records: @tagged_records,
+      path: ->(record) { universe_event_path(id: record) } %>
+  <% end %>
+<% else %>
+  <%= render "shared/tagged_records_by_child_tag",
+    child_tags: @child_tags,
+    records_by_child_tag: @records_by_child_tag,
+    tags_by_record: @tags_by_record,
+    count_label: "event",
+    icon: "calendar-event",
     path: ->(record) { universe_event_path(id: record) } %>
 <% end %>

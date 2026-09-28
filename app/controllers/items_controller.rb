@@ -14,7 +14,6 @@ class ItemsController < ApplicationController
 
     @item_tags = Current.universe.item_tags
     @item_tags = @item_tags.where(taggable: true).order(:name)
-    @menu_item_tags = Current.universe.item_tags.where(show_in_menu: true).order(:position, :id)
   end
 
   # GET /items/:id — the record's own read-only details page. It identifies the

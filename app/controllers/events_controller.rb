@@ -11,7 +11,6 @@ class EventsController < ApplicationController
     @events = Current.universe.events.includes(:event_tags).order(:id)
     @events_for_select = @events
     @event_tags = Current.universe.event_tags.where(taggable: true).order(:position, :id)
-    @menu_event_tags = Current.universe.event_tags.where(show_in_menu: true).order(:position, :id)
   end
 
   # GET /events/:id — the record's own read-only details page. It identifies the

@@ -109,9 +109,13 @@ session is an authentication token rather than content.
 `relation_tags` additionally has `symmetric` (bool, default `true`) and `inverse` (string).
 Every tag has `taggable` (bool, default `true`): a tag with `taggable: false` is a grouping for its
 children — it stays in the taxonomy tree and on records that already carry it, but it is not offered
-in an element's tag editor. `character_tags`, `location_tags`, `item_tags`, and `event_tags`
+in an element's tag editor. Its details page shows records under each direct child tag instead of a
+flat descendant-inclusive list; the child sections have no include-descendants toggle. Taggable tags
+retain the flat list and toggle. `character_tags`, `location_tags`, `item_tags`, and `event_tags`
 additionally have `show_in_menu` (bool, default `false`): a tag with `show_in_menu: true` appears as a
-tab on its workspace page and links to that tag's own details page.
+tab on its workspace page and links to that tag's own details page. Workspace tab links carry
+`from=workspace`, preserving that navigation on the tag page; taxonomy Details links remain canonical
+and do not show workspace tabs.
 
 Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `scene_tags`,
 `event_tags`, `relation_tags`, `ownership_tags`.

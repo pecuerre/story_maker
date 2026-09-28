@@ -157,6 +157,47 @@ module TagsHelper
     RecordTags.for(records)
   end
 
+  # Tabs for a content workspace. Tag links explicitly carry their origin so
+  # the tag details page can preserve this navigation without relying on a
+  # potentially absent or untrusted Referer header.
+  def content_workspace_tabs(type, active_tag: nil)
+    type = type.to_s
+    base_tabs = case type
+    when "character"
+      [
+        { label: "Characters", path: universe_characters_path, controller: :characters },
+        { label: "Relations", path: universe_relations_path, controller: :relations }
+      ]
+    when "location"
+      [ { label: "Locations", path: universe_locations_path, controller: :locations } ]
+    when "event"
+      [ { label: "Events", path: universe_events_path, controller: :events } ]
+    when "item"
+      [
+        { label: "Items", path: universe_items_path, controller: :items },
+        { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships }
+      ]
+    else
+      return []
+    end
+
+    base_tabs.each do |tab|
+      tab[:active] = active_tag.nil? && controller.controller_name == tab.fetch(:controller).to_s
+    end
+
+    menu_tags = Current.universe.public_send(:"#{type}_tags").where(show_in_menu: true).order(:position, :id)
+    tag_tabs = menu_tags.map do |tag|
+      {
+        label: tag.name,
+        path: public_send(:"universe_#{type}_tag_path", id: tag, from: "workspace"),
+        controller: :"#{type}_tags",
+        active: active_tag&.id == tag.id
+      }
+    end
+
+    base_tabs + tag_tabs
+  end
+
   private
     def normalized_tag_workspace_type(scope, taxonomy)
       if scope.to_s == "story"

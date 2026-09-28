@@ -19,6 +19,29 @@ Labels used below:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-09-29
+
+- **[changed]** On a tag page reached from a workspace menu tab, the tab strip now sits between the
+  page header and the tag's identity card instead of below the card, so the navigation reads as one
+  piece the way it does on every other workspace page. `shared/_record_details` takes an optional
+  block rendered in that gap; the four menu tag pages pass their existing
+  `shared/_menu_tag_content_tabs` render to it, and every other details page is unchanged. A tag
+  opened from the taxonomy tree still has no tab strip and keeps the card directly under its
+  header. Request and browser tests assert the block order in both cases.
+- **[changed]** Non-taggable grouping tags now show each direct child tag with its own assigned
+  records instead of flattening descendant results; the include-descendants checkbox remains on
+  taggable tags. Child records and their other tag badges are batch-loaded. Workspace menu-tag links
+  carry `from=workspace`, keeping the related tabs on tag details pages; taxonomy Details links
+  remain canonical and do not show those tabs. Pinned Character tags are also present on Relations.
+- **[docs]** Updated the tag data model, workspace conventions, and development guide with the
+  grouping, menu-navigation, and demo-data verification behavior.
+- **[chore]** Dark demo data now calls the Character grouping tag **Factions** and pins both
+  **Factions** and the assignable **Family Nielsen** tag in the workspace menu. Request tests cover
+  grouped child results and the different workspace/taxonomy navigation paths.
+- **[planned]** Backlog item 26 records a safety follow-up: `db:demo:reset` invoked Rails `db:drop`,
+  which also dropped the local test database. The implementation remains deferred; approval for a
+  development-data reset must never extend to test or production databases.
+
 ## 2026-09-28
 
 - **[added]** Every content table with a user-facing delete action now carries a nullable `deleted_at`,

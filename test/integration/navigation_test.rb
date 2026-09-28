@@ -232,7 +232,9 @@ class NavigationTest < ActionDispatch::IntegrationTest
     {
       characters: universe_characters_path(universe_slug: @universe.slug),
       relations: universe_relations_path(universe_slug: @universe.slug),
-      "Character tag one": universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one))
+      "Character tag one": universe_character_tag_path(
+        universe_slug: @universe.slug, id: character_tags(:character_tag_one), from: "workspace"
+      )
     }.each do |label, path|
       assert_select "nav.content-tabs a[href=?]", path, text: label.to_s.capitalize
     end

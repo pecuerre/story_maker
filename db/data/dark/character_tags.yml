@@ -11,6 +11,8 @@
   parent: CharacterTag.family
   bgcolor: "#66cc99" # medium green
   fgcolor: "#000000" # black
+  taggable: true
+  show_in_menu: true
 
 - universe: Universe.dark
   name: Family Doppler
@@ -34,8 +36,8 @@
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
-  name: Faction
-  slug: faction
+  name: Factions
+  slug: factions
   bgcolor: "#cc99cc" # light purple
   fgcolor: "#000000" # black
   taggable: false
@@ -43,14 +45,14 @@
 
 - universe: Universe.dark
   name: Sic Mundus
-  parent: CharacterTag.faction
+  parent: CharacterTag.factions
   slug: sic_mundus
   bgcolor: "#9966cc" # medium purple
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
   name: Erit Lux
-  parent: CharacterTag.faction
+  parent: CharacterTag.factions
   slug: erit_lux
   bgcolor: "#6600cc" # dark purple
   fgcolor: "#000000" # black

@@ -6,7 +6,11 @@
       label      - record type, e.g. "Character"
       facts      - [ label, value ] pairs for shared/detail_facts
       back_url / back_label - where the list this page was opened from lives
-      edit_url / edit_label - optional editor link, writers only %>
+      edit_url / edit_label - optional editor link, writers only
+      block      - optional content between the page header and the identity
+                    card. The tab strip belongs to the page's navigation
+                    chrome, not to the record, so a workspace that stays open
+                    here puts its tabs there and keeps the card below them. %>
 <% record = local_assigns.fetch(:record) %>
 <% title = local_assigns[:title] || (record.try(:display_string) || record.name) %>
 
@@ -20,6 +24,10 @@
     <%= link_to local_assigns.fetch(:edit_label), local_assigns.fetch(:edit_url),
       class: "btn btn-primary" %>
   <% end %>
+<% end %>
+
+<% if block_given? %>
+  <%= yield %>
 <% end %>
 
 <div class="surface-card p-4">

@@ -2,7 +2,7 @@
      resolves each record to its own details page, so a tag is a way into the
      records it labels. Every tag the record carries is shown beside it, not
      just the one filtering this list. %>
-<% tags_by_record = record_tags_for(local_assigns.fetch(:records)) %>
+<% tags_by_record = local_assigns[:tags_by_record] || record_tags_for(local_assigns.fetch(:records)) %>
 <div class="list-group list-group-flush">
   <% local_assigns.fetch(:records).each do |record| %>
     <div class="list-group-item entity-row d-flex align-items-center gap-3">

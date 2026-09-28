@@ -18,6 +18,21 @@ class TagImprovementsTest < ApplicationSystemTestCase
     assert_selector ".detail-section", text: "Characters with this tag"
   end
 
+  test "a menu tag's tab strip reads above its identity card" do
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(users(:user_one))
+    visit universe_characters_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    within "nav.content-tabs" do
+      click_link tag.name
+    end
+
+    assert_equal [ "header", "tabs", "card" ], page_blocks
+  end
+
   test "a tag's details page shows every tag next to each listed record" do
     universe = universes(:universe_one)
     tag = character_tags(:character_tag_one)
@@ -70,4 +85,18 @@ class TagImprovementsTest < ApplicationSystemTestCase
     assert_selector ".empty-state", text: "No character tags are defined yet."
     assert_no_selector ".empty-state", text: "Add one to group characters"
   end
+
+  private
+
+    # The tag page's own blocks in the order the browser stacks them. The tab
+    # strip is page navigation, so it reads as one with the header above the
+    # identity card rather than as a strip pushed below it.
+    def page_blocks
+      page.all("main .page-shell > header.page-header, main .page-shell > nav.content-tabs, main .page-shell > .surface-card").map do |block|
+        classes = block["class"].to_s
+        next "header" if classes.include?("page-header")
+        next "tabs" if classes.include?("content-tabs")
+        next "card" if classes.include?("surface-card")
+      end
+    end
 end

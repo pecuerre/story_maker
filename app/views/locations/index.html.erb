@@ -8,12 +8,7 @@
   count_label: "location",
   new_label: "Add location",
   tabs_aria_label: "Location workspace",
-  tabs: [
-    { label: "Locations", path: universe_locations_path, controller: :locations },
-    *@menu_location_tags.map { |tag|
-      { label: tag.name, path: universe_location_tag_path(id: tag), controller: :location_tags }
-    }
-  ],
+  tabs: content_workspace_tabs(:location),
   empty_description: "Add a location, then drag rows to create parent and child places.",
   read_only_empty_description: "No locations have been added yet.",
   nodes: @locations,

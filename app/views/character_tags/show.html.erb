@@ -10,18 +10,30 @@
     detail_fact("Color", @character_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
   ],
   back_url: universe_character_tags_path,
-  back_label: "All character tags" %>
+  back_label: "All character tags" do %>
+  <%= render "shared/menu_tag_content_tabs", tag_type: "character", tag: @character_tag %>
+<% end %>
 
-<%= render "shared/include_descendants_toggle" %>
+<% if @character_tag.taggable %>
+  <%= render "shared/include_descendants_toggle" %>
 
-<%= render "shared/detail_section",
-  title: "Characters with this tag",
-  count: @tagged_records.size,
-  count_label: "character",
-  icon: "person",
-  empty_title: "No characters carry this tag",
-  empty_description: "Nothing uses this tag yet. Tags are optional, so characters can stay untagged." do %>
-  <%= render "shared/tagged_record_list",
-    records: @tagged_records,
+  <%= render "shared/detail_section",
+    title: "Characters with this tag",
+    count: @tagged_records.size,
+    count_label: "character",
+    icon: "person",
+    empty_title: "No characters carry this tag",
+    empty_description: "Nothing uses this tag yet. Tags are optional, so characters can stay untagged." do %>
+    <%= render "shared/tagged_record_list",
+      records: @tagged_records,
+      path: ->(record) { universe_character_path(id: record) } %>
+  <% end %>
+<% else %>
+  <%= render "shared/tagged_records_by_child_tag",
+    child_tags: @child_tags,
+    records_by_child_tag: @records_by_child_tag,
+    tags_by_record: @tags_by_record,
+    count_label: "character",
+    icon: "person",
     path: ->(record) { universe_character_path(id: record) } %>
 <% end %>

@@ -21,6 +21,11 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[changed]** Flash messages are now **floating toasts fixed to the top-right corner** instead of
+  in-page alerts. Success toasts auto-dismiss after 4 seconds; error toasts after 10 seconds. Both
+  can be closed manually. The flash partial renders once in the layout outside the page flow, and
+  a new `flash_toast_controller.js` Stimulus controller manages the dismiss timers. The page-level
+  mutation-status live region (for non-modal failures like row deletes) is unchanged.
 - **[fixed]** A delegated admin could **demote or remove their own membership** and be left
   staring at a bodyless `403`: the membership page rendered change and remove controls on every
   row, including the caller's own, and the post-mutation redirect re-ran the admin-only

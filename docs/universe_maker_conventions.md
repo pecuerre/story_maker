@@ -178,7 +178,9 @@ controls use `can_administer_universe?`. The shared row/taxonomy partials enforc
 members and public guests see the same content without misleading edit affordances. Flat entity
 rows use `shared/_row_actions`: neutral overflow menus for edit/delete, with
 destructive actions marked by text/icon rather than a permanently red button. Flash messages are
-rendered once by the application layout through `shared/_flash`.
+rendered once by the application layout through `shared/_flash` as floating toasts fixed to the
+top-right corner. Success toasts auto-dismiss after 4 seconds; error toasts after 10 seconds. Both
+can be closed manually. The `flash_toast_controller.js` Stimulus controller manages the timers.
 
 The three functional editing patterns are:
 

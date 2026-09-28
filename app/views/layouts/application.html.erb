@@ -67,7 +67,6 @@
           </div>
 
           <div class="page-shell">
-            <%= render "shared/flash" %>
             <%= render "shared/mutation_status" %>
             <% if !can_write_universe? %>
               <div class="alert alert-info access-notice" role="status">
@@ -98,11 +97,11 @@
     <% else %>
       <main class="workspace-main workspace-main--full" id="main-content">
         <div class="page-shell">
-          <%= render "shared/flash" %>
           <%= render "shared/mutation_status" %>
           <%= yield %>
         </div>
       </main>
     <% end %>
+    <%= render "shared/flash" %>
   </body>
 </html>

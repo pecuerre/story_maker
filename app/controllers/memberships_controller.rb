@@ -35,6 +35,11 @@ class MembershipsController < ApplicationController
   end
 
   def update
+    if own_membership?
+      redirect_to root_path, alert: "You cannot change your own membership.", status: :see_other
+      return
+    end
+
     attributes = update_membership_params
     assign_access_level(attributes[:access_level])
 
@@ -48,6 +53,11 @@ class MembershipsController < ApplicationController
   end
 
   def destroy
+    if own_membership?
+      redirect_to root_path, alert: "You cannot remove your own membership.", status: :see_other
+      return
+    end
+
     @membership.destroy!
     redirect_to universe_memberships_path(universe_slug: Current.universe.slug),
       notice: "Member access was successfully removed.", status: :see_other
@@ -57,6 +67,10 @@ class MembershipsController < ApplicationController
 
     def set_membership
       @membership = Current.universe.memberships.find(params.expect(:id))
+    end
+
+    def own_membership?
+      @membership.user == Current.user
     end
 
     def load_memberships

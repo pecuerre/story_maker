@@ -11,6 +11,7 @@ CI.run do
   step "Tests: Rails", "bin/rails test"
   step "Checks: Dark development data", "env RAILS_ENV=test UNIVERSE=dark bin/rails db:demo:check"
   step "Checks: LOTR development data", "env RAILS_ENV=test UNIVERSE=lotr bin/rails db:demo:check"
+  step "Migrations: From-zero check", "env RAILS_ENV=test bin/rails db:drop db:create db:migrate && git diff --exit-code db/schema.rb"
 
   # Optional: Run system tests
   # step "Tests: System", "bin/rails test:system"

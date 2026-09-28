@@ -71,28 +71,36 @@
             </tr>
 
             <% @memberships.each do |membership| %>
+              <% own_membership = membership.user == Current.user %>
               <tr>
                 <td>
                   <div class="fw-semibold"><%= membership.user.name %></div>
                   <div class="small text-body-secondary"><%= membership.user.email_address %></div>
                 </td>
                 <td>
-                  <%= form_with scope: :membership,
-                    url: universe_membership_path(universe_slug: Current.universe.slug, id: membership),
-                    method: :patch,
-                    class: "d-flex align-items-center gap-2" do |form| %>
-                    <%= form.select :access_level,
-                      UniverseMembership::ACCESS_LEVELS.keys.map { |level| [ level.to_s.titleize, level ] },
-                      { selected: membership.access_level },
-                      { class: "form-select form-select-sm", aria: { label: "Access level for #{membership.user.name}" } } %>
-                    <%= form.submit "Save", class: "btn btn-sm btn-outline-secondary" %>
+                  <span class="badge text-bg-primary"><%= membership.access_level.to_s.titleize %></span>
+                  <% unless own_membership %>
+                    <%= form_with scope: :membership,
+                      url: universe_membership_path(universe_slug: Current.universe.slug, id: membership),
+                      method: :patch,
+                      class: "d-flex align-items-center gap-2 ms-2" do |form| %>
+                      <%= form.select :access_level,
+                        UniverseMembership::ACCESS_LEVELS.keys.map { |level| [ level.to_s.titleize, level ] },
+                        { selected: membership.access_level },
+                        { class: "form-select form-select-sm", aria: { label: "Access level for #{membership.user.name}" } } %>
+                      <%= form.submit "Save", class: "btn btn-sm btn-outline-secondary" %>
+                    <% end %>
                   <% end %>
                 </td>
                 <td class="text-end">
-                  <%= button_to "Remove", universe_membership_path(universe_slug: Current.universe.slug, id: membership),
-                    method: :delete,
-                    class: "btn btn-sm btn-outline-danger",
-                    data: { turbo_confirm: "Remove #{membership.user.name} from this universe?" } %>
+                  <% if own_membership %>
+                    <span class="small text-body-secondary">You</span>
+                  <% else %>
+                    <%= button_to "Remove", universe_membership_path(universe_slug: Current.universe.slug, id: membership),
+                      method: :delete,
+                      class: "btn btn-sm btn-outline-danger",
+                      data: { turbo_confirm: "Remove #{membership.user.name} from this universe?" } %>
+                  <% end %>
                 </td>
               </tr>
             <% end %>

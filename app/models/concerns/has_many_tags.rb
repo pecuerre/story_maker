@@ -9,6 +9,19 @@ module HasManyTags
       @tagged_records_association
     end
 
+    # The scope attribute a declared tag association is restricted to, e.g.
+    # :universe_id on Character, :story_id on SectionTag.
+    def tagged_records_scope_attribute
+      @tagged_records_scope_attribute
+    end
+
+    # The tag association declared on this model, on either side (:character_tags
+    # on Character, :characters on CharacterTag). Distinct from
+    # tagged_records_association, which is only set on the tag side.
+    def tagged_records_join_association
+      @tagged_records_join_association
+    end
+
     # Declares a many-to-many relationship to a taxonomy "tag" model, e.g.
     # `has_many_tags :character_tag, scope: :universe_id` on Character.
     # on Character. Backed by a habtm join table named "<element_table>_<tag_table>".
@@ -43,6 +56,9 @@ module HasManyTags
 
     private
       def declare_scoped_habtm(association, scope:, **options)
+        @tagged_records_scope_attribute = scope
+        @tagged_records_join_association = association
+
         has_and_belongs_to_many association,
           ->(owner) { where(scope => owner.public_send(scope)) },
           **options
@@ -54,6 +70,8 @@ module HasManyTags
             errors.add(association, "must belong to the same #{scope.to_s.delete_suffix('_id')}")
           end
         end
+
+        validate :scope_change_does_not_orphan_join_rows
       end
   end
 
@@ -65,5 +83,33 @@ module HasManyTags
     return self.class.none if association.nil?
 
     public_send(association).reorder(:name, :id)
+  end
+
+  # A tag assignment links this record to another record through a join table.
+  # Changing the owning scope (universe, or story for section-scoped records)
+  # would leave those join rows pointing across scopes, which violates the
+  # graph-wide scope rules, so a scope change is rejected while assignment rows
+  # exist. The scoped association read cannot detect them: after the change it
+  # only matches records that already share the new scope.
+  def scope_change_does_not_orphan_join_rows
+    scope = self.class.tagged_records_scope_attribute
+    return unless scope && persisted?
+    return unless will_save_change_to_attribute?(scope)
+    return unless join_rows_exist?
+
+    errors.add(scope, "cannot be changed while tagged records exist")
+  end
+
+  private
+
+  def join_rows_exist?
+    association = self.class.tagged_records_join_association
+    reflection = association && self.class.reflect_on_association(association)
+    return false unless reflection
+
+    count = self.class.connection.select_value(
+      "SELECT COUNT(*) FROM #{reflection.join_table} WHERE #{reflection.foreign_key} = #{id}"
+    )
+    count.to_i > 0
   end
 end

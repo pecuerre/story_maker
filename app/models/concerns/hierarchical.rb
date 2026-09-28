@@ -11,6 +11,7 @@ module Hierarchical
     validate :parent_belongs_to_same_universe
     validate :parent_cannot_be_self
     validate :parent_cannot_be_descendant
+    validate :scope_change_does_not_orphan_children
 
     after_destroy :normalize_sibling_positions_after_destroy
   end
@@ -58,6 +59,18 @@ module Hierarchical
       parent.public_send(hierarchy_scope_attribute) == public_send(hierarchy_scope_attribute)
 
     errors.add(:parent, hierarchy_scope_error)
+  end
+
+  # A hierarchical record's whole subtree lives in the same owning scope (universe,
+  # or story for Section/SectionTag/SceneTag). Moving the record itself would leave
+  # every child behind in the old scope, which violates the graph-wide scope rules,
+  # so a scope change is rejected while child records exist. Move the subtree
+  # leaf-up instead.
+  def scope_change_does_not_orphan_children
+    return unless will_save_change_to_attribute?(hierarchy_scope_attribute)
+    return unless children.exists?
+
+    errors.add(hierarchy_scope_attribute, "cannot be changed while child records exist")
   end
 
   def parent_cannot_be_self

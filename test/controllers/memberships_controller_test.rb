@@ -102,4 +102,51 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to universe_memberships_url(universe_slug: @universe.slug)
   end
+
+  test "delegated admin cannot demote themselves" do
+    membership = UniverseMembership.create!(universe: @universe, user: @user, access_level: :admin)
+    sign_in_as(@user)
+
+    patch universe_membership_url(universe_slug: @universe.slug, id: membership),
+      params: { membership: { access_level: "write" } }
+
+    assert_redirected_to root_path
+    assert_equal "You cannot change your own membership.", flash[:alert]
+    assert_equal "admin", membership.reload.access_level
+  end
+
+  test "delegated admin cannot remove themselves" do
+    membership = UniverseMembership.create!(universe: @universe, user: @user, access_level: :admin)
+    sign_in_as(@user)
+
+    assert_no_difference("UniverseMembership.count") do
+      delete universe_membership_url(universe_slug: @universe.slug, id: membership)
+    end
+
+    assert_redirected_to root_path
+    assert_equal "You cannot remove your own membership.", flash[:alert]
+    assert membership.reload.persisted?
+  end
+
+  test "own membership row hides change and remove controls" do
+    UniverseMembership.create!(universe: @universe, user: @user, access_level: :admin)
+    sign_in_as(@user)
+
+    get universe_memberships_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "input[type=submit][value=Save]", count: 0
+    assert_select "button", text: "Remove", count: 0
+    assert_select "td.text-end", text: "You"
+  end
+
+  test "other membership rows keep change and remove controls" do
+    UniverseMembership.create!(universe: @universe, user: @user, access_level: :read)
+
+    get universe_memberships_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "input[type=submit][value=Save]"
+    assert_select "button", text: "Remove"
+  end
 end

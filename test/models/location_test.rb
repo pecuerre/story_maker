@@ -18,4 +18,20 @@ class LocationTest < ActiveSupport::TestCase
     assert_not location.valid?
     assert_includes location.errors[:parent], "must belong to the same universe"
   end
+
+  test "rejects a universe change while child locations exist" do
+    location = Location.create!(universe: universes(:universe_one), name: "Parent")
+    Location.create!(universe: universes(:universe_one), name: "Child", parent: location)
+
+    assert_not location.update(universe: universes(:universe_two))
+    assert_includes location.errors[:universe_id], "cannot be changed while child records exist"
+    assert_equal universes(:universe_one).id, location.reload.universe_id
+  end
+
+  test "allows a universe change without dependents" do
+    location = Location.create!(universe: universes(:universe_one), name: "Mover")
+
+    assert location.update(universe: universes(:universe_two))
+    assert_equal universes(:universe_two).id, location.reload.universe_id
+  end
 end

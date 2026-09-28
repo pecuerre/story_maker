@@ -14,7 +14,10 @@ class SettingsController < ApplicationController
   skip_before_action :set_current_universe
   skip_before_action :authorize_universe_access
 
+  helper_method :after_settings_url
+
   def show
+    store_return_path
   end
 
   def update
@@ -29,4 +32,24 @@ class SettingsController < ApplicationController
       redirect_to settings_path, alert: "Choose either the light or the dark theme.", status: :see_other
     end
   end
+
+  private
+    # Remember the page the reader came from so the settings page's **Go back**
+    # action can return them to where they left off. Only a same-host referer is
+    # stored, so an external site cannot choose the destination, and the settings
+    # page itself is skipped so a theme save (which redirects back here) does not
+    # overwrite the destination with this page. A later visit from a different
+    # page overwrites the stored path, so **Go back** always points at where the
+    # reader last came from.
+    def store_return_path
+      referer = request.referer
+      return if referer.blank? || !referer.start_with?("#{request.base_url}/")
+      return if referer == settings_url
+
+      session[:return_to_after_settings] = referer
+    end
+
+    def after_settings_url
+      session[:return_to_after_settings] || root_url
+    end
 end

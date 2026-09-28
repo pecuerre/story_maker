@@ -102,12 +102,47 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
   test "the top bar links to settings for a guest and marks the current page" do
     get settings_url
 
-    assert_select "nav a[href=?][aria-current=page]", settings_path, text: /Settings/
+    # Settings lives inside the account menu, so the menu button carries the
+    # current-page marker rather than a standalone settings link.
+    assert_select "nav .dropdown button[aria-current=page]", text: "Account"
+    assert_select "nav .dropdown a[href=?]", settings_path, text: /Settings/
 
     get universes_url
 
-    assert_select "nav a[href=?]", settings_path
-    assert_select "nav a[href=?][aria-current=page]", settings_path, count: 0
+    assert_select "nav .dropdown a[href=?]", settings_path, text: /Settings/
+    assert_select "nav .dropdown button[aria-current=page]", count: 0
+  end
+
+  test "the settings page offers a go back link to the page it was opened from" do
+    universe = universes(:universe_one)
+
+    get universe_url(universe)
+    get settings_url, headers: { "Referer" => universe_url(universe) }
+
+    assert_select ".page-actions a[href=?]", universe_url(universe), text: /Go back/
+  end
+
+  test "the go back link falls back to the landing page without a referer" do
+    get settings_url
+
+    assert_select ".page-actions a[href=?]", root_url, text: /Go back/
+  end
+
+  test "the go back link ignores an external referer" do
+    get settings_url, headers: { "Referer" => "https://example.com/phishing" }
+
+    assert_select ".page-actions a[href=?]", root_url, text: /Go back/
+  end
+
+  test "saving the theme keeps the go back destination" do
+    universe = universes(:universe_one)
+
+    get settings_url, headers: { "Referer" => universe_url(universe) }
+    patch settings_url, params: { theme: "dark" }
+
+    assert_redirected_to settings_url
+    follow_redirect!
+    assert_select ".page-actions a[href=?]", universe_url(universe), text: /Go back/
   end
 
   private

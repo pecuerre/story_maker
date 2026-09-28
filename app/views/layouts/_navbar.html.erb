@@ -47,44 +47,47 @@
           results page, and the dropdown is only the enhancement of that. %>
       <%= render "shared/search_bar" %>
 
-      <%# One row: the settings entry and the account menu sit side by side at
-          every width, so the actions never stack under each other. %>
+      <%# One menu: the account dropdown is the top bar's only action. Settings is
+          platform-level, so it lives inside the same menu rather than beside it,
+          and a guest sees the same menu with Log in as its first entry. %>
       <div class="navbar-actions ms-auto mt-3 mt-lg-0 d-flex align-items-center gap-2">
-        <%# Settings is platform-level, not universe content, so it lives in the top
-            bar rather than in the workspace sidebars. A theme is a per-browser
-            choice, which is also why the entry is rendered for a guest. %>
         <% on_settings_page = controller_name == "settings" %>
-        <%= link_to settings_path,
-          class: "btn btn-outline-light btn-sm d-inline-flex align-items-center gap-2#{' active' if on_settings_page}",
-          aria: (on_settings_page ? { current: "page" } : {}) do %>
-          <i class="bi bi-gear" aria-hidden="true"></i>
-          Settings
-        <% end %>
-
-        <% if Current.user.present? %>
-          <div class="dropdown">
-            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false">
-              Account
-            </button>
-            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+        <div class="dropdown">
+          <button class="btn btn-outline-light btn-sm dropdown-toggle<%= ' active' if on_settings_page %>",
+            type="button",
+            data-bs-toggle="dropdown",
+            aria-expanded="false"<% if on_settings_page %> aria-current="page"<% end %>>
+            Account
+          </button>
+          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+            <% if Current.user.present? %>
               <li>
                 <span class="dropdown-item-text navbar-account-label" title="<%= Current.user.email_address %>">
                   <%= Current.user.email_address %>
                 </span>
               </li>
               <li><hr class="dropdown-divider"></li>
+            <% else %>
+              <li>
+                <%= link_to "Log in", new_session_path, class: "dropdown-item" %>
+              </li>
+            <% end %>
+            <li>
+              <%= link_to settings_path, class: "dropdown-item d-inline-flex align-items-center gap-2" do %>
+                <i class="bi bi-gear" aria-hidden="true"></i>
+                Settings
+              <% end %>
+            </li>
+            <% if Current.user.present? %>
+              <li><hr class="dropdown-divider"></li>
               <li>
                 <%= button_to "Log out", session_path,
                   method: :delete,
                   class: "dropdown-item" %>
               </li>
-            </ul>
-          </div>
-        <% else %>
-          <%= link_to "Log in", new_session_path, class: "btn btn-outline-light btn-sm" %>
-        <% end %>
+            <% end %>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

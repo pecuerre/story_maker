@@ -16,6 +16,7 @@ class SettingsThemeTest < ApplicationSystemTestCase
     light_background = background_color("body")
     assert_equal "light", theme_attribute
 
+    click_button "Account"
     click_link "Settings"
 
     assert_current_path settings_path
@@ -63,6 +64,20 @@ class SettingsThemeTest < ApplicationSystemTestCase
     assert_checked_field "Light", checked: true
     assert_equal "light", theme_attribute
     assert_not_equal dark_background, background_color("body")
+  end
+
+  test "the go back action returns to the page settings was opened from" do
+    universe = universes(:universe_one)
+
+    visit universe_url(universe)
+    click_button "Account"
+    click_link "Settings"
+
+    assert_current_path settings_path
+    click_link "Go back"
+
+    assert_current_path universe_url(universe)
+    assert_selector "h1", text: universe.name
   end
 
   private

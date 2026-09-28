@@ -164,7 +164,8 @@ The navbar is intentionally small: three links, one search box, and the account 
 - `Universe: <name>` links to the current universe page;
 - `Story: <name>` links to the current story page and exists only while a story is current;
 - **Search** is one field with a scope dropdown inside it (see below);
-- `Account` contains the signed-in email and logout action.
+- `Account` is the top bar's only action, a dropdown for every visitor: a signed-in reader sees their
+  email, **Settings**, and **Log out**; a guest sees **Log in** and **Settings**.
 
 There is no universe or story switcher in the top bar: changing universes happens on the landing
 page, and changing or creating stories happens on the universe page, which lists the universe's
@@ -299,9 +300,10 @@ bar's **Settings** entry.
 
 ### Settings
 
-**Settings** is a platform page, not universe content, so it is reached from the top bar next to the
-account menu and is rendered for every visitor including a guest. It has no workspace shell, which is
-why the page reads as one column with a lot of quiet space to the right of a single tab.
+**Settings** is a platform page, not universe content, so it is reached from the top bar's account
+menu and is rendered for every visitor including a guest. It has no workspace shell, which is
+why the page reads as one column with a lot of quiet space to the right of a single tab. A **Go back**
+action in the page header returns the reader to the page the settings page was opened from.
 
 The page is a **vertical** tab strip beside its panel: a 12rem navigation column at `md` and above,
 stacked above the panel below it, so a narrow window never squeezes the panel. Tabs are URL-backed

@@ -6,6 +6,8 @@ event_tag_one:
   name: Event tag one
   bgcolor: "#ff0000"
   fgcolor: "#000000"
+  taggable: true
+  show_in_menu: true
 
 event_tag_two:
   universe: universe_one
@@ -13,6 +15,7 @@ event_tag_two:
   name: Event tag two
   bgcolor: "#00ff00"
   fgcolor: "#000000"
+  taggable: false
 
 event_tag_three:
   universe: universe_two
@@ -20,3 +23,4 @@ event_tag_three:
   name: Event tag three
   bgcolor: "#0000ff"
   fgcolor: "#000000"
+  taggable: true

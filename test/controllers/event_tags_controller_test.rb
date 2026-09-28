@@ -46,4 +46,19 @@ class EventTagsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :no_content
   end
+
+  test "creates a grouping tag that is not taggable and pins it to the menu" do
+    assert_difference("EventTag.count") do
+      post universe_event_tags_url(universe_slug: @universe.slug),
+        params: { event_tag: { name: "Conflict", taggable: false, show_in_menu: true } },
+        as: :json
+    end
+
+    assert_response :created
+    created = EventTag.find_by(name: "Conflict")
+    assert_equal false, response.parsed_body["taggable"]
+    assert_equal true, response.parsed_body["show_in_menu"]
+    assert_not created.taggable
+    assert created.show_in_menu
+  end
 end

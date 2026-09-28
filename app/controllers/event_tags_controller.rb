@@ -6,12 +6,6 @@ class EventTagsController < ApplicationController
   before_action :set_event_tag,
     only: %i[ show update destroy ]
 
-  # GET /event_tags/new
-  def new
-    event_tags = Current.universe.event_tags
-    @event_tag = event_tags.new(parent_id: params[:parent_id])
-  end
-
   # GET /event_tags or /event_tags.json
   def index
     @event_tags = Current.universe.event_tags
@@ -77,13 +71,15 @@ class EventTagsController < ApplicationController
       fgcolor: @event_tag.fgcolor,
       parent_id: @event_tag.parent_id,
       position: @event_tag.position,
+      taggable: @event_tag.taggable,
+      show_in_menu: @event_tag.show_in_menu,
       url: universe_event_tag_path(id: @event_tag)
     }
   end
 
   # Only allow a list of trusted parameters through.
   def event_tag_params
-    params.expect(event_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
+    params.expect(event_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_event_tag

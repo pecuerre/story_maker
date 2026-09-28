@@ -81,6 +81,10 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     `show` action, so the `show` half of the content surface is no longer an empty route. The
     `edit` routes for modal-edited content, the session/password actions, and the `new` routes
     without templates are unchanged and still need either an action or a route restriction.
+    The tag-controller half was reduced on 2026-09-28: the eight `*_tags` resources are restricted
+    to `index/show/create/update/destroy`, the dead `new` actions are removed, and the taxonomy
+    node's vestigial `data-edit-url`/`data-create-url` attributes are gone. The content-controller
+    `new`/`edit` routes and the session/password actions remain open.
 
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
     maintenance.** The controller-facing `PositionedResourceOrder` service now transactionally
@@ -264,15 +268,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
 
 ## Additional UI and interaction observations
 
-45. **Medium — read-only empty taxonomy pages still instruct users to add or drag records.** The
-    shared partial has a read-only empty-state fallback, but Locations and taxonomy views pass
-    explicit copy containing “Add”/“drag” instructions (for example
-    `app/views/locations/index.html.erb:15` and `app/views/character_tags/index.html.erb:17`).
-    Guests and read-only members see mutation instructions even
-    though no mutation controls are rendered. The Sections workspace was fixed in slice 11.3 by
-    passing both `empty_description` and the new `read_only_empty_description` local; the remaining
-    callers still need it.
-
 46. **Medium — the documented Timeline pan/zoom interaction is not implemented, and nodes lack an
     accessible name.** `docs/architecture.md:177-190` describes pan/zoom, but
     `app/javascript/controllers/timeline_controller.js:12-91` only redraws SVG lines and popovers;
@@ -375,13 +370,6 @@ used with a frozen install in CI and Docker.
     value instead, while preserving the documented synthetic development login and load commands
     for manual verification. A value-free template is not a secret. The separate critical master-key
     rotation/history task remains open. See backlog item 17.
-
-54. **Low — taxonomy field-builder duplication creates maintenance drift risk.** The DataFactor
-    report identified repeated per-type descriptor logic in `app/helpers/modal_fields.rb` and
-    `app/helpers/tags_helper.rb`. The current small-file profile is otherwise a strength, so this
-    is a refactoring opportunity rather than a correctness finding. Characterize the serialized
-    field/JSON and form contracts before extracting shared declarative behavior; see backlog item
-    19.
 
 ## Audit baseline and evidence
 

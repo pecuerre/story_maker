@@ -57,4 +57,29 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_equal [ "must belong to the same universe" ], response.parsed_body["parent"]
   end
+
+  test "creates a grouping tag that is not taggable but is pinned to the menu" do
+    assert_difference("CharacterTag.count") do
+      post universe_character_tags_url(universe_slug: @universe.slug),
+        params: { character_tag: { name: "Factions", taggable: false, show_in_menu: true } },
+        as: :json
+    end
+
+    assert_response :created
+    created = CharacterTag.find_by(name: "Factions")
+    assert_equal false, response.parsed_body["taggable"]
+    assert_equal true, response.parsed_body["show_in_menu"]
+    assert_not created.taggable
+    assert created.show_in_menu
+  end
+
+  test "updates taggable and show_in_menu" do
+    patch universe_character_tag_url(universe_slug: @universe.slug, id: @character_tag),
+      params: { character_tag: { name: @character_tag.name, taggable: false, show_in_menu: true } },
+      as: :json
+
+    assert_response :success
+    assert_equal [ false, true ], @character_tag.reload.values_at(:taggable, :show_in_menu)
+    assert_equal [ false, true ], response.parsed_body.values_at("taggable", "show_in_menu")
+  end
 end

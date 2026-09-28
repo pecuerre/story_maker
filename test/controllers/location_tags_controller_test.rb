@@ -35,4 +35,19 @@ class LocationTagsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal [ "Renamed", "Updated" ], @location_tag.reload.values_at(:name, :description)
   end
+
+  test "creates a grouping tag that is not taggable and pins it to the menu" do
+    assert_difference("LocationTag.count") do
+      post universe_location_tags_url(universe_slug: @universe.slug),
+        params: { location_tag: { name: "Region", taggable: false, show_in_menu: true } },
+        as: :json
+    end
+
+    assert_response :created
+    created = LocationTag.find_by(name: "Region")
+    assert_equal false, response.parsed_body["taggable"]
+    assert_equal true, response.parsed_body["show_in_menu"]
+    assert_not created.taggable
+    assert created.show_in_menu
+  end
 end

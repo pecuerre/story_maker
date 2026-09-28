@@ -2,13 +2,17 @@ location_tag_one:
   universe: universe_one
   name: Location tag one
   slug: "location-tag-one"
+  taggable: true
+  show_in_menu: true
 
 location_tag_two:
   universe: universe_one
   name: Location tag two
   slug: "location-tag-two"
+  taggable: false
 
 location_tag_three:
   universe: universe_two
   name: Location tag three
   slug: "location-tag-three"
+  taggable: true

@@ -54,7 +54,7 @@ class LocationTagsController < ApplicationController
   end
 
   def location_tag_params
-    params.expect(location_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
+    params.expect(location_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_location_tag
@@ -71,6 +71,8 @@ class LocationTagsController < ApplicationController
       fgcolor: @location_tag.fgcolor,
       parent_id: @location_tag.parent_id,
       position: @location_tag.position,
+      taggable: @location_tag.taggable,
+      show_in_menu: @location_tag.show_in_menu,
       url: universe_location_tag_path(id: @location_tag)
     }
   end

@@ -29,7 +29,10 @@
     aria_label: "Item workspace",
     tabs: [
       { label: "Items", path: universe_items_path, controller: :items },
-      { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships }
+      { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships },
+      *@menu_item_tags.map { |tag|
+        { label: tag.name, path: universe_item_tag_path(id: tag), controller: :item_tags }
+      }
     ] %>
 
   <% if @items.any? %>

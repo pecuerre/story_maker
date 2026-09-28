@@ -12,7 +12,8 @@ class LocationsController < ApplicationController
     @locations = @locations.order(:position, :id)
 
     @location_tags = Current.universe.location_tags
-    @location_tags = @location_tags.order(:name)
+    @location_tags = @location_tags.where(taggable: true).order(:name)
+    @menu_location_tags = Current.universe.location_tags.where(show_in_menu: true).order(:position, :id)
     @location_options = Current.universe.locations.reorder(:position, :id).to_a
   end
 

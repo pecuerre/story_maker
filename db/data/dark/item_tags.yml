@@ -1,10 +1,3 @@
-
-- universe: Universe.dark
-  name: "Key"
-  slug: "key"
-  bgcolor: "#FFD700" # "gold"
-  fgcolor: "#000000" # black
-
 - universe: Universe.dark
   name: "Time Machine"
   slug: "time_machine"
@@ -12,7 +5,23 @@
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
+  name: "Treasure"
+  slug: "treasure"
+  bgcolor: "#FFD700" # "gold"
+  fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
+
+- universe: Universe.dark
+  name: "Key"
+  slug: "key"
+  parent: ItemTag.treasure
+  bgcolor: "#FFD700" # "gold"
+  fgcolor: "#000000" # black
+
+- universe: Universe.dark
   name: "Medal"
   slug: "medal"
+  parent: ItemTag.treasure
   bgcolor: "#A52A2A" # "brown"
   fgcolor: "#000000" # black

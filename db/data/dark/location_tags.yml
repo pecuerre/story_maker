@@ -5,37 +5,58 @@
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
+  name: "Indoor"
+  slug: "indoor"
+  bgcolor: "#00FF00"
+  fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
+
+- universe: Universe.dark
   name: "House"
   slug: "house"
+  parent: LocationTag.indoor
   bgcolor: "#00FF00"
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
   name: "School"
   slug: "school"
+  parent: LocationTag.indoor
   bgcolor: "#0000FF"
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
   name: "Police"
   slug: "police"
+  parent: LocationTag.indoor
   bgcolor: "#FFFF00"
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
+  name: "Room"
+  slug: "room"
+  parent: LocationTag.indoor
+  bgcolor: "#FFFFFF"
+  fgcolor: "#000000" # black
+
+- universe: Universe.dark
+  name: "Outdoor"
+  slug: "outdoor"
+  bgcolor: "#00FFFF"
+  fgcolor: "#000000" # black
+  taggable: false
+
+- universe: Universe.dark
   name: "Forest"
   slug: "forest"
+  parent: LocationTag.outdoor
   bgcolor: "#00FFFF"
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
   name: "Cave"
   slug: "cave"
+  parent: LocationTag.outdoor
   bgcolor: "#FF00FF"
-  fgcolor: "#000000" # black
-
-- universe: Universe.dark
-  name: "Room"
-  slug: "room"
-  bgcolor: "#FFFFFF"
   fgcolor: "#000000" # black

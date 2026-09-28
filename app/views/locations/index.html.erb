@@ -9,9 +9,13 @@
   new_label: "Add location",
   tabs_aria_label: "Location workspace",
   tabs: [
-    { label: "Locations", path: universe_locations_path, controller: :locations }
+    { label: "Locations", path: universe_locations_path, controller: :locations },
+    *@menu_location_tags.map { |tag|
+      { label: tag.name, path: universe_location_tag_path(id: tag), controller: :location_tags }
+    }
   ],
   empty_description: "Add a location, then drag rows to create parent and child places.",
+  read_only_empty_description: "No locations have been added yet.",
   nodes: @locations,
   new_url: ->(parent = nil) { new_universe_location_path(parent_id: parent&.id) },
   create_url: universe_locations_path,

@@ -13,7 +13,7 @@ class SectionsController < ApplicationController
     @sections = @sections.order(:position, :id)
 
     @section_tags = @story.section_tags
-    @section_tags = @section_tags.order(:name)
+    @section_tags = @section_tags.where(taggable: true).order(:name)
     @section_options = @story.sections.reorder(:position, :id).to_a
     # The Section tree above and the ungrouped Scene list below share one
     # ordered Section list, so ancestor paths cost a single extra query for the

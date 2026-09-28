@@ -13,6 +13,76 @@ module TagsHelper
     "scene" => "Scene tags"
   }.freeze
 
+  # The per-type workspace copy for the universe taxonomies. The mechanical
+  # keys — `model_param`, the field-descriptor helper, the tag URLs, and the
+  # count label — are derived from the type name, so adding a taxonomy means
+  # adding one entry here rather than a second hand-maintained block that can
+  # drift from the routes and from `modal_fields.rb`.
+  UNIVERSE_TAG_METADATA = {
+    "character" => {
+      title: "Character tags",
+      description: "Define the optional labels used to organize characters across this universe.",
+      empty_description: "Tags are optional. Add one to group characters, or create characters without a tag.",
+      read_only_empty_description: "No character tags are defined yet.",
+      new_label: "Add character tag"
+    },
+    "relation" => {
+      title: "Relation tags",
+      description: "Define the relationship types used when connecting characters in this universe.",
+      empty_description: "Tags are optional. Add one to describe character relationships, or leave relations untagged.",
+      read_only_empty_description: "No relation tags are defined yet.",
+      new_label: "Add relation tag"
+    },
+    "location" => {
+      title: "Location tags",
+      description: "Organize the places and regions that make up this universe.",
+      empty_description: "Tags are optional. Add one to group locations, or organize them later.",
+      read_only_empty_description: "No location tags are defined yet.",
+      new_label: "Add location tag"
+    },
+    "event" => {
+      title: "Event tags",
+      description: "Classify events so related moments are easier to find across the timeline.",
+      empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead.",
+      read_only_empty_description: "No event tags are defined yet.",
+      new_label: "Add event tag"
+    },
+    "item" => {
+      title: "Item tags",
+      description: "Define optional categories for objects and resources in this universe.",
+      empty_description: "Tags are optional. Add one to group items, or create untagged items.",
+      read_only_empty_description: "No item tags are defined yet.",
+      new_label: "Add item tag"
+    },
+    "ownership" => {
+      title: "Ownership tags",
+      description: "Describe the kinds of ownership recorded between characters and items.",
+      empty_description: "Tags are optional. Add one to classify ownership records, or create them untagged.",
+      read_only_empty_description: "No ownership tags are defined yet.",
+      new_label: "Add ownership tag"
+    }
+  }.freeze
+
+  STORY_TAG_METADATA = {
+    "section" => {
+      title: "Section tags",
+      description: "Define labels such as book, chapter, act, or episode for this story's sections.",
+      empty_description: "Tags are optional. Add one to classify sections, or build the section tree without them.",
+      read_only_empty_description: "This story has no section tags defined yet.",
+      new_label: "Add section tag"
+    },
+    "scene" => {
+      title: "Scene tags",
+      description: "Define optional labels for this story's scenes, such as mood, turning point, or story beat.",
+      empty_description: "Tags are optional. Add one to classify scenes, or write scenes without a tag.",
+      read_only_empty_description: "This story has no scene tags defined yet.",
+      new_label: "Add scene tag",
+      confirm_message: ->(tag) {
+        "Delete “#{tag.name}”? Its child tags and assignments will be removed. Scenes will remain."
+      }
+    }
+  }.freeze
+
   def tag_workspace_navigation_data(scope:, taxonomy:)
     scope = scope.to_s == "story" ? "story" : "universe"
     taxonomy = normalized_tag_workspace_type(scope, taxonomy)
@@ -80,6 +150,13 @@ module TagsHelper
     TaggedRecordCounts.for(records)
   end
 
+  # The tags each record carries, from one grouped query, for a tag details
+  # page's record list. See `RecordTags`: the same eager-loading limit means
+  # the per-row badge list is read once for the whole page, not once per row.
+  def record_tags_for(records)
+    RecordTags.for(records)
+  end
+
   private
     def normalized_tag_workspace_type(scope, taxonomy)
       if scope.to_s == "story"
@@ -94,149 +171,34 @@ module TagsHelper
     end
 
     def universe_tag_workspace_config(type)
-      metadata = case type
-      when "character"
-        {
-          title: TAG_LABELS.fetch("character"),
-          description: "Define the optional labels used to organize characters across this universe.",
-          empty_description: "Tags are optional. Add one to group characters, or create characters without a tag.",
-          new_label: "Add character tag",
-          model_param: "character_tag",
-          fields: :character_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_character_tag_path(parent_id: parent&.id) },
-          create_url: universe_character_tags_path,
-          edit_url: ->(tag) { edit_universe_character_tag_path(id: tag) },
-          update_url: ->(tag) { universe_character_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_character_tag_path(id: tag) },
-          details_url: ->(tag) { universe_character_tag_path(id: tag) },
-          details_count_label: "character"
-        }
-      when "relation"
-        {
-          title: TAG_LABELS.fetch("relation"),
-          description: "Define the relationship types used when connecting characters in this universe.",
-          empty_description: "Tags are optional. Add one to describe character relationships, or leave relations untagged.",
-          new_label: "Add relation tag",
-          model_param: "relation_tag",
-          fields: :relation_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_relation_tag_path(parent_id: parent&.id) },
-          create_url: universe_relation_tags_path,
-          edit_url: ->(tag) { edit_universe_relation_tag_path(id: tag) },
-          update_url: ->(tag) { universe_relation_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_relation_tag_path(id: tag) },
-          details_url: ->(tag) { universe_relation_tag_path(id: tag) },
-          details_count_label: "relation"
-        }
-      when "location"
-        {
-          title: TAG_LABELS.fetch("location"),
-          description: "Organize the places and regions that make up this universe.",
-          empty_description: "Tags are optional. Add one to group locations, or organize them later.",
-          new_label: "Add location tag",
-          model_param: "location_tag",
-          fields: :location_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_location_tag_path(parent_id: parent&.id) },
-          create_url: universe_location_tags_path,
-          edit_url: ->(tag) { edit_universe_location_tag_path(id: tag) },
-          update_url: ->(tag) { universe_location_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_location_tag_path(id: tag) },
-          details_url: ->(tag) { universe_location_tag_path(id: tag) },
-          details_count_label: "location"
-        }
-      when "event"
-        {
-          title: TAG_LABELS.fetch("event"),
-          description: "Classify events so related moments are easier to find across the timeline.",
-          empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead.",
-          new_label: "Add event tag",
-          model_param: "event_tag",
-          fields: :event_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_event_tag_path(parent_id: parent&.id) },
-          create_url: universe_event_tags_path,
-          edit_url: ->(tag) { edit_universe_event_tag_path(id: tag) },
-          update_url: ->(tag) { universe_event_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_event_tag_path(id: tag) },
-          details_url: ->(tag) { universe_event_tag_path(id: tag) },
-          details_count_label: "event"
-        }
-      when "item"
-        {
-          title: TAG_LABELS.fetch("item"),
-          description: "Define optional categories for objects and resources in this universe.",
-          empty_description: "Tags are optional. Add one to group items, or create untagged items.",
-          new_label: "Add item tag",
-          model_param: "item_tag",
-          fields: :item_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_item_tag_path(parent_id: parent&.id) },
-          create_url: universe_item_tags_path,
-          edit_url: ->(tag) { edit_universe_item_tag_path(id: tag) },
-          update_url: ->(tag) { universe_item_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_item_tag_path(id: tag) },
-          details_url: ->(tag) { universe_item_tag_path(id: tag) },
-          details_count_label: "item"
-        }
-      when "ownership"
-        {
-          title: TAG_LABELS.fetch("ownership"),
-          description: "Describe the kinds of ownership recorded between characters and items.",
-          empty_description: "Tags are optional. Add one to classify ownership records, or create them untagged.",
-          new_label: "Add ownership tag",
-          model_param: "ownership_tag",
-          fields: :ownership_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_ownership_tag_path(parent_id: parent&.id) },
-          create_url: universe_ownership_tags_path,
-          edit_url: ->(tag) { edit_universe_ownership_tag_path(id: tag) },
-          update_url: ->(tag) { universe_ownership_tag_path(id: tag) },
-          delete_url: ->(tag) { universe_ownership_tag_path(id: tag) },
-          details_url: ->(tag) { universe_ownership_tag_path(id: tag) },
-          details_count_label: "ownership"
-        }
-      end
+      metadata = UNIVERSE_TAG_METADATA.fetch(type)
+      records = Current.universe.public_send(:"#{type}_tags")
 
-      tag_workspace_base(Current.universe.public_send(:"#{type}_tags"), metadata)
+      tag_workspace_base(records, metadata.merge(
+        model_param: "#{type}_tag",
+        fields: :"#{type}_tag_taxonomy_fields",
+        create_url: public_send(:"universe_#{type}_tags_path"),
+        update_url: ->(tag) { public_send(:"universe_#{type}_tag_path", id: tag) },
+        details_url: ->(tag) { public_send(:"universe_#{type}_tag_path", id: tag) },
+        details_count_label: type
+      ))
     end
 
     def story_tag_workspace_config(type)
       story = Current.story
       return if story.nil?
 
-      case type
-      when "scene"
-        tag_workspace_base(story.scene_tags, {
-          title: TAG_LABELS.fetch("scene"),
-          description: "Define optional labels for this story's scenes, such as mood, turning point, or story beat.",
-          empty_description: "Tags are optional. Add one to classify scenes, or write scenes without a tag.",
-          new_label: "Add scene tag",
-          model_param: "scene_tag",
-          confirm_message: ->(tag) {
-            "Delete “#{tag.name}”? Its child tags and assignments will be removed. Scenes will remain."
-          },
-          fields: :scene_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_story_scene_tag_path(story_id: story, parent_id: parent&.id) },
-          create_url: universe_story_scene_tags_path(story_id: story),
-          edit_url: ->(tag) { edit_universe_story_scene_tag_path(story_id: story, id: tag) },
-          update_url: ->(tag) { universe_story_scene_tag_path(story_id: story, id: tag) },
-          delete_url: ->(tag) { universe_story_scene_tag_path(story_id: story, id: tag) },
-          details_url: ->(tag) { universe_story_scene_tag_path(story_id: story, id: tag) },
-          details_count_label: "scene"
-        })
-      else
-        tag_workspace_base(story.section_tags, {
-          title: TAG_LABELS.fetch("section"),
-          description: "Define labels such as book, chapter, act, or episode for this story's sections.",
-          empty_description: "Tags are optional. Add one to classify sections, or build the section tree without them.",
-          new_label: "Add section tag",
-          model_param: "section_tag",
-          fields: :section_tag_taxonomy_fields,
-          new_url: ->(parent = nil) { new_universe_story_section_tag_path(story_id: story, parent_id: parent&.id) },
-          create_url: universe_story_section_tags_path(story_id: story),
-          edit_url: ->(tag) { edit_universe_story_section_tag_path(story_id: story, id: tag) },
-          update_url: ->(tag) { universe_story_section_tag_path(story_id: story, id: tag) },
-          delete_url: ->(tag) { universe_story_section_tag_path(story_id: story, id: tag) },
-          details_url: ->(tag) { universe_story_section_tag_path(story_id: story, id: tag) },
-          details_count_label: "section"
-        })
-      end
+      metadata = STORY_TAG_METADATA.fetch(type)
+      records = story.public_send(:"#{type}_tags")
+
+      tag_workspace_base(records, metadata.merge(
+        model_param: "#{type}_tag",
+        fields: :"#{type}_tag_taxonomy_fields",
+        create_url: public_send(:"universe_story_#{type}_tags_path", story_id: story),
+        update_url: ->(tag) { public_send(:"universe_story_#{type}_tag_path", story_id: story, id: tag) },
+        details_url: ->(tag) { public_send(:"universe_story_#{type}_tag_path", story_id: story, id: tag) },
+        details_count_label: type
+      ))
     end
 
     def tag_workspace_base(records, metadata)

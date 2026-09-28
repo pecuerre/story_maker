@@ -3,6 +3,8 @@
   slug: geographic
   bgcolor: "#b3b3b3" # light gray
   fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
 
 - universe: Universe.lotr
   name: Region

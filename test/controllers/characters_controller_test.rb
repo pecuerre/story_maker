@@ -89,4 +89,21 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     @character.reload
     assert_equal [ "Renamed", "Updated", [ @character_tag.id ] ], [ @character.name, @character.description, @character.character_tag_ids ]
   end
+
+  test "the character editor dropdown offers taggable tags only" do
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "select[name='character[character_tag_ids][]'] option", text: "Character tag one"
+    assert_select "select[name='character[character_tag_ids][]'] option", text: "Character tag two", count: 0
+  end
+
+  test "a show_in_menu tag appears as a workspace tab linking to its details page" do
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "nav.content-tabs a[href=?]",
+      universe_character_tag_path(universe_slug: @universe.slug, id: character_tags(:character_tag_one)),
+      text: "Character tag one"
+  end
 end

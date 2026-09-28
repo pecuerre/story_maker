@@ -11,7 +11,16 @@
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
+  slug: "social"
+  name: "Social"
+  bgcolor: "#3357FF"
+  fgcolor: "#000000" # black
+  taggable: false
+  show_in_menu: true
+
+- universe: Universe.dark
   slug: "party"
   name: "Party"
+  parent: EventTag.social
   bgcolor: "#3357FF"
   fgcolor: "#000000" # black

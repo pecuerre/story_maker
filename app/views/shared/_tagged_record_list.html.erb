@@ -1,15 +1,21 @@
 <%# The list of records carrying one tag, on that tag's details page. `path`
-    resolves each record to its own details page, so a tag is a way into the
-    records it labels. Tag badges are intentionally not repeated here: this
-    list is already filtered by the tag being shown. %>
+     resolves each record to its own details page, so a tag is a way into the
+     records it labels. Every tag the record carries is shown beside it, not
+     just the one filtering this list. %>
+<% tags_by_record = record_tags_for(local_assigns.fetch(:records)) %>
 <div class="list-group list-group-flush">
   <% local_assigns.fetch(:records).each do |record| %>
     <div class="list-group-item entity-row d-flex align-items-center gap-3">
       <div class="entity-copy flex-grow-1">
-        <span class="entity-title">
-          <%= link_to record.try(:display_string) || record.name,
-            local_assigns.fetch(:path).call(record), class: "text-break" %>
-        </span>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="entity-title">
+            <%= link_to record.try(:display_string) || record.name,
+              local_assigns.fetch(:path).call(record), class: "text-break" %>
+          </span>
+          <% tags_by_record.fetch(record.id, []).each do |tag| %>
+            <%= tag_badge(tag) %>
+          <% end %>
+        </div>
         <% if record.description.present? %>
           <div class="entity-description"><%= record.description %></div>
         <% end %>

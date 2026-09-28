@@ -13,6 +13,61 @@ module ModalFields
     options
   end
 
+  # The editor fields shared by every taxonomy. `nodes` is the one per-call
+  # value (the ordered node list the parent selector is built from);
+  # `extra_fields` appends type-specific descriptors after the shared ones.
+  # The shared taxonomy editor renders and submits a checkbox like any other
+  # field, so `taggable` needs no per-type wiring.
+  def taxonomy_tag_fields(nodes = [], extra_fields = [])
+    [
+      {
+        name: "name",
+        label: "Name",
+        type: "text",
+        required: true
+      },
+      {
+        name: "description",
+        label: "Description",
+        type: "textarea"
+      },
+      {
+        name: "bgcolor",
+        label: "Background color",
+        type: "color"
+      },
+      {
+        name: "fgcolor",
+        label: "Foreground color",
+        type: "color"
+      },
+      {
+        name: "parent_id",
+        label: "Parent",
+        type: "select",
+        options: taxonomy_parent_options(nodes)
+      },
+      {
+        name: "taggable",
+        label: "Taggable",
+        type: "checkbox"
+      },
+      *extra_fields
+    ]
+  end
+
+  # Character, Location, Item, and Event tags additionally offer the workspace
+  # menu tab. Relation, Ownership, Section, and Scene tags do not.
+  def content_tag_taxonomy_fields(nodes = [])
+    taxonomy_tag_fields(nodes, [
+      {
+        name: "show_in_menu",
+        label: "Show in menu",
+        type: "checkbox"
+      }
+    ])
+  end
+
   def event_fields_json(event)
     {
       title: event.title,
@@ -27,67 +82,11 @@ module ModalFields
   end
 
   def event_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      }
-    ]
+    content_tag_taxonomy_fields(nodes)
   end
 
   def character_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      }
-    ]
+    content_tag_taxonomy_fields(nodes)
   end
 
   def character_fields_json(character)
@@ -99,35 +98,7 @@ module ModalFields
   end
 
   def item_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      }
-    ]
+    content_tag_taxonomy_fields(nodes)
   end
 
   def item_fields_json(item)
@@ -139,35 +110,7 @@ module ModalFields
   end
 
   def location_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      }
-    ]
+    content_tag_taxonomy_fields(nodes)
   end
 
   def location_taxonomy_fields(location_tags, locations = [])
@@ -202,35 +145,7 @@ module ModalFields
   end
 
   def ownership_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      }
-    ]
+    taxonomy_tag_fields(nodes)
   end
 
   def ownership_fields_json(ownership)
@@ -245,34 +160,7 @@ module ModalFields
   end
 
   def relation_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      },
+    taxonomy_tag_fields(nodes, [
       {
         name: "symmetric",
         label: "Symmetric",
@@ -284,7 +172,7 @@ module ModalFields
         type: "text",
         required_unless: { field: "symmetric", value: true }
       }
-    ]
+    ])
   end
 
   def relation_fields_json(relation)
@@ -299,67 +187,11 @@ module ModalFields
   end
 
   def section_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      }
-    ]
+    taxonomy_tag_fields(nodes)
   end
 
   def scene_tag_taxonomy_fields(nodes = [])
-    [
-      {
-        name: "name",
-        label: "Name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "textarea"
-      },
-      {
-        name: "bgcolor",
-        label: "Background color",
-        type: "color"
-      },
-      {
-        name: "fgcolor",
-        label: "Foreground color",
-        type: "color"
-      },
-      {
-        name: "parent_id",
-        label: "Parent",
-        type: "select",
-        options: taxonomy_parent_options(nodes)
-      }
-    ]
+    taxonomy_tag_fields(nodes)
   end
 
   def section_taxonomy_fields(section_tags, sections = [])

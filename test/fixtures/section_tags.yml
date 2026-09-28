@@ -4,13 +4,16 @@ section_tag_one:
   story: story_one
   name: Section tag one
   slug: "section-tag-one"
+  taggable: true
 
 section_tag_two:
   story: story_one
   name: Section tag two
   slug: "section-tag-two"
+  taggable: false
 
 section_tag_three:
   story: story_two
   name: Section tag three
   slug: "section-tag-three"
+  taggable: true

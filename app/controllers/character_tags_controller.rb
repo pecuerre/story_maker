@@ -13,11 +13,6 @@ class CharacterTagsController < ApplicationController
     @tagged_counts = TaggedRecordCounts.for(Current.universe.character_tags)
   end
 
-  def new
-    character_tags = Current.universe.character_tags
-    @character_tag = character_tags.new(parent_id: params[:parent_id])
-  end
-
   # GET /character_tags/:id — the tag's own details page: the records that carry it.
   # The taxonomy tree links here with that count.
   def show
@@ -59,7 +54,7 @@ class CharacterTagsController < ApplicationController
   end
 
   def character_tag_params
-    params.expect(character_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position ])
+    params.expect(character_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_character_tag
@@ -76,6 +71,8 @@ class CharacterTagsController < ApplicationController
       fgcolor: @character_tag.fgcolor,
       parent_id: @character_tag.parent_id,
       position: @character_tag.position,
+      taggable: @character_tag.taggable,
+      show_in_menu: @character_tag.show_in_menu,
       url: universe_character_tag_path(id: @character_tag)
     }
   end

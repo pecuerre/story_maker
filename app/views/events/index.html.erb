@@ -28,7 +28,10 @@
   <%= render "shared/content_tabs",
     aria_label: "Event workspace",
     tabs: [
-      { label: "Events", path: universe_events_path, controller: :events }
+      { label: "Events", path: universe_events_path, controller: :events },
+      *@menu_event_tags.map { |tag|
+        { label: tag.name, path: universe_event_tag_path(id: tag), controller: :event_tags }
+      }
     ] %>
 
   <% if @events.any? %>

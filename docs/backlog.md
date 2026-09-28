@@ -181,34 +181,6 @@ it has a useful destination and clear empty/loading/error states.
   - if no user is logged in, instead of a button [log in] show the same combo [account] and the login button inside
   - add a button "go back" in the settings, so when you finish changing settings you can continue where you left
 
-24. **tags improvements**
-  - in all tags add:
-    - a field "taggable" (or find a better name, i am open to suggestions)
-    - the idea of this field is that some tags with children tags are not supposed
-      to be used as tags, but more as a grupings for children tag.
-    - if the tag is not "taggable" (or the name you choose) then doesn't appear
-      in the dropbox when editing the corresponding element
-    - for instance
-      - i create character tag called "factions"
-      - some child tags can be "the good ones" and "the bad ones"
-      - i mark the "factions" one as taggable:false (or the name you choose)
-      - this means that i can not assign "factions" to a character.
-        but i can assign a children tag
-  - only in characters tags, locations tags, event tags, item tags do:
-    - add a field "fixed" or "show in menu" (or a better name suggested by you)
-    - the idea is that those tags should be shown in the tab selector
-    - for instance (using the same example as before)
-      - in the character form currently i see 2 tabs: characters, relations
-      - if i mark "show in menu" the tag "factions" (or the name you suggest)
-        i will see  characters, relations, factions
-      - when i click on the factions, i should see a same view when i click on the tag
-        on the configuration > tags > the corresponding tag
-  - in all the tag views
-    - currently when i click for instance in "character tags" i see
-      "caracters with this tag (4)" and the list of characters
-    - that is ok, but i would like to see all the tags next to the character
-    - this view is the one that should be "reused" when you add a "fixed" tag to the tabs
-
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

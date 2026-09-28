@@ -12,8 +12,12 @@ class CharactersController < ApplicationController
     @characters = @characters.includes(:character_tags)
     @characters = @characters.order(:name, :id)
 
+    # The editor offers assignable tags only; a grouping tag stays in the tree
+    # and on records that already carry it. The tab strip links to the tags
+    # the author pinned with `show_in_menu`.
     @character_tags = Current.universe.character_tags
-    @character_tags = @character_tags.order(:name)
+    @character_tags = @character_tags.where(taggable: true).order(:name)
+    @menu_character_tags = Current.universe.character_tags.where(show_in_menu: true).order(:position, :id)
   end
 
   # GET /characters/:id — the record's own read-only details page. It identifies the

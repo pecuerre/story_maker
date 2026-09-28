@@ -21,11 +21,31 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[added]** Tags can now be **groupings that are not assignable**. Every tag carries a `taggable`
+  flag (default `true`); a tag with `taggable: false` stays in the taxonomy tree and on records that
+  already carry it, but it is no longer offered in an element's tag editor — so a "Factions" tag can
+  group "Sic Mundus" and "Erit Lux" without itself being assignable to a character. Character, Location,
+  Item, and Event tags additionally carry a `show_in_menu` flag (default `false`); a tag with
+  `show_in_menu: true` appears as a tab on its workspace page and links to that tag's own details page,
+  the same view the taxonomy tree's Details link opens. A tag's details page now also shows **every
+  tag badge next to each listed record**, not just the tag being viewed.
+- **[changed]** The taxonomy editor's field descriptors are now built by shared `ModalFields` helpers
+  (`taxonomy_tag_fields` for every taxonomy, `content_tag_taxonomy_fields` for the four content tags)
+  instead of eight hand-maintained copies, and the tag workspace config is declarative `TagsHelper`
+  metadata with the mechanical keys derived from the type name. This removes the field/URL drift risk
+  tracked as quirk 54 and is what let `taggable` and `show_in_menu` land in one place per helper.
 - **[changed]** Flash messages are now **floating toasts fixed to the top-right corner** instead of
   in-page alerts. Success toasts auto-dismiss after 4 seconds; error toasts after 10 seconds. Both
   can be closed manually. The flash partial renders once in the layout outside the page flow, and
   a new `flash_toast_controller.js` Stimulus controller manages the dismiss timers. The page-level
   mutation-status live region (for non-modal failures like row deletes) is unchanged.
+- **[fixed]** Read-only empty taxonomy pages no longer instruct guests and read-only members to
+  "Add" or drag records. Every remaining `shared/taxonomy_tree` caller now passes
+  `read_only_empty_description`, so an empty taxonomy shows mutation copy only to writers (quirk 45).
+- **[fixed]** The eight tag controllers no longer advertise `new` and `edit` routes that have no
+  template or action. The routes are restricted to `index/show/create/update/destroy`, the dead `new`
+  actions are removed, and the taxonomy node's vestigial `data-edit-url`/`data-create-url` attributes
+  are gone — a row's only URL surface is `data-update-url` and the Details link (quirk 20, tag half).
 - **[fixed]** A delegated admin could **demote or remove their own membership** and be left
   staring at a bodyless `403`: the membership page rendered change and remove controls on every
   row, including the caller's own, and the post-mutation redirect re-ran the admin-only
@@ -85,6 +105,11 @@ Labels used below:
   declarations and the development-data loader are unchanged, and both development universes
   still load.
 
+- **[chore]** Fixtures set `taggable`/`show_in_menu` on the tag fixtures, both development universes
+  exercise grouping and menu tags (Dark: Family/Faction/Job, Indoor/Outdoor, Treasure, Social; LOTR:
+  Race/Allegiance, Geographic, Artifact/Weapon, Conflict), and new model/controller/request/system
+  cases cover the defaults, the editor dropdown filter, the workspace menu tab, the details-page
+  badges, the modal checkboxes, and the read-only empty copy.
 - **[chore]** CI now proves the migrations run from an empty database. A new `migrations-from-zero`
   job drops, creates, and migrates the test database from scratch, asserts every migration is up,
   and fails if the checked-in `db/schema.rb` differs from what the migrations produce — so a
@@ -114,6 +139,9 @@ Labels used below:
   a closed panel to zero height — without the conditional surface it measures 4px, an empty strip under
   the field on every page of the application — and the unavailable case now asserts there is no
   "See all results" link under a message that has no answer to open.
+- **[docs]** `data_model.md` documents the `taggable` and `show_in_menu` tag columns,
+  `universe_maker_conventions.md` states the shared tag-editor field builders and the `show_in_menu`
+  tab rule, and `architecture.md` describes the batch-loaded tag badges on a tag's details page.
 - **[docs]** `AGENTS.md` now requires checking [`docs/known_quirks.md`](docs/known_quirks.md) for a
   related open quirk before starting any [`docs/backlog.md`](docs/backlog.md) item and asking the
   owner whether to fix it in the same change, so a backlog task cannot silently inherit a known

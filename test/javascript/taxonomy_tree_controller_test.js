@@ -222,6 +222,52 @@ describe("taxonomy error rendering", () => {
   })
 })
 
+describe("taxonomy checkbox fields", () => {
+  const checkboxFields = [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "taggable", label: "Taggable", type: "checkbox" },
+    { name: "show_in_menu", label: "Show in menu", type: "checkbox" }
+  ]
+
+  function nodeWithValues(values) {
+    const node = document.createElement("li")
+    node.dataset.nodeId = "1"
+    node.dataset.name = "Factions"
+    node.dataset.taxonomyValues = JSON.stringify(values)
+    node.dataset.updateUrl = "/u/dark/character_tags/1"
+    return node
+  }
+
+  test("a checkbox descriptor renders as a checkbox populated from the node's values", () => {
+    const { controller } = build({ modalFields: checkboxFields })
+    const node = nodeWithValues({ taggable: false, show_in_menu: true })
+
+    const modal = controller.buildModal(node)
+    document.body.append(modal)
+    controller.populateModalFields(modal, node)
+
+    const taggable = modal.querySelector("input[name='character_tag[taggable]'][type='checkbox']")
+    const showInMenu = modal.querySelector("input[name='character_tag[show_in_menu]'][type='checkbox']")
+    expect(taggable.checked).toBe(false)
+    expect(showInMenu.checked).toBe(true)
+    modal.remove()
+  })
+
+  test("a checked checkbox submits 1 and an unchecked one submits its hidden 0", () => {
+    const { controller } = build({ modalFields: checkboxFields })
+    const node = nodeWithValues({ taggable: true, show_in_menu: false })
+
+    const modal = controller.buildModal(node)
+    document.body.append(modal)
+    controller.populateModalFields(modal, node)
+
+    const values = controller.formValues(modal.querySelector("form"))
+    expect(values.taggable).toBe("1")
+    expect(values.show_in_menu).toBe("0")
+    modal.remove()
+  })
+})
+
 describe("taxonomy row building", () => {
   test("a color is only accepted in the documented format", () => {
     const { controller } = build()

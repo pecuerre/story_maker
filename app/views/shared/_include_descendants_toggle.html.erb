@@ -1,0 +1,14 @@
+<%# Toggle to include/exclude records from child tags on a tag details page.
+    The form submits via GET to the current path, preserving the tag ID. The
+    hidden field ensures "0" is submitted when the checkbox is unchecked. %>
+<%= form_tag request.path, method: :get, class: "d-inline-flex align-items-center gap-2 mb-3" do %>
+  <%= hidden_field_tag :include_descendants, "0" %>
+  <div class="form-check form-check-inline mb-0">
+    <%= check_box_tag :include_descendants, "1", @include_descendants,
+      class: "form-check-input",
+      id: "include_descendants_toggle",
+      onchange: "this.form.submit()" %>
+    <%= label_tag :include_descendants_toggle, "Include records from child tags",
+      class: "form-check-label" %>
+  </div>
+<% end %>

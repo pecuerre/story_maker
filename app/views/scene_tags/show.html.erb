@@ -12,6 +12,8 @@
   back_url: universe_story_scene_tags_path(story_id: @story),
   back_label: "All scene tags" %>
 
+<%= render "shared/include_descendants_toggle" %>
+
 <%= render "shared/detail_section",
   title: "Scenes with this tag",
   count: @tagged_records.size,

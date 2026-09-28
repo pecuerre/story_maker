@@ -71,7 +71,7 @@ class SceneCharactersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     # The blank prompt plus every universe character.
-    assert_select "select[name='scene_character[character_id]'] option", count: 4
+    assert_select "select[name='scene_character[character_id]'] option", count: 5
     assert_select "select[name='scene_character[character_id]'] option[value='']", text: "Choose a character"
     assert_select "select[name='scene_character[character_id]'] option[value=?]", third.id
     # A character already in the scene is not hidden, because a stale page or a

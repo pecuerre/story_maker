@@ -16,7 +16,12 @@ class OwnershipTagsController < ApplicationController
   # GET /ownership_tags/:id — the tag's own details page: the records that carry it.
   # The taxonomy tree links here with that count.
   def show
-    @tagged_records = @ownership_tag.tagged_records
+    @include_descendants = params[:include_descendants] != "0"
+    @tagged_records = if @include_descendants
+      @ownership_tag.tagged_records_including_descendants
+    else
+      @ownership_tag.tagged_records
+    end
   end
 
   def create

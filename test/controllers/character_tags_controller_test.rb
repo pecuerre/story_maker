@@ -82,4 +82,29 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ false, true ], @character_tag.reload.values_at(:taggable, :show_in_menu)
     assert_equal [ false, true ], response.parsed_body.values_at("taggable", "show_in_menu")
   end
+
+  test "show includes records from child tags by default" do
+    get universe_character_tag_url(universe_slug: @universe.slug, id: @character_tag)
+
+    assert_response :success
+    assert_includes response.body, "Character one"
+    assert_includes response.body, "Character three"
+    assert_includes response.body, "Include records from child tags"
+  end
+
+  test "show with include_descendants=0 excludes records from child tags" do
+    get universe_character_tag_url(universe_slug: @universe.slug, id: @character_tag, include_descendants: "0")
+
+    assert_response :success
+    assert_includes response.body, "Character one"
+    assert_not_includes response.body, "Character three"
+  end
+
+  test "show with include_descendants=1 includes records from child tags" do
+    get universe_character_tag_url(universe_slug: @universe.slug, id: @character_tag, include_descendants: "1")
+
+    assert_response :success
+    assert_includes response.body, "Character one"
+    assert_includes response.body, "Character three"
+  end
 end

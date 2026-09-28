@@ -12,6 +12,8 @@
   back_url: universe_location_tags_path,
   back_label: "All location tags" %>
 
+<%= render "shared/include_descendants_toggle" %>
+
 <%= render "shared/detail_section",
   title: "Locations with this tag",
   count: @tagged_records.size,

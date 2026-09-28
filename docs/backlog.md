@@ -180,6 +180,8 @@ it has a useful destination and clear empty/loading/error states.
   - move the seetings button on the top bar, under the account button
   - if no user is logged in, instead of a button [log in] show the same combo [account] and the login button inside
   - add a button "go back" in the settings, so when you finish changing settings you can continue where you left
+  - if i am not logged in and i am browsing the site, and then i decide to log in, i am redirected to the universe page
+    i would like to be redirected to the same page i was
 
 These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

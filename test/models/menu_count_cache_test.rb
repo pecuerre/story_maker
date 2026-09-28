@@ -16,7 +16,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
 
   test "caches all universe menu counts together" do
     expected_counts = {
-      characters: 2,
+      characters: 3,
       relations: 0,
       locations: 2,
       events: 2,
@@ -119,7 +119,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
     character.destroy!
 
     assert_equal(
-      { characters: 1, relations: 0, ownerships: 0 },
+      { characters: 2, relations: 0, ownerships: 0 },
       @universe.menu_counts.slice(:characters, :relations, :ownerships)
     )
   end
@@ -129,7 +129,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
 
     characters(:character_one).update!(name: "Renamed character")
 
-    assert_no_queries { assert_equal 2, @universe.menu_counts.fetch(:characters) }
+    assert_no_queries { assert_equal 3, @universe.menu_counts.fetch(:characters) }
   end
 
   test "moving a counted record invalidates both universe counts" do

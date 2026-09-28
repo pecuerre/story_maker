@@ -9,3 +9,9 @@ character_two:
   slug: "character-two"
   character_tags: character_tag_two
   name: Character two
+
+character_three:
+  universe: universe_one
+  slug: "character-three"
+  character_tags: character_tag_child
+  name: Character three

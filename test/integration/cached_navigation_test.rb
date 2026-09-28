@@ -28,7 +28,7 @@ class CachedNavigationTest < ActionDispatch::IntegrationTest
 
   test "menu counts refresh after character requests change the data" do
     get universe_story_url(universe_slug: @universe.slug, id: @story)
-    assert_character_sidebar_count(2)
+    assert_character_sidebar_count(3)
 
     post universe_characters_url(universe_slug: @universe.slug),
       params: { character: { name: "Navigation character" } },
@@ -37,13 +37,13 @@ class CachedNavigationTest < ActionDispatch::IntegrationTest
     character_id = response.parsed_body["id"]
 
     get universe_story_url(universe_slug: @universe.slug, id: @story)
-    assert_character_sidebar_count(3)
+    assert_character_sidebar_count(4)
 
     delete universe_character_url(universe_slug: @universe.slug, id: character_id), as: :json
     assert_response :no_content
 
     get universe_story_url(universe_slug: @universe.slug, id: @story)
-    assert_character_sidebar_count(2)
+    assert_character_sidebar_count(3)
   end
 
   private

@@ -16,3 +16,10 @@ character_tag_three:
   slug: "character-tag-three"
   name: Character tag three
   taggable: true
+
+character_tag_child:
+  universe: universe_one
+  slug: "character-tag-child"
+  name: Character tag child
+  parent: character_tag_one
+  taggable: true

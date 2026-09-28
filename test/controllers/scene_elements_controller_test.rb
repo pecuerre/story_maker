@@ -228,7 +228,7 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :no_content
     assert_equal [ 0, 1, 2 ], @scene.scene_elements.reorder(:position, :id).pluck(:position)
-    assert_equal 2, @scene.universe.characters.count, "a shared character is never deleted with an element"
+    assert_equal 3, @scene.universe.characters.count, "a shared character is never deleted with an element"
     assert_equal 0, ActiveRecord::Base.connection.select_value(
       "SELECT COUNT(*) FROM scene_element_speakers WHERE scene_element_id = #{element.id}"
     ).to_i

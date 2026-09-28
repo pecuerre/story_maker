@@ -38,6 +38,11 @@ module Hierarchical
     result
   end
 
+  # All descendant tag IDs (children, grandchildren, etc.) in the subtree.
+  def descendant_ids
+    children.flat_map { |child| [ child.id, *child.descendant_ids ] }
+  end
+
   private
 
   # Ownership scope parents must share. Defaults to the universe; models that

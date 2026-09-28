@@ -85,6 +85,34 @@ module HasManyTags
     public_send(association).reorder(:name, :id)
   end
 
+  # The records carrying this tag or any of its descendants. Used when the
+  # "include child tags" toggle is enabled on the tag details page. Queries
+  # the join table directly with all descendant tag IDs to avoid N+1 queries.
+  def tagged_records_including_descendants
+    association = self.class.tagged_records_association
+    return self.class.none if association.nil?
+
+    reflection = self.class.reflect_on_association(association)
+    return self.class.none unless reflection
+
+    tag_ids = [ id, *descendant_ids ]
+    return self.class.none if tag_ids.empty?
+
+    element_class = reflection.klass
+    join_table = reflection.join_table
+    element_fk = reflection.association_foreign_key
+    tag_fk = reflection.foreign_key
+    scope_attr = self.class.tagged_records_scope_attribute
+    scope_value = public_send(scope_attr)
+
+    element_class
+      .joins("INNER JOIN #{join_table} ON #{join_table}.#{element_fk} = #{element_class.table_name}.id")
+      .where(join_table => { tag_fk => tag_ids })
+      .where(scope_attr => scope_value)
+      .distinct
+      .reorder(:name, :id)
+  end
+
   # A tag assignment links this record to another record through a join table.
   # Changing the owning scope (universe, or story for section-scoped records)
   # would leave those join rows pointing across scopes, which violates the

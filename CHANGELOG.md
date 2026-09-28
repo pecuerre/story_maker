@@ -21,6 +21,11 @@ Labels used below:
 
 ## 2026-09-28
 
+- **[added]** Every tag details page now has an **"Include records from child tags" toggle**
+  (enabled by default). When on, the "X with this tag" list also shows records carrying any
+  descendant tag, so a parent tag like "Factions" can list characters tagged with its children
+  like "Sic Mundus" and "Erit Lux". The toggle is a checkbox that auto-submits via GET; all
+  eight tag types (character, location, item, event, relation, ownership, section, scene) support it.
 - **[added]** Tags can now be **groupings that are not assignable**. Every tag carries a `taggable`
   flag (default `true`); a tag with `taggable: false` stays in the taxonomy tree and on records that
   already carry it, but it is no longer offered in an element's tag editor — so a "Factions" tag can

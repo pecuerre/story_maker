@@ -190,6 +190,16 @@ Labels used below:
   flow, and `universe_maker_conventions.md` states the rule behind it: nothing inside the dropdown is
   positioned against the form, because anything that is resolves against a form no taller than the
   field.
+- **[planned]** `docs/backlog.md` items 20–25 now hold the full collaboration system plan: six phases
+  covering universe collaboration modes (`direct`/`wikipedia`/`github`), per-record discussions, a
+  draft/apply mutation system with per-record conflict resolution ("theirs"/"mine"), a GitHub-style
+  review workflow for owner+admins, and in-app notifications. Each phase is broken into deliverable
+  slices with their own tests, docs, and changelog entries. Decisions recorded: discussions are
+  configurable per model via a `HasDiscussion` concern; the draft system is a universe-level setting
+  that does not replace direct writes by default; reviewers are owner+admins; conflict detection is
+  per-record using `updated_at` as a version stamp. Deliberately deferred: per-field conflict
+  detection, real-time collaborative editing, markdown in discussions, email notifications, draft
+  branching/forking, and draft merging.
 
 ## 2026-09-27
 

@@ -166,7 +166,147 @@ it has a useful destination and clear empty/loading/error states.
    three UI patterns, JSON-only mutation contracts, optional tags, authorization, and accessible
    error states. Do not refactor solely to improve a line-count metric.
 
-These items are deliberately **LATER** by default. Use the owner’s **NOW / LATER / NEVER** decision
+20. **Collaboration system — Phase 1: Foundation (collaboration mode + discussions)**
+
+    Universes gain a collaboration mode setting, and every record gains a discussion page. No draft
+    functionality yet. Decisions: discussions are configurable per model via a `HasDiscussion` concern
+    (initially all content models + tags); SceneElement/SceneCharacter etc. have discussions inside
+    their Scene page, not as a separate user concern for now.
+
+    - **Slice 1.1:** Add `collaboration_mode` column to `universes` (string, default `"direct"`, not
+      null; values: `direct`, `wikipedia`, `github`). Add `Universe#direct?`, `#wikipedia?`,
+      `#github?`, `#draft_based?` helpers. Add a setting on the universe settings page (owner/admin
+      only) to change the mode. Update docs + changelog. Tests: model validation, request test.
+    - **Slice 1.2:** Create `discussions` table (`record_type`, `record_id`, `universe_id`, `title`,
+      timestamps) and `discussion_messages` table (`discussion_id`, `user_id`, `body`, timestamps).
+      `Discussion` model (polymorphic belongs_to :record, belongs_to :universe, has_many :messages),
+      `DiscussionMessage` model (belongs_to :discussion, belongs_to :user). Create `HasDiscussion`
+      concern (`has_one :discussion, as: :record, dependent: :destroy` + `find_or_create_discussion`
+      helper). Include in all content models and tag models. Tests: model tests, polymorphic
+      association tests.
+    - **Slice 1.3:** Routes: `resources :discussions, only: [:show, :create]` nested under universe,
+      with `resources :messages, only: [:create]` nested under discussions. `DiscussionsController#show`
+      (loads record through authorized scope, renders record details + discussion thread),
+      `DiscussionsController#create` (find or create discussion for a record),
+      `MessagesController#create` (add message). Views: discussion page uses `shared/_record_details`
+      for the record header, then message thread + reply form. Add "Discuss" link on every record's
+      details page. Tests: request tests, system test.
+    - **Slice 1.4:** Message timestamps, author names, empty state copy. Update
+      `docs/universe_maker_conventions.md` with the discussion page pattern. Update changelog.
+
+21. **Collaboration system — Phase 2: Draft system (core data model + interception)**
+
+    In `wikipedia` or `github` mode, mutations are stored as draft changes instead of written directly.
+    Users can see their pending changes and apply them. Conflict resolution comes in Phase 3.
+
+    - **Slice 2.1:** Create `drafts` table (`user_id`, `universe_id`, `status` string default `"draft"`
+      not null: `draft`/`applied`/`discarded`/`submitted`, timestamps) and `draft_changes` table
+      (`draft_id`, `record_type`, `record_id` nullable, `action` string: `create`/`update`/`delete`,
+      `changes` JSON/text, `base_version` string nullable, `created_at`). `Draft` model (belongs_to
+      :user, belongs_to :universe, has_many :draft_changes), `DraftChange` model (belongs_to :draft).
+      Validations: action inclusion, record_type presence. Tests: model tests, association tests.
+    - **Slice 2.2:** Create `app/controllers/concerns/draft_mutation.rb`. The concern intercepts
+      `create`, `update`, `destroy` actions. When the universe is in a draft mode: for `create` store
+      `action=create`, `record_id=null`, `changes`=new attributes; for `update` store `action=update`,
+      `record_id=id`, `changes`=changed attributes, `base_version`=record's `updated_at`; for
+      `destroy` store `action=delete`, `record_id=id`, `base_version`=record's `updated_at`. Return
+      JSON response indicating the change was stored as a draft. In `direct` mode: proceed with
+      current behavior. Include the concern in all mutation controllers (characters, locations, items,
+      events, relations, ownerships, sections, scenes, all tags, scene_elements, scene_characters,
+      scene_items, scene_locations). Tests: request tests for each controller in both direct and draft
+      mode.
+    - **Slice 2.3:** `DraftsController#index` (lists current user's drafts for the universe),
+      `#show` (shows one draft with all its changes), `#apply` (applies all non-conflicting changes;
+      conflict resolution comes in Phase 3), `#discard` (discards a draft). Views: draft list page,
+      draft detail page. Routes: `resources :drafts, only: [:index, :show, :apply, :discard]`.
+      Tests: request tests, system test.
+    - **Slice 2.4:** Add "Start editing" / "Stop editing" toggle button in the universe view (visible
+      to users with write access in draft-based modes). When in draft mode, show "N pending changes"
+      indicator. Toggle stored in session. When entering draft mode, create a draft for the user if one
+      doesn't exist. Tests: request tests, system test.
+    - **Slice 2.5:** When in draft mode, show pending changes as a panel/sidebar. For draft-created
+      records: show them in the list with a "draft" badge. For draft-edited records: show current
+      values with a "pending edit" badge. For draft-deleted records: show the record with a "pending
+      deletion" badge. Modify list queries to include draft changes for the current user. Tests:
+      request tests, system test.
+
+22. **Collaboration system — Phase 3: Conflict resolution**
+
+    When applying a draft, detect conflicts and let the user choose "theirs" or "mine" per conflicting
+    record. Conflict detection is per-record (not per-field). Uses `updated_at` as a version stamp:
+    when a draft change is created, store the record's `updated_at`; at apply time, a mismatch means
+    someone else modified the record.
+
+    - **Slice 3.1:** Create `app/services/draft_conflict_detector.rb`. For each draft change:
+      **Create** → no conflict possible. **Update** → if record's `updated_at` != `base_version` →
+      CONFLICT; if record is soft-deleted → CONFLICT. **Delete** → if record's `updated_at` !=
+      `base_version` → CONFLICT; if record is already soft-deleted → no conflict (already gone).
+      Returns a list of conflicts with the draft change and the current record state. Tests: unit
+      tests for all conflict scenarios.
+    - **Slice 3.2:** Conflict resolution UI. When applying a draft with conflicts, show a conflict
+      resolution page. For each conflict: show the record name and type, what the current user wants
+      to do, what "theirs" means, two buttons: "Apply theirs" (discard my change for this record) and
+      "Apply mine" (overwrite with my change). For "apply mine" on a delete conflict: restore the
+      record and apply the edit. For "apply mine" on an edit conflict: overwrite the current values
+      with the draft values. Tests: request tests, system test.
+    - **Slice 3.3:** Create `app/services/draft_applier.rb`. Applies non-conflicting changes directly.
+      For conflicting changes, applies the user's choice. Runs in a transaction. Returns a summary of
+      what was applied. Tests: unit tests, integration tests.
+
+23. **Collaboration system — Phase 4: Wikipedia mode (end-to-end)**
+
+    The full wikipedia flow works: start editing → make changes → apply → changes are live.
+
+    - **Slice 4.1:** Ensure all mutation controllers properly intercept in `wikipedia` mode. Ensure
+      the apply flow works end-to-end. Ensure conflict resolution works in `wikipedia` mode. Update
+      the UI to guide the user through the flow. Tests: full request + system test coverage.
+    - **Slice 4.2:** Flash messages for successful apply. Empty state for no pending changes. Draft
+      history (list of applied drafts). Update docs. Update changelog.
+
+24. **Collaboration system — Phase 5: GitHub mode (review workflow)**
+
+    In `github` mode, drafts are submitted for review. Owner+admins review and apply or reject.
+
+    - **Slice 5.1:** Create `review_requests` table (`draft_id`, `universe_id`, `submitted_by_id`,
+      `status` string: `pending`/`approved`/`rejected`, `reviewed_by_id`, `review_notes` text,
+      timestamps). `ReviewRequest` model (belongs_to :draft, :universe, :submitted_by, :reviewed_by).
+      When a draft is submitted, create a review request and change the draft status to `submitted`.
+      Tests: model tests.
+    - **Slice 5.2:** `ReviewRequestsController#index` (lists pending review requests, owner+admin
+      only), `#show` (shows a review request with the draft's changes), `#approve` (applies the
+      draft's changes with conflict resolution if needed), `#reject` (rejects with notes, changes
+      draft status back to `draft`). Routes: `resources :review_requests, only: [:index, :show,
+      approve, reject]`. Tests: request tests, system test.
+    - **Slice 5.3:** In `github` mode, the "Apply changes" button becomes "Submit for review". The
+      user can add a submission message. The draft status changes to `submitted`. The draft owner can
+      see the status of their submission. Tests: request tests, system test.
+    - **Slice 5.4:** A "Review requests" link in the right sidebar (owner+admin only). The review
+      page shows the draft's changes, the submitter's message. Approve button (with conflict
+      resolution if needed). Reject button with a notes field. Tests: request tests, system test.
+    - **Slice 5.5:** Full flow: start editing → make changes → submit for review → owner reviews →
+      approve/reject. In-app notifications: when a review request is submitted, when it's
+      approved/rejected. Update docs. Update changelog.
+
+25. **Collaboration system — Phase 6: Polish + notifications**
+
+    The collaboration system feels complete and polished.
+
+    - **Slice 6.1:** In-app notifications. Create `notifications` table (`user_id`, `type`, `read`,
+      `payload` JSON, `created_at`). Notify when: your draft is approved, your draft is rejected,
+      someone submits a review request, someone replies to your discussion. Notification bell in the
+      navbar. Tests: model tests, request tests.
+    - **Slice 6.2:** Real-time updates via Solid Cable. Broadcast when a draft is applied (so other
+      users see the changes), when a discussion message is posted, when a review request is
+      submitted/approved/rejected. Tests: system tests.
+    - **Slice 6.3:** Write an ADR for the collaboration system architecture. Update all relevant docs.
+      Update changelog.
+
+    **Deliberately deferred:** per-field conflict detection (per-record only for now); real-time
+    collaborative editing (async with explicit apply, not Google Docs style); markdown in discussions
+    (plain text first); email notifications (in-app first, email later); draft branching/forking (a
+    draft is a linear set of changes); draft merging (one draft at a time per user per universe).
+
+These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 

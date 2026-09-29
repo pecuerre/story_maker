@@ -8,9 +8,10 @@
 #
 # Every table and column name comes from the association's own reflection or from
 # the live schema, so a renamed table or column cannot silently produce a
-# different query, and the universe/story scope stays an explicit filter — the same
-# rule the association itself applies. All interpolated values go through
-# `sanitize_sql_array`.
+# different query. The universe/story scope and the soft-delete exclusion both stay
+# explicit filters on the element side — the same rules the association itself
+# applies, restated because raw SQL does not inherit `default_scope`. All
+# interpolated values go through `sanitize_sql_array`.
 #
 # The result maps tag id => tagged record count, so a taxonomy row can show a
 # "(10 characters)" count pill without an N+1.
@@ -52,31 +53,41 @@ class TaggedRecordCounts < ApplicationRecord
   def self.count_sql(element_class, reflection, tag_column, scope_column)
     join_table = reflection.join_table
     tag_id = connection.quote_column_name(tag_column)
-    scope = scope_column.present? ? scope_sql(element_class, reflection, tag_column, scope_column) : ""
 
     <<~SQL.squish
       SELECT #{tag_id} AS #{tag_column}, #{count_sql_for(join_table, tag_column)} AS #{COUNT_ALIAS}
       FROM #{connection.quote_table_name(join_table)}
       WHERE #{tag_id} IN (?)
-      #{scope}
+      #{scope_sql(element_class, reflection, tag_column, scope_column)}
       GROUP BY #{tag_id}
     SQL
   end
   private_class_method :count_sql
 
-  # The HABTM table has no universe/story column, so the shared scope is enforced
-  # on the element side, exactly like the instance-dependent association scope. Tag
-  # ids are already universe/story specific, so this only rules out a corrupt
-  # cross-scope join row rather than doing the primary filtering.
+  # The HABTM table has neither a universe/story column nor a `deleted_at`, so both
+  # are enforced on the element side, exactly like the instance-dependent
+  # association scope. Tag ids are already universe/story specific, so the scope
+  # filter only rules out a corrupt cross-scope join row rather than doing the
+  # primary filtering.
+  #
+  # The `deleted_at IS NULL` predicate is the same kind of correction. This query is
+  # raw SQL, so the element model's `default_scope` does not apply, and a soft
+  # delete deliberately keeps both the row and its join-table rows so that a
+  # restore is complete. Without it, deleting a tagged record left it counted in its
+  # tags' `(N characters)` pills while being invisible everywhere else.
   def self.scope_sql(element_class, reflection, tag_column, scope_column)
     table = connection.quote_table_name(element_class.table_name)
     id = connection.quote_column_name(element_class.primary_key)
-    scope = connection.quote_column_name(scope_column)
     element_id = connection.quote_column_name(element_foreign_key(reflection.join_table, tag_column))
 
-    <<~SQL.squish
-      AND #{element_id} IN (SELECT #{id} FROM #{table} WHERE #{scope} IN (?))
-    SQL
+    predicates = []
+    predicates << "#{connection.quote_column_name(scope_column)} IN (?)" if scope_column.present?
+    if element_class.column_names.include?("deleted_at")
+      predicates << "#{connection.quote_column_name("deleted_at")} IS NULL"
+    end
+    where = predicates.any? ? " WHERE #{predicates.join(" AND ")}" : ""
+
+    "AND #{element_id} IN (SELECT #{id} FROM #{table}#{where})"
   end
   private_class_method :scope_sql
 

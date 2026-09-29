@@ -61,6 +61,46 @@ Labels used below:
   `features/tags.md`, and its Scene section is the painted shape with the contract in
   `features/scenes.md`.
 
+- **[fixed]** `TaggedRecordCounts` counted soft-deleted records, so every taxonomy's
+  `(N characters)` pill kept a deleted record that was invisible everywhere else. It builds one
+  grouped query in **raw SQL**, so the element model's `default_scope` does not apply, and a soft
+  delete deliberately keeps both the row and its join-table rows so a restore is complete. The
+  element subquery filtered `universe_id`/`story_id` but not `deleted_at`. Verified in the
+  development database: soft-deleting a character tagged **Family Nielsen** left the count at 4 while
+  the record was correctly hidden everywhere else. The exclusion is now restated in the query, beside
+  the scope filter it already carried, and is conditional on the element table actually having a
+  `deleted_at` column. The story-scoped taxonomies are covered by the same generated query, and
+  `test/models/tagged_record_counts_test.rb` gained three cases: the count drops on a soft delete
+  while the join row is kept, a restored record is counted again, and a story-scoped taxonomy
+  behaves the same. This is what the Scene delete confirmation's "tag assignments … will be
+  permanently removed" promises, and until now it was not true of the count the author sees.
+
+- **[fixed]** Two JSON-only mutation controllers had no format guard, so an HTML request committed the
+  record and only then answered `406` — the exact commit-behind-the-error failure ADR 0011 exists to
+  prevent. `SectionsController` and `LocationsController` now `include RequiresJsonMutationFormat`
+  and declare `before_action :require_json_mutation_format, only: %i[ create update destroy ]` after
+  their record lookup, matching the eight controllers that already had it. `LocationsController#destroy`
+  was the worse half: it was not even wrapped in `respond_to`, so an HTML `_method=delete` was
+  accepted outright and soft-deleted the record. Neither controller has an HTML mutation surface —
+  both are mutated only through the taxonomy tree, which sends `Accept: application/json` — so no
+  legitimate path is refused. `test/controllers/modal_json_contract_test.rb` gained a case covering
+  create and delete for both, verified to fail without the guard.
+- **[fixed]** `config/locales/es.yml` carried **two** `errors:` blocks, and a repeated mapping key is
+  not an error to Psych: the later value silently replaces the earlier one. The second block, holding
+  the Rails `errors.format` / `errors.messages` subset, was discarding the application's own Spanish
+  `unavailable_account` and `rate_limited` strings, so those two messages were never translated. The
+  blocks are merged under one `errors:` key, and `test/models/translations_test.rb` now walks the
+  parsed document for a repeated key at any depth and fails on one.
+- **[fixed]** The translation parity test decided which keys the application owns by **namespace**,
+  excluding all of `errors`, `datetime`, and `support`. Because this application owns
+  `errors.unavailable_account` and `errors.rate_limited` beside Rails' own `errors.messages.*` and
+  `errors.format`, those two were exempt from the two-file comparison: a key added to `en.yml` and
+  forgotten in `es.yml` would have failed no test. Ownership is now decided **per key**, read from
+  the framework's own locale files rather than a hardcoded list, so a Rails upgrade that adds or
+  moves a subtree is classified correctly without editing the test. `I18n.exists?` cannot answer
+  this question, because the application's own `en.yml` is merged into the `:en` backend and its keys
+  answer `true` exactly like Rails' do.
+
 - **[fixed]** `docs/adr/README.md` did not mention `docs/features/`, so the eight feature documents
   were unreachable from the ADR index that 16 of 17 ADRs link to. Its "current documentation" list
   now names all five core documents, the `features/` directory with its eight members, and
@@ -101,6 +141,25 @@ Labels used below:
   accepted Scene contract adds the remaining documented Scene actions in later delivery slices",
   long shipped). The Event section now states the taxonomy as current fact, and the delivery sentence
   is gone; what happened when belongs in this changelog, not in a living rule.
+
+- **[docs]** ADR 0007's deletion contract was written against the hard delete and does not describe the
+  shipped soft delete. `SoftDeletable` walks only each model's declared `soft_deletes` list and never
+  touches a HABTM join table, so a Scene's Scene Tag assignments and Dialogue speaker links, and a
+  Character's tag assignments and speaker links, are **retained** — which is what makes a restore
+  complete, and is already pinned for speaker links by
+  `test/controllers/scene_elements_controller_test.rb` ("speaker links are kept so a restore brings
+  them back"). ADR 0007 gains a dated execution note recording the divergence rather than having its
+  Decision rewritten, `docs/features/scenes.md` stated the false cascade and now states the real
+  contract, and `test/models/scene_test.rb` gains a soft-delete/restore case alongside the existing
+  hard-delete one — which used `destroy!` and so proved only the contract that is no longer shipped.
+- **[docs]** ADR 0015 claimed "Destroying the record's universe does remove them, because `Photo`
+  belongs to it", and no such cascade exists: `Universe` declares no `has_many :photos`, its
+  `soft_deletes` omits photos, and `db/schema.rb`'s foreign key has no `on_delete:`, so it is
+  `NO ACTION` and would not cascade even on a hard delete. The claim is corrected in place and an
+  audit note added, with the reason the cascade was **not** implemented: `photos` has no `deleted_at`
+  and `Photo` is not soft-deletable, and a `Photo` can be deliberately shared with
+  `HasPhoto#referenced_elsewhere?` already guarding that case. Making photos cascade is a product
+  decision with a schema change attached, so it is left as one.
 
 - **[docs]** ADR 0016 re-derived a decision ADR 0013 had already made. Its `users.locale` alternative
   opened with "Rejected for now, for the same reason `users.theme` was" and then repeated ADR 0013's
@@ -166,6 +225,11 @@ Labels used below:
   name, shared partial, and helper referenced by the four documents before the move is still
   referenced after it. `shared/_search_bar` and `TimelineController` were the only two mentions lost,
   and both were restored.
+
+- **[chore]** `docs/adr_audit.md` — the point-in-time audit of all sixteen accepted ADRs against the
+  code — was removed once its findings had been acted on, since it duplicated what this entry and the
+  two ADR notes now record. It had also made `test/docs_test.rb` fail its index check, because a new
+  document has to be listed in `docs/README.md`.
 
 - **[chore]** Added `test/docs_test.rb`, which makes the documentation's own consistency a test
   rather than a convention nobody checks. It fails the suite when a relative Markdown link is dead,

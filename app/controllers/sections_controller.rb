@@ -1,12 +1,14 @@
 class SectionsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
+  include RequiresJsonMutationFormat
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :section
 
   before_action :set_story
   before_action :set_section, only: %i[ show update destroy ]
+  before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
     @sections = @story.sections

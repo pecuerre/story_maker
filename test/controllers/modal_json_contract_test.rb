@@ -173,6 +173,42 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     assert_response :not_acceptable
   end
 
+  # Sections and Locations are mutated through the taxonomy tree, which is JSON
+  # only, but neither controller carried the format guard. An HTML create
+  # therefore committed the record and only then raised UnknownFormat as a 406,
+  # and an HTML delete was accepted outright, because `destroy` was not even
+  # wrapped in `respond_to`. Both are the commit-behind-the-error failure
+  # ADR 0011 exists to prevent.
+  test "the section and location endpoints refuse an html mutation instead of committing it" do
+    story = stories(:story_one)
+    section = sections(:section_one)
+    location = locations(:location_one)
+
+    assert_no_difference("Section.count") do
+      post universe_story_sections_url(universe_slug: @universe.slug, story_id: story),
+        params: { section: { name: "Html submit" } }
+    end
+    assert_response :not_acceptable
+
+    assert_no_difference("Location.count") do
+      post universe_locations_url(universe_slug: @universe.slug),
+        params: { location: { name: "Html submit" } }
+    end
+    assert_response :not_acceptable
+
+    # The delete path is the one that was accepted outright rather than merely
+    # committing and then raising, so it is asserted on its own.
+    assert_no_difference("Section.count") do
+      delete universe_story_section_url(universe_slug: @universe.slug, story_id: story, id: section)
+    end
+    assert_response :not_acceptable
+
+    assert_no_difference("Location.count") do
+      delete universe_location_url(universe_slug: @universe.slug, id: location)
+    end
+    assert_response :not_acceptable
+  end
+
   test "a rejected json mutation answers 422 with the error hash the modal renders" do
     post universe_characters_url(universe_slug: @universe.slug),
       params: { character: { name: "" } },

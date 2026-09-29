@@ -476,10 +476,6 @@ es:
   pwa:
     description: "Construye y mantén universos narrativos coherentes."
 
-  errors:
-    unavailable_account: "Esa página no está disponible para esta cuenta. Aquí tienes los universos que puedes abrir."
-    rate_limited: "Inténtalo de nuevo más tarde."
-
   # Los nombres de los tipos de registro viven en la raíz de la Locale a
   # propósito. Cada espacio de trabajo ya pasa uno de ellos como una palabra
   # suelta (`count_label: "character"`), y los ayudantes compartidos resuelven
@@ -604,8 +600,13 @@ es:
   # `errors.format` is the frame Rails puts a translated message in, and
   # `errors.messages` are the built-in validation messages. The application's own
   # `errors.add` messages are literals in the models, and are translated with
-  # the models rather than here.
+  # the models rather than here. The two refusals below are this application's
+  # own, and live under the same `errors:` key as the Rails subset rather than in
+  # a second `errors:` block: a repeated key in one YAML file silently replaces
+  # the earlier one, which is how these two strings were being dropped entirely.
   errors:
+    unavailable_account: "Esa página no está disponible para esta cuenta. Aquí tienes los universos que puedes abrir."
+    rate_limited: "Inténtalo de nuevo más tarde."
     format: "%{attribute} %{message}"
     messages:
       model_invalid: "La validación falló: %{errors}"

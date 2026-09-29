@@ -291,12 +291,19 @@ not render placeholder counts for them.
 
 It is asymmetric, and the asymmetry is deliberate:
 
-- Scene-owned Elements, tag assignments, speaker links, and presence links **cascade** with Scene or
-  Story deletion. Scene Tag definitions are removed with their Story.
+- Scene-owned **Elements** and **presence links** (characters, items, locations) cascade with Scene
+  or Story deletion. Scene Tag *definitions* are removed with their Story.
+- **Join-table rows are deliberately retained**, not cascaded: a Scene's Scene Tag assignments and
+  Dialogue speaker links, and a Character's tag assignments and speaker links, all survive a soft
+  delete. That is what makes a **restore** complete — the record returns with its tags and speakers
+  intact — and it is why `soft_delete` walks only the `soft_deletes` list and never touches a HABTM
+  join table. ADR 0007's Decision section was written against the hard-delete contract and predates
+  this; the divergence is recorded in that ADR's dated execution notes.
 - Deleting a **Section** clears Scene references (`section_id` nullified) and deleting an **Event**
   clears the temporal reference, while preserving Scene narrative order. Neither removes a Scene.
-- Deleting a shared Character, Item, or Location removes its Scene links in addition to the existing
-  model-dependent behavior, and never removes a Scene.
+- Deleting a shared Character, Item, or Location soft-deletes its presence links in addition to the
+  existing model-dependent behavior, and never removes a Scene. Its HABTM tag assignments and
+  speaker links are retained, for the restore reason above.
 - Event retains its existing child and temporal-referrer cleanup.
 
 A soft delete follows the shared rules in [data_model.md](../data_model.md#soft-delete): a deleted

@@ -14,19 +14,30 @@ require "test_helper"
 # whole loaded `I18n` backend: Rails defines `errors.messages.*`,
 # `datetime.distance_in_words.*`, and `support.array.*` in English only, so they
 # can never appear in `en.yml`. Those are checked against the real Rails key set
-# instead, and are told apart by the namespace they live under.
+# instead. Ownership is decided **per key**, read from the framework's own locale
+# files, so an application key that happens to sit inside a framework namespace
+# is still compared.
 class TranslationsTest < ActiveSupport::TestCase
   LOCALE_FILES = %w[config/locales/en.yml config/locales/es.yml].freeze
-
-  # The top-level namespaces Rails owns. `es.yml` translates a hand-picked subset
-  # of these; everything else in the two files is the application's own copy.
-  FRAMEWORK_NAMESPACES = %w[datetime errors support].freeze
 
   PLURAL_FORMS = %w[zero one two few many other].freeze
 
   test "the two locale files parse and each holds exactly one locale" do
     assert_equal %w[en], load_locale("en").keys.map(&:to_s)
     assert_equal %w[es], load_locale("es").keys.map(&:to_s)
+  end
+
+  test "no locale file repeats a mapping key" do
+    # A repeated key in one YAML file is not an error to Psych: the later value
+    # silently replaces the earlier one, so the discarded half simply stops
+    # being translated and nothing in the suite notices. `es.yml` had two
+    # `errors:` blocks, and the second one — the Rails subset — was replacing the
+    # application's own `unavailable_account` and `rate_limited` strings.
+    LOCALE_FILES.each do |file|
+      repeated = repeated_keys(Psych.parse_file(Rails.root.join(file)))
+
+      assert_empty repeated, "#{file} repeats a key, so the earlier value is discarded: #{repeated.join(', ')}"
+    end
   end
 
   test "the Spanish translations carry exactly the English key set" do
@@ -172,16 +183,49 @@ class TranslationsTest < ActiveSupport::TestCase
       YAML.load_file(Rails.root.join("config", "locales", "#{name}.yml"))
     end
 
-    # Everything the application owns: the two files minus the namespaces Rails
-    # defines in English only.
+    # Everything the application owns: the two files minus the keys Rails itself
+    # defines. The split is made per key, not per namespace, because this
+    # application owns `errors.unavailable_account` and `errors.rate_limited`
+    # beside Rails' own `errors.messages.*` and `errors.format`. A namespace-wide
+    # exclusion dropped those two out of the comparison, so a key added to
+    # `en.yml` and forgotten in `es.yml` would have failed no test at all.
     def application_keys(locale)
-      walk(load_locale(locale).fetch(locale).except(*FRAMEWORK_NAMESPACES), [])
+      keys(locale).reject { |key, _| rails_keys.include?(key) }
     end
 
     def framework_keys(locale)
-      walk(load_locale(locale).fetch(locale).slice(*FRAMEWORK_NAMESPACES), [])
-        .select { |key, _| FRAMEWORK_NAMESPACES.any? { |ns| key.start_with?("#{ns}.") } }
-        .keys
+      keys(locale).select { |key, _| rails_keys.include?(key) }.keys
+    end
+
+    def keys(locale)
+      walk(load_locale(locale).fetch(locale), [])
+    end
+
+    # The keys Rails defines, read from the framework's own locale files rather
+    # than assumed from a hardcoded list, so a Rails upgrade that adds or moves a
+    # subtree is classified correctly without editing this test. `I18n.exists?`
+    # cannot answer this: the application's own `en.yml` is merged into the `:en`
+    # backend, so its keys answer `true` exactly like Rails' do.
+    def rails_keys
+      @rails_keys ||= begin
+        paths = Gem.loaded_specs
+          .values_at("activemodel", "activesupport", "activerecord", "actionview")
+          .compact
+          .flat_map { |gem| Dir[File.join(gem.full_gem_path, "lib", "**", "locale", "*.yml")] }
+
+        paths.each_with_object({}) do |path, out|
+          data = begin
+            YAML.load_file(path)
+          rescue StandardError
+            nil
+          end
+          next unless data.is_a?(Hash)
+
+          data.each_value do |tree|
+            walk(tree, [], out) if tree.is_a?(Hash)
+          end
+        end
+      end
     end
 
     # A leaf is a String; a Hash whose keys are all plural forms is one
@@ -206,5 +250,23 @@ class TranslationsTest < ActiveSupport::TestCase
 
     def placeholders(value)
       value.to_s.scan(/%\{(\w+)\}/).flatten.sort
+    end
+
+    # Every mapping key in the parsed document as a full dotted path, at any
+    # depth, so a repeat is found wherever it is written rather than only at the
+    # top level. The path matters: `shared.label` and `settings.label` are two
+    # different keys, while two `errors:` blocks are the same key twice.
+    def repeated_keys(node, path = [], seen = [])
+      case node
+      when Psych::Nodes::Mapping
+        node.children.each_slice(2) do |key, value|
+          child = path + [ key.respond_to?(:value) ? key.value.to_s : "?" ]
+          seen << child.join(".")
+          repeated_keys(value, child, seen) if value.is_a?(Psych::Nodes::Node)
+        end
+      when Psych::Nodes::Sequence, Psych::Nodes::Document
+        node.children.each { |child| repeated_keys(child, path, seen) if child.is_a?(Psych::Nodes::Node) }
+      end
+      seen.tally.select { |_key, count| count > 1 }.keys
     end
 end

@@ -168,4 +168,25 @@ class SceneTest < ActiveSupport::TestCase
     assert_equal 2, SceneTag.where(story_id: @story).count
     assert SceneTag.where(id: tag_ids).all? { |tag| tag.scenes.empty? }
   end
+
+  # The shipped delete is a soft delete, and the two contracts differ for the
+  # HABTM join table. A soft delete keeps the assignment rows so a restore is
+  # complete, which is the same reason speaker links are kept. ADR 0007's
+  # Decision section still states the hard-delete contract, and its dated
+  # execution note records the divergence.
+  test "soft-deleting a scene keeps its tag assignments so a restore is complete" do
+    scene = scenes(:scene_one)
+    tag_ids = scene.scene_tag_ids
+
+    scene.soft_delete
+
+    assert scene.reload.deleted?
+    assert_equal tag_ids.sort, ActiveRecord::Base.connection.select_values(
+      "SELECT scene_tag_id FROM scenes_scene_tags WHERE scene_id = #{scene.id} ORDER BY scene_tag_id"
+    ).map(&:to_i).sort
+
+    scene.restore
+
+    assert_equal tag_ids.sort, scene.scene_tag_ids.sort
+  end
 end

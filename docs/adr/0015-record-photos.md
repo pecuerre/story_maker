@@ -95,8 +95,10 @@ over unless the transport is chosen to make one implementation serve all three.
   during the request. `PhotoProcessing` bounds that at 8 MB. This is a deliberate trade for not
   changing how three editors submit.
 - **A `Photo` can be orphaned.** A record destroyed through a path that does not run the concern's
-  callbacks keeps its `Photo` row. Destroying the record's universe does remove them, because
-  `Photo` belongs to it; a general sweep for orphans would be a separate decision.
+  callbacks keeps its `Photo` row. A general sweep for orphans would be a separate decision. The
+  sentence that used to continue here — "Destroying the record's universe does remove them, because
+  `Photo` belongs to it" — was **never true of the shipped code**; see the dated execution note
+  below.
 - **`Photo::OWNER_CLASS_NAMES` is a list that can go stale.** It is kept equal to the `HasPhoto`
   includers by a model test, because a missing entry is a photo destroyed while another record still
   shows it. A new photo-capable model must add itself in both places or the test fails.
@@ -146,6 +148,35 @@ attachment fetch, and the author can delete the original by deleting the photo.
 Rejected, and recorded here because it is the one that would have been cheapest to build. Optional
 is the requirement, and a required photo would have meant a migration default, a placeholder image,
 a validation on eighteen models, and a change to every existing record and fixture.
+
+## Dated execution note (2026-09-30, no cascade from Universe)
+
+An audit of this ADR against the code on 2026-09-30 found that the Consequences section claimed
+"Destroying the record's universe does remove them, because `Photo` belongs to it", and **no such
+cascade exists**. Recorded here rather than by rewriting the section, which is the record of what was
+decided on 2026-09-29.
+
+- `Universe` declares **no** `has_many :photos`, and its `soft_deletes` list omits photos
+  (`app/models/universe.rb:16-17,64-80`).
+- The database offers no help either: `db/schema.rb:574` is
+  `add_foreign_key "photos", "universes"` with **no** `on_delete:`, so it is the default `NO ACTION`
+  and would not cascade even on a hard delete.
+- The shipped delete path is `universes_controller.rb:66` → `soft_delete`, which only stamps
+  `deleted_at` on the associations the model declares.
+
+So a `Photo` row survives its universe. This was left as-is rather than "fixed", because adding the
+cascade is a product decision with real prerequisites, not a documentation slip:
+
+- `photos` has **no `deleted_at` column** and `Photo` does not include `SoftDeletable`, so there is
+  nothing for a soft delete to mark. Cascading would mean either hard-destroying image rows during a
+  soft delete, or a schema migration to make `Photo` soft-deletable.
+- A `Photo` can be **deliberately shared** — development data and a console can point two records at
+  one row — and `HasPhoto#referenced_elsewhere?` already guards that case when a photo is replaced.
+  A universe-wide sweep would have to respect the same guard.
+
+The current behaviour is documented in
+[`../features/photos.md`](../features/photos.md), which never made the universe-cascade claim.
+Implementing the cascade is left as a separate decision.
 
 ## Related documentation
 

@@ -334,6 +334,31 @@ shown in these confirmations.
 >   delete returns to the same filter. A Story may hold hundreds of scenes, so narrowing the list is
 >   a list capability, not a second order.
 
+## Dated execution note (2026-09-30, deletion contract under soft delete)
+
+The Decision section above describes the deletion contract in hard-delete terms. The shipped delete
+is a **soft delete**, and the two differ for the HABTM join tables. Recorded here rather than by
+rewriting the Decision, because that section is the record of what was decided on 2026-09-25.
+
+- **Still cascading.** Scene-owned Elements and presence links, and the Section/Event reference
+  clearing, behave exactly as the Decision states. `soft_delete` walks each model's declared
+  `soft_deletes` list, and the partial unique indexes carry the matching `deleted_at IS NULL`
+  condition.
+- **Not cascading, deliberately.** Rows in a HABTM join table are retained: a Scene's
+  `scenes_scene_tags` assignments and `scene_element_speakers` links, and a Character's tag
+  assignments and speaker links. `SoftDeletable` has no join-cleanup hook, so these survive
+  untouched. That is what makes a **restore** complete — the record returns with its tags and
+  speakers intact — and `test/controllers/scene_elements_controller_test.rb` pins it for speaker
+  links with the comment "speaker links are kept so a restore brings them back". The Decision's
+  sentence "deleting a Character removes … tag assignments" is therefore not true of the shipped
+  soft-delete path.
+- The user-facing confirmation copy still describes the removal in the Decision's terms, because
+  that copy is mandated by this ADR and has not been reworded.
+
+The current contract is documented in
+[`../features/scenes.md`](../features/scenes.md#the-deletion-contract) and
+[`../data_model.md`](../data_model.md#soft-delete).
+
 ## Consequences
 
 ### Benefits

@@ -61,4 +61,46 @@ class TaggedRecordCountsTest < ActiveSupport::TestCase
   test "returns an empty hash for a taxonomy with no tags" do
     assert_equal({}, TaggedRecordCounts.for(@universe.relation_tags.where(id: 0)))
   end
+
+  # A soft delete keeps the record's join-table rows so a restore is complete, and
+  # this query is raw SQL, so the element model's `default_scope` does not apply.
+  # The exclusion has to be restated in the query, or a deleted record stays in its
+  # tags' count pills while being invisible everywhere else.
+  test "stops counting a soft-deleted record while its join rows are kept" do
+    tag = character_tags(:character_tag_one)
+    character = characters(:character_one)
+    assert_equal 1, TaggedRecordCounts.for(@universe.character_tags)[tag.id]
+
+    character.soft_delete
+
+    assert_empty Character.where(id: character.id), "the record must be hidden from ordinary queries"
+    assert_equal 1, ActiveRecord::Base.connection.select_value(
+      "SELECT COUNT(*) FROM characters_character_tags WHERE character_id = #{character.id}"
+    ).to_i, "the join row is kept so a restore is complete"
+    assert_equal 0, TaggedRecordCounts.for(@universe.character_tags)[tag.id],
+      "a soft-deleted record must not still be counted"
+  end
+
+  test "counts a restored record again" do
+    tag = character_tags(:character_tag_one)
+    character = characters(:character_one)
+
+    character.soft_delete
+    character.restore
+
+    assert_equal 1, TaggedRecordCounts.for(@universe.character_tags)[tag.id]
+  end
+
+  test "excludes soft-deleted records in a story-scoped taxonomy too" do
+    story = stories(:story_one)
+    tag = section_tags(:section_tag_one)
+    section = story.sections.first
+    tag.sections << section unless tag.sections.include?(section)
+
+    before = TaggedRecordCounts.for(story.section_tags)[tag.id]
+    section.soft_delete
+
+    assert_equal before - 1, TaggedRecordCounts.for(story.section_tags)[tag.id],
+      "a soft-deleted section must drop out of its tag's count"
+  end
 end

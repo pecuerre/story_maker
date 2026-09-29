@@ -275,6 +275,23 @@ export default class extends Controller {
         return
       }
 
+      // The photo editor is a Stimulus controller that builds its own widget, so
+      // the taxonomy modal only produces the same bare container the server-side
+      // partial produces. There is no second implementation of the control here
+      // to drift from the one in `shared/_photo_field`.
+      if (field.type === "photo") {
+        wrapper.className = "photo-field"
+        wrapper.dataset.controller = "photo-crop"
+        wrapper.dataset.photoCropFieldValue = `${this.modelParamValue}[photo_data]`
+        wrapper.dataset.photoCropRemoveFieldValue = `${this.modelParamValue}[remove_photo]`
+        // The stored photo is this node's own value, so the modal shows the row
+        // being edited rather than whatever the shared descriptor carries.
+        wrapper.dataset.photoCropCurrentUrlValue = this.photoUrlFor(node)
+        wrapper.dataset.photoCropLabelValue = field.label || "Photo"
+        fragment.append(wrapper)
+        return
+      }
+
       const label = this.fieldLabel(field, id)
       const input = document.createElement(field.type === "textarea" ? "textarea" : "input")
       input.className = field.type === "color" ? "form-control form-control-color" : "form-control"
@@ -289,6 +306,11 @@ export default class extends Controller {
     })
 
     return fragment
+  }
+
+  photoUrlFor(node) {
+    const values = this.parseJson(node?.dataset.taxonomyValues, {})
+    return values.photo || ""
   }
 
   fieldLabel(field, id, className = "form-label") {
@@ -319,6 +341,10 @@ export default class extends Controller {
     const fields = this.parseJson(this.modalFieldsValue, [])
 
     fields.forEach((field) => {
+      // The photo control reads the URL from the container it was built with and
+      // owns its own inputs, so it has no field to fill here.
+      if (field.type === "photo") return
+
       const inputName = field.multiple ? `${this.modelParamValue}[${field.name}][]` : `${this.modelParamValue}[${field.name}]`
       const input = this.findInput(modal, inputName, field)
       if (!input) return

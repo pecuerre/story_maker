@@ -3,6 +3,7 @@ class RelationTag < ApplicationRecord
   include HasColor
   include HasManyTags
   include HasSlug
+  include HasPhoto
   include SoftDeletable
   include Searchable
   searchable kind: "tag", title: :name, body: :description, route: "relation_tag", taxonomy: "Relation"

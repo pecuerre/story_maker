@@ -1,5 +1,6 @@
 class StoriesController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   before_action :set_story, only: %i[ show edit update destroy ]
 
   # GET /u/:universe_slug/s
@@ -61,6 +62,6 @@ class StoriesController < ApplicationController
   end
 
   def story_params
-    params.expect(story: [ :name, :description ])
+    params.expect(story: [ *photo_params, :name, :description ])
   end
 end

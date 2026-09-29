@@ -96,6 +96,7 @@
             <% if rejected %>
               <%= render "shared/error_summary", record: rejected, subject: "relation" %>
             <% end %>
+            <%= render "shared/photo_field", param: "relation" %>
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <%= form.label :character1_id, "Character 1", class: "form-label" %>

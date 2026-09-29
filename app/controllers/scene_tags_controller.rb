@@ -1,5 +1,6 @@
 class SceneTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
   maintains_sibling_positions_for :scene_tag
@@ -78,7 +79,7 @@ class SceneTagsController < ApplicationController
     end
 
     def scene_tag_params
-      params.expect(scene_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
+      params.expect(scene_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
     end
 
     def update_scene_tag

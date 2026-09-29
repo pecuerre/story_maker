@@ -4,6 +4,7 @@ require "rails/test_help"
 require_relative "test_helpers/session_test_helper"
 require_relative "test_helpers/forgery_protection_test_helper"
 require_relative "support/search_test_backend"
+require_relative "support/photo_test_helper"
 
 module ActiveSupport
   class TestCase

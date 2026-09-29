@@ -1,0 +1,26 @@
+<%# The photo editor for a form the server renders.
+
+    Local contract:
+      param        - the form scope, e.g. "character" or "story", so the two
+                     fields are named the way this form's other fields are
+      current_url  - the stored photo's URL, or nothing
+      label        - optional override for the field's own label
+
+    Pass no `current_url` for a shared modal. One modal form serves every row of
+    a list, so its picture is whatever row is being edited; `modal_form_controller`
+    tells the control which one that is when it opens the editor, from the same
+    `photo_url` the row's own trigger already carries. A full-page form is
+    rendered for one record and passes the URL directly.
+
+    This is the bare container the cropper takes over. Everything inside it — the
+    file input, the square crop stage, the zoom control, the move buttons, the
+    hidden field carrying the chosen square, and the remove checkbox — is built by
+    `photo_crop_controller.js`. That is what lets a server-rendered form and the
+    taxonomy editor's JavaScript-built modal use the identical control instead of
+    two implementations that could drift. %>
+<div class="photo-field"
+  data-controller="photo-crop"
+  data-photo-crop-field-value="<%= param %>[photo_data]"
+  data-photo-crop-remove-field-value="<%= param %>[remove_photo]"
+  data-photo-crop-current-url-value="<%= local_assigns[:current_url] %>"
+  data-photo-crop-label-value="<%= local_assigns[:label] || "Photo" %>"></div>

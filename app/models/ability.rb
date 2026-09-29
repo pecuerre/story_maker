@@ -30,7 +30,13 @@ class Ability
     RelationTag
     Ownership
     OwnershipTag
+    Photo
   ].freeze
+
+  # A Photo has no route and no page of its own: it is written only through the
+  # form of the record that shows it, which is already authorized. It is listed
+  # here so a generic `authorize!` on the class is never allowed for lack of a
+  # rule, and because `UniverseScopeResolver` answers for it.
 
   def initialize(user)
     @user = user

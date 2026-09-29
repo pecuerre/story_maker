@@ -21,6 +21,28 @@ Labels used below:
 
 ## 2026-09-29
 
+- **[added]** Every "main" record and tag can now carry one optional photo: universes, stories,
+  sections, scenes, characters, locations, items, events, relations, ownerships, and all eight tag
+  models. The image lives in its own `Photo` model (`app/models/photo.rb`) with one Active Storage
+  attachment, and each of those eighteen tables gained a nullable, indexed `photo_id` through a
+  shared `HasPhoto` concern — a record without a photo is completely normal, and no controller
+  creates one. On a details page the square shows in the left part of the surface card with the
+  identity beside it; a record without one renders exactly what it rendered before, because both
+  branches share `shared/_record_details_identity`.
+  A photo is always square. `photo_crop_controller.js` is a dependency-free canvas cropper that
+  opens the chosen image in a square the author can drag, move with the arrow keys, or nudge with
+  four real buttons, and confirms it as a `data:` URL in one ordinary form field — so the same
+  control serves the JSON modals, the taxonomy editor's DOM-built modal, and the plain full-page
+  forms without any of them changing how it submits. The server is still the authority:
+  `PhotoProcessing` crops and resizes to 300×300 again, re-encodes as JPEG, and strips metadata, so
+  the original upload is never stored, and the stored bytes are an image this application produced.
+  Submitted bytes are checked against a content-signature allowlist (JPEG/PNG/GIF/WebP) and a size
+  bound before an image library sees them, so a client that labels an SVG as `image/png` is refused.
+  The request carries a cropped square or a remove flag, never a photo id, which makes a
+  cross-universe assignment unreachable from the interface; a photo must still belong to the
+  record's own universe, and one is destroyed only after the replacing transaction commits and only
+  while nothing else still refers to it. A read-only member and a guest are offered no cropper at
+  all. See [ADR 0015](docs/adr/0015-record-photos.md).
 - **[changed]** On a tag page reached from a workspace menu tab, the tab strip now sits between the
   page header and the tag's identity card instead of below the card, so the navigation reads as one
   piece the way it does on every other workspace page. `shared/_record_details` takes an optional

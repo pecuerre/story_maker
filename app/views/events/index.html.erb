@@ -90,6 +90,7 @@
               <%= form.label :title, class: "form-label" %>
               <%= form.text_field :title, class: "form-control" %>
             </div>
+            <%= render "shared/photo_field", param: "event" %>
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <%= form.label :start_datetime, "Start date/time", class: "form-label" %>

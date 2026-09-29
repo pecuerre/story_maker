@@ -1,5 +1,6 @@
 class EventTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :event_tag
@@ -80,7 +81,7 @@ class EventTagsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def event_tag_params
-    params.expect(event_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
+    params.expect(event_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_event_tag

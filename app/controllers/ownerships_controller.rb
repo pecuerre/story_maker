@@ -1,5 +1,6 @@
 class OwnershipsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   before_action :set_ownership, only: %i[ show update destroy ]
 
   def index
@@ -47,7 +48,7 @@ class OwnershipsController < ApplicationController
   end
 
   def ownership_params
-    params.expect(ownership: [ :item_id, :character_id, { ownership_tag_ids: [] }, :description, :from_date, :to_date ])
+    params.expect(ownership: [ *photo_params, :item_id, :character_id, { ownership_tag_ids: [] }, :description, :from_date, :to_date ])
   end
 
   def load_form_options

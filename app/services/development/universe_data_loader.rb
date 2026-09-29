@@ -9,7 +9,11 @@ module Development
 
     REFERENCE_PATTERN = /\A([A-Z][A-Za-z0-9_]*)\.([A-Za-z0-9_-]+)\z/
     VIRTUAL_ATTRIBUTES = {
-      "User" => %w[password password_confirmation]
+      "User" => %w[password password_confirmation],
+      # A path to a checked-in image rather than inline bytes, so a photo
+      # manifest stays readable. `Photo#source_file=` runs it through the same
+      # processing an upload does.
+      "Photo" => %w[source_file]
     }.freeze
     UNIVERSE_ASSOCIATION_FIELDS = %w[
       character1
@@ -19,6 +23,7 @@ module Development
       before_event
       after_event
       simultaneous_event
+      photo
     ].freeze
 
     Record = Struct.new(

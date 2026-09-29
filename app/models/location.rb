@@ -2,6 +2,7 @@ class Location < ApplicationRecord
   include Hierarchical
   include HasManyTags
   include HasSlug
+  include HasPhoto
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable

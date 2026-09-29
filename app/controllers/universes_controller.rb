@@ -1,4 +1,5 @@
 class UniversesController < ApplicationController
+  include PhotoParams
   before_action :set_universe, only: %i[ show edit update destroy ]
   allow_unauthenticated_access only: %i[ index show ]
   skip_before_action :set_current_universe, only: %i[ index ]
@@ -81,6 +82,6 @@ class UniversesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def universe_params
-    params.expect(universe: [ :name, :private ])
+    params.expect(universe: [ *photo_params, :name, :private ])
   end
 end

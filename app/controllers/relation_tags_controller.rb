@@ -1,5 +1,6 @@
 class RelationTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :relation_tag
 
@@ -59,7 +60,7 @@ class RelationTagsController < ApplicationController
   end
 
   def relation_tag_params
-    params.expect(relation_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :symmetric, :inverse ])
+    params.expect(relation_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :symmetric, :inverse ])
   end
 
   def update_relation_tag

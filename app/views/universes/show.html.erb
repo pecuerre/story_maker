@@ -78,16 +78,38 @@
   </div>
 
   <div class="col-lg-5">
+    <%# The photo occupies the card's own row when there is one, with the
+        universe's own summary beside it. With no photo the summary takes the
+        whole card, which is how this page looked before. %>
     <div class="surface-card h-100 p-4">
-      <div class="page-eyebrow">Universe Bible</div>
-      <h2 class="h4">Shared world</h2>
-      <p class="text-body-secondary">Characters, places, events, items, and their relationships live at universe scope.</p>
-      <div class="d-flex flex-wrap gap-2">
-        <%= link_to "Characters", universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
-        <%= link_to "Locations", universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
-        <%= link_to "Events", universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
-        <%= link_to "Timeline", universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
-      </div>
+      <% if @universe.photo %>
+        <div class="row g-4 align-items-start">
+          <div class="col-12 col-sm-5 col-lg-4">
+            <%= render "shared/record_photo", photo: @universe.photo, name: @universe.name %>
+          </div>
+          <div class="col-12 col-sm-7 col-lg-8">
+            <div class="page-eyebrow">Universe Bible</div>
+            <h2 class="h4">Shared world</h2>
+            <p class="text-body-secondary">Characters, places, events, items, and their relationships live at universe scope.</p>
+            <div class="d-flex flex-wrap gap-2">
+              <%= link_to "Characters", universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
+              <%= link_to "Locations", universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
+              <%= link_to "Events", universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
+              <%= link_to "Timeline", universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="page-eyebrow">Universe Bible</div>
+        <h2 class="h4">Shared world</h2>
+        <p class="text-body-secondary">Characters, places, events, items, and their relationships live at universe scope.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <%= link_to "Characters", universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
+          <%= link_to "Locations", universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
+          <%= link_to "Events", universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
+          <%= link_to "Timeline", universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>

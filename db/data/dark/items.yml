@@ -8,6 +8,7 @@
   name: "Tannhaus Clockwork Device"
   item_tags: [ ItemTag.time_machine ]
   slug: "tannhaus_clockwork_device"
+  photo: Photo.the_tannhaus
 
 - universe: Universe.dark
   name: "St Christopher Medal"

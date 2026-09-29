@@ -82,6 +82,19 @@
   matching validations carry the same condition. Controllers call `soft_delete` instead of
   `destroy!`; the positioned controllers go through `PositionedResourceOrder`, which normalizes the
   remaining siblings in the same transaction. See [data_model.md](data_model.md#soft-delete).
+- **One optional photo** is `HasPhoto` (`app/models/concerns/has_photo.rb`): `belongs_to :photo,
+  optional: true`, a `photo_belongs_to_the_universe` validation, and the two virtual writers
+  `photo_data=` (the cropped square as a `data:` URL) and `remove_photo=`. Eighteen models include
+  it — Universe, Story, Section, Scene, the six content models, and all eight `_tag` models. The
+  bytes become a finished 300×300 square in a `before_validation` (an unreadable upload is an
+  ordinary field error, and the record is never written), the `Photo` row is created in an
+  `after_save` (a `Universe` has no id of its own until it saves, and is its own photo scope), and
+  the photo that was replaced is destroyed in an `after_commit`, only while nothing else still
+  refers to it. `Photo::OWNER_CLASS_NAMES` is the explicit list of models that may point at a
+  `Photo`, kept equal to the `HasPhoto` includers by a model test. The stored file is only ever the
+  finished crop: `PhotoProcessing` re-encodes it and drops its metadata, so the original upload is
+  never written. `Photo` has no `url` method — a view asks the router through
+  `ApplicationHelper#record_photo_url`. See [ADR 0015](adr/0015-record-photos.md).
 - **A group of related value objects gets its own namespace directory.** `Search` is the current
   example: `app/models/search/` holds the query, scope, catalog, client, and the rest of one
   subsystem, rather than sixteen top-level files. A standalone value object with no siblings to
@@ -109,7 +122,11 @@
   written. Without the guard, `respond_to` raises `ActionController::UnknownFormat` only after the
   record has been saved, so the write commits behind the error and a retry duplicates it. Keep the
   guard an explicit `before_action` rather than a blanket filter so the callback order stays visible.
-- Strong params use Rails 8 `params.expect(model: [ ... ])`.
+- Strong params use Rails 8 `params.expect(model: [ ... ])`. A photo-capable controller `include
+  PhotoParams` (`app/controllers/concerns/photo_params.rb`) and splats `*photo_params` into its
+  `params.expect`, so the two virtual photo fields are declared once instead of in eighteen
+  controllers. They are never a `photo_id`, which is what makes a cross-universe photo impossible
+  to assign from a request.
 - Universe authorization is a three-level policy: `read`, `write`, and `admin`. Public universes
   grant guest read and signed-in write access; private universes require an owner or membership.
   A private-universe non-member, including a guest, receives 404 so slug enumeration cannot
@@ -275,6 +292,25 @@ The three functional editing patterns are:
 
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
+
+**The photo field** is the same control in all three patterns, which is why it is built in one
+place:
+- `shared/_photo_field` renders a bare container carrying `data-controller="photo-crop"` and the
+  two field names; `photo_crop_controller.js` builds the file input, the preview, the remove
+  checkbox, the square stage, and its controls itself. The taxonomy editor's `photo` field branch
+  produces the same container from the shared `ModalFields::PHOTO_FIELD` descriptor rather than
+  building a second widget, so the three surfaces cannot drift.
+- The transport is a `data:` URL in a normal text field, not a multipart body. That is what lets the
+  JSON modals (which already post `application/x-www-form-urlencoded`), the DOM-built taxonomy
+  modal, and a plain Turbo form all carry a photo without changing how they submit.
+- One modal form serves every row, so `modal_form_controller.js#loadRowState` dispatches
+  `photo-crop:load` with the row's own photo URL before the modal opens. Without it a row would
+  open showing the previous row's photo.
+- A read-only member and a guest are offered no cropper at all: the field is rendered only where a
+  mutation control already belongs.
+- A record's photo shows in the **left** part of its details-page surface card. A record without one
+  renders exactly what it rendered before photos existed — see
+  [architecture.md](architecture.md#record-details-pages).
 
 **Settings** uses the plain full-page form shape with no record behind it: `app/views/settings/show.html.erb`
 posts a flat `theme` parameter to `PATCH /settings` with `params.expect(:theme)`, and the controller
@@ -490,7 +526,13 @@ added to an existing page instead of a new page being invented. See
     `location_taxonomy_fields`, `section_taxonomy_fields`.
   - `*_fields_json(record)` — serializes a record for modal pre-filling:
     `event_fields_json`, `character_fields_json`, `item_fields_json`,
-    `ownership_fields_json`, `relation_fields_json`.
+    `ownership_fields_json`, `relation_fields_json`. Each carries a `photo_url` alongside the
+    record's columns, because the photo is a stored image rather than a column and the shared modal
+    is what tells the photo control which row it is about to edit.
+  - `PHOTO_FIELD` / `photo_field` — the one descriptor every photo-capable editor shares, so the
+    field cannot be spelled one way in a tag taxonomy and another in a content editor. `url: true`
+    marks the descriptor as naming a stored image: `shared/_taxonomy_node` then serializes
+    `record_photo_url(node)` for it instead of calling `node.public_send(field[:name])`.
 - `app/helpers/scenes_helper.rb` — Scene grouping/event/time descriptors and
   `scene_tag_choices`; the latter uses `SceneTagPaths` so nested tag options are root-first and
   query-free.
@@ -505,7 +547,10 @@ added to an existing page instead of a new page being invented. See
   name and no count — plus `record_count_text(count, label)` / `record_count_badge(count, label)`
   for the number that record's page will list and what it counts ("(4 characters)"),
   `detail_fact(label, value, blank:)` for one identity value, and `in_world_range(from, to)`
-  for the optional interval Event/Relation/Ownership share.
+  for the optional interval Event/Relation/Ownership share. `record_photo_url(record)` is the single
+  way a view gets a record's photo URL: it returns `nil` when there is no photo, and it asks the
+  router for the attachment's URL rather than calling a method on `Photo`, because an Active Storage
+  URL belongs to the request that serves it.
 - `app/views/shared/_content_tabs.html.erb` renders related universe pages as URL-backed
   Bootstrap navigation; it does not use `data-bs-toggle="tab"` because each tab is a separate
   request and canonical URL. It accepts an optional `class_name` and explicit `active` tab state
@@ -523,6 +568,11 @@ added to an existing page instead of a new page being invented. See
   the header instead of below the card. `_detail_section` renders its empty state whenever `count`
   is zero or no block is given, so a page states what it does not know instead of showing an empty
   box.
+- A record that has a photo lays its identity card out in two columns, the square on the left;
+  a record without one renders the identity block alone, unchanged. Both branches render
+  `shared/_record_details_identity`, so there is one identity layout rather than two. Universe,
+  Story, and Scene have no shared details partial and do the same inline through
+  `scenes/_show_identity`. `shared/_record_photo` is the `<figure>` both use.
 - `app/views/shared/_modal_errors.html.erb` is the one error region inside a modal form
   (`data-modal-form-target="errors"`, `role="alert"`, `tabindex="-1"`, rendered hidden). The modal
   controller fills it with the server's error hash and moves focus here; the region is never
@@ -620,6 +670,14 @@ that must not drift:
 - `modal_form_controller.js` — Bootstrap modal CRUD for the flat list views, including the JSON
   submission, `422` error rendering, pending state, JSON delete, and the same-URL refresh described
   in [ADR 0011](adr/0011-modal-json-mutation-contract.md).
+- `photo_crop_controller.js` — the square photo editor. It builds its own whole widget with DOM
+  APIs (file input, stored-photo preview, remove checkbox, live region, square stage, canvas, zoom
+  and nudge controls) from one bare container, so the JSON modals, the taxonomy editor's
+  DOM-built modal, and the plain full-page forms all use this one implementation instead of three.
+  A file opens in a square viewport the author can drag or move with the arrow keys; confirming
+  draws that square to a canvas and hands the result to the form as a `data:` URL. It must stay a
+  **named** class export, because the Stimulus registration name is derived from the file and the
+  controller self-references its own static constants.
 - `timeline_controller.js` — pan/zoom + popovers for the Timeline view.
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
 

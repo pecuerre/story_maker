@@ -101,6 +101,7 @@
             <% if rejected %>
               <%= render "shared/error_summary", record: rejected, subject: "ownership" %>
             <% end %>
+            <%= render "shared/photo_field", param: "ownership" %>
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <%= form.label :item_id, "Item", class: "form-label" %>

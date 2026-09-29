@@ -27,6 +27,12 @@ module Development
       ModelDefinition.new(model_name: "User", file_name: "users", scope: :none),
       ModelDefinition.new(model_name: "Universe", file_name: "universes", scope: :universe),
       ModelDefinition.new(model_name: "UniverseMembership", file_name: "universe_memberships", scope: :universe),
+      # Loaded after the Universe and before every model that can point at one,
+      # including Story: a photo belongs to a universe and any of them may name
+      # one. `source_file` is a path under `db/photos/` rather than inline bytes,
+      # so a manifest stays readable and the checked-in asset is the one a reader
+      # can open.
+      ModelDefinition.new(model_name: "Photo", file_name: "photos", scope: :universe),
       ModelDefinition.new(model_name: "Story", file_name: "stories", scope: :universe),
       ModelDefinition.new(model_name: "SectionTag", file_name: "section_tags", scope: :story, positioned: true),
       ModelDefinition.new(model_name: "SceneTag", file_name: "scene_tags", scope: :story, positioned: true),

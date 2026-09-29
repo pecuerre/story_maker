@@ -1,5 +1,6 @@
 class ScenesController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   maintains_flat_positions_for :scene
 
@@ -234,7 +235,7 @@ class ScenesController < ApplicationController
   end
 
   def scene_params
-    params.expect(scene: [ :name, :description, :section_id, :event_id, :datetime, { scene_tag_ids: [] } ])
+    params.expect(scene: [ *photo_params, :name, :description, :section_id, :event_id, :datetime, { scene_tag_ids: [] } ])
   end
 
   def move_direction

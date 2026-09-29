@@ -1,5 +1,6 @@
 class OwnershipTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :ownership_tag
 
@@ -59,7 +60,7 @@ class OwnershipTagsController < ApplicationController
   end
 
   def ownership_tag_params
-    params.expect(ownership_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
+    params.expect(ownership_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
   end
 
   def update_ownership_tag

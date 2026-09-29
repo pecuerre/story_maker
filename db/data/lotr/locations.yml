@@ -6,6 +6,7 @@
 - universe: Universe.lotr
   name: Eriador
   slug: eriador
+  photo: Photo.rivendell
   location_tags: [ LocationTag.region ]
   parent: Location.middle_earth
 

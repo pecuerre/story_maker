@@ -1369,3 +1369,83 @@ $um-search-match: #ffc107;
     transition: none;
   }
 }
+
+// The optional photo. A stored photo is always a 300x300 square, so it is
+// rendered at that aspect ratio and never stretched, and the crop stage is
+// square for the same reason: what the author is looking at is the shape that
+// will be stored.
+.record-photo-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-secondary-bg);
+  object-fit: cover;
+}
+
+.photo-preview {
+  margin-bottom: 1rem;
+}
+
+.photo-preview-image {
+  width: 8rem;
+  height: 8rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-secondary-bg);
+  object-fit: cover;
+}
+
+.photo-remove {
+  margin-bottom: 1rem;
+}
+
+.photo-status {
+  min-height: 1.5rem;
+}
+
+// The square the author crops inside. It is a fixed ratio rather than a pixel
+// size so the stage shrinks with the modal, and the canvas is drawn at exactly
+// the stored size whatever the stage happens to measure.
+.photo-crop-stage {
+  position: relative;
+  width: 100%;
+  max-width: 20rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-secondary-bg);
+  touch-action: none;
+  cursor: grab;
+}
+
+.photo-crop-stage:active {
+  cursor: grabbing;
+}
+
+.photo-crop-stage:focus-visible {
+  outline: 2px solid var(--um-primary-strong);
+  outline-offset: 2px;
+}
+
+.photo-crop-canvas {
+  display: block;
+}
+
+.photo-crop-controls {
+  margin-top: 1rem;
+}
+
+.photo-crop-nudge {
+  display: flex;
+  gap: .25rem;
+  margin: .5rem 0 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-crop-stage {
+    cursor: default;
+  }
+}

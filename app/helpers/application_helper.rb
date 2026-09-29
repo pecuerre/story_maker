@@ -107,6 +107,17 @@ module ApplicationHelper
     safe_join(entity.send(association_name).map { |tag| tag_badge(tag) }, " ")
   end
 
+  # A record's stored photo, as a URL an editor can show before a replacement is
+  # chosen, or nothing. An Active Storage attachment's URL is built by the
+  # request serving it, so this is a view helper rather than a model method; a
+  # record that has no photo — the normal case — is simply `nil`.
+  def record_photo_url(record)
+    photo = record&.photo
+    return if photo.blank?
+
+    url_for(photo.file)
+  end
+
   # One labelled value in a details page's identity block. A missing value
   # renders explicit copy instead of a blank row, and the copy is per-fact so a
   # page never implies a value it does not have.

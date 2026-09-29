@@ -1,0 +1,17 @@
+# Photos are development-only assets kept beside the manifests in
+# `db/photos/<universe>/` and referenced here by path, so this file stays
+# readable. Every record that can carry one may name any of them; they are
+# shared deliberately, which is also what proves a photo row is never destroyed
+# while another record still points at it.
+#
+# The source images are deliberately not square, so a loaded universe exercises
+# the real path: the source is cropped to a square and stored at 300x300, and the
+# source file itself is never what is served.
+
+- universe: Universe.dark
+  name: Winden
+  source_file: db/photos/dark/portrait.jpg
+
+- universe: Universe.dark
+  name: The Tannhaus
+  source_file: db/photos/dark/landscape.jpg

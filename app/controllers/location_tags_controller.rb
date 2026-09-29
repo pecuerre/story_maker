@@ -1,5 +1,6 @@
 class LocationTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :location_tag
@@ -55,7 +56,7 @@ class LocationTagsController < ApplicationController
   end
 
   def location_tag_params
-    params.expect(location_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
+    params.expect(location_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_location_tag

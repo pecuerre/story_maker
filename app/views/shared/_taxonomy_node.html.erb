@@ -27,7 +27,13 @@
   <% if record_count %>
     data-record-count-label="<%= record_count_text(record_count, details_count_label) %>"
   <% end %>
-  data-taxonomy-values="<%= modal_fields.to_h { |field| [field[:name], node.public_send(field[:name])] }.to_json %>"
+  <%# One value per descriptor, so the editor can pre-fill a row. A descriptor
+      marked `url` names a stored image rather than a column: the photo editor is
+      given the URL of the photo this node already has, which the node cannot
+      produce itself because an Active Storage URL belongs to the request. %>
+  data-taxonomy-values="<%= modal_fields.to_h { |field|
+    [ field[:name], field[:url] ? record_photo_url(node) : node.public_send(field[:name]) ]
+  }.to_json %>"
   <% if taxonomy_field %>data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"<% end %>>
 
   <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom">

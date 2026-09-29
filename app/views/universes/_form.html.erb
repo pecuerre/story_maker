@@ -15,6 +15,8 @@
     <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
   </div>
 
+  <%= render "shared/photo_field", param: "universe", current_url: record_photo_url(universe) %>
+
   <div class="form-check form-switch mb-2">
     <%= form.check_box :private, class: "form-check-input" %>
     <%= form.label :private, "Private universe", class: "form-check-label" %>

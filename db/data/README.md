@@ -89,6 +89,34 @@ Dialog records must use the actual associations decided for the model. A story-s
 characters, locations, items, events, sections, and tags where those relationships exist, so the
 browser scenario exercises more than an isolated row.
 
+## Sample images
+
+Photos are the one model whose data is not self-contained in the YAML. The bytes live beside this
+tree, in `db/photos/<universe_slug>/`, and `photos.yml` names one of those files rather than
+carrying them:
+
+```yaml
+# db/data/dark/photos.yml
+- name: portrait
+  source_file: portrait.jpg
+```
+
+`source_file` is a **virtual attribute** allowlisted by the loader, not a column. It puts the file's
+bytes through exactly the same processing an upload does, so a sample photo is cropped and resized
+to 300×300 on the way in and the stored file is never the source asset. Records then reference their
+photo the same way they reference anything else, by name:
+
+```yaml
+# db/data/dark/characters.yml
+- name: Walter White
+  photo: portrait
+```
+
+Keep the checked-in images **deliberately non-square**. A square source would pass through
+unresized and would not show that the crop happened. `db/photos/` is a checked-in asset directory
+beside `db/data/`, not a feature directory inside it, and an unused image file is dead weight — the
+two current universes ship `portrait.jpg` and `landscape.jpg` each, and both are referenced.
+
 ## Lifecycle and safety
 
 YAML edits are not hot-reloaded or synchronized to an existing database. **After adding, deleting,

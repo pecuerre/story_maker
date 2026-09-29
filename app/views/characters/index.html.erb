@@ -86,6 +86,7 @@
               <%= form.label :name, class: "form-label" %>
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
+            <%= render "shared/photo_field", param: "character" %>
             <div class="mb-3">
               <%= form.label :character_tag_ids, "Character tags", class: "form-label" %>
               <%= form.collection_select :character_tag_ids, @character_tags, :id, :name,

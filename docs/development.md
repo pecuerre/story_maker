@@ -10,6 +10,11 @@ Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirk
 - **Google Chrome** (or a compatible browser) for `bin/rails test:system`.
 - **Bun** for CSS/JS assets: `bun install`; `bun.lock` is the committed source of truth. Use
   `bun install --frozen-lockfile` in CI and other reproducible environments.
+- **An image library**, for record photos. Either **libvips** or **ImageMagick**: `PhotoProcessing`
+  prefers `ImageProcessing::Vips` and falls back to `ImageProcessing::MiniMagick` when libvips is not
+  installed, so one of the two is enough. libvips is installed in the `Dockerfile` and in CI;
+  ImageMagick is the usual workstation install. Without either, uploading a photo fails with an
+  ordinary "could not be read as an image" field error rather than a stack trace.
 - **Meilisearch**, only if you want search to return anything. Everything else works without it; the
   box says it is unavailable. `bin/dev` starts the engine once it is installed — see **Search
   engine** below.
@@ -210,6 +215,13 @@ db/data/
   lotr/       # the smaller Lord of the Rings dataset
   star_wars/  # future universe data
 ```
+
+Sample images live beside that tree rather than inside it, in `db/photos/<universe_slug>/`. A
+`photos.yml` entry names one of those files through the virtual `source_file` attribute
+(`source_file: portrait.jpg`), and the loader puts its bytes through exactly the same processing an
+upload does — so a sample photo arrives as a 300×300 square and the stored file is never the source
+asset. The checked-in images are deliberately **not** square, so a stored square proves the crop
+happened rather than passing through unchanged.
 
 Each directory contains all data used to exercise that universe: its user/universe record, stories,
 sections, section tags, world-building records, taxonomies, and relationships. A universe
@@ -484,6 +496,51 @@ changing ordering behavior. The service supports explicit flat mode, which the S
 sequence now uses with `@story` as scope owner; the same flat mode is reserved for Scene Elements.
 `MaintainsSiblingPositions#position_parent_id_for` omits the ordering parent in flat mode, so a flat
 record does not need a `parent_id` column. It does not make `section_id` an ordering parent.
+
+## Photos
+
+A record may carry one photo, and the photo is always optional. The stored file is only ever the
+finished 300×300 square: the browser cropper sends a `data:` URL and the server crops and re-encodes
+it again, so a request that skipped the cropper cannot store something else, and the original upload
+is never written to disk. [ADR 0015](adr/0015-record-photos.md) is the decision;
+[`data_model.md`](data_model.md#photos) is the schema.
+
+Coverage is split by what each layer can prove:
+
+- `test/models/photo_test.rb` — the model's own rules, including that `Photo::OWNER_CLASS_NAMES`
+  equals the models that include `HasPhoto` (a missing entry is a photo destroyed while another
+  record still shows it).
+- `test/models/has_photo_test.rb` — the concern: optionality, the two virtual writers, the
+  same-universe rule, and that a rejected save never takes the existing photo away.
+- `test/services/photo_processing_test.rb` — the 300×300 square, metadata stripping, the
+  content-signature allowlist, and the size bound.
+- `test/controllers/photo_mutation_test.rb` — that all eighteen controllers accept the fields.
+- `test/controllers/record_photo_details_test.rb` — the details-page layout with and without a photo.
+- `test/controllers/photo_field_test.rb` — that the field is rendered where a mutation control
+  belongs, and offered to no one else.
+- `test/javascript/photo_crop_controller_test.js` — the cropper's own logic, without a browser.
+- `test/system/photo_crop_test.rb` — what only a browser can show: choosing a file opens a square,
+  the square moves with the keyboard alone, the finished crop is what the record ends up showing, and
+  a read-only member is offered no cropper at all.
+
+`Photo` cannot use a fixture attachment, so tests build one through `create_photo` in
+`test/support/photo_test_helper.rb` rather than through `test/fixtures/photos.yml`.
+
+To verify by hand:
+
+```bash
+CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset   # loads db/data/dark + db/photos/dark
+UNIVERSE=lotr bin/rails db:demo:load                       # optional second universe
+bin/rails server
+```
+
+Open a Dark character that has a photo and check: its details page shows the square on the left of
+the surface card; a character without one looks exactly as it did before photos existed. Edit it,
+choose a file, move the square with the arrow keys or the move buttons, and press **Use this
+photo** — the saved record's stored file is 300×300 whatever the source aspect ratio was. Press
+**Cancel** in the cropper instead and the record is unchanged. Check **Remove the current photo** and
+save to go back to no photo. A guest reading a public universe, and a read-only member, see the photo
+and no editor.
 
 ## Database migrations
 

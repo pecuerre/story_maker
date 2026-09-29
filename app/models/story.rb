@@ -3,6 +3,7 @@ class Story < ApplicationRecord
   SCENE_MENU_COUNT_SCOPE = :story_scenes
 
   include HasSlug
+  include HasPhoto
   include SoftDeletable
   include Searchable
   searchable kind: "story", title: :name, body: :description, route: "story"

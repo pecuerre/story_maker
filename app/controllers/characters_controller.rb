@@ -1,5 +1,6 @@
 class CharactersController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
   maintains_sibling_positions_for :character
@@ -67,7 +68,7 @@ class CharactersController < ApplicationController
   end
 
   def character_params
-    params.expect(character: [ :name, :description, { character_tag_ids: [] }, :parent_id, :position ])
+    params.expect(character: [ *photo_params, :name, :description, { character_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_character

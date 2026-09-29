@@ -18,6 +18,22 @@ module ModalFields
   # `extra_fields` appends type-specific descriptors after the shared ones.
   # The shared taxonomy editor renders and submits a checkbox like any other
   # field, so `taggable` needs no per-type wiring.
+  # Every photo-capable editor carries an optional photo. The descriptor names a
+  # widget rather than an input: the taxonomy controller builds the same
+  # container `shared/_photo_field` renders, and `photo_crop_controller.js` fills
+  # it.
+  #
+  # `url: true` says the value this descriptor carries is the record's stored
+  # image rather than one of its columns, which the taxonomy node resolves
+  # through `record_photo_url`. The submitted field names (`photo_data`,
+  # `remove_photo`) belong to the widget, not to this descriptor.
+  PHOTO_FIELD = {
+    name: "photo",
+    label: "Photo",
+    type: "photo",
+    url: true
+  }.freeze
+
   def taxonomy_tag_fields(nodes = [], extra_fields = [])
     [
       {
@@ -52,8 +68,15 @@ module ModalFields
         label: "Taggable",
         type: "checkbox"
       },
+      photo_field,
       *extra_fields
     ]
+  end
+
+  # The one descriptor every photo-capable editor shares, so the field cannot be
+  # spelled one way in a tag taxonomy and another in a content editor.
+  def photo_field
+    PHOTO_FIELD
   end
 
   # Character, Location, Item, and Event tags additionally offer the workspace
@@ -77,7 +100,8 @@ module ModalFields
       after_event_id: event.after_event_id,
       simultaneous_event_id: event.simultaneous_event_id,
       description: event.description,
-      event_tag_ids: event.event_tag_ids
+      event_tag_ids: event.event_tag_ids,
+      photo_url: record_photo_url(event)
     }.to_json
   end
 
@@ -93,7 +117,8 @@ module ModalFields
     {
       name: character.name,
       description: character.description,
-      character_tag_ids: character.character_tag_ids
+      character_tag_ids: character.character_tag_ids,
+      photo_url: record_photo_url(character)
     }.to_json
   end
 
@@ -105,7 +130,8 @@ module ModalFields
     {
       name: item.name,
       description: item.description,
-      item_tag_ids: item.item_tag_ids
+      item_tag_ids: item.item_tag_ids,
+      photo_url: record_photo_url(item)
     }.to_json
   end
 
@@ -140,7 +166,8 @@ module ModalFields
         options: location_tags.map { |location_tag|
           [ location_tag.id, location_tag.name ]
         }
-      }
+      },
+      photo_field
     ]
   end
 
@@ -155,7 +182,8 @@ module ModalFields
       ownership_tag_ids: ownership.ownership_tag_ids,
       description: ownership.description,
       from_date: ownership.from_date&.strftime("%Y-%m-%dT%H:%M"),
-      to_date: ownership.to_date&.strftime("%Y-%m-%dT%H:%M")
+      to_date: ownership.to_date&.strftime("%Y-%m-%dT%H:%M"),
+      photo_url: record_photo_url(ownership)
     }.to_json
   end
 
@@ -182,7 +210,8 @@ module ModalFields
       relation_tag_ids: relation.relation_tag_ids,
       description: relation.description,
       from_date: relation.from_date&.strftime("%Y-%m-%dT%H:%M"),
-      to_date: relation.to_date&.strftime("%Y-%m-%dT%H:%M")
+      to_date: relation.to_date&.strftime("%Y-%m-%dT%H:%M"),
+      photo_url: record_photo_url(relation)
     }.to_json
   end
 
@@ -221,7 +250,8 @@ module ModalFields
         options: section_tags.map { |section_tag|
           [ section_tag.id, section_tag.name ]
         }
-      }
+      },
+      photo_field
     ]
   end
 end

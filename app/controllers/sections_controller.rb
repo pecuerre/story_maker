@@ -1,5 +1,6 @@
 class SectionsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :section
 
@@ -97,7 +98,7 @@ class SectionsController < ApplicationController
   end
 
   def section_params
-    params.expect(section: [ :name, :description, { section_tag_ids: [] }, :parent_id, :position ])
+    params.expect(section: [ *photo_params, :name, :description, { section_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_section

@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_09_28_150000`) and the models in `app/models/`.
+`2026_09_28_235300`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -10,6 +10,7 @@ and the slug system. Verified against `db/schema.rb` (SQLite, schema version
 User (owner)
  └── Universe  (1..n stories; everything below is scoped to exactly one universe)
       ├── UniverseMembership ──> User (read/write/admin)
+      ├── Photo (Active Storage attachment, one 300x300 square, optional on every record below)
       ├── Story ── Section ──> Section's parent Section (tree)
       │   │                     └── HABTM SectionTag ──┐
       │   ├── SceneTag (tree, story-scoped) ── HABTM SceneTag assignment
@@ -77,6 +78,45 @@ delete are partial (`WHERE deleted_at IS NULL`): `universes.slug`, `stories.[uni
 
 `users` and `sessions` are not soft-deletable: they have no user-facing delete action, and a
 session is an authentication token rather than content.
+
+## Photos
+
+A record may carry one photo, and the photo is always optional. Eighteen models include
+`HasPhoto` (`app/models/concerns/has_photo.rb`): `Universe`, `Story`, `Section`, `Scene`,
+`Character`, `Location`, `Item`, `Event`, `Relation`, `Ownership`, and the eight `*_tag` models.
+Each of those tables gained a nullable `photo_id` with an index; none of them requires it, and no
+view, form, or list assumes a photo exists.
+
+The image itself lives in its own `photos` row rather than as a `photo`/`photo_path` pair on every
+table, so the bytes, the normalization, and the optional reference are defined once:
+
+| Table | Columns (beyond timestamps) | Notes |
+|---|---|---|
+| `photos` | `universe_id` FK (NOT NULL), `name`, `slug` (NOT NULL) | `has_one_attached :file`; the stored file is **only** the finished 300×300 crop — neither the original upload nor its metadata is written |
+| `active_storage_blobs` / `active_storage_attachments` / `active_storage_variant_records` | Rails' own tables | created by `CreateActiveStorageTables`; the only Active Storage table that varies (`variant_records`) stays empty because a photo has no variants |
+
+Rules the model layer enforces:
+
+- **Optional everywhere.** `belongs_to :photo, optional: true`. A record without a photo is
+  completely normal, and no controller force-creates one.
+- **Same universe.** `photo_belongs_to_the_universe` rejects a `Photo` from another universe. The
+  editor never sends an id at all — it sends the cropped square as a `data:` URL, and the model
+  creates the `Photo` inside the record's own universe, so a cross-universe assignment is not
+  reachable from the interface. A `Universe` is its own photo scope, because a universe is the
+  outermost scope.
+- **The server is the authority on the stored file.** `PhotoProcessing` resizes and re-encodes
+  whatever arrives to a 300×300 JPEG with its metadata stripped, so a request that skipped the
+  browser cropper still cannot store something else. Submitted bytes are checked against a
+  content-signature allowlist (JPEG/PNG/GIF/WebP) before an image library sees them, and payloads
+  over 8 MB are refused. The stored bytes are an image this application produced, never the
+  submitted bytes.
+- **Replacing is safe.** A new photo row is created after the record saves, inside the same
+  transaction; the photo it superseded is destroyed only after that transaction commits, and only
+  when no other record still points at it (`Photo::OWNER_CLASS_NAMES`, which a test keeps equal to
+  the models that include `HasPhoto`). A rejected save never takes the picture away.
+- **No URL on the model.** An Active Storage attachment's URL is built by the request that serves
+  it, so a view asks the router through `ApplicationHelper#record_photo_url(record)` and the model
+  exposes no `url` method that could only return `nil`.
 
 ## Tables
 
@@ -150,6 +190,12 @@ per-record read.
 `solid_cache` / `solid_cable` / `solid_queue` live in their own schema files
 (`db/cache_schema.rb`, `db/cable_schema.rb`, `db/queue_schema.rb`).
 
+### Photo columns, per table
+`universes`, `stories`, `sections`, `scenes`, `characters`, `locations`, `items`, `events`,
+`relations`, `ownerships`, and all eight `*_tags` tables each carry one nullable, indexed
+`photo_id`. `users`, `sessions`, `scene_elements`, and the Scene presence-link tables do not. See
+[Photos](#photos) for the rules those references obey.
+
 ## Tag taxonomy matrix
 
 | Content model | Tag model (`has_many_tags`) | Join table | Tag required? |
@@ -214,8 +260,10 @@ records), **Story**, **Universe**, **User**, **Session**.
 | `Event` | `must_be_identifiable` (title **or** start/end datetime **or** a before/after/simultaneous relation); referenced events must be in the same universe; model validation and three DB check constraints reject self references (including unsaved/future IDs); `Hierarchical` rules; *no* name-presence rule. Destroying an event nullifies all incoming temporal references; a relation-only referrer that would become unidentifiable is destroyed first |
 | `Relation` | `character1`/`character2` required; both characters and all `relation_tags` must be in the same universe |
 | `Ownership` | `character`/`item` required; both records and all `ownership_tags` must be in the same universe |
+| `Photo` | `universe` required; an attachment must be present (`file must be attached`) or the row is not a useful record; `HasSlug` |
 | `User` | `has_secure_password` (password confirmation on create); unique normalized email (DB unique index) |
 | `Session` | `user` required |
+| any model including `HasPhoto` | `photo` optional; when present it must belong to the record's own universe ("must belong to the same universe"). `Photo::OWNER_CLASS_NAMES` lists every model that may point at a `Photo` and is kept equal to the `HasPhoto` includers by a model test |
 
 Cross-universe checks are **application-level only** because ordinary foreign keys cannot prove
 that two records share a universe/story. Several same-scope checks (e.g. "parent in same story",
@@ -414,6 +462,14 @@ same convention (`universe_memberships.yml`) when a sample universe needs explic
 or delegated admin access. After any YAML add/delete/update, run
 `UNIVERSE=<slug> bin/rails db:demo:check` and then reset the local development database so the files
 are actually loaded; create-only `db:demo:load` is for an additional universe after that reset.
+
+Photo data follows the same convention with one extra rule: a `photos.yml` entry names a file under
+`db/photos/<universe_slug>/` through the virtual `source_file` attribute rather than carrying bytes,
+and a record references its photo by name. `source_file` goes through exactly the same processing an
+upload does, so a sample photo is cropped and resized to 300×300 on the way in and the stored file
+is never the source asset. Sample images are deliberately **not** square, so the stored square proves
+the crop rather than passing through. `db/photos/` is a checked-in asset directory beside
+`db/data/`, not inside it.
 Records made only in the UI are intentionally lost and are not merged back into YAML. Neither
 `db:seed` nor `db:prepare` loads `db/data/`. Development data is for browser/manual validation only;
 automated tests use `test/fixtures/`, and production bootstrap data belongs in

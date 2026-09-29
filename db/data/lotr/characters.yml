@@ -3,6 +3,7 @@
   slug: frodo_baggins
   description: "Hobbit Ring-bearer of the Fellowship."
   character_tags: [ CharacterTag.hobbit, CharacterTag.fellowship_of_the_ring ]
+  photo: Photo.the_shire
 
 - universe: Universe.lotr
   name: Samwise Gamgee

@@ -1,6 +1,7 @@
 - universe: Universe.dark
   name: Jonas
   character_tags: [ CharacterTag.family_kahnwald, CharacterTag.sic_mundus ]
+  photo: Photo.the_tannhaus
 
 - universe: Universe.dark
   name: Martha

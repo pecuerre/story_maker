@@ -1,5 +1,6 @@
 class RelationsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   before_action :set_relation, only: %i[ show update destroy ]
 
   def index
@@ -47,7 +48,7 @@ class RelationsController < ApplicationController
   end
 
   def relation_params
-    params.expect(relation: [ :character1_id, :character2_id, { relation_tag_ids: [] }, :description, :from_date, :to_date ])
+    params.expect(relation: [ *photo_params, :character1_id, :character2_id, { relation_tag_ids: [] }, :description, :from_date, :to_date ])
   end
 
   def load_form_options

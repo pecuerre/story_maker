@@ -2,6 +2,7 @@
   name: Winden
   slug: winden
   location_tags: [ LocationTag.town ]
+  photo: Photo.winden
 
 - universe: Universe.dark
   name: Jonas House

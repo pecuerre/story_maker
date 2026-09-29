@@ -79,7 +79,25 @@ export default class extends Controller {
       }
     })
 
+    // One modal form serves every row, so a control that shows the record's
+    // stored state — the photo — is told which row is being edited rather than
+    // keeping whatever the previous row left behind. Its own fields are filled
+    // above from the same values.
+    this.loadRowState(values)
+
     this.modal.show()
+  }
+
+  // The photo editor is the only field that renders a record's stored state
+  // rather than a value. It is a separate controller, so it is told, not
+  // written to.
+  loadRowState(values) {
+    this.formTarget.querySelectorAll("[data-controller~='photo-crop']").forEach((field) => {
+      field.dispatchEvent(new CustomEvent("photo-crop:load", {
+        bubbles: true,
+        detail: { url: values.photo_url || "" }
+      }))
+    })
   }
 
   // The JSON mutation path. Everything below it is the reliability contract:

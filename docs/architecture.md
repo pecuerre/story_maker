@@ -181,7 +181,11 @@ without inventing a new page pattern:
 
 - `shared/_record_details` — page header (eyebrow, title, back link) plus the identity card. Its
   optional block renders between the two, so a page that keeps a workspace tab strip open there puts
-  the navigation above the card and not below it;
+  the navigation above the card and not below it. A record that has a photo lays the card out in two
+  columns with the square on the left and the identity beside it; a record without one renders the
+  identity block alone, so the page is unchanged from what it was before photos existed. The two
+  branches share `shared/_record_details_identity`, so there is one identity layout rather than two;
+  Universe, Story, and Scene pages have their own identity partials and follow the same rule;
 - `shared/_detail_facts` — the `[ label, value ]` grid, fed by the `detail_fact` helper so a
   missing value renders explicit copy instead of a blank row;
 - `shared/_detail_section` — one related-records section, with a `count` badge, and its empty state
@@ -201,6 +205,41 @@ retain the include-descendants toggle and flat list. Menu links carry `from=work
 their content tabs on the tag details page; a taxonomy Details link does not carry that marker.
 `TaggedRecordCounts` answers the same question for a whole taxonomy in one grouped query, which is
 what the row's `.record-count` pill uses.
+
+## Photos
+
+[ADR 0015](adr/0015-record-photos.md) decides the shape; this is how it is wired.
+
+Eighteen models include `HasPhoto`, which gives each a nullable `photo_id` pointing at a `Photo`
+row that holds the image as an Active Storage attachment. A record with no photo is completely
+normal, and no controller force-creates one.
+
+- `app/models/concerns/has_photo.rb` — the whole optional-photo contract: the virtual writers
+  `photo_data=` (a cropped square as a `data:` URL) and `remove_photo=`, the same-universe
+  validation, a `before_validation` that turns the bytes into a finished square (so a bad upload is
+  an ordinary 422 field error and the record is never written), an `after_save` that creates the
+  `Photo` (a `Universe` has no id of its own until it saves, and it is its own photo scope), and an
+  `after_commit` that destroys the photo it replaced, and only then, and only while nothing else
+  still refers to it.
+- `app/services/photo_processing.rb` — the server's authority on the stored file: 300×300,
+  re-encoded as JPEG, metadata stripped. It checks the submitted bytes against a content-signature
+  allowlist before any image library sees them, so a client that labels an SVG as `image/png` is
+  refused. libvips is used when installed (Docker, CI) and ImageMagick is the fallback, so a
+  workstation with only that still works.
+- `app/controllers/concerns/photo_params.rb` — `PHOTO_PARAMS = [ :photo_data, :remove_photo ]`.
+  Every photo-capable controller `include PhotoParams` and splats `*photo_params` into its
+  `params.expect`, so no controller spells the two names out again.
+- `app/javascript/controllers/photo_crop_controller.js` — the square cropper, with no new
+  dependency: it builds its own widget with DOM APIs and posts the finished crop as one ordinary
+  text field. That is what lets one control serve all three page patterns (the JSON modals already
+  post `application/x-www-form-urlencoded`, the taxonomy editor's modal is built in JS, and a plain
+  Turbo form posts a string) without any of them changing how it submits.
+- `app/helpers/modal_fields.rb` — one `PHOTO_FIELD` descriptor, so the field cannot be spelled one
+  way in a tag taxonomy and another in a content editor. The taxonomy controller's `photo` branch
+  produces the same bare container the server-side partial renders, and the photo controller fills
+  it, so the three surfaces cannot drift.
+- `ApplicationHelper#record_photo_url(record)` — the single way a view gets a photo URL. `Photo` has
+  no `url` method of its own: an Active Storage URL belongs to the request that serves it.
 
 ## Response formats per controller
 

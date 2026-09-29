@@ -2,6 +2,7 @@ class Universe < ApplicationRecord
   MENU_COUNT_ASSOCIATIONS = %i[characters relations locations events items ownerships].freeze
 
   include HasSlug
+  include HasPhoto
   include SoftDeletable
   include Searchable
   # A universe's slug appears in the stored path of every document under it, so a

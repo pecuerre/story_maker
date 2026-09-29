@@ -5,6 +5,7 @@
 class Scene < ApplicationRecord
   include HasManyTags
   include HasSlug
+  include HasPhoto
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable

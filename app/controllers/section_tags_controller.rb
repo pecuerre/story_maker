@@ -1,5 +1,6 @@
 class SectionTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :section_tag
 
@@ -97,7 +98,7 @@ class SectionTagsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def section_tag_params
-    params.expect(section_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
+    params.expect(section_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
   end
 
   def update_section_tag

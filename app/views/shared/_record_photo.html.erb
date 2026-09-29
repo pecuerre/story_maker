@@ -1,0 +1,16 @@
+<%# The square photo a details page shows in the left part of its identity card.
+
+    Local contract:
+      photo - the Photo record, already known to carry a file
+      name  - the record's own name, used as the image's alternative text
+
+    A stored photo is always a 300x300 square, so it is rendered at that
+    aspect ratio and never stretched. The alternative text names the record
+    rather than describing the picture, because the picture is the record. %>
+<figure class="record-photo mb-0">
+  <%= image_tag url_for(photo.file),
+    alt: "Photo of #{name}",
+    class: "record-photo-image",
+    width: Photo::SIZE,
+    height: Photo::SIZE %>
+</figure>

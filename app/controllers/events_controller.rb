@@ -1,5 +1,6 @@
 class EventsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
   maintains_sibling_positions_for :event
@@ -60,7 +61,7 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.expect(event: [ :title, :start_datetime, :end_datetime, :before_event_id, :after_event_id,
+    params.expect(event: [ *photo_params, :title, :start_datetime, :end_datetime, :before_event_id, :after_event_id,
       :simultaneous_event_id, :description, { event_tag_ids: [] }, :parent_id, :position ])
   end
 

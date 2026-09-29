@@ -1,5 +1,6 @@
 class CharacterTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :character_tag
@@ -55,7 +56,7 @@ class CharacterTagsController < ApplicationController
   end
 
   def character_tag_params
-    params.expect(character_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
+    params.expect(character_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_character_tag

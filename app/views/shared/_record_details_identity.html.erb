@@ -1,0 +1,10 @@
+<%# The name and the facts inside a record's identity card, with or without the
+    photo beside them. Split out so the two layouts in
+    `shared/_record_details` render exactly the same identity block and cannot
+    drift apart. %>
+<% if local_assigns[:label].present? %>
+  <div class="page-eyebrow"><%= local_assigns.fetch(:label) %></div>
+  <h2 class="h4 text-break mb-3"><%= local_assigns.fetch(:title) %></h2>
+<% end %>
+
+<%= render "shared/detail_facts", facts: local_assigns.fetch(:facts) %>

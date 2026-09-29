@@ -1,5 +1,6 @@
 class ItemsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
   maintains_sibling_positions_for :item
@@ -64,7 +65,7 @@ class ItemsController < ApplicationController
   end
 
   def item_params
-    params.expect(item: [ :name, :description, { item_tag_ids: [] }, :parent_id, :position ])
+    params.expect(item: [ *photo_params, :name, :description, { item_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_item

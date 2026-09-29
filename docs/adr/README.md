@@ -29,6 +29,7 @@ The current architecture and conventions are documented in:
 | [0012](0012-client-side-verification-and-csrf.md) | Accepted | Verify client-side code with Bun tests, Biome, and a real browser CSRF check |
 | [0013](0013-platform-settings-and-browser-theme.md) | Accepted | Keep platform settings browser-owned, server-rendered, and out of the universe workspace |
 | [0014](0014-global-search-with-meilisearch.md) | Accepted | Answer the top-bar search with Meilisearch, filtered by what the reader may read, and state it when there is no engine |
+| [0015](0015-record-photos.md) | Accepted | Give every main record one optional `Photo`, cropped to a square and stored as a 300×300 re-encode |
 
 ## Format
 

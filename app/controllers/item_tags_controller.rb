@@ -1,5 +1,6 @@
 class ItemTagsController < ApplicationController
   allow_unauthenticated_access only: %i[ index show ]
+  include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
   maintains_sibling_positions_for :item_tag
@@ -55,7 +56,7 @@ class ItemTagsController < ApplicationController
   end
 
   def item_tag_params
-    params.expect(item_tag: [ :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
+    params.expect(item_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
   def update_item_tag

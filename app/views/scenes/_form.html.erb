@@ -18,6 +18,8 @@
     <div class="form-text">The scene's title in the narrative order. Only a title is required.</div>
   </div>
 
+  <%= render "shared/photo_field", param: "scene", current_url: record_photo_url(scene) %>
+
   <div class="mb-3">
     <%= form.label :description, "Short description", class: "form-label" %>
     <%= form.text_area :description, class: "form-control", rows: 5 %>

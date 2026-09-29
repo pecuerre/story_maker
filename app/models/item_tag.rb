@@ -3,6 +3,7 @@ class ItemTag < ApplicationRecord
   include HasColor
   include HasManyTags
   include HasSlug
+  include HasPhoto
   include SoftDeletable
   include Searchable
   searchable kind: "tag", title: :name, body: :description, route: "item_tag", taxonomy: "Item"

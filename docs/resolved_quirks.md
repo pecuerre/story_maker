@@ -219,6 +219,35 @@ could make a new event receive a random slug instead of one derived from its tit
 **Fix:** `set_name` now runs before `HasSlug` on create and whenever the title changes. The title is
 copied to `name`, and `HasSlug` regenerates the slug when that name changes.
 
+### Former quirk #26: a duplicate universe name raised an uncaught uniqueness exception (fixed)
+
+**Then:** a universe's slug is its public address (`/u/<slug>`) and is global, and `HasSlug`
+derives it from the name. Two universes whose names slugify alike therefore collide — as does a
+name that happens to derive an address another universe already holds. `universes.slug` carries a
+partial unique index, but `Universe` validated nothing about it, so `UniversesController#create`
+and `#update` let the index raise `ActiveRecord::RecordNotUnique` out of an ordinary save and the
+author got a `500` instead of a stated reason. The form offered no way out either: it accepted no
+slug, so the only recovery was to invent a different universe name.
+
+**Fix:** `Universe` validates `slug` uniqueness with the same `deleted_at IS NULL` condition the
+index uses (as `Story` already did for its own partial index), so a taken address is an ordinary
+`:slug` field error — a `422` that renders in the shared error summary, or the documented `422`
+error hash in the JSON contract — instead of a driver exception. The universe form gained an
+optional **Address slug** field so the collision is answerable without renaming the world, and
+`universes_controller`'s strong parameters accept it.
+
+**The field is blank on both forms, and that is the whole point.** `HasSlug` already gives an
+explicitly supplied slug priority for the save on which it is supplied, so a filled field republishes
+the universe where the author asked, while a blank one leaves the callback to derive the address
+from the name. The alternative — prefilling the field with the current address — would have shown a
+value that the callback silently replaces on a rename, and forwarding the blank field as a cleared
+attribute would have been worse: `HasSlug` would regenerate the slug from the name on an
+*unrelated* save, so ticking **Private universe** would republish the universe under a new address
+and invalidate every path stored below it. A blank slug is therefore dropped in
+`universe_params` and the attribute is never assigned, and a request test pins that behaviour. A
+refused save is the one case that shows a value: the form keeps the address the author typed, since
+this field is the answer to the error being shown, and discards a derived one it never received.
+
 ### CI system-test job had no tests (fixed)
 
 **Then:** the CI workflow ran `test:system`, but the repository had no `test/system` directory.
@@ -924,3 +953,41 @@ request suite asserts the markup the browser would render), `bin/brakeman`, `bin
 schema changed in this delivery), `UNIVERSE=dark|lotr bin/rails db:demo:check` (no `db/data`
 manifest changed), and `db:demo:reset`/`db:restart`/Docker/Kamal deployment (destructive, needs
 approval).
+
+## Follow-up verification (2026-09-29, universe address uniqueness — quirk 26)
+
+- `bin/rails test` — 1,074 tests, 6,395 assertions, 0 failures, 0 errors, 7 skips.
+- `bin/rails test test/models/universe_test.rb test/models/translations_test.rb` — 24 tests,
+  195 assertions, 0 failures, 0 errors, 0 skips.
+- `bin/rails test test/controllers/universes_controller_test.rb` — 28 tests, 101 assertions,
+  0 failures, 0 errors, 0 skips.
+- `bin/rails test test/controllers/workspace_locale_test.rb` — 26 tests, 310 assertions,
+  0 failures, 0 errors, 0 skips.
+- `PARALLEL_WORKERS=2 bin/rails test:system` — 117 tests, 1,501 assertions, **2 failures, 2 errors**,
+  0 skips. All four are pre-existing and in a surface this change does not touch, and they are now
+  recorded as the stale browser assertions finding in [`known_quirks.md`](known_quirks.md)
+  (`test/system/tag_improvements_test.rb:16,60` and `test/system/taxonomy_tree_test.rb:22,302`:
+  a workspace tab link that deliberately carries `from=workspace`, a taxonomy row that now holds two
+  collapsed toggles, and a page-header badge that counts the tag the test itself creates). Both
+  files reproduce all four on their own
+  (`PARALLEL_WORKERS=2 bin/rails test test/system/tag_improvements_test.rb test/system/taxonomy_tree_test.rb`
+  — 17 tests, 185 assertions, 2 failures, 2 errors), and none of them creates, renames, or updates a
+  universe. An earlier full run on the same day also reported three further errors that did not
+  reappear, which is the load sensitivity known quirk 58 describes.
+- `PARALLEL_WORKERS=1 bin/rails test test/system/universe_story_test.rb` — 2 tests, 27 assertions,
+  0 failures, 0 errors, 0 skips. The first run failed the pre-existing creation journey on an
+  "All stories" navigation that never arrived; the identical run passed on re-run with no change,
+  which is the flake recorded as known quirk 58 and the reason a single browser run is not read as
+  a verdict.
+- `bin/brakeman --no-pager` — 1 weak-confidence SQL-injection warning in
+  `app/models/concerns/has_many_tags.rb:109`, a string-interpolated `joins` of table and column
+  names taken from the model's own reflections. Pre-existing, and unrelated to this change.
+- `bin/rubocop` — 324 files, no offenses.
+- `git diff --check` — clean.
+
+Not run: a manual browser pass outside the automated suite (no browser was attached to the
+session that made this change), `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no
+dependency, importmap pin, or vendored asset changed), `bun run check:js` (no client-side code
+changed), `UNIVERSE=dark|lotr bin/rails db:demo:check` (no `db/data` manifest changed; the two
+registered universes keep distinct addresses), and `db:demo:reset`/`db:restart`/Docker/Kamal
+deployment (destructive, needs approval).

@@ -289,6 +289,15 @@ The three functional editing patterns are:
 - **Stories only** must pass the URL explicitly
   (`form_with model: story, url: story.persisted? ? universe_story_path(id: story) : universe_stories_path`)
   because the routes are not nested under `resources :universes`.
+- **The universe form is the only one with an optional address slug.** A universe's slug is its
+  public address (`/u/<slug>`) and is global, so `HasSlug` can derive the same address for two
+  names; the field is how an author answers that collision without renaming the world. It renders
+  **blank on both forms**, and a blank value is dropped in `universe_params` rather than assigned:
+  an explicitly supplied slug wins for that save, a blank one leaves `HasSlug` to derive the
+  address from the name, and forwarding a cleared slug would republish the universe on an unrelated
+  save. Prefilling it is equally wrong — the callback replaces the value on a rename, so the field
+  would show an address the form is not going to use. See
+  [resolved_quirks.md](resolved_quirks.md).
 
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).

@@ -83,7 +83,15 @@ class UniversesController < ApplicationController
   end
 
   # Only allow a list of trusted parameters through.
+  #
+  # The form's address slug is optional, and a blank one means "derive it from
+  # the name", not "clear it". Forwarding the empty string would make `HasSlug`
+  # regenerate the slug on an *unrelated* save — toggling Private would silently
+  # republish the universe under a new address and invalidate every path stored
+  # below it — so a blank value is dropped and the attribute is never assigned.
   def universe_params
-    params.expect(universe: [ *photo_params, :name, :private ])
+    permitted = params.expect(universe: [ *photo_params, :name, :private, :slug ])
+    permitted.delete(:slug) if permitted[:slug].blank?
+    permitted
   end
 end

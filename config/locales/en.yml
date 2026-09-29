@@ -176,6 +176,9 @@ en:
       guest_description: "Sign in to create a universe, or check back when a public universe is available."
     form:
       name: "Name"
+      slug: "Address slug"
+      slug_hint: "Leave this blank to build the address from the name."
+      slug_hint_current: "Leave this blank to keep /u/%{slug}. A new name rebuilds the address from the name."
       private: "Private universe"
       private_hint: "Public universes can be read by guests and contributed to by signed-in users. Private universes are visible only to their members."
       # The default submit label comes from Rails' own `helpers.submit.*`, which
@@ -528,6 +531,10 @@ en:
       universe:
         name: "Name"
         private: "Private"
+        # The human name of a validation's attribute, not a form label. A taken
+        # address reads "Slug has already been taken" beside the Address slug
+        # field that answers it.
+        slug: "Slug"
       story:
         name: "Name"
         description: "Description"

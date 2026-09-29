@@ -154,6 +154,9 @@ es:
       guest_description: "Inicia sesión para crear un universo, o vuelve cuando haya uno público disponible."
     form:
       name: "Nombre"
+      slug: "Slug de la dirección"
+      slug_hint: "Déjalo en blanco para construir la dirección a partir del nombre."
+      slug_hint_current: "Déjalo en blanco para conservar /u/%{slug}. Un nombre nuevo reconstruye la dirección a partir del nombre."
       private: "Universo privado"
       private_hint: "Los universos públicos pueden leer los visitantes y en ellos pueden colaborar los usuarios que han iniciado sesión. Los universos privados solo son visibles para sus miembros."
       submit_create: "Crear universo"
@@ -375,6 +378,8 @@ es:
       universe:
         name: "Nombre"
         private: "Privado"
+        # The human name of a validation's attribute, not a form label.
+        slug: "Slug"
       story:
         name: "Nombre"
         description: "Descripción"
@@ -632,6 +637,7 @@ es:
       in: "debe estar en %{count}"
       odd: "debe ser impar"
       even: "debe ser par"
+      taken: "ya está en uso"
   # The connectors `to_sentence` uses, which the settings flash and the scene
   # filter summaries read.
   support:

@@ -20,6 +20,14 @@ class Universe < ApplicationRecord
   validates :name, presence: true
   validates :owner, presence: true
   validates :private, inclusion: { in: [ true, false ] }
+  # A universe slug is its public address (`/u/<slug>`) and is global, so
+  # `HasSlug` deriving it from the name means two universes whose names slugify
+  # alike collide. The partial unique index on `universes.slug` only sees live
+  # rows, and it used to raise `ActiveRecord::RecordNotUnique` from inside an
+  # ordinary create or update. This validation carries the same condition, so a
+  # taken address is a field error the form can show and the author can answer
+  # with a different slug.
+  validates :slug, uniqueness: { conditions: -> { where(deleted_at: nil) } }
 
   scope :visible_to, ->(user) {
     if user

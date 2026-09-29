@@ -105,6 +105,8 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Nuevo universo"
     assert_select "label[for=universe_name]", text: "Nombre"
+    assert_select "label[for=universe_slug]", text: "Slug de la dirección"
+    assert_select ".form-text", text: /Déjalo en blanco para construir la dirección/
     assert_select ".form-check-label", text: "Universo privado"
     assert_select ".form-text", text: /Los universos públicos/
     assert_select "input[type=submit][value=?]", "Crear universo"
@@ -120,7 +122,20 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     # The browser tab names the record; the page keeps the workspace's own title.
     assert_equal "Editar Editado", rendered_title
     assert_select "h1", text: "Editar universo"
+    # The optional address field starts blank on the edit form too, and its hint
+    # names the address the universe is published under right now.
+    assert_select "input#universe_slug[value='']"
+    assert_select ".form-text", text: /Déjalo en blanco para conservar \/u\/editado/
     assert_select "input[type=submit][value=?]", "Actualizar universo"
+  end
+
+  test "a taken universe address is reported in Spanish" do
+    Universe.create!(owner: users(:user_one), name: "Ocupado", slug: "ocupado")
+
+    post universes_url, params: { universe: { name: "Ocupado" } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert] li", text: "Slug ya está en uso"
   end
 
   test "the stories list and its per-story actions are Spanish" do

@@ -8,6 +8,21 @@
     <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
   </div>
 
+  <div class="mb-3">
+    <%# Optional, and blank on a fresh open: an address set here wins for this
+        save, while a blank one leaves `HasSlug` to derive it from the name.
+        Prefilling would show a value the callback silently replaces on a
+        rename, and a cleared field would republish the universe under a new
+        address on an unrelated save. A refused save keeps what the author
+        actually typed, because this field is the answer to the error it shows. %>
+    <% typed_slug = universe.persisted? && universe.slug != universe.slug_in_database %>
+    <%= form.label :slug, t("universes.form.slug"), class: "form-label" %>
+    <%= form.text_field :slug, class: "form-control", value: (typed_slug ? universe.slug : "") %>
+    <div class="form-text">
+      <%= universe.persisted? ? t("universes.form.slug_hint_current", slug: universe.slug) : t("universes.form.slug_hint") %>
+    </div>
+  </div>
+
   <%= render "shared/photo_field", param: "universe", current_url: record_photo_url(universe) %>
 
   <div class="form-check form-switch mb-2">

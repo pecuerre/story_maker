@@ -15,6 +15,55 @@ class UniverseTest < ActiveSupport::TestCase
     assert_includes universe.errors[:private], "is not included in the list"
   end
 
+  test "a duplicate name that derives a taken address is a field error" do
+    # `HasSlug` derives the address from the name and the address is global, so
+    # two universes whose names slugify alike collide. The database's partial
+    # unique index used to raise `ActiveRecord::RecordNotUnique` here instead.
+    Universe.create!(owner: users(:user_one), name: "Shared name")
+
+    duplicate = Universe.new(owner: users(:user_one), name: "Shared name")
+
+    assert_not duplicate.valid?
+    assert_includes duplicate.errors[:slug], "has already been taken"
+    assert_no_difference("Universe.count") { duplicate.save }
+  end
+
+  test "an explicit address can disambiguate a duplicate name" do
+    Universe.create!(owner: users(:user_one), name: "Shared name")
+
+    disambiguated = Universe.new(owner: users(:user_one), name: "Shared name", slug: "shared-name-two")
+
+    assert disambiguated.save
+    assert_equal "shared-name-two", disambiguated.slug
+  end
+
+  test "a rename into a taken address is a field error and keeps the old address" do
+    Universe.create!(owner: users(:user_one), name: "Taken", slug: "taken")
+    universe = Universe.create!(owner: users(:user_one), name: "Movable", slug: "movable")
+
+    assert_not universe.update(name: "Taken")
+    assert_includes universe.errors[:slug], "has already been taken"
+    assert_equal "movable", universe.reload.slug
+  end
+
+  test "an unrelated save does not republish the universe under a new address" do
+    universe = Universe.create!(owner: users(:user_one), name: "Movable", slug: "movable")
+
+    assert universe.update(private: true)
+
+    assert_equal "movable", universe.reload.slug
+  end
+
+  test "a soft-deleted universe releases its address" do
+    universe = Universe.create!(owner: users(:user_one), name: "Retired", slug: "retired")
+    universe.soft_delete
+
+    reused = Universe.new(owner: users(:user_one), name: "Retired", slug: "retired")
+
+    assert reused.save
+    assert_equal "retired", reused.slug
+  end
+
   test "defaults visibility to public" do
     universe = Universe.create!(owner: users(:user_one), name: "Default visibility")
 

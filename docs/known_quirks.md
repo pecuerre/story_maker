@@ -125,13 +125,6 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     (`app/views/timeline/index.html.erb:3,31-45`). The model has no temporal-consistency validation
     for this contradiction, and timeline tests do not cover conflicting dates/relations.
 
-26. **Low — duplicate universe names become uncaught uniqueness exceptions.** `HasSlug` derives a
-    global universe slug from the name, but `Universe` has no slug-uniqueness validation
-    (`app/models/concerns/has_slug.rb:26-38`, `app/models/universe.rb:4-8`). The database unique
-    index then raises `ActiveRecord::RecordNotUnique` during an ordinary create/update
-    (`app/controllers/universes_controller.rb:31-50`) instead of rendering a field error. The form
-    does not accept a slug to disambiguate the collision.
-
 27. **Low — User model validation does not match its NOT NULL schema.** `users.name` and
     `users.email_address` are `NULL: false` (`db/schema.rb:304-312`), but `User` has no presence
     validations (`app/models/user.rb:1-10`). Model callers can see `valid? == true` and then receive
@@ -350,6 +343,33 @@ through the current normal UI. They are recorded so they are not mistaken for se
     three surfaces pass their templates or the ADR's Character/Item/Location templates are
     withdrawn; the ADR's "every confirmation template above is live" claim was corrected on
     2026-09-29 to name the four that are.
+
+60. **Medium — four browser assertions in the tag and taxonomy suites are stale, and the browser
+    suite is currently red for a reason that has nothing to do with the load flake.** A complete
+    `PARALLEL_WORKERS=2 bin/rails test:system` run on 2026-09-29 is 117 tests / 1,501 assertions
+    with 2 failures and 2 errors, all four in two files, and
+    `bin/rails test test/system/tag_improvements_test.rb test/system/taxonomy_tree_test.rb`
+    reproduces the same 2 failures and 2 errors on its own:
+    - `tag_improvements_test.rb:16` asserts the canonical tag path, but a workspace menu-tag link
+      deliberately carries `?from=workspace`
+      (`docs/universe_maker_conventions.md`, flat-list pattern), so the test disagrees with
+      documented behavior rather than the app being wrong.
+    - `tag_improvements_test.rb:60` and `taxonomy_tree_test.rb:302` both call
+      `find("button[aria-expanded='false']")` inside a taxonomy row, which now matches **two**
+      collapsed toggles and raises `Capybara::Ambiguous`. The row grew the second control when
+      grouping tags started listing their own children (2026-09-29); the selector was never
+      narrowed.
+    - `taxonomy_tree_test.rb:22` expects a page-header `.badge` of `3` where the page shows `4`.
+      That badge is the taxonomy's own tag count (`TagsHelper` passes `count: ordered_records.length`),
+      and `test/fixtures/character_tags.yml` holds three tags for `universe_one`, so the test's own
+      new tag makes four. The expectation is stale, not the badge — but nothing states that the
+      header count is meant to track live creation, so confirm it while fixing the line.
+    These are not known quirk 58: they are assertion failures that reproduce in isolation on an
+    idle machine, and a first full run on the same day also reported three further errors that did
+    not reappear, which is the load sensitivity quirk 58 describes. Fix each by deciding whether the
+    test or the app is stale, then narrow the selectors, correct the `from=workspace` expectation,
+    and settle what the header badge counts. Until then, do not read a red browser suite as evidence
+    about any other change, and do not add a fourth unexplained failure to the pile.
 
 ## DataFactor report follow-up observations (2026-09-25)
 

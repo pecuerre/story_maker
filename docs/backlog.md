@@ -356,19 +356,27 @@ it has a useful destination and clear empty/loading/error states.
       and is then deleted from this file, so what is left here is only the work that is still
       pending. The remaining numbers are never renumbered or reused.
 
-      **Fix the four open quirks in this code path first, in this order**, because each one is a
+      **Fix the three open quirks in this code path first, in this order**, because each one is a
       behavior defect rather than a translation and none of them is helped by being done after
       the copy is translated:
         - **#48** (a delegated admin can demote or remove their own
       membership into a bodyless 403 — `memberships/index.html.erb` and
       `memberships_controller.rb`),
-        - **#26** (a duplicate universe name raises
-      `ActiveRecord::RecordNotUnique` instead of rendering a field error — `universes_controller.rb`
-      and `universes/_form.html.erb`),
         - **#24** (`TimelineLayout` rebuilds `@edges` from raw event
       associations, so a valid model state renders edges that contradict the layer order),
         - **#46** (a Timeline node renders a bare id with no accessible name, and the documented
       pan/zoom interaction is not implemented).
+
+    - **Before slice 27.3: make the browser suite green again.** Four assertions in
+      `test/system/tag_improvements_test.rb` and `test/system/taxonomy_tree_test.rb` are stale — a
+      workspace menu-tag link now carries `from=workspace`, a taxonomy row holds two collapsed
+      toggles, and a page-header badge counts the tag the test itself creates — so
+      `bin/rails test:system` is red before any of the work below starts, which is exactly the
+      state in which a real regression cannot be told from an old one. The finding, the evidence, and
+      the three decisions it needs are in [`known_quirks.md`](known_quirks.md) #60 (the stale browser
+      assertions entry); fix that entry and delete it here in the same change. Do it before the
+      Universe Bible workspaces, because that slice is the one that edits the tag, taxonomy, and
+      workspace-tab surfaces those tests assert on.
 
     - **Slice 27.3 — Universe Bible workspaces.** `characters/*`, `locations/*`, `events/*`,
       `items/*`, `relations/*`, `ownerships/*`, all six universe-level `*_tags` indexes and their

@@ -29,4 +29,23 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Sections"
     assert_match %r{/u/system-test-universe/s/\d+/sections\z}, current_path
   end
+
+  test "a name whose address is taken is refused, and the address field answers it" do
+    sign_in_via_form(users(:user_one))
+
+    # "One" derives the address `one`, which the `universe_one` fixture already
+    # holds. The refusal is a stated field error on the form, not a 500 page.
+    visit new_universe_path
+    fill_in "Name", with: "One"
+    click_button "Create Universe"
+
+    assert_selector ".alert-danger[role=alert] li", text: "Slug has already been taken"
+    assert_equal "One", find("#universe_name").value
+
+    fill_in "Address slug", with: "one-in-another-timeline"
+    click_button "Create Universe"
+
+    assert_selector "h1", text: "One"
+    assert_match %r{/u/one-in-another-timeline\z}, current_path
+  end
 end

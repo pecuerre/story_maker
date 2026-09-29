@@ -43,6 +43,82 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.parsed_body["private"], "is not included in the list"
   end
 
+  test "a duplicate name renders an address field error instead of raising" do
+    Universe.create!(owner: users(:user_one), name: "Duplicate")
+
+    assert_no_difference("Universe.count") do
+      post universes_url, params: { universe: { name: "Duplicate" } }
+    end
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert] li", text: /Slug has already been taken/
+  end
+
+  test "a taken address is a field error in the JSON contract" do
+    Universe.create!(owner: users(:user_one), name: "Duplicate")
+
+    assert_no_difference("Universe.count") do
+      post universes_url, params: { universe: { name: "Duplicate" } }, as: :json
+    end
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["slug"], "has already been taken"
+  end
+
+  test "an explicit address disambiguates a duplicate name" do
+    Universe.create!(owner: users(:user_one), name: "Duplicate")
+
+    assert_difference("Universe.count") do
+      post universes_url, params: { universe: { name: "Duplicate", slug: "duplicate-two" } }
+    end
+
+    universe = Universe.order(:id).last
+    assert_equal "duplicate-two", universe.slug
+    assert_redirected_to universe_url(universe)
+  end
+
+  test "a rename into a taken address re-renders the form" do
+    Universe.create!(owner: users(:user_one), name: "Taken", slug: "taken")
+
+    patch universe_url(@universe), params: { universe: { name: "Taken" } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert] li", text: /Slug has already been taken/
+    assert_equal "one", @universe.reload.slug
+  end
+
+  test "a refused update keeps the address the author typed" do
+    Universe.create!(owner: users(:user_one), name: "Taken", slug: "taken")
+
+    patch universe_url(@universe), params: { universe: { name: @universe.name, slug: "taken" } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert] li", text: /Slug has already been taken/
+    assert_select "input#universe_slug[value=?]", "taken"
+  end
+
+  test "a refused create leaves the optional address blank" do
+    post universes_url, params: { universe: { name: "" } }
+
+    assert_response :unprocessable_content
+    assert_select "input#universe_slug[value='']"
+  end
+
+  test "an unrelated update keeps the address the universe is published under" do
+    patch universe_url(@universe), params: { universe: { name: @universe.name, private: "1", slug: "" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert_equal "one", @universe.reload.slug
+    assert @universe.reload.private?
+  end
+
+  test "an author can republish a universe under a chosen address" do
+    patch universe_url(@universe), params: { universe: { name: @universe.name, slug: "renamed_address" } }
+
+    assert_redirected_to universe_url(@universe.reload)
+    assert_equal "renamed-address", @universe.reload.slug
+  end
+
   test "should not update universe with a null visibility flag" do
     patch universe_url(@universe), params: { universe: { private: nil } }, as: :json
 

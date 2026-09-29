@@ -145,6 +145,27 @@ Labels used below:
   taggable tags. Child records and their other tag badges are batch-loaded. Workspace menu-tag links
   carry `from=workspace`, keeping the related tabs on tag details pages; taxonomy Details links
   remain canonical and do not show those tabs. Pinned Character tags are also present on Relations.
+- **[fixed]** Two universes whose names slugify alike no longer fail with a `500`. A universe's slug
+  is its public address (`/u/<slug>`) and is global, so `HasSlug` deriving it from the name made
+  two names a collision — as did a name that happened to derive an address another universe already
+  held. `universes.slug` carries a partial unique index but `Universe` validated nothing about it,
+  so `UniversesController#create`/`#update` let the index raise `ActiveRecord::RecordNotUnique` out
+  of an ordinary save. `Universe` now validates `slug` uniqueness with the index's own
+  `deleted_at IS NULL` condition, the way `Story` already did, so a taken address is a `422` field
+  error: it renders in the shared error summary for HTML and comes back as the documented error hash
+  for JSON. The universe form gained an optional **Address slug** field so the collision is
+  answerable without renaming the world; it renders blank on both forms, because a filled field wins
+  for that save while a blank one leaves `HasSlug` to derive the address from the name. A blank slug
+  is dropped in `universe_params` rather than assigned, because forwarding a cleared slug would make
+  the callback regenerate the address from the name on an *unrelated* save — ticking **Private
+  universe** would republish the universe under a new address and invalidate every path stored below
+  it. Prefilling the field was rejected for the mirror-image reason: the callback replaces the value
+  on a rename, so the form would have shown an address it was not going to use. The new field and
+  its `Slug has already been taken` message are translated in both locales, and
+  `errors.messages.taken` is now part of the hand-maintained Spanish subset of Rails' own strings.
+  Model, request, locale, and browser tests cover the collision, the disambiguation, the unrelated
+  save that must not republish the universe, and a soft-deleted universe releasing its address. The
+  entry moved from `docs/known_quirks.md` to `docs/resolved_quirks.md`.
 - **[fixed]** Signing in no longer leaves the visitor on the sign-in page. A wrong password sends
   the browser back to that same form, and the referer of that reload is the sign-in page (or the
   sign-in endpoint) itself; that URL was being remembered as the post-login destination, so the
@@ -160,6 +181,20 @@ Labels used below:
   its documented status code. Request tests cover the mistyped-then-correct retry, the
   password-page destination, the refused destination and its one-request scope; browser tests cover
   the retry and the password-page journey.
+- **[docs]** The browser suite is red for a reason that is now written down instead of being
+  rediscovered. A complete `PARALLEL_WORKERS=2 bin/rails test:system` run is 117 tests / 1,501
+  assertions with 2 failures and 2 errors, all four in `test/system/tag_improvements_test.rb` and
+  `test/system/taxonomy_tree_test.rb`, and those two files reproduce all four on their own, so this
+  is not the load flake described by known quirk 58: a workspace menu-tag link deliberately carries
+  `from=workspace` while the test asserts the canonical path, a taxonomy row now holds two collapsed
+  `aria-expanded='false'` toggles so `find` raises `Capybara::Ambiguous`, and a page-header badge
+  counts the tag the test itself creates, so its expectation is one behind. The new known-quirks
+  entry states the evidence and names the one thing worth confirming while fixing it — that the
+  header count is meant to track live creation — and the internationalization item in
+  [`docs/backlog.md`](docs/backlog.md) now carries a slice **before** the Universe Bible workspaces
+  to fix them, because that slice is the one that edits the tag, taxonomy, and workspace-tab
+  surfaces these tests assert on — with a red suite, a real regression cannot be told from an old
+  failure.
 - **[docs]** Quirk 48 — a delegated admin demoting or removing their own membership — was already
   fixed earlier today but still listed as open. The entry moved from `docs/known_quirks.md` to
   `docs/resolved_quirks.md`, which now records that the refusal is a stated redirect to the landing

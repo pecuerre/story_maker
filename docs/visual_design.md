@@ -497,7 +497,7 @@ Universes, Stories, and universe membership management use the existing form pat
 Do not replace these with a modal: full-page forms remain appropriate for objects with a stable
 URL and meaningful navigation.
 
-### Scene workspace (core, references, grouping, tags, Elements, and presence shipped in 11.1–11.7; later slices pending)
+### Scene workspace (core, references, grouping, tags, Elements, presence, and appearances shipped)
 
 The accepted [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines a calm, explicit
 Scene workspace. The **Scenes** sidebar entry is a real story-scoped link with its own count while a

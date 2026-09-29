@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-26
-- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`0010`](0010-safe-taxonomy-editing-and-state-refresh.md), [`../architecture.md`](../architecture.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md), [`../known_quirks.md`](../known_quirks.md), [`../backlog.md`](../backlog.md)
+- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`0010`](0010-safe-taxonomy-editing-and-state-refresh.md), [`../architecture.md`](../architecture.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md), [`../known_quirks.md`](../known_quirks.md)
 
 ## Context
 
@@ -15,10 +15,12 @@ created a duplicate. Deleting a row used a Turbo `button_to` against a `204 No C
 Turbo had no replacement to apply and the row plus its count stayed in the DOM. The browser suite
 passed anyway because it asserted the row after a later navigation.
 
-Backlog item 11.5 makes this shared path reliable before slice 11.6 builds Scene Elements and
-speakers on it, and slices 11.7–11.9 add three more role-bearing modal workspaces to the same
-controller. The response matrix itself does not change: JSON-only endpoints stay JSON-only and the
-HTML flow stays the HTML flow.
+This shared path was made reliable before Scene Elements and Dialogue speakers were built on it, and
+three more role-bearing modal workspaces (Character, Item, and Location presence) were later added
+to the same controller, which is what made the one contract below sufficient for all of them;
+[ADR 0007](0007-story-owned-scenes-and-elements.md) records those deliveries. The
+response matrix itself does not change: JSON-only endpoints stay JSON-only and the HTML flow stays
+the HTML flow.
 
 ## Decision
 
@@ -101,7 +103,7 @@ selector options all have to agree, and one server render is the authoritative w
 ### Move relations and ownerships to JSON as well
 
 Rejected because that would change the documented response matrix for no user-visible gain in this
-slice. Declaring the mode per page keeps the choice explicit and reversible.
+decision. Declaring the mode per page keeps the choice explicit and reversible.
 
 ### Validate everything in the browser
 

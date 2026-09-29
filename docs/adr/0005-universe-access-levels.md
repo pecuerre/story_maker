@@ -33,9 +33,10 @@ Authorization is defined at the universe level and has three levels: **read**, *
 - `Ability` is the single policy definition used by the request authorization concern. Universe
   membership management is an admin-only HTML flow at `/u/:universe_slug/members`.
 
-> **Slice 11.4 clarification (2026-09-25):** `SceneTag` is a story-scoped content component and
-> therefore inherits the same Universe access level as its Story; it does not introduce a separate
-> permission boundary.
+> **Scene Tag clarification (2026-09-25, added with the Scene Tag delivery in
+> [ADR 0007](0007-story-owned-scenes-and-elements.md)):** `SceneTag` is a story-scoped content
+> component and therefore inherits the same Universe access level as its Story; it does not introduce
+> a separate permission boundary.
 
 ## Consequences
 

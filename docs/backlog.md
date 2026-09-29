@@ -35,6 +35,10 @@ Items are numbered and the numbers are stable: a finished item is deleted withou
 renumbering, so the remaining numbers are left as they are and a number is never reused or
 made to mean a different idea.
 
+Because a number disappears from this file when its item is completed, **do not cite a backlog
+number from another document**. Reference a pending idea by its heading text, and cite delivered
+work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
+
 3. **Contextual inspector / right-side utility panel**
 
 The right utility sidebar now reserves a stable home for future collaboration, analytics, and AI
@@ -86,8 +90,8 @@ and visibility rules in mind before exposing any summary data.
 9. **Story-planning and world-building tools**
 
 Story-owned scene planning is now implemented; see
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and the delivered slices in
-[`../CHANGELOG.md`](../CHANGELOG.md). Revisit the adjacent ideas this epic did not decide — Plot,
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and the dated entries in
+[`../CHANGELOG.md`](../CHANGELOG.md). Revisit the adjacent ideas that decision did not settle — Plot,
 Tropes, Routes, Map, Distances, Meetings, POV structure, and turn-level dialogue — only with a
 concrete domain decision: define what each record means, which scope owns it, how it appears in the
 current page patterns, and whether it is worth adding to the data model. Replace a reserved link
@@ -325,8 +329,6 @@ it has a useful destination and clear empty/loading/error states.
 30. define a code_style.md?
 
 31. consider moving all scene_* supporting classes to a namespace?
-
-32. review ADR and rewrite or remove any reference to old backlog items because they are removed after completed.
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

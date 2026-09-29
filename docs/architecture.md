@@ -420,21 +420,23 @@ same reason: a `PATCH` move with no form to follow. Every part of that path is a
 `test/controllers/modal_json_contract_test.rb` and in the browser suite, because a request test
 cannot see the error UI, the pending state, or the refresh.
 
-## Scene architecture (slices 11.1–11.10 implemented)
+## Scene architecture
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first-version Scene domain and
-UX contract. Slices 11.1–11.4 implement its core, references, Section grouping, and Scene Tag
-taxonomy: the `scenes` and `scene_tags` tables, the `Scene` and `SceneTag` models, story-scoped
-routes, the canonical Scenes list, the Scene Details editor with its URL-backed tab shell,
-narrative-order moves, both Section-grouping paths, and optional tag assignment. Slice 11.5 then
-made the shared modal JSON path reliable for the Element and presence-link modals that come next.
-Slices 11.6 and 11.7 add the `scene_elements` and `scene_characters` tables, the `SceneElement` and
+UX contract, and the whole of it is implemented. Its first deliveries added the `scenes` and
+`scene_tags` tables, the `Scene` and `SceneTag` models, story-scoped routes, the canonical Scenes
+list, the Scene Details editor with its URL-backed tab shell, narrative-order moves, both
+Section-grouping paths, and optional tag assignment, and made the shared modal JSON path reliable
+for the Element and presence-link modals that followed
+([ADR 0011](adr/0011-modal-json-mutation-contract.md)). The Element and Character-presence
+deliveries added the `scene_elements` and `scene_characters` tables, the `SceneElement` and
 `SceneCharacter` models, the Dialogue speaker link, the ordered Element list on Scene Details, and
-the Characters tab. Slices 11.8 and 11.9 add `scene_items` and `scene_locations` with the Items and
-plural Locations tabs, completing the four workspace tabs. Slice 11.10 adds `SceneAppearances` and
-the "Appears in scenes" section on the Character, Item, Location, and Event details pages, so a
-shared universe record can be traced forward into the Story's narrative sequence. Every Scene-owned
-route in [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) is now live.
+the Characters tab; the Item and Location-presence deliveries added `scene_items` and
+`scene_locations` with the Items and plural Locations tabs, completing the four workspace tabs.
+`SceneAppearances` added the "Appears in scenes" section on the Character, Item, Location, and Event
+details pages, so a shared universe record can be traced forward into the Story's narrative
+sequence. Every Scene-owned route in [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) is
+live.
 
 ### Ownership and resolution
 
@@ -515,9 +517,8 @@ to the list with a `303`, and grouping redirects back to the Sections workspace 
 `SceneTagsController` follows the established taxonomy JSON mutation contract while its index uses
 the shared tree; it rejects a non-JSON mutation before the positioned service can commit anything.
 The Scene record flow itself never uses the shared modal path, so it inherits nothing from it. The
-Element and presence-link mutations added in slices 11.6–11.9 do: they reuse
-`modal_form_controller.js` under [ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of a
-second editor, so their JSON submission, `422` rendering, pending state, and post-mutation refresh
+Element and presence-link mutations do: they reuse `modal_form_controller.js` under
+[ADR 0011](adr/0011-modal-json-mutation-contract.md) instead of a second editor, so their JSON submission, `422` rendering, pending state, and post-mutation refresh
 are the same contract that is already covered for Characters, Items, and Events.
 
 `SceneElementsController` has no read action at all: Elements are read on Scene Details, so every one

@@ -333,7 +333,7 @@ modal. Each record type supplies its own `facts` array and its own sections, so 
 added to an existing page instead of a new page being invented. See
 [architecture.md](architecture.md#record-details-pages) for the URL table and the scoping rules.
 
-### Scene conventions (core, references, grouping, tags, Elements, and presence shipped in 11.1–11.7; later slices pending)
+### Scene conventions (core, references, grouping, tags, Elements, presence, and appearances shipped)
 
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) accepts the first Scene contract. The
 **Scenes** sidebar entry is a real story-scoped link when a story is selected and stays an
@@ -368,9 +368,9 @@ added to an existing page instead of a new page being invented. See
   selector options from one ordered Section list. Preloading an arbitrary tree depth with
   `includes` is not possible and `ancestor_chain` would query per level per Scene, so list pages
   build the index once instead of walking ancestors in a row.
-- **Elements (implemented in 11.6):** `SceneElement belongs_to :scene`; it is an ordered child
-  component rather than a standalone navigable content model, has no public slug requirement, and is
-  flat rather than hierarchical. Its `kind` is `narration` or `dialogue` — never a column named
+- **Elements:** `SceneElement belongs_to :scene`; it is an ordered child component rather than a
+  standalone navigable content model, has no public slug requirement, and is flat rather than
+  hierarchical. Its `kind` is `narration` or `dialogue` — never a column named
   `type` — and both the model validation and a database `check_constraint` enforce the pair.
   `name` is required and labelled **Title**, `body` is optional and labelled **Content**, and
   `position` is flat and contiguous inside its own Scene. Register `SceneElement` in
@@ -387,26 +387,23 @@ added to an existing page instead of a new page being invented. See
   in the same atomic update. `Character` declares the same link from its side so deleting a Character
   removes its speaker links. Speaking is **not** a presence link: it never creates a
   `SceneCharacter` row, so `SceneParticipants` reads both sources and reports their union.
-- **Character presence (implemented in 11.7):** `SceneCharacter belongs_to :scene` and
-  `belongs_to :character` and carries a nullable free-text `role`, so it is a join model rather than
-  a HABTM association. A blank role means no role and is never checked against a vocabulary. Validate
+- **Character presence:** `SceneCharacter belongs_to :scene` and `belongs_to :character` and carries
+  a nullable free-text `role`, so it is a join model rather than a HABTM association. A blank role means no role and is never checked against a vocabulary. Validate
   same-Universe scope in application code and resolve it through Scene in both `Ability` and the
   shared helpers.
-- **Item and Location presence (implemented in 11.8 and 11.9):** `SceneItem` and `SceneLocation`
-  follow that exact shape, including the unique pair index and the same-Universe rule. Neither record
+- **Item and Location presence:** `SceneItem` and `SceneLocation` follow that exact shape, including
+  the unique pair index and the same-Universe rule. Neither record
   has a second derived source, so their tabs have no union to reconcile: every row is a stored link,
   and the row list, the page count, and the count a mutation changes are the same rows. The
   Locations tab is plural and hierarchical, so each row carries its full ancestor path from
   `LocationPaths` and the picker is depth-indented in root-first order. `Item` and `Location` declare
   the link from their side with `dependent: :delete_all`, so deleting one removes its presence links
   and never a Scene.
-- **Tags (implemented in 11.4):** `SceneTag` definitions are hierarchical, story-scoped, and
-  managed under Configuration → Tags → Story Tags → Scene tags. The same workspace keeps Section
+- **Tags:** `SceneTag` definitions are hierarchical, story-scoped, and managed under
+  Configuration → Tags → Story Tags → Scene tags. The same workspace keeps Section
   Tags as a separate tab. Scene Details shows preloaded badges, and its one stable HTML form owns
   optional `scene_tag_ids` assignment; tags are never required or automatically assigned.
-- **World links (implemented in 11.7–11.9):** use real join models for `SceneCharacter`,
-  `SceneItem`, and
-  `SceneLocation` so
+- **World links:** use real join models for `SceneCharacter`, `SceneItem`, and `SceneLocation` so
   their nullable free-text `role` is persisted. The Dialogue speaker link is a HABTM association
   instead, because it has no role and no turn order. Validate same-Universe scope in application code
   and resolve it through Scene in both `Ability` and shared helpers.
@@ -424,8 +421,8 @@ added to an existing page instead of a new page being invented. See
   next to the chosen `section_id`, which keeps the move working without client-side scripting. Pass
   `story_id`, `scene_id`, `id`, and any record id as named route-helper keys; never use positional
   records.
-- **Reverse scene links (implemented in 11.10):** the Character, Item, Location, and Event details
-  pages end with an **Appears in scenes of &lt;Story&gt;** section built by `SceneAppearances` and
+- **Reverse scene links:** the Character, Item, Location, and Event details pages end with an
+  **Appears in scenes of &lt;Story&gt;** section built by `SceneAppearances` and
   `scene_appearances/_section`. It is read-only navigation on the record's own page, never a new
   workspace: the same links would be broken if it were. It is scoped to `Current.story`, and with no
   current Story it says so and offers the story list — a Scene has no Universe-level URL, so there is

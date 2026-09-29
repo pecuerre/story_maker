@@ -77,9 +77,12 @@ schema-only reset and also requires development plus confirmation; it does not l
 
 - Adding a persisted model requires updating the registry and every registered universe directory.
 - The loader is intentionally create-only; changing demo data means using the explicit reset task.
-- The current Dark/LOTR synthetic passwords remain a separate security-hygiene backlog item.
-- The loader normalizes current hierarchy positions but does not solve application-level sibling
-  position concurrency concerns for future flat Scene/Element sequences.
+- The Dark/LOTR synthetic passwords are still literals; replacing them with an explicit
+  environment value is separate security-hygiene work, recorded in
+  [`../known_quirks.md`](../known_quirks.md).
+- The loader normalizes current hierarchy positions; flat position groups are registered the same way
+  (see [ADR 0009](0009-transactional-position-maintenance.md)), which does not solve
+  application-level sibling position concurrency concerns for direct writes.
 
 ## Alternatives considered
 

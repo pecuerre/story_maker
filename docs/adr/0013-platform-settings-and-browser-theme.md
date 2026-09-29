@@ -10,9 +10,9 @@
 
 ## Context
 
-The backlog asked for a settings page under Configuration with vertical tabs, starting with one
-**Appearance** tab holding a light/dark **Theme** choice. Two things about that request do not fit the
-shape of everything else in the application:
+The request was a settings page under Configuration with vertical tabs, starting with one
+**Appearance** tab holding a light/dark **Theme** choice. Two things about that request do not fit
+the shape of everything else in the application:
 
 - [ADR 0001](0001-universe-and-story-scope.md) makes the universe the unit of ownership: characters,
   locations, events, items, relations, memberships, taxonomies, and stories all belong to a universe
@@ -123,7 +123,7 @@ document.
 
 Rejected for now. It is a nicer interaction, but it is a new client-side code path (an instant
 attribute flip, then a background write of the cookie) that needs its own Bun tests and a CSRF
-decision, and it is not what the backlog item asked for.
+decision, and it is not what was asked for.
 
 ## Related documentation
 

@@ -70,6 +70,38 @@ Labels used below:
   its documented status code. Request tests cover the mistyped-then-correct retry, the
   password-page destination, the refused destination and its one-request scope; browser tests cover
   the retry and the password-page journey.
+- **[docs]** Documentation no longer cites a backlog item number, because a number is deleted from
+  `docs/backlog.md` when its item completes and the citation then points at nothing. `docs/adr/README.md`
+  records the rule for future ADRs: cite the reference documentation or ADR holding the delivered
+  behavior, the dated `CHANGELOG.md` entry for the delivery, or an open `known_quirks.md` entry, all
+  of which survive completion; `docs/backlog.md` says the same from the other side. The stale
+  references are removed across the ADRs and the docs that carried them. ADR 0007 no longer says
+  soft deletion is "backlog item 20" — item 20 is now the collaboration-system plan and soft delete
+  shipped on 2026-09-28 — and instead points at the `SoftDeletable` behavior documented in
+  `data_model.md#soft-delete` and `architecture.md#soft-delete`, recording that the cascade contract
+  above it (a Section ungroups its Scenes, an Event clears its temporal references) survived the
+  change from hard to soft deletion. ADR 0007's execution notes are now titled by what each delivery
+  added (core/references/Scene Tags, Elements and Character presence, Item/Location presence and
+  appearances, the Scene and Section improvement pass) instead of by slice number, its Context and
+  Consequences no longer refer to an "epic", and its flat-ordering cost now cites ADR 0009, which is
+  where the flat mode is actually decided. ADR 0011 no longer opens by citing backlog item 11.5,
+  ADR 0013's request is described directly instead of as "the backlog", and the "Slice 11.4
+  clarification" notes in ADRs 0001 and 0005 are now named for the Scene Tag delivery they came from.
+  ADR 0008's cost list no longer says the demo passwords are "a backlog item"; it names the
+  security-hygiene work in `known_quirks.md`. The same slice-number removal covers `architecture.md`,
+  `data_model.md`, `development.md`, `universe_maker_conventions.md`, `visual_design.md`,
+  `known_quirks.md`, and `resolved_quirks.md` — the Scene delivery stages are described by what they
+  added, the data-model table no longer carries an "implemented in 11.x" column, and the remaining
+  `known_quirks.md` DataFactor pointers now name the pending item by its title rather than its
+  number.
+- **[docs]** ADR 0007 claimed that every one of its mandatory deletion-confirmation templates was
+  live. It was not: Characters and Items pass no `confirm_text`, so
+  `shared/_row_actions.html.erb` falls back to the short `Delete <name>?`, and the Locations taxonomy
+  tree falls back to a generic message that names only the record and its children. Scene, Story,
+  Section, and Event do show their mandated copy. The ADR now names the four that are and records the
+  gap as known quirk 59, because each of those three models still cascades on delete — a Character
+  soft-deletes its descendants, relations, ownerships, and presence links — and the confirmation a
+  reader sees does not say so.
 - **[docs]** `AGENTS.md` and the development guide now require clarifying a request before coding
   starts. Naming two unrelated items in one sentence is not approval to do both: the agent asks
   "A and B are not related, do you want to proceed with both or only one now?" A single item that

@@ -26,8 +26,9 @@ hierarchy, while Scenes form its ordered narrative sequence; each story has its 
 taxonomies. Section, Scene, Section Tag, and Scene Tag routes must therefore include an explicit
 story id.
 
-> **Slice 11.4 clarification (2026-09-25):** `Scene` and `SceneTag` apply the same story-scope
-> boundary to the ordered Scene sequence and its optional tag taxonomy. The underlying
+> **Scene clarification (2026-09-25, added with the Scene Tag delivery in
+> [ADR 0007](0007-story-owned-scenes-and-elements.md)):** `Scene` and `SceneTag` apply the same
+> story-scope boundary to the ordered Scene sequence and its optional tag taxonomy. The underlying
 > world-building scope decision is unchanged.
 
 The current story is selected explicitly or remembered for the current user and universe. There

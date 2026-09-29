@@ -55,15 +55,17 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     (`app/controllers/application_controller.rb:20-37`), so malformed
     `parent_id`, `before_event_id`, `after_event_id`, or `simultaneous_event_id` values can become
     500s instead of documented 422 error hashes. No such request tests exist.
-    **Scenes are now covered** (slices 11.2/11.3): `Scene` validates `optional_references_exist`,
+    **Scenes are now covered** (see [ADR 0007](adr/0007-story-owned-scenes-and-elements.md)):
+    `Scene` validates `optional_references_exist`,
     `section_belongs_to_story`, and `event_belongs_to_story_universe`, and
     `datetime_is_a_valid_point` rejects an unparseable in-world time that Active Record would
     otherwise cast to `nil` and silently discard, so those values render `422` field errors with the
     submitted input preserved. The `#group` action instead resolves the Section through
-    `@story.sections.find`, making a foreign or unknown target a `404`. Slice 11.4 also adds
-    collection-id guards on Scene/Scene Tag assignment, so unknown, duplicate, and cross-story tag
+    `@story.sections.find`, making a foreign or unknown target a `404`. Scene/Scene Tag
+    assignment also has
+    collection-id guards, so unknown, duplicate, and cross-story tag
     ids become ordinary validation errors before the constrained join can raise. The Scene-owned
-    presence links are covered the same way from slices 11.7–11.9: an unknown or foreign
+    presence links are covered the same way: an unknown or foreign
     `character_id`, `item_id`, or `location_id` is a `404` because the record is resolved through
     `Current.universe`, and a duplicate pair is a `422` field error before the unique index can raise.
     The remaining
@@ -89,8 +91,9 @@ reachable security/data-loss issues from lower-priority hardening and contract d
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
     maintenance.** The controller-facing `PositionedResourceOrder` service now transactionally
     handles create, move, reparent, and destroy for current positioned controllers, and the
-    `Hierarchical` callback closes gaps after direct hierarchical destroys. Slices 11.1 and 11.6
-    added two flat sequences — the Story-owned `Scene` order and the Scene-owned `SceneElement`
+    `Hierarchical` callback closes gaps after direct hierarchical destroys. Two flat sequences were
+    added with the Scene deliveries — the Story-owned `Scene` order and the Scene-owned
+    `SceneElement`
     order — which are normalized only when a mutation goes through `ScenesController` or
     `SceneElementsController`; unlike `Hierarchical`, neither `Scene` nor `SceneElement` has a model
     callback that repairs positions after a direct destroy. Direct SQL, association manipulation,
@@ -182,7 +185,8 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     `bun audit` currently reports no vulnerabilities, but that check is absent from the workflow.
     The DataFactor report's observation that no JavaScript lockfile exists is stale: `bun.lock` is
     committed and CI/Docker use `bun install --frozen-lockfile`. The remaining audit/Dependabot
-    coverage is still a backlog item (see `docs/backlog.md`, item 18).
+    coverage is pending work: the "Complete dependency, JavaScript, and container supply-chain
+    checks" item in [`backlog.md`](backlog.md).
 
 35. **Medium — the production image retains test and build artifacts.** `Dockerfile:24-28` excludes
     only the `development` bundle group, not `development:test`, so Capybara/Selenium and shared
@@ -196,8 +200,9 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     from-zero migration run, Docker build, production asset boot, Solid Cache/Queue/Cable setup,
     Kamal validation, or production mailer URL/SMTP behavior. There is no coverage measurement or
     threshold. The local migration status is currently clean, but those deployment paths remain
-    untested. The DataFactor coverage recommendation is tracked as backlog item 14; the container
-    and supply-chain follow-ups are items 15 and 18. A green test job is not evidence that a clean
+    untested. These follow-ups are pending in [`backlog.md`](backlog.md): "Coverage measurement and
+    CI gate", "One-command containerized onboarding", and "Complete dependency, JavaScript, and
+    container supply-chain checks". A green test job is not evidence that a clean
     production image or the full runtime can boot.
 
 37. **Low — development fixtures and documentation overstate baseline coverage.**
@@ -337,13 +342,32 @@ through the current normal UI. They are recorded so they are not mistaken for se
     why this has not been seen there. Do not read a single browser run as a verdict, and do not
     "fix" a test that failed this way — re-run it with fewer workers first.
 
+59. **Medium — deleting a Character, Item, or Location announces none of the consequences ADR 0007
+    records.** The row menu defaults to the short `Delete <name>?` confirmation unless the caller
+    passes `confirm_text` (`app/views/shared/_row_actions.html.erb:7-10`), and the Characters and
+    Items workspaces pass none (`app/views/characters/index.html.erb:49-56`,
+    `app/views/items/index.html.erb:49`), so the mandated templates in
+    [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) are not rendered for those two.
+    Locations are a taxonomy tree, and its fallback message names only the record and its children
+    (`app/javascript/controllers/taxonomy_tree_controller.js:605-613`), not the Location's Scene
+    links. Events and Scenes pass their full template, and the Story, Section, and tag pages
+    hard-code theirs. The delete itself is not wrong — each model declares its own cascade, and a
+    Character, Item, or Location still soft-deletes its descendants, ownerships or relations, and
+    presence links — but the confirmation a reader sees does not say so. This is the same
+    unannounced-cascade risk the partial in `_row_actions` was written to prevent. Either those
+    three surfaces pass their templates or the ADR's Character/Item/Location templates are
+    withdrawn; the ADR's "every confirmation template above is live" claim was corrected on
+    2026-09-29 to name the four that are.
+
 ## DataFactor report follow-up observations (2026-09-25)
 
 The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They were
 checked against the current tree and are recorded here as open follow-ups, not as requirements to
 maximize an automated score. The distilled policy is in
 [`data_factor_guidance.md`](data_factor_guidance.md), and the corresponding implementation work is
-in [`backlog.md`](backlog.md), items 14–19. The report's claims that no `/up` route or JavaScript
+the run of DataFactor follow-up items in [`backlog.md`](backlog.md) (coverage measurement,
+containerized onboarding, observability, credential hygiene, supply-chain checks, and shared
+editor/helper duplication). The report's claims that no `/up` route or JavaScript
 lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
 used with a frozen install in CI and Docker.
 
@@ -351,15 +375,16 @@ used with a frozen install in CI and Docker.
     application now redacts password-reset path segments before request logging, but there is no
     structured request formatter, error-tracking integration, or metrics contract. The existing
     `/up` route and health-log silencing are useful foundations; they need a regression test and a
-    deliberate privacy/redaction policy before external tracking or metrics are added. See backlog
-    item 16.
+    deliberate privacy/redaction policy before external tracking or metrics are added. This is the
+    "Structured logging and runtime observability" item in [`backlog.md`](backlog.md).
 
 52. **Medium — clean container onboarding is absent.** The repository has a production-oriented
     `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`,
     devcontainer, or value-free `.env.example`. A fresh clone therefore still depends on the
     documented host toolchain, and there is no clean-checkout proof that the image, SQLite paths,
     CSS assets, and `/up` work together. The compose path must not run development data in
-    production; see backlog item 15.
+    production; this is the "One-command containerized onboarding" item in
+    [`backlog.md`](backlog.md).
 
 53. **Low/conditional — local demo and smoke-test credentials are literal values.** The LOTR
     development users contain literal passwords (`db/data/lotr/users.yml:1-6`), the Dark fixture
@@ -369,7 +394,8 @@ used with a frozen install in CI and Docker.
     trigger security hygiene checks. Require an explicit environment value or generate a local
     value instead, while preserving the documented synthetic development login and load commands
     for manual verification. A value-free template is not a secret. The separate critical master-key
-    rotation/history task remains open. See backlog item 17.
+    rotation/history task remains open (quirk 5 above). This is the "Development credential and
+    environment hygiene" item in [`backlog.md`](backlog.md).
 
 ## Audit baseline and evidence
 

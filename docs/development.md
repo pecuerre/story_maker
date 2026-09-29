@@ -302,18 +302,18 @@ The Rails test suite uses `test/fixtures/` so automated tests remain determinist
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
 test mode instead of replanting demo records.
 
-## Scene delivery (complete: slices 11.1–11.10)
+## Scene delivery (complete)
 
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the Scene contract, and the epic is
-now delivered. Slices 11.1–11.4 have landed the core (`scenes` migration,
-`Scene` model, story-scoped routes/controller, canonical list, narrative-order moves, Scene Details
-page and its editor form, the real sidebar link with its own cached count), the optional
-Section/Event/datetime references with their validation and the URL-backed tab shell, the Section
-grouping workspace, and the story-scoped Scene Tag taxonomy/assignment. Slice 11.5 made the shared
-modal JSON path reliable. Slices 11.6 and 11.7 landed `scene_elements` with its Dialogue speaker
-link, `scene_characters`, the ordered Element list and its modal on Scene Details, and the Characters
-tab. Slices 11.8 and 11.9 landed `scene_items` and `scene_locations` with the Items and plural
-Locations tabs, so all four workspace tabs are live. Slice 11.10 landed `SceneAppearances` and the
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the Scene contract, and the whole of
+it is delivered. Its first deliveries landed the core (`scenes` migration, `Scene` model,
+story-scoped routes/controller, canonical list, narrative-order moves, Scene Details page and its
+editor form, the real sidebar link with its own cached count), the optional Section/Event/datetime
+references with their validation and the URL-backed tab shell, the Section grouping workspace, and
+the story-scoped Scene Tag taxonomy/assignment, and made the shared modal JSON path reliable. The
+Element and Character-presence deliveries landed `scene_elements` with its Dialogue speaker link,
+`scene_characters`, the ordered Element list and its modal on Scene Details, and the Characters tab.
+The Item and Location-presence deliveries landed `scene_items` and `scene_locations` with the Items
+and plural Locations tabs, so all four workspace tabs are live. `SceneAppearances` landed the
 reverse **Appears in scenes** section on the Character, Item, Location, and Event details pages.
 The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
 `name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
@@ -321,29 +321,32 @@ has none; Scene uses one optional single-point `datetime` with the current Event
 precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
 detailed deletion confirmations are mandatory.
 
-The slice-by-slice record is in [`backlog.md`](backlog.md) and, for the delivered state, in
-[`../CHANGELOG.md`](../CHANGELOG.md):
+What each delivery added, in order:
 
-- 11.1 (done) adds the core Scene migration/model, canonical list, ordering controls, editor shell,
-  tests, and connected development data.
-- 11.2 and 11.3 (done) add the Section/Event/datetime references, the URL-backed tab shell, and the
-  Section grouping workspace.
-- 11.4 (done) adds the story-scoped Scene Tag schema/model, hierarchical Story Tags workspace,
-  optional Scene Details assignment, badges, fixtures, and development data.
-- 11.5 (done) makes the shared modal submit JSON, render a `422` in the modal, report a request that
-  never lands, and remove a row with its counts, with request and browser regressions for Characters,
+- The core Scene migration/model, the canonical list, the ordering controls, the editor shell, the
+  tests, and the connected development data.
+- The Section/Event/datetime references, the URL-backed tab shell, and the Section grouping
+  workspace.
+- The story-scoped Scene Tag schema/model, the hierarchical Story Tags workspace, optional Scene
+  Details assignment, badges, fixtures, and development data.
+- The shared modal made to submit JSON, render a `422` in the modal, report a request that never
+  lands, and remove a row with its counts, with request and browser regressions for Characters,
   Items, and Events. See [ADR 0011](adr/0011-modal-json-mutation-contract.md).
-- 11.6 (done) adds the `scene_elements` schema/model with its flat position, the many-to-many
-  Dialogue speaker link, the JSON-only Element controller with `move`, the Element list and modal on
-  Scene Details, and the shared modal controller's JSON move action.
-- 11.7 (done) adds the `scene_characters` join model, the Characters tab, the derived participant
-  view, and the Scenes list's Element and participant counts.
-- 11.8 (done) adds the `scene_items` join model and the Items tab.
-- 11.9 (done) adds the `scene_locations` join model, the plural Locations tab, and `LocationPaths`.
-- 11.10 (done) adds `SceneAppearances`, the reverse section on four record pages, and the
-  analyzer-oriented query tests for shared Events and narrative order.
+- The `scene_elements` schema/model with its flat position, the many-to-many Dialogue speaker link,
+  the JSON-only Element controller with `move`, the Element list and modal on Scene Details, and the
+  shared modal controller's JSON move action.
+- The `scene_characters` join model, the Characters tab, the derived participant view, and the
+  Scenes list's Element and participant counts.
+- The `scene_items` join model and the Items tab.
+- The `scene_locations` join model, the plural Locations tab, and `LocationPaths`.
+- `SceneAppearances`, the reverse section on four record pages, and the analyzer-oriented query
+  tests for shared Events and narrative order.
 
-Every slice preserved public/private read-write-admin behavior and updated all model registries,
+Each dated entry is in [`../CHANGELOG.md`](../CHANGELOG.md), which is the durable record of this
+delivery; the numbered slices these stages were planned as are not kept, because a planned number
+is not a durable reference.
+
+Every delivery preserved public/private read-write-admin behavior and updated all model registries,
 authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
 
 The new tables shipped as their own create migrations (`CreateSceneElements`, which also creates the
@@ -352,8 +355,8 @@ The new tables shipped as their own create migrations (`CreateSceneElements`, wh
 
 ### Amending a shipped migration does not work here
 
-`scenes` already shipped its create migration in slice 11.1, so 11.2/11.3 added the references with
-a separate schema-only alter migration (`AddSceneReferencesToScenes`). This is not just tidiness.
+`scenes` already shipped its create migration with the core delivery, so the references arrived in a
+separate schema-only alter migration (`AddSceneReferencesToScenes`). This is not just tidiness.
 Rails 8.1's `ActiveRecord::Tasks::DatabaseTasks.initialize_database` loads `db/schema.rb` when a
 database has no `schema_migrations` table, so on a **freshly created** database `db:migrate`,
 `db:restart`, and `db:demo:reset` load the checked-in schema instead of executing the migration
@@ -369,9 +372,9 @@ When data is added, put it in the relevant `db/data/<universe_slug>/` files (`sc
 `scene_locations.yml`), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, tagged/untagged Scene,
-Narration, Dialogue, multi-speaker, multi-Location, multi-Item, and blank/populated-role cases at
-Epic completion. `scenes.yml` records already reference their story, may now reference `section:`,
-`event:`, and `scene_tags:` with `Model.slug` references and an independent `datetime:`, and use
+Narration, Dialogue, multi-speaker, multi-Location, multi-Item, and blank/populated-role cases.
+`scenes.yml` records reference their story and may reference `section:`, `event:`, and
+`scene_tags:` with `Model.slug` references and an independent `datetime:`, and use
 explicit `position` values so the narrative order is visible in the file. The Dark file is the worked
 example: three scenes share Season 1 / Episode 1, three scenes are ungrouped (one of them told last
 but set in 1953), and each remaining Section keeps a single scene. `SceneTag` is loaded before

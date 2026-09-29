@@ -698,7 +698,8 @@ was added:
 - `git diff --check` — clean.
 
 The broader Bun/npm graph audit, vendored-file provenance verification, and Dependabot coverage
-remain open under backlog item 18. No destructive database, container, deployment, or browser
+remain open under the "Complete dependency, JavaScript, and container supply-chain checks" item in
+[`backlog.md`](backlog.md). No destructive database, container, deployment, or browser
 operations were run for this tooling-only fix.
 
 ## Follow-up verification (2026-09-25, ordering/security/taxonomy hardening)
@@ -715,7 +716,7 @@ operations were run for this tooling-only fix.
   loader tests passed. No destructive database task, Docker/Kamal deployment, real SMTP delivery,
   credential rotation, Git-history rewrite, or proxy/log-retention verification was performed.
 
-## Follow-up verification (2026-09-25, Scene core slice 11.1)
+## Follow-up verification (2026-09-25, Scene core)
 
 - `bin/rails test` — 341 tests, 2,034 assertions, 0 failures/errors/skips.
 - `bin/rails test:system` — 12 tests, 151 assertions, 0 failures/errors/skips, including the new
@@ -728,11 +729,11 @@ operations were run for this tooling-only fix.
   `db/schema.rb`; no data operations were added to the migration.
 
 Not run: `bin/bundler-audit`, `bin/importmap audit`, `bun audit` (no dependency or JavaScript pin
-changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs approval), a browser
+changed in this delivery), `db:demo:reset`/`db:demo:load` (destructive, needs approval), a browser
 manual pass against loaded development data, Docker/Kamal deployment, and any production SMTP or
 proxy verification.
 
-## Follow-up verification (2026-09-25, Scene references and grouping slices 11.2/11.3)
+## Follow-up verification (2026-09-25, Scene references and grouping)
 
 - `bin/rails test` — 405 tests, 2,344 assertions, 1 failure. The single failure is pre-existing and
   unrelated: `UniverseDataLoaderTest#test_loads_the_Dark_universe_and_normalizes_sibling_positions`
@@ -756,7 +757,7 @@ changed in these slices), Docker/Kamal deployment, production SMTP delivery, pro
 verification, and a browser manual pass against the reloaded development data. No destructive task
 was run beyond the standing `db:demo:reset` approval.
 
-## Follow-up verification (2026-09-25, Scene Tag slice 11.4)
+## Follow-up verification (2026-09-25, Scene Tag)
 
 - `bin/rails test` — 440 tests, 2,544 assertions, 1 failure. The remaining failure is the
   pre-existing Dark story-name expectation documented above; the new Scene Tag model, request,
@@ -777,12 +778,13 @@ was run beyond the standing `db:demo:reset` approval.
 Not run: Docker/Kamal deployment or boot, production SMTP delivery, proxy/log-retention
 verification, and a separate manual browser pass outside the automated system suite. The only
 known full-suite failure is the pre-existing `UniverseDataLoaderTest` Dark story-name expectation
-recorded in the 11.2/11.3 verification section.
+recorded in the Scene references and grouping verification section.
 
 ## Follow-up verification (2026-09-25, Dark story-name test fix)
 
 - `bin/rails test` — 440 tests, 2,552 assertions, 0 failures, 0 errors, 0 skips. This clears the
-  standing failure recorded in the 11.2/11.3 and 11.4 verification sections above. The assertion
+  standing failure recorded in the Scene references/grouping and Scene Tag verification sections
+  above. The assertion
   count rose by 8 because the previously failing test aborted at its first bad expectation and
   never ran its remaining assertions.
 - Root cause: commit `0a236a9` renamed the `dark` universe's development story to `Netflix Dark`
@@ -823,7 +825,7 @@ Not run: `bin/rails test:system`, `bin/brakeman`, `bin/bundler-audit`, `bin/impo
 `bun audit` (no behavior, view, JavaScript, dependency, or schema change), and Docker/Kamal
 deployment.
 
-## Follow-up verification (2026-09-26, shared modal JSON reliability — slice 11.5)
+## Follow-up verification (2026-09-26, shared modal JSON reliability)
 
 - `bin/rails test` — 516 tests, 3,110 assertions, 0 failures, 0 errors, 0 skips.
 - `bin/rails test:system` — 39 tests, 492 assertions, 0 failures, 0 errors, 0 skips on three
@@ -842,7 +844,7 @@ deployment.
 - `git diff --check` — clean.
 
 Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin,
-or vendored asset changed in this slice), `db:demo:reset`/`db:demo:load` (destructive, needs
+or vendored asset changed in this delivery), `db:demo:reset`/`db:demo:load` (destructive, needs
 approval; no `db/data` manifest changed either), Docker/Kamal deployment, and a manual browser pass
 outside the automated system suite.
 

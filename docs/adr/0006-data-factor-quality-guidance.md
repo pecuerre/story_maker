@@ -28,8 +28,9 @@ services, or production demo data merely to satisfy a detector.
   `CHANGELOG.md` entry. Use the shared **NOW / LATER / NEVER** decision for work outside the current
   request.
 - Put deferred implementation work in [`../backlog.md`](../backlog.md) and verified open gaps in
-  [`../known_quirks.md`](../known_quirks.md). Do not silently add dependencies, services, refactors,
-  releases, or deployment actions.
+  [`../known_quirks.md`](../known_quirks.md), and describe a pending item by what it asks for rather
+  than by its number, because a completed item's number is deleted. Do not silently add
+  dependencies, services, refactors, releases, or deployment actions.
 - Security, authorization, data integrity, privacy, reproducible operations, and the existing
   universe/story boundaries take priority over score improvements. A clean automated scan is not
   evidence that browser, logging, or production-boundary behavior is safe.

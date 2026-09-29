@@ -6,7 +6,7 @@
 <% record = local_assigns.fetch(:record) %>
 <% subject = local_assigns.fetch(:subject) { record.model_name.human.downcase } %>
 <div class="alert alert-danger" role="alert">
-  <h2 class="h6"><%= pluralize(record.errors.count, "error") %> prevented this <%= subject %> from being saved:</h2>
+  <h2 class="h6"><%= t("shared.error_summary.heading", count: record.errors.count, subject: subject) %></h2>
   <ul class="mb-0">
     <% record.errors.each do |error| %>
       <li><%= error.full_message %></li>

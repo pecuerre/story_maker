@@ -64,6 +64,12 @@ not to the session, universe, or story a request carries. `AppTheme` reads it fr
 `um_theme` and the layout renders it as `<html data-bs-theme>`; the `current_theme` helper memoizes it
 for the render. See [ADR 0013](adr/0013-platform-settings-and-browser-theme.md).
 
+The language is a second browser-owned preference of exactly the same kind. `AppLocale` reads the
+signed cookie `um_locale`, and `ApplicationController#switch_locale` is an `around_action` that sets
+`I18n.locale` for the request before any action runs, so a redirect's flash is already translated. The
+layout renders `<html lang="...">` from the same value, so the first paint is in the right language.
+See [ADR 0016](adr/0016-internationalization-and-browser-locale.md).
+
 Other global behavior: `allow_browser versions: :modern`,
 `stale_when_importmap_changes`, `rate_limit to: 10, within: 3.minutes` on
 `sessions#create` and `passwords#create`.
@@ -161,7 +167,11 @@ Other global behavior: `allow_browser versions: :modern`,
 - **Platform settings are not universe-scoped**: `GET /settings` shows the page and
   `PATCH /settings` stores a preference. It is the only page outside `/u/:universe_slug` that is not
   authentication, so it skips `set_current_universe` and `authorize_universe_access` and allows
-  unauthenticated access. See [ADR 0013](adr/0013-platform-settings-and-browser-theme.md).
+  unauthenticated access. The page has two sections, Appearance and Language, selected by the
+  `?section=language` query parameter rather than by a second route; both preferences are written by
+  the same `PATCH` and are validated independently of each other. See
+  [ADR 0013](adr/0013-platform-settings-and-browser-theme.md) and
+  [ADR 0016](adr/0016-internationalization-and-browser-locale.md).
 - **Search is both**: `GET /search` searches the platform, and
   `GET /u/:universe_slug/search` keeps a universe-scoped search inside that universe's URL so the
   shared callbacks authorize it. A helper that builds both, for a form that must work on either,

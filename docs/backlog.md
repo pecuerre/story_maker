@@ -320,7 +320,110 @@ it has a useful destination and clear empty/loading/error states.
     are untouched. Preserve the explicit confirmation guard, validate the named universe, and verify
     the rebuilt development records before reporting success.
 
-27. convert all hardcoded strings like into t(:key) for internationalization. put all texts in locales/en.yml
+27. **Internationalization: move every user-facing string behind `t()` and add a language setting**
+
+    Deliver in six slices, in the order below. The whole item is roughly 700 strings: ~470 unique
+    strings in the 100 ERB views, ~120 in controllers and helpers, ~51 distinct inside four Stimulus
+    controllers, plus model-level labels (`AppTheme::THEMES`, `SectionPaths::UNGROUPED_LABEL`,
+    `Search::Scope` option labels, `SceneFilter` discard messages) and the `PasswordsMailer`
+    templates. Slice 1 fixes the key-naming convention and the language-setting pattern; the later
+    slices repeat it, so they depend on it and should not be started before it lands. Every slice
+    ships its own `config/locales/en.yml` and `config/locales/es.yml` entries, its own tests, the
+    matching `docs/` update, and a dated `CHANGELOG.md` entry, and the item leaves this file only
+    when the sixth slice is delivered.
+
+    Rules that apply to all six slices:
+
+    - Use Rails `I18n` with `t("dotted.key")` in views, helpers, and controllers. Group keys by the
+      surface that owns the string (`shared.*`, `characters.*`, `scenes.*`, `flash.*`), not by
+      a flat global list. Pluralize with `t("key", count: n)`; interpolate with named arguments
+      (`t("scenes.move.notice", name: scene.name)`) so word order can differ per language.
+    - Record names, descriptions, tags, universes, and anything else an author typed are **data**,
+      never translated. Only application chrome is translated.
+    - `config/locales/en.yml` currently holds six `section_*` keys that nothing reads. Fold them
+      into the new structure rather than keeping a second flat block.
+    - Enable `config.i18n.raise_on_missing_translations = true` in the **test** environment in slice
+      1, and turn on `config.i18n.available_locales`/`default_locale` in the same slice, so a
+      missing key is a test failure rather than a silent English string in a Spanish page.
+    - Keep ADR 0013's rule that a display preference belongs to the browser: the language choice is
+      a signed cookie, not a `User` column and not a universe setting, so it works for a guest and
+      cannot be imposed by a universe admin.
+    - The `<html lang="...">` attribute in `app/views/layouts/application.html.erb` is hardcoded
+      to `en` today; slice 1 renders the active locale there, and each later slice inherits it.
+
+    - **Slice 27.1 — Foundation + chrome.** Configure I18n (`available_locales: %i[en es]`,
+      `default_locale: :en`, `raise_on_missing_translations` in test). Add the language preference:
+      an `AppLocale` class beside `AppTheme` following the same signed-cookie, known-values-only,
+      `normalize`-on-read contract, a `current_locale` helper, an `around_action` in
+      `ApplicationController` that sets `I18n.locale` for the request, and a **Language** section on
+      the existing `/settings` page (a second `settings_tabs` entry plus its panel, saved through
+      the same `PATCH` that already carries the theme, with the form's Turbo opt-out preserved).
+      Then translate the application shell and everything a visitor sees before choosing a
+      universe: `layouts/application`, `_navbar`, `_left_sidebar`, `_right_sidebar`, all of
+      `shared/*` (`_page_header`, `_empty_state`, `_row_actions`, `_record_details*`, `_flash`,
+      `_error_summary`, `_search_bar`, `_content_tabs`, `_sidebar_link`, `_taxonomy_tree`,
+      `_taxonomy_node`, `_photo_field`, `_settings_navigation`, …), `sessions/new`, `passwords/*`,
+      the `PasswordsMailer` templates, and `pwa/manifest.json.erb`. Translate `AppTheme`'s own
+      `label`/`description` values, which are chrome too. Add a **new ADR** for the i18n contract
+      (key layout, the browser-owned language cookie, why the data is not translated) — this
+      changes how every string in the project is written, so it is not a convention-only change.
+      Update `docs/architecture.md`, `docs/universe_maker_conventions.md`, and
+      `docs/visual_design.md`. Tests: `AppLocale` model coverage, a `SettingsController` request
+      test for choosing/keeping/refusing a language, a `test:system` case proving the cookie
+      survives a navigation and the Spanish page really renders in Spanish, and a mailer test for
+      the Spanish reset message.
+    - **Slice 27.2 — Universe & Story workspaces.** `universes/*` (index, show, new, edit, `_form`,
+      `_universe`, the JSON view), `stories/*`, `memberships/*`, `sections/index` and
+      `sections/show`, `tags/index` (the taxonomy workspace), and `timeline/index`. Includes their
+      controller flash/notice/alert strings, including the "That page is not available to this
+      account" refusal in `ApplicationController`. Timeline's per-event popover title/content comes
+      from `event_popover_title`/`event_popover_content` in `timeline_helper.rb`, so those go
+      through `t()` too. Tests: request coverage for the workspace pages rendering under `es`, and
+      the existing redirect/`see_other` flash assertions updated to the translated copy.
+    - **Slice 27.3 — Universe Bible workspaces.** `characters/*`, `locations/*`, `events/*`,
+      `items/*`, `relations/*`, `ownerships/*`, all six universe-level `*_tags` indexes and their
+      `show` pages, and the shared modal field labels produced by `app/helpers/modal_fields.rb` and
+      `app/helpers/tags_helper.rb` (the field descriptors are serialized into the taxonomy editor's
+      `data-…-modal-fields-value` JSON, so the label travels to the DOM-built modal — the client
+      half of that hand-off is slice 27.6). Also the `characters`/`locations`/`items`/`events`
+      controller flash strings. Tests: request coverage per workspace, plus a check that the
+      serialized modal field descriptors are the translated ones.
+    - **Slice 27.4 — Scene workspace.** `scenes/*` (index, show, edit, new, `_form`, `_filter`,
+      `_elements`, `_show_identity`, `_ungrouped_scenes`, `_workspace_tabs`), `sections/show`,
+      `section_tags/*`, `scene_tags/*`, `scene_characters/*`, `scene_items/*`,
+      `scene_locations/*`, `scene_appearances/_section`, and `scenes_controller.rb`'s move/group
+      flash messages (which are interpolated sentences built in Ruby). Translating
+      `SectionPaths::UNGROUPED_LABEL` and `SceneFilter`'s discard messages belongs here, because
+      both are read by the Scenes page — see the constant/label contract note below.
+    - **Slice 27.5 — Search.** `searches/show`, `_commands`, `_result`, `_scope_field`, the
+      `searches_controller.rb` and `searches_helper.rb` strings, and the model-level labels in
+      `app/models/search/`: `Search::Scope`'s option labels, the kind labels in
+      `Search::Registry`/`Search::Catalog`/`Search::Hit`, and `Search::Commands`. These are values
+      inside a query/display object rather than a literal in a view, so the slice defines whether
+      a label is stored translated or translated at read time — **translate at read time**, and keep
+      the option's `value` (the URL parameter) untranslated, or search URLs stop working in
+      Spanish. `SectionPaths::UNGROUPED_LABEL` and `SceneFilter::UNGROUPED` are the same shape and
+      must keep the same rule: the *value* in the URL stays `"ungrouped"`, only the label is
+      translated.
+    - **Slice 27.6 — Client-side strings + enforcement.** The four Stimulus controllers with
+      user-facing text — `taxonomy_tree_controller.js` (17 distinct strings),
+      `photo_crop_controller.js` (17), `modal_form_controller.js` (12), and
+      `search_controller.js` (10) — read their strings
+      from the server instead of hardcoding them: pass them as Stimulus `values` on the elements
+      that already declare the controller (the taxonomy tree already passes a JSON value, so
+      extend that pattern), or as a small JSON blob the layout renders. Add a shared
+      `app/javascript/i18n.js` lookup so no controller invents its own mechanism. Then enforce the
+      contract: `config.i18n.raise_on_missing_translations = true` across the whole test suite
+      (introduced in 27.1), a test asserting `en.yml` and `es.yml` carry the same key set, and a
+      test that a Spanish response contains no untranslated English chrome. Bun unit tests for any
+      new JS module, and a `test:system` case for the language flow through a real page, per
+      [ADR 0012](adr/0012-client-side-verification-and-csrf.md).
+
+    **Deliberately deferred:** translating author-entered data; a per-user (account) language that
+    follows a sign-in across browsers (a column and a cookie-precedence rule — the opposite trade
+    from ADR 0013's theme decision); right-to-left layout; a third language; translating the
+    `taxonomy:` arguments in the `searchable` model declarations (they are index metadata, not
+    chrome, until slice 27.5 decides otherwise); translating `db/data/**/*.yml` demo content.
 
 28. review comments. add comments when needed, remove comments when not needed
 

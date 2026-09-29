@@ -21,6 +21,21 @@ Labels used below:
 
 ## 2026-09-29
 
+- **[added]** The application can now be read in Spanish, and the language is a browser-owned
+  preference chosen on the settings page. `AppLocale` (`app/models/app_locale.rb`) follows exactly the
+  contract `AppTheme` uses: two known names, English as the default, one signed cookie
+  (`um_locale`), and a `normalize` on every read, so a forged or hand-edited cookie can only ever
+  select a known locale. `ApplicationController#switch_locale` is an `around_action` that sets
+  `I18n.locale` from it before any action runs, so a redirect's flash is already translated, and
+  `I18n.with_locale` stops one request leaking its language onto the next request served by the same
+  thread. The layout renders `<html lang>` from the same value, so the first paint is in the right
+  language for a screen reader and for the browser's own hyphenation. Language is a second
+  **section** of the existing settings page — `/settings?section=language` — rather than a second
+  route, matching the query-parameter tab shape ADR 0013 already describes. Each option is labelled
+  in its own language, so a reader who cannot read the current one can still find theirs, and the
+  confirmation is written in the language that was just chosen. Both preferences are written by the
+  same `PATCH` and validated independently, so a request that refuses one does not silently apply the
+  other. See [ADR 0016](docs/adr/0016-internationalization-and-browser-locale.md).
 - **[added]** Every "main" record and tag can now carry one optional photo: universes, stories,
   sections, scenes, characters, locations, items, events, relations, ownerships, and all eight tag
   models. The image lives in its own `Photo` model (`app/models/photo.rb`) with one Active Storage
@@ -43,6 +58,34 @@ Labels used below:
   record's own universe, and one is destroyed only after the replacing transaction commits and only
   while nothing else still refers to it. A read-only member and a guest are offered no cropper at
   all. See [ADR 0015](docs/adr/0015-record-photos.md).
+- **[changed]** Application chrome now lives behind `t("dotted.key")` in `config/locales/en.yml`,
+  with a Spanish `config/locales/es.yml` mirroring it. The application shell, the top bar, both
+  sidebars, the shared partials (page header, empty state, row actions, record details, photo, flash,
+  error summary, search bar, taxonomy tree and node, the detail and tab strips), the sign-in and
+  password pages, the settings page, the password-reset mailer, the PWA manifest, `AppTheme`'s theme
+  names and descriptions, and the sign-in, password-reset, and account-refusal controller messages
+  are translated. Keys are grouped by the surface that owns the string rather than kept in one flat
+  list. **Author-entered data is not translated**: record names, descriptions, tag names, and universe
+  and story names stay exactly as their author wrote them. The six `section_*` keys that sat in
+  `en.yml` and were read by nothing are gone.
+- **[changed]** A missing translation is now a test failure rather than a silent English string on a
+  Spanish page. `config.i18n.raise_on_missing_translations` is on in the test environment, and
+  `test/models/translations_test.rb` compares the two locale files' key sets, interpolation
+  placeholders, and plural forms, so a key added to one file and forgotten in the other fails the
+  suite. It also checks that the hand-maintained Spanish subset of Rails' own strings
+  (`errors.format`, `errors.messages.*`, `datetime.distance_in_words.*`, `support.array.*`, which Rails
+  ships in English only) mirrors a key Rails really defines, so that block cannot rot into translating
+  something the framework never asks for; and that no translation uses `locale`, `default`, `scope`, or
+  `raise` as an interpolation name, because those are reserved I18n options — `t(key, locale:
+  "Español")` asks I18n to translate *in* a locale called Español and raises `I18n::InvalidLocale`
+  rather than interpolating anything.
+- **[changed]** A workspace's count label is now an I18n key rather than an English noun, so the
+  plural comes from the locale instead of from an appended "s". The record-type nouns live at the root
+  of the locale files, which is why the fifty-odd existing `count_label: "character"` and
+  `details_count_label: "scene"` call sites read as they did and needed no change;
+  `ApplicationHelper#count_with_label` resolves them with a `count:`. A sidebar count is announced as
+  the record type, a separate value from the visible label, so a link reading "Ownerships" is
+  announced as "ownerships".
 - **[changed]** On a tag page reached from a workspace menu tab, the tab strip now sits between the
   page header and the tag's identity card instead of below the card, so the navigation reads as one
   piece the way it does on every other workspace page. `shared/_record_details` takes an optional
@@ -70,6 +113,18 @@ Labels used below:
   its documented status code. Request tests cover the mistyped-then-correct retry, the
   password-page destination, the refused destination and its one-request scope; browser tests cover
   the retry and the password-page journey.
+- **[docs]** Added
+  [ADR 0016](docs/adr/0016-internationalization-and-browser-locale.md) for the translation contract:
+  why the language is a cookie rather than a `User` column, why only chrome is translated, why a
+  missing key fails instead of falling back to English, and why a value that travels in a URL is not
+  translated. `docs/architecture.md`, `docs/universe_maker_conventions.md` (with a new
+  **Translations** section listing the rules a new string has to follow), and `docs/visual_design.md`
+  were updated to match, and `docs/adr/README.md` indexes the new record.
+- **[planned]** `docs/backlog.md`'s internationalization item is now written as six ordered slices
+  recording the measured string surface, instead of a one-line note, so the remaining work can be
+  picked up one slice at a time. The slice text also fixes the decisions that would otherwise be
+  re-made inline: the language preference is a browser-owned signed cookie, a value that travels in a
+  URL stays untranslated while its label is translated, and author-entered data is never translated.
 - **[docs]** Documentation no longer cites a backlog item number, because a number is deleted from
   `docs/backlog.md` when its item completes and the citation then points at nothing. `docs/adr/README.md`
   records the rule for future ADRs: cite the reference documentation or ADR holding the delivered

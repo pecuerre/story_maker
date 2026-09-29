@@ -6,6 +6,14 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
   stale_when_importmap_changes
 
+  # The language is set before anything renders, so every part of the request —
+  # the view, a flash, a redirect message, a mailer — answers in the reader's
+  # language. It is an `around_action` rather than a `before_action` because
+  # `I18n.locale` is thread state: the block restores the previous value on the
+  # way out, so one request cannot leak its language into the next one on the
+  # same thread.
+  around_action :switch_locale
+
   # Load the session (if any) on public pages too, so Current.user is available
   # in views for things like the universes navbar dropdown.
   before_action :resume_session
@@ -44,6 +52,15 @@ class ApplicationController < ActionController::Base
   end
 
   protected
+    # The one place `I18n.locale` is set. It reads the browser-owned preference
+    # rather than from `Current`, because a language is a property of the browser
+    # in exactly the way the theme is, and it has to be in place before the
+    # action runs so a redirect's flash is already translated. `I18n.with_locale`
+    # restores the previous value on the way out, so a request cannot leak its
+    # language into the next one served by the same thread.
+    def switch_locale(&block)
+      I18n.with_locale(AppLocale.to_sym(AppLocale.read(cookies)), &block)
+    end
 
   # A refusal is normally a bare status code, which is what the documented
   # 403/404 contract depends on. The one exception is the page a visitor asked to
@@ -55,7 +72,7 @@ class ApplicationController < ActionController::Base
     return head status unless post_sign_in_destination?
     return head status unless request.format.html? && request.get?
 
-    redirect_to root_path, alert: "That page is not available to this account. Here are the universes you can open."
+    redirect_to root_path, alert: t("errors.unavailable_account")
   end
 
   def post_sign_in_destination?

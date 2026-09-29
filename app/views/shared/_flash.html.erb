@@ -8,7 +8,7 @@
         data-flash-toast-type="<%= alert_class %>"
         data-flash-toast-delay="<%= alert_class == "success" ? 4000 : 10000 %>">
         <%= message %>
-        <button type="button" class="btn-close" data-flash-toast-close aria-label="Close"></button>
+        <button type="button" class="btn-close" data-flash-toast-close aria-label="<%= t("shared.flash.close") %>"></button>
       </div>
     <% end %>
   </div>

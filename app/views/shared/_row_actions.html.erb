@@ -7,7 +7,7 @@
   <%# Deletion consequences are mandatory copy for records with dependents: the
       default stays short, and a caller that owns dependents passes the full
       template so an unannounced cascade is never possible. %>
-  <% confirm_text = local_assigns[:confirm_text] || "Delete #{record_name}?" %>
+  <% confirm_text = local_assigns[:confirm_text] || t("shared.row_actions.delete_confirm", name: record_name) %>
   <%# `:turbo` is the HTML redirect/re-render flow. `:json` is for a row whose
       destroy action is JSON-only: there is no Turbo form to follow, so the modal
       controller issues the DELETE, confirms the copy, and refreshes the list. %>
@@ -19,7 +19,7 @@
       id="<%= actions_id %>"
       data-bs-toggle="dropdown"
       aria-expanded="false"
-      aria-label="Actions for <%= record_name %>">
+      aria-label="<%= t("shared.row_actions.actions_for", name: record_name) %>">
       <i class="bi bi-three-dots" aria-hidden="true"></i>
     </button>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= actions_id %>">
@@ -28,9 +28,9 @@
           data-action="modal-form#open"
           data-modal-form-url="<%= local_assigns.fetch(:edit_url) %>"
           data-modal-form-method="patch"
-          data-modal-form-title="Edit <%= label %>"
+          data-modal-form-title="<%= t("shared.row_actions.edit_title", label: label) %>"
           data-modal-form-values-value="<%= values %>">
-          <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+          <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("shared.row_actions.edit") %>
         </button>
       </li>
       <li><hr class="dropdown-divider"></li>

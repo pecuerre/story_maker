@@ -8,44 +8,48 @@
     Configuration and Tags live in the right utility sidebar, which owns the
     tools scope, so this column stays purely about universe and story content. %>
 <div class="sidebar-context sidebar-context--universe">
-  <div class="sidebar-eyebrow">Current universe</div>
+  <div class="sidebar-eyebrow"><%= t("sidebar.current_universe") %></div>
   <h2 class="sidebar-universe-name"><%= Current.universe.name %></h2>
 </div>
 
-<nav class="workspace-navigation" aria-label="Universe and story navigation">
+<nav class="workspace-navigation" aria-label="<%= t("sidebar.navigation_label") %>">
   <section class="sidebar-section sidebar-section--universe" aria-labelledby="universe-bible-title">
-    <h3 class="sidebar-section-title" id="universe-bible-title">Universe Bible</h3>
+    <h3 class="sidebar-section-title" id="universe-bible-title"><%= t("sidebar.universe_bible") %></h3>
     <ul class="sidebar-list">
       <%= render "shared/sidebar_link",
         icon: "person",
-        label: "Characters",
+        label: t("sidebar.characters"),
+        count_label: "character",
         count: menu_counts[:characters],
         path: universe_characters_path,
         controllers: %i[ characters relations ] %>
 
       <%= render "shared/sidebar_link",
         icon: "geo-alt",
-        label: "Locations",
+        label: t("sidebar.locations"),
+        count_label: "location",
         count: menu_counts[:locations],
         path: universe_locations_path,
         controllers: %i[ locations ] %>
 
       <%= render "shared/sidebar_link",
         icon: "calendar-event",
-        label: "Events",
+        label: t("sidebar.events"),
+        count_label: "event",
         count: menu_counts[:events],
         path: universe_events_path,
         controllers: %i[ events ] %>
 
       <%= render "shared/sidebar_link",
         icon: "calendar-range",
-        label: "Timeline",
+        label: t("sidebar.timeline"),
         path: universe_timeline_path,
         controllers: %i[ timeline ] %>
 
       <%= render "shared/sidebar_link",
         icon: "box-seam",
-        label: "Items",
+        label: t("sidebar.items"),
+        count_label: "item",
         count: menu_counts[:items],
         path: universe_items_path,
         controllers: %i[ items ownerships ] %>
@@ -53,44 +57,46 @@
   </section>
 
   <div class="sidebar-context sidebar-context--story">
-    <div class="sidebar-eyebrow">Current story</div>
+    <div class="sidebar-eyebrow"><%= t("sidebar.current_story") %></div>
     <% if Current.story.present? %>
       <h2 class="sidebar-universe-name sidebar-story-name"><%= Current.story.name %></h2>
 
     <% else %>
       <%# The prompt that belongs with these links lives in the Story workspace
           section below, so the context block stays a statement of scope. %>
-      <h2 class="sidebar-universe-name sidebar-story-name text-body-secondary">None selected</h2>
+      <h2 class="sidebar-universe-name sidebar-story-name text-body-secondary"><%= t("sidebar.none_selected") %></h2>
     <% end %>
   </div>
 
   <section class="sidebar-section sidebar-section--story" aria-labelledby="story-workspace-title">
-    <h3 class="sidebar-section-title" id="story-workspace-title">Story workspace</h3>
+    <h3 class="sidebar-section-title" id="story-workspace-title"><%= t("sidebar.story_workspace") %></h3>
     <ul class="sidebar-list">
       <% if Current.story.present? %>
         <%= render "shared/sidebar_link",
           icon: "house",
-          label: "Story overview",
+          label: t("sidebar.story_overview"),
           path: universe_story_path(id: Current.story),
           controllers: %i[ stories ] %>
 
         <%= render "shared/sidebar_link",
           icon: "list-nested",
-          label: "Sections",
+          label: t("sidebar.sections"),
+          count_label: "section",
           count: section_count,
           path: universe_story_sections_path(story_id: Current.story),
           controllers: %i[ sections ] %>
 
         <%= render "shared/sidebar_link",
           icon: "film",
-          label: "Scenes",
+          label: t("sidebar.scenes"),
+          count_label: "scene",
           count: scene_count,
           path: universe_story_scenes_path(story_id: Current.story),
           controllers: %i[ scenes ] %>
       <% else %>
         <%= render "shared/sidebar_link",
           icon: "books",
-          label: "All stories",
+          label: t("sidebar.all_stories"),
           path: universe_stories_path,
           controllers: %i[ stories ] %>
 
@@ -98,7 +104,7 @@
             and never fall back to the universe's first story. %>
         <%= render "shared/sidebar_link",
           icon: "film",
-          label: "Scenes",
+          label: t("sidebar.scenes"),
           path: "#",
           controllers: [],
           placeholder: true %>
@@ -106,7 +112,7 @@
     </ul>
 
     <% unless Current.story.present? %>
-      <p class="sidebar-hint">Select a story to work on its sections and story-specific structure.</p>
+      <p class="sidebar-hint"><%= t("sidebar.select_story_hint") %></p>
     <% end %>
   </section>
 </nav>

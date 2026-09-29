@@ -1,13 +1,13 @@
-<% content_for :title, "Update password" %>
+<% content_for :title, t("passwords.edit.title") %>
 
 <div class="auth-shell">
   <%= render "shared/page_header",
-    title: "Update your password",
-    description: "Choose a new password for your account." %>
+    title: t("passwords.edit.heading"),
+    description: t("passwords.edit.description") %>
 
   <%= form_with url: password_path(params[:token]), method: :put, class: "form-surface" do |form| %>
     <div class="mb-3">
-      <%= form.label :password, "New password", class: "form-label" %>
+      <%= form.label :password, t("passwords.edit.new_password"), class: "form-label" %>
       <%= form.password_field :password,
         class: "form-control",
         required: true,
@@ -17,7 +17,7 @@
     </div>
 
     <div>
-      <%= form.label :password_confirmation, "Confirm new password", class: "form-label" %>
+      <%= form.label :password_confirmation, t("passwords.edit.confirm_password"), class: "form-label" %>
       <%= form.password_field :password_confirmation,
         class: "form-control",
         required: true,
@@ -26,7 +26,7 @@
     </div>
 
     <div class="form-actions">
-      <%= form.submit "Save password", class: "btn btn-primary" %>
+      <%= form.submit t("passwords.edit.submit"), class: "btn btn-primary" %>
     </div>
   <% end %>
 </div>

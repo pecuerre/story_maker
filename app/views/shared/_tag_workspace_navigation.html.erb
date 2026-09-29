@@ -4,10 +4,10 @@
 
 <%= render "shared/content_tabs",
   class_name: "tag-scope-tabs",
-  aria_label: "Tag scope",
+  aria_label: t("shared.tag_workspace_navigation.scope_aria_label"),
   tabs: navigation.fetch(:scope_tabs) %>
 
 <%= render "shared/content_tabs",
   class_name: "tag-taxonomy-tabs",
-  aria_label: scope == "story" ? "Story tag workspace" : "Universe tag workspace",
+  aria_label: scope == "story" ? t("shared.tag_workspace_navigation.story_aria_label") : t("shared.tag_workspace_navigation.universe_aria_label"),
   tabs: navigation.fetch(:taxonomy_tabs) %>

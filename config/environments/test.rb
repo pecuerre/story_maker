@@ -57,8 +57,12 @@ Rails.application.configure do
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
-  # Raises error for missing translations.
-  # config.i18n.raise_on_missing_translations = true
+  # A key that has no translation is a bug, not a page that quietly falls back to
+  # English. With `es` now a real locale, a missing Spanish key would otherwise
+  # be invisible until a Spanish reader hit it. Note the consequence: the test
+  # suite is also the place where a genuinely new key fails until it is added to
+  # *both* locale files, which is the intent.
+  config.i18n.raise_on_missing_translations = true
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true

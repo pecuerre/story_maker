@@ -86,6 +86,14 @@ the **Settings** page and applied by Bootstrap's own `data-bs-theme` attribute o
 ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). The layout writes the attribute, so the
 first paint is already correct and no script is involved.
 
+The **Language** choice sits beside it on the same settings page and is the same kind of preference: a
+per-browser cookie, chosen on `/settings?section=language`, applied by the layout writing `<html lang>`.
+The two preferences are independent — changing one never changes the other — and a change to either
+loads the whole document rather than navigating with Turbo, so the root attributes and the rendered
+copy change together
+([ADR 0016](adr/0016-internationalization-and-browser-locale.md)). A language option is labelled in its
+own language, so a reader who cannot read the current one can still find theirs.
+
 Bootstrap flips its own variables; the `--um-*` tokens above are ours, so each one that carries a
 light-only value is re-tinted in the `[data-bs-theme="dark"]` block of
 [`app/assets/stylesheets/_application_custom.scss`](../app/assets/stylesheets/_application_custom.scss):

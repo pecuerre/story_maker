@@ -1,9 +1,9 @@
-<% content_for :title, "Reset password" %>
+<% content_for :title, t("passwords.new.title") %>
 
 <div class="auth-shell">
   <%= render "shared/page_header",
-    title: "Forgot your password?",
-    description: "Enter your email address and we will send password reset instructions." %>
+    title: t("passwords.new.heading"),
+    description: t("passwords.new.description") %>
 
   <%= form_with url: passwords_path, class: "form-surface" do |form| %>
     <div class="mb-3">
@@ -18,8 +18,8 @@
     </div>
 
     <div class="d-flex align-items-center gap-3">
-      <%= form.submit "Email reset instructions", class: "btn btn-primary" %>
-      <%= link_to "Back to sign in", new_session_path, class: "btn btn-link" %>
+      <%= form.submit t("passwords.new.submit"), class: "btn btn-primary" %>
+      <%= link_to t("passwords.new.back"), new_session_path, class: "btn btn-link" %>
     </div>
   <% end %>
 </div>

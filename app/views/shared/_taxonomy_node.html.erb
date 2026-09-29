@@ -47,7 +47,7 @@
       <% if editable %>
         <%= button_tag type: "button",
           class: "taxonomy-name-trigger text-break",
-          aria: { label: "Rename #{node.name}" },
+          aria: { label: t("shared.taxonomy_node.rename", name: node.name) },
           data: { taxonomy_tree_target: "name", action: "click->taxonomy-tree#editName" } do %>
           <% if node.respond_to?(:bgcolor) %>
             <%= entity_tag_badge(node) %>
@@ -95,48 +95,48 @@
               id="taxonomy-<%= node.id %>-actions"
               data-bs-toggle="dropdown"
               aria-expanded="false"
-              aria-label="Actions for <%= node.name %>">
+              aria-label="<%= t("shared.row_actions.actions_for", name: node.name) %>">
               <i class="bi bi-three-dots" aria-hidden="true"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="taxonomy-<%= node.id %>-actions">
               <li>
                 <button type="button" class="dropdown-item" data-action="taxonomy-tree#add" data-taxonomy-action="add-child">
-                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Add child
+                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.add_child") %>
                 </button>
               </li>
               <li>
                 <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="before">
-                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert before
+                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.insert_before") %>
                 </button>
               </li>
               <li>
                 <button type="button" class="dropdown-item" data-action="taxonomy-tree#insertRelative" data-insert-position="after">
-                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Insert after
+                  <i class="bi bi-plus-lg me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.insert_after") %>
                 </button>
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <button type="button" class="dropdown-item"
                   data-action="taxonomy-tree#move" data-move-direction="up" data-taxonomy-action="move-up">
-                  <i class="bi bi-arrow-up me-2" aria-hidden="true"></i>Move up
+                  <i class="bi bi-arrow-up me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.move_up") %>
                 </button>
               </li>
               <li>
                 <button type="button" class="dropdown-item"
                   data-action="taxonomy-tree#move" data-move-direction="down" data-taxonomy-action="move-down">
-                  <i class="bi bi-arrow-down me-2" aria-hidden="true"></i>Move down
+                  <i class="bi bi-arrow-down me-2" aria-hidden="true"></i><%= t("shared.taxonomy_node.move_down") %>
                 </button>
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <button type="button" class="dropdown-item" data-action="taxonomy-tree#edit">
-                  <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+                  <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("shared.row_actions.edit") %>
                 </button>
               </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <button type="button" class="dropdown-item text-danger" data-action="taxonomy-tree#remove">
-                  <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+                  <i class="bi bi-trash me-2" aria-hidden="true"></i><%= t("shared.row_actions.delete") %>
                 </button>
               </li>
             </ul>

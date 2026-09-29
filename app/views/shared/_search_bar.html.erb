@@ -17,10 +17,10 @@
         page can carry more than one search field — the Scenes list has its own —
         and two fields announced as "Search" leave a reader guessing which is
         which. %>
-    <label class="visually-hidden" for="navbar_search_q">Search Universe Maker</label>
+    <label class="visually-hidden" for="navbar_search_q"><%= t("searches.bar.label") %></label>
     <input type="search" class="form-control navbar-search-input" id="navbar_search_q" name="q"
       value="<%= params[:q] %>"
-      placeholder="Search<%= Current.universe.present? ? " this universe" : "" %>"
+      placeholder="<%= Current.universe.present? ? t("searches.bar.placeholder_universe") : t("searches.bar.placeholder") %>"
       autocomplete="off" spellcheck="false"
       role="combobox" aria-expanded="false" aria-haspopup="listbox"
       aria-controls="navbar_search_results" aria-autocomplete="list"
@@ -39,7 +39,7 @@
       <%= hidden_field_tag :story_id, Current.story.id, id: "navbar_search_story_id" %>
     <% end %>
 
-    <%= submit_tag "Search", class: "visually-hidden", name: nil %>
+    <%= submit_tag t("searches.bar.submit"), class: "visually-hidden", name: nil %>
   </div>
 
   <%# The dropdown and the link into the full answer are one box, positioned once.
@@ -52,12 +52,12 @@
         single list. The container is a div rather than a list so that a group and
         its options are not illegally nested list items. %>
     <div class="navbar-search-results" id="navbar_search_results" role="listbox"
-      aria-label="Search results" hidden data-search-target="results"></div>
+      aria-label="<%= t("searches.bar.results_label") %>" hidden data-search-target="results"></div>
 
     <%# A path into the full answer, shown when there is something to see. The
         dropdown is a preview; this is where the whole result set lives. %>
     <a class="navbar-search-all" href="<%= search_path_for(Current.universe) %>" hidden
-      data-search-target="allLink">See all results</a>
+      data-search-target="allLink"><%= t("searches.bar.see_all") %></a>
   </div>
 
   <%# One live region for the result count and for any problem with it, so a

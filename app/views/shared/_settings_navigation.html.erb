@@ -3,7 +3,7 @@
     where the reader is, and no data-bs-toggle turns a link into an in-document
     pane that would have no address of its own. A new section is one entry in
     `settings_tabs` plus the panel it belongs to. %>
-<nav class="settings-navigation" aria-label="Settings sections">
+<nav class="settings-navigation" aria-label="<%= t("settings.navigation_label") %>">
   <ul class="nav nav-tabs flex-column settings-navigation-list">
     <% tabs.each do |tab| %>
       <li class="nav-item" role="presentation">

@@ -8,6 +8,7 @@
 <% link_options[:data] = { placeholder_link: true } if local_assigns[:placeholder] %>
 
 <li>
-  <%= link_to icon_text_count(local_assigns.fetch(:icon), local_assigns.fetch(:label), local_assigns[:count]),
+  <%= link_to icon_text_count(local_assigns.fetch(:icon), local_assigns.fetch(:label),
+    local_assigns[:count], count_label: local_assigns[:count_label]),
     local_assigns.fetch(:path), **link_options %>
 </li>

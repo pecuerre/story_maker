@@ -313,18 +313,26 @@ place:
   [architecture.md](architecture.md#record-details-pages).
 
 **Settings** uses the plain full-page form shape with no record behind it: `app/views/settings/show.html.erb`
-posts a flat `theme` parameter to `PATCH /settings` with `params.expect(:theme)`, and the controller
-answers with a redirect (`see_other`) or a refusal. It carries `data: { turbo: false }` because the
-theme lives in an attribute on the root element and a Turbo Drive navigation does not update root
-attributes ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)).
+posts a flat `theme` and/or `locale` parameter to `PATCH /settings`, and the controller answers with a
+redirect (`see_other`) or a refusal. The two parameters are independent and are both validated before
+either is written, so a request that refuses one does not apply the other. It carries
+`data: { turbo: false }` because the theme lives in an attribute on the root element and a Turbo Drive
+navigation does not update root attributes ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md));
+the language needs the same opt-out for the same reason, since `I18n.locale` is resolved when the
+response is rendered and `<html lang>` is a root attribute
+([ADR 0016](adr/0016-internationalization-and-browser-locale.md)).
 
 **Settings navigation** is its own small page shape. `settings_tabs` in `ApplicationHelper` declares
 the sections and `shared/_settings_navigation` renders them as a **vertical** Bootstrap tab strip:
 `nav nav-tabs flex-column`, the active class plus `aria-current="page"`, and no `data-bs-toggle`,
 because each destination is a real request like every other tab strip. Adding a section is one entry
-in `settings_tabs` plus its panel. The Appearance panel's **Theme** control is a radio group inside a
-`fieldset`/`legend`, and each option's `<label>` is the card, so the checked state is one adjacent
-sibling CSS rule and needs no script.
+in `settings_tabs` plus its panel; the first section owns `/settings` and a later one gets a
+`?section=` query parameter, which `settings_language_section?` is the single predicate for. The
+Appearance panel's **Theme** control and the Language panel's **Language** control are each a radio
+group inside a `fieldset`/`legend`, and each option's `<label>` is the card, so the checked state is
+one adjacent sibling CSS rule and needs no script. A language option is labelled in **its own**
+language, not in the current one, so a reader who cannot read the current language can still find
+theirs.
 
 **Record details pages** are a fourth *page* shape, not a fourth editing pattern: a details page has
 no editor, so it is built from the shared read-only partials `shared/_record_details`,
@@ -714,8 +722,7 @@ Left to right:
 - **Settings** — the platform settings page (`/settings`), rendered for every visitor including a
   guest, because its preferences belong to the browser rather than to a universe. It lives inside
   the account menu, and it is deliberately not a **Configuration** link in the right utility
-  sidebar ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). The page remembers where
-  it was opened from and offers a **Go back** action that returns there.
+  sidebar ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). The page remembers where  it was opened from and offers a **Go back** action that returns there.
 
 `.navbar-actions` is a flex row that holds the single account dropdown.
 
@@ -729,6 +736,41 @@ and the sidebar never gains a create action: creation belongs to the page that l
 Nonfunctional dashboard links do not appear in the navbar. The right utility sidebar is the
 intentional home for future richer collaboration, analytics, and AI placeholders; those entries are
 `aria-disabled` and should be replaced with real destinations as the product areas are defined.
+
+### Translations — `config/locales/`
+
+Application chrome is written behind `t("dotted.key")` and lives in `config/locales/en.yml` (the source
+of truth) with a Spanish `config/locales/es.yml` mirroring it. See
+[ADR 0016](adr/0016-internationalization-and-browser-locale.md) for why the language is a
+browser-owned preference and which strings are excluded. The rules a new string has to follow:
+
+- **Group keys by the surface that owns the string** — `layouts.*`, `sidebar.*`, `shared.*`,
+  `settings.*`, `sessions.*`, `passwords.*`, and then the workspace that owns them — rather than
+  adding to a flat list.
+- **Author-entered data is never translated.** Record names, descriptions, tag names, and universe
+  and story names are the author's words. They are not keys and must not become keys.
+- **Interpolate with named arguments** (`t("shared.record_photo.alt", name: record.name)`) so a
+  translation can reorder the sentence. Positional `%1`/`%2` is not used.
+- **Never name an interpolation `locale`, `default`, `scope`, or `raise`.** They are reserved I18n
+  options, not interpolation variables: `t(key, locale: "Español")` asks I18n to translate *in* a
+  locale called Español and raises `I18n::InvalidLocale`. `count` is only a pluralization input.
+  `TranslationsTest` fails the suite if one appears.
+- **Pluralize with `count:`** and give the key `one:`/`other:` forms. A count is never assembled by
+  appending an "s".
+- **A count label is a key, not a noun.** A workspace passes `count_label: "character"`, and
+  `ApplicationHelper#count_with_label` resolves it with a `count:` so the locale chooses the plural.
+  Those record-type nouns therefore live at the **root** of the locale files.
+- **A value that travels in a URL is not translated.** `SceneFilter::UNGROUPED` and a search scope's
+  `value` are query values; only the label beside them is translated.
+- **A key is added to both files in the same change.**
+  `config.i18n.raise_on_missing_translations` is on in the test environment and
+  `test/models/translations_test.rb` compares the two key sets, so a one-sided key fails the suite.
+- Rails defines `errors.*`, `datetime.distance_in_words.*`, and `support.array.*` in English only.
+  The Spanish subset this application reaches is in `es.yml` and is checked against the real Rails
+  key set, so it cannot drift into translating something the framework never asks for.
+- A **client-side** string is not a `t()` call: a Stimulus controller receives it from the server as
+  a Stimulus value or a rendered JSON blob. A hardcoded English string in `app/javascript` is a
+  known gap, not a pattern to copy.
 
 ### Navigation (Sidebar) — `app/views/layouts/_left_sidebar.html.erb`
 The workspace sidebar renders only when `Current.universe` is present. It is one continuous

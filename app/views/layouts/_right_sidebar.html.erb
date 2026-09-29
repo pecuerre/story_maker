@@ -2,18 +2,18 @@
   tags character_tags relation_tags location_tags event_tags item_tags ownership_tags section_tags scene_tags
 ] %>
 
-<nav class="right-navigation" aria-label="Universe configuration and tools">
+<nav class="right-navigation" aria-label="<%= t("sidebar.tools.navigation_label") %>">
   <div class="sidebar-context sidebar-context--tools right-sidebar-intro">
-    <div class="sidebar-eyebrow">Universe tools</div>
-    <p>Additional collaboration, analytics, and AI tools will live here.</p>
+    <div class="sidebar-eyebrow"><%= t("sidebar.tools.eyebrow") %></div>
+    <p><%= t("sidebar.tools.intro") %></p>
   </div>
 
   <section class="sidebar-section sidebar-section--tools" aria-labelledby="configuration-title">
-    <h3 class="sidebar-section-title" id="configuration-title">Configuration</h3>
+    <h3 class="sidebar-section-title" id="configuration-title"><%= t("sidebar.tools.configuration") %></h3>
     <ul class="sidebar-list">
       <%= render "shared/sidebar_link",
         icon: "tags",
-        label: "Tags",
+        label: t("sidebar.tools.tags"),
         path: universe_tags_path,
         controllers: tag_controllers %>
 
@@ -22,7 +22,7 @@
       <% if can_administer_universe? %>
         <%= render "shared/sidebar_link",
           icon: "people",
-          label: "Members",
+          label: t("sidebar.tools.members"),
           path: universe_memberships_path,
           controllers: %i[ memberships ] %>
       <% end %>
@@ -30,28 +30,28 @@
   </section>
 
   <section class="sidebar-section sidebar-section--tools" aria-labelledby="collaboration-tools-title">
-    <h3 class="sidebar-section-title" id="collaboration-tools-title">Collaboration</h3>
+    <h3 class="sidebar-section-title" id="collaboration-tools-title"><%= t("sidebar.tools.collaboration") %></h3>
     <ul class="sidebar-list">
       <li>
-        <%= link_to icon_text_count("people", "Collaborators"), "#",
+        <%= link_to icon_text_count("people", t("sidebar.tools.collaborators")), "#",
           class: "sidebar-link sidebar-placeholder-link",
           aria: { disabled: true },
           data: { placeholder_link: true } %>
       </li>
       <li>
-        <%= link_to icon_text_count("exclamation-diamond", "Conflicts"), "#",
+        <%= link_to icon_text_count("exclamation-diamond", t("sidebar.tools.conflicts")), "#",
           class: "sidebar-link sidebar-placeholder-link",
           aria: { disabled: true },
           data: { placeholder_link: true } %>
       </li>
       <li>
-        <%= link_to icon_text_count("diagram-2", "Branches"), "#",
+        <%= link_to icon_text_count("diagram-2", t("sidebar.tools.branches")), "#",
           class: "sidebar-link sidebar-placeholder-link",
           aria: { disabled: true },
           data: { placeholder_link: true } %>
       </li>
       <li>
-        <%= link_to icon_text_count("signpost-split", "Forks"), "#",
+        <%= link_to icon_text_count("signpost-split", t("sidebar.tools.forks")), "#",
           class: "sidebar-link sidebar-placeholder-link",
           aria: { disabled: true },
           data: { placeholder_link: true } %>
@@ -60,16 +60,16 @@
   </section>
 
   <section class="sidebar-section sidebar-section--tools" aria-labelledby="analytics-tools-title">
-    <h3 class="sidebar-section-title" id="analytics-tools-title">Analytics</h3>
+    <h3 class="sidebar-section-title" id="analytics-tools-title"><%= t("sidebar.tools.analytics") %></h3>
     <ul class="sidebar-list">
       <li>
-        <%= link_to icon_text_count("bar-chart-line", "Insights"), "#",
+        <%= link_to icon_text_count("bar-chart-line", t("sidebar.tools.insights")), "#",
           class: "sidebar-link sidebar-placeholder-link",
           aria: { disabled: true },
           data: { placeholder_link: true } %>
       </li>
       <li>
-        <%= link_to icon_text_count("file-earmark-bar-graph", "Reports"), "#",
+        <%= link_to icon_text_count("file-earmark-bar-graph", t("sidebar.tools.reports")), "#",
           class: "sidebar-link sidebar-placeholder-link",
           aria: { disabled: true },
           data: { placeholder_link: true } %>
@@ -78,10 +78,10 @@
   </section>
 
   <section class="sidebar-section sidebar-section--tools" aria-labelledby="ai-tools-title">
-    <h3 class="sidebar-section-title" id="ai-tools-title">AI</h3>
+    <h3 class="sidebar-section-title" id="ai-tools-title"><%= t("sidebar.tools.ai") %></h3>
     <ul class="sidebar-list">
       <li>
-        <%= link_to icon_text_count("stars", "Assistant"), "#",
+        <%= link_to icon_text_count("stars", t("sidebar.tools.assistant")), "#",
           class: "sidebar-link sidebar-placeholder-link",
           aria: { disabled: true },
           data: { placeholder_link: true } %>

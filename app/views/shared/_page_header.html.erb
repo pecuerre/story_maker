@@ -2,6 +2,8 @@
 <% description = local_assigns[:description] %>
 <% eyebrow = local_assigns[:eyebrow] %>
 <% count = local_assigns[:count] %>
+<%# `count_label` is an I18n key for the record type, not a finished noun:
+    the badge reads it with a `count:` so the plural comes from the locale. %>
 <% count_label = local_assigns[:count_label] || "entry" %>
 
 <header class="page-header d-flex flex-column flex-md-row align-items-md-start justify-content-between">
@@ -14,7 +16,7 @@
       <h1 class="page-title"><%= title %></h1>
       <% unless count.nil? %>
         <span class="badge rounded-pill text-bg-light border"
-          aria-label="<%= pluralize(count, count_label) %>">
+          aria-label="<%= count_with_label(count, count_label) %>">
           <%= count %>
         </span>
       <% end %>

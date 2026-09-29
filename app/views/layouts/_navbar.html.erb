@@ -1,15 +1,15 @@
-<nav class="navbar navbar-expand-lg fixed-top border-bottom bg-dark navbar-dark" aria-label="Primary navigation">
+<nav class="navbar navbar-expand-lg fixed-top border-bottom bg-dark navbar-dark" aria-label="<%= t("layouts.primary_navigation") %>">
   <div class="container-fluid px-3 px-lg-4">
     <%# The brand is the landing page: it lists the universes the visitor may
         open and is the only place a new universe is created. %>
-    <%= link_to "Universe Maker", root_path, class: "navbar-brand fw-bold" %>
+    <%= link_to t("app.name"), root_path, class: "navbar-brand fw-bold" %>
 
     <button class="navbar-toggler" type="button"
       data-bs-toggle="collapse"
       data-bs-target="#primary-navigation"
       aria-controls="primary-navigation"
       aria-expanded="false"
-      aria-label="Toggle navigation">
+      aria-label="<%= t("layouts.toggle_navigation") %>">
       <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -25,7 +25,7 @@
             <%= link_to universe_path(Current.universe),
               class: "nav-link#{' active' if on_universe_page}",
               aria: (on_universe_page ? { current: "page" } : {}) do %>
-              Universe: <span class="navbar-context"><%= Current.universe.name %></span>
+              <%= t("layouts.scope.universe") %> <span class="navbar-context"><%= Current.universe.name %></span>
             <% end %>
           </li>
         <% end %>
@@ -36,7 +36,7 @@
             <%= link_to universe_story_path(id: Current.story),
               class: "nav-link#{' active' if on_story_page}",
               aria: (on_story_page ? { current: "page" } : {}) do %>
-              Story: <span class="navbar-context"><%= Current.story.name %></span>
+              <%= t("layouts.scope.story") %> <span class="navbar-context"><%= Current.story.name %></span>
             <% end %>
           </li>
         <% end %>
@@ -57,7 +57,7 @@
             type="button",
             data-bs-toggle="dropdown",
             aria-expanded="false"<% if on_settings_page %> aria-current="page"<% end %>>
-            Account
+            <%= t("layouts.account") %>
           </button>
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
             <% if Current.user.present? %>
@@ -69,19 +69,19 @@
               <li><hr class="dropdown-divider"></li>
             <% else %>
               <li>
-                <%= link_to "Log in", new_session_path, class: "dropdown-item" %>
+                <%= link_to t("layouts.log_in"), new_session_path, class: "dropdown-item" %>
               </li>
             <% end %>
             <li>
               <%= link_to settings_path, class: "dropdown-item d-inline-flex align-items-center gap-2" do %>
                 <i class="bi bi-gear" aria-hidden="true"></i>
-                Settings
+                <%= t("layouts.settings") %>
               <% end %>
             </li>
             <% if Current.user.present? %>
               <li><hr class="dropdown-divider"></li>
               <li>
-                <%= button_to "Log out", session_path,
+                <%= button_to t("layouts.log_out"), session_path,
                   method: :delete,
                   class: "dropdown-item" %>
               </li>

@@ -9,15 +9,19 @@
 <% details_url = local_assigns[:details_url] %>
 <% details_count = local_assigns[:details_count] %>
 <% details_count_label = local_assigns.fetch(:details_count_label, "item") %>
+<%# A caller always passes `title`, `count_label`, and `new_label`; the
+    fallbacks below are a guard for a new call site, and are English because a
+    class name humanized is not a translatable string. Passing the three
+    locals is what keeps a taxonomy page out of this fallback. %>
 <% title = local_assigns.fetch(:title, model_param.humanize) %>
 <% count = local_assigns[:count] %>
 <% count_label = local_assigns[:count_label] || model_param.humanize.downcase.pluralize %>
 <% new_label = local_assigns[:new_label] || "Add #{model_param.humanize.downcase}" %>
 <% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(nodes.first) || Current.universe) } %>
 <% empty_description = if editable
-  local_assigns[:empty_description] || "Create the first one to start building this hierarchy."
+  local_assigns[:empty_description] || t("shared.taxonomy_tree.empty_description")
 else
-  local_assigns[:read_only_empty_description] || "There are no #{model_param.humanize.downcase.pluralize} to show yet."
+  local_assigns[:read_only_empty_description] || t("shared.taxonomy_tree.read_only_empty_description")
 end %>
 
 <div class="taxonomy-tree"
@@ -63,7 +67,7 @@ end %>
   <div class="taxonomy-surface">
     <% if editable %>
       <p class="taxonomy-hint">
-        Use the row menu for Add child, Insert before/after, Move up/Move down, Edit, and Delete. Inline rename is available by clicking the name itself. Drag rows when you want a visual reorder; dropping near the top or bottom nests a row as a child.
+        <%= t("shared.taxonomy_tree.hint") %>
       </p>
       <p class="visually-hidden" data-taxonomy-tree-status aria-live="polite"></p>
     <% end %>
@@ -71,7 +75,7 @@ end %>
     <% if nodes.empty? %>
       <div class="p-3 p-md-4" data-taxonomy-tree-empty>
         <%= render "shared/empty_state",
-          title: "No #{model_param.humanize.downcase.pluralize} yet",
+          title: t("taxonomies.#{model_param}.none_yet"),
           description: empty_description,
           icon: "diagram-3" %>
       </div>

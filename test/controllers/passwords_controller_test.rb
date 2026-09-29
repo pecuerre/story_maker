@@ -10,7 +10,9 @@ class PasswordsControllerTest < ActionDispatch::IntegrationTest
 
   test "create" do
     post passwords_path, params: { email_address: @user.email_address }
-    assert_enqueued_email_with PasswordsMailer, :reset, args: [ @user ]
+    # The locale travels as an argument because the delivery job runs on a
+    # thread with no `I18n.locale` of its own.
+    assert_enqueued_email_with PasswordsMailer, :reset, args: [ @user, { locale: :en } ]
     assert_redirected_to new_session_path
 
     follow_redirect!

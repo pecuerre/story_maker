@@ -12,8 +12,8 @@
 # the value out of attribute-injection territory.
 class AppTheme
   THEMES = {
-    "light" => { label: "Light", icon: "sun", description: "A light page with dark text." },
-    "dark" => { label: "Dark", icon: "moon-stars", description: "A dark page with light text." }
+    "light" => { icon: "sun" },
+    "dark" => { icon: "moon-stars" }
   }.freeze
 
   DEFAULT = "light"
@@ -36,8 +36,12 @@ class AppTheme
       THEMES.key?(name.to_s)
     end
 
+    # The label and the description are chrome, so they are translated rather
+    # than stored: what the settings page calls a theme has to be readable in
+    # the reader's own language. The icon is not translated — it is a Bootstrap
+    # icon name, which has nothing to do with the reader's language.
     def label_for(name)
-      THEMES.fetch(normalize(name))[:label]
+      I18n.t("themes.#{normalize(name)}.label")
     end
 
     def icon_for(name)
@@ -45,7 +49,7 @@ class AppTheme
     end
 
     def description_for(name)
-      THEMES.fetch(normalize(name))[:description]
+      I18n.t("themes.#{normalize(name)}.description")
     end
 
     # The theme this request should render with. Anything unknown — a missing

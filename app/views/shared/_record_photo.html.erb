@@ -9,7 +9,7 @@
     rather than describing the picture, because the picture is the record. %>
 <figure class="record-photo mb-0">
   <%= image_tag url_for(photo.file),
-    alt: "Photo of #{name}",
+    alt: t("shared.record_photo.alt", name: name),
     class: "record-photo-image",
     width: Photo::SIZE,
     height: Photo::SIZE %>

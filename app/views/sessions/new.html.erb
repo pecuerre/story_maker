@@ -1,9 +1,9 @@
-<% content_for :title, "Sign in" %>
+<% content_for :title, t("sessions.title") %>
 
 <div class="auth-shell">
   <%= render "shared/page_header",
-    title: "Sign in",
-    description: "Open your universes and continue building your worlds." %>
+    title: t("sessions.title"),
+    description: t("sessions.description") %>
 
   <%= form_with url: session_path, class: "form-surface" do |form| %>
     <div class="mb-3">
@@ -23,13 +23,13 @@
         class: "form-control",
         required: true,
         autocomplete: "current-password",
-        placeholder: "Enter your password",
+        placeholder: t("sessions.password_placeholder"),
         maxlength: 72 %>
     </div>
 
     <div class="d-flex align-items-center justify-content-between gap-3">
-      <%= form.submit "Sign in", class: "btn btn-primary" %>
-      <%= link_to "Forgot password?", new_password_path, class: "link-secondary" %>
+      <%= form.submit t("sessions.submit"), class: "btn btn-primary" %>
+      <%= link_to t("sessions.forgot_password"), new_password_path, class: "link-secondary" %>
     </div>
   <% end %>
 </div>

@@ -1,9 +1,322 @@
+# Every user-facing string in the application chrome. Keys are grouped by the
+# surface that owns the string, not by a flat global list, so a page and its
+# translations live together and a surface can be moved without renumbering the
+# rest. See ADR 0016.
+#
+# Author-entered data is not here and must never be added: record names,
+# descriptions, tag names, and universe or story names are data, and a
+# translation layer that rewrote them would be corrupting the author's work.
 en:
-  # sections
-  section_created: "Section was successfully created."
-  section_updated: "Section was successfully updated."
-  section_destroyed: "Section was successfully destroyed."
-  # section tags
-  section_tag_created: "Section tag was successfully created."
-  section_tag_updated: "Section tag was successfully updated."
-  section_tag_destroyed: "Section tag was successfully destroyed."
+  app:
+    name: "Universe Maker"
+
+  # The application layout: the document shell, the top bar's own strings, and
+  # the access notice the workspace shows a read-only member or a guest.
+  layouts:
+    skip_to_content: "Skip to main content"
+    primary_navigation: "Primary navigation"
+    toggle_navigation: "Toggle navigation"
+    workspace_navigation: "Workspace navigation"
+    close_navigation: "Close navigation"
+    close_tools: "Close tools"
+    universe_tools: "Universe tools"
+    menu: "Menu"
+    tools: "Tools"
+    account: "Account"
+    log_in: "Log in"
+    log_out: "Log out"
+    settings: "Settings"
+    read_only: "read-only"
+    scope:
+      universe: "Universe:"
+      story: "Story:"
+    # The two access notices contain markup — a `strong` and a link — so they
+    # are `_html` keys and are rendered with the `html_safe` helper.
+    read_only_notice_html: "You have %{emphasis} access to this universe."
+    guest_notice_html: "You are viewing this public universe as a guest. %{login_link} to contribute."
+
+  # The left column: the universe/story navigation.
+  sidebar:
+    current_universe: "Current universe"
+    current_story: "Current story"
+    none_selected: "None selected"
+    navigation_label: "Universe and story navigation"
+    universe_bible: "Universe Bible"
+    story_workspace: "Story workspace"
+    story_overview: "Story overview"
+    characters: "Characters"
+    locations: "Locations"
+    events: "Events"
+    timeline: "Timeline"
+    items: "Items"
+    sections: "Sections"
+    scenes: "Scenes"
+    all_stories: "All stories"
+    select_story_hint: "Select a story to work on its sections and story-specific structure."
+    # The right column: universe configuration and the reserved tool areas.
+    tools:
+      navigation_label: "Universe configuration and tools"
+      eyebrow: "Universe tools"
+      intro: "Additional collaboration, analytics, and AI tools will live here."
+      configuration: "Configuration"
+      tags: "Tags"
+      members: "Members"
+      collaboration: "Collaboration"
+      collaborators: "Collaborators"
+      conflicts: "Conflicts"
+      branches: "Branches"
+      forks: "Forks"
+      analytics: "Analytics"
+      insights: "Insights"
+      reports: "Reports"
+      ai: "AI"
+      assistant: "Assistant"
+
+  # The access level a reader has in a universe, as a details page states it.
+  universe_access:
+    admin: "Admin"
+    contributor: "Contributor"
+    read_only: "Read-only"
+    none: "No access"
+    public_read_only: "Public read-only"
+
+  # Partials shared by every workspace.
+  shared:
+    count:
+      # A count and the record type it counts. `label` is already the pluralized
+      # record type, resolved by `ApplicationHelper#count_with_label`.
+      with_count: "%{count} %{label}"
+    detail_fact:
+      blank: "Not set yet."
+    in_world_range:
+      empty: "No dates set yet."
+      from: "From %{date}"
+      until: "Until %{date}"
+    record_details_link:
+      text: "Details"
+      aria: "Details for %{name}"
+    record_photo:
+      alt: "Photo of %{name}"
+    error_summary:
+      # `count` is pluralized by the key: one error reads differently from many.
+      heading:
+        one: "1 error prevented this %{subject} from being saved:"
+        other: "%{count} errors prevented this %{subject} from being saved:"
+    flash:
+      close: "Close"
+    photo_field:
+      default_label: "Photo"
+    include_descendants_toggle:
+      label: "Include records from child tags"
+    child_tags:
+      empty_title: "No child tags"
+      empty_description: "This grouping tag has no child tags yet."
+      unused_description: "Nothing uses this child tag yet."
+    detail_section:
+      # `label` is a record-type key resolved with `count: 2`, so the sentence
+      # reads "No characters carry this tag" and not "No character carry…".
+      empty_title: "No %{label} carry this tag"
+    menu_tag_content_tabs:
+      aria_label: "%{type} workspace"
+    tag_workspace_navigation:
+      scope_aria_label: "Tag scope"
+      story_aria_label: "Story tag workspace"
+      universe_aria_label: "Universe tag workspace"
+    taxonomy_tree:
+      hint: "Use the row menu for Add child, Insert before/after, Move up/Move down, Edit, and Delete. Inline rename is available by clicking the name itself. Drag rows when you want a visual reorder; dropping near the top or bottom nests a row as a child."
+      empty_description: "Create the first one to start building this hierarchy."
+      read_only_empty_description: "There is nothing here to show yet."
+    taxonomy_node:
+      rename: "Rename %{name}"
+      add_child: "Add child"
+      insert_before: "Insert before"
+      insert_after: "Insert after"
+      move_up: "Move up"
+      move_down: "Move down"
+    row_actions:
+      actions_for: "Actions for %{name}"
+      edit: "Edit"
+      delete: "Delete"
+      edit_title: "Edit %{label}"
+      delete_confirm: "Delete %{name}?"
+
+  # The top-bar search box. The results page and the scope dropdown's own option
+  # labels are translated with the search slice that owns them.
+  searches:
+    bar:
+      label: "Search Universe Maker"
+      placeholder: "Search"
+      placeholder_universe: "Search this universe"
+      submit: "Search"
+      results_label: "Search results"
+      see_all: "See all results"
+
+  # Sign in.
+  sessions:
+    title: "Sign in"
+    description: "Open your universes and continue building your worlds."
+    password_placeholder: "Enter your password"
+    submit: "Sign in"
+    forgot_password: "Forgot password?"
+    failed: "Try another email address or password."
+
+  # Password reset: request, reset, and the confirmations around them.
+  passwords:
+    instructions_sent: "Password reset instructions sent (if user with that email address exists)."
+    reset_done: "Password has been reset."
+    mismatch: "Passwords did not match."
+    invalid_link: "Password reset link is invalid or has expired."
+    new:
+      title: "Reset password"
+      heading: "Forgot your password?"
+      description: "Enter your email address and we will send password reset instructions."
+      submit: "Email reset instructions"
+      back: "Back to sign in"
+    edit:
+      title: "Update password"
+      heading: "Update your password"
+      description: "Choose a new password for your account."
+      new_password: "New password"
+      confirm_password: "Confirm new password"
+      submit: "Save password"
+
+  passwords_mailer:
+    reset:
+      subject: "Reset your password"
+      link_text: "this password reset page"
+      reset_on_html: "You can reset your password on %{link}. This link will expire in %{duration}."
+      reset_on_text: "You can reset your password on %{url}"
+      expires_in: "This link will expire in %{duration}"
+
+  # The platform settings page and its two sections.
+  settings:
+    title: "Settings"
+    eyebrow: "This browser"
+    description: "These preferences belong to this browser, not to a universe, so they are available on every page and to a guest."
+    go_back: "Go back"
+    navigation_label: "Settings sections"
+    tabs:
+      appearance: "Appearance"
+      language: "Language"
+    appearance:
+      title: "Appearance"
+      description: "How this browser renders Universe Maker. Every page follows the choice, and nothing else about the workspace changes with it."
+      legend: "Theme"
+      hint: "Light and dark are the only two themes. The choice is remembered in this browser; it is not an account setting and no universe admin can change it for you."
+      submit: "Save theme"
+      option_description:
+        light: "A light page with dark text."
+        dark: "A dark page with light text."
+    language:
+      title: "Language"
+      description: "Which language the application is written in. Every page follows the choice, including the messages the server sends back."
+      legend: "Language"
+      hint: "The choice is remembered in this browser and applies to every page, to a guest, and with no universe selected. It is not an account setting and no universe admin can change it for you."
+      submit: "Save language"
+      # Each option is described in the language it names, so a reader who cannot
+      # read the current one can still tell the two apart.
+      option_description:
+        en: "The language this application is currently written in."
+        es: "Spanish. The application, its pages, and its messages."
+    flash:
+      theme_saved: "Theme set to %{theme}."
+      locale_saved: "Language set to %{language}."
+      theme_unknown: "Choose either the light or the dark theme."
+      locale_unknown: "Choose a language this application offers."
+
+  # The two themes, named in the reader's own language.
+  themes:
+    light:
+      label: "Light"
+      description: "A light page with dark text."
+    dark:
+      label: "Dark"
+      description: "A dark page with light text."
+
+  # The web app manifest. The `theme_color` and `background_color` values are
+  # not translated: they are colours.
+  pwa:
+    description: "Build and maintain consistent story universes."
+
+  # Refusals and rate limits that are stated rather than answered with a bare
+  # status code.
+  errors:
+    unavailable_account: "That page is not available to this account. Here are the universes you can open."
+    rate_limited: "Try again later."
+
+  # The record-type nouns, at the root of the locale on purpose.
+  #
+  # Every workspace already passes one of these as a bare word
+  # (`count_label: "character"`, `details_count_label: "scene"`), and the shared
+  # count helpers resolve that word as an I18n key with a `count:` so the plural
+  # is chosen by the locale. Nesting them under a namespace would mean every one
+  # of those 50-odd call sites had to name a longer key, for no gain: the key
+  # *is* the record type's name, which is what `t` is for.
+  entry:
+    one: "entry"
+    other: "entries"
+  item:
+    one: "item"
+    other: "items"
+  record:
+    one: "record"
+    other: "records"
+  tag:
+    one: "tag"
+    other: "tags"
+  character:
+    one: "character"
+    other: "characters"
+  location:
+    one: "location"
+    other: "locations"
+  event:
+    one: "event"
+    other: "events"
+  section:
+    one: "section"
+    other: "sections"
+  scene:
+    one: "scene"
+    other: "scenes"
+  relation:
+    one: "relation"
+    other: "relations"
+  ownership:
+    one: "ownership"
+    other: "ownerships"
+  universe:
+    one: "universe"
+    other: "universes"
+  story:
+    one: "story"
+    other: "stories"
+  member:
+    one: "member"
+    other: "members"
+
+  # The taxonomy tree's own empty state, keyed by the `model_param` a caller
+  # passes. The tree needs the *taxonomy's* name there ("No relation tags yet"),
+  # which is not the `count_label` a caller passes ("tag"), so it cannot be
+  # derived from it and is translated from the model param instead.
+  taxonomies:
+    character_tag:
+      none_yet: "No character tags yet"
+    relation_tag:
+      none_yet: "No relation tags yet"
+    location_tag:
+      none_yet: "No location tags yet"
+    event_tag:
+      none_yet: "No event tags yet"
+    item_tag:
+      none_yet: "No item tags yet"
+    ownership_tag:
+      none_yet: "No ownership tags yet"
+    section_tag:
+      none_yet: "No section tags yet"
+    scene_tag:
+      none_yet: "No scene tags yet"
+    section:
+      none_yet: "No sections yet"
+    location:
+      none_yet: "No locations yet"

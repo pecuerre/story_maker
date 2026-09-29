@@ -22,29 +22,57 @@ module ApplicationHelper
     @current_theme ||= AppTheme.read(cookies)
   end
 
+  # The language this request renders in. Read from the same kind of signed
+  # cookie as the theme, and therefore subject to the same "unknown value is the
+  # default" rule. `I18n.locale` is already set from this by
+  # `ApplicationController#switch_locale`; the helper exists so a view can ask
+  # what it is without reaching into `I18n` directly, and so the settings form
+  # and the layout cannot disagree about it.
+  def current_locale
+    @current_locale ||= AppLocale.read(cookies)
+  end
+
   # The settings sections, in the order the vertical navigation lists them. Each
   # one owns a real destination, so the navigation is URL-backed like every other
   # tab strip in the application: no `data-bs-toggle`, no in-document panes. The
   # first tab is the page itself, and a later tab that needs its own state gets a
-  # query parameter in the shape of the taxonomy workspace.
+  # query parameter in the shape of the taxonomy workspace — hence the Language
+  # tab's `?section=language`, which is that own state rather than a second
+  # route for the same page.
   def settings_tabs
     [
-      { label: "Appearance", icon: "palette", path: settings_path, active: controller_name == "settings" }
+      { label: t("settings.tabs.appearance"), icon: "palette", path: settings_path,
+        active: controller_name == "settings" && !settings_language_section? },
+      { label: t("settings.tabs.language"), icon: "translate", path: settings_path(section: "language"),
+        active: controller_name == "settings" && settings_language_section? }
     ]
+  end
+
+  # Whether this request is the Language section rather than the page's own
+  # Appearance section. The query parameter is the only thing that distinguishes
+  # them, so the navigation, the panel, and the redirect after a save all read
+  # this one predicate.
+  def settings_language_section?
+    params[:section].to_s == "language"
   end
 
   def icon(name)
     content_tag(:i, "", class: "bi bi-#{name}")
   end
 
-  def icon_text_count(icon, text, count = nil)
+  # A sidebar link's content: an icon, a visible label, and an optional count
+  # pill. The pill's accessible name is the *record type* in the plural, which
+  # is why `count_label` is an I18n key rather than the visible `text`: the
+  # visible label may read "Ownerships" while the count is announced as
+  # "ownerships", and neither is derived from the other.
+  def icon_text_count(icon, text, count = nil, count_label: nil)
     content_tag(:span, class: "sidebar-link-content d-flex align-items-center gap-2 w-100") do
       concat content_tag(:i, "", class: "bi bi-#{icon}", aria: { hidden: true })
       concat content_tag(:span, text, class: "sidebar-link-label")
       unless count.nil?
         concat content_tag(:span, count,
           class: "sidebar-count",
-          aria: { label: pluralize(count, text) })
+          aria: { label: t(count_label || text, count: count) })
       end
     end
   end
@@ -78,10 +106,10 @@ module ApplicationHelper
     return nil if universe.nil?
 
     case universe_access_level(universe)
-    when "admin" then "Admin"
-    when "write" then "Contributor"
-    when "read" then "Read-only"
-    else universe.private? ? "No access" : "Public read-only"
+    when "admin" then t("universe_access.admin")
+    when "write" then t("universe_access.contributor")
+    when "read" then t("universe_access.read_only")
+    else universe.private? ? t("universe_access.none") : t("universe_access.public_read_only")
     end
   end
 
@@ -121,20 +149,20 @@ module ApplicationHelper
   # One labelled value in a details page's identity block. A missing value
   # renders explicit copy instead of a blank row, and the copy is per-fact so a
   # page never implies a value it does not have.
-  def detail_fact(label, value, blank: "Not set yet.")
-    { label: label, value: value.presence || blank }
+  def detail_fact(label, value, blank: nil)
+    { label: label, value: value.presence || blank || t("shared.detail_fact.blank") }
   end
 
   # One in-world interval, for the details pages of Event, Relation, and
   # Ownership. All three store an optional pair of datetimes, and an open or
   # absent bound is stated as such instead of being hidden or guessed.
-  def in_world_range(from, to, empty: "No dates set yet.")
+  def in_world_range(from, to, empty: nil)
     from_label = from&.strftime(DATE_FORMAT)
     to_label = to&.strftime(DATE_FORMAT)
 
-    return empty if from_label.blank? && to_label.blank?
-    return "From #{from_label}" if to_label.blank?
-    return "Until #{to_label}" if from_label.blank?
+    return empty || t("shared.in_world_range.empty") if from_label.blank? && to_label.blank?
+    return t("shared.in_world_range.from", date: from_label) if to_label.blank?
+    return t("shared.in_world_range.until", date: to_label) if from_label.blank?
 
     "#{from_label} – #{to_label}"
   end
@@ -152,17 +180,30 @@ module ApplicationHelper
   def record_details_link(path, record:, classes: %w[details-link])
     record_name = record.try(:display_string) || record.try(:name) || record.to_s
 
-    link_to path, class: classes.join(" "), aria: { label: "Details for #{record_name}" } do
+    link_to path, class: classes.join(" "), aria: { label: t("shared.record_details_link.aria", name: record_name) } do
       concat content_tag(:i, "", class: "bi bi-box-arrow-up-right", aria: { hidden: true })
-      concat content_tag(:span, "Details")
+      concat content_tag(:span, t("shared.record_details_link.text"))
     end
+  end
+
+  # A count and the record type it counts, as one phrase: "3 characters".
+  #
+  # `label` is an I18n key, not a finished noun. Every workspace already passes a
+  # bare word here (`count_label: "character"`, `details_count_label: "scene"`),
+  # and those words are the keys defined at the root of the locale files, so the
+  # plural is chosen by the locale instead of by appending an "s" here. That is
+  # the only reason the record-type nouns sit at the root rather than under
+  # `shared`: a caller passes the same key to `page_header`, to a taxonomy tree,
+  # and to a count badge, and all of them resolve it the same way.
+  def count_with_label(count, label = "item")
+    t("shared.count.with_count", count: count, label: t(label, count: count))
   end
 
   # The number of related records a record's own page will list: "(4
   # characters)". The label is part of the text, so a bare figure is never
   # ambiguous in a list of many rows.
   def record_count_text(count, label = "item")
-    "(#{pluralize(count, label)})"
+    "(#{count_with_label(count, label)})"
   end
 
   # That count as a left-aligned pill next to the name and its tag badges. It is

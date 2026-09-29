@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ApplicationHelperTest < ActiveSupport::TestCase
+class ApplicationHelperTest < ActionView::TestCase
   include ApplicationHelper
 
   setup do

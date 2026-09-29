@@ -1,0 +1,387 @@
+# Spanish translations. Every key under `es:` has a matching key under `en:`; a
+# test asserts the two key sets are identical, so a key added to one file and
+# forgotten in the other fails the suite rather than silently rendering English
+# to a Spanish reader. See ADR 0016.
+#
+# A translation may reorder an interpolation — the copy is written per language
+# rather than assembled from English fragments — but it must keep every
+# placeholder the English key uses, which is what lets Spanish put "Desde" in
+# front of a date instead of after it.
+es:
+  app:
+    name: "Universe Maker"
+
+  layouts:
+    skip_to_content: "Saltar al contenido principal"
+    primary_navigation: "Navegación principal"
+    toggle_navigation: "Mostrar u ocultar la navegación"
+    workspace_navigation: "Navegación del espacio de trabajo"
+    close_navigation: "Cerrar la navegación"
+    close_tools: "Cerrar las herramientas"
+    universe_tools: "Herramientas del universo"
+    menu: "Menú"
+    tools: "Herramientas"
+    account: "Cuenta"
+    log_in: "Iniciar sesión"
+    log_out: "Cerrar sesión"
+    settings: "Ajustes"
+    read_only: "solo lectura"
+    scope:
+      universe: "Universo:"
+      story: "Historia:"
+    read_only_notice_html: "Tienes acceso %{emphasis} a este universo."
+    guest_notice_html: "Estás viendo este universo público como visitante. %{login_link} para colaborar."
+
+  sidebar:
+    current_universe: "Universo actual"
+    current_story: "Historia actual"
+    none_selected: "Ninguna seleccionada"
+    navigation_label: "Navegación del universo y de la historia"
+    universe_bible: "Biblia del universo"
+    story_workspace: "Espacio de trabajo de la historia"
+    story_overview: "Resumen de la historia"
+    characters: "Personajes"
+    locations: "Lugares"
+    events: "Sucesos"
+    timeline: "Cronología"
+    items: "Objetos"
+    sections: "Secciones"
+    scenes: "Escenas"
+    all_stories: "Todas las historias"
+    select_story_hint: "Selecciona una historia para trabajar en sus secciones y su estructura propia."
+    tools:
+      navigation_label: "Configuración y herramientas del universo"
+      eyebrow: "Herramientas del universo"
+      intro: "Aquí vivirán las herramientas adicionales de colaboración, análisis e inteligencia artificial."
+      configuration: "Configuración"
+      tags: "Etiquetas"
+      members: "Miembros"
+      collaboration: "Colaboración"
+      collaborators: "Colaboradores"
+      conflicts: "Conflictos"
+      branches: "Ramas"
+      forks: "Bifurcaciones"
+      analytics: "Análisis"
+      insights: "Descubrimientos"
+      reports: "Informes"
+      ai: "IA"
+      assistant: "Asistente"
+
+  universe_access:
+    admin: "Administración"
+    contributor: "Colaboración"
+    read_only: "Solo lectura"
+    none: "Sin acceso"
+    public_read_only: "Público, solo lectura"
+
+  shared:
+    count:
+      with_count: "%{count} %{label}"
+    detail_fact:
+      blank: "Sin definir todavía."
+    in_world_range:
+      empty: "Sin fechas todavía."
+      from: "Desde el %{date}"
+      until: "Hasta el %{date}"
+    record_details_link:
+      text: "Detalles"
+      aria: "Detalles de %{name}"
+    record_photo:
+      alt: "Foto de %{name}"
+    error_summary:
+      heading:
+        one: "Un error impidió guardar este %{subject}:"
+        other: "%{count} errores impidieron guardar este %{subject}:"
+    flash:
+      close: "Cerrar"
+    photo_field:
+      default_label: "Foto"
+    include_descendants_toggle:
+      label: "Incluir registros de las etiquetas hijas"
+    child_tags:
+      empty_title: "No hay etiquetas hijas"
+      empty_description: "Esta etiqueta de grupo todavía no tiene etiquetas hijas."
+      unused_description: "Todavía no se usa esta etiqueta hija."
+    detail_section:
+      empty_title: "Ningún %{label} lleva esta etiqueta"
+    menu_tag_content_tabs:
+      aria_label: "Espacio de trabajo de %{type}"
+    tag_workspace_navigation:
+      scope_aria_label: "Ámbito de las etiquetas"
+      story_aria_label: "Espacio de trabajo de etiquetas de historia"
+      universe_aria_label: "Espacio de trabajo de etiquetas del universo"
+    taxonomy_tree:
+      hint: "Usa el menú de la fila para añadir una hija, insertar antes o después, subir o bajar, editar y eliminar. También puedes renombrar en línea haciendo clic en el propio nombre. Arrastra las filas cuando quieras reordenarlas visualmente; soltar cerca del principio o del final anida una fila como hija."
+      empty_description: "Crea el primero para empezar a construir esta jerarquía."
+      read_only_empty_description: "Todavía no hay nada que mostrar aquí."
+    taxonomy_node:
+      rename: "Renombrar %{name}"
+      add_child: "Añadir hija"
+      insert_before: "Insertar antes"
+      insert_after: "Insertar después"
+      move_up: "Subir"
+      move_down: "Bajar"
+    row_actions:
+      actions_for: "Acciones para %{name}"
+      edit: "Editar"
+      delete: "Eliminar"
+      edit_title: "Editar %{label}"
+      delete_confirm: "¿Eliminar %{name}?"
+
+  searches:
+    bar:
+      label: "Buscar en Universe Maker"
+      placeholder: "Buscar"
+      placeholder_universe: "Buscar en este universo"
+      submit: "Buscar"
+      results_label: "Resultados de la búsqueda"
+      see_all: "Ver todos los resultados"
+
+  sessions:
+    title: "Iniciar sesión"
+    description: "Abre tus universos y sigue construyendo tus mundos."
+    password_placeholder: "Escribe tu contraseña"
+    submit: "Iniciar sesión"
+    forgot_password: "¿Olvidaste tu contraseña?"
+    failed: "Prueba con otra dirección de correo o contraseña."
+
+  passwords:
+    instructions_sent: "Se enviaron las instrucciones para restablecer la contraseña (si existe un usuario con esa dirección de correo)."
+    reset_done: "La contraseña se ha restablecido."
+    mismatch: "Las contraseñas no coinciden."
+    invalid_link: "El enlace para restablecer la contraseña no es válido o ha caducado."
+    new:
+      title: "Restablecer la contraseña"
+      heading: "¿Has olvidado tu contraseña?"
+      description: "Escribe tu dirección de correo y te enviaremos las instrucciones para restablecer la contraseña."
+      submit: "Enviar instrucciones"
+      back: "Volver a iniciar sesión"
+    edit:
+      title: "Actualizar la contraseña"
+      heading: "Actualiza tu contraseña"
+      description: "Elige una contraseña nueva para tu cuenta."
+      new_password: "Contraseña nueva"
+      confirm_password: "Confirma la contraseña nueva"
+      submit: "Guardar la contraseña"
+
+  passwords_mailer:
+    reset:
+      subject: "Restablece tu contraseña"
+      link_text: "esta página para restablecer la contraseña"
+      reset_on_html: "Puedes restablecer tu contraseña en %{link}. Este enlace caducará en %{duration}."
+      reset_on_text: "Puedes restablecer tu contraseña en %{url}"
+      expires_in: "Este enlace caducará en %{duration}"
+
+  settings:
+    title: "Ajustes"
+    eyebrow: "Este navegador"
+    description: "Estas preferencias pertenecen a este navegador, no a un universo, así que están disponibles en todas las páginas y también para los visitantes."
+    go_back: "Volver"
+    navigation_label: "Secciones de los ajustes"
+    tabs:
+      appearance: "Apariencia"
+      language: "Idioma"
+    appearance:
+      title: "Apariencia"
+      description: "Así representa este navegador Universe Maker. Todas las páginas siguen la elección y nada más del espacio de trabajo cambia con ella."
+      legend: "Tema"
+      hint: "Los únicos temas son claro y oscuro. La elección se recuerda en este navegador; no es un ajuste de la cuenta y ningún administrador del universo puede cambiarla por ti."
+      submit: "Guardar el tema"
+      option_description:
+        light: "Una página clara con texto oscuro."
+        dark: "Una página oscura con texto claro."
+    language:
+      title: "Idioma"
+      description: "En qué idioma está escrita la aplicación. Todas las páginas siguen la elección, incluidos los mensajes que devuelve el servidor."
+      legend: "Idioma"
+      hint: "La elección se recuerda en este navegador y se aplica a todas las páginas, a los visitantes y cuando no hay ningún universo seleccionado. No es un ajuste de la cuenta y ningún administrador del universo puede cambiarla por ti."
+      submit: "Guardar el idioma"
+      option_description:
+        en: "El idioma en el que está escrita actualmente la aplicación."
+        es: "Español. La aplicación, sus páginas y sus mensajes."
+    flash:
+      theme_saved: "El tema ahora es %{theme}."
+      locale_saved: "El idioma ahora es %{language}."
+      theme_unknown: "Elige entre el tema claro y el oscuro."
+      locale_unknown: "Elige uno de los idiomas que ofrece la aplicación."
+
+  themes:
+    light:
+      label: "Claro"
+      description: "Una página clara con texto oscuro."
+    dark:
+      label: "Oscuro"
+      description: "Una página oscura con texto claro."
+
+  pwa:
+    description: "Construye y mantén universos narrativos coherentes."
+
+  errors:
+    unavailable_account: "Esa página no está disponible para esta cuenta. Aquí tienes los universos que puedes abrir."
+    rate_limited: "Inténtalo de nuevo más tarde."
+
+  # Los nombres de los tipos de registro viven en la raíz de la Locale a
+  # propósito. Cada espacio de trabajo ya pasa uno de ellos como una palabra
+  # suelta (`count_label: "character"`), y los ayudantes compartidos resuelven
+  # esa palabra como una clave de I18n con `count:` para que el plural lo elija
+  # la Locale. Ver la explicación equivalente en `en.yml`.
+  entry:
+    one: "entrada"
+    other: "entradas"
+  item:
+    one: "elemento"
+    other: "elementos"
+  record:
+    one: "registro"
+    other: "registros"
+  tag:
+    one: "etiqueta"
+    other: "etiquetas"
+  character:
+    one: "personaje"
+    other: "personajes"
+  location:
+    one: "lugar"
+    other: "lugares"
+  event:
+    one: "suceso"
+    other: "sucesos"
+  section:
+    one: "sección"
+    other: "secciones"
+  scene:
+    one: "escena"
+    other: "escenas"
+  relation:
+    one: "relación"
+    other: "relaciones"
+  ownership:
+    one: "propiedad"
+    other: "propiedades"
+  universe:
+    one: "universo"
+    other: "universos"
+  story:
+    one: "historia"
+    other: "historias"
+  member:
+    one: "miembro"
+    other: "miembros"
+
+  taxonomies:
+    character_tag:
+      none_yet: "Todavía no hay etiquetas de personajes"
+    relation_tag:
+      none_yet: "Todavía no hay etiquetas de relaciones"
+    location_tag:
+      none_yet: "Todavía no hay etiquetas de lugares"
+    event_tag:
+      none_yet: "Todavía no hay etiquetas de sucesos"
+    item_tag:
+      none_yet: "Todavía no hay etiquetas de objetos"
+    ownership_tag:
+      none_yet: "Todavía no hay etiquetas de propiedades"
+    section_tag:
+      none_yet: "Todavía no hay etiquetas de secciones"
+    scene_tag:
+      none_yet: "Todavía no hay etiquetas de escenas"
+    section:
+      none_yet: "Todavía no hay secciones"
+    location:
+      none_yet: "Todavía no hay lugares"
+
+  # Spanish for the parts of Rails' own translations this application renders.
+  #
+  # Rails ships these strings in English only, and
+  # `config.i18n.raise_on_missing_translations` is on in the test environment, so
+  # a Spanish page that rendered a validation message or a duration would raise
+  # rather than quietly fall back to English. That is the right failure, and it
+  # is also what makes this block necessary rather than optional.
+  #
+  # Only the keys this application can actually reach are here, and
+  # `TranslationsTest` checks that each one mirrors a key Rails really defines, so
+  # this block cannot drift into translating something the framework never asks
+  # for. The proper answer for a third language — or for a Rails version that
+  # reaches a key not listed here — is the `rails-i18n` gem, which would replace
+  # this block wholesale. It is deliberately not added: that is a dependency
+  # change, and this subset is what the application currently needs.
+  datetime:
+    distance_in_words:
+      half_a_minute: "medio minuto"
+      less_than_x_seconds:
+        one: "menos de 1 segundo"
+        other: "menos de %{count} segundos"
+      x_seconds:
+        one: "1 segundo"
+        other: "%{count} segundos"
+      less_than_x_minutes:
+        one: "menos de un minuto"
+        other: "menos de %{count} minutos"
+      x_minutes:
+        one: "1 minuto"
+        other: "%{count} minutos"
+      about_x_hours:
+        one: "aproximadamente 1 hora"
+        other: "aproximadamente %{count} horas"
+      x_days:
+        one: "1 día"
+        other: "%{count} días"
+      about_x_months:
+        one: "aproximadamente 1 mes"
+        other: "aproximadamente %{count} meses"
+      x_months:
+        one: "1 mes"
+        other: "%{count} meses"
+      about_x_years:
+        one: "aproximadamente 1 año"
+        other: "aproximadamente %{count} años"
+      over_x_years:
+        one: "más de 1 año"
+        other: "más de %{count} años"
+      almost_x_years:
+        one: "casi 1 año"
+        other: "casi %{count} años"
+  # `errors.format` is the frame Rails puts a translated message in, and
+  # `errors.messages` are the built-in validation messages. The application's own
+  # `errors.add` messages are literals in the models, and are translated with
+  # the models rather than here.
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      model_invalid: "La validación falló: %{errors}"
+      inclusion: "no está incluido en la lista"
+      exclusion: "está reservado"
+      invalid: "no es válido"
+      confirmation: "no coincide con %{attribute}"
+      accepted: "debe aceptarse"
+      empty: "no puede estar vacío"
+      blank: "no puede estar en blanco"
+      present: "debe estar en blanco"
+      too_long:
+        one: "es demasiado largo (el máximo es 1 carácter)"
+        other: "es demasiado largo (el máximo es %{count} caracteres)"
+      password_too_long: "es demasiado larga"
+      too_short:
+        one: "es demasiado corto (el mínimo es 1 carácter)"
+        other: "es demasiado corto (el mínimo es %{count} caracteres)"
+      wrong_length:
+        one: "no tiene la longitud correcta (debería tener 1 carácter)"
+        other: "no tiene la longitud correcta (debería tener %{count} caracteres)"
+      not_a_number: "no es un número"
+      not_an_integer: "debe ser un número entero"
+      greater_than: "debe ser mayor que %{count}"
+      greater_than_or_equal_to: "debe ser mayor o igual que %{count}"
+      equal_to: "debe ser igual a %{count}"
+      less_than: "debe ser menor que %{count}"
+      less_than_or_equal_to: "debe ser menor o igual que %{count}"
+      other_than: "debe ser distinto de %{count}"
+      in: "debe estar en %{count}"
+      odd: "debe ser impar"
+      even: "debe ser par"
+  # The connectors `to_sentence` uses, which the settings flash and the scene
+  # filter summaries read.
+  support:
+    array:
+      words_connector: ", "
+      two_words_connector: " y "
+      last_word_connector: " y "

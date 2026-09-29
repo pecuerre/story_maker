@@ -3,8 +3,8 @@
 
 <% if child_tags.empty? %>
   <%= render "shared/empty_state",
-    title: "No child tags",
-    description: "This grouping tag has no child tags yet.",
+    title: t("shared.child_tags.empty_title"),
+    description: t("shared.child_tags.empty_description"),
     icon: local_assigns.fetch(:icon) %>
 <% else %>
   <% child_tags.each do |child_tag| %>
@@ -14,8 +14,8 @@
       count: child_records.size,
       count_label: local_assigns.fetch(:count_label),
       icon: local_assigns.fetch(:icon),
-      empty_title: "No #{local_assigns.fetch(:count_label).pluralize} carry this tag",
-      empty_description: "Nothing uses this child tag yet." do %>
+      empty_title: t("shared.detail_section.empty_title", label: t(local_assigns.fetch(:count_label), count: 2)),
+      empty_description: t("shared.child_tags.unused_description") do %>
       <%= render "shared/tagged_record_list",
         records: child_records,
         tags_by_record: local_assigns.fetch(:tags_by_record),

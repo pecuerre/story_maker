@@ -11,7 +11,7 @@
   <div class="d-flex align-items-center gap-2 mb-3">
     <h2 class="h5 mb-0"><%= local_assigns.fetch(:title) %></h2>
     <% unless count.nil? %>
-      <span class="badge rounded-pill text-bg-light border" aria-label="<%= pluralize(count, local_assigns.fetch(:count_label, "record")) %>">
+      <span class="badge rounded-pill text-bg-light border" aria-label="<%= count_with_label(count, local_assigns.fetch(:count_label, "record")) %>">
         <%= count %>
       </span>
     <% end %>

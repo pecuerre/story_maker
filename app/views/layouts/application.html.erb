@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <%# The chosen theme is server-rendered onto the root element, so the very first
-    paint is already in the right palette instead of flashing the default one. %>
-<html lang="en" data-bs-theme="<%= current_theme %>">
+    paint is already in the right palette instead of flashing the default one.
+    The language is rendered the same way, for the same reason plus one more: a
+    screen reader, a browser's hyphenation, and `lang`-dependent CSS all read
+    this attribute, so it has to be right on the first paint rather than patched
+    in by a script after load. %>
+<html lang="<%= AppLocale.html_lang_for(current_locale) %>" data-bs-theme="<%= current_theme %>">
   <head>
-    <title><%= content_for(:title) || "Universe Maker" %></title>
+    <title><%= content_for(:title) || t("app.name") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Universe Maker">
+    <meta name="application-name" content="<%= t("app.name") %>">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -22,7 +26,7 @@
   </head>
 
   <body class="um-page-canvas">
-    <a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
+    <a class="visually-hidden-focusable skip-link" href="#main-content"><%= t("layouts.skip_to_content") %></a>
 
     <%= render "layouts/navbar" %>
 
@@ -33,8 +37,8 @@
           id="workspace-navigation"
           aria-labelledby="workspace-navigation-title">
           <div class="offcanvas-header border-bottom">
-            <h2 class="offcanvas-title h5 mb-0" id="workspace-navigation-title">Workspace navigation</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close navigation"></button>
+            <h2 class="offcanvas-title h5 mb-0" id="workspace-navigation-title"><%= t("layouts.workspace_navigation") %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="<%= t("layouts.close_navigation") %>"></button>
           </div>
           <div class="offcanvas-body p-0">
             <%= render "layouts/left_sidebar" %>
@@ -50,7 +54,7 @@
                 data-bs-target="#workspace-navigation"
                 aria-controls="workspace-navigation">
                 <i class="bi bi-list" aria-hidden="true"></i>
-                Menu
+                <%= t("layouts.menu") %>
               </button>
               <button class="btn btn-outline-secondary btn-sm d-xl-none d-inline-flex align-items-center gap-2"
                 type="button"
@@ -58,7 +62,7 @@
                 data-bs-target="#workspace-tools-navigation"
                 aria-controls="workspace-tools-navigation">
                 <i class="bi bi-stars" aria-hidden="true"></i>
-                Tools
+                <%= t("layouts.tools") %>
               </button>
             </div>
             <span class="mobile-workspace-context">
@@ -71,9 +75,9 @@
             <% if !can_write_universe? %>
               <div class="alert alert-info access-notice" role="status">
                 <% if Current.user.present? %>
-                  You have <strong>read-only</strong> access to this universe.
+                  <%= t("layouts.read_only_notice_html", emphasis: t("layouts.read_only") ) %>
                 <% else %>
-                  You are viewing this public universe as a guest. <%= link_to "Log in", new_session_path %> to contribute.
+                  <%= t("layouts.guest_notice_html", login_link: link_to(t("layouts.log_in"), new_session_path) ) %>
                 <% end %>
               </div>
             <% end %>
@@ -86,8 +90,8 @@
           id="workspace-tools-navigation"
           aria-labelledby="workspace-tools-navigation-title">
           <div class="offcanvas-header border-bottom">
-            <h2 class="offcanvas-title h5 mb-0" id="workspace-tools-navigation-title">Universe tools</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close tools"></button>
+            <h2 class="offcanvas-title h5 mb-0" id="workspace-tools-navigation-title"><%= t("layouts.universe_tools") %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="<%= t("layouts.close_tools") %>"></button>
           </div>
           <div class="offcanvas-body p-0">
             <%= render "layouts/right_sidebar" %>

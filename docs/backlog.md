@@ -367,17 +367,6 @@ it has a useful destination and clear empty/loading/error states.
         - **#46** (a Timeline node renders a bare id with no accessible name, and the documented
       pan/zoom interaction is not implemented).
 
-    - **Before slice 27.3: make the browser suite green again.** Four assertions in
-      `test/system/tag_improvements_test.rb` and `test/system/taxonomy_tree_test.rb` are stale — a
-      workspace menu-tag link now carries `from=workspace`, a taxonomy row holds two collapsed
-      toggles, and a page-header badge counts the tag the test itself creates — so
-      `bin/rails test:system` is red before any of the work below starts, which is exactly the
-      state in which a real regression cannot be told from an old one. The finding, the evidence, and
-      the three decisions it needs are in [`known_quirks.md`](known_quirks.md) #60 (the stale browser
-      assertions entry); fix that entry and delete it here in the same change. Do it before the
-      Universe Bible workspaces, because that slice is the one that edits the tag, taxonomy, and
-      workspace-tab surfaces those tests assert on.
-
     - **Slice 27.3 — Universe Bible workspaces.** `characters/*`, `locations/*`, `events/*`,
       `items/*`, `relations/*`, `ownerships/*`, all six universe-level `*_tags` indexes and their
       `show` pages, and the shared modal field labels produced by `app/helpers/modal_fields.rb` and

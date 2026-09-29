@@ -18,12 +18,19 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     end
     assert_selector ".taxonomy-name-trigger", text: hostile_name
     assert_no_selector "img[data-taxonomy-xss]"
+    # The header badge is the taxonomy's own tag count, so it already includes
+    # the tag created above: the create refreshes the same URL, and the count
+    # comes from one fresh server render. Nested children are tags too, so the
+    # badge is read against the records rather than against a literal, which
+    # would go stale the moment a fixture tag is added.
+    tag_count = universe.character_tags.count
     within ".page-header" do
-      assert_selector ".badge", text: "3"
+      assert_selector ".badge", text: tag_count.to_s
+      assert_selector ".badge[aria-label='#{tag_count} tags']"
     end
 
     other = character_tags(:character_tag_two)
-    within "li[data-node-id='#{other.id}']" do
+    within "li[data-node-id='#{other.id}'] > .taxonomy-row" do
       find("button[aria-expanded='false']").click
       click_button "Edit"
     end
@@ -53,7 +60,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     assert_selector "button.taxonomy-name-trigger", text: "Renamed browser tag"
     other = character_tags(:character_tag_two)
-    within "li[data-node-id='#{other.id}']" do
+    within "li[data-node-id='#{other.id}'] > .taxonomy-row" do
       find("button[aria-expanded='false']").click
       click_button "Edit"
     end
@@ -298,7 +305,10 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     visit universe_character_tags_path(universe_slug: universe.slug)
     assert_stimulus_loaded
 
-    within "li[data-node-id='#{tag.id}']" do
+    # Scoped to the node's own row: `tag` has a child tag, and the child's `li`
+    # is nested inside this one with a collapsed menu of its own, so the bare
+    # node scope matches two toggles and the click is ambiguous.
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
       find("button[aria-expanded='false']").click
       click_button "Edit"
     end

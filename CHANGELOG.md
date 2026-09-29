@@ -21,6 +21,17 @@ Labels used below:
 
 ## 2026-09-29
 
+- **[fixed]** The browser suite is green again: four stale assertions in
+  `test/system/tag_improvements_test.rb` and `test/system/taxonomy_tree_test.rb` were red before any
+  new work started (known quirk 60, now in `docs/resolved_quirks.md`). All four were test-side, so
+  no application code changed. The workspace menu-tag tab is asserted with the `from=workspace` link
+  it actually renders, and the test then follows the taxonomy tree's **Details** link for the same
+  tag to cover the canonical path too. The four `find("button[aria-expanded='false']")` sites are
+  scoped to `li[data-node-id] > .taxonomy-row` rather than the bare node, because a tag with
+  children nests the child's own collapsed row menu inside the parent and the old scope matched two
+  toggles. The page-header count badge is asserted against `universe.character_tags.count` and its
+  `aria-label` instead of a literal, and what it counts is now stated in the conventions: every tag
+  in the taxonomy, nested children included, which is why a create makes the badge go up.
 - **[changed]** The Universe and Story workspaces now render in Spanish as well: `universes/*`
   (index, show, new, edit, `_form`, `_universe`), `stories/*`, `memberships/*`,
   `sections/{index,show}`, `tags/index` (the taxonomy workspace), `timeline/index`, and the

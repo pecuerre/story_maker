@@ -619,6 +619,46 @@ with no tags and asserts the read-only copy appears while the writer copy does n
 
 ## Resolved interaction findings (2026-09-29)
 
+### Former quirk #60: four browser assertions in the tag and taxonomy suites were stale (fixed)
+
+**Then:** `bin/rails test:system` was red before any new work started, from four assertions in
+`test/system/tag_improvements_test.rb` and `test/system/taxonomy_tree_test.rb` that no longer
+matched documented behavior. They reproduced in isolation on an idle machine, so they were not the
+load sensitivity in quirk 58, and a red browser suite is exactly the state in which a real
+regression cannot be told from an old failure.
+
+- `tag_improvements_test.rb:16` asserted the canonical tag path after clicking a workspace menu-tag
+  tab. A workspace tag link deliberately carries `from=workspace`
+  ([conventions](universe_maker_conventions.md), flat-list pattern) so the tag page can preserve that
+  navigation without trusting a `Referer` header. The app was right; the expectation was stale.
+- `tag_improvements_test.rb:60` and `taxonomy_tree_test.rb:302` called
+  `find("button[aria-expanded='false']")` inside a `li[data-node-id]`. A tag with children nests the
+  child's `li` — and therefore the child's own collapsed row menu — inside the parent's, so the
+  scope matched two toggles and raised `Capybara::Ambiguous`. The row grew a second control when
+  grouping tags began listing their own children; the selector was never narrowed.
+- `taxonomy_tree_test.rb:22` expected a page-header `.badge` of `3` where the page shows `4`. The
+  badge is the taxonomy's own tag count (`TagsHelper` passes `count: ordered_records.length`), and
+  `character_tag_one`, `character_tag_two`, and the nested `character_tag_child` are three tags
+  before the test creates a fourth, so the header was correct and the literal was stale.
+
+**Fix:** all four were test-side; no application code changed.
+
+- The workspace tab is asserted with the `from=workspace` link it actually renders, and the test
+  then follows the taxonomy tree's **Details** link for the same tag to confirm the canonical path
+  is the same page without the origin. Both navigation styles are now covered where the
+  convention is recorded.
+- Every `find("button[aria-expanded='false']")` in the taxonomy suites is scoped to
+  `li[data-node-id] > .taxonomy-row`, matching the existing convention in the same files, so a
+  parent node's click cannot land on a child's menu. The four sites that used the bare node scope
+  were narrowed, not only the two that were raising.
+- The header badge is asserted against `universe.character_tags.count` and its `aria-label`, instead
+  of a literal, so the test states the contract — the count is the taxonomy's tags, nested children
+  included, and it tracks live creation because a create performs a same-URL Turbo visit.
+
+The header count's meaning is now stated where it is documented, in
+[conventions](universe_maker_conventions.md) under the taxonomy-tree pattern: the badge is every tag
+in the taxonomy, children included, not the number of root rows.
+
 ### Former quirk #48: delegated admins could demote or remove themselves into a blank 403 (fixed)
 
 **Then:** the Members workspace rendered the access-level select and the Remove button on every
@@ -939,6 +979,26 @@ or vendored asset changed), `bun run build:css` (no SCSS change), `db:demo:reset
 (destructive, needs approval; no `db/data` manifest changed), Docker/Kamal deployment, and a manual
 browser pass outside the automated suite.
 
+## Follow-up verification (2026-09-29, stale browser assertions — quirk 60)
+
+- `PARALLEL_WORKERS=1 bin/rails test test/system/tag_improvements_test.rb
+  test/system/taxonomy_tree_test.rb` — before: 17 runs, 185 assertions, 2 failures, 2 errors. After:
+  17 runs, 208 assertions, 0 failures, 0 errors, 0 skips. The extra assertions are the
+  `from=workspace` href, the canonical Details-link path, and the badge `aria-label`.
+- `PARALLEL_WORKERS=2 bin/rails test:system` — 117 tests, 1,524 assertions, 0 failures, 0 errors,
+  0 skips. The full browser suite is green, which is the point of the entry: a regression in a later
+  change is now distinguishable from one of these four.
+- `bin/rubocop test/system/tag_improvements_test.rb test/system/taxonomy_tree_test.rb` — 2 files,
+  no offenses.
+
+Not run: `bin/rails test` and `bin/rails test:system`'s non-browser companions were not extended
+because no application, model, or view code changed — the four edits are test expectations and
+selectors, and the full browser suite is the suite that covers them. Also not run:
+`bin/brakeman --no-pager`, `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no
+authorization rule, route, dependency, importmap pin, or schema changed), `bun run check:js` (no
+client-side code changed), `UNIVERSE=dark|lotr bin/rails db:demo:check` (no `db/data` manifest
+changed), and `db:demo:reset`/`db:restart`/Docker/Kamal deployment (destructive, needs approval).
+
 ## Follow-up verification (2026-09-29, membership self-mutation — quirk 48)
 
 - `bin/rails test` — 1,060 tests, 6,338 assertions, 0 failures, 0 errors, 7 skips.
@@ -964,8 +1024,10 @@ approval).
 - `bin/rails test test/controllers/workspace_locale_test.rb` — 26 tests, 310 assertions,
   0 failures, 0 errors, 0 skips.
 - `PARALLEL_WORKERS=2 bin/rails test:system` — 117 tests, 1,501 assertions, **2 failures, 2 errors**,
-  0 skips. All four are pre-existing and in a surface this change does not touch, and they are now
-  recorded as the stale browser assertions finding in [`known_quirks.md`](known_quirks.md)
+  0 skips. All four are pre-existing and in a surface this change does not touch, and they were
+  recorded as the stale browser assertions finding in [`known_quirks.md`](known_quirks.md) and
+  fixed the same day; see [Former quirk #60](#former-quirk-60-four-browser-assertions-in-the-tag-and-taxonomy-suites-were-stale-fixed)
+  and its verification section below.
   (`test/system/tag_improvements_test.rb:16,60` and `test/system/taxonomy_tree_test.rb:22,302`:
   a workspace tab link that deliberately carries `from=workspace`, a taxonomy row that now holds two
   collapsed toggles, and a page-header badge that counts the tag the test itself creates). Both

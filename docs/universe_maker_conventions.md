@@ -229,6 +229,10 @@ The three functional editing patterns are:
   child, Insert before, Insert after, Move up, Move down, Edit, and Delete. Move up/down are disabled
   menu items at the sequence boundaries, so the row itself has no add or arrow buttons. The Details
   link and the menu are both always visible: a row never depends on hover.
+- The page header's count badge is **every tag in the taxonomy, nested children included**, not the
+  number of root rows the tree lists: `tags_helper.rb` passes `Current.universe.<type>_tags.count`,
+  and a nested grouping tag is a tag like any other. A create, rename, or delete performs a
+  same-URL Turbo visit, so the badge tracks live changes.
 - `taxonomy_tree_controller.js` provides safe DOM-built modal fields and nodes, inline name
   editing, insertion boundaries, and the move/insert menu actions. HTML5 drag/drop is an
   optional enhancement. After every successful mutation it performs a same-URL Turbo visit so

@@ -10,12 +10,25 @@ class TagImprovementsTest < ApplicationSystemTestCase
     assert_stimulus_loaded
 
     within "nav.content-tabs" do
+      # The tab states where it was opened from, so the tag page can keep this
+      # navigation without trusting a Referer header it does not control.
+      assert_selector "a[href='#{universe_character_tag_path(universe_slug: universe.slug, id: tag, from: "workspace")}']"
       click_link tag.name
     end
 
-    assert_current_path universe_character_tag_path(universe_slug: universe.slug, id: tag)
+    assert_current_path universe_character_tag_path(universe_slug: universe.slug, id: tag, from: "workspace")
     assert_selector "h1", text: tag.name
     assert_selector ".detail-section", text: "Characters with this tag"
+
+    # The taxonomy tree's Details link reaches the same page without the origin,
+    # so the two are the same destination reached two documented ways: the
+    # workspace tab keeps the tab strip, the canonical link does not.
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
+      find("a.details-link").click
+    end
+
+    assert_current_path universe_character_tag_path(universe_slug: universe.slug, id: tag)
   end
 
   test "a menu tag's tab strip reads above its identity card" do
@@ -56,7 +69,10 @@ class TagImprovementsTest < ApplicationSystemTestCase
     visit universe_character_tags_path(universe_slug: universe.slug)
     assert_stimulus_loaded
 
-    within "li[data-node-id='#{tag.id}']" do
+    # The row is scoped to the node's own row: a tag with children nests their
+    # `li` inside this one, and each of those rows has a collapsed menu of its
+    # own, so the bare node scope holds more than one toggle.
+    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
       find("button[aria-expanded='false']").click
       click_button "Edit"
     end

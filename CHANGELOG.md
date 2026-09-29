@@ -160,6 +160,12 @@ Labels used below:
   its documented status code. Request tests cover the mistyped-then-correct retry, the
   password-page destination, the refused destination and its one-request scope; browser tests cover
   the retry and the password-page journey.
+- **[docs]** Quirk 48 — a delegated admin demoting or removing their own membership — was already
+  fixed earlier today but still listed as open. The entry moved from `docs/known_quirks.md` to
+  `docs/resolved_quirks.md`, which now records that the refusal is a stated redirect to the landing
+  page with an alert, that the caller's own row no longer renders change and Remove controls, and
+  that the bare `403` still stands for a signed-in non-administrator asking for an admin-only page.
+  A follow-up verification block records the runs behind that entry.
 - **[docs]** Added
   [ADR 0016](docs/adr/0016-internationalization-and-browser-locale.md) for the translation contract:
   why the language is a cookie rather than a `User` column, why only chrome is translated, why a

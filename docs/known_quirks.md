@@ -288,14 +288,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
     the current event is allowed by the browser but rejected by the model, producing a validation
     path that is not explained by the current Turbo/JSON UI.
 
-48. **Medium — delegated admins can demote or remove themselves into a blank 403.** The membership
-    UI permits changing/removing the current membership (`app/views/memberships/index.html.erb:73-96`).
-    After the mutation redirects to the admin-only Members page, the same user no longer passes the
-    admin authorization callback and receives a bodyless 403
-    (`app/controllers/memberships_controller.rb:37-53`,
-    `app/controllers/concerns/universe_authorization.rb:35-40`). There is no self-demotion browser
-    or request test.
-
 49. **Low/conditional — Turbo page snapshots may retain private views after session invalidation.**
     The layout does not disable Turbo caching and defines no `turbo-cache-control`
     (`app/views/layouts/application.html.erb:1-20`, `app/controllers/application_controller.rb:6-7`).

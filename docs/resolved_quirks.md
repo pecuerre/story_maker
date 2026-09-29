@@ -588,6 +588,39 @@ empty taxonomy shows mutation copy only to writers and a read-only "No … are d
 guests and read-only members. A system regression signs in as a read-only member of a private universe
 with no tags and asserts the read-only copy appears while the writer copy does not.
 
+## Resolved interaction findings (2026-09-29)
+
+### Former quirk #48: delegated admins could demote or remove themselves into a blank 403 (fixed)
+
+**Then:** the Members workspace rendered the access-level select and the Remove button on every
+membership row, including the caller's own, and `MembershipsController#update` and `#destroy` had no
+self-membership check. A delegated admin could therefore set their own level down to `write` or `read`,
+or soft-delete their own row. The mutation redirected to `universe_memberships_path`, which is
+admin-only (`universe_access_for_request` answers `:admin` for every `memberships` action), so the
+redirect immediately failed the very authorization the author had just given up: `rescue_from
+CanCan::AccessDenied` answers the documented bare `403`, and the browser landed on a bodyless page
+with no explanation and no link forward. The owner was never exposed, because the owner is not a
+membership at all and its row is hardcoded.
+
+**Fix:** a self-mutation is refused before it is applied. `MembershipsController#own_membership?`
+compares the target membership's user with `Current.user`, and both actions redirect to the landing
+page with an alert (`memberships.flash.own_change_refused`, `memberships.flash.own_removal_refused`)
+instead of redirecting to a page the author can no longer open. The view stops offering the controls
+in the first place: the caller's own row keeps its access badge and shows a "You" label where the
+change form and the Remove button would be, and another member's row is unaffected. A self-demotion
+is now a stated refusal rather than a successful mutation with an unexplained dead end.
+
+The bare `403` is deliberately unchanged for the case it was written for: a signed-in member who is
+not an administrator asking for an admin-only page still gets the documented status code. The fix is
+that the application no longer *produces* that state through its own UI.
+
+Four request tests in `test/controllers/memberships_controller_test.rb` cover the refused
+self-demotion (level unchanged, alert, redirect to the landing page), the refused self-removal (the
+row is still there), the absence of change and Remove controls on the caller's own row, and the
+presence of both controls on another member's row. No browser test was added: the change is
+server-rendered ERB with no client-side path, and the request suite asserts the same markup the
+browser would render.
+
 ## Resolved client-side verification and CSRF findings (2026-09-27)
 
 ### Former quirk #33: client-side code had no tests, no linter, and an unverified CSRF path (fixed)
@@ -876,3 +909,18 @@ Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no depende
 or vendored asset changed), `bun run build:css` (no SCSS change), `db:demo:reset`/`db:demo:load`
 (destructive, needs approval; no `db/data` manifest changed), Docker/Kamal deployment, and a manual
 browser pass outside the automated suite.
+
+## Follow-up verification (2026-09-29, membership self-mutation — quirk 48)
+
+- `bin/rails test` — 1,060 tests, 6,338 assertions, 0 failures, 0 errors, 7 skips.
+- `bin/rails test test/controllers/memberships_controller_test.rb` — 14 tests, 60 assertions,
+  0 failures, 0 errors, 0 skips.
+- `bin/rubocop` — 324 files, no offenses.
+- `git diff --check` — clean.
+
+Not run: `bin/rails test:system` (the fix is server-rendered ERB with no client-side path, and the
+request suite asserts the markup the browser would render), `bin/brakeman`, `bin/bundler-audit`,
+`bin/importmap audit`, and `bun audit` (no authorization rule, route, dependency, importmap pin, or
+schema changed in this delivery), `UNIVERSE=dark|lotr bin/rails db:demo:check` (no `db/data`
+manifest changed), and `db:demo:reset`/`db:restart`/Docker/Kamal deployment (destructive, needs
+approval).

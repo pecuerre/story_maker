@@ -31,8 +31,9 @@ of them decides how the other slices of the internationalization work are writte
    English in a Spanish locale looks finished and is not, and nothing in the
    existing suite would have noticed.
 
-The work is delivered in six slices. This ADR records the decisions the first slice
-settles; the later slices repeat them.
+The work is delivered in stages, and the remaining workspaces still hold English literals. This ADR
+records the decisions the delivered stage settled — the key layout, the browser-owned language
+cookie, and why author data is excluded — because every later stage repeats them.
 
 ## Decision
 
@@ -86,7 +87,7 @@ settles; the later slices repeat them.
   is the string `"ungrouped"` because it is a query value, and a search scope's
   `value` is a query value. Only the *label* beside them is translated. This is
   the one place where a mechanical conversion would quietly break links, and it
-  is called out here because it recurs in the later slices.
+  is called out here because it recurs in the workspaces not yet converted.
 
 ## Consequences
 

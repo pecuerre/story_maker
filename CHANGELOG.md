@@ -120,11 +120,15 @@ Labels used below:
   translated. `docs/architecture.md`, `docs/universe_maker_conventions.md` (with a new
   **Translations** section listing the rules a new string has to follow), and `docs/visual_design.md`
   were updated to match, and `docs/adr/README.md` indexes the new record.
-- **[planned]** `docs/backlog.md`'s internationalization item is now written as six ordered slices
+- **[planned]** `docs/backlog.md`'s internationalization item is now written as ordered slices
   recording the measured string surface, instead of a one-line note, so the remaining work can be
-  picked up one slice at a time. The slice text also fixes the decisions that would otherwise be
-  re-made inline: the language preference is a browser-owned signed cookie, a value that travels in a
-  URL stays untranslated while its label is translated, and author-entered data is never translated.
+  picked up one slice at a time. The foundation and the application shell are no longer listed there
+  — the entries above are the record of that delivery — and what remains is the Universe and Story
+  workspaces, the Universe Bible workspaces, the Scene workspace, search, and the client-side
+  strings. The slice text fixes the decisions that would otherwise be re-made inline: a value that
+  travels in a URL stays untranslated while its label is translated, a count label is a key rather
+  than a noun, an interpolation is never named `locale`, and author-entered data is never
+  translated.
 - **[docs]** Documentation no longer cites a backlog item number, because a number is deleted from
   `docs/backlog.md` when its item completes and the citation then points at nothing. `docs/adr/README.md`
   records the rule for future ADRs: cite the reference documentation or ADR holding the delivered

@@ -322,61 +322,44 @@ it has a useful destination and clear empty/loading/error states.
 
 27. **Internationalization: move every user-facing string behind `t()` and add a language setting**
 
-    Deliver in six slices, in the order below. The whole item is roughly 700 strings: ~470 unique
-    strings in the 100 ERB views, ~120 in controllers and helpers, ~51 distinct inside four Stimulus
-    controllers, plus model-level labels (`AppTheme::THEMES`, `SectionPaths::UNGROUPED_LABEL`,
-    `Search::Scope` option labels, `SceneFilter` discard messages) and the `PasswordsMailer`
-    templates. Slice 1 fixes the key-naming convention and the language-setting pattern; the later
-    slices repeat it, so they depend on it and should not be started before it lands. Every slice
-    ships its own `config/locales/en.yml` and `config/locales/es.yml` entries, its own tests, the
-    matching `docs/` update, and a dated `CHANGELOG.md` entry, and the item leaves this file only
-    when the sixth slice is delivered.
+    Deliver in the order below. The foundation and the application shell are already done — the
+    `AppLocale` preference, the **Language** section on `/settings`, the I18n configuration, the
+    translated layouts/sidebars/`shared/*`/sessions/passwords/mailer/PWA, and the missing-translation
+    enforcement are described by [ADR 0016](adr/0016-internationalization-and-browser-locale.md) and
+    the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). What is left is roughly 1,100 strings:
+    64 of the 100 ERB views still carry hardcoded rendered text (about 440 distinct strings), ~120
+    more in controllers and helpers, ~51 distinct inside four Stimulus controllers, plus the
+    model-level labels (`SectionPaths::UNGROUPED_LABEL`, `Search::Scope` option labels,
+    `SceneFilter` discard messages) and the literal `errors.add` messages. Every `shared/*` partial
+    is already translated, and the counts above exclude ERB comments, which document a local
+    contract for the next developer and are never rendered.
 
-    Rules that apply to all six slices:
+    Rules that apply to every remaining slice:
 
     - Use Rails `I18n` with `t("dotted.key")` in views, helpers, and controllers. Group keys by the
-      surface that owns the string (`shared.*`, `characters.*`, `scenes.*`, `flash.*`), not by
-      a flat global list. Pluralize with `t("key", count: n)`; interpolate with named arguments
+      surface that owns the string (`characters.*`, `scenes.*`, `searches.*`), not by a flat global
+      list, following the layout [ADR 0016](adr/0016-internationalization-and-browser-locale.md)
+      established. Pluralize with `t("key", count: n)`; interpolate with **named** arguments
       (`t("scenes.move.notice", name: scene.name)`) so word order can differ per language.
+    - Never name an interpolation `locale`, `default`, `scope`, or `raise`. They are reserved I18n
+      options: `t(key, locale: "…")` asks I18n to translate *in* a locale and raises
+      `I18n::InvalidLocale`. `TranslationsTest` fails the suite if one appears.
     - Record names, descriptions, tags, universes, and anything else an author typed are **data**,
       never translated. Only application chrome is translated.
-    - `config/locales/en.yml` currently holds six `section_*` keys that nothing reads. Fold them
-      into the new structure rather than keeping a second flat block.
-    - Enable `config.i18n.raise_on_missing_translations = true` in the **test** environment in slice
-      1, and turn on `config.i18n.available_locales`/`default_locale` in the same slice, so a
-      missing key is a test failure rather than a silent English string in a Spanish page.
-    - Keep ADR 0013's rule that a display preference belongs to the browser: the language choice is
-      a signed cookie, not a `User` column and not a universe setting, so it works for a guest and
-      cannot be imposed by a universe admin.
-    - The `<html lang="...">` attribute in `app/views/layouts/application.html.erb` is hardcoded
-      to `en` today; slice 1 renders the active locale there, and each later slice inherits it.
+    - A value that travels in a URL is not translated: `SceneFilter::UNGROUPED` and a search scope's
+      `value` stay exactly as they are, and only the label beside them moves into a key.
+    - A count label is a key, not a noun. Pass `count_label: "character"` and let
+      `ApplicationHelper#count_with_label` choose the plural from the locale.
+    - A key is added to **both** `config/locales/en.yml` and `config/locales/es.yml` in the same
+      change. `raise_on_missing_translations` is on in test, so a one-sided key fails the suite.
+    - Each slice ships its own tests, the matching `docs/` update, and a dated `CHANGELOG.md` entry,
+      and is then deleted from this file, so what is left here is only the work that is still
+      pending. The remaining numbers are never renumbered or reused.
 
-    - **Slice 27.1 — Foundation + chrome.** Configure I18n (`available_locales: %i[en es]`,
-      `default_locale: :en`, `raise_on_missing_translations` in test). Add the language preference:
-      an `AppLocale` class beside `AppTheme` following the same signed-cookie, known-values-only,
-      `normalize`-on-read contract, a `current_locale` helper, an `around_action` in
-      `ApplicationController` that sets `I18n.locale` for the request, and a **Language** section on
-      the existing `/settings` page (a second `settings_tabs` entry plus its panel, saved through
-      the same `PATCH` that already carries the theme, with the form's Turbo opt-out preserved).
-      Then translate the application shell and everything a visitor sees before choosing a
-      universe: `layouts/application`, `_navbar`, `_left_sidebar`, `_right_sidebar`, all of
-      `shared/*` (`_page_header`, `_empty_state`, `_row_actions`, `_record_details*`, `_flash`,
-      `_error_summary`, `_search_bar`, `_content_tabs`, `_sidebar_link`, `_taxonomy_tree`,
-      `_taxonomy_node`, `_photo_field`, `_settings_navigation`, …), `sessions/new`, `passwords/*`,
-      the `PasswordsMailer` templates, and `pwa/manifest.json.erb`. Translate `AppTheme`'s own
-      `label`/`description` values, which are chrome too. Add a **new ADR** for the i18n contract
-      (key layout, the browser-owned language cookie, why the data is not translated) — this
-      changes how every string in the project is written, so it is not a convention-only change.
-      Update `docs/architecture.md`, `docs/universe_maker_conventions.md`, and
-      `docs/visual_design.md`. Tests: `AppLocale` model coverage, a `SettingsController` request
-      test for choosing/keeping/refusing a language, a `test:system` case proving the cookie
-      survives a navigation and the Spanish page really renders in Spanish, and a mailer test for
-      the Spanish reset message.
     - **Slice 27.2 — Universe & Story workspaces.** `universes/*` (index, show, new, edit, `_form`,
       `_universe`, the JSON view), `stories/*`, `memberships/*`, `sections/index` and
-      `sections/show`, `tags/index` (the taxonomy workspace), and `timeline/index`. Includes their
-      controller flash/notice/alert strings, including the "That page is not available to this
-      account" refusal in `ApplicationController`. Timeline's per-event popover title/content comes
+      `sections/show`, `tags/index` (the taxonomy workspace), and `timeline/index`, plus their
+      controller flash/notice/alert strings. Timeline's per-event popover title/content comes
       from `event_popover_title`/`event_popover_content` in `timeline_helper.rb`, so those go
       through `t()` too. Tests: request coverage for the workspace pages rendering under `es`, and
       the existing redirect/`see_other` flash assertions updated to the translated copy.
@@ -412,18 +395,20 @@ it has a useful destination and clear empty/loading/error states.
       from the server instead of hardcoding them: pass them as Stimulus `values` on the elements
       that already declare the controller (the taxonomy tree already passes a JSON value, so
       extend that pattern), or as a small JSON blob the layout renders. Add a shared
-      `app/javascript/i18n.js` lookup so no controller invents its own mechanism. Then enforce the
-      contract: `config.i18n.raise_on_missing_translations = true` across the whole test suite
-      (introduced in 27.1), a test asserting `en.yml` and `es.yml` carry the same key set, and a
-      test that a Spanish response contains no untranslated English chrome. Bun unit tests for any
-      new JS module, and a `test:system` case for the language flow through a real page, per
-      [ADR 0012](adr/0012-client-side-verification-and-csrf.md).
+      `app/javascript/i18n.js` lookup so no controller invents its own mechanism. Then close the
+      remaining enforcement gaps: the locale-file key-set, placeholder, and plural-form checks exist
+      already, so what is left is a test that a Spanish **response body** contains no untranslated
+      English chrome, and a check that every string a controller reads is a key rather than a
+      literal. Bun unit tests for any new JS module, and a `test:system` case for the language flow
+      through a real page, per [ADR 0012](adr/0012-client-side-verification-and-csrf.md).
 
     **Deliberately deferred:** translating author-entered data; a per-user (account) language that
     follows a sign-in across browsers (a column and a cookie-precedence rule — the opposite trade
-    from ADR 0013's theme decision); right-to-left layout; a third language; translating the
-    `taxonomy:` arguments in the `searchable` model declarations (they are index metadata, not
-    chrome, until slice 27.5 decides otherwise); translating `db/data/**/*.yml` demo content.
+    from ADR 0013's theme decision, and also what would let a queued password reset be written in
+    the reader's own language); right-to-left layout; a third language; replacing the hand-maintained
+    Spanish subset of Rails' own strings with the `rails-i18n` gem; translating the `taxonomy:`
+    arguments in the `searchable` model declarations (they are index metadata, not chrome, until
+    slice 27.5 decides otherwise); translating `db/data/**/*.yml` demo content.
 
 28. review comments. add comments when needed, remove comments when not needed
 

@@ -76,9 +76,16 @@ Layout:
 - Unauthenticated access: public universe content is intentionally readable without a session;
   mutations redirect (302) to `/session/new`. Signing in returns the reader to the page they were on,
   whether they opened the sign-in page directly or were redirected from a protected action; only a
-  same-host referer is remembered, and an external site cannot choose the destination. Universe-scoped
-  controllers allow unauthenticated access only for read actions; the shared authorization callback
-  enforces the universe policy.
+  same-host referer is remembered, and an external site cannot choose the destination. A sign-in or
+  password page is never a destination: a wrong password reopens the form and the browser offers that
+  form as the referer of the reload, which used to loop a successful sign-in back to the form. With
+  no destination left, sign-in lands on the universe list. Universe-scoped controllers allow
+  unauthenticated access only for read actions; the shared authorization callback enforces the
+  universe policy.
+- Signing in to a remembered page that the new account still cannot read answers with the universe
+  list and an alert, because a bare 403/404 there reads as "the sign-in did nothing". That exception
+  covers only the single request after the sign-in; assert `assert_response :not_found` /
+  `:forbidden` for every ordinary refusal, as usual.
 - Universe authorization tests must cover both public and private universes. Create explicit
   `UniverseMembership` records for read/write/admin cases; do not rely on a public fixture to stand
   in for a private collaboration scenario. Private non-members—including guests—receive 404;

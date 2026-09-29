@@ -36,8 +36,42 @@ module Authentication
       redirect_to new_session_path
     end
 
+    # Where a successful sign-in sends the visitor: the page that refused them, or
+    # the page they opened the form from, or the universe list when there is
+    # nothing to return to. A remembered sign-in or password page is never a
+    # destination — the request that follows this redirect is also marked, so a
+    # page the new session cannot read answers with the universe list instead of
+    # a bare 403/404 (see `ApplicationController#refuse_request`).
     def after_authentication_url
-      session.delete(:return_to_after_authenticating) || root_url
+      destination = session.delete(:return_to_after_authenticating)
+      destination = nil if authentication_page?(destination)
+
+      session[:post_sign_in_destination] = true
+      destination || root_url
+    end
+
+    # True for a URL that is itself part of signing in, so it cannot be the
+    # answer to "where were you?".
+    #
+    # After a wrong password the browser reopens the form, and the referer it
+    # sends with that request is the sign-in endpoint or the sign-in page itself
+    # (a plain refresh of the form sends the same self-referer). Either one
+    # stored as the destination made a *correct* password land back on the form —
+    # or on the POST endpoint, which no GET route answers — looking like nothing
+    # had happened even though the session cookie was set. The password pages are
+    # refused for the same reason: they ask for something the visitor has just
+    # proved they do not need.
+    def authentication_page?(url)
+      return false if url.blank?
+
+      path = URI.parse(url).path
+      return true if [ session_path, new_session_path ].include?(path)
+
+      path.start_with?("#{passwords_path}/")
+    rescue URI::InvalidURIError
+      # A referer is a client-supplied header, so it is parsed defensively: a
+      # malformed one must not turn a correct password into a 500.
+      false
     end
 
     def start_new_session_for(user)

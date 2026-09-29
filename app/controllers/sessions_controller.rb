@@ -27,12 +27,16 @@ class SessionsController < ApplicationController
     # from a page that required a session) has nowhere to return to yet, so the
     # page they came from is remembered the same way `request_authentication`
     # remembers the page that refused them. Only a same-host referer is stored,
-    # so an external site cannot choose the post-login destination.
+    # so an external site cannot choose the post-login destination, and a sign-in
+    # or password page is never stored: after a wrong password the browser
+    # reopens this form with this form as its referer, which would make a
+    # *correct* password land back on the form looking like nothing had happened.
     def store_return_path
       return if session[:return_to_after_authenticating].present?
 
       referer = request.referer
       return if referer.blank? || !referer.start_with?("#{request.base_url}/")
+      return if authentication_page?(referer)
 
       session[:return_to_after_authenticating] = referer
     end

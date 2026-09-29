@@ -10,6 +10,11 @@ class ApplicationController < ActionController::Base
   # in views for things like the universes navbar dropdown.
   before_action :resume_session
 
+  # The request immediately following a successful sign-in is the page the
+  # visitor asked to return to. Consuming the marker here, before any action
+  # runs, keeps the refusal fallback below scoped to that single request.
+  before_action :consume_post_sign_in_destination
+
   before_action :set_current_universe
   # Authorization must run after the universe is resolved, but before story
   # selection or any controller loads scoped content.
@@ -18,10 +23,10 @@ class ApplicationController < ActionController::Base
   before_action :set_current_story
 
   rescue_from CanCan::AccessDenied do
-    head :forbidden
+    refuse_request(:forbidden)
   end
   rescue_from ActiveRecord::RecordNotFound do
-    head :not_found
+    refuse_request(:not_found)
   end
 
   # A JSON mutation that arrives without a valid CSRF token is a refusal, not a
@@ -37,6 +42,27 @@ class ApplicationController < ActionController::Base
   end
 
   protected
+
+  # A refusal is normally a bare status code, which is what the documented
+  # 403/404 contract depends on. The one exception is the page a visitor asked to
+  # return to right after signing in: a bare 403/404 there answers "nothing
+  # happened" to a sign-in that actually succeeded, so that single request is sent
+  # to the universe list with an explanation instead. A signed-in member following
+  # an ordinary link still gets the documented status code.
+  def refuse_request(status)
+    return head status unless post_sign_in_destination?
+    return head status unless request.format.html? && request.get?
+
+    redirect_to root_path, alert: "That page is not available to this account. Here are the universes you can open."
+  end
+
+  def post_sign_in_destination?
+    @post_sign_in_destination == true
+  end
+
+  def consume_post_sign_in_destination
+    @post_sign_in_destination = session.delete(:post_sign_in_destination).present?
+  end
 
   def current_ability
     @current_ability ||= Ability.new(Current.user)

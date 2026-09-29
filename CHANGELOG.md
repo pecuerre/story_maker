@@ -55,6 +55,21 @@ Labels used below:
   taggable tags. Child records and their other tag badges are batch-loaded. Workspace menu-tag links
   carry `from=workspace`, keeping the related tabs on tag details pages; taxonomy Details links
   remain canonical and do not show those tabs. Pinned Character tags are also present on Relations.
+- **[fixed]** Signing in no longer leaves the visitor on the sign-in page. A wrong password sends
+  the browser back to that same form, and the referer of that reload is the sign-in page (or the
+  sign-in endpoint) itself; that URL was being remembered as the post-login destination, so the
+  *next* correct password redirected straight back to the form. The account was authenticated the
+  whole time, so the sign-in looked like it had done nothing and only navigating to a universe
+  proved otherwise. `Authentication#authentication_page?` now refuses a sign-in or password URL as a
+  destination — both where the referer is stored (`sessions#new`) and where it is used
+  (`after_authentication_url`, so a value left in the cookie by the previous code cannot survive a
+  deploy) — and the two documented outcomes hold: a visitor who was browsing as a guest returns to
+  that page, and a visitor with nowhere to return to lands on the universe list. A remembered
+  destination that the new session still cannot read no longer dead-ends on a bare 404: that single
+  request now redirects to the universe list with an explanation, while every ordinary refusal keeps
+  its documented status code. Request tests cover the mistyped-then-correct retry, the
+  password-page destination, the refused destination and its one-request scope; browser tests cover
+  the retry and the password-page journey.
 - **[docs]** Updated the tag data model, workspace conventions, and development guide with the
   grouping, menu-navigation, and demo-data verification behavior.
 - **[chore]** Dark demo data now calls the Character grouping tag **Factions** and pins both

@@ -90,6 +90,20 @@ Other global behavior: `allow_browser versions: :modern`,
   required` (500).
 - `start_new_session_for(user)` creates a `Session` row (user agent, IP) and sets
   `cookies.signed.permanent[:session_id]`.
+- Post-login destination (`sessions#new` remembers the page, `Authentication#after_authentication_url`
+  resolves it):
+  - a page remembered by `request_authentication`, or the same-host referer of the sign-in page, is
+    returned to; anything else lands on `root_url` (the universe list);
+  - `Authentication#authentication_page?` rejects `/session`, `/session/new`, and `/passwords/*` as
+    destinations, both when storing the referer and when resolving it. This is load-bearing: a wrong
+    password reopens the form, and the browser sends that form (or the `POST /session` endpoint) as
+    the referer of the reload, which used to become its own destination and loop a successful
+    sign-in back to the form. A referer is parsed defensively because it is a client-supplied header;
+  - the request following a successful sign-in is marked with `session[:post_sign_in_destination]`
+    and consumed by an `ApplicationController` before-action. If that one request is refused (403 or
+    404), `ApplicationController#refuse_request` redirects to the universe list with an alert instead
+    of a bare status code, because a refusal there answers "nothing happened" to a sign-in that
+    succeeded. Every other refusal keeps the bare 403/404.
 - Sign-out destroys the `Current.session`, deletes the cookie, and clears remembered story
   selections. Starting a new authenticated session performs the same context cleanup, and a
   request with a stale/deleted authentication session clears its cookie and story context.

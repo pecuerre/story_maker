@@ -351,6 +351,9 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".timeline-node", text: events(:event_one).id.to_s
     assert_select ".timeline-node[data-bs-title=?]", "The beginning"
     assert_select ".timeline-node[data-bs-content*=?]", "Fechas:"
+    # The node renders only the record's id, so its accessible name is the
+    # translated chrome around the same title the popover header shows.
+    assert_select ".timeline-node[aria-label=?]", "Mostrar detalles del suceso: The beginning"
   end
 
   test "an empty timeline says why it is empty, by access level" do

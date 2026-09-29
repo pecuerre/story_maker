@@ -5,6 +5,14 @@ module TimelineHelper
     event.title.presence || t("timeline.event_placeholder", id: event.id)
   end
 
+  # The node's accessible name. The node itself renders only the record's id,
+  # which a screen reader would announce as a bare number, so the label names the
+  # Event the popover describes. It is built from the same `event_popover_title`
+  # the popover header uses, so the two can never describe different events.
+  def event_node_aria_label(event)
+    t("timeline.node_aria_label", event: event_popover_title(event))
+  end
+
   # Builds the inner HTML for an event's hover popover. Returns a plain (non
   # html_safe) string so it gets escaped once more when written into the
   # data-bs-content attribute, and decoded back to real markup by the browser.

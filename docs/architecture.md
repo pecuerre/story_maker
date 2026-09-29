@@ -832,9 +832,19 @@ Route `get "timeline", to: "timeline#index"` → `TimelineController` → **`Tim
    `before_event`/`after_event`. Edges that would create a cycle are skipped (`reachable?`).
 3. Longest-path layering assigns rows: no known predecessor → top row; otherwise at least one row
    below all predecessors.
-4. The view renders `@layers`/`@edges`; `timeline_controller.js` handles pan/zoom and popovers
-   whose content comes from `TimelineHelper#event_popover_content` (dates, tags, relations,
-   description).
+4. The view renders `@layers`/`@edges`; `timeline_controller.js` redraws the edges between nodes on
+   resize, and the node popovers carry content from `TimelineHelper#event_popover_content`
+   (dates, tags, relations, description).
+
+`@layers` is the only source of the rendered order, and `@edges` is read back off it rather than off
+the raw associations: a `before_event`/`after_event` the graph refused (it contradicted a stronger
+signal, or accepting it would have closed a cycle) is **not** drawn, because an arrow running the
+wrong way across rows that say the opposite is worse than no arrow. A relation named from both sides
+produces one arrow, not two. The layer order is therefore never contradicted by the drawn edges.
+
+The timeline is a static layered view: there is no pan, zoom, or transform. A node is a `<button>`
+carrying an `aria-label` (`TimelineHelper#event_node_aria_label`) that names the event the popover
+describes, because the node itself renders only the record's id.
 
 ## Caching / performance notes
 

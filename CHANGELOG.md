@@ -21,6 +21,41 @@ Labels used below:
 
 ## 2026-09-29
 
+- **[fixed]** The Timeline could draw arrows that contradicted its own layout (known quirk 24, now in
+  `docs/resolved_quirks.md`). `TimelineLayout` layered the events with a cycle-checked graph and then
+  threw that graph away, rebuilding `@edges` from the raw `before_event`/`after_event` associations,
+  so the drawing was free to disagree with the rows. An event whose dates ordered it after another
+  while declaring itself *before* that other was placed on the lower row and drawn with an arrow
+  running back up the page; two events naming each other drew an arrow in **both** directions; and an
+  event marked simultaneous with another while also declaring a sequence relation to it got a dashed
+  and a solid line between the same two nodes on the same row. `@layers` is now the single source of
+  the rendered order and `@edges` is read back off it: a sequence edge is emitted only when the two
+  events landed on strictly different rows with `from` above `to`, a simultaneous edge only when they
+  share a row, and a relation named from both sides draws one arrow instead of two. A refused
+  relation is **not** drawn reversed to match the rows — reversing would invent a relation the author
+  never declared and hide the conflict — it is simply not drawn. No model validation was added, on
+  purpose: a `before_event` that disagrees with approximate dates is legitimate author data, and the
+  documented confidence order already says which signal wins. `test/models/timeline_layout_test.rb`
+  grew from 4 to 11 cases covering conflicting dates/relations, a mutual-reference cycle, the
+  simultaneous-plus-sequence overlap, and a reference outside the layout; direction is asserted
+  against the row indices rather than a literal.
+- **[fixed]** A Timeline node is now reachable and understandable without a mouse (known quirk 46).
+  It rendered only the record's numeric id inside a focusable `<div tabindex="0">` with no role and
+  no accessible name, so a screen reader announced a bare number for every event on the page, and its
+  popover opened only on hover or focus. The node is a real `<button>` carrying an `aria-label` built
+  by the new `TimelineHelper#event_node_aria_label` from the same `event_popover_title` the popover
+  header uses, so the label and the popover cannot describe different events; the UA button chrome is
+  reset in `_timeline.scss` so the node keeps its 40px circle and the author's tag colors, with a
+  `:focus-visible` outline added now that it is genuinely focusable. The popover trigger became
+  `hover focus click`, because a control meant to be operated needs a click path and a touch pointer
+  never hovers. Covered by four new request cases and a new `test/system/timeline_test.rb`, which
+  tabs forward from the preceding control, asserts focus actually lands on the node, and checks the
+  popover opens on both focus and click.
+- **[docs]** The docs described a Timeline pan/zoom interaction that has never existed: it was claimed
+  from the feature's first commit (`fef94d1`) while `timeline_controller.js` only ever drew edges
+  and popovers. `docs/architecture.md` and `docs/universe_maker_conventions.md` now describe the
+  Timeline as the static layered view it is, and the pan/zoom feature itself is recorded as pending
+  work in `docs/backlog.md` rather than left as a false claim.
 - **[fixed]** The browser suite is green again: four stale assertions in
   `test/system/tag_improvements_test.rb` and `test/system/taxonomy_tree_test.rb` were red before any
   new work started (known quirk 60, now in `docs/resolved_quirks.md`). All four were test-side, so

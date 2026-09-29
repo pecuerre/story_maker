@@ -29,21 +29,22 @@
             </div>
             <div class="timeline-layer-events">
               <% layer.each do |event| %>
-                <div class="timeline-node"
+                <button type="button"
+                  class="timeline-node"
                   id="timeline-event-<%= event.id %>"
                   data-timeline-target="node"
                   data-event-id="<%= event.id %>"
                   style="background-color: <%= event.event_tags.first&.bgcolor || '#d3d3d3' %>; color: <%= event.event_tags.first&.fgcolor || '#000000' %>;"
-                  tabindex="0"
+                  aria-label="<%= event_node_aria_label(event) %>"
                   data-bs-toggle="popover"
-                  data-bs-trigger="hover focus"
+                  data-bs-trigger="hover focus click"
                   data-bs-custom-class="custom-popover"
                   data-bs-html="true"
                   data-bs-placement="right"
                   data-bs-title="<%= event_popover_title(event) %>"
                   data-bs-content="<%= event_popover_content(event) %>">
                   <%= event.id %>
-                </div>
+                </button>
               <% end %>
             </div>
           </div>

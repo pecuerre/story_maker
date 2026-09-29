@@ -63,9 +63,15 @@
   max-width: 20rem;
 }
 
+// The node is a real `<button>` so it is reachable and operable from the
+// keyboard and announces an accessible name, which the previous focusable
+// `<div>` did not. The UA's button chrome (border, padding, font) is reset here
+// so the node keeps its documented 40px circle and the event's own tag colors;
+// only the border remains, as before.
 .timeline-node {
   width: 40px;
   height: 40px;
+  padding: 0;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -74,8 +80,14 @@
   font-weight: 600;
   color: rgba(0, 0, 0, 0.75);
   border: 1px solid var(--bs-border-color);
-  cursor: default;
+  line-height: 1;
+  cursor: pointer;
   flex-shrink: 0;
+}
+
+.timeline-node:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
 }
 
 .timeline-edge {

@@ -413,6 +413,10 @@ en:
     # Shown when an Event has no title of its own. The id is the record's, so it
     # is interpolated rather than translated.
     event_placeholder: "Event #%{id}"
+    # The node renders the record's id, which a screen reader announces as a bare
+    # number, so the control carries this label instead. `event` is the same
+    # string the popover header shows.
+    node_aria_label: "Show event details: %{event}"
     popover:
       dates: "Dates:"
       tag: "Tag:"

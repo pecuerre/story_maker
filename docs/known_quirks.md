@@ -117,14 +117,6 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     HABTM collection writer can still write a join row before a later validation failure in a
     legacy table, however, because the database has no constraints to reject it.
 
-24. **Medium — Timeline output can contradict its layer ordering.** `TimelineLayout` rejects an
-    edge that would create a cycle (`app/models/timeline_layout.rb:33-40`), but later rebuilds
-    `@edges` directly from raw event associations (`:103-115`). A valid model state with dates
-    ordering A before B and `B.before_event = A` produces layers with A above B while the view
-    receives a B-to-A sequence edge. The view renders those edges directly
-    (`app/views/timeline/index.html.erb:3,31-45`). The model has no temporal-consistency validation
-    for this contradiction, and timeline tests do not cover conflicting dates/relations.
-
 27. **Low — User model validation does not match its NOT NULL schema.** `users.name` and
     `users.email_address` are `NULL: false` (`db/schema.rb:304-312`), but `User` has no presence
     validations (`app/models/user.rb:1-10`). Model callers can see `valid? == true` and then receive
@@ -265,14 +257,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
   route-surface check.
 
 ## Additional UI and interaction observations
-
-46. **Medium — the documented Timeline pan/zoom interaction is not implemented, and nodes lack an
-    accessible name.** `docs/architecture.md:177-190` describes pan/zoom, but
-    `app/javascript/controllers/timeline_controller.js:12-91` only redraws SVG lines and popovers;
-    there are no pan, zoom, pointer, or transform handlers. Timeline nodes render only numeric IDs
-    (`app/views/timeline/index.html.erb:31-46`) with no role or explanatory accessible label, and
-    rely on hover/focus for popovers. Its unit test covers the drawn geometry; no keyboard, touch,
-    resize, or interaction test covers this.
 
 47. **Medium — the Event edit selector offers the event itself as a temporal reference.**
     `EventsController#index` puts all universe events in `@events_for_select`

@@ -617,6 +617,82 @@ empty taxonomy shows mutation copy only to writers and a read-only "No … are d
 guests and read-only members. A system regression signs in as a read-only member of a private universe
 with no tags and asserts the read-only copy appears while the writer copy does not.
 
+## Resolved Timeline findings (2026-09-29)
+
+### Former quirk #24: Timeline output could contradict its layer ordering (fixed)
+
+**Then:** `TimelineLayout` built a DAG of "happens no later than" relations, refused any edge that
+would close a cycle (`reachable?`), and layered the events by longest path. It then threw that graph
+away and rebuilt `@edges` from the raw `before_event`/`after_event`/`simultaneous_event` associations,
+so the arrows the view drew did not have to agree with the rows it drew them across. Three
+reachable contradictions, all confirmed by probe before the fix:
+
+- An event whose dates ordered it after another, while declaring itself *before* that other, was
+  placed on the lower row by the dates and then drawn with an arrow running back up the page.
+- Two events each naming the other (`A.after_event = B`, `B.after_event = A`) produced **both**
+  directions as drawn arrows: a cycle in the drawing that the graph had already refused.
+- An event that was `simultaneous_event` with another *and* declared a sequence relation to it was
+  drawn on the same row with both a dashed "same time" line and a solid one-directional arrow.
+
+Nothing validated against this, and no test covered conflicting dates and relations, so the drawing
+was the only place the contradiction could surface.
+
+**Fix:** `@layers` is the single source of the rendered order, and `@edges` is now read back off it.
+`build_edges`/`push_edge` emit a sequence edge only when the two events ended up on **strictly
+different** rows with `from` above `to`, and a simultaneous edge only when they share a row — which
+union-find guarantees. A relation the graph refused is therefore not drawn at all. It is deliberately
+**not** drawn reversed to "match" the rows: reversing would invent a relation the author did not
+declare and hide the conflict. A relation named from both sides is de-duplicated, so it draws one
+arrow rather than two.
+
+No model validation was added, on purpose. A `before_event` contradicting the dates is a legitimate
+author state — dates are frequently approximate in a story bible, and the declared relation is often
+the truer one. Rejecting it at save time would refuse data the application previously accepted; the
+documented confidence order (full ranges → start dates → end dates → explicit relations) already
+says which signal wins, and the drawing now simply follows it.
+
+`test/models/timeline_layout_test.rb` grew from 4 to 11 cases. The new ones cover: a relation the
+dates contradict (drawn nothing, layers unchanged), a relation the dates agree with (still drawn),
+a mutual `after_event` cycle (exactly one arrow, asserted against the row indices rather than a
+literal), simultaneous-plus-sequence on the same pair (only the simultaneous edge), a relation named
+from both sides (one arrow), and a reference to an event outside the layout. The suite asserts
+direction by looking up each endpoint's row, so a future change to the layering fails the test rather
+than quietly invalidating it.
+
+### Former quirk #46: Timeline nodes had no accessible name, and the docs promised pan/zoom (fixed)
+
+**Then:** each node rendered only the record's numeric id inside a focusable `<div tabindex="0">`,
+with no role and no accessible name — a screen reader announced a bare number for every event on the
+page. The popover that carried the real description opened only on `hover focus`. Separately,
+`architecture.md` and the conventions both described a pan/zoom interaction for
+`timeline_controller.js` that **never existed**: the controller only ever drew SVG edges and
+popovers, from its first commit (`fef94d1`) onward. The docs described an intended feature as
+shipped behavior.
+
+**Fix**, in two halves because the finding bundled two unrelated things:
+
+- **The accessible name.** A node is now a real `<button>` with an `aria-label` built by
+  `TimelineHelper#event_node_aria_label` from the same `event_popover_title` the popover header uses,
+  so the label and the popover cannot describe different events. The button's UA chrome (padding,
+  border) is reset in `_timeline.scss` so the node keeps its documented 40px circle and the author's
+  tag colors; a `:focus-visible` outline was added since the node is now genuinely focusable. The
+  popover trigger became `hover focus click`: a `<div>` could rely on hover, but a control that is
+  meant to be operated needs a click path too, and a touch pointer never hovers.
+- **The docs.** `architecture.md` and the conventions no longer claim pan/zoom; both now state that
+  the Timeline is a static layered view. Per the owner's decision the pan/zoom interaction itself is
+  **not** built — it is recorded as pending work in [`backlog.md`](backlog.md) rather than left as a
+  false claim in the docs.
+
+Coverage, per [ADR 0012](adr/0012-client-side-verification-and-csrf.md): four request cases in
+`test/controllers/timeline_controller_test.rb` assert the node is a `button` with the expected label,
+that the id-placeholder fallback is labelled correctly for a title-less event, that no `tabindex` is
+left behind, and that the trigger includes `click`; the Spanish label is asserted in
+`workspace_locale_test.rb`. The new `test/system/timeline_test.rb` covers what only a browser can
+show: tabbing forward from the control before the timeline really lands focus on the node
+(`document.activeElement`), the popover opens on focus alone, it opens on click, and an empty
+timeline draws no nodes. `timeline_controller.js` itself is unchanged, so its `bun test` cases still
+cover the drawn geometry unchanged.
+
 ## Resolved interaction findings (2026-09-29)
 
 ### Former quirk #60: four browser assertions in the tag and taxonomy suites were stale (fixed)
@@ -1053,3 +1129,44 @@ dependency, importmap pin, or vendored asset changed), `bun run check:js` (no cl
 changed), `UNIVERSE=dark|lotr bin/rails db:demo:check` (no `db/data` manifest changed; the two
 registered universes keep distinct addresses), and `db:demo:reset`/`db:restart`/Docker/Kamal
 deployment (destructive, needs approval).
+
+## Follow-up verification (2026-09-29, Timeline layering and node accessibility — quirks 24 and 46)
+
+- `bin/rails test` — 1,084 tests, 6,428 assertions, 0 failures, 0 errors, 7 skips.
+- `bin/rails test test/models/timeline_layout_test.rb` — 11 tests, 23 assertions, 0 failures,
+  0 errors, 0 skips (4 tests before this change).
+- `bin/rails test test/controllers/timeline_controller_test.rb` — 4 tests, 14 assertions, 0 failures,
+  0 errors, 0 skips.
+- `bin/rails test test/controllers/workspace_locale_test.rb` — includes the new Spanish
+  `aria-label` assertion; green.
+- `bun run check:js` — 137 tests across 8 files, 0 fail, 361 assertions.
+  `timeline_controller.js` is unchanged, so its drawn-geometry cases are the same six as before.
+- `bun run build:css` — Sass + PostCSS/autoprefixer clean; the built `.timeline-node` rule carries
+  the `padding: 0` reset. `app/assets/builds/` is gitignored and was not edited by hand.
+- `bin/rubocop` — 325 files, no offenses.
+- `bin/brakeman --no-pager` — the one pre-existing weak-confidence SQL-injection warning in
+  `app/models/concerns/has_many_tags.rb:109`, a string-interpolated `joins` of the model's own
+  reflected table and column names. Unrelated to this change and already recorded above.
+- `PARALLEL_WORKERS=1 bin/rails test test/system/timeline_test.rb` — 4 tests, 39 assertions,
+  0 failures, 0 errors, 0 skips. Covers keyboard focus landing on the node, the popover opening on
+  focus and on click, the node's computed geometry, and the empty timeline.
+- `PARALLEL_WORKERS=1 bin/rails test test/system/timeline_test.rb test/system/workspace_navigation_test.rb`
+  — 6 tests, 80 assertions, 0 failures, 0 errors, 0 skips.
+- `PARALLEL_WORKERS=2 bin/rails test:system` — 120 tests, ~1,550 assertions, 1 failure and 1 error
+  across the two runs, and **not the same two each time**: the first run failed
+  `scene_locations_test.rb` (a Role field that appended to its existing value instead of replacing
+  it), the second failed `scene_elements_test.rb` (a truncated Content field and a missing
+  `.entity-row`). Both files are unmodified by this change and neither touches the Timeline; each
+  reproduces green in isolation
+  (`PARALLEL_WORKERS=1 bin/rails test test/system/scene_elements_test.rb test/system/scene_locations_test.rb`
+  — 11 tests, 149 assertions, 0 failures, 0 errors, 0 skips). This is the load sensitivity recorded as
+  known quirk 58: the shape is a partially-typed field and a row that never appeared, and the
+  affected files move between runs, which is what distinguishes it from a real regression. Do not
+  "fix" a test that failed this way — re-run it with fewer workers first.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin,
+or vendored asset changed), `UNIVERSE=dark|lotr bin/rails db:demo:check` and
+`db:demo:reset`/`db:restart` (no `db/data` manifest changed; the reset tasks are destructive and
+need approval), Docker/Kamal deployment, and a manual browser pass outside the automated suite. The
+pan/zoom interaction was not built, so there was no client-side interaction to verify beyond the
+node's own focus/click/geometry coverage.

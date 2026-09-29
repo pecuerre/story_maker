@@ -11,6 +11,10 @@
 # The resulting DAG is then arranged into layers (rows) using longest-path layering,
 # so that anything with no known predecessor sits on the top row, and everything else
 # is placed at least one row below all of its known predecessors.
+#
+# `@layers` is the single source of truth for that ordering, and the arrows the view
+# draws are derived from it rather than from the raw associations, so the two can
+# never contradict each other.
 class TimelineLayout
   attr_reader :layers, :edges
 
@@ -100,19 +104,52 @@ class TimelineLayout
     end
     @layers.each { |layer| layer.sort_by! { |event| event.id } }
 
-    # Normalized for the view: "sequence" edges always point from the earlier event to the later one.
-    @edges = []
+    @edges = build_edges(union, levels)
+  end
+
+  # The arrows the view draws are read off the resolved layout, never off the raw
+  # associations. A `before_event`/`after_event` the graph refused — because the
+  # declared order contradicted a stronger signal, or because accepting it would
+  # have closed a cycle — leaves no row ordering behind it, so drawing it would
+  # put an arrow pointing the wrong way across rows that say the opposite. Only a
+  # relation the layering actually kept is emitted, and only once: two events that
+  # name each other, or one that names the other in both fields, describe a single
+  # arrow.
+  def build_edges(union, levels)
+    edges = []
+    seen = Set.new
+
     @events.each do |event|
-      if event.before_event_id && @by_id[event.before_event_id]
-        @edges << { from: event.id, to: event.before_event_id, kind: "sequence" }
+      if (target = @by_id[event.before_event_id])
+        push_edge(edges, seen, union, levels, from: event, to: target, kind: "sequence")
       end
-      if event.after_event_id && @by_id[event.after_event_id]
-        @edges << { from: event.after_event_id, to: event.id, kind: "sequence" }
+
+      if (target = @by_id[event.after_event_id])
+        push_edge(edges, seen, union, levels, from: target, to: event, kind: "sequence")
       end
-      if event.simultaneous_event_id && @by_id[event.simultaneous_event_id]
-        @edges << { from: event.id, to: event.simultaneous_event_id, kind: "simultaneous" }
+
+      # Simultaneous events share a union-find group, so they are on one row by
+      # construction and the connecting line can never contradict the layout.
+      if (target = @by_id[event.simultaneous_event_id])
+        push_edge(edges, seen, union, levels, from: event, to: target, kind: "simultaneous", same_row: true)
       end
     end
+
+    edges
+  end
+
+  # `from` must sit strictly above `to` for a directed arrow to be honest. A
+  # simultaneous edge is the one exception: it joins two events on the *same* row.
+  def push_edge(edges, seen, union, levels, from:, to:, kind:, same_row: false)
+    from_level = levels[union.find(from.id)]
+    to_level = levels[union.find(to.id)]
+    agrees = same_row ? from_level == to_level : from_level < to_level
+    return unless agrees
+
+    edge = { from: from.id, to: to.id, kind: kind }
+    return unless seen.add?(edge)
+
+    edges << edge
   end
 
   def build_union_find

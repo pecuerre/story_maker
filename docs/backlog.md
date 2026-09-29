@@ -356,16 +356,13 @@ it has a useful destination and clear empty/loading/error states.
       and is then deleted from this file, so what is left here is only the work that is still
       pending. The remaining numbers are never renumbered or reused.
 
-      **Fix the three open quirks in this code path first, in this order**, because each one is a
-      behavior defect rather than a translation and none of them is helped by being done after
-      the copy is translated:
-        - **#48** (a delegated admin can demote or remove their own
-      membership into a bodyless 403 — `memberships/index.html.erb` and
-      `memberships_controller.rb`),
-        - **#24** (`TimelineLayout` rebuilds `@edges` from raw event
-      associations, so a valid model state renders edges that contradict the layer order),
-        - **#46** (a Timeline node renders a bare id with no accessible name, and the documented
-      pan/zoom interaction is not implemented).
+      **The quirks this code path was blocked on were fixed on 2026-09-29, before any of this copy
+      was translated**, because each was a behavior defect rather than a translation and none of them
+      was helped by being fixed afterwards: the Timeline layering no longer contradicts its own drawn
+      edges, and a Timeline node is now a labelled `<button>` reachable by keyboard. See
+      [`resolved_quirks.md`](resolved_quirks.md). The pan/zoom interaction the docs used to claim for
+      the Timeline was never built; the docs now say the view is static, and building the interaction
+      is listed under FUTURE WORK below.
 
     - **Slice 27.3 — Universe Bible workspaces.** `characters/*`, `locations/*`, `events/*`,
       `items/*`, `relations/*`, `ownerships/*`, all six universe-level `*_tags` indexes and their
@@ -452,3 +449,11 @@ work order.
 - **Scene prose-contradiction analyzer.** Analyze Element text for claims that conflict with Universe
   facts; this is a separate product from structured temporal/causal checks and should explain its
   evidence and uncertainty.
+- **Timeline pan/zoom.** `architecture.md` and the conventions described a pan/zoom interaction for
+  `timeline_controller.js` from the feature's first commit, but it was never implemented — the
+  controller only draws edges between nodes. The docs were corrected on 2026-09-29 to describe the
+  Timeline as the static layered view it is; this item is the actual feature, deferred by decision.
+  Building it is a UI design question, not a defect fix: a draggable/zoomable viewport changes how
+  the layer markers and node circles read, needs a keyboard and touch path to be usable at all, and
+  the SVG edges must stay aligned under the transform. Worth doing only if a universe's event count
+  makes the current wrapped layout genuinely hard to read.

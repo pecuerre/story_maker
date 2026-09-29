@@ -696,7 +696,8 @@ that must not drift:
   draws that square to a canvas and hands the result to the form as a `data:` URL. It must stay a
   **named** class export, because the Stimulus registration name is derived from the file and the
   controller self-references its own static constants.
-- `timeline_controller.js` — pan/zoom + popovers for the Timeline view.
+- `timeline_controller.js` — redraws the edges between Timeline nodes on resize, and opens each
+  node's Bootstrap popover. It is not a pan/zoom surface: the Timeline is a static layered view.
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
 
 Both editors that mutate through `fetch` send the page's `csrf-token` meta tag as `X-CSRF-Token`
@@ -873,3 +874,14 @@ content models. What actually makes Event special:
 `TimelineController` (`get "timeline"`) hands the universe's events to `TimelineLayout`
 (app/models/timeline_layout.rb), which layers them for the Timeline view; rendering is done by
 `timeline/index` + `timeline_controller.js` with popovers from `TimelineHelper`.
+
+- **The layer order is the single source of truth.** `@edges` is derived from the resolved layering,
+  not rebuilt from the raw `before_event`/`after_event`/`simultaneous_event` associations, so a drawn
+  arrow can never contradict the rows it spans. A relation the graph refused (it contradicted a
+  stronger signal, or accepting it would have closed a cycle) is not drawn at all; it is never drawn
+  reversed to "match". A relation named from both sides yields one arrow, not two.
+- **A node is a `<button>`, not a focusable `<div>`.** It renders the record's id as its text, which
+  a screen reader would otherwise announce as a bare number, so it carries an `aria-label` built from
+  the same `event_popover_title` the popover header uses. The popover trigger is
+  `hover focus click`, because a touch pointer never hovers.
+- The view is static: no pan, zoom, or transform. See [architecture.md](architecture.md#timeline).

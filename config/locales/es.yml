@@ -363,6 +363,7 @@ es:
     empty_writable_description: "Añade sucesos con fechas o relacionados entre sí y vuelve aquí para ver su orden."
     empty_read_only_description: "Los sucesos de este universo aparecerán en la cronología en cuanto se hayan añadido."
     event_placeholder: "Suceso n.º %{id}"
+    node_aria_label: "Mostrar detalles del suceso: %{event}"
     popover:
       dates: "Fechas:"
       tag: "Etiqueta:"

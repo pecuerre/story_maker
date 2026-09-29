@@ -70,6 +70,11 @@ signed cookie `um_locale`, and `ApplicationController#switch_locale` is an `arou
 layout renders `<html lang="...">` from the same value, so the first paint is in the right language.
 See [ADR 0016](adr/0016-internationalization-and-browser-locale.md).
 
+A frozen constant holds an I18n **key**, never a translated string: a constant that called `t()` at
+class-load time would resolve once, in whatever locale loaded the class first.
+`TagsHelper::UNIVERSE_TAG_METADATA` stores `title_key:`/`description_key:`/… and
+`tag_workspace_base` resolves them per request, so both locales come from one code path.
+
 Other global behavior: `allow_browser versions: :modern`,
 `stale_when_importmap_changes`, `rate_limit to: 10, within: 3.minutes` on
 `sessions#create` and `passwords#create`.

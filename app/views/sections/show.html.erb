@@ -2,32 +2,32 @@
 
 <%= render "shared/record_details",
   record: @section,
-  eyebrow: "Story: #{@story.name}",
-  label: "Section",
+  eyebrow: t("sections.eyebrow", story: @story.name),
+  label: t("sections.show.label"),
   facts: [
-    detail_fact("Story", link_to(@story.name, universe_story_path(id: @story))),
-    detail_fact("Section path", @section_path || @section.name),
-    detail_fact("Section tags", entity_tag_badge(@section), blank: "No tags assigned. Tags are optional."),
-    detail_fact("Description", @section.description, blank: "No description yet.")
+    detail_fact(t("sections.show.facts.story"), link_to(@story.name, universe_story_path(id: @story))),
+    detail_fact(t("sections.show.facts.path"), @section_path || @section.name),
+    detail_fact(t("sections.show.facts.tags"), entity_tag_badge(@section), blank: t("sections.show.facts.tags_blank")),
+    detail_fact(t("sections.show.facts.description"), @section.description, blank: t("sections.show.facts.description_blank"))
   ],
   back_url: universe_story_sections_path(story_id: @story),
-  back_label: "All sections" %>
+  back_label: t("sections.show.back_label") %>
 
 <%# "Details" on a Section in the tree leads here, so the scenes grouped under this
     Section are visible on their own. The number shown is the scene's narrative
     position in the story, which this Section does not influence. %>
 <%= render "shared/detail_section",
-  title: "Scenes in this section",
+  title: t("sections.show.scenes.title"),
   count: @scenes.size,
   count_label: "scene",
   icon: "film",
-  empty_title: "No scenes in this section",
-  empty_description: "A section only groups scenes; it never sets their order. Scenes assigned to it will be listed here in the order the story is told." do %>
+  empty_title: t("sections.show.scenes.empty_title"),
+  empty_description: t("sections.show.scenes.empty_description") do %>
   <div class="list-group list-group-flush">
     <% @scenes.each do |scene| %>
       <div class="list-group-item entity-row d-flex align-items-center gap-3">
         <span class="badge rounded-pill text-bg-light border"
-          aria-label="<%= "Narrative position #{scene.position + 1} of #{@scene_total}" %>">
+          aria-label="<%= t("sections.show.scenes.position_aria", position: scene.position + 1, total: @scene_total) %>">
           <%= scene.position + 1 %>
         </span>
         <div class="entity-copy flex-grow-1">
@@ -44,7 +44,7 @@
 <% end %>
 
 <%= render "shared/detail_section",
-  title: "Related information",
+  title: t("sections.show.related.title"),
   icon: "diagram-3",
-  empty_title: "Nothing related yet",
-  empty_description: "Anything else worth knowing about this section will be listed here later." %>
+  empty_title: t("sections.show.related.empty_title"),
+  empty_description: t("sections.show.related.empty_description") %>

@@ -1,5 +1,12 @@
 require "test_helper"
 
+# The Members workspace in the default (English) locale.
+#
+# The page's own copy is asserted through `I18n.t` rather than as a literal,
+# because these strings are chrome: a literal here would be a second place that
+# has to change when the copy does, and would keep passing if the key behind it
+# were renamed. `WorkspaceLocaleTest` is the other half — it asserts the same
+# pages answer in Spanish.
 class MembershipsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @universe = universes(:universe_one)
@@ -11,7 +18,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     get universe_memberships_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "h1", text: "Members"
+    assert_select "h1", text: I18n.t("memberships.index.title")
     assert_select "form[action=?]", universe_memberships_path(universe_slug: @universe.slug)
   end
 
@@ -19,7 +26,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     get new_universe_membership_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "h1", text: "Add member"
+    assert_select "h1", text: I18n.t("memberships.new.title")
   end
 
   test "owner can grant membership" do
@@ -29,6 +36,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to universe_memberships_url(universe_slug: @universe.slug)
+    assert_equal I18n.t("memberships.flash.granted"), flash[:notice]
     assert_equal "write", UniverseMembership.last.access_level
   end
 
@@ -39,7 +47,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_content
-    assert_includes response.body, "could not be found"
+    assert_includes response.body, I18n.t("memberships.errors.email_not_found")
   end
 
   test "invalid access levels are rejected" do
@@ -49,7 +57,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_content
-    assert_includes response.body, "not a valid access level"
+    assert_includes response.body, I18n.t("memberships.errors.invalid_access_level")
   end
 
   test "delegated admins can manage memberships" do
@@ -58,7 +66,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
 
     get universe_memberships_url(universe_slug: @universe.slug)
     assert_response :success
-    assert_select "h1", text: "Members"
+    assert_select "h1", text: I18n.t("memberships.index.title")
   end
 
   test "ordinary members cannot manage memberships" do
@@ -95,12 +103,14 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     patch universe_membership_url(universe_slug: @universe.slug, id: membership),
       params: { membership: { access_level: "admin" } }
     assert_redirected_to universe_memberships_url(universe_slug: @universe.slug)
+    assert_equal I18n.t("memberships.flash.updated"), flash[:notice]
     assert_equal "admin", membership.reload.access_level
 
     assert_difference("UniverseMembership.count", -1) do
       delete universe_membership_url(universe_slug: @universe.slug, id: membership)
     end
     assert_redirected_to universe_memberships_url(universe_slug: @universe.slug)
+    assert_equal I18n.t("memberships.flash.removed"), flash[:notice]
   end
 
   test "delegated admin cannot demote themselves" do
@@ -111,7 +121,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
       params: { membership: { access_level: "write" } }
 
     assert_redirected_to root_path
-    assert_equal "You cannot change your own membership.", flash[:alert]
+    assert_equal I18n.t("memberships.flash.own_change_refused"), flash[:alert]
     assert_equal "admin", membership.reload.access_level
   end
 
@@ -124,7 +134,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to root_path
-    assert_equal "You cannot remove your own membership.", flash[:alert]
+    assert_equal I18n.t("memberships.flash.own_removal_refused"), flash[:alert]
     assert membership.reload.persisted?
   end
 
@@ -135,9 +145,9 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     get universe_memberships_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "input[type=submit][value=Save]", count: 0
-    assert_select "button", text: "Remove", count: 0
-    assert_select "td.text-end", text: "You"
+    assert_select "input[type=submit][value=?]", I18n.t("memberships.index.save"), count: 0
+    assert_select "button", text: I18n.t("memberships.index.remove"), count: 0
+    assert_select "td.text-end", text: I18n.t("memberships.index.you")
   end
 
   test "other membership rows keep change and remove controls" do
@@ -146,7 +156,7 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     get universe_memberships_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_select "input[type=submit][value=Save]"
-    assert_select "button", text: "Remove"
+    assert_select "input[type=submit][value=?]", I18n.t("memberships.index.save")
+    assert_select "button", text: I18n.t("memberships.index.remove")
   end
 end

@@ -2,14 +2,7 @@
   url: story.persisted? ? universe_story_path(id: story) : universe_stories_path,
   class: "form-surface" do |form| %>
   <% if story.errors.any? %>
-    <div class="alert alert-danger" role="alert">
-      <h2 class="h6"><%= pluralize(story.errors.count, "error") %> prevented this story from being saved:</h2>
-      <ul class="mb-0">
-        <% story.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
+    <%= render "shared/error_summary", record: story, subject: t("story", count: 1) %>
   <% end %>
 
   <div class="mb-3">
@@ -25,8 +18,11 @@
   </div>
 
   <div class="form-actions">
-    <%= form.submit class: "btn btn-primary" %>
-    <%= link_to "Cancel", story.persisted? ? universe_story_path(id: story) : universe_stories_path,
+    <%# The default submit label comes from Rails' English-only
+        `helpers.submit.*`, so the label is named here. %>
+    <%= form.submit(story.persisted? ? t("stories.form.submit_update") : t("stories.form.submit_create"),
+      class: "btn btn-primary") %>
+    <%= link_to t("stories.form.cancel"), story.persisted? ? universe_story_path(id: story) : universe_stories_path,
       class: "btn btn-link" %>
   </div>
 <% end %>

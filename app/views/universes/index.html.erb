@@ -1,16 +1,18 @@
-<% content_for :title, "Universes" %>
-<% empty_title = Current.user.present? ? "Create your first universe" : "No public universes yet" %>
-<% empty_description = Current.user.present? ? "A universe holds the world, characters, locations, events, and items shared by its stories." : "Sign in to create a universe, or check back when a public universe is available." %>
+<% content_for :title, t("universes.title") %>
+<%# The list has two empty states because it has two audiences: someone who can
+    create a universe is told to create one, and a guest is told to wait. %>
+<% empty_title = Current.user.present? ? t("universes.empty.owner_title") : t("universes.empty.guest_title") %>
+<% empty_description = Current.user.present? ? t("universes.empty.owner_description") : t("universes.empty.guest_description") %>
 
 <%= render "shared/page_header",
-  title: "Universes",
-  description: "Choose a world to work in. Each universe contains its own stories and shared world-building records.",
+  title: t("universes.title"),
+  description: t("universes.description"),
   count: @universes.size,
   count_label: "universe" do %>
   <% if Current.user.present? %>
     <%= link_to new_universe_path, class: "btn btn-primary" do %>
       <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      <span>New universe</span>
+      <span><%= t("universes.new") %></span>
     <% end %>
   <% end %>
 <% end %>
@@ -21,9 +23,9 @@
       <table class="table table-hover align-middle mb-0">
         <thead>
           <tr>
-            <th scope="col">Universe</th>
-            <th scope="col">Visibility</th>
-            <th scope="col" class="text-end">Actions</th>
+            <th scope="col"><%= t("universes.columns.universe") %></th>
+            <th scope="col"><%= t("universes.columns.visibility") %></th>
+            <th scope="col" class="text-end"><%= t("universes.columns.actions") %></th>
           </tr>
         </thead>
         <tbody>
@@ -35,11 +37,11 @@
               <td>
                 <% if universe.private? %>
                   <span class="badge text-bg-warning-subtle text-warning-emphasis">
-                    <span class="status-dot status-dot--private" aria-hidden="true"></span>Private
+                    <span class="status-dot status-dot--private" aria-hidden="true"></span><%= t("universes.visibility.private") %>
                   </span>
                 <% else %>
                   <span class="badge text-bg-success-subtle text-success-emphasis">
-                    <span class="status-dot" aria-hidden="true"></span>Public
+                    <span class="status-dot" aria-hidden="true"></span><%= t("universes.visibility.public") %>
                   </span>
                 <% end %>
               </td>
@@ -49,20 +51,20 @@
                     id="<%= dom_id(universe) %>-actions"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
-                    aria-label="Actions for <%= universe.name %>">
+                    aria-label="<%= t("shared.row_actions.actions_for", name: universe.name) %>">
                     <i class="bi bi-three-dots" aria-hidden="true"></i>
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(universe) %>-actions">
-                    <li><%= link_to "Open universe", universe_path(universe), class: "dropdown-item" %></li>
+                    <li><%= link_to t("universes.open"), universe_path(universe), class: "dropdown-item" %></li>
                     <% if can_administer_universe?(universe) %>
-                      <li><%= link_to "Manage members", universe_memberships_path(universe_slug: universe.slug), class: "dropdown-item" %></li>
-                      <li><%= link_to "Edit universe", edit_universe_path(universe), class: "dropdown-item" %></li>
+                      <li><%= link_to t("universes.manage_members"), universe_memberships_path(universe_slug: universe.slug), class: "dropdown-item" %></li>
+                      <li><%= link_to t("universes.edit"), edit_universe_path(universe), class: "dropdown-item" %></li>
                       <li><hr class="dropdown-divider"></li>
                       <li>
-                        <%= button_to "Delete universe", universe_path(universe),
+                        <%= button_to t("universes.delete"), universe_path(universe),
                           method: :delete,
                           class: "dropdown-item text-danger",
-                          data: { turbo_confirm: "Delete #{universe.name} and all of its content?" } %>
+                          data: { turbo_confirm: t("universes.delete_confirm", name: universe.name) } %>
                       </li>
                     <% end %>
                   </ul>

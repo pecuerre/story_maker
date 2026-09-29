@@ -37,8 +37,9 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".page-header h1", text: story.name
-    assert_select ".page-eyebrow", text: "Story workspace"
-    assert_select "a[href=?]", universe_story_sections_path(universe_slug: @universe.slug, story_id: story), text: "Open sections"
+    assert_select ".page-eyebrow", text: I18n.t("sidebar.story_workspace")
+    assert_select "a[href=?]", universe_story_sections_path(universe_slug: @universe.slug, story_id: story),
+      text: I18n.t("stories.show.open_sections")
   end
 
   test "should get new story" do

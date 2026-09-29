@@ -26,7 +26,7 @@ class StoriesController < ApplicationController
 
     respond_to do |format|
       if @story.save
-        format.html { redirect_to universe_story_path(id: @story), notice: "Story was successfully created." }
+        format.html { redirect_to universe_story_path(id: @story), notice: t("stories.flash.created") }
       else
         format.html { render :new, status: :unprocessable_content }
       end
@@ -41,7 +41,7 @@ class StoriesController < ApplicationController
   def update
     respond_to do |format|
       if @story.update(story_params)
-        format.html { redirect_to universe_story_path(id: @story), notice: "Story was successfully updated.", status: :see_other }
+        format.html { redirect_to universe_story_path(id: @story), notice: t("stories.flash.updated"), status: :see_other }
       else
         format.html { render :edit, status: :unprocessable_content }
       end
@@ -53,7 +53,7 @@ class StoriesController < ApplicationController
     @story.soft_delete
 
     respond_to do |format|
-      format.html { redirect_to universe_stories_path, notice: "Story was successfully deleted.", status: :see_other }
+      format.html { redirect_to universe_stories_path, notice: t("stories.flash.deleted"), status: :see_other }
     end
   end
 

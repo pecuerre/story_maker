@@ -1,8 +1,8 @@
-<% content_for :title, "New story" %>
+<% content_for :title, t("stories.new") %>
 
 <%= render "shared/page_header",
-  title: "New story",
+  title: t("stories.new"),
   eyebrow: Current.universe.name,
-  description: "Create a story with its own plot and section structure inside this universe." %>
+  description: t("stories.new_description") %>
 
 <%= render "form", story: @story %>

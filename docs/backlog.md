@@ -356,13 +356,20 @@ it has a useful destination and clear empty/loading/error states.
       and is then deleted from this file, so what is left here is only the work that is still
       pending. The remaining numbers are never renumbered or reused.
 
-    - **Slice 27.2 — Universe & Story workspaces.** `universes/*` (index, show, new, edit, `_form`,
-      `_universe`, the JSON view), `stories/*`, `memberships/*`, `sections/index` and
-      `sections/show`, `tags/index` (the taxonomy workspace), and `timeline/index`, plus their
-      controller flash/notice/alert strings. Timeline's per-event popover title/content comes
-      from `event_popover_title`/`event_popover_content` in `timeline_helper.rb`, so those go
-      through `t()` too. Tests: request coverage for the workspace pages rendering under `es`, and
-      the existing redirect/`see_other` flash assertions updated to the translated copy.
+      **Fix the four open quirks in this code path first, in this order**, because each one is a
+      behavior defect rather than a translation and none of them is helped by being done after
+      the copy is translated:
+        - **#48** (a delegated admin can demote or remove their own
+      membership into a bodyless 403 — `memberships/index.html.erb` and
+      `memberships_controller.rb`),
+        - **#26** (a duplicate universe name raises
+      `ActiveRecord::RecordNotUnique` instead of rendering a field error — `universes_controller.rb`
+      and `universes/_form.html.erb`),
+        - **#24** (`TimelineLayout` rebuilds `@edges` from raw event
+      associations, so a valid model state renders edges that contradict the layer order),
+        - **#46** (a Timeline node renders a bare id with no accessible name, and the documented
+      pan/zoom interaction is not implemented).
+
     - **Slice 27.3 — Universe Bible workspaces.** `characters/*`, `locations/*`, `events/*`,
       `items/*`, `relations/*`, `ownerships/*`, all six universe-level `*_tags` indexes and their
       `show` pages, and the shared modal field labels produced by `app/helpers/modal_fields.rb` and
@@ -371,13 +378,15 @@ it has a useful destination and clear empty/loading/error states.
       half of that hand-off is slice 27.6). Also the `characters`/`locations`/`items`/`events`
       controller flash strings. Tests: request coverage per workspace, plus a check that the
       serialized modal field descriptors are the translated ones.
+
     - **Slice 27.4 — Scene workspace.** `scenes/*` (index, show, edit, new, `_form`, `_filter`,
-      `_elements`, `_show_identity`, `_ungrouped_scenes`, `_workspace_tabs`), `sections/show`,
+      `_elements`, `_show_identity`, `_ungrouped_scenes`, `_workspace_tabs`),
       `section_tags/*`, `scene_tags/*`, `scene_characters/*`, `scene_items/*`,
       `scene_locations/*`, `scene_appearances/_section`, and `scenes_controller.rb`'s move/group
       flash messages (which are interpolated sentences built in Ruby). Translating
       `SectionPaths::UNGROUPED_LABEL` and `SceneFilter`'s discard messages belongs here, because
       both are read by the Scenes page — see the constant/label contract note below.
+
     - **Slice 27.5 — Search.** `searches/show`, `_commands`, `_result`, `_scope_field`, the
       `searches_controller.rb` and `searches_helper.rb` strings, and the model-level labels in
       `app/models/search/`: `Search::Scope`'s option labels, the kind labels in
@@ -388,6 +397,7 @@ it has a useful destination and clear empty/loading/error states.
       Spanish. `SectionPaths::UNGROUPED_LABEL` and `SceneFilter::UNGROUPED` are the same shape and
       must keep the same rule: the *value* in the URL stays `"ungrouped"`, only the label is
       translated.
+
     - **Slice 27.6 — Client-side strings + enforcement.** The four Stimulus controllers with
       user-facing text — `taxonomy_tree_controller.js` (17 distinct strings),
       `photo_crop_controller.js` (17), `modal_form_controller.js` (12), and

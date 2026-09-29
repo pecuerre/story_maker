@@ -128,6 +128,260 @@ es:
       edit_title: "Editar %{label}"
       delete_confirm: "¿Eliminar %{name}?"
 
+  universes:
+    title: "Universos"
+    description: "Elige un mundo en el que trabajar. Cada universo contiene sus propias historias y sus registros de construcción del mundo compartidos."
+    new: "Nuevo universo"
+    new_description: "Crea un mundo que contendrá sus propias historias y sus registros de construcción del mundo compartidos."
+    edit: "Editar universo"
+    edit_document_title: "Editar %{name}"
+    edit_description: "Actualiza el nombre que identifica este universo."
+    open: "Abrir universo"
+    manage_members: "Gestionar miembros"
+    delete: "Eliminar universo"
+    delete_confirm: "¿Eliminar %{name} y todo su contenido?"
+    columns:
+      universe: "Universo"
+      visibility: "Visibilidad"
+      actions: "Acciones"
+    visibility:
+      private: "Privado"
+      public: "Público"
+    empty:
+      owner_title: "Crea tu primer universo"
+      owner_description: "Un universo contiene el mundo, los personajes, los lugares, los sucesos y los objetos que comparten sus historias."
+      guest_title: "Todavía no hay universos públicos"
+      guest_description: "Inicia sesión para crear un universo, o vuelve cuando haya uno público disponible."
+    form:
+      name: "Nombre"
+      private: "Universo privado"
+      private_hint: "Los universos públicos pueden leer los visitantes y en ellos pueden colaborar los usuarios que han iniciado sesión. Los universos privados solo son visibles para sus miembros."
+      submit_create: "Crear universo"
+      submit_update: "Actualizar universo"
+      cancel: "Cancelar"
+    show:
+      eyebrow: "Universo"
+      description: "El mundo compartido y la colección de historias de este espacio de trabajo."
+      new_story: "Nueva historia"
+      actions_aria: "Acciones del universo"
+      stories_eyebrow: "Historias"
+      current_badge: "Actual"
+      open_story: "Abrir"
+      open_story_aria: "Abrir %{name}"
+      empty_title: "Todavía no hay historias"
+      empty_writable_description: "Una historia contiene la trama, las secciones y las escenas de este universo compartiendo su mundo. Crea la primera con la acción Nueva historia de arriba."
+      empty_read_only_description: "Este universo todavía no tiene historias que mostrar."
+      bible_heading: "Mundo compartido"
+      bible_description: "Los personajes, los lugares, los sucesos, los objetos y sus relaciones viven en el ámbito del universo."
+    detail:
+      name: "Nombre:"
+    flash:
+      created: "El universo se ha creado correctamente."
+      updated: "El universo se ha actualizado correctamente."
+      deleted: "El universo se ha eliminado correctamente."
+
+  stories:
+    title: "Historias"
+    description: "Cada historia es dueña de su trama y de sus secciones, y comparte los personajes, los lugares, los sucesos y los objetos de este universo."
+    new: "Nueva historia"
+    new_description: "Crea una historia con su propia trama y su propia estructura de secciones dentro de este universo."
+    edit: "Editar historia"
+    edit_document_title: "Editar %{name}"
+    edit_description: "Actualiza el nombre y la descripción que se usan para esta historia."
+    open: "Abrir historia"
+    delete: "Eliminar historia"
+    delete_confirm: "¿Eliminar «%{name}»? Sus secciones, etiquetas de sección, etiquetas de escena, escenas, elementos de escena y enlaces propiedad de la historia se eliminarán de forma permanente. Los registros compartidos del universo no se eliminarán."
+    current_badge: "Actual"
+    no_description: "Todavía no hay descripción."
+    empty_title: "Todavía no hay historias"
+    empty_writable_description: "Una historia contiene la trama y las secciones de este universo, mientras que sus registros de construcción del mundo siguen siendo compartidos entre las historias."
+    empty_read_only_description: "Las historias de este universo aparecerán aquí en cuanto se hayan añadido."
+    form:
+      name: "Nombre"
+      description: "Descripción"
+      submit_create: "Crear historia"
+      submit_update: "Actualizar historia"
+      cancel: "Cancelar"
+    show:
+      default_description: "Planifica la trama y la estructura de esta historia."
+      open_sections: "Abrir las secciones"
+      open_scenes: "Abrir las escenas"
+      actions_aria: "Acciones de la historia"
+      structure_eyebrow: "Estructura de la historia"
+      structure_description: "Organiza esta historia en una jerarquía de actos, capítulos, libros o temporadas, y escríbela como una secuencia ordenada de escenas."
+      manage_sections: "Gestionar las secciones"
+      view_sections: "Ver las secciones"
+      manage_scenes: "Gestionar las escenas"
+      view_scenes: "Ver las escenas"
+      bible_eyebrow: "Biblia del universo compartida"
+      bible_heading: "Registros de construcción del mundo"
+      bible_description: "Todas las historias de %{universe} comparten estos registros."
+    flash:
+      created: "La historia se ha creado correctamente."
+      updated: "La historia se ha actualizado correctamente."
+      deleted: "La historia se ha eliminado correctamente."
+
+  memberships:
+    index:
+      title: "Miembros"
+      description: "Concede acceso de lectura, escritura o administración a este universo. El propietario siempre tiene acceso de administración."
+      back: "Volver al universo"
+      columns:
+        member: "Miembro"
+        access: "Acceso"
+        actions: "Acciones"
+      grant_eyebrow: "Conceder acceso"
+      grant_title: "Añadir un miembro"
+      grant_description: "El usuario ya debe tener una cuenta. En un universo público cualquier usuario que haya iniciado sesión puede colaborar; una membresía de administración también concede el control sobre los miembros y los ajustes del universo."
+      owner: "Propietario"
+      you: "Tú"
+      save: "Guardar"
+      remove: "Quitar"
+      remove_confirm: "¿Quitar a %{name} de este universo?"
+      access_level_aria: "Nivel de acceso para %{name}"
+    new:
+      title: "Añadir miembro"
+      description: "Concede a un usuario acceso a este universo."
+    form:
+      email_address: "Dirección de correo"
+      access_level: "Nivel de acceso"
+      choose_level: "Elige un nivel"
+      submit: "Conceder acceso"
+      cancel: "Cancelar"
+    access_levels:
+      read: "Lectura"
+      write: "Escritura"
+      admin: "Administración"
+    subject: "acceso"
+    errors:
+      email_not_found: "no se ha encontrado"
+      email_is_owner: "es el propietario del universo y ya tiene acceso de administración"
+      invalid_access_level: "no es un nivel de acceso válido"
+    flash:
+      granted: "El acceso del miembro se ha concedido correctamente."
+      updated: "El acceso del miembro se ha actualizado correctamente."
+      removed: "El acceso del miembro se ha retirado correctamente."
+      own_change_refused: "No puedes cambiar tu propia membresía."
+      own_removal_refused: "No puedes retirar tu propia membresía."
+
+  sections:
+    eyebrow: "Historia: %{story}"
+    index:
+      title: "Secciones"
+      description: "Organiza esta historia en una jerarquía de libros, capítulos, actos, escenas o cualquier estructura que necesites."
+      new_label: "Añadir sección"
+      empty_description: "Añade una sección y luego arrastra las filas para crear el esquema de esta historia."
+      read_only_empty_description: "Esta historia todavía no tiene secciones que mostrar."
+      delete_confirm: "¿Eliminar «%{name}»? Sus secciones hijas y las asignaciones de etiquetas se eliminarán, y las escenas vinculadas quedarán sin agrupar. Su orden narrativo no cambiará."
+    show:
+      label: "Sección"
+      back_label: "Todas las secciones"
+      facts:
+        story: "Historia"
+        path: "Ruta de la sección"
+        tags: "Etiquetas de sección"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+      scenes:
+        title: "Escenas de esta sección"
+        empty_title: "No hay escenas en esta sección"
+        empty_description: "Una sección solo agrupa escenas; nunca establece su orden. Las escenas que se le asignen aparecerán aquí en el orden en que se cuenta la historia."
+        position_aria: "Posición narrativa %{position} de %{total}"
+      related:
+        title: "Información relacionada"
+        empty_title: "Todavía no hay nada relacionado"
+        empty_description: "Todo lo demás que merezca la pena saber sobre esta sección se mostrará aquí más adelante."
+
+  tags:
+    title: "Etiquetas"
+    scope:
+      universe: "Etiquetas del universo"
+      story: "Etiquetas de historia"
+    no_story:
+      description: "Elige una historia antes de gestionar sus etiquetas de sección o de escena."
+      empty_title: "Selecciona una historia"
+      empty_description: "Las etiquetas de historia pertenecen a una historia concreta. Selecciona una historia desde el menú Historia para continuar."
+    types:
+      character:
+        title: "Etiquetas de personajes"
+        description: "Define las etiquetas opcionales que sirven para organizar a los personajes de este universo."
+        empty_description: "Las etiquetas son opcionales. Añade una para agrupar personajes, o crea personajes sin etiqueta."
+        read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de personajes."
+        new_label: "Añadir etiqueta de personaje"
+      relation:
+        title: "Etiquetas de relaciones"
+        description: "Define los tipos de relación que se usan al conectar a los personajes de este universo."
+        empty_description: "Las etiquetas son opcionales. Añade una para describir relaciones entre personajes, o deja las relaciones sin etiquetar."
+        read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de relaciones."
+        new_label: "Añadir etiqueta de relación"
+      location:
+        title: "Etiquetas de lugares"
+        description: "Organiza los lugares y las regiones que componen este universo."
+        empty_description: "Las etiquetas son opcionales. Añade una para agrupar lugares, o organízalos más adelante."
+        read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de lugares."
+        new_label: "Añadir etiqueta de lugar"
+      event:
+        title: "Etiquetas de sucesos"
+        description: "Clasifica los sucesos para que los momentos relacionados sean más fáciles de encontrar en la cronología."
+        empty_description: "Las etiquetas son opcionales. Añade una para agrupar sucesos, o confía en las fechas y en las relaciones."
+        read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de sucesos."
+        new_label: "Añadir etiqueta de suceso"
+      item:
+        title: "Etiquetas de objetos"
+        description: "Define categorías opcionales para los objetos y los recursos de este universo."
+        empty_description: "Las etiquetas son opcionales. Añade una para agrupar objetos, o crea objetos sin etiqueta."
+        read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de objetos."
+        new_label: "Añadir etiqueta de objeto"
+      ownership:
+        title: "Etiquetas de propiedades"
+        description: "Describe los tipos de propiedad que se registran entre personajes y objetos."
+        empty_description: "Las etiquetas son opcionales. Añade una para clasificar los registros de propiedad, o créalos sin etiquetar."
+        read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de propiedades."
+        new_label: "Añadir etiqueta de propiedad"
+      section:
+        title: "Etiquetas de secciones"
+        description: "Define etiquetas como libro, capítulo, acto o episodio para las secciones de esta historia."
+        empty_description: "Las etiquetas son opcionales. Añade una para clasificar las secciones, o construye el árbol de secciones sin ellas."
+        read_only_empty_description: "Esta historia todavía no tiene etiquetas de secciones definidas."
+        new_label: "Añadir etiqueta de sección"
+      scene:
+        title: "Etiquetas de escenas"
+        description: "Define etiquetas opcionales para las escenas de esta historia, como el tono, un punto de inflexión o un hito de la trama."
+        empty_description: "Las etiquetas son opcionales. Añade una para clasificar las escenas, o escribe escenas sin etiqueta."
+        read_only_empty_description: "Esta historia todavía no tiene etiquetas de escenas definidas."
+        new_label: "Añadir etiqueta de escena"
+        delete_confirm: "¿Eliminar «%{name}»? Sus etiquetas hijas y sus asignaciones se eliminarán. Las escenas se conservarán."
+
+  timeline:
+    description: "Descubre cómo se ordenan los sucesos a partir de las fechas y de las relaciones explícitas de antes, después y al mismo tiempo."
+    add_event: "Añadir suceso"
+    empty_title: "No hay sucesos que colocar en la cronología"
+    empty_writable_description: "Añade sucesos con fechas o relacionados entre sí y vuelve aquí para ver su orden."
+    empty_read_only_description: "Los sucesos de este universo aparecerán en la cronología en cuanto se hayan añadido."
+    event_placeholder: "Suceso n.º %{id}"
+    popover:
+      dates: "Fechas:"
+      tag: "Etiqueta:"
+      related: "Relacionado:"
+      before: "antes de %{event}"
+      after: "después de %{event}"
+      simultaneous: "al mismo tiempo que %{event}"
+
+  # Los nombres de los atributos que leen los formularios y los mensajes de
+  # error de esta rebanada. Ver la explicación equivalente en `en.yml`.
+  activerecord:
+    attributes:
+      universe:
+        name: "Nombre"
+        private: "Privado"
+      story:
+        name: "Nombre"
+        description: "Descripción"
+      universe_membership:
+        email_address: "Dirección de correo"
+        access_level: "Nivel de acceso"
+
   searches:
     bar:
       label: "Buscar en Universe Maker"

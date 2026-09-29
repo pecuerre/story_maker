@@ -1,16 +1,19 @@
-<% content_for :title, "Stories" %>
-<% empty_description = can_write_universe? ? "A story holds the plot and sections of this universe, while its world-building records remain shared across stories." : "Stories in this universe will appear here once they have been added." %>
+<% content_for :title, t("stories.title") %>
+<%# The list is empty in two different ways, so it says two different things:
+    someone who can add a story is told what one is for, and a read-only member
+    is told that the page is waiting rather than inviting them to act. %>
+<% empty_description = can_write_universe? ? t("stories.empty_writable_description") : t("stories.empty_read_only_description") %>
 
 <%= render "shared/page_header",
-  title: "Stories",
+  title: t("stories.title"),
   eyebrow: Current.universe.name,
-  description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe.",
+  description: t("stories.description"),
   count: @stories.size,
   count_label: "story" do %>
   <% if can_write_universe? %>
     <%= link_to new_universe_story_path, class: "btn btn-primary" do %>
       <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      <span>New story</span>
+      <span><%= t("stories.new") %></span>
     <% end %>
   <% end %>
 <% end %>
@@ -26,24 +29,24 @@
                 <%= link_to story.name, universe_story_path(id: story) %>
               </h2>
               <% if Current.story == story %>
-                <span class="badge text-bg-primary">Current</span>
+                <span class="badge text-bg-primary"><%= t("stories.current_badge") %></span>
               <% end %>
             </div>
 
             <% if story.description.present? %>
               <p class="text-body-secondary"><%= story.description %></p>
             <% else %>
-              <p class="text-body-secondary">No description yet.</p>
+              <p class="text-body-secondary"><%= t("stories.no_description") %></p>
             <% end %>
 
             <div class="small text-body-secondary mb-3">
-              <%= pluralize(story.sections.size, "section") %>
+              <%= count_with_label(story.sections.size, "section") %>
             </div>
           </div>
 
           <div class="card-footer bg-body border-top-0 d-flex align-items-center gap-2">
-            <%= link_to "Open story", universe_story_path(id: story), class: "btn btn-sm btn-primary" %>
-            <%= link_to "Sections", universe_story_sections_path(story_id: story), class: "btn btn-sm btn-outline-secondary" %>
+            <%= link_to t("stories.open"), universe_story_path(id: story), class: "btn btn-sm btn-primary" %>
+            <%= link_to t("sidebar.sections"), universe_story_sections_path(story_id: story), class: "btn btn-sm btn-outline-secondary" %>
 
             <% if can_write_universe? %>
               <div class="dropdown row-actions ms-auto">
@@ -51,17 +54,17 @@
                   id="<%= dom_id(story) %>-actions"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
-                  aria-label="Actions for <%= story.name %>">
+                  aria-label="<%= t("shared.row_actions.actions_for", name: story.name) %>">
                   <i class="bi bi-three-dots" aria-hidden="true"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(story) %>-actions">
-                  <li><%= link_to "Edit story", edit_universe_story_path(id: story), class: "dropdown-item" %></li>
+                  <li><%= link_to t("stories.edit"), edit_universe_story_path(id: story), class: "dropdown-item" %></li>
                   <li><hr class="dropdown-divider"></li>
                   <li>
-                    <%= button_to "Delete story", universe_story_path(id: story),
+                    <%= button_to t("stories.delete"), universe_story_path(id: story),
                       method: :delete,
                       class: "dropdown-item text-danger",
-                      data: { turbo_confirm: "Delete “#{story.name}”? Its sections, section tags, scene tags, scenes, scene elements, and story-owned links will be permanently deleted. Shared universe records will not be deleted." } %>
+                      data: { turbo_confirm: t("stories.delete_confirm", name: story.name) } %>
                   </li>
                 </ul>
               </div>
@@ -73,7 +76,7 @@
   </div>
 <% else %>
   <%= render "shared/empty_state",
-    title: "No stories yet",
+    title: t("stories.empty_title"),
     description: empty_description,
     icon: "books" %>
 <% end %>

@@ -1,6 +1,9 @@
-<% content_for :title, "Tags" %>
+<% content_for :title, t("tags.title") %>
 
 <% tag_config = tag_workspace_config(scope: @tag_scope, taxonomy: @tag_type) %>
+<%# The eyebrow is the same string as the active scope tab beside it, so one key
+    names both. %>
+<% scope_label = @tag_scope == "story" ? t("tags.scope.story") : t("tags.scope.universe") %>
 
 <%= render "shared/tag_workspace_navigation",
   scope: @tag_scope,
@@ -8,8 +11,8 @@
 
 <% if tag_config.present? %>
   <%= render "shared/taxonomy_tree",
-    title: "Tags",
-    eyebrow: @tag_scope == "story" ? "Story Tags" : "Universe Tags",
+    title: t("tags.title"),
+    eyebrow: scope_label,
     description: tag_config.fetch(:description),
     count: tag_config.fetch(:count),
     count_label: "tag",
@@ -27,12 +30,12 @@
     modal_fields: tag_config.fetch(:modal_fields) %>
 <% elsif @tag_scope == "story" %>
   <%= render "shared/page_header",
-    title: "Tags",
-    eyebrow: "Story Tags",
-    description: "Choose a story before managing its section or scene tags." %>
+    title: t("tags.title"),
+    eyebrow: scope_label,
+    description: t("tags.no_story.description") %>
 
   <%= render "shared/empty_state",
-    title: "Select a story",
-    description: "Story tags belong to an individual story. Select a story from the Story menu to continue.",
+    title: t("tags.no_story.empty_title"),
+    description: t("tags.no_story.empty_description"),
     icon: "book" %>
 <% end %>

@@ -2,84 +2,85 @@ module TagsHelper
   UNIVERSE_TAG_TYPES = %w[character relation location event item ownership].freeze
   STORY_TAG_TYPES = %w[section scene].freeze
 
-  TAG_LABELS = {
-    "character" => "Character tags",
-    "relation" => "Relation tags",
-    "location" => "Location tags",
-    "event" => "Event tags",
-    "item" => "Item tags",
-    "ownership" => "Ownership tags",
-    "section" => "Section tags",
-    "scene" => "Scene tags"
-  }.freeze
+  # The tab label for each taxonomy. The label is a property of the taxonomy
+  # rather than of a page, so it is read from the per-type locale block the
+  # workspace copy below already uses rather than kept in a second hand-written
+  # list that could drift from the routes.
+  def tag_type_label(type)
+    t("tags.types.#{type}.title")
+  end
 
-  # The per-type workspace copy for the universe taxonomies. The mechanical
-  # keys — `model_param`, the field-descriptor helper, the tag URLs, and the
-  # count label — are derived from the type name, so adding a taxonomy means
-  # adding one entry here rather than a second hand-maintained block that can
-  # drift from the routes and from `modal_fields.rb`.
+  # The per-type workspace copy for the universe taxonomies, held as I18n keys
+  # and translated when the workspace is read. The mechanical keys —
+  # `model_param`, the field-descriptor helper, the tag URLs, and the count
+  # label — are derived from the type name, so adding a taxonomy means adding
+  # one entry here plus its locale block rather than a second hand-maintained
+  # block that can drift from the routes and from `modal_fields.rb`.
+  #
+  # The values are *keys*, not copy: a constant holding translated strings would
+  # be built once, in whatever locale loaded the class first, and every later
+  # request would render that one language. `tag_workspace_base` resolves them.
   UNIVERSE_TAG_METADATA = {
     "character" => {
-      title: "Character tags",
-      description: "Define the optional labels used to organize characters across this universe.",
-      empty_description: "Tags are optional. Add one to group characters, or create characters without a tag.",
-      read_only_empty_description: "No character tags are defined yet.",
-      new_label: "Add character tag"
+      title_key: "tags.types.character.title",
+      description_key: "tags.types.character.description",
+      empty_description_key: "tags.types.character.empty_description",
+      read_only_empty_description_key: "tags.types.character.read_only_empty_description",
+      new_label_key: "tags.types.character.new_label"
     },
     "relation" => {
-      title: "Relation tags",
-      description: "Define the relationship types used when connecting characters in this universe.",
-      empty_description: "Tags are optional. Add one to describe character relationships, or leave relations untagged.",
-      read_only_empty_description: "No relation tags are defined yet.",
-      new_label: "Add relation tag"
+      title_key: "tags.types.relation.title",
+      description_key: "tags.types.relation.description",
+      empty_description_key: "tags.types.relation.empty_description",
+      read_only_empty_description_key: "tags.types.relation.read_only_empty_description",
+      new_label_key: "tags.types.relation.new_label"
     },
     "location" => {
-      title: "Location tags",
-      description: "Organize the places and regions that make up this universe.",
-      empty_description: "Tags are optional. Add one to group locations, or organize them later.",
-      read_only_empty_description: "No location tags are defined yet.",
-      new_label: "Add location tag"
+      title_key: "tags.types.location.title",
+      description_key: "tags.types.location.description",
+      empty_description_key: "tags.types.location.empty_description",
+      read_only_empty_description_key: "tags.types.location.read_only_empty_description",
+      new_label_key: "tags.types.location.new_label"
     },
     "event" => {
-      title: "Event tags",
-      description: "Classify events so related moments are easier to find across the timeline.",
-      empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead.",
-      read_only_empty_description: "No event tags are defined yet.",
-      new_label: "Add event tag"
+      title_key: "tags.types.event.title",
+      description_key: "tags.types.event.description",
+      empty_description_key: "tags.types.event.empty_description",
+      read_only_empty_description_key: "tags.types.event.read_only_empty_description",
+      new_label_key: "tags.types.event.new_label"
     },
     "item" => {
-      title: "Item tags",
-      description: "Define optional categories for objects and resources in this universe.",
-      empty_description: "Tags are optional. Add one to group items, or create untagged items.",
-      read_only_empty_description: "No item tags are defined yet.",
-      new_label: "Add item tag"
+      title_key: "tags.types.item.title",
+      description_key: "tags.types.item.description",
+      empty_description_key: "tags.types.item.empty_description",
+      read_only_empty_description_key: "tags.types.item.read_only_empty_description",
+      new_label_key: "tags.types.item.new_label"
     },
     "ownership" => {
-      title: "Ownership tags",
-      description: "Describe the kinds of ownership recorded between characters and items.",
-      empty_description: "Tags are optional. Add one to classify ownership records, or create them untagged.",
-      read_only_empty_description: "No ownership tags are defined yet.",
-      new_label: "Add ownership tag"
+      title_key: "tags.types.ownership.title",
+      description_key: "tags.types.ownership.description",
+      empty_description_key: "tags.types.ownership.empty_description",
+      read_only_empty_description_key: "tags.types.ownership.read_only_empty_description",
+      new_label_key: "tags.types.ownership.new_label"
     }
   }.freeze
 
+  # The per-type copy for this story's section and scene taxonomies.
   STORY_TAG_METADATA = {
     "section" => {
-      title: "Section tags",
-      description: "Define labels such as book, chapter, act, or episode for this story's sections.",
-      empty_description: "Tags are optional. Add one to classify sections, or build the section tree without them.",
-      read_only_empty_description: "This story has no section tags defined yet.",
-      new_label: "Add section tag"
+      title_key: "tags.types.section.title",
+      description_key: "tags.types.section.description",
+      empty_description_key: "tags.types.section.empty_description",
+      read_only_empty_description_key: "tags.types.section.read_only_empty_description",
+      new_label_key: "tags.types.section.new_label"
     },
     "scene" => {
-      title: "Scene tags",
-      description: "Define optional labels for this story's scenes, such as mood, turning point, or story beat.",
-      empty_description: "Tags are optional. Add one to classify scenes, or write scenes without a tag.",
-      read_only_empty_description: "This story has no scene tags defined yet.",
-      new_label: "Add scene tag",
-      confirm_message: ->(tag) {
-        "Delete “#{tag.name}”? Its child tags and assignments will be removed. Scenes will remain."
-      }
+      title_key: "tags.types.scene.title",
+      description_key: "tags.types.scene.description",
+      empty_description_key: "tags.types.scene.empty_description",
+      read_only_empty_description_key: "tags.types.scene.read_only_empty_description",
+      new_label_key: "tags.types.scene.new_label",
+      confirm_message_key: "tags.types.scene.delete_confirm"
     }
   }.freeze
 
@@ -90,7 +91,7 @@ module TagsHelper
     taxonomy_tabs = if scope == "story"
       STORY_TAG_TYPES.map do |type|
         {
-          label: TAG_LABELS.fetch(type),
+          label: tag_type_label(type),
           path: universe_tags_path(scope: "story", taxonomy: type),
           controller: :tags,
           active: taxonomy == type
@@ -99,7 +100,7 @@ module TagsHelper
     else
       UNIVERSE_TAG_TYPES.map do |type|
         {
-          label: TAG_LABELS.fetch(type),
+          label: tag_type_label(type),
           path: universe_tags_path(scope: "universe", taxonomy: type),
           controller: :tags,
           active: taxonomy == type
@@ -110,13 +111,13 @@ module TagsHelper
     {
       scope_tabs: [
         {
-          label: "Universe Tags",
+          label: t("tags.scope.universe"),
           path: universe_tags_path(scope: "universe", taxonomy: universe_taxonomy),
           controller: :tags,
           active: scope == "universe"
         },
         {
-          label: "Story Tags",
+          label: t("tags.scope.story"),
           path: universe_tags_path(scope: "story", taxonomy: taxonomy),
           controller: :tags,
           active: scope == "story"
@@ -160,6 +161,10 @@ module TagsHelper
   # Tabs for a content workspace. Tag links explicitly carry their origin so
   # the tag details page can preserve this navigation without relying on a
   # potentially absent or untrusted Referer header.
+  #
+  # These labels belong to the Universe Bible workspaces, which the taxonomy
+  # index views also pass their own copy of; both are translated together by the
+  # slice that owns those pages.
   def content_workspace_tabs(type, active_tag: nil)
     type = type.to_s
     base_tabs = case type
@@ -247,7 +252,7 @@ module TagsHelper
       nodes = records.where(parent_id: nil).includes(:children).order(:position, :id)
       counts = tagged_record_counts(records)
 
-      metadata.merge(
+      translated_metadata(metadata).merge(
         count: ordered_records.length,
         nodes: nodes,
         details_url: metadata.fetch(:details_url),
@@ -255,5 +260,31 @@ module TagsHelper
         details_count_label: metadata.fetch(:details_count_label),
         modal_fields: public_send(metadata.fetch(:fields), ordered_records)
       )
+    end
+
+    # The copy half of a metadata entry, resolved for the locale of the request
+    # being rendered. Only the `*_key` entries are translated; the mechanical
+    # ones (URLs, the `model_param`) pass through untouched, because a URL and a
+    # query value are never chrome.
+    #
+    # `confirm_message_key` resolves to a lambda rather than a string because the
+    # taxonomy tree calls it per tag with the tag as its argument, so the
+    # translation has to be interpolated at call time rather than resolved once.
+    # Building that lambda here rather than in the constant is what keeps the
+    # constant itself free of a `t()` call — which would be evaluated at class
+    # load, in whatever locale happened to load it first.
+    def translated_metadata(metadata)
+      copy = metadata.select { |key, _| key.to_s.end_with?("_key") }
+      resolved = copy.to_h do |key, value|
+        name = key.to_s.delete_suffix("_key").to_sym
+
+        if name == :confirm_message
+          [ name, ->(tag) { t(value, name: tag.name) } ]
+        else
+          [ name, t(value) ]
+        end
+      end
+
+      metadata.merge(resolved)
     end
 end

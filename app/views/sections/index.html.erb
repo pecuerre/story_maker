@@ -1,22 +1,20 @@
-<% content_for :title, "Sections" %>
+<% content_for :title, t("sections.index.title") %>
 
 <%= render "shared/taxonomy_tree",
-  title: "Sections",
-  description: "Organize this story into a hierarchy of books, chapters, acts, scenes, or any structure you need.",
-  eyebrow: "Story: #{@story.name}",
+  title: t("sections.index.title"),
+  description: t("sections.index.description"),
+  eyebrow: t("sections.eyebrow", story: @story.name),
   count: @story.sections.count,
   count_label: "section",
-  new_label: "Add section",
-  tabs_aria_label: "Story workspace",
+  new_label: t("sections.index.new_label"),
+  tabs_aria_label: t("sidebar.story_workspace"),
   tabs: [
-    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
-    { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
+    { label: t("sidebar.sections"), path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ],
-  empty_description: "Add a section, then drag rows to create the outline for this story.",
-  read_only_empty_description: "This story has no sections to show yet.",
-  confirm_message: ->(section) {
-    "Delete “#{section.name}”? Its child sections and tag assignments will be removed, and linked scenes will become ungrouped. Their narrative order will not change."
-  },
+  empty_description: t("sections.index.empty_description"),
+  read_only_empty_description: t("sections.index.read_only_empty_description"),
+  confirm_message: ->(section) { t("sections.index.delete_confirm", name: section.name) },
   nodes: @sections,
   new_url: ->(parent = nil) { new_universe_story_section_path(story_id: @story, parent_id: parent&.id) },
   create_url: universe_story_sections_path(story_id: @story),

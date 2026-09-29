@@ -765,6 +765,18 @@ browser-owned preference and which strings are excluded. The rules a new string 
 - **A key is added to both files in the same change.**
   `config.i18n.raise_on_missing_translations` is on in the test environment and
   `test/models/translations_test.rb` compares the two key sets, so a one-sided key fails the suite.
+- **A constant holds an I18n key, never a translated string.** A hash or a `freeze`d constant built
+  at class-load time resolves `t()` once, in whatever locale happened to load the class first, and
+  every later request renders that one language. `TagsHelper::UNIVERSE_TAG_METADATA` stores
+  `title_key:`/`description_key:` and `tag_workspace_base` resolves them per request; the same rule
+  governs `Search::Scope`'s option labels. A confirmation that the tree calls per record is stored
+  as a key and wrapped in a lambda at read time, not as a lambda that calls `t()` inside a constant.
+- **A `form.submit` label is named explicitly.** Rails' default label comes from
+  `helpers.submit.*`, which is English only, so a full-page form passes its own label
+  (`universes.form.submit_create`, `stories.form.submit_update`) rather than inheriting one.
+- **An attribute name a form or an error message renders is named too.** Rails reads
+  `human_attribute_name` from `activerecord.attributes.<model>.<column>`, so a Spanish page
+  otherwise reads "Name" beside a Spanish error message.
 - Rails defines `errors.*`, `datetime.distance_in_words.*`, and `support.array.*` in English only.
   The Spanish subset this application reaches is in `es.yml` and is checked against the real Rails
   key set, so it cannot drift into translating something the framework never asks for.

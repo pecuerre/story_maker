@@ -1,13 +1,6 @@
 <%= form_with(model: universe, class: "form-surface") do |form| %>
   <% if universe.errors.any? %>
-    <div class="alert alert-danger" role="alert">
-      <h2 class="h6"><%= pluralize(universe.errors.count, "error") %> prevented this universe from being saved:</h2>
-      <ul class="mb-0">
-        <% universe.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
+    <%= render "shared/error_summary", record: universe, subject: t("universe", count: 1) %>
   <% end %>
 
   <div class="mb-3">
@@ -19,14 +12,17 @@
 
   <div class="form-check form-switch mb-2">
     <%= form.check_box :private, class: "form-check-input" %>
-    <%= form.label :private, "Private universe", class: "form-check-label" %>
+    <%= form.label :private, t("universes.form.private"), class: "form-check-label" %>
   </div>
   <p class="form-text">
-    Public universes can be read by guests and contributed to by signed-in users. Private universes are visible only to their members.
+    <%= t("universes.form.private_hint") %>
   </p>
 
   <div class="form-actions">
-    <%= form.submit class: "btn btn-primary" %>
-    <%= link_to "Cancel", universe.persisted? ? universe_path(universe) : universes_path, class: "btn btn-link" %>
+    <%# The default submit label comes from Rails' English-only
+        `helpers.submit.*`, so the label is named here. %>
+    <%= form.submit(universe.persisted? ? t("universes.form.submit_update") : t("universes.form.submit_create"),
+      class: "btn btn-primary") %>
+    <%= link_to t("universes.form.cancel"), universe.persisted? ? universe_path(universe) : universes_path, class: "btn btn-link" %>
   </div>
 <% end %>

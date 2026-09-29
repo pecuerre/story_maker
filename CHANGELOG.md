@@ -21,6 +21,53 @@ Labels used below:
 
 ## 2026-09-29
 
+- **[changed]** The Universe and Story workspaces now render in Spanish as well: `universes/*`
+  (index, show, new, edit, `_form`, `_universe`), `stories/*`, `memberships/*`,
+  `sections/{index,show}`, `tags/index` (the taxonomy workspace), `timeline/index`, and the
+  Universes, Stories, and Memberships controller flash and confirmation messages. Keys are grouped
+  by the surface that owns them (`universes.*`, `stories.*`, `memberships.*`, `sections.*`,
+  `tags.*`, `timeline.*`). Notable decisions:
+  - **A constant holds a key, not copy.** `TagsHelper`'s `UNIVERSE_TAG_METADATA` /
+    `STORY_TAG_METADATA` now store `title_key:`/`description_key:`/… and `tag_workspace_base`
+    resolves them for the request's locale. A constant that called `t()` at class-load time would
+    have been built once, in whichever locale loaded the class first, and every later request would
+    have rendered that one language. The scene taxonomy's per-tag delete confirmation is stored as a
+    key and wrapped in a lambda at read time, because the tree calls it once per tag. The
+    now-redundant `TAG_LABELS` constant is gone; the tab label is the same
+    `tags.types.<type>.title` the workspace copy uses, so the two cannot drift.
+  - **A URL, a query value, and a stored value stay untranslated.** `read`/`write`/`admin` still
+    travel in the membership form field and are still stored verbatim; only the label beside them
+    moved into `memberships.access_levels.*`. `UniverseMembership::ACCESS_LEVELS.keys.map { titleize }`
+    appeared in three places and is now one helper, `membership_access_level_options`.
+  - **A `form.submit` label is named rather than inherited.** Rails' default comes from
+    `helpers.submit.*`, which is English only, so the Universe and Story forms pass their own
+    labels (`Crear universo` / `Actualizar universo`, `Crear historia` / `Actualizar historia`).
+    The same gap is closed for attribute names: `activerecord.attributes.{universe,story,
+    universe_membership}.*` are defined in both locale files, so a Spanish form reads "Nombre"
+    beside a Spanish validation message instead of "Name no puede estar en blanco".
+  - **The three hand-rolled error blocks now render `shared/error_summary`.** The Universe form,
+    the Story form, and the Members page each had their own `pluralize(errors.count, "error")`
+    heading, which English-only `pluralize` made untranslatable. The Members page therefore reads
+    "1 error impidió guardar este acceso:" rather than the old "1 error prevented access from being
+    saved", and `test/system/membership_access_test.rb` was updated to the shared sentence.
+  - **A sentence is written per language, not assembled around an interpolation.**
+    "These records are shared by every story in X" became "Every story in X shares these records"
+    / "Todas las historias de X comparten estos registros", because the English frame cannot be
+    translated by substituting a name into it.
+  - **Author data is still not translated**, and the tests say so: a universe name, a story
+    description, and a tag name appear untranslated inside Spanish sentences throughout
+    `test/controllers/workspace_locale_test.rb`.
+  - **The four Stimulus controllers still hardcode their own English.** The taxonomy editor's
+    built modal, the photo cropper, and the timeline popover trigger remain partly English on a
+    Spanish page; that gap is the client-side slice's.
+- **[changed]** The Sections workspace, the taxonomy workspace, and the Timeline read their copy
+  from the locale too: the "Add section" action and the per-section delete confirmation that
+  announces what happens to child sections and linked scenes, the per-taxonomy workspace copy, and
+  the Timeline's per-event popover labels and relationship phrases in
+  `TimelineHelper#event_popover_title`/`#event_popover_content`. The "before X" / "after X" /
+  "same time as X" phrases are whole translated sentences with the related Event interpolated, so
+  their word order can differ by language, and an Event with no title of its own falls back to a
+  translated "Event #N" whose number is the record's id.
 - **[added]** The application can now be read in Spanish, and the language is a browser-owned
   preference chosen on the settings page. `AppLocale` (`app/models/app_locale.rb`) follows exactly the
   contract `AppTheme` uses: two known names, English as the default, one signed cookie

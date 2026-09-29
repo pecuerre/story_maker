@@ -39,7 +39,7 @@ class UniversesController < ApplicationController
 
     respond_to do |format|
       if @universe.save
-        format.html { redirect_to @universe, notice: "Universe was successfully created." }
+        format.html { redirect_to @universe, notice: t("universes.flash.created") }
         format.json { render :show, status: :created, location: @universe }
       else
         format.html { render :new, status: :unprocessable_content }
@@ -52,7 +52,7 @@ class UniversesController < ApplicationController
   def update
     respond_to do |format|
       if @universe.update(universe_params)
-        format.html { redirect_to @universe, notice: "Universe was successfully updated.", status: :see_other }
+        format.html { redirect_to @universe, notice: t("universes.flash.updated"), status: :see_other }
         format.json { render :show, status: :ok, location: @universe }
       else
         format.html { render :edit, status: :unprocessable_content }
@@ -66,7 +66,7 @@ class UniversesController < ApplicationController
     @universe.soft_delete
 
     respond_to do |format|
-      format.html { redirect_to universes_path, notice: "Universe was successfully deleted.", status: :see_other }
+      format.html { redirect_to universes_path, notice: t("universes.flash.deleted"), status: :see_other }
       format.json { head :no_content }
     end
   end

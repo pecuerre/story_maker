@@ -46,7 +46,9 @@ class MembershipAccessTest < ApplicationSystemTestCase
       click_button "Grant access"
     end
 
-    assert_selector ".alert-danger[role=alert]", text: "prevented access from being saved"
+    # The summary is the shared one every workspace renders, so its sentence is
+    # the shared copy rather than a second hand-written variant.
+    assert_selector ".alert-danger[role=alert]", text: "prevented this access from being saved"
     assert_selector ".alert-danger[role=alert] li", text: /could not be found/
   end
 

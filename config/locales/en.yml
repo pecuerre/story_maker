@@ -140,6 +140,284 @@ en:
       edit_title: "Edit %{label}"
       delete_confirm: "Delete %{name}?"
 
+  # The universes workspace: the list of worlds, one universe's own page, and
+  # the create/edit forms it shares with the stories workspace.
+  #
+  # The button labels and the page titles are the same string, so one key serves
+  # both the `content_for :title` and the `h1` — a reader who follows "New
+  # universe" expects the page it opens to be called that too.
+  universes:
+    title: "Universes"
+    description: "Choose a world to work in. Each universe contains its own stories and shared world-building records."
+    new: "New universe"
+    new_description: "Create a world that will contain its own stories and shared world-building records."
+    edit: "Edit universe"
+    # The browser tab names the record being edited; the page below it keeps the
+    # workspace's own "Edit universe" title.
+    edit_document_title: "Edit %{name}"
+    edit_description: "Update the name used to identify this universe."
+    open: "Open universe"
+    manage_members: "Manage members"
+    delete: "Delete universe"
+    delete_confirm: "Delete %{name} and all of its content?"
+    columns:
+      universe: "Universe"
+      visibility: "Visibility"
+      actions: "Actions"
+    visibility:
+      private: "Private"
+      public: "Public"
+    empty:
+      # The list has two empty states because it has two audiences: someone who
+      # can create a universe is told to create one, and a guest is told to wait.
+      owner_title: "Create your first universe"
+      owner_description: "A universe holds the world, characters, locations, events, and items shared by its stories."
+      guest_title: "No public universes yet"
+      guest_description: "Sign in to create a universe, or check back when a public universe is available."
+    form:
+      name: "Name"
+      private: "Private universe"
+      private_hint: "Public universes can be read by guests and contributed to by signed-in users. Private universes are visible only to their members."
+      # The default submit label comes from Rails' own `helpers.submit.*`, which
+      # is English only, so the label is named here rather than inherited.
+      submit_create: "Create Universe"
+      submit_update: "Update Universe"
+      cancel: "Cancel"
+    show:
+      eyebrow: "Universe"
+      description: "The shared world and story collection for this workspace."
+      new_story: "New story"
+      actions_aria: "Universe actions"
+      stories_eyebrow: "Stories"
+      current_badge: "Current"
+      open_story: "Open"
+      open_story_aria: "Open %{name}"
+      empty_title: "No stories yet"
+      empty_writable_description: "A story holds the plot, sections, and scenes of this universe while sharing its world. Create the first one from the New story action above."
+      empty_read_only_description: "This universe has no stories to show yet."
+      # The four quick links and the eyebrow are the sidebar's own navigation
+      # labels, so they are read from `sidebar.*` rather than repeated here.
+      bible_heading: "Shared world"
+      bible_description: "Characters, places, events, items, and their relationships live at universe scope."
+    # The JSON-shaped detail partial still renders a labelled value.
+    detail:
+      name: "Name:"
+    flash:
+      created: "Universe was successfully created."
+      updated: "Universe was successfully updated."
+      deleted: "Universe was successfully deleted."
+
+  # The stories workspace, which shares the universe's own page as its picker.
+  stories:
+    title: "Stories"
+    description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe."
+    new: "New story"
+    new_description: "Create a story with its own plot and section structure inside this universe."
+    edit: "Edit story"
+    edit_document_title: "Edit %{name}"
+    edit_description: "Update the name and description used for this story."
+    open: "Open story"
+    delete: "Delete story"
+    delete_confirm: "Delete “%{name}”? Its sections, section tags, scene tags, scenes, scene elements, and story-owned links will be permanently deleted. Shared universe records will not be deleted."
+    current_badge: "Current"
+    no_description: "No description yet."
+    empty_title: "No stories yet"
+    empty_writable_description: "A story holds the plot and sections of this universe, while its world-building records remain shared across stories."
+    empty_read_only_description: "Stories in this universe will appear here once they have been added."
+    form:
+      name: "Name"
+      description: "Description"
+      submit_create: "Create Story"
+      submit_update: "Update Story"
+      cancel: "Cancel"
+    show:
+      default_description: "Plan the plot and structure for this story."
+      open_sections: "Open sections"
+      open_scenes: "Open scenes"
+      actions_aria: "Story actions"
+      structure_eyebrow: "Story structure"
+      structure_description: "Organize this story into a hierarchy such as acts, chapters, books, or seasons, and write it as an ordered sequence of scenes."
+      manage_sections: "Manage sections"
+      view_sections: "View sections"
+      manage_scenes: "Manage scenes"
+      view_scenes: "View scenes"
+      bible_eyebrow: "Shared Universe Bible"
+      bible_heading: "World-building records"
+      # The sentence is written per language rather than assembled around the
+      # universe's name: "Shared by every story in X" cannot become Spanish by
+      # substituting the name into a fixed frame.
+      bible_description: "Every story in %{universe} shares these records."
+    flash:
+      created: "Story was successfully created."
+      updated: "Story was successfully updated."
+      deleted: "Story was successfully deleted."
+
+  # Granting and changing a universe's access.
+  memberships:
+    index:
+      title: "Members"
+      description: "Grant read, write, or admin access to this universe. The owner always has admin access."
+      back: "Back to universe"
+      columns:
+        member: "Member"
+        access: "Access"
+        actions: "Actions"
+      grant_eyebrow: "Grant access"
+      grant_title: "Add a member"
+      grant_description: "The user must already have an account. In a public universe every signed-in user can contribute; an admin membership also grants control over members and universe settings."
+      owner: "Owner"
+      you: "You"
+      save: "Save"
+      remove: "Remove"
+      remove_confirm: "Remove %{name} from this universe?"
+      access_level_aria: "Access level for %{name}"
+    new:
+      title: "Add member"
+      description: "Grant a user access to this universe."
+    form:
+      email_address: "Email address"
+      access_level: "Access level"
+      choose_level: "Choose a level"
+      submit: "Grant access"
+      cancel: "Cancel"
+    # The three levels the form offers. Their *values* are the `read`/`write`/
+    # `admin` strings that travel in a form field and are stored on the record,
+    # so only the label beside them is translated.
+    access_levels:
+      read: "Read"
+      write: "Write"
+      admin: "Admin"
+    # What a membership is called in the error summary's sentence, where the
+    # record being saved has no name.
+    subject: "access"
+    # `errors.add` messages read as the tail of `errors.format`
+    # ("%{attribute} %{message}"), so each starts lowercase.
+    errors:
+      email_not_found: "could not be found"
+      email_is_owner: "is the universe owner and already has admin access"
+      invalid_access_level: "is not a valid access level"
+    flash:
+      granted: "Member access was successfully granted."
+      updated: "Member access was successfully updated."
+      removed: "Member access was successfully removed."
+      own_change_refused: "You cannot change your own membership."
+      own_removal_refused: "You cannot remove your own membership."
+
+  # The Sections tree and a Section's own details page. The tree itself is the
+  # shared taxonomy partial; these are the words this workspace passes to it.
+  sections:
+    eyebrow: "Story: %{story}"
+    index:
+      title: "Sections"
+      description: "Organize this story into a hierarchy of books, chapters, acts, scenes, or any structure you need."
+      new_label: "Add section"
+      empty_description: "Add a section, then drag rows to create the outline for this story."
+      read_only_empty_description: "This story has no sections to show yet."
+      delete_confirm: "Delete “%{name}”? Its child sections and tag assignments will be removed, and linked scenes will become ungrouped. Their narrative order will not change."
+    show:
+      label: "Section"
+      back_label: "All sections"
+      facts:
+        story: "Story"
+        path: "Section path"
+        tags: "Section tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        description: "Description"
+        description_blank: "No description yet."
+      scenes:
+        title: "Scenes in this section"
+        empty_title: "No scenes in this section"
+        empty_description: "A section only groups scenes; it never sets their order. Scenes assigned to it will be listed here in the order the story is told."
+        position_aria: "Narrative position %{position} of %{total}"
+      related:
+        title: "Related information"
+        empty_title: "Nothing related yet"
+        empty_description: "Anything else worth knowing about this section will be listed here later."
+
+  # The taxonomy workspace at `/u/:universe_slug/tags`. The per-taxonomy copy
+  # lives in `TagsHelper`'s metadata, which stores these keys rather than English
+  # strings so the same helper serves both locales; see
+  # `tag_workspace_config`'s comment.
+  tags:
+    title: "Tags"
+    # One label serves both the scope tab strip and this page's eyebrow.
+    scope:
+      universe: "Universe Tags"
+      story: "Story Tags"
+    no_story:
+      description: "Choose a story before managing its section or scene tags."
+      empty_title: "Select a story"
+      empty_description: "Story tags belong to an individual story. Select a story from the Story menu to continue."
+    types:
+      character:
+        title: "Character tags"
+        description: "Define the optional labels used to organize characters across this universe."
+        empty_description: "Tags are optional. Add one to group characters, or create characters without a tag."
+        read_only_empty_description: "No character tags are defined yet."
+        new_label: "Add character tag"
+      relation:
+        title: "Relation tags"
+        description: "Define the relationship types used when connecting characters in this universe."
+        empty_description: "Tags are optional. Add one to describe character relationships, or leave relations untagged."
+        read_only_empty_description: "No relation tags are defined yet."
+        new_label: "Add relation tag"
+      location:
+        title: "Location tags"
+        description: "Organize the places and regions that make up this universe."
+        empty_description: "Tags are optional. Add one to group locations, or organize them later."
+        read_only_empty_description: "No location tags are defined yet."
+        new_label: "Add location tag"
+      event:
+        title: "Event tags"
+        description: "Classify events so related moments are easier to find across the timeline."
+        empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead."
+        read_only_empty_description: "No event tags are defined yet."
+        new_label: "Add event tag"
+      item:
+        title: "Item tags"
+        description: "Define optional categories for objects and resources in this universe."
+        empty_description: "Tags are optional. Add one to group items, or create untagged items."
+        read_only_empty_description: "No item tags are defined yet."
+        new_label: "Add item tag"
+      ownership:
+        title: "Ownership tags"
+        description: "Describe the kinds of ownership recorded between characters and items."
+        empty_description: "Tags are optional. Add one to classify ownership records, or create them untagged."
+        read_only_empty_description: "No ownership tags are defined yet."
+        new_label: "Add ownership tag"
+      section:
+        title: "Section tags"
+        description: "Define labels such as book, chapter, act, or episode for this story's sections."
+        empty_description: "Tags are optional. Add one to classify sections, or build the section tree without them."
+        read_only_empty_description: "This story has no section tags defined yet."
+        new_label: "Add section tag"
+      scene:
+        title: "Scene tags"
+        description: "Define optional labels for this story's scenes, such as mood, turning point, or story beat."
+        empty_description: "Tags are optional. Add one to classify scenes, or write scenes without a tag."
+        read_only_empty_description: "This story has no scene tags defined yet."
+        new_label: "Add scene tag"
+        delete_confirm: "Delete “%{name}”? Its child tags and assignments will be removed. Scenes will remain."
+
+  # The universe Timeline. Each node's popover is assembled by `TimelineHelper`,
+  # so the labels and the relationship phrases below are read there.
+  timeline:
+    description: "See how events are ordered from dates and explicit before, after, and simultaneous relationships."
+    add_event: "Add event"
+    empty_title: "No events to place on the timeline"
+    empty_writable_description: "Add events with dates or relationships to each other, then return here to see their order."
+    empty_read_only_description: "Events in this universe will appear on the timeline once they have been added."
+    # Shown when an Event has no title of its own. The id is the record's, so it
+    # is interpolated rather than translated.
+    event_placeholder: "Event #%{id}"
+    popover:
+      dates: "Dates:"
+      tag: "Tag:"
+      related: "Related:"
+      before: "before %{event}"
+      after: "after %{event}"
+      simultaneous: "same time as %{event}"
+
   # The top-bar search box. The results page and the scope dropdown's own option
   # labels are translated with the search slice that owns them.
   searches:
@@ -237,6 +515,25 @@ en:
   # not translated: they are colours.
   pwa:
     description: "Build and maintain consistent story universes."
+
+  # The attribute names this slice's own forms and error messages read.
+  #
+  # Rails resolves a form label and the `%{attribute}` in `errors.format` from
+  # `human_attribute_name`, which falls back to a humanized English column name.
+  # Naming them here is what keeps a Spanish form from reading "Name" beside a
+  # Spanish error message. Only the models whose forms this workspace renders are
+  # here; a model is added when the workspace that owns its form is translated.
+  activerecord:
+    attributes:
+      universe:
+        name: "Name"
+        private: "Private"
+      story:
+        name: "Name"
+        description: "Description"
+      universe_membership:
+        email_address: "Email address"
+        access_level: "Access level"
 
   # Refusals and rate limits that are stated rather than answered with a bare
   # status code.

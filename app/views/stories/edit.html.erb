@@ -1,8 +1,10 @@
-<% content_for :title, "Edit #{@story.name}" %>
+<%# The browser tab names the record; the page itself keeps the workspace's
+    "Edit story" title. %>
+<% content_for :title, t("stories.edit_document_title", name: @story.name) %>
 
 <%= render "shared/page_header",
-  title: "Edit story",
+  title: t("stories.edit"),
   eyebrow: @story.name,
-  description: "Update the name and description used for this story." %>
+  description: t("stories.edit_description") %>
 
 <%= render "form", story: @story %>

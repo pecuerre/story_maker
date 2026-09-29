@@ -23,7 +23,7 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to universe_url(Universe.last)
     follow_redirect!
-    assert_select ".alert-success", text: /successfully created/
+    assert_select ".alert-success", text: /#{I18n.t("universes.flash.created")}/
   end
 
   test "should not create universe without a name" do

@@ -5,8 +5,9 @@
 # stored presence link with a role, and the counts the page shows and the counts
 # the mutations change are the same list.
 class SceneItemsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index ]
   include RequiresJsonMutationFormat
+
+  allow_unauthenticated_access only: %i[ index ]
 
   before_action :set_story
   before_action :set_scene

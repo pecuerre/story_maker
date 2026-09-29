@@ -1,8 +1,9 @@
 class LocationTagsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :location_tag
 
   before_action :set_location_tag, only: %i[ show update destroy ]

@@ -1,8 +1,9 @@
 class ItemTagsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :item_tag
 
   before_action :set_item_tag, only: %i[ show update destroy ]

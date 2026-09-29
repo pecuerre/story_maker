@@ -1,5 +1,6 @@
 class TimelineController < ApplicationController
   allow_unauthenticated_access only: :index
+
   def index
     @events = Current.universe.events
       .includes(:event_tags, :before_event, :after_event, :simultaneous_event)

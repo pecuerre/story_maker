@@ -6,8 +6,8 @@ class SectionTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
-  searchable kind: "tag", title: :name, body: :description, route: "section_tag", taxonomy: "Section", scope: :story
 
+  searchable kind: "tag", title: :name, body: :description, route: "section_tag", taxonomy: "Section", scope: :story
   soft_deletes :children
 
   belongs_to :story

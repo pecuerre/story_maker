@@ -6,10 +6,9 @@ class Character < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+
   searchable kind: "character", title: :name, body: :description, route: "character"
-
   invalidates_menu_counts_for :universe
-
   soft_deletes :children, :relations_as_character1, :relations_as_character2, :ownerships, :scene_characters
 
   belongs_to :universe

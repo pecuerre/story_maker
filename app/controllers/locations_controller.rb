@@ -1,7 +1,8 @@
 class LocationsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include MaintainsSiblingPositions
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :location
 
   before_action :set_location, only: %i[ show update destroy ]

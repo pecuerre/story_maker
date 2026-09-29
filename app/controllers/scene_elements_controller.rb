@@ -9,6 +9,7 @@
 class SceneElementsController < ApplicationController
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+
   maintains_flat_positions_for :scene_element
 
   MOVE_DIRECTIONS = %w[ up down ].freeze

@@ -16,6 +16,7 @@ class ApplicationController < ActionController::Base
   before_action :consume_post_sign_in_destination
 
   before_action :set_current_universe
+
   # Authorization must run after the universe is resolved, but before story
   # selection or any controller loads scoped content.
   before_action :authorize_universe_access
@@ -25,6 +26,7 @@ class ApplicationController < ActionController::Base
   rescue_from CanCan::AccessDenied do
     refuse_request(:forbidden)
   end
+
   rescue_from ActiveRecord::RecordNotFound do
     refuse_request(:not_found)
   end

@@ -5,8 +5,9 @@
 # Element — and labels the difference, because a speaker is a participant of the
 # Scene without ever becoming a second stored row.
 class SceneCharactersController < ApplicationController
-  allow_unauthenticated_access only: %i[ index ]
   include RequiresJsonMutationFormat
+
+  allow_unauthenticated_access only: %i[ index ]
 
   before_action :set_story
   before_action :set_scene

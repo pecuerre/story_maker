@@ -6,8 +6,8 @@ class Story < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
-  searchable kind: "story", title: :name, body: :description, route: "story"
 
+  searchable kind: "story", title: :name, body: :description, route: "story"
   soft_deletes :sections, :section_tags, :scene_tags, :scenes
 
   after_destroy_commit :expire_story_menu_counts

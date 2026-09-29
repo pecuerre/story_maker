@@ -1,8 +1,9 @@
 class CharactersController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :character
 
   before_action :set_character, only: %i[ show update destroy ]

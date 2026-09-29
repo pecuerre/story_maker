@@ -5,8 +5,9 @@
 # presence link: nothing is derived from a Location, so there is no second
 # participation source to reconcile here the way the Characters tab has.
 class SceneLocationsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index ]
   include RequiresJsonMutationFormat
+
+  allow_unauthenticated_access only: %i[ index ]
 
   before_action :set_story
   before_action :set_scene

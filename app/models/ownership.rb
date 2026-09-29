@@ -5,8 +5,8 @@ class Ownership < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
-  searchable kind: "ownership", title: :display_string, body: :description, route: "ownership"
 
+  searchable kind: "ownership", title: :display_string, body: :description, route: "ownership"
   invalidates_menu_counts_for :universe
 
   belongs_to :universe

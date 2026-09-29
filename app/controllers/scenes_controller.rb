@@ -1,7 +1,8 @@
 class ScenesController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include MaintainsSiblingPositions
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_flat_positions_for :scene
 
   MOVE_DIRECTIONS = %w[ up down ].freeze

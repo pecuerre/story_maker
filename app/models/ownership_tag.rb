@@ -6,8 +6,8 @@ class OwnershipTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
-  searchable kind: "tag", title: :name, body: :description, route: "ownership_tag", taxonomy: "Ownership"
 
+  searchable kind: "tag", title: :name, body: :description, route: "ownership_tag", taxonomy: "Ownership"
   soft_deletes :children
 
   belongs_to :universe

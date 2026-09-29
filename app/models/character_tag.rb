@@ -6,8 +6,8 @@ class CharacterTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
-  searchable kind: "tag", title: :name, body: :description, route: "character_tag", taxonomy: "Character"
 
+  searchable kind: "tag", title: :name, body: :description, route: "character_tag", taxonomy: "Character"
   soft_deletes :children
 
   belongs_to :universe

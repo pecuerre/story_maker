@@ -5,8 +5,8 @@ class Relation < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
-  searchable kind: "relation", title: :display_string, body: :description, route: "relation"
 
+  searchable kind: "relation", title: :display_string, body: :description, route: "relation"
   invalidates_menu_counts_for :universe
 
   belongs_to :universe
@@ -17,6 +17,7 @@ class Relation < ApplicationRecord
   # Generate before HasSlug so the composite slug can be set on create.
   # Later endpoint or tag changes do not rewrite this creation-time snapshot.
   before_validation :generate_slug, on: :create, prepend: true
+
   validates :character1, :character2, presence: true
   validate :associated_records_belong_to_universe
 

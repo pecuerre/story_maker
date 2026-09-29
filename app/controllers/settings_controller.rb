@@ -11,6 +11,7 @@
 # save, so no JSON mutation contract applies.
 class SettingsController < ApplicationController
   allow_unauthenticated_access
+
   skip_before_action :set_current_universe
   skip_before_action :authorize_universe_access
 

@@ -1,7 +1,8 @@
 class OwnershipTagsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include MaintainsSiblingPositions
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :ownership_tag
 
   before_action :set_ownership_tag, only: %i[ show update destroy ]

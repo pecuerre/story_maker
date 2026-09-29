@@ -1,9 +1,11 @@
 class PasswordsController < ApplicationController
   allow_unauthenticated_access
+
   skip_before_action :set_current_universe
   skip_before_action :authorize_universe_access
   before_action :set_password_reset_security_headers
   before_action :set_user_by_token, only: %i[ edit update ]
+
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_password_path, alert: "Try again later." }
 
   def new

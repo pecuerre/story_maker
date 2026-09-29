@@ -316,6 +316,18 @@ it has a useful destination and clear empty/loading/error states.
     are untouched. Preserve the explicit confirmation guard, validate the named universe, and verify
     the rebuilt development records before reporting success.
 
+27. convert all hardcoded strings like into t(:key) for internationalization. put all texts in locales/en.yml
+
+28. review comments. add comments when needed, remove comments when not needed
+
+29. is is has_many_tagd or has_many_tagged?
+
+30. define a code_style.md?
+
+31. consider moving all scene_* supporting classes to a namespace?
+
+32. review ADR and rewrite or remove any reference to old backlog items because they are removed after completed.
+
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

@@ -1,7 +1,8 @@
 class SectionsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include MaintainsSiblingPositions
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :section
 
   before_action :set_story

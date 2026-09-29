@@ -1,7 +1,9 @@
 class UniversesController < ApplicationController
   include PhotoParams
-  before_action :set_universe, only: %i[ show edit update destroy ]
+
   allow_unauthenticated_access only: %i[ index show ]
+
+  before_action :set_universe, only: %i[ show edit update destroy ]
   skip_before_action :set_current_universe, only: %i[ index ]
   skip_before_action :authorize_universe_access, only: %i[ index ]
 

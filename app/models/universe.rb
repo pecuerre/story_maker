@@ -5,6 +5,7 @@ class Universe < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
+
   # A universe's slug appears in the stored path of every document under it, so a
   # rename makes all of them dead links. This record's own document is re-indexed
   # like any other update; the rest of the universe is one bounded job rather

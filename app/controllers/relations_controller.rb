@@ -1,6 +1,7 @@
 class RelationsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
+
+  allow_unauthenticated_access only: %i[ index show ]
   before_action :set_relation, only: %i[ show update destroy ]
 
   def index

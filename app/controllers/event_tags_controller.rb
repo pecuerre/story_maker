@@ -1,12 +1,12 @@
 class EventTagsController < ApplicationController
-  allow_unauthenticated_access only: %i[ index show ]
   include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
+
+  allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :event_tag
 
-  before_action :set_event_tag,
-    only: %i[ show update destroy ]
+  before_action :set_event_tag, only: %i[ show update destroy ]
 
   # GET /event_tags or /event_tags.json
   def index

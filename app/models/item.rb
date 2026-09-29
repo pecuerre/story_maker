@@ -6,10 +6,9 @@ class Item < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+
   searchable kind: "item", title: :name, body: :description, route: "item"
-
   invalidates_menu_counts_for :universe
-
   soft_deletes :children, :ownerships, :scene_items
 
   belongs_to :universe

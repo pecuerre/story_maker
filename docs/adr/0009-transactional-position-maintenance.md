@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-25
-- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../conventions.md`](../conventions.md)
 
 ## Context
 
@@ -74,5 +74,5 @@ deferred or two-phase reorder strategy.
 
 - [`../architecture.md`](../architecture.md)
 - [`../data_model.md`](../data_model.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../backlog.md`](../backlog.md)

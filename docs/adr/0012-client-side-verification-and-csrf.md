@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-27
 - **Related:** [`../architecture.md`](../architecture.md),
-  [`../universe_maker_conventions.md`](../universe_maker_conventions.md),
+  [`../conventions.md`](../conventions.md),
   [`../development.md`](../development.md),
   [`../known_quirks.md`](../known_quirks.md),
   [0011](0011-modal-json-mutation-contract.md)
@@ -120,7 +120,7 @@ reason to add tooling.
 ## Related documentation
 
 - [`../architecture.md`](../architecture.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../development.md`](../development.md)
 - [`../resolved_quirks.md`](../resolved_quirks.md)
 - [`../known_quirks.md`](../known_quirks.md)

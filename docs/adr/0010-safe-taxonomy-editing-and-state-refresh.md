@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-25
-- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`../architecture.md`](../architecture.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md), [`../backlog.md`](../backlog.md)
+- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`../architecture.md`](../architecture.md), [`../conventions.md`](../conventions.md), [`../backlog.md`](../backlog.md)
 
 ## Context
 
@@ -73,6 +73,6 @@ alternative, not a replacement for the existing visual interaction.
 ## Related documentation
 
 - [`../architecture.md`](../architecture.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../visual_design.md`](../visual_design.md)
 - [`../known_quirks.md`](../known_quirks.md)

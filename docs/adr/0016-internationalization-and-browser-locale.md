@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-29
 - **Related:** [`../architecture.md`](../architecture.md),
-  [`../universe_maker_conventions.md`](../universe_maker_conventions.md),
+  [`../conventions.md`](../conventions.md),
   [`../visual_design.md`](../visual_design.md),
   [0013](0013-platform-settings-and-browser-theme.md),
   [0012](0012-client-side-verification-and-csrf.md)
@@ -43,9 +43,9 @@ cookie, and why author data is excluded — because every later stage repeats th
   `normalize`-on-read contract `AppTheme` uses, so a forged, stale, or
   hand-edited cookie can only ever select a known locale. It is not a `User`
   column and not a universe setting, for the reasons
-  [ADR 0013](0013-platform-settings-and-browser-theme.md) gives for the theme: a
-  reader's language has to work for a guest, before a universe is chosen, on the
-  landing page, and no universe admin may impose one on a collaborator.
+  [ADR 0013](0013-platform-settings-and-browser-theme.md) gives for the theme —
+  a reader's language has to work before a universe is chosen, and no universe
+  admin may impose one on a collaborator.
 - **The server renders the choice.** `ApplicationController#switch_locale` is an
   `around_action` that reads the cookie and sets `I18n.locale` for the request,
   before any action runs, so a redirect's flash is already translated. It is an
@@ -129,12 +129,11 @@ cookie, and why author data is excluded — because every later stage repeats th
 
 ### A `users.locale` column
 
-Rejected for now, for the same reason `users.theme` was: it needs a migration, it
-cannot be used by a guest, and it does not work on the landing page. It remains
-the right answer if a language ever has to follow an account across devices, and
-it is also what would let a queued password reset be written in the reader's own
-language. If it is added, the cookie would take precedence for a signed-out
-reader and the column would be the fallback.
+Rejected for now, for the reasons [ADR 0013](0013-platform-settings-and-browser-theme.md) gives for
+`users.theme`; that ADR records them, so they are not repeated here. What the locale adds to the
+answer is one more reason it becomes right later: it is what would let a queued password reset be
+written in the reader's own language. If the column is ever added, the cookie would take precedence
+for a signed-out reader and the column would be the fallback.
 
 ### Detecting the browser's `Accept-Language` header
 
@@ -166,7 +165,7 @@ string, and a later change to one page diffs against the whole application.
 ## Related documentation
 
 - [`../architecture.md`](../architecture.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../visual_design.md`](../visual_design.md)
 - [`../development.md`](../development.md)
 - [0013](0013-platform-settings-and-browser-theme.md)

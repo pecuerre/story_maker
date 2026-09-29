@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-25
-- **Related:** [`0001-universe-and-story-scope.md`](0001-universe-and-story-scope.md), [`0002-json-crud-with-stimulus-editors.md`](0002-json-crud-with-stimulus-editors.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- **Related:** [`0001-universe-and-story-scope.md`](0001-universe-and-story-scope.md), [`0002-json-crud-with-stimulus-editors.md`](0002-json-crud-with-stimulus-editors.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../conventions.md`](../conventions.md)
 
 ## Context
 
@@ -213,8 +213,7 @@ gained a nullable `deleted_at`: a delete marks the column instead of removing th
 parent cascades to its declared children, and the unique indexes that would otherwise block
 re-creating the same key are partial (`WHERE deleted_at IS NULL`). The `Section` ungrouping and the
 `Event` reference clearing above remain the two exceptions to the cascade. That behavior is
-described in [`../data_model.md`](../data_model.md#soft-delete) and
-[`../architecture.md`](../architecture.md#soft-delete); the confirmation templates below are
+described in [`../data_model.md`](../data_model.md#soft-delete); the confirmation templates below are
 unchanged as the recorded copy.
 
 Destructive controls use these exact templates, substituting the displayed record name:
@@ -412,7 +411,7 @@ unfinished Scene structure is represented by an Element-free or optional-field S
 - [`0002-json-crud-with-stimulus-editors.md`](0002-json-crud-with-stimulus-editors.md)
 - [`../architecture.md`](../architecture.md)
 - [`../data_model.md`](../data_model.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../visual_design.md`](../visual_design.md)
 - [`../development.md`](../development.md)
 - [`../known_quirks.md`](../known_quirks.md)

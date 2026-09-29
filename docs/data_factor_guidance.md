@@ -81,7 +81,7 @@ findings take priority over score-oriented changes. No secret value belongs in t
    database reset without the owner's approval.
 8. **Use the existing project boundaries.** Universe/story scope, authorization, response formats,
    route-key conventions, test helpers, and the three UI patterns in
-   [`universe_maker_conventions.md`](universe_maker_conventions.md) remain authoritative. A quality
+   [`conventions.md`](conventions.md) remain authoritative. A quality
    improvement must not bypass them to make a metric look better.
 
 ## Recommended work packages

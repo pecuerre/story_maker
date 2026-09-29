@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-24
-- **Related:** [`../architecture.md`](../architecture.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- **Related:** [`../architecture.md`](../architecture.md), [`../conventions.md`](../conventions.md)
 
 ## Context
 
@@ -61,5 +61,5 @@ application is already well served by Rails and Hotwire.
 ## Related documentation
 
 - [`../architecture.md`](../architecture.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../development.md`](../development.md)

@@ -6,10 +6,20 @@ a future contributor might otherwise be tempted to reverse a deliberate choice.
 
 The current architecture and conventions are documented in:
 
-- [`../architecture.md`](../architecture.md)
-- [`../data_model.md`](../data_model.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
-- [`../known_quirks.md`](../known_quirks.md)
+- [`../architecture.md`](../architecture.md) — request lifecycle, auth, access policy
+- [`../data_model.md`](../data_model.md) — schema, constraints, validations, slugs, positions
+- [`../conventions.md`](../conventions.md) — cross-cutting code patterns and page shapes
+- [`../features/`](../features/) — one document per feature, each the single home of that
+  feature's rules: [scenes](../features/scenes.md), [tags](../features/tags.md),
+  [search](../features/search.md), [navigation](../features/navigation.md),
+  [photos](../features/photos.md), [events](../features/events.md), [i18n](../features/i18n.md),
+  [settings](../features/settings.md)
+- [`../known_quirks.md`](../known_quirks.md) — verified open findings
+- [`../visual_design.md`](../visual_design.md) — the visual system and painted treatment
+
+An ADR explains **why** a decision was made; the document that owns the subject explains **what the
+current system does**. When the two disagree, the living document is right and the ADR records the
+reasoning as of its date.
 
 ## Current decisions
 

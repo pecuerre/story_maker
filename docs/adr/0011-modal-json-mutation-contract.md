@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-26
-- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`0010`](0010-safe-taxonomy-editing-and-state-refresh.md), [`../architecture.md`](../architecture.md), [`../universe_maker_conventions.md`](../universe_maker_conventions.md), [`../known_quirks.md`](../known_quirks.md)
+- **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`0010`](0010-safe-taxonomy-editing-and-state-refresh.md), [`../architecture.md`](../architecture.md), [`../conventions.md`](../conventions.md), [`../known_quirks.md`](../known_quirks.md)
 
 ## Context
 
@@ -113,7 +113,7 @@ reports what the server decided instead of predicting it.
 ## Related documentation
 
 - [`../architecture.md`](../architecture.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../visual_design.md`](../visual_design.md)
 - [`../resolved_quirks.md`](../resolved_quirks.md)
 - [`0002-json-crud-with-stimulus-editors.md`](0002-json-crud-with-stimulus-editors.md)

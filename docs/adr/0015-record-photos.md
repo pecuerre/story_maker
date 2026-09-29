@@ -4,7 +4,7 @@
 - **Date:** 2026-09-29
 - **Related:** [`../architecture.md`](../architecture.md),
   [`../data_model.md`](../data_model.md),
-  [`../universe_maker_conventions.md`](../universe_maker_conventions.md),
+  [`../conventions.md`](../conventions.md),
   [`../development.md`](../development.md),
   [0001](0001-universe-and-story-scope.md),
   [0002](0002-json-crud-with-stimulus-editors.md),
@@ -149,10 +149,10 @@ a validation on eighteen models, and a change to every existing record and fixtu
 
 ## Related documentation
 
-- [`../architecture.md`](../architecture.md#photos)
+- [`../features/photos.md`](../features/photos.md)
 - [`../data_model.md`](../data_model.md#photos)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
-- [`../development.md`](../development.md#photos)
+- [`../conventions.md`](../conventions.md)
+- [`../development.md`](../development.md#testing-record-photos)
 - [`../db/data/README.md`](../../db/data/README.md)
 - [0001](0001-universe-and-story-scope.md)
 - [0002](0002-json-crud-with-stimulus-editors.md)

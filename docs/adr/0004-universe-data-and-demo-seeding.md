@@ -95,5 +95,5 @@ be treated as production bootstrap data.
 - [`0003-disposable-schema-and-seed-data.md`](0003-disposable-schema-and-seed-data.md)
 - [`../development.md`](../development.md)
 - [`../data_model.md`](../data_model.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../known_quirks.md`](../known_quirks.md)

@@ -196,7 +196,7 @@ it has a useful destination and clear empty/loading/error states.
       for the record header, then message thread + reply form. Add "Discuss" link on every record's
       details page. Tests: request tests, system test.
     - **Slice 1.4:** Message timestamps, author names, empty state copy. Update
-      `docs/universe_maker_conventions.md` with the discussion page pattern. Update changelog.
+      `docs/conventions.md` with the discussion page pattern. Update changelog.
 
 21. **Collaboration system — Phase 2: Draft system (core data model + interception)**
 

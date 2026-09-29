@@ -34,4 +34,4 @@ Why it was not selected.
 
 - [`../architecture.md`](../architecture.md)
 - [`../data_model.md`](../data_model.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)

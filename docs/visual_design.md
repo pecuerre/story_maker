@@ -88,11 +88,10 @@ first paint is already correct and no script is involved.
 
 The **Language** choice sits beside it on the same settings page and is the same kind of preference: a
 per-browser cookie, chosen on `/settings?section=language`, applied by the layout writing `<html lang>`.
-The two preferences are independent — changing one never changes the other — and a change to either
-loads the whole document rather than navigating with Turbo, so the root attributes and the rendered
-copy change together
-([ADR 0016](adr/0016-internationalization-and-browser-locale.md)). A language option is labelled in its
-own language, so a reader who cannot read the current one can still find theirs.
+The two preferences are independent, and a change to either loads the whole document rather than
+navigating with Turbo, so the root attributes and the rendered copy change together. The cookies, the
+`around_action`, the page, and why the navigation is a full load are in
+[features/settings.md](features/settings.md).
 
 Bootstrap flips its own variables; the `--um-*` tokens above are ours, so each one that carries a
 light-only value is re-tinted in the `[data-bs-theme="dark"]` block of
@@ -165,84 +164,62 @@ heading uppercase.
 4. a responsive right utility navigation;
 5. a skip link and one shared floating toast region for flash messages.
 
-The navbar is intentionally small: three links, one search box, and the account menu.
+The navbar is intentionally small: three links, one search box, and the account menu. **What each
+entry contains and links to is in [features/navigation.md](features/navigation.md)** — read that for
+the entries; this is only the shell.
 
-- `Universe Maker` is the brand and the **landing page** — the universes list, which is also where a
-  universe is created;
-- `Universe: <name>` links to the current universe page;
-- `Story: <name>` links to the current story page and exists only while a story is current;
-- **Search** is one field with a scope dropdown inside it (see below);
-- `Account` is the top bar's only action, a dropdown for every visitor: a signed-in reader sees their
-  email, **Settings**, and **Log out**; a guest sees **Log in** and **Settings**.
-
-There is no universe or story switcher in the top bar: changing universes happens on the landing
-page, and changing or creating stories happens on the universe page, which lists the universe's
-stories. A scope link is marked current with `.active` **and** `aria-current="page"` only on the
-page it points at, so the bar never claims a scope that is not the page being viewed. The account
-menu is the navbar's only Bootstrap dropdown, and the top bar issues no query of its own — the search
-box renders from what the page already knows and asks the engine only for what a reader types.
+A scope link is marked current with `.active` **and** `aria-current="page"` only on the page it points
+at, so the bar never claims a scope that is not the page being viewed. The account menu is the
+navbar's only Bootstrap dropdown, and the top bar issues no query of its own — the search box renders
+from what the page already knows and asks the engine only for what a reader types.
 
 ### Search
 
+The painted treatment only. The behaviour, the rules, and the reasons behind each decision are in
+[features/search.md](features/search.md) — read that for *why*; this section is what it looks like.
+
 The box reads as one control: a rounded field with a search icon, the text input, and the scope
-dropdown as a compact select divided off by a hairline at the field's trailing edge. The dropdown wears
-**no surface of its own** — its background is the field's own color, so the two are one surface with no
-seam, and no border except that hairline; the field's trailing curve carries the hover, instead of a
-square panel inside the pill. Its chevron is the bar's, not Bootstrap's, because Bootstrap's is a
-per-theme literal and the bar is always dark. It sits between the scope links and the actions and grows
-into the space they leave, up to 30rem; the actions keep their own row and never wrap under it.
+dropdown as a compact select divided off by a hairline at the field's trailing edge. The dropdown
+wears **no surface of its own** — its background is the field's own color, so the two are one
+surface with no seam, and no border except that hairline; the field's trailing curve carries the
+hover, instead of a square panel inside the pill. Its chevron is the bar's, not Bootstrap's, because
+Bootstrap's is a per-theme literal and the bar is always dark. It sits between the scope links and
+the actions and grows into the space they leave, up to 30rem; the actions keep their own row and
+never wrap under it.
 
-The same dropdown is rendered on the search results page, and that copy is the **ordinary**
-theme-aware form control: the caller states which surface it sits on, so the bar's dark treatment never
-reaches a page that follows the theme.
-
-The field's color and the scope's are **opaque**, and the field declares `color-scheme: dark`. Both are
-for the same reason: the scope's **open** option list and the input's own clear button are painted by the
-browser, not by this stylesheet. The browser takes the list's panel color from the element's own
-background and the rest of its palette from the used color scheme, so a `transparent` background — or a
-translucent one, which is the state the control is in when the list opens — leaves the bar's near-white
-options on a light panel. The opaque colors are the white overlay composited onto the bar's own color in
-Sass, because CSS cannot resolve an overlay onto the surface beneath it. What the browser still owns —
-the list's exact panel color and its highlighted row — is the browser's choice; a dropdown styled in
+The field's and the scope's colors are **opaque**, and the field declares `color-scheme: dark`,
+because the browser — not this stylesheet — paints the scope's open option list and the input's
+clear button, and takes the list's panel color from the element's own background. The opaque values
+are the white overlay composited onto the bar's color in Sass, because CSS cannot resolve an overlay
+onto the surface beneath it. What the browser still owns is left to the browser: a dropdown styled in
 every detail would be a custom listbox, which would cost the plain GET form that works without
 scripting.
 
 The navbar is dark in both themes, so the box's colors are declared once and are **not** re-tinted by
 `data-bs-theme` — a widget that changed palette with the page theme inside an always-dark bar would
 look borrowed from the page it sits above. The results panel is a raised dark surface with a shadow,
-scrolled to 24rem, and it is painted above the actions to its right.
+scrolled to 24rem, and painted above the actions to its right.
 
 The panel is one listbox holding two labelled groups — **Go to** for navigation destinations and
 **Results** for records — separated by a hairline, with an uppercase group heading and a kind badge
 (`Character`, `Scene element`, `Character tag`) on every row, the record's context underneath, and a
-one-line excerpt. **Both kinds of row wear the same row treatment**, because the panel, not the page, is
-what paints them: the row is a block with the bar's near-white text, the same padding, the same radius,
-and the same hover and keyboard-cursor tint. The controller names a row `navbar-search-#{kind}`, so a
-kind the stylesheet does not name keeps whatever the *page* paints an anchor with — the theme's link
-blue on the bar's near-black, 2.6:1 and unreadable, in a row with no padding and no cursor. The
-matched run in a title is `<mark>`ed wherever the title is — a destination title that matches wears the
-same amber as a record title, in the full-strength amber with the app's own dark on top of it. A
-highlight has to be *more* legible than the line it sits in, so the fill and the text are both opaque: a
-translucent amber over the panel's near-black resolves to a brown the run is harder to read on than the
-near-white beside it, and it would also pick up the row's hover tint from beneath it, moving the one run
-the reader is tracking. Left to Bootstrap's own `mark`, the same run in a "Go to" row came out in a
-white box carrying the theme's link color — a second highlight saying something different about the same
-match. `test/system/search_test.rb` measures the resolved colors in a browser and holds **every** option
-in the list to AA — the worst row in the list, whichever kind it is — to one shared highlight fill, and
-to a keyboard cursor that is visible on it. A panel with nothing to show says so
-in muted text: "No matches for …" or "Search is not available." **See all results** appears only when
-there is an answer to open, and is the panel's **footer**: the dropdown and the link are one box with one
-surface, the list scrolls inside a 24rem cap, and the link sits in flow beneath the results, divided from
-them by a hairline. It is in flow on purpose. Anything positioned against the form resolves against a form
-no taller than the field, because the results are out of flow — so a link positioned on its own lands on
-the bottom edge of the *field*, across the text being typed and the caret with it.
-`test/system/search_test.rb` measures both boxes in a browser and fails if the link starts above either
-one's bottom edge.
+one-line excerpt. **Both kinds of row wear the same row treatment**, because the panel, not the page,
+paints them: the bar's near-white text, the same padding, the same radius, the same hover and
+keyboard-cursor tint. The matched run in a title is `<mark>`ed wherever the title is, in the
+full-strength amber with the app's own dark on top of it. A panel with nothing to show says so in
+muted text: "No matches for …" or "Search is not available."
 
-On the results page the same content uses the ordinary theme-aware surfaces: a `content-surface` form
-block, an uppercase group heading in the secondary color, kind badges and titles in a row, and
-`Previous` / `Next` with a `Page N` position. A truncated list always says "Showing 12 of 40 matches"
-— a short list that looks complete is how a reader concludes a universe is smaller than it is.
+**See all results** appears only when there is an answer to open, and is the panel's **footer**:
+the dropdown and the link are one box with one surface, the list scrolls inside a 24rem cap, and
+the link sits in flow beneath the results, divided from them by a hairline.
+
+The same dropdown is rendered on the search results page, and that copy is the **ordinary**
+theme-aware form control: the caller states which surface it sits on, so the bar's dark treatment
+never reaches a page that follows the theme. On the results page the content uses the ordinary
+theme-aware surfaces: a `content-surface` form block, an uppercase group heading in the secondary
+color, kind badges and titles in a row, and `Previous` / `Next` with a `Page N` position. A
+truncated list always says "Showing 12 of 40 matches" — a short list that looks complete is how a
+reader concludes a universe is smaller than it is.
 
 The navbar does not render placeholder links. The right utility sidebar is the one intentional
 exception: its `aria-disabled` entries reserve space for future Collaboration, Analytics, and AI
@@ -267,80 +244,28 @@ shell classes and let the main region grow.
 
 ## Navigation and information architecture
 
-The left navigation is task-oriented and scope-aware. It is one continuous surface read as two
-scoped blocks, and each block is a **context header** followed by the **section** it introduces, so
-the reader can always tell which scope a link belongs to:
+The painted system for navigation is here; **what the navigation contains** is in
+[features/navigation.md](features/navigation.md), which owns the entry lists, the two-step
+universe-then-story selection, the Configuration placement rule, and the honest-placeholder rules.
+Do not restate an entry list here — add the row to the feature document instead.
 
-1. **Current universe** context — universe name.
-2. **Universe Bible** — Characters, Locations, Events, Timeline, Items.
-3. **Current story** context — story name, or an explicit
-   **None selected** state.
-4. **Story workspace** — Story overview, Sections, Scenes (or All stories plus a prompt).
-
-Configuration is not in this column: it belongs to the right utility sidebar, so the left column
-carries universe and story content only.
-
-### Universe Bible
-
-The Bible is a direct record list without People/Places/Time/Objects group labels:
-
-- Characters;
-- Locations;
-- Events;
-- Timeline;
-- Items.
-
-Characters open a two-tab **Characters / Relations** workspace, and Items open a two-tab **Items /
-Ownerships** workspace. Locations, Events, and Sections each have a single record tab. These tabs
-are URL-backed navigation, not in-document tab panes, so each page keeps its canonical URL and
-mutation flow.
-
-### Configuration
-
-Configuration is the first section of the right utility sidebar. **Tags** opens the shared taxonomy
-workspace: **Universe Tags** is selected by default and contains Character, Relation, Location,
-Event, Item, and Ownership tag tabs; **Story Tags** contains separate story-scoped Section tags and
-Scene tags tabs. The same section holds **Members** for universe admins, where the read/write/admin
-access list is managed, and the entry itself is always rendered so **Tags** stays available to a
-guest or read-only member. Configuration is about **the universe**: a new *universe* configuration
-tool belongs here, grouped by scope when needed, while a platform preference belongs in the top
-bar's **Settings** entry.
-
-### Settings
-
-**Settings** is a platform page, not universe content, so it is reached from the top bar's account
-menu and is rendered for every visitor including a guest. It has no workspace shell, which is
-why the page reads as one column with a lot of quiet space to the right of a single tab. A **Go back**
-action in the page header returns the reader to the page the settings page was opened from.
-
-The page is a **vertical** tab strip beside its panel: a 12rem navigation column at `md` and above,
-stacked above the panel below it, so a narrow window never squeezes the panel. Tabs are URL-backed
-links with the active class and `aria-current="page"` — no `data-bs-toggle`, no in-document panes. The
-active tab wears the same soft primary as the horizontal content tabs.
-
-**Appearance** is the first tab. Its only control is **Theme**: a radio group of two labelled cards,
-**Light** and **Dark**, each with a swatch of that theme's page color, and a **Save theme** button.
-The card is the option's `<label>`, so the chosen state is a border and background change on the
-label, a filled radio for the non-color signal, and the checked attribute for assistive technology.
-The page says plainly that the choice is remembered in this browser and that no universe admin can
-change it for someone else, because that is the whole scope of the setting.
-
-Counts use aligned `.sidebar-count` pills, and a list row's own count uses the identical
-`.record-count` pill. Current links use a soft primary background and
-`aria-current="page"`; color is not the only state signal. **Scenes** is a real link with its own
-count while a story is selected and an `aria-disabled` placeholder otherwise; the right-sidebar
-entries are the intentional placeholders for future functionality and are rendered in the flat
-disabled gray so they never look like something to click.
-
-### Right utility sidebar
-
-The right sidebar is the tools scope, so it is one continuous surface: a green **Universe tools**
-context block, then the **Configuration** section with **Tags** and the universe **Members** access
-manager for admins, then **Collaboration**, **Analytics**, and **AI** placeholders. Its green hue is
-the same `--um-scope-tools` pair the section headers use, so the block reads like the two left-hand
-scopes. Keeping Configuration and the access manager here leaves the left column purely about
-universe and story content while preserving a stable home for richer collaboration and analysis
-features without adding fake routes.
+- The left navigation is task-oriented and scope-aware, and is one continuous surface read as two
+  scoped blocks. Each block is a **context header** followed by the section it introduces, so the
+  reader can always tell which scope a link belongs to.
+- Configuration is not in the left column; it belongs to the right utility sidebar, so the left
+  column carries universe and story content only.
+- At `lg` and above the left column is a 16rem sticky column; below `lg` it becomes a Bootstrap
+  `offcanvas-start` with a compact **Menu** button. At `xl` and above the right column is a 14rem
+  sticky column; below `xl` it becomes an `offcanvas-end` opened by a **Tools** button. The
+  **Menu** button appears only below `lg`, when the left panel also needs a trigger. The main column
+  must have `min-width: 0`, and sticky offsets stay aligned with the fixed navbar height.
+- Real entries show `icon_text_count` as aligned `.sidebar-count` pills, and a list row's own count
+  uses the identical `.record-count` pill. Current links use a soft primary background and
+  `aria-current="page"`, so color is never the only state signal. Placeholder navigation is rendered
+  in the flat disabled gray with no hover emphasis.
+- The **Settings** page is a platform page, not universe content, so it is reached from the top bar's
+  account menu, is rendered for every visitor including a guest, and has no workspace shell. Its
+  content and its vertical tab strip are in [features/settings.md](features/settings.md).
 
 ## Shared view patterns
 
@@ -363,27 +288,14 @@ Use `shared/_empty_state` for no records. It must explain what the record belong
 useful. Tags remain optional in every empty-state message. Do not imply that a default tag is
 required.
 
-### List rows
+### Row and count treatment
 
-Every list row in the application — Characters, Relations, Locations, Events, Items, Ownerships,
-Sections, every tag tree, and Scenes — has the same shape, so a row means the same thing wherever
-it appears:
-
-- **left**: the record's name as plain text, followed by its tag badges and, where a count exists
-  (a tag, a Section), a `.record-count` pill that names what it counts — `(4 characters)`,
-  `(3 scenes)` — next to the name it belongs to;
-- **right**: the **Details** link into the record's own page, then the overflow action menu.
-
-Both parts of the right-hand group are always visible at every access level. Nothing on a row
-depends on hover, so a list reads the same with a pointer, a keyboard, on touch, and at a narrow
-width, and a read-only member sees the same right edge as a writer. The name is never a link: the
-Details link is the single, predictable way into a record, which is why it repeats the record name in
-its accessible name.
-
-A count is a quiet pill, never part of a link label. Keeping it out of the Details label leaves that
-label short in a long list and puts the number where it can be compared across rows. It always says
-what it counts — a bare figure beside a name is ambiguous once a list has more than a few rows — and
-because the label is visible text, the pill is its own accessible name.
+The row shape — plain-text name on the left with its badges and count pill, the Details link and the
+overflow menu on the right, and the rule that nothing on a row depends on hover — is defined once, in
+[conventions.md](conventions.md#list-rows). Read that for the contract. This section is the painted
+treatment: the `.record-count` pill is styled like the sidebar's `.sidebar-count` pills so a row's
+count and a sidebar's count read as the same quiet object, and a destructive action in a row's overflow
+menu is marked by text or icon rather than by a permanently red button.
 
 ### Flat entity lists
 
@@ -435,63 +347,37 @@ strip is the same pattern turned vertical (`nav nav-tabs flex-column`). All tabs
 Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not add
 `data-bs-toggle="tab"` because each destination is a separate request.
 
-### Record details pages
+### Details-page treatment
 
-Every record has exactly one details page, and every list row and taxonomy node links to it. Build
-the page from `shared/_record_details` plus `shared/_detail_section`, so the shape stays the same as
-more information is added to it:
-
-- the shared page header, with the record's name as the title and a link back to the list it was
-  opened from;
-- an identity card: the record type, then a `.detail-facts` grid of labelled values. A value that is
-  not set renders explicit copy instead of an empty cell;
-- one or more related-records sections, each with a count badge and an empty state when there is
-  nothing to list yet. The empty copy states what will appear later and must not tell a guest or a
-  read-only member to add records.
-
-`shared/_record_details` accepts an optional block rendered between the page header and the identity
-card. Give it the page's workspace tab strip when a related workspace stays open on a details page:
-the tab strip is navigation, so it belongs with the header above the content, and this keeps such a
-page the same shape as the workspace page it was reached from. Do not use the block for content — a
-fact belongs in `facts` and a record list belongs in a `shared/_detail_section`.
-
-A details page renders no mutation control, so read-only members and public guests see exactly the
-same page. A tag's page lists the records carrying it; a Section's page lists the scenes grouped
-under it, each still showing its narrative position.
+The details page's contract — four shared partials, read-only, guest-readable, one per record — is in
+[conventions.md](conventions.md#record-details-pages). The painted treatment: the identity card with
+the record type, then a `.detail-facts` grid of labelled values where an unset value renders explicit
+copy instead of an empty cell, then one or more related-records sections, each with a count badge and
+its own empty state. The empty copy states what will appear later and must not tell a guest or a
+read-only member to add records. The identity card's two-column layout when a record has a photo is
+in [conventions.md](conventions.md#record-details-pages).
 
 ### Taxonomy trees and other hierarchy pages
 
-Use `shared/_taxonomy_tree` and `shared/_taxonomy_node` for tag indexes, Sections, and Locations.
-The shared tree provides:
+The taxonomy system's rules — the DSL, the mandatory scope, the tree's row and menu contract, the
+`taggable` and `show_in_menu` flags, and the DOM-built editor — are in
+[features/tags.md](features/tags.md). The painted shape of the tree:
 
-- a page header with explicit `title`, count, description, and human-readable add label;
-- optional URL-backed workspace tabs via `tabs` and `tabs_aria_label` locals;
-- a consistent empty state;
-- a native rename button with inline rename for users with write access. The button is sized to its
-  own text, so only hovering or focusing the name starts a rename — clicking the rest of the row
-  does nothing;
-- a `.record-count` pill next to the name and its tags, naming the number of records that page will
-  list (`(4 characters)`, `(3 scenes)`), and a **Details** link on the right that is visible at every
-  access level;
-- one neutral overflow menu per row holding Add child, Insert before, Insert after, Move up, Move
-  down, Edit, and Delete. Move up/down are disabled menu items at the sequence boundaries; the row
-  itself carries no add or arrow buttons, and drag handles remain an optional enhancement;
-- successful mutations refresh the same URL so counts and serialized parent/tag options are never
-  stale; dynamic names and option labels are rendered as text, not HTML.
-
-The row's right-hand group (Details + menu) is never a hover affordance. A hover-revealed control is
-not usable on touch and is invisible to a keyboard user scanning a long list, so both are always
-rendered and the row is the same shape as a flat list row.
-
-The first insert target of the tree needs room for its 44px button, so the root list keeps top
-padding; otherwise the button would hang over the hint paragraph above it.
-
-The add action must be human-readable (`Add relation tag`), never generated directly from a
-model parameter (`Add Relation_tag`). The tree Stimulus controller owns the inline add form and
-must keep the empty-state removal, hierarchy indentation, and keyboard/focus behavior in sync with
-the rendered node partial. It must not grow a second JavaScript copy of the row: a successful
-create always refreshes the same URL, so only the rename button is ever built in JavaScript, and
-that button's content is rebuilt from the node's data attributes when a rename is cancelled.
+- `shared/_taxonomy_tree` and `shared/_taxonomy_node` render tag indexes, Sections, and Locations
+  with a page header carrying an explicit `title`, count, description, and a human-readable add
+  label, optional URL-backed workspace tabs, and a consistent empty state.
+- The name carries a native rename button for users with write access, sized to its own text so only
+  hovering or focusing the name starts a rename; clicking the rest of the row does nothing.
+- A `.record-count` pill sits next to the name and its tags, naming the number of records that page
+  will list (`(4 characters)`, `(3 scenes)`), with a **Details** link on the right that is visible at
+  every access level. The row carries the single neutral overflow menu, whose items and boundary
+  behavior are in [features/tags.md](features/tags.md); the row itself has no add or arrow buttons,
+  and drag handles remain an optional enhancement.
+- The row's right-hand group (Details + menu) is never a hover affordance: a hover-revealed control is
+  not usable on touch and is invisible to a keyboard user scanning a long list, so the row is the same
+  shape as a flat list row.
+- The first insert target of the tree needs room for its 44px button, so the root list keeps top
+  padding; otherwise the button would hang over the hint paragraph above it.
 
 ### Full-page forms
 
@@ -505,138 +391,44 @@ Universes, Stories, and universe membership management use the existing form pat
 Do not replace these with a modal: full-page forms remain appropriate for objects with a stable
 URL and meaningful navigation.
 
-### Scene workspace (core, references, grouping, tags, Elements, presence, and appearances shipped)
+### Scene workspace
 
-The accepted [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines a calm, explicit
-Scene workspace. The **Scenes** sidebar entry is a real story-scoped link with its own count while a
-story is selected, and remains an `aria-disabled` placeholder with no story.
+The Scene pages' content, behaviour, and rules are in [features/scenes.md](features/scenes.md).
+The painted shape:
 
-The global Scenes page is a flat list in narrative order, not a Section-grouped tree. It uses the
-shared page header, content surface, entity rows, and empty state. Rows show:
-
-- the 1-based narrative position as a bordered pill with an
-  `aria-label="Narrative position N of M"`, where both numbers come from the whole sequence;
-- the required Title as plain text and a clamped description preview, like every other list;
-- a bordered grouping badge showing the Scene's full nested Section path, or **Ungrouped** with an
-  open-folder icon. The `title` states that grouping does not change the narrative order;
-- optional Scene Tag badges using the taxonomy colors, with untagged Scenes remaining valid;
-- two small bordered count pills: the Scene's **Element** count and how many **Characters take part**
-  in it. A derived speaker counts once, so the figure is the union the Characters tab shows, never
-  the sum of the two sources;
-- a right-hand group with the **Details** link into Scene Details for every access level, followed by
-  the writer-only Move up/Move down controls and the Edit/Delete menu, with a clear disabled state at
+- The global Scenes page is a flat list in narrative order, not a Section-grouped tree, using the
+  shared page header, content surface, entity rows, and empty state. The 1-based narrative position
+  is a bordered pill with an `aria-label="Narrative position N of M"`, where both numbers come from
+  the whole sequence; the grouping badge shows the Scene's full nested Section path, or **Ungrouped**
+  with an open-folder icon and a `title` stating that grouping does not change the narrative order;
+  optional Scene Tag badges use the taxonomy colors, and untagged Scenes remain valid.
+- Rows show two small bordered count pills — the Scene's **Element** count and how many **Characters
+  take part** — then a right-hand group with the **Details** link for every access level, the
+  writer-only Move up/Move down controls, and the Edit/Delete menu with a clear disabled state at
   the sequence boundaries.
-
-The three Scene workspace tabs — **Characters**, **Items**, and **Locations** — share one row shape:
-the linked record's name as plain text, a bordered **Linked** badge, and `Role: …` with **No role
-recorded** when the author recorded the fact without annotating it. Writers get the same
-**Edit**/**Remove** dropdown as every other JSON-only row, and the details link renders for every
-access level. The Characters tab is the exception to the badge, because it has a second source: a
-Character who only speaks carries **Speaks in N element(s)** instead of **Linked** and has no
-dropdown, because there is no stored row to act on.
-
-The Locations tab is the only one of the three whose rows are hierarchical, so its title is the full
-ancestor path (`Winden / Nielsen House / Martha Room`) and its picker is depth-indented in
-root-first order. Two places called "Room" are never ambiguous there.
-
-A shared universe record's details page ends with an **Appears in scenes of &lt;Story&gt;** section:
-the same entity rows, prefixed with the same 1-based narrative-position pill, so the order the Story
-is told in is visible from a record that knows nothing about that order. Its reason badges
-(**Linked**, **Speaks in N element(s)**, **Depicted**) are listed, never collapsed. The section is
-read-only navigation, so it carries no mutation control for any access level. Without a current
-Story it renders the shared empty state with a link to the story list, because a Scene has no
-Universe-level URL to point at.
-
-The global Scenes list keeps the two count pills it already had. Item and Location counts are
-deliberately absent: they would need one extra grouped query each per page, and the three workspace
-tabs are the place that detail belongs. Do not render placeholder counts for them.
-
-A Story can hold hundreds or thousands of Scenes, so the list is preceded by a **Find scenes**
-surface (`scenes/_filter`): a full-width `search` field, a **Section** select, a **Scene Tag**
-select, two `date` fields labelled **In-world from** and **In-world to**, a **Filter scenes**
-submit, and a **Clear filters** link that appears only while a filter is in effect. The fields fold
-into one column below the `sm` breakpoint with the two date fields side by side, and the area never
-depends on hover or a wide viewport. One sentence states the two rules an author needs: filtering
-does not change the narrative order, and a Scene without an in-world time is not in a date range.
-Every access level sees it, because filtering is reading.
-
-While a filter is active the surface adds `Showing N scenes of M scenes.` followed by the active
-filters as neutral badges, so a result set is never ambiguous. A filter that matches nothing gets
-its own empty state — **No scenes match these filters**, the story's total, the same filter badges,
-and a **Clear filters** action — which is never reused for a Story that has no Scenes
-(**No scenes yet**).
-
-The page's primary **Add scene** action opens the stable new Scene form. The page header states
-that the order is the order the story is told, not in-world chronology, and that a section group
-only organizes a scene. Move controls are real forms, so they work with a keyboard and on touch, and
-the action group wraps below the title at narrow widths instead of hiding it or relying on hover.
-
-Scene Details (`/scenes/:id`) is the canonical, inspectable page: the Title, narrative position,
-short description, Section group, Scene Tag badges, linked Event, in-world time, and story context
-render for every access level, and only writers get the **Edit scene** action. `/scenes/:id/edit` is
-the full-page editor form and `new` reuses the same partial, so the Title/Description/Section/Event/
-time/Scene Tag fields exist in exactly one place. The Details page labels narrative position and
-in-world time separately and says explicitly that the two values are independent and that a
-disagreement between them is not detected. Scene Tags are optional; an empty tag state remains
-valid and never receives a default.
-
-The editor's **Scene Details / Characters / Items / Locations** shell is a URL-backed
-`shared/_content_tabs` nav. **Scene Details** and **Characters** are live links; **Items** and
-**Locations** are `aria-disabled` placeholders with an explanatory `title` until their slices add a
-destination. A tab is never a link to a route that does not exist.
-
-The Scene form groups its fields: **Scene tags** holds the optional native multi-select with
-root-first tag paths, **Organization** holds the Section selector (with **Ungrouped** and
-depth-indented Section names), and **In-world time** holds the Event selector (with **None**) and
-the `datetime-local` field. Each field has copy that states what it does *not* do — grouping never
-changes the narrative position, Scene Tags do not change order, and the event link and the in-world
-time never write or clear each other.
-
-The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** surface below it: only
-the Scenes that belong to no Section, headed by a badge that says how many that is
-("3 ungrouped scenes") because a bare figure next to the story's own Scene count is ambiguous, each
-row showing its narrative position and Title
-in canonical order, and a line saying how many Scenes are grouped and that they are listed on their
-own Section's page. A grouped Scene is therefore never shown twice: the tree's **Details** link is
-the way in. When nothing is ungrouped the surface says so instead of showing an empty list. A long
-Section name wraps instead of pushing the layout. Writers also get one selector-driven move form
-(**Ungrouped scene** → group, offering **Ungrouped** plus every Section path) with a
-real submit button; it offers only the ungrouped Scenes the surface above lists, because the form
-belongs to that block — a grouped Scene is regrouped from its own Section's page, where the editor
-carries the Section selector. Drag-and-drop is not offered, so the move always works by keyboard and
-on touch.
-Read-only members and guests see the same surface with no controls and no instruction to add scenes.
-
-Narration and Dialogue Elements use one Bootstrap modal and the shared modal contract, not a second
-editor: the form has an **Element type** selector, a required
-**Title**, optional plain-text **Content**, and a multi-speaker **Speakers** picker shown only for
-Dialogue. A one-line hint under the type selector states what each kind is, and the same line changes
-with the selection. Narration has no speaker control; switching a Dialogue that has speakers to
-Narration reveals a single **Remove the speakers and make this narration** confirmation rather than
-dropping them silently. Error summaries stay in the modal with the entered
-values; a failed request does not close it. The Element list renders on Scene Details, below the
-Scene's own facts, as a `detail-section` with its own count badge and an **Add element** action. Rows
-show a 1-based position in this Scene's sequence, the kind, the content (or an explicit "No content
-yet. A title is all an element needs."), a Dialogue's speakers with the sentence that says the link
-records who is in the conversation and not which line belongs to whom, and accessible Move up/Move
-down controls plus the Edit/Delete menu for writers. An empty Element list gets its own empty state:
-a Scene may hold any number of Elements, including none.
-
-The **Characters** tab (`/scenes/:id/characters`) is a real read page. Rows are one per Character
-in the union of the two participation sources, ordered by name, each with a neutral **Participant**
-badge for a stored link, a **Speaks in N element(s)** badge for a Dialogue speaker, the role (or
-**No role recorded**), and a line naming the Elements a speaker speaks in. A Character who is both
-carries both badges on one row. Only a stored link offers the Edit/Delete menu, because a derived
-speaker has no row of its own to act on; the row still links to the Character's own details page for
-every access level. Writers also get **Add character**; the picker offers every Universe Character
-and says plainly that a duplicate is reported in the window, because Characters are shared by every
-Story in the Universe. Read-only members and guests see the same list with no controls and a
-non-instructional empty state.
-
-The Scene/Story/Section/Event/shared-record destructive copy from ADR 0007 is mandatory. Do not
-replace the consequences with only “Delete {record}?” merely to save space. Scene, Story, and
-Event rows and the Section tree already use the full templates, and they must keep that wording as
-later dependents are added.
+- The three Scene workspace tabs share one row shape: the linked record's name as plain text, a
+  bordered **Linked** badge, and `Role: …` with **No role recorded**. The Characters tab is the
+  exception, because it has a second source: a Character who only speaks carries **Speaks in N
+  element(s)** instead of **Linked** and has no dropdown.
+- The Locations tab is the only one whose rows are hierarchical, so its title is the full ancestor
+  path (`Winden / Nielsen House / Martha Room`) and its picker is depth-indented in root-first order.
+- **Appears in scenes of &lt;Story&gt;** reuses the same entity rows, prefixed with the same 1-based
+  narrative-position pill, with its reason badges (**Linked**, **Speaks in N element(s)**,
+  **Depicted**) listed and never collapsed.
+- The **Find scenes** filter surface (`scenes/_filter`) is a full-width `search` field, a **Section**
+  select, a **Scene Tag** select, two `date` fields labelled **In-world from** and **In-world to**, a
+  **Filter scenes** submit, and a **Clear filters** link that appears only while a filter is in
+  effect. The fields fold into one column below `sm` with the two date fields side by side. One
+  sentence states the two rules an author needs: filtering does not change the narrative order, and a
+  Scene without an in-world time is not in a date range. Every access level sees it, because
+  filtering is reading. While a filter is active the surface adds `Showing N scenes of M scenes.`
+  followed by the active filters as neutral badges.
+- Narration and Dialogue Elements use one Bootstrap modal and the shared modal contract, not a second
+  editor. A one-line hint under the type selector states what each kind is, and the same line changes
+  with the selection. An empty Element list gets its own empty state, because a Scene may hold any
+  number of Elements, including none.
+- A long Section name wraps instead of pushing the layout, and the action group wraps below the title
+  at narrow widths instead of hiding it or relying on hover.
 
 ## Accessibility and interaction
 

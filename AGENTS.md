@@ -21,19 +21,44 @@ Stack:
 
 ## Read before changing code
 
-Read the relevant documents before making a non-trivial change:
+The documentation is a **lookup index, not a book**. It is far too long to read end to end, and
+nobody does; a change is prepared by reading the one or two documents that own the subject. Look up
+the subject and read its owner:
 
-1. [`docs/architecture.md`](docs/architecture.md)
-2. [`docs/data_model.md`](docs/data_model.md)
-3. [`docs/universe_maker_conventions.md`](docs/universe_maker_conventions.md)
-4. [`docs/known_quirks.md`](docs/known_quirks.md)
-5. [`docs/development.md`](docs/development.md) for setup, tests, CI, or deployment
+| Your change is about | Read |
+|---|---|
+| Request lifecycle, `Current`, callbacks, auth/sessions, access policy, test-env behavior, production boundary, caching | [`docs/architecture.md`](docs/architecture.md) |
+| Tables, columns, indexes, constraints, validations, hierarchies, positions, slugs, soft delete, `db/data/**` manifests | [`docs/data_model.md`](docs/data_model.md) |
+| Code patterns: models, controllers, routes, the three page patterns, list rows, record details pages, helpers, Stimulus controllers | [`docs/conventions.md`](docs/conventions.md) |
+| Colors, tokens, light/dark, typography, shell, responsive behavior, accessibility, the painted treatment of a view | [`docs/visual_design.md`](docs/visual_design.md) |
+| **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
+| The tag DSL, taxonomies, the tree and its editor, tagged-record counts | [`docs/features/tags.md`](docs/features/tags.md) |
+| Global search and its dropdown | [`docs/features/search.md`](docs/features/search.md) |
+| The navbar and both workspace sidebars | [`docs/features/navigation.md`](docs/features/navigation.md) |
+| Record photos and the cropper | [`docs/features/photos.md`](docs/features/photos.md) |
+| Events and the Timeline algorithm | [`docs/features/events.md`](docs/features/events.md) |
+| Translations and writing a translatable string | [`docs/features/i18n.md`](docs/features/i18n.md) |
+| The platform Settings page and its two preferences | [`docs/features/settings.md`](docs/features/settings.md) |
+| Setup, commands, test suites, CI, demo-data workflow, deployment | [`docs/development.md`](docs/development.md) |
+| Verified open oddities, dead code, tech debt — **read before touching shared code** | [`docs/known_quirks.md`](docs/known_quirks.md) |
+| A foundational design decision, or a change that makes one necessary | [`docs/adr/`](docs/adr/) |
 
-Read [`docs/adr/`](docs/adr/) when a change depends on a foundational design decision. Add a
-new ADR for a decision that changes the project's structure, domain boundaries, or long-term
-workflow; do not rewrite an accepted ADR to hide its history.
+A feature's rules live in exactly one `docs/features/` document. When a change touches a feature,
+read that feature's document rather than searching the whole directory.
 
-When behavior changes, update the matching document in `docs/` in the same change.
+Two rules keep that index trustworthy, and both are enforced by `test/docs_test.rb`:
+
+- **One fact, one home.** A fact is stated in the document that owns its subject; every other
+  document links to it instead of restating it. Several subjects are currently owned by more than
+  one document, which is recorded duplication debt and is exactly how a past fact went stale in one
+  place while another place stayed correct. Do not add a second owner.
+- **A wrong duplicate is worse than a missing fact.** A confident, well-written, wrong paragraph
+  gets acted on; an absent fact sends you to the code. When the docs and the code disagree, the
+  code wins and the docs are fixed in the same change.
+
+Add a new ADR for a decision that changes the project's structure, domain boundaries, or long-term
+workflow; do not rewrite an accepted ADR to hide its history. When behavior changes, update the
+document that owns the subject, in the same change.
 
 ## Task intake: clarify before starting
 

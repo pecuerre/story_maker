@@ -64,7 +64,7 @@ not used.
 - [Development](docs/development.md) — setup, tests, seeds, CI, and deployment
 - [Architecture](docs/architecture.md) — request lifecycle, routing, and feature design
 - [Data model](docs/data_model.md) — schema, associations, validations, and slugs
-- [Conventions](docs/universe_maker_conventions.md) — patterns for adding and changing features
+- [Conventions](docs/conventions.md) — patterns for adding and changing features
 - [Known quirks](docs/known_quirks.md) and [resolved quirks](docs/resolved_quirks.md) — verified
   caveats and fix history
 - [DataFactor guidance](docs/data_factor_guidance.md) — maintenance, quality, onboarding, and

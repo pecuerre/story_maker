@@ -81,11 +81,15 @@ session is an authentication token rather than content.
 
 ## Photos
 
+Schema only. The photo **contract** — the optional writers, the same-universe rule, the server-side
+authority on the stored file, and the one control that serves all three page patterns — is in
+[features/photos.md](features/photos.md).
+
 A record may carry one photo, and the photo is always optional. Eighteen models include
-`HasPhoto` (`app/models/concerns/has_photo.rb`): `Universe`, `Story`, `Section`, `Scene`,
-`Character`, `Location`, `Item`, `Event`, `Relation`, `Ownership`, and the eight `*_tag` models.
-Each of those tables gained a nullable `photo_id` with an index; none of them requires it, and no
-view, form, or list assumes a photo exists.
+`HasPhoto`: `Universe`, `Story`, `Section`, `Scene`, `Character`, `Location`, `Item`, `Event`,
+`Relation`, `Ownership`, and the eight `*_tag` models. Each of those tables gained a nullable
+`photo_id` with an index; none of them requires it, and no view, form, or list assumes a photo
+exists.
 
 The image itself lives in its own `photos` row rather than as a `photo`/`photo_path` pair on every
 table, so the bytes, the normalization, and the optional reference are defined once:
@@ -95,28 +99,11 @@ table, so the bytes, the normalization, and the optional reference are defined o
 | `photos` | `universe_id` FK (NOT NULL), `name`, `slug` (NOT NULL) | `has_one_attached :file`; the stored file is **only** the finished 300×300 crop — neither the original upload nor its metadata is written |
 | `active_storage_blobs` / `active_storage_attachments` / `active_storage_variant_records` | Rails' own tables | created by `CreateActiveStorageTables`; the only Active Storage table that varies (`variant_records`) stays empty because a photo has no variants |
 
-Rules the model layer enforces:
-
-- **Optional everywhere.** `belongs_to :photo, optional: true`. A record without a photo is
-  completely normal, and no controller force-creates one.
-- **Same universe.** `photo_belongs_to_the_universe` rejects a `Photo` from another universe. The
-  editor never sends an id at all — it sends the cropped square as a `data:` URL, and the model
-  creates the `Photo` inside the record's own universe, so a cross-universe assignment is not
-  reachable from the interface. A `Universe` is its own photo scope, because a universe is the
-  outermost scope.
-- **The server is the authority on the stored file.** `PhotoProcessing` resizes and re-encodes
-  whatever arrives to a 300×300 JPEG with its metadata stripped, so a request that skipped the
-  browser cropper still cannot store something else. Submitted bytes are checked against a
-  content-signature allowlist (JPEG/PNG/GIF/WebP) before an image library sees them, and payloads
-  over 8 MB are refused. The stored bytes are an image this application produced, never the
-  submitted bytes.
-- **Replacing is safe.** A new photo row is created after the record saves, inside the same
-  transaction; the photo it superseded is destroyed only after that transaction commits, and only
-  when no other record still points at it (`Photo::OWNER_CLASS_NAMES`, which a test keeps equal to
-  the models that include `HasPhoto`). A rejected save never takes the picture away.
-- **No URL on the model.** An Active Storage attachment's URL is built by the request that serves
-  it, so a view asks the router through `ApplicationHelper#record_photo_url(record)` and the model
-  exposes no `url` method that could only return `nil`.
+Model rules, one line each: the reference is `belongs_to :photo, optional: true`; a `Photo` from
+another universe is refused; the stored bytes are an image this application produced, never the
+submitted bytes; replacing a photo is safe, because the old row is destroyed only after the
+transaction commits and only while nothing else refers to it; and the model exposes no `url`
+method. Each rule is stated in full in [features/photos.md](features/photos.md).
 
 ## Tables
 
@@ -315,142 +302,24 @@ Tags, sections, and scenes are reachable only under the explicit story path
 `/u/<slug>/section_tags`, `/u/<slug>/scene_tags`, `/u/<slug>/sections`, and `/u/<slug>/scenes`
 routes are intentionally invalid.
 
-## Writing model (Scene core, references, grouping, tags, Elements, presence, and appearances implemented)
+## The Scene writing model
 
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the first Scene model, and all of it
-is in the current schema. Its first deliveries added the `scenes` and `scene_tags` tables, the
-`Scene` and `SceneTag` models, the optional Section/Event/datetime references, story-scoped tag
-assignment, and the story-scoped routes; the Element and Character-presence deliveries added
-`scene_elements`, `scene_element_speakers`, and `scene_characters`, the `SceneElement` and
-`SceneCharacter` models, and the derived participant view; the Item and Location-presence
-deliveries added `scene_items`, `scene_locations`, and their two join models, and `SceneAppearances`
-provided the reverse query. Every table and association below is delivered and nothing here is
-speculative.
+Schema for the Scene domain is in the tables above and the per-model validations table; the domain
+itself — the narrative sequence, the four workspace tabs, the participation union, the value objects,
+and the deletion contract — is in [features/scenes.md](features/scenes.md).
 
-```text
-Story
-  ├── Scene (contiguous narrative position)
-  │   ├── Section ───────────────────> optional same-Story grouping
-  │   ├── Event ────────────────────> optional same-Universe in-world fact
-  │   ├── SceneElement (contiguous flat position)
-  │   │   └── characters (HABTM via scene_element_speakers)
-  │   ├── SceneCharacter ────────────> Character   (optional role)
-  │   ├── SceneItem ─────────────────> Item        (optional role)
-  │   └── SceneLocation ─────────────> Location    (optional role)
-  └── SceneTag (story-scoped hierarchy; optional Scene assignment via join)
-```
+Two things are worth keeping here because they are about the **migrations** rather than the
+behaviour:
 
-The persisted fields and relationships are:
-
-| Model/table | Intended fields and constraints |
-|---|---|
-| `scenes` | required `story_id`, required `name` (interface label **Title**), `slug`, optional `description`, indexed `position`; optional `section_id` (same Story), optional `event_id` (same Universe), and one optional `datetime` point using Event-compatible storage/editor precision and timezone semantics (not Event's `start_datetime`/`end_datetime` pair). The event reference and the datetime are independent: neither writes, clears, nor validates against the other |
-| `scene_tags` | story-scoped hierarchical/colored tag shape; optional assignment only |
-| `scenes_scene_tags` | story-scoped HABTM join with real FKs and a unique `[scene_id, scene_tag_id]` index; tags remain optional |
-| `scene_elements` | required `scene_id`, `kind` (`narration`/`dialogue` by model validation *and* a database `check_constraint`, never a column named `type`), required `name` (interface label **Title**), optional plain-text `body` (interface label **Content**), indexed `[scene_id, position]` |
-| `scene_element_speakers` | a plain many-to-many join — real FKs and a unique `[scene_element_id, character_id]` index. It carries no data of its own and records no turn order, so a HABTM association is the right shape; the same-Universe rule is checked through the Element's Scene |
-| `scene_characters` | `scene_id` and `character_id` with real FKs, a unique `[scene_id, character_id]` index, and a nullable free-text `role` |
-| `scene_items` | `scene_id` and `item_id` with real FKs, a unique `[scene_id, item_id]` index, and a nullable free-text `role`. Same shape as `scene_characters`; an Item is shared by every Story, so the link records that one Scene uses it rather than copying it |
-| `scene_locations` | `scene_id` and `location_id` with real FKs, a unique `[scene_id, location_id]` index, and a nullable free-text `role`. Linking a Location says nothing about which nested place inside it a Scene used; that stays the author's free-text role |
-
-The `scenes` create migration is schema-only: a real `story_id` foreign key, `null: false` `position`
-with a `0` default, `null: false` `slug`, timestamps, and a composite `[story_id, position]` index.
-`Scene` includes `HasSlug`, validates title presence, resolves its Universe through
-`story.universe`, and has no `parent_id`: a flat narrative sequence is not a hierarchy. `Story`
-declares `has_many :scenes, dependent: :destroy`; `Universe` exposes
-`has_many :scenes, through: :stories` for scope checks only.
-
-The optional references arrived in a **separate schema-only alter migration**
-(`AddSceneReferencesToScenes`) because the `scenes` create migration had already shipped.
-Amending an applied migration does not work in this project: Rails 8.1's `initialize_database`
-loads `db/schema.rb` when a database has no `schema_migrations` table, so an edited create
-migration is never executed on a freshly created database and the regenerated schema silently keeps
-the old shape. The alter migration adds nullable `section_id` and `event_id` references with real
-foreign keys, the nullable `datetime` column, and a `[story_id, section_id]` index beside the
-existing narrative-order index.
-
-`Scene` adds four application-level validations, because a foreign key cannot prove shared scope:
-`section_belongs_to_story`, `event_belongs_to_story_universe`, `optional_references_exist` (an
-unknown optional id becomes "must exist" instead of a foreign-key exception), and
-`datetime_is_a_valid_point` (an unparseable value is reported instead of being silently cast to
-`nil` and discarded). `Section` and `Event` each declare `has_many :scenes, dependent: :nullify`, so
-deleting a Section only ungroups and deleting an Event only clears the reference; neither removes a
-Scene or changes a narrative position.
-
-`SceneTag` adds the story-scoped hierarchy, color, slug, and inverse tag association. The
-`CreateSceneTags` migration is schema-only and creates both `scene_tags` and the constrained
-`scenes_scene_tags` join. `Scene` declares `has_many_tags :scene_tag, scope: :story_id`; the shared
-validation rejects tags from another Story, while the unique pair index and scoped association reads
-keep duplicate or foreign join rows from becoming visible. Scene and Scene Tag collection-id writers
-also turn unknown, duplicate, or cross-story ids into ordinary validation errors before the database
-constraint can raise. `Story` cascades Scene Tag definitions; deleting a Scene or Scene Tag removes
-assignments but never a shared world record.
-
-`SectionPaths` (`app/models/section_paths.rb`) is a value object, not a table: it builds every
-root-first Section path and the depth-indented selector options from one ordered Section list, so
-neither the Scenes list nor the Sections workspace walks ancestors per Scene. `SceneTagPaths` is the
-analogous Scene Tag value object: it builds root-first tag labels and selector choices from one
-ordered tag list without walking parents per Scene.
-`UniverseScopeResolver` (`app/models/universe_scope_resolver.rb`) is the shared answer to which
-universe owns a record and is used by both `Ability` and the view helpers, so a Scene-owned
-component can never lose its mutation controls or be denied a valid mutation.
-
-`Relation#display_string` and `Ownership#display_string` fall back to their two endpoints because
-both `name` columns are optional; `Event#display_string` already existed. A link record therefore
-always has a readable label in list rows, row-action confirmations, and its details page.
-
-`TaggedRecordCounts` (`app/models/tagged_record_counts.rb`) is a value object, not a table: it answers
-"how many records carry each tag" for a whole taxonomy with one grouped query, because the
-instance-dependent `HasManyTags` scopes cannot be eager loaded or grouped through Active Record. Its
-result is a `tag id => count` hash used by the taxonomy rows' `(N records)` count pill. The
-per-record read side is `HasManyTags#tagged_records`, the scoped inverse association ordered by name
-(`none` on a content model), which is what a tag's details page lists.
-
-`SceneParticipants` (`app/models/scene_participants.rb`) is a value object, not a table: it answers
-"who takes part in this Scene" from the two independent sources the domain allows — the stored
-`SceneCharacter` links and the Characters who speak in a Dialogue Element — and reports their
-**union**, never their sum. A Character who both participates and speaks is one participant, and the
-same object therefore backs both the Characters tab's rows and the Scenes list's per-row count. For a
-list of Scenes it answers from two grouped queries for the whole page instead of one query per row.
-
-`SceneAppearances` (`app/models/scene_appearances.rb`) is the reverse value object, not a table: it
-answers "which Scenes of this Story involve this shared record, and why" from three possible
-sources — a stored presence link, a derived Dialogue speaker, and an `event` reference — and reports
-their **union** in Scene `position` order. It is the one read path behind the "Appears in scenes"
-section on the Character, Item, Location, and Event details pages, and the same object therefore
-backs the section's rows and its count. Its query count is fixed per record type, so a details page
-costs the same whether a record appears in one Scene or in all of them. `LocationPaths`
-(`app/models/location_paths.rb`) is a third value object in the same shape as `SectionPaths` and
-`SceneTagPaths`: it turns one ordered Location list into root-first ancestor paths for the Locations
-tab's rows and depth-indented picker options.
-
-`SceneElement` is an ordered child component rather than a standalone navigable content model, so
-it has no public slug requirement. `Scene.position` and `SceneElement.position` are contiguous `0..n-1` within their Story and Scene
-respectively. They are not `parent_id` hierarchies and must not include `Hierarchical`. The
-`PositionedResourceOrder` service supports an explicit flat mode for these sequences, and
-`ScenesController` uses that mode with the Story as scope owner rather than adding a fake parent or
-a second ordering algorithm. The development-data registry also distinguishes flat position groups
-and loads
-`SceneTag` before `Scene`, and `Scene` after `Event`, because a Scene may reference both a
-story-scoped tag and a shared universe event and a symbolic reference may not point at a later model
-file. The loader proves the Section and every assigned Scene Tag belong to the Scene's Story before
-writing. The ordering contract is flat and transactional. A
-title-only Scene is valid. A Scene's optional Event and single-point datetime are independent, and
-multiple Scenes may reference one Event.
-
-Narration Elements have no speakers. Dialogue Elements require at least one same-Universe Character
-speaker; the server must reject a Dialogue-to-Narration change while speakers remain. Presence
-roles are free text and are not analyzer vocabularies. All same-Story/same-Universe relationships
-remain application-level validations, even when the individual foreign keys are real and indexed.
-Unknown optional references become documented validation/not-found errors rather than database 500s.
-
-The deletion contract is asymmetric: Scene-owned Elements, tag assignments, speaker links, and
-presence links cascade with Scene/Story deletion; Scene Tag definitions are removed with their
-Story; deleting a Section or Event clears Scene references while preserving Scene narrative order;
-deleting a shared Character, Item, or Location removes its Scene links in addition to the existing
-model-dependent hierarchy/relation/ownership behavior and never removes a Scene. Event retains its
-existing child and temporal-referrer cleanup. The exact confirmation copy is in
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md).
+- The `scenes` create migration is schema-only: a real `story_id` foreign key, `null: false`
+  `position` with a `0` default, `null: false` `slug`, timestamps, and a composite
+  `[story_id, position]` index. The optional `section_id` and `event_id` references and the `datetime`
+  column arrived in a **separate** alter migration (`AddSceneReferencesToScenes`), because the create
+  migration had already shipped.
+- An applied migration is never amended: on a freshly created database Rails loads `db/schema.rb`
+  instead of executing the migration files, so an edit silently changes nothing. The mechanism and the
+  required workflow are in
+  [development.md](development.md#amending-a-shipped-migration-does-not-work-here).
 
 ## Development data convention
 
@@ -459,7 +328,6 @@ existing child and temporal-referrer cleanup. The exact confirmation copy is in
 ```text
 db/data/dark/
 db/data/lotr/
-db/data/star_wars/
 ```
 
 A new persisted model adds its data file to every universe directory where it should be exercised.
@@ -469,9 +337,11 @@ For example, a future `Dialog` model uses `db/data/dark/dialogs.yml` and, if app
 registered universe directory must include its file (use `[]` when intentionally unused).
 References must preserve the model's universe/story scope. Universe membership data follows the
 same convention (`universe_memberships.yml`) when a sample universe needs explicit private access
-or delegated admin access. After any YAML add/delete/update, run
-`UNIVERSE=<slug> bin/rails db:demo:check` and then reset the local development database so the files
-are actually loaded; create-only `db:demo:load` is for an additional universe after that reset.
+or delegated admin access. The loader validates the exact file set, identifiers, forward references,
+attributes, and universe/story scope before writing; it normalizes hierarchical sibling positions
+from file order, or requires complete unique explicit positions for a sibling group. Which command to
+run, and when, is in
+[development.md](development.md#required-workflow-after-editing-demo-yaml).
 
 Photo data follows the same convention with one extra rule: a `photos.yml` entry names a file under
 `db/photos/<universe_slug>/` through the virtual `source_file` attribute rather than carrying bytes,
@@ -484,5 +354,3 @@ Records made only in the UI are intentionally lost and are not merged back into 
 `db:seed` nor `db:prepare` loads `db/data/`. Development data is for browser/manual validation only;
 automated tests use `test/fixtures/`, and production bootstrap data belongs in
 `db/seeds.rb`/`db/seeds/`.
-
-Hand-maintained sketch of the core entities: [schema.txt](schema.txt).

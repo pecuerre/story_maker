@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-27
 - **Related:** [`../architecture.md`](../architecture.md),
-  [`../universe_maker_conventions.md`](../universe_maker_conventions.md),
+  [`../conventions.md`](../conventions.md),
   [`../visual_design.md`](../visual_design.md),
   [0001](0001-universe-and-story-scope.md),
   [0005](0005-universe-access-levels.md)
@@ -128,7 +128,7 @@ decision, and it is not what was asked for.
 ## Related documentation
 
 - [`../architecture.md`](../architecture.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../visual_design.md`](../visual_design.md)
 - [`../development.md`](../development.md)
 - [0001](0001-universe-and-story-scope.md)

@@ -112,6 +112,6 @@ supported universes and model files.
 - [`0004-universe-data-and-demo-seeding.md`](0004-universe-data-and-demo-seeding.md)
 - [`../development.md`](../development.md)
 - [`../data_model.md`](../data_model.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../known_quirks.md`](../known_quirks.md)
 - [`../backlog.md`](../backlog.md)

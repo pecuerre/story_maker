@@ -705,7 +705,7 @@ regression cannot be told from an old failure.
 
 - `tag_improvements_test.rb:16` asserted the canonical tag path after clicking a workspace menu-tag
   tab. A workspace tag link deliberately carries `from=workspace`
-  ([conventions](universe_maker_conventions.md), flat-list pattern) so the tag page can preserve that
+  ([conventions](conventions.md), flat-list pattern) so the tag page can preserve that
   navigation without trusting a `Referer` header. The app was right; the expectation was stale.
 - `tag_improvements_test.rb:60` and `taxonomy_tree_test.rb:302` called
   `find("button[aria-expanded='false']")` inside a `li[data-node-id]`. A tag with children nests the
@@ -732,7 +732,7 @@ regression cannot be told from an old failure.
   included, and it tracks live creation because a create performs a same-URL Turbo visit.
 
 The header count's meaning is now stated where it is documented, in
-[conventions](universe_maker_conventions.md) under the taxonomy-tree pattern: the badge is every tag
+[conventions](conventions.md) under the taxonomy-tree pattern: the badge is every tag
 in the taxonomy, children included, not the number of root rows.
 
 ### Former quirk #48: delegated admins could demote or remove themselves into a blank 403 (fixed)

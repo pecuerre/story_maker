@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-27
 - **Related:** [`../architecture.md`](../architecture.md),
-  [`../universe_maker_conventions.md`](../universe_maker_conventions.md),
+  [`../conventions.md`](../conventions.md),
   [`../development.md`](../development.md),
   [`../known_quirks.md`](../known_quirks.md),
   [0001](0001-universe-and-story-scope.md),
@@ -162,3 +162,15 @@ form that says nothing is not an error.
   writer. Meilisearch is the same idea in one binary.
 - **A SQL fallback behind the engine.** Rejected above: two answers to one
   question.
+
+## Related documentation
+
+- [`../features/search.md`](../features/search.md) — the search subsystem: the request, the
+  scopes, the registry, the dropdown, and the contrast rules a browser test measures
+- [`../conventions.md`](../conventions.md#routes) — the two search routes, and why serving two
+  formats from one read is safe here
+- [`../visual_design.md`](../visual_design.md#search) — the painted treatment of the box and panel
+- [`../development.md`](../development.md#search-engine) — running the engine locally
+- [0001](0001-universe-and-story-scope.md)
+- [0005](0005-universe-access-levels.md)
+- [0012](0012-client-side-verification-and-csrf.md)

@@ -73,7 +73,7 @@ reachable security/data-loss issues from lower-priority hardening and contract d
 
 20. **Medium — generated routes advertise unsupported actions and templates.** `config/routes.rb:2-25`
     uses broad session, password, and content resources even though the documented action surface is
-    narrower (`docs/universe_maker_conventions.md:63-66`). Examples include missing
+    narrower (`docs/conventions.md:63-66`). Examples include missing
     `sessions#show/edit/update`, `passwords#index/show/destroy`, content `show/edit` actions, and
     `new` routes whose controllers have no templates. The route table contains dozens of entries
     that cannot render a supported page; direct requests can produce 404, unsupported-format, or
@@ -191,14 +191,14 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     production image or the full runtime can boot.
 
 37. **Low — development fixtures and documentation overstate baseline coverage.**
-    `docs/development.md:42-44` says all content and tag fixtures are present, but relation,
+    `docs/development.md` says all content and tag fixtures are present, but relation,
     ownership, relation-tag, ownership-tag, and membership fixture files are absent; tests create
-    many of those records ad hoc. `docs/README.md:19` and `docs/data_model.md:207` link to missing
-    `docs/schema.txt`, and `docs/README.md:23` advertises an absent `docs/images-to-ai/` directory.
-    The development guide also calls `test/helpers` and mailer previews effectively empty even though
-    `test/helpers/application_helper_test.rb` and a mailer preview are present. The root README's
-    destructive `db:restart` warning has been clarified; the fixture and missing-link issues in
-    this finding remain open.
+    many of those records ad hoc. `docs/README.md` advertises an absent `docs/images-to-ai/`
+    directory. The development guide also calls `test/helpers` effectively empty even though
+    `test/helpers/application_helper_test.rb`, `record_details_link_test.rb`, and
+    `scenes_helper_test.rb` are present. The root README's destructive `db:restart` warning has
+    been clarified, and the dead `schema.txt` links this finding used to report were removed on
+    2026-09-30; the fixture, `images-to-ai`, and `test/helpers` issues in this finding remain open.
 
 38. **Low — setup and supply-chain reproducibility has gaps.** `bin/dev:3-5` installs an unpinned
     `foreman` gem at runtime; the Dockerfile comment refers to a nonexistent `.ruby-version` while

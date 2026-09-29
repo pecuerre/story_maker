@@ -18,6 +18,181 @@ Labels used below:
 - `docs` — project knowledge, decisions, or contributor guidance changed
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
+## 2026-09-30
+
+- **[changed]** The residual duplication the heading-ownership test cannot see is removed — the same
+  fact stated under two different headings, which is the case a heading test structurally cannot
+  catch. It was found by measuring repeated runs across the living documents rather than by reading,
+  and the largest instance was that **routes were documented twice**: `architecture.md`'s "Routing &
+  URL generation (the sharp edges)" and `conventions.md`'s "Routes" each carried the universe scope,
+  the story nesting, the named-key rule, and the workspace URLs. `conventions.md` now owns route
+  conventions, and `architecture.md` keeps only what happens *inside a request* — `universe_slug` being
+  filled from recall, `Universe#to_param`, and a foreign `story_id` raising 404.
+- **[changed]** The `db/data` guidance in `development.md` and `conventions.md` were a third and
+  fourth statement of the same rules. `data_model.md` owns the layout, the registry, and the loader's
+  validation; `development.md` owns the command workflow; and `conventions.md` keeps only the rule a
+  model author needs — a new persisted model means a YAML file in every registered universe directory
+  **and** a registry entry, in the same change.
+- **[changed]** `docs/development.md`'s "Scene delivery (complete)" no longer narrates what each
+  delivery slice added. That is history, the dated entries in `CHANGELOG.md` already hold it, and a
+  planned slice number is not a durable reference. The section now points at `features/scenes.md` for
+  the confirmed defaults and at the changelog for the order, keeping only the fact that the
+  Scene-owned tables shipped as their own create migrations.
+- **[changed]** The documentation is reorganized around **one fact, one home**, and each feature now
+  has a single document that owns its rules. `docs/universe_maker_conventions.md` is renamed
+  `docs/conventions.md` and keeps only the cross-cutting code patterns, and a new `docs/features/`
+  directory holds one document per feature: `scenes`, `tags`, `search`, `navigation`, `photos`,
+  `events`, `i18n`, and `settings`. The reorganization was driven by duplication that had already
+  rotted: the Scene domain was documented in **four** documents at once (`conventions.md`,
+  `architecture.md`, `data_model.md`, `visual_design.md`, roughly 760 lines in total), the list-row
+  shape in three, record details pages in three, the navbar and both sidebars in three, photos in
+  four, global search in three, and soft delete in three. Every defect found on 2026-09-30 was in a
+  place where two documents both said something and one went stale, and none was in a topic only one
+  document owned. `docs/features/scenes.md` is now the single Scene home, and the "participation is a
+  union, never a sum" rule is stated once instead of five times.
+- **[changed]** The reference/narrative split is applied. `data_model.md` keeps the schema — tables,
+  columns, indexes, constraints, the taxonomy matrix, soft delete, slugs, positions — and no longer
+  carries feature behaviour narrative; the Scene writing-model section there is reduced to the two
+  facts that are about migrations (the schema-only `scenes` migration, and why an applied migration
+  cannot be amended). `visual_design.md` keeps tokens, light/dark, typography, spacing, the shell,
+  responsive behavior, accessibility, and the **painted** treatment of a view, and no longer restates
+  behaviour rules: its search section is now the painted treatment with the rules and their reasons in
+  `features/search.md`, its taxonomy section is the painted shape with the contract in
+  `features/tags.md`, and its Scene section is the painted shape with the contract in
+  `features/scenes.md`.
+
+- **[fixed]** `docs/adr/README.md` did not mention `docs/features/`, so the eight feature documents
+  were unreachable from the ADR index that 16 of 17 ADRs link to. Its "current documentation" list
+  now names all five core documents, the `features/` directory with its eight members, and
+  `visual_design.md`, and states the split explicitly: an ADR explains why, the document that owns
+  the subject explains what the current system does, and when they disagree the living document is
+  right.
+- **[fixed]** ADR 0014 (global search) was the only one of seventeen with no
+  `## Related documentation` section, although `adr/README.md` and `0000-template.md` both require
+  it; its cross-references lived in a header line instead. It now has the standard section and
+  points at `features/search.md` as the search subsystem's home.
+
+- **[fixed]** The Scene editor's workspace tabs were documented as two live links and two
+  `aria-disabled` placeholders in three places, long after Items and Locations shipped. An assistant
+  reading `docs/architecture.md` was told those two tabs had no destination and would not have
+  added a link to them, while `docs/conventions.md` and the view itself
+  (`app/views/scenes/_workspace_tabs.html.erb`) said all four were live. All three documents now
+  state that **Scene Details**, **Characters**, **Items**, and **Locations** are live links, and the
+  invariant that a tab is never a link to a route that does not exist is kept intact as its own
+  sentence. `docs/adr/0007-story-owned-scenes-and-elements.md` was deliberately **not** changed: its
+  status block already records that those routes "remained unrouted until their deliveries added a
+  real destination", which is correct history, and an accepted ADR is not rewritten.
+- **[fixed]** `docs/architecture.md` cited "former quirk #18" for the sidebar count cache, but quirk
+  18 in `docs/resolved_quirks.md` is about mutation failures in editors; the sidebar-count finding
+  is a separate, differently named heading. The link pointed at a heading that does not exist and at
+  the wrong finding, so it now names the real target.
+- **[fixed]** `docs/conventions.md` said `HasManyTags` enforces the shared universe or
+  story scope "for all seven content/tag pairs". There are **eight** (`character`, `event`, `item`,
+  `location`, `ownership`, `relation`, `scene`, `section`); it now says eight and points at the tag
+  taxonomy matrix in `docs/data_model.md`, which lists all eight.
+- **[fixed]** `docs/data_model.md` listed `db/data/star_wars/` as an existing universe directory
+  alongside `dark` and `lotr`; only those two exist. `docs/development.md` still shows it, and is left
+  as it is, because there it is explicitly annotated `# future universe data`.
+- **[fixed]** Removed two dead links to `docs/schema.txt`, a file that does not exist, from
+  `docs/data_model.md` and `docs/README.md`. The ownership graph and the per-table reference in
+  `docs/data_model.md` already cover what that link promised.
+- **[fixed]** `docs/conventions.md` carried its own errata in the body ("Correction of
+  an older (wrong) note: **Event does have a `_tag` taxonomy**") and a stale delivery promise ("the
+  accepted Scene contract adds the remaining documented Scene actions in later delivery slices",
+  long shipped). The Event section now states the taxonomy as current fact, and the delivery sentence
+  is gone; what happened when belongs in this changelog, not in a living rule.
+
+- **[docs]** ADR 0016 re-derived a decision ADR 0013 had already made. Its `users.locale` alternative
+  opened with "Rejected for now, for the same reason `users.theme` was" and then repeated ADR 0013's
+  three reasons and its "right answer if a preference has to follow an account across devices"
+  conclusion verbatim. It now cites ADR 0013 for those reasons and states only what the locale adds:
+  that a column would let a queued password reset be written in the reader's own language, and that
+  the cookie would take precedence for a signed-out reader. The shared repeated runs between the two
+  ADRs fell from three blocks to two, and the two that remain are the deliberate parallel structure
+  that expresses "exactly like the theme".
+- **[docs]** Two things were checked and deliberately left alone, so they are not "fixed" later.
+  ADR 0007 and `features/scenes.md` share repeated wording, which is the intended ADR-explains-why /
+  document-explains-what split rather than duplication. And `docs/known_quirks.md` appears to have
+  out-of-order item numbers — 55 sits above 5, and 51–53 follow 59 — which is correct: items are
+  grouped into severity sections that are each internally ascending, and the numbers are the
+  original audit identifiers that are never renumbered or reused.
+
+- **[docs]** Eleven smaller second statements were replaced by a link to the owning section: the
+  photo cropper and its `data:` URL transport in `conventions.md`'s JavaScript-controllers list and
+  photo-field paragraph; the `PhotoParams` splat and the grouped-tag badge map in the Helpers list;
+  the `PHOTO_FIELD` descriptor; the identity card's two-column photo layout in `visual_design.md`; the
+  navbar's entry list and the sidebar's three hues in `visual_design.md`; the taxonomy row's overflow
+  menu; the hover-reveal accessibility rule in `features/navigation.md`; the "theme belongs to the
+  browser, not to `Current`" premise; the `@layers` Timeline rule; the "change to either preference
+  loads the whole document" rule; and the amended-migration mechanism, which `data_model.md` now
+  points at `development.md` for.
+- **[docs]** `conventions.md` stated the identity card's photo layout **twice** — once in "Record
+  details pages" and once in the Helpers list — and `visual_design.md` stated it a third time. Only
+  the first survives; the other two link to it.
+- **[docs]** Verified that this pass lost no content either: every distinctive class name, method
+  name, shared partial, task name, and registry constant referenced by the five documents before the
+  whole refactor is still referenced after it — 142 tokens, none missing.
+- **[docs]** A measurement pass over the living documents now shows five remaining cross-document
+  repeats of 14 or more words, down from more than fifteen pairs. All five are single clauses each
+  document needs for its own premise — a document that links to another still has to state the rule it
+  is applying, and deleting that would leave the cross-reference unreadable. This is the floor, not
+  remaining debt.
+- **[docs]** Replaced the flat "read these five documents before changing code" list in `AGENTS.md`
+  and `docs/README.md` with a subject-to-owner table. The old list named roughly 4000 lines as a
+  prerequisite for any non-trivial change, which no reader and no assistant actually follows, so it
+  functioned as a table of contents while presenting itself as a reading requirement. The new form
+  answers the question a change actually asks — *which document owns this subject* — and states the
+  two rules that make the index trustworthy: **one fact, one home**, and **a wrong duplicate is worse
+  than a missing fact**, since a confident incorrect paragraph gets acted on while an absent fact
+  sends the reader to the code.
+- **[docs]** `docs/known_quirks.md` finding 37 tracked the dead `schema.txt` links; that clause is
+  removed and the rest of the finding is kept open. Its own `docs/development.md:42-44` line
+  reference had also drifted to unrelated prerequisite text, so the finding now names the document
+  instead of stale line numbers. The still-open parts are unchanged: absent relation, ownership,
+  relation-tag, ownership-tag, and membership fixtures; an advertised but absent
+  `docs/images-to-ai/`; and `test/helpers` described as effectively empty when it holds three test
+  files.
+- **[docs]** `AGENTS.md` and `docs/README.md` now carry a subject-to-owner table that maps each subject
+  — the five core documents plus the seven feature documents — to the document that owns it, and both
+  state that a feature's rules live in exactly one `docs/features/` document.
+- **[docs]** Three cross-references in two ADRs were repointed at their sections' new homes, so the
+  reader is not sent to a section that no longer exists: ADR 0015's photo links now point at
+  `features/photos.md` and `development.md#testing-record-photos`, and ADR 0007's soft-delete link now
+  points only at `data_model.md`. These are navigational cross-references, not decisions, so no ADR
+  reasoning was rewritten.
+- **[docs]** `docs/development.md`'s `## Photos` heading is renamed `## Testing record photos`, so the
+  test workflow keeps its home while the photo contract has one.
+- **[docs]** Verified that the reorganization lost no content: every distinctive class name, method
+  name, shared partial, and helper referenced by the four documents before the move is still
+  referenced after it. `shared/_search_bar` and `TimelineController` were the only two mentions lost,
+  and both were restored.
+
+- **[chore]** Added `test/docs_test.rb`, which makes the documentation's own consistency a test
+  rather than a convention nobody checks. It fails the suite when a relative Markdown link is dead,
+  when a cross-document `#anchor` no longer matches a heading (using GitHub's slug rules), or when a
+  section heading is owned by two documents. Each case was verified by deliberately introducing the
+  defect and watching the matching test fail. `docs/adr/**` and `docs/resolved_quirks.md` are exempt
+  from the heading-ownership and link checks, because a record of what was decided, or of what used
+  to be broken, is allowed to disagree with the code now.
+- **[chore]** The heading-ownership test ships with the documentation's existing duplication debt
+  listed explicitly, naming both the heading and the documents that currently own it, so the suite
+  is green while the debt is paid. The list may only shrink: a document dropping out of an entry
+  keeps the suite green, while a **new** document joining one fails it, because the failure this
+  test exists to catch is a fact gaining a second owner. The duplicated subjects it currently names
+  are **Global search**, **List rows**, **Photos**, **Record details pages**, and **Soft delete**.
+- **[chore]** `test/docs_test.rb` now also checks links **out of** historical records
+  (`docs/adr/**`, `docs/resolved_quirks.md`). Exempting them entirely hid three dead anchors that the
+  sections' moves created; a historical record is still exempt from the heading-ownership check,
+  because a record of what was decided may not be made the second source of a fact, and from the
+  index check, because it is not a living document.
+- **[chore]** `KNOWN_DUPLICATED_HEADINGS` in `test/docs_test.rb` is now **empty**. The one-fact-one-home
+  refactor resolved all five entries — **Global search**, **List rows**, **Photos**, **Record details
+  pages**, and **Soft delete** — so the documentation has no known duplicated heading left and a fact
+  gaining a second owner again now fails the suite. The two thin pointer sections that caused two of
+  those entries were removed rather than renamed: `architecture.md` had nothing true left to say about
+  photos, and the empty `Global search` stubs in `architecture.md` and `conventions.md` were folded
+  into the sections they actually belong to.
+
 
 ## 2026-09-29
 

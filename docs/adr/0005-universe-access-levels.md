@@ -75,5 +75,5 @@ from ownership and would complicate owner transfers.
 
 - [`../data_model.md`](../data_model.md)
 - [`../architecture.md`](../architecture.md)
-- [`../universe_maker_conventions.md`](../universe_maker_conventions.md)
+- [`../conventions.md`](../conventions.md)
 - [`../known_quirks.md`](../known_quirks.md)

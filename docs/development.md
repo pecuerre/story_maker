@@ -1,7 +1,7 @@
 # Development Guide
 
 Commands, tests, seeding, CI, deployment and a "adding a new model" checklist.
-Conventions: [universe_maker_conventions.md](universe_maker_conventions.md) ·
+Conventions: [conventions.md](conventions.md) ·
 Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirks.md).
 
 ## Clarifying a request before coding
@@ -304,54 +304,18 @@ test mode instead of replanting demo records.
 
 ## Scene delivery (complete)
 
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) defines the Scene contract, and the whole of
-it is delivered. Its first deliveries landed the core (`scenes` migration, `Scene` model,
-story-scoped routes/controller, canonical list, narrative-order moves, Scene Details page and its
-editor form, the real sidebar link with its own cached count), the optional Section/Event/datetime
-references with their validation and the URL-backed tab shell, the Section grouping workspace, and
-the story-scoped Scene Tag taxonomy/assignment, and made the shared modal JSON path reliable. The
-Element and Character-presence deliveries landed `scene_elements` with its Dialogue speaker link,
-`scene_characters`, the ordered Element list and its modal on Scene Details, and the Characters tab.
-The Item and Location-presence deliveries landed `scene_items` and `scene_locations` with the Items
-and plural Locations tabs, so all four workspace tabs are live. `SceneAppearances` landed the
-reverse **Appears in scenes** section on the Character, Item, Location, and Event details pages.
-The confirmed first-version defaults are: Scene `name` labelled **Title**; Element
-`name` required and plain-text `body` optional; Dialogue requires at least one speaker; Narration
-has none; Scene uses one optional single-point `datetime` with the current Event storage/editor
-precision and timezone semantics, not Event's start/end pair; roles remain nullable; and the ADR's
-detailed deletion confirmations are mandatory.
+The Scene domain, its confirmed defaults (Title labelling, a single-point `datetime`, nullable roles,
+Dialogue needing a speaker, the mandatory deletion confirmations), its workspace tabs, and its
+deletion contract are in [features/scenes.md](features/scenes.md). The Scene-owned tables shipped as
+their own create migrations (`CreateSceneElements`, which also creates the `scene_element_speakers`
+join, `CreateSceneCharacters`, `CreateSceneItems`, and `CreateSceneLocations`), which matters for the
+reason given below.
 
-What each delivery added, in order:
-
-- The core Scene migration/model, the canonical list, the ordering controls, the editor shell, the
-  tests, and the connected development data.
-- The Section/Event/datetime references, the URL-backed tab shell, and the Section grouping
-  workspace.
-- The story-scoped Scene Tag schema/model, the hierarchical Story Tags workspace, optional Scene
-  Details assignment, badges, fixtures, and development data.
-- The shared modal made to submit JSON, render a `422` in the modal, report a request that never
-  lands, and remove a row with its counts, with request and browser regressions for Characters,
-  Items, and Events. See [ADR 0011](adr/0011-modal-json-mutation-contract.md).
-- The `scene_elements` schema/model with its flat position, the many-to-many Dialogue speaker link,
-  the JSON-only Element controller with `move`, the Element list and modal on Scene Details, and the
-  shared modal controller's JSON move action.
-- The `scene_characters` join model, the Characters tab, the derived participant view, and the
-  Scenes list's Element and participant counts.
-- The `scene_items` join model and the Items tab.
-- The `scene_locations` join model, the plural Locations tab, and `LocationPaths`.
-- `SceneAppearances`, the reverse section on four record pages, and the analyzer-oriented query
-  tests for shared Events and narrative order.
-
-Each dated entry is in [`../CHANGELOG.md`](../CHANGELOG.md), which is the durable record of this
-delivery; the numbered slices these stages were planned as are not kept, because a planned number
-is not a durable reference.
-
-Every delivery preserved public/private read-write-admin behavior and updated all model registries,
-authorization resolvers, route-helper guards, fixtures, tests, documentation, and changelog.
-
-The new tables shipped as their own create migrations (`CreateSceneElements`, which also creates the
-`scene_element_speakers` join, `CreateSceneCharacters`, `CreateSceneItems`, and
-`CreateSceneLocations`). See below for why that matters here.
+The delivery history — what each slice added, in order — is in
+[`../CHANGELOG.md`](../CHANGELOG.md), which is the durable record of it. A planned slice number is not
+a durable reference, so none is kept here. Every delivery preserved public/private read-write-admin
+behavior and updated all model registries, authorization resolvers, route-helper guards, fixtures,
+tests, documentation, and changelog.
 
 ### Amending a shipped migration does not work here
 
@@ -457,9 +421,8 @@ the original palette. In dark mode the universe, story, and tools sidebar blocks
 surfaces are dark rather than near-white, and tag badges keep the colors stored on the record. See
 [ADR 0013](adr/0013-platform-settings-and-browser-theme.md).
 
-Open a Scene and check: the **Scene Details** tab is active while **Characters** is a live link and
-**Items** and **Locations** are `aria-disabled` placeholders rather than dead links; Details shows
-the Section
+Open a Scene and check: the **Scene Details** tab is active while **Characters**, **Items**, and
+**Locations** are live links rather than dead links; Details shows the Section
 group, Scene Tag badges, the linked event, and the in-world time as separate labelled values; and
 the editor's **Scene tags**, **Organization**, and **In-world time** fieldsets let you assign or
 clear optional tags, set a Section, set an Event, and set a `datetime-local` value without the
@@ -522,22 +485,22 @@ become ungrouped without their narrative order changing.
 
 ## Taxonomy editor and ordering verification
 
-Taxonomy mutations remain JSON-only. The shared tree builds dynamic fields and nodes through DOM
-APIs, treats names/descriptions as text, and refreshes the same URL after every successful mutation
-so parent/tag options and counts are server-authoritative. Section and Location editors include
-scoped parent selectors; Move up/Move down and Insert before/Insert after provide non-drag paths.
-Run `test/system/taxonomy_tree_test.rb` for hostile-name, stale-state, boundary insertion,
-keyboard, and narrow/touch regressions. Do not reintroduce hover-only controls or `innerHTML` for
-user-controlled values.
+This section is the *verification* workflow; the rules it verifies are in
+[features/tags.md](features/tags.md) (the DSL, the tree, the editor) and
+[conventions.md](conventions.md#controllers) (`MaintainsSiblingPositions`, `PositionedResourceOrder`,
+and the flat-versus-hierarchical modes).
 
-Positioned controller mutations use `PositionedResourceOrder` and ADR 0009. Run
-`test/services/positioned_resource_order_test.rb` plus the positioned controller tests after
-changing ordering behavior. The service supports explicit flat mode, which the Story-owned Scene
-sequence now uses with `@story` as scope owner; the same flat mode is reserved for Scene Elements.
-`MaintainsSiblingPositions#position_parent_id_for` omits the ordering parent in flat mode, so a flat
-record does not need a `parent_id` column. It does not make `section_id` an ordering parent.
+- Run `test/system/taxonomy_tree_test.rb` for hostile-name, stale-state, boundary insertion,
+  keyboard, and narrow/touch regressions, and confirm that a mutation refreshes the same URL so
+  parent/tag options and counts stay server-authoritative.
+- Run `test/services/positioned_resource_order_test.rb` plus the positioned controller tests after
+  changing ordering behavior.
+- Do not reintroduce hover-only controls, or `innerHTML` for a user-controlled value.
 
-## Photos
+## Testing record photos
+
+The photo **contract** is in [features/photos.md](features/photos.md). This section is only the
+test workflow.
 
 A record may carry one photo, and the photo is always optional. The stored file is only ever the
 finished 300×300 square: the browser cropper sends a `data:` URL and the server crops and re-encodes

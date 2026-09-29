@@ -70,6 +70,15 @@ Labels used below:
   its documented status code. Request tests cover the mistyped-then-correct retry, the
   password-page destination, the refused destination and its one-request scope; browser tests cover
   the retry and the password-page journey.
+- **[docs]** `AGENTS.md` and the development guide now require clarifying a request before coding
+  starts. Naming two unrelated items in one sentence is not approval to do both: the agent asks
+  "A and B are not related, do you want to proceed with both or only one now?" A single item that
+  touches several areas of the project and divides into independent pieces is large, so the agent
+  asks "do you want to do everything now or do you want to split this task in slices/parts/chunks?"
+  and brings a concrete slicing with the question. The question is skipped when the items are the
+  same code path, when the request already answers it, or when the answer is obvious from the
+  repository and can be stated as an assumption. Intake settles the shape of the request and is
+  separate from the existing **NOW / LATER / NEVER** decision about work found outside its scope.
 - **[docs]** Updated the tag data model, workspace conventions, and development guide with the
   grouping, menu-navigation, and demo-data verification behavior.
 - **[chore]** Dark demo data now calls the Character grouping tag **Factions** and pins both

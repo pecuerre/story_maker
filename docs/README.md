@@ -14,7 +14,7 @@ per-universe development-data convention, and the public/private universe access
 | [universe_maker_conventions.md](universe_maker_conventions.md) | Code conventions & patterns: models, controllers, routes, views (3 page patterns), helpers, Stimulus controllers, top bar & sidebar navigation, Event/Timeline feature notes |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, Timeline algorithm |
-| [development.md](development.md) | Running the app, Minitest and client-side test suites, lint/security scans, per-universe development data (`db/data/<universe_slug>/`), CI, Kamal deployment, smoke test, and the full "adding a new model" workflow |
+| [development.md](development.md) | Clarifying a request before coding, running the app, Minitest and client-side test suites, lint/security scans, per-universe development data (`db/data/<universe_slug>/`), CI, Kamal deployment, smoke test, and the full "adding a new model" workflow |
 | [data_factor_guidance.md](data_factor_guidance.md) | DataFactor report snapshot, verified/current status, sustainable maintenance guidance, and acceptance criteria for quality, security, CI, onboarding, and observability work |
 | [known_quirks.md](known_quirks.md) | Verified **open** oddities, dead code and tech debt — read before changing shared code |
 | [resolved_quirks.md](resolved_quirks.md) | Quirks/tech debt that **used to exist and is fixed now** — what the problem was and how it was solved |

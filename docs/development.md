@@ -4,6 +4,36 @@ Commands, tests, seeding, CI, deployment and a "adding a new model" checklist.
 Conventions: [universe_maker_conventions.md](universe_maker_conventions.md) ·
 Schema: [data_model.md](data_model.md) · Gotchas: [known_quirks.md](known_quirks.md).
 
+## Clarifying a request before coding
+
+An agent settles the shape of a request before it writes code, because a request can be two tasks
+dressed as one, or one task large enough that finishing it in a single pass is the wrong call.
+
+Two shapes require a question first:
+
+- **Unrelated items named together.** If A and B do not belong together — different models, areas,
+  files, or bugs with no shared code path — ask: *"A and B are not related. Do you want to proceed
+  with both, or only one now?"* Name the one you would do first. Listing both in one sentence is
+  not approval to do both.
+- **One large item that divides.** If an item touches several different areas of the project
+  (model, migration, routes, controller, views, JavaScript, tests, demo data, docs) and can be
+  delivered in independent pieces, ask: *"Do you want to do everything now, or do you want to split
+  this task into slices/parts/chunks?"* Bring the proposed slices with the question, each with what
+  it contains, instead of asking the question open-ended.
+
+The question is skipped when the items are the same feature or code path, when the request already
+answers it ("only A", "all at once", "split into three"), or when the answer is obvious from the
+repository and the assumption can be stated in the hand-off summary instead. It is asked with the
+agent's question tool: concrete options, one at a time, short wording, after reading enough of the
+code to know what the real decision is. One answer settles it — the same scope, slicing, or ordering
+is not asked again later in the same task, and "just do it" is a standing answer for the rest of
+the request.
+
+This is separate from the **NOW / LATER / NEVER** decision in
+[`backlog.md`](backlog.md), which covers work found outside the requested scope. Intake comes
+first; NOW/LATER/NEVER applies to whatever extra turns up afterwards. The rules are summarized in
+[`../AGENTS.md`](../AGENTS.md), which is the always-loaded version.
+
 ## Prerequisites & running
 
 - Ruby **3.4.10** via [mise](https://mise.jdx.dev) (`mise.toml`); `bundle install`.

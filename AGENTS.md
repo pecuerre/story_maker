@@ -35,6 +35,43 @@ workflow; do not rewrite an accepted ADR to hide its history.
 
 When behavior changes, update the matching document in `docs/` in the same change.
 
+## Task intake: clarify before starting
+
+Ask the owner before editing files when a request has one of these two shapes. Do not start work,
+and do not guess, until the answer is given.
+
+- **Several unrelated items at once.** "Work on A and B", where A and B do not belong together —
+  different models, areas, files, or bugs with no shared code path — is two tasks, not one. Ask:
+  _"A and B are not related. Do you want to proceed with both, or only one now?"_ Say which one
+  you would do first and why. Being named in the same sentence is not approval to do both.
+- **One large item that divides.** When the requested item touches several different areas of the
+  project — model, migration, routes, controller, views, JavaScript, tests, demo data, docs — and
+  can be delivered in independent pieces, it is large. Ask: _"Do you want to do everything now, or
+  do you want to split this task into slices/parts/chunks?"_ Answer with a concrete proposal — the
+  pieces you would cut along and what each one contains — rather than an open question.
+
+Do not ask when:
+
+- the items are the same feature or the same code path;
+- the request already answers it ("only A", "all of it now", "split it into three", "in this
+  order");
+- answering costs more than proceeding, because the split or the relation is obvious from the
+  repository and the assumption can simply be stated in the hand-off summary.
+
+How to ask:
+
+- Use the question tool with concrete options, one question at a time, short wording.
+- Read the code before asking; never ask something the repository answers cheaply. Ask about the
+  decision that is genuinely the owner's.
+- One answer covers the decision. Do not ask again about the same scope, slicing, or ordering
+  later in the same task.
+- If the owner says "no questions" or "just do it", treat that as the standing answer for the rest
+  of the request and state the assumption you made in the hand-off summary.
+
+This is a different decision from **NOW / LATER / NEVER** in
+[`docs/backlog.md`](docs/backlog.md): intake settles the shape of the request, and NOW/LATER/NEVER
+then applies to anything extra that turns up during the work.
+
 ## Changelog discipline
 
 - Maintain the root [`CHANGELOG.md`](CHANGELOG.md) as a date-based project history. The project

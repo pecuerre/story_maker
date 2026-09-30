@@ -50,7 +50,7 @@ class Relation < ApplicationRecord
 
   def associated_records_belong_to_universe
     { character1: character1, character2: character2 }.each do |name, record|
-      errors.add(name, "must belong to the relation's universe") if record && universe && record.universe_id != universe_id
+      errors.add(name, I18n.t("relations.errors.must_belong_to_universe")) if record && universe && record.universe_id != universe_id
     end
   end
 end

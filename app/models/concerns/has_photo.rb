@@ -64,7 +64,7 @@ module HasPhoto
 
       return if @photo_data.blank?
       if photo_scope_universe.blank?
-        errors.add(:photo, "needs a record that belongs to a universe")
+        errors.add(:photo, I18n.t("shared.errors.photo.needs_universe_record"))
         return
       end
 
@@ -95,7 +95,7 @@ module HasPhoto
       return if photo.blank? || photo_scope_universe.blank?
       return if photo.universe_id == photo_scope_universe.id
 
-      errors.add(:photo, "must belong to the same universe")
+      errors.add(:photo, I18n.t("shared.errors.same_scope.universe"))
     end
 
     def destroy_replaced_photo

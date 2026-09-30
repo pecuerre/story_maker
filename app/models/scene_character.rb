@@ -15,7 +15,7 @@ class SceneCharacter < ApplicationRecord
   belongs_to :character
 
   validates :character_id, uniqueness: { scope: :scene_id, conditions: -> { where(deleted_at: nil) },
-    message: "is already in this scene" }
+    message: ->(_record, _data) { I18n.t("scenes.participation_errors.already_in_scene") } }
   validate :character_belongs_to_the_scene_universe
 
   def universe
@@ -43,6 +43,6 @@ class SceneCharacter < ApplicationRecord
       return if universe_id.blank? || character.nil?
       return if character.universe_id == universe_id
 
-      errors.add(:character, "must belong to the scene's universe")
+      errors.add(:character, I18n.t("scenes.participation_errors.must_belong_to_scene_universe"))
     end
 end

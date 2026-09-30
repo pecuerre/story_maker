@@ -115,13 +115,18 @@ class SceneElement < ApplicationRecord
       return if @character_assignment_errors.present?
 
       if dialogue? && characters.empty?
-        errors.add(:character_ids, "is required for a dialogue element")
+        errors.add(:character_ids, I18n.t("scenes.element_errors.speakers_required"))
       elsif narration? && characters.any?
         # The modal offers an explicit "remove the speakers" confirmation, which
         # submits an empty list in the same request. Reaching this message means
         # no such confirmation was given, so the change is refused rather than
         # silently dropping the speakers.
-        errors.add(:kind, "cannot be Narration while speakers are still assigned")
+        #
+        # The sentence names the *label* of the kind, not its value: `kind` is
+        # what the select stores and what the browser matches on, so it stays
+        # `narration` in every language while the word beside it moves.
+        errors.add(:kind, I18n.t("scenes.element_errors.narration_with_speakers",
+          narration: I18n.t("scenes.elements.kinds.narration")))
       end
     end
 
@@ -135,7 +140,7 @@ class SceneElement < ApplicationRecord
       characters.each do |character|
         next if character.universe_id == universe_id
 
-        errors.add(:character_ids, "must belong to the scene's universe")
+        errors.add(:character_ids, I18n.t("scenes.participation_errors.must_belong_to_scene_universe"))
       end
     end
 end

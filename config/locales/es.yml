@@ -109,6 +109,34 @@ es:
       heading:
         one: "Un error impidió guardar %{subject}:"
         other: "%{count} errores impidieron guardar %{subject}:"
+    # Los mensajes de validación que lanzan las cuatro Tuberías de Interés
+    # Compartidas, para que un espacio de trabajo no repita una regla que su
+    # propio modelo hereda. Cada uno es la cola de `errors.format`
+    # ("%{attribute} %{message}"), así que todos empiezan en minúscula.
+    #
+    # Las dos tuberías que comprueban un ámbito — el `parent` de `Hierarchical` y
+    # las filas de asignación de `HasManyTags` — dicen lo mismo sobre un dueño
+    # distinto, así que el ámbito es su propia oración y no un marco con la
+    # palabra del ámbito cosida dentro: un idioma que contrae o concuerda su
+    # determinante con el sustantivo no puede recibir un marco. Es la misma
+    # decisión que toma `tags.show.scope_universe_description` a su lado.
+    errors:
+      same_scope:
+        # El determinante concuerda con el sustantivo, y el español lo lleva
+        # delante: no es un marco con «el mismo» pegado al final.
+        universe: "debe pertenecer al mismo universo"
+        story: "debe pertenecer a la misma historia"
+      hierarchy:
+        scope_change_with_children: "no se puede cambiar mientras existan registros hijos"
+        cannot_be_itself: "no puede ser él mismo"
+        cannot_be_descendant: "no puede ser un descendiente"
+      tagged_records:
+        scope_change_with_tags: "no se puede cambiar mientras existan registros etiquetados"
+      color:
+        must_be_hex: "debe ser un color hexadecimal como #d3d3d3"
+      photo:
+        needs_universe_record: "necesita un registro que pertenezca a un universo"
+        must_be_attached: "debe estar adjunto"
     flash:
       close: "Cerrar"
     photo_field:
@@ -398,7 +426,7 @@ es:
     subject: "este acceso"
     errors:
       email_not_found: "no se ha encontrado"
-      email_is_owner: "es el propietario del universo y ya tiene acceso de administración"
+      is_universe_owner: "es el propietario del universo y ya tiene acceso de administración"
       invalid_access_level: "no es un nivel de acceso válido"
     flash:
       granted: "El acceso del miembro se ha concedido correctamente."
@@ -793,6 +821,22 @@ es:
       must_belong_to_universe: "debe pertenecer al universo de la historia"
       must_be_unique: "no puede estar repetido"
       invalid_datetime: "no es una fecha y una hora válidas"
+    # Los tres enlaces de presencia y la lista de hablantes del Elemento. Sus dos
+    # reglas de ámbito son un par de claves para los cuatro modelos porque la
+    # oración es la misma la diga el enlace que la diga: los modelos de presencia
+    # la añaden al atributo del registro enlazado y el Elemento a
+    # `:character_ids`, pero al lector se le dice el mismo hecho.
+    participation_errors:
+      already_in_scene: "ya está en esta escena"
+      must_belong_to_scene_universe: "debe pertenecer al universo de la escena"
+    # Las dos reglas que el propio `kind` de un diálogo tiene que cumplir.
+    # `narration` es la `label` del tipo, no su valor `kind`, así que se
+    # interpola: la oración nombra el tipo que el lector eligió en el selector, y
+    # un idioma que no lo llame «Narración» recibe igualmente una oración sobre el
+    # tipo que eligió.
+    element_errors:
+      speakers_required: "es obligatorio para un elemento de diálogo"
+      narration_with_speakers: "no puede ser %{narration} mientras todavía haya hablantes asignados"
 
   # Los espacios de trabajo de la Biblia del universo: Personajes, Lugares,
   # Sucesos, Objetos, Relaciones y Propiedades. Cada bloque es dueño de su
@@ -1022,6 +1066,7 @@ es:
     # entera porque su oración no aporta determinante.
     errors:
       subject: "esta relación"
+      must_belong_to_universe: "debe pertenecer al universo de la relación"
     # Los dos extremos en una sola frase, para la confirmación de borrado de la
     # fila: la fila los dibuja a ambos lados de una flecha, pero la confirmación
     # tiene que nombrarlos en una frase. Ninguno de los dos nombres es chrome, así
@@ -1080,6 +1125,7 @@ es:
         empty_description: "Esta propiedad es un vínculo entre un personaje y un objeto. Todo lo demás que merezca la pena saber sobre ella se mostrará aquí más adelante."
     errors:
       subject: "esta propiedad"
+      must_belong_to_universe: "debe pertenecer al universo de la propiedad"
     # Ver `relations.endpoints`: la misma frase para la misma acción de fila.
     endpoints: "%{first} y %{second}"
     # Los dos extremos como etiqueta. `display_label` es esto; `display_string` es

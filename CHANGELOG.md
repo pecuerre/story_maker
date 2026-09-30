@@ -20,6 +20,44 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[changed]** **Every model's own validation message is a key, which was the last English a
+  Spanish page could show.** Twenty-six `errors.add` and `validates … message:` call sites across
+  fifteen models wrote their sentence inline, so a rejected save rendered English inside an otherwise
+  translated page — a Spanish taxonomy save answered `["Color de fondo must be a hex color like
+  #d3d3d3"]`, with a Spanish attribute name in front of it. The four shared concerns
+  (`Hierarchical`, `HasColor`, `HasManyTags`, `HasPhoto`), the three presence links, `SceneElement`,
+  `Relation`, `Ownership`, `Photo`, and `UniverseMembership` all read a key now.
+  - **A scope is a sentence, not a word.** `Hierarchical`'s parent and `HasManyTags`' assignment rows
+    both built `"must belong to the same #{scope}"`, which hands a locale a frame it cannot
+    reorder, contract, or gender. The two scopes are two sentences under `shared.errors.same_scope`
+    now, and `Hierarchical#hierarchy_scope_error_key` returns a **key** so the three story-scoped
+    models (`Section`, `SectionTag`, `SceneTag`) name the other key rather than each carrying its own
+    copy of a word.
+  - **A `validates` message is a callable, not a resolved string.** `HasColor` is the case that
+    proves why: `included do` runs when the class loads, so `I18n.t` called there resolves once — in
+    whichever locale happened to load the class first — and every later request validates against
+    that one language. Rails evaluates a callable message per validation, which is where
+    `I18n.locale` is the locale of the request being validated. The three presence models' uniqueness
+    messages are callables for the same reason.
+  - `SceneElement`'s refusal to keep speakers on a Narration interpolates the kind's **label**, not
+    its value: `kind` is what the select stores and the browser matches on, so it stays `narration`
+    in every language while the word beside it moves.
+  - `UniverseMembership` and the memberships controller were writing the same sentence under two
+    names; they now share `memberships.errors.is_universe_owner`.
+- **[chore]** **Two checks now guard what neither could see.** A validation message is only reachable
+  from a *rejected* request, which is why `TranslationsTest` (which compares the two locale files
+  against each other) and `SpanishChromeTest` (which searched a rendered, i.e. successful, page for
+  the English values the locale files define) both passed while twenty-six English messages shipped.
+  - `test/models/model_error_message_literals_test.rb` is the server-side twin of
+    `no_client_string_literals_test.js`: it fails when a quoted string reaches `errors.add` or a
+    `validates` `message:`. A key read from a variable is deliberately **not** an offence, so
+    `ClientStrings`, `Search::Kinds`, and `HasColor::HEX_COLOR_MESSAGE` stay as they are.
+  - `test/controllers/spanish_chrome_test.rb` now drives the failing requests — a rejected taxonomy
+    save, a rejected presence link, a rejected Element, and a rejected Relation that re-renders its
+    form through `shared/_error_summary` — asserting both that the Spanish sentence is what came back
+    and that the answer carries no English.
+  - Both guards were verified to fail when their own regression is reintroduced.
+
 - **[changed]** **The four Stimulus controllers read their strings from the server, which finishes
   the internationalization work.** `taxonomy_tree_controller.js`, `photo_crop_controller.js`,
   `modal_form_controller.js`, and `search_controller.js` each hardcoded about a dozen sentences of

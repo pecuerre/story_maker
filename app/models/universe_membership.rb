@@ -53,6 +53,9 @@ class UniverseMembership < ApplicationRecord
     def user_is_not_universe_owner
       return if user.nil? || universe.nil? || user_id != universe.owner_id
 
-      errors.add(:user, "is the universe owner and already has admin access")
+      # The same sentence the memberships controller adds when an owner is invited
+      # by email, so both call sites read one key rather than two copies of the
+      # same words under two names.
+      errors.add(:user, I18n.t("memberships.errors.is_universe_owner"))
     end
 end

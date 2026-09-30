@@ -20,7 +20,7 @@ class MembershipsController < ApplicationController
     if user.nil?
       @membership.errors.add(:email_address, t("memberships.errors.email_not_found"))
     elsif user == Current.universe.owner
-      @membership.errors.add(:email_address, t("memberships.errors.email_is_owner"))
+      @membership.errors.add(:email_address, t("memberships.errors.is_universe_owner"))
     else
       @membership.user = user
     end

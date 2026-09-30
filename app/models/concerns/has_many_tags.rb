@@ -22,6 +22,22 @@ module HasManyTags
       @tagged_records_join_association
     end
 
+    # The I18n **key** of the sentence that says a tagged record must share this
+    # model's scope, chosen from the scope attribute the declaration passed.
+    #
+    # It was one interpolated string here, which spliced the scope's own word into
+    # a fixed frame — a locale that contracts or genders its determiner with that
+    # noun cannot be handed a frame, so the two scopes are two sentences now. The
+    # key is resolved per validation rather than frozen here, so a request is
+    # answered in its own language; see `features/i18n.md`.
+    def tag_scope_error_key(scope)
+      case scope.to_s.delete_suffix("_id")
+      when "universe" then "shared.errors.same_scope.universe"
+      when "story" then "shared.errors.same_scope.story"
+      else raise ArgumentError, "no scope sentence for #{scope.inspect}"
+      end
+    end
+
     # Declares a many-to-many relationship to a taxonomy "tag" model, e.g.
     # `has_many_tags :character_tag, scope: :universe_id` on Character.
     # on Character. Backed by a habtm join table named "<element_table>_<tag_table>".
@@ -67,7 +83,7 @@ module HasManyTags
           public_send(association).each do |record|
             next if record.public_send(scope) == public_send(scope)
 
-            errors.add(association, "must belong to the same #{scope.to_s.delete_suffix('_id')}")
+            errors.add(association, I18n.t(self.class.tag_scope_error_key(scope)))
           end
         end
 
@@ -125,7 +141,7 @@ module HasManyTags
     return unless will_save_change_to_attribute?(scope)
     return unless join_rows_exist?
 
-    errors.add(scope, "cannot be changed while tagged records exist")
+    errors.add(scope, I18n.t("shared.errors.tagged_records.scope_change_with_tags"))
   end
 
   private

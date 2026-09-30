@@ -32,6 +32,7 @@ class SpanishChromeTest < ActionDispatch::IntegrationTest
   setup do
     @universe = universes(:universe_one)
     @story = stories(:story_one)
+    @scene = scenes(:scene_one)
     sign_in_as(users(:user_one))
     patch settings_url, params: { locale: "es" }
   end
@@ -65,6 +66,68 @@ class SpanishChromeTest < ActionDispatch::IntegrationTest
       assert_no_english_chrome(name)
     end
   end
+
+  # The pages above all render, so they never reach a validation message. That
+  # left a whole class of English invisible to this file: a model that answered
+  # a rejected save with a literal `errors.add` sentence rather than a key. The
+  # reader saw a Spanish page with one English line in it, and every test here
+  # passed, because a message that never appears on a successful page is not a
+  # value this file searches a body for.
+  #
+  # So the failing request is the one under test. Each case below is a real
+  # mutation that the models above reject, and each is asserted twice: that the
+  # Spanish sentence is the one that came back, and that the answer carries no
+  # English. The first catches a key that fell back to `en.yml`; the second
+  # catches a literal that is not a key at all.
+  test "a rejected save answers in Spanish rather than in an English message" do
+    # `HasColor`'s format validation, which is the message that used to render as
+    # "Color de fondo must be a hex color like #d3d3d3".
+    post universe_character_tags_url(universe_slug: @universe.slug),
+      params: { character_tag: { name: "Spanish probe", scope: "universe", bgcolor: "not-a-color" } },
+      as: :json
+    assert_response :unprocessable_content
+    assert_equal [ spanish("shared.errors.color.must_be_hex") ], response.parsed_body["bgcolor"]
+    assert_no_english_chrome("a rejected taxonomy save")
+
+    # A presence link, whose uniqueness message reaches the Scene's own tab. The
+    # Scene comes from the URL, so the payload carries only the link's own fields.
+    post universe_story_scene_scene_characters_path(universe_slug: @universe.slug,
+      story_id: @story.id, scene_id: @scene.id),
+      params: { scene_character: { character_id: characters(:character_one).id } },
+      as: :json
+    assert_response :unprocessable_content
+    assert_equal [ spanish("scenes.participation_errors.already_in_scene") ], response.parsed_body["character_id"]
+    assert_no_english_chrome("a rejected presence link")
+
+    # A record-level message, which the browser wraps in a sentence about the
+    # record rather than in a field label.
+    post universe_story_scene_scene_elements_path(universe_slug: @universe.slug,
+      story_id: @story.id, scene_id: @scene.id),
+      params: { scene_element: { kind: "dialogue", name: "Spanish probe" } },
+      as: :json
+    assert_response :unprocessable_content
+    assert_equal [ spanish("scenes.element_errors.speakers_required") ], response.parsed_body["character_ids"]
+    assert_no_english_chrome("a rejected element save")
+  end
+
+  # The server-rendered half of the same rule. A workspace that re-renders its
+  # form after a rejected submission prints the model's own messages through
+  # `shared/_error_summary`, which is the path a literal sentence takes when the
+  # mutation is not a JSON one — and the reason the Relations and Ownerships
+  # messages needed translating as carefully as the modal's.
+  test "a rejected save renders its summary in Spanish" do
+    foreign = universes(:universe_two).characters.create!(name: "Foreign character")
+
+    post universe_relations_path(universe_slug: @universe.slug),
+      params: { relation: { name: "Spanish probe", character1_id: foreign.id } }
+
+    assert_response :unprocessable_content
+
+    body = Nokogiri::HTML(response.body).text
+    assert_includes body, spanish("relations.errors.must_belong_to_universe")
+    assert_no_english_chrome("a rejected relation save")
+  end
+
 
   test "the client-string blob a Spanish page ships is the Spanish one" do
     get universe_characters_url(universe_slug: @universe.slug)
@@ -113,6 +176,14 @@ class SpanishChromeTest < ActionDispatch::IntegrationTest
   end
 
   private
+    # The reader's answer, not the test process's. `setup` switched the *request*
+    # to Spanish through a cookie, and the process itself is still in the default
+    # locale, so an expectation has to ask for the Spanish value explicitly or it
+    # would compare the body against the English it is supposed not to contain.
+    def spanish(key)
+      I18n.t(key, locale: :es)
+    end
+
     def assert_no_english_chrome(name)
       body = Nokogiri::HTML(response.body).text
 

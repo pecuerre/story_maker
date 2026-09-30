@@ -57,7 +57,7 @@ class Ownership < ApplicationRecord
 
   def associated_records_belong_to_universe
     { item: item, character: character }.each do |name, record|
-      errors.add(name, "must belong to the ownership's universe") if record && universe && record.universe_id != universe_id
+      errors.add(name, I18n.t("ownerships.errors.must_belong_to_universe")) if record && universe && record.universe_id != universe_id
     end
   end
 end

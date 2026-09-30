@@ -84,7 +84,12 @@ reads rather than resolves — because every later stage repeats them.
   `ClientStringsTest` asserts both that every `t()` call in `app/javascript`
   names a key the server sends and that every key the server sends is one a
   controller reads, and `no_client_string_literals_test.js` fails when a
-  controller holds English of its own.
+  controller holds English of its own. A **model's** validation message needs the
+  same rule and its own gate: `model_error_message_literals_test.rb` fails when
+  `errors.add` or a `validates` `message:` holds a literal, because a message is
+  only reachable from a *rejected* request, which is why neither the key
+  comparison nor a rendered page could see one. See
+  [`features/i18n.md`](../features/i18n.md#the-models-own-validation-messages).
 - **Record-type nouns live at the root of the locale files.** Every workspace
   already passes a bare word as a count label (`count_label: "character"`,
   `details_count_label: "scene"`), and the shared count helpers now resolve that

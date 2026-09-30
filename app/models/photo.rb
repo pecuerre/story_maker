@@ -72,6 +72,6 @@ class Photo < ApplicationRecord
     # useful record. Written out rather than using Active Storage's `attached:`
     # validator, which this Rails version does not ship.
     def file_is_attached
-      errors.add(:file, "must be attached") unless file.attached?
+      errors.add(:file, I18n.t("shared.errors.photo.must_be_attached")) unless file.attached?
     end
 end

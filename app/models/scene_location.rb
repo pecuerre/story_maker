@@ -13,7 +13,7 @@ class SceneLocation < ApplicationRecord
   belongs_to :location
 
   validates :location_id, uniqueness: { scope: :scene_id, conditions: -> { where(deleted_at: nil) },
-    message: "is already in this scene" }
+    message: ->(_record, _data) { I18n.t("scenes.participation_errors.already_in_scene") } }
   validate :location_belongs_to_the_scene_universe
 
   def universe
@@ -41,6 +41,6 @@ class SceneLocation < ApplicationRecord
       return if universe_id.blank? || location.nil?
       return if location.universe_id == universe_id
 
-      errors.add(:location, "must belong to the scene's universe")
+      errors.add(:location, I18n.t("scenes.participation_errors.must_belong_to_scene_universe"))
     end
 end

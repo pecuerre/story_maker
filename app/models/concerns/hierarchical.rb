@@ -55,15 +55,19 @@ module Hierarchical
     :universe_id
   end
 
-  def hierarchy_scope_error
-    "must belong to the same universe"
+  # The *key* of the scope sentence, not the sentence: a model that narrows the
+  # scope overrides this to name the other key rather than to write its own
+  # English, which is what let three models each carry a copy of a word a locale
+  # cannot choose. See `shared.errors.same_scope`.
+  def hierarchy_scope_error_key
+    "shared.errors.same_scope.universe"
   end
 
   def parent_belongs_to_same_universe
     return if parent.nil? ||
       parent.public_send(hierarchy_scope_attribute) == public_send(hierarchy_scope_attribute)
 
-    errors.add(:parent, hierarchy_scope_error)
+    errors.add(:parent, I18n.t(hierarchy_scope_error_key))
   end
 
   # A hierarchical record's whole subtree lives in the same owning scope (universe,
@@ -75,17 +79,17 @@ module Hierarchical
     return unless will_save_change_to_attribute?(hierarchy_scope_attribute)
     return unless children.exists?
 
-    errors.add(hierarchy_scope_attribute, "cannot be changed while child records exist")
+    errors.add(hierarchy_scope_attribute, I18n.t("shared.errors.hierarchy.scope_change_with_children"))
   end
 
   def parent_cannot_be_self
-    errors.add(:parent, "cannot be itself") if parent.present? && parent == self
+    errors.add(:parent, I18n.t("shared.errors.hierarchy.cannot_be_itself")) if parent.present? && parent == self
   end
 
   def parent_cannot_be_descendant
     return if parent.nil? || new_record? || parent_id == id
 
-    errors.add(:parent, "cannot be a descendant") if parent.ancestor_chain.include?(self)
+    errors.add(:parent, I18n.t("shared.errors.hierarchy.cannot_be_descendant")) if parent.ancestor_chain.include?(self)
   end
 
   def normalize_sibling_positions_after_destroy

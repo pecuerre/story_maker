@@ -26,7 +26,7 @@ class SectionTag < ApplicationRecord
     :story_id
   end
 
-  def hierarchy_scope_error
-    "must belong to the same story"
+  def hierarchy_scope_error_key
+    "shared.errors.same_scope.story"
   end
 end

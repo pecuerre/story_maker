@@ -118,6 +118,31 @@ en:
       heading:
         one: "1 error prevented this %{subject} from being saved:"
         other: "%{count} errors prevented this %{subject} from being saved:"
+    # The validation messages the four shared concerns raise, so a workspace
+    # does not repeat a rule its own model inherited. Each is the tail of
+    # `errors.format` ("%{attribute} %{message}"), so each starts lowercase.
+    #
+    # The two concerns that check a scope — `Hierarchical`'s parent and
+    # `HasManyTags`' assignment rows — say the same thing about a different
+    # owner, so the scope is its own sentence rather than a frame with the
+    # scope's word spliced into it: a locale that contracts or genders its
+    # determiner with the noun cannot be handed a frame. This is the same
+    # decision `tags.show.scope_universe_description` makes beside it.
+    errors:
+      same_scope:
+        universe: "must belong to the same universe"
+        story: "must belong to the same story"
+      hierarchy:
+        scope_change_with_children: "cannot be changed while child records exist"
+        cannot_be_itself: "cannot be itself"
+        cannot_be_descendant: "cannot be a descendant"
+      tagged_records:
+        scope_change_with_tags: "cannot be changed while tagged records exist"
+      color:
+        must_be_hex: "must be a hex color like #d3d3d3"
+      photo:
+        needs_universe_record: "needs a record that belongs to a universe"
+        must_be_attached: "must be attached"
     flash:
       close: "Close"
     photo_field:
@@ -431,7 +456,7 @@ en:
     # ("%{attribute} %{message}"), so each starts lowercase.
     errors:
       email_not_found: "could not be found"
-      email_is_owner: "is the universe owner and already has admin access"
+      is_universe_owner: "is the universe owner and already has admin access"
       invalid_access_level: "is not a valid access level"
     flash:
       granted: "Member access was successfully granted."
@@ -808,6 +833,21 @@ en:
       must_belong_to_universe: "must belong to the story's universe"
       must_be_unique: "must be unique"
       invalid_datetime: "is not a valid date and time"
+    # The three presence links and the Element's speaker list. Their two scope
+    # rules are one pair of keys for all four models because the sentence is the
+    # same whichever link states it: the presence models add to the linked
+    # record's own attribute and the Element to `:character_ids`, but the reader
+    # is told the same fact either way.
+    participation_errors:
+      already_in_scene: "is already in this scene"
+      must_belong_to_scene_universe: "must belong to the scene's universe"
+    # The two rules a Dialogue's own kind has to satisfy. `narration` is the
+    # kind's `label`, not its `kind` value, so it is interpolated: the sentence
+    # names the type the reader picked in the select, and a locale that does not
+    # call it "Narration" still gets a sentence about the type they chose.
+    element_errors:
+      speakers_required: "is required for a dialogue element"
+      narration_with_speakers: "cannot be %{narration} while speakers are still assigned"
 
   # The Universe Bible workspaces: Characters, Locations, Events, Items,
   # Relations, and Ownerships. Each block owns its list page, the modal editor
@@ -1031,6 +1071,7 @@ en:
     # phrase because its sentence has no determiner to supply one.
     errors:
       subject: "relation"
+      must_belong_to_universe: "must belong to the relation's universe"
     # The two endpoints as one phrase, for the row action's delete confirmation:
     # the row draws them either side of an arrow, and the confirmation has to
     # name them in a sentence. Neither name is chrome, so both are interpolated.
@@ -1087,6 +1128,7 @@ en:
         empty_description: "This ownership is a link between a character and an item. Anything else worth knowing about it will be listed here later."
     errors:
       subject: "ownership"
+      must_belong_to_universe: "must belong to the ownership's universe"
     # See `relations.endpoints`: the same phrase, for the same row action.
     endpoints: "%{first} and %{second}"
     # The two endpoints as a label. `display_label` is this; `display_string` is

@@ -43,9 +43,11 @@ the same change, or `db:demo:check` fails.
   `Relation` and `Ownership` do **not** (they are link records between two entities);
   `Story`, `Universe`, `User`, `Session` don't either.
 - `Hierarchical` compares parents within their owning scope through the overridable
-  `hierarchy_scope` / `hierarchy_scope_attribute` / `hierarchy_scope_error` methods
-  (universe by default; `Section` overrides them to compare `story_id` →
-  *"must belong to the same story"*).
+  `hierarchy_scope` / `hierarchy_scope_attribute` / `hierarchy_scope_error_key` methods
+  (universe by default; `Section`, `SectionTag`, and `SceneTag` override them to compare `story_id`).
+  `hierarchy_scope_error_key` returns an **I18n key** rather than a sentence, so a model narrowing the
+  scope names `shared.errors.same_scope.story` instead of writing its own English; see
+  [`features/i18n.md`](features/i18n.md#the-models-own-validation-messages).
 - Content ↔ tag pairs are declared with the `has_many_tags` / `has_many_tagd` DSL and a mandatory
   shared `scope:` (`:universe_id`, or `:story_id` for Section and Scene tags). The DSL, the optional-tag
   rule, the inverse read side, the grouped-count value objects that exist because these scopes cannot

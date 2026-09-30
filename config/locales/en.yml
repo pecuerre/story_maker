@@ -381,6 +381,11 @@ en:
     # and a guest or read-only member is told the records belong to the universe.
     empty_writable_description: "Characters belong to the universe and are shared by all of its stories. Add the first one to begin."
     empty_read_only_description: "Characters belong to the universe and are shared by all of its stories."
+    # A Character has dependents, so its row's delete states its own cascade. The
+    # exact sentence is mandated by ADR 0007 and must not be weakened here;
+    # `name` is the author's own record name, so it is interpolated rather than
+    # translated.
+    delete_confirm: "Delete “%{name}”? Its descendant characters, relations, ownerships, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain."
     show:
       label: "Character"
       back_label: "All characters"
@@ -404,6 +409,10 @@ en:
     # descriptions sit under that title, and the second is the read-only one.
     empty_description: "Add a location, then drag rows to create parent and child places."
     read_only_empty_description: "No locations have been added yet."
+    # A Location has dependents, so each tree node carries its own cascade as the
+    # `confirm_message` the shared taxonomy tree serializes. Same ADR-mandated
+    # sentence as the Characters and Items lists.
+    delete_confirm: "Delete “%{name}”? Its descendant locations, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain."
     show:
       label: "Location"
       back_label: "All locations"
@@ -430,9 +439,10 @@ en:
     empty_title: "No events yet"
     empty_writable_description: "Add events with dates or relationships to each other, then open the Timeline to see how they connect."
     empty_read_only_description: "Events in this universe will appear here once they have been added."
-    # The one delete confirmation of these six workspaces that states its own
-    # cascade. `name` is `Event#display_string`, so it is the event's own label
-    # and is interpolated rather than translated.
+    # An Event has dependents, so its row's delete states its own cascade in the
+    # same ADR-mandated words as the Character, Item, and Location lists.
+    # `name` is `Event#display_string`, so it is the event's own label and is
+    # interpolated rather than translated.
     delete_confirm: "Delete “%{name}”? Its child events, tag assignments, and any temporal referrers that would become unidentifiable will be permanently removed; other temporal references and Scene links will be cleared. Scenes will remain."
     form:
       title: "Title"
@@ -485,6 +495,9 @@ en:
     empty_title: "No items yet"
     empty_writable_description: "Items belong to the universe and can be used to track objects, resources, and ownership across every story. Add the first one to begin."
     empty_read_only_description: "Items belong to the universe and are shared by all of its stories."
+    # An Item has dependents, so its row's delete states its own cascade, in the
+    # same ADR-mandated words as the Characters list above.
+    delete_confirm: "Delete “%{name}”? Its descendant items, ownerships, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain."
     show:
       label: "Item"
       back_label: "All items"

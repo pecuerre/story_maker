@@ -346,6 +346,11 @@ es:
     # le dice que los registros pertenecen al universo.
     empty_writable_description: "Los personajes pertenecen al universo y los comparten todas sus historias. Añade el primero para empezar."
     empty_read_only_description: "Los personajes pertenecen al universo y los comparten todas sus historias."
+    # Un personaje tiene dependientes, así que su borrado declara su propia cascada.
+    # La frase exacta la impone el ADR 0007 y no debe debilitarse aquí; `name` es el
+    # nombre del propio registro de la persona autora, así que se interpola en lugar
+    # de traducirse.
+    delete_confirm: "¿Eliminar «%{name}»? Sus personajes descendientes, relaciones, propiedades, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros registros del universo permanecerán."
     show:
       label: "Personaje"
       back_label: "Todos los personajes"
@@ -369,6 +374,10 @@ es:
     # dos descripciones van bajo ese título, y la segunda es la de solo lectura.
     empty_description: "Añade un lugar y luego arrastra las filas para crear lugares padres e hijos."
     read_only_empty_description: "Todavía no se ha añadido ningún lugar."
+    # Un lugar tiene dependientes, así que cada nodo del árbol lleva su propia cascada
+    # como el `confirm_message` que el árbol de taxonomías compartido serializa. La
+    # misma frase que impone el ADR 0007 que usan las listas de personajes y objetos.
+    delete_confirm: "¿Eliminar «%{name}»? Sus lugares descendientes, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros registros del universo permanecerán."
     show:
       label: "Lugar"
       back_label: "Todos los lugares"
@@ -395,9 +404,10 @@ es:
     empty_title: "Todavía no hay sucesos"
     empty_writable_description: "Añade sucesos con fechas o relaciones entre ellos y abre después la Cronología para ver cómo se conectan."
     empty_read_only_description: "Los sucesos de este universo aparecerán aquí en cuanto se hayan añadido."
-    # La única confirmación de borrado de estos seis espacios de trabajo que
-    # declara su propia cascada. `name` es `Event#display_string`, es decir la
-    # etiqueta del propio suceso, así que se interpola en lugar de traducirse.
+    # Un suceso tiene dependientes, así que su borrado declara su propia cascada con las
+    # mismas palabras que impone el ADR 0007 para las listas de personajes, objetos y
+    # lugares. `name` es `Event#display_string`, es decir la etiqueta del propio suceso,
+    # así que se interpola en lugar de traducirse.
     delete_confirm: "¿Eliminar «%{name}»? Sus sucesos hijos, las asignaciones de etiquetas y cualquier referente temporal que quedara sin identificar se eliminarán de forma permanente; las demás referencias temporales y los enlaces a escenas se vaciarán. Las escenas permanecerán."
     form:
       title: "Título"
@@ -451,6 +461,9 @@ es:
     empty_title: "Todavía no hay objetos"
     empty_writable_description: "Los objetos pertenecen al universo y sirven para seguir objetos, recursos y propiedades a lo largo de todas las historias. Añade el primero para empezar."
     empty_read_only_description: "Los objetos pertenecen al universo y los comparten todas sus historias."
+    # Un objeto tiene dependientes, así que su borrado declara su propia cascada, con las
+    # mismas palabras que impone el ADR 0007 para la lista de personajes.
+    delete_confirm: "¿Eliminar «%{name}»? Sus objetos descendientes, propiedades, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros registros del universo permanecerán."
     show:
       label: "Objeto"
       back_label: "Todos los objetos"

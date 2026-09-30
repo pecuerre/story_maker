@@ -312,10 +312,10 @@ shown in these confirmations.
 >   `position` order, and nothing in the model sorts a story by an Event's timeline or by a
 >   Scene's in-world `datetime`.
 >
-> Every Scene-owned route in the target-URL table is live. The confirmation templates above are
-> the live copy for `Scene`, `Story`, `Section`, and `Event`; the `Character`, `Item`, and
-> `Location` templates are still the contract this ADR records and are not yet the copy the
-> interface shows — see [`../known_quirks.md`](../known_quirks.md).
+> Every Scene-owned route in the target-URL table is live. At this date the confirmation templates
+> above were the live copy for `Scene`, `Story`, `Section`, and `Event` only; the `Character`,
+> `Item`, and `Location` templates were still the contract this ADR records and not the copy the
+> interface showed. That gap was closed later — see the dated note below.
 
 > **Execution note (2026-09-26, Scene and Section improvement pass):** the first improvement pass
 > over the two shipped Scene/Section workspaces is delivered and does not change the domain. Two
@@ -358,6 +358,29 @@ rewriting the Decision, because that section is the record of what was decided o
 The current contract is documented in
 [`../features/scenes.md`](../features/scenes.md#the-deletion-contract) and
 [`../data_model.md`](../data_model.md#soft-delete).
+
+## Dated execution note (2026-09-30, all seven confirmation templates are live)
+
+The 2026-09-27 note above recorded that the `Character`, `Item`, and `Location` templates were the
+contract this ADR holds but not the copy the interface showed. That gap is closed: all seven
+destructive confirmations now render the Decision's sentences.
+
+- **Character and Item** are flat JSON-only rows, so they pass `confirm_text` to
+  `shared/_row_actions`, which serializes it as the modal controller's `data-modal-form-confirm`.
+- **Location** is a taxonomy tree, so it passes a `confirm_message` lambda and the shared tree
+  serializes it per node as `data-confirm-message` for `taxonomy-tree#remove` to confirm on. That
+  is the same channel `Section` and `SceneTag` already used.
+- The three new strings live at `characters.delete_confirm`, `items.delete_confirm`, and
+  `locations.delete_confirm`, beside the copy they are the only readers of, and each is the
+  Decision's sentence with `%{name}` interpolated. The record name is the author's own data, so it
+  is interpolated rather than translated.
+- The ADR's "every confirmation template above is live" claim now holds for all seven. The copy is
+  unchanged from the Decision section: the wording was never the problem, only that three surfaces
+  were not rendering it.
+
+Request tests read each confirmation from the rendered attribute in
+`test/controllers/characters_controller_test.rb`, `items_controller_test.rb`,
+`locations_controller_test.rb`, and `universe_bible_locale_test.rb` (English and Spanish).
 
 ## Consequences
 

@@ -50,6 +50,7 @@
               record: item,
               label: t("item", count: 1),
               record_name: item.name,
+              confirm_text: t("items.delete_confirm", name: item.name),
               edit_url: universe_item_path(id: item),
               delete_url: universe_item_path(id: item),
               delete_via: :json,

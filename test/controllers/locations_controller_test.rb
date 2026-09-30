@@ -55,6 +55,18 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "must belong to the same universe" ], response.parsed_body["location_tags"]
   end
 
+  test "the location delete confirmation states that scenes and other records remain" do
+    get universe_locations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # The tree sends the confirmation to the browser as a per-node attribute, so it
+    # is read from the DOM rather than from a rendered button. The mandatory
+    # consequence copy is carried by that attribute and must not be weakened.
+    assert_select "li.taxonomy-node[data-confirm-message=?]",
+      "Delete “#{@location.name}”? Its descendant locations, tag assignments, and links to scenes " \
+      "will be permanently removed. Scenes and other universe records will remain."
+  end
+
   test "should update location details as json" do
     patch universe_location_url(universe_slug: @universe.slug, id: @location),
       params: { location: { name: "Renamed", description: "Updated", location_tag_ids: [ @location_tag.id ] } },

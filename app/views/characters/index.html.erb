@@ -55,6 +55,7 @@
               record: character,
               label: t("character", count: 1),
               record_name: character.name,
+              confirm_text: t("characters.delete_confirm", name: character.name),
               edit_url: universe_character_path(id: character),
               delete_url: universe_character_path(id: character),
               delete_via: :json,

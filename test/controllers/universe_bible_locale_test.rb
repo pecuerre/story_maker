@@ -74,7 +74,9 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
       "Editar personaje"
     assert_select ".row-actions button[data-action='modal-form#destroy']", text: "Eliminar"
     assert_select ".row-actions button[data-action='modal-form#destroy'][data-modal-form-confirm=?]",
-      "¿Eliminar Character one?"
+      "¿Eliminar «Character one»? Sus personajes descendientes, relaciones, propiedades, " \
+      "asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas " \
+      "y otros registros del universo permanecerán."
   end
 
   test "a Character's own page states its facts in Spanish" do
@@ -245,6 +247,33 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".page-eyebrow", text: "Objeto"
     assert_select "dt", text: "Etiquetas de objetos"
     assert_select ".page-actions a", text: "Todos los objetos"
+  end
+
+  test "an Item's delete confirmation is Spanish and states its consequences" do
+    item = items(:item_one)
+
+    get universe_items_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # The confirmation is interpolated onto a per-row attribute, so it is read from
+    # the DOM rather than from a rendered button. The item's own name is data and
+    # is interpolated, not translated.
+    assert_select ".row-actions button[data-modal-form-confirm=?]",
+      "¿Eliminar «#{item.name}»? Sus objetos descendientes, propiedades, asignaciones de etiquetas " \
+      "y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros registros del " \
+      "universo permanecerán."
+  end
+
+  test "a Location's delete confirmation is Spanish and states its consequences" do
+    get universe_locations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # The tree sends its confirmation to the browser as a per-node attribute rather
+    # than as a rendered button, so that is where the copy is read.
+    assert_select "li.taxonomy-node[data-confirm-message=?]",
+      "¿Eliminar «#{locations(:location_one).name}»? Sus lugares descendientes, asignaciones de " \
+      "etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros " \
+      "registros del universo permanecerán."
   end
 
   test "an empty Items list names itself in Spanish" do

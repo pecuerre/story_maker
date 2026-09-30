@@ -90,6 +90,20 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Renamed", "Updated", [ @character_tag.id ] ], [ @character.name, @character.description, @character.character_tag_ids ]
   end
 
+  test "the character delete confirmation states that scenes and other records remain" do
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # The character row is a JSON-only workspace, so its delete control is the modal
+    # controller's button rather than a Turbo `button_to`. The mandatory consequence
+    # copy is carried by that control and must not be weakened.
+    assert_select "button[data-action='modal-form#destroy'][data-modal-form-url=?][data-modal-form-confirm=?]",
+      universe_character_path(universe_slug: @universe.slug, id: @character),
+      "Delete “#{@character.name}”? Its descendant characters, relations, ownerships, tag " \
+      "assignments, and links to scenes will be permanently removed. Scenes and other universe " \
+      "records will remain."
+  end
+
   test "the character editor dropdown offers taggable tags only" do
     get universe_characters_url(universe_slug: @universe.slug)
 

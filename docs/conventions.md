@@ -419,6 +419,14 @@ value objects, and the deletion contract are one feature with one home, in
   read-only member is not told to add or drag records, and the `details_url`/`details_count`/
   `details_count_label` trio that renders the row's Details link and count pill. `_row_actions`
   accepts the same kind of `confirm_text`.
+- **A record with dependents passes its own confirmation; the default is only the fallback.** The
+  destructive templates are mandated by
+  [ADR 0007](adr/0007-story-owned-scenes-and-elements.md), which owns the sentences and what they
+  must say. A flat JSON-only row that owns dependents passes `confirm_text` to `_row_actions`; a
+  taxonomy whose nodes own dependents passes a `confirm_message` lambda. Every current caller does:
+  Characters, Items, and Events on the flat-list path, and Locations, Sections, and Scene Tags on
+  the tree path. `shared.row_actions.delete_confirm` and the tree controller's `Delete … and its
+  children?` exist for a record with nothing to announce, and must not be reached by one that does.
 - `app/views/shared/_record_details.html.erb`, `_detail_facts.html.erb`,
   `_detail_section.html.erb`, and `_tagged_record_list.html.erb` compose every record's details
   page. `_record_details` renders its optional block between the page header and the identity card,

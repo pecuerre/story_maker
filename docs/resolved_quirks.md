@@ -735,6 +735,44 @@ The header count's meaning is now stated where it is documented, in
 [conventions](conventions.md) under the taxonomy-tree pattern: the badge is every tag
 in the taxonomy, children included, not the number of root rows.
 
+### Former quirk #59: deleting a Character, Item, or Location announced none of the consequences ADR 0007 records (fixed)
+
+**Then:** `shared/_row_actions` defaults to the short `Delete <name>?` confirmation, and the
+Characters and Items workspaces passed no `confirm_text` of their own, so the mandatory templates in
+[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) were never rendered for those two.
+Locations is a taxonomy tree and passed no `confirm_message`, so its delete fell back to the tree
+controller's generic `Delete <name> and its children?`, which names the record and its descendants
+but not the Scene presence links. Events, Scenes, Sections, and the Story and tag pages already
+rendered their full templates.
+
+The deletes themselves were correct: each model declares its own cascade, and a Character, Item, or
+Location already soft-deleted its descendants, ownerships or relations, and presence links. Only the
+confirmation a reader saw was silent, which is the exact unannounced-cascade risk the `confirm_text`
+partial was written to prevent. The ADR's 2026-09-27 execution note had already narrowed its
+"every confirmation template above is live" claim to the four that were.
+
+**Fix:** all three surfaces now render the ADR's sentences, unchanged.
+
+- Characters and Items pass `confirm_text` to `shared/_row_actions`, which serializes it as the modal
+  controller's `data-modal-form-confirm` — the same channel Events already used.
+- Locations passes a `confirm_message` lambda, which `shared/_taxonomy_tree` serializes per node as
+  `data-confirm-message` for `taxonomy-tree#remove` to confirm on. That is the channel Section and
+  SceneTag already used, so no JavaScript changed and the controller's generic message stays as the
+  fallback for an unrendered node.
+- The copy lives at `characters.delete_confirm`, `items.delete_confirm`, and
+  `locations.delete_confirm`, beside the workspace that is its only reader, and each is the ADR
+  sentence with `%{name}` interpolated. The record name is the author's own data, so it is
+  interpolated rather than translated; both locales carry each string.
+
+Four request tests read the rendered confirmation: `characters_controller_test.rb`,
+`items_controller_test.rb`, and `locations_controller_test.rb` assert the English copy on the attribute
+the page actually ships (`data-modal-form-confirm` for the two flat rows, `data-confirm-message` for
+the tree node), and `universe_bible_locale_test.rb` asserts the Spanish Item and Location copy. Two
+assertions elsewhere read the old short sentence and were updated to the full template:
+`modal_json_contract_test.rb` (which is what pins the JSON-only row's delete copy at all) and the two
+`accept_confirm` blocks in `test/system/modal_json_flow_test.rb`, which now accept whatever the row
+sends because the copy's content is a request-test concern.
+
 ### Former quirk #48: delegated admins could demote or remove themselves into a blank 403 (fixed)
 
 **Then:** the Members workspace rendered the access-level select and the Remove button on every
@@ -1170,3 +1208,42 @@ or vendored asset changed), `UNIVERSE=dark|lotr bin/rails db:demo:check` and
 need approval), Docker/Kamal deployment, and a manual browser pass outside the automated suite. The
 pan/zoom interaction was not built, so there was no client-side interaction to verify beyond the
 node's own focus/click/geometry coverage.
+
+## Follow-up verification (2026-09-30, deletion confirmations — quirk 59)
+
+- `bin/rails test` — 1,128 tests, 6,876 assertions, 0 failures, 0 errors, 7 skips.
+- `bin/rails test test/controllers/characters_controller_test.rb test/controllers/items_controller_test.rb
+  test/controllers/locations_controller_test.rb test/controllers/modal_json_contract_test.rb
+  test/controllers/universe_bible_locale_test.rb test/models/translations_test.rb` — 78 tests,
+  801 assertions, 0 failures, 0 errors, 0 skips.
+- `bin/rails test test/docs_test.rb` plus the five other locale/ADR-adjacent controller suites
+  (`sections`, `workspace_locale`, `events`, `universe_bible_locale`, `translations`) — 137 tests,
+  1,275 assertions, 0 failures, 0 errors, 0 skips. `translations_test` is the check that matters most
+  here: the three new keys exist in both locale files, carry the same `%{name}` interpolation, and
+  the Events comment that claimed it was "the one delete confirmation of these six workspaces that
+  states its own cascade" is no longer a claim.
+- `PARALLEL_WORKERS=2 bin/rails test test/system/modal_json_flow_test.rb` — 8 tests, 107 assertions,
+  0 failures, 0 errors, 0 skips. Its two delete journeys now accept whatever confirmation the row
+  sends; the confirmation's content is a request-test concern, and the request tests read it.
+- `PARALLEL_WORKERS=2 bin/rails test:system` — 121 tests, 1,559 assertions, 0 failures, **1 error**:
+  `scene_locations_test.rb:79`, a `.modal.show` that never opened while typing into the Location
+  picker. That file is unmodified and does not touch a delete confirmation; it reproduces green on
+  its own (`PARALLEL_WORKERS=1 bin/rails test test/system/scene_locations_test.rb` — 6 tests,
+  73 assertions, 0 failures, 0 errors, 0 skips), which is the load sensitivity known quirk 58
+  describes and the same shape recorded in the Timeline verification above.
+- `bun run check:js` — 137 tests across 8 files, 0 fail, 361 assertions. No JavaScript changed:
+  `taxonomy_tree_controller.js` reads the same `data-confirm-message` attribute Section and SceneTag
+  already read, and the Locations page now populates it.
+- `bin/rubocop` — 327 files, no offenses.
+- `bin/brakeman --no-pager` — 0 errors and the one pre-existing weak-confidence SQL-injection warning
+  in `app/models/concerns/has_many_tags.rb:109`, a string-interpolated `joins` of the model's own
+  reflected table and column names. Unrelated to this change and already recorded above.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin,
+or vendored asset changed), `UNIVERSE=dark|lotr bin/rails db:demo:check`,
+`db:demo:reset`/`db:restart`, Docker/Kamal deployment (no `db/data` manifest or schema changed; the
+reset tasks are destructive and need approval), and a manual browser pass outside the automated suite.
+The three changed confirmations were not observed in a hand-driven browser: the copy is server-rendered
+into an attribute and every suite that reads it asserts the rendered value, so a browser could only
+show the modal controller passing that attribute to `window.confirm`, which
+`test/system/modal_json_flow_test.rb` already exercises for a Character row.

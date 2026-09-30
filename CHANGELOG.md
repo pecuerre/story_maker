@@ -20,6 +20,21 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[fixed]** Deleting a **Character, Item, or Location** now says what it deletes. The row menu
+  defaults to the short `Delete <name>?` confirmation and Locations is a taxonomy tree whose fallback
+  named only the record and its children, so the three surfaces that ADR 0007 has mandated
+  consequence sentences for since 2026-09-25 were confirming a deletion that really does cascade —
+  descendants, ownerships or relations, and Scene presence links — without naming any of it. Events,
+  Scenes, Sections, and the Story and tag pages already rendered theirs. Characters and Items now
+  pass `confirm_text` to `shared/_row_actions` and Locations passes a `confirm_message` lambda to the
+  shared tree, which are the two channels the other surfaces already used, so no JavaScript changed and
+  the ADR's sentences are reproduced unchanged. The copy sits at `characters.delete_confirm`,
+  `items.delete_confirm`, and `locations.delete_confirm` beside the workspace that is its only reader,
+  in both locales; the record name is the author's own data, so it is interpolated, not translated.
+  Request tests read the shipped attribute in `characters_controller_test.rb`, `items_controller_test.rb`,
+  `locations_controller_test.rb`, and `universe_bible_locale_test.rb` (Spanish included), and the two
+  browser `accept_confirm` blocks in `test/system/modal_json_flow_test.rb` now accept the confirmation
+  the row sends.
 - **[changed]** The **Universe Bible workspaces** now render in Spanish as well: `characters/*`,
   `locations/*`, `events/*`, `items/*`, `relations/*`, `ownerships/*`, the six universe-level `*_tags`
   indexes and their `show` pages, the modal editors those lists open, and the flash confirmations of

@@ -59,6 +59,19 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "must belong to the same universe" ], response.parsed_body["item_tags"]
   end
 
+  test "the item delete confirmation states that scenes and other records remain" do
+    get universe_items_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # The item row is a JSON-only workspace, so its delete control is the modal
+    # controller's button rather than a Turbo `button_to`. The mandatory consequence
+    # copy is carried by that control and must not be weakened.
+    assert_select "button[data-action='modal-form#destroy'][data-modal-form-url=?][data-modal-form-confirm=?]",
+      universe_item_path(universe_slug: @universe.slug, id: @item),
+      "Delete “#{@item.name}”? Its descendant items, ownerships, tag assignments, and links to " \
+      "scenes will be permanently removed. Scenes and other universe records will remain."
+  end
+
   test "should update item details as json" do
     patch universe_item_url(universe_slug: @universe.slug, id: @item),
       params: { item: { name: "Renamed", description: "Updated", item_tag_ids: [ @item_tag.id ] } },

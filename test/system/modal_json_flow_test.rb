@@ -131,7 +131,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     break_fetch
     within_row(character.name) do
       find("button[aria-expanded='false']").click
-      accept_confirm("Delete #{character.name}?") { click_button "Delete" }
+      accept_confirm { click_button "Delete" }
     end
 
     assert_selector ".mutation-status .alert-danger", text: "The record could not be deleted"
@@ -148,7 +148,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
 
     within_row(character.name) do
       find("button[aria-expanded='false']").click
-      accept_confirm("Delete #{character.name}?") { click_button "Delete" }
+      accept_confirm { click_button "Delete" }
     end
 
     assert_no_selector ".entity-row .entity-title", text: character.name

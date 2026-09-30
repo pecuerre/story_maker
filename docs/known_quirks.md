@@ -311,23 +311,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
     why this has not been seen there. Do not read a single browser run as a verdict, and do not
     "fix" a test that failed this way — re-run it with fewer workers first.
 
-59. **Medium — deleting a Character, Item, or Location announces none of the consequences ADR 0007
-    records.** The row menu defaults to the short `Delete <name>?` confirmation unless the caller
-    passes `confirm_text` (`app/views/shared/_row_actions.html.erb:7-10`), and the Characters and
-    Items workspaces pass none (`app/views/characters/index.html.erb:49-56`,
-    `app/views/items/index.html.erb:49`), so the mandated templates in
-    [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) are not rendered for those two.
-    Locations are a taxonomy tree, and its fallback message names only the record and its children
-    (`app/javascript/controllers/taxonomy_tree_controller.js:605-613`), not the Location's Scene
-    links. Events and Scenes pass their full template, and the Story, Section, and tag pages
-    hard-code theirs. The delete itself is not wrong — each model declares its own cascade, and a
-    Character, Item, or Location still soft-deletes its descendants, ownerships or relations, and
-    presence links — but the confirmation a reader sees does not say so. This is the same
-    unannounced-cascade risk the partial in `_row_actions` was written to prevent. Either those
-    three surfaces pass their templates or the ADR's Character/Item/Location templates are
-    withdrawn; the ADR's "every confirmation template above is live" claim was corrected on
-    2026-09-29 to name the four that are.
-
 ## DataFactor report follow-up observations (2026-09-25)
 
 The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They were

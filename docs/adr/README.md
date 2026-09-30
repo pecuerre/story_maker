@@ -71,7 +71,8 @@ A copyable starting point is in [`0000-template.md`](0000-template.md).
 - **Never cite a backlog item number.** A number is deleted from [`../backlog.md`](../backlog.md)
   when its item is completed, so a citation to one eventually points at nothing. Cite the reference
   documentation or ADR that holds the delivered behavior, the dated `CHANGELOG.md` entry for the
-  delivery, or an open entry in [`../known_quirks.md`](../known_quirks.md) — all of which are kept
+  delivery (or its long form in [`../delivery_history.md`](../delivery_history.md)), or an open entry
+  in [`../known_quirks.md`](../known_quirks.md) — all of which are kept
   after the work is finished. The same applies to a delivery "slice" number: name the stage by what
   it added, not by the number it was called while it was pending.
 - Update the relevant files in `docs/` when the implementation changes. An ADR explains why;

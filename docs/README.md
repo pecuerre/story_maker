@@ -18,7 +18,7 @@ per-universe development-data convention, and the public/private universe access
 | [development.md](development.md) | Clarifying a request before coding, running the app, Minitest and client-side test suites, lint/security scans, per-universe development data (`db/data/<universe_slug>/`), CI, Kamal deployment, smoke test, and the full "adding a new model" workflow |
 | [data_factor_guidance.md](data_factor_guidance.md) | DataFactor report snapshot, verified/current status, sustainable maintenance guidance, and acceptance criteria for quality, security, CI, onboarding, and observability work |
 | [known_quirks.md](known_quirks.md) | Verified **open** oddities, dead code and tech debt — read before changing shared code |
-| [resolved_quirks.md](resolved_quirks.md) | Quirks/tech debt that **used to exist and is fixed now** — what the problem was and how it was solved |
+| [delivery_history.md](delivery_history.md) | **Historical record**: the dated project history and the quirks/tech debt that **used to exist and is fixed now** — what each change was, why it was made that way, and how a resolved problem was solved |
 | [backlog.md](backlog.md) | Shared pending-work list for the owner and AI assistants, including ideas for the future |
 | [adr/](adr/) | Architecture Decision Records: the reasoning behind foundational domain and workflow decisions |
 | [smoke_test_stories.sh](smoke_test_stories.sh) | Curl-based end-to-end smoke test (login → stories → sections); moved here from `/tmp/opencode/` so it is tracked |
@@ -58,11 +58,14 @@ How to use these docs:
   gets acted on, whereas an absent fact sends the reader to the code. When a document and the code
   disagree, the code wins and the document is fixed in the same change.
 - Historical records are deliberately exempt and never rewritten: an ADR states what was decided
-  at the time, and [resolved_quirks.md](resolved_quirks.md) states what used to be broken. Both may
-  disagree with the code now, because their value is the reasoning.
+  at the time, and [delivery_history.md](delivery_history.md) states what was delivered and what used
+  to be broken. Both may disagree with the code now, because their value is the reasoning.
 - Changing behavior? Update the document that owns the subject, in the same change.
 - After every code, site, data, test, documentation, configuration, security, or tooling change,
   add or update a dated entry in [`../CHANGELOG.md`](../CHANGELOG.md) using the actual work date.
+  That entry is the short form — one or two sentences naming the subject. When a change has
+  reasoning worth keeping that no live document owns, the long form goes to
+  [delivery_history.md](delivery_history.md) in the same change.
 
 ## Shared backlog
 

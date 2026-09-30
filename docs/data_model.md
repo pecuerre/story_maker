@@ -280,7 +280,7 @@ columns are the exception: SQLite check constraints enforce that they cannot poi
   (`UniversesController#universe_params`), because a blank submitted slug would let `HasSlug`
   regenerate the address from the name on an unrelated save — republishing the universe under a new
   address and invalidating every path stored below it. See
-  [resolved_quirks.md](resolved_quirks.md).
+  [the delivery history](delivery_history.md).
 - `Relation`/`Ownership` additionally generate a `character-tag-character` (or
   `character-character` when untagged) slug when no explicit slug or name is supplied. Because
   tags are optional, the tag segment is omitted for an untagged record; if no part is available,

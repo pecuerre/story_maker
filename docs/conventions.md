@@ -265,7 +265,7 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   address from the name, and forwarding a cleared slug would republish the universe on an unrelated
   save. Prefilling it is equally wrong — the callback replaces the value on a rename, so the field
   would show an address the form is not going to use. See
-  [resolved_quirks.md](resolved_quirks.md).
+  [the delivery history](delivery_history.md).
 
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).

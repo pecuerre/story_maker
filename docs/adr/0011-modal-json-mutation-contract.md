@@ -115,6 +115,6 @@ reports what the server decided instead of predicting it.
 - [`../architecture.md`](../architecture.md)
 - [`../conventions.md`](../conventions.md)
 - [`../visual_design.md`](../visual_design.md)
-- [`../resolved_quirks.md`](../resolved_quirks.md)
+- [`../delivery_history.md`](../delivery_history.md)
 - [`0002-json-crud-with-stimulus-editors.md`](0002-json-crud-with-stimulus-editors.md)
 - [`0010-safe-taxonomy-editing-and-state-refresh.md`](0010-safe-taxonomy-editing-and-state-refresh.md)

@@ -8,9 +8,9 @@ require "test_helper"
 class DocsTest < ActiveSupport::TestCase
   DOCS_ROOT = Rails.root.join("docs")
   # Historical records are deliberately frozen: an ADR states what was decided at the time, and
-  # a resolved quirk states what used to be broken. Both are allowed to disagree with the code
-  # now, so they are excluded from link and heading checks.
-  HISTORICAL_GLOBS = [ "docs/adr/**/*.md", "docs/resolved_quirks.md" ].freeze
+  # the delivery history states what used to be true and why. Both are allowed to disagree with
+  # the code now, so they are excluded from link and heading checks.
+  HISTORICAL_GLOBS = [ "docs/adr/**/*.md", "docs/delivery_history.md" ].freeze
 
   # The documentation's existing duplication debt: a fact more than one document currently
   # states, pending the one-fact-one-home refactor. Keep it sorted; remove a document from an

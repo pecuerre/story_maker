@@ -59,14 +59,16 @@ not used.
 
 [`docs/`](docs/README.md) is the source of truth for this project. In particular:
 
-- [Changelog](CHANGELOG.md) — date-based history of project changes
+- [Changelog](CHANGELOG.md) — date-based history of project changes, one or two sentences per entry
+- [Delivery history](docs/delivery_history.md) — the long form: the reasoning behind each change and
+  the fix history of resolved quirks and tech debt
 - [Vision](docs/vision.md) — the product goals and continuity promise
 - [Development](docs/development.md) — setup, tests, seeds, CI, and deployment
 - [Architecture](docs/architecture.md) — request lifecycle, routing, and feature design
 - [Data model](docs/data_model.md) — schema, associations, validations, and slugs
 - [Conventions](docs/conventions.md) — patterns for adding and changing features
-- [Known quirks](docs/known_quirks.md) and [resolved quirks](docs/resolved_quirks.md) — verified
-  caveats and fix history
+- [Known quirks](docs/known_quirks.md) — verified
+  open caveats to read before changing shared code
 - [DataFactor guidance](docs/data_factor_guidance.md) — maintenance, quality, onboarding, and
   security priorities distilled from the 2026-09-25 repository score report
 

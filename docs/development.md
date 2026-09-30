@@ -312,10 +312,10 @@ join, `CreateSceneCharacters`, `CreateSceneItems`, and `CreateSceneLocations`), 
 reason given below.
 
 The delivery history — what each slice added, in order — is in
-[`../CHANGELOG.md`](../CHANGELOG.md), which is the durable record of it. A planned slice number is not
-a durable reference, so none is kept here. Every delivery preserved public/private read-write-admin
-behavior and updated all model registries, authorization resolvers, route-helper guards, fixtures,
-tests, documentation, and changelog.
+[`delivery_history.md`](delivery_history.md), which is the durable record of it. A planned slice
+number is not a durable reference, so none is kept here. Every delivery preserved public/private
+read-write-admin behavior and updated all model registries, authorization resolvers, route-helper
+guards, fixtures, tests, documentation, and changelog.
 
 ### Amending a shipped migration does not work here
 

@@ -99,11 +99,22 @@ then applies to anything extra that turns up during the work.
 
 ## Changelog discipline
 
-- Maintain the root [`CHANGELOG.md`](CHANGELOG.md) as a date-based project history. The project
-  does not currently use release versions, so do not invent a versioning scheme.
+There are two files, with two different jobs. Keep them that way.
+
+- The root [`CHANGELOG.md`](CHANGELOG.md) is the **short form**: a date-based project history whose
+  entries are one or two sentences naming the subject. The project does not currently use release
+  versions, so do not invent a versioning scheme. This is the file agents and the owner cite.
+- [`docs/delivery_history.md`](docs/delivery_history.md) is the **long form**: the reasoning behind a
+  change, the alternatives that were rejected, and the verification it went through, plus the quirks
+  and tech debt that have been resolved. It is a frozen historical record in the same way an ADR is:
+  it may disagree with the code today, and it is never rewritten to match.
 - Every change to application code, site/UI behavior, schema or development data, tests,
-  documentation, configuration, security, or tooling must add or update a changelog entry in the
-  same work, using the actual calendar date of the change.
+  documentation, configuration, security, or tooling must add or update a short changelog entry in
+  the same work, using the actual calendar date of the change.
+- Write the long form into `docs/delivery_history.md` in the same change **only** when the reasoning
+  is worth keeping and no live document owns it. A fact that a document in `docs/` already states
+  belongs there, not in the history file — restating it creates the second source of truth that the
+  one-fact-one-home rule exists to prevent.
 - Group related changes under one date and use a concise label such as `[added]`, `[changed]`,
   `[fixed]`, `[security]`, `[docs]`, `[chore]`, or `[planned]`. Do not rewrite historical entries;
   add a new entry when behavior changes again.
@@ -113,7 +124,9 @@ then applies to anything extra that turns up during the work.
   Never add a blank line between entries of the same label, and never separate work batches with
   blank lines.
 - When reconstructing the first historical entries, use the repository's Git history and existing
-  documentation. Mark future work as `[planned]` rather than describing it as implemented.
+  documentation. Mark future work as `[planned]` rather than describing it as implemented. Do not
+  invent detail that the repository does not contain; where an early entry is thin, point at the
+  document that owns the fact now.
 
 ## Repository quality and DataFactor guidance
 
@@ -135,9 +148,9 @@ tree; some findings (notably the existing
   **NOW / LATER / NEVER** decision. Do not silently add services, dependencies, refactors, release
   tags, or deployment actions just because a report suggests them.
 - When a backlog item is finished, add its `CHANGELOG.md` entry and then delete the item, the same
-  way a fixed known quirk leaves `docs/known_quirks.md`. The backlog holds pending work only: do not
-  leave "completed" prose, an archive heading, or a status marker behind, and do not renumber the
-  remaining items.
+  way a fixed known quirk leaves `docs/known_quirks.md` for the history file. The backlog holds
+  pending work only: do not leave "completed" prose, an archive heading, or a status marker behind,
+  and do not renumber the remaining items.
 - Before starting work on a [`docs/backlog.md`](docs/backlog.md) item, check
   [`docs/known_quirks.md`](docs/known_quirks.md) for a related open quirk — same model, table,
   controller, route, or code path — and ask the owner whether to fix it **NOW** (in the same change,

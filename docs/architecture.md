@@ -241,7 +241,7 @@ span, are in [features/events.md](features/events.md).
   Expiration happens from model `after_commit` callbacks when a counted record is created or
   destroyed (and when a record moves to another scope). Open transactions calculate without
   filling the cache, and entries have a one-hour safety expiry. See
-  [the resolved sidebar-count finding](resolved_quirks.md#sidebar-issued-count-queries-on-every-page-fixed).
+  [the resolved sidebar-count finding](delivery_history.md#sidebar-issued-count-queries-on-every-page-fixed).
 - The navbar is three links, the search box, and the account menu, so it issues no query. The
   search box renders a form and a scope list from values it already has — `Current.universe`,
   `Current.story`, and `Search::Scope` — and asks the engine only for what a reader types. Only the

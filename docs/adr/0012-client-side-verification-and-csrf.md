@@ -122,7 +122,7 @@ reason to add tooling.
 - [`../architecture.md`](../architecture.md)
 - [`../conventions.md`](../conventions.md)
 - [`../development.md`](../development.md)
-- [`../resolved_quirks.md`](../resolved_quirks.md)
+- [`../delivery_history.md`](../delivery_history.md)
 - [`../known_quirks.md`](../known_quirks.md)
 - [`../../AGENTS.md`](../../AGENTS.md)
 - [0011](0011-modal-json-mutation-contract.md)

@@ -2,7 +2,7 @@
 
 Verified **open** oddities in this codebase — things that look like bugs, are bugs, or will
 surprise you. This file holds only open findings: when one is fixed, the whole entry moves to
-[resolved_quirks.md](resolved_quirks.md) with the history of the fix, and no "this used to be broken"
+[delivery_history.md](delivery_history.md) with the history of the fix, and no "this used to be broken"
 note is left behind here. Index of all docs: [README.md](README.md).
 
 This re-audit was performed on 2026-09-24 against commit `8fcf4d4`. It is an observation record
@@ -34,7 +34,7 @@ reachable security/data-loss issues from lower-priority hardening and contract d
    repository/history copies or rotate `RAILS_MASTER_KEY`; the owner must rotate the key, the
    affected `secret_key_base`/signed artifacts, and any credentials it protects before deployment.
    No secret value is reproduced in this document.
-   See [`resolved_quirks.md`](resolved_quirks.md) for the repository-containment change and
+   See [`delivery_history.md`](delivery_history.md) for the repository-containment change and
    [`config/deploy.yml`](../config/deploy.yml) for the local secret contract.
 
 12. **Medium — sessions have no application-enforced expiry or source binding.** Login creates a
@@ -100,7 +100,7 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     and direct-model writes therefore
     still bypass the service for both hierarchies and flat sequences, and SQLite has no
     portable row-lock/unique-position guarantee. Do not treat those paths as normalized without an
-    explicit import/console workflow; see ADR 0009 and [`resolved_quirks.md`](resolved_quirks.md).
+    explicit import/console workflow; see ADR 0009 and [`delivery_history.md`](delivery_history.md).
 
 23. **Medium — legacy HABTM join tables have no database integrity constraints.** The seven
     pre-Scene join tables contain only two integer columns and no indexes, foreign keys, or
@@ -339,11 +339,11 @@ used with a frozen install in CI and Docker.
 
 The following non-destructive checks passed during the 2026-09-24 re-audit. They are the evidence
 behind the findings above, not a current capability list; the verification run for each later change
-is recorded in [`resolved_quirks.md`](resolved_quirks.md).
+is recorded in [`delivery_history.md`](delivery_history.md).
 
 - `bin/rails test` — 226 tests, 1,495 assertions, 0 failures/errors/skips.
 - `bin/rails test:system` — 4 tests, 55 assertions, 0 failures/errors/skips, with the 406 caveat
-  recorded in [`resolved_quirks.md`](resolved_quirks.md).
+  recorded in [`delivery_history.md`](delivery_history.md).
 - `bin/rubocop` — 158 files, no offenses.
 - `bin/brakeman --no-pager` — 0 security warnings; it does not cover the client-side DOM XSS path.
 - `bin/bundler-audit` — no known vulnerabilities.

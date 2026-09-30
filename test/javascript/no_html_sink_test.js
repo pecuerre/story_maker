@@ -4,7 +4,7 @@ import { join } from "node:path"
 
 // The taxonomy and modal editors build their rows, options, labels, and error
 // messages with DOM APIs so a user-controlled value is only ever text or an
-// attribute (see `docs/resolved_quirks.md`, former quirk #8). Brakeman does not
+// attribute (see `docs/delivery_history.md`, former quirk #8). Brakeman does not
 // read client-side code, so this gate keeps the one remaining HTML-parsing sink
 // a deliberate, reviewed decision instead of a habit.
 const ALLOWED_HTML_SINKS = [

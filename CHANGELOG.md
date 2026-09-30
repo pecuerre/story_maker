@@ -31,10 +31,10 @@ Labels used below:
 
 ## 2026-09-30
 
-- **[changed]** **Every model's own validation message is a key, which was the last English a Spanish page could show.**
-- **[changed]** **The four Stimulus controllers read their strings from the server, which finishes the internationalization work.**
-- **[changed]** **The last three untranslated views are translated, and the search surface's own labels with them.**
-- **[changed]** **A record's label and a search document's title are now two different things, and the reason is written down.**
+- **[changed]** Every model's own validation message is a key, which was the last English a Spanish page could show.
+- **[changed]** The four Stimulus controllers read their strings from the server, which finishes the internationalization work.
+- **[changed]** The last three untranslated views are translated, and the search surface's own labels with them.
+- **[changed]** A record's label and a search document's title are now two different things, and the reason is written down.
 - **[changed]** The **Scene workspace** now renders in Spanish: the story-scoped `scenes/*` list and filter, Scene Details and its Element editor, the shared `new`/`edit` form, the Characters/Items/Locations tabs, both story taxonomies, the Sections workspace's ungrouped block, and a universe record's "Appears in scenes" section — 21 of the 100 ERB views, plus the controllers, helpers, and model labels they read.
 - **[changed]** The **Universe Bible workspaces** now render in Spanish as well: `characters/*`, `locations/*`, `events/*`, `items/*`, `relations/*`, `ownerships/*`, the six universe-level `*_tags` indexes and their `show` pages, the modal editors those lists open, and the flash confirmations of the two workspaces that use the HTML redirect flow.
 - **[changed]** The modal editors' field labels are translated where they are **produced**, not where they are printed.

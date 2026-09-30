@@ -2,6 +2,7 @@ class Ownership < ApplicationRecord
   include HasManyTags
   include HasSlug
   include HasPhoto
+  include OptionalName
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable

@@ -20,6 +20,30 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[fixed]** A **Relation or Ownership can now be named**, and a stored in-world time survives an
+  edit. Three silent contract drifts on the record/editor boundary, recorded as known quirk 30, are
+  fixed together:
+  - `Relation` and `Ownership` both carry an optional `name` that `display_string` and the composite
+    slug prefer when set, but neither controller permitted it, neither modal had a Name field, and
+    neither `*_fields_json` serialized it — so a name that arrived from `db/data` or a console could
+    not be changed, renamed, or cleared through the interface. `:name` is now permitted, both editors
+    carry an optional Name field with a hint saying so, and both serializers emit `name` so the row's
+    editor is prefilled and a rejected entry keeps what was typed.
+  - The in-world datetime serializers formatted with `%Y-%m-%dT%H:%M`, so opening an editor on a
+    record whose stored time had a non-zero second and saving it again rewrote that column to zero
+    seconds. `ApplicationHelper::DATETIME_LOCAL_FORMAT` (`%Y-%m-%dT%H:%M:%S`) is now the one format
+    every editor value is built from, in `modal_fields.rb` and `scenes_helper.rb` alike, and every
+    `datetime-local` control for those values carries `step: 1` — a control whose step is a whole
+    minute cannot hold a second even when the value has one. Display formatting (`in_world_range`,
+    the timeline, `scene_in_world_time`) is unchanged and stays minute-precision.
+  - `RelationsController` and `OwnershipsController` redirected on PATCH and DELETE with Rails'
+    default 302, against the documented `status: :see_other` for non-GET verbs in the HTML flow.
+    Both now send 303; `create` is a POST, so its 302 is correct and stays.
+  Making `name` writable exposed what clearing it did: `HasSlug#set_slug` resolves a blank or
+  unslugifiable name to a random hex, so un-naming a Relation replaced its address with an arbitrary
+  one and discarded the composite slug its demo-data references depend on. The new `OptionalName`
+  concern gives both models one home for the rule — a blank name is stored as NULL, and a name with no
+  slug of its own does not re-address the record. Renaming still renames.
 - **[docs]** **Known quirk 61** records that a dismiss control clicked while a modal is still fading in
   is silently dropped: **Cancel**, `btn-close`, Escape, and a backdrop click all resolve to the one
   Bootstrap instance `modal_form_controller.js` owns, and `hide()` returns while that instance is still

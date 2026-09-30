@@ -115,8 +115,8 @@ module ModalFields
   def event_fields_json(event)
     {
       title: event.title,
-      start_datetime: event.start_datetime&.strftime("%Y-%m-%dT%H:%M"),
-      end_datetime: event.end_datetime&.strftime("%Y-%m-%dT%H:%M"),
+      start_datetime: event.start_datetime&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
+      end_datetime: event.end_datetime&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
       before_event_id: event.before_event_id,
       after_event_id: event.after_event_id,
       simultaneous_event_id: event.simultaneous_event_id,
@@ -198,12 +198,13 @@ module ModalFields
 
   def ownership_fields_json(ownership)
     {
+      name: ownership.name,
       item_id: ownership.item_id,
       character_id: ownership.character_id,
       ownership_tag_ids: ownership.ownership_tag_ids,
       description: ownership.description,
-      from_date: ownership.from_date&.strftime("%Y-%m-%dT%H:%M"),
-      to_date: ownership.to_date&.strftime("%Y-%m-%dT%H:%M"),
+      from_date: ownership.from_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
+      to_date: ownership.to_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
       photo_url: record_photo_url(ownership)
     }.to_json
   end
@@ -226,12 +227,13 @@ module ModalFields
 
   def relation_fields_json(relation)
     {
+      name: relation.name,
       character1_id: relation.character1_id,
       character2_id: relation.character2_id,
       relation_tag_ids: relation.relation_tag_ids,
       description: relation.description,
-      from_date: relation.from_date&.strftime("%Y-%m-%dT%H:%M"),
-      to_date: relation.to_date&.strftime("%Y-%m-%dT%H:%M"),
+      from_date: relation.from_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
+      to_date: relation.to_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
       photo_url: record_photo_url(relation)
     }.to_json
   end

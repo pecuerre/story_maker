@@ -850,6 +850,65 @@ presence of both controls on another member's row. No browser test was added: th
 server-rendered ERB with no client-side path, and the request suite asserts the same markup the
 browser would render.
 
+### Former quirk #30: JSON/field contracts had several silent omissions (fixed)
+
+**Then:** three drifts on the contract between a record and the editor that writes it, none of which
+was an authorization failure and all of which were invisible to a reader.
+
+- **`Relation` and `Ownership` could not be given a name.** Both models carry an optional `name` that
+  `display_string` and the composite slug both *prefer* when it is set, so a named record is labelled
+  by its name everywhere — but neither `relation_params` nor `ownership_params` permitted it, neither
+  modal had a Name field, and neither `*_fields_json` serialized it. A name could arrive from
+  `db/data` or a console and then be impossible to change, rename, or clear through the interface.
+- **Stored seconds were discarded on the way to the editor.** `event_fields_json`,
+  `relation_fields_json`, and `ownership_fields_json` formatted with `%Y-%m-%dT%H:%M`, and
+  `scene_datetime_field_value` did the same, so opening an editor on a record whose stored time had a
+  non-zero second and saving it again rewrote that column to zero seconds. `scenes_helper` repeated
+  the same truncation in its own helper, so fixing only `modal_fields.rb` would have left Scene as the
+  odd one out.
+- **The HTML flow answered `302` where the matrix documents a 303.** `RelationsController` and
+  `OwnershipsController` redirected on PATCH and DELETE with Rails' default, against the documented
+  `status: :see_other` for non-GET verbs. Every other controller in the HTML flow — universes, stories,
+  scenes, memberships — already sent it.
+
+**Fix, in three parts:**
+
+- **The name is now part of the contract.** `:name` is permitted by both controllers, both modals
+  carry an optional Name field with a hint saying it is optional, and both serializers emit `name`, so
+  the row's editor is prefilled with the stored value and a rejected entry keeps what was typed. The
+  field is deliberately *not* `required`: the endpoints remain the reliable label, and
+  `display_string` falls back to them.
+- **A stored second survives an edit.** `ApplicationHelper::DATETIME_LOCAL_FORMAT`
+  (`%Y-%m-%dT%H:%M:%S`) is now the one format every in-world editor value is built from, in
+  `modal_fields.rb` and in `scenes_helper.rb` alike. It is deliberately a *different* constant from
+  `DATE_FORMAT`, which is what a reader is shown; that one stays minute-precision. Every
+  `datetime-local` control for those values now carries `step: 1`, because a control whose step is a
+  whole minute cannot hold a second even when the value it is handed has one — the serializer and the
+  control have to agree, or the browser drops the value the server serialized. Display formatting
+  (`in_world_range`, the timeline, `scene_in_world_time`) is unchanged.
+- **PATCH and DELETE answer `see_other`.** `create` is a POST, so its 302 is correct and stays.
+
+**A defect the first fix exposed, fixed with it.** Making `name` writable revealed what happens when
+it is *un*writable-to: `HasSlug#set_slug` regenerates the slug on every name change, and resolves a
+blank or unslugifiable name to a random hex. So clearing a Relation's name replaced its address with
+`"4a45ea13"` and discarded the composite slug its demo-data references and class-level lookup depend
+on. The new `OptionalName` concern (`app/models/concerns/optional_name.rb`) gives both models one home
+for the rule, because they are the only two with an optional name: a blank name is stored as NULL
+rather than `""`, and a name that has no slug of its own does not re-address the record. Renaming to a
+name that *does* slugify still renames; `Relation` and `Ownership` had no test for clearing or
+unslugifiable names before, and now have four cases each.
+
+Coverage: `test/helpers/modal_fields_helper_test.rb` is new and pins the serialized hand-off itself —
+the three serializers keep a stored second, `relation`/`ownership` carry `name`, an unset value
+serializes as `nil`, and the two datetime formats are distinct. The request tests own what a page
+ships: `relations_controller_test.rb`, `ownerships_controller_test.rb`, and `events_controller_test.rb`
+each assert `step='1'` on the datetime controls and that the row's trigger carries the stored seconds;
+the relations and ownerships files also cover the name being created, prefilled, renamed, cleared, and
+`see_other` on PATCH/DELETE. `scenes_controller_test.rb` gained a real open-and-save round trip for a
+stored second, `scenes_helper_test.rb` covers the same at the helper, and
+`universe_bible_locale_test.rb` asserts the Spanish Name label and that neither field is marked
+required.
+
 ## Resolved client-side verification and CSRF findings (2026-09-27)
 
 ### Former quirk #33: client-side code had no tests, no linter, and an unverified CSRF path (fixed)

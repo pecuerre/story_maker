@@ -168,6 +168,10 @@ scenes, which controllers answer which format, and the URL of every workspace â€
 |---|---|---|
 | JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors â†’ `unprocessable_content` + error hash |
 | HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+
+Every PATCH and DELETE in the HTML flow sends `status: :see_other`; a `create` is a POST, so its
+default 302 is correct. A 302 after a non-GET verb asks the browser to repeat the mutation as a GET
+against the redirect target, which Turbo then has to reinterpret.
 | Both | universes (also has `*.json.jbuilder`), **searches** | |
 | No mutation | tags, timeline, sessions, passwords | |
 

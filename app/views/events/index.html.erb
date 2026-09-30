@@ -94,11 +94,15 @@
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <%= form.label :start_datetime, t("events.form.start_datetime"), class: "form-label" %>
-                <%= form.datetime_local_field :start_datetime, class: "form-control" %>
+                <%# `step: 1` matches `ApplicationHelper::DATETIME_LOCAL_FORMAT`, which
+                    serializes the stored seconds into the trigger that prefills this
+                    control: a whole-minute step could not hold them and would drop
+                    them on save. %>
+                <%= form.datetime_local_field :start_datetime, class: "form-control", step: 1 %>
               </div>
               <div class="col-md-6">
                 <%= form.label :end_datetime, t("events.form.end_datetime"), class: "form-label" %>
-                <%= form.datetime_local_field :end_datetime, class: "form-control" %>
+                <%= form.datetime_local_field :end_datetime, class: "form-control", step: 1 %>
               </div>
             </div>
             <div class="mb-3">

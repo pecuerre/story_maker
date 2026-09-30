@@ -377,21 +377,18 @@ it has a useful destination and clear empty/loading/error states.
       the Timeline was never built; the docs now say the view is static, and building the interaction
       is listed under FUTURE WORK below.
 
-    - **A slice that must be delivered before 27.4 — one defect left in the Universe Bible surface,
-      plus the shared editor's own dismiss defect found while fixing it.** These were found while
+    - **A slice that must be delivered before 27.4 — the shared editor's own dismiss defect.** Three
+      defects were found while
       translating that surface and are behavior defects rather than translations, so the owner
       deferred them out of the translation slice. They live on the same views, and the ones whose fix
-      is a copy change need the Spanish keys to be written once rather than twice. Deliver this slice
-      first, each finding with its own tests and a changelog entry, and move each matching
-      `known_quirks.md` entry to `resolved_quirks.md` as it is fixed. **Two of the original three are
-      already fixed**, on 2026-09-30, before any of this copy was translated, because each was a
-      behavior defect rather than a translation: quirk 59 (a Character, Item, or Location row deleted
-      without saying what it deletes) and quirk 47 (the Event editor offered the event being edited as
-      its own temporal reference). See [`resolved_quirks.md`](resolved_quirks.md). What is left:
-      - **Quirk 30 — Relation/Ownership parameter lists omit their optional `name`, and
-        `modal_fields.rb` formats datetimes to whole minutes.** Both are contract drift on the JSON
-        hand-off this surface already owns; note that `event_fields_json` and its siblings in that
-        helper are the same code path.
+      is a copy change need the Spanish keys to be written once rather than twice. Each finding gets
+      its own tests and a changelog entry, and its matching `known_quirks.md` entry moves to
+      `resolved_quirks.md` as it is fixed. **All three are now fixed**, on 2026-09-30, before any of
+      this copy was translated: quirk 59 (a Character, Item, or Location row deleted without saying
+      what it deletes), quirk 47 (the Event editor offered the event being edited as its own temporal
+      reference), and quirk 30 (the Relation/Ownership `name` field was unwritable, stored seconds were
+      dropped when an editor was saved, and the HTML flow answered 302 where it documents 303). See
+      [`resolved_quirks.md`](resolved_quirks.md). What is left:
       - **Quirk 61 — a dismiss control clicked while the modal is still fading in is silently
         dropped.** Recorded on 2026-09-30 while fixing quirk 47, on the shared
         `modal_form_controller.js` every workspace in this slice opens. **Cancel**, the `btn-close`

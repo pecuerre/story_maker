@@ -18,8 +18,17 @@ class ScenesHelperTest < ActionView::TestCase
     scene = Scene.new(story: stories(:story_one), name: "Bad time", datetime: "not-a-datetime")
 
     assert_equal "not-a-datetime", scene_datetime_field_value(scene)
-    assert_equal "2026-09-11T09:00", scene_datetime_field_value(scenes(:scene_one))
+    assert_equal "2026-09-11T09:00:00", scene_datetime_field_value(scenes(:scene_one))
     assert_nil scene_datetime_field_value(Scene.new(story: stories(:story_one), name: "No time"))
+  end
+
+  test "the in-world time keeps the seconds it was stored with" do
+    # Truncating here would rewrite the column to zero seconds the moment an
+    # author opened this form and saved it again.
+    scene = scenes(:scene_one)
+    scene.update!(datetime: Time.utc(2026, 9, 11, 9, 30, 45))
+
+    assert_equal "2026-09-11T09:30:45", scene_datetime_field_value(scene.reload)
   end
 
   test "offers an explicit none choice plus every universe event" do

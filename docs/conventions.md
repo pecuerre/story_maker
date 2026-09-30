@@ -54,7 +54,10 @@ the same change, or `db:demo:check` fails.
   `SectionTag` and `SceneTag` additionally use the story-scoped `Hierarchical` scope.
 - Name presence is validated on: Universe, Character, Location, Item, Section, Story and all
   `_tag` models. Not on: Event (see [features/events.md](features/events.md)), Relation and
-  Ownership (name optional).
+  Ownership (name optional). The two optional names are handled by the `OptionalName` concern
+  (`app/models/concerns/optional_name.rb`), which stores a blank name as NULL and keeps the record's
+  slug when a name is cleared or cannot be slugified — `HasSlug` would otherwise resolve that to a
+  random hex and discard the composite slug those records' demo-data references depend on.
 - `Relation`, `Ownership` and `Event` add custom validators that keep their non-tag associated
   records inside the same universe. `HasManyTags` independently enforces the shared universe or
   story scope in both directions for all eight content/tag pairs (see the taxonomy matrix in
@@ -386,7 +389,13 @@ value objects, and the deletion contract are one feature with one home, in
     `event_fields_json`, `character_fields_json`, `item_fields_json`,
     `ownership_fields_json`, `relation_fields_json`. Each carries a `photo_url` alongside the
     record's columns, because the photo is a stored image rather than a column and the shared modal
-    is what tells the photo control which row it is about to edit.
+    is what tells the photo control which row it is about to edit. Every in-world datetime is
+    serialized with `ApplicationHelper::DATETIME_LOCAL_FORMAT`, and every control that receives one
+    carries `step: 1`: the serializer and the control's step have to agree, or the browser drops the
+    seconds the server sent and an open-and-save rewrites the column to zero. That format is
+    deliberately distinct from `DATE_FORMAT`, which is what a *reader* is shown and stays
+    minute-precision. A serializer's keys are the editor's field names, so a field the editor renders
+    but the serializer omits cannot be prefilled — and vice versa.
   - `PHOTO_FIELD` / `photo_field` — the one descriptor every photo-capable editor shares. `url: true`
     marks the descriptor as naming a stored image: `shared/_taxonomy_node` then serializes
     `record_photo_url(node)` for it instead of calling `node.public_send(field[:name])`. See

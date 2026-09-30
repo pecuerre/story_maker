@@ -95,4 +95,34 @@ class OwnershipTest < ActiveSupport::TestCase
     ownership.update!(name: "Heirloom")
     assert_equal "Heirloom", ownership.display_string
   end
+
+  test "a blank name is stored as no name rather than an empty string" do
+    ownership = Ownership.create!(universe: @universe, item: items(:item_one),
+      character: characters(:character_one), name: "  ")
+
+    assert_nil ownership.reload.name
+  end
+
+  test "clearing a name keeps the slug the record already had" do
+    item = items(:item_one)
+    character = characters(:character_one)
+    ownership = Ownership.create!(universe: @universe, item: item, character: character, name: "Heirloom")
+    assert_equal "heirloom", ownership.slug
+
+    ownership.update!(name: "")
+
+    # The name goes, the address stays, and the endpoints become the label again.
+    assert_nil ownership.reload.name
+    assert_equal "heirloom", ownership.slug
+    assert_equal "#{character.name} owns #{item.name}", ownership.display_string
+  end
+
+  test "renaming an ownership still renames its slug" do
+    ownership = Ownership.create!(universe: @universe, item: items(:item_one),
+      character: characters(:character_one), name: "Heirloom")
+
+    ownership.update!(name: "Family sword")
+
+    assert_equal "family-sword", ownership.reload.slug
+  end
 end

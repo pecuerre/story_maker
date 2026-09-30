@@ -169,6 +169,15 @@ module ApplicationHelper
 
   DATE_FORMAT = "%Y-%m-%d %H:%M"
 
+  # The value a `datetime-local` editor control has to carry, which is a stored
+  # value rather than a display one: `DATE_FORMAT` above is what a *reader* is
+  # shown, while this is what the browser is handed so that opening an editor and
+  # saving it again round-trips the column instead of quietly rewriting it. It
+  # keeps seconds for that reason, and every control that follows this contract
+  # also carries `step: 1`, because a control whose step is a whole minute
+  # cannot hold a second even when the value it is given has one.
+  DATETIME_LOCAL_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
   # The one "Details" link used by every record's list row and taxonomy node.
   # It is real navigation to that record's own page, so it renders for read-only
   # members and guests too, it sits on the right of the row next to the actions,

@@ -85,9 +85,20 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal 7, universe.characters.count
     assert_equal 12, universe.locations.count
     assert_equal 5, universe.items.count
-    assert_equal 5, universe.relations.count
+    assert_equal 6, universe.relations.count
     assert_equal 5, universe.ownerships.count
     assert_equal 6, universe.events.count
+
+    # One relation and one ownership per universe carry the optional `name`, so the
+    # field and the `display_string` preference for it are exercised by the loader
+    # rather than only by the suite's own records.
+    named_relation = universe.relations.find_by!(slug: "frodo-gollum")
+    assert_equal "Bearer of the Ring", named_relation.name
+    assert_equal "Bearer of the Ring", named_relation.display_string
+
+    named_ownership = universe.ownerships.find_by!(slug: "aragorn-anduril")
+    assert_equal "Heirloom of the House", named_ownership.name
+    assert_equal "Heirloom of the House", named_ownership.display_string
 
     race = universe.character_tags.find_by!(name: "Race")
     hobbit = universe.character_tags.find_by!(name: "Hobbit")

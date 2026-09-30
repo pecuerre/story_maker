@@ -678,7 +678,24 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "select[name='scene[section_id]'] option[selected=selected][value=?]",
       sections(:section_one).id
-    assert_select "input[type=datetime-local][name='scene[datetime]'][value=?]", "2026-09-11T09:00"
+    assert_select "input[type=datetime-local][name='scene[datetime]'][value=?]", "2026-09-11T09:00:00"
+    # The stored second has to survive the form, so the control is stepped for
+    # seconds rather than for whole minutes.
+    assert_select "input[type=datetime-local][name='scene[datetime]'][step='1']"
+  end
+
+  test "a stored second survives an open-and-save round trip through the form" do
+    @scene.update!(datetime: Time.utc(2026, 9, 11, 9, 30, 45))
+
+    get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_select "input[type=datetime-local][name='scene[datetime]'][value=?]", "2026-09-11T09:30:45"
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene), params: {
+      scene: { datetime: "2026-09-11T09:30:45" }
+    }
+
+    assert_equal Time.utc(2026, 9, 11, 9, 30, 45), @scene.reload.datetime
   end
 
   test "the scene forms expose only current-story scene tags and preserve assignments" do

@@ -131,16 +131,9 @@ reachable security/data-loss issues from lower-priority hardening and contract d
 
 29. **Low — composite Relation/Ownership slugs depend on unordered tag input.** Their callbacks use
     `relation_tags.first` or `ownership_tags.first` without an explicit order
-    (`app/models/relation.rb:21-31`, `app/models/ownership.rb:21-31`). Creating equivalent records
+    (`app/models/relation.rb:43`, `app/models/ownership.rb:42`). Creating equivalent records
     with tags supplied in a different order can produce different slugs, which matters for
     symbolic development-data references and class-level lookup.
-
-30. **Low — JSON/field contracts have several silent omissions.** Relation/Ownership parameter
-    lists omit their optional `name` fields (`app/controllers/relations_controller.rb:43-45`,
-    `app/controllers/ownerships_controller.rb:43-45`), and modal datetime helpers format only to
-    minutes (`app/helpers/modal_fields.rb:16-26,230-292`), silently discarding stored seconds.
-    Relation/ownership HTML redirects also use 302 where the response matrix documents a 303-style
-    redirect. These are contract drifts rather than authorization failures.
 
 ## Performance, test, and tooling observations
 

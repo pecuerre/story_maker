@@ -12,7 +12,12 @@
   ownership_tags: [ OwnershipTag.belongs_to ]
   slug: "frodo_sting"
 
+# One ownership in this universe carries its own optional name, so the Name field
+# and the `display_string` preference for it are visible in the running app rather
+# than only in the suite. Every record here states its slug explicitly, which is
+# why adding a name leaves this address unchanged.
 - universe: Universe.lotr
+  name: "Heirloom of the House"
   item: Item.anduril
   character: Character.aragorn
   ownership_tags: [ OwnershipTag.belongs_to ]
@@ -29,3 +34,5 @@
   character: Character.aragorn
   ownership_tags: [ OwnershipTag.belongs_to ]
   slug: "aragorn_ring_of_barahir"
+
+

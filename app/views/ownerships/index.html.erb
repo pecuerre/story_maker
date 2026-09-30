@@ -106,6 +106,14 @@
             <% if rejected %>
               <%= render "shared/error_summary", record: rejected, subject: t("ownerships.errors.subject") %>
             <% end %>
+            <div class="mb-3">
+              <%= form.label :name, t("ownerships.form.name"), class: "form-label" %>
+              <%# Optional, and it is what `display_string` and the composite slug
+                  prefer when it is set, so the field says so instead of implying
+                  it is required. %>
+              <%= form.text_field :name, class: "form-control" %>
+              <div class="form-text"><%= t("ownerships.form.name_hint") %></div>
+            </div>
             <%= render "shared/photo_field", param: "ownership" %>
             <div class="row g-3 mb-3">
               <div class="col-md-6">
@@ -134,11 +142,15 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <%= form.label :from_date, t("ownerships.from"), class: "form-label" %>
-                <%= form.datetime_local_field :from_date, class: "form-control" %>
+                <%# `step: 1` matches `ApplicationHelper::DATETIME_LOCAL_FORMAT`, which
+                    serializes the stored seconds into the trigger that prefills this
+                    control: a whole-minute step could not hold them and would drop
+                    them on save. %>
+                <%= form.datetime_local_field :from_date, class: "form-control", step: 1 %>
               </div>
               <div class="col-md-6">
                 <%= form.label :to_date, t("ownerships.to"), class: "form-label" %>
-                <%= form.datetime_local_field :to_date, class: "form-control" %>
+                <%= form.datetime_local_field :to_date, class: "form-control", step: 1 %>
               </div>
             </div>
           </div>

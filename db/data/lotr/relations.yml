@@ -27,3 +27,14 @@
   character1: Character.samwise_gamgee
   character2: Character.gollum
   relation_tags: [ RelationTag.is_master_of ]
+
+# One relation in this universe carries its own optional name, so the Name field
+# and the `display_string` preference for it are visible in the running app rather
+# than only in the suite. Every record here states its slug explicitly, which is
+# why adding a name leaves this address unchanged.
+- universe: Universe.lotr
+  name: "Bearer of the Ring"
+  slug: "frodo_gollum"
+  character1: Character.frodo_baggins
+  character2: Character.gollum
+  relation_tags: [ RelationTag.is_master_of ]

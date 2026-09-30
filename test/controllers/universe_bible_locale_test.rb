@@ -304,6 +304,8 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "label[for=relation_character1_id]", text: "Personaje 1"
     assert_select "label[for=relation_character2_id]", text: "Personaje 2"
     assert_select "select[name='relation[character1_id]'] option", text: "Selecciona un personaje"
+    assert_select "label[for=relation_name]", text: "Nombre"
+    assert_select "input[name='relation[name]'][required=required]", count: 0
     assert_select "label[for=relation_from_date]", text: "Desde"
     assert_select "label[for=relation_to_date]", text: "Hasta"
     assert_select "input[type=submit][value=?]", "Guardar relación"
@@ -383,6 +385,8 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     # what it is in the relationship.
     assert_select "label[for=ownership_item_id]", text: "Objeto"
     assert_select "label[for=ownership_character_id]", text: "Personaje"
+    assert_select "label[for=ownership_name]", text: "Nombre"
+    assert_select "input[name='ownership[name]'][required=required]", count: 0
     assert_select "select[name='ownership[item_id]'] option", text: "Selecciona un objeto"
     assert_select "label[for=ownership_ownership_tag_ids]", text: "Etiquetas de propiedades"
     assert_select "input[type=submit][value=?]", "Guardar propiedad"

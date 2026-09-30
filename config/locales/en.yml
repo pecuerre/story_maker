@@ -527,6 +527,11 @@ en:
     add: "Add relation"
     save: "Save relation"
     form:
+      # The name is optional on both models: the two endpoints are the reliable
+      # label, and `display_string` and the composite slug both prefer the name
+      # only when one is set.
+      name: "Name"
+      name_hint: "Optional. Used as the label instead of the two characters when it is set."
       description: "Description"
       tags_label: "Relation tags"
     character1: "Character 1"
@@ -573,6 +578,11 @@ en:
     add: "Add ownership"
     save: "Save ownership"
     form:
+      # The name is optional on both models: the item and character are the
+      # reliable label, and `display_string` and the composite slug both prefer
+      # the name only when one is set.
+      name: "Name"
+      name_hint: "Optional. Used as the label instead of the item and character when it is set."
       description: "Description"
       tags_label: "Ownership tags"
     # The two form labels. `character` is the field's subject — the select offers

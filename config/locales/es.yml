@@ -495,6 +495,11 @@ es:
     add: "Añadir relación"
     save: "Guardar relación"
     form:
+      # El nombre es opcional en ambos modelos: los dos personajes son la
+      # etiqueta fiable, y `display_string` y el slug compuesto solo prefieren el
+      # nombre cuando hay uno.
+      name: "Nombre"
+      name_hint: "Opcional. Se usa como etiqueta en lugar de los dos personajes cuando está definido."
       description: "Descripción"
       tags_label: "Etiquetas de relaciones"
     character1: "Personaje 1"
@@ -541,6 +546,11 @@ es:
     add: "Añadir propiedad"
     save: "Guardar propiedad"
     form:
+      # El nombre es opcional en ambos modelos: el objeto y el personaje son la
+      # etiqueta fiable, y `display_string` y el slug compuesto solo prefieren el
+      # nombre cuando hay uno.
+      name: "Nombre"
+      name_hint: "Opcional. Se usa como etiqueta en lugar del objeto y el personaje cuando está definido."
       description: "Descripción"
       tags_label: "Etiquetas de propiedades"
     # Las dos etiquetas del formulario. `character` es el sujeto del campo —el

@@ -137,6 +137,21 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_nil @event.reload.before_event_id
   end
 
+  test "the datetime editors keep stored seconds" do
+    # Both halves of one contract: the control accepts a second (`step: 1`) and the
+    # serialized value carries it, so opening an editor and saving it again does
+    # not rewrite the stored second as zero.
+    @event.update!(start_datetime: Time.utc(2026, 3, 1, 9, 0, 30))
+
+    get universe_events_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "input[type=datetime-local][name='event[start_datetime]'][step='1']"
+    assert_select "input[type=datetime-local][name='event[end_datetime]'][step='1']"
+    assert_select ".row-actions button[data-action='modal-form#open'][data-modal-form-values-value*=?]",
+      '"start_datetime":"2026-03-01T09:00:30"'
+  end
+
   test "the event delete confirmation states that scenes remain" do
     get universe_events_url(universe_slug: @universe.slug)
 

@@ -39,9 +39,11 @@ module ScenesHelper
   end
 
   # What the datetime-local field must render. A rejected value is kept as the
-  # author typed it, so a validation error never silently clears the input.
+  # author typed it, so a validation error never silently clears the input. A
+  # stored value keeps its seconds, so opening this form and saving it again
+  # round-trips the column instead of rewriting it to zero seconds.
   def scene_datetime_field_value(scene)
-    return scene.datetime.strftime("%Y-%m-%dT%H:%M") if scene.datetime.present?
+    return scene.datetime.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT) if scene.datetime.present?
 
     raw = scene.read_attribute_before_type_cast(:datetime)
     raw.is_a?(String) ? raw : nil

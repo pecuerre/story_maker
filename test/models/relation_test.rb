@@ -67,4 +67,51 @@ class RelationTest < ActiveSupport::TestCase
     relation.update!(name: "Sworn oath")
     assert_equal "Sworn oath", relation.display_string
   end
+
+  test "a blank name is stored as no name rather than an empty string" do
+    other = characters(:character_two)
+    relation = Relation.create!(universe: @universe, character1: @character, character2: other, name: "  ")
+
+    assert_nil relation.reload.name
+  end
+
+  test "a name that cannot be slugified is stored, because the name is not the address" do
+    other = characters(:character_two)
+    relation = Relation.create!(universe: @universe, character1: @character, character2: other, name: "!!!")
+    composite = relation.slug
+
+    # `HasSlug` resolves an unslugifiable name to a random hex, which would leave
+    # the record with a name it can display and an address nothing else predicts.
+    relation.update!(name: "???")
+
+    assert_equal "???", relation.reload.name
+    assert_equal composite, relation.slug
+
+    # Renaming to a name that *does* slugify still renames.
+    relation.update!(name: "Sworn oath")
+
+    assert_equal "sworn-oath", relation.reload.slug
+  end
+
+  test "clearing a name keeps the slug the record already had" do
+    other = characters(:character_two)
+    relation = Relation.create!(universe: @universe, character1: @character, character2: other, name: "Sworn oath")
+    assert_equal "sworn-oath", relation.slug
+
+    relation.update!(name: "")
+
+    # The name goes, the address stays, and the endpoints become the label again.
+    assert_nil relation.reload.name
+    assert_equal "sworn-oath", relation.slug
+    assert_equal "#{@character.name} → #{other.name}", relation.display_string
+  end
+
+  test "renaming a relation still renames its slug" do
+    other = characters(:character_two)
+    relation = Relation.create!(universe: @universe, character1: @character, character2: other, name: "Sworn oath")
+
+    relation.update!(name: "Blood tie")
+
+    assert_equal "blood-tie", relation.reload.slug
+  end
 end

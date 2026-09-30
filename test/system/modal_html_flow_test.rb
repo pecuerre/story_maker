@@ -73,6 +73,76 @@ class ModalHtmlFlowTest < ApplicationSystemTestCase
     assert_equal before + 1, @universe.ownerships.count
   end
 
+  test "a named relation and its stored seconds survive an edit in the browser" do
+    # Both halves of quirk 30 need a browser to be certain about: a `datetime-local`
+    # given a value with seconds only keeps them if the control is stepped for
+    # them, and the modal only pre-fills from the serialized record the row's
+    # trigger carries. The request tests assert what the page ships; this asserts
+    # that the browser keeps it.
+    # Its own characters, so the row's visible endpoint pairing identifies it:
+    # the row title is the two endpoints, not `display_string`, so the name is
+    # asserted through the editor and the record's own page instead.
+    martha = @universe.characters.create!(name: "Martha")
+    ulrich = @universe.characters.create!(name: "Ulrich")
+    relation = Relation.create!(universe: @universe, character1: martha, character2: ulrich,
+      name: "Marriage of convenience", from_date: Time.utc(2024, 1, 1, 10, 0, 30))
+
+    sign_in_via_form(@user)
+    visit universe_relations_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+
+    find(".entity-row", text: "Martha").find(".dropdown-toggle").click
+    click_button "Edit"
+
+    within ".modal.show" do
+      # The name came back from the serialized record, not from a stale row.
+      assert_field "Name", with: "Marriage of convenience"
+      # The second is still there after the modal opened, which is the whole point
+      # of `step: 1`: a whole-minute control drops it the moment it is written to.
+      assert_equal "2024-01-01T10:00:30", find("input[name='relation[from_date]']").value
+
+      fill_in "Description", with: "Edited"
+      click_button "Save relation"
+    end
+
+    assert_selector ".alert-danger[role=alert]", count: 0, wait: REFRESH_WAIT
+    relation.reload
+    assert_equal "Marriage of convenience", relation.name
+    assert_equal "Marriage of convenience", relation.display_string
+    assert_equal Time.utc(2024, 1, 1, 10, 0, 30), relation.from_date
+  end
+
+  test "clearing a name in the browser keeps the record's address" do
+    # Its own characters, for the same reason the other case gives itself some:
+    # the row title is the endpoint pairing, so that text is what identifies it.
+    hannah = @universe.characters.create!(name: "Hannah")
+    jonas = @universe.characters.create!(name: "Jonas")
+    relation = Relation.create!(universe: @universe, character1: hannah, character2: jonas,
+      name: "Marriage of convenience")
+    address = relation.slug
+
+    sign_in_via_form(@user)
+    visit universe_relations_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+
+    find(".entity-row", text: "Hannah").find(".dropdown-toggle").click
+    click_button "Edit"
+
+    within ".modal.show" do
+      assert_field "Name", with: "Marriage of convenience"
+      fill_in "Name", with: ""
+      click_button "Save relation"
+    end
+
+    assert_selector ".alert-danger[role=alert]", count: 0, wait: REFRESH_WAIT
+    relation.reload
+    # The name is cleared and the endpoints become the label again, but the slug the
+    # record already had is its address and does not change underneath it.
+    assert_nil relation.name
+    assert_equal address, relation.slug
+    assert_equal "Hannah → Jonas", relation.display_string
+  end
+
   test "the row actions and the editor stay usable at a narrow viewport" do
     sign_in_via_form(@user)
     page.current_window.resize_to(390, 844)

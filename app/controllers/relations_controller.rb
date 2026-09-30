@@ -27,9 +27,13 @@ class RelationsController < ApplicationController
     end
   end
 
+  # PATCH and DELETE answer with `see_other`, as the documented HTML flow
+  # requires (`docs/architecture.md`): a 302 after a non-GET verb asks the
+  # browser to repeat the mutation as a GET against the redirect target, which
+  # Turbo then has to reinterpret. `create` is a POST, so its 302 is correct.
   def update
     if @relation.update(relation_params)
-      redirect_to universe_relations_path(), notice: t("relations.flash.updated")
+      redirect_to universe_relations_path(), notice: t("relations.flash.updated"), status: :see_other
     else
       load_form_options
       @relations = Current.universe.relations.includes(:character1, :character2, :relation_tags).order(:id)
@@ -39,7 +43,7 @@ class RelationsController < ApplicationController
 
   def destroy
     @relation.soft_delete
-    redirect_to universe_relations_path(), notice: t("relations.flash.deleted")
+    redirect_to universe_relations_path(), notice: t("relations.flash.deleted"), status: :see_other
   end
 
   private
@@ -49,7 +53,7 @@ class RelationsController < ApplicationController
   end
 
   def relation_params
-    params.expect(relation: [ *photo_params, :character1_id, :character2_id, { relation_tag_ids: [] }, :description, :from_date, :to_date ])
+    params.expect(relation: [ :name, *photo_params, :character1_id, :character2_id, { relation_tag_ids: [] }, :description, :from_date, :to_date ])
   end
 
   def load_form_options

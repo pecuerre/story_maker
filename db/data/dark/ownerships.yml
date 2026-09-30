@@ -18,3 +18,14 @@
   ownership_tags: [ OwnershipTag.is_holded_by ]
   character: Character.hannah
   slug: "hannah_time_machine"
+
+# One ownership in this universe carries its own optional name, so the Name field
+# and the `display_string` preference for it are visible in the running app rather
+# than only in the suite. Every record here states its slug explicitly, which is
+# why adding a name leaves this address unchanged.
+- universe: Universe.dark
+  name: "Borrowed, not given"
+  item: Item.sphere_machine
+  character: Character.hannah
+  ownership_tags: [ OwnershipTag.is_holded_by ]
+  slug: "hannah_sphere_machine"

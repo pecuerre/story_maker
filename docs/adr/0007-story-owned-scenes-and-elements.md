@@ -34,8 +34,8 @@ that implemented it are recorded in the dated execution notes below.
   their narrative order. Section and Scene must belong to the same Story.
 - A `Scene` may reference one optional universe Event and may separately store one optional
   `datetime` column as a single in-world time point. This is intentionally not Event's two-field
-  `start_datetime`/`end_datetime` shape. It uses the same ordinary `t.datetime` storage and current
-  minute-precision `datetime-local` editor semantics as Events, with no explicit timezone. The Event
+  `start_datetime`/`end_datetime` shape. It uses the same ordinary `t.datetime` storage and the same
+  second-precision `datetime-local` editor semantics as Events, with no explicit timezone. The Event
   reference and Scene datetime are independent in the first version; selecting one never writes,
   clears, or validates against the other.
 - A Story still becomes current only through the existing explicit selection or remembered-story
@@ -49,7 +49,8 @@ uses `HasSlug`, has a short optional description, and has the following optional
 - one same-Story Section;
 - one same-Universe Event;
 - one optional in-world `datetime` (a single point, using Event-compatible storage/editor
-  precision and timezone semantics, rather than Event's start/end pair);
+  precision and timezone semantics — `ApplicationHelper::DATETIME_LOCAL_FORMAT` and `step: 1` on the
+  control, so a stored second survives an edit — rather than Event's start/end pair);
 - zero or many story-scoped Scene Tags;
 - zero or many same-Universe Character, Item, and Location presence links.
 

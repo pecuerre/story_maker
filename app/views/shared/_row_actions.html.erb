@@ -24,10 +24,15 @@
     </button>
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= actions_id %>">
       <li>
+        <%# The row's own id travels with its trigger because one modal form
+            serves every row: a select that must not offer the record being
+            edited (Event's three temporal references) can only drop that option
+            once it knows which row opened the modal. %>
         <button type="button" class="dropdown-item"
           data-action="modal-form#open"
           data-modal-form-url="<%= local_assigns.fetch(:edit_url) %>"
           data-modal-form-method="patch"
+          data-modal-form-record-id="<%= record.id %>"
           data-modal-form-title="<%= t("shared.row_actions.edit_title", label: label) %>"
           data-modal-form-values-value="<%= values %>">
           <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("shared.row_actions.edit") %>

@@ -107,6 +107,36 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal stories(:story_one), scene.story
   end
 
+  test "the three temporal selects do not offer the row being edited" do
+    get universe_events_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # One modal form serves every row, so the server cannot know which row the
+    # browser is about to edit: it sends every universe event. Each select says
+    # it must not offer the row being edited, and each row's trigger carries the
+    # id that identifies which option that is.
+    assert_select "select[data-modal-form-exclude-self]", 3
+    assert_select "select[name='event[before_event_id]'][data-modal-form-exclude-self]", 1
+    assert_select "select[name='event[after_event_id]'][data-modal-form-exclude-self]", 1
+    assert_select "select[name='event[simultaneous_event_id]'][data-modal-form-exclude-self]", 1
+    assert_select ".row-actions button[data-action='modal-form#open'][data-modal-form-record-id=?]",
+      @event.id.to_s
+    assert_select "select[name='event[before_event_id]'] option[value=?]", @event.id.to_s, 1
+  end
+
+  test "a self reference built by hand is still refused and keyed on the association" do
+    patch universe_event_url(universe_slug: @universe.slug, id: @event),
+      params: { event: { before_event_id: @event.id } },
+      as: :json
+
+    assert_response :unprocessable_content
+    # The browser no longer offers the choice, so this is the only way to reach
+    # the rule: the model is the authority, and it keys the error on the
+    # association so the modal can show it beside the foreign-key control.
+    assert_equal [ "cannot be itself" ], response.parsed_body["before_event"]
+    assert_nil @event.reload.before_event_id
+  end
+
   test "the event delete confirmation states that scenes remain" do
     get universe_events_url(universe_slug: @universe.slug)
 

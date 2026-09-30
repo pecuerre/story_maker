@@ -20,6 +20,26 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[docs]** **Known quirk 61** records that a dismiss control clicked while a modal is still fading in
+  is silently dropped: **Cancel**, `btn-close`, Escape, and a backdrop click all resolve to the one
+  Bootstrap instance `modal_form_controller.js` owns, and `hide()` returns while that instance is still
+  transitioning in, so the first attempt does nothing and only the second closes the modal. Measured
+  with Bootstrap 5.3.8 while fixing quirk 47; it reaches every modal workspace and is listed under the
+  backlog slice that must be delivered before 27.4. It is recorded rather than fixed here because it is
+  the shared editor's own pre-existing defect, not part of that slice. The claim that modals cannot be
+  dismissed at all, which an earlier draft of this work repeated, is corrected: the modal does close,
+  one attempt late.
+- **[fixed]** The **Event editor** no longer offers the event being edited as one of its own
+  `Happens before` / `Happens after` / `Same time as` references. `EventsController#index` sends every
+  universe event because one modal form serves every row and a single server render cannot know which
+  row is about to be edited, so the browser offered a choice `Event#cannot_reference_self` and the
+  `events_*_event_not_self` check constraints always refuse. The three selects now declare
+  `data-modal-form-exclude-self`, `shared/_row_actions` gives each row's trigger the
+  `data-modal-form-record-id` that identifies it, and `modal_form_controller.js` detaches that one
+  `<option>` and re-inserts it before the next row opens — the same shape the taxonomy tree already
+  uses to keep a node out of its own `parent_id` select. The create trigger carries no id, so a create
+  offers every event. The controller, the locales, and the Event model are otherwise unchanged: the
+  model and the database stay the authority, so a hand-built or stale request is still refused.
 - **[fixed]** Deleting a **Character, Item, or Location** now says what it deletes. The row menu
   defaults to the short `Delete <name>?` confirmation and Locations is a taxonomy tree whose fallback
   named only the record and its children, so the three surfaces that ADR 0007 has mandated
@@ -27,8 +47,8 @@ Labels used below:
   descendants, ownerships or relations, and Scene presence links — without naming any of it. Events,
   Scenes, Sections, and the Story and tag pages already rendered theirs. Characters and Items now
   pass `confirm_text` to `shared/_row_actions` and Locations passes a `confirm_message` lambda to the
-  shared tree, which are the two channels the other surfaces already used, so no JavaScript changed and
-  the ADR's sentences are reproduced unchanged. The copy sits at `characters.delete_confirm`,
+  shared tree, which are the two channels the other surfaces already used, so the ADR's sentences are
+  reproduced unchanged. The copy sits at `characters.delete_confirm`,
   `items.delete_confirm`, and `locations.delete_confirm` beside the workspace that is its only reader,
   in both locales; the record name is the author's own data, so it is interpolated, not translated.
   Request tests read the shipped attribute in `characters_controller_test.rb`, `items_controller_test.rb`,

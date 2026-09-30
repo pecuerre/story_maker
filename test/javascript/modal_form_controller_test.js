@@ -547,3 +547,92 @@ describe("modal form open", () => {
     expect(controller.modalShown).toBe(true)
   })
 })
+
+// The Event editor's three temporal selects are the one place a record must not
+// be offered as one of its own references. The server cannot do it — one modal
+// form serves every row — so the control declares it and the row's id travels on
+// the trigger. The server-rendered list is kept so the next row gets its own
+// option back; that restoration is the whole correctness risk here.
+describe("modal form self-reference exclusion", () => {
+  const formHtml = `
+    <form>
+      <select id="event_before_event_id" name="event[before_event_id]" data-modal-form-exclude-self="true">
+        <option value="">None</option>
+        <option value="1">The beginning</option>
+        <option value="2">The end</option>
+      </select>
+      <select id="event_start_datetime" name="event[start_datetime]">
+        <option value="">None</option>
+        <option value="1">The beginning</option>
+      </select>
+    </form>
+  `
+
+  function openEditor(controller, dataset = {}) {
+    controller.titleTarget = document.createElement("h5")
+    controller.modal = { show: () => {} }
+
+    controller.open({
+      preventDefault() {},
+      currentTarget: {
+        dataset: {
+          modalFormTitle: "Edit event",
+          modalFormUrl: "/u/dark/events/1",
+          modalFormMethod: "patch",
+          modalFormValuesValue: "{}",
+          ...dataset
+        }
+      }
+    })
+  }
+
+  function optionValues(form, id) {
+    return [ ...form.querySelector(`#${id}`).options ].map((option) => option.value)
+  }
+
+  test("drops the edited record's own option and keeps every other one", () => {
+    const { controller, form } = build(formHtml)
+
+    openEditor(controller, { modalFormRecordId: "1" })
+
+    // The blank "None" option is never the record, so it survives.
+    expect(optionValues(form, "event_before_event_id")).toEqual([ "", "2" ])
+    // Rebuilding the list instead of detaching one option loses which option is
+    // selected, and a create then submits a temporal reference nobody chose.
+    expect(form.querySelector("#event_before_event_id").value).toBe("")
+  })
+
+  test("leaves a select that does not declare the exclusion alone", () => {
+    const { controller, form } = build(formHtml)
+
+    openEditor(controller, { modalFormRecordId: "1" })
+
+    expect(optionValues(form, "event_start_datetime")).toEqual([ "", "1" ])
+  })
+
+  test("restores the removed option when another row opens the same form", () => {
+    const { controller, form } = build(formHtml)
+
+    openEditor(controller, { modalFormRecordId: "1" })
+    openEditor(controller, { modalFormUrl: "/u/dark/events/2", modalFormRecordId: "2" })
+
+    expect(optionValues(form, "event_before_event_id")).toEqual([ "", "1" ])
+  })
+
+  test("a create trigger offers every option, because there is no record yet", () => {
+    const { controller, form } = build(formHtml)
+
+    openEditor(controller, { modalFormUrl: "/u/dark/events", modalFormMethod: "post" })
+
+    expect(optionValues(form, "event_before_event_id")).toEqual([ "", "1", "2" ])
+  })
+
+  test("a create trigger after an edit restores the option the edit removed", () => {
+    const { controller, form } = build(formHtml)
+
+    openEditor(controller, { modalFormRecordId: "1" })
+    openEditor(controller, { modalFormUrl: "/u/dark/events", modalFormMethod: "post" })
+
+    expect(optionValues(form, "event_before_event_id")).toEqual([ "", "1", "2" ])
+  })
+})

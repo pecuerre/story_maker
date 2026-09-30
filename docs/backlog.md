@@ -377,25 +377,29 @@ it has a useful destination and clear empty/loading/error states.
       the Timeline was never built; the docs now say the view is static, and building the interaction
       is listed under FUTURE WORK below.
 
-    - **A slice that must be delivered before 27.4 — three defects in the Universe Bible surface.**
-      These were found while translating that surface and are behavior defects rather than
-      translations, so the owner deferred them out of the translation slice. They live on the same
-      views, and the two whose fix is a copy change need the Spanish keys to be written once rather
-      than twice. Deliver this slice first, each finding with its own tests and a changelog entry, and
-      move each matching `known_quirks.md` entry to `resolved_quirks.md` as it is fixed:
-      - **Quirk 59 — a Character, Item, or Location row deletes without saying what it deletes.**
-        Only Events pass ADR 0007's cascade template; those three fall back to the short
-        `Delete <name>?` while their descendants, relations/ownerships, and Scene links are in fact
-        removed. Each template needs a locale key, and the Locations tree's own fallback message in
-        `taxonomy_tree_controller.js` needs the same treatment in the client-side slice.
-      - **Quirk 47 — the Event editor offers the event being edited as its own temporal reference.**
-        `EventsController#index` puts every universe event in `@events_for_select` and the modal
-        renders all three selects without excluding it, so the browser offers a choice the model
-        rejects.
+    - **A slice that must be delivered before 27.4 — one defect left in the Universe Bible surface,
+      plus the shared editor's own dismiss defect found while fixing it.** These were found while
+      translating that surface and are behavior defects rather than translations, so the owner
+      deferred them out of the translation slice. They live on the same views, and the ones whose fix
+      is a copy change need the Spanish keys to be written once rather than twice. Deliver this slice
+      first, each finding with its own tests and a changelog entry, and move each matching
+      `known_quirks.md` entry to `resolved_quirks.md` as it is fixed. **Two of the original three are
+      already fixed**, on 2026-09-30, before any of this copy was translated, because each was a
+      behavior defect rather than a translation: quirk 59 (a Character, Item, or Location row deleted
+      without saying what it deletes) and quirk 47 (the Event editor offered the event being edited as
+      its own temporal reference). See [`resolved_quirks.md`](resolved_quirks.md). What is left:
       - **Quirk 30 — Relation/Ownership parameter lists omit their optional `name`, and
         `modal_fields.rb` formats datetimes to whole minutes.** Both are contract drift on the JSON
         hand-off this surface already owns; note that `event_fields_json` and its siblings in that
         helper are the same code path.
+      - **Quirk 61 — a dismiss control clicked while the modal is still fading in is silently
+        dropped.** Recorded on 2026-09-30 while fixing quirk 47, on the shared
+        `modal_form_controller.js` every workspace in this slice opens. **Cancel**, the `btn-close`
+        button, and Escape or a backdrop click all resolve to the one Bootstrap instance the
+        controller owns, and `hide()` returns while that instance is still transitioning in, so the
+        first attempt does nothing and only the second one closes the modal. It is recorded rather than
+        bundled because it is the shared editor's own defect and predates this slice; fix it here only
+        because every modal in this slice is affected by it.
 
     - **Slice 27.4 — Scene workspace.** `scenes/*` (index, show, edit, new, `_form`, `_filter`,
       `_elements`, `_show_identity`, `_ungrouped_scenes`, `_workspace_tabs`),

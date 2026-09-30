@@ -419,6 +419,16 @@ value objects, and the deletion contract are one feature with one home, in
   read-only member is not told to add or drag records, and the `details_url`/`details_count`/
   `details_count_label` trio that renders the row's Details link and count pill. `_row_actions`
   accepts the same kind of `confirm_text`.
+- **A select that must not offer the record being edited declares it on the control.** One modal form
+  serves every row, so the server cannot exclude a row's own record from an option list and the row's
+  identity has to travel with the trigger: `_row_actions` adds `data-modal-form-record-id`, and
+  `modal_form_controller.js` removes that one `<option>` from every `select[data-modal-form-exclude-self]`
+  before it fills the stored values, restoring it before the next row opens. The Events page's three
+  temporal selects are the current callers; the create trigger carries no id, so a create offers
+  everything. The option list is never rebuilt from a cached copy — detaching and re-appending a
+  `<select>`'s children loses which option it holds, and the form would then submit a value the author
+  never chose. Model validations and database constraints remain the authority; this is only the
+  browser not offering a choice the server would refuse.
 - **A record with dependents passes its own confirmation; the default is only the fallback.** The
   destructive templates are mandated by
   [ADR 0007](adr/0007-story-owned-scenes-and-elements.md), which owns the sentences and what they

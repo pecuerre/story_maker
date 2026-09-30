@@ -773,6 +773,52 @@ assertions elsewhere read the old short sentence and were updated to the full te
 `accept_confirm` blocks in `test/system/modal_json_flow_test.rb`, which now accept whatever the row
 sends because the copy's content is a request-test concern.
 
+### Former quirk #47: the Event edit selector offered the event itself as a temporal reference (fixed)
+
+**Then:** `EventsController#index` put every universe event in `@events_for_select`, and the modal's
+three temporal selects rendered that whole list. One modal form serves every row of the Events list,
+so a single server render cannot know which row is about to be edited — but the browser still offered
+the row being edited inside all three of **Happens before / Happens after / Same time as**. Picking it
+was accepted by the browser and refused by `Event#cannot_reference_self`, and by the
+`events_*_event_not_self` check constraints behind it.
+
+**Fix:** the option list is now the browser's half of the same rule the model already enforces.
+
+- A select opts in on the control itself with `data-modal-form-exclude-self`, and the row's identity
+  travels on its trigger as `data-modal-form-record-id`, which `shared/_row_actions` now emits. This is
+  the same shape `taxonomy_tree_controller.js` already uses to keep a node out of its own `parent_id`
+  select, and it is client-side for the same reason: the tree builds one modal per node, and the flat
+  list builds one modal for the whole page.
+- `modal_form_controller.js#excludeEditedRecord` detaches exactly the one option that belongs to the
+  row being opened and `restoreExcludedOptions` re-inserts it, in the place the server rendered it,
+  before the next row opens. The create trigger carries no id, so a create offers every event.
+- `EventsController` is unchanged: it still sends every universe event, which is the only correct thing
+  for a form shared by every row.
+- **The option list is never rebuilt from a cached copy**, and that is a finding rather than a style
+  choice. The first implementation rebuilt each select with `replaceChildren` from a cached array, and
+  the existing `a record-level 422 keeps the modal open` browser case immediately failed with a stale
+  element reference. The cause was not Capybara: `replaceChildren` on a `<select>` loses which option
+  the control holds, so the *create* form came up with `before_event_id` set to a real event, which
+  satisfied `must_be_identifiable`, saved, and replaced the page under the test. Detaching one option
+  cannot disturb the others' selection.
+- The model validation, the three database constraints, and the `422` path are untouched, so a request
+  built by hand — a stale page, a crafted POST — is still refused.
+
+Coverage: five cases in `test/javascript/modal_form_controller_test.js` (the edited row's own option is
+dropped, an undeclared select is untouched, the next row gets it back, a create offers everything, and a
+create after an edit restores the option), one request test in `events_controller_test.rb` for the
+declared contract on the rendered page, and one request test there for the hand-built self reference
+still being a `422` keyed on `before_event`. Two browser cases in `test/system/modal_json_flow_test.rb`
+replace the one that used to drive the browser into the self-reference: they assert that the editor for
+an event does not offer that event, that a create still offers both, and that a create's select is
+empty. **A coverage change worth stating plainly:** the removed browser case was the only end-to-end
+proof that an association-keyed error (`before_event`) lands on the foreign-key control
+(`before_event_id`). That mapping is now unreachable through the Events modal — which is the point of
+the fix — and it keeps its unit case in `modal_form_controller_test.js`
+(`resolves an association error to its foreign-key field`), while the real-browser proof that a `422`
+renders in the summary, on the offending control, and takes focus is `scene_elements_test.rb`'s
+"a dialogue with no speaker is refused in the modal, which stays open".
+
 ### Former quirk #48: delegated admins could demote or remove themselves into a blank 403 (fixed)
 
 **Then:** the Members workspace rendered the access-level select and the Remove button on every
@@ -1208,6 +1254,45 @@ or vendored asset changed), `UNIVERSE=dark|lotr bin/rails db:demo:check` and
 need approval), Docker/Kamal deployment, and a manual browser pass outside the automated suite. The
 pan/zoom interaction was not built, so there was no client-side interaction to verify beyond the
 node's own focus/click/geometry coverage.
+
+## Follow-up verification (2026-09-30, Event temporal self-reference — quirk 47)
+
+- `bin/rails test test/controllers/events_controller_test.rb test/controllers/modal_json_contract_test.rb`
+  — 26 tests, 183 assertions, 0 failures, 0 errors, 0 skips (4 new cases: the declared contract on the
+  rendered page, and the hand-built self reference).
+- `bun test test/javascript/modal_form_controller_test.js` — 40 tests, 99 assertions, 0 failures
+  (35 before this change; five new cases and one new assertion).
+- `bun run check:js` — 142 tests across 8 files, 0 fail, 367 assertions. Biome rejected the first
+  version of `restoreExcludedOptions` for a `forEach` callback that returned `insertBefore`'s value;
+  the callback now has a block body.
+- `bin/rails test` — 1,130 tests, 6,887 assertions, 0 failures, 0 errors, 7 skips.
+- `bin/rubocop` — 327 files, no offenses.
+- `bin/brakeman --no-pager` — 0 errors, plus the one pre-existing weak-confidence SQL-injection warning
+  in `app/models/concerns/has_many_tags.rb:109` recorded above.
+- `SE_CHROME_NO_SANDBOX=1 PARALLEL_WORKERS=1 bin/rails test test/system/modal_json_flow_test.rb` — 9
+  tests, 116 assertions, 0 failures, 0 errors, 0 skips. `SE_CHROME_NO_SANDBOX=1` is required on this
+  machine because the AppArmor user-namespace policy blocks Chrome's sandbox;
+  `test/application_system_test_case.rb` documents that.
+- `SE_CHROME_NO_SANDBOX=1 PARALLEL_WORKERS=2 bin/rails test:system` — 122 tests, 1,572 assertions,
+  **0 failures, 0 errors**, 0 skips. A first run of the same command reported 14 failures and 8 errors,
+  and they were not the same set on a second pass: a sign-in path that landed on `/` instead of
+  `/session/new`, a `.modal.show` that never opened, a half-typed Scene Element field. That is the load
+  sensitivity known quirk 58 describes, on a surface this change does not touch. Do not "fix" a test
+  that failed this way — re-run it with fewer workers first.
+
+Two things found while doing this, neither fixed here and neither part of the finding:
+
+- **A dismiss control clicked while the modal is still fading in is silently dropped.** I first read
+  this as "a modal in this application cannot be dismissed", which is wrong: a **Cancel** click and a
+  direct `bootstrap.Modal.getInstance(...).hide()` both work — one attempt late. The instance reports
+  `{isShown: true, isTransitioning: true}` immediately after `show()`, and Bootstrap's `hide()`
+  returns while it is transitioning in, so the first click does nothing. That is recorded as
+  **quirk 61** and referenced from the backlog slice that must be delivered before 27.4. It is also why
+  no browser case can open a second editor on the same page: Capybara clicks as soon as the element
+  exists, so the click lands inside the transition and the first modal keeps covering the list.
+- I lost the first draft of the two browser cases to a `git checkout --` during that investigation and
+  re-applied them; the file in the tree is the reviewed version and `git diff` shows only those two
+  tests plus the helper.
 
 ## Follow-up verification (2026-09-30, deletion confirmations — quirk 59)
 

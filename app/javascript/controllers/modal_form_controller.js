@@ -10,6 +10,10 @@ export default class extends Controller {
   static targets = [ "modal", "title", "form", "submit", "errors" ]
   static values = { createTitle: String, modelParam: String, response: String }
 
+  // The options this row's editor detached, and the sibling each one goes back
+  // in front of. An empty list is the normal state, between opens.
+  excludedOptions = []
+
   connect() {
     this.modal = new window.bootstrap.Modal(this.modalTarget)
     this.shown = false
@@ -65,6 +69,7 @@ export default class extends Controller {
     this.formTarget.querySelectorAll("select[multiple]").forEach((select) => {
       select.tomselect?.clear(true)
     })
+    this.excludeEditedRecord(trigger)
 
     Object.entries(values).forEach(([name, value]) => {
       const field = this.namedControl(`${this.modelParamValue}[${name}]`)
@@ -86,6 +91,38 @@ export default class extends Controller {
     this.loadRowState(values)
 
     this.modal.show()
+  }
+
+  // One form serves every row, so a select that must not offer the record being
+  // edited says so on the control itself, and the row's own id travels on the
+  // trigger. A browser choice the server would refuse is the defect: `Event`'s
+  // `cannot_reference_self` and three database check constraints stay the
+  // authority for a request built by hand, and this is only the option list the
+  // author is offered.
+  //
+  // Exactly one `<option>` is detached per select, and put back where the server
+  // put it before the next row opens. The option list is never rebuilt: removing
+  // and re-appending a select's children loses which option is selected, and a
+  // create would then submit a temporal reference nobody chose.
+  excludeEditedRecord(trigger) {
+    this.restoreExcludedOptions()
+    const editedId = trigger.dataset.modalFormRecordId
+    if (!editedId) return
+
+    this.formTarget.querySelectorAll("[data-modal-form-exclude-self]").forEach((select) => {
+      const option = [ ...select.options ].find((candidate) => candidate.value === String(editedId))
+      if (!option) return
+
+      this.excludedOptions.push({ select, option, follows: option.nextElementSibling })
+      option.remove()
+    })
+  }
+
+  restoreExcludedOptions() {
+    this.excludedOptions.forEach(({ select, option, follows }) => {
+      select.insertBefore(option, follows)
+    })
+    this.excludedOptions = []
   }
 
   // The photo editor is the only field that renders a record's stored state

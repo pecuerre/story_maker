@@ -75,11 +75,12 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     assert_equal "Nothing identifies this event.", Event.order(:id).last.description
   end
 
-  test "a field error is rendered on the control that caused it" do
+  test "the editor does not offer the event being edited as its own temporal reference" do
     sign_in_via_form(@user)
     visit universe_events_path(universe_slug: @universe.slug)
     assert_stimulus_loaded
     event = events(:event_one)
+    other = events(:event_two)
 
     within_row(event.display_string) do
       find("button[aria-expanded='false']").click
@@ -87,19 +88,31 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     end
 
     within ".modal.show" do
-      # The model rejects an event that points at itself and keys the error on the
-      # association, so the message belongs on the foreign-key control.
-      select event.display_string, from: "Happens before"
-      click_button "Save event"
-
-      assert_selector "[data-modal-form-error-for='before_event']", text: "cannot be itself", visible: :visible
-      assert_selector "select#event_before_event_id[aria-invalid='true']"
-      assert_selector "[data-modal-form-target='errors'] .alert-danger", text: "Happens before cannot be itself"
-      # The summary takes focus, so the reason is announced instead of only shown.
-      assert_selector "[data-modal-form-target='errors']:focus"
+      # `Event` refuses a self reference in the model and in three database
+      # checks, so the row being edited is not offered as one of its own. The
+      # other event still is, or the editor could not express a relation at all.
+      assert_no_selector self_option("event_before_event_id", event), visible: :all
+      assert_selector self_option("event_before_event_id", other), visible: :all
+      assert_no_selector self_option("event_after_event_id", event), visible: :all
+      assert_no_selector self_option("event_simultaneous_event_id", event), visible: :all
+      # Nothing is selected, and the row's own option is simply gone rather than
+      # disabled: rebuilding the list instead of detaching one option loses which
+      # option a select holds, and a create then saves a temporal reference nobody
+      # chose.
+      assert_equal "", find("#event_before_event_id").value
     end
-    assert_selector ".modal.show"
-    assert_nil event.reload.before_event_id
+  end
+
+  test "a create offers every event, because there is no record to exclude yet" do
+    sign_in_via_form(@user)
+    visit universe_events_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+
+    click_button "Add event"
+    within ".modal.show" do
+      assert_selector self_option("event_before_event_id", events(:event_one)), visible: :all
+      assert_selector self_option("event_before_event_id", events(:event_two)), visible: :all
+    end
   end
 
   test "a request that never reaches the server is reported and leaves the form usable" do
@@ -214,6 +227,13 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     # scope to every row on the page.
     def within_row(name, &block)
       within first(".list-group-item", text: name), &block
+    end
+
+    # One option in a temporal select, addressed by the record's id. Capybara has
+    # no `?` substitution for a CSS selector, so the value goes into the selector
+    # itself; it is an integer id, never user input.
+    def self_option(field_id, event)
+      "##{field_id} option[value='#{event.id}']"
     end
 
     # Replaces `fetch` with a rejection so the network-failure branch of the

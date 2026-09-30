@@ -11,7 +11,9 @@ the Event list's page shape is in [conventions.md](../conventions.md#views---thr
    and `cannot_reference_self` checks both object identity and the foreign-key id. Database check
    constraints close the insert-time gap where an id is assigned only during save. Destroying an event
    nullifies every incoming temporal reference; a referrer that existed only to point at that event is
-   removed first, so `must_be_identifiable` remains true for retained rows.
+   removed first, so `must_be_identifiable` remains true for retained rows. **The editor never offers
+   the event being edited as one of its own three references** — see
+   [The editor's own temporal references](#the-editors-own-temporal-references).
 2. Tags are **optional**, as on every content model (`has_many_tags` adds no presence validation).
    Event has a `_tag` taxonomy like the other content models: `EventTag` + `events_event_tags` HABTM +
    `EventTagsController` + labeled Event tags navigation.
@@ -26,6 +28,34 @@ the Event list's page shape is in [conventions.md](../conventions.md#views---thr
 
 `EventsController` uses the flat list + modal pattern, and includes `MaintainsSiblingPositions` and
 `RequiresJsonMutationFormat` like the other positioned, JSON-only controllers.
+
+## The editor's own temporal references
+
+An Event cannot be its own `before_event`, `after_event`, or `simultaneous_event`, and the three
+**Happens before / Happens after / Same time as** selects must therefore never offer the record being
+edited. `cannot_reference_self` and the three `events_*_event_not_self` check constraints are the
+authority and are unchanged; the option list is the browser's half of the same rule, so a reader is
+not offered a choice the server will refuse.
+
+**The exclusion is client-side because it cannot be anything else.** One modal form serves every row of
+the Events list, so a single server render cannot know which row is about to be edited, and
+`@events_for_select` is every universe event. The server sends the whole list; the modal controller
+removes exactly the one option that belongs to the row being opened, and puts it back before the next
+row opens.
+
+- A select opts in on the control itself with `data-modal-form-exclude-self`, and the row's identity
+  travels on its trigger as `data-modal-form-record-id` (added by `shared/_row_actions`).
+  `modal_form_controller.js` does the rest — see
+  [conventions.md](../conventions.md#views---three-patterns) for the shared mechanism.
+- Exactly one `<option>` is detached, and it is re-inserted in the place the server rendered it. **The
+  option list is never rebuilt.** Removing and re-appending a `<select>`'s children loses which option
+  the select holds, which silently gave the create form a temporal reference it would then have
+  submitted; `test/system/modal_json_flow_test.rb` pins the empty selection that prevents it.
+- The create trigger carries no record id, so it offers every event: a record with no id cannot be its
+  own reference. Row-to-row restoration is covered by `test/javascript/modal_form_controller_test.js`
+  rather than in a browser, because one browser case cannot open a second editor: a dismiss control
+  clicked while the modal is still fading in is silently dropped (known quirk 61), so Capybara's first
+  Cancel leaves the modal open and it keeps covering the list behind it.
 
 ## The Timeline algorithm
 

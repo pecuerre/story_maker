@@ -52,10 +52,10 @@ row opens.
   the select holds, which silently gave the create form a temporal reference it would then have
   submitted; `test/system/modal_json_flow_test.rb` pins the empty selection that prevents it.
 - The create trigger carries no record id, so it offers every event: a record with no id cannot be its
-  own reference. Row-to-row restoration is covered by `test/javascript/modal_form_controller_test.js`
-  rather than in a browser, because one browser case cannot open a second editor: a dismiss control
-  clicked while the modal is still fading in is silently dropped (known quirk 61), so Capybara's first
-  Cancel leaves the modal open and it keeps covering the list behind it.
+  own reference. Row-to-row restoration is pinned by `test/javascript/modal_form_controller_test.js`
+  for each option, and end to end by a browser case that dismisses one row's editor and opens the
+  next row's: one modal form really does serve every row on the page, and the second editor's
+  **Happens before** select has to hold the first row's option back.
 
 ## The Timeline algorithm
 

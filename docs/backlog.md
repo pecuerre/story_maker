@@ -377,27 +377,6 @@ it has a useful destination and clear empty/loading/error states.
       the Timeline was never built; the docs now say the view is static, and building the interaction
       is listed under FUTURE WORK below.
 
-    - **A slice that must be delivered before 27.4 — the shared editor's own dismiss defect.** Three
-      defects were found while
-      translating that surface and are behavior defects rather than translations, so the owner
-      deferred them out of the translation slice. They live on the same views, and the ones whose fix
-      is a copy change need the Spanish keys to be written once rather than twice. Each finding gets
-      its own tests and a changelog entry, and its matching `known_quirks.md` entry moves to
-      `resolved_quirks.md` as it is fixed. **All three are now fixed**, on 2026-09-30, before any of
-      this copy was translated: quirk 59 (a Character, Item, or Location row deleted without saying
-      what it deletes), quirk 47 (the Event editor offered the event being edited as its own temporal
-      reference), and quirk 30 (the Relation/Ownership `name` field was unwritable, stored seconds were
-      dropped when an editor was saved, and the HTML flow answered 302 where it documents 303). See
-      [`resolved_quirks.md`](resolved_quirks.md). What is left:
-      - **Quirk 61 — a dismiss control clicked while the modal is still fading in is silently
-        dropped.** Recorded on 2026-09-30 while fixing quirk 47, on the shared
-        `modal_form_controller.js` every workspace in this slice opens. **Cancel**, the `btn-close`
-        button, and Escape or a backdrop click all resolve to the one Bootstrap instance the
-        controller owns, and `hide()` returns while that instance is still transitioning in, so the
-        first attempt does nothing and only the second one closes the modal. It is recorded rather than
-        bundled because it is the shared editor's own defect and predates this slice; fix it here only
-        because every modal in this slice is affected by it.
-
     - **Slice 27.4 — Scene workspace.** `scenes/*` (index, show, edit, new, `_form`, `_filter`,
       `_elements`, `_show_identity`, `_ungrouped_scenes`, `_workspace_tabs`),
       `section_tags/*`, `scene_tags/*`, `scene_characters/*`, `scene_items/*`,

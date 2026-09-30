@@ -264,28 +264,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
 
-61. **Low — a dismiss control clicked while the modal is still fading in is silently dropped.**
-    `modal_form_controller.js` owns the Bootstrap instance (`new window.bootstrap.Modal(...)` in
-    `connect()`, `this.modal.show()` in `open()`), and every modal in the application offers three ways
-    out: the `btn-close` button, the footer **Cancel** button, and Escape or a backdrop click
-    (`app/views/{characters,items,events,relations,ownerships}/index.html.erb`,
-    `app/views/scenes/_elements.html.erb`, and the three Scene presence tabs). Those three route
-    through Bootstrap's data-api, which resolves to **that same instance**, and `hide()` returns
-    immediately while `this._isTransitioning` is true — which is exactly the window the `.fade`
-    opening transition occupies. Measured on 2026-09-30 with Bootstrap 5.3.8: immediately after
-    `show()` the instance reports `{isShown: true, isTransitioning: true}` and a **Cancel** click
-    leaves the modal open, while the same click a second later closes it. So the modal is not
-    undismissable — it is dismissable one attempt late, and the first attempt gives the reader nothing
-    at all. It reaches every modal workspace, it is invisible to a pointer user who waits a fraction
-    of a second, and it matters to a keyboard user who presses Escape as soon as the dialog appears.
-    It is also why no browser case here opens a second editor on the same page: Capybara clicks as
-    soon as the element exists, so it lands inside the transition. The shared controller already
-    compensates for the related focus race on a **rejected save** (`this.focusSummaryOnShow` and the
-    `shown.bs.modal` handler), so the dismiss path needs the same care. Nothing is lost — the modal
-    does close on the next attempt — which is why this is Low rather than Medium. Reproduce with a
-    click delivered in the same tick as the open, and check whether a machine with reduced motion still
-    sees it before treating the fade as the whole explanation.
-
 56. **Medium — an index write the engine refuses asynchronously is invisible to the job that queued
     it.** `Search::IndexRecordJob` and `Search::RemoveRecordJob` hand a document to the engine and
     return; the engine accepts the request and applies it later, so a *server-side* rejection — an

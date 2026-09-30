@@ -342,6 +342,82 @@ describe("taxonomy row building", () => {
   })
 })
 
+// The editor is a second Bootstrap dialog of its own, and it had the same
+// dropped-dismiss race as the flat-list editor: `hide()` returns while the
+// instance is still fading in, and the editor's `btn-close`, **Cancel**, Escape,
+// and backdrop click all resolve to that one instance.
+describe("taxonomy editor dismiss", () => {
+  const nodeHtml = `
+    <ul class="taxonomy-list" data-drop-parent-id="">
+      <li class="taxonomy-node" data-node-id="1" data-name="Factions" data-update-url="/u/dark/character_tags/1" data-taxonomy-values='{"name":"Factions"}'>
+        <button type="button" data-action="taxonomy-tree#edit">Edit</button>
+      </li>
+    </ul>
+  `
+
+  // happy-dom has no transition and no Bootstrap, so the stub is the instance
+  // contract the controller uses; what is under test is the deferral.
+  function openEditor() {
+    const hidden = []
+    class FakeModal {
+      show() {}
+      hide() { hidden.push(true) }
+    }
+    globalThis.window.bootstrap = { Modal: FakeModal }
+
+    const { controller, host } = build({
+      elementHtml: nodeHtml,
+      modalFields: [ { name: "name", label: "Name", type: "text", required: true } ]
+    })
+    controller.edit({ preventDefault() {}, currentTarget: host.querySelector("[data-action='taxonomy-tree#edit']") })
+    return { controller, modal: controller.modalElement, hidden }
+  }
+
+  test("a dismiss that lands while the editor is opening is honoured once it has opened", () => {
+    const { controller, modal, hidden } = openEditor()
+
+    controller.modal.hide()
+    expect(hidden).toHaveLength(0)
+
+    modal.dispatchEvent(new Event("shown.bs.modal"))
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("a dismiss after the editor has opened closes it at once", () => {
+    const { controller, modal, hidden } = openEditor()
+
+    modal.dispatchEvent(new Event("shown.bs.modal"))
+    controller.modal.hide()
+
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("a deferred dismiss gives nothing inside the closing editor focus", () => {
+    const { controller, modal, hidden } = openEditor()
+    // A visible error region is what a rejected save leaves behind, and the
+    // editor claims focus back for it on `shown`. A dismiss is honoured on
+    // `shown` too, and it wins: the editor is on its way out.
+    const region = modal.querySelector("[data-taxonomy-tree-errors]")
+    region.hidden = false
+
+    controller.modal.hide()
+    modal.dispatchEvent(new Event("shown.bs.modal"))
+
+    expect(hidden).toHaveLength(1)
+    expect(document.activeElement).not.toBe(region)
+  })
+
+  test("a dismiss repeated while the editor is opening is honoured once", () => {
+    const { controller, modal, hidden } = openEditor()
+
+    controller.modal.hide()
+    controller.modal.hide()
+    modal.dispatchEvent(new Event("shown.bs.modal"))
+
+    expect(hidden).toHaveLength(1)
+  })
+})
+
 describe("taxonomy announcements", () => {
   test("a failure is visible and a progress note is not", () => {
     const { controller, host } = build({ elementHtml: '<div data-taxonomy-tree-status></div>' })

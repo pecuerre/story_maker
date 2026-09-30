@@ -17,8 +17,20 @@ export default class extends Controller {
   connect() {
     this.modal = new window.bootstrap.Modal(this.modalTarget)
     this.shown = false
+    this.opening = false
+    this.dismissOnShow = false
     this.handleShown = () => {
       this.shown = true
+      this.opening = false
+      // A dismiss that arrived while the dialog was still fading in is honoured
+      // here, before any focus is claimed: the dialog is on its way out, so
+      // nothing inside it is given focus on the way.
+      if (this.dismissOnShow) {
+        this.dismissOnShow = false
+        this.focusSummaryOnShow = false
+        this.modal.hide()
+        return
+      }
       // Bootstrap activates its own focus trap on this event, which focuses the
       // dialog itself. A save rejected while the modal was still opening would
       // lose the summary's focus to it, so the focus is claimed back here.
@@ -33,13 +45,42 @@ export default class extends Controller {
       if (this.hasErrorsTarget && !this.errorsTarget.hidden) return
       this.focusFirstField()
     }
+    this.handleHidden = () => {
+      // The next open has to know the dialog is no longer on the page. A modal
+      // that is still open is not shown again, so it must not open the
+      // deferred-dismiss window either.
+      this.shown = false
+      this.dismissOnShow = false
+    }
     this.modalTarget.addEventListener("shown.bs.modal", this.handleShown)
+    this.modalTarget.addEventListener("hidden.bs.modal", this.handleHidden)
+    this.deferDismissWhileOpening()
   }
 
   disconnect() {
     this.modalTarget?.removeEventListener("shown.bs.modal", this.handleShown)
+    this.modalTarget?.removeEventListener("hidden.bs.modal", this.handleHidden)
     this.modal?.dispose()
     this.modal = null
+  }
+
+  // Bootstrap's `hide()` returns without doing anything while the instance is
+  // still transitioning in, so a dismiss that lands in that window is dropped
+  // with nothing at all to show for it. Every way out of this dialog — the
+  // `btn-close` button, the footer's **Cancel**, Escape, and a backdrop click —
+  // resolves to the one instance `connect()` builds, so `hide()` itself is
+  // wrapped rather than four triggers being intercepted: an intent that arrives
+  // while the dialog is opening is remembered and re-issued the moment it has
+  // finished opening, the same care the focus race on a rejected save gets.
+  deferDismissWhileOpening() {
+    const hide = this.modal.hide.bind(this.modal)
+    this.modal.hide = () => {
+      if (!this.opening) {
+        hide()
+        return
+      }
+      this.dismissOnShow = true
+    }
   }
 
   // A page declares its own mutation contract. "json" means the controller
@@ -64,7 +105,16 @@ export default class extends Controller {
     this.clearErrors()
     this.setPending(false)
     this.pageStatus(null)
+    // Bootstrap's `show()` returns without doing anything when the dialog is
+    // already open, and no `shown.bs.modal` follows to end the opening window, so
+    // the window is only opened by an open that will really show the dialog. A
+    // second open while the first is still fading in inherits the `shown` that is
+    // already on its way, and that is what ends the window.
+    this.opening = !this.shown
     this.shown = false
+    // A dismiss the previous open never delivered belongs to the row that has
+    // just been replaced, not to this one.
+    this.dismissOnShow = false
     this.focusSummaryOnShow = false
     this.formTarget.querySelectorAll("select[multiple]").forEach((select) => {
       select.tomselect?.clear(true)

@@ -909,6 +909,58 @@ stored second, `scenes_helper_test.rb` covers the same at the helper, and
 `universe_bible_locale_test.rb` asserts the Spanish Name label and that neither field is marked
 required.
 
+### Former quirk #61: a dismiss control clicked while the modal was still fading in was silently dropped (fixed)
+
+**Then:** every modal editor offers three ways out — the `btn-close` button, the footer's **Cancel**,
+and Escape or a backdrop click — and all of them resolve to the one Bootstrap instance the controller
+owns. Bootstrap's `Modal#hide()` returns immediately while that instance is transitioning in, which is
+the whole window the opening transition occupies, so a dismiss landing there was dropped without a
+word: the modal stayed open, the control looked dead, and only a second attempt closed it. Measured
+on 2026-09-30 with Bootstrap 5.3.8 — immediately after `show()` the instance reports
+`{isShown: true, isTransitioning: true}`, a **Cancel** click leaves the modal open, and the same click
+a second later closes it. The window is wider than the dialog's own 150ms fade: the backdrop fades in
+first, and only then does Bootstrap mark the dialog shown and fire `shown.bs.modal`, so the state that
+is dropped spans both transitions.
+
+It was invisible to a pointer user, who waits a fraction of a second, and it took the first Escape a
+keyboard reader pressed the moment the dialog appeared. It reached every modal workspace, and it was
+also why no browser case could open a second editor on the same page: Capybara clicks as soon as the
+element exists, so the click landed inside the transition and the first editor kept covering the list.
+
+**Fix:** both editors wrap the instance's own `hide()` instead of intercepting four triggers. While
+the dialog is opening, an intent is remembered and re-issued on `shown.bs.modal`, before any focus is
+claimed — the same care the focus race on a rejected save already gets.
+
+`modal_form_controller.js` opens that window only when `show()` will really show the dialog. Bootstrap's
+`show()` returns without doing anything while the dialog is already open, and no `shown.bs.modal` would
+follow to close a window opened anyway, which would have replaced a dismiss that arrives one attempt
+late with a dialog that cannot be dismissed at all. So "already open" is read from the dialog's own
+events, not guessed: `hidden.bs.modal` clears it. The first version of this fix inferred it from the
+previous open alone, and the browser case that dismisses one row's editor and opens the next row's
+caught the difference — the second editor no longer deferred, because nothing had marked the first one
+closed.
+
+The taxonomy tree editor builds its own `.modal fade` with the same `btn-close`, **Cancel**, Escape,
+and backdrop, and had the identical race on its own instance. The recorded finding named only the
+shared editor; the owner chose to fix both in the same change, and the two fixes are the same shape.
+
+Coverage: six cases in `test/javascript/modal_form_controller_test.js` — a dismiss during the opening
+is honoured once it has opened, one after it has opened is not deferred, the open that replaces the row
+supersedes a dismiss it never delivered, an open that does not re-show the dialog still leaves it
+dismissable, a dismissal lets the next open defer its own dismiss again, and a deferred dismiss claims
+no focus for the dialog that is closing — and four in `test/javascript/taxonomy_tree_controller_test.js`,
+which add that a repeated dismiss is honoured once and that a deferred dismiss beats the focus a
+rejected save would have claimed. Four of the six and three of the four fail without the fix.
+
+In the browser, `test/system/modal_json_flow_test.rb` and `test/system/taxonomy_tree_test.rb` deliver the
+dismiss in the same task as the open through `execute_script`, because Capybara cannot: a case that waits
+for the control to be actionable clicks in a later task, which is past the window. The flat-list file
+also covers Escape, the dismiss a keyboard reader reaches for, and the row-to-row case the quirk itself
+blocked. Each of the same-task cases waits for `shown.bs.modal` and then `hidden.bs.modal` to be
+recorded on the body, so "the editor is not on the page" cannot be satisfied by the fraction of a second
+before it has finished opening — which is how the first version of these cases passed against the
+unfixed code.
+
 ## Resolved client-side verification and CSRF findings (2026-09-27)
 
 ### Former quirk #33: client-side code had no tests, no linter, and an unverified CSRF path (fixed)
@@ -1391,3 +1443,43 @@ The three changed confirmations were not observed in a hand-driven browser: the 
 into an attribute and every suite that reads it asserts the rendered value, so a browser could only
 show the modal controller passing that attribute to `window.confirm`, which
 `test/system/modal_json_flow_test.rb` already exercises for a Character row.
+
+## Follow-up verification (2026-09-30, deferred modal dismiss — quirk 61)
+
+- `bun test test/javascript/modal_form_controller_test.js` — 46 tests, 108 assertions, 0 failures
+  (40 before this change; six new cases).
+- `bun test test/javascript/taxonomy_tree_controller_test.js` — 24 tests, 72 assertions, 0 failures
+  (20 before this change; four new cases).
+- `bun run check:js` — 152 tests across 8 files, 0 fail, 382 assertions. Four of the six new cases in
+  `modal_form_controller_test.js` and three of the four in `taxonomy_tree_controller_test.js` fail with
+  the deferral disabled, and the `hidden.bs.modal` case fails again when that handler is removed.
+- `bin/rails test` — 1,154 tests, 6,997 assertions, 0 failures, 0 errors, 7 skips.
+- `SE_CHROME_NO_SANDBOX=1 PARALLEL_WORKERS=1 bin/rails test test/system/modal_json_flow_test.rb
+  test/system/taxonomy_tree_test.rb` — 25 tests, 322 assertions, 0 failures, 0 errors, 0 skips. Each of
+  the three same-task cases fails with the deferral disabled, with `expected to find css
+  "body[data-dismiss-closed='yes']"`: the dialog finished opening and never closed, which is the defect
+  stated as an assertion.
+- `SE_CHROME_NO_SANDBOX=1 PARALLEL_WORKERS=2 bin/rails test:system` — 128 tests, 1,652 assertions,
+  0 failures, 0 errors, 0 skips.
+- `bin/rubocop` — 329 files, no offenses.
+- `bin/brakeman --no-pager` — 0 errors and the one pre-existing weak-confidence SQL-injection warning
+  in `app/models/concerns/has_many_tags.rb:109` recorded above.
+
+Two findings from doing this, both fixed here:
+
+- **The first browser cases passed against the unfixed code.** `assert_no_selector ".modal.show"` is
+  satisfied by the fraction of a second before the dialog has finished opening, and the dialog does not
+  carry `show` until after the backdrop's own fade has run — a dismiss delivered in the same task as
+  the open arrives before either. Each case now records `shown.bs.modal` and then `hidden.bs.modal` on
+  the body and waits for both, which is what makes "it closed" mean something.
+- **The second row's editor stopped deferring.** The window was first opened from the previous open's
+  state alone, and nothing marked a dismissed dialog closed, so the next open believed the dialog was
+  still open: Bootstrap's `show()` was then a no-op, no `shown.bs.modal` would ever close the window,
+  and the next dismiss was dropped exactly as before. It surfaced only because the row-to-row browser
+  case the defect had blocked could finally be written. That state now comes from `hidden.bs.modal`.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin, or
+vendored asset changed), `UNIVERSE=dark|lotr bin/rails db:demo:check`, `db:demo:reset`/`db:restart`
+(no `db/data` manifest or schema changed; the reset tasks are destructive and need approval), and a
+manual browser pass outside the automated suite. Reduced motion was not exercised: the window this fix
+closes is the opening transition itself, and the fix does not depend on which transition produced it.

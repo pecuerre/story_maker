@@ -20,6 +20,22 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[fixed]** A **dismiss control clicked while a modal is still fading in is no longer dropped**, in
+  both shared editors. Every modal offers **Cancel**, a `btn-close` button, and Escape or a backdrop
+  click, and all four resolve to the one Bootstrap instance the editor owns; `hide()` returns without
+  doing anything while that instance is still transitioning in, so a dismiss landing in the opening
+  transition left the dialog open and the control looking dead until a second attempt — one attempt
+  late, and the first gave the reader nothing. `modal_form_controller.js` and
+  `taxonomy_tree_controller.js` now wrap their own instance's `hide()` and re-issue a remembered intent
+  on `shown.bs.modal`, before any focus is claimed, which is the same care the focus race on a
+  rejected save already got. The flat-list editor also reads "already open" from `hidden.bs.modal`, so
+  the window is only opened when `show()` will really show the dialog and a deferred dismiss can never
+  be stranded. Known quirk 61, recorded while fixing quirk 47 and listed under the i18n slice that had
+  to be delivered before 27.4, is fixed ahead of that slice; the taxonomy tree editor had the identical
+  race on its own instance and the recorded finding did not name it. Four browser cases cover what
+  only a browser can show — a **Cancel** and an Escape delivered in the same task as the open, the
+  same for the tree editor, and the row-to-row editor journey the defect had blocked — and ten
+  `bun test` cases cover the deferral in each controller.
 - **[fixed]** A **Relation or Ownership can now be named**, and a stored in-world time survives an
   edit. Three silent contract drifts on the record/editor boundary, recorded as known quirk 30, are
   fixed together:

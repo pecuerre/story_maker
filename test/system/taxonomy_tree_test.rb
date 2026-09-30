@@ -296,6 +296,43 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_equal tag.name, tag.reload.name
   end
 
+  test "a dismiss that lands while the editor is still fading in still closes it" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    # The row menu is opened and the editor dismissed inside one script, so the
+    # dismiss lands in the task the editor was shown in: the window in which
+    # Bootstrap's `hide()` returns without doing anything. Capybara cannot
+    # express that — it waits for the element to be actionable and clicks in a
+    # later task — which is why no case that waits has ever seen this. The two
+    # events are recorded on the body so the assertions can wait for them,
+    # because "the editor is not on the page" is also true for the fraction of a
+    # second before it has finished opening.
+    page.execute_script(<<~JS)
+      const row = document.querySelector("li[data-node-id='#{tag.id}'] .taxonomy-row")
+      row.querySelector("button[aria-expanded='false']").click()
+      row.querySelector("[data-action='taxonomy-tree#edit']").click()
+      const editor = [ ...document.querySelectorAll(".modal") ].find((modal) => modal.querySelector("[data-taxonomy-tree-errors]"))
+      editor.addEventListener("shown.bs.modal", () => { document.body.dataset.dismissOpened = "yes" })
+      editor.addEventListener("hidden.bs.modal", () => { document.body.dataset.dismissClosed = "yes" })
+      editor.querySelector("input[data-taxonomy-field='name']").value = "Never saved"
+      editor.querySelector(".modal-footer [data-bs-dismiss='modal']").click()
+    JS
+
+    # The editor really did finish opening, so a closed one is a dismissed one.
+    assert_selector "body[data-dismiss-opened='yes']"
+    assert_selector "body[data-dismiss-closed='yes']"
+    assert_no_selector ".modal.show"
+    # The dismiss discarded the edit rather than saving it.
+    assert_selector "button.taxonomy-name-trigger", text: tag.name
+    assert_equal tag.name, tag.reload.name
+  end
+
   test "a rejected edit keeps the modal open and renders the server's field errors" do
     user = users(:user_one)
     universe = universes(:universe_one)

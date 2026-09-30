@@ -115,6 +115,41 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     end
   end
 
+  test "a dismissed editor hands the list back, so the next row's editor opens on its own options" do
+    sign_in_via_form(@user)
+    visit universe_events_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+    first = events(:event_one)
+    second = events(:event_two)
+
+    within_row(first.display_string) do
+      find("button[aria-expanded='false']").click
+      click_button "Edit"
+    end
+    within ".modal.show" do
+      assert_no_selector self_option("event_before_event_id", first), visible: :all
+      click_button "Cancel"
+    end
+    assert_no_selector ".modal.show"
+
+    # One modal form serves every row, so the editor the second row opens has to
+    # offer the first row back: the option the first editor detached is put in
+    # place before this form is filled.
+    within_row(second.display_string) do
+      find("button[aria-expanded='false']").click
+      click_button "Edit"
+    end
+    within ".modal.show" do
+      assert_selector self_option("event_before_event_id", first), visible: :all
+      assert_no_selector self_option("event_before_event_id", second), visible: :all
+      assert_field "Title", with: second.title
+      click_button "Cancel"
+    end
+    assert_no_selector ".modal.show"
+    assert_equal first.title, first.reload.title
+    assert_equal second.title, second.reload.title
+  end
+
   test "a request that never reaches the server is reported and leaves the form usable" do
     sign_in_via_form(@user)
     visit universe_characters_path(universe_slug: @universe.slug)
@@ -219,6 +254,64 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     within ".page-header" do
       assert_selector ".badge", text: @universe.items.count.to_s
     end
+  end
+
+  test "a dismiss that lands while the editor is still fading in still closes it" do
+    sign_in_via_form(@user)
+    visit universe_characters_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+    before = @universe.characters.count
+
+    # Both clicks are delivered inside one script, so the dismiss lands in the
+    # task the open happened in: the window in which Bootstrap's `hide()` returns
+    # without doing anything. Capybara cannot express that — it waits for the
+    # element to be actionable and clicks in a later task — which is why no case
+    # that waits has ever seen this. The two events are recorded on the body so
+    # the assertions can wait for them, because "the editor is not on the page"
+    # is also true for the fraction of a second before it has finished opening.
+    page.execute_script(<<~JS)
+      const trigger = document.querySelector(".page-header [data-action='modal-form#open']")
+      trigger.click()
+      const dialog = document.querySelector("[data-modal-form-target='modal']")
+      dialog.addEventListener("shown.bs.modal", () => { document.body.dataset.dismissOpened = "yes" })
+      dialog.addEventListener("hidden.bs.modal", () => { document.body.dataset.dismissClosed = "yes" })
+      dialog.querySelector("input[name='character[name]']").value = "Never saved"
+      dialog.querySelector(".modal-footer [data-bs-dismiss='modal']").click()
+    JS
+
+    # The editor really did finish opening, so a closed one is a dismissed one.
+    assert_selector "body[data-dismiss-opened='yes']"
+    assert_selector "body[data-dismiss-closed='yes']"
+    assert_no_selector ".modal.show"
+    # The dismiss discarded the edit rather than saving it.
+    assert_no_selector ".entity-row .entity-title", text: "Never saved"
+    assert_equal before, @universe.characters.count
+  end
+
+  test "Escape pressed while the editor is still fading in still closes it" do
+    sign_in_via_form(@user)
+    visit universe_characters_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+
+    # The keyboard equivalent of the case above, and the one that matters most: a
+    # reader who presses Escape the moment the dialog appears. Delivered in the
+    # same task as the open, because that is the only way to reach the window —
+    # see the comment above.
+    page.execute_script(<<~JS)
+      const trigger = document.querySelector(".page-header [data-action='modal-form#open']")
+      trigger.click()
+      const dialog = document.querySelector("[data-modal-form-target='modal']")
+      dialog.addEventListener("shown.bs.modal", () => { document.body.dataset.dismissOpened = "yes" })
+      dialog.addEventListener("hidden.bs.modal", () => { document.body.dataset.dismissClosed = "yes" })
+      // Nothing inside the dialog can hold focus yet — it is still `display: none`
+      // while the backdrop fades in — so the key is delivered on the dialog
+      // itself, which is where Bootstrap listens for it.
+      dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
+    JS
+
+    assert_selector "body[data-dismiss-opened='yes']"
+    assert_selector "body[data-dismiss-closed='yes']"
+    assert_no_selector ".modal.show"
   end
 
   private

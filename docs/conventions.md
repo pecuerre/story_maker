@@ -490,7 +490,12 @@ subsystems it shares helpers and Stimulus controllers with.
   not read as a Stimulus target.
 - `modal_form_controller.js` — Bootstrap modal CRUD for the flat list views, including the JSON
   submission, `422` error rendering, pending state, JSON delete, and the same-URL refresh described
-  in [ADR 0011](adr/0011-modal-json-mutation-contract.md).
+  in [ADR 0011](adr/0011-modal-json-mutation-contract.md). **A dismiss that lands while the dialog is
+  still opening is deferred to `shown.bs.modal` instead of being dropped**, and the taxonomy tree
+  editor does the same on its own instance: Bootstrap's `hide()` returns without doing anything while
+  the instance is transitioning in, and the `btn-close` button, the footer's **Cancel**, Escape, and a
+  backdrop click all resolve to the one instance each controller owns. Wrapping `hide()` covers all
+  four triggers at once, so no editor has to be dismissed twice.
 - `photo_crop_controller.js` — the square photo editor, which serves all three page patterns from one
   implementation. It is described in [features/photos.md](features/photos.md), including the rule
   that it must stay a **named** class export.

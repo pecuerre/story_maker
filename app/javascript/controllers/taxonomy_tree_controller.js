@@ -160,6 +160,9 @@ export default class extends Controller {
     })
 
     this.modal = new window.bootstrap.Modal(modal)
+    this.openingEditor = true
+    this.dismissEditorOnShow = false
+    this.deferEditorDismissWhileOpening()
     modal.addEventListener("hidden.bs.modal", () => {
       modal.querySelectorAll("select[multiple]").forEach((select) => {
         select.tomselect?.destroy()
@@ -169,6 +172,15 @@ export default class extends Controller {
       this.modalElement = null
     }, { once: true })
     modal.addEventListener("shown.bs.modal", () => {
+      this.openingEditor = false
+      // A dismiss that arrived while the editor was still fading in is honoured
+      // here, before any focus is claimed: the editor is on its way out, so
+      // nothing inside it is given focus on the way.
+      if (this.dismissEditorOnShow) {
+        this.dismissEditorOnShow = false
+        this.modal.hide()
+        return
+      }
       // Bootstrap activates its own focus trap on this event, which focuses the
       // dialog. A save rejected while the editor was still opening would lose the
       // error summary to it, so the focus is claimed back.
@@ -177,6 +189,24 @@ export default class extends Controller {
     })
     modal.querySelector("form").addEventListener("submit", (submitEvent) => this.updateDetails(submitEvent, node))
     this.modal.show()
+  }
+
+  // Bootstrap's `hide()` returns without doing anything while the instance is
+  // still transitioning in, so a dismiss that lands in that window is dropped
+  // with nothing at all to show for it. The editor's `btn-close`, its **Cancel**,
+  // Escape, and a backdrop click all resolve to the one instance `edit()` builds,
+  // so `hide()` itself is wrapped rather than four triggers being intercepted —
+  // the same compensation `modal_form_controller.js` makes for the flat-list
+  // editor, which has the identical race.
+  deferEditorDismissWhileOpening() {
+    const hide = this.modal.hide.bind(this.modal)
+    this.modal.hide = () => {
+      if (!this.openingEditor) {
+        hide()
+        return
+      }
+      this.dismissEditorOnShow = true
+    }
   }
 
   buildModal(node) {

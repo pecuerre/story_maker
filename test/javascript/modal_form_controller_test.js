@@ -548,6 +548,132 @@ describe("modal form open", () => {
   })
 })
 
+// Bootstrap's own dialog is not what these cases are about, and happy-dom has no
+// transition: the stub is the instance contract the controller uses, so what is
+// exercised is the controller's own deferral and not a fade.
+function stubBootstrapModal() {
+  const hidden = []
+  class FakeModal {
+    show() {}
+    hide() { hidden.push(true) }
+  }
+  globalThis.window.bootstrap = { Modal: FakeModal }
+  return hidden
+}
+
+function openEditor(controller, dataset = {}) {
+  controller.titleTarget = document.createElement("h5")
+  controller.open({
+    preventDefault() {},
+    currentTarget: {
+      dataset: {
+        modalFormTitle: "Edit character",
+        modalFormUrl: "/u/dark/characters/1",
+        modalFormMethod: "patch",
+        modalFormValuesValue: "{}",
+        ...dataset
+      }
+    }
+  })
+}
+
+function finishedOpening(controller) {
+  controller.modalTarget.dispatchEvent(new Event("shown.bs.modal"))
+}
+
+// A dismiss that lands while the dialog is still fading in used to be dropped
+// without a word: Bootstrap's `hide()` returns while the instance is transitioning
+// in, and the `btn-close` button, the footer's **Cancel**, Escape, and a backdrop
+// click all resolve to that one instance. It reaches every modal workspace and it
+// is invisible to a pointer user who waits a fraction of a second, but it takes
+// the first Escape a keyboard user presses away with nothing at all.
+describe("modal form dismiss", () => {
+  function connectedEditor() {
+    const built = build('<div class="modal fade" data-modal-form-target="modal"><form data-modal-form-target="form"></form></div>')
+    built.hidden = stubBootstrapModal()
+    built.controller.connect()
+    return built
+  }
+
+  test("a dismiss that lands while the dialog is opening is honoured once it has opened", () => {
+    const { controller, hidden } = connectedEditor()
+
+    openEditor(controller)
+    controller.modal.hide()
+    expect(hidden).toHaveLength(0)
+
+    finishedOpening(controller)
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("a dismiss after the dialog has opened closes it at once", () => {
+    const { controller, hidden } = connectedEditor()
+
+    openEditor(controller)
+    finishedOpening(controller)
+    controller.modal.hide()
+
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("the open that replaces the row supersedes a dismiss it never delivered", () => {
+    const { controller, hidden } = connectedEditor()
+
+    openEditor(controller)
+    controller.modal.hide()
+    openEditor(controller, { modalFormUrl: "/u/dark/characters/2" })
+    finishedOpening(controller)
+
+    expect(hidden).toHaveLength(0)
+  })
+
+  test("an open that does not show the dialog again leaves it dismissable", () => {
+    const { controller, hidden } = connectedEditor()
+
+    openEditor(controller)
+    finishedOpening(controller)
+    // Bootstrap's `show()` returns without doing anything while the dialog is
+    // already open, so no `shown.bs.modal` follows this open. A dismiss deferred
+    // into a window that can never close would leave the dialog undismissable.
+    openEditor(controller)
+    controller.modal.hide()
+
+    expect(hidden).toHaveLength(1)
+  })
+
+  test("a dismissal lets the next open defer its own dismiss again", () => {
+    const { controller, hidden } = connectedEditor()
+
+    openEditor(controller)
+    finishedOpening(controller)
+    controller.modal.hide()
+    controller.modalTarget.dispatchEvent(new Event("hidden.bs.modal"))
+
+    // The second open is the row after the dismissed one, and it is dismissed the
+    // same way. A dialog that is still on the page is not shown again, so the
+    // controller has to know this one is gone before it opens the window again.
+    openEditor(controller, { modalFormUrl: "/u/dark/characters/2" })
+    controller.modal.hide()
+    expect(hidden).toHaveLength(1)
+
+    finishedOpening(controller)
+    expect(hidden).toHaveLength(2)
+  })
+
+  test("a deferred dismiss gives nothing inside the closing dialog focus", () => {
+    const { controller, hidden } = connectedEditor()
+    let focused = 0
+    controller.focusFirstField = () => { focused += 1 }
+
+    openEditor(controller)
+    controller.modal.hide()
+    finishedOpening(controller)
+
+    expect(hidden).toHaveLength(1)
+    expect(focused).toBe(0)
+  })
+})
+
 // The Event editor's three temporal selects are the one place a record must not
 // be offered as one of its own references. The server cannot do it — one modal
 // form serves every row — so the control declares it and the row's id travels on

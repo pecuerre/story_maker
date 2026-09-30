@@ -512,6 +512,12 @@ Client-side rules:
   fails if a new `innerHTML`/`outerHTML`/`insertAdjacentHTML`/`document.write` sink appears in
   `app/javascript` without a reviewed, commented exception; the only one is the Timeline's static
   SVG arrow markers.
+- A user-facing string is a **`t()` call against the layout's blob**, never a literal.
+  `test/javascript/no_client_string_literals_test.js` fails when a quoted string that reads as
+  prose appears in `app/javascript`; `app/javascript/i18n.js` is the only lookup, and
+  `ClientStrings` (`app/models/client_strings.rb`) is the only list of what it may resolve. The
+  whole contract, including what a controller asks the server for, is in
+  [features/i18n.md](features/i18n.md#a-string-the-browser-has-to-have).
 - Every shared editor's serialization, error-rendering, and DOM-building logic has a `bun test`
   case in `test/javascript/`, next to the controller it covers. Browser tests are for what only a
   browser can show (focus, Turbo navigation, a real token on the wire).

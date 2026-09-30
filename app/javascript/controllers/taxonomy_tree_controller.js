@@ -1,9 +1,27 @@
 import { Controller } from "@hotwired/stimulus"
 import "bootstrap"
 import "tom-select"
+import { t } from "i18n"
 
 const FOCUS_STORAGE_KEY = "universe-maker:taxonomy-tree-focus"
 
+// The taxonomy tree's editing surface.
+//
+// One controller serves all ten taxonomies and the two non-tag hierarchies, so
+// nothing here may name a record type: the tree's own status line says "the
+// item", and the noun in a record-level error is `shared.taxonomy_tree.record_subject`
+// for the same reason — a tree that edits eight different things cannot say which
+// one it is talking about.
+//
+// Every word the controller shows is read through `t()` from the blob the layout
+// rendered. That includes the editor modal, which this controller builds in
+// `document.body`, and the inline create and rename rows. The two error frames it
+// shares with the flat-list editor are keys for the same reason, so a rejected
+// save reads the same whichever editor refused it.
+//
+// The tree's editor also builds the photo control's container, so it passes that
+// control the descriptor's own label rather than a word of its own — the same
+// bare container `shared/_photo_field` renders, and the same label.
 export default class extends Controller {
   static values = { modelParam: String, createUrl: String, modalFields: String, fieldName: String, editable: Boolean }
 
@@ -98,11 +116,11 @@ export default class extends Controller {
     const input = document.createElement("input")
     input.className = "form-control form-control-sm"
     input.name = "name"
-    input.setAttribute("aria-label", "New name")
+    input.setAttribute("aria-label", t("shared.taxonomy_tree.new_name"))
     input.required = true
-    const cancel = this.button("Cancel", "btn btn-sm btn-outline-secondary", "button")
+    const cancel = this.button(t("shared.form.cancel"), "btn btn-sm btn-outline-secondary", "button")
     cancel.addEventListener("click", (event) => this.cancel(event))
-    form.append(input, this.button("Save", "btn btn-sm btn-primary", "submit"), cancel)
+    form.append(input, this.button(t("shared.taxonomy_tree.save"), "btn btn-sm btn-primary", "submit"), cancel)
 
     row.append(form)
     item.append(row)
@@ -127,9 +145,9 @@ export default class extends Controller {
     input.name = "name"
     input.value = node.dataset.name || ""
     input.required = true
-    const cancel = this.button("Cancel", "btn btn-sm btn-outline-secondary", "button")
+    const cancel = this.button(t("shared.form.cancel"), "btn btn-sm btn-outline-secondary", "button")
     cancel.addEventListener("click", (event) => this.cancel(event))
-    form.append(input, this.button("Save", "btn btn-sm btn-primary", "submit"), cancel)
+    form.append(input, this.button(t("shared.taxonomy_tree.save"), "btn btn-sm btn-primary", "submit"), cancel)
 
     name.replaceWith(form)
     node.classList.add("is-editing")
@@ -226,8 +244,8 @@ export default class extends Controller {
     const title = document.createElement("h2")
     title.className = "modal-title fs-5"
     title.id = titleId
-    title.textContent = `Edit ${node.dataset.name || "item"}`
-    const close = this.button("", "btn-close", "button", null, "Close")
+    title.textContent = t("shared.taxonomy_tree.edit_title", { name: node.dataset.name || "" })
+    const close = this.button("", "btn-close", "button", null, t("shared.form.close"))
     close.setAttribute("data-bs-dismiss", "modal")
     header.append(title, close)
 
@@ -247,9 +265,9 @@ export default class extends Controller {
     body.append(errors, this.modalFields(node))
     const footer = document.createElement("div")
     footer.className = "modal-footer"
-    const cancel = this.button("Cancel", "btn btn-secondary", "button")
+    const cancel = this.button(t("shared.form.cancel"), "btn btn-secondary", "button")
     cancel.setAttribute("data-bs-dismiss", "modal")
-    footer.append(cancel, this.button("Save changes", "btn btn-primary", "submit"))
+    footer.append(cancel, this.button(t("shared.taxonomy_tree.save_changes"), "btn btn-primary", "submit"))
     form.append(body, footer)
     content.append(header, form)
     dialog.append(content)
@@ -317,7 +335,10 @@ export default class extends Controller {
         // The stored photo is this node's own value, so the modal shows the row
         // being edited rather than whatever the shared descriptor carries.
         wrapper.dataset.photoCropCurrentUrlValue = this.photoUrlFor(node)
-        wrapper.dataset.photoCropLabelValue = field.label || "Photo"
+        // The descriptor's own label, which `ModalFields` already resolved for
+        // this request. The editor has no word of its own for it, so a taxonomy
+        // whose photo field is labelled differently says so here.
+        wrapper.dataset.photoCropLabelValue = field.label || t("modal_fields.photo")
         fragment.append(wrapper)
         return
       }
@@ -352,10 +373,13 @@ export default class extends Controller {
       const marker = document.createElement("span")
       marker.className = "text-danger"
       marker.setAttribute("aria-hidden", "true")
+      // The asterisk is not chrome: it is the marker the stylesheet draws beside
+      // a required field, and it is the same mark in every language. The words
+      // a screen reader reads in its place are.
       marker.textContent = " *"
       const hidden = document.createElement("span")
       hidden.className = "visually-hidden"
-      hidden.textContent = " (required)"
+      hidden.textContent = t("shared.taxonomy_tree.required")
       label.append(marker, hidden)
     }
     return label
@@ -436,7 +460,7 @@ export default class extends Controller {
     }
 
     if (!response.ok) {
-      this.announce(await this.mutationMessage(response, "The changes could not be saved."), true)
+      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.update_failed")), true)
       return
     }
 
@@ -447,7 +471,7 @@ export default class extends Controller {
   renderFieldErrors(modal, payload) {
     const entries = this.errorEntries(payload)
     if (entries.length === 0) {
-      this.announce("The change was rejected but the server did not explain why.", true)
+      this.announce(t("shared.modal_form.unexplained"), true)
       return
     }
 
@@ -468,7 +492,7 @@ export default class extends Controller {
     alert.setAttribute("role", "alert")
     const heading = document.createElement("p")
     heading.className = "mb-1"
-    heading.textContent = "This change could not be saved. Fix the following and try again."
+    heading.textContent = t("shared.modal_form.fix_and_retry")
     alert.append(heading, list)
 
     // The editor is built in `document.body`, outside this controller's element,
@@ -542,7 +566,9 @@ export default class extends Controller {
         const messages = raw
           .map((message) => (typeof message === "string" ? message.trim() : ""))
           .filter((message) => message.length > 0)
-          .map((message) => attribute === "base" ? `the ${this.modelParamValue.replace(/_/g, " ")} ${message}` : `${this.errorFieldLabel(attribute)} ${message}`)
+          .map((message) => attribute === "base"
+            ? t("shared.record_error", { subject: t("shared.taxonomy_tree.record_subject"), message })
+            : t("shared.record_message", { label: this.errorFieldLabel(attribute), message }))
         return [ attribute, messages ]
       })
       .filter(([ , messages ]) => messages.length > 0)
@@ -590,7 +616,7 @@ export default class extends Controller {
     const response = await this.request(form.dataset.url, "POST", values)
     if (!response) return
     if (!response.ok) {
-      this.announce(await this.mutationMessage(response, "The item could not be created."), true)
+      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.create_failed")), true)
       return
     }
 
@@ -606,7 +632,7 @@ export default class extends Controller {
     const response = await this.request(node.dataset.updateUrl, "PATCH", { name: form.querySelector("[name='name']")?.value || "" })
     if (!response) return
     if (!response.ok) {
-      this.announce(await this.mutationMessage(response, "The name could not be saved."), true)
+      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.rename_failed")), true)
       return
     }
 
@@ -625,7 +651,7 @@ export default class extends Controller {
     const response = await this.request(node.dataset.updateUrl, "PATCH", { name: form.querySelector("[name='name']")?.value || "" })
     if (!response) return
     if (!response.ok) {
-      this.announce(await this.mutationMessage(response, "The name could not be saved."), true)
+      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.rename_failed")), true)
       return
     }
 
@@ -640,13 +666,13 @@ export default class extends Controller {
     // The server owns the consequence copy when the record has dependents; the
     // generic message stays only as a fallback for an unrendered node.
     const consequence = node.dataset.confirmMessage?.trim()
-    if (!window.confirm(consequence || `Delete ${node.dataset.name} and its children?`)) return
+    if (!window.confirm(consequence || t("shared.taxonomy_tree.delete_confirm", { name: node.dataset.name }))) return
 
     const nextFocus = this.nextTaxonomyNode(node)?.dataset.nodeId || this.previousTaxonomyNode(node)?.dataset.nodeId
     const response = await this.request(node.dataset.updateUrl, "DELETE")
     if (!response) return
     if (!response.ok) {
-      this.announce(await this.mutationMessage(response, "The item could not be deleted."), true)
+      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.delete_failed")), true)
       return
     }
 
@@ -672,7 +698,7 @@ export default class extends Controller {
     })
     if (!response) return
     if (!response.ok) {
-      this.announce(await this.mutationMessage(response, "The item could not be moved."), true)
+      this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.move_failed")), true)
       return
     }
 
@@ -708,7 +734,7 @@ export default class extends Controller {
         body: new URLSearchParams(params)
       })
     } catch (_error) {
-      this.announce("The network request failed. Please try again.", true)
+      this.announce(t("shared.taxonomy_tree.network_failed"), true)
       return null
     }
   }
@@ -717,7 +743,7 @@ export default class extends Controller {
     try {
       return await response.json()
     } catch (_error) {
-      this.announce("The server returned an invalid response.", true)
+      this.announce(t("shared.taxonomy_tree.invalid_response"), true)
       return {}
     }
   }
@@ -748,7 +774,7 @@ export default class extends Controller {
     trigger.className = "taxonomy-name-trigger text-break"
     trigger.dataset.taxonomyTreeTarget = "name"
     trigger.dataset.action = "click->taxonomy-tree#editName"
-    trigger.setAttribute("aria-label", `Rename ${data.name}`)
+    trigger.setAttribute("aria-label", t("shared.taxonomy_node.rename", { name: data.name }))
     trigger.append(this.buildNameContent(data))
     return trigger
   }
@@ -904,7 +930,7 @@ export default class extends Controller {
     separator.className = "taxonomy-separator"
     separator.dataset.parentId = list.dataset.dropParentId || ""
     separator.dataset.position = String(position)
-    const button = this.iconButton("bi-plus-lg", `Insert item at position ${position + 1}`, "taxonomy-tree#insertAt")
+    const button = this.iconButton("bi-plus-lg", t("shared.taxonomy_tree.insert_at", { position: position + 1 }), "taxonomy-tree#insertAt")
     button.className = "taxonomy-separator-add"
     separator.append(button)
     return separator
@@ -1030,7 +1056,7 @@ export default class extends Controller {
 
     restore()
     if (!response) return
-    this.announce(await this.mutationMessage(response, "The item could not be moved."), true)
+    this.announce(await this.mutationMessage(response, t("shared.taxonomy_tree.move_failed")), true)
   }
 
   endDrag() {
@@ -1059,7 +1085,7 @@ export default class extends Controller {
 
   refreshAndFocus(nodeId, target = "name") {
     this.storePendingFocus(nodeId, target)
-    this.announce("Saved. Refreshing the taxonomy…")
+    this.announce(t("shared.taxonomy_tree.saved_refresh"))
     if (window.Turbo?.visit) window.Turbo.visit(window.location.href, { action: "replace" })
     else window.location.reload()
   }

@@ -14,8 +14,8 @@ require "test_helper"
 # They are not a check that a Spanish page contains no English at all. Author data
 # — a scene name, a tag name, a free-text role, an `Event#display_string` — is
 # never translated, the value that travels in the `section_id` URL stays
-# `ungrouped`, and the four Stimulus controllers still hardcode their own copy
-# until the client-side slice. What is asserted is that each surface's own chrome
+# `ungrouped`, and `SpanishChromeTest` is the file that looks for what should be
+# *absent*. What is asserted is that each surface's own chrome
 # came from the Spanish keys, and that the values that travel in a form field, an
 # `<option>`, or a URL did *not* get translated along with their labels.
 class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest

@@ -20,6 +20,56 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[changed]** **The four Stimulus controllers read their strings from the server, which finishes
+  the internationalization work.** `taxonomy_tree_controller.js`, `photo_crop_controller.js`,
+  `modal_form_controller.js`, and `search_controller.js` each hardcoded about a dozen sentences of
+  their own — a Spanish page had translated chrome and an English **Use this photo** button, in a
+  modal the server never rendered. Each of those words is now a key.
+  - `ClientStrings` (`app/models/client_strings.rb`) owns the list of keys a controller may read,
+    resolves them against `I18n.locale` for the request being rendered, and serializes them into
+    one JSON blob. The layout renders it as `<script type="application/json" id="client-strings">`
+    on every page, because which controllers a page carries is not something the layout can know:
+    the taxonomy tree builds a photo editor inside a modal it creates after load, so a value
+    declared only by the view that owns a controller would be missing exactly where it is needed.
+  - `app/javascript/i18n.js` is the only lookup. A missing key returns the key and warns rather
+    than rendering English, interpolation is named and a missing value leaves its placeholder
+    visible, and a controller never assembles a key from a value — so a value that travels in a URL
+    cannot become a lookup that raises.
+  - **A plural is the locale's choice, and this is the one genuinely new rule.** The blob is
+    rendered once per page while the count is only known when a controller asks, so a pluralized
+    key travels as its whole `{one:, other:}` hash and `t()` picks the form with `Intl.PluralRules`
+    for the locale the blob names. The words are still the locale file's; only the choice among
+    them moved, and a controller cannot express a `count === 1` because there is no way to write
+    one. A third language with a richer plural rule needs no change here.
+  - **A record-level error's subject is asked for, not derived.** Both editors hold a `model_param`
+    (`scene_element`), which is a value — it also names the form field they post — so humanizing it
+    in the browser would have put English in a Spanish page. `record_subject.*` holds one whole
+    phrase per record type, for the same reason `shared.error_summary.heading` does: English
+    supplies "the" in the phrase and Spanish has to.
+  - Where a sentence named another sentence's word, it interpolates the other key rather than
+    duplicating it: the photo editor's "then choose %{action}" carries the button's own label, and
+    a sentence that mentions moving up or down is two keys rather than one frame with a spliced
+    word, because `data-modal-form-direction` is a value.
+  - `shared.record_error`, `shared.record_message`, and two status sentences are now shared between
+    the two editors rather than duplicated, so a rejected save reads the same whichever editor
+    refused it. The taxonomy tree's own wording for that heading changed with it.
+  - Three enforcement gaps are closed, each covering what the others cannot see and each verified
+    to fail when its own class of regression is reintroduced:
+    `test/models/client_strings_test.rb` reads every `t()` call out of `app/javascript` and asserts
+    it **both ways** — every key a controller reads is a key the server sends, and every key the
+    server sends is one a controller reads, so a translation cannot quietly become unreachable;
+    `test/javascript/no_client_string_literals_test.js` fails when a quoted string that reads as
+    prose appears in `app/javascript` (a class list, an attribute name, a MIME type, and a
+    `KeyboardEvent.key` value are names, not sentences); and
+    `test/controllers/spanish_chrome_test.rb` asserts the negative a positive assertion cannot,
+    that a Spanish **response body** contains none of the English sentences the locale files
+    define. `test/system/spanish_client_strings_test.rb` then drives the same three editors in a
+    real browser, because the words a controller prints were never in the response for a request
+    test to read.
+- **[fixed]** **"Type 1 more characters to search."** The search dropdown's shortfall message is a
+  plural now, so the same `count` that said "characters" after one character says "character". The
+  bug is what the i18n change existed to remove: the sentence was assembled in the controller, so
+  no locale could choose a different form.
 - **[changed]** **The last three untranslated views are translated, and the search surface's own
   labels with them.** `searches/show`, `searches/_commands`, and `searches/_scope_field` carried about
   25 English literals; every user-facing string on the search surface now comes from `searches.*`, which

@@ -306,11 +306,21 @@ describe("modal form error rendering", () => {
   })
 
   test("a record-level message is phrased for the model being edited", () => {
+    // The client holds a `model_param`, which is a value: it also names the form
+    // field this controller posts. The reader is not shown "scene element", and a
+    // Spanish reader is not shown "elemento de la escena" — the server sends the
+    // reader's own phrase, and this asserts the controller prints that rather than
+    // humanizing the parameter itself.
     const { controller } = build(formHtml)
 
     expect(controller.describe("name", "can't be blank")).toBe("Name can't be blank")
     expect(controller.describe("base", "must belong to a universe")).toBe("the character must belong to a universe")
     expect(controller.describe("base", "The universe is closed.")).toBe("The universe is closed.")
+
+    controller.modelParamValue = "scene_element"
+    expect(controller.describe("base", "must belong to the scene's universe")).toBe(
+      "the scene element must belong to the scene's universe"
+    )
   })
 
   test("an unknown field keeps its attribute name as the label", () => {
@@ -388,14 +398,6 @@ describe("modal form status reporting", () => {
     expect(submit.disabled).toBe(false)
     expect(controller.formTarget.getAttribute("aria-busy")).toBe("false")
     expect(submit.querySelector(".spinner-border")).toBeNull()
-  })
-
-  test("the model name reads as words", () => {
-    const { controller } = build("<form></form>")
-
-    expect(controller.recordName()).toBe("character")
-    controller.modelParamValue = "scene_element"
-    expect(controller.recordName()).toBe("scene element")
   })
 
   test("the JSON mutation mode is the one the page declares", () => {

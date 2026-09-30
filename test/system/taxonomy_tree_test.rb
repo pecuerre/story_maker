@@ -359,7 +359,10 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
       fill_in "Description", with: "Rejected, so this text must survive"
       click_button "Save changes"
 
-      assert_selector "[data-taxonomy-tree-errors] .alert-danger", text: "This change could not be saved"
+      # The heading is the shared `fix_and_retry` sentence — the same key the
+      # flat-list editor uses — so a rejected save reads identically whichever
+      # editor refused it.
+      assert_selector "[data-taxonomy-tree-errors] .alert-danger", text: "The change could not be saved"
       assert_selector "[data-taxonomy-tree-errors] .alert-danger li", text: "Name can't be blank"
       assert_selector "input[data-taxonomy-field=name][aria-invalid='true']"
       assert_selector ".modal-body p.invalid-feedback", text: "can't be blank", visible: :visible

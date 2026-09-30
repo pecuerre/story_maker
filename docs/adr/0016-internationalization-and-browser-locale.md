@@ -32,10 +32,11 @@ of them decides how the other slices of the internationalization work are writte
    existing suite would have noticed.
 
 The work is delivered in stages. Every server-rendered view, helper, model-level label, and flash in
-the application is now behind a key; the client-side half is not, and the four Stimulus controllers that
-still hardcode their own English read their strings from the server in the slice that owns them. This ADR
-records the decisions the delivered stages settled — the key layout, the browser-owned language
-cookie, and why author data is excluded — because every later stage repeats them.
+the application is now behind a key, and so is every string a Stimulus controller prints: the
+client-side half resolves its words in the same place and ships them to the browser, because a
+controller has no I18n backend of its own. This ADR records the decisions the delivered stages settled
+— the key layout, the browser-owned language cookie, why author data is excluded, and why the browser
+reads rather than resolves — because every later stage repeats them.
 
 ## Decision
 
@@ -79,7 +80,11 @@ cookie, and why author data is excluded — because every later stage repeats th
   `support.array.*` in English only, so a Spanish page rendering a validation
   message or a duration would otherwise raise. The subset is checked against the
   real Rails key set, so it cannot rot into translating a key the framework never
-  asks for.
+  asks for. The same rule governs a key a **controller** reads:
+  `ClientStringsTest` asserts both that every `t()` call in `app/javascript`
+  names a key the server sends and that every key the server sends is one a
+  controller reads, and `no_client_string_literals_test.js` fails when a
+  controller holds English of its own.
 - **Record-type nouns live at the root of the locale files.** Every workspace
   already passes a bare word as a count label (`count_label: "character"`,
   `details_count_label: "scene"`), and the shared count helpers now resolve that
@@ -89,7 +94,16 @@ cookie, and why author data is excluded — because every later stage repeats th
   is the string `"ungrouped"` because it is a query value, and a search scope's
   `value` is a query value. Only the *label* beside them is translated. This is
   the one place where a mechanical conversion would quietly break links, and it
-  is called out here because it recurs in the workspaces not yet converted.
+  recurs on the client too: a `data-modal-form-direction` attribute carries
+  `"up"`/`"down"`, so the two sentences that mention moving are two keys rather
+  than one frame with a spliced word.
+- **The browser reads; the server resolves.** A client-side string is a `t()`
+  call against a JSON blob the layout renders, not a translation the browser
+  performs. `ClientStrings` owns the list of keys a controller may read and
+  `app/javascript/i18n.js` is the only lookup, so the same missing-key and
+  one-sided-key rules that govern a view govern a controller. A controller never
+  assembles a key from a value, which is what keeps a value that travels in a
+  URL from ever becoming a lookup.
 
 ## Consequences
 
@@ -122,10 +136,23 @@ cookie, and why author data is excluded — because every later stage repeats th
   written as short labels. A translation that reads correctly in isolation can
   still be awkward once a sentence wraps it. The browser suite is where that
   shows up.
-- The client-side half is not done. Four Stimulus controllers still hardcode
-  English; they read their strings from the server in the slice that owns them.
-  Until then a Spanish page has translated chrome and English text in the
-  JavaScript-built modals and toasts.
+- The client-side half works the way the rest of the decision describes, and it
+  costs one extra file. The browser has no I18n backend, so a controller's
+  strings are resolved by the server and shipped as one JSON blob the layout
+  renders on every page; `app/javascript/i18n.js` is the only lookup.
+  `ClientStringsTest` and `no_client_string_literals_test.js` enforce the
+  boundary from both sides, so a controller that hardcodes English or reads a
+  key the server does not send fails the suite. A **pluralized** key travels as
+  its whole `{one:, other:}` hash and the client picks the form with
+  `Intl.PluralRules`, because the blob is rendered once per page while the
+  count is only known when a controller asks. That is a genuinely new rule —
+  the words are still the locale file's, but the choice among them is the
+  browser's — and a third language with a richer plural rule needs no change
+  here. See [features/i18n.md](../features/i18n.md#a-string-the-browser-has-to-have).
+- The blob is sent on every page rather than per controller, because which
+  controllers a page carries is not something the layout can know: the taxonomy
+  tree builds a photo editor inside a modal it creates after load. That is a few
+  hundred words of chrome on a page that may use none of it.
 
 ## Alternatives considered
 

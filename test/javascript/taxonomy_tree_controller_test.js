@@ -169,9 +169,13 @@ describe("taxonomy error rendering", () => {
 
     const entries = controller.errorEntries({ errors: { parent: [ "can't be blank" ], base: "must belong to a universe" } })
 
+    // The `base` subject is the tree's own generic word, not the taxonomy's name:
+    // one controller serves ten taxonomies, so it cannot name the one being
+    // edited — and it uses the same word as its own status line, so a reader is
+    // not told "the item" by an error and "this entry" by the message beside it.
     expect(entries).toEqual([
       [ "parent", [ "Parent tag can't be blank" ] ],
-      [ "base", [ "the character tag must belong to a universe" ] ]
+      [ "base", [ "the item must belong to a universe" ] ]
     ])
 
     controller.markFieldInvalid(modal, "parent", [ "Parent tag can't be blank" ])

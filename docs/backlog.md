@@ -323,14 +323,13 @@ it has a useful destination and clear empty/loading/error states.
 27. **Internationalization: move every user-facing string behind `t()` and add a language setting**
 
     Deliver in the order below. The foundation, the application shell, the Universe Bible workspaces,
-    the Scene workspace, and the search surface are already done — the `AppLocale` preference, the
-    **Language** section on `/settings`, the I18n configuration, the translated layouts/sidebars/
-    `shared/*`/sessions/passwords/mailer/PWA, the missing-translation enforcement, and the four
-    model-level search labels are described by
-    [ADR 0016](adr/0016-internationalization-and-browser-locale.md) and
-    [`features/i18n.md`](features/i18n.md), and the delivered workspaces are the dated entries in
-    [`../CHANGELOG.md`](../CHANGELOG.md). What is left is **0 of the 100 ERB views**, plus ~51
-    distinct strings inside four Stimulus controllers and the literal `errors.add` messages in
+    the Scene workspace, the search surface, and the client side are all done — the `AppLocale`
+    preference, the **Language** section on `/settings`, the I18n configuration, the translated
+    layouts/sidebars/`shared/*`/sessions/passwords/mailer/PWA, the missing-translation enforcement,
+    the four model-level search labels, and the strings the four Stimulus controllers print are
+    described by [ADR 0016](adr/0016-internationalization-and-browser-locale.md) and
+    [`features/i18n.md`](features/i18n.md), and the delivered work is the dated entries in
+    [`../CHANGELOG.md`](../CHANGELOG.md). What is left is the literal `errors.add` messages in
     `Hierarchical` and `HasColor`, which every taxonomy shares. Every `shared/*` partial is
     translated, and the counts above exclude ERB comments, which document a local contract for the
     next developer and are never rendered.
@@ -348,7 +347,9 @@ it has a useful destination and clear empty/loading/error states.
     - Record names, descriptions, tags, universes, and anything else an author typed are **data**,
       never translated. Only application chrome is translated.
     - A value that travels in a URL is not translated: `SceneFilter::UNGROUPED` and a search scope's
-      `value` stay exactly as they are, and only the label beside them moves into a key.
+      `value` stay exactly as they are, and only the label beside them moves into a key. The same
+      holds on the client: `data-modal-form-direction` carries `"up"`/`"down"`, so the two sentences
+      that mention moving are two keys rather than one frame with a spliced word.
     - A count label is a key, not a noun. Pass `count_label: "character"` and let
       `ApplicationHelper#count_with_label` choose the plural from the locale.
     - A sentence decides its own determiner, and a slot that takes one noun takes the **singular**.
@@ -356,10 +357,20 @@ it has a useful destination and clear empty/loading/error states.
       sentence has none, so its `subject` is the whole phrase (`esta relación`). A label resolved
       with `count: 2` is wrong in a slot that reads as one noun, and a determiner a language agrees
       in gender is its own interpolation (`shared.detail_section.determiners.*`) beside the noun —
-      see [`features/i18n.md`](features/i18n.md#sentences-are-not-nouns).
+      see [`features/i18n.md`](features/i18n.md#sentences-are-not-nouns). A record type's whole
+      phrase is `record_subject.*` for the same reason, and the client asks for it rather than
+      deriving it: a `model_param` is a value, not a word.
     - A sentence that carries a link is one `_html` key with the link as the interpolation; the
       link's own text stays a key of its own, because a translator still needs to know what it is
-      called. See [`features/i18n.md`](features/i18n.md#a-link-inside-a-sentence).
+      called. The same split holds when a sentence names another control's label, which is why
+      `shared.photo_field.ready` interpolates `shared.photo_field.accept`. See
+      [`features/i18n.md`](features/i18n.md#a-link-inside-a-sentence).
+    - A string a **browser** has to have is resolved by the server and read through
+      `app/javascript/i18n.js`; it is never a literal in a controller, and the key it reads must
+      already be in `ClientStrings`. A pluralized client key travels as its whole `{one:, other:}`
+      hash, because the blob is rendered once per page while the count is only known when a
+      controller asks. See
+      [`features/i18n.md`](features/i18n.md#a-string-the-browser-has-to-have).
     - A modal built with `form_with scope:` (and no model) cannot resolve
       `activerecord.attributes.<model>.<column>`, so its labels are named explicitly under that
       workspace's `form:` keys. The attribute entry is still required, because an error message
@@ -378,27 +389,14 @@ it has a useful destination and clear empty/loading/error states.
       the Timeline was never built; the docs now say the view is static, and building the interaction
       is listed under FUTURE WORK below.
 
-    - **Slice 27.6 — Client-side strings + enforcement.** The four Stimulus controllers with
-      user-facing text — `taxonomy_tree_controller.js` (17 distinct strings),
-      `photo_crop_controller.js` (17), `modal_form_controller.js` (12), and
-      `search_controller.js` (10) — read their strings
-      from the server instead of hardcoding them: pass them as Stimulus `values` on the elements
-      that already declare the controller (the taxonomy tree already passes a JSON value, so
-      extend that pattern), or as a small JSON blob the layout renders. Add a shared
-      `app/javascript/i18n.js` lookup so no controller invents its own mechanism. Then close the
-      remaining enforcement gaps: the locale-file key-set, placeholder, and plural-form checks exist
-      already, so what is left is a test that a Spanish **response body** contains no untranslated
-      English chrome, and a check that every string a controller reads is a key rather than a
-      literal. Bun unit tests for any new JS module, and a `test:system` case for the language flow
-      through a real page, per [ADR 0012](adr/0012-client-side-verification-and-csrf.md).
-
     **Deliberately deferred:** translating author-entered data; a per-user (account) language that
     follows a sign-in across browsers (a column and a cookie-precedence rule — the opposite trade
     from ADR 0013's theme decision, and also what would let a queued password reset be written in
-    the reader's own language); right-to-left layout; a third language; replacing the hand-maintained
-    Spanish subset of Rails' own strings with the `rails-i18n` gem; translating the `taxonomy:`
-    arguments in the `searchable` model declarations (they are index metadata, and the label a reader
-    sees for one is now `searches.kinds.*` — see
+    the reader's own language); right-to-left layout; a third language (the client blob picks its
+    plural form with `Intl.PluralRules`, so a language with a richer rule needs no change there);
+    replacing the hand-maintained Spanish subset of Rails' own strings with the `rails-i18n` gem;
+    translating the `taxonomy:` arguments in the `searchable` model declarations (they are index
+    metadata, and the label a reader sees for one is now `searches.kinds.*` — see
     [`features/search.md`](features/search.md#a-result-row-shows-the-stored-document-title));
     translating `db/data/**/*.yml` demo content.
 

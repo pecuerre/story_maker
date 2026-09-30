@@ -113,6 +113,77 @@ es:
       close: "Cerrar"
     photo_field:
       default_label: "Foto"
+      # Las cadenas que lee el propio controlador del editor de fotos. El editor
+      # se construye entero en el navegador, así que cada palabra que muestra es
+      # una de estas; el widget es una sola implementación compartida por los
+      # tres patrones de página, así que una lista sirve para los tres en lugar
+      # de tres copias.
+      hint: "Una foto siempre es cuadrada. Elige una imagen y muévela dentro del cuadrado para decidir qué conservar."
+      remove: "Quitar la foto actual"
+      stage_aria: "Área de recorte de la foto. Las flechas mueven la imagen, y más y menos la amplían."
+      zoom: "Ampliar"
+      zoom_aria: "Ampliar la foto"
+      accept: "Usar esta foto"
+      move_group_aria: "Mover la foto dentro del cuadrado"
+      move_left: "Mover a la izquierda"
+      move_up: "Mover arriba"
+      move_down: "Mover abajo"
+      move_right: "Mover a la derecha"
+      reading: "Leyendo la foto…"
+      unreadable: "Ese archivo no se pudo leer como una imagen. Prueba con un JPEG, PNG, WebP o GIF."
+      # `action` es la **propia clave del botón** interpolada en la oración que
+      # le indica al autor que lo pulse, por la misma razón que una oración con
+      # un enlace lleva el enlace: quien traduce, al decidir dónde colocar la
+      # referencia, sigue necesitando saber cómo se llama el control, y el
+      # nombre del control es una clave propia porque el botón también la
+      # imprime.
+      ready: "Cuadrado listo. Mueve la foto y elige %{action}."
+      chosen: "Foto elegida. Guarda el formulario para conservarla."
+      discarded: "Foto descartada."
+      removing: "La foto se quitará cuando guardes."
+    # Las dos oraciones con las que ambos editores imprimen un mensaje de error
+    # del servidor. Son marcos, no texto propio: `subject` y `label` llegan ya
+    # resueltos, y un idioma que necesite un determinante lo lleva en el sujeto
+    # (véase `record_subject.*` y `shared.taxonomy_tree.record_subject`). Las dos
+    # se leen igual en ambos idiomas porque todas sus palabras vienen de otro
+    # sitio, que es justo lo que las hace claves en lugar del inglés que los
+    # controladores armaban antes.
+    record_error: "%{subject} %{message}"
+    record_message: "%{label} %{message}"
+    # La línea de estado y los mensajes de error propios del modal de lista. Un
+    # espacio de nombres para los marcos que comparten los dos editores, y otro
+    # para los mensajes que solo muestra este: quien guarda un personaje y
+    # mueve una escena está leyendo el mismo editor y espera las mismas
+    # palabras.
+    modal_form:
+      saving: "Guardando…"
+      saved_refresh: "Guardado. Actualizando la lista…"
+      save_failed: "No se pudo guardar el cambio."
+      unsent: "No se pudo enviar el cambio. Comprueba tu conexión e inténtalo de nuevo."
+      deleting: "Eliminando…"
+      deleted_refresh: "Eliminado. Actualizando la lista…"
+      delete_failed: "No se pudo eliminar el registro."
+      delete_unsent: "No se pudo eliminar el registro: la petición no se pudo enviar. Comprueba tu conexión e inténtalo de nuevo."
+      gone_refresh: "Ese registro ya no existe. Actualizando la lista…"
+      # «up»/«down» son los valores que lleva el atributo
+      # `data-modal-form-direction`, así que nunca se traducen; las dos oraciones
+      # que los mencionan son dos claves y no un marco con una palabra pegada,
+      # porque un idioma que ordene el adverbio de otra forma tendría que
+      # reescribir el marco para colocarlo.
+      moving_up: "Subiendo…"
+      moving_down: "Bajando…"
+      moved_refresh: "Movido. Actualizando la lista…"
+      move_failed: "No se pudo mover la fila."
+      move_unsent: "No se pudo mover la fila: la petición no se pudo enviar. Comprueba tu conexión e inténtalo de nuevo."
+      gone_row_refresh: "Esa fila ya no existe. Actualizando la lista…"
+      unexplained: "El servidor rechazó el cambio pero no explicó por qué. No se guardó nada."
+      fix_and_retry: "No se pudo guardar el cambio. Corrige lo siguiente e inténtalo de nuevo."
+      # Los tres rechazos que puede contestar el contrato de mutación, añadidos a
+      # la oración del propio editor para que quien lee sepa qué falló y por qué.
+      forbidden: "Ya no tienes permiso para hacer eso; recarga la página e inicia sesión de nuevo."
+      rejected: "El servidor rechazó el valor."
+      server_error: "El servidor no pudo completar la petición. No se cambió nada; inténtalo de nuevo."
+      http_status: "(HTTP %{status})"
     # La opción en blanco que limpia una referencia opcional. Tanto las tres
     # referencias temporales del formulario de Sucesos como el enlace al suceso del
     # formulario de Escena leen esta clave, así que la palabra tiene una sola casa.
@@ -148,6 +219,34 @@ es:
       hint: "Usa el menú de la fila para añadir una hija, insertar antes o después, subir o bajar, editar y eliminar. También puedes renombrar en línea haciendo clic en el propio nombre. Arrastra las filas cuando quieras reordenarlas visualmente; soltar cerca del principio o del final anida una fila como hija."
       empty_description: "Crea el primero para empezar a construir esta jerarquía."
       read_only_empty_description: "Todavía no hay nada que mostrar aquí."
+      # Las cadenas que lee el propio controlador del árbol. El árbol dibuja las
+      # filas del servidor, pero su fila de creación y renombrado en línea, su
+      # modal de edición y su línea de estado se construyen en el navegador, así
+      # que esas palabras están aquí y no en la parcial.
+      new_name: "Nombre nuevo"
+      save: "Guardar"
+      save_changes: "Guardar los cambios"
+      edit_title: "Editar %{name}"
+      # El texto oculto que un campo obligatorio lleva junto a su asterisco
+      # visible. El asterisco no es clave: es una marca tipográfica que dibuja la
+      # hoja de estilos, no una palabra, y es la misma marca en todos los idiomas.
+      required: " (obligatorio)"
+      delete_confirm: "¿Eliminar %{name} y sus elementos hijos?"
+      insert_at: "Insertar un elemento en la posición %{position}"
+      # El sujeto de un error de registro, para un árbol que edita ocho
+      # taxonomías distintas y por tanto no puede nombrar ninguna en concreto.
+      # Es la misma palabra genérica que ya usa su propia línea de estado («The
+      # item could not be created.»), así que a quien lee no le dicen «el
+      # elemento» en un mensaje y «esta entrada» en el siguiente.
+      record_subject: "el elemento"
+      create_failed: "No se pudo crear el elemento."
+      rename_failed: "No se pudo guardar el nombre."
+      update_failed: "No se pudieron guardar los cambios."
+      delete_failed: "No se pudo eliminar el elemento."
+      move_failed: "No se pudo mover el elemento."
+      network_failed: "La petición de red falló. Inténtalo de nuevo."
+      invalid_response: "El servidor devolvió una respuesta no válida."
+      saved_refresh: "Guardado. Actualizando la taxonomía…"
     taxonomy_node:
       rename: "Renombrar %{name}"
       add_child: "Añadir hija"
@@ -1277,6 +1376,35 @@ es:
       submit: "Buscar"
       results_label: "Resultados de la búsqueda"
       see_all: "Ver todos los resultados"
+      # Las cadenas que construye en el navegador la mitad de autocompletado del
+      # cuadro. El formulario y la página de resultados los dibuja el servidor;
+      # el desplegable, sus anuncios y el mensaje de «sin resultados» no, así que
+      # viven aquí.
+      #
+      # Las formas anunciadas repiten la oración sin las comillas angulares que
+      # usa la visible, porque las comillas son adorno en pantalla y puntuación
+      # que un lector de pantalla lee en voz alta.
+      type_more:
+        one: "Escribe %{count} carácter más para buscar."
+        other: "Escribe %{count} caracteres más para buscar."
+      no_matches: "Nada coincide con «%{text}»."
+      no_matches_announce: "Nada coincide con %{text}."
+      matches_announce:
+        one: "%{count} coincidencia para %{text}."
+        other: "%{count} coincidencias para %{text}."
+      unavailable: "La búsqueda no está disponible."
+      # `reason` es la oración ya traducida del propio servidor
+      # (`searches.unavailable_reason`), o la de abajo cuando la petición ni
+      # siquiera llegó al servidor, que es la misma respuesta que da el servidor
+      # para un motor que no puede alcanzar; así que este marco solo tiene que
+      # colocarla.
+      unreachable: "No se pudo contactar con la búsqueda."
+      unavailable_reason: "La búsqueda no está disponible. %{reason}"
+      results_group: "Resultados"
+      # La última etiqueta para una respuesta que no trae su propio `kind_label`.
+      # El servidor siempre envía una; esto es lo que vería quien lee si algún día
+      # dejara de hacerlo.
+      result_label: "Resultado"
 
     title: "Buscar"
     eyebrow: "Encuentra cualquier cosa"
@@ -1517,6 +1645,28 @@ es:
   member:
     one: "miembro"
     other: "miembros"
+
+  # El sujeto de un error de registro, con la clave `model_param` que un
+  # controlador ya tiene. Los dos editores del navegador imprimen un mensaje
+  # `base` como una oración sobre el registro («the event must have a title…»),
+  # y el cliente no puede convertir ese parámetro en un nombre —`scene_element` es
+  # un nombre de campo de formulario, no una palabra—, así que el servidor envía
+  # esto en su lugar.
+  #
+  # El inglés aporta el determinante dentro de la frase; un idioma que no lo hace
+  # lo aporta también, y por eso son frases enteras y no sustantivos sueltos.
+  # Véase `shared.error_summary.heading` para la misma decisión en el resumen que
+  # dibuja el servidor.
+  record_subject:
+    character: "este personaje"
+    event: "este suceso"
+    item: "este elemento"
+    ownership: "esta propiedad"
+    relation: "esta relación"
+    scene_character: "este personaje de la escena"
+    scene_element: "este elemento de la escena"
+    scene_item: "este elemento de la escena"
+    scene_location: "este lugar de la escena"
 
   taxonomies:
     character_tag:

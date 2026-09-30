@@ -10,10 +10,9 @@ require "test_helper"
 # model is invisible to a locale assertion.
 #
 # They are not a check that a Spanish page contains no English at all. Author data
-# — a record's own name, a universe's name — is never translated, the four Stimulus
-# controllers still hardcode their own copy, and a **search result row** shows the
-# stored document title rather than a re-translated label. That last one is a
-# decision, not an oversight: see
+# — a record's own name, a universe's name — is never translated, and a **search
+# result row** shows the stored document title rather than a re-translated label.
+# That last one is a decision, not an oversight: see
 # `docs/features/search.md#a-result-row-shows-the-stored-document-title`.
 class SearchesLocaleTest < ActionDispatch::IntegrationTest
   setup do

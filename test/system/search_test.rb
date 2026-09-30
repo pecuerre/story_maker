@@ -212,7 +212,10 @@ class SearchTest < ApplicationSystemTestCase
 
     search_box.fill_in with: "h"
 
-    assert_text "Type 1 more characters to search."
+    # One character is missing, and one is singular. The shortfall is a count, so
+    # the plural comes from the locale file's `one:`/`other:` forms rather than
+    # from the controller appending an "s" to a fixed word.
+    assert_text "Type 1 more character to search."
 
     # Submitting the form is the answer a reader without scripting gets, and it
     # has to work while the box is on the page. The scope is part of the

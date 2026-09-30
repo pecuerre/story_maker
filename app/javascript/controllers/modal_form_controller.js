@@ -1,11 +1,28 @@
 import { Controller } from "@hotwired/stimulus"
 import "bootstrap"
+import { recordSubject, t } from "i18n"
 
 // Rails' own form plumbing is not part of a model payload, and `_method` is
 // translated into the real HTTP verb by this controller.
 const NON_PAYLOAD_FIELDS = new Set([ "_method", "authenticity_token", "utf8", "commit" ])
 const JSON_RESPONSE = "json"
 
+// The flat-list editor for the JSON workspaces.
+//
+// Every word it shows is read through `t()` from the blob the layout rendered,
+// and its two error frames are keys rather than English it assembles:
+// `shared.record_error` and `shared.record_message` are shared with the taxonomy
+// tree's editor, so a rejected save reads the same in both editors.
+//
+// Two things this controller cannot do for itself, and asks the server for
+// instead:
+//
+//   - **A record-level message's subject.** It holds a `model_param`
+//     ("scene_element"), which is a *value* — it also names the form field it
+//     posts — so `recordSubject()` asks for the reader's own noun rather than
+//     humanizing a parameter in the browser.
+//   - **A plural.** `count` goes to `t()` and the locale file decides, so this
+//     controller contains no `count === 1`.
 export default class extends Controller {
   static targets = [ "modal", "title", "form", "submit", "errors" ]
   static values = { createTitle: String, modelParam: String, response: String }
@@ -198,16 +215,16 @@ export default class extends Controller {
 
     this.clearErrors()
     this.setPending(true)
-    this.pageStatus("Saving…")
+    this.pageStatus(t("shared.modal_form.saving"))
 
     const response = await this.request(this.formTarget.action, this.httpMethod(), this.formPayload(this.formTarget))
     if (!response) {
-      this.fail("The change could not be sent. Check your connection and try again.")
+      this.fail(t("shared.modal_form.unsent"))
       return
     }
 
     if (response.ok) {
-      this.pageStatus("Saved. Refreshing the list…")
+      this.pageStatus(t("shared.modal_form.saved_refresh"))
       this.refresh()
       return
     }
@@ -217,7 +234,7 @@ export default class extends Controller {
       return
     }
 
-    this.fail(this.statusMessage(response, "The change could not be saved."))
+    this.fail(this.statusMessage(response, t("shared.modal_form.save_failed")))
   }
 
   // A JSON-only destroy has no Turbo form to follow, so the row menu issues the
@@ -232,27 +249,27 @@ export default class extends Controller {
 
     this.closeMenu(trigger)
     trigger.disabled = true
-    this.pageStatus("Deleting…")
+    this.pageStatus(t("shared.modal_form.deleting"))
     const response = await this.request(trigger.dataset.modalFormUrl, "DELETE", new URLSearchParams())
     if (!response) {
       trigger.disabled = false
-      this.pageStatus("The record could not be deleted: the request could not be sent. Check your connection and try again.", true)
+      this.pageStatus(t("shared.modal_form.delete_unsent"), true)
       return
     }
 
     if (response.status === 404) {
-      this.pageStatus("That record no longer exists. Refreshing the list…")
+      this.pageStatus(t("shared.modal_form.gone_refresh"))
       this.refresh()
       return
     }
 
     if (!response.ok) {
       trigger.disabled = false
-      this.pageStatus(this.statusMessage(response, "The record could not be deleted."), true)
+      this.pageStatus(this.statusMessage(response, t("shared.modal_form.delete_failed")), true)
       return
     }
 
-    this.pageStatus("Deleted. Refreshing the list…")
+    this.pageStatus(t("shared.modal_form.deleted_refresh"))
     this.refresh()
   }
 
@@ -270,28 +287,34 @@ export default class extends Controller {
 
     this.closeMenu(trigger)
     trigger.disabled = true
-    const direction = trigger.dataset.modalFormDirection === "up" ? "up" : "down"
-    this.pageStatus(`Moving ${direction}…`)
+    // "up"/"down" are the values a `data-modal-form-direction` attribute carries,
+    // so they are never translated; the two sentences that mention them are two
+    // keys rather than one frame with a spliced word, because a locale that
+    // orders the adverb differently would have to rewrite the frame to place it.
+    const moving = trigger.dataset.modalFormDirection === "up"
+      ? t("shared.modal_form.moving_up")
+      : t("shared.modal_form.moving_down")
+    this.pageStatus(moving)
     const response = await this.request(trigger.dataset.modalFormUrl, "PATCH", new URLSearchParams())
     if (!response) {
       trigger.disabled = false
-      this.pageStatus("The row could not be moved: the request could not be sent. Check your connection and try again.", true)
+      this.pageStatus(t("shared.modal_form.move_unsent"), true)
       return
     }
 
     if (response.status === 404) {
-      this.pageStatus("That row no longer exists. Refreshing the list…")
+      this.pageStatus(t("shared.modal_form.gone_row_refresh"))
       this.refresh()
       return
     }
 
     if (!response.ok) {
       trigger.disabled = false
-      this.pageStatus(await this.mutationMessage(response, "The row could not be moved."), true)
+      this.pageStatus(await this.mutationMessage(response, t("shared.modal_form.move_failed")), true)
       return
     }
 
-    this.pageStatus("Moved. Refreshing the list…")
+    this.pageStatus(t("shared.modal_form.moved_refresh"))
     this.refresh()
   }
 
@@ -380,7 +403,7 @@ export default class extends Controller {
     this.setPending(false)
     const entries = this.errorEntries(payload)
     if (entries.length === 0) {
-      this.fail("The server rejected the change but did not explain why. Nothing was saved.")
+      this.fail(t("shared.modal_form.unexplained"))
       return
     }
 
@@ -395,7 +418,7 @@ export default class extends Controller {
     entries.forEach(([ attribute, messages ]) => {
       this.markInvalid(attribute, messages)
     })
-    this.showSummary(entries, "The change could not be saved. Fix the following and try again.")
+    this.showSummary(entries, t("shared.modal_form.fix_and_retry"))
   }
 
   // A `{ errors: ... }` envelope is only unwrapped when `errors` really is the
@@ -423,9 +446,16 @@ export default class extends Controller {
   // "can't be blank" on :name reads as "Name can't be blank", and a record-level
   // message reads as "the event must have a title…". A message that does not start
   // with a verb is rendered as the server wrote it.
+  //
+  // Both shapes are keys, not English this method assembles. The `base` case asks
+  // the server for the record's own noun, because the only thing this controller
+  // holds is a `model_param` and a locale cannot derive "this event" from the word
+  // `event` any more than it can derive the plural from it.
   describe(attribute, message) {
-    if (attribute !== "base") return `${this.labelFor(attribute)} ${message}`
-    return /^[a-z]/.test(message) ? `the ${this.recordName()} ${message}` : message
+    if (attribute !== "base") return t("shared.record_message", { label: this.labelFor(attribute), message })
+    return /^[a-z]/.test(message)
+      ? t("shared.record_error", { subject: recordSubject(this.modelParamValue), message })
+      : message
   }
 
   labelFor(attribute) {
@@ -592,11 +622,14 @@ export default class extends Controller {
     }
   }
 
+  // Each refusal appends the caller's own sentence rather than replacing it, so
+  // the reader is told both what failed and why. The caller's sentence is
+  // already a translated string; only the reason is added here.
   statusMessage(response, fallback) {
-    if (response.status === 403) return `${fallback} You are no longer allowed to do that; reload the page and sign in again.`
-    if (response.status === 422) return `${fallback} The server rejected the value.`
-    if (response.status >= 500) return "The server could not complete the request. Nothing was changed; try again."
-    return `${fallback} (HTTP ${response.status})`
+    if (response.status === 403) return `${fallback} ${t("shared.modal_form.forbidden")}`
+    if (response.status === 422) return `${fallback} ${t("shared.modal_form.rejected")}`
+    if (response.status >= 500) return t("shared.modal_form.server_error")
+    return `${fallback} ${t("shared.modal_form.http_status", { status: response.status })}`
   }
 
   closeMenu(trigger) {
@@ -610,10 +643,6 @@ export default class extends Controller {
     if (!field) return
     field.focus()
     if (field.type === "text") field.select()
-  }
-
-  recordName() {
-    return this.modelParamValue.replace(/[_-]+/g, " ")
   }
 
   refresh() {

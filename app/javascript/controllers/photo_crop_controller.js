@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { t } from "i18n"
 
 // The square photo editor.
 //
@@ -19,6 +20,11 @@ import { Controller } from "@hotwired/stimulus"
 // Every node here is built with DOM APIs. Nothing parses markup, and nothing a
 // user supplies ever becomes any: a file name only ever reaches a text node.
 //
+// Every word the widget shows is read through `t()`, so a Spanish page has no
+// English left in it. The one value that is not chrome is the field's own
+// `label`, which is the descriptor label the surface that rendered the container
+// sent — the taxonomy tree's own editor label, not a word this controller owns.
+//
 // The server is the authority on the stored file. This crop is a square because
 // a photo is always shown as one, and the server crops and resizes to 300x300
 // again whatever arrives.
@@ -31,7 +37,7 @@ export default class PhotoCropController extends Controller {
     field: String,
     removeField: String,
     currentUrl: { type: String, default: "" },
-    label: { type: String, default: "Photo" }
+    label: { type: String, default: "" }
   }
 
   static SIZE = 300
@@ -97,7 +103,7 @@ export default class PhotoCropController extends Controller {
 
     const hint = document.createElement("p")
     hint.className = "form-text mb-0"
-    hint.textContent = "A photo is always square. Choose an image, then move it inside the square to choose what to keep."
+    hint.textContent = t("shared.photo_field.hint")
 
     return [ label, input, hint ]
   }
@@ -130,7 +136,7 @@ export default class PhotoCropController extends Controller {
     const label = document.createElement("label")
     label.className = "form-check-label"
     label.htmlFor = input.id
-    label.textContent = "Remove the current photo"
+    label.textContent = t("shared.photo_field.remove")
 
     const wrapper = document.createElement("div")
     wrapper.className = "form-check photo-remove"
@@ -152,7 +158,7 @@ export default class PhotoCropController extends Controller {
     this.stage.tabIndex = 0
     this.stage.dataset.action = "photo-crop#dragStart photo-crop#drag photo-crop#dragEnd keydown->photo-crop#nudge"
     this.stage.setAttribute("role", "application")
-    this.stage.setAttribute("aria-label", "Photo crop area. Arrow keys move the image, plus and minus zoom it.")
+    this.stage.setAttribute("aria-label", t("shared.photo_field.stage_aria"))
 
     this.canvas = document.createElement("canvas")
     this.canvas.width = PhotoCropController.SIZE
@@ -169,16 +175,19 @@ export default class PhotoCropController extends Controller {
     this.zoomInput.value = String(this.zoom)
     this.zoomInput.id = `photo-crop-zoom-${this.identifier}`
     this.zoomInput.dataset.action = "photo-crop#zoomTo"
-    this.zoomInput.setAttribute("aria-label", "Zoom the photo")
+    this.zoomInput.setAttribute("aria-label", t("shared.photo_field.zoom_aria"))
 
     const zoomLabel = document.createElement("label")
     zoomLabel.className = "form-label"
     zoomLabel.htmlFor = this.zoomInput.id
-    zoomLabel.textContent = "Zoom"
+    zoomLabel.textContent = t("shared.photo_field.zoom")
 
     const actions = document.createElement("div")
     actions.className = "d-flex flex-wrap gap-2"
-    actions.append(this.button("Use this photo", "btn btn-primary", "photo-crop#accept"), this.button("Cancel", "btn btn-outline-secondary", "photo-crop#discard"))
+    actions.append(
+      this.button(t("shared.photo_field.accept"), "btn btn-primary", "photo-crop#accept"),
+      this.button(t("shared.form.cancel"), "btn btn-outline-secondary", "photo-crop#discard")
+    )
 
     const controls = document.createElement("div")
     controls.className = "photo-crop-controls"
@@ -197,13 +206,17 @@ export default class PhotoCropController extends Controller {
     const wrapper = document.createElement("div")
     wrapper.className = "photo-crop-nudge"
     wrapper.setAttribute("role", "group")
-    wrapper.setAttribute("aria-label", "Move the photo inside the square")
+    wrapper.setAttribute("aria-label", t("shared.photo_field.move_group_aria"))
 
+    // The four directions are four keys rather than one sentence with a spliced
+    // word, because a locale that orders the adverb differently would have to
+    // rewrite the sentence to place it. The icon name beside each is Bootstrap's
+    // own and is not chrome.
     const moves = [
-      [ "arrow-left", -1, 0, "Move left" ],
-      [ "arrow-up", 0, -1, "Move up" ],
-      [ "arrow-down", 0, 1, "Move down" ],
-      [ "arrow-right", 1, 0, "Move right" ]
+      [ "arrow-left", -1, 0, t("shared.photo_field.move_left") ],
+      [ "arrow-up", 0, -1, t("shared.photo_field.move_up") ],
+      [ "arrow-down", 0, 1, t("shared.photo_field.move_down") ],
+      [ "arrow-right", 1, 0, t("shared.photo_field.move_right") ]
     ]
 
     moves.forEach(([ icon, dx, dy, label ]) => {
@@ -247,7 +260,7 @@ export default class PhotoCropController extends Controller {
     const file = event.target.files?.[0]
     if (!file) return
 
-    this.announce("Reading the photo…")
+    this.announce(t("shared.photo_field.reading"))
     const url = URL.createObjectURL(file)
     const image = new Image()
 
@@ -259,7 +272,7 @@ export default class PhotoCropController extends Controller {
       })
     } catch (_error) {
       URL.revokeObjectURL(url)
-      this.announce("That file could not be read as an image. Try a JPEG, PNG, WebP, or GIF.", true)
+      this.announce(t("shared.photo_field.unreadable"), true)
       return
     }
 
@@ -273,7 +286,10 @@ export default class PhotoCropController extends Controller {
     this.chooser.hidden = true
     this.cropper.hidden = false
     this.draw()
-    this.announce("Square ready. Move the photo, then choose Use this photo.")
+    // The sentence names the button by that button's own key, so a translator
+    // placing the reference and a translator naming the control are two separate
+    // decisions — the same split a sentence carrying a link has.
+    this.announce(t("shared.photo_field.ready", { action: t("shared.photo_field.accept") }))
     this.stage.focus()
   }
 
@@ -391,14 +407,14 @@ export default class PhotoCropController extends Controller {
     this.valueField().value = this.canvas.toDataURL("image/jpeg", 0.9)
     this.release()
     this.close()
-    this.announce("Photo chosen. Save the form to keep it.")
+    this.announce(t("shared.photo_field.chosen"))
     this.showChosen()
   }
 
   discard() {
     this.release()
     this.close()
-    this.announce("Photo discarded.")
+    this.announce(t("shared.photo_field.discarded"))
   }
 
   close() {
@@ -413,7 +429,7 @@ export default class PhotoCropController extends Controller {
     }
 
     this.valueField().value = ""
-    this.announce("The photo will be removed when you save.")
+    this.announce(t("shared.photo_field.removing"))
     this.showChosen()
   }
 

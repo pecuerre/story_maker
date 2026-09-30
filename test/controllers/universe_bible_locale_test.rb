@@ -11,9 +11,11 @@ require "test_helper"
 #
 # They are not a check that a Spanish page contains no English at all. Author data
 # — a character name, a tag name, an `Event#display_string` — is never translated,
-# the four Stimulus controllers still hardcode their own copy, and three
-# `errors.add` messages in shared model concerns are named in the slice that owns
-# them. What is asserted is that each workspace's own chrome came from the
+# the literal `errors.add` messages in `Hierarchical` and `HasColor` are named
+# in [`backlog.md`](../backlog.md) item 27, and a **search result row** shows the
+# stored document title rather than a re-translated label — a deliberate trade
+# recorded at `docs/features/search.md#a-result-row-shows-the-stored-document-title`.
+# What is asserted is that each workspace's own chrome came from the
 # Spanish keys, and that the values that travel in a form field, an option, or a
 # URL did *not* get translated along with their labels.
 class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { t } from "i18n"
 
 // The autocomplete half of the top-bar search box.
 //
@@ -15,6 +16,12 @@ import { Controller } from "@hotwired/stimulus"
 // Every node here is built with DOM APIs and every piece of text goes in as
 // text: a result carries the author's own words, and they are never parsed as
 // markup.
+//
+// Every word the controller shows is read through `t()` from the blob the layout
+// rendered, so a Spanish page has no English left in the dropdown. Two sentences
+// here have a *visible* form and an *announced* form, and the reason they are two
+// keys rather than one is that the curly quotes the visible one uses are
+// decoration on screen and punctuation a screen reader reads out loud.
 export default class extends Controller {
   static targets = [ "input", "scope", "results", "status", "allLink" ]
   static values = { minimum: Number, delay: Number }
@@ -47,7 +54,12 @@ export default class extends Controller {
 
     const text = this.inputTarget.value.trim()
     if (text.length < this.minimumValue) {
-      this.announce(text.length > 0 ? `Type ${this.minimumValue - text.length} more characters to search.` : "")
+      // An empty box says nothing: a reader who has not typed yet has not been
+      // told anything wrong, and announcing a shortfall to them would be the
+      // controller speaking unasked. The count is how much is *still* needed, so
+      // it is a plural — "one more character" is not a sentence any locale would
+      // write by appending an "s".
+      this.announce(text.length > 0 ? t("searches.bar.type_more", { count: this.minimumValue - text.length }) : "")
       return
     }
 
@@ -109,7 +121,7 @@ export default class extends Controller {
     } catch (_error) {
       // A network failure is not a result. It is reported as a problem, which is
       // the same answer the server gives for an engine it cannot reach.
-      return { available: false, reason: "Search could not be reached.", results: [], commands: [] }
+      return { available: false, reason: t("searches.bar.unreachable"), results: [], commands: [] }
     }
   }
 
@@ -127,18 +139,18 @@ export default class extends Controller {
 
   render(payload, text) {
     if (!payload.available) {
-      this.show([ this.message(`Search is not available. ${payload.reason || ""}`.trim()) ], { allLink: false })
-      this.announce("Search is not available.")
+      this.show([ this.message(t("searches.bar.unavailable_reason", { reason: payload.reason || "" }).trim()) ], { allLink: false })
+      this.announce(t("searches.bar.unavailable"))
       return
     }
 
     const groups = []
-    if (payload.commands && payload.commands.length > 0) groups.push([ "Go to", payload.commands, "command" ])
-    if (payload.results && payload.results.length > 0) groups.push([ "Results", payload.results, "result" ])
+    if (payload.commands && payload.commands.length > 0) groups.push([ t("searches.commands_title"), payload.commands, "command" ])
+    if (payload.results && payload.results.length > 0) groups.push([ t("searches.bar.results_group"), payload.results, "result" ])
 
     if (groups.length === 0) {
-      this.show([ this.message(`No matches for “${text}”.`) ], { allLink: false })
-      this.announce(`No matches for ${text}.`)
+      this.show([ this.message(t("searches.bar.no_matches", { text })) ], { allLink: false })
+      this.announce(t("searches.bar.no_matches_announce", { text }))
       return
     }
 
@@ -155,8 +167,10 @@ export default class extends Controller {
     })
     this.show(nodes)
 
-    const count = this.options.length
-    this.announce(`${count} ${count === 1 ? "result" : "results"} for ${text}.`)
+    // The count is announced through a key with plural forms, so "1 result" and
+    // "0 results" are two words the locale file chooses rather than a
+    // `count === 1` this controller wrote.
+    this.announce(t("searches.bar.matches_announce", { count: this.options.length, text }))
   }
 
   // `allLink` is the way into the full answer, so it appears only when there is
@@ -303,5 +317,5 @@ export default class extends Controller {
 // server sends its own label; this is only the last resort for a payload that
 // carries none.
 function labelFor(kind) {
-  return kind === "command" ? "Go to" : "Result"
+  return kind === "command" ? t("searches.commands_title") : t("searches.bar.result_label")
 }

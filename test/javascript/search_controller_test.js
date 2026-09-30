@@ -84,7 +84,10 @@ describe("asking the server", () => {
     await wait()
 
     expect(calls.length).toBe(0)
-    expect(controller.statusTarget.textContent).toBe("Type 1 more characters to search.")
+    // The shortfall is a count, so the plural is the locale's: one character
+    // left is not "1 more characters", which is what a client-side
+    // `count === 1 ? …` would have printed here.
+    expect(controller.statusTarget.textContent).toBe("Type 1 more character to search.")
     expect(controller.resultsTarget.hidden).toBe(true)
   })
 
@@ -97,6 +100,8 @@ describe("asking the server", () => {
     await wait()
 
     expect(calls.length).toBe(0)
+    // Nothing typed is not a shortfall to report: a reader who has not started
+    // has not been told anything wrong.
     expect(controller.statusTarget.textContent).toBe("")
   })
 

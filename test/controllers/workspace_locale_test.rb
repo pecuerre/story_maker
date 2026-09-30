@@ -8,11 +8,11 @@ require "test_helper"
 # assertion. Each case therefore reads the strings the page actually renders.
 #
 # They are not a check that a Spanish page contains no English at all — author
-# data (a universe name, a story name, a tag name) is never translated, and the
-# four Stimulus controllers still hardcode their own copy until the client-side
-# slice. What is asserted is that the workspace's own chrome came from the
-# Spanish keys, and that the access levels and query values that travel in a
-# form field or a URL did *not* get translated along with their labels.
+# data (a universe name, a story name, a tag name) is never translated, and
+# `SpanishChromeTest` is the file that looks for what should be *absent*. What is
+# asserted is that the workspace's own chrome came from the Spanish keys, and
+# that the access levels and query values that travel in a form field or a URL
+# did *not* get translated along with their labels.
 class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
   setup do
     @universe = universes(:universe_one)

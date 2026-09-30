@@ -21,6 +21,14 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <%# The strings a Stimulus controller reads, resolved for this request.
+        Rendered as JSON rather than per-controller Stimulus values because which
+        controllers a page carries is not something the layout can know: the
+        taxonomy tree builds a photo editor inside a modal it creates after load,
+        so a value declared only by the view that owns the controller would be
+        missing exactly where it is needed. See `ClientStrings`. %>
+    <script type="application/json" id="client-strings"><%= raw ClientStrings.payload %></script>
+
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>

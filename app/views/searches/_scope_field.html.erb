@@ -14,9 +14,12 @@
 <% classes = [ "form-select", "form-select-sm", *Array(local_assigns[:class]) ] %>
 
 <select class="<%= classes.join(" ") %>" name="scope" id="<%= id %>"
-  aria-label="Search scope"
+  aria-label="<%= t("searches.scope_aria_label") %>"
   data-search-target="scope"
   data-action="change->search#query">
+  <%# An option's `value` is a query value and is never translated — it is what
+      the URL carries — while its label is resolved per request by
+      `Search::Scope::Option#label`. %>
   <% search_scope_options(universe: universe, story: story).each do |option| %>
     <option value="<%= option[:value] %>"
       <%= "selected" if option[:value] == selected %>

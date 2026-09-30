@@ -18,23 +18,36 @@ module Search
     UNIVERSE = "universe"
     STORY = "story"
 
-    Option = Data.define(:value, :label, :kind, :boundary, :commands)
+    # An option holds the *key* of its label, never a translated string. `OPTIONS`
+    # is built when this file is loaded, and a constant that called `t()` would be
+    # resolved once, in whatever locale loaded it first, so every later request
+    # would render that one language — the rule `ModalFields` and `SceneElementsHelper`
+    # follow. `Option#label` resolves the key per request instead.
+    #
+    # The key is the option's own `value`, which is also its query parameter: the
+    # value travels in a URL and is never translated, and `searches.scopes.*` is
+    # keyed by it so the dropdown and `search_selected_scope` cannot disagree.
+    Option = Data.define(:value, :kind, :boundary, :commands) do
+      def label
+        I18n.t("searches.scopes.#{value}")
+      end
+    end
 
     OPTIONS = [
-      Option.new(value: PLATFORM, label: "Entire platform", kind: nil, boundary: :platform, commands: true),
-      Option.new(value: UNIVERSE, label: "This universe", kind: nil, boundary: :universe, commands: true),
-      Option.new(value: STORY, label: "This story", kind: nil, boundary: :story, commands: true),
-      Option.new(value: "universes", label: "Only universes", kind: "universe", boundary: :inherited, commands: false),
-      Option.new(value: "stories", label: "Only stories", kind: "story", boundary: :inherited, commands: false),
-      Option.new(value: "characters", label: "Only characters", kind: "character", boundary: :inherited, commands: false),
-      Option.new(value: "locations", label: "Only locations", kind: "location", boundary: :inherited, commands: false),
-      Option.new(value: "items", label: "Only items", kind: "item", boundary: :inherited, commands: false),
-      Option.new(value: "events", label: "Only events", kind: "event", boundary: :inherited, commands: false),
-      Option.new(value: "relations", label: "Only relations", kind: "relation", boundary: :inherited, commands: false),
-      Option.new(value: "ownerships", label: "Only ownerships", kind: "ownership", boundary: :inherited, commands: false),
-      Option.new(value: "sections", label: "Only sections", kind: "section", boundary: :inherited, commands: false),
-      Option.new(value: "scenes", label: "Only scenes", kind: "scene", boundary: :inherited, commands: false),
-      Option.new(value: "tags", label: "Only tags", kind: "tag", boundary: :inherited, commands: false)
+      Option.new(value: PLATFORM, kind: nil, boundary: :platform, commands: true),
+      Option.new(value: UNIVERSE, kind: nil, boundary: :universe, commands: true),
+      Option.new(value: STORY, kind: nil, boundary: :story, commands: true),
+      Option.new(value: "universes", kind: "universe", boundary: :inherited, commands: false),
+      Option.new(value: "stories", kind: "story", boundary: :inherited, commands: false),
+      Option.new(value: "characters", kind: "character", boundary: :inherited, commands: false),
+      Option.new(value: "locations", kind: "location", boundary: :inherited, commands: false),
+      Option.new(value: "items", kind: "item", boundary: :inherited, commands: false),
+      Option.new(value: "events", kind: "event", boundary: :inherited, commands: false),
+      Option.new(value: "relations", kind: "relation", boundary: :inherited, commands: false),
+      Option.new(value: "ownerships", kind: "ownership", boundary: :inherited, commands: false),
+      Option.new(value: "sections", kind: "section", boundary: :inherited, commands: false),
+      Option.new(value: "scenes", kind: "scene", boundary: :inherited, commands: false),
+      Option.new(value: "tags", kind: "tag", boundary: :inherited, commands: false)
     ].freeze
 
     VALUES = OPTIONS.map(&:value).freeze
@@ -51,7 +64,11 @@ module Search
         # A missing scope is the normal case — the form simply has nothing to say
         # — so only a scope that *was* asked for and is not one of ours is worth
         # reporting. It came from a hand-edited URL.
-        @discarded << "“#{value}” is not a search scope, so the default scope was used." if value.present?
+        #
+        # The value is interpolated as `value`, never as `scope`: `scope` is a
+        # reserved I18n option, so `t(key, scope: value)` would ask I18n to look
+        # the key up *inside* an area named after what was typed.
+        @discarded << I18n.t("searches.discarded.unknown_scope", value: value) if value.present?
         @option = self.class.option_for(default_value)
         @value = @option.value
       end
@@ -97,6 +114,9 @@ module Search
       option&.commands == true
     end
 
+    # The scope's own label, resolved per request. The results page's note, the
+    # JSON answer's `scope_label`, and the dropdown's option text all read this
+    # one reader, so a Spanish page cannot show three scope names.
     def label
       option&.label
     end
@@ -144,11 +164,7 @@ module Search
       def report_degradation
         return unless option.boundary == :story && story.nil?
 
-        @discarded << if universe
-          "The story search was widened to this universe because no story is selected."
-        else
-          "The story search was widened to the entire platform because no story is selected."
-        end
+        @discarded << I18n.t("searches.discarded.#{universe ? "widened_to_universe" : "widened_to_platform"}")
       end
   end
 end

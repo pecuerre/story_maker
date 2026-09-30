@@ -68,6 +68,20 @@ class RelationTest < ActiveSupport::TestCase
     assert_equal "Sworn oath", relation.display_string
   end
 
+  # A Relation's label is the author's own name or a neutral arrow, so it needs no
+  # second form and no `#display_label`: the same string is correct in every
+  # language, which is also what makes it safe to store in a search document.
+  test "the label is the same string in every language" do
+    relation = Relation.create!(universe: @universe, character1: @character, character2: characters(:character_two))
+
+    I18n.with_locale(:es) do
+      assert_equal "#{@character.name} → #{characters(:character_two).name}", relation.display_string
+    end
+
+    assert_not relation.respond_to?(:display_label),
+      "a neutral label needs no reader's form, and adding one would give the shared partial two paths"
+  end
+
   test "a blank name is stored as no name rather than an empty string" do
     other = characters(:character_two)
     relation = Relation.create!(universe: @universe, character1: @character, character2: other, name: "  ")

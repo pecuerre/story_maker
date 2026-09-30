@@ -96,6 +96,30 @@ class OwnershipTest < ActiveSupport::TestCase
     assert_equal "Heirloom", ownership.display_string
   end
 
+  # An Ownership is the one model whose stored label is a sentence, so it is the
+  # one model where the two forms can differ. `display_string` is what a search
+  # document keeps and one index serves every reader, so it is the default
+  # locale's whatever the request is; `display_label` is what a view reads.
+  test "the stored label is the default locale's, whatever the request asks for" do
+    ownership = Ownership.create!(universe: @universe, character: characters(:character_one),
+      item: items(:item_one))
+
+    I18n.with_locale(:es) do
+      assert_equal "#{ownership.character.name} owns #{ownership.item.name}", ownership.display_string
+      assert_equal "#{ownership.character.name} posee #{ownership.item.name}", ownership.display_label
+    end
+  end
+
+  test "an ownership's own name is the author's and is never translated" do
+    ownership = Ownership.create!(universe: @universe, character: characters(:character_one),
+      item: items(:item_one), name: "Heirloom")
+
+    I18n.with_locale(:es) do
+      assert_equal "Heirloom", ownership.display_label
+      assert_equal "Heirloom", ownership.display_string
+    end
+  end
+
   test "a blank name is stored as no name rather than an empty string" do
     ownership = Ownership.create!(universe: @universe, item: items(:item_one),
       character: characters(:character_one), name: "  ")

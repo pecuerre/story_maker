@@ -24,8 +24,20 @@ class Ownership < ApplicationRecord
   # An Ownership is a link between a character and an item and its own name is
   # optional, so the two endpoints are the reliable label. Row actions, delete
   # confirmations, and the details page all read this instead of a blank name.
+  #
+  # Unlike `Relation`, the fallback is a sentence and the verb in it is chrome, so
+  # it has two forms. `#display_string` is the **stored** one: it is the model's
+  # `searchable title:`, so a search document keeps this string and one index
+  # serves every reader, which is why it is resolved in the application's default
+  # locale whatever the request is in. `#display_label` is the same phrase in the
+  # reader's language, and it is what a view reads. `OwnershipTest` pins the two
+  # together, so the stored wording cannot move without the test saying so.
   def display_string
-    name.presence || "#{character&.name} owns #{item&.name}"
+    I18n.with_locale(AppLocale::DEFAULT) { display_label }
+  end
+
+  def display_label
+    name.presence || I18n.t("ownerships.display_label", character: character&.name, item: item&.name)
   end
 
   private

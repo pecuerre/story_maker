@@ -23,9 +23,11 @@ module ScenesHelper
   #
   # The blank option's *value* is the empty string the form stores and the rest
   # are event ids, so neither is translated; only the blank's own label and the
-  # events' own labels are chrome.
+  # events' own labels are chrome. An event's own label is `display_label` rather
+  # than the `display_string` a search document stores, so a Scene's event picker
+  # reads in the reader's language.
   def scene_event_choices(events)
-    [ [ t("shared.none"), "" ] ] + events.map { |event| [ event.display_string, event.id ] }
+    [ [ t("shared.none"), "" ] ] + events.map { |event| [ event.display_label, event.id ] }
   end
 
   # The Scene's own in-world time point, formatted with the same minute

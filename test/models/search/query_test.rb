@@ -104,4 +104,25 @@ class Search::QueryTest < ActiveSupport::TestCase
   test "the only query keys are the ones a search needs" do
     assert_equal %i[ q scope story_id ], Search::Query::PARAMS
   end
+
+  # Each message is translated where it is dropped rather than stored as a key,
+  # because the controller's `to_sentence` joins them and has to join them in the
+  # reader's language — English connectors around Spanish sentences would read as
+  # a fault rather than as copy.
+  test "a dropped value is reported in the reader's language" do
+    I18n.with_locale(:es) do
+      assert_equal [ "El filtro de historia se ignoró porque no hay ningún universo seleccionado." ],
+        Search::Query.new({ q: "arrival", story_id: @story.id }, universe: nil).discarded
+
+      # A story that is dropped from another universe also leaves the scope it
+      # narrowed behind, and both facts are reported in the same language.
+      assert_equal [ "El filtro de historia se ignoró porque no es una historia de este universo.",
+        "La búsqueda por historia se amplió a este universo porque no hay ninguna historia seleccionada." ],
+        Search::Query.new({ q: "arrival", story_id: stories(:story_two).id, scope: "story" },
+          universe: @universe).discarded
+
+      assert_equal [ "«planetas» no es un alcance de búsqueda, así que se usó el alcance por defecto." ],
+        Search::Query.new({ q: "arrival", scope: "planetas" }, universe: @universe).discarded
+    end
+  end
 end

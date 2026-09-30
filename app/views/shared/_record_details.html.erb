@@ -17,7 +17,7 @@
     before photos existed: the two branches below differ only by the presence of
     the picture. %>
 <% record = local_assigns.fetch(:record) %>
-<% title = local_assigns[:title] || (record.try(:display_string) || record.name) %>
+<% title = local_assigns[:title] || record_label(record) %>
 <% photo = record.try(:photo) %>
 
 <%= render "shared/page_header",

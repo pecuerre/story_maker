@@ -31,8 +31,10 @@ of them decides how the other slices of the internationalization work are writte
    English in a Spanish locale looks finished and is not, and nothing in the
    existing suite would have noticed.
 
-The work is delivered in stages, and the remaining workspaces still hold English literals. This ADR
-records the decisions the delivered stage settled — the key layout, the browser-owned language
+The work is delivered in stages. Every server-rendered view, helper, model-level label, and flash in
+the application is now behind a key; the client-side half is not, and the four Stimulus controllers that
+still hardcode their own English read their strings from the server in the slice that owns them. This ADR
+records the decisions the delivered stages settled — the key layout, the browser-owned language
 cookie, and why author data is excluded — because every later stage repeats them.
 
 ## Decision

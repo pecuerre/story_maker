@@ -50,8 +50,26 @@ class Event < ApplicationRecord
   validate :must_be_identifiable
 
   # A short label for this event, falling back to its known relations when it has no title or dates.
+  #
+  # This is the **stored** form. `Event` indexes `name` rather than this label, so
+  # nothing here reaches the index — but `Relation` and `Ownership` make the same
+  # kind of label their `searchable title:`, and one index serves every reader, so
+  # the rule is written once for all three: the stored form is resolved in the
+  # application's default locale, whatever the request is in. A document written by
+  # a Spanish request must not carry Spanish chrome for the next reader.
+  #
+  # A view reads `#display_label`, which is the same ladder in the reader's
+  # language. `EventTest` holds the *stored* wording, so it cannot move without the
+  # test saying so.
   def display_string(visited = [])
-    return "Event ##{id}" if visited.include?(self)
+    I18n.with_locale(AppLocale::DEFAULT) { display_label(visited) }
+  end
+
+  # The same label, in the reader's language. The four phrases are chrome and the
+  # event's own title, dates, and id are data, so a chain of relationships reads
+  # as a chain of translated sentences: a referenced event's label is itself one.
+  def display_label(visited = [])
+    return I18n.t("events.display_label.unidentified", id: id) if visited.include?(self)
     visited = visited + [ self ]
 
     if title.present? && start_datetime.present?
@@ -63,13 +81,13 @@ class Event < ApplicationRecord
     elsif end_datetime.present?
       formatted_datetime(end_datetime)
     elsif before_event.present?
-      "before #{before_event.display_string(visited)}"
+      I18n.t("events.display_label.before", event: before_event.display_label(visited))
     elsif after_event.present?
-      "after #{after_event.display_string(visited)}"
+      I18n.t("events.display_label.after", event: after_event.display_label(visited))
     elsif simultaneous_event.present?
-      "same time as #{simultaneous_event.display_string(visited)}"
+      I18n.t("events.display_label.simultaneous", event: simultaneous_event.display_label(visited))
     else
-      "Event ##{id}"
+      I18n.t("events.display_label.unidentified", id: id)
     end
   end
 

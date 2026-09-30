@@ -187,12 +187,25 @@ module ApplicationHelper
   # about its destination, so it renders next to the name and tags as
   # `record_count_badge` and the link label stays short in a long list.
   def record_details_link(path, record:, classes: %w[details-link])
-    record_name = record.try(:display_string) || record.try(:name) || record.to_s
-
-    link_to path, class: classes.join(" "), aria: { label: t("shared.record_details_link.aria", name: record_name) } do
+    link_to path, class: classes.join(" "), aria: { label: t("shared.record_details_link.aria", name: record_label(record)) } do
       concat content_tag(:i, "", class: "bi bi-box-arrow-up-right", aria: { hidden: true })
       concat content_tag(:span, t("shared.record_details_link.text"))
     end
+  end
+
+  # How a record is named wherever a shared partial has to name it without
+  # knowing the model: a row action's delete confirmation, a record's own details
+  # page, a taxonomy page's list of what carries a tag.
+  #
+  # `#display_label` first, because that is a `#display_string` whose chrome has
+  # been resolved in the reader's language. Only the models whose label *is* a
+  # sentence define it — `Event` and `Ownership` today — and a `#display_string`
+  # that is the author's own words or a neutral pair (`Relation`) is already the
+  # same in every language, so it needs no second form. This is the one place
+  # that order is written, because five shared partials reading it separately is
+  # how a row and its own page end up disagreeing about a record's name.
+  def record_label(record)
+    record.try(:display_label) || record.try(:display_string) || record.try(:name) || record.to_s
   end
 
   # A count and the record type it counts, as one phrase: "3 characters".

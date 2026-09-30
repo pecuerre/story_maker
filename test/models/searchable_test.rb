@@ -29,7 +29,7 @@ class SearchableTest < ActiveSupport::TestCase
       assert document[:kind].present?, "#{model.name} produced a document with no kind"
       assert document[:url].present?, "#{model.name} produced a document with no url"
       assert document[:universe_id].present?, "#{model.name} produced a document with no universe to filter by"
-      assert_includes Search::Kinds::LABELS.keys, document[:kind],
+      assert_includes Search::Kinds::LABEL_KEYS.keys, document[:kind],
         "#{model.name} declares a kind the interface has no label for"
     end
   end

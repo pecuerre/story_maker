@@ -311,10 +311,12 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "input[type=submit][value=?]", "Guardar relación"
     # A delete is the HTML redirect flow here, so its confirmation is a Turbo
     # attribute rather than a modal one. `button_to` puts it on the button it
-    # renders, not on the form around it.
+    # renders, not on the form around it. The two endpoints are the row's
+    # `relations.endpoints` sentence: the names are the author's own data, and the
+    # "y" joining them is the locale's, not an English frame's.
     assert_select "form[action=?] button[data-turbo-confirm=?]",
       universe_relation_path(universe_slug: @universe.slug, id: relation),
-      "¿Eliminar Character one and Character two?"
+      "¿Eliminar Character one y Character two?"
   end
 
   test "a rejected Relation create is explained in Spanish, with its own record type" do

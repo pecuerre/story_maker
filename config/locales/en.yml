@@ -504,8 +504,9 @@ en:
         section_group: "Section group"
         section_blank: "Ungrouped. A Section is optional and only organizes this scene; it does not change its narrative position."
         event: "In-world event"
-        # `%{event}` is `Event#display_string`, which is the record's own label and
-        # is data: it is interpolated, never translated.
+        # `%{event}` is `Event#display_label`, the record's own label in the
+        # reader's language. Its own title and dates are data, so they are
+        # interpolated, never translated; a phrase of its own resolves the key.
         event_html: "%{event} — see the %{workspace}. Several scenes can depict the same event."
         event_workspace: "Events workspace"
         event_blank: "No event linked yet."
@@ -803,8 +804,8 @@ en:
     empty_read_only_description: "Events in this universe will appear here once they have been added."
     # An Event has dependents, so its row's delete states its own cascade in the
     # same ADR-mandated words as the Character, Item, and Location lists.
-    # `name` is `Event#display_string`, so it is the event's own label and is
-    # interpolated rather than translated.
+    # `name` is `Event#display_label`, so it is the event's own label, resolved
+    # in the reader's language, and interpolated rather than translated.
     delete_confirm: "Delete “%{name}”? Its child events, tag assignments, and any temporal referrers that would become unidentifiable will be permanently removed; other temporal references and Scene links will be cleared. Scenes will remain."
     form:
       title: "Title"
@@ -824,7 +825,7 @@ en:
       back_label: "All events"
       facts:
         # There is no blank state for the title. The value is
-        # `title.presence || display_string`, and `display_string` always answers
+        # `title.presence || display_label`, and `display_label` always answers
         # with something — at worst "Event #12" — so a blank copy here could never
         # be rendered and would only be a key nothing reads.
         title: "Title"
@@ -840,6 +841,16 @@ en:
       must_belong_to_universe: "must belong to the event's universe"
       cannot_be_itself: "cannot be itself"
       must_be_identifiable: "must have a title, a date, or a relation to another event"
+    # An Event's own label, in the reader's language. `Event#display_label`
+    # resolves these; `Event#display_string` is the same ladder resolved in the
+    # default locale, because that is the string a search document stores and one
+    # index serves every reader. `event` is a referenced event's own label, so it
+    # is already a sentence in the reader's language and is interpolated whole.
+    display_label:
+      unidentified: "Event #%{id}"
+      before: "before %{event}"
+      after: "after %{event}"
+      simultaneous: "same time as %{event}"
     tabs:
       events: "Events"
 
@@ -890,7 +901,7 @@ en:
     save: "Save relation"
     form:
       # The name is optional on both models: the two endpoints are the reliable
-      # label, and `display_string` and the composite slug both prefer the name
+      # label, and a record's label and the composite slug both prefer the name
       # only when one is set.
       name: "Name"
       name_hint: "Optional. Used as the label instead of the two characters when it is set."
@@ -924,6 +935,10 @@ en:
     # phrase because its sentence has no determiner to supply one.
     errors:
       subject: "relation"
+    # The two endpoints as one phrase, for the row action's delete confirmation:
+    # the row draws them either side of an arrow, and the confirmation has to
+    # name them in a sentence. Neither name is chrome, so both are interpolated.
+    endpoints: "%{first} and %{second}"
     flash:
       created: "Relation created."
       updated: "Relation updated."
@@ -941,7 +956,7 @@ en:
     save: "Save ownership"
     form:
       # The name is optional on both models: the item and character are the
-      # reliable label, and `display_string` and the composite slug both prefer
+      # reliable label, and a record's label and the composite slug both prefer
       # the name only when one is set.
       name: "Name"
       name_hint: "Optional. Used as the label instead of the item and character when it is set."
@@ -976,6 +991,12 @@ en:
         empty_description: "This ownership is a link between a character and an item. Anything else worth knowing about it will be listed here later."
     errors:
       subject: "ownership"
+    # See `relations.endpoints`: the same phrase, for the same row action.
+    endpoints: "%{first} and %{second}"
+    # The two endpoints as a label. `display_label` is this; `display_string` is
+    # the same phrase in the default locale, because that is what a search
+    # document stores and one index serves every reader.
+    display_label: "%{character} owns %{item}"
     flash:
       created: "Ownership created."
       updated: "Ownership updated."
@@ -1123,16 +1144,15 @@ en:
         delete_confirm: "Delete “%{name}”? Its child tags and assignments will be removed. Scenes will remain."
 
   # The universe Timeline. Each node's popover is assembled by `TimelineHelper`,
-  # so the labels and the relationship phrases below are read there.
+  # so the labels read there. The three relationship phrases are not listed here:
+  # an Event's label carries them, and `Event#display_label` owns them so a node's
+  # popover and an Event's own page cannot disagree about what "before" means.
   timeline:
     description: "See how events are ordered from dates and explicit before, after, and simultaneous relationships."
     add_event: "Add event"
     empty_title: "No events to place on the timeline"
     empty_writable_description: "Add events with dates or relationships to each other, then return here to see their order."
     empty_read_only_description: "Events in this universe will appear on the timeline once they have been added."
-    # Shown when an Event has no title of its own. The id is the record's, so it
-    # is interpolated rather than translated.
-    event_placeholder: "Event #%{id}"
     # The node renders the record's id, which a screen reader announces as a bare
     # number, so the control carries this label instead. `event` is the same
     # string the popover header shows.
@@ -1141,12 +1161,12 @@ en:
       dates: "Dates:"
       tag: "Tag:"
       related: "Related:"
-      before: "before %{event}"
-      after: "after %{event}"
-      simultaneous: "same time as %{event}"
 
-  # The top-bar search box. The results page and the scope dropdown's own option
-  # labels are translated with the search slice that owns them.
+  # The search box and the results page it opens. `bar.*` is the box in the top
+  # bar; everything below it belongs to the results page, the scope dropdown, and
+  # the two model-level surfaces that read for it (`Search::Scope`'s options,
+  # `Search::Kinds`' badges, `Search::Commands`' destinations), which is why the
+  # copy lives here rather than beside each of them.
   searches:
     bar:
       label: "Search Universe Maker"
@@ -1155,6 +1175,150 @@ en:
       submit: "Search"
       results_label: "Search results"
       see_all: "See all results"
+
+    title: "Search"
+    eyebrow: "Find anything"
+    # The page's own paragraph. It names the record types a search covers, so it
+    # is one sentence rather than a list assembled from the record-type nouns:
+    # the list is this page's copy, and the nouns' plurals belong to the count
+    # labels.
+    description: "Search every record in the scope you choose. Records carry their own name and description; a universe or story name is context, not something to match."
+    form:
+      label: "Search"
+      # `minimum` is `Search::Query::MINIMUM_LENGTH`, a number the code owns, so
+      # it is interpolated rather than translated.
+      placeholder: "At least %{minimum} characters"
+      scope_label: "Scope"
+      submit: "Search"
+      clear: "Clear"
+    # The `aria-label` of the one scope dropdown both surfaces render.
+    scope_aria_label: "Search scope"
+    # What the form searched. `searched` is the resolved scope's own label, which
+    # is why the sentence carries a `<strong>`: the label is the emphasis, and an
+    # `_html` key is the only way a translation can decide where it sits. It is
+    # not called `scope`, because `scope` is a reserved I18n option and
+    # `t(key, scope: …)` asks I18n to look the key up inside an area.
+    scope_note_html: "Searching <strong>%{searched}</strong>."
+
+    # The three states that explain rather than answer.
+    unavailable_title: "Search is not available"
+    # What a reader is told, under a heading of its own. This is not
+    # `Search::UnavailableBackend::REASON`, which is the operator's sentence for a
+    # log line and a reindex report: the two name the same environment variable and
+    # the same command, and neither name is prose.
+    unavailable_reason: "Set MEILISEARCH_URL and run bin/rails search:reindex."
+    too_short_title: "Keep typing"
+    too_short_description: "A search needs at least %{minimum} characters, because one character matches nearly everything."
+    idle_title: "Search this universe"
+    idle_description: "Type at least %{minimum} characters to look through characters, locations, events, items, relations, ownerships, tags, and — inside a story — sections, scenes, and their text. Narrow it with the scope above."
+    commands_title: "Go to"
+
+    # The result count. `count` is the engine's own total, not the page's, which
+    # is why the count and the "showing" line are two keys: a page that lists 25
+    # of 40 is not showing 25 matches.
+    matches:
+      one: "%{count} match"
+      other: "%{count} matches"
+    showing:
+      one: "Showing %{shown} of %{count} match"
+      other: "Showing %{shown} of %{count} matches"
+    pagination:
+      aria_label: "Search results pages"
+      previous: "Previous"
+      next: "Next"
+      page: "Page %{number}"
+
+    # The empty answer. The scope is a sentence of its own rather than a noun
+    # inside this one: "Nothing in *This universe* matched" needs a lowercased
+    # label, and a lowercased label is a word order the locale does not get to
+    # choose. The page above the form already says what was searched, so the box
+    # says it once more in a form that can start a sentence.
+    nothing_matched_title: "Nothing matched “%{query}”"
+    nothing_matched_searched_html: "Searched <strong>%{searched}</strong>."
+    nothing_matched_description: "Check the spelling, or widen the scope above — %{platform_hint}"
+    # Only stated inside a universe, where "Entire platform" is a scope the
+    # reader can widen to and would not think to try.
+    nothing_matched_description_no_widen: "Check the spelling, or try a different scope above."
+    platform_hint: "“Entire platform” searches every universe you can read, not only this one."
+
+    # The scope dropdown's option labels, keyed by the option's own `value`. That
+    # value is a query value and is never translated — a Spanish link to
+    # `?scope=characters` has to keep working — so the key is the value and only
+    # the wording beside it moves.
+    scopes:
+      platform: "Entire platform"
+      universe: "This universe"
+      story: "This story"
+      universes: "Only universes"
+      stories: "Only stories"
+      characters: "Only characters"
+      locations: "Only locations"
+      items: "Only items"
+      events: "Only events"
+      relations: "Only relations"
+      ownerships: "Only ownerships"
+      sections: "Only sections"
+      scenes: "Only scenes"
+      tags: "Only tags"
+
+    # A value a request could not use, reported rather than applied. Each is
+    # translated where it is dropped, so `SearchesController` joins them with
+    # `to_sentence` in the reader's language instead of with English connectors.
+    discarded:
+      unknown_scope: "“%{value}” is not a search scope, so the default scope was used."
+      widened_to_universe: "The story search was widened to this universe because no story is selected."
+      widened_to_platform: "The story search was widened to the entire platform because no story is selected."
+      story_without_universe: "The story filter was ignored because no universe is selected."
+      story_outside_universe: "The story filter was ignored because it is not a story of this universe."
+
+    # The badge on a result row. A document's `kind` is what the engine filters
+    # on and is never translated; only the word beside it is a key. The eight
+    # taxonomies share the `tag` kind and are told apart by a document's
+    # `taxonomy`, so each of them is named here as a whole rather than composed
+    # from the kind and a lowercased noun — the same reason `taxonomy:` stays
+    # untranslated.
+    kinds:
+      universe: "Universe"
+      story: "Story"
+      section: "Section"
+      scene: "Scene"
+      scene_element: "Scene element"
+      character: "Character"
+      location: "Location"
+      item: "Item"
+      event: "Event"
+      relation: "Relation"
+      ownership: "Ownership"
+      tag: "Tag"
+      character_tag: "Character tag"
+      location_tag: "Location tag"
+      item_tag: "Item tag"
+      event_tag: "Event tag"
+      relation_tag: "Relation tag"
+      ownership_tag: "Ownership tag"
+      section_tag: "Section tag"
+      scene_tag: "Scene tag"
+
+    # The navigation half of the box. A command's `id` is what the dropdown
+    # marks the active option with, so it stays a value; the title is the label
+    # beside it. `name` is a universe's or a story's own name, so it is
+    # interpolated rather than translated.
+    commands:
+      universe_overview: "Universe overview"
+      stories: "All stories"
+      characters: "Characters"
+      locations: "Locations"
+      events: "Events"
+      items: "Items"
+      relations: "Relations"
+      ownerships: "Ownerships"
+      timeline: "Timeline"
+      tags: "Tags"
+      story: "Story: %{name}"
+      sections: "Sections"
+      scenes: "Scenes"
+      universe: "Universe: %{name}"
+      open_universe: "Open universe"
 
   # Sign in.
   sessions:

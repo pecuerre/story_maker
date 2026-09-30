@@ -323,19 +323,17 @@ it has a useful destination and clear empty/loading/error states.
 27. **Internationalization: move every user-facing string behind `t()` and add a language setting**
 
     Deliver in the order below. The foundation, the application shell, the Universe Bible workspaces,
-    and the Scene workspace are already done — the `AppLocale` preference, the **Language** section on
-    `/settings`, the I18n configuration, the translated layouts/sidebars/`shared/*`/sessions/passwords/
-    mailer/PWA, and the missing-translation enforcement are described by
-    [ADR 0016](adr/0016-internationalization-and-browser-locale.md), and the delivered workspaces are
-    the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). What is left is **3 of the 100 ERB
-    views**, carrying about 25 distinct strings: `searches/show`, `searches/_commands`, and
-    `searches/_scope_field` (`searches/_result` renders no copy of its own; its two labels are the
-    model-level ones below). Plus ~51 distinct strings inside four Stimulus controllers, the
-    model-level labels (`Search::Scope` option labels, the `Search::Registry`/`Catalog`/`Hit` kind
-    labels, `Search::Commands`, and the `display_string` sentences — see slice 27.5), and the literal
-    `errors.add` messages in `Hierarchical` and `HasColor`, which every taxonomy shares. Every
-    `shared/*` partial is translated, and the counts above exclude ERB comments, which document a local
-    contract for the next developer and are never rendered.
+    the Scene workspace, and the search surface are already done — the `AppLocale` preference, the
+    **Language** section on `/settings`, the I18n configuration, the translated layouts/sidebars/
+    `shared/*`/sessions/passwords/mailer/PWA, the missing-translation enforcement, and the four
+    model-level search labels are described by
+    [ADR 0016](adr/0016-internationalization-and-browser-locale.md) and
+    [`features/i18n.md`](features/i18n.md), and the delivered workspaces are the dated entries in
+    [`../CHANGELOG.md`](../CHANGELOG.md). What is left is **0 of the 100 ERB views**, plus ~51
+    distinct strings inside four Stimulus controllers and the literal `errors.add` messages in
+    `Hierarchical` and `HasColor`, which every taxonomy shares. Every `shared/*` partial is
+    translated, and the counts above exclude ERB comments, which document a local contract for the
+    next developer and are never rendered.
 
     Rules that apply to every remaining slice:
 
@@ -380,25 +378,6 @@ it has a useful destination and clear empty/loading/error states.
       the Timeline was never built; the docs now say the view is static, and building the interaction
       is listed under FUTURE WORK below.
 
-    - **Slice 27.5 — Search.** `searches/show`, `_commands`, `_result`, `_scope_field`, the
-      `searches_controller.rb` and `searches_helper.rb` strings, and the model-level labels in
-      `app/models/search/`: `Search::Scope`'s option labels, the kind labels in
-      `Search::Registry`/`Search::Catalog`/`Search::Hit`, and `Search::Commands`. These are values
-      inside a query/display object rather than a literal in a view, so the slice defines whether
-      a label is stored translated or translated at read time — **translate at read time**, and keep
-      the option's `value` (the URL parameter) untranslated, or search URLs stop working in
-      Spanish. `SectionPaths::UNGROUPED_LABEL_KEY` and `SceneFilter::UNGROUPED` are the same shape and
-      must keep the same rule: the *value* in the URL stays `"ungrouped"`, only the label is
-      translated — and the label now has one home, `sections.ungrouped_label`, resolved by
-      `SectionPaths#ungrouped_label`. This slice also settles the one model-level label a translation
-      could not close:
-      `Event#display_string`, `Relation#display_string`, and `Ownership#display_string` are their
-      models' `searchable title:`, so the string is **stored in a language-independent search index**
-      and read back straight into a result row. Translating them in the model would put one locale's
-      chrome in that index and show it to a reader in another language, so the decision to make is
-      how a view resolves a translated label while the index keeps the stored one — see
-      [`features/i18n.md`](features/i18n.md#known-gap), which records the shape and the reasoning.
-
     - **Slice 27.6 — Client-side strings + enforcement.** The four Stimulus controllers with
       user-facing text — `taxonomy_tree_controller.js` (17 distinct strings),
       `photo_crop_controller.js` (17), `modal_form_controller.js` (12), and
@@ -418,8 +397,10 @@ it has a useful destination and clear empty/loading/error states.
     from ADR 0013's theme decision, and also what would let a queued password reset be written in
     the reader's own language); right-to-left layout; a third language; replacing the hand-maintained
     Spanish subset of Rails' own strings with the `rails-i18n` gem; translating the `taxonomy:`
-    arguments in the `searchable` model declarations (they are index metadata, not chrome, until
-    slice 27.5 decides otherwise); translating `db/data/**/*.yml` demo content.
+    arguments in the `searchable` model declarations (they are index metadata, and the label a reader
+    sees for one is now `searches.kinds.*` — see
+    [`features/search.md`](features/search.md#a-result-row-shows-the-stored-document-title));
+    translating `db/data/**/*.yml` demo content.
 
 28. review comments. add comments when needed, remove comments when not needed
 

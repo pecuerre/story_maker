@@ -93,4 +93,37 @@ class Search::CommandsTest < ActiveSupport::TestCase
     assert_equal({ id: "timeline", title: "Timeline", subtitle: @universe.name,
       url: universe_timeline_path(universe_slug: @universe.slug) }, commands.first.as_json)
   end
+
+  # A command's title is the reader's own language, and it is also what the typed
+  # text is matched against: the thing on screen is the thing searched.
+  test "a destination is named in the reader's language, and matched in it too" do
+    english = Search::Commands.new(text: "chara", universe: @universe, user: users(:user_one)).to_a
+    spanish = I18n.with_locale(:es) do
+      Search::Commands.new(text: "personajes", universe: @universe, user: users(:user_one)).to_a
+    end
+
+    assert_equal [ "Characters" ], english.map(&:title)
+    assert_equal [ "Personajes" ], spanish.map(&:title)
+    # The id is data the dropdown marks the active option with, so it does not
+    # follow the language.
+    assert_equal english.map(&:id), spanish.map(&:id)
+
+    I18n.with_locale(:es) do
+      # An English word finds nothing in a Spanish box, which is the honest
+      # answer: the reader is looking at Spanish labels.
+      assert_empty Search::Commands.new(text: "chara", universe: @universe, user: users(:user_one)).to_a
+    end
+  end
+
+  test "a universe or story name is interpolated into its own sentence, not translated" do
+    I18n.with_locale(:es) do
+      story = Search::Commands.new(text: "historia", universe: @universe, story: @story,
+        user: users(:user_one)).to_a
+      universe = Search::Commands.new(text: "universo", universe: nil, user: users(:user_one)).to_a
+
+      assert_includes story.map(&:title), "Historia: #{@story.name}"
+      assert_includes universe.map(&:title), "Universo: #{@universe.name}"
+      assert_includes universe.map(&:subtitle), "Abrir el universo"
+    end
+  end
 end

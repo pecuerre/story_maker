@@ -51,12 +51,13 @@
   <div class="col-12">
     <div class="page-eyebrow"><%= t("scenes.show.facts.event") %></div>
     <% if scene.event.present? %>
-      <%# `Event#display_string` is the record's own label and is data, so it is
-          interpolated into the sentence rather than translated: translating it in
-          the model would put one locale's chrome into the search index. %>
+      <%# The Event's own label is chrome plus the author's own title, so it is
+          resolved in the reader's language and interpolated into the sentence
+          rather than translated: translating it inside the model would put one
+          locale's chrome into the search index. %>
       <p class="mb-0">
         <%= t("scenes.show.facts.event_html",
-          event: scene.event.display_string,
+          event: scene.event.display_label,
           workspace: link_to(t("scenes.show.facts.event_workspace"), universe_events_path)) %>
       </p>
     <% else %>

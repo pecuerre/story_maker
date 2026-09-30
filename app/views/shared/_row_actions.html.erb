@@ -2,7 +2,7 @@
 <% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(record)) } %>
 <% if editable %>
   <% label = local_assigns[:label] || record.model_name.human.downcase %>
-  <% record_name = local_assigns[:record_name] || record.try(:display_string) || record.name %>
+  <% record_name = local_assigns[:record_name] || record_label(record) %>
   <% values = local_assigns.fetch(:values, "{}") %>
   <%# Deletion consequences are mandatory copy for records with dependents: the
       default stays short, and a caller that owns dependents passes the full

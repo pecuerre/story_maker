@@ -4,7 +4,7 @@
 
 <% if commands.any? %>
   <section class="search-commands" aria-labelledby="search-commands-title">
-    <h2 class="search-group-title" id="search-commands-title">Go to</h2>
+    <h2 class="search-group-title" id="search-commands-title"><%= t("searches.commands_title") %></h2>
     <ul class="list-unstyled mb-0">
       <% commands.each do |command| %>
         <li>

@@ -9,7 +9,7 @@
       <div class="entity-copy flex-grow-1">
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <span class="entity-title">
-            <%= link_to record.try(:display_string) || record.name,
+            <%= link_to record_label(record),
               local_assigns.fetch(:path).call(record), class: "text-break" %>
           </span>
           <% tags_by_record.fetch(record.id, []).each do |tag| %>

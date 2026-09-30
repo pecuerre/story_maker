@@ -84,7 +84,7 @@ class EventsController < ApplicationController
       event_tag_ids: @event.event_tag_ids,
       parent_id: @event.parent_id,
       position: @event.position,
-      display_string: @event.display_string,
+      display_string: @event.display_label,
       url: universe_event_path(id: @event)
     }
   end

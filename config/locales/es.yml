@@ -474,8 +474,9 @@ es:
         section_group: "Grupo de sección"
         section_blank: "Sin agrupar. Una Sección es opcional y solo organiza esta escena; no cambia su posición narrativa."
         event: "Suceso en el mundo"
-        # `%{event}` es `Event#display_string`, que es la etiqueta propia del
-        # registro y por tanto es dato: se interpola, nunca se traduce.
+        # `%{event}` es `Event#display_label`, la etiqueta propia del registro en el
+        # idioma del lector. Su título y sus fechas son dato, así que se interpolan
+        # y nunca se traducen; una frase propia suya resuelve su clave.
         event_html: "%{event}: consulta el %{workspace}. Varias escenas pueden representar el mismo suceso."
         event_workspace: "espacio de trabajo de Sucesos"
         event_blank: "Todavía no hay ningún suceso enlazado."
@@ -788,8 +789,8 @@ es:
     empty_read_only_description: "Los sucesos de este universo aparecerán aquí en cuanto se hayan añadido."
     # Un suceso tiene dependientes, así que su borrado declara su propia cascada con las
     # mismas palabras que impone el ADR 0007 para las listas de personajes, objetos y
-    # lugares. `name` es `Event#display_string`, es decir la etiqueta del propio suceso,
-    # así que se interpola en lugar de traducirse.
+    # lugares. `name` es `Event#display_label`, es decir la etiqueta del propio suceso
+    # resuelta en el idioma del lector, así que se interpola en lugar de traducirse.
     delete_confirm: "¿Eliminar «%{name}»? Sus sucesos hijos, las asignaciones de etiquetas y cualquier referente temporal que quedara sin identificar se eliminarán de forma permanente; las demás referencias temporales y los enlaces a escenas se vaciarán. Las escenas permanecerán."
     form:
       title: "Título"
@@ -809,7 +810,7 @@ es:
       back_label: "Todos los sucesos"
       facts:
         # El título no tiene estado vacío. El valor es
-        # `title.presence || display_string`, y `display_string` siempre responde
+        # `title.presence || display_label`, y `display_label` siempre responde
         # con algo —en el peor caso, «Suceso n.º 12»—, así que una copia en blanco
         # aquí nunca se renderizaría y solo sería una clave que nadie lee.
         title: "Título"
@@ -825,6 +826,17 @@ es:
       must_belong_to_universe: "debe pertenecer al universo del suceso"
       cannot_be_itself: "no puede ser él mismo"
       must_be_identifiable: "debe tener un título, una fecha o una relación con otro suceso"
+    # La etiqueta propia de un suceso en el idioma del lector.
+    # `Event#display_label` resuelve estas claves; `Event#display_string` es la
+    # misma escalera resuelta en el idioma por defecto, porque esa es la cadena
+    # que guarda un documento del índice y un solo índice sirve a todos los
+    # lectores. `event` es la etiqueta de un suceso referenciado, así que ya es
+    # una frase en el idioma del lector y se interpola entera.
+    display_label:
+      unidentified: "Suceso n.º %{id}"
+      before: "antes de %{event}"
+      after: "después de %{event}"
+      simultaneous: "al mismo tiempo que %{event}"
     tabs:
       events: "Sucesos"
 
@@ -877,8 +889,8 @@ es:
     save: "Guardar relación"
     form:
       # El nombre es opcional en ambos modelos: los dos personajes son la
-      # etiqueta fiable, y `display_string` y el slug compuesto solo prefieren el
-      # nombre cuando hay uno.
+      # etiqueta fiable, y la etiqueta de un registro y el slug compuesto solo
+      # prefieren el nombre cuando hay uno.
       name: "Nombre"
       name_hint: "Opcional. Se usa como etiqueta en lugar de los dos personajes cuando está definido."
       description: "Descripción"
@@ -911,6 +923,11 @@ es:
     # entera porque su oración no aporta determinante.
     errors:
       subject: "esta relación"
+    # Los dos extremos en una sola frase, para la confirmación de borrado de la
+    # fila: la fila los dibuja a ambos lados de una flecha, pero la confirmación
+    # tiene que nombrarlos en una frase. Ninguno de los dos nombres es chrome, así
+    # que los dos se interpolan.
+    endpoints: "%{first} y %{second}"
     flash:
       created: "La relación se ha creado."
       updated: "La relación se ha actualizado."
@@ -928,8 +945,8 @@ es:
     save: "Guardar propiedad"
     form:
       # El nombre es opcional en ambos modelos: el objeto y el personaje son la
-      # etiqueta fiable, y `display_string` y el slug compuesto solo prefieren el
-      # nombre cuando hay uno.
+      # etiqueta fiable, y la etiqueta de un registro y el slug compuesto solo
+      # prefieren el nombre cuando hay uno.
       name: "Nombre"
       name_hint: "Opcional. Se usa como etiqueta en lugar del objeto y el personaje cuando está definido."
       description: "Descripción"
@@ -964,6 +981,12 @@ es:
         empty_description: "Esta propiedad es un vínculo entre un personaje y un objeto. Todo lo demás que merezca la pena saber sobre ella se mostrará aquí más adelante."
     errors:
       subject: "esta propiedad"
+    # Ver `relations.endpoints`: la misma frase para la misma acción de fila.
+    endpoints: "%{first} y %{second}"
+    # Los dos extremos como etiqueta. `display_label` es esto; `display_string` es
+    # la misma frase en el idioma por defecto, porque eso es lo que guarda un
+    # documento del índice y un solo índice sirve a todos los lectores.
+    display_label: "%{character} posee %{item}"
     flash:
       created: "La propiedad se ha creado."
       updated: "La propiedad se ha actualizado."
@@ -1113,15 +1136,11 @@ es:
     empty_title: "No hay sucesos que colocar en la cronología"
     empty_writable_description: "Añade sucesos con fechas o relacionados entre sí y vuelve aquí para ver su orden."
     empty_read_only_description: "Los sucesos de este universo aparecerán en la cronología en cuanto se hayan añadido."
-    event_placeholder: "Suceso n.º %{id}"
     node_aria_label: "Mostrar detalles del suceso: %{event}"
     popover:
       dates: "Fechas:"
       tag: "Etiqueta:"
       related: "Relacionado:"
-      before: "antes de %{event}"
-      after: "después de %{event}"
-      simultaneous: "al mismo tiempo que %{event}"
 
   # Los nombres de los atributos que leen los formularios y los mensajes de
   # error de esta rebanada. Ver la explicación equivalente en `en.yml`.
@@ -1258,6 +1277,116 @@ es:
       submit: "Buscar"
       results_label: "Resultados de la búsqueda"
       see_all: "Ver todos los resultados"
+
+    title: "Buscar"
+    eyebrow: "Encuentra cualquier cosa"
+    description: "Busca en todos los registros del alcance que elijas. Cada registro lleva su propio nombre y su propia descripción; el nombre de un universo o de una historia es contexto, no algo que se pueda buscar."
+    form:
+      label: "Buscar"
+      placeholder: "Al menos %{minimum} caracteres"
+      scope_label: "Alcance"
+      submit: "Buscar"
+      clear: "Limpiar"
+    scope_aria_label: "Alcance de la búsqueda"
+    scope_note_html: "Buscando <strong>%{searched}</strong>."
+
+    unavailable_title: "La búsqueda no está disponible"
+    # No es `Search::UnavailableBackend::REASON`, que es la frase de quien
+    # gestiona la instancia para un registro o un informe de reindexado: las dos
+    # nombran la misma variable de entorno y el mismo comando, y ninguno de los dos
+    # nombres es prosa.
+    unavailable_reason: "Configura MEILISEARCH_URL y ejecuta bin/rails search:reindex."
+    too_short_title: "Sigue escribiendo"
+    too_short_description: "Una búsqueda necesita al menos %{minimum} caracteres, porque un solo carácter coincide casi con todo."
+    idle_title: "Busca en este universo"
+    idle_description: "Escribe al menos %{minimum} caracteres para recorrer personajes, lugares, sucesos, objetos, relaciones, propiedades, etiquetas y —dentro de una historia— secciones, escenas y su texto. Acota la búsqueda con el alcance de arriba."
+    commands_title: "Ir a"
+
+    matches:
+      one: "%{count} coincidencia"
+      other: "%{count} coincidencias"
+    showing:
+      one: "Mostrando %{shown} de %{count} coincidencia"
+      other: "Mostrando %{shown} de %{count} coincidencias"
+    pagination:
+      aria_label: "Páginas de resultados de la búsqueda"
+      previous: "Anterior"
+      next: "Siguiente"
+      page: "Página %{number}"
+
+    nothing_matched_title: "Nada coincide con «%{query}»"
+    nothing_matched_searched_html: "Se buscó <strong>%{searched}</strong>."
+    nothing_matched_description: "Comprueba la ortografía o amplía el alcance de arriba: %{platform_hint}"
+    nothing_matched_description_no_widen: "Comprueba la ortografía o prueba con otro alcance de arriba."
+    platform_hint: "«Plataforma entera» busca en todos los universos que puedes leer, no solo en este."
+
+    # La clave es el propio `value` de la opción, que viaja en la URL y no se
+    # traduce: un enlace a `?scope=characters` tiene que seguir funcionando en
+    # español. Ver la nota equivalente en `en.yml`.
+    scopes:
+      platform: "Plataforma entera"
+      universe: "Este universo"
+      story: "Esta historia"
+      universes: "Solo universos"
+      stories: "Solo historias"
+      characters: "Solo personajes"
+      locations: "Solo lugares"
+      items: "Solo objetos"
+      events: "Solo sucesos"
+      relations: "Solo relaciones"
+      ownerships: "Solo propiedades"
+      sections: "Solo secciones"
+      scenes: "Solo escenas"
+      tags: "Solo etiquetas"
+
+    discarded:
+      # El valor escrito a mano viaja como `value` y no como `scope`: `scope` es
+      # una opción reservada de I18n, y nombrarla así le pediría a I18n buscar la
+      # clave *dentro* de un ámbito llamado igual que el valor.
+      unknown_scope: "«%{value}» no es un alcance de búsqueda, así que se usó el alcance por defecto."
+      widened_to_universe: "La búsqueda por historia se amplió a este universo porque no hay ninguna historia seleccionada."
+      widened_to_platform: "La búsqueda por historia se amplió a la plataforma entera porque no hay ninguna historia seleccionada."
+      story_without_universe: "El filtro de historia se ignoró porque no hay ningún universo seleccionado."
+      story_outside_universe: "El filtro de historia se ignoró porque no es una historia de este universo."
+
+    kinds:
+      universe: "Universo"
+      story: "Historia"
+      section: "Sección"
+      scene: "Escena"
+      scene_element: "Elemento de escena"
+      character: "Personaje"
+      location: "Lugar"
+      item: "Objeto"
+      event: "Suceso"
+      relation: "Relación"
+      ownership: "Propiedad"
+      tag: "Etiqueta"
+      character_tag: "Etiqueta de personaje"
+      location_tag: "Etiqueta de lugar"
+      item_tag: "Etiqueta de objeto"
+      event_tag: "Etiqueta de suceso"
+      relation_tag: "Etiqueta de relación"
+      ownership_tag: "Etiqueta de propiedad"
+      section_tag: "Etiqueta de sección"
+      scene_tag: "Etiqueta de escena"
+
+    commands:
+      universe_overview: "Resumen del universo"
+      stories: "Todas las historias"
+      characters: "Personajes"
+      locations: "Lugares"
+      events: "Sucesos"
+      items: "Objetos"
+      relations: "Relaciones"
+      ownerships: "Propiedades"
+      timeline: "Cronología"
+      tags: "Etiquetas"
+      story: "Historia: %{name}"
+      sections: "Secciones"
+      scenes: "Escenas"
+      universe: "Universo: %{name}"
+      open_universe: "Abrir el universo"
 
   sessions:
     title: "Iniciar sesión"

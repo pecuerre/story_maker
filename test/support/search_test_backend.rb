@@ -16,9 +16,13 @@ class SearchTestBackend
   attr_reader :searches, :written, :removed
   attr_accessor :hits, :available
 
-  def initialize(hits: [], available: true)
+  def initialize(hits: [], available: true, total: nil)
     @hits = hits
     @available = available
+    # What the engine believes it has, which is not what one page asked for. It
+    # defaults to the replayed hits, and a test that needs the "showing 25 of 40"
+    # copy sets it to something larger than the hits it is given.
+    @total = total
     @searches = []
     @written = []
     @removed = []
@@ -39,7 +43,7 @@ class SearchTestBackend
     raise Search::Unavailable, reason unless available?
 
     hits = @hits.map { |hit| Search::Hit.from_engine(hit) }
-    Search::ResultSet.new(hits: hits, total: hits.size)
+    Search::ResultSet.new(hits: hits, total: @total || hits.size)
   end
 
   def upsert(documents)
@@ -93,8 +97,8 @@ end
 module SearchTestHelper
   # Replaces the engine for the duration of one test. `ActiveSupport::TestCase`
   # resets `Search` after every test, so no stub can leak into the next one.
-  def stub_search_backend(hits: [], available: true)
-    Search.backend = SearchTestBackend.new(hits: hits, available: available)
+  def stub_search_backend(hits: [], available: true, total: nil)
+    Search.backend = SearchTestBackend.new(hits: hits, available: available, total: total)
   end
 
   def search_backend

@@ -25,6 +25,10 @@ class Relation < ApplicationRecord
   # A Relation is a link between two characters and its own name is optional, so
   # the endpoints are the reliable label. Row actions, delete confirmations, and
   # the details page all read this instead of a blank name.
+  #
+  # The arrow is the neutral form the Relations list row already draws, so unlike
+  # `Ownership` this label carries no chrome: it is the same string in every
+  # language, which is also what makes it safe to store in a search document.
   def display_string
     name.presence || "#{character1&.name} → #{character2&.name}"
   end

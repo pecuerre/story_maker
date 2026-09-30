@@ -51,7 +51,7 @@
     <div class="content-surface entity-list">
       <div class="list-group list-group-flush">
         <% @ownerships.each do |ownership| %>
-          <% ownership_name = "#{ownership.character.name} and #{ownership.item.name}" %>
+          <%# See `relations/index`: the same sentence for the same row action. %>
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -70,7 +70,8 @@
             <%= render "shared/row_actions",
               record: ownership,
               label: t("ownership", count: 1),
-              record_name: ownership_name,
+              record_name: t("ownerships.endpoints", first: ownership.character.name,
+                second: ownership.item.name),
               edit_url: universe_ownership_path(id: ownership),
               delete_url: universe_ownership_path(id: ownership),
               values: (rejected&.persisted? && rejected.id == ownership.id) ? ownership_fields_json(rejected) : ownership_fields_json(ownership) %>
@@ -108,9 +109,9 @@
             <% end %>
             <div class="mb-3">
               <%= form.label :name, t("ownerships.form.name"), class: "form-label" %>
-              <%# Optional, and it is what `display_string` and the composite slug
-                  prefer when it is set, so the field says so instead of implying
-                  it is required. %>
+              <%# Optional, and it is what the record's label and the composite
+                  slug prefer when it is set, so the field says so instead of
+                  implying it is required. %>
               <%= form.text_field :name, class: "form-control" %>
               <div class="form-text"><%= t("ownerships.form.name_hint") %></div>
             </div>

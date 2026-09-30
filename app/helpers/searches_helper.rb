@@ -5,6 +5,12 @@
 # what lets the two parts agree for free and what makes the box work with
 # scripting turned off: the `<select>` is a plain control inside a plain GET
 # form, and a scope is an ordinary query value.
+#
+# An option's `value` is that query value and is never translated, while its
+# `label` is resolved per request from `searches.scopes.*` by
+# `Search::Scope::Option#label`. Both surfaces therefore offer the same fourteen
+# scopes with the same fourteen wordings, in whatever language the reader asked
+# for, and a link carrying `?scope=characters` keeps working in all of them.
 module SearchesHelper
   def search_scope_options(universe:, story:)
     Search::Scope::OPTIONS.map do |option|

@@ -1,11 +1,11 @@
-<% content_for :title, @event.display_string %>
+<% content_for :title, @event.display_label %>
 
 <%= render "shared/record_details",
   record: @event,
   eyebrow: t("sidebar.universe_bible"),
   label: t("events.show.label"),
   facts: [
-    detail_fact(t("events.show.facts.title"), @event.title.presence || @event.display_string),
+    detail_fact(t("events.show.facts.title"), @event.title.presence || @event.display_label),
     detail_fact(t("events.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
     detail_fact(t("events.show.facts.tags"), entity_tag_badge(@event), blank: t("events.show.facts.tags_blank")),
     detail_fact(t("events.show.facts.in_world_time"), in_world_range(@event.start_datetime, @event.end_datetime)),

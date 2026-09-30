@@ -36,7 +36,7 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= event.display_string %></span>
+                <span class="entity-title"><%= event.display_label %></span>
                 <%= entity_tag_badge(event) %>
               </div>
               <% if event.description.present? %>
@@ -49,8 +49,8 @@
             <%= render "shared/row_actions",
               record: event,
               label: t("event", count: 1),
-              record_name: event.display_string,
-              confirm_text: t("events.delete_confirm", name: event.display_string),
+              record_name: event.display_label,
+              confirm_text: t("events.delete_confirm", name: event.display_label),
               edit_url: universe_event_path(id: event),
               delete_url: universe_event_path(id: event),
               delete_via: :json,
@@ -127,19 +127,19 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <%= form.label :before_event_id, t("events.form.before_event"), class: "form-label" %>
-                <%= form.collection_select :before_event_id, @events_for_select, :id, :display_string,
+                <%= form.collection_select :before_event_id, @events_for_select, :id, :display_label,
                   { include_blank: t("shared.none") },
                   { class: "form-select", data: { modal_form_exclude_self: true } } %>
               </div>
               <div class="col-md-4">
                 <%= form.label :after_event_id, t("events.form.after_event"), class: "form-label" %>
-                <%= form.collection_select :after_event_id, @events_for_select, :id, :display_string,
+                <%= form.collection_select :after_event_id, @events_for_select, :id, :display_label,
                   { include_blank: t("shared.none") },
                   { class: "form-select", data: { modal_form_exclude_self: true } } %>
               </div>
               <div class="col-md-4">
                 <%= form.label :simultaneous_event_id, t("events.form.simultaneous_event"), class: "form-label" %>
-                <%= form.collection_select :simultaneous_event_id, @events_for_select, :id, :display_string,
+                <%= form.collection_select :simultaneous_event_id, @events_for_select, :id, :display_label,
                   { include_blank: t("shared.none") },
                   { class: "form-select", data: { modal_form_exclude_self: true } } %>
               </div>

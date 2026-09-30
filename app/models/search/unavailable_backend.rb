@@ -8,6 +8,12 @@ module Search
   # because search is not there. `bin/rails search:reindex` reports the same state
   # instead of pretending to have indexed anything.
   class UnavailableBackend
+    # The operator's sentence: a log line, an exception message, and what
+    # `bin/rails search:reindex` reports. It stays English because that is what it
+    # is for. It is deliberately **not** what a reader is shown — the results page
+    # prints `searches.unavailable_reason` in the reader's language instead, under
+    # a heading of its own, so a Spanish page does not answer a Spanish heading
+    # with an English paragraph.
     REASON = "Search is not available. Set MEILISEARCH_URL and run bin/rails search:reindex."
 
     def available?

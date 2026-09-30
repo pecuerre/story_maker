@@ -192,7 +192,7 @@ class ScenesController < ApplicationController
   end
 
   # Events are shared universe records. Their temporal references are preloaded
-  # because `Event#display_string` can fall back to them for an option label.
+  # because `Event#display_label` can fall back to them for an option label.
   def set_event_options
     @event_options = Current.universe.events
       .includes(:before_event, :after_event, :simultaneous_event)

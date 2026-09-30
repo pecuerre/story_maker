@@ -60,12 +60,18 @@ class SearchesController < ApplicationController
     # The same read for both formats. A search too short to be worth asking, or
     # an engine that cannot answer, is a stated state and never an exception:
     # `flash.now[:alert]` is how the page reports a value it could not use.
+    #
+    # The page shows `searches.unavailable_reason` rather than the exception's own
+    # message. `Search::UnavailableBackend::REASON` is the operator's sentence — a
+    # log line, a reindex report — and printing it under a translated heading
+    # would put English in an otherwise Spanish page. The two name the same two
+    # things, an environment variable and a command, and neither is prose.
     def search_results
       @search_results ||= begin
         Search::Catalog.new.results(@query, limit: result_limit, offset: result_offset)
       rescue Search::Unavailable => error
         Rails.logger.warn { "[search] #{error.message}" }
-        @search_unavailable = error.message
+        @search_unavailable = t("searches.unavailable_reason")
         Search::ResultSet.new
       end
     end

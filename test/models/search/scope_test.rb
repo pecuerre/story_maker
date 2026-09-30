@@ -42,6 +42,15 @@ class Search::ScopeTest < ActiveSupport::TestCase
       scope.discarded
   end
 
+  test "a widening is stated in the reader's language, not in the one that built the scope" do
+    I18n.with_locale(:es) do
+      assert_equal [ "La búsqueda por historia se amplió a este universo porque no hay ninguna historia seleccionada." ],
+        Search::Scope.new("story", universe: @universe, story: nil).discarded
+      assert_equal [ "La búsqueda por historia se amplió a la plataforma entera porque no hay ninguna historia seleccionada." ],
+        Search::Scope.new("story", universe: nil, story: nil).discarded
+    end
+  end
+
   test "asking for this universe on the landing page widens to the platform and says so" do
     scope = Search::Scope.new("universe", universe: nil, story: nil)
 
@@ -92,15 +101,29 @@ class Search::ScopeTest < ActiveSupport::TestCase
     assert Search::Scope.available?(characters_option, universe: nil, story: nil)
   end
 
-  test "every option has a label and every kind a label of its own" do
-    Search::Scope::OPTIONS.each do |option|
-      assert option.label.present?, "#{option.value} has no label"
-      assert_includes Search::Kinds::LABELS.keys, option.kind if option.kind
+  test "every option has a label in every locale, and every kind a label of its own" do
+    # An option holds a `value` and the *key* of its label, never a translated
+    # string: `OPTIONS` is built when the class loads, so a label resolved there
+    # would be the language of whichever request loaded it first. The key is the
+    # option's own value, which is also its query parameter, and a missing key
+    # raises in the test environment rather than rendering a blank option.
+    %i[en es].each do |locale|
+      I18n.with_locale(locale) do
+        Search::Scope::OPTIONS.each do |option|
+          assert_predicate option.label, :present?, "#{locale}: #{option.value} has no label"
+          assert I18n.exists?("searches.scopes.#{option.value}", locale),
+            "#{locale}: the label key is not the option's own value"
+          assert_includes Search::Kinds::LABEL_KEYS.keys, option.kind if option.kind
+        end
+      end
     end
+  end
 
-    assert_equal "Character tag", Search::Kinds.label_for("tag", "Character")
-    assert_equal "Tag", Search::Kinds.label_for("tag")
-    assert_equal "Scene element", Search::Kinds.label_for("scene_element")
+  test "the scope's own label is the one the dropdown and the note read" do
+    I18n.with_locale(:es) do
+      assert_equal "Este universo", Search::Scope.new("universe", universe: @universe).label
+      assert_equal "Solo personajes", Search::Scope.new("characters", universe: @universe).label
+    end
   end
 
   test "the option list is the dropdown, and the boundary options come first" do

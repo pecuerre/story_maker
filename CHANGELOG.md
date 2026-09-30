@@ -20,6 +20,88 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[changed]** **The last three untranslated views are translated, and the search surface's own
+  labels with them.** `searches/show`, `searches/_commands`, and `searches/_scope_field` carried about
+  25 English literals; every user-facing string on the search surface now comes from `searches.*`, which
+  completes the server-rendered half of the internationalization work (0 of 100 views left). The strings
+  that live in value objects rather than in a view moved with them, and each is resolved at read time
+  rather than held in a constant, because a constant that called `t()` would be resolved once in
+  whichever locale loaded the class first:
+  - `Search::Scope::Option` no longer holds a label at all. Its label key **is** its own `value`, so
+    `searches.scopes.characters` is `searches.scopes.<the query parameter>` and the dropdown, the note
+    above the form, and the JSON answer's `scope_label` are one lookup apart — while the value in the
+    URL stays `characters`, so a Spanish link to `?scope=characters` keeps working.
+  - `Search::Kinds` holds the twelve bare kinds and the eight taxonomy compounds as keys, keyed by the
+    `kind`/`taxonomy` **pair** the document carries. "Character tag" was composed as
+    `"#{taxonomy} #{kind.downcase}"`, which is a word order a locale does not get to choose; the
+    Spanish badge is now "Etiqueta de personaje", its own key. A kind or taxonomy this version does not
+    know answers with its own value rather than with `humanize`, which was English chrome.
+  - `Search::Commands`' destinations are named in the reader's language, and the typed text is matched
+    against that same translated title — someone typing «personajes» is matched against «Personajes», so
+    the thing on screen is the thing searched. A command's `id` stays a value, because it is what the
+    dropdown marks the active option with. The one command whose subtitle is chrome rather than data
+    ("Open universe") translates it at the call site.
+  - `Search::Scope` and `Search::Query` translate each dropped value where they drop it, so the
+    controller's `to_sentence` joins them in the reader's language instead of with English connectors.
+  - The results page no longer prints `Search::UnavailableBackend::REASON` as its paragraph. That
+    constant is the operator's sentence for a log line and a reindex report, and printing it under a
+    heading this slice had just translated put English in a Spanish page; the page says the same thing
+    with `searches.unavailable_reason` instead, and the two name the same environment variable and the
+    same command.
+  - The results page's empty answer no longer downcases the scope label. "Nothing in *This universe*
+    matched" needed a lowercased label, and a lowercased label is a word order the locale does not get
+    to choose; it is two sentences now, one carrying the scope as its subject and one doing the
+    advising, with and without the platform hint depending on whether a universe is in scope.
+  - `test/controllers/searches_locale_test.rb` holds the rendered page in Spanish;
+    `test/models/search/{scope,query,commands,kinds}_test.rb` hold the four value objects, and
+    `SearchTestBackend` grew a `total:` so a truncated result set's copy is covered rather than
+    assumed.
+- **[changed]** **A record's label and a search document's title are now two different things, and the
+  reason is written down.** `Event#display_string` and `Ownership#display_string` are their models'
+  `searchable title:`, so a document holds the string and one index serves every reader. Both now
+  resolve through `I18n.with_locale(AppLocale::DEFAULT)`, and a new `#display_label` on each is the
+  same ladder in the reader's language — so every view, helper, and serialized field reads
+  `display_label`, and a Spanish request can no longer write Spanish chrome into the index. In the
+  default locale the two are the same string, which is what makes the stored one safe, and
+  `EventTest`/`OwnershipTest` hold the *stored* wording explicitly: changing `en.yml` is an
+  index-content change and `bin/rails search:reindex` is what makes an existing index agree. Nothing
+  has to be reindexed **now**: the stored strings are byte-for-byte the ones already in the index
+  (`"X owns Y"`, `"before X"`, `"Event #12"`), and only the code producing them changed.
+  Consequences worth stating:
+  - `Relation` needs no second form. Its fallback is `A → B` — the neutral pair its list row already
+    draws — so it has no `display_label` at all, and `ApplicationHelper#record_label` is the one place
+    that order is written: `display_label`, then `display_string`, then `name`. Five shared partials
+    (`_row_actions`, `_record_details`, `_tagged_record_list`, `record_details_link`, and the row-action
+    confirmations) read that helper instead of repeating the fallback chain.
+  - **A search result row still shows the stored document title**, so an Ownership with no name reads
+    "Hannah owns Heirloom" in the results page of a Spanish reader. That is a decision, not a gap: the
+    alternatives are a document that changes with the locale of whoever caused the write, an index
+    extension for one sentence, or a record that cannot be found by its only identifier. The three
+    options and the trade are recorded in `docs/features/search.md`.
+  - `Event` was never the case the docs described: it indexes `name`, not its own label, so its
+    `"before X"` phrases never reached the index. They were still chrome on every surface that shows an
+    event — the Events list, the Scene's event picker, the Timeline popover, and the three temporal
+    selects — and they moved to `events.display_label.*` together. `timeline.popover.before/after/
+    simultaneous` and `timeline.event_placeholder` were the same English strings under a second owner
+    and are deleted; the popover reads the Event's own keys, so "before" has one home.
+- **[fixed]** The **Relations and Ownerships rows** built their delete confirmation's record name as an
+  English frame — `relation_name = "#{relation.character1.name} and #{relation.character2.name}"` —
+  which the Universe Bible slice translated around but not in. Both are `relations.endpoints` and
+  `ownerships.endpoints` now, so the row's confirmation reads "Character one y Character two" in Spanish.
+- **[docs]** `docs/features/i18n.md` records the decision this slice settled: a search document's title
+  is a record's label **in the default locale** while a view resolves `#display_label` in the reader's
+  language, why `Relation` needs no second form, and what a change to the stored wording costs. Its
+  naming rules gain the two this surface showed: a sentence is not a frame, so a scope label is never
+  spliced into one and lowercased; and a **search result badge** is its own surface and owns
+  `searches.kinds.*`, where the Scenes tab strip reads the workspace's own title. The "Known gap"
+  section now names only the four Stimulus controllers, since the record-label gap is decided and points
+  at `features/search.md`; `features/search.md` gains a ninth rule (a label a reader sees is translated
+  at read time, a value they act on is not) and the new
+  [result-row section](docs/features/search.md#a-result-row-shows-the-stored-document-title).
+  `docs/backlog.md`'s internationalization item re-measures the remainder — **0 of 100 views**, ~51
+  client-side strings, and the two shared `errors.add` messages — and the slice 27.5 entry is deleted;
+  the remaining numbers were not renumbered.
+
 - **[fixed]** A **dismiss control clicked while a modal is still fading in is no longer dropped**, in
   both shared editors. Every modal offers **Cancel**, a `btn-close` button, and Escape or a backdrop
   click, and all four resolve to the one Bootstrap instance the editor owns; `hide()` returns without

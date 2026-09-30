@@ -12,6 +12,12 @@ module Search
   # universes the visitor may open, and inside a universe they are that
   # universe's own pages and stories. Mixing the two would offer "switch
   # universe" in the middle of a story search.
+  #
+  # A command's **title is the reader's own language**, and it is also what the
+  # typed text is matched against — so someone who types «personajes» is matched
+  # against «Personajes». That is the point: the thing on screen is the thing
+  # searched. The `id` stays a value, because it is what the dropdown marks the
+  # active option with and never appears to a reader.
   class Commands
     include Rails.application.routes.url_helpers
 
@@ -67,22 +73,22 @@ module Search
       # search is using, so the commands stay inside it.
       def universe_candidates
         pages = [
-          command("universe", "Universe overview", universe.name, universe_path(universe_slug: universe.slug)),
-          command("stories", "All stories", universe.name, universe_stories_path(universe_slug: universe.slug))
+          command("universe", "searches.commands.universe_overview", universe.name, universe_path(universe_slug: universe.slug)),
+          command("stories", "searches.commands.stories", universe.name, universe_stories_path(universe_slug: universe.slug))
         ]
         pages + universe_pages + story_commands
       end
 
       def universe_pages
         [
-          command("characters", "Characters", universe.name, universe_characters_path(universe_slug: universe.slug)),
-          command("locations", "Locations", universe.name, universe_locations_path(universe_slug: universe.slug)),
-          command("events", "Events", universe.name, universe_events_path(universe_slug: universe.slug)),
-          command("items", "Items", universe.name, universe_items_path(universe_slug: universe.slug)),
-          command("relations", "Relations", universe.name, universe_relations_path(universe_slug: universe.slug)),
-          command("ownerships", "Ownerships", universe.name, universe_ownerships_path(universe_slug: universe.slug)),
-          command("timeline", "Timeline", universe.name, universe_timeline_path(universe_slug: universe.slug)),
-          command("tags", "Tags", universe.name, universe_tags_path(universe_slug: universe.slug))
+          command("characters", "searches.commands.characters", universe.name, universe_characters_path(universe_slug: universe.slug)),
+          command("locations", "searches.commands.locations", universe.name, universe_locations_path(universe_slug: universe.slug)),
+          command("events", "searches.commands.events", universe.name, universe_events_path(universe_slug: universe.slug)),
+          command("items", "searches.commands.items", universe.name, universe_items_path(universe_slug: universe.slug)),
+          command("relations", "searches.commands.relations", universe.name, universe_relations_path(universe_slug: universe.slug)),
+          command("ownerships", "searches.commands.ownerships", universe.name, universe_ownerships_path(universe_slug: universe.slug)),
+          command("timeline", "searches.commands.timeline", universe.name, universe_timeline_path(universe_slug: universe.slug)),
+          command("tags", "searches.commands.tags", universe.name, universe_tags_path(universe_slug: universe.slug))
         ]
       end
 
@@ -90,11 +96,11 @@ module Search
         return [] if story.nil?
 
         [
-          command("story", "Story: #{story.name}", universe.name,
-            universe_story_path(universe_slug: universe.slug, id: story.id)),
-          command("sections", "Sections", story.name,
+          command("story", "searches.commands.story", universe.name,
+            universe_story_path(universe_slug: universe.slug, id: story.id), name: story.name),
+          command("sections", "searches.commands.sections", story.name,
             universe_story_sections_path(universe_slug: universe.slug, story_id: story.id)),
-          command("scenes", "Scenes", story.name,
+          command("scenes", "searches.commands.scenes", story.name,
             universe_story_scenes_path(universe_slug: universe.slug, story_id: story.id))
         ]
       end
@@ -104,13 +110,20 @@ module Search
       # to — so the two can never disagree about who exists.
       def universe_switchers
         Universe.visible_to(user).order(:name, :id).limit(MAX_UNIVERSES).map do |candidate|
-          command("universe-#{candidate.id}", "Universe: #{candidate.name}", "Open universe",
-            universe_path(universe_slug: candidate.slug))
+          command("universe-#{candidate.id}", "searches.commands.universe",
+            I18n.t("searches.commands.open_universe"), universe_path(universe_slug: candidate.slug),
+            name: candidate.name)
         end
       end
 
-      def command(id, title, subtitle, url)
-        Command.new(id: id, title: title, subtitle: subtitle, url: url)
+      # `key` rather than a title, resolved here rather than stored, for the
+      # reason every other constant in this application holds a key and not a
+      # string: a title resolved at load time would be one language forever. The
+      # subtitle beside it is data — a universe's or a story's own name — so it is
+      # never translated, which is why the one command whose subtitle is chrome
+      # ("Open universe") translates it at the call site.
+      def command(id, key, subtitle, url, name: nil)
+        Command.new(id: id, title: I18n.t(key, name: name), subtitle: subtitle, url: url)
       end
 
       def match(command, needle)

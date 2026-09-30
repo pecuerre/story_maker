@@ -14,7 +14,8 @@ module Search
   #
   # A value that cannot be used is dropped and reported, exactly as `SceneFilter`
   # reports a section id from another story, rather than silently emptying the
-  # result.
+  # result. Each message is translated where it is dropped, so the controller's
+  # `to_sentence` joins them in the reader's language.
   class Query
     PARAMS = %i[ q scope story_id ].freeze
     MINIMUM_LENGTH = Search::Dropdown::MINIMUM_LENGTH
@@ -83,7 +84,7 @@ module Search
         return if requested.blank?
 
         if universe.nil?
-          @story_discarded << "The story filter was ignored because no universe is selected."
+          @story_discarded << I18n.t("searches.discarded.story_without_universe")
           return
         end
 
@@ -91,7 +92,7 @@ module Search
         if story
           story
         else
-          @story_discarded << "The story filter was ignored because it is not a story of this universe."
+          @story_discarded << I18n.t("searches.discarded.story_outside_universe")
           nil
         end
       end

@@ -47,7 +47,11 @@ guard exists to forbid.
 1. **The engine is reached through `Search.backend` and nowhere else.** A real `Search::Client` when
    configured, `Search::UnavailableBackend` when not. Every engine failure becomes
    `Search::Unavailable`, which the controller states rather than raises, because the box renders on
-   every page. There is no SQL fallback: one query, one ranking, one answer.
+   every page. There is no SQL fallback: one query, one ranking, one answer. The state is stated twice
+   over, in two registers: `Search::UnavailableBackend::REASON` is the **operator's** sentence and is
+   what a log line, an exception message, and `bin/rails search:reindex` carry, while the page prints
+   `searches.unavailable_reason` under a heading of its own — a reader's sentence, in the reader's
+   language, naming the same environment variable and the same command.
 2. **Authorization is a filter, not a post-filter.** `Search::Catalog` sends
    `universe_id IN [...]` built from `Universe.visible_to(user)` — the same rule `Ability`
    enforces — and a reader with no readable universe is not asked at all. The engine's key never
@@ -71,6 +75,35 @@ guard exists to forbid.
 8. **The reindex must check its tasks.** `Search::Reindexer` awaits each one and raises
    `Search::ReindexFailed` on a failure, because the engine refuses a whole batch over one document
    it dislikes and otherwise reports success while storing nothing.
+9. **A label a reader sees is translated at read time; a value they act on is not.** A scope's
+   `value` and a command's `id` travel in a URL and into the dropdown, so they are English in every
+   locale; the label beside each is a key. That is why `Search::Scope::Option` holds no string at all —
+   its label key *is* its value — and why a command's `title` is resolved per request and is also what
+   the typed text is matched against, so the thing on screen is the thing searched.
+
+## A result row shows the stored document title
+
+`Search::Hit#title` is the document's own `title` field, read straight back out of the index, and a
+document is **language-independent by design**: one index serves every reader. A record whose own label
+is a sentence — an `Ownership` with no name, which is `"X owns Y"` — therefore shows that sentence in
+the default locale on a result row, while its own list and its own page show the reader's language.
+
+That is a decision, not an oversight, and the alternatives are worse:
+
+- **Translate it in the model** and a document written during a Spanish request stores Spanish chrome,
+  which every English reader of that universe then sees. Reindexing in a second language would change
+  every document again.
+- **Store the parts and compose at read time** — a second document field holding the two names, and a
+  composer in `Search::Catalog` — so every surface agrees. It extends the `searchable` declaration for
+  one sentence, needs a reindex to populate the field, and has to be extended again for `Event`'s
+  chain of relationships before it is really general.
+- **Leave the record's label out of the index** so no chrome is ever stored. Then an unnamed Ownership
+  is unfindable by its endpoints, which is the only thing that identifies it.
+
+The stored half of the contract is `Model#display_string`, and the read half is `Model#display_label`;
+[`features/i18n.md`](i18n.md#a-record-label-that-is-also-a-search-documents-title) owns the rule. A
+change to the default locale's `ownerships.display_label` is therefore an index-content change, and
+`bin/rails search:reindex` is what makes an existing index agree with it.
 
 ## Both surfaces, one read
 
@@ -83,6 +116,13 @@ so keep it in the caller's class.
 `searches_helper.rb` supplies the rest: `search_scope_options` (which disables what the page cannot
 honour), `search_selected_scope` (the *resolved* scope, so a widened search never displays a choice
 that does not describe it), and `search_path_for(universe, query)`.
+
+Every word on both surfaces is in `searches.*`, including the copy the two model-level classes read:
+`searches.scopes.*` (an option's label, keyed by its value), `searches.kinds.*` (a result row's badge),
+`searches.commands.*` (a destination's title), and `searches.discarded.*` (a value a request could not
+use, translated where it is dropped so the controller's `to_sentence` joins them in the reader's
+language). `test/controllers/searches_locale_test.rb` holds the rendered page in Spanish;
+`test/models/search/{scope,query,commands,kinds}_test.rb` hold the four value objects.
 
 ## Client-side rules
 

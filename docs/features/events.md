@@ -7,13 +7,15 @@ the Event list's page shape is in [conventions.md](../conventions.md#views---thr
 ## What makes Event special
 
 1. `Event` includes `Hierarchical` (parent/position) **plus** the self-referencing `before_event`,
-   `after_event`, and `simultaneous_event` associations. `display_string` walks with a visited list,
+   `after_event`, and `simultaneous_event` associations. `display_label` walks with a visited list,
    and `cannot_reference_self` checks both object identity and the foreign-key id. Database check
    constraints close the insert-time gap where an id is assigned only during save. Destroying an event
    nullifies every incoming temporal reference; a referrer that existed only to point at that event is
    removed first, so `must_be_identifiable` remains true for retained rows. **The editor never offers
    the event being edited as one of its own three references** — see
-   [The editor's own temporal references](#the-editors-own-temporal-references).
+   [The editor's own temporal references](#the-editors-own-temporal-references). A label has two forms
+   here, and the reason is in
+   [i18n.md](i18n.md#a-record-label-that-is-also-a-search-documents-title).
 2. Tags are **optional**, as on every content model (`has_many_tags` adds no presence validation).
    Event has a `_tag` taxonomy like the other content models: `EventTag` + `events_event_tags` HABTM +
    `EventTagsController` + labeled Event tags navigation.

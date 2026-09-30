@@ -2,17 +2,17 @@
 
 <%= render "shared/record_details",
   record: @event,
-  eyebrow: "Universe Bible",
-  label: "Event",
+  eyebrow: t("sidebar.universe_bible"),
+  label: t("events.show.label"),
   facts: [
-    detail_fact("Title", @event.title.presence || @event.display_string, blank: "No title yet."),
-    detail_fact("Universe", link_to(Current.universe.name, universe_path(id: Current.universe))),
-    detail_fact("Event tags", entity_tag_badge(@event), blank: "No tags assigned. Tags are optional."),
-    detail_fact("In-world time", in_world_range(@event.start_datetime, @event.end_datetime)),
-    detail_fact("Description", @event.description, blank: "No description yet.")
+    detail_fact(t("events.show.facts.title"), @event.title.presence || @event.display_string),
+    detail_fact(t("events.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
+    detail_fact(t("events.show.facts.tags"), entity_tag_badge(@event), blank: t("events.show.facts.tags_blank")),
+    detail_fact(t("events.show.facts.in_world_time"), in_world_range(@event.start_datetime, @event.end_datetime)),
+    detail_fact(t("events.show.facts.description"), @event.description, blank: t("events.show.facts.description_blank"))
   ],
   back_url: universe_events_path,
-  back_label: "All events" %>
+  back_label: t("events.show.back_label") %>
 
 <%# Several Scenes may depict one Event, and they are never merged: the section
     lists each Scene in the order its Story is told, not in the Event's timeline. %>

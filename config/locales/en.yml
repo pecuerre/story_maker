@@ -99,6 +99,10 @@ en:
       alt: "Photo of %{name}"
     error_summary:
       # `count` is pluralized by the key: one error reads differently from many.
+      # `subject` is the phrase that follows the sentence's own "this", so it
+      # carries no article of its own in English. A locale whose sentence has no
+      # determiner to supply one — Spanish — passes a full phrase instead, because
+      # a bare noun there would need an article the key cannot know.
       heading:
         one: "1 error prevented this %{subject} from being saved:"
         other: "%{count} errors prevented this %{subject} from being saved:"
@@ -113,9 +117,11 @@ en:
       empty_description: "This grouping tag has no child tags yet."
       unused_description: "Nothing uses this child tag yet."
     detail_section:
-      # `label` is a record-type key resolved with `count: 2`, so the sentence
-      # reads "No characters carry this tag" and not "No character carry…".
-      empty_title: "No %{label} carry this tag"
+      # `label` is a record-type key resolved with `count: 1`, so the sentence
+      # reads "No character carries this tag" and not "No character carry…" — the
+      # slot takes a **singular** noun, because a plural cannot follow this verb
+      # in either language.
+      empty_title: "No %{label} carries this tag"
     menu_tag_content_tabs:
       aria_label: "%{type} workspace"
     tag_workspace_navigation:
@@ -139,6 +145,14 @@ en:
       delete: "Delete"
       edit_title: "Edit %{label}"
       delete_confirm: "Delete %{name}?"
+    # The two strings every form and every modal in the application shares: the
+    # button that abandons an edit, and the icon button that closes a modal. They
+    # are one key each rather than one per workspace, because a reader who reads
+    # "Cancel" on the universe form and "Cancel" on the Characters form has read
+    # the same word twice and expects it to be one word.
+    form:
+      cancel: "Cancel"
+      close: "Close"
 
   # The universes workspace: the list of worlds, one universe's own page, and
   # the create/edit forms it shares with the stories workspace.
@@ -185,7 +199,6 @@ en:
       # is English only, so the label is named here rather than inherited.
       submit_create: "Create Universe"
       submit_update: "Update Universe"
-      cancel: "Cancel"
     show:
       eyebrow: "Universe"
       description: "The shared world and story collection for this workspace."
@@ -232,7 +245,6 @@ en:
       description: "Description"
       submit_create: "Create Story"
       submit_update: "Update Story"
-      cancel: "Cancel"
     show:
       default_description: "Plan the plot and structure for this story."
       open_sections: "Open sections"
@@ -282,7 +294,6 @@ en:
       access_level: "Access level"
       choose_level: "Choose a level"
       submit: "Grant access"
-      cancel: "Cancel"
     # The three levels the form offers. Their *values* are the `read`/`write`/
     # `admin` strings that travel in a form field and are stored on the record,
     # so only the label beside them is translated.
@@ -291,8 +302,10 @@ en:
       write: "Write"
       admin: "Admin"
     # What a membership is called in the error summary's sentence, where the
-    # record being saved has no name.
-    subject: "access"
+    # record being saved has no name. It is the phrase that follows the sentence's
+    # own "this", so it carries no article of its own here — the Spanish entry is
+    # a full phrase because its sentence has no determiner to supply one.
+    subject: "access grant"
     # `errors.add` messages read as the tail of `errors.format`
     # ("%{attribute} %{message}"), so each starts lowercase.
     errors:
@@ -337,11 +350,297 @@ en:
         empty_title: "Nothing related yet"
         empty_description: "Anything else worth knowing about this section will be listed here later."
 
+  # The Universe Bible workspaces: Characters, Locations, Events, Items,
+  # Relations, and Ownerships. Each block owns its list page, the modal editor
+  # that list page opens, and the record's own details page, so a workspace and
+  # its translations live together.
+  #
+  # Two of their strings are not repeated here. The `Universe Bible` eyebrow is
+  # the left sidebar's own section heading and is read from `sidebar.*` — the
+  # same choice `universes.show` makes for its quick links. The record-type nouns
+  # the counts are announced with stay at the root of this file, and the tab
+  # strip a workspace shares with its sibling reads that sibling's own `tabs`.
+  characters:
+    title: "Characters"
+    description: "People and beings whose details are shared by every story in this universe."
+    tabs_aria_label: "Character workspace"
+    new_title: "New character"
+    add: "Add character"
+    save: "Save character"
+    # The modal is built with `form_with scope:`, which has no model to read
+    # `human_attribute_name` from, so a modal's own labels are named here. The
+    # `activerecord.attributes` entry for the same column is what an error
+    # message reads, and the two are expected to say the same thing.
+    form:
+      name: "Name"
+      description: "Description"
+      tags_label: "Character tags"
+    empty_title: "No characters yet"
+    # The list has two empty states because it has two audiences, exactly as the
+    # universes and stories lists do: a writer is told to add the first record,
+    # and a guest or read-only member is told the records belong to the universe.
+    empty_writable_description: "Characters belong to the universe and are shared by all of its stories. Add the first one to begin."
+    empty_read_only_description: "Characters belong to the universe and are shared by all of its stories."
+    show:
+      label: "Character"
+      back_label: "All characters"
+      facts:
+        universe: "Universe"
+        tags: "Character tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        description: "Description"
+        description_blank: "No description yet."
+    tabs:
+      characters: "Characters"
+      relations: "Relations"
+
+  locations:
+    title: "Locations"
+    description: "Build a hierarchy of places and regions shared by every story in this universe."
+    tabs_aria_label: "Location workspace"
+    new_label: "Add location"
+    # Locations is a taxonomy tree, so it has no empty title of its own: the tree
+    # names the taxonomy from `taxonomies.<model_param>.none_yet`. These two
+    # descriptions sit under that title, and the second is the read-only one.
+    empty_description: "Add a location, then drag rows to create parent and child places."
+    read_only_empty_description: "No locations have been added yet."
+    show:
+      label: "Location"
+      back_label: "All locations"
+      facts:
+        universe: "Universe"
+        tags: "Location tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        parent: "Parent location"
+        parent_blank: "This location is a top-level place."
+        children: "Child locations"
+        children_blank: "No nested places yet."
+        description: "Description"
+        description_blank: "No description yet."
+    tabs:
+      locations: "Locations"
+
+  events:
+    title: "Events"
+    description: "Record moments that shape the universe and provide the structure for its timeline."
+    tabs_aria_label: "Event workspace"
+    new_title: "New event"
+    add: "Add event"
+    save: "Save event"
+    empty_title: "No events yet"
+    empty_writable_description: "Add events with dates or relationships to each other, then open the Timeline to see how they connect."
+    empty_read_only_description: "Events in this universe will appear here once they have been added."
+    # The one delete confirmation of these six workspaces that states its own
+    # cascade. `name` is `Event#display_string`, so it is the event's own label
+    # and is interpolated rather than translated.
+    delete_confirm: "Delete “%{name}”? Its child events, tag assignments, and any temporal referrers that would become unidentifiable will be permanently removed; other temporal references and Scene links will be cleared. Scenes will remain."
+    form:
+      title: "Title"
+      description: "Description"
+      tags_label: "Event tags"
+      hint: "An event needs at least a title, a start or end date, or a relationship to another event below."
+      start_datetime: "Start date/time"
+      end_datetime: "End date/time"
+      # The three temporal references and the blank option that clears one. The
+      # values are event ids, so only the labels beside them are translated.
+      before_event: "Happens before"
+      after_event: "Happens after"
+      simultaneous_event: "Same time as"
+      none: "None"
+    show:
+      label: "Event"
+      back_label: "All events"
+      facts:
+        # There is no blank state for the title. The value is
+        # `title.presence || display_string`, and `display_string` always answers
+        # with something — at worst "Event #12" — so a blank copy here could never
+        # be rendered and would only be a key nothing reads.
+        title: "Title"
+        universe: "Universe"
+        tags: "Event tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        in_world_time: "In-world time"
+        description: "Description"
+        description_blank: "No description yet."
+    # `errors.add` messages read as the tail of `errors.format`
+    # ("%{attribute} %{message}"), so each starts lowercase.
+    errors:
+      must_belong_to_universe: "must belong to the event's universe"
+      cannot_be_itself: "cannot be itself"
+      must_be_identifiable: "must have a title, a date, or a relation to another event"
+    tabs:
+      events: "Events"
+
+  items:
+    title: "Items"
+    description: "Objects and resources whose details are shared by every story in this universe."
+    tabs_aria_label: "Item workspace"
+    new_title: "New item"
+    add: "Add item"
+    save: "Save item"
+    form:
+      name: "Name"
+      description: "Description"
+      tags_label: "Item tags"
+    empty_title: "No items yet"
+    empty_writable_description: "Items belong to the universe and can be used to track objects, resources, and ownership across every story. Add the first one to begin."
+    empty_read_only_description: "Items belong to the universe and are shared by all of its stories."
+    show:
+      label: "Item"
+      back_label: "All items"
+      facts:
+        universe: "Universe"
+        tags: "Item tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        description: "Description"
+        description_blank: "No description yet."
+    tabs:
+      items: "Items"
+      ownerships: "Ownerships"
+
+  # Relations and Ownerships are the two workspaces that use the HTML
+  # redirect/re-render flow rather than a JSON-only mutation, so they are also the
+  # two that set a flash. Their `flash` blocks are the confirmation for a saved or
+  # deleted record; the record type is spelled out rather than interpolated,
+  # because "Relation created." is a sentence about one record and composing it
+  # from the root noun would put the word order back under the locale's control.
+  relations:
+    title: "Relations"
+    # The eyebrow is the tab strip this workspace belongs to, not the section it
+    # is filed under: Relations is reached from the Characters tab.
+    eyebrow: "Characters"
+    description: "Connect characters and record how their relationships change over time."
+    new_title: "New relation"
+    add: "Add relation"
+    save: "Save relation"
+    form:
+      description: "Description"
+      tags_label: "Relation tags"
+    character1: "Character 1"
+    character2: "Character 2"
+    select_character: "Select a character"
+    from: "From"
+    to: "To"
+    empty_title: "No relations yet"
+    empty_writable_description: "Connect two characters to describe their relationship. Relation tags are optional but can make these connections easier to scan."
+    empty_read_only_description: "Character relationships in this universe will appear here once they have been added."
+    show:
+      label: "Relation"
+      back_label: "All relations"
+      facts:
+        character1: "First character"
+        character2: "Second character"
+        tags: "Relation tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        in_world_dates: "In-world dates"
+        description: "Description"
+        description_blank: "No description yet."
+      related:
+        title: "Related information"
+        empty_title: "Nothing related yet"
+        empty_description: "This relation is a link between two characters. Anything else worth knowing about it will be listed here later."
+    # The error summary's subject. It is the phrase that follows the sentence's
+    # own "this", so it carries no article here — the Spanish entry is a full
+    # phrase because its sentence has no determiner to supply one.
+    errors:
+      subject: "relation"
+    flash:
+      created: "Relation created."
+      updated: "Relation updated."
+      deleted: "Relation deleted."
+    tabs:
+      characters: "Characters"
+      relations: "Relations"
+
+  ownerships:
+    title: "Ownerships"
+    eyebrow: "Items"
+    description: "Track which characters own items and when those relationships change."
+    new_title: "New ownership"
+    add: "Add ownership"
+    save: "Save ownership"
+    form:
+      description: "Description"
+      tags_label: "Ownership tags"
+    # The two form labels. `character` is the field's subject — the select offers
+    # characters — while `show.facts.owner` is what the record *is* in that
+    # relationship, so the two are separate keys and not one shared noun.
+    item: "Item"
+    character: "Character"
+    select_item: "Select an item"
+    select_character: "Select a character"
+    from: "From"
+    to: "To"
+    empty_title: "No ownerships yet"
+    empty_writable_description: "Connect a character to an item to record present or historical ownership."
+    empty_read_only_description: "Ownership records in this universe will appear here once they have been added."
+    show:
+      label: "Ownership"
+      back_label: "All ownerships"
+      facts:
+        item: "Item"
+        owner: "Owner"
+        tags: "Ownership tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        in_world_dates: "In-world dates"
+        description: "Description"
+        description_blank: "No description yet."
+      related:
+        title: "Related information"
+        empty_title: "Nothing related yet"
+        empty_description: "This ownership is a link between a character and an item. Anything else worth knowing about it will be listed here later."
+    errors:
+      subject: "ownership"
+    flash:
+      created: "Ownership created."
+      updated: "Ownership updated."
+      deleted: "Ownership deleted."
+    tabs:
+      items: "Items"
+      ownerships: "Ownerships"
+
+  # The field labels the modal editors are built from.
+  #
+  # `ModalFields` serializes these descriptors into the taxonomy tree's
+  # `data-taxonomy-tree-modal-fields-value`, so a label here is the string the
+  # DOM-built modal prints, and the same helpers feed the server-rendered modals.
+  # The descriptors themselves hold a *key* rather than a translated string —
+  # `PHOTO_FIELD` is a frozen constant, and a constant that called `t()` would be
+  # resolved once, in whatever locale loaded the class first — so these are
+  # resolved per request by `ModalFields#modal_field`.
+  modal_fields:
+    name: "Name"
+    description: "Description"
+    background_color: "Background color"
+    foreground_color: "Foreground color"
+    parent: "Parent"
+    no_parent: "(No parent)"
+    taggable: "Taggable"
+    photo: "Photo"
+    show_in_menu: "Show in menu"
+    symmetric: "Symmetric"
+    inverse: "Inverse"
+    location_tags: "Location tags"
+    section_tags: "Section tags"
+
   # The taxonomy workspace at `/u/:universe_slug/tags`. The per-taxonomy copy
   # lives in `TagsHelper`'s metadata, which stores these keys rather than English
   # strings so the same helper serves both locales; see
   # `tag_workspace_config`'s comment.
   tags:
+    # A taxonomy's own details page. The eyebrow names the right sidebar's
+    # section rather than the taxonomy, so one key serves all eight, and the
+    # Scope/Description/Color facts are the same three on every one of them.
+    #
+    # The colour has no blank state: `bgcolor` is NOT NULL with a default, so it
+    # always holds a value and a blank copy here could never be rendered.
+    show:
+      eyebrow: "Configuration · Tags"
+      scope: "Scope"
+      scope_universe_description: "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."
+      description: "Description"
+      description_blank: "No description yet."
+      color: "Color"
     title: "Tags"
     # One label serves both the scope tab strip and this page's eyebrow.
     scope:
@@ -358,36 +657,60 @@ en:
         empty_description: "Tags are optional. Add one to group characters, or create characters without a tag."
         read_only_empty_description: "No character tags are defined yet."
         new_label: "Add character tag"
+        record_label: "Character tag"
+        all_label: "All character tags"
+        records_title: "Characters with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so characters can stay untagged."
       relation:
         title: "Relation tags"
         description: "Define the relationship types used when connecting characters in this universe."
         empty_description: "Tags are optional. Add one to describe character relationships, or leave relations untagged."
         read_only_empty_description: "No relation tags are defined yet."
         new_label: "Add relation tag"
+        record_label: "Relation tag"
+        all_label: "All relation tags"
+        records_title: "Relations with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so relations can stay untagged."
       location:
         title: "Location tags"
         description: "Organize the places and regions that make up this universe."
         empty_description: "Tags are optional. Add one to group locations, or organize them later."
         read_only_empty_description: "No location tags are defined yet."
         new_label: "Add location tag"
+        record_label: "Location tag"
+        all_label: "All location tags"
+        records_title: "Locations with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so locations can stay untagged."
       event:
         title: "Event tags"
         description: "Classify events so related moments are easier to find across the timeline."
         empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead."
         read_only_empty_description: "No event tags are defined yet."
         new_label: "Add event tag"
+        record_label: "Event tag"
+        all_label: "All event tags"
+        records_title: "Events with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so events can stay untagged."
       item:
         title: "Item tags"
         description: "Define optional categories for objects and resources in this universe."
         empty_description: "Tags are optional. Add one to group items, or create untagged items."
         read_only_empty_description: "No item tags are defined yet."
         new_label: "Add item tag"
+        record_label: "Item tag"
+        all_label: "All item tags"
+        records_title: "Items with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so items can stay untagged."
       ownership:
         title: "Ownership tags"
         description: "Describe the kinds of ownership recorded between characters and items."
         empty_description: "Tags are optional. Add one to classify ownership records, or create them untagged."
         read_only_empty_description: "No ownership tags are defined yet."
         new_label: "Add ownership tag"
+        record_label: "Ownership tag"
+        all_label: "All ownership tags"
+        records_title: "Ownerships with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so ownerships can stay untagged."
       section:
         title: "Section tags"
         description: "Define labels such as book, chapter, act, or episode for this story's sections."
@@ -545,6 +868,99 @@ en:
       universe_membership:
         email_address: "Email address"
         access_level: "Access level"
+      # The Universe Bible workspaces' own models. A form label reads the same
+      # name an error message does, so a Spanish page must not render "Name"
+      # beside a Spanish error about `name`. The attributes named here are the
+      # ones a form label, a collection select, or an `errors.add` in these
+      # workspaces actually reaches.
+      character:
+        name: "Name"
+        description: "Description"
+        parent: "Parent character"
+      location:
+        name: "Name"
+        description: "Description"
+        parent: "Parent location"
+      event:
+        name: "Name"
+        title: "Title"
+        description: "Description"
+        start_datetime: "Start date/time"
+        end_datetime: "End date/time"
+        # The three temporal references are named by the form's own labels, and
+        # an `errors.add(:before_event, …)` is announced as this name.
+        before_event: "Happens before"
+        after_event: "Happens after"
+        simultaneous_event: "Same time as"
+      item:
+        name: "Name"
+        description: "Description"
+        parent: "Parent item"
+      relation:
+        name: "Name"
+        description: "Description"
+        character1: "Character 1"
+        character2: "Character 2"
+        from_date: "From"
+        to_date: "To"
+      ownership:
+        name: "Name"
+        description: "Description"
+        item: "Item"
+        character: "Character"
+        from_date: "From"
+        to_date: "To"
+      # The eight taxonomies share one concern for the colour pair and one for
+      # the parent, so a model is named once here and the tag editor's field
+      # labels come from `modal_fields.*` rather than from here.
+      character_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
+        show_in_menu: "Show in menu"
+      relation_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
+        symmetric: "Symmetric"
+        inverse: "Inverse"
+      location_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
+        show_in_menu: "Show in menu"
+      event_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
+        show_in_menu: "Show in menu"
+      item_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
+        show_in_menu: "Show in menu"
+      ownership_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
 
   # Refusals and rate limits that are stated rather than answered with a bare
   # status code.

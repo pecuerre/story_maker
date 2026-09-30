@@ -1,15 +1,15 @@
-<% content_for :title, "Events" %>
-<% empty_description = can_write_universe? ? "Add events with dates or relationships to each other, then open the Timeline to see how they connect." : "Events in this universe will appear here once they have been added." %>
+<% content_for :title, t("events.title") %>
+<% empty_description = can_write_universe? ? t("events.empty_writable_description") : t("events.empty_read_only_description") %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="event"
   data-modal-form-response-value="json"
-  data-modal-form-create-title-value="New event">
+  data-modal-form-create-title-value="<%= t("events.new_title") %>">
   <%= render "shared/page_header",
-    title: "Events",
-    eyebrow: "Universe Bible",
-    description: "Record moments that shape the universe and provide the structure for its timeline.",
+    title: t("events.title"),
+    eyebrow: t("sidebar.universe_bible"),
+    description: t("events.description"),
     count: @events.size,
     count_label: "event" do %>
     <% if can_write_universe? %>
@@ -17,16 +17,16 @@
         data-action="modal-form#open"
         data-modal-form-url="<%= universe_events_path %>"
         data-modal-form-method="post"
-        data-modal-form-title="New event"
+        data-modal-form-title="<%= t("events.new_title") %>"
         data-modal-form-values-value="{}">
         <i class="bi bi-plus-lg" aria-hidden="true"></i>
-        <span>Add event</span>
+        <span><%= t("events.add") %></span>
       </button>
     <% end %>
   <% end %>
 
   <%= render "shared/content_tabs",
-    aria_label: "Event workspace",
+    aria_label: t("events.tabs_aria_label"),
     tabs: content_workspace_tabs(:event) %>
 
   <% if @events.any? %>
@@ -48,9 +48,9 @@
 
             <%= render "shared/row_actions",
               record: event,
-              label: "event",
+              label: t("event", count: 1),
               record_name: event.display_string,
-              confirm_text: "Delete “#{event.display_string}”? Its child events, tag assignments, and any temporal referrers that would become unidentifiable will be permanently removed; other temporal references and Scene links will be cleared. Scenes will remain.",
+              confirm_text: t("events.delete_confirm", name: event.display_string),
               edit_url: universe_event_path(id: event),
               delete_url: universe_event_path(id: event),
               delete_via: :json,
@@ -61,7 +61,7 @@
     </div>
   <% else %>
     <%= render "shared/empty_state",
-      title: "No events yet",
+      title: t("events.empty_title"),
       description: empty_description,
       icon: "calendar-event" %>
   <% end %>
@@ -74,8 +74,8 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="event-modal-title" data-modal-form-target="title">New event</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h2 class="modal-title fs-5" id="event-modal-title" data-modal-form-target="title"><%= t("events.new_title") %></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
         </div>
         <%= form_with scope: :event,
           url: universe_events_path,
@@ -84,57 +84,59 @@
           <div class="modal-body">
             <%= render "shared/modal_errors" %>
             <p class="text-body-secondary small">
-              An event needs at least a title, a start or end date, or a relationship to another event below.
+              <%= t("events.form.hint") %>
             </p>
             <div class="mb-3">
-              <%= form.label :title, class: "form-label" %>
+              <%= form.label :title, t("events.form.title"), class: "form-label" %>
               <%= form.text_field :title, class: "form-control" %>
             </div>
             <%= render "shared/photo_field", param: "event" %>
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <%= form.label :start_datetime, "Start date/time", class: "form-label" %>
+                <%= form.label :start_datetime, t("events.form.start_datetime"), class: "form-label" %>
                 <%= form.datetime_local_field :start_datetime, class: "form-control" %>
               </div>
               <div class="col-md-6">
-                <%= form.label :end_datetime, "End date/time", class: "form-label" %>
+                <%= form.label :end_datetime, t("events.form.end_datetime"), class: "form-label" %>
                 <%= form.datetime_local_field :end_datetime, class: "form-control" %>
               </div>
             </div>
             <div class="mb-3">
-              <%= form.label :description, class: "form-label" %>
+              <%= form.label :description, t("events.form.description"), class: "form-label" %>
               <%= form.text_area :description, class: "form-control", rows: 3 %>
             </div>
             <div class="mb-3">
-              <%= form.label :event_tag_ids, "Event tags", class: "form-label" %>
+              <%= form.label :event_tag_ids, t("events.form.tags_label"), class: "form-label" %>
               <%= form.collection_select :event_tag_ids, @event_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
+            <%# The three temporal references carry event ids, so the option values
+                are ids in every language and only the labels beside them move. %>
             <div class="row g-3">
               <div class="col-md-4">
-                <%= form.label :before_event_id, "Happens before", class: "form-label" %>
+                <%= form.label :before_event_id, t("events.form.before_event"), class: "form-label" %>
                 <%= form.collection_select :before_event_id, @events_for_select, :id, :display_string,
-                  { include_blank: "None" },
+                  { include_blank: t("events.form.none") },
                   { class: "form-select" } %>
               </div>
               <div class="col-md-4">
-                <%= form.label :after_event_id, "Happens after", class: "form-label" %>
+                <%= form.label :after_event_id, t("events.form.after_event"), class: "form-label" %>
                 <%= form.collection_select :after_event_id, @events_for_select, :id, :display_string,
-                  { include_blank: "None" },
+                  { include_blank: t("events.form.none") },
                   { class: "form-select" } %>
               </div>
               <div class="col-md-4">
-                <%= form.label :simultaneous_event_id, "Same time as", class: "form-label" %>
+                <%= form.label :simultaneous_event_id, t("events.form.simultaneous_event"), class: "form-label" %>
                 <%= form.collection_select :simultaneous_event_id, @events_for_select, :id, :display_string,
-                  { include_blank: "None" },
+                  { include_blank: t("events.form.none") },
                   { class: "form-select" } %>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= form.submit "Save event", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+            <%= form.submit t("events.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
           </div>
         <% end %>
       </div>

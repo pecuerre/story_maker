@@ -1,16 +1,16 @@
-<% content_for :title, "Ownership Tags" %>
+<% content_for :title, t("tags.types.ownership.title") %>
 
 <%= render "shared/taxonomy_tree",
-  title: "Ownership tags",
-  description: "Describe the kinds of ownership recorded between characters and items.",
-  eyebrow: "Universe Bible",
+  title: t("tags.types.ownership.title"),
+  description: t("tags.types.ownership.description"),
+  eyebrow: t("sidebar.universe_bible"),
   count: Current.universe.ownership_tags.count,
   count_label: "tag",
-  new_label: "Add ownership tag",
+  new_label: t("tags.types.ownership.new_label"),
   tag_workspace_scope: "universe",
   tag_workspace_taxonomy: "ownership",
-  empty_description: "Tags are optional. Add one to classify ownership records, or create them untagged.",
-  read_only_empty_description: "No ownership tags are defined yet.",
+  empty_description: t("tags.types.ownership.empty_description"),
+  read_only_empty_description: t("tags.types.ownership.read_only_empty_description"),
   nodes: @ownership_tags,
   create_url: universe_ownership_tags_path,
   update_url: ->(ownership_tag) { universe_ownership_tag_path(id: ownership_tag) },

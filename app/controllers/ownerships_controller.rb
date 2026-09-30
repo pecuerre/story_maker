@@ -19,7 +19,7 @@ class OwnershipsController < ApplicationController
     @ownership = Current.universe.ownerships.new(ownership_params)
 
     if @ownership.save
-      redirect_to universe_ownerships_path(), notice: "Ownership created."
+      redirect_to universe_ownerships_path(), notice: t("ownerships.flash.created")
     else
       load_form_options
       @ownerships = Current.universe.ownerships.includes(:item, :character, :ownership_tags).order(:id)
@@ -29,7 +29,7 @@ class OwnershipsController < ApplicationController
 
   def update
     if @ownership.update(ownership_params)
-      redirect_to universe_ownerships_path(), notice: "Ownership updated."
+      redirect_to universe_ownerships_path(), notice: t("ownerships.flash.updated")
     else
       load_form_options
       @ownerships = Current.universe.ownerships.includes(:item, :character, :ownership_tags).order(:id)
@@ -39,7 +39,7 @@ class OwnershipsController < ApplicationController
 
   def destroy
     @ownership.soft_delete
-    redirect_to universe_ownerships_path(), notice: "Ownership deleted."
+    redirect_to universe_ownerships_path(), notice: t("ownerships.flash.deleted")
   end
 
   private

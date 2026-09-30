@@ -22,7 +22,7 @@
         `helpers.submit.*`, so the label is named here. %>
     <%= form.submit(story.persisted? ? t("stories.form.submit_update") : t("stories.form.submit_create"),
       class: "btn btn-primary") %>
-    <%= link_to t("stories.form.cancel"), story.persisted? ? universe_story_path(id: story) : universe_stories_path,
+    <%= link_to t("shared.form.cancel"), story.persisted? ? universe_story_path(id: story) : universe_stories_path,
       class: "btn btn-link" %>
   </div>
 <% end %>

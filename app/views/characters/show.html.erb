@@ -2,14 +2,14 @@
 
 <%= render "shared/record_details",
   record: @character,
-  eyebrow: "Universe Bible",
-  label: "Character",
+  eyebrow: t("sidebar.universe_bible"),
+  label: t("characters.show.label"),
   facts: [
-    detail_fact("Universe", link_to(Current.universe.name, universe_path(id: Current.universe))),
-    detail_fact("Character tags", entity_tag_badge(@character), blank: "No tags assigned. Tags are optional."),
-    detail_fact("Description", @character.description, blank: "No description yet.")
+    detail_fact(t("characters.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
+    detail_fact(t("characters.show.facts.tags"), entity_tag_badge(@character), blank: t("characters.show.facts.tags_blank")),
+    detail_fact(t("characters.show.facts.description"), @character.description, blank: t("characters.show.facts.description_blank"))
   ],
   back_url: universe_characters_path,
-  back_label: "All characters" %>
+  back_label: t("characters.show.back_label") %>
 
 <%= render "scene_appearances/section", record: @character %>

@@ -162,28 +162,60 @@ module TagsHelper
   # the tag details page can preserve this navigation without relying on a
   # potentially absent or untrusted Referer header.
   #
-  # These labels belong to the Universe Bible workspaces, which the taxonomy
-  # index views also pass their own copy of; both are translated together by the
-  # slice that owns those pages.
+  # A tab label is the name of the workspace it opens, and every workspace names
+  # itself in its own key block, so the strip reads `<workspace>.tabs.<name>`
+  # rather than a second hand-written list here. A workspace the strip does not
+  # open — Ownerships reached from the Items strip, Relations from the Characters
+  # strip — still declares the label, because this method builds the whole strip
+  # for both of them and a workspace that cannot render its own tab is the kind of
+  # hole a missing translation only shows at runtime.
+  #
+  # `path` is a route helper's **name**, not a lambda. A constant is loaded once
+  # and its lambdas capture the module, which has no route helpers, so calling
+  # `universe_characters_path` inside one raises `undefined local variable or
+  # method … for module TagsHelper`. `public_send` runs it on the view, which is
+  # the same reason `UNIVERSE_TAG_METADATA` above stores `model_param` and a
+  # field-helper name rather than calling either from the constant.
+  CONTENT_WORKSPACE_TABS = {
+    "character" => {
+      key: "characters",
+      tabs: [
+        { name: "characters", path: :universe_characters_path, controller: :characters },
+        { name: "relations", path: :universe_relations_path, controller: :relations }
+      ]
+    },
+    "location" => {
+      key: "locations",
+      tabs: [
+        { name: "locations", path: :universe_locations_path, controller: :locations }
+      ]
+    },
+    "event" => {
+      key: "events",
+      tabs: [
+        { name: "events", path: :universe_events_path, controller: :events }
+      ]
+    },
+    "item" => {
+      key: "items",
+      tabs: [
+        { name: "items", path: :universe_items_path, controller: :items },
+        { name: "ownerships", path: :universe_ownerships_path, controller: :ownerships }
+      ]
+    }
+  }.freeze
+
   def content_workspace_tabs(type, active_tag: nil)
     type = type.to_s
-    base_tabs = case type
-    when "character"
-      [
-        { label: "Characters", path: universe_characters_path, controller: :characters },
-        { label: "Relations", path: universe_relations_path, controller: :relations }
-      ]
-    when "location"
-      [ { label: "Locations", path: universe_locations_path, controller: :locations } ]
-    when "event"
-      [ { label: "Events", path: universe_events_path, controller: :events } ]
-    when "item"
-      [
-        { label: "Items", path: universe_items_path, controller: :items },
-        { label: "Ownerships", path: universe_ownerships_path, controller: :ownerships }
-      ]
-    else
-      return []
+    workspace = CONTENT_WORKSPACE_TABS[type]
+    return [] if workspace.nil?
+
+    base_tabs = workspace.fetch(:tabs).map do |tab|
+      {
+        label: t("#{workspace.fetch(:key)}.tabs.#{tab.fetch(:name)}"),
+        path: public_send(tab.fetch(:path)),
+        controller: tab.fetch(:controller)
+      }
     end
 
     base_tabs.each do |tab|
@@ -193,6 +225,8 @@ module TagsHelper
     menu_tags = Current.universe.public_send(:"#{type}_tags").where(show_in_menu: true).order(:position, :id)
     tag_tabs = menu_tags.map do |tag|
       {
+        # A pinned tag's name is the author's own words, so it is data and is
+        # never translated — unlike the workspace tab above it.
         label: tag.name,
         path: public_send(:"universe_#{type}_tag_path", id: tag, from: "workspace"),
         controller: :"#{type}_tags",

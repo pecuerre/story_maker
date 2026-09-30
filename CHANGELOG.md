@@ -20,6 +20,81 @@ Labels used below:
 - `planned` — a documented future direction; not implemented in that entry
 ## 2026-09-30
 
+- **[changed]** The **Universe Bible workspaces** now render in Spanish as well: `characters/*`,
+  `locations/*`, `events/*`, `items/*`, `relations/*`, `ownerships/*`, the six universe-level `*_tags`
+  indexes and their `show` pages, the modal editors those lists open, and the flash confirmations of
+  the two workspaces that use the HTML redirect flow. The six taxonomy pages now read the *same*
+  `tags.types.<type>` copy the taxonomy workspace already used rather than a second hand-maintained
+  list of the same sentences, so a page and its translations cannot drift apart, and each
+  `record_label`/`all_label`/`records_title`/`unused_description` sits beside the name it belongs to.
+  Three strings were not repeated per workspace because one home already owns them: the
+  `Universe Bible` eyebrow is the left sidebar's own section heading and is read from `sidebar.*`, the
+  count labels resolve the **root** record-type nouns with a `count:`, and `Cancel`/`Close` are one
+  `shared.form` pair — which let the three already-delivered `form.cancel` keys
+  (`universes`, `stories`, `memberships`) be removed rather than left as a second, third, and fourth
+  home for the same word. `Relations` and `Ownerships` also gained the error-summary sentences their
+  re-render path needed, and the row menu's `label` is now the record type's own name rather than an
+  English literal. 29 request cases in `test/controllers/universe_bible_locale_test.rb` read the
+  rendered page — including the values that travel in a form field, an `<option>`, and a URL, which
+  are asserted *not* to be translated alongside their labels.
+- **[changed]** The modal editors' field labels are translated where they are **produced**, not where
+  they are printed. `ModalFields` serialized its descriptors into the taxonomy tree's
+  `data-taxonomy-tree-modal-fields-value`, and a modal the *browser* builds from that JSON printed an
+  English label in a Spanish page. The descriptors now carry `label_key:` and
+  `ModalFields#modal_field` resolves it per request, which is the rule the i18n document states for
+  every other constant: `PHOTO_FIELD` is frozen, so a `t()` inside it would have been resolved once,
+  in whatever locale loaded the class first, and every later request would have rendered that one
+  language. The key is dropped on the way out — it is how the label is found, not part of the
+  contract, and shipping it in the serialized JSON would publish a key nothing renders. This also
+  fixes the Sections tree, which had been reading the same English descriptors. Separately,
+  `TagsHelper::CONTENT_WORKSPACE_TABS` stores a route helper's **name** rather than a lambda: a
+  `freeze`d constant's lambdas capture the module, which has no route helpers, so the first attempt
+  raised `undefined local variable or method 'universe_characters_path' for module TagsHelper` on
+  every Universe Bible page. `shared/_row_actions` also had two hardcoded `Delete` labels while the
+  taxonomy node beside it already used `shared.row_actions.delete`, and
+  `shared/_menu_tag_content_tabs` was building its accessible name from `tag_type.titleize` — an
+  English accident of the class name where the record type's own noun was what a reader needed.
+- **[fixed]** Three Spanish sentences this surface exposed were ungrammatical in **both** languages, and
+  both fixes are the same rule. `shared.error_summary.heading` ends in `"… prevented this %{subject} …"`
+  in English, so an English `subject` is a bare noun; the Spanish sentence has no determiner to
+  supply one and the Spanish subject was a bare noun too, which rendered *"2 errores impidieron
+  guardar este relación"*. The determiner now belongs to the sentence: the Spanish heading carries
+  none, and each workspace's `errors.subject` is the whole phrase (`esta relación`, `este acceso`,
+  `access grant` in English). And `shared.detail_section.empty_title` took a label resolved with
+  `count: 2` while the verb wanted one noun, giving *"No characters carry this tag"* and *"Ningún
+  personajes lleva esta etiqueta"*; the label is now resolved at `count: 1` and the English reads
+  *"No character carries this tag"*. `section_tags/show` and `scene_tags/show` still hardcode the
+  old plural wording and are named in the Scene-workspace slice that owns them.
+- **[fixed]** `config/locales/es.yml` was missing `errors.messages.required`, which Rails defines in
+  English only, so a Spanish page that rejected a **missing** `belongs_to` — a Relation or Ownership
+  submitted without one of its two records — raised `I18n::MissingTranslationData` while its *other*
+  messages rendered correctly. It is the one message Rails' subset reaches that was not there, and
+  `TranslationsTest`'s Rails-key check now covers it.
+- **[fixed]** A `blank:` state that cannot be reached is a translation nothing renders, and it is worse
+  than a missing one because a reviewer cannot tell it apart from a real state. Two were removed
+  rather than translated: `events.show.facts.title_blank`, because the value is
+  `title.presence || display_string` and `display_string` always answers (at worst `"Event #12"`), and
+  `tags.show.color_blank`, because `bgcolor` is `NOT NULL` with a default. A Relation or Ownership
+  error also stopped reading *"Character2 must exist"*, which was Rails humanizing a column name;
+  `activerecord.attributes.relation` names it `Character 2` in both locales.
+- **[docs]** `docs/features/i18n.md` records the four rules this surface settled rather than leaving
+  them in the diff: why a frozen constant cannot hold a route-helper lambda, why `label_key` is
+  dropped from the serialized descriptor, that **a sentence decides its own determiner** while **a slot
+  that takes one noun takes the singular**, and that a `form_with scope:` modal has no model to read
+  `human_attribute_name` from and must name its own labels while the `activerecord.attributes` entry
+  is still required for its error messages. Its Known gap now also records the one model-level label a
+  translation cannot close: `Event#`, `Relation#`, and `Ownership#display_string` are their models'
+  `searchable title:`, so the string is stored in a **language-independent** search index and read
+  back into a result row — translating them in the model would put one locale's chrome in that index
+  and show it to a reader in another language. The decision to make is how a view resolves a
+  translated label while the index keeps the stored one, which is named in the search slice.
+  `docs/backlog.md`'s internationalization item carries re-measured counts (**21 of 100 views**, about
+  132 distinct strings, down from 64 and about 440), the two new general slice rules, the correction
+  that the slice's own text named the wrong controllers for the flash strings, and — at the owner's
+  direction — a slice that must be delivered **before** the Scene workspace for the three open defects
+  this translation surfaced: the Character/Item/Location delete confirmations, the Event temporal
+  reference selector, and the Relation/Ownership parameter and datetime contract drift.
+
 - **[changed]** The residual duplication the heading-ownership test cannot see is removed — the same
   fact stated under two different headings, which is the case a heading test structurally cannot
   catch. It was found by measuring repeated runs across the living documents rather than by reading,

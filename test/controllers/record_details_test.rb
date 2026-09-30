@@ -178,7 +178,10 @@ class RecordDetailsTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".detail-section h2", text: "Relations with this tag"
-    assert_select ".empty-state", text: /No relations carry this tag/
+    # The empty title is the shared sentence with the record type in its
+    # singular, so it reads "No relation carries this tag" rather than the
+    # ungrammatical "No relation carry…".
+    assert_select ".empty-state", text: /No relation carries this tag/
   end
 
   test "a details page is a read-only destination for a guest and a read member" do

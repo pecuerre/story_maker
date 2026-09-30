@@ -19,7 +19,7 @@ class RelationsController < ApplicationController
     @relation = Current.universe.relations.new(relation_params)
 
     if @relation.save
-      redirect_to universe_relations_path(), notice: "Relation created."
+      redirect_to universe_relations_path(), notice: t("relations.flash.created")
     else
       load_form_options
       @relations = Current.universe.relations.includes(:character1, :character2, :relation_tags).order(:id)
@@ -29,7 +29,7 @@ class RelationsController < ApplicationController
 
   def update
     if @relation.update(relation_params)
-      redirect_to universe_relations_path(), notice: "Relation updated."
+      redirect_to universe_relations_path(), notice: t("relations.flash.updated")
     else
       load_form_options
       @relations = Current.universe.relations.includes(:character1, :character2, :relation_tags).order(:id)
@@ -39,7 +39,7 @@ class RelationsController < ApplicationController
 
   def destroy
     @relation.soft_delete
-    redirect_to universe_relations_path(), notice: "Relation deleted."
+    redirect_to universe_relations_path(), notice: t("relations.flash.deleted")
   end
 
   private

@@ -1,5 +1,5 @@
-<% content_for :title, "Relations" %>
-<% empty_description = can_write_universe? ? "Connect two characters to describe their relationship. Relation tags are optional but can make these connections easier to scan." : "Character relationships in this universe will appear here once they have been added." %>
+<% content_for :title, t("relations.title") %>
+<% empty_description = can_write_universe? ? t("relations.empty_writable_description") : t("relations.empty_read_only_description") %>
 <%# A rejected submission re-renders this index with the invalid record, so the
     entered values are serialized into the trigger that reopens the editor
     instead of being thrown away: the Add trigger for a rejected create, and only
@@ -11,11 +11,11 @@
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="relation"
   data-modal-form-response-value="html"
-  data-modal-form-create-title-value="New relation">
+  data-modal-form-create-title-value="<%= t("relations.new_title") %>">
   <%= render "shared/page_header",
-    title: "Relations",
-    eyebrow: "Characters",
-    description: "Connect characters and record how their relationships change over time.",
+    title: t("relations.title"),
+    eyebrow: t("relations.eyebrow"),
+    description: t("relations.description"),
     count: @relations.size,
     count_label: "relation" do %>
     <% if can_write_universe? %>
@@ -23,20 +23,20 @@
         data-action="modal-form#open"
         data-modal-form-url="<%= universe_relations_path %>"
         data-modal-form-method="post"
-        data-modal-form-title="New relation"
+        data-modal-form-title="<%= t("relations.new_title") %>"
         data-modal-form-values-value="<%= add_values %>">
         <i class="bi bi-plus-lg" aria-hidden="true"></i>
-        <span>Add relation</span>
+        <span><%= t("relations.add") %></span>
       </button>
     <% end %>
   <% end %>
 
   <% if rejected %>
-    <%= render "shared/error_summary", record: rejected, subject: "relation" %>
+    <%= render "shared/error_summary", record: rejected, subject: t("relations.errors.subject") %>
   <% end %>
 
   <%= render "shared/content_tabs",
-    aria_label: "Character workspace",
+    aria_label: t("characters.tabs_aria_label"),
     tabs: content_workspace_tabs(:character) %>
 
   <% if @relations.any? %>
@@ -61,7 +61,7 @@
 
             <%= render "shared/row_actions",
               record: relation,
-              label: "relation",
+              label: t("relation", count: 1),
               record_name: relation_name,
               edit_url: universe_relation_path(id: relation),
               delete_url: universe_relation_path(id: relation),
@@ -72,7 +72,7 @@
     </div>
   <% else %>
     <%= render "shared/empty_state",
-      title: "No relations yet",
+      title: t("relations.empty_title"),
       description: empty_description,
       icon: "people" %>
   <% end %>
@@ -85,8 +85,8 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="relation-modal-title" data-modal-form-target="title">New relation</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h2 class="modal-title fs-5" id="relation-modal-title" data-modal-form-target="title"><%= t("relations.new_title") %></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
         </div>
         <%= form_with scope: :relation, url: universe_relations_path,
           method: :post, data: { modal_form_target: "form" } do |form| %>
@@ -94,47 +94,47 @@
             <%# The editor carries the same summary as the page, so reopening it
                 after a rejection still explains the refusal. %>
             <% if rejected %>
-              <%= render "shared/error_summary", record: rejected, subject: "relation" %>
+              <%= render "shared/error_summary", record: rejected, subject: t("relations.errors.subject") %>
             <% end %>
             <%= render "shared/photo_field", param: "relation" %>
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <%= form.label :character1_id, "Character 1", class: "form-label" %>
+                <%= form.label :character1_id, t("relations.character1"), class: "form-label" %>
                 <%= form.collection_select :character1_id, @characters, :id, :name,
-                  { prompt: "Select a character" },
+                  { prompt: t("relations.select_character") },
                   { class: "form-select", required: true } %>
               </div>
               <div class="col-md-6">
-                <%= form.label :character2_id, "Character 2", class: "form-label" %>
+                <%= form.label :character2_id, t("relations.character2"), class: "form-label" %>
                 <%= form.collection_select :character2_id, @characters, :id, :name,
-                  { prompt: "Select a character" },
+                  { prompt: t("relations.select_character") },
                   { class: "form-select", required: true } %>
               </div>
             </div>
             <div class="mb-3">
-              <%= form.label :relation_tag_ids, "Relation tags", class: "form-label" %>
+              <%= form.label :relation_tag_ids, t("relations.form.tags_label"), class: "form-label" %>
               <%= form.collection_select :relation_tag_ids, @relation_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
             <div class="mb-3">
-              <%= form.label :description, class: "form-label" %>
+              <%= form.label :description, t("relations.form.description"), class: "form-label" %>
               <%= form.text_area :description, class: "form-control", rows: 4 %>
             </div>
             <div class="row g-3">
               <div class="col-md-6">
-                <%= form.label :from_date, "From", class: "form-label" %>
+                <%= form.label :from_date, t("relations.from"), class: "form-label" %>
                 <%= form.datetime_local_field :from_date, class: "form-control" %>
               </div>
               <div class="col-md-6">
-                <%= form.label :to_date, "To", class: "form-label" %>
+                <%= form.label :to_date, t("relations.to"), class: "form-label" %>
                 <%= form.datetime_local_field :to_date, class: "form-control" %>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= form.submit "Save relation", class: "btn btn-primary" %>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+            <%= form.submit t("relations.save"), class: "btn btn-primary" %>
           </div>
         <% end %>
       </div>

@@ -322,17 +322,21 @@ it has a useful destination and clear empty/loading/error states.
 
 27. **Internationalization: move every user-facing string behind `t()` and add a language setting**
 
-    Deliver in the order below. The foundation and the application shell are already done — the
-    `AppLocale` preference, the **Language** section on `/settings`, the I18n configuration, the
-    translated layouts/sidebars/`shared/*`/sessions/passwords/mailer/PWA, and the missing-translation
-    enforcement are described by [ADR 0016](adr/0016-internationalization-and-browser-locale.md) and
-    the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). What is left is roughly 1,100 strings:
-    64 of the 100 ERB views still carry hardcoded rendered text (about 440 distinct strings), ~120
-    more in controllers and helpers, ~51 distinct inside four Stimulus controllers, plus the
-    model-level labels (`SectionPaths::UNGROUPED_LABEL`, `Search::Scope` option labels,
-    `SceneFilter` discard messages) and the literal `errors.add` messages. Every `shared/*` partial
-    is already translated, and the counts above exclude ERB comments, which document a local
-    contract for the next developer and are never rendered.
+    Deliver in the order below. The foundation, the application shell, and the Universe Bible
+    workspaces are already done — the `AppLocale` preference, the **Language** section on `/settings`,
+    the I18n configuration, the translated layouts/sidebars/`shared/*`/sessions/passwords/mailer/PWA,
+    and the missing-translation enforcement are described by
+    [ADR 0016](adr/0016-internationalization-and-browser-locale.md), and the remaining workspaces are
+    the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). What is left is **21 of the 100 ERB
+    views**, carrying about 132 distinct strings: the ten `scenes/*` views, the three `searches/*`
+    views, and the eight story-scoped views (`section_tags`, `scene_tags`, `scene_characters`,
+    `scene_items`, `scene_locations`, `scene_appearances/_section`). Plus ~120 strings in the
+    matching controllers and helpers, ~51 distinct inside four Stimulus controllers, the model-level
+    labels (`SectionPaths::UNGROUPED_LABEL`, `Search::Scope` option labels, `SceneFilter` discard
+    messages, and the `display_string` sentences — see slice 27.5), and the literal `errors.add`
+    messages in `Hierarchical` and `HasColor`, which every taxonomy shares. Every `shared/*` partial
+    is translated, and the counts above exclude ERB comments, which document a local contract for
+    the next developer and are never rendered.
 
     Rules that apply to every remaining slice:
 
@@ -350,6 +354,15 @@ it has a useful destination and clear empty/loading/error states.
       `value` stay exactly as they are, and only the label beside them moves into a key.
     - A count label is a key, not a noun. Pass `count_label: "character"` and let
       `ApplicationHelper#count_with_label` choose the plural from the locale.
+    - A sentence decides its own determiner, and a slot that takes one noun takes the **singular**.
+      English's error summary supplies its own `this`, so its `subject` is a bare noun; Spanish's
+      sentence has none, so its `subject` is the whole phrase (`esta relación`). A label resolved
+      with `count: 2` is wrong in a slot that reads as one noun — see
+      [`features/i18n.md`](features/i18n.md#sentences-are-not-nouns).
+    - A modal built with `form_with scope:` (and no model) cannot resolve
+      `activerecord.attributes.<model>.<column>`, so its labels are named explicitly under that
+      workspace's `form:` keys. The attribute entry is still required, because an error message
+      reads it.
     - A key is added to **both** `config/locales/en.yml` and `config/locales/es.yml` in the same
       change. `raise_on_missing_translations` is on in test, so a one-sided key fails the suite.
     - Each slice ships its own tests, the matching `docs/` update, and a dated `CHANGELOG.md` entry,
@@ -364,14 +377,25 @@ it has a useful destination and clear empty/loading/error states.
       the Timeline was never built; the docs now say the view is static, and building the interaction
       is listed under FUTURE WORK below.
 
-    - **Slice 27.3 — Universe Bible workspaces.** `characters/*`, `locations/*`, `events/*`,
-      `items/*`, `relations/*`, `ownerships/*`, all six universe-level `*_tags` indexes and their
-      `show` pages, and the shared modal field labels produced by `app/helpers/modal_fields.rb` and
-      `app/helpers/tags_helper.rb` (the field descriptors are serialized into the taxonomy editor's
-      `data-…-modal-fields-value` JSON, so the label travels to the DOM-built modal — the client
-      half of that hand-off is slice 27.6). Also the `characters`/`locations`/`items`/`events`
-      controller flash strings. Tests: request coverage per workspace, plus a check that the
-      serialized modal field descriptors are the translated ones.
+    - **A slice that must be delivered before 27.4 — three defects in the Universe Bible surface.**
+      These were found while translating that surface and are behavior defects rather than
+      translations, so the owner deferred them out of the translation slice. They live on the same
+      views, and the two whose fix is a copy change need the Spanish keys to be written once rather
+      than twice. Deliver this slice first, each finding with its own tests and a changelog entry, and
+      move each matching `known_quirks.md` entry to `resolved_quirks.md` as it is fixed:
+      - **Quirk 59 — a Character, Item, or Location row deletes without saying what it deletes.**
+        Only Events pass ADR 0007's cascade template; those three fall back to the short
+        `Delete <name>?` while their descendants, relations/ownerships, and Scene links are in fact
+        removed. Each template needs a locale key, and the Locations tree's own fallback message in
+        `taxonomy_tree_controller.js` needs the same treatment in the client-side slice.
+      - **Quirk 47 — the Event editor offers the event being edited as its own temporal reference.**
+        `EventsController#index` puts every universe event in `@events_for_select` and the modal
+        renders all three selects without excluding it, so the browser offers a choice the model
+        rejects.
+      - **Quirk 30 — Relation/Ownership parameter lists omit their optional `name`, and
+        `modal_fields.rb` formats datetimes to whole minutes.** Both are contract drift on the JSON
+        hand-off this surface already owns; note that `event_fields_json` and its siblings in that
+        helper are the same code path.
 
     - **Slice 27.4 — Scene workspace.** `scenes/*` (index, show, edit, new, `_form`, `_filter`,
       `_elements`, `_show_identity`, `_ungrouped_scenes`, `_workspace_tabs`),
@@ -380,6 +404,13 @@ it has a useful destination and clear empty/loading/error states.
       flash messages (which are interpolated sentences built in Ruby). Translating
       `SectionPaths::UNGROUPED_LABEL` and `SceneFilter`'s discard messages belongs here, because
       both are read by the Scenes page — see the constant/label contract note below.
+      Two of this slice's sentences are shared with the Universe Bible surface and were already
+      corrected there: `section_tags/show` and `scene_tags/show` each pass a hardcoded
+      `"No sections carry this tag"` / `"No scenes carry this tag"` that must become
+      `t("shared.detail_section.empty_title", label: t("section", count: 1))` and the same for
+      `scene` — a **singular** label, because that verb takes no plural in either language. Their
+      `include_descendants_toggle` branch and `tags.types.section`/`tags.types.scene` keys are the
+      rest of the same two files.
 
     - **Slice 27.5 — Search.** `searches/show`, `_commands`, `_result`, `_scope_field`, the
       `searches_controller.rb` and `searches_helper.rb` strings, and the model-level labels in
@@ -390,7 +421,13 @@ it has a useful destination and clear empty/loading/error states.
       the option's `value` (the URL parameter) untranslated, or search URLs stop working in
       Spanish. `SectionPaths::UNGROUPED_LABEL` and `SceneFilter::UNGROUPED` are the same shape and
       must keep the same rule: the *value* in the URL stays `"ungrouped"`, only the label is
-      translated.
+      translated. This slice also settles the one model-level label a translation could not close:
+      `Event#display_string`, `Relation#display_string`, and `Ownership#display_string` are their
+      models' `searchable title:`, so the string is **stored in a language-independent search index**
+      and read back straight into a result row. Translating them in the model would put one locale's
+      chrome in that index and show it to a reader in another language, so the decision to make is
+      how a view resolves a translated label while the index keeps the stored one — see
+      [`features/i18n.md`](features/i18n.md#known-gap), which records the shape and the reasoning.
 
     - **Slice 27.6 — Client-side strings + enforcement.** The four Stimulus controllers with
       user-facing text — `taxonomy_tree_controller.js` (17 distinct strings),
@@ -421,6 +458,25 @@ it has a useful destination and clear empty/loading/error states.
 30. define a code_style.md?
 
 31. consider moving all scene_* supporting classes to a namespace?
+
+32. adding several stories to one universe. for instance. in dark add 2 more stories called:
+    a) Netflix Darker, b) Bethesda Dark. add some info to the demo data .yml files. the idea of this
+    is testing hwo it looks when you have several stories. and also to test the login -> universe ->
+    story flow
+
+33. the `has_many_tags` raw-SQL warning, and the audit baseline that claims Brakeman is clean
+
+    `bin/brakeman --no-pager` reports one **Weak**-confidence SQL-injection warning at
+    `app/models/concerns/has_many_tags.rb:109`, where a `joins("INNER JOIN …")` string is built by
+    interpolating `reflect_on_association(...)` results. Nothing interpolated there comes from a
+    request — the table and column names come from the model's own associations — so it reads as a
+    false positive, but it is still a string-built join rather than a symbol or a hash, and it is the
+    kind of construct a future edit could make reachable. Confirm that reading, then either rewrite
+    the join without string interpolation or record why the warning is safe to accept.
+    The reason this is listed rather than fixed silently: the audit baseline in
+    [`known_quirks.md`](known_quirks.md) records `bin/brakeman --no-pager` as **0 security
+    warnings**, which is now wrong and will mislead the next person who trusts it. Update that
+    baseline in the same change, whether the warning is fixed or accepted.
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

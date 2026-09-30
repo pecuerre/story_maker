@@ -1,16 +1,16 @@
-<% content_for :title, "Location Tags" %>
+<% content_for :title, t("tags.types.location.title") %>
 
 <%= render "shared/taxonomy_tree",
-  title: "Location tags",
-  description: "Organize the places and regions that make up this universe.",
-  eyebrow: "Universe Bible",
+  title: t("tags.types.location.title"),
+  description: t("tags.types.location.description"),
+  eyebrow: t("sidebar.universe_bible"),
   count: Current.universe.location_tags.count,
   count_label: "tag",
-  new_label: "Add location tag",
+  new_label: t("tags.types.location.new_label"),
   tag_workspace_scope: "universe",
   tag_workspace_taxonomy: "location",
-  empty_description: "Tags are optional. Add one to group locations, or organize them later.",
-  read_only_empty_description: "No location tags are defined yet.",
+  empty_description: t("tags.types.location.empty_description"),
+  read_only_empty_description: t("tags.types.location.read_only_empty_description"),
   nodes: @location_tags,
   create_url: universe_location_tags_path,
   update_url: ->(location_tag) { universe_location_tag_path(id: location_tag) },

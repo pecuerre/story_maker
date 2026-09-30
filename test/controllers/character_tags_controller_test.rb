@@ -11,7 +11,9 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     get universe_character_tags_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_includes response.body, "Character Tags"
+    # The document title and the page heading are the same string, so the tab
+    # reads "Character tags" exactly as the heading does.
+    assert_select "h1", text: "Character tags"
     assert_includes response.body, @character_tag.name
   end
 

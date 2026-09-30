@@ -2,28 +2,33 @@
 
 <%= render "shared/record_details",
   record: @location_tag,
-  eyebrow: "Configuration · Tags",
-  label: "Location tag",
+  eyebrow: t("tags.show.eyebrow"),
+  label: t("tags.types.location.record_label"),
   facts: [
-    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
-    detail_fact("Description", @location_tag.description, blank: "No description yet."),
-    detail_fact("Color", @location_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+    detail_fact(t("tags.show.scope"), t("tags.show.scope_universe_description")),
+    detail_fact(t("tags.show.description"), @location_tag.description, blank: t("tags.show.description_blank")),
+    detail_fact(t("tags.show.color"), @location_tag.bgcolor)
   ],
   back_url: universe_location_tags_path,
-  back_label: "All location tags" do %>
+  back_label: t("tags.types.location.all_label") do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "location", tag: @location_tag %>
 <% end %>
+
+<%# The section's empty title is the shared sentence with the record type in its
+    plural, so the two branches below — a taggable tag lists the records directly,
+    a grouping tag lists one section per child tag — read identically when empty. %>
+<% empty_title = t("shared.detail_section.empty_title", label: t("location", count: 1)) %>
 
 <% if @location_tag.taggable %>
   <%= render "shared/include_descendants_toggle" %>
 
   <%= render "shared/detail_section",
-    title: "Locations with this tag",
+    title: t("tags.types.location.records_title"),
     count: @tagged_records.size,
     count_label: "location",
     icon: "geo-alt",
-    empty_title: "No locations carry this tag",
-    empty_description: "Nothing uses this tag yet. Tags are optional, so locations can stay untagged." do %>
+    empty_title: empty_title,
+    empty_description: t("tags.types.location.unused_description") do %>
     <%= render "shared/tagged_record_list",
       records: @tagged_records,
       path: ->(record) { universe_location_path(id: record) } %>

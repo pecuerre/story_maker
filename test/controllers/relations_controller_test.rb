@@ -78,8 +78,10 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
     # The reason is stated on the page the author lands on, and again inside the
     # editor they reopen, because this workspace re-renders after a rejection.
     assert_select ".alert-danger[role=alert]", text: /prevented this relation from being saved/
-    assert_select ".alert-danger[role=alert] li", text: /Character2/
-    assert_select "[data-modal-form-target='modal'] .alert-danger li", text: /Character2/
+    # The attribute name is named in `activerecord.attributes.relation`, so the
+    # message reads "Character 2" rather than Rails' humanized "Character2".
+    assert_select ".alert-danger[role=alert] li", text: /Character 2/
+    assert_select "[data-modal-form-target='modal'] .alert-danger li", text: /Character 2/
     # The invalid values are serialized into the Add trigger, so reopening the
     # editor does not silently discard the entry.
     assert_select "button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",

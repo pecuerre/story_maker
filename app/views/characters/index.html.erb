@@ -1,15 +1,18 @@
-<% content_for :title, "Characters" %>
-<% empty_description = can_write_universe? ? "Characters belong to the universe and are shared by all of its stories. Add the first one to begin." : "Characters belong to the universe and are shared by all of its stories." %>
+<% content_for :title, t("characters.title") %>
+<%# The list has two empty states because it has two audiences: a writer is told
+    to add the first character, and a guest or read-only member is only told what a
+    character is. Both are chrome, so both are keys. %>
+<% empty_description = can_write_universe? ? t("characters.empty_writable_description") : t("characters.empty_read_only_description") %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="character"
   data-modal-form-response-value="json"
-  data-modal-form-create-title-value="New character">
+  data-modal-form-create-title-value="<%= t("characters.new_title") %>">
   <%= render "shared/page_header",
-    title: "Characters",
-    eyebrow: "Universe Bible",
-    description: "People and beings whose details are shared by every story in this universe.",
+    title: t("characters.title"),
+    eyebrow: t("sidebar.universe_bible"),
+    description: t("characters.description"),
     count: @characters.size,
     count_label: "character" do %>
     <% if can_write_universe? %>
@@ -17,16 +20,16 @@
         data-action="modal-form#open"
         data-modal-form-url="<%= universe_characters_path %>"
         data-modal-form-method="post"
-        data-modal-form-title="New character"
+        data-modal-form-title="<%= t("characters.new_title") %>"
         data-modal-form-values-value="{}">
         <i class="bi bi-plus-lg" aria-hidden="true"></i>
-        <span>Add character</span>
+        <span><%= t("characters.add") %></span>
       </button>
     <% end %>
   <% end %>
 
   <%= render "shared/content_tabs",
-    aria_label: "Character workspace",
+    aria_label: t("characters.tabs_aria_label"),
     tabs: content_workspace_tabs(:character) %>
 
   <% if @characters.any? %>
@@ -46,9 +49,11 @@
 
             <%= record_details_link universe_character_path(id: character), record: character %>
 
+            <%# `label` titles the edit menu entry, so it is the record type's own
+                name rather than a finished phrase. %>
             <%= render "shared/row_actions",
               record: character,
-              label: "character",
+              label: t("character", count: 1),
               record_name: character.name,
               edit_url: universe_character_path(id: character),
               delete_url: universe_character_path(id: character),
@@ -60,7 +65,7 @@
     </div>
   <% else %>
     <%= render "shared/empty_state",
-      title: "No characters yet",
+      title: t("characters.empty_title"),
       description: empty_description,
       icon: "person" %>
   <% end %>
@@ -73,8 +78,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="character-modal-title" data-modal-form-target="title">New character</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h2 class="modal-title fs-5" id="character-modal-title" data-modal-form-target="title"><%= t("characters.new_title") %></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
         </div>
         <%= form_with scope: :character,
           url: universe_characters_path,
@@ -83,24 +88,24 @@
           <div class="modal-body">
             <%= render "shared/modal_errors" %>
             <div class="mb-3">
-              <%= form.label :name, class: "form-label" %>
+              <%= form.label :name, t("characters.form.name"), class: "form-label" %>
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
             <%= render "shared/photo_field", param: "character" %>
             <div class="mb-3">
-              <%= form.label :character_tag_ids, "Character tags", class: "form-label" %>
+              <%= form.label :character_tag_ids, t("characters.form.tags_label"), class: "form-label" %>
               <%= form.collection_select :character_tag_ids, @character_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
             <div>
-              <%= form.label :description, class: "form-label" %>
+              <%= form.label :description, t("characters.form.description"), class: "form-label" %>
               <%= form.text_area :description, class: "form-control", rows: 4 %>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= form.submit "Save character", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+            <%= form.submit t("characters.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
           </div>
         <% end %>
       </div>

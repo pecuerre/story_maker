@@ -1,15 +1,15 @@
-<% content_for :title, "Items" %>
-<% empty_description = can_write_universe? ? "Items belong to the universe and can be used to track objects, resources, and ownership across every story. Add the first one to begin." : "Items belong to the universe and are shared by all of its stories." %>
+<% content_for :title, t("items.title") %>
+<% empty_description = can_write_universe? ? t("items.empty_writable_description") : t("items.empty_read_only_description") %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
   data-modal-form-model-param-value="item"
   data-modal-form-response-value="json"
-  data-modal-form-create-title-value="New item">
+  data-modal-form-create-title-value="<%= t("items.new_title") %>">
   <%= render "shared/page_header",
-    title: "Items",
-    eyebrow: "Universe Bible",
-    description: "Objects and resources whose details are shared by every story in this universe.",
+    title: t("items.title"),
+    eyebrow: t("sidebar.universe_bible"),
+    description: t("items.description"),
     count: @items.size,
     count_label: "item" do %>
     <% if can_write_universe? %>
@@ -17,16 +17,16 @@
         data-action="modal-form#open"
         data-modal-form-url="<%= universe_items_path %>"
         data-modal-form-method="post"
-        data-modal-form-title="New item"
+        data-modal-form-title="<%= t("items.new_title") %>"
         data-modal-form-values-value="{}">
         <i class="bi bi-plus-lg" aria-hidden="true"></i>
-        <span>Add item</span>
+        <span><%= t("items.add") %></span>
       </button>
     <% end %>
   <% end %>
 
   <%= render "shared/content_tabs",
-    aria_label: "Item workspace",
+    aria_label: t("items.tabs_aria_label"),
     tabs: content_workspace_tabs(:item) %>
 
   <% if @items.any? %>
@@ -48,7 +48,7 @@
 
             <%= render "shared/row_actions",
               record: item,
-              label: "item",
+              label: t("item", count: 1),
               record_name: item.name,
               edit_url: universe_item_path(id: item),
               delete_url: universe_item_path(id: item),
@@ -60,7 +60,7 @@
     </div>
   <% else %>
     <%= render "shared/empty_state",
-      title: "No items yet",
+      title: t("items.empty_title"),
       description: empty_description,
       icon: "box-seam" %>
   <% end %>
@@ -73,32 +73,32 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title fs-5" id="item-modal-title" data-modal-form-target="title">New item</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h2 class="modal-title fs-5" id="item-modal-title" data-modal-form-target="title"><%= t("items.new_title") %></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
         </div>
         <%= form_with scope: :item, url: universe_items_path, method: :post,
           data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
           <div class="modal-body">
             <%= render "shared/modal_errors" %>
             <div class="mb-3">
-              <%= form.label :name, class: "form-label" %>
+              <%= form.label :name, t("items.form.name"), class: "form-label" %>
               <%= form.text_field :name, class: "form-control", required: true %>
             </div>
             <%= render "shared/photo_field", param: "item" %>
             <div class="mb-3">
-              <%= form.label :item_tag_ids, "Item tags", class: "form-label" %>
+              <%= form.label :item_tag_ids, t("items.form.tags_label"), class: "form-label" %>
               <%= form.collection_select :item_tag_ids, @item_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
             <div>
-              <%= form.label :description, class: "form-label" %>
+              <%= form.label :description, t("items.form.description"), class: "form-label" %>
               <%= form.text_area :description, class: "form-control", rows: 4 %>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <%= form.submit "Save item", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+            <%= form.submit t("items.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
           </div>
         <% end %>
       </div>

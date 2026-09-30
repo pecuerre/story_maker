@@ -89,9 +89,14 @@ es:
     record_photo:
       alt: "Foto de %{name}"
     error_summary:
+      # `count` se pluraliza con la clave: un error se lee de otra forma que
+      # muchos. `subject` es la frase que va detrás del «this» de la oración. En
+      # español la oración no aporta determinante, así que la frase lo trae
+      # entero: un sustantivo suelto necesitaría un artículo que la clave no
+      # puede conocer.
       heading:
-        one: "Un error impidió guardar este %{subject}:"
-        other: "%{count} errores impidieron guardar este %{subject}:"
+        one: "Un error impidió guardar %{subject}:"
+        other: "%{count} errores impidieron guardar %{subject}:"
     flash:
       close: "Cerrar"
     photo_field:
@@ -103,6 +108,10 @@ es:
       empty_description: "Esta etiqueta de grupo todavía no tiene etiquetas hijas."
       unused_description: "Todavía no se usa esta etiqueta hija."
     detail_section:
+      # `label` es una clave de tipo de registro resuelta con `count: 1`, así que
+      # la frase se lee «Ningún personaje lleva esta etiqueta». La ranura recibe un
+      # nombre **singular**, porque en ninguno de los dos idiomas un plural cabe
+      # detrás de este verbo.
       empty_title: "Ningún %{label} lleva esta etiqueta"
     menu_tag_content_tabs:
       aria_label: "Espacio de trabajo de %{type}"
@@ -127,6 +136,14 @@ es:
       delete: "Eliminar"
       edit_title: "Editar %{label}"
       delete_confirm: "¿Eliminar %{name}?"
+    # Las dos cadenas que comparten todos los formularios y todos los modales de la
+    # aplicación: el botón que abandona una edición y el botón de icono que cierra
+    # un modal. Son una clave cada una en lugar de una por espacio de trabajo,
+    # porque quien lee «Cancelar» en el formulario del universo y «Cancelar» en el
+    # de Personajes ha leído dos veces la misma palabra y espera que sea una.
+    form:
+      cancel: "Cancelar"
+      close: "Cerrar"
 
   universes:
     title: "Universos"
@@ -161,7 +178,6 @@ es:
       private_hint: "Los universos públicos pueden leer los visitantes y en ellos pueden colaborar los usuarios que han iniciado sesión. Los universos privados solo son visibles para sus miembros."
       submit_create: "Crear universo"
       submit_update: "Actualizar universo"
-      cancel: "Cancelar"
     show:
       eyebrow: "Universo"
       description: "El mundo compartido y la colección de historias de este espacio de trabajo."
@@ -204,7 +220,6 @@ es:
       description: "Descripción"
       submit_create: "Crear historia"
       submit_update: "Actualizar historia"
-      cancel: "Cancelar"
     show:
       default_description: "Planifica la trama y la estructura de esta historia."
       open_sections: "Abrir las secciones"
@@ -250,12 +265,13 @@ es:
       access_level: "Nivel de acceso"
       choose_level: "Elige un nivel"
       submit: "Conceder acceso"
-      cancel: "Cancelar"
     access_levels:
       read: "Lectura"
       write: "Escritura"
       admin: "Administración"
-    subject: "acceso"
+    # El artículo va en la frase porque la frase en español no lo aporta: en
+    # inglés el determinante lo pone la propia oración («this …»).
+    subject: "este acceso"
     errors:
       email_not_found: "no se ha encontrado"
       email_is_owner: "es el propietario del universo y ya tiene acceso de administración"
@@ -296,7 +312,302 @@ es:
         empty_title: "Todavía no hay nada relacionado"
         empty_description: "Todo lo demás que merezca la pena saber sobre esta sección se mostrará aquí más adelante."
 
+  # Los espacios de trabajo de la Biblia del universo: Personajes, Lugares,
+  # Sucesos, Objetos, Relaciones y Propiedades. Cada bloque es dueño de su
+  # página de lista, del editor modal que esa lista abre y de la página de
+  # detalles del registro, de modo que un espacio de trabajo y sus traducciones
+  # viven juntos.
+  #
+  # Dos de sus cadenas no se repiten aquí. El antetítulo «Biblia del universo» es
+  # el encabezado de sección de la barra lateral izquierda y se lee de
+  # `sidebar.*`, la misma elección que hace `universes.show` con sus enlaces
+  # rápidos. Los nombres de los tipos de registro con los que se anuncian los
+  # recuentos viven en la raíz de este archivo, y la tira de pestañas que un
+  # espacio de trabajo comparte con su hermano lee las pestañas de ese hermano.
+  characters:
+    title: "Personajes"
+    description: "Personas y seres cuyos detalles comparten todas las historias de este universo."
+    tabs_aria_label: "Espacio de trabajo de personajes"
+    new_title: "Nuevo personaje"
+    add: "Añadir personaje"
+    save: "Guardar personaje"
+    # El modal se construye con `form_with scope:`, que no tiene modelo del que
+    # leer `human_attribute_name`, así que aquí se nombran las etiquetas del propio
+    # modal. La entrada de `activerecord.attributes` para la misma columna es lo
+    # que lee un mensaje de error, y se espera que las dos digan lo mismo.
+    form:
+      name: "Nombre"
+      description: "Descripción"
+      tags_label: "Etiquetas de personajes"
+    empty_title: "Todavía no hay personajes"
+    # La lista tiene dos estados vacíos porque tiene dos audiencias, igual que
+    # las listas de universos e historias: a quien puede escribir se le dice que
+    # añada el primer registro, y a un visitante o a un miembro de solo lectura se
+    # le dice que los registros pertenecen al universo.
+    empty_writable_description: "Los personajes pertenecen al universo y los comparten todas sus historias. Añade el primero para empezar."
+    empty_read_only_description: "Los personajes pertenecen al universo y los comparten todas sus historias."
+    show:
+      label: "Personaje"
+      back_label: "Todos los personajes"
+      facts:
+        universe: "Universo"
+        tags: "Etiquetas de personajes"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+    tabs:
+      characters: "Personajes"
+      relations: "Relaciones"
+
+  locations:
+    title: "Lugares"
+    description: "Construye una jerarquía de lugares y regiones que comparten todas las historias de este universo."
+    tabs_aria_label: "Espacio de trabajo de lugares"
+    new_label: "Añadir lugar"
+    # Lugares es un árbol de taxonomías, así que no tiene un título vacío propio:
+    # el árbol nombra la taxonomía con `taxonomies.<model_param>.none_yet`. Estas
+    # dos descripciones van bajo ese título, y la segunda es la de solo lectura.
+    empty_description: "Añade un lugar y luego arrastra las filas para crear lugares padres e hijos."
+    read_only_empty_description: "Todavía no se ha añadido ningún lugar."
+    show:
+      label: "Lugar"
+      back_label: "Todos los lugares"
+      facts:
+        universe: "Universo"
+        tags: "Etiquetas de lugares"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        parent: "Lugar padre"
+        parent_blank: "Este lugar está en el nivel superior."
+        children: "Lugares hijos"
+        children_blank: "Todavía no hay lugares anidados."
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+    tabs:
+      locations: "Lugares"
+
+  events:
+    title: "Sucesos"
+    description: "Registra momentos que dan forma al universo y aportan la estructura de su cronología."
+    tabs_aria_label: "Espacio de trabajo de sucesos"
+    new_title: "Nuevo suceso"
+    add: "Añadir suceso"
+    save: "Guardar suceso"
+    empty_title: "Todavía no hay sucesos"
+    empty_writable_description: "Añade sucesos con fechas o relaciones entre ellos y abre después la Cronología para ver cómo se conectan."
+    empty_read_only_description: "Los sucesos de este universo aparecerán aquí en cuanto se hayan añadido."
+    # La única confirmación de borrado de estos seis espacios de trabajo que
+    # declara su propia cascada. `name` es `Event#display_string`, es decir la
+    # etiqueta del propio suceso, así que se interpola en lugar de traducirse.
+    delete_confirm: "¿Eliminar «%{name}»? Sus sucesos hijos, las asignaciones de etiquetas y cualquier referente temporal que quedara sin identificar se eliminarán de forma permanente; las demás referencias temporales y los enlaces a escenas se vaciarán. Las escenas permanecerán."
+    form:
+      title: "Título"
+      description: "Descripción"
+      tags_label: "Etiquetas de sucesos"
+      hint: "Un suceso necesita al menos un título, una fecha de inicio o de fin, o una relación con otro suceso de abajo."
+      start_datetime: "Fecha/hora de inicio"
+      end_datetime: "Fecha/hora de fin"
+      # Las tres referencias temporales y la opción en blanco que limpia una. Los
+      # valores son identificadores de suceso, así que solo se traducen las
+      # etiquetas que los acompañan.
+      before_event: "Ocurre antes"
+      after_event: "Ocurre después"
+      simultaneous_event: "Al mismo tiempo que"
+      none: "Ninguno"
+    show:
+      label: "Suceso"
+      back_label: "Todos los sucesos"
+      facts:
+        # El título no tiene estado vacío. El valor es
+        # `title.presence || display_string`, y `display_string` siempre responde
+        # con algo —en el peor caso, «Suceso n.º 12»—, así que una copia en blanco
+        # aquí nunca se renderizaría y solo sería una clave que nadie lee.
+        title: "Título"
+        universe: "Universo"
+        tags: "Etiquetas de sucesos"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        in_world_time: "Tiempo en el mundo"
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+    # Los mensajes de `errors.add` se leen como la cola de `errors.format`
+    # («%{attribute} %{message}»), así que cada uno empieza en minúscula.
+    errors:
+      must_belong_to_universe: "debe pertenecer al universo del suceso"
+      cannot_be_itself: "no puede ser él mismo"
+      must_be_identifiable: "debe tener un título, una fecha o una relación con otro suceso"
+    tabs:
+      events: "Sucesos"
+
+  items:
+    title: "Objetos"
+    description: "Objetos y recursos cuyos detalles comparten todas las historias de este universo."
+    tabs_aria_label: "Espacio de trabajo de objetos"
+    new_title: "Nuevo objeto"
+    add: "Añadir objeto"
+    save: "Guardar objeto"
+    form:
+      name: "Nombre"
+      description: "Descripción"
+      tags_label: "Etiquetas de objetos"
+    empty_title: "Todavía no hay objetos"
+    empty_writable_description: "Los objetos pertenecen al universo y sirven para seguir objetos, recursos y propiedades a lo largo de todas las historias. Añade el primero para empezar."
+    empty_read_only_description: "Los objetos pertenecen al universo y los comparten todas sus historias."
+    show:
+      label: "Objeto"
+      back_label: "Todos los objetos"
+      facts:
+        universe: "Universo"
+        tags: "Etiquetas de objetos"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+    tabs:
+      items: "Objetos"
+      ownerships: "Propiedades"
+
+  # Relaciones y Propiedades son los dos espacios de trabajo que usan el flujo de
+  # redirección y rerenderizado en HTML en lugar de una mutación solo JSON, así
+  # que son también los dos que establecen un mensaje flash. Sus bloques `flash`
+  # son la confirmación de un registro guardado o eliminado; el tipo de registro
+  # se escribe entero en lugar de interpolarse, porque «Relation created.» es una
+  # frase sobre un registro y componerla a partir del nombre de la raíz le
+  # devolvería el orden de las palabras al control de la locale.
+  relations:
+    title: "Relaciones"
+    # El antetítulo es la tira de pestañas a la que pertenece este espacio de
+    # trabajo, no la sección donde se archiva: se llega a Relaciones desde la
+    # pestaña Personajes.
+    eyebrow: "Personajes"
+    description: "Conecta a los personajes y registra cómo cambian sus relaciones con el tiempo."
+    new_title: "Nueva relación"
+    add: "Añadir relación"
+    save: "Guardar relación"
+    form:
+      description: "Descripción"
+      tags_label: "Etiquetas de relaciones"
+    character1: "Personaje 1"
+    character2: "Personaje 2"
+    select_character: "Selecciona un personaje"
+    from: "Desde"
+    to: "Hasta"
+    empty_title: "Todavía no hay relaciones"
+    empty_writable_description: "Conecta a dos personajes para describir su relación. Las etiquetas de relaciones son opcionales, pero pueden hacer estas conexiones más fáciles de leer."
+    empty_read_only_description: "Las relaciones entre personajes de este universo aparecerán aquí en cuanto se hayan añadido."
+    show:
+      label: "Relación"
+      back_label: "Todas las relaciones"
+      facts:
+        character1: "Primer personaje"
+        character2: "Segundo personaje"
+        tags: "Etiquetas de relaciones"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        in_world_dates: "Fechas en el mundo"
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+      related:
+        title: "Información relacionada"
+        empty_title: "Todavía no hay nada relacionado"
+        empty_description: "Esta relación es un vínculo entre dos personajes. Todo lo demás que merezca la pena saber sobre ella se mostrará aquí más adelante."
+    # El sujeto del resumen de errores. Es la frase que va detrás del «this» de la
+    # oración, así que aquí no lleva artículo; la entrada española es una frase
+    # entera porque su oración no aporta determinante.
+    errors:
+      subject: "esta relación"
+    flash:
+      created: "La relación se ha creado."
+      updated: "La relación se ha actualizado."
+      deleted: "La relación se ha eliminado."
+    tabs:
+      characters: "Personajes"
+      relations: "Relaciones"
+
+  ownerships:
+    title: "Propiedades"
+    eyebrow: "Objetos"
+    description: "Sigue qué personajes poseen qué objetos y cuándo cambian esas relaciones."
+    new_title: "Nueva propiedad"
+    add: "Añadir propiedad"
+    save: "Guardar propiedad"
+    form:
+      description: "Descripción"
+      tags_label: "Etiquetas de propiedades"
+    # Las dos etiquetas del formulario. `character` es el sujeto del campo —el
+    # selector ofrece personajes—, mientras que `show.facts.owner` es lo que el
+    # registro *es* en esa relación, así que son dos claves y no un sustantivo
+    # compartido.
+    item: "Objeto"
+    character: "Personaje"
+    select_item: "Selecciona un objeto"
+    select_character: "Selecciona un personaje"
+    from: "Desde"
+    to: "Hasta"
+    empty_title: "Todavía no hay propiedades"
+    empty_writable_description: "Conecta a un personaje con un objeto para registrar una propiedad presente o histórica."
+    empty_read_only_description: "Los registros de propiedad de este universo aparecerán aquí en cuanto se hayan añadido."
+    show:
+      label: "Propiedad"
+      back_label: "Todas las propiedades"
+      facts:
+        item: "Objeto"
+        owner: "Propietario"
+        tags: "Etiquetas de propiedades"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        in_world_dates: "Fechas en el mundo"
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+      related:
+        title: "Información relacionada"
+        empty_title: "Todavía no hay nada relacionado"
+        empty_description: "Esta propiedad es un vínculo entre un personaje y un objeto. Todo lo demás que merezca la pena saber sobre ella se mostrará aquí más adelante."
+    errors:
+      subject: "esta propiedad"
+    flash:
+      created: "La propiedad se ha creado."
+      updated: "La propiedad se ha actualizado."
+      deleted: "La propiedad se ha eliminado."
+    tabs:
+      items: "Objetos"
+      ownerships: "Propiedades"
+
+  # Las etiquetas de los campos con los que se construyen los editores modales.
+  #
+  # `ModalFields` serializa estos descriptores en el
+  # `data-taxonomy-tree-modal-fields-value` del árbol de taxonomías, así que una
+  # etiqueta aquí es la cadena que imprime el modal construido con DOM, y los
+  # mismos ayudantes alimentan los modales que renderiza el servidor. Los
+  # descriptores guardan una *clave* y no una cadena ya traducida —`PHOTO_FIELD` es
+  # una constante congelada, y una constante que llamara a `t()` se resolvería una
+  # sola vez, en la locale con la que se hubiera cargado la clase—, así que estas
+  # se resuelven en cada petición con `ModalFields#modal_field`.
+  modal_fields:
+    name: "Nombre"
+    description: "Descripción"
+    background_color: "Color de fondo"
+    foreground_color: "Color de texto"
+    parent: "Padre"
+    no_parent: "(Sin padre)"
+    taggable: "Etiquetable"
+    photo: "Foto"
+    show_in_menu: "Mostrar en el menú"
+    symmetric: "Simétrica"
+    inverse: "Inversa"
+    location_tags: "Etiquetas de lugares"
+    section_tags: "Etiquetas de secciones"
+
   tags:
+    # La página de detalles de una taxonomía. El antetítulo nombra la sección de
+    # la barra lateral derecha y no la taxonomía, así que una sola clave sirve
+    # para las ocho, y los datos Ámbito/Descripción/Color son los mismos tres en
+    # todas ellas.
+    #
+    # El color no tiene estado vacío: `bgcolor` es NOT NULL con valor por defecto,
+    # así que siempre tiene un valor y una copia en blanco nunca se renderizaría.
+    show:
+      eyebrow: "Configuración · Etiquetas"
+      scope: "Ámbito"
+      scope_universe_description: "Las etiquetas son etiquetas opcionales. Esta taxonomía pertenece al universo y la comparten todas sus historias."
+      description: "Descripción"
+      description_blank: "Todavía no hay descripción."
+      color: "Color"
     title: "Etiquetas"
     scope:
       universe: "Etiquetas del universo"
@@ -312,36 +623,60 @@ es:
         empty_description: "Las etiquetas son opcionales. Añade una para agrupar personajes, o crea personajes sin etiqueta."
         read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de personajes."
         new_label: "Añadir etiqueta de personaje"
+        record_label: "Etiqueta de personaje"
+        all_label: "Todas las etiquetas de personajes"
+        records_title: "Personajes con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que los personajes pueden quedarse sin etiquetar."
       relation:
         title: "Etiquetas de relaciones"
         description: "Define los tipos de relación que se usan al conectar a los personajes de este universo."
         empty_description: "Las etiquetas son opcionales. Añade una para describir relaciones entre personajes, o deja las relaciones sin etiquetar."
         read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de relaciones."
         new_label: "Añadir etiqueta de relación"
+        record_label: "Etiqueta de relación"
+        all_label: "Todas las etiquetas de relaciones"
+        records_title: "Relaciones con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que las relaciones pueden quedarse sin etiquetar."
       location:
         title: "Etiquetas de lugares"
         description: "Organiza los lugares y las regiones que componen este universo."
         empty_description: "Las etiquetas son opcionales. Añade una para agrupar lugares, o organízalos más adelante."
         read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de lugares."
         new_label: "Añadir etiqueta de lugar"
+        record_label: "Etiqueta de lugar"
+        all_label: "Todas las etiquetas de lugares"
+        records_title: "Lugares con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que los lugares pueden quedarse sin etiquetar."
       event:
         title: "Etiquetas de sucesos"
         description: "Clasifica los sucesos para que los momentos relacionados sean más fáciles de encontrar en la cronología."
         empty_description: "Las etiquetas son opcionales. Añade una para agrupar sucesos, o confía en las fechas y en las relaciones."
         read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de sucesos."
         new_label: "Añadir etiqueta de suceso"
+        record_label: "Etiqueta de suceso"
+        all_label: "Todas las etiquetas de sucesos"
+        records_title: "Sucesos con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que los sucesos pueden quedarse sin etiquetar."
       item:
         title: "Etiquetas de objetos"
         description: "Define categorías opcionales para los objetos y los recursos de este universo."
         empty_description: "Las etiquetas son opcionales. Añade una para agrupar objetos, o crea objetos sin etiqueta."
         read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de objetos."
         new_label: "Añadir etiqueta de objeto"
+        record_label: "Etiqueta de objeto"
+        all_label: "Todas las etiquetas de objetos"
+        records_title: "Objetos con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que los objetos pueden quedarse sin etiquetar."
       ownership:
         title: "Etiquetas de propiedades"
         description: "Describe los tipos de propiedad que se registran entre personajes y objetos."
         empty_description: "Las etiquetas son opcionales. Añade una para clasificar los registros de propiedad, o créalos sin etiquetar."
         read_only_empty_description: "Todavía no se ha definido ninguna etiqueta de propiedades."
         new_label: "Añadir etiqueta de propiedad"
+        record_label: "Etiqueta de propiedad"
+        all_label: "Todas las etiquetas de propiedades"
+        records_title: "Propiedades con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que las propiedades pueden quedarse sin etiquetar."
       section:
         title: "Etiquetas de secciones"
         description: "Define etiquetas como libro, capítulo, acto o episodio para las secciones de esta historia."
@@ -379,7 +714,9 @@ es:
       universe:
         name: "Nombre"
         private: "Privado"
-        # The human name of a validation's attribute, not a form label.
+        # El nombre humano del atributo de una validación, no la etiqueta de un
+        # formulario. Una dirección ocupada se lee «Slug ya está en uso» junto al
+        # campo «Slug de la dirección» que la responde.
         slug: "Slug"
       story:
         name: "Nombre"
@@ -387,6 +724,102 @@ es:
       universe_membership:
         email_address: "Dirección de correo"
         access_level: "Nivel de acceso"
+      # Los modelos propios de los espacios de trabajo de la Biblia del universo.
+      # Una etiqueta de formulario lee el mismo nombre que un mensaje de error, así
+      # que una página en español no debe mostrar «Nombre» junto a un error en
+      # español sobre `name`. Aquí se nombran los atributos a los que llega de
+      # verdad una etiqueta de formulario, un `collection_select` o un `errors.add`
+      # de estos espacios de trabajo.
+      character:
+        name: "Nombre"
+        description: "Descripción"
+        parent: "Personaje padre"
+      location:
+        name: "Nombre"
+        description: "Descripción"
+        parent: "Lugar padre"
+      event:
+        name: "Nombre"
+        title: "Título"
+        description: "Descripción"
+        start_datetime: "Fecha/hora de inicio"
+        end_datetime: "Fecha/hora de fin"
+        # Las tres referencias temporales se nombran con las etiquetas del propio
+        # formulario, y un `errors.add(:before_event, …)` se anuncia con este
+        # nombre.
+        before_event: "Ocurre antes"
+        after_event: "Ocurre después"
+        simultaneous_event: "Al mismo tiempo que"
+      item:
+        name: "Nombre"
+        description: "Descripción"
+        parent: "Objeto padre"
+      relation:
+        name: "Nombre"
+        description: "Descripción"
+        character1: "Personaje 1"
+        character2: "Personaje 2"
+        from_date: "Desde"
+        to_date: "Hasta"
+      ownership:
+        name: "Nombre"
+        description: "Descripción"
+        item: "Objeto"
+        character: "Personaje"
+        from_date: "Desde"
+        to_date: "Hasta"
+      # Las ocho taxonomías comparten una preocupación para el par de colores y
+      # otra para el padre, así que un modelo se nombra una vez aquí y las
+      # etiquetas de campo del editor de etiquetas vienen de `modal_fields.*` y no
+      # de aquí.
+      character_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
+        show_in_menu: "Mostrar en el menú"
+      relation_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
+        symmetric: "Simétrica"
+        inverse: "Inversa"
+      location_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
+        show_in_menu: "Mostrar en el menú"
+      event_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
+        show_in_menu: "Mostrar en el menú"
+      item_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
+        show_in_menu: "Mostrar en el menú"
+      ownership_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
 
   searches:
     bar:
@@ -618,6 +1051,10 @@ es:
       empty: "no puede estar vacío"
       blank: "no puede estar en blanco"
       present: "debe estar en blanco"
+      # `belongs_to` produces this one, and Rails defines it in English only, so
+      # without it a Spanish page that rejects a missing reference raises instead
+      # of naming the field.
+      required: "debe existir"
       too_long:
         one: "es demasiado largo (el máximo es 1 carácter)"
         other: "es demasiado largo (el máximo es %{count} caracteres)"

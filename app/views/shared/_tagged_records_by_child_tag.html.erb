@@ -14,7 +14,7 @@
       count: child_records.size,
       count_label: local_assigns.fetch(:count_label),
       icon: local_assigns.fetch(:icon),
-      empty_title: t("shared.detail_section.empty_title", label: t(local_assigns.fetch(:count_label), count: 2)),
+      empty_title: t("shared.detail_section.empty_title", label: t(local_assigns.fetch(:count_label), count: 1)),
       empty_description: t("shared.child_tags.unused_description") do %>
       <%= render "shared/tagged_record_list",
         records: child_records,

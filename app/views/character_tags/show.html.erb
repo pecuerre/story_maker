@@ -2,28 +2,33 @@
 
 <%= render "shared/record_details",
   record: @character_tag,
-  eyebrow: "Configuration · Tags",
-  label: "Character tag",
+  eyebrow: t("tags.show.eyebrow"),
+  label: t("tags.types.character.record_label"),
   facts: [
-    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
-    detail_fact("Description", @character_tag.description, blank: "No description yet."),
-    detail_fact("Color", @character_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+    detail_fact(t("tags.show.scope"), t("tags.show.scope_universe_description")),
+    detail_fact(t("tags.show.description"), @character_tag.description, blank: t("tags.show.description_blank")),
+    detail_fact(t("tags.show.color"), @character_tag.bgcolor)
   ],
   back_url: universe_character_tags_path,
-  back_label: "All character tags" do %>
+  back_label: t("tags.types.character.all_label") do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "character", tag: @character_tag %>
 <% end %>
+
+<%# The section's empty title is the shared sentence with the record type in its
+    plural, so the two branches below — a taggable tag lists the records directly,
+    a grouping tag lists one section per child tag — read identically when empty. %>
+<% empty_title = t("shared.detail_section.empty_title", label: t("character", count: 1)) %>
 
 <% if @character_tag.taggable %>
   <%= render "shared/include_descendants_toggle" %>
 
   <%= render "shared/detail_section",
-    title: "Characters with this tag",
+    title: t("tags.types.character.records_title"),
     count: @tagged_records.size,
     count_label: "character",
     icon: "person",
-    empty_title: "No characters carry this tag",
-    empty_description: "Nothing uses this tag yet. Tags are optional, so characters can stay untagged." do %>
+    empty_title: empty_title,
+    empty_description: t("tags.types.character.unused_description") do %>
     <%= render "shared/tagged_record_list",
       records: @tagged_records,
       path: ->(record) { universe_character_path(id: record) } %>

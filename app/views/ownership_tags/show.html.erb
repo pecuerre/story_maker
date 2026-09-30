@@ -2,25 +2,25 @@
 
 <%= render "shared/record_details",
   record: @ownership_tag,
-  eyebrow: "Configuration · Tags",
-  label: "Ownership tag",
+  eyebrow: t("tags.show.eyebrow"),
+  label: t("tags.types.ownership.record_label"),
   facts: [
-    detail_fact("Scope", "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."),
-    detail_fact("Description", @ownership_tag.description, blank: "No description yet."),
-    detail_fact("Color", @ownership_tag.bgcolor, blank: "No background color set. An untinted tag is still shown with its name.")
+    detail_fact(t("tags.show.scope"), t("tags.show.scope_universe_description")),
+    detail_fact(t("tags.show.description"), @ownership_tag.description, blank: t("tags.show.description_blank")),
+    detail_fact(t("tags.show.color"), @ownership_tag.bgcolor)
   ],
   back_url: universe_ownership_tags_path,
-  back_label: "All ownership tags" %>
+  back_label: t("tags.types.ownership.all_label") %>
 
 <%= render "shared/include_descendants_toggle" %>
 
 <%= render "shared/detail_section",
-  title: "Ownerships with this tag",
+  title: t("tags.types.ownership.records_title"),
   count: @tagged_records.size,
   count_label: "ownership",
   icon: "person-check",
-  empty_title: "No ownerships carry this tag",
-  empty_description: "Nothing uses this tag yet. Tags are optional, so ownerships can stay untagged." do %>
+  empty_title: t("shared.detail_section.empty_title", label: t("ownership", count: 1)),
+  empty_description: t("tags.types.ownership.unused_description") do %>
   <%= render "shared/tagged_record_list",
     records: @tagged_records,
     path: ->(record) { universe_ownership_path(id: record) } %>

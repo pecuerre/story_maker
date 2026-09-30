@@ -40,14 +40,14 @@
             data-action="modal-form#destroy"
             data-modal-form-url="<%= local_assigns.fetch(:delete_url) %>"
             data-modal-form-confirm="<%= confirm_text %>">
-            <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+            <i class="bi bi-trash me-2" aria-hidden="true"></i><%= t("shared.row_actions.delete") %>
           </button>
         <% else %>
           <%= button_to local_assigns.fetch(:delete_url),
             method: :delete,
             class: "dropdown-item text-danger",
             data: { turbo_confirm: confirm_text } do %>
-            <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+            <i class="bi bi-trash me-2" aria-hidden="true"></i><%= t("shared.row_actions.delete") %>
           <% end %>
         <% end %>
       </li>

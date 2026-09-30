@@ -11,7 +11,9 @@ class LocationTagsControllerTest < ActionDispatch::IntegrationTest
     get universe_location_tags_url(universe_slug: @universe.slug)
 
     assert_response :success
-    assert_includes response.body, "Location Tags"
+    # The document title and the page heading are the same string, so the tab
+    # reads "Location tags" exactly as the heading does.
+    assert_select "h1", text: "Location tags"
     assert_includes response.body, @location_tag.name
   end
 

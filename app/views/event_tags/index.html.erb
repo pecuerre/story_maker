@@ -1,16 +1,16 @@
-<% content_for :title, "Event Tags" %>
+<% content_for :title, t("tags.types.event.title") %>
 
 <%= render "shared/taxonomy_tree",
-  title: "Event tags",
-  description: "Classify events so related moments are easier to find across the timeline.",
-  eyebrow: "Universe Bible",
+  title: t("tags.types.event.title"),
+  description: t("tags.types.event.description"),
+  eyebrow: t("sidebar.universe_bible"),
   count: Current.universe.event_tags.count,
   count_label: "tag",
-  new_label: "Add event tag",
+  new_label: t("tags.types.event.new_label"),
   tag_workspace_scope: "universe",
   tag_workspace_taxonomy: "event",
-  empty_description: "Tags are optional. Add one to group events, or rely on dates and relationships instead.",
-  read_only_empty_description: "No event tags are defined yet.",
+  empty_description: t("tags.types.event.empty_description"),
+  read_only_empty_description: t("tags.types.event.read_only_empty_description"),
   nodes: @event_tags,
   create_url: universe_event_tags_path,
   update_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },

@@ -1,4 +1,10 @@
 class Event < ApplicationRecord
+  # A validation runs wherever a record is saved, not only inside a request, so the
+  # three `errors.add` messages below resolve their keys through `I18n.t` rather
+  # than through a view/controller `t`. A save from a console, a job, or the
+  # development-data loader has the default locale, so those callers get the
+  # English message — exactly what they got before, because the message was a
+  # literal.
   include Hierarchical
   include HasManyTags
   include HasSlug
@@ -92,7 +98,9 @@ class Event < ApplicationRecord
 
   def associated_records_belong_to_universe
     { before_event: before_event, after_event: after_event, simultaneous_event: simultaneous_event }.each do |name, record|
-      errors.add(name, "must belong to the event's universe") if record && universe && record.universe_id != universe_id
+      next unless record && universe && record.universe_id != universe_id
+
+      errors.add(name, I18n.t("events.errors.must_belong_to_universe"))
     end
   end
 
@@ -101,7 +109,7 @@ class Event < ApplicationRecord
       foreign_key = public_send("#{name}_id")
       next unless record == self || (id.present? && foreign_key.present? && foreign_key == id)
 
-      errors.add(name, "cannot be itself")
+      errors.add(name, I18n.t("events.errors.cannot_be_itself"))
     end
   end
 
@@ -134,6 +142,6 @@ class Event < ApplicationRecord
     return if title.present? || start_datetime.present? || end_datetime.present? ||
       before_event.present? || after_event.present? || simultaneous_event.present?
 
-    errors.add(:base, "must have a title, a date, or a relation to another event")
+    errors.add(:base, I18n.t("events.errors.must_be_identifiable"))
   end
 end

@@ -1,16 +1,16 @@
-<% content_for :title, "Item Tags" %>
+<% content_for :title, t("tags.types.item.title") %>
 
 <%= render "shared/taxonomy_tree",
-  title: "Item tags",
-  description: "Define optional categories for objects and resources in this universe.",
-  eyebrow: "Universe Bible",
+  title: t("tags.types.item.title"),
+  description: t("tags.types.item.description"),
+  eyebrow: t("sidebar.universe_bible"),
   count: Current.universe.item_tags.count,
   count_label: "tag",
-  new_label: "Add item tag",
+  new_label: t("tags.types.item.new_label"),
   tag_workspace_scope: "universe",
   tag_workspace_taxonomy: "item",
-  empty_description: "Tags are optional. Add one to group items, or create untagged items.",
-  read_only_empty_description: "No item tags are defined yet.",
+  empty_description: t("tags.types.item.empty_description"),
+  read_only_empty_description: t("tags.types.item.read_only_empty_description"),
   nodes: @item_tags,
   create_url: universe_item_tags_path,
   update_url: ->(item_tag) { universe_item_tag_path(id: item_tag) },

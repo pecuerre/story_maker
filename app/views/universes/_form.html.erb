@@ -38,6 +38,6 @@
         `helpers.submit.*`, so the label is named here. %>
     <%= form.submit(universe.persisted? ? t("universes.form.submit_update") : t("universes.form.submit_create"),
       class: "btn btn-primary") %>
-    <%= link_to t("universes.form.cancel"), universe.persisted? ? universe_path(universe) : universes_path, class: "btn btn-link" %>
+    <%= link_to t("shared.form.cancel"), universe.persisted? ? universe_path(universe) : universes_path, class: "btn btn-link" %>
   </div>
 <% end %>

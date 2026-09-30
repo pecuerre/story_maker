@@ -2,20 +2,20 @@
 
 <%= render "shared/record_details",
   record: @ownership,
-  eyebrow: "Universe Bible",
-  label: "Ownership",
+  eyebrow: t("sidebar.universe_bible"),
+  label: t("ownerships.show.label"),
   facts: [
-    detail_fact("Item", link_to(@ownership.item.name, universe_item_path(id: @ownership.item))),
-    detail_fact("Owner", link_to(@ownership.character.name, universe_character_path(id: @ownership.character))),
-    detail_fact("Ownership tags", entity_tag_badge(@ownership), blank: "No tags assigned. Tags are optional."),
-    detail_fact("In-world dates", in_world_range(@ownership.from_date, @ownership.to_date)),
-    detail_fact("Description", @ownership.description, blank: "No description yet.")
+    detail_fact(t("ownerships.show.facts.item"), link_to(@ownership.item.name, universe_item_path(id: @ownership.item))),
+    detail_fact(t("ownerships.show.facts.owner"), link_to(@ownership.character.name, universe_character_path(id: @ownership.character))),
+    detail_fact(t("ownerships.show.facts.tags"), entity_tag_badge(@ownership), blank: t("ownerships.show.facts.tags_blank")),
+    detail_fact(t("ownerships.show.facts.in_world_dates"), in_world_range(@ownership.from_date, @ownership.to_date)),
+    detail_fact(t("ownerships.show.facts.description"), @ownership.description, blank: t("ownerships.show.facts.description_blank"))
   ],
   back_url: universe_ownerships_path,
-  back_label: "All ownerships" %>
+  back_label: t("ownerships.show.back_label") %>
 
 <%= render "shared/detail_section",
-  title: "Related information",
+  title: t("ownerships.show.related.title"),
   icon: "person-check",
-  empty_title: "Nothing related yet",
-  empty_description: "This ownership is a link between a character and an item. Anything else worth knowing about it will be listed here later." %>
+  empty_title: t("ownerships.show.related.empty_title"),
+  empty_description: t("ownerships.show.related.empty_description") %>

@@ -1,16 +1,16 @@
-<% content_for :title, "Character Tags" %>
+<% content_for :title, t("tags.types.character.title") %>
 
 <%= render "shared/taxonomy_tree",
-  title: "Character tags",
-  description: "Define the optional labels used to organize characters across this universe.",
-  eyebrow: "Universe Bible",
+  title: t("tags.types.character.title"),
+  description: t("tags.types.character.description"),
+  eyebrow: t("sidebar.universe_bible"),
   count: Current.universe.character_tags.count,
   count_label: "tag",
-  new_label: "Add character tag",
+  new_label: t("tags.types.character.new_label"),
   tag_workspace_scope: "universe",
   tag_workspace_taxonomy: "character",
-  empty_description: "Tags are optional. Add one to group characters, or create characters without a tag.",
-  read_only_empty_description: "No character tags are defined yet.",
+  empty_description: t("tags.types.character.empty_description"),
+  read_only_empty_description: t("tags.types.character.read_only_empty_description"),
   nodes: @character_tags,
   create_url: universe_character_tags_path,
   update_url: ->(character_tag) { universe_character_tag_path(id: character_tag) },

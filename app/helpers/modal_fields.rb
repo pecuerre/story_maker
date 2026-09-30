@@ -2,7 +2,7 @@ module ModalFields
   # Builds a flat, depth-indented [id, label] list of taxonomy nodes suitable for a parent-select dropdown.
   def taxonomy_parent_options(nodes)
     by_parent = nodes.group_by(&:parent_id)
-    options = [ [ "", "(No parent)" ] ]
+    options = [ [ "", t("modal_fields.no_parent") ] ]
     add_children = lambda do |parent_id, depth|
       (by_parent[parent_id] || []).each do |node|
         options << [ node.id, ("— " * depth) + node.name ]
@@ -11,6 +11,27 @@ module ModalFields
     end
     add_children.call(nil, 0)
     options
+  end
+
+  # One field descriptor with its label resolved for the request being rendered.
+  #
+  # The descriptors below hold `label_key:` rather than `label:`. A descriptor is
+  # serialized into the taxonomy tree's `data-taxonomy-tree-modal-fields-value`
+  # and printed by a modal the browser builds from it, so the label is chrome that
+  # has to cross the boundary already translated — but `PHOTO_FIELD` is a frozen
+  # constant, and a constant that called `t()` would be resolved once, in whatever
+  # locale happened to load this class first, and every later request would render
+  # that one language. The key therefore travels in the constant and the string is
+  # produced here, per request.
+  #
+  # The key is dropped on the way out. It is how the label is found, not part of
+  # the descriptor's contract with the tree controller, and leaving it in the
+  # serialized JSON would publish a key nobody renders.
+  def modal_field(descriptor)
+    key = descriptor[:label_key]
+    return descriptor if key.nil?
+
+    descriptor.except(:label_key).merge(label: t(key))
   end
 
   # The editor fields shared by every taxonomy. `nodes` is the one per-call
@@ -29,7 +50,7 @@ module ModalFields
   # `remove_photo`) belong to the widget, not to this descriptor.
   PHOTO_FIELD = {
     name: "photo",
-    label: "Photo",
+    label_key: "modal_fields.photo",
     type: "photo",
     url: true
   }.freeze
@@ -38,45 +59,45 @@ module ModalFields
     [
       {
         name: "name",
-        label: "Name",
+        label_key: "modal_fields.name",
         type: "text",
         required: true
       },
       {
         name: "description",
-        label: "Description",
+        label_key: "modal_fields.description",
         type: "textarea"
       },
       {
         name: "bgcolor",
-        label: "Background color",
+        label_key: "modal_fields.background_color",
         type: "color"
       },
       {
         name: "fgcolor",
-        label: "Foreground color",
+        label_key: "modal_fields.foreground_color",
         type: "color"
       },
       {
         name: "parent_id",
-        label: "Parent",
+        label_key: "modal_fields.parent",
         type: "select",
         options: taxonomy_parent_options(nodes)
       },
       {
         name: "taggable",
-        label: "Taggable",
+        label_key: "modal_fields.taggable",
         type: "checkbox"
       },
       photo_field,
       *extra_fields
-    ]
+    ].map { |field| modal_field(field) }
   end
 
   # The one descriptor every photo-capable editor shares, so the field cannot be
   # spelled one way in a tag taxonomy and another in a content editor.
   def photo_field
-    PHOTO_FIELD
+    modal_field(PHOTO_FIELD)
   end
 
   # Character, Location, Item, and Event tags additionally offer the workspace
@@ -85,7 +106,7 @@ module ModalFields
     taxonomy_tag_fields(nodes, [
       {
         name: "show_in_menu",
-        label: "Show in menu",
+        label_key: "modal_fields.show_in_menu",
         type: "checkbox"
       }
     ])
@@ -143,24 +164,24 @@ module ModalFields
     [
       {
         name: "name",
-        label: "Name",
+        label_key: "modal_fields.name",
         type: "text",
         required: true
       },
       {
         name: "description",
-        label: "Description",
+        label_key: "modal_fields.description",
         type: "textarea"
       },
       {
         name: "parent_id",
-        label: "Parent",
+        label_key: "modal_fields.parent",
         type: "select",
         options: taxonomy_parent_options(locations)
       },
       {
         name: "location_tag_ids",
-        label: "Location tags",
+        label_key: "modal_fields.location_tags",
         type: "select",
         multiple: true,
         options: location_tags.map { |location_tag|
@@ -168,7 +189,7 @@ module ModalFields
         }
       },
       photo_field
-    ]
+    ].map { |field| modal_field(field) }
   end
 
   def ownership_tag_taxonomy_fields(nodes = [])
@@ -191,12 +212,12 @@ module ModalFields
     taxonomy_tag_fields(nodes, [
       {
         name: "symmetric",
-        label: "Symmetric",
+        label_key: "modal_fields.symmetric",
         type: "checkbox"
       },
       {
         name: "inverse",
-        label: "Inverse",
+        label_key: "modal_fields.inverse",
         type: "text",
         required_unless: { field: "symmetric", value: true }
       }
@@ -227,24 +248,24 @@ module ModalFields
     [
       {
         name: "name",
-        label: "Name",
+        label_key: "modal_fields.name",
         type: "text",
         required: true
       },
       {
         name: "description",
-        label: "Description",
+        label_key: "modal_fields.description",
         type: "textarea"
       },
       {
         name: "parent_id",
-        label: "Parent",
+        label_key: "modal_fields.parent",
         type: "select",
         options: taxonomy_parent_options(sections)
       },
       {
         name: "section_tag_ids",
-        label: "Section tags",
+        label_key: "modal_fields.section_tags",
         type: "select",
         multiple: true,
         options: section_tags.map { |section_tag|
@@ -252,6 +273,6 @@ module ModalFields
         }
       },
       photo_field
-    ]
+    ].map { |field| modal_field(field) }
   end
 end

@@ -31,6 +31,9 @@ Labels used below:
 
 ## 2026-09-30
 
+- **[fixed]** `has_many_tags.rb`'s "include child tags" query no longer splices table and column names into a SQL string, so `bin/brakeman` reports no warnings and CI's `scan_ruby` job passes again. The join is built by Arel now, which also closes the backlog item that named the warning.
+- **[fixed]** The `migrations-from-zero` CI job runs `db:drop`, `db:create`, and `db:migrate` as three separate processes; as one command, `db:drop` unlinked the SQLite file while the connection still pointed at it, so the migration wrote to the deleted inode and the next process found no schema.
+- **[fixed]** The client-side i18n test no longer leaves its own four-key string table installed for the files that run after it, so `bun run test:js` passes whichever order Bun discovers the test files in.
 - **[changed]** Every model's own validation message is a key, which was the last English a Spanish page could show.
 - **[changed]** The four Stimulus controllers read their strings from the server, which finishes the internationalization work.
 - **[changed]** The last three untranslated views are translated, and the search surface's own labels with them.
@@ -67,6 +70,7 @@ Labels used below:
 - **[fixed]** Removed two dead links to `docs/schema.txt`, a file that does not exist, from `docs/data_model.md` and `docs/README.md`. The ownership graph and the per-table reference in `docs/data_model.md` already cover what that link promised.
 - **[fixed]** `docs/conventions.md` carried its own errata in the body and a stale delivery promise about the Scene slices, long shipped. The Event taxonomy is now stated as current fact and the delivery sentence is gone.
 
+- **[docs]** `docs/development.md` records why the CI migration commands must be separate processes, and that Bun runs every client-side test file in one process with shared module state.
 - **[docs]** **The changelog was too detailed to be readable, and the fix was to split it in two rather than to trim it.**
 - **[docs]** `docs/features/i18n.md` records the decision this slice settled: a search document's title is a record's label **in the default locale** while a view resolves `#display_label` in the reader's language, why `Relation` needs no second form, and what a change to the stored wording costs.
 - **[docs]** `docs/features/i18n.md` records the three translation rules this surface settled: a determiner a language agrees in gender is its own interpolation beside the noun, a link inside a sentence is one `_html` key with the link as the interpolation, and a value object that is not a view resolves its keys with `I18n.t`.
@@ -88,6 +92,7 @@ Labels used below:
 - **[docs]** Verified that the reorganization lost no content: every distinctive class name, method name, shared partial, and helper referenced by the four documents before the move is still referenced after it. `shared/_search_bar` and `TimelineController` were the only two mentions lost, and both were restored.
 - **[docs]** The changelog's historical entries are now summaries: all 299 entries across the 22 recorded dates were reduced to one or two sentences each, derived from the long form rather than rewritten.
 
+- **[chore]** The photo tests measure a stored image through the same libvips-then-ImageMagick pair `PhotoProcessing` uses, instead of shelling out to ImageMagick's `identify` and `convert`, which CI does not install — that is why the `test` and `system-test` jobs were red.
 - **[chore]** Two checks now guard the validation messages only a *rejected* request can reach: `model_error_message_literals_test.rb` fails on a quoted string in `errors.add` or `message:`, and `spanish_chrome_test.rb` drives the failing requests and asserts the Spanish answer carries no English.
 - **[chore]** `docs/adr_audit.md` — the point-in-time audit of all sixteen accepted ADRs against the code — was removed once its findings had been acted on, since it duplicated what this entry and the two ADR notes now record.
 - **[chore]** Added `test/docs_test.rb`, which makes the documentation's own consistency a test rather than a convention nobody checks.

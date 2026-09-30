@@ -132,14 +132,12 @@ class SpanishClientStringsTest < ApplicationSystemTestCase
       assert_selector "html[lang='es']"
     end
 
+    # A real, committed image handed to the real file input, so the browser
+    # decodes an actual file rather than a stub. It used to be drawn with
+    # ImageMagick's `convert` into `tmp/`, which is how this case came to need a
+    # tool CI does not install.
     def attach_photo
-      path = Rails.root.join("tmp/photos/spanish.png")
-      unless path.exist?
-        FileUtils.mkdir_p(path.dirname)
-        built = system("convert", "-size", "600x400", "gradient:#7c3aed-#2563eb", path.to_s,
-          out: File::NULL, err: File::NULL)
-        raise "could not build the test image" unless built
-      end
+      path = Rails.root.join("test/fixtures/files/photo_one.jpg")
 
       within ".modal.show" do
         find(".photo-field input[type=file]").set(path.to_s)

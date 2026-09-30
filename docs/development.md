@@ -44,7 +44,9 @@ first; NOW/LATER/NEVER applies to whatever extra turns up afterwards. The rules 
   prefers `ImageProcessing::Vips` and falls back to `ImageProcessing::MiniMagick` when libvips is not
   installed, so one of the two is enough. libvips is installed in the `Dockerfile` and in CI;
   ImageMagick is the usual workstation install. Without either, uploading a photo fails with an
-  ordinary "could not be read as an image" field error rather than a stack trace.
+  ordinary "could not be read as an image" field error rather than a stack trace. The photo tests
+  read a stored file's size through `PhotoDimensions`, which asks those same two libraries in the
+  same order, so no test needs an image tool the application itself does not use.
 - **Meilisearch**, only if you want search to return anything. Everything else works without it; the
   box says it is unavailable. `bin/dev` starts the engine once it is installed — see **Search
   engine** below.
@@ -150,7 +152,13 @@ without booting Rails or a browser:
 - `test/javascript/setup.js` registers a DOM (happy-dom) and stubs the two specifiers the
   application serves from the import map rather than `node_modules` (`@hotwired/stimulus`,
   `bootstrap`). Only the base class is needed to instantiate a controller, and no unit test opens a
-  dialog. `bunfig.toml` preloads it.
+  dialog. `bunfig.toml` preloads it. It also installs the English string blob (`i18n.use`), so a
+  controller under test reads the same words a real English page would.
+- Bun runs every file in `test/javascript/` in **one** process, in the order the filesystem hands
+  them over, which is not the same on every machine. Module state is therefore shared: a file that
+  installs its own `i18n` table must put the real blob back when it finishes (`afterAll`), or every
+  file that happens to run after it asserts against a raw key instead of a reader's sentence. This
+  is why `i18n_test.js` restores `test/javascript/fixtures/client_strings.en.json`.
 - Cases build a small host element and assign the Stimulus targets the method under test reads
   (`formTarget`, `errorsTarget`, `submitTargets`, `element`, `modalFieldsValue`, …).
 - happy-dom's `FormData` does not repeat a multi-select's selected options the way a browser's
@@ -697,9 +705,14 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | `scan_js` | `bin/importmap audit` |
 | `lint` | `bin/rubocop -f github` (cached) |
 | `js-check` | `bun run lint:js`, `bun run test:js` |
-| `test` | `bin/rails db:test:prepare test` |
-| `data-check` | `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` |
+| `test` | `bin/rails db:test:prepare test`, then `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` |
+| `migrations-from-zero` | `bin/rails db:drop`, `bin/rails db:create`, `bin/rails db:migrate` as three separate processes, then `bin/rails db:migrate:status` and `git diff --exit-code db/schema.rb` |
 | `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure) |
+
+The three migration commands must be separate processes. `db:drop` unlinks the SQLite file while the
+process still holds a connection to it, so one `bin/rails db:drop db:create db:migrate` migrates the
+deleted inode, leaves the recreated database empty, and the next command reports that the schema
+migrations table does not exist.
 
 The system-test job passes the exact Chrome and ChromeDriver paths emitted by
 `browser-actions/setup-chrome` to Selenium as `SE_CHROME_PATH` and `SE_CHROMEDRIVER`. Do not rely

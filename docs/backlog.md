@@ -333,19 +333,23 @@ it has a useful destination and clear empty/loading/error states.
     is testing hwo it looks when you have several stories. and also to test the login -> universe ->
     story flow
 
-33. the `has_many_tags` raw-SQL warning, and the audit baseline that claims Brakeman is clean
+34. **`db:demo:reset` and `db:restart` drop, create, and migrate in one process**
 
-    `bin/brakeman --no-pager` reports one **Weak**-confidence SQL-injection warning at
-    `app/models/concerns/has_many_tags.rb:109`, where a `joins("INNER JOIN …")` string is built by
-    interpolating `reflect_on_association(...)` results. Nothing interpolated there comes from a
-    request — the table and column names come from the model's own associations — so it reads as a
-    false positive, but it is still a string-built join rather than a symbol or a hash, and it is the
-    kind of construct a future edit could make reachable. Confirm that reading, then either rewrite
-    the join without string interpolation or record why the warning is safe to accept.
-    The reason this is listed rather than fixed silently: the audit baseline in
-    [`known_quirks.md`](known_quirks.md) records `bin/brakeman --no-pager` as **0 security
-    warnings**, which is now wrong and will mislead the next person who trusts it. Update that
-    baseline in the same change, whether the warning is fixed or accepted.
+    `lib/tasks/db.rake` invokes `db:drop`, `db:create`, and `db:migrate` inside a single rake
+    process. `db:drop` unlinks the SQLite file while the process still holds a connection to it, so
+    the migration that follows can read `schema_migrations` from the deleted inode, decide every
+    migration is already up, and write nothing. This is the same defect that made CI's
+    `migrations-from-zero` job fail on every run since it was added; that job now runs the three
+    commands as separate processes.
+
+    Both rake tasks work today, because in the development environment `db:migrate`'s schema dump
+    reconnects first, which hides the ordering problem. It is still the shape that failed, and it
+    stops being harmless if the development database is ever a multi-file configuration or the
+    task's ordering changes. Give each its own connection lifecycle — separate rake invocations,
+    or an explicit disconnect before migrating — and add task-level coverage proving the
+    recreated development database actually has every migration applied. Keep the confirmation
+    guard and the named-universe validation; this is the same area as the demo-reset isolation
+    item above.
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

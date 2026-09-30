@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, test } from "bun:test"
+import { afterAll, beforeEach, describe, expect, test } from "bun:test"
 import { recordSubject, t, use } from "../../app/javascript/i18n"
+import clientStrings from "./fixtures/client_strings.en.json"
 
 // The client half of the server/client string contract.
 //
@@ -32,6 +33,18 @@ const SPANISH = {
 
 beforeEach(() => {
   use(ENGLISH)
+})
+
+// Bun runs every file in this directory in one process, in the order the
+// filesystem hands them over — which is alphabetical here and something else on
+// another machine. `use` replaces one module-wide table rather than a per-test
+// one, so a file that leaves its own four-key fixture behind hands every file
+// that runs after it a table with nothing in it, and the controller tests then
+// assert against the raw key: "shared.modal_form.unexplained" instead of the
+// sentence a reader is shown. Putting the real blob back when this file is done
+// is what makes those files' result independent of the order they ran in.
+afterAll(() => {
+  use(clientStrings)
 })
 
 describe("a plain string", () => {

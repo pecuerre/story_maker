@@ -122,7 +122,7 @@ module HasManyTags
     scope_value = public_send(scope_attr)
 
     element_class
-      .joins("INNER JOIN #{join_table} ON #{join_table}.#{element_fk} = #{element_class.table_name}.id")
+      .joins(tag_assignments_join(element_class, join_table, element_fk))
       .where(join_table => { tag_fk => tag_ids })
       .where(scope_attr => scope_value)
       .distinct
@@ -145,6 +145,23 @@ module HasManyTags
   end
 
   private
+
+  # The `INNER JOIN` the descendant query needs, assembled by Arel instead of by
+  # splicing names into a SQL string.
+  #
+  # Every part comes out of the association reflection, so nothing here can be a
+  # request value — but a string with names interpolated into it reads like one,
+  # and Brakeman reports it as a possible SQL injection, which is how this
+  # concern turned CI's `scan_ruby` job red. Arel quotes each name as it builds
+  # the join, so the statement is made of identifiers rather than of text.
+  def tag_assignments_join(element_class, join_table, element_fk)
+    elements = element_class.arel_table
+    assignments = Arel::Table.new(join_table)
+
+    Arel::Nodes::InnerJoin
+      .new(assignments, Arel::Nodes::On.new(assignments[element_fk].eq(elements[element_class.primary_key])))
+      .to_sql
+  end
 
   def join_rows_exist?
     association = self.class.tagged_records_join_association

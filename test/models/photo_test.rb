@@ -74,12 +74,8 @@ class PhotoTest < ActiveSupport::TestCase
     # under test is what was actually written, and the analyzer is whichever
     # image library the machine has.
     def dimensions(photo)
-      path = Rails.root.join("tmp/photo-test-#{photo.id}.jpg")
-      File.binwrite(path, photo.file.download)
-      output = `identify -format "%w %h" #{path.to_s.shellescape} 2>/dev/null`.strip
-      FileUtils.rm_f(path)
-
-      assert_match(/\A\d+ \d+\z/, output, "the stored file must be a readable image")
-      output.split.map(&:to_i)
+      PhotoDimensions.of(photo.file.download)
+    rescue PhotoDimensions::Unreadable
+      flunk "the stored file must be a readable image"
     end
 end

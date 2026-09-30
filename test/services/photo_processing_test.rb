@@ -13,8 +13,7 @@ class PhotoProcessingTest < ActiveSupport::TestCase
     [ @landscape, @portrait ].each do |bytes|
       result = PhotoProcessing.from_data_url(data_url(bytes))
 
-      assert_equal 300, width_of(result.io)
-      assert_equal 300, height_of(result.io)
+      assert_equal [ 300, 300 ], dimensions_of(result.io)
       assert_equal "image/jpeg", result.content_type
     end
   end
@@ -75,20 +74,8 @@ class PhotoProcessingTest < ActiveSupport::TestCase
       "data:#{type};base64,#{Base64.strict_encode64(bytes)}"
     end
 
-    def dimensions(io)
-      path = Rails.root.join("tmp/photo-processing-test.jpg")
+    def dimensions_of(io)
       io.rewind
-      File.binwrite(path, io.read)
-      output = `identify -format "%w %h" #{path.to_s.shellescape} 2>/dev/null`.strip
-      FileUtils.rm_f(path)
-      output
-    end
-
-    def width_of(io)
-      dimensions(io).split.first.to_i
-    end
-
-    def height_of(io)
-      dimensions(io).split.last.to_i
+      PhotoDimensions.of(io.read)
     end
 end

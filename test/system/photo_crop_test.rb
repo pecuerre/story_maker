@@ -17,7 +17,7 @@ class PhotoCropTest < ApplicationSystemTestCase
     assert_stimulus_loaded
 
     open_character_editor
-    attach_photo("wide.png")
+    attach_photo
     assert_selector ".photo-crop", wait: 5
     assert_selector ".photo-crop-stage", wait: 5
 
@@ -49,7 +49,7 @@ class PhotoCropTest < ApplicationSystemTestCase
     assert_stimulus_loaded
 
     open_character_editor
-    attach_photo("wide.png")
+    attach_photo
     assert_selector ".photo-crop-stage", wait: 5
 
     # Dragging is a pointer gesture, so the stage has to be operable without one.
@@ -69,7 +69,7 @@ class PhotoCropTest < ApplicationSystemTestCase
     assert_stimulus_loaded
 
     open_character_editor
-    attach_photo("wide.png")
+    attach_photo
     assert_selector ".photo-crop-stage", wait: 5
 
     # The modal's own Cancel sits in the footer beside the cropper's, so each
@@ -128,16 +128,13 @@ class PhotoCropTest < ApplicationSystemTestCase
       assert_selector ".modal.show", wait: 10
     end
 
-    # A real image on disk, handed to the real file input, so the browser decodes
-    # an actual file rather than a stub. It is deliberately not square.
-    def attach_photo(file_name)
-      path = Rails.root.join("tmp/photos", file_name)
-      unless path.exist?
-        FileUtils.mkdir_p(path.dirname)
-        built = system("convert", "-size", "600x400", "gradient:#7c3aed-#2563eb", path.to_s,
-          out: File::NULL, err: File::NULL)
-        raise "could not build the test image" unless built
-      end
+    # A real, committed image handed to the real file input, so the browser
+    # decodes an actual file rather than a stub. The fixture is deliberately not
+    # square, which is the case the cropper exists for.
+    def attach_photo
+      # It used to be drawn with ImageMagick's `convert` into `tmp/`, which is
+      # how this case came to need a tool CI does not install.
+      path = Rails.root.join("test/fixtures/files/photo_one.jpg")
 
       within ".modal.show" do
         find(".photo-field input[type=file]").set(path.to_s)
@@ -149,10 +146,6 @@ class PhotoCropTest < ApplicationSystemTestCase
     end
 
     def stored_photo_dimensions
-      path = Rails.root.join("tmp/photo-system-check.jpg")
-      File.binwrite(path, @character.reload.photo.file.download)
-      dimensions = `identify -format "%w %h" #{path.to_s.shellescape} 2>/dev/null`.strip
-      FileUtils.rm_f(path)
-      dimensions.split.map(&:to_i)
+      PhotoDimensions.of(@character.reload.photo.file.download)
     end
 end

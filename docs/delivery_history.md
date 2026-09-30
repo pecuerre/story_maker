@@ -29,6 +29,64 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-09-30
 
+- **[chore]** **Four CI failures, and none of them was a flake: each was a place where the
+  environment and the suite disagreed and the suite was the thing that had to change.**
+  Run 36761947376 (`d2e20fe`) was red in five jobs — `js-check`, `test`, `system-test`,
+  `migrations-from-zero`, and `scan_ruby` — and the job log needed admin rights, so every one was
+  reproduced locally from a scratch clone before anything was changed.
+  - **`js-check`: the client-side i18n test was order-dependent.** `test/javascript/i18n_test.js`
+    installs its own four-key `ENGLISH` table with `beforeEach` and never put the real blob back, and
+    Bun runs every file in `test/javascript/` in **one** process in filesystem-discovered order — which
+    is alphabetical on one machine and something else on the next. Locally the i18n file ran near the
+    end and the suite was green; on the runner it ran early and every controller assertion that reads
+    a sentence received the raw key (`"shared.modal_form.unexplained"` instead of the words). Renaming
+    the file so it ran first reproduced the runner's exact failure, which is what confirmed the cause
+    rather than a theory about it. The fix is an `afterAll` that restores
+    `test/javascript/fixtures/client_strings.en.json`; `docs/development.md` now states the shared-state
+    rule so the next file does not reintroduce it.
+  - **`test` and `system-test`: the photo tests measured the stored square with a tool CI does not
+    install.** `photo_processing_test.rb` and `photo_test.rb` shelled out to ImageMagick's `identify`,
+    and `photo_crop_test.rb` and `spanish_client_strings_test.rb` also drew their test image with
+    `convert`. CI installs **libvips**, so `identify` returned nothing and the assertions read
+    `Expected: 300, Actual: 0` — on a runner that had processed the photo correctly. The two system
+    cases' `convert` calls raised `Errno::ENOENT` outright, which is where the 954 KB screenshot
+    artifact came from. `test/support/photo_dimensions.rb` now asks the same two libraries
+    `PhotoProcessing` chooses between, in the same order, so no test needs an image tool the
+    application itself does not use, and the system tests attach the committed
+    `test/fixtures/files/photo_one.jpg` instead of drawing one.
+  - **`migrations-from-zero`: three rake commands in one process cannot drop a SQLite database.**
+    `bin/rails db:drop db:create db:migrate` unlinks `storage/test.sqlite3` while the process still
+    holds a connection to the deleted inode, so `db:migrate` read `schema_migrations` from that dead
+    file, decided every migration was already up, and wrote nothing; the next process reported
+    `Schema migrations table does not exist yet`. Each command is now its own `bin/rails` invocation.
+    The same sequence in the **development** environment works, because `db:prepare`'s schema dump
+    reconnects first — which is why `db:demo:reset` was never affected and this was not an
+    application defect.
+  - **`scan_ruby`: Brakeman was right about the shape and wrong about the risk.** `tagged_records_including_descendants`
+    interpolated reflection-derived table and column names into a `joins("INNER JOIN …")` string, which
+    reads like request input and is reported as a possible SQL injection. It is built by Arel now —
+    `Arel::Nodes::InnerJoin` over an `Arel::Nodes::On` — so the names are quoted identifiers rather
+    than spliced text. `config/brakeman.ignore` was the rejected alternative: a reviewed exception
+    documents a risk that is not there, and this project prefers an allowlist for a genuine
+    exception over a suppression for a false positive. This closed the pending item in
+    [`backlog.md`](backlog.md) that named this warning and asked for the audit baseline in
+    [`known_quirks.md`](known_quirks.md) to be corrected alongside it; that baseline now reads true
+    again without an edit, since `bin/brakeman --no-pager` reports 0 warnings as it claims.
+- **[chore]** **The photo tests measure a stored image through the same libraries the application
+  uses.** `PhotoDimensions` (libvips first, ImageMagick second) replaces four shell-outs to
+  `identify`/`convert` across `photo_test.rb`, `photo_processing_test.rb`, `photo_crop_test.rb`, and
+  `spanish_client_strings_test.rb`. It raises `PhotoDimensions::Unreadable` rather than letting a
+  library error escape, so `photo_test.rb`'s "the stored file must be a readable image" failure is
+  still the failure a reader sees. See the `2026-09-30` CI entry above for why the shell-outs were
+  there and what they cost.
+- **[docs]** **The CI job table was three weeks stale and hid the bug that mattered.** `docs/development.md`
+  listed a `data-check` job that no longer exists (the demo-manifest checks are steps inside `test`)
+  and never listed `migrations-from-zero` at all, so the job added in `d1c31b1` was undocumented.
+  The table now matches the workflow, `data-check`'s commands are attributed to `test`, and the reason
+  the migration commands must be separate processes is stated next to them. The same document now
+  records that Bun shares one process across `test/javascript/` and that a file installing the i18n
+  table must restore it, and that `PhotoDimensions` is why an image library is a test prerequisite.
+
 - **[docs]** **The short form had to stay a complete index, so every historical entry was
   summarized rather than left behind.** Splitting the file in two is only worth it if the short half
   still answers "what changed, and when" — a 34-line changelog that begins today is not an index, it

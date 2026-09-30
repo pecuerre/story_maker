@@ -148,10 +148,18 @@ jobs:
         with:
           bundler-cache: true
 
+      # One `bin/rails` process per command, deliberately. `db:drop` unlinks the
+      # SQLite file while the boot connection still points at it, so a single
+      # `bin/rails db:drop db:create db:migrate` migrates that deleted inode,
+      # leaves the recreated database empty, and the next process reports
+      # "Schema migrations table does not exist yet".
       - name: Migrate an empty test database from zero
         env:
           RAILS_ENV: test
-        run: bin/rails db:drop db:create db:migrate
+        run: |
+          bin/rails db:drop
+          bin/rails db:create
+          bin/rails db:migrate
 
       - name: Verify every migration is up
         env:

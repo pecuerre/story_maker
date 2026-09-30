@@ -86,6 +86,18 @@ en:
       # A count and the record type it counts. `label` is already the pluralized
       # record type, resolved by `ApplicationHelper#count_with_label`.
       with_count: "%{count} %{label}"
+    # The scope a page's header announces above its title. The Sections tree, the
+    # Scenes list, and the two story taxonomies state the same two scopes, so
+    # they are one pair of keys rather than one copy per surface.
+    eyebrow:
+      story: "Story: %{story}"
+      scene: "Scene: %{scene}"
+    # The narrative-position badge, announced by the Scenes list, a Section's own
+    # scene list, and the "Appears in scenes" section. The long form names the
+    # Story's total beside the position; the short form is used where the list is
+    # already known to be one Scene's subset.
+    scene_position_aria: "Narrative position %{position} of %{total}"
+    scene_position_aria_short: "Narrative position %{position}"
     detail_fact:
       blank: "Not set yet."
     in_world_range:
@@ -110,6 +122,10 @@ en:
       close: "Close"
     photo_field:
       default_label: "Photo"
+    # The blank option that clears an optional reference. Both the Events form's
+    # three temporal references and the Scene form's event link read it, so the
+    # word has one home rather than one per form.
+    none: "None"
     include_descendants_toggle:
       label: "Include records from child tags"
     child_tags:
@@ -121,7 +137,16 @@ en:
       # reads "No character carries this tag" and not "No character carry…" — the
       # slot takes a **singular** noun, because a plural cannot follow this verb
       # in either language.
-      empty_title: "No %{label} carries this tag"
+      #
+      # `determiner` is a second interpolation because a language that agrees in
+      # gender cannot derive "una sección" from the word `sección` any more than it
+      # can derive the plural from it. The caller states its record type's
+      # determiner beside the noun, the same way it states the noun; the two
+      # English values are identical because English has no such agreement.
+      empty_title: "%{determiner} %{label} carries this tag"
+      determiners:
+        none_masculine: "No"
+        none_feminine: "No"
     menu_tag_content_tabs:
       aria_label: "%{type} workspace"
     tag_workspace_navigation:
@@ -321,8 +346,16 @@ en:
 
   # The Sections tree and a Section's own details page. The tree itself is the
   # shared taxonomy partial; these are the words this workspace passes to it.
+  #
+  # Its story-scope eyebrow and the narrative-position badge on its scene list are
+  # `shared.eyebrow.story` and `shared.scene_position_aria`, because the Scenes
+  # workspace states the same two facts.
   sections:
-    eyebrow: "Story: %{story}"
+    # The one group a Section selector offers that is not a Section. It is built
+    # by `SectionPaths`, which is shared with the Scenes workspace, so both read
+    # it from here; the `ungrouped` **value** that travels in a URL is the
+    # `SceneFilter::UNGROUPED` string and is never translated.
+    ungrouped_label: "Ungrouped"
     index:
       title: "Sections"
       description: "Organize this story into a hierarchy of books, chapters, acts, scenes, or any structure you need."
@@ -344,11 +377,340 @@ en:
         title: "Scenes in this section"
         empty_title: "No scenes in this section"
         empty_description: "A section only groups scenes; it never sets their order. Scenes assigned to it will be listed here in the order the story is told."
-        position_aria: "Narrative position %{position} of %{total}"
       related:
         title: "Related information"
         empty_title: "Nothing related yet"
         empty_description: "Anything else worth knowing about this section will be listed here later."
+
+  # The Scenes workspace and the three Scene-owned tabs. This block owns the
+  # story-scoped list and its filter, Scene Details with its Element list, the one
+  # editor both `new` and `edit` share, and the Characters, Items, and Locations
+  # tabs.
+  #
+  # Three of its strings are not repeated here because one home already owns
+  # them: the workspace tab strip names its siblings with the workspaces' own
+  # titles (`characters.title`, `items.title`, `locations.title`), the count
+  # labels resolve the **root** record-type nouns with a `count:`, and
+  # `Cancel`/`Close` are the `shared.form` pair.
+  scenes:
+    title: "Scenes"
+    add: "Add scene"
+    # `new_*` and `edit_*` are flat rather than nested blocks, because the editor's
+    # own page titles and descriptions are the four strings beside them and a
+    # `new:` block would collide with the `new_title` key beside it.
+    new_title: "New scene"
+    new_description: "Add the next scene to %{story}. Its position is the order in which the story is told, not in-world chronology."
+    # The browser tab names the record being edited; the page below it keeps the
+    # workspace's own "Edit scene" title, and the Scene Details page's editor link
+    # carries that same title.
+    edit_title: "Edit scene"
+    edit_document_title: "Edit %{name}"
+    edit_description: "Update the title, short description, Section group, event link, and in-world time of this scene. Its narrative position changes only through the Move up/Move down controls on the scenes list."
+    back_to_details: "Scene details"
+    # The move controls the Scenes list and the Element list both show, and the
+    # titles that say why one is disabled at a sequence boundary. The Element
+    # controls are a Sequence inside one Scene and the Scene controls are the
+    # Story's own, which is why each has its own wording rather than one shared
+    # sentence that would be wrong half the time.
+    move:
+      up: "Move up"
+      down: "Move down"
+      already_first: "Already first in the narrative order"
+      already_last: "Already last in the narrative order"
+      up_aria: "Move %{name} up in the narrative order"
+      down_aria: "Move %{name} down in the narrative order"
+      element_already_first: "Already first in this scene"
+      element_already_last: "Already last in this scene"
+      element_up_aria: "Move %{name} up"
+      element_down_aria: "Move %{name} down"
+    index:
+      description: "The order below is the order %{story} is told, not in-world chronology. A section group only organizes a scene; it never changes this order."
+      # Two empty states, because a story without scenes and a filter that matched
+      # nothing are different facts and only a writer is told to change either.
+      empty_title: "No scenes yet"
+      empty_writable_description: "Scenes are the ordered units of this story. Add the first one to start its narrative order."
+      empty_read_only_description: "This story has no scenes to show yet."
+      no_match_title: "No scenes match these filters"
+      no_match_description: "%{story} has %{total}, but none of them match the filters above. Clear them to see the whole narrative order."
+      # The row's own delete confirmation. A Scene owns its Elements and its
+      # presence links, so the cascade is stated here rather than falling back to
+      # the short `shared.row_actions.delete_confirm`; `name` is the author's own
+      # record name and is interpolated rather than translated.
+      delete_confirm: "Delete “%{name}”? Its elements, tag assignments, and links to story and universe records will be permanently removed. Linked records will not be deleted."
+      # The two row badges that are not counts, and the two titles that explain
+      # what a grouping badge means.
+      grouped_title: "Grouped under %{grouping}. Grouping does not change the narrative order."
+      ungrouped_title: "Not grouped under a section. Grouping does not change the narrative order."
+      participants_title: "Characters that take part in this scene, whether they are stored participants or only speakers in a dialogue. Counted once."
+      # `%{characters}` is a count resolved with a `count:`, so the plural comes
+      # from the locale and this sentence stays one clause in both languages.
+      participants_aria: "%{characters} taking part"
+    filter:
+      title: "Find scenes"
+      description: "A story can hold hundreds or thousands of scenes. Narrow the list by text, section, scene tag, or in-world date range. Filtering never changes the narrative order, and a scene without an in-world time is not in a date range."
+      search_label: "Search"
+      search_placeholder: "Title or short description"
+      section_label: "Section"
+      all_sections: "All sections"
+      scene_tag_label: "Scene tag"
+      all_scene_tags: "All scene tags"
+      from_label: "In-world from"
+      to_label: "In-world to"
+      submit: "Filter scenes"
+      clear: "Clear filters"
+      # The sentence a narrowed list opens with. Both counts are resolved with a
+      # `count:` before they are interpolated, so each chooses its own plural.
+      showing: "Showing %{shown} of %{total}."
+      filtered_by: "Filtered by"
+      # The active filters repeated as text, so an empty result set can always say
+      # which value produced it.
+      summaries:
+        search: "Search: “%{value}”"
+        section: "Section: %{value}"
+        scene_tag: "Scene tag: %{value}"
+        from: "In-world from %{value}"
+        to: "In-world to %{value}"
+      # A filter value the filter could not use. `bound` is `scenes.filter.bound.*`
+      # resolved with the same word the form's own label uses, never the literal
+      # `start`/`end` this object was constructed with.
+      bound:
+        start: "start"
+        end: "end"
+      discarded:
+        section: "The section filter was ignored because it is not a section of this story."
+        scene_tag: "The scene tag filter was ignored because it is not a scene tag of this story."
+        date: "The in-world %{bound} date “%{value}” could not be read, so it was ignored."
+    show:
+      description: "Scene %{position} of %{total} in the order %{story} is told. Narrative order is not in-world chronology."
+      all_scenes: "All scenes"
+      facts:
+        title: "Title"
+        narrative_position: "Narrative position"
+        # The position and the total beside it, with no words of their own.
+        position: "%{position} of %{total}"
+        description: "Short description"
+        description_blank: "No short description yet."
+        tags: "Scene tags"
+        tags_blank: "No scene tags assigned yet."
+        tags_hint: "Tags are optional and belong to this story."
+        # Two hints with a link in them, so they are `_html` keys and the link is
+        # the interpolation: the sentence decides where the link sits. The link
+        # *text* stays a key of its own, because a translator choosing where the
+        # link goes still needs to know what it is called.
+        tags_hint_editor_html: "Change them from the %{editor}."
+        tags_hint_workspace_html: "The taxonomy is available in the %{workspace}."
+        editor_link: "scene editor"
+        workspace_link: "Scene Tags workspace"
+        section_group: "Section group"
+        section_blank: "Ungrouped. A Section is optional and only organizes this scene; it does not change its narrative position."
+        event: "In-world event"
+        # `%{event}` is `Event#display_string`, which is the record's own label and
+        # is data: it is interpolated, never translated.
+        event_html: "%{event} — see the %{workspace}. Several scenes can depict the same event."
+        event_workspace: "Events workspace"
+        event_blank: "No event linked yet."
+        in_world_time: "In-world time"
+        in_world_time_blank: "No in-world time set yet."
+        in_world_time_hint: "This is the order in world time, kept separate from the narrative position above. The event and the in-world time are independent values; neither one is derived from the other and a disagreement between them is not detected here."
+        story: "Story"
+      tabs:
+        # The four workspace tabs, which are real URLs rather than in-document
+        # panes. The other three are the sibling workspaces' own titles.
+        aria_label: "Scene workspace"
+        details: "Scene Details"
+    form:
+      name: "Title"
+      name_hint: "The scene's title in the narrative order. Only a title is required."
+      description: "Short description"
+      description_hint: "An optional one-line summary shown in the scene list."
+      tags_legend: "Scene tags"
+      tags_label: "Scene tags"
+      tags_hint: "Optional. Assign any labels that describe this scene. Tags belong to this story and can be managed under Configuration → Tags → Story Tags → Scene tags."
+      tags_empty: "No scene tags are defined for this story yet."
+      manage_tags: "Manage Scene Tags"
+      organization_legend: "Organization"
+      section: "Section"
+      section_hint: "Optional. A Section groups this scene, for example under a book, chapter, season, or episode. Grouping changes organization only: it never changes this scene's narrative position, and a nested Section also places the scene inside its ancestor path."
+      in_world_time_legend: "In-world time"
+      event: "Event"
+      event_hint: "Optional. Links this scene to a shared universe event. Several scenes can reference the same event, and nothing else in this form changes when you pick one."
+      # The blank event option reads the shared `shared.none`, so it is not
+      # repeated here.
+      datetime: "In-world time"
+      datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the event above: choosing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
+      # `%{move_up}`/`%{move_down}` are the list's own translated control names, so
+      # this sentence names the controls the reader will actually find.
+      position_note_html: "This scene's narrative position is set only by the %{move_up}/%{move_down} controls on the %{scenes_list}. It is the order the story is told in, not in-world chronology."
+      scenes_list_link: "scenes list"
+      submit_create: "Create Scene"
+      submit_update: "Update Scene"
+    # The Elements section of Scene Details. The kind labels are the values a
+    # select stores, so the `kind` itself is never translated — only the label
+    # beside it is, and both the server-rendered list and the modal read these.
+    elements:
+      title: "Scene elements"
+      add: "Add element"
+      edit: "Edit element"
+      position_aria: "Element %{position} of %{total}"
+      empty_title: "No elements yet"
+      empty_description: "A scene can hold any number of elements, including none. A narration block describes what happens; a dialogue block names the characters who speak in it."
+      no_content: "No content yet. A title is all an element needs."
+      delete_confirm: "Delete “%{name}”? Its content and its speaker links will be permanently removed. Characters and other universe records will not be deleted."
+      # The sentence a Dialogue's row states about its speaker links. `names` is
+      # the author-entered speaker names joined by the locale's own connector, so
+      # it is interpolated; the one/other split is the verb agreeing with the count.
+      speaker_note:
+        one: "%{names} speaks in this block. The link records who is in the conversation, not which line belongs to whom."
+        other: "%{names} speak in this block. The link records who is in the conversation, not which line belongs to whom."
+      speaker_note_empty: "A dialogue must name at least one speaker."
+      # The two Element kinds. `kind` is the value the select stores, so only the
+      # label is translated.
+      kinds:
+        narration: "Narration"
+        dialogue: "Dialogue"
+        narration_description: "Description or action, with no one speaking."
+        dialogue_description: "A spoken block. Name everyone who speaks in it."
+      form:
+        kind: "Element type"
+        name: "Title"
+        name_hint: "The block's title. Only a title is required; the content can follow later."
+        body: "Content"
+        body_hint: "Plain text, kept exactly as written. Nothing here is interpreted as chronology or checked against the universe."
+        speakers: "Speakers"
+        speakers_hint: "Everyone who speaks in this block. Several characters may share one dialogue; the link records who is in the conversation, not which line belongs to whom."
+        remove_speakers: "Remove the speakers and make this narration"
+        remove_speakers_hint: "Narration cannot keep speakers. This is the confirmation that removes them, and it happens in the same save."
+        save: "Save element"
+    # The three presence-link tabs. Their pages and their editors are one shape, so
+    # the copy that is genuinely shared (the role field, the "linked" badge, the
+    # sentences a derived speaker states) sits in `participation` and each tab's
+    # own strings sit under its own name.
+    participation:
+      role: "Role: %{role}"
+      no_role: "No role recorded"
+      linked: "Linked"
+      depicted: "Depicted"
+      # The row control withdraws a **link**, which is not the record: the
+      # character, item, or location stays in the universe. That is why this is
+      # "Remove" and not the shared row action's "Delete", which removes a record.
+      remove_label: "Remove"
+      # `%{count}` is a count resolved with a `count:`, so the plural comes from
+      # the locale.
+      speaks_in: "Speaks in %{count}"
+      # The one hint all three role fields share, with each tab supplying its own
+      # examples (`<tab>.role_examples`): the sentence is written once and the
+      # examples are interpolated, because the examples are chrome too and each
+      # tab suggests different ones.
+      role_hint: "Optional, in your own words: %{examples} Leave it blank if you do not want to say. Nothing here is interpreted by the application."
+      # The row menu's own accessible name. It names the record *and* the scene it
+      # appears in, because a name can appear in more than one of this tab's rows
+      # across the story.
+      actions_for: "Actions for %{name} in %{scene}"
+      # The row that says a character speaks, naming the Elements. `%{elements}` is
+      # the author-entered element names joined by the locale's connector.
+      speaks_in_html: "Speaks in %{elements}."
+      remove:
+        character: "Remove %{name} from %{scene}? The character stays in the universe, and anyone who speaks in a dialogue is unaffected."
+        item: "Remove %{name} from %{scene}? The item stays in the universe and in every other scene."
+        location: "Remove %{name} from %{scene}? The location stays in the universe, with its nested places, and in every other scene."
+    characters:
+      document_title: "Characters in %{scene}"
+      description: "Everyone who takes part in this scene. A participant is stored here with an optional role; a character who only speaks in a dialogue is derived from that dialogue, so the two are shown side by side and counted once."
+      add: "Add character"
+      save: "Save character"
+      edit_role: "Edit role"
+      role_examples: "“setting,” “enters,” “carries,” “objective.”"
+      participant_badge: "Participant"
+      empty_title: "No characters in this scene yet"
+      empty_description: "Add a character to record that they take part, with an optional role such as “setting,” “enters,” or “objective.” A character who only speaks in a dialogue appears here too, without a separate record."
+      form:
+        character: "Character"
+        choose_character: "Choose a character"
+        character_hint: "A character belongs to the universe and is shared by every story in it. A character can only be in a scene once; choosing one that already is is reported here, in this window."
+        role: "Role"
+    items:
+      document_title: "Items in %{scene}"
+      description: "The objects that appear in this scene. An item belongs to the universe and is shared by every story in it, so linking one here never copies it. Each link can carry an optional role in your own words."
+      add: "Add item"
+      save: "Save item"
+      edit_item: "Edit item"
+      role_examples: "“carries,” “on the table,” “destroyed.”"
+      empty_title: "No items in this scene yet"
+      empty_description: "Add an item to record that it appears here, with an optional role such as “carries,” “on the table,” or “destroyed.” The item itself is shared by every story in the universe."
+      form:
+        item: "Item"
+        choose_item: "Choose an item"
+        item_hint: "An item belongs to the universe and is shared by every story in it. An item can only be in a scene once; choosing one that already is is reported here, in this window."
+        role: "Role"
+    locations:
+      document_title: "Locations in %{scene}"
+      description: "The places this scene happens in. A location belongs to the universe and is shared by every story in it, so linking one here never copies it. A scene can use any number of them, and each link can carry an optional role in your own words."
+      add: "Add location"
+      save: "Save location"
+      edit_location: "Edit location"
+      role_examples: "“setting,” “arrives at,” “left behind.”"
+      empty_title: "No locations in this scene yet"
+      empty_description: "Add a location to record that the scene happens there, with an optional role such as “setting,” “arrives at,” or “left behind.” The location itself is shared by every story in the universe, together with its nested places."
+      form:
+        location: "Location"
+        choose_location: "Choose a location"
+        location_hint: "Nested places are indented under their parent, so a room is recognizable from the house it belongs to. A location can only be in a scene once; choosing one that already is is reported here, in this window."
+        role: "Role"
+    # The "Appears in scenes" section on a shared universe record's own page: the
+    # reverse of the three tabs, so it states the same things they do.
+    appearances:
+      title: "Appears in scenes of %{story}"
+      # Without a current Story there is nothing to point at, so the section says
+      # so and names no Story.
+      title_without_story: "Appears in scenes"
+      empty_title: "Not in any scene of %{story} yet"
+      empty_title_without_story: "Select a story to see its scenes"
+      empty_description: "This record is shared by every story in the universe, so it can appear in as many scenes as you like. Link it from a scene's Characters, Items, or Locations tab, or point a scene at this event, and it will be listed here."
+      empty_description_without_story: "Scenes belong to a story, so a record can only say where it appears once a story is the current one. Pick a story to see which of its scenes use this record."
+    # The ungrouped block below the Sections tree: only the scenes that belong to
+    # no section, plus the form that groups one of them.
+    grouping:
+      title: "Ungrouped scenes"
+      description_html: "Only the scenes that belong to no section are listed here. Grouping is organization only: it never changes the order in the %{scenes_list}."
+      # The same paragraph with the count of already-grouped scenes folded in.
+      # It is a second key rather than a sentence spliced into the first, because
+      # the two clauses do not keep their order in every language.
+      description_with_grouped_html: "Only the scenes that belong to no section are listed here. The other %{total} in %{story} are grouped and are listed on their own section's page, which the Details link on a section above opens. Grouping is organization only: it never changes the order in the %{scenes_list}."
+      empty_title: "No scenes yet"
+      empty_description: "This story has no scenes to group yet. Add one and it will appear here as ungrouped."
+      add_first: "Add the first scene"
+      all_grouped: "Every scene in %{story} is grouped under a section, so there is nothing waiting to be grouped here. Open a section above to read the scenes grouped under it."
+      count:
+        one: "%{count} ungrouped scene"
+        other: "%{count} ungrouped scenes"
+      move_scene_label: "Ungrouped scene"
+      move_to_label: "Move to"
+      submit: "Move scene"
+    flash:
+      created: "Scene was successfully created."
+      updated: "Scene was successfully updated."
+      deleted: "Scene was successfully destroyed."
+      moved: "Scene was moved."
+      move_failed: "Scene could not be moved."
+      already_first: "This scene is already first in the narrative order."
+      already_last: "This scene is already last in the narrative order."
+      grouped: "“%{name}” is now grouped under %{grouping}. Its narrative position did not change."
+      ungrouped: "“%{name}” is now ungrouped. Its narrative position did not change."
+    # The error summary's subject. It is the phrase that follows the sentence's own
+    # "this", so it carries no article here — the Spanish entry is a full phrase
+    # because its sentence has no determiner to supply one.
+    #
+    # The `errors.add` messages below read as the tail of `errors.format`
+    # ("%{attribute} %{message}"), so each starts lowercase. They are the Scene
+    # model's own messages and live beside the subject rather than in a shared
+    # block, exactly as `events.errors` belongs to the Events workspace.
+    errors:
+      subject: "scene"
+      must_exist: "must exist"
+      must_belong_to_story: "must belong to the same story"
+      must_belong_to_universe: "must belong to the story's universe"
+      must_be_unique: "must be unique"
+      invalid_datetime: "is not a valid date and time"
 
   # The Universe Bible workspaces: Characters, Locations, Events, Items,
   # Relations, and Ownerships. Each block owns its list page, the modal editor
@@ -451,12 +813,12 @@ en:
       hint: "An event needs at least a title, a start or end date, or a relationship to another event below."
       start_datetime: "Start date/time"
       end_datetime: "End date/time"
-      # The three temporal references and the blank option that clears one. The
-      # values are event ids, so only the labels beside them are translated.
+      # The three temporal references. The values are event ids, so only the
+      # labels beside them are translated, and the blank option that clears one is
+      # `shared.none` because the Scene form's event link needs the same word.
       before_event: "Happens before"
       after_event: "Happens after"
       simultaneous_event: "Same time as"
-      none: "None"
     show:
       label: "Event"
       back_label: "All events"
@@ -661,6 +1023,10 @@ en:
       eyebrow: "Configuration · Tags"
       scope: "Scope"
       scope_universe_description: "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."
+      # The story-scoped taxonomies say the same three facts about a different
+      # owner, so the sentence is its own key rather than a second copy with
+      # "universe" replaced.
+      scope_story_description: "Tags are optional labels and belong to this story, not to the universe."
       description: "Description"
       description_blank: "No description yet."
       color: "Color"
@@ -740,12 +1106,20 @@ en:
         empty_description: "Tags are optional. Add one to classify sections, or build the section tree without them."
         read_only_empty_description: "This story has no section tags defined yet."
         new_label: "Add section tag"
+        record_label: "Section tag"
+        all_label: "All section tags"
+        records_title: "Sections with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so sections can stay untagged."
       scene:
         title: "Scene tags"
         description: "Define optional labels for this story's scenes, such as mood, turning point, or story beat."
         empty_description: "Tags are optional. Add one to classify scenes, or write scenes without a tag."
         read_only_empty_description: "This story has no scene tags defined yet."
         new_label: "Add scene tag"
+        record_label: "Scene tag"
+        all_label: "All scene tags"
+        records_title: "Scenes with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so scenes can stay untagged."
         delete_confirm: "Delete “%{name}”? Its child tags and assignments will be removed. Scenes will remain."
 
   # The universe Timeline. Each node's popover is assembled by `TimelineHelper`,
@@ -933,6 +1307,18 @@ en:
         character: "Character"
         from_date: "From"
         to_date: "To"
+      # The Scene and its Scene-owned join models. The editor is rendered with a
+      # model, so these are what a form label *and* an `errors.add` read; the
+      # `scenes.form` labels above are the form's own copy and the two are expected
+      # to say the same thing. `name` is the record's title, not a bare column
+      # name, and `datetime` is the in-world point rather than a raw timestamp.
+      scene:
+        name: "Title"
+        description: "Short description"
+        section: "Section"
+        event: "Event"
+        datetime: "In-world time"
+        scene_tags: "Scene tags"
       # The eight taxonomies share one concern for the colour pair and one for
       # the parent, so a model is named once here and the tag editor's field
       # labels come from `modal_fields.*` rather than from here.
@@ -1002,6 +1388,9 @@ en:
   entry:
     one: "entry"
     other: "entries"
+  element:
+    one: "element"
+    other: "elements"
   item:
     one: "item"
     other: "items"

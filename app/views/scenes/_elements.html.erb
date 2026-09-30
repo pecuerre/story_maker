@@ -21,13 +21,14 @@
     data-controller="modal-form"
     data-modal-form-model-param-value="scene_element"
     data-modal-form-response-value="json"
-    data-modal-form-create-title-value="Add element"
+    data-modal-form-create-title-value="<%= t("scenes.elements.add") %>"
   <% end %>
   >
   <section class="detail-section scene-elements">
     <div class="d-flex align-items-center gap-2 mb-3">
-      <h2 class="h5 mb-0">Scene elements</h2>
-      <span class="badge rounded-pill text-bg-light border" aria-label="<%= pluralize(@element_total, "element") %>">
+      <h2 class="h5 mb-0"><%= t("scenes.elements.title") %></h2>
+      <span class="badge rounded-pill text-bg-light border"
+        aria-label="<%= count_with_label(@element_total, "element") %>">
         <%= @element_total %>
       </span>
       <% if editable %>
@@ -35,10 +36,10 @@
           data-action="modal-form#open"
           data-modal-form-url="<%= universe_story_scene_scene_elements_path(story_id: @story, scene_id: @scene) %>"
           data-modal-form-method="post"
-          data-modal-form-title="Add element"
+          data-modal-form-title="<%= t("scenes.elements.add") %>"
           data-modal-form-values-value="{}">
           <i class="bi bi-plus-lg" aria-hidden="true"></i>
-          <span>Add element</span>
+          <span><%= t("scenes.elements.add") %></span>
         </button>
       <% end %>
     </div>
@@ -51,7 +52,7 @@
             <% at_last = element.position == @element_total - 1 %>
             <div class="list-group-item entity-row d-flex align-items-start gap-3">
               <span class="badge rounded-pill text-bg-light border"
-                aria-label="<%= "Element #{element.position + 1} of #{@element_total}" %>">
+                aria-label="<%= t("scenes.elements.position_aria", position: element.position + 1, total: @element_total) %>">
                 <%= element.position + 1 %>
               </span>
 
@@ -67,7 +68,7 @@
                 <% if element.body.present? %>
                   <div class="entity-description"><%= element.body %></div>
                 <% else %>
-                  <div class="entity-description text-body-secondary">No content yet. A title is all an element needs.</div>
+                  <div class="entity-description text-body-secondary"><%= t("scenes.elements.no_content") %></div>
                 <% end %>
 
                 <% if element.dialogue? %>
@@ -85,8 +86,8 @@
                       data-modal-form-url="<%= move_universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: element, direction: "up") %>"
                       data-modal-form-direction="up"
                       <%= "disabled" if at_first %>
-                      title="<%= at_first ? "Already first in this scene" : "Move up" %>"
-                      aria-label="Move <%= element.name %> up">
+                      title="<%= at_first ? t("scenes.move.element_already_first") : t("scenes.move.up") %>"
+                      aria-label="<%= t("scenes.move.element_up_aria", name: element.name) %>">
                       <i class="bi bi-arrow-up" aria-hidden="true"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-light border"
@@ -94,8 +95,8 @@
                       data-modal-form-url="<%= move_universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: element, direction: "down") %>"
                       data-modal-form-direction="down"
                       <%= "disabled" if at_last %>
-                      title="<%= at_last ? "Already last in this scene" : "Move down" %>"
-                      aria-label="Move <%= element.name %> down">
+                      title="<%= at_last ? t("scenes.move.element_already_last") : t("scenes.move.down") %>"
+                      aria-label="<%= t("scenes.move.element_down_aria", name: element.name) %>">
                       <i class="bi bi-arrow-down" aria-hidden="true"></i>
                     </button>
                   </div>
@@ -105,7 +106,7 @@
                       id="<%= dom_id(element) %>-actions"
                       data-bs-toggle="dropdown"
                       aria-expanded="false"
-                      aria-label="Actions for <%= element.name %>">
+                      aria-label="<%= t("shared.row_actions.actions_for", name: element.name) %>">
                       <i class="bi bi-three-dots" aria-hidden="true"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(element) %>-actions">
@@ -114,9 +115,9 @@
                           data-action="modal-form#open"
                           data-modal-form-url="<%= universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: element) %>"
                           data-modal-form-method="patch"
-                          data-modal-form-title="Edit element"
+                          data-modal-form-title="<%= t("scenes.elements.edit") %>"
                           data-modal-form-values-value="<%= scene_element_fields_json(element) %>">
-                          <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+                          <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("scenes.elements.edit") %>
                         </button>
                       </li>
                       <li><hr class="dropdown-divider"></li>
@@ -124,8 +125,8 @@
                         <button type="button" class="dropdown-item text-danger"
                           data-action="modal-form#destroy"
                           data-modal-form-url="<%= universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: element) %>"
-                          data-modal-form-confirm="Delete “<%= element.name %>”? Its content and its speaker links will be permanently removed. Characters and other universe records will not be deleted.">
-                          <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+                          data-modal-form-confirm="<%= t("scenes.elements.delete_confirm", name: element.name) %>">
+                          <i class="bi bi-trash me-2" aria-hidden="true"></i><%= t("shared.row_actions.delete") %>
                         </button>
                       </li>
                     </ul>
@@ -138,8 +139,8 @@
       </div>
     <% else %>
       <%= render "shared/empty_state",
-        title: "No elements yet",
-        description: "A scene can hold any number of elements, including none. A narration block describes what happens; a dialogue block names the characters who speak in it.",
+        title: t("scenes.elements.empty_title"),
+        description: t("scenes.elements.empty_description"),
         icon: "text-paragraph" %>
     <% end %>
   </section>
@@ -152,15 +153,19 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h2 class="modal-title fs-5" id="scene-element-modal-title" data-modal-form-target="title">Add element</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h2 class="modal-title fs-5" id="scene-element-modal-title" data-modal-form-target="title"><%= t("scenes.elements.add") %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
           </div>
           <%= form_with scope: :scene_element,
             url: universe_story_scene_scene_elements_path(story_id: @story, scene_id: @scene),
             method: :post,
             data: {
               controller: "scene-element-form",
-              scene_element_form_descriptions_value: SceneElementsHelper::KIND_DESCRIPTIONS.to_json,
+              # The browser prints these descriptions when the Element type changes,
+              # so they cross the boundary already translated. The hash is keyed by
+              # the `kind` value the select stores, which is why only the prose is
+              # chrome and the keys are not.
+              scene_element_form_descriptions_value: scene_element_kind_descriptions.to_json,
               modal_form_target: "form",
               action: "modal-form#save"
             } do |form| %>
@@ -168,54 +173,48 @@
               <%= render "shared/modal_errors" %>
 
               <div class="mb-3">
-                <%= form.label :kind, "Element type", class: "form-label" %>
+                <%= form.label :kind, t("scenes.elements.form.kind"), class: "form-label" %>
                 <%= form.select :kind, scene_element_kind_options, {},
                   class: "form-select",
                   data: { scene_element_form_target: "kind", action: "change->scene-element-form#sync" } %>
                 <div class="form-text" data-scene-element-form-target="kindDescription">
-                  <%= SceneElementsHelper::KIND_DESCRIPTIONS[SceneElement::NARRATION] %>
+                  <%= scene_element_kind_description(SceneElement::NARRATION) %>
                 </div>
               </div>
 
               <div class="mb-3">
-                <%= form.label :name, "Title", class: "form-label" %>
+                <%= form.label :name, t("scenes.elements.form.name"), class: "form-label" %>
                 <%= form.text_field :name, class: "form-control", required: true %>
-                <div class="form-text">The block's title. Only a title is required; the content can follow later.</div>
+                <div class="form-text"><%= t("scenes.elements.form.name_hint") %></div>
               </div>
 
               <div class="mb-3">
-                <%= form.label :body, "Content", class: "form-label" %>
+                <%= form.label :body, t("scenes.elements.form.body"), class: "form-label" %>
                 <%= form.text_area :body, class: "form-control", rows: 5 %>
-                <div class="form-text">Plain text, kept exactly as written. Nothing here is interpreted as chronology or checked against the universe.</div>
+                <div class="form-text"><%= t("scenes.elements.form.body_hint") %></div>
               </div>
 
               <fieldset class="mb-3" data-scene-element-form-target="speakers">
-                <legend class="h6">Speakers</legend>
-                <%= form.label :character_ids, "Speakers", class: "form-label" %>
+                <legend class="h6"><%= t("scenes.elements.form.speakers") %></legend>
+                <%= form.label :character_ids, t("scenes.elements.form.speakers"), class: "form-label" %>
                 <%= form.select :character_ids, scene_element_speaker_choices(@character_options),
                   { include_hidden: true },
                   multiple: true, class: "form-select", size: [ @character_options.size, 6 ].min.clamp(2, 6),
                   data: { scene_element_form_target: "speakerPicker" } %>
-                <div class="form-text">
-                  Everyone who speaks in this block. Several characters may share one dialogue; the link
-                  records who is in the conversation, not which line belongs to whom.
-                </div>
+                <div class="form-text"><%= t("scenes.elements.form.speakers_hint") %></div>
               </fieldset>
 
               <div class="form-check mb-3" data-scene-element-form-target="removeSpeakers" hidden>
                 <%= check_box_tag "scene_element[remove_speakers]", "1", false,
                   class: "form-check-input", id: "scene_element_remove_speakers" %>
                 <%= label_tag "scene_element_remove_speakers",
-                  "Remove the speakers and make this narration", class: "form-check-label" %>
-                <div class="form-text">
-                  Narration cannot keep speakers. This is the confirmation that removes them, and it happens
-                  in the same save.
-                </div>
+                  t("scenes.elements.form.remove_speakers"), class: "form-check-label" %>
+                <div class="form-text"><%= t("scenes.elements.form.remove_speakers_hint") %></div>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <%= form.submit "Save element", class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+              <%= form.submit t("scenes.elements.form.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
             </div>
           <% end %>
         </div>

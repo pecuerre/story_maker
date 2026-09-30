@@ -77,6 +77,18 @@ es:
   shared:
     count:
       with_count: "%{count} %{label}"
+    # El ámbito que anuncia la cabecera de una página. El árbol de Secciones, la
+    # lista de Escenas y las dos taxonomías de historia declaran los mismos dos
+    # ámbitos, así que son un par de claves y no una copia por superficie.
+    eyebrow:
+      story: "Historia: %{story}"
+      scene: "Escena: %{scene}"
+    # La píldora de posición narrativa, anunciada por la lista de Escenas, por la
+    # lista de escenas de una Sección y por la sección «Aparece en escenas». La
+    # forma larga nombra el total de la Historia junto a la posición; la corta se
+    # usa donde la lista ya se sabe que es un subconjunto de una Escena.
+    scene_position_aria: "Posición narrativa %{position} de %{total}"
+    scene_position_aria_short: "Posición narrativa %{position}"
     detail_fact:
       blank: "Sin definir todavía."
     in_world_range:
@@ -101,6 +113,10 @@ es:
       close: "Cerrar"
     photo_field:
       default_label: "Foto"
+    # La opción en blanco que limpia una referencia opcional. Tanto las tres
+    # referencias temporales del formulario de Sucesos como el enlace al suceso del
+    # formulario de Escena leen esta clave, así que la palabra tiene una sola casa.
+    none: "Ninguno"
     include_descendants_toggle:
       label: "Incluir registros de las etiquetas hijas"
     child_tags:
@@ -112,7 +128,16 @@ es:
       # la frase se lee «Ningún personaje lleva esta etiqueta». La ranura recibe un
       # nombre **singular**, porque en ninguno de los dos idiomas un plural cabe
       # detrás de este verbo.
-      empty_title: "Ningún %{label} lleva esta etiqueta"
+      #
+      # `determiner` es una segunda interpolación porque un idioma que concuerda en
+      # género no puede deducir «una sección» a partir de la palabra `sección` ni
+      # más que deducir su plural. Quien llama declara el determinante de su tipo de
+      # registro junto al nombre, igual que declara el nombre; los dos valores
+      # ingleses son iguales porque el inglés no tiene esa concordancia.
+      empty_title: "%{determiner} %{label} lleva esta etiqueta"
+      determiners:
+        none_masculine: "Ningún"
+        none_feminine: "Ninguna"
     menu_tag_content_tabs:
       aria_label: "Espacio de trabajo de %{type}"
     tag_workspace_navigation:
@@ -283,8 +308,19 @@ es:
       own_change_refused: "No puedes cambiar tu propia membresía."
       own_removal_refused: "No puedes retirar tu propia membresía."
 
+  # El árbol de Secciones y la página de detalles de una Sección. El árbol es la
+  # parcial compartida de taxonomías; estas son las palabras que este espacio de
+  # trabajo le pasa.
+  #
+  # Su antetítulo de ámbito de historia y la píldora de posición narrativa de su
+  # lista de escenas son `shared.eyebrow.story` y `shared.scene_position_aria`,
+  # porque el espacio de trabajo de Escenas declara los mismos dos hechos.
   sections:
-    eyebrow: "Historia: %{story}"
+    # El único grupo que ofrece un selector de Sección y que no es una Sección. Lo
+    # construye `SectionPaths`, que es compartido con el espacio de trabajo de
+    # Escenas, así que ambos lo leen de aquí; el **valor** `ungrouped` que viaja en
+    # una URL es la cadena `SceneFilter::UNGROUPED` y nunca se traduce.
+    ungrouped_label: "Sin agrupar"
     index:
       title: "Secciones"
       description: "Organiza esta historia en una jerarquía de libros, capítulos, actos, escenas o cualquier estructura que necesites."
@@ -306,11 +342,357 @@ es:
         title: "Escenas de esta sección"
         empty_title: "No hay escenas en esta sección"
         empty_description: "Una sección solo agrupa escenas; nunca establece su orden. Las escenas que se le asignen aparecerán aquí en el orden en que se cuenta la historia."
-        position_aria: "Posición narrativa %{position} de %{total}"
       related:
         title: "Información relacionada"
         empty_title: "Todavía no hay nada relacionado"
         empty_description: "Todo lo demás que merezca la pena saber sobre esta sección se mostrará aquí más adelante."
+
+  # El espacio de trabajo de Escenas y las tres pestañas que la Escena posee. Este
+  # bloque es dueño de la lista con ámbito de historia y su filtro, de los
+  # detalles de la Escena con su lista de elementos, del único editor que
+  # comparten `new` y `edit`, y de las pestañas Personajes, Objetos y Lugares.
+  #
+  # Tres de sus cadenas no se repiten aquí porque una sola casa ya las posee: la
+  # tira de pestañas del espacio de trabajo nombra a sus hermanos con los títulos
+  # de esos espacios de trabajo (`characters.title`, `items.title`,
+  # `locations.title`), las etiquetas de recuento resuelven los sustantivos de tipo
+  # de registro de la **raíz** con un `count:`, y «Cancelar»/«Cerrar» son el par
+  # `shared.form`.
+  scenes:
+    title: "Escenas"
+    add: "Añadir escena"
+    # `new_*` y `edit_*` son planos y no bloques anidados, porque los títulos y las
+    # descripciones de las páginas del editor son las cuatro cadenas que hay a su
+    # lado y un bloque `new:` chocaría con la clave `new_title` de al lado.
+    new_title: "Nueva escena"
+    new_description: "Añade la siguiente escena a %{story}. Su posición es el orden en que se cuenta la historia, no la cronología en el mundo."
+    # La pestaña del navegador nombra el registro que se está editando; la página
+    # de abajo conserva su propio título «Editar escena», y el enlace al editor de
+    # la página de detalles de la escena lleva ese mismo título.
+    edit_title: "Editar escena"
+    edit_document_title: "Editar %{name}"
+    edit_description: "Actualiza el título, la descripción breve, el grupo de sección, el enlace al suceso y el tiempo en el mundo de esta escena. Su posición narrativa solo cambia mediante los controles Subir/Bajar de la lista de escenas."
+    back_to_details: "Detalles de la escena"
+    # Los controles de movimiento que muestran tanto la lista de Escenas como la
+    # de elementos, y los títulos que dicen por qué uno está desactivado en un
+    # límite de la secuencia. Los controles de elementos son una secuencia dentro de
+    # una Escena y los de escenas son los de la propia Historia, y por eso cada uno
+    # tiene su redacción en lugar de una frase compartida que sería incorrecta la
+    # mitad de las veces.
+    move:
+      up: "Subir"
+      down: "Bajar"
+      already_first: "Ya está la primera en el orden narrativo"
+      already_last: "Ya está la última en el orden narrativo"
+      up_aria: "Subir %{name} en el orden narrativo"
+      down_aria: "Bajar %{name} en el orden narrativo"
+      element_already_first: "Ya está el primero en esta escena"
+      element_already_last: "Ya está el último en esta escena"
+      element_up_aria: "Subir %{name}"
+      element_down_aria: "Bajar %{name}"
+    index:
+      description: "El orden de abajo es el orden en que se cuenta %{story}, no la cronología en el mundo. Un grupo de sección solo organiza una escena; nunca cambia este orden."
+      # Dos estados vacíos, porque una historia sin escenas y un filtro que no
+      # encontró nada son hechos distintos y solo a quien puede escribir se le dice
+      # que cambie algo.
+      empty_title: "Todavía no hay escenas"
+      empty_writable_description: "Las escenas son las unidades ordenadas de esta historia. Añade la primera para empezar su orden narrativo."
+      empty_read_only_description: "Esta historia todavía no tiene escenas que mostrar."
+      no_match_title: "Ninguna escena coincide con estos filtros"
+      no_match_description: "%{story} tiene %{total}, pero ninguna coincide con los filtros de arriba. Quítalos para ver todo el orden narrativo."
+      # La confirmación de borrado de la fila. Una Escena posee sus elementos y
+      # sus enlaces de presencia, así que aquí se declara la cascada en lugar de
+      # recurrir a la confirmación corta `shared.row_actions.delete_confirm`; `name`
+      # es el nombre propio del registro y se interpola en lugar de traducirse.
+      delete_confirm: "¿Eliminar «%{name}»? Sus elementos, las asignaciones de etiquetas y los enlaces con registros de la historia y del universo se eliminarán de forma permanente. Los registros vinculados no se eliminarán."
+      # Las dos píldoras de la fila que no son recuentos, y los dos títulos que
+      # explican qué significa una píldora de agrupación.
+      grouped_title: "Agrupada bajo %{grouping}. La agrupación no cambia el orden narrativo."
+      ungrouped_title: "Sin agrupar bajo ninguna sección. La agrupación no cambia el orden narrativo."
+      participants_title: "Personajes que participan en esta escena, tanto si son participantes almacenados como si solo hablan en un diálogo. Contados una sola vez."
+      # `%{characters}` es un recuento resuelto con un `count:`, así que el plural
+      # viene de la locale y esta frase sigue siendo una sola cláusula en los dos
+      # idiomas.
+      participants_aria: "%{characters} participando"
+    filter:
+      title: "Buscar escenas"
+      description: "Una historia puede tener cientos o miles de escenas. Reduce la lista por texto, sección, etiqueta de escena o rango de fechas en el mundo. Filtrar nunca cambia el orden narrativo, y una escena sin tiempo en el mundo no pertenece a ningún rango de fechas."
+      search_label: "Buscar"
+      search_placeholder: "Título o descripción breve"
+      section_label: "Sección"
+      all_sections: "Todas las secciones"
+      scene_tag_label: "Etiqueta de escena"
+      all_scene_tags: "Todas las etiquetas de escenas"
+      from_label: "En el mundo desde"
+      to_label: "En el mundo hasta"
+      submit: "Filtrar escenas"
+      clear: "Quitar filtros"
+      # La frase con la que abre una lista reducida. Los dos recuentos se resuelven
+      # con un `count:` antes de interpolarse, así que cada uno elige su plural.
+      showing: "Mostrando %{shown} de %{total}."
+      filtered_by: "Filtrado por"
+      # Los filtros activos repetidos como texto, para que un conjunto de resultados
+      # vacío siempre pueda decir qué valor lo produjo.
+      summaries:
+        search: "Búsqueda: «%{value}»"
+        section: "Sección: %{value}"
+        scene_tag: "Etiqueta de escena: %{value}"
+        from: "En el mundo desde %{value}"
+        to: "En el mundo hasta %{value}"
+      # Un valor de filtro que el filtro no pudo usar. `bound` es
+      # `scenes.filter.bound.*` resuelto con la misma palabra que usa la etiqueta del
+      # propio formulario, nunca el literal `start`/`end` con el que se construyó
+      # este objeto.
+      bound:
+        start: "inicio"
+        end: "fin"
+      discarded:
+        section: "Se ha ignorado el filtro de sección porque no es una sección de esta historia."
+        scene_tag: "Se ha ignorado el filtro de etiqueta de escena porque no es una etiqueta de escena de esta historia."
+        date: "No se ha podido leer la fecha de %{bound} en el mundo «%{value}», así que se ha ignorado."
+    show:
+      description: "Escena %{position} de %{total} en el orden en que se cuenta %{story}. El orden narrativo no es la cronología en el mundo."
+      all_scenes: "Todas las escenas"
+      facts:
+        title: "Título"
+        narrative_position: "Posición narrativa"
+        # La posición y el total que la acompañan, sin palabras propias.
+        position: "%{position} de %{total}"
+        description: "Descripción breve"
+        description_blank: "Todavía no hay descripción breve."
+        tags: "Etiquetas de escena"
+        tags_blank: "Todavía no hay etiquetas de escena asignadas."
+        tags_hint: "Las etiquetas son opcionales y pertenecen a esta historia."
+        # Dos avisos con un enlace dentro, así que son claves `_html` y el enlace es
+        # la interpolación: la frase decide dónde va el enlace. El *texto* del enlace
+        # sigue siendo su propia clave, porque quien traduce sigue necesitando saber
+        # cómo se llama el enlace al elegir dónde ponerlo.
+        tags_hint_editor_html: "Cámbialas desde el %{editor}."
+        tags_hint_workspace_html: "La taxonomía está disponible en el %{workspace}."
+        editor_link: "editor de escenas"
+        workspace_link: "espacio de trabajo de Etiquetas de escenas"
+        section_group: "Grupo de sección"
+        section_blank: "Sin agrupar. Una Sección es opcional y solo organiza esta escena; no cambia su posición narrativa."
+        event: "Suceso en el mundo"
+        # `%{event}` es `Event#display_string`, que es la etiqueta propia del
+        # registro y por tanto es dato: se interpola, nunca se traduce.
+        event_html: "%{event}: consulta el %{workspace}. Varias escenas pueden representar el mismo suceso."
+        event_workspace: "espacio de trabajo de Sucesos"
+        event_blank: "Todavía no hay ningún suceso enlazado."
+        in_world_time: "Tiempo en el mundo"
+        in_world_time_blank: "Todavía no hay tiempo en el mundo definido."
+        in_world_time_hint: "Este es el orden en el tiempo del mundo, que se mantiene separado de la posición narrativa de arriba. El suceso y el tiempo en el mundo son valores independientes; ninguno se deduce del otro y aquí no se detecta ninguna discrepancia entre ellos."
+        story: "Historia"
+      tabs:
+        # Las cuatro pestañas del espacio de trabajo, que son URL reales y no paneles
+        # dentro del mismo documento. Las otras tres son los títulos de los espacios
+        # de trabajo hermanos.
+        aria_label: "Espacio de trabajo de la escena"
+        details: "Detalles de la escena"
+    form:
+      name: "Título"
+      name_hint: "El título de la escena en el orden narrativo. Solo hace falta un título."
+      description: "Descripción breve"
+      description_hint: "Un resumen opcional de una línea que se muestra en la lista de escenas."
+      tags_legend: "Etiquetas de escena"
+      tags_label: "Etiquetas de escena"
+      tags_hint: "Opcional. Asigna las etiquetas que describan esta escena. Las etiquetas pertenecen a esta historia y se pueden gestionar en Configuración → Etiquetas → Etiquetas de historia → Etiquetas de escenas."
+      tags_empty: "Todavía no hay etiquetas de escena definidas para esta historia."
+      manage_tags: "Gestionar etiquetas de escena"
+      organization_legend: "Organización"
+      section: "Sección"
+      section_hint: "Opcional. Una Sección agrupa esta escena, por ejemplo bajo un libro, un capítulo, una temporada o un episodio. La agrupación solo cambia la organización: nunca cambia la posición narrativa de esta escena, y una Sección anidada también sitúa la escena dentro de la ruta de sus ancestros."
+      in_world_time_legend: "Tiempo en el mundo"
+      event: "Suceso"
+      event_hint: "Opcional. Enlaza esta escena con un suceso compartido del universo. Varias escenas pueden referirse al mismo suceso, y nada más en este formulario cambia cuando eliges uno."
+      # La opción de suceso en blanco lee el `shared.none` compartido, así que no se
+      # repite aquí.
+      datetime: "Tiempo en el mundo"
+      datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente del suceso de arriba: elegir o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
+      # `%{move_up}`/`%{move_down}` son los nombres traducidos de los controles de la
+      # lista, así que esta frase nombra los controles que el lector encontrará de
+      # verdad.
+      position_note_html: "La posición narrativa de esta escena solo se establece con los controles %{move_up}/%{move_down} de la %{scenes_list}. Es el orden en que se cuenta la historia, no la cronología en el mundo."
+      scenes_list_link: "lista de escenas"
+      submit_create: "Crear escena"
+      submit_update: "Actualizar escena"
+    # La sección de elementos de los detalles de la escena. Las etiquetas de tipo
+    # son los valores que el selector almacena, así que el `kind` nunca se traduce:
+    # solo se traduce la etiqueta que va al lado, y tanto la lista que renderiza el
+    # servidor como el modal leen estas claves.
+    elements:
+      title: "Elementos de la escena"
+      add: "Añadir elemento"
+      edit: "Editar elemento"
+      position_aria: "Elemento %{position} de %{total}"
+      empty_title: "Todavía no hay elementos"
+      empty_description: "Una escena puede tener cualquier número de elementos, incluido ninguno. Un bloque de narración describe lo que ocurre; un bloque de diálogo nombra a los personajes que hablan en él."
+      no_content: "Todavía no hay contenido. Un título es todo lo que un elemento necesita."
+      delete_confirm: "¿Eliminar «%{name}»? Su contenido y sus enlaces con los hablantes se eliminarán de forma permanente. Los personajes y otros registros del universo no se eliminarán."
+      # La frase que la fila de un diálogo declara sobre sus enlaces con
+      # hablantes. `names` son los nombres de hablantes escritos por la persona
+      # autora unidos por el conector de la locale, así que se interpola; la
+      # separación one/other es la concordancia del verbo con la cuenta.
+      speaker_note:
+        one: "%{names} habla en este bloque. El enlace registra quién está en la conversación, no qué línea es de quién."
+        other: "%{names} hablan en este bloque. El enlace registra quién está en la conversación, no qué línea es de quién."
+      speaker_note_empty: "Un diálogo debe nombrar al menos un hablante."
+      # Los dos tipos de elemento. El `kind` es el valor que el selector almacena,
+      # así que solo se traduce la etiqueta.
+      kinds:
+        narration: "Narración"
+        dialogue: "Diálogo"
+        narration_description: "Descripción o acción, sin que nadie hable."
+        dialogue_description: "Un bloque hablado. Nombra a todos los que hablan en él."
+      form:
+        kind: "Tipo de elemento"
+        name: "Título"
+        name_hint: "El título del bloque. Solo hace falta un título; el contenido puede llegar después."
+        body: "Contenido"
+        body_hint: "Texto sin formato, guardado exactamente como está escrito. Aquí nada se interpreta como cronología ni se contrasta con el universo."
+        speakers: "Hablantes"
+        speakers_hint: "Todos los que hablan en este bloque. Varios personajes pueden compartir un mismo diálogo; el enlace registra quién está en la conversación, no qué línea es de quién."
+        remove_speakers: "Quitar los hablantes y convertir esto en narración"
+        remove_speakers_hint: "La narración no puede conservar hablantes. Esta es la confirmación que los quita, y ocurre en el mismo guardado."
+        save: "Guardar elemento"
+    # Las tres pestañas de enlaces de presencia. Sus páginas y sus editores tienen la
+    # misma forma, así que la copia que es realmente compartida (el campo de rol, la
+    # píldora «enlazado», las frases que declara un hablante derivado) vive en
+    # `participation` y las cadenas propias de cada pestaña viven bajo su nombre.
+    participation:
+      role: "Rol: %{role}"
+      no_role: "No hay rol registrado"
+      linked: "Enlazado"
+      depicted: "Representado"
+      # El control de la fila retira un **enlace**, que no es el registro: el
+      # personaje, el objeto o el lugar sigue en el universo. Por eso aquí dice
+      # «Quitar» y no el «Eliminar» de la acción de fila compartida, que borra un
+      # registro.
+      remove_label: "Quitar"
+      # `%{count}` es un recuento resuelto con un `count:`, así que el plural viene
+      # de la locale.
+      speaks_in: "Habla en %{count}"
+      # El único aviso que comparten los tres campos de rol, y cada pestaña aporta
+      # sus propios ejemplos: la frase se escribe una vez y los ejemplos se
+      # interpolan, porque los ejemplos también son chrome y cada pestaña sugiere
+      # otros distintos.
+      role_hint: "Opcional, con tus propias palabras: %{examples} Déjalo en blanco si no quieres decir nada. La aplicación no interpreta nada de esto."
+      # El nombre accesible del menú de la fila. Nombra el registro *y* la escena
+      # en la que aparece, porque un nombre puede aparecer en más de una fila de
+      # esta pestaña a lo largo de la historia.
+      actions_for: "Acciones para %{name} en %{scene}"
+      # La fila que dice que un personaje habla, nombrando los elementos. `%{elements}`
+      # son los nombres de los elementos escritos por la persona autora unidos por el
+      # conector de la locale.
+      speaks_in_html: "Habla en %{elements}."
+      remove:
+        character: "¿Quitar a %{name} de %{scene}? El personaje sigue en el universo, y quien hable en un diálogo no se ve afectado."
+        item: "¿Quitar %{name} de %{scene}? El objeto sigue en el universo y en todas las demás escenas."
+        location: "¿Quitar %{name} de %{scene}? El lugar sigue en el universo, con sus lugares anidados, y en todas las demás escenas."
+    characters:
+      document_title: "Personajes en %{scene}"
+      description: "Todos los que participan en esta escena. Un participante se almacena aquí con un rol opcional; un personaje que solo habla en un diálogo se deriva de ese diálogo, así que ambos se muestran uno al lado del otro y se cuentan una sola vez."
+      add: "Añadir personaje"
+      save: "Guardar personaje"
+      edit_role: "Editar rol"
+      role_examples: "«escenario», «entra», «lleva», «objetivo»."
+      participant_badge: "Participante"
+      empty_title: "Todavía no hay personajes en esta escena"
+      empty_description: "Añade un personaje para registrar que participa, con un rol opcional como «escenario», «entra» u «objetivo». Un personaje que solo habla en un diálogo también aparece aquí, sin un registro aparte."
+      form:
+        character: "Personaje"
+        choose_character: "Elige un personaje"
+        character_hint: "Un personaje pertenece al universo y lo comparten todas sus historias. Un personaje solo puede estar en una escena una vez; elegir uno que ya está en ella se informa aquí, en esta ventana."
+        role: "Rol"
+    items:
+      document_title: "Objetos en %{scene}"
+      description: "Los objetos que aparecen en esta escena. Un objeto pertenece al universo y lo comparten todas sus historias, así que enlazar uno aquí nunca lo copia. Cada enlace puede llevar un rol opcional con tus propias palabras."
+      add: "Añadir objeto"
+      save: "Guardar objeto"
+      edit_item: "Editar objeto"
+      role_examples: "«lleva», «sobre la mesa», «destruido»."
+      empty_title: "Todavía no hay objetos en esta escena"
+      empty_description: "Añade un objeto para registrar que aparece aquí, con un rol opcional como «lleva», «sobre la mesa» o «destruido». El objeto en sí lo comparten todas las historias del universo."
+      form:
+        item: "Objeto"
+        choose_item: "Elige un objeto"
+        item_hint: "Un objeto pertenece al universo y lo comparten todas sus historias. Un objeto solo puede estar en una escena una vez; elegir uno que ya está en ella se informa aquí, en esta ventana."
+        role: "Rol"
+    locations:
+      document_title: "Lugares en %{scene}"
+      description: "Los lugares donde ocurre esta escena. Un lugar pertenece al universo y lo comparten todas sus historias, así que enlazar uno aquí nunca lo copia. Una escena puede usar tantos como quiera, y cada enlace puede llevar un rol opcional con tus propias palabras."
+      add: "Añadir lugar"
+      save: "Guardar lugar"
+      edit_location: "Editar lugar"
+      role_examples: "«escenario», «llega a», «dejado atrás»."
+      empty_title: "Todavía no hay lugares en esta escena"
+      empty_description: "Añade un lugar para registrar que la escena ocurre allí, con un rol opcional como «escenario», «llega a» o «dejado atrás». El lugar en sí lo comparten todas las historias del universo, junto con sus lugares anidados."
+      form:
+        location: "Lugar"
+        choose_location: "Elige un lugar"
+        location_hint: "Los lugares anidados se sangran bajo su padre, así que una habitación se reconoce por la casa a la que pertenece. Un lugar solo puede estar en una escena una vez; elegir uno que ya está en ella se informa aquí, en esta ventana."
+        role: "Rol"
+    # La sección «Aparece en escenas» de la página de un registro compartido del
+    # universo: la inversa de las tres pestañas, así que declara lo mismo que ellas.
+    appearances:
+      title: "Aparece en escenas de %{story}"
+      # Sin una Historia actual no hay nada que señalar, así que la sección lo dice
+      # y no nombra ninguna Historia.
+      title_without_story: "Aparece en escenas"
+      empty_title: "Todavía no aparece en ninguna escena de %{story}"
+      empty_title_without_story: "Selecciona una historia para ver sus escenas"
+      empty_description: "Este registro lo comparten todas las historias del universo, así que puede aparecer en tantas escenas como quieras. Enlázalo desde la pestaña Personajes, Objetos o Lugares de una escena, o apunta una escena a este suceso, y aparecerá aquí."
+      empty_description_without_story: "Las escenas pertenecen a una historia, así que un registro solo puede decir dónde aparece cuando hay una historia actual. Elige una historia para ver cuáles de sus escenas usan este registro."
+    # El bloque de escenas sin agrupar que hay bajo el árbol de Secciones: solo las
+    # escenas que no pertenecen a ninguna sección, más el formulario que agrupa una
+    # de ellas.
+    grouping:
+      title: "Escenas sin agrupar"
+      description_html: "Aquí solo se listan las escenas que no pertenecen a ninguna sección. La agrupación es solo organización: nunca cambia el orden en la %{scenes_list}."
+      # El mismo párrafo con el recuento de escenas ya agrupadas incorporado. Es una
+      # segunda clave y no una frase empalmada dentro de la primera, porque las dos
+      # cláusulas no conservan su orden en todos los idiomas.
+      description_with_grouped_html: "Aquí solo se listan las escenas que no pertenecen a ninguna sección. Las otras %{total} de %{story} están agrupadas y se listan en la página de su propia sección, que abre el enlace «Detalles» de una sección de arriba. La agrupación es solo organización: nunca cambia el orden en la %{scenes_list}."
+      empty_title: "Todavía no hay escenas"
+      empty_description: "Esta historia todavía no tiene escenas que agrupar. Añade una y aparecerá aquí sin agrupar."
+      add_first: "Añadir la primera escena"
+      all_grouped: "Todas las escenas de %{story} están agrupadas bajo una sección, así que aquí no hay nada esperando a ser agrupado. Abre una sección de arriba para leer las escenas agrupadas bajo ella."
+      count:
+        one: "%{count} escena sin agrupar"
+        other: "%{count} escenas sin agrupar"
+      move_scene_label: "Escena sin agrupar"
+      move_to_label: "Mover a"
+      submit: "Mover escena"
+    flash:
+      created: "La escena se ha creado correctamente."
+      # `se ha <participio>` is the compound verbal form, so the participle is not
+      # the feminine "creada" a reader might expect from the subject's gender; this
+      # is the same wording `stories.flash`, `relations.flash`, and
+      # `ownerships.flash` already use.
+      updated: "La escena se ha actualizado correctamente."
+      deleted: "La escena se ha eliminado correctamente."
+      moved: "La escena se ha movido."
+      move_failed: "No se ha podido mover la escena."
+      already_first: "Esta escena ya está la primera en el orden narrativo."
+      already_last: "Esta escena ya está la última en el orden narrativo."
+      grouped: "«%{name}» ahora está agrupada bajo %{grouping}. Su posición narrativa no ha cambiado."
+      ungrouped: "«%{name}» ahora está sin agrupar. Su posición narrativa no ha cambiado."
+    # El sujeto del resumen de errores. Es la frase que va detrás del «this» de la
+    # oración, así que aquí no lleva artículo; la entrada española es una frase
+    # entera porque su oración no aporta determinante.
+    #
+    # Los mensajes de `errors.add` de abajo se leen como la cola de `errors.format`
+    # («%{attribute} %{message}»), así que cada uno empieza en minúscula. Son
+    # mensajes propios del modelo Scene y viven junto al sujeto en lugar de en un
+    # bloque compartido, igual que `events.errors` pertenece al espacio de trabajo
+    # de Sucesos.
+    errors:
+      subject: "esta escena"
+      must_exist: "no puede existir"
+      must_belong_to_story: "debe pertenecer a la misma historia"
+      must_belong_to_universe: "debe pertenecer al universo de la historia"
+      must_be_unique: "no puede estar repetido"
+      invalid_datetime: "no es una fecha y una hora válidas"
 
   # Los espacios de trabajo de la Biblia del universo: Personajes, Lugares,
   # Sucesos, Objetos, Relaciones y Propiedades. Cada bloque es dueño de su
@@ -422,7 +804,6 @@ es:
       before_event: "Ocurre antes"
       after_event: "Ocurre después"
       simultaneous_event: "Al mismo tiempo que"
-      none: "Ninguno"
     show:
       label: "Suceso"
       back_label: "Todos los sucesos"
@@ -628,6 +1009,10 @@ es:
       eyebrow: "Configuración · Etiquetas"
       scope: "Ámbito"
       scope_universe_description: "Las etiquetas son etiquetas opcionales. Esta taxonomía pertenece al universo y la comparten todas sus historias."
+      # Las taxonomías de ámbito de historia dicen los mismos tres hechos sobre un
+      # dueño distinto, así que la frase es su propia clave y no una segunda copia
+      # con «universo» sustituido.
+      scope_story_description: "Las etiquetas son etiquetas opcionales y pertenecen a esta historia, no al universo."
       description: "Descripción"
       description_blank: "Todavía no hay descripción."
       color: "Color"
@@ -706,12 +1091,20 @@ es:
         empty_description: "Las etiquetas son opcionales. Añade una para clasificar las secciones, o construye el árbol de secciones sin ellas."
         read_only_empty_description: "Esta historia todavía no tiene etiquetas de secciones definidas."
         new_label: "Añadir etiqueta de sección"
+        record_label: "Etiqueta de sección"
+        all_label: "Todas las etiquetas de secciones"
+        records_title: "Secciones con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que las secciones pueden quedarse sin etiquetar."
       scene:
         title: "Etiquetas de escenas"
         description: "Define etiquetas opcionales para las escenas de esta historia, como el tono, un punto de inflexión o un hito de la trama."
         empty_description: "Las etiquetas son opcionales. Añade una para clasificar las escenas, o escribe escenas sin etiqueta."
         read_only_empty_description: "Esta historia todavía no tiene etiquetas de escenas definidas."
         new_label: "Añadir etiqueta de escena"
+        record_label: "Etiqueta de escena"
+        all_label: "Todas las etiquetas de escenas"
+        records_title: "Escenas con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que las escenas pueden quedarse sin etiquetar."
         delete_confirm: "¿Eliminar «%{name}»? Sus etiquetas hijas y sus asignaciones se eliminarán. Las escenas se conservarán."
 
   timeline:
@@ -791,6 +1184,19 @@ es:
         character: "Personaje"
         from_date: "Desde"
         to_date: "Hasta"
+      # La Escena y sus modelos de unión que la Escena posee. El editor se
+      # renderiza con un modelo, así que esto es lo que leen tanto una etiqueta de
+      # formulario *como* un `errors.add`; las etiquetas `scenes.form` de arriba son
+      # la copia propia del formulario y se espera que las dos digan lo mismo.
+      # `name` es el título del registro, no un nombre de columna suelto, y
+      # `datetime` es el punto en el mundo y no una marca de tiempo cruda.
+      scene:
+        name: "Título"
+        description: "Descripción breve"
+        section: "Sección"
+        event: "Suceso"
+        datetime: "Tiempo en el mundo"
+        scene_tags: "Etiquetas de escena"
       # Las ocho taxonomías comparten una preocupación para el par de colores y
       # otra para el padre, así que un modelo se nombra una vez aquí y las
       # etiquetas de campo del editor de etiquetas vienen de `modal_fields.*` y no
@@ -940,6 +1346,9 @@ es:
   entry:
     one: "entrada"
     other: "entradas"
+  element:
+    one: "elemento"
+    other: "elementos"
   item:
     one: "elemento"
     other: "elementos"

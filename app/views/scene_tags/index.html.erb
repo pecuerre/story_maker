@@ -1,19 +1,22 @@
-<% content_for :title, "Scene Tags" %>
+<% content_for :title, t("tags.types.scene.title") %>
 
+<%# The taxonomy's own copy is read from `tags.types.scene.*`, the same block the
+    story-scope taxonomy workspace already used, so this page and its translations
+    are one set of strings in both places rather than two that can drift. The tree
+    calls `confirm_message` per tag, so it is a lambda that translates at call
+    time rather than a string resolved once here. %>
 <%= render "shared/taxonomy_tree",
-  title: "Scene tags",
-  description: "Define optional labels for this story's scenes, such as mood, turning point, or story beat.",
-  eyebrow: "Story: #{@story.name}",
+  title: t("tags.types.scene.title"),
+  description: t("tags.types.scene.description"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
   count: @story.scene_tags.count,
   count_label: "tag",
-  new_label: "Add scene tag",
+  new_label: t("tags.types.scene.new_label"),
   tag_workspace_scope: "story",
   tag_workspace_taxonomy: "scene",
-  empty_description: "Tags are optional. Add one to classify scenes, or write scenes without a tag.",
-  read_only_empty_description: "This story has no scene tags defined yet.",
-  confirm_message: ->(scene_tag) {
-    "Delete “#{scene_tag.name}”? Its child tags and assignments will be removed. Scenes will remain."
-  },
+  empty_description: t("tags.types.scene.empty_description"),
+  read_only_empty_description: t("tags.types.scene.read_only_empty_description"),
+  confirm_message: ->(scene_tag) { t("tags.types.scene.delete_confirm", name: scene_tag.name) },
   nodes: @scene_tags,
   create_url: universe_story_scene_tags_path(story_id: @story),
   update_url: ->(scene_tag) { universe_story_scene_tag_path(story_id: @story, id: scene_tag) },

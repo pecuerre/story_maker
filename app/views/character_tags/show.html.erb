@@ -17,7 +17,7 @@
 <%# The section's empty title is the shared sentence with the record type in its
     plural, so the two branches below — a taggable tag lists the records directly,
     a grouping tag lists one section per child tag — read identically when empty. %>
-<% empty_title = t("shared.detail_section.empty_title", label: t("character", count: 1)) %>
+<% empty_title = t("shared.detail_section.empty_title", determiner: t("shared.detail_section.determiners.none_masculine"), label: t("character", count: 1)) %>
 
 <% if @character_tag.taggable %>
   <%= render "shared/include_descendants_toggle" %>

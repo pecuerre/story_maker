@@ -128,19 +128,19 @@
               <div class="col-md-4">
                 <%= form.label :before_event_id, t("events.form.before_event"), class: "form-label" %>
                 <%= form.collection_select :before_event_id, @events_for_select, :id, :display_string,
-                  { include_blank: t("events.form.none") },
+                  { include_blank: t("shared.none") },
                   { class: "form-select", data: { modal_form_exclude_self: true } } %>
               </div>
               <div class="col-md-4">
                 <%= form.label :after_event_id, t("events.form.after_event"), class: "form-label" %>
                 <%= form.collection_select :after_event_id, @events_for_select, :id, :display_string,
-                  { include_blank: t("events.form.none") },
+                  { include_blank: t("shared.none") },
                   { class: "form-select", data: { modal_form_exclude_self: true } } %>
               </div>
               <div class="col-md-4">
                 <%= form.label :simultaneous_event_id, t("events.form.simultaneous_event"), class: "form-label" %>
                 <%= form.collection_select :simultaneous_event_id, @events_for_select, :id, :display_string,
-                  { include_blank: t("events.form.none") },
+                  { include_blank: t("shared.none") },
                   { class: "form-select", data: { modal_form_exclude_self: true } } %>
               </div>
             </div>

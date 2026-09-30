@@ -322,21 +322,20 @@ it has a useful destination and clear empty/loading/error states.
 
 27. **Internationalization: move every user-facing string behind `t()` and add a language setting**
 
-    Deliver in the order below. The foundation, the application shell, and the Universe Bible
-    workspaces are already done — the `AppLocale` preference, the **Language** section on `/settings`,
-    the I18n configuration, the translated layouts/sidebars/`shared/*`/sessions/passwords/mailer/PWA,
-    and the missing-translation enforcement are described by
-    [ADR 0016](adr/0016-internationalization-and-browser-locale.md), and the remaining workspaces are
-    the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). What is left is **21 of the 100 ERB
-    views**, carrying about 132 distinct strings: the ten `scenes/*` views, the three `searches/*`
-    views, and the eight story-scoped views (`section_tags`, `scene_tags`, `scene_characters`,
-    `scene_items`, `scene_locations`, `scene_appearances/_section`). Plus ~120 strings in the
-    matching controllers and helpers, ~51 distinct inside four Stimulus controllers, the model-level
-    labels (`SectionPaths::UNGROUPED_LABEL`, `Search::Scope` option labels, `SceneFilter` discard
-    messages, and the `display_string` sentences — see slice 27.5), and the literal `errors.add`
-    messages in `Hierarchical` and `HasColor`, which every taxonomy shares. Every `shared/*` partial
-    is translated, and the counts above exclude ERB comments, which document a local contract for
-    the next developer and are never rendered.
+    Deliver in the order below. The foundation, the application shell, the Universe Bible workspaces,
+    and the Scene workspace are already done — the `AppLocale` preference, the **Language** section on
+    `/settings`, the I18n configuration, the translated layouts/sidebars/`shared/*`/sessions/passwords/
+    mailer/PWA, and the missing-translation enforcement are described by
+    [ADR 0016](adr/0016-internationalization-and-browser-locale.md), and the delivered workspaces are
+    the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). What is left is **3 of the 100 ERB
+    views**, carrying about 25 distinct strings: `searches/show`, `searches/_commands`, and
+    `searches/_scope_field` (`searches/_result` renders no copy of its own; its two labels are the
+    model-level ones below). Plus ~51 distinct strings inside four Stimulus controllers, the
+    model-level labels (`Search::Scope` option labels, the `Search::Registry`/`Catalog`/`Hit` kind
+    labels, `Search::Commands`, and the `display_string` sentences — see slice 27.5), and the literal
+    `errors.add` messages in `Hierarchical` and `HasColor`, which every taxonomy shares. Every
+    `shared/*` partial is translated, and the counts above exclude ERB comments, which document a local
+    contract for the next developer and are never rendered.
 
     Rules that apply to every remaining slice:
 
@@ -357,8 +356,12 @@ it has a useful destination and clear empty/loading/error states.
     - A sentence decides its own determiner, and a slot that takes one noun takes the **singular**.
       English's error summary supplies its own `this`, so its `subject` is a bare noun; Spanish's
       sentence has none, so its `subject` is the whole phrase (`esta relación`). A label resolved
-      with `count: 2` is wrong in a slot that reads as one noun — see
-      [`features/i18n.md`](features/i18n.md#sentences-are-not-nouns).
+      with `count: 2` is wrong in a slot that reads as one noun, and a determiner a language agrees
+      in gender is its own interpolation (`shared.detail_section.determiners.*`) beside the noun —
+      see [`features/i18n.md`](features/i18n.md#sentences-are-not-nouns).
+    - A sentence that carries a link is one `_html` key with the link as the interpolation; the
+      link's own text stays a key of its own, because a translator still needs to know what it is
+      called. See [`features/i18n.md`](features/i18n.md#a-link-inside-a-sentence).
     - A modal built with `form_with scope:` (and no model) cannot resolve
       `activerecord.attributes.<model>.<column>`, so its labels are named explicitly under that
       workspace's `form:` keys. The attribute entry is still required, because an error message
@@ -377,21 +380,6 @@ it has a useful destination and clear empty/loading/error states.
       the Timeline was never built; the docs now say the view is static, and building the interaction
       is listed under FUTURE WORK below.
 
-    - **Slice 27.4 — Scene workspace.** `scenes/*` (index, show, edit, new, `_form`, `_filter`,
-      `_elements`, `_show_identity`, `_ungrouped_scenes`, `_workspace_tabs`),
-      `section_tags/*`, `scene_tags/*`, `scene_characters/*`, `scene_items/*`,
-      `scene_locations/*`, `scene_appearances/_section`, and `scenes_controller.rb`'s move/group
-      flash messages (which are interpolated sentences built in Ruby). Translating
-      `SectionPaths::UNGROUPED_LABEL` and `SceneFilter`'s discard messages belongs here, because
-      both are read by the Scenes page — see the constant/label contract note below.
-      Two of this slice's sentences are shared with the Universe Bible surface and were already
-      corrected there: `section_tags/show` and `scene_tags/show` each pass a hardcoded
-      `"No sections carry this tag"` / `"No scenes carry this tag"` that must become
-      `t("shared.detail_section.empty_title", label: t("section", count: 1))` and the same for
-      `scene` — a **singular** label, because that verb takes no plural in either language. Their
-      `include_descendants_toggle` branch and `tags.types.section`/`tags.types.scene` keys are the
-      rest of the same two files.
-
     - **Slice 27.5 — Search.** `searches/show`, `_commands`, `_result`, `_scope_field`, the
       `searches_controller.rb` and `searches_helper.rb` strings, and the model-level labels in
       `app/models/search/`: `Search::Scope`'s option labels, the kind labels in
@@ -399,9 +387,11 @@ it has a useful destination and clear empty/loading/error states.
       inside a query/display object rather than a literal in a view, so the slice defines whether
       a label is stored translated or translated at read time — **translate at read time**, and keep
       the option's `value` (the URL parameter) untranslated, or search URLs stop working in
-      Spanish. `SectionPaths::UNGROUPED_LABEL` and `SceneFilter::UNGROUPED` are the same shape and
+      Spanish. `SectionPaths::UNGROUPED_LABEL_KEY` and `SceneFilter::UNGROUPED` are the same shape and
       must keep the same rule: the *value* in the URL stays `"ungrouped"`, only the label is
-      translated. This slice also settles the one model-level label a translation could not close:
+      translated — and the label now has one home, `sections.ungrouped_label`, resolved by
+      `SectionPaths#ungrouped_label`. This slice also settles the one model-level label a translation
+      could not close:
       `Event#display_string`, `Relation#display_string`, and `Ownership#display_string` are their
       models' `searchable title:`, so the string is **stored in a language-independent search index**
       and read back straight into a result row. Translating them in the model would put one locale's

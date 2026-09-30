@@ -1,16 +1,22 @@
 <%# The Scene editor's URL-backed workspace tabs. Every tab is its own canonical
     request, never an in-document Bootstrap pane. All four workspace tabs now
     have a real destination, so each is a link rather than an aria-disabled
-    placeholder, and no tab ever links to a route that does not exist yet. %>
+    placeholder, and no tab ever links to a route that does not exist yet.
+
+    A tab label is the name of the workspace it opens, so the three sibling tabs
+    read the sibling workspaces' own titles rather than a hand-written copy that
+    could drift from them; only **Scene Details**, which has no sibling workspace,
+    is named here. %>
 <%= render "shared/content_tabs",
-  aria_label: "Scene workspace",
+  aria_label: t("scenes.show.tabs.aria_label"),
   class_name: "scene-workspace-tabs",
   tabs: [
-    { label: "Scene Details", path: universe_story_scene_path(story_id: @story, id: @scene), active: @scene_tab == "details" },
-    { label: "Characters", path: universe_story_scene_scene_characters_path(story_id: @story, scene_id: @scene),
+    { label: t("scenes.show.tabs.details"),
+      path: universe_story_scene_path(story_id: @story, id: @scene), active: @scene_tab == "details" },
+    { label: t("characters.title"), path: universe_story_scene_scene_characters_path(story_id: @story, scene_id: @scene),
       active: @scene_tab == "characters" },
-    { label: "Items", path: universe_story_scene_scene_items_path(story_id: @story, scene_id: @scene),
+    { label: t("items.title"), path: universe_story_scene_scene_items_path(story_id: @story, scene_id: @scene),
       active: @scene_tab == "items" },
-    { label: "Locations", path: universe_story_scene_scene_locations_path(story_id: @story, scene_id: @scene),
+    { label: t("locations.title"), path: universe_story_scene_scene_locations_path(story_id: @story, scene_id: @scene),
       active: @scene_tab == "locations" }
   ] %>

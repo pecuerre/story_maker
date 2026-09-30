@@ -19,7 +19,7 @@
   count: @tagged_records.size,
   count_label: "relation",
   icon: "diagram-2",
-  empty_title: t("shared.detail_section.empty_title", label: t("relation", count: 1)),
+  empty_title: t("shared.detail_section.empty_title", determiner: t("shared.detail_section.determiners.none_masculine"), label: t("relation", count: 1)),
   empty_description: t("tags.types.relation.unused_description") do %>
   <%= render "shared/tagged_record_list",
     records: @tagged_records,

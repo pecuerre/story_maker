@@ -1,5 +1,9 @@
 <% child_tags = local_assigns.fetch(:child_tags) %>
 <% records_by_child_tag = local_assigns.fetch(:records_by_child_tag) %>
+<%# The shared empty sentence needs a determiner beside the record type, and the six
+    taxonomies that render this partial are all masculine. A caller whose record
+    type is feminine passes `determiner:` beside its own. %>
+<% determiner = t("shared.detail_section.determiners.#{local_assigns.fetch(:determiner, 'none_masculine')}") %>
 
 <% if child_tags.empty? %>
   <%= render "shared/empty_state",
@@ -14,7 +18,9 @@
       count: child_records.size,
       count_label: local_assigns.fetch(:count_label),
       icon: local_assigns.fetch(:icon),
-      empty_title: t("shared.detail_section.empty_title", label: t(local_assigns.fetch(:count_label), count: 1)),
+      empty_title: t("shared.detail_section.empty_title",
+        determiner: determiner,
+        label: t(local_assigns.fetch(:count_label), count: 1)),
       empty_description: t("shared.child_tags.unused_description") do %>
       <%= render "shared/tagged_record_list",
         records: child_records,

@@ -2,7 +2,7 @@
 
 <%= render "shared/record_details",
   record: @section,
-  eyebrow: t("sections.eyebrow", story: @story.name),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
   label: t("sections.show.label"),
   facts: [
     detail_fact(t("sections.show.facts.story"), link_to(@story.name, universe_story_path(id: @story))),
@@ -27,7 +27,7 @@
     <% @scenes.each do |scene| %>
       <div class="list-group-item entity-row d-flex align-items-center gap-3">
         <span class="badge rounded-pill text-bg-light border"
-          aria-label="<%= t("sections.show.scenes.position_aria", position: scene.position + 1, total: @scene_total) %>">
+          aria-label="<%= t("shared.scene_position_aria", position: scene.position + 1, total: @scene_total) %>">
           <%= scene.position + 1 %>
         </span>
         <div class="entity-copy flex-grow-1">

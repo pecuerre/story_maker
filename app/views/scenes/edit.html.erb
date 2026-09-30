@@ -1,15 +1,15 @@
-<% content_for :title, "Edit #{@scene.name}" %>
+<% content_for :title, t("scenes.edit_document_title", name: @scene.name) %>
 
 <%= render "shared/page_header",
-  title: "Edit scene",
-  eyebrow: "Story: #{@story.name}",
-  description: "Update the title, short description, Section group, event link, and in-world time of this scene. Its narrative position changes only through the Move up/Move down controls on the scenes list." %>
+  title: t("scenes.edit_title"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
+  description: t("scenes.edit_description") %>
 
 <%= render "shared/content_tabs",
-  aria_label: "Story workspace",
+  aria_label: t("sidebar.story_workspace"),
   tabs: [
-    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
-    { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
+    { label: t("sidebar.sections"), path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ] %>
 
 <%= render "scenes/workspace_tabs" %>

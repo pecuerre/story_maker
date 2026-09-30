@@ -7,9 +7,15 @@
 # memory from a single query.
 #
 # Ordering follows the supplied array, so a child always follows its parent.
+#
+# `UNGROUPED_LABEL_KEY` is a key and not a translated string. A constant that
+# called `t()` would be resolved once, in whatever locale happened to load this
+# class first, and every later request would render that one language — the rule
+# `ModalFields` and `TagsHelper` already follow. The label is resolved per
+# request through `#ungrouped_label` instead.
 class SectionPaths
   SEPARATOR = " / "
-  UNGROUPED_LABEL = "Ungrouped"
+  UNGROUPED_LABEL_KEY = "sections.ungrouped_label"
 
   def self.build(sections)
     new(sections)
@@ -18,7 +24,7 @@ class SectionPaths
   def initialize(sections)
     @by_parent = Array(sections).group_by(&:parent_id)
     @labels = {}
-    @grouping_options = [ [ UNGROUPED_LABEL, "" ] ]
+    @grouping_options = [ [ ungrouped_label, "" ] ]
 
     collect(nil, [], [], 0)
   end
@@ -27,6 +33,17 @@ class SectionPaths
   # validate a filter value against the Story's own tree without a second query.
   def ids
     @labels.keys
+  end
+
+  # The label of the group that is not a Section. The Scenes list badge, the
+  # Section selector in the Scene editor, the Scenes filter, and the Sections
+  # workspace's ungrouped block all read it from here, so there is one word for
+  # the group rather than one per surface.
+  # `SectionPaths` is a plain value object and does not include the view's
+  # `translate` helper, so this reads the locale through `I18n.t` directly — the
+  # same call, against the request's `I18n.locale`.
+  def ungrouped_label
+    I18n.t(UNGROUPED_LABEL_KEY)
   end
 
   # Accepts a Section or a section id. Returns nil when the Scene is ungrouped

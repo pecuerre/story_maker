@@ -1,31 +1,31 @@
-<% content_for :title, "Scenes" %>
+<% content_for :title, t("scenes.title") %>
 <% editable = can_write_universe? %>
 <% filtered = @scene_filter.active? %>
 <% empty_description = if editable
-  "Scenes are the ordered units of this story. Add the first one to start its narrative order."
+  t("scenes.index.empty_writable_description")
 else
-  "This story has no scenes to show yet."
+  t("scenes.index.empty_read_only_description")
 end %>
 
 <%= render "shared/page_header",
-  title: "Scenes",
-  eyebrow: "Story: #{@story.name}",
-  description: "The order below is the order #{@story.name} is told, not in-world chronology. A section group only organizes a scene; it never changes this order.",
+  title: t("scenes.title"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
+  description: t("scenes.index.description", story: @story.name),
   count: @scenes.size,
   count_label: "scene" do %>
   <% if editable %>
     <%= link_to new_universe_story_scene_path(story_id: @story), class: "btn btn-primary" do %>
       <i class="bi bi-plus-lg" aria-hidden="true"></i>
-      <span>Add scene</span>
+      <span><%= t("scenes.add") %></span>
     <% end %>
   <% end %>
 <% end %>
 
 <%= render "shared/content_tabs",
-  aria_label: "Story workspace",
+  aria_label: t("sidebar.story_workspace"),
   tabs: [
-    { label: "Sections", path: universe_story_sections_path(story_id: @story), controller: :sections },
-    { label: "Scenes", path: universe_story_scenes_path(story_id: @story), controller: :scenes }
+    { label: t("sidebar.sections"), path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ] %>
 
 <%= render "scenes/filter",
@@ -49,26 +49,32 @@ end %>
                   the filtered rows, so a narrowed view still says where the scene
                   sits in the order the story is told. %>
               <span class="badge rounded-pill text-bg-light border"
-                aria-label="<%= "Narrative position #{scene.position + 1} of #{@scene_total}" %>">
+                aria-label="<%= t("shared.scene_position_aria", position: scene.position + 1, total: @scene_total) %>">
                 <%= scene.position + 1 %>
               </span>
               <span class="entity-title"><%= scene.name %></span>
               <% grouping = scene_grouping_label(scene, @section_paths) %>
               <span class="badge rounded-pill text-bg-light border"
-                title="<%= grouping.present? ? "Grouped under #{grouping}. Grouping does not change the narrative order." : "Not grouped under a section. Grouping does not change the narrative order." %>">
+                title="<%= grouping.present? ? t("scenes.index.grouped_title", grouping: grouping) : t("scenes.index.ungrouped_title") %>">
                 <i class="bi <%= grouping.present? ? "bi-folder2" : "bi-folder2-open" %>" aria-hidden="true"></i>
-                <span class="text-truncate"><%= grouping || SectionPaths::UNGROUPED_LABEL %></span>
+                <span class="text-truncate"><%= grouping || @section_paths.ungrouped_label %></span>
               </span>
               <%# Both counts are per-row facts, and a row with none says so
-                  rather than showing a zero that looks like a measurement. %>
+                  rather than showing a zero that looks like a measurement. The
+                  announced count and its record type are one phrase resolved with a
+                  `count:`, so the plural comes from the locale. %>
               <span class="badge rounded-pill text-bg-light border"
-                aria-label="<%= "#{pluralize(@element_counts.fetch(scene.id, 0), "element")}" %>">
+                aria-label="<%= count_with_label(@element_counts.fetch(scene.id, 0), "element") %>">
                 <i class="bi bi-text-paragraph" aria-hidden="true"></i>
                 <%= @element_counts.fetch(scene.id, 0) %>
               </span>
+              <%# The participants are the union of the stored presence links and the
+                  derived speakers, so this badge never sums them; the title says what
+                  it counted and why a speaker is one participant. %>
               <span class="badge rounded-pill text-bg-light border"
-                title="<%= "Characters that take part in this scene, whether they are stored participants or only speakers in a dialogue. Counted once." %>"
-                aria-label="<%= "#{pluralize(@participant_counts.fetch(scene.id, 0), "character")} taking part" %>">
+                title="<%= t("scenes.index.participants_title") %>"
+                aria-label="<%= t("scenes.index.participants_aria",
+                  characters: count_with_label(@participant_counts.fetch(scene.id, 0), "character")) %>">
                 <i class="bi bi-people" aria-hidden="true"></i>
                 <%= @participant_counts.fetch(scene.id, 0) %>
               </span>
@@ -96,8 +102,8 @@ end %>
                   params: { direction: "up" },
                   class: "btn btn-sm btn-light border",
                   disabled: at_first,
-                  title: at_first ? "Already first in the narrative order" : "Move up",
-                  aria: { label: "Move #{scene.name} up in the narrative order" },
+                  title: at_first ? t("scenes.move.already_first") : t("scenes.move.up"),
+                  aria: { label: t("scenes.move.up_aria", name: scene.name) },
                   data: { scene_move: "up" } do %>
                   <i class="bi bi-arrow-up" aria-hidden="true"></i>
                 <% end %>
@@ -106,8 +112,8 @@ end %>
                   params: { direction: "down" },
                   class: "btn btn-sm btn-light border",
                   disabled: at_last,
-                  title: at_last ? "Already last in the narrative order" : "Move down",
-                  aria: { label: "Move #{scene.name} down in the narrative order" },
+                  title: at_last ? t("scenes.move.already_last") : t("scenes.move.down"),
+                  aria: { label: t("scenes.move.down_aria", name: scene.name) },
                   data: { scene_move: "down" } do %>
                   <i class="bi bi-arrow-down" aria-hidden="true"></i>
                 <% end %>
@@ -118,22 +124,26 @@ end %>
                   id="<%= dom_id(scene) %>-actions"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
-                  aria-label="Actions for <%= scene.name %>">
+                  aria-label="<%= t("shared.row_actions.actions_for", name: scene.name) %>">
                   <i class="bi bi-three-dots" aria-hidden="true"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(scene) %>-actions">
                   <li>
                     <%= link_to edit_universe_story_scene_path(story_id: @story, id: scene), class: "dropdown-item" do %>
-                      <i class="bi bi-pencil me-2" aria-hidden="true"></i>Edit
+                      <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("shared.row_actions.edit") %>
                     <% end %>
                   </li>
                   <li><hr class="dropdown-divider"></li>
                   <li>
+                    <%# A Scene owns its Elements and its presence links, so its
+                        delete states that cascade rather than falling back to the
+                        short shared confirmation. The scene's name is the author's
+                        own record name and is interpolated, not translated. %>
                     <%= button_to universe_story_scene_path(story_id: @story, id: scene, **filter_params),
                       method: :delete,
                       class: "dropdown-item text-danger",
-                      data: { turbo_confirm: "Delete “#{scene.name}”? Its elements, tag assignments, and links to story and universe records will be permanently removed. Linked records will not be deleted." } do %>
-                      <i class="bi bi-trash me-2" aria-hidden="true"></i>Delete
+                      data: { turbo_confirm: t("scenes.index.delete_confirm", name: scene.name) } do %>
+                      <i class="bi bi-trash me-2" aria-hidden="true"></i><%= t("shared.row_actions.delete") %>
                     <% end %>
                   </li>
                 </ul>
@@ -149,26 +159,27 @@ end %>
       so it says which filters produced nothing and offers the way back. %>
   <div class="content-surface p-3 p-md-4">
     <%= render "shared/empty_state",
-      title: "No scenes match these filters",
-      description: "#{@story.name} has #{pluralize(@scene_total, 'scene')}, but none of them match the filters above. Clear them to see the whole narrative order.",
+      title: t("scenes.index.no_match_title"),
+      description: t("scenes.index.no_match_description",
+        story: @story.name, total: count_with_label(@scene_total, "scene")),
       icon: "filter" do %>
       <span class="d-block mb-3">
         <% scene_filter_summaries(@scene_filter, @section_paths, @scene_tag_paths).each do |summary| %>
           <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
         <% end %>
       </span>
-      <%= link_to "Clear filters", universe_story_scenes_path(story_id: @story), class: "btn btn-primary" %>
+      <%= link_to t("scenes.filter.clear"), universe_story_scenes_path(story_id: @story), class: "btn btn-primary" %>
     <% end %>
   </div>
 <% else %>
   <%= render "shared/empty_state",
-    title: "No scenes yet",
+    title: t("scenes.index.empty_title"),
     description: empty_description,
     icon: "film" do %>
     <% if editable %>
       <%= link_to new_universe_story_scene_path(story_id: @story), class: "btn btn-primary" do %>
         <i class="bi bi-plus-lg" aria-hidden="true"></i>
-        <span>Add scene</span>
+        <span><%= t("scenes.add") %></span>
       <% end %>
     <% end %>
   <% end %>

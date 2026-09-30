@@ -3,7 +3,10 @@
   class: "form-surface" do |form| %>
   <% if scene.errors.any? %>
     <div class="alert alert-danger" role="alert">
-      <h2 class="h6"><%= pluralize(scene.errors.count, "error") %> prevented this scene from being saved:</h2>
+      <%# `shared.error_summary.heading` owns the sentence and its determiner, and
+          `scene` is the workspace's own subject noun rather than a name, so the
+          sentence decides where the phrase goes. %>
+      <h2 class="h6"><%= t("shared.error_summary.heading", count: scene.errors.count, subject: t("scenes.errors.subject")) %></h2>
       <ul class="mb-0">
         <% scene.errors.each do |error| %>
           <li><%= error.full_message %></li>
@@ -13,86 +16,83 @@
   <% end %>
 
   <div class="mb-3">
-    <%= form.label :name, "Title", class: "form-label" %>
+    <%= form.label :name, t("scenes.form.name"), class: "form-label" %>
     <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
-    <div class="form-text">The scene's title in the narrative order. Only a title is required.</div>
+    <div class="form-text"><%= t("scenes.form.name_hint") %></div>
   </div>
 
   <%= render "shared/photo_field", param: "scene", current_url: record_photo_url(scene) %>
 
   <div class="mb-3">
-    <%= form.label :description, "Short description", class: "form-label" %>
+    <%= form.label :description, t("scenes.form.description"), class: "form-label" %>
     <%= form.text_area :description, class: "form-control", rows: 5 %>
-    <div class="form-text">An optional one-line summary shown in the scene list.</div>
+    <div class="form-text"><%= t("scenes.form.description_hint") %></div>
   </div>
 
   <fieldset class="mb-3">
-    <legend class="h6">Scene tags</legend>
+    <legend class="h6"><%= t("scenes.form.tags_legend") %></legend>
     <div class="mb-3">
-      <%= form.label :scene_tag_ids, "Scene tags", class: "form-label" %>
+      <%= form.label :scene_tag_ids, t("scenes.form.tags_label"), class: "form-label" %>
       <% if @scene_tags.any? %>
         <%= form.select :scene_tag_ids,
           scene_tag_choices(@taggable_scene_tags, @scene_tag_paths),
           { include_hidden: true },
           { multiple: true, class: "form-select", size: [ @taggable_scene_tags.size, 6 ].min } %>
-        <div class="form-text">
-          Optional. Assign any labels that describe this scene. Tags belong to this story and can
-          be managed under Configuration → Tags → Story Tags → Scene tags.
-        </div>
+        <div class="form-text"><%= t("scenes.form.tags_hint") %></div>
       <% else %>
-        <p class="text-body-secondary mb-2">No scene tags are defined for this story yet.</p>
-        <%= link_to "Manage Scene Tags", universe_tags_path(scope: "story", taxonomy: "scene"), class: "btn btn-sm btn-outline-secondary" %>
+        <p class="text-body-secondary mb-2"><%= t("scenes.form.tags_empty") %></p>
+        <%= link_to t("scenes.form.manage_tags"), universe_tags_path(scope: "story", taxonomy: "scene"), class: "btn btn-sm btn-outline-secondary" %>
       <% end %>
     </div>
   </fieldset>
 
   <fieldset class="mb-3">
-    <legend class="h6">Organization</legend>
+    <legend class="h6"><%= t("scenes.form.organization_legend") %></legend>
     <div class="mb-3">
-      <%= form.label :section_id, "Section", class: "form-label" %>
+      <%= form.label :section_id, t("scenes.form.section"), class: "form-label" %>
+      <%# The selector's first option is the Ungrouped group, whose *value* is the
+          empty string the form stores and whose label is translated through
+          `SectionPaths`. %>
       <%= form.select :section_id, section_paths.grouping_options, {}, class: "form-select" %>
-      <div class="form-text">
-        Optional. A Section groups this scene, for example under a book, chapter, season, or
-        episode. Grouping changes organization only: it never changes this scene's narrative
-        position, and a nested Section also places the scene inside its ancestor path.
-      </div>
+      <div class="form-text"><%= t("scenes.form.section_hint") %></div>
     </div>
   </fieldset>
 
   <fieldset class="mb-3">
-    <legend class="h6">In-world time</legend>
+    <legend class="h6"><%= t("scenes.form.in_world_time_legend") %></legend>
     <div class="mb-3">
-      <%= form.label :event_id, "Event", class: "form-label" %>
-      <%= form.select :event_id, scene_event_choices(event_options), {}, class: "form-select" %>
-      <div class="form-text">
-        Optional. Links this scene to a shared universe event. Several scenes can reference the
-        same event, and nothing else in this form changes when you pick one.
-      </div>
+      <%= form.label :event_id, t("scenes.form.event"), class: "form-label" %>
+      <%# The blank option clears the reference and the values are event ids, so
+          neither is translated; only the labels beside them are. %>
+      <%= form.select :event_id, scene_event_choices(event_options),
+        { include_blank: t("shared.none") }, class: "form-select" %>
+      <div class="form-text"><%= t("scenes.form.event_hint") %></div>
     </div>
 
     <div class="mb-3">
-      <%= form.label :datetime, "In-world time", class: "form-label" %>
+      <%= form.label :datetime, t("scenes.form.datetime"), class: "form-label" %>
       <%# `step: 1` matches `ApplicationHelper::DATETIME_LOCAL_FORMAT`, which is what
             `scene_datetime_field_value` formats this control with: a whole-minute
             step could not hold stored seconds and would drop them on save. %>
         <%= form.datetime_local_field :datetime, value: scene_datetime_field_value(scene), class: "form-control", step: 1 %>
-      <div class="form-text">
-        Optional. A single point in story time, stored with the same precision and without a
-        timezone as event dates. It is independent of the event above: choosing or clearing one
-        never writes, clears, or checks the other, so you can deliberately keep them different.
-      </div>
+      <div class="form-text"><%= t("scenes.form.datetime_hint") %></div>
     </div>
   </fieldset>
 
+  <%# One sentence with a link in it, so it is an `_html` key. The two control
+      names are interpolated from the Scenes list's own keys rather than written
+      out here, so the sentence names the controls the reader will actually find. %>
   <p class="form-text">
-    This scene's narrative position is set only by the Move up/Move down controls on the
-    <%= link_to "scenes list", universe_story_scenes_path(story_id: scene.story) %>. It is the
-    order the story is told in, not in-world chronology.
+    <%= t("scenes.form.position_note_html",
+      move_up: t("scenes.move.up"), move_down: t("scenes.move.down"),
+      scenes_list: link_to(t("scenes.form.scenes_list_link"), universe_story_scenes_path(story_id: scene.story))) %>
   </p>
 
   <div class="form-actions">
-    <%= form.submit class: "btn btn-primary" %>
-    <%= link_to "Cancel", scene.persisted? ? universe_story_scene_path(story_id: scene.story, id: scene) : universe_story_scenes_path(story_id: scene.story),
+    <%# Rails' default submit label comes from `helpers.submit.*`, which is English
+        only, so each branch names its own. %>
+    <%= form.submit(scene.persisted? ? t("scenes.form.submit_update") : t("scenes.form.submit_create"), class: "btn btn-primary") %>
+    <%= link_to t("shared.form.cancel"), scene.persisted? ? universe_story_scene_path(story_id: scene.story, id: scene) : universe_story_scenes_path(story_id: scene.story),
       class: "btn btn-link" %>
   </div>
 <% end %>

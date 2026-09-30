@@ -59,9 +59,9 @@ class Scene < ApplicationRecord
     end
 
     @scene_tag_assignment_errors = []
-    @scene_tag_assignment_errors << "must exist" if (requested_ids - existing_ids).any?
-    @scene_tag_assignment_errors << "must belong to the same story" if (existing_ids - scoped_ids).any?
-    @scene_tag_assignment_errors << "must be unique" if normalized_ids.length != requested_ids.length
+    @scene_tag_assignment_errors << I18n.t("scenes.errors.must_exist") if (requested_ids - existing_ids).any?
+    @scene_tag_assignment_errors << I18n.t("scenes.errors.must_belong_to_story") if (existing_ids - scoped_ids).any?
+    @scene_tag_assignment_errors << I18n.t("scenes.errors.must_be_unique") if normalized_ids.length != requested_ids.length
 
     self.scene_tags = SceneTag.where(id: scoped_ids).to_a
   end
@@ -80,25 +80,31 @@ class Scene < ApplicationRecord
     # Shared scopes are application-level rules: a real foreign key cannot prove
     # that a Section belongs to this Scene's Story or that an Event belongs to
     # this Story's Universe.
+    #
+    # Every `errors.add` below resolves its message through `I18n.t` rather than
+    # holding an English literal, for the reason `Event` does: the message is read
+    # by the Scene editor's error summary, and a literal would render English on a
+    # page whose chrome is in the reader's language. Each message starts lowercase
+    # because it is the tail of `errors.format` ("%{attribute} %{message}").
     def section_belongs_to_story
       return if section.nil? || story.nil?
       return if section.story_id == story_id
 
-      errors.add(:section, "must belong to the same story")
+      errors.add(:section, I18n.t("scenes.errors.must_belong_to_story"))
     end
 
     def event_belongs_to_story_universe
       return if event.nil? || story&.universe.nil?
       return if event.universe_id == story.universe_id
 
-      errors.add(:event, "must belong to the story's universe")
+      errors.add(:event, I18n.t("scenes.errors.must_belong_to_universe"))
     end
 
     # An unknown optional ID would otherwise raise a foreign-key exception (a
     # 500) instead of rendering a field error.
     def optional_references_exist
-      errors.add(:section, "must exist") if section_id.present? && section.nil?
-      errors.add(:event, "must exist") if event_id.present? && event.nil?
+      errors.add(:section, I18n.t("scenes.errors.must_exist")) if section_id.present? && section.nil?
+      errors.add(:event, I18n.t("scenes.errors.must_exist")) if event_id.present? && event.nil?
     end
 
     # Active Record casts an unparseable datetime to nil, which would silently
@@ -110,6 +116,6 @@ class Scene < ApplicationRecord
       submitted = read_attribute_before_type_cast(:datetime)
       return if submitted.blank? || datetime.present?
 
-      errors.add(:datetime, "is not a valid date and time")
+      errors.add(:datetime, I18n.t("scenes.errors.invalid_datetime"))
     end
 end

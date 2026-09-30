@@ -42,6 +42,9 @@ class ScenesController < ApplicationController
       Arel.sql("COUNT(*)"), Arel.sql("MIN(position)"), Arel.sql("MAX(position)")
     )
     set_scene_listing_counts
+    # `SceneFilter` collects each discarded value as a translated sentence, so
+    # they are joined in the reader's language rather than in the language the
+    # filter was built in.
     flash.now[:alert] = @scene_filter.discarded.to_sentence if @scene_filter.discarded.any?
   end
 
@@ -63,7 +66,7 @@ class ScenesController < ApplicationController
       if create_with_sibling_position(@scene)
         format.html do
           redirect_to universe_story_scene_path(story_id: @story, id: @scene),
-            notice: "Scene was successfully created."
+            notice: t("scenes.flash.created")
         end
       else
         format.html { render :new, status: :unprocessable_content }
@@ -82,7 +85,7 @@ class ScenesController < ApplicationController
       if update_with_sibling_position(@scene, scene_params)
         format.html do
           redirect_to universe_story_scene_path(story_id: @story, id: @scene),
-            notice: "Scene was successfully updated.",
+            notice: t("scenes.flash.updated"),
             status: :see_other
         end
       else
@@ -126,7 +129,7 @@ class ScenesController < ApplicationController
     respond_to do |format|
       format.html do
         redirect_to filtered_scenes_path,
-          notice: "Scene was successfully destroyed.",
+          notice: t("scenes.flash.deleted"),
           status: :see_other
       end
     end
@@ -250,16 +253,16 @@ class ScenesController < ApplicationController
   # sequence boundary is a deliberate no-op with its own copy rather than a
   # partial write. A validation failure is reported separately.
   def move_flash(direction, original_position, target_position)
-    return { alert: "Scene could not be moved." } unless update_with_sibling_position(@scene, position: target_position)
+    return { alert: t("scenes.flash.move_failed") } unless update_with_sibling_position(@scene, position: target_position)
 
     if @scene.reload.position == original_position
       if direction == "up"
-        { alert: "This scene is already first in the narrative order." }
+        { alert: t("scenes.flash.already_first") }
       else
-        { alert: "This scene is already last in the narrative order." }
+        { alert: t("scenes.flash.already_last") }
       end
     else
-      { notice: "Scene was moved." }
+      { notice: t("scenes.flash.moved") }
     end
   end
 
@@ -287,14 +290,17 @@ class ScenesController < ApplicationController
     params[:section_id].presence
   end
 
+  # The ungrouped branch names the group through `SectionPaths`, so the flash and
+  # the Section selector call it the same word. The scene's own name is the
+  # author's record name and is interpolated, never translated.
   def group_flash
     return { alert: @scene.errors.full_messages.to_sentence } if @scene.errors.any?
 
     label = @section_paths.label_for(@scene.section_id)
     if label.present?
-      { notice: "“#{@scene.name}” is now grouped under #{label}. Its narrative position did not change." }
+      { notice: t("scenes.flash.grouped", name: @scene.name, grouping: label) }
     else
-      { notice: "“#{@scene.name}” is now ungrouped. Its narrative position did not change." }
+      { notice: t("scenes.flash.ungrouped", name: @scene.name) }
     end
   end
 end

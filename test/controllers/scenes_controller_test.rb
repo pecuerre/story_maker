@@ -788,7 +788,10 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_content
-    assert_select ".alert-danger", text: /Name can't be blank/
+    # The attribute is named from `activerecord.attributes.scene.name`, which says
+    # **Title** because that is what the field above it is labelled — the form label
+    # and the error message are two keys that are expected to agree.
+    assert_select ".alert-danger", text: /Title can't be blank/
   end
 
   test "a malformed optional section or event id is a 422 field error, not a 500" do
@@ -827,7 +830,9 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       params: { scene: { name: "Bad time", datetime: "not-a-datetime" } }
 
     assert_response :unprocessable_content
-    assert_select ".alert-danger", text: /Datetime is not a valid date and time/
+    # The field is labelled **In-world time** above, so the error names it that way
+    # rather than as a raw column name.
+    assert_select ".alert-danger", text: /In-world time is not a valid date and time/
     assert_select "input[type=datetime-local][name='scene[datetime]'][value=?]", "not-a-datetime"
   end
 

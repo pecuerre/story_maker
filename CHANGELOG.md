@@ -60,6 +60,20 @@ Labels used below:
   one and discarded the composite slug its demo-data references depend on. The new `OptionalName`
   concern gives both models one home for the rule — a blank name is stored as NULL, and a name with no
   slug of its own does not re-address the record. Renaming still renames.
+- **[docs]** `docs/features/i18n.md` records the three rules this surface settled rather than leaving
+  them in the diff: that **a determiner a language agrees in gender is its own interpolation**
+  beside the noun, so `shared.detail_section.empty_title` takes `determiner:` as well as `label:`;
+  that **a link inside a sentence is one `_html` key with the link as the interpolation** while the
+  link's own text stays a key of its own; and that **a value object which is not a view resolves keys
+  with `I18n.t`** — `SectionPaths#ungrouped_label`, `SceneFilter`'s discarded values (translated where
+  they are dropped, so `to_sentence` joins them in the reader's language rather than with English
+  connectors), and `Scene`'s `errors.add` messages, each starting lowercase because it is the tail of
+  `errors.format`. The constant-holds-a-key rule now names `SceneElementsHelper` beside `ModalFields`,
+  with the point that its descriptions stay keyed by the `kind` **value** because that is what the
+  browser matches on. `docs/backlog.md`'s internationalization item carries re-measured counts
+  (**3 of 100 views** — the three `searches/*` — and about 25 distinct strings, down from 21 and
+  about 132), the two new general slice rules, and the slice 27.4 entry is deleted; the remaining
+  numbers were not renumbered.
 - **[docs]** **Known quirk 61** records that a dismiss control clicked while a modal is still fading in
   is silently dropped: **Cancel**, `btn-close`, Escape, and a backdrop click all resolve to the one
   Bootstrap instance `modal_form_controller.js` owns, and `hide()` returns while that instance is still
@@ -95,6 +109,49 @@ Labels used below:
   `locations_controller_test.rb`, and `universe_bible_locale_test.rb` (Spanish included), and the two
   browser `accept_confirm` blocks in `test/system/modal_json_flow_test.rb` now accept the confirmation
   the row sends.
+- **[changed]** The **Scene workspace** now renders in Spanish as well: the story-scoped `scenes/*`
+  list, its filter, Scene Details with its Element list and Element editor, the one form `new` and
+  `edit` share, the Characters/Items/Locations tabs, both story taxonomies (`section_tags/*`,
+  `scene_tags/*`), the Sections workspace's ungrouped block, `ScenesController`'s flash copy, and
+  the "Appears in scenes" section on a universe record's own page — **21 of the 100 ERB views** and
+  the controllers, helpers, and model labels they read. Three shared sentences stopped being
+  duplicated rather than gaining a second home, the same way `shared.form.cancel` did in the
+  Universe Bible slice: `sections.eyebrow` and the narrative-position badge are now
+  `shared.eyebrow.story`/`shared.eyebrow.scene` and `shared.scene_position_aria` (the two
+  Section-scene-list and three list/appearance readers), `events.form.none` became `shared.none`
+  because the Scene form's event link needs the same word, and the Scenes tab strip now names its
+  three siblings with **their** workspaces' titles (`characters.title`, `items.title`,
+  `locations.title`) instead of a second copy of three words. `SectionPaths::UNGROUPED_LABEL` became
+  `UNGROUPED_LABEL_KEY` plus a `#ungrouped_label` reader, because a constant that called `t()` would
+  be translated once in whichever locale loaded the class first; the label it resolves has **one**
+  home (`sections.ungrouped_label`), read by the list badge, the Section selector, the filter, and
+  the ungrouped block, while `SceneFilter::UNGROUPED` stays the untranslated `ungrouped` query value.
+  `SceneElementsHelper`'s two frozen constants now hold **keys** rather than English labels, because
+  the kind descriptions are serialized into the modal and printed by a browser-side controller — so
+  they cross the boundary already translated, still keyed by the `kind` value the browser matches on.
+  Two sentences the templates had assembled from English fragments (`" — see the"` + link + `". Several
+  scenes can depict the same event."`) became one `_html` key each, since fragments cannot be
+  reordered; the link's own text stays a key so a translator still knows what it is called. 31
+  request cases in `test/controllers/scene_workspace_locale_test.rb` read the rendered page, including
+  the values that travel in a form field, an `<option>`, and a URL, which are asserted *not* to be
+  translated alongside their labels.
+- **[fixed]** Two defects this translation surfaced on the same code path, both about the word a
+  locale cannot derive on its own:
+  - **A determiner a language agrees in gender cannot be derived from an interpolated noun.**
+    `shared.detail_section.empty_title` hardcoded the masculine *"Ningún"*, which reads correctly for
+    the six Universe Bible record types and wrongly for the two new ones — *"Ningún sección lleva esta
+    etiqueta"*. The key now takes a `determiner` from
+    `shared.detail_section.determiners.none_masculine`/`none_feminine` beside its noun, which the eight
+    callers state; the two English entries are identical because English has no such agreement.
+  - **A model-level `errors.add` message is chrome too.** `Scene`'s five messages were English
+    literals read by the Scene editor's error summary, so a rejected save answered in English inside a
+    translated page. They are `scenes.errors.*` now, and `activerecord.attributes.scene` names `name`
+    as **Title** and `datetime` as **In-world time** so an error agrees with the label above it — which
+    is why two English assertions in `scenes_controller_test.rb` now read *"Title can't be blank"* and
+    *"In-world time is not a valid date and time"*.
+  A third question this raised was **not** a defect: `se ha <participio>` is the compound verbal form,
+  so `scenes.flash` keeps the masculine participle its sibling workspaces' confirmations already use
+  rather than the feminine one the subject's gender would suggest.
 - **[changed]** The **Universe Bible workspaces** now render in Spanish as well: `characters/*`,
   `locations/*`, `events/*`, `items/*`, `relations/*`, `ownerships/*`, the six universe-level `*_tags`
   indexes and their `show` pages, the modal editors those lists open, and the flash confirmations of

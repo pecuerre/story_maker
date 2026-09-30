@@ -6,6 +6,10 @@
 # object — it reads only the query keys in `PARAMS` and never assigns them to a
 # model — so the Scenes index stays a plain HTML GET.
 #
+# `UNGROUPED` is a **value** and never changes with the locale, because it is
+# what travels in the `section_id` query parameter. Only the label printed beside
+# it is chrome, and that comes from `SectionPaths#ungrouped_label`.
+#
 # Query contract for `GET /u/:universe_slug/s/:story_id/scenes`:
 #
 #   `q`             free text over the scene title and short description
@@ -85,7 +89,7 @@ class SceneFilter
       id = section_ids.find { |candidate| candidate.to_s == raw }
       return id.to_s if id
 
-      @discarded << "The section filter was ignored because it is not a section of this story."
+      @discarded << t("scenes.filter.discarded.section")
       nil
     end
 
@@ -96,19 +100,24 @@ class SceneFilter
       tag = scene_tags.find { |candidate| candidate.id.to_s == raw }
       return tag if tag
 
-      @discarded << "The scene tag filter was ignored because it is not a scene tag of this story."
+      @discarded << t("scenes.filter.discarded.scene_tag")
       nil
     end
 
     # A `date` input submits an ISO day or nothing, so an unreadable value only
     # arrives from a hand-edited URL. It is reported, not guessed at.
-    def resolve_date(label, value)
+    #
+    # `bound` names the end of the range, and it is a key rather than the literal
+    # `start`/`end` this method is called with: the word the reader sees is the one
+    # beside the control they used, so it comes from `scenes.filter.bound.*`.
+    def resolve_date(bound, value)
       raw = value.to_s.strip
       return if raw.blank?
 
       Date.iso8601(raw)
     rescue Date::Error
-      @discarded << "The in-world #{label} date “#{raw}” could not be read, so it was ignored."
+      @discarded << t("scenes.filter.discarded.date",
+        bound: t("scenes.filter.bound.#{bound}"), value: raw)
       nil
     end
 
@@ -150,5 +159,14 @@ class SceneFilter
       else
         relation.where(datetime: ..to_date.end_of_day)
       end
+    end
+
+    # `SceneFilter` is a value object and does not include the view's `translate`
+    # helper, so these keys resolve through `I18n.t` against the request's
+    # `I18n.locale` — the same call `Event`'s own `errors.add` messages make. The
+    # alternative, storing keys and letting the view translate them, would mean
+    # the controller had to know which of the filter's internal labels are chrome.
+    def t(key, **options)
+      I18n.t(key, **options)
     end
 end

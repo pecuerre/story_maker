@@ -11,19 +11,28 @@
 <% appearances = SceneAppearances.for(record, story: Current.story) %>
 <% story_selected = Current.story.present? %>
 <%# Without a current Story the section can only offer the way to pick one, so
-    the empty case gets a real action rather than a dead end. %>
-<% empty_action = link_to("All stories", universe_stories_path, class: "btn btn-primary") unless story_selected %>
+    the empty case gets a real action rather than a dead end. The link's text is
+    the story list's own navigation label, so the two cannot disagree. %>
+<% empty_action = link_to(t("sidebar.all_stories"), universe_stories_path, class: "btn btn-primary") unless story_selected %>
+<%# The two empty states are computed here rather than as inline ternaries inside
+    the render's keyword arguments, so each branch is a complete sentence in the
+    locale rather than a fragment assembled around the Story's name. %>
+<% if story_selected %>
+  <% section_title = scene_appearances_title(appearances, Current.story) %>
+  <% section_empty_title = t("scenes.appearances.empty_title", story: Current.story.name) %>
+  <% section_empty_description = t("scenes.appearances.empty_description") %>
+<% else %>
+  <% section_title = t("scenes.appearances.title_without_story") %>
+  <% section_empty_title = t("scenes.appearances.empty_title_without_story") %>
+  <% section_empty_description = t("scenes.appearances.empty_description_without_story") %>
+<% end %>
 <%= render "shared/detail_section",
-  title: story_selected ? scene_appearances_title(appearances, Current.story) : "Appears in scenes",
+  title: section_title,
   icon: "film",
   count: appearances.count,
   count_label: "scene",
-  empty_title: story_selected ? "Not in any scene of #{Current.story.name} yet" : "Select a story to see its scenes",
-  empty_description: if story_selected
-    "This record is shared by every story in the universe, so it can appear in as many scenes as you like. Link it from a scene's Characters, Items, or Locations tab, or point a scene at this event, and it will be listed here."
-  else
-    "Scenes belong to a story, so a record can only say where it appears once a story is the current one. Pick a story to see which of its scenes use this record."
-  end,
+  empty_title: section_empty_title,
+  empty_description: section_empty_description,
   empty_action: empty_action do %>
   <%# The block only renders when the section has appearances, which is only ever
       possible with a current Story: without one there is nothing to point at. %>
@@ -36,7 +45,7 @@
             <%# The narrative position badge, so the order the Story is told in is
                 visible from a record that knows nothing about that order. %>
             <span class="badge rounded-pill text-bg-light border"
-              aria-label="<%= "Narrative position #{entry.scene.position + 1} of #{scene_total}" %>">
+              aria-label="<%= t("shared.scene_position_aria", position: entry.scene.position + 1, total: scene_total) %>">
               <%= entry.scene.position + 1 %>
             </span>
             <span class="entity-title">
@@ -46,12 +55,15 @@
               <span class="badge rounded-pill text-bg-light border"><%= badge %></span>
             <% end %>
           </div>
+          <%# The role is the author's own free text, so it is interpolated into
+              the row's label rather than translated. %>
           <% role_label = scene_appearance_role_label(entry) %>
           <% if role_label.present? %>
-            <div class="entity-description">Role: <%= role_label %></div>
+            <div class="entity-description"><%= t("scenes.participation.role", role: role_label) %></div>
           <% end %>
           <% if entry.speaks? %>
-            <div class="form-text">Speaks in <%= scene_appearance_speaking_in(entry).to_sentence %>.</div>
+            <div class="form-text"><%= t("scenes.participation.speaks_in_html",
+              elements: scene_appearance_speaking_in(entry).to_sentence) %></div>
           <% end %>
         </div>
 

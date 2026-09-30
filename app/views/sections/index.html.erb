@@ -3,7 +3,7 @@
 <%= render "shared/taxonomy_tree",
   title: t("sections.index.title"),
   description: t("sections.index.description"),
-  eyebrow: t("sections.eyebrow", story: @story.name),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
   count: @story.sections.count,
   count_label: "section",
   new_label: t("sections.index.new_label"),

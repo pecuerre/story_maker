@@ -251,7 +251,8 @@ fallback to the Universe's first Story.
 The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** list below it: only
 the Scenes that belong to no Section, in canonical narrative order, because a grouped Scene is read on
 its own Section's page. The badge above that list states how many ungrouped Scenes it holds
-(`pluralize(size, "ungrouped scene")`) rather than a bare figure, and the move form offers only the
+(`scenes.grouping.count`, a pluralized label rather than a bare figure or an appended "s"), and the
+move form offers only the
 ungrouped Scenes of that list: the form belongs to the Ungrouped block, so a grouped Scene is
 regrouped from its own Section's page through the editor's Section selector instead. The form is not
 rendered at all when nothing is ungrouped. Drag-and-drop is not offered, so the move is always

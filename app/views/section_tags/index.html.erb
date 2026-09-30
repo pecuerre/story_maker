@@ -1,16 +1,16 @@
-<% content_for :title, "Section Tags" %>
+<% content_for :title, t("tags.types.section.title") %>
 
 <%= render "shared/taxonomy_tree",
-  title: "Section tags",
-  description: "Define labels such as book, chapter, act, or episode for this story's sections.",
-  eyebrow: "Story: #{@story.name}",
+  title: t("tags.types.section.title"),
+  description: t("tags.types.section.description"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
   count: @story.section_tags.count,
   count_label: "tag",
-  new_label: "Add section tag",
+  new_label: t("tags.types.section.new_label"),
   tag_workspace_scope: "story",
   tag_workspace_taxonomy: "section",
-  empty_description: "Tags are optional. Add one to classify sections, or build the section tree without them.",
-  read_only_empty_description: "This story has no section tags defined yet.",
+  empty_description: t("tags.types.section.empty_description"),
+  read_only_empty_description: t("tags.types.section.read_only_empty_description"),
   nodes: @section_tags,
   create_url: universe_story_section_tags_path(story_id: @story),
   update_url: ->(section_tag) { universe_story_section_tag_path(story_id: @story, id: section_tag) },

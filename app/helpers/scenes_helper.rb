@@ -10,16 +10,22 @@ module ScenesHelper
   end
 
   # The same label for a group heading, where a nil id is the Ungrouped group
-  # rather than an unknown Section.
+  # rather than an unknown Section. The word comes from `SectionPaths` rather
+  # than from this helper, so the Section selector and this heading cannot
+  # disagree about what the group is called.
   def scene_grouping_label_by_id(section_paths, section_id)
-    section_paths.label_for(section_id) || SectionPaths::UNGROUPED_LABEL
+    section_paths.label_for(section_id) || section_paths.ungrouped_label
   end
 
   # [ label, value ] pairs in Rails' select order: an explicit **None** first,
   # then the universe's events. Several Scenes may pick the same Event, so this
   # is a plain single-select rather than an exclusion list.
+  #
+  # The blank option's *value* is the empty string the form stores and the rest
+  # are event ids, so neither is translated; only the blank's own label and the
+  # events' own labels are chrome.
   def scene_event_choices(events)
-    [ [ "None", "" ] ] + events.map { |event| [ event.display_string, event.id ] }
+    [ [ t("shared.none"), "" ] ] + events.map { |event| [ event.display_string, event.id ] }
   end
 
   # The Scene's own in-world time point, formatted with the same minute
@@ -52,19 +58,23 @@ module ScenesHelper
   # "Label: value" descriptions of the filters currently in effect, in the order
   # the search area lists them. The result set of a long story is otherwise
   # ambiguous, and an empty result has to be able to say what caused it.
+  #
+  # Each entry is its own key rather than one frame with the field name
+  # interpolated, because "In-world from 2026-09-11" is a different sentence in
+  # each language than "Section: <path>" is.
   def scene_filter_summaries(filter, section_paths, scene_tag_paths)
     summaries = []
-    summaries << "Search: “#{filter.text}”" if filter.text.present?
+    summaries << t("scenes.filter.summaries.search", value: filter.text) if filter.text.present?
     if filter.ungrouped?
-      summaries << "Section: #{SectionPaths::UNGROUPED_LABEL}"
+      summaries << t("scenes.filter.summaries.section", value: section_paths.ungrouped_label)
     elsif filter.section_id
-      summaries << "Section: #{section_paths.label_for(filter.section_id)}"
+      summaries << t("scenes.filter.summaries.section", value: section_paths.label_for(filter.section_id))
     end
     if filter.scene_tag
-      summaries << "Scene tag: #{scene_tag_paths.label_for(filter.scene_tag)}"
+      summaries << t("scenes.filter.summaries.scene_tag", value: scene_tag_paths.label_for(filter.scene_tag))
     end
-    summaries << "In-world from #{filter.from_date.iso8601}" if filter.from_date
-    summaries << "In-world to #{filter.to_date.iso8601}" if filter.to_date
+    summaries << t("scenes.filter.summaries.from", value: filter.from_date.iso8601) if filter.from_date
+    summaries << t("scenes.filter.summaries.to", value: filter.to_date.iso8601) if filter.to_date
     summaries
   end
 end

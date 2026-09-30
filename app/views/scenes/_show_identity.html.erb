@@ -3,79 +3,78 @@
     the same block and cannot drift apart. %>
 <div class="row g-4">
   <div class="col-md-6">
-    <div class="page-eyebrow">Title</div>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.title") %></div>
     <p class="mb-0 text-break"><%= scene.name %></p>
   </div>
   <div class="col-md-6">
-    <div class="page-eyebrow">Narrative position</div>
-    <p class="mb-0"><%= scene.position + 1 %> of <%= @scene_total %></p>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.narrative_position") %></div>
+    <p class="mb-0"><%= t("scenes.show.facts.position", position: scene.position + 1, total: @scene_total) %></p>
   </div>
   <div class="col-12">
-    <div class="page-eyebrow">Short description</div>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.description") %></div>
     <% if scene.description.present? %>
       <p class="mb-0 text-break"><%= scene.description %></p>
     <% else %>
-      <p class="mb-0 text-body-secondary">No short description yet.</p>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.description_blank") %></p>
     <% end %>
   </div>
   <div class="col-12">
-    <div class="page-eyebrow">Scene tags</div>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.tags") %></div>
     <% if scene.scene_tags.any? %>
       <div class="d-flex flex-wrap gap-1">
         <%= entity_tag_badge(scene) %>
       </div>
     <% else %>
-      <p class="mb-0 text-body-secondary">No scene tags assigned yet.</p>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.tags_blank") %></p>
     <% end %>
+    <%# Two hints with a link in each. They are `_html` keys so the *sentence*
+        decides where the link sits rather than the template deciding it. %>
     <div class="form-text">
-      Tags are optional and belong to this story.
+      <%= t("scenes.show.facts.tags_hint") %>
       <% if can_write_universe? %>
-        Change them from the <%= link_to "scene editor", edit_universe_story_scene_path(story_id: story, id: scene) %>.
+        <%= t("scenes.show.facts.tags_hint_editor_html",
+          editor: link_to(t("scenes.show.facts.editor_link"), edit_universe_story_scene_path(story_id: story, id: scene))) %>
       <% end %>
-      The taxonomy is available in the <%= link_to "Scene Tags workspace", universe_tags_path(scope: "story", taxonomy: "scene") %>.
+      <%= t("scenes.show.facts.tags_hint_workspace_html",
+        workspace: link_to(t("scenes.show.facts.workspace_link"), universe_tags_path(scope: "story", taxonomy: "scene"))) %>
     </div>
   </div>
   <div class="col-12">
-    <div class="page-eyebrow">Section group</div>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.section_group") %></div>
     <% grouping = scene_grouping_label(scene, @section_paths) %>
     <% if grouping.present? %>
       <p class="mb-0"><%= link_to grouping, universe_story_sections_path(story_id: story), class: "text-break" %></p>
     <% else %>
-      <p class="mb-0 text-body-secondary">
-        Ungrouped. A Section is optional and only organizes this scene; it does not change its
-        narrative position.
-      </p>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.section_blank") %></p>
     <% end %>
   </div>
   <div class="col-12">
-    <div class="page-eyebrow">In-world event</div>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.event") %></div>
     <% if scene.event.present? %>
+      <%# `Event#display_string` is the record's own label and is data, so it is
+          interpolated into the sentence rather than translated: translating it in
+          the model would put one locale's chrome into the search index. %>
       <p class="mb-0">
-        <%= scene.event.display_string %>
-        <span class="text-body-secondary"> — see the</span>
-        <%= link_to "Events workspace", universe_events_path %>
-        <span class="text-body-secondary">. Several scenes can depict the same event.</span>
+        <%= t("scenes.show.facts.event_html",
+          event: scene.event.display_string,
+          workspace: link_to(t("scenes.show.facts.event_workspace"), universe_events_path)) %>
       </p>
     <% else %>
-      <p class="mb-0 text-body-secondary">No event linked yet.</p>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.event_blank") %></p>
     <% end %>
   </div>
   <div class="col-12">
-    <div class="page-eyebrow">In-world time</div>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.in_world_time") %></div>
     <% in_world_time = scene_in_world_time(scene) %>
     <% if in_world_time.present? %>
       <p class="mb-0"><%= in_world_time %></p>
     <% else %>
-      <p class="mb-0 text-body-secondary">No in-world time set yet.</p>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.in_world_time_blank") %></p>
     <% end %>
-    <div class="form-text">
-      This is the order in world time, kept separate from the narrative position above. The
-      event and the in-world time are independent values; neither one is derived from the other
-      and a disagreement between them is not detected here.
-    </div>
+    <div class="form-text"><%= t("scenes.show.facts.in_world_time_hint") %></div>
   </div>
   <div class="col-12">
-    <div class="page-eyebrow">Story</div>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.story") %></div>
     <p class="mb-0"><%= link_to story.name, universe_story_path(id: story) %></p>
   </div>
 </div>

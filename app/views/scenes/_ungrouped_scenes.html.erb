@@ -14,17 +14,21 @@
 
 <div class="content-surface scene-grouping mt-4">
   <div class="p-3 p-md-4 border-bottom">
-    <h2 class="h5 mb-1">Ungrouped scenes</h2>
+    <h2 class="h5 mb-1"><%= t("scenes.grouping.title") %></h2>
+    <%# The paragraph is one sentence with a link in it, so it is an `_html` key
+        with the scenes-list link as the interpolation. The variant that also
+        states how many scenes are grouped is a second key rather than a clause
+        spliced into the first, because the two clauses do not keep their order
+        in every language. %>
     <p class="text-body-secondary mb-0">
       <% if grouped.positive? %>
-        Only the scenes that belong to no section are listed here. The other
-        <%= pluralize(grouped, "scene") %> in <%= story.name %> are grouped and are listed on
-        their own section's page, which the Details link on a section above opens.
+        <%= t("scenes.grouping.description_with_grouped_html",
+          total: count_with_label(grouped, "scene"), story: story.name,
+          scenes_list: link_to(t("scenes.form.scenes_list_link"), universe_story_scenes_path(story_id: story))) %>
       <% else %>
-        Only the scenes that belong to no section are listed here.
+        <%= t("scenes.grouping.description_html",
+          scenes_list: link_to(t("scenes.form.scenes_list_link"), universe_story_scenes_path(story_id: story))) %>
       <% end %>
-      Grouping is organization only: it never changes the order in the
-      <%= link_to "scenes list", universe_story_scenes_path(story_id: story) %>.
     </p>
 
     <% if scenes.empty? %>
@@ -42,7 +46,7 @@
         method: :patch,
         class: "row g-2 align-items-end mt-3 scene-grouping-form" do %>
         <div class="col-12 col-md">
-          <label class="form-label" for="scene_grouping_scene_id">Ungrouped scene</label>
+          <label class="form-label" for="scene_grouping_scene_id"><%= t("scenes.grouping.move_scene_label") %></label>
           <select class="form-select" name="scene_id" id="scene_grouping_scene_id">
             <% ungrouped.each do |scene| %>
               <option value="<%= scene.id %>">
@@ -52,7 +56,7 @@
           </select>
         </div>
         <div class="col-12 col-md">
-          <label class="form-label" for="scene_grouping_section_id">Move to</label>
+          <label class="form-label" for="scene_grouping_section_id"><%= t("scenes.grouping.move_to_label") %></label>
           <select class="form-select" name="section_id" id="scene_grouping_section_id">
             <% section_paths.grouping_options.each do |label, value| %>
               <option value="<%= value %>"><%= label %></option>
@@ -60,7 +64,7 @@
           </select>
         </div>
         <div class="col-12 col-md-auto">
-          <%= submit_tag "Move scene", class: "btn btn-primary", name: nil %>
+          <%= submit_tag t("scenes.grouping.submit"), class: "btn btn-primary", name: nil %>
         </div>
       <% end %>
     <% end %>
@@ -69,40 +73,40 @@
   <% if scenes.empty? %>
     <div class="p-3 p-md-4">
       <%= render "shared/empty_state",
-        title: "No scenes yet",
-        description: "This story has no scenes to group yet. Add one and it will appear here as ungrouped.",
+        title: t("scenes.grouping.empty_title"),
+        description: t("scenes.grouping.empty_description"),
         icon: "film" do %>
         <% if editable %>
-          <%= link_to "Add the first scene", new_universe_story_scene_path(story_id: story), class: "btn btn-primary" %>
+          <%= link_to t("scenes.grouping.add_first"), new_universe_story_scene_path(story_id: story), class: "btn btn-primary" %>
         <% end %>
       <% end %>
     </div>
   <% elsif ungrouped.empty? %>
     <div class="p-3 p-md-4">
-      <p class="text-body-secondary mb-0">
-        Every scene in <%= story.name %> is grouped under a section, so there is nothing waiting to
-        be grouped here. Open a section above to read the scenes grouped under it.
-      </p>
+      <p class="text-body-secondary mb-0"><%= t("scenes.grouping.all_grouped", story: story.name) %></p>
     </div>
   <% else %>
     <div class="list-group list-group-flush">
       <div class="list-group-item">
         <%# The badge states what the list holds instead of a bare number, because
             this list is a subset of the story and the bare figure is ambiguous
-            next to the story's own scene count. %>
+            next to the story's own scene count. Its own pluralized label lives
+            here rather than at the root with the record-type nouns, because
+            "ungrouped scene" is a state of a scene and not a record type. %>
         <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
           <span class="badge rounded-pill text-bg-light border">
-            <%= pluralize(ungrouped.size, "ungrouped scene") %>
+            <%= t("scenes.grouping.count", count: ungrouped.size) %>
           </span>
         </div>
         <%# The narrative-position pill carries the order, so the list stays
             unordered rather than being an ordered list with its own markers
-            suppressed. %>
+            suppressed. This list is one Scene's subset, so the badge announces
+            the position without a total. %>
         <ul class="list-unstyled mb-0">
           <% ungrouped.each do |scene| %>
             <li class="d-flex align-items-center gap-2 py-1">
               <span class="badge rounded-pill text-bg-light border"
-                aria-label="<%= "Narrative position #{scene.position + 1}" %>"><%= scene.position + 1 %></span>
+                aria-label="<%= t("shared.scene_position_aria_short", position: scene.position + 1) %>"><%= scene.position + 1 %></span>
               <%= link_to scene.name, universe_story_scene_path(story_id: story, id: scene), class: "text-break" %>
             </li>
           <% end %>

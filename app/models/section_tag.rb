@@ -11,7 +11,7 @@ class SectionTag < ApplicationRecord
   soft_deletes :children
 
   belongs_to :story
-  has_many_tagd :section, scope: :story_id
+  has_many_tagged :section, scope: :story_id
 
   validates :name, presence: true
 

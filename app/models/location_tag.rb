@@ -11,7 +11,7 @@ class LocationTag < ApplicationRecord
   soft_deletes :children
 
   belongs_to :universe
-  has_many_tagd :location, scope: :universe_id
+  has_many_tagged :location, scope: :universe_id
 
   validates :name, presence: true
 end

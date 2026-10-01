@@ -11,7 +11,7 @@ class SceneTag < ApplicationRecord
   soft_deletes :children
 
   belongs_to :story
-  has_many_tagd :scene, scope: :story_id
+  has_many_tagged :scene, scope: :story_id
 
   validates :name, presence: true
   validate :scene_assignments_are_valid

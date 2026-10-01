@@ -48,7 +48,7 @@ the same change, or `db:demo:check` fails.
   `hierarchy_scope_error_key` returns an **I18n key** rather than a sentence, so a model narrowing the
   scope names `shared.errors.same_scope.story` instead of writing its own English; see
   [`features/i18n.md`](features/i18n.md#the-models-own-validation-messages).
-- Content ↔ tag pairs are declared with the `has_many_tags` / `has_many_tagd` DSL and a mandatory
+- Content ↔ tag pairs are declared with the `has_many_tags` / `has_many_tagged` DSL and a mandatory
   shared `scope:` (`:universe_id`, or `:story_id` for Section and Scene tags). The DSL, the optional-tag
   rule, the inverse read side, the grouped-count value objects that exist because these scopes cannot
   be eager loaded, and the tree and its editor are all in [features/tags.md](features/tags.md).

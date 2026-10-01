@@ -834,7 +834,7 @@ Dependabot config: `.github/dependabot.yml`.
    operations or application-model references. Update `db/schema.rb` via `bin/rails db:migrate`.
 2. Model in `app/models/` — `include HasSlug` (+ `Hierarchical`, `HasManyTags`,
    `has_many_tags :foo_tag, scope: :universe_id` / inverse
-   `has_many_tagd :foo, scope: :universe_id`, `HasColor` for tags — the scope is mandatory and
+   `has_many_tagged :foo, scope: :universe_id`, `HasColor` for tags — the scope is mandatory and
    tags remain optional), `belongs_to :universe`, `validates :name, presence: true` (unless it has
    custom identity rules). Story-scoped tag pairs use `scope: :story_id`; Section/SectionTag and
    Scene/SceneTag are the current examples. Sections, Scenes, and their tag definitions are

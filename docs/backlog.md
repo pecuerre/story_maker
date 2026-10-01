@@ -330,8 +330,6 @@ it has a useful destination and clear empty/loading/error states.
 
 28. review comments. add comments when needed, remove comments when not needed
 
-29. is is has_many_tagd or has_many_tagged?
-
 30. define a code_style.md?
 
 31. consider moving all scene_* supporting classes to a namespace?

@@ -40,7 +40,7 @@ module HasManyTags
 
     # Declares a many-to-many relationship to a taxonomy "tag" model, e.g.
     # `has_many_tags :character_tag, scope: :universe_id` on Character.
-    # on Character. Backed by a habtm join table named "<element_table>_<tag_table>".
+    # Backed by a habtm join table named "<element_table>_<tag_table>".
     # Tags are never required: a record may be saved untagged (a simple story just wants
     # a few characters/locations/sections, no taxonomy needed). The association is
     # always restricted to the same universe (or story for section-scoped records),
@@ -57,8 +57,8 @@ module HasManyTags
     end
 
     # Declares the inverse side on a "tag" model, e.g.
-    # `has_many_tagd :character, scope: :universe_id` on CharacterTag.
-    def has_many_tagd(element_name, scope:)
+    # `has_many_tagged :character, scope: :universe_id` on CharacterTag.
+    def has_many_tagged(element_name, scope:)
       association = element_name.to_s.pluralize.to_sym
       @tagged_records_association = association
 

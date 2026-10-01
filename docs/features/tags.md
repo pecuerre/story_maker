@@ -8,14 +8,14 @@ columns, the join tables, and the content↔tag matrix — is in
 ## The two-sided DSL
 
 A content model declares its taxonomy with `has_many_tags`, and the tag model declares the inverse
-with `has_many_tagd`:
+with `has_many_tagged`:
 
 ```ruby
 # content model
 has_many_tags :character_tag, scope: :universe_id
 
 # tag model
-has_many_tagd :character, scope: :universe_id
+has_many_tagged :character, scope: :universe_id
 ```
 
 The `scope:` is **mandatory**, and it is the whole safety story. Section/SectionTag and Scene/SceneTag
@@ -24,7 +24,7 @@ builds on **both** sides, and a shared validation rejects foreign members whethe
 memory or through an id writer. That is what makes a cross-universe tag assignment impossible rather
 than merely discouraged.
 
-`has_many_tagd` also records the inverse association name (`Model.tagged_records_association`, e.g.
+`has_many_tagged` also records the inverse association name (`Model.tagged_records_association`, e.g.
 `:characters`), and `tagged_records` is the read side used by a tag's details page: the scoped
 association ordered by name, or `none` on a content model.
 

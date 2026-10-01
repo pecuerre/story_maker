@@ -11,7 +11,7 @@ class EventTag < ApplicationRecord
   soft_deletes :children
 
   belongs_to :universe
-  has_many_tagd :event, scope: :universe_id
+  has_many_tagged :event, scope: :universe_id
 
   validates :name, presence: true
 end

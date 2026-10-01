@@ -11,7 +11,7 @@ class ItemTag < ApplicationRecord
   soft_deletes :children
 
   belongs_to :universe
-  has_many_tagd :item, scope: :universe_id
+  has_many_tagged :item, scope: :universe_id
 
   validates :name, presence: true
 end

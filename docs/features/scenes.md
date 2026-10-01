@@ -19,7 +19,7 @@ validates against the other, and a disagreement between them is not detected. `h
 through `story.universe`.
 
 `SceneTag belongs_to :story`, includes `Hierarchical`, `HasColor`, `HasSlug`, and the inverse
-`has_many_tagd :scene, scope: :story_id`. Definitions use the same positioned controller contract as
+`has_many_tagged :scene, scope: :story_id`. Definitions use the same positioned controller contract as
 Section Tags, while the Scene form uses `scene_tag_ids` and the shared scoped association; no default
 tag is assigned.
 

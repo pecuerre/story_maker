@@ -83,6 +83,46 @@ class UniverseStoryTest < ApplicationSystemTestCase
     end
   end
 
+  # The two cards are stacked rather than side by side: the story list reads
+  # first, and neither card is squeezed into half the page, so a long story
+  # name or description has the whole width to itself.
+  test "the universe page stacks the story list above the Universe Bible, both full width" do
+    universe = universes(:universe_one)
+
+    sign_in_via_form(users(:user_one))
+    visit universe_path(universe_slug: universe.slug)
+
+    assert_selector "#universe-stories-title"
+
+    # Measured in the browser rather than through Capybara's node API, because
+    # the fact under test is the layout the reader sees.
+    stories_box, bible_box = page.evaluate_script(<<~JS)
+      (() => {
+        const main = document.querySelector("main");
+        const stories = document.getElementById("universe-stories-title").closest(".surface-card");
+        // The Universe Bible card is the one holding its four links. Its
+        // eyebrow cannot be matched by text: CSS renders it uppercase, and the
+        // same wording is also a left-sidebar section title.
+        const links = [...main.querySelectorAll("a")].filter((a) => a.textContent.trim() === "Timeline");
+        const bible = links[0].closest(".surface-card");
+        const rect = (el) => {
+          const r = el.getBoundingClientRect();
+          return { top: r.top, bottom: r.bottom, width: r.width };
+        };
+        return [rect(stories), rect(bible)];
+      })()
+    JS
+
+    # Stacked: the bible card starts at or below the story card's bottom edge,
+    # never beside it.
+    assert_operator bible_box["top"], :>=, stories_box["bottom"]
+
+    # Full width: both cards span the same measure, and that measure is the
+    # whole content column rather than half of it.
+    assert_in_delta bible_box["width"], stories_box["width"], 1
+    assert_operator bible_box["width"], :>, 600
+  end
+
   test "a name whose address is taken is refused, and the address field answers it" do
     sign_in_via_form(users(:user_one))
 

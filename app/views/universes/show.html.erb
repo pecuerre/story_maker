@@ -39,77 +39,76 @@
   <% end %>
 <% end %>
 
-<div class="row g-3">
-  <div class="col-lg-7">
-    <section class="surface-card h-100 p-4" aria-labelledby="universe-stories-title">
-      <div class="page-eyebrow"><%= t("universes.show.stories_eyebrow") %></div>
-      <h2 class="h4 mb-3" id="universe-stories-title"><%= count_with_label(stories.size, "story") %></h2>
+<%# The stories sit above the Universe Bible card, each spanning the whole
+    page width, so the story list reads first and both cards keep a full-width
+    measure instead of sharing one row. %>
+<div class="d-flex flex-column gap-3">
+  <section class="surface-card p-4" aria-labelledby="universe-stories-title">
+    <div class="page-eyebrow"><%= t("universes.show.stories_eyebrow") %></div>
+    <h2 class="h4 mb-3" id="universe-stories-title"><%= count_with_label(stories.size, "story") %></h2>
 
-      <% if stories.any? %>
-        <div class="list-group list-group-flush">
-          <% stories.each do |story| %>
-            <div class="list-group-item entity-row px-0 d-flex align-items-center gap-3">
-              <div class="entity-copy flex-grow-1">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <%= link_to story.name, universe_story_path(id: story), class: "entity-title text-break" %>
-                  <% if Current.story == story %>
-                    <span class="badge text-bg-primary"><%= t("universes.show.current_badge") %></span>
-                  <% end %>
-                </div>
-                <% if story.description.present? %>
-                  <div class="entity-description"><%= story.description %></div>
+    <% if stories.any? %>
+      <div class="list-group list-group-flush">
+        <% stories.each do |story| %>
+          <div class="list-group-item entity-row px-0 d-flex align-items-center gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <%= link_to story.name, universe_story_path(id: story), class: "entity-title text-break" %>
+                <% if Current.story == story %>
+                  <span class="badge text-bg-primary"><%= t("universes.show.current_badge") %></span>
                 <% end %>
               </div>
-              <%= link_to t("universes.show.open_story"), universe_story_path(id: story),
-                class: "btn btn-sm btn-outline-primary flex-shrink-0",
-                aria: { label: t("universes.show.open_story_aria", name: story.name) } %>
+              <% if story.description.present? %>
+                <div class="entity-description"><%= story.description %></div>
+              <% end %>
             </div>
-          <% end %>
-        </div>
-      <% else %>
-        <%= render "shared/empty_state",
-          title: t("universes.show.empty_title"),
-          description: can_write_universe? ?
-            t("universes.show.empty_writable_description") :
-            t("universes.show.empty_read_only_description"),
-          icon: "books" %>
-      <% end %>
-    </section>
-  </div>
+            <%= link_to t("universes.show.open_story"), universe_story_path(id: story),
+              class: "btn btn-sm btn-outline-primary flex-shrink-0",
+              aria: { label: t("universes.show.open_story_aria", name: story.name) } %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <%= render "shared/empty_state",
+        title: t("universes.show.empty_title"),
+        description: can_write_universe? ?
+          t("universes.show.empty_writable_description") :
+          t("universes.show.empty_read_only_description"),
+        icon: "books" %>
+    <% end %>
+  </section>
 
-  <div class="col-lg-5">
-    <%# The photo occupies the card's own row when there is one, with the
-        universe's own summary beside it. With no photo the summary takes the
-        whole card, which is how this page looked before. %>
-    <div class="surface-card h-100 p-4">
-      <% if @universe.photo %>
-        <div class="row g-4 align-items-start">
-          <div class="col-12 col-sm-5 col-lg-4">
-            <%= render "shared/record_photo", photo: @universe.photo, name: @universe.name %>
-          </div>
-          <div class="col-12 col-sm-7 col-lg-8">
-            <div class="page-eyebrow"><%= t("sidebar.universe_bible") %></div>
-            <h2 class="h4"><%= t("universes.show.bible_heading") %></h2>
-            <p class="text-body-secondary"><%= t("universes.show.bible_description") %></p>
-            <div class="d-flex flex-wrap gap-2">
-              <%= link_to t("sidebar.characters"), universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
-              <%= link_to t("sidebar.locations"), universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
-              <%= link_to t("sidebar.events"), universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
-              <%= link_to t("sidebar.timeline"), universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
-            </div>
+  <%# The photo occupies the card's own row when there is one, with the
+      universe's own summary beside it. With no photo the summary takes the
+      whole card, which is how this page looked before. %>
+  <div class="surface-card p-4">
+    <% if @universe.photo %>
+      <div class="row g-4 align-items-start">
+        <div class="col-12 col-sm-5 col-lg-4">
+          <%= render "shared/record_photo", photo: @universe.photo, name: @universe.name %>
+        </div>
+        <div class="col-12 col-sm-7 col-lg-8">
+          <div class="page-eyebrow"><%= t("sidebar.universe_bible") %></div>
+          <h2 class="h4"><%= t("universes.show.bible_heading") %></h2>
+          <p class="text-body-secondary"><%= t("universes.show.bible_description") %></p>
+          <div class="d-flex flex-wrap gap-2">
+            <%= link_to t("sidebar.characters"), universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
+            <%= link_to t("sidebar.locations"), universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
+            <%= link_to t("sidebar.events"), universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
+            <%= link_to t("sidebar.timeline"), universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
           </div>
         </div>
-      <% else %>
-        <div class="page-eyebrow"><%= t("sidebar.universe_bible") %></div>
-        <h2 class="h4"><%= t("universes.show.bible_heading") %></h2>
-        <p class="text-body-secondary"><%= t("universes.show.bible_description") %></p>
-        <div class="d-flex flex-wrap gap-2">
-          <%= link_to t("sidebar.characters"), universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
-          <%= link_to t("sidebar.locations"), universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
-          <%= link_to t("sidebar.events"), universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
-          <%= link_to t("sidebar.timeline"), universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
-        </div>
-      <% end %>
-    </div>
+      </div>
+    <% else %>
+      <div class="page-eyebrow"><%= t("sidebar.universe_bible") %></div>
+      <h2 class="h4"><%= t("universes.show.bible_heading") %></h2>
+      <p class="text-body-secondary"><%= t("universes.show.bible_description") %></p>
+      <div class="d-flex flex-wrap gap-2">
+        <%= link_to t("sidebar.characters"), universe_characters_path, class: "btn btn-outline-secondary btn-sm" %>
+        <%= link_to t("sidebar.locations"), universe_locations_path, class: "btn btn-outline-secondary btn-sm" %>
+        <%= link_to t("sidebar.events"), universe_events_path, class: "btn btn-outline-secondary btn-sm" %>
+        <%= link_to t("sidebar.timeline"), universe_timeline_path, class: "btn btn-outline-secondary btn-sm" %>
+      </div>
+    <% end %>
   </div>
 </div>

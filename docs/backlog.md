@@ -111,15 +111,6 @@ records and permissions: inconsistency detection, incomplete/undefined records, 
 changes/forks, graphs, analytics, and drafts. A feature should appear as a live navigation item when
 it has a useful destination and clear empty/loading/error states.
 
-14. **Coverage measurement and CI gate (DataFactor follow-up)**
-
-   Measure the current Minitest baseline with a real coverage tool (SimpleCov is a reasonable
-   starting point), start collection before Rails loads, and decide whether the report's suggested
-   80% threshold is appropriate for this codebase. Add the threshold only after measuring, upload
-   the HTML report from CI, and add tests for meaningful uncovered behavior rather than padding
-   assertions. Keep generated coverage out of Git and document the local command, exclusions, and
-   the limits of the smoke system suite.
-
 15. **One-command containerized onboarding (DataFactor follow-up)**
 
    Add and verify a development-safe `docker compose up` path using a development-specific service

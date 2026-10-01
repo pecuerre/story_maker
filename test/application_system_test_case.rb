@@ -1,5 +1,16 @@
 require "test_helper"
 
+# The browser suite gets its own coverage report and no gate.
+#
+# It is a smoke suite: it drives a handful of journeys in a real browser, so its
+# total (about 70% line on 2026-10-01) is not comparable with the request suite's
+# and would fail a threshold sized for the whole suite. It also runs in its own CI
+# job and its own process, so sharing the request suite's report directory would
+# merge two unrelated runs into one number.
+SimpleCov.coverage_dir "tmp/coverage-system"
+SimpleCov.coverage(:line) { minimum 0 }
+SimpleCov.coverage(:branch) { minimum 0 }
+
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # A mutation in this application is a fetch followed by a same-URL navigation
   # (ADR 0011), so the first assertion after one waits longer than Capybara's

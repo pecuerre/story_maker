@@ -87,11 +87,56 @@ bin/rails test test/models/section_test.rb
 bin/rails test:system         # browser-based system tests
 ```
 
+### Test coverage
+
+Coverage is measured on every run and gated in CI. It is required from `test/coverage_helper.rb`
+**before** `config/environment`, because SimpleCov only measures what is loaded after it starts and
+Rails loads application code while booting.
+
+```bash
+bin/rails test            # writes tmp/coverage/index.html and tmp/coverage/coverage.json
+CI=1 bin/rails test       # the same, plus the line/branch thresholds
+bundle exec simplecov uncovered --input tmp/coverage/coverage.json --top 20 --missing
+```
+
+- `tmp/coverage/` is inside the already-ignored `tmp/`, so no generated report is ever committed. The
+  HTML report is uploaded from CI as the `coverage` artifact.
+- Measured with branch coverage on, over this application's own Ruby only:
+  `app/{channels,controllers,helpers,jobs,mailers,models,services}/**/*.rb` and `lib/**/*.rb`.
+  `cover` also reports files nothing loaded, so a file no test reaches reads as 0% instead of
+  silently not appearing. `app/javascript` is excluded: the Stimulus controllers have their own
+  runner and their own gate (`bun run test:js`), and one number must not cover two toolchains.
+- The thresholds are **90% line / 75% branch**, set from a measured baseline (94.59% / 80.99% on
+  2026-10-01) with a few points of headroom. They exist to catch a *drop*, not to reward adding
+  assertions, and they are only enforced when `CI` is set. A single-file or `-n`-filtered run
+  measures a fraction of the application by design and would fail spuriously, so it reports without
+  gating; `CI=1 bin/rails test` reproduces the CI check locally.
+- Consecutive runs within 10 minutes are **merged**, so a single-file run started right after a full
+  one reports the union of both. Merging only ever adds covered lines, so the number is never
+  understated and the gate cannot be weakened by it — but delete `tmp/coverage/` first if you want
+  one run's own figure.
+- `merge_subprocesses` is on because `parallelize(workers:)` forks one process per worker. Without it
+  the report holds only the parent process's own execution and reads a few percent with nothing to
+  explain it.
+- The browser suite writes its **own** report to `tmp/coverage-system/` and sets no threshold. It is
+  a smoke suite whose total (about 70% line) is not comparable with the request suite's, and the two
+  run in separate processes and separate CI jobs.
+- A line percentage is not evidence that the behavior that matters is covered. Authorization,
+  cross-universe scope, the JSON/HTML response contracts, and failure paths can all be untested
+  behind a high number, and the browser suite is a smoke suite rather than exhaustive UI coverage.
+  The three files with the lowest coverage after this measurement are
+  `app/services/development/database_reset.rb` (it runs in its own process in
+  `test/services/development/database_reset_test.rb`, which the report cannot see),
+  `app/models/search/client.rb` (the engine is verified out of band by
+  `test/search/meilisearch_integration_test.rb`), and `app/controllers/concerns/universe_authorization.rb`
+  (its guest branches are unreachable while every controller still runs `require_authentication`
+  first). Treat a gap as a question about behavior, not a number to fill.
+
 Layout:
 - `test/controllers`, `test/models`, and `test/integration` — model, request, navigation, and
-  workspace coverage; `test/services` — development-data registry/loader coverage; `test/system` —
-  browser-level smoke coverage for the primary workspace journeys; `test/helpers` and
-  `test/mailers/previews` are effectively empty.
+  workspace coverage; `test/services` — development-data registry/loader coverage; `test/jobs` and
+  `test/channels` — the queued search writes and the websocket connection's session rules;
+  `test/system` — browser-level smoke coverage for the primary workspace journeys.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
   (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements and
@@ -199,9 +244,10 @@ add ceremonial dependencies or Git history. Its actionable recommendations are d
 Verify each recommendation against the current tree before acting. In particular, `/up` is already
 routed and `bun.lock` is already committed and used with `--frozen-lockfile` in CI and Docker.
 
-The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, Minitest, checked-in
-development-data manifest checks, and a browser smoke suite. It does **not** yet measure coverage, audit the complete Bun/npm graph or
-build/boot the production image, provide a one-command Compose setup, or enable structured
+The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, Minitest with a
+line/branch coverage gate, checked-in development-data manifest checks, a from-zero migration run, a
+browser smoke suite, and a production-image build/boot check against `/up`. It does **not** yet
+audit the complete Bun/npm graph, provide a one-command Compose setup, or enable structured
 request/error tracking. Those are follow-up work, not current capabilities; do not claim them in
 release or onboarding copy until they are implemented and documented.
 
@@ -758,9 +804,17 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | `scan_js` | `bin/importmap audit` |
 | `lint` | `bin/rubocop -f github` (cached) |
 | `js-check` | `bun run lint:js`, `bun run test:js` |
-| `test` | `bin/rails db:test:prepare test`, then `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` |
+| `test` | `bin/rails db:test:prepare test` with `CI=1` (the coverage gate), then `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check`; uploads the `coverage` artifact from `tmp/coverage` |
 | `migrations-from-zero` | `bin/rails db:drop`, `bin/rails db:create`, `schema_migration.create_table`, `bin/rails db:migrate` as four separate processes, then a guard that the migrations ran, `bin/rails db:migrate:status`, and `git diff --exit-code db/schema.rb` |
-| `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure) |
+| `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure). No `CI`, so it writes its own report to `tmp/coverage-system` and gates nothing |
+| `production-boot` | `docker build` the production image, run it with throwaway environment variables, and require `GET /up` to answer `200`. Fails within 120 seconds, and prints the container log on failure |
+
+`CI=1` is set explicitly in the `test` job rather than relying on GitHub Actions' own `CI`, because a
+run that silently lost the gate would still be green. `production-boot` uses only locally-unusable
+values: `APP_HOST` and `MAILER_FROM` are on the reserved `.invalid` TLD, `SMTP_ADDRESS` is never
+contacted, and `SECRET_KEY_BASE` is `openssl rand` output for that run. It boots the container
+exactly as the entrypoint does, so the first request also proves the production schema, the Solid
+Cache/Queue/Cable databases, and the precompiled assets came up.
 
 The migration commands must be separate processes. `db:drop` unlinks the SQLite file while the
 process still holds a connection to it, so one `bin/rails db:drop db:create db:migrate` migrates the

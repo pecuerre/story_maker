@@ -76,3 +76,9 @@ gem "colorize"
 # pins an older client and installs a global `searchable` DSL that would replace
 # the explicit `Searchable` declarations each model owns. See ADR 0014.
 gem "meilisearch", "~> 0.33.0"
+
+# Measures the Minitest suite and is gated in CI. Configured in
+# test/coverage_helper.rb, which test_helper.rb loads before Rails so the boot-time
+# application code is counted too. The client-side code has its own runner and its
+# own gate (`bun run test:js`); see docs/development.md.
+gem "simplecov", "~> 1.3", group: :test

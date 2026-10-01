@@ -47,6 +47,11 @@ Several observations in the report are already stale or have changed in this rep
   unit tested on Bun's runner, and the browser suite proves a real CSRF token is sent
   ([ADR 0012](adr/0012-client-side-verification-and-csrf.md)). What remains open there is breadth —
   the browser suite is a smoke suite, not exhaustive UI coverage — not tooling.
+- Test coverage is now measured and gated in CI, so the report's "no coverage tool or threshold was
+  detected" observation is stale. The threshold was chosen from a measurement rather than from the
+  report's suggested 80%, which sits below this codebase's baseline. See
+  [`development.md`](development.md#test-coverage) for the numbers, the exclusions, and what the
+  percentage does not prove.
 
 The report also does not replace the more urgent project findings in
 [`known_quirks.md`](known_quirks.md). In particular, the tracked Kamal secret, taxonomy DOM XSS,
@@ -120,27 +125,23 @@ before documenting Compose. Test from a clean checkout, including CSS assets, mi
 and `/up`; report any Docker or browser limitation. A devcontainer is optional and should follow the
 same environment and data-boundary rules.
 
-### 3. Measured, enforced test coverage — priority: later/medium
+### 3. Measured, enforced test coverage — priority: delivered
 
-Add a coverage tool (SimpleCov is a reasonable starting point) to the test group, start it before
-loading the Rails environment, measure a baseline, and publish the report from CI. The email's
-suggested 80% minimum is a target to evaluate, not a number to assert without measuring the current
-codebase. Set the threshold only after the baseline and the project's meaningful-behavior priorities
-are understood; then add tests for uncovered behavior rather than padding files with assertions.
+Delivered on 2026-10-01. SimpleCov is in the test group, started from `test/coverage_helper.rb`
+before `config/environment` loads, measured with branch coverage over the application's own Ruby,
+and gated in CI at 90% line / 75% branch against a measured baseline of 94.59% / 80.99%. The
+email's suggested 80% was measured rather than adopted: it sits below this codebase's baseline and
+would never have failed. [`development.md`](development.md#test-coverage) owns the local command,
+the exclusions, and the limits; [`../CHANGELOG.md`](../CHANGELOG.md) records the delivery.
 
-A useful implementation should:
+Two of the points the original recommendation listed still govern it:
 
-- update `Gemfile.lock` through Bundler;
-- fail CI when the agreed threshold is crossed, with a clear command and artifact;
-- upload the HTML report (and, if useful, a machine-readable report) without committing generated
-  coverage output;
-- keep the test environment deterministic and avoid making parallel test processes race on the
-  result file;
-- document the threshold, exclusions, and local command;
-- distinguish line coverage from meaningful request, authorization, failure, and browser coverage.
-
-The current system suite is an initial smoke suite, not exhaustive UI coverage. Coverage must not be
-used to claim that untested interactions, especially the known modal/taxonomy issues, are safe.
+- coverage must not be used to claim that untested interactions, especially the known
+  modal/taxonomy issues, are safe. The system suite remains an initial smoke suite, not exhaustive
+  UI coverage.
+- the gate is deliberately **off** for a partial run (`bin/rails test <file>`, or `-n /pattern/`),
+  which measures a fraction of the application by design. A gate that fires there makes the number a
+  reason to avoid running a test at all.
 
 ### 4. Structured logging and runtime observability — priority: later/high signal
 

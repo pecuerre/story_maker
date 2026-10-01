@@ -122,10 +122,14 @@ jobs:
       - name: Install JavaScript dependencies
         run: bun install --frozen-lockfile
 
+      # `CI: "1"` is what turns the coverage gate on. GitHub Actions sets `CI`
+      # itself, but it is set here too because a run that silently lost the gate
+      # would still be green, which is the failure this is guarding against.
       - name: Run tests
         env:
           RAILS_ENV: test
           SKIP_BUN_INSTALL: 1
+          CI: "1"
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
@@ -135,6 +139,19 @@ jobs:
         run: |
           UNIVERSE=dark bin/rails db:demo:check
           UNIVERSE=lotr bin/rails db:demo:check
+
+      # The report is generated but never committed (`tmp/` is git-ignored), so
+      # this is the only place the HTML is readable. It is uploaded on failure as
+      # well as on success, because a run that tripped the gate is exactly the one
+      # where the missing lines matter.
+      - name: Upload the coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: tmp/coverage
+          if-no-files-found: error
+          retention-days: 14
 
   migrations-from-zero:
     runs-on: ubuntu-latest
@@ -239,6 +256,10 @@ jobs:
       - name: Install JavaScript dependencies
         run: bun install --frozen-lockfile
 
+      # No `CI: "1"` here, deliberately. The browser suite is a smoke suite whose
+      # coverage total is not comparable with the request suite's, so it writes its
+      # own report and sets no threshold
+      # (`test/application_system_test_case.rb`).
       - name: Run System Tests
         env:
           RAILS_ENV: test
@@ -257,3 +278,74 @@ jobs:
           name: screenshots
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
+
+  # Known quirk 36: a green test job was not evidence that the deployed runtime
+  # boots. This job builds the production image and starts it, so a Dockerfile,
+  # asset-pipeline, or production-environment change that only breaks at boot
+  # fails here instead of on the server.
+  #
+  # It boots the container the way the entrypoint does and asks the one endpoint
+  # that proves a working application: `/up`. The environment variables below are
+  # throwaway values for a container nobody talks to. `SECRET_KEY_BASE` is
+  # generated per run and `APP_HOST` is a name that resolves nowhere -- neither is
+  # a credential, and no real key, host, or mailer address is in this repository.
+  production-boot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Plain `docker build`, deliberately: no cache mount, no BuildKit secret, no
+      # registry login. The job proves the checked-in Dockerfile works from a clean
+      # checkout; anything that made the build depend on state outside this
+      # repository would defeat that.
+      - name: Build the production image
+        run: docker build --tag universe_maker:ci .
+
+      - name: Boot the container and check /up
+        env:
+          APP_HOST: ci.universe-maker.invalid
+          MAILER_FROM: no-reply@ci.universe-maker.invalid
+          SMTP_ADDRESS: smtp.universe-maker.invalid
+        run: |
+          # Generated per run rather than read from a secret: this container serves
+          # nothing and throws its database away when the job ends. `openssl` rather
+          # than `ruby`, so the job needs no Ruby on the runner outside the image.
+          export SECRET_KEY_BASE="$(openssl rand -hex 64)"
+
+          docker run --detach --name universe_maker_ci \
+            --publish 127.0.0.1:8080:80 \
+            --env APP_HOST \
+            --env MAILER_FROM \
+            --env SMTP_ADDRESS \
+            --env SECRET_KEY_BASE \
+            universe_maker:ci
+
+          # The entrypoint runs `db:prepare` before the server starts, so the
+          # first request is also the proof that the production schema, the Solid
+          # Cache/Queue/Cable databases, and the precompiled assets all came up.
+          for attempt in $(seq 1 60); do
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              --header 'Host: ci.universe-maker.invalid' http://127.0.0.1:8080/up || true)
+            if [ "$status" = "200" ]; then
+              echo "the application answered /up with 200"
+              exit 0
+            fi
+            if ! docker inspect --format '{{.State.Running}}' universe_maker_ci | grep -q true; then
+              echo "::error::the container exited before answering /up"
+              docker logs universe_maker_ci
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "::error::the application did not answer /up within 120 seconds"
+          docker logs universe_maker_ci
+          exit 1
+
+      # Both failure paths above already print the container's logs, so this step
+      # only cleans up.
+      - name: Remove the container
+        if: always()
+        run: docker rm --force universe_maker_ci || true

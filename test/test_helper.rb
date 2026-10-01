@@ -1,4 +1,6 @@
 ENV["RAILS_ENV"] ||= "test"
+# Before `config/environment`: SimpleCov measures what it loads after it starts.
+require_relative "coverage_helper"
 require_relative "../config/environment"
 require "rails/test_help"
 require_relative "test_helpers/session_test_helper"

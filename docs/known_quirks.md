@@ -163,16 +163,19 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     (`Dockerfile:74-76`), including `node_modules` and build tooling. CI does not build/inspect the
     production image to catch this.
 
-36. **Medium — CI does not prove clean migrations or production boot.** The test job runs
-    `db:test:prepare test` against the checked-in schema (`.github/workflows/ci.yml:124-131`), not a
-    from-zero migration run, Docker build, production asset boot, Solid Cache/Queue/Cable setup,
-    Kamal validation, or production mailer URL/SMTP behavior. There is no coverage measurement or
-    threshold. The local migration status is currently clean, but those deployment paths remain
-    untested. These follow-ups are pending in [`backlog.md`](backlog.md): "Coverage measurement and
-    CI gate", "One-command containerized onboarding", and "Complete dependency, JavaScript, and
-    container supply-chain checks". A green test job is not evidence that a clean
-    production image or the full runtime can boot.
-    The `migrations-from-zero` job now closes the migration half of this. It used not to: it ran
+36. **Medium — CI proves a production image boots, but not a deployment.** The test job runs
+    `db:test:prepare test` against the checked-in schema (`.github/workflows/ci.yml:125-131`), so it
+    was never a from-zero migration run, a Docker build, a production asset boot, or a Solid
+    Cache/Queue/Cable setup; there was no coverage measurement or threshold either. A green test job
+    was therefore not evidence that a clean production image or the full runtime could boot.
+    Two of those halves are now closed. `migrations-from-zero` runs the migration files from zero
+    (below), and `production-boot` builds the production image, runs it with throwaway environment
+    variables, and requires `GET /up` to answer `200` — which also exercises `db:prepare`, the four
+    production SQLite databases, and the precompiled assets. Neither job validates Kamal
+    configuration or production mailer URL/SMTP behavior, and the remaining follow-ups are pending
+    in [`backlog.md`](backlog.md) under "One-command containerized onboarding" and "Complete
+    dependency, JavaScript, and container supply-chain checks".
+    The `migrations-from-zero` job closes the migration half. It used not to: it ran
     `db:drop`, `db:create`, and `db:migrate` as three processes — which is required, because one
     process migrates the inode `db:drop` unlinked — but on the freshly created database `db:migrate`
     **loaded `db/schema.rb` rather than executing the migration files** (see

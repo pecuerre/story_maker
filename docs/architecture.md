@@ -255,6 +255,79 @@ The Rails request logger redacts password-reset path tokens through
 access log or a browser's external history; production logging and retention must be configured
 accordingly.
 
+## Runtime logging and observability
+
+Production logs to tagged `STDOUT` (`config.log_tags = [:request_id]`) and answers `GET /up`.
+On top of that the application emits two structured JSON events per line of interest, and
+optionally forwards unhandled errors to an external collector. The three subjects are the log
+format, the correlation key, and the collector.
+
+### The log
+
+`RequestLogMiddleware` (`lib/request_log_middleware.rb`) writes one `{"event":"request", …}`
+object per completed request: `request_id`, `request_method`, `request_path`, `request_status`,
+`request_format`, `request_controller`, `request_action`, `duration_ms`. It is inserted after
+`Rails::Rack::Logger`, which is what makes the event carry the same `[request_id]` tag as
+`Started`/`Completed` and makes `config.silence_healthcheck_path` silence it too. The fields are
+an allowlist built from named values, never from the request object, so a cookie, session,
+parameter, or account cannot ride along. `request_path` is the request's own `filtered_path`,
+so the password-reset token filter covers this line exactly as it covers Rails'.
+
+Rails' own lines are left in place: `Started GET "…" for <ip>` prints the client IP, so the
+deployment's **log retention** is still the control that governs personal data in the log, and
+no application-level filter can reach an upstream proxy's access log.
+
+### The correlation key
+
+The request id. `ActionDispatch::RequestId` puts it in `env`, `Rails::Rack::Logger` tags every
+line of the request with it, `RequestLogMiddleware` repeats it as the `request_id` field, and the
+same value is returned to the client as `X-Request-Id`. `RequestLogMiddleware` also publishes the
+request's identity into `Rails.error`'s execution context, so an error raised anywhere inside a
+request is reported with the request that raised it; the executor clears that context when the
+request ends, so it cannot leak into the next one.
+
+### The error collector
+
+`ErrorTracking` (`lib/error_tracking.rb`) subscribes to `Rails.error`, which is where an unhandled
+exception is reported by `ActionDispatch::Executor` and where a failed `Solid Queue` job is
+reported. For every report it writes an `{"event":"error", …}` line carrying the exception class,
+a redacted message, up to ten redacted backtrace frames, severity, `handled`, `source`, a
+timestamp, and the correlation keys above.
+
+Forwarding is **off unless `ERROR_TRACKING_DSN` is set**. With it set, unhandled errors are
+POSTed as JSON to that https URL through `Net::HTTP` from the standard library — no gem is added,
+which is why there is no vendor to audit and no client to initialize when the variable is
+absent. Only `handled: false` reports are forwarded; a recovered error is logged and kept local.
+
+The rules the collector is held to, stated before it exists as a feature:
+
+- **Redaction.** Every emitted string is filtered through `config.filter_parameters` applied to
+  `key=value` pairs (the same treatment the query string gets), then scrubbed of e-mail
+  addresses and of URL credentials. The DSN is itself scrubbed out of everything logged, because
+  it is a credential and a delivery failure quotes the address it failed to reach.
+- **Authentication.** The DSN is the credential. It is supplied by the deployment, must be
+  https, and is never written to the log. A malformed value fails the boot rather than being
+  quietly ignored.
+- **Cardinality and volume.** At most ten frames, a capped message, one attempt, two-second
+  timeouts, no retry queue. Recovery is deliberately not automatic: a retry would be the
+  application's own unbounded queue.
+- **Failure behavior.** A collector that is down, slow, or broken costs one `warn` line. The
+  report was already logged locally first, so a collector outage cannot lose it, and reporting
+  never raises into the request that failed.
+- **Retention and privacy.** The application stores neither the forwarded payload nor a copy of
+  it; what the collector retains afterwards is the collector's policy, which is why unhandled
+  errors are the only thing forwarded.
+
+### What is deliberately absent
+
+There is no metrics endpoint, no `Prometheus`/`StatsD` client, and no public `/metrics` route. A
+public metrics route would be an unauthenticated window onto this application's traffic, and a
+metrics client would be a dependency and a label-cardinality policy to maintain for numbers
+nobody has asked to graph. `/up` answers liveness only; it deliberately reports nothing about
+counts, latency, or errors. A future metrics surface would have to answer, in writing, who reads
+it, how it authenticates, which labels it may carry (never a user, universe, story, or record id),
+and how long anything is retained — before it is added.
+
 ## Timeline
 
 The layering algorithm, the rule that keeps the drawn arrows from contradicting the rows they span,

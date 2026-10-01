@@ -37,15 +37,7 @@ reachable security/data-loss issues from lower-priority hardening and contract d
 
 ## Mutation, route, and data-contract observations
 
-19. **Medium — nonexistent optional association IDs escape the JSON error contract.** Hierarchical
-    parents and event temporal references are optional, but an unknown ID can pass model validation
-    and reach a database foreign-key exception (`app/models/concerns/hierarchical.rb:5,54-68`,
-    `app/models/event.rb:11-13,55-58`). The shared controller rescues `CanCan::AccessDenied`,
-    `RecordNotFound`, and a JSON request whose CSRF token was rejected
-    (`app/controllers/application_controller.rb:20-37`), so malformed
-    `parent_id`, `before_event_id`, `after_event_id`, or `simultaneous_event_id` values can become
-    500s instead of documented 422 error hashes. No such request tests exist.
-    **Scenes are now covered** (see [ADR 0007](adr/0007-story-owned-scenes-and-elements.md)):
+    **Scenes are covered** (see [ADR 0007](adr/0007-story-owned-scenes-and-elements.md)):
     `Scene` validates `optional_references_exist`,
     `section_belongs_to_story`, and `event_belongs_to_story_universe`, and
     `datetime_is_a_valid_point` rejects an unparseable in-world time that Active Record would
@@ -58,8 +50,9 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     presence links are covered the same way: an unknown or foreign
     `character_id`, `item_id`, or `location_id` is a `404` because the record is resolved through
     `Current.universe`, and a duplicate pair is a `422` field error before the unique index can raise.
-    The remaining
-    unprotected paths are the hierarchical `parent_id` and the Event temporal references above.
+    The hierarchical `parent_id` and the Event temporal references are covered the same way, by
+    `Hierarchical#parent_reference_exists` and `Event#temporal_references_exist`; see
+    [conventions.md](conventions.md#models).
 
 20. **Medium — generated routes advertise unsupported actions and templates.** `config/routes.rb:2-25`
     uses broad session, password, and content resources even though the documented action surface is
@@ -329,14 +322,11 @@ the run of DataFactor follow-up items in [`backlog.md`](backlog.md) (coverage me
 containerized onboarding, observability, credential hygiene, supply-chain checks, and shared
 editor/helper duplication). The report's claims that no `/up` route or JavaScript
 lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
-used with a frozen install in CI and Docker.
+used with a frozen install in CI and Docker. Finding 51 below is closed; see
+[architecture.md](architecture.md#runtime-logging-and-observability) and
+[`../CHANGELOG.md`](../CHANGELOG.md).
 
-51. **Medium — production observability is minimal.** Production logs to tagged `STDOUT`, and the
-    application now redacts password-reset path segments before request logging, but there is no
-    structured request formatter, error-tracking integration, or metrics contract. The existing
-    `/up` route and health-log silencing are useful foundations; they need a regression test and a
-    deliberate privacy/redaction policy before external tracking or metrics are added. This is the
-    "Structured logging and runtime observability" item in [`backlog.md`](backlog.md).
+
 
 52. **Medium — clean container onboarding is absent.** The repository has a production-oriented
     `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`,

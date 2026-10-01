@@ -45,6 +45,7 @@ class Event < ApplicationRecord
   # Run before HasSlug so a newly created event without an explicit slug can derive it from the title.
   before_validation :set_name, prepend: true
 
+  validate :temporal_references_exist
   validate :associated_records_belong_to_universe
   validate :cannot_reference_self
   validate :must_be_identifiable
@@ -114,8 +115,32 @@ class Event < ApplicationRecord
     datetime.strftime("%Y-%m-%d %H:%M")
   end
 
+  # The three temporal references are optional, so an id that names no Event
+  # resolves to `nil` and the write would be refused by the database's foreign key
+  # — an unhandled 500 instead of the documented error hash. `Hierarchical`'s
+  # `parent_reference_exists` is the same rule for a parent; this is its Event
+  # equivalent, and `Scene#optional_references_exist` is the third.
+  #
+  # It runs before `associated_records_belong_to_universe` and `must_be_identifiable`
+  # so an unknown id is reported on the field that carried it. An unknown
+  # reference also leaves the Event with nothing to identify it by, so a
+  # reference-only Event legitimately collects both messages.
+  def temporal_references_exist
+    temporal_references.each_key do |name|
+      next unless public_send("#{name}_id").present? && public_send(name).nil?
+
+      errors.add(name, I18n.t("events.errors.must_exist"))
+    end
+  end
+
+  # The three temporal associations in one place, because three rules read them
+  # and a fourth association would otherwise have to be added to all three.
+  def temporal_references
+    { before_event: before_event, after_event: after_event, simultaneous_event: simultaneous_event }
+  end
+
   def associated_records_belong_to_universe
-    { before_event: before_event, after_event: after_event, simultaneous_event: simultaneous_event }.each do |name, record|
+    temporal_references.each do |name, record|
       next unless record && universe && record.universe_id != universe_id
 
       errors.add(name, I18n.t("events.errors.must_belong_to_universe"))
@@ -123,7 +148,7 @@ class Event < ApplicationRecord
   end
 
   def cannot_reference_self
-    { before_event: before_event, after_event: after_event, simultaneous_event: simultaneous_event }.each do |name, record|
+    temporal_references.each do |name, record|
       foreign_key = public_send("#{name}_id")
       next unless record == self || (id.present? && foreign_key.present? && foreign_key == id)
 

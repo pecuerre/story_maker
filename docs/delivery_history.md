@@ -27,6 +27,132 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-02
+
+- **[added]** **Structured runtime logging and an optional, gated error tracker.** Backlog item 16
+  asked for the production gap known quirk 51 described: logs to tagged `STDOUT`, a redaction rule
+  for password-reset path segments, no structured request formatter, no error tracking, no metrics
+  contract. It was delivered in five pieces rather than as one change, because each is useful and
+  verifiable on its own: a `/up` regression test, a structured request event, the request id as the
+  correlation key, a `Rails.error` subscriber that logs and forwards, and a written decision about
+  metrics.
+
+  **The finding that shaped it: production never recorded why a request failed.** Checked against
+  Rails 8.1's source rather than assumed. `ActionDispatch::DebugExceptions` calls `log_error` only
+  when it *renders* an exception, which happens solely for local requests; in production it
+  re-raises, `ActionDispatch::ShowExceptions` renders `public/500.html`, and nothing else writes a
+  line. `ActiveSupport::ErrorReporter#report` does not log either — its only use of the logger is
+  `fatal` for a *subscriber that raised*. So a production 500 was `Started …`, `Completed 500`, and
+  no class, message, or backtrace anywhere. That is what the `error` event is for, and it is on in
+  every environment with no configuration, because a missing log line is the defect and an absent
+  third-party service is not.
+
+  **Middleware, and the placement is the design.** A `LogSubscriber` was the alternative and was
+  rejected: `process_action.action_controller` never fires for a routing 404, a rejected host, a
+  `/up` probe, or a failure in the middleware itself, which are exactly the requests worth a line.
+  `RequestLogMiddleware` sits **below** `Rails::Rack::Logger`, **above** `ActionDispatch::Executor`
+  and `ActionDispatch::ShowExceptions`, and **below** `Rails::Rack::SilenceRequest`. Each of those
+  is load-bearing and each is asserted:
+
+  - below `Rails::Rack::Logger` → the event carries the same `[request_id]` tag as `Started`/
+    `Completed`, so the two can be joined without a second identifier;
+  - above the `Executor` → the exception the executor reports to `Rails.error` still has this
+    request's correlation data available;
+  - above `ShowExceptions` → a 500 is logged with its status instead of vanishing;
+  - below `SilenceRequest` → `config.silence_healthcheck_path` silences the new line with no second
+    health-check rule to keep in step. `HealthCheckSilenceTest` composes the two middlewares
+    directly rather than trusting the ordering.
+
+  **Two implementation notes worth keeping.** The router's path parameters are **symbol**-keyed, so
+  a string lookup silently produced `request_controller: nil` on every event and the JSON looked
+  fine — the field-allowlist test caught it. And `Request#format` answers with a symbol, a MIME
+  string, or the request path depending on how many types were accepted, so the field is
+  `request.formats.first` (the negotiated media type, stable shape) instead; negotiating raises on a
+  malformed `Content-Type`, which is rescued to `"invalid"` because a middleware that records
+  requests must not turn a 406 into a 500.
+
+  **Autoloading turned out to be the one real obstacle.** The middleware could not be registered
+  from `config/application.rb` (the stack is built before the autoloader is set up) nor from a
+  `config/initializers` file, because `load_config_initializers` runs *before* `setup_main_autoloader`
+  in the finisher — both raise `uninitialized constant`. The two `lib/` files are now named in
+  `config.autoload_lib`'s ignore list and `require`d by their initializers, which is the pattern
+  `lib/password_reset_path_filter.rb` already used and the reason its name was already there.
+
+  **The tracker's design rules, written before it existed as code.** Off unless
+  `ERROR_TRACKING_DSN` is set: no client, no socket, no dependency. `Net::HTTP` from the standard
+  library rather than a gem, because adding one for an optional feature to a locked bundle is the
+  wrong trade, and because the dependency would have to be audited for something that may never be
+  enabled. **Only `handled: false` reports are forwarded** — a recovered error is logged and kept
+  local, so the collector does not become the storage and retention problem for a stream of expected
+  warnings. Payload is an **allowlist**: no request, headers, cookies, session, or parameters ever
+  reach it, so only `RequestLogMiddleware`'s published correlation keys do. Every emitted string is
+  filtered through `config.filter_parameters` applied to `key=value` pairs — the same treatment the
+  query string gets, because `ActiveSupport::ParameterFilter` filters key/value pairs and **not**
+  free text — then scrubbed of e-mail addresses and URL credentials. The **DSN is scrubbed from
+  everything logged**, which the delivery test pins by making the transport fail with the DSN in its
+  message: a collector outage would otherwise publish the key on every failed report.
+
+  **No metrics endpoint, and that is the recorded decision rather than an omission.** The item said
+  to define authentication, cardinality, retention, and privacy rules *before* adding metrics, and
+  not to add a public endpoint or dependency because a report named one. A public `/metrics` is an
+  unauthenticated window onto the application's traffic; a metrics client is a dependency and a
+  label-cardinality policy to maintain for numbers nobody has asked to graph. `architecture.md`
+  states the four rules a future surface would have to answer first.
+
+  **`Rails.error.set_context`, not `Current`.** The middleware publishes the request's identity into
+  the execution context that `Rails.error` subscribers receive. `Current` would have answered "who
+  signed in"; an error reporter has no reason to know. The executor clears that context when the
+  request ends — `ActiveSupport::ExecutionContext.push`/`pop` are registered on
+  `app.executor` — and a test asserts it is empty afterwards, because a surviving value would attach
+  one request's path to a later request's error report: misleading rather than merely noisy.
+
+  Verification: `bin/rails test` — 1,365 runs, 8,538 assertions, 0 failures, 0 errors, 10 skips.
+  `bin/rubocop` — 366 files, no offenses. `UNIVERSE=dark` and `UNIVERSE=lotr bin/rails db:demo:check`
+  — both passed, which is the check that the two new validations do not reject the checked-in
+  development manifests. `bin/brakeman --no-pager` — 0 warnings. Not run: `bin/rails test:system`
+  (no client-side code changed), `bun run check:js` (same reason), and any deployment, collector, or
+  real outbound send — the DSN path was exercised against a substituted client, so a real
+  `Net::HTTP` round trip is explicitly **not** claimed here.
+
+- **[fixed]** **An optional reference id that names nothing is a 422 field error.** Known quirk 19:
+  the hierarchical `parent_id` and the Event temporal references were the two optional-reference
+  shapes not covered by the rule the Scene feature had already established. An unknown id resolved to
+  `nil`, every scope and cycle validation read it as "no reference", and the write was refused by
+  SQLite's foreign key — an unhandled `ActiveRecord::InvalidForeignKey`, a 500, an editor reporting
+  that the server failed without saying which field was wrong.
+
+  **Why a model validation and not a controller check.** The same id arrives from a form, from
+  `Development::UniverseDataLoader`, and from a console, and a `rescue_from` would only convert the
+  symptom into a 422 after the foreign key had already refused the write. The check belongs where the
+  write does. `UnknownReferenceIdsTest` walks all thirteen endpoints that accept a `parent_id`
+  rather than one representative, because the rule lives in a shared concern and an endpoint added
+  later would otherwise depend on its author remembering it.
+
+  **The cast case is worth naming.** Active Record casts a non-numeric `parent_id` to `0`, not to
+  `nil`, so `"abc"` would have been written as `parent_id = 0` and refused by the foreign key. The
+  same rule catches it, because the cast still resolves to no parent.
+
+  **Not limited to a change in the column.** The validation runs whenever a present id resolves to
+  nothing, rather than only on a change, so a record whose parent vanished outside the application is
+  reported instead of handing a dangling value back to the database. The application's own paths keep
+  references consistent — every hierarchical model declares `soft_deletes :children`, and an Event's
+  `soft_delete_dependencies` clears the temporal references — so this rejects malformed input rather
+  than legitimate state.
+
+  The cross-scope messages are unchanged and stay distinct: `shared.errors.same_scope.*` for a
+  parent, `events.errors.must_belong_to_universe` for a temporal reference. A reference that resolves
+  but belongs elsewhere is a different mistake from one that names nothing, and the two are reported
+  differently.
+
+  Verification: `bin/rails test` (above), plus `bin/rubocop`, `db:demo:check` for both universes,
+  and `bin/brakeman --no-pager` — 0 warnings. Not run: `bin/rails test:system`, `bun run check:js`.
+
+- **[chore]** **`GET /up` has a regression test.** The health check had CI coverage only in the
+  `production-boot` job: one route, one line in `config/routes.rb`, and a test that runs only against
+  a production configuration. `HealthCheckTest` pins that the route is drawn, named, answers `200`,
+  answers a guest, and does not depend on the universe/story scope — so a route that stopped being
+  drawn fails the suite rather than only the boot job.
+
 ### 2026-10-01
 
 - **[fixed]** **The development reset really rebuilds the database, and it does so from the migration
@@ -2770,6 +2896,45 @@ and the foreign-key id, while three schema-only check constraints close the inse
 SQLite assigns the new ID only during the write. Model and request tests cover every reference
 direction, relation-only cleanup, universe destruction, unsaved/future-ID self-links, and direct
 database writes.
+
+### Former quirk #19: nonexistent optional association IDs escaped the JSON error contract (fixed)
+
+**Then:** the hierarchical `parent_id` and the Event temporal references
+(`before_event_id`, `after_event_id`, `simultaneous_event_id`) were the two optional-reference
+shapes the Scene feature's `optional_references_exist` rule had not been extended to. An unknown id
+resolved to `nil`, every scope and cycle validation read it as "no reference", and the write was
+refused by SQLite's foreign key — an unhandled `ActiveRecord::InvalidForeignKey`, a **500** outside
+the documented error hash, with nothing in the editor's summary pointing at the control that sent
+the id. The quirk had no request tests.
+
+**Resolution:** three validations own the rule, one per shape of reference —
+`Hierarchical#parent_reference_exists` (`shared.errors.hierarchy.must_exist`),
+`Event#temporal_references_exist` (`events.errors.must_exist`, alongside the existing
+`Scene#optional_references_exist`) — and each answers **422** with a message on the attribute that
+carried the id.
+
+**Why the model and not the controller.** The same id arrives from a form, from
+`Development::UniverseDataLoader`, and from a console. A `rescue_from` would have converted the
+symptom into a 422 only *after* the foreign key had refused the write, and only for the HTTP path.
+
+**Two details the tests pinned.**
+
+- **The cast.** Active Record casts a non-numeric `parent_id` to `0`, not `nil`, so `"abc"` would
+  have been written as `parent_id = 0` and refused by the foreign key. The same rule catches it,
+  because the cast still resolves to no parent.
+- **Not limited to a change in the column.** The validation runs whenever a present id resolves to
+  nothing, so a record whose parent vanished outside the application is reported rather than handing
+  a dangling value back to the database. The application's own paths keep references consistent —
+  every hierarchical model declares `soft_deletes :children`, and an Event's
+  `soft_delete_dependencies` clears the temporal references — so this rejects malformed input, not
+  legitimate state.
+
+**Coverage shape.** `UnknownReferenceIdsTest` walks all **thirteen** endpoints that accept a
+`parent_id` rather than one representative, because the rule lives in a shared concern and an
+endpoint added later would otherwise depend on its author remembering it. The cross-scope messages
+are unchanged and stay distinct: `shared.errors.same_scope.*` for a parent,
+`events.errors.must_belong_to_universe` for a temporal reference. A reference that resolves but
+belongs elsewhere is a different mistake from one that names nothing.
 
 ### Universe-scoped content was not authorized (fixed)
 

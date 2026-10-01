@@ -128,6 +128,7 @@ es:
         story: "debe pertenecer a la misma historia"
       hierarchy:
         scope_change_with_children: "no se puede cambiar mientras existan registros hijos"
+        must_exist: "no existe"
         cannot_be_itself: "no puede ser él mismo"
         cannot_be_descendant: "no puede ser un descendiente"
       tagged_records:
@@ -966,6 +967,7 @@ es:
     # Los mensajes de `errors.add` se leen como la cola de `errors.format`
     # («%{attribute} %{message}»), así que cada uno empieza en minúscula.
     errors:
+      must_exist: "no existe"
       must_belong_to_universe: "debe pertenecer al universo del suceso"
       cannot_be_itself: "no puede ser él mismo"
       must_be_identifiable: "debe tener un título, una fecha o una relación con otro suceso"

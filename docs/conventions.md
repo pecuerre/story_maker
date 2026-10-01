@@ -47,7 +47,8 @@ the same change, or `db:demo:check` fails.
   (universe by default; `Section`, `SectionTag`, and `SceneTag` override them to compare `story_id`).
   `hierarchy_scope_error_key` returns an **I18n key** rather than a sentence, so a model narrowing the
   scope names `shared.errors.same_scope.story` instead of writing its own English; see
-  [`features/i18n.md`](features/i18n.md#the-models-own-validation-messages).
+  [`features/i18n.md`](features/i18n.md#the-models-own-validation-messages). It also validates that
+  the parent **exists** — see the optional-reference rule below.
 - Content ↔ tag pairs are declared with the `has_many_tags` / `has_many_tagged` DSL and a mandatory
   shared `scope:` (`:universe_id`, or `:story_id` for Section and Scene tags). The DSL, the optional-tag
   rule, the inverse read side, the grouped-count value objects that exist because these scopes cannot
@@ -64,6 +65,19 @@ the same change, or `db:demo:check` fails.
   records inside the same universe. `HasManyTags` independently enforces the shared universe or
   story scope in both directions for all eight content/tag pairs (see the taxonomy matrix in
   [data_model.md](data_model.md#tag-taxonomy-matrix)).
+- **An optional reference that names nothing is a field error, not a database failure.** Three
+  validators own that sentence, one per shape of reference: `Hierarchical`'s
+  `parent_reference_exists` (`shared.errors.hierarchy.must_exist`), `Event`'s
+  `temporal_references_exist` for its three temporal links (`events.errors.must_exist`), and
+  `Scene`'s `optional_references_exist` (`scenes.errors.must_exist`). They answer **422** with a
+  message on the attribute that carried the id, because the alternative is the foreign key raising
+  `ActiveRecord::InvalidForeignKey` — a **500** with no error summary and no hint which control was
+  wrong. The check belongs in the model: the same id can arrive from a form, the development-data
+  loader, or a console, and a controller-level check would cover only the first. A reference that
+  resolves to a record in the **wrong scope** keeps its own separate message rather than being
+  folded into this one, so "does not exist" and "belongs to another universe" stay distinguishable.
+  `test/controllers/unknown_reference_ids_test.rb` asserts this for every endpoint that accepts a
+  `parent_id`.
 - **A concern lives in `app/models/concerns/`**, beside `HasSlug`, `HasManyTags`, `Hierarchical`,
   `HasColor`, `InvalidatesMenuCounts`, and `SoftDeletable`. A model that needs behaviour declares it
   with `include` and, where the behaviour is configurable, a class-level DSL on itself — as

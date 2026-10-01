@@ -123,16 +123,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-16. **Structured logging and runtime observability (DataFactor follow-up)**
-
-   Preserve the existing `/up` health route and add a regression test. Evaluate structured request
-   logging, request IDs, and optional error tracking with explicit redaction for password-reset
-   tokens, cookies, credentials, DSNs, and personal data. Initialize an external tracker only when
-   an environment variable is supplied. Define authentication, cardinality, retention, and privacy
-   rules before adding metrics; do not add a public endpoint or dependency merely because a report
-   names one. This work must coordinate with the logging, transport, and mailer findings in
-   `known_quirks.md`.
-
 17. **Development credential and environment hygiene (DataFactor follow-up)**
 
    Replace hardcoded local/demo passwords in the LOTR development users, Dark user data, and smoke script

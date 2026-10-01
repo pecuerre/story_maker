@@ -8,6 +8,7 @@ module Hierarchical
              foreign_key: :parent_id,
              dependent: :destroy
 
+    validate :parent_reference_exists
     validate :parent_belongs_to_same_universe
     validate :parent_cannot_be_self
     validate :parent_cannot_be_descendant
@@ -61,6 +62,26 @@ module Hierarchical
   # cannot choose. See `shared.errors.same_scope`.
   def hierarchy_scope_error_key
     "shared.errors.same_scope.universe"
+  end
+
+  # An optional reference is only optional when it is *absent*. A `parent_id`
+  # the reader typed resolves to no record, so every rule above reads it as "no
+  # parent" and the write is refused by the database's foreign key instead — an
+  # unhandled 500 rather than the documented error hash. This is the rule
+  # `Scene` already applies to its own optional links
+  # (`Scene#optional_references_exist`): a submitted id that names nothing is a
+  # field error on the field that carried it, so the editor renders it beside the
+  # control instead of losing the submission.
+  #
+  # It is deliberately not limited to a change in `parent_id`. A record whose
+  # parent was soft-deleted or removed keeps the column, and re-saving it must
+  # say so rather than silently pass a dangling reference back to the database.
+  # Every model with a hierarchy declares `soft_deletes :children`, so an ordinary
+  # delete clears the reference instead of orphaning a live child.
+  def parent_reference_exists
+    return unless parent_id.present? && parent.nil?
+
+    errors.add(:parent, I18n.t("shared.errors.hierarchy.must_exist"))
   end
 
   def parent_belongs_to_same_universe

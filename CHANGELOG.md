@@ -29,6 +29,15 @@ Labels used below:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-02
+
+- **[added]** **Structured runtime logging.** Every completed request now writes one JSON `request` event (`request_id`, method, filtered path, status, format, controller, action, duration) alongside the human-readable lines Rails already writes, and every reported exception writes a JSON `error` event (class, redacted message, bounded backtrace, severity, source, timestamp). Both are allowlists: no client IP, cookie, session, parameter, or account is emitted, and the password-reset token filter covers the new lines.
+- **[added]** **Optional error tracking.** Setting `ERROR_TRACKING_DSN` to an https URL forwards unhandled errors to a collector as redacted JSON through `Net::HTTP`; with the variable absent nothing is initialized, no request leaves the process, and **no dependency is added**. A malformed value fails the boot, a collector that is down costs one log line and nothing else, and the DSN is itself scrubbed out of everything logged.
+- **[added]** **Request id as the correlation key.** The request id now appears in the structured event, in the `request_id` log tag every line of the request already carries, and in the `X-Request-Id` response header, and it is published into `Rails.error`'s execution context so an error raised anywhere in a request is reported with the request that raised it.
+- **[fixed]** **An unknown optional reference id is now a 422 field error instead of a 500.** A `parent_id`, `before_event_id`, `after_event_id`, or `simultaneous_event_id` that names nothing used to reach the write and come back as a foreign-key exception with no error summary; three model validations now answer with a message on the attribute that carried the id. This closes known quirk 19.
+- **[chore]** `GET /up` now has a regression test: the health check is pinned in the test environment as well as in CI's production boot job, so the one route no other test would notice losing is covered.
+- **[docs]** `architecture.md` records the runtime logging and observability contract — the two structured events, the request id as the correlation key, the error collector's authentication/cardinality/retention/privacy rules, and the deliberate absence of a metrics endpoint. The backlog item that asked for all of it is closed.
+
 ## 2026-10-01
 
 - **[changed]** Every workspace with a tab strip now states what it holds in a sentence **below** the strip and above the list, not in the page header, so the header states only what identifies the page. Characters, Relations, Locations, Events, Items, Ownerships, the Timeline, and every taxonomy tree are on the new `shared/_content_intro`; the copy itself is unchanged.

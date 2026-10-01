@@ -14,7 +14,13 @@ module UniverseMaker
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks])
+    #
+    # The two files named here are the request pipeline's, and they are ignored
+    # because their initializers `require` them: the main autoloader is set up
+    # *after* `config/initializers` run, so a constant the pipeline needs at boot
+    # cannot come from it. `lib/password_reset_path_filter.rb` is ignored for the
+    # same reason and has been since it was written.
+    config.autoload_lib(ignore: %w[assets tasks password_reset_path_filter request_log_middleware error_tracking])
 
     # The two locales this application ships. `en` is the default and the locale
     # every other locale falls back to, so a page is never blocked by a missing

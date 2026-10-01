@@ -134,6 +134,7 @@ en:
         story: "must belong to the same story"
       hierarchy:
         scope_change_with_children: "cannot be changed while child records exist"
+        must_exist: "does not exist"
         cannot_be_itself: "cannot be itself"
         cannot_be_descendant: "cannot be a descendant"
       tagged_records:
@@ -974,6 +975,7 @@ en:
     # `errors.add` messages read as the tail of `errors.format`
     # ("%{attribute} %{message}"), so each starts lowercase.
     errors:
+      must_exist: "does not exist"
       must_belong_to_universe: "must belong to the event's universe"
       cannot_be_itself: "cannot be itself"
       must_be_identifiable: "must have a title, a date, or a relation to another event"

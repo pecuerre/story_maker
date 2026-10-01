@@ -246,10 +246,14 @@ routed and `bun.lock` is already committed and used with `--frozen-lockfile` in 
 
 The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, Minitest with a
 line/branch coverage gate, checked-in development-data manifest checks, a from-zero migration run, a
-browser smoke suite, and a production-image build/boot check against `/up`. It does **not** yet
-audit the complete Bun/npm graph, provide a one-command Compose setup, or enable structured
-request/error tracking. Those are follow-up work, not current capabilities; do not claim them in
-release or onboarding copy until they are implemented and documented.
+browser smoke suite, and a production-image build/boot check against `/up`. Structured request and
+error logging is implemented and needs no CI job: it is a middleware and an initializer that run in
+every environment, covered by `test/integration/request_log_middleware_test.rb` and
+`test/lib/error_tracking_test.rb`. Optional error **forwarding** is off unless
+`ERROR_TRACKING_DSN` is set, and no CI job exercises it against a real collector — do not claim it
+does. It does **not** yet audit the complete Bun/npm graph or provide a one-command Compose setup.
+Those are follow-up work, not current capabilities; do not claim them in release or onboarding copy
+until they are implemented and documented.
 
 When planning one of those improvements, preserve the development-only data boundary, the
 universe/story authorization model, and the no-secrets rules. A value-free `.env.example` may be
@@ -878,6 +882,26 @@ Dependabot config: `.github/dependabot.yml`.
   Rails request logs. Password-reset pages also send `Cache-Control: no-store` and
   `Referrer-Policy: no-referrer`. Configure proxy/access-log retention separately; application
   filtering cannot erase a token from an upstream proxy or browser history.
+- **Runtime logging.** `RequestLogMiddleware` (`lib/request_log_middleware.rb`) writes one JSON
+  `request` event per completed request and `ErrorTracking` (`lib/error_tracking.rb`) writes one
+  JSON `error` event per reported exception, both on the tagged production `STDOUT` stream. The
+  request id is the correlation key across the log tag, the `request_id` field, and the
+  `X-Request-Id` response header. Both events are allowlists: no client IP, cookie, session,
+  parameter, or account is emitted. Rails' own `Started GET …` line still prints the client IP, so
+  configure log retention accordingly. See
+  [architecture.md](architecture.md#runtime-logging-and-observability) for the full contract,
+  including why no metrics endpoint exists.
+- **Optional error tracking.** Set `ERROR_TRACKING_DSN` to an **https** URL to forward unhandled
+  errors to a collector. Without it, nothing is initialized and nothing leaves the process — the
+  `error` events are still logged. There is **no dependency**: delivery is a `Net::HTTP` POST of the
+  redacted payload. A malformed value fails the boot rather than being ignored. Only unhandled
+  errors are forwarded; recovered errors stay in the log. Never commit the value: it is a
+  credential, and it is scrubbed out of the log.
+- **Health check.** `GET /up` answers **200** and is the deployment's liveness probe. It is pinned
+  by `test/integration/health_check_test.rb`; CI's `production-boot` job proves it inside the built
+  image.
+- `ERROR_TRACKING_DSN` is **optional**: absent (the default) means error tracking is off and error
+  events are only logged; present and a valid https URL means unhandled errors are forwarded there.
 - `config/deploy.yml` must receive the variables above through its `env.clear`/`env.secret` lists,
   backed by the host environment or an approved secret store. Do not run `bin/kamal config` in
   shared CI or paste its output into tickets: the resolved configuration can contain secrets.

@@ -328,12 +328,6 @@ it has a useful destination and clear empty/loading/error states.
     token's real grants live on GitHub's side and are not recorded here, so "read-only" is the
     owner's account of it rather than something this repository can verify. Only rotation settles it.
 
-28. review comments. add comments when needed, remove comments when not needed
-
-30. define a code_style.md?
-
-31. consider moving all scene_* supporting classes to a namespace?
-
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

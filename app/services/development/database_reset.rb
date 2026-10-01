@@ -9,15 +9,12 @@ module Development
   # 1. **`db:drop` unlinks the file while this process still holds a connection
   #     to it.** SQLite keeps the deleted inode alive for every open handle, so
   #     the phases that follow write to a file that no longer has a name and the
-  #     recreated database is empty. A default development setup hides this by
-  #     accident: `db:create` also creates the *test* database, and connecting to
-  #     that second file disconnects the first, so the next phase happens to
-  #     reopen the new development file. Remove the second database — a
-  #     `DATABASE_URL`, or `SKIP_TEST_DATABASE` — and nothing reconnects, so the
-  #     reset produces no database and every later command reads an empty one.
-  #     Each phase therefore gets its own connection lifecycle: nothing holds a
-  #     handle to the file being unlinked, and the next phase opens the file by
-  #     name instead of inheriting a handle to the deleted inode.
+  #     recreated database is empty. Each phase therefore gets its own connection
+  #     lifecycle: nothing holds a handle to the file being unlinked, and the
+  #     next phase opens the file by name instead of inheriting a handle to the
+  #     deleted inode. Nothing here may rely on another database happening to be
+  #     configured as well, because this class deliberately touches only the
+  #     development database — see `db_configs`.
   #
   # 2. **On a database with no `schema_migrations` table, `db:migrate` loads
   #     `db/schema.rb` instead of running the migrations.** Rails 8.1's
@@ -54,6 +51,11 @@ module Development
 
     # Drops, recreates, and migrates every database configured for the current
     # environment, then proves the result. Returns self.
+    #
+    # "The current environment" is the whole scope, and it is deliberately
+    # narrower than `db:drop`'s: the approval behind this reset covers one
+    # disposable development database, never the test or production one. See
+    # `db_configs`.
     def call
       drop!
       create!
@@ -65,29 +67,47 @@ module Development
     private
       attr_reader :environment
 
-      # The scope `db:migrate` covers: the databases configured for the current
-      # environment. Dropping and creating go through Active Record's own
-      # `drop_current`/`create_current` rather than a list built here, because
-      # those widen the scope to the test database in development and that
-      # difference belongs to Active Record's task contract, not to a list this
-      # class re-derives.
+      # The scope of the whole reset: the databases configured for the current
+      # environment, and nothing else.
+      #
+      # Active Record's own `drop_current`/`create_current` would widen that in
+      # development — its `each_current_environment` appends the *test*
+      # environment, so a development reset also empties `storage/test.sqlite3`.
+      # That is the wrong scope for a task whose authorisation is a development
+      # database: a developer who runs it to rebuild their demo universe loses
+      # the test database they did not ask to lose, and a future
+      # `DATABASE_URL`/`SKIP_TEST_DATABASE` difference would change which files
+      # get unlinked. Dropping and creating through the per-configuration
+      # `drop`/`create` keeps the scope here, where it can be read, while
+      # staying the same Active Record operations.
       def db_configs
         ActiveRecord::Base.configurations.configs_for(env_name: environment)
       end
 
-      # The protected-environment check `db:drop` runs connects before it
-      # unlinks, so a handle to the deleted file exists again by the time it
-      # returns. Releasing has to happen *after* the drop, not instead of it.
+      # The protected-environment check `drop` runs connects before it unlinks,
+      # so a handle to the deleted file exists again by the time it returns.
+      # Releasing has to happen *after* the drop, not instead of it.
       def drop!
         release_connections!
-        ActiveRecord::Tasks::DatabaseTasks.drop_current(environment)
+        db_configs.each { |db_config| ActiveRecord::Tasks::DatabaseTasks.drop(db_config) }
       ensure
         release_connections!
       end
 
       def create!
         release_connections!
-        ActiveRecord::Tasks::DatabaseTasks.create_current(environment)
+        db_configs.each { |db_config| ActiveRecord::Tasks::DatabaseTasks.create(db_config) }
+        establish_environment_connection!
+      ensure
+        release_connections!
+      end
+
+      # Opens the current environment's database by name, so the migrate phase
+      # cannot inherit a handle to the file the drop unlinked. `create_current`
+      # did this for its whole environment; with the scope narrowed to one
+      # environment it is stated here instead of inherited.
+      def establish_environment_connection!
+        ActiveRecord::Base.establish_connection(environment.to_sym)
       end
 
       def migrate!
@@ -105,10 +125,10 @@ module Development
         db_configs.each { |db_config| ActiveRecord::Tasks::DatabaseTasks.dump_schema(db_config) }
       end
 
-      # Only the current environment's databases, which is the development database.
-      # `db:drop` and `db:create` also empty the test database in development —
-      # a scope question that belongs to the reset as a whole — and an empty test
-      # database has nothing to prove.
+      # Only the current environment's databases, which is the development
+      # database. The test database the reset no longer empties has nothing to
+      # prove here, and reaching for it would be the very scope error `db_configs`
+      # documents.
       def verify!
         db_configs.each { |db_config| verify_database!(db_config) }
       end

@@ -325,9 +325,10 @@ load-bearing rather than incidental:
   invisible in a default development setup for an accidental reason: `db:create` also creates the
   *test* database, and connecting to that second file disconnects the first, so the next phase
   reopens the new development file by name. Add a `DATABASE_URL`, or set `SKIP_TEST_DATABASE`, and
-  nothing reconnects — the reset then reports success and leaves **no database at all**. The reset
-  releases its connections around the drop so the behaviour no longer depends on which other
-  databases happen to be configured.
+  nothing reconnects — the reset then reports success and leaves **no database at all**. Because the
+  reset touches the development database only (below), there is no second database left to lean on,
+  so the reset releases its connections around the drop and around the create. The behaviour does
+  not depend on which other databases happen to be configured.
 - **The migrations run; `db/schema.rb` is not loaded instead.** On a database with no
   `schema_migrations` table, `db:migrate` loads the checked-in schema dump, which records every
   version as applied. Amending a shipped migration would then change nothing on a fresh database.
@@ -337,9 +338,14 @@ load-bearing rather than incidental:
   `schema_migrations` table, is missing a migration version, or has no `universes` table. An
   in-process check could not see this class of failure, because the stale handle answers from the
   deleted inode.
-- **Scope is unchanged.** The drop and the create still use Active Record's own `drop_current` and
-  `create_current`, so — as before this change — a development reset also empties
-  `storage/test.sqlite3`.
+- **Scope is the development database only.** The drop and the create go through the
+  per-configuration `ActiveRecord::Tasks::DatabaseTasks.drop`/`create` over the current
+  environment's configurations, not through `drop_current`/`create_current`: Rails' own versions
+  widen to the *test* environment in development (`each_current_environment` appends it), so a reset
+  also emptied `storage/test.sqlite3`. The approval behind either task covers the disposable
+  development database and never the test or production one, so the scope is now stated where it is
+  enforced — in `Development::DatabaseReset.db_configs` — rather than being a side effect of which
+  other databases happen to be configured.
 
 The Rails test suite uses `test/fixtures/` so automated tests remain deterministic; these mutable
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in

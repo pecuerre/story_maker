@@ -310,24 +310,6 @@ it has a useful destination and clear empty/loading/error states.
     (plain text first); email notifications (in-app first, email later); draft branching/forking (a
     draft is a linear set of changes); draft merging (one draft at a time per user per universe).
 
-26. **Keep the demo reset isolated to the development database**
-
-    On 2026-09-29, `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` invoked Rails
-    `db:drop`, which dropped both `storage/development.sqlite3` and `storage/test.sqlite3` before
-    recreating them. The owner's approval for this task covers only the disposable development
-    database, never test or production. Replace the broad task dependency with a development-only
-    database reset path, and add task-level coverage proving test/production database files or data
-    are untouched. Preserve the explicit confirmation guard, validate the named universe, and verify
-    the rebuilt development records before reporting success.
-
-    A GitHub fine-grained personal access token was pasted into this paragraph by mistake and
-    committed in `af2fcde`. The text is redacted here. The owner reports it as read-only against a
-    public repository, which bounds the exposure: those contents were already readable by anyone, so
-    this was a hygiene failure rather than a disclosure. Revoking it is still worth doing, because
-    it costs nothing and the commit stays in history indefinitely — but note that a fine-grained
-    token's real grants live on GitHub's side and are not recorded here, so "read-only" is the
-    owner's account of it rather than something this repository can verify. Only rotation settles it.
-
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

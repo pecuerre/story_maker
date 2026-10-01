@@ -22,6 +22,19 @@ reachable security/data-loss issues from lower-priority hardening and contract d
    See [`delivery_history.md`](delivery_history.md) for the repository-containment change and
    [`config/deploy.yml`](../config/deploy.yml) for the local secret contract.
 
+6. **Low — a personal access token pasted into a backlog paragraph stays in Git history.** A
+   GitHub fine-grained personal access token was pasted into the "Keep the demo reset isolated to
+   the development database" paragraph of `docs/backlog.md` by mistake and committed in `af2fcde`.
+   The working-tree text was redacted, and that backlog item has since been delivered and deleted.
+   The string itself is still in `git log` permanently. The owner reports the token as read-only
+   against a **public** repository, which bounds the exposure: those contents were already readable
+   by anyone, so this was a hygiene failure rather than a disclosure. Revoking it is still worth
+   doing — it costs nothing — but note that a fine-grained token's real grants live on GitHub's
+   side and are not recorded in this repository, so "read-only" is the owner's account of it rather
+   than something the tree can verify. Only rotation settles it.
+   See [`delivery_history.md`](delivery_history.md) for the same incident as it was recorded when
+   the backlog item was still open. No secret value is reproduced in this document.
+
 ## Mutation, route, and data-contract observations
 
 19. **Medium — nonexistent optional association IDs escape the JSON error contract.** Hierarchical

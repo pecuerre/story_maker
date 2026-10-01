@@ -110,6 +110,71 @@ are linked rather than repeated, so there is one place to keep them current.
   `db/schema.rb` byte for byte, which is the evidence that the reset was building the right database
   all along and only writing it to the wrong file. `git status` is clean for `db/schema.rb` after
   every reset run in this delivery.
+- **[fixed]** **The demo reset no longer empties the test database.** Backlog item 26, "Keep the demo
+  reset isolated to the development database", was closed later the same day. On 2026-09-29,
+  `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` had dropped both
+  `storage/development.sqlite3` and `storage/test.sqlite3` before recreating them, because the reset
+  went through Rails' own `db:drop`/`db:create`.
+
+  **The cause is a Rails widening, and it is documented in the framework itself.**
+  `DatabaseTasks.each_current_environment` appends `"test"` whenever the environment is
+  `"development"` and neither `SKIP_TEST_DATABASE` nor `DATABASE_URL` is set, and `drop_current` /
+  `create_current` iterate exactly that list. So "drop the development database" is not what
+  `drop_current` means; it means "drop the development database and the test database". The earlier
+  entry in this file records that widening being kept on purpose, because narrowing it had been a
+  deliberate refusal to deliver item 26 as a side effect of unrelated work. That was the right call
+  for that change, and this change is what makes it safe to reverse.
+
+  **`Development::DatabaseReset.db_configs` already held the narrow list.** Migrate, verify, and the
+  schema dump had iterated `configs_for(env_name: environment)` from the start; only the drop and the
+  create went through Active Record. The fix is therefore to drop and create those same
+  configurations one by one with `DatabaseTasks.drop`/`create` — the identical Active Record
+  operations, with the list stated in one readable place — and to add the
+  `establish_connection(environment)` that `create_current` ended with, so the migrate phase still
+  opens the file by name.
+
+  **The scope error was invisible from every angle that was available.** It never failed a run, it
+  produced a perfectly good empty test database that `db:test:prepare` then rebuilt, and the three
+  existing tests could not see it because all of them set `DATABASE_URL` and `SKIP_TEST_DATABASE` —
+  the very variables that suppress the test environment. Worse, the accidental reconnection described
+  above depended on that same second database: `create_current` created the test file, connecting to
+  it disconnected the development pool, and the next phase reopened the new development file by
+  name. Narrowing the scope removes the crutch, which is why `create!` releases its connections and
+  re-establishes explicitly rather than trusting `create_current` to have done it.
+
+  **The coverage had to reproduce the shape, not just the outcome.** A test that points
+  `DATABASE_URL` at a scratch file and asserts the test database survived would pass against the
+  unfixed code, because `DATABASE_URL` is one of the two conditions that turn the widening off.
+  Pointing the test database at a scratch file is also not possible through configuration: Rails
+  merges `DATABASE_URL` into the *current* environment only, so there is no per-environment override
+  to lean on. The test therefore replaces `ActiveRecord::Base.configurations` in the subprocess
+  before invoking the real task, with a development, a test, and a production database all pointing
+  at temporary files. That leaves the widening in play and makes anything it reaches observable,
+  while keeping `storage/development.sqlite3` and `storage/test.sqlite3` out of it. Each of the two
+  assertions was checked against the unfixed code separately: the inode/size/mtime fingerprint
+  reports "changed the test database", and with that assertion removed the probe table reports
+  "dropped the test database and left an empty one in its place". The development database is
+  asserted to have been rebuilt and loaded first, so the isolation assertions cannot pass because
+  the task did nothing.
+
+  - **`bin/rails runner` rather than `bin/rails <task>`, because the shape cannot be set otherwise.**
+    The script replaces the configurations, defines the `:environment` prerequisite the runner has
+    already satisfied, loads only this application's own `lib/tasks` (`Rails.application.load_tasks`
+    would also re-run every bundled gem's rake file, which is a second thing the test would be
+    measuring), and invokes `Rake::Task["db:demo:reset"]`.
+  - **Booting against the real configuration is safe here, and was checked rather than assumed.**
+    `rails runner` in development opens a connection to `storage/development.sqlite3` before the
+    script replaces the configuration. Inode, size, and modification time of both real database
+    files were compared across a full run and were unchanged, and the reset cannot write to them
+    afterwards because it only ever sees the replaced configuration.
+  - The three existing tests still pass unchanged: `DATABASE_URL` replaces the whole configuration
+    there, so the environment holds exactly one database and narrowing the scope is a no-op.
+
+  The second paragraph of that backlog item recorded a personal access token pasted into it by
+  mistake and committed in `af2fcde`. It moved to [`known_quirks.md`](known_quirks.md) when the item
+  was deleted, because a backlog holds pending work only and the token is still in `git log`
+  regardless; the entry there says what this one said, that revocation is a cheap precaution and the
+  owner's "read-only against a public repository" is not something the repository can verify.
 - **[chore]** **The reset kept its scope, deliberately.** A first version iterated
   `ActiveRecord::Base.configurations.configs_for(env_name: Rails.env)` for the drop and the create,
   which quietly narrowed the reset to the development database and would have delivered the separate

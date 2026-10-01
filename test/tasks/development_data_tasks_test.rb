@@ -44,7 +44,26 @@ class DevelopmentDataTasksTest < ActiveSupport::TestCase
 
     reset_start = task_source.index("task :reset")
     reset_guard = task_source.index("unless Rails.env.development?", reset_start)
-    first_drop = task_source.index('Rake::Task["db:drop"]', reset_start)
-    assert_operator reset_guard, :<, first_drop
+    first_reset = task_source.index("Development::DatabaseReset.call", reset_start)
+    assert_operator reset_guard, :<, first_reset
+  end
+
+  # Both destructive tasks rebuild the database through one shared implementation,
+  # so the connection lifecycle that `db:drop` breaks is handled once instead of
+  # once per task. Invoking `db:drop`/`db:create`/`db:migrate` in the task itself
+  # is what regressed: `db:drop` unlinks the file while the process still holds a
+  # connection to it, and the two phases after it then write to the deleted inode.
+  test "rebuilds the database through the shared reset in both destructive tasks" do
+    task_source = Rails.root.join("lib/tasks/db.rake").read
+
+    assert_equal 2, task_source.scan("Development::DatabaseReset.call").size,
+      "both db:demo:reset and db:restart must rebuild through Development::DatabaseReset"
+    assert_not_includes task_source, 'Rake::Task["db:drop"]'
+    assert_not_includes task_source, 'Rake::Task["db:create"]'
+    assert_not_includes task_source, 'Rake::Task["db:migrate"]'
+
+    reset_body = task_source[/task :reset.*?\n    end/m]
+    assert_includes reset_body, "Development::UniverseDataLoader.load!(universe: universe)",
+      "db:demo:reset must still load the named universe after the database is rebuilt"
   end
 end

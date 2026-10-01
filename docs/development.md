@@ -316,6 +316,31 @@ it never invokes `db:seed`. `db:seed` and `db:prepare` load only production-safe
 `db/seeds/` and never load `db/data/`. The guarded `db:restart` task resets the schema without
 loading demo data.
 
+Both destructive tasks rebuild through `Development::DatabaseReset`, and the way it rebuilds is
+load-bearing rather than incidental:
+
+- **Every phase gets its own connection lifecycle.** `db:drop` unlinks the SQLite file while the
+  process still holds a connection to it, and SQLite keeps that deleted inode alive for every open
+  handle — so the create and migrate that follow write to a file that no longer has a name. This is
+  invisible in a default development setup for an accidental reason: `db:create` also creates the
+  *test* database, and connecting to that second file disconnects the first, so the next phase
+  reopens the new development file by name. Add a `DATABASE_URL`, or set `SKIP_TEST_DATABASE`, and
+  nothing reconnects — the reset then reports success and leaves **no database at all**. The reset
+  releases its connections around the drop so the behaviour no longer depends on which other
+  databases happen to be configured.
+- **The migrations run; `db/schema.rb` is not loaded instead.** On a database with no
+  `schema_migrations` table, `db:migrate` loads the checked-in schema dump, which records every
+  version as applied. Amending a shipped migration would then change nothing on a fresh database.
+  See [Amending a shipped migration does not work here](#amending-a-shipped-migration-does-not-work-here).
+- **The result is verified, and verified from the file.** The reset re-reads the database through a
+  connection opened after the last handle was released, and fails if the file is missing, has no
+  `schema_migrations` table, is missing a migration version, or has no `universes` table. An
+  in-process check could not see this class of failure, because the stale handle answers from the
+  deleted inode.
+- **Scope is unchanged.** The drop and the create still use Active Record's own `drop_current` and
+  `create_current`, so — as before this change — a development reset also empties
+  `storage/test.sqlite3`.
+
 The Rails test suite uses `test/fixtures/` so automated tests remain deterministic; these mutable
 universe files are not its fixture source. `config/ci.rb` validates the checked-in manifests in
 test mode instead of replanting demo records.
@@ -340,12 +365,19 @@ guards, fixtures, tests, documentation, and changelog.
 `scenes` already shipped its create migration with the core delivery, so the references arrived in a
 separate schema-only alter migration (`AddSceneReferencesToScenes`). This is not just tidiness.
 Rails 8.1's `ActiveRecord::Tasks::DatabaseTasks.initialize_database` loads `db/schema.rb` when a
-database has no `schema_migrations` table, so on a **freshly created** database `db:migrate`,
-`db:restart`, and `db:demo:reset` load the checked-in schema instead of executing the migration
-files. Editing an applied migration therefore changes nothing on a fresh database, the regenerated
-`db/schema.rb` silently keeps the old shape, and the mismatch is only visible when a manifest or a
-form references a column that does not exist. Add a new migration for any change to a table that has
-already shipped.
+database has no `schema_migrations` table, so on a **freshly created** database `db:migrate` loads
+the checked-in schema instead of executing the migration files. Editing an applied migration
+therefore changes nothing on a fresh database built that way, the regenerated `db/schema.rb`
+silently keeps the old shape, and the mismatch is only visible when a manifest or a form references
+a column that does not exist. Add a new migration for any change to a table that has already
+shipped.
+
+The two development reset tasks are the exception, and deliberately so: `Development::DatabaseReset`
+runs the migration files with `skip_initialize: true`, so `db:restart` and `db:demo:reset` execute
+the migrations from zero rather than loading the dump. Everything else — `db:migrate`, `db:prepare`,
+`db:setup`, and the CI `migrations-from-zero` job — still loads `db/schema.rb` on a fresh database,
+which is why the rule above still applies to them. See
+[Explicit development data tasks](#explicit-development-data-tasks).
 
 ### Scene data and manual verification
 
@@ -574,9 +606,9 @@ The database is intentionally disposable: schema migrations only define the stru
 records are reconstructed from the per-universe files under `db/data/`; they are not backfilled by
 migrations. Keep one schema-only create migration per persisted model, including any HABTM join
 table owned by that model. Once that create migration has shipped, add **new** migrations for later
-column changes: Rails 8.1's `initialize_database` loads `db/schema.rb` when a database has no
-`schema_migrations` table, so editing an applied migration has no effect on a freshly created
-database (see [Amending a shipped migration does not work here](#amending-a-shipped-migration-does-not-work-here)).
+column changes: on a freshly created database Rails 8.1's `initialize_database` loads
+`db/schema.rb` rather than executing the migrations, so editing an applied migration has no effect
+there (see [Amending a shipped migration does not work here](#amending-a-shipped-migration-does-not-work-here)).
 Migrations must not read or write application records or reference
 application models. The `universes.private` NOT NULL migration deliberately refuses to guess how
 legacy NULL rows should be classified; resolve each such row explicitly before migrating an older
@@ -721,13 +753,28 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | `lint` | `bin/rubocop -f github` (cached) |
 | `js-check` | `bun run lint:js`, `bun run test:js` |
 | `test` | `bin/rails db:test:prepare test`, then `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` |
-| `migrations-from-zero` | `bin/rails db:drop`, `bin/rails db:create`, `bin/rails db:migrate` as three separate processes, then `bin/rails db:migrate:status` and `git diff --exit-code db/schema.rb` |
+| `migrations-from-zero` | `bin/rails db:drop`, `bin/rails db:create`, `schema_migration.create_table`, `bin/rails db:migrate` as four separate processes, then a guard that the migrations ran, `bin/rails db:migrate:status`, and `git diff --exit-code db/schema.rb` |
 | `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure) |
 
-The three migration commands must be separate processes. `db:drop` unlinks the SQLite file while the
+The migration commands must be separate processes. `db:drop` unlinks the SQLite file while the
 process still holds a connection to it, so one `bin/rails db:drop db:create db:migrate` migrates the
 deleted inode, leaves the recreated database empty, and the next command reports that the schema
 migrations table does not exist.
+
+`schema_migrations` is created before migrating, and that is the step that makes the job mean what
+its name says. On a database without that table `db:migrate` loads `db/schema.rb` instead of
+executing the migrations and records every version as applied, so `db:migrate:status` would report
+all 36 `up` and `git diff --exit-code db/schema.rb` would compare the dump against itself. Creating
+the table first makes Rails treat the database as initialized, so the migration files run. The job
+then asserts that no `schema_sha1` was recorded in `ar_internal_metadata` — that row is written only
+by `DatabaseTasks.load_schema` — so a future Rails change that makes the pre-creation ineffective
+fails the job instead of quietly turning it into a no-op.
+
+Verified by amending a shipped migration to add a column: the previous sequence reported all 36
+migrations `up` and left `db/schema.rb` unchanged, so it passed; the current one runs the migration,
+puts the column in the database, and fails on the schema diff. See
+[Amending a shipped migration does not work here](#amending-a-shipped-migration-does-not-work-here)
+and [Explicit development data tasks](#explicit-development-data-tasks).
 
 The system-test job passes the exact Chrome and ChromeDriver paths emitted by
 `browser-actions/setup-chrome` to Selenium as `SE_CHROME_PATH` and `SE_CHROMEDRIVER`. Do not rely

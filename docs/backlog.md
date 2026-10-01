@@ -314,11 +314,19 @@ it has a useful destination and clear empty/loading/error states.
 
     On 2026-09-29, `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` invoked Rails
     `db:drop`, which dropped both `storage/development.sqlite3` and `storage/test.sqlite3` before
-    recreating them. The o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wner's approval for this task covers only the disposable development
+    recreating them. The owner's approval for this task covers only the disposable development
     database, never test or production. Replace the broad task dependency with a development-only
     database reset path, and add task-level coverage proving test/production database files or data
     are untouched. Preserve the explicit confirmation guard, validate the named universe, and verify
     the rebuilt development records before reporting success.
+
+    A GitHub fine-grained personal access token was pasted into this paragraph by mistake and
+    committed in `af2fcde`. The text is redacted here. The owner reports it as read-only against a
+    public repository, which bounds the exposure: those contents were already readable by anyone, so
+    this was a hygiene failure rather than a disclosure. Revoking it is still worth doing, because
+    it costs nothing and the commit stays in history indefinitely — but note that a fine-grained
+    token's real grants live on GitHub's side and are not recorded here, so "read-only" is the
+    owner's account of it rather than something this repository can verify. Only rotation settles it.
 
 28. review comments. add comments when needed, remove comments when not needed
 
@@ -327,24 +335,6 @@ it has a useful destination and clear empty/loading/error states.
 30. define a code_style.md?
 
 31. consider moving all scene_* supporting classes to a namespace?
-
-34. **`db:demo:reset` and `db:restart` drop, create, and migrate in one process**
-
-    `lib/tasks/db.rake` invokes `db:drop`, `db:create`, and `db:migrate` inside a single rake
-    process. `db:drop` unlinks the SQLite file while the process still holds a connection to it, so
-    the migration that follows can read `schema_migrations` from the deleted inode, decide every
-    migration is already up, and write nothing. This is the same defect that made CI's
-    `migrations-from-zero` job fail on every run since it was added; that job now runs the three
-    commands as separate processes.
-
-    Both rake tasks work today, because in the development environment `db:migrate`'s schema dump
-    reconnects first, which hides the ordering problem. It is still the shape that failed, and it
-    stops being harmless if the development database is ever a multi-file configuration or the
-    task's ordering changes. Give each its own connection lifecycle — separate rake invocations,
-    or an explicit disconnect before migrating — and add task-level coverage proving the
-    recreated development database actually has every migration applied. Keep the confirmation
-    guard and the named-universe validation; this is the same area as the demo-reset isolation
-    item above.
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

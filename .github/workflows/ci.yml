@@ -153,13 +153,38 @@ jobs:
       # `bin/rails db:drop db:create db:migrate` migrates that deleted inode,
       # leaves the recreated database empty, and the next process reports
       # "Schema migrations table does not exist yet".
+      #
+      # `schema_migrations` is created before migrating, and that is the part
+      # that makes this job mean what its name says. On a database without that
+      # table Rails 8.1's `DatabaseTasks.initialize_database` loads
+      # `db/schema.rb` instead of executing the migrations and records every
+      # version as applied — so `db:migrate:status` would report all 36 `up` and
+      # `git diff --exit-code db/schema.rb` would compare the dump against
+      # itself. Creating the table first makes Rails treat the database as
+      # initialized, so the migration files actually run.
       - name: Migrate an empty test database from zero
         env:
           RAILS_ENV: test
         run: |
           bin/rails db:drop
           bin/rails db:create
+          bin/rails runner 'ActiveRecord::Base.connection_pool.schema_migration.create_table'
           bin/rails db:migrate
+
+      - name: Prove the migrations ran rather than the schema being loaded
+        env:
+          RAILS_ENV: test
+        # `schema_sha1` is written only by `DatabaseTasks.load_schema`. If it is
+        # present, the step above migrated nothing, and both `db:migrate:status`
+        # and `git diff --exit-code db/schema.rb` would be comparing the dump
+        # against itself. This is the check that stops this job from quietly
+        # becoming a no-op if a Rails upgrade changes that behaviour.
+        run: |
+          bin/rails runner '
+            metadata = ActiveRecord::Base.connection_pool.internal_metadata
+            abort "::error::the migrated database has no ar_internal_metadata table" unless metadata.table_exists?
+            abort "::error::db/schema.rb was loaded instead of the migrations being executed" if metadata[:schema_sha1]
+          '
 
       - name: Verify every migration is up
         env:

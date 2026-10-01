@@ -27,9 +27,7 @@ namespace :db do
       end
 
       Development::UniverseDataLoader.check!(universe: universe, validate_schema: false)
-      Rake::Task["db:drop"].invoke
-      Rake::Task["db:create"].invoke
-      Rake::Task["db:migrate"].invoke
+      Development::DatabaseReset.call
       Development::UniverseDataLoader.load!(universe: universe)
       Rails.cache.clear
       puts "Development database reset and loaded for #{universe}."
@@ -42,9 +40,7 @@ namespace :db do
       abort "Refusing database reset. Run only in development with CONFIRM_DB_RESET=1."
     end
 
-    Rake::Task["db:drop"].invoke
-    Rake::Task["db:create"].invoke
-    Rake::Task["db:migrate"].invoke
+    Development::DatabaseReset.call
     Rails.cache.clear
     puts "Development database reset without demo data."
   end

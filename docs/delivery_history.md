@@ -29,6 +29,165 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-01
 
+- **[fixed]** **The development reset really rebuilds the database, and it does so from the migration
+  files.** Backlog item 34 recorded that `lib/tasks/db.rake` invoked `db:drop`, `db:create`, and
+  `db:migrate` inside one rake process, and asked for each phase to get its own connection
+  lifecycle. Both destructive tasks now rebuild through `Development::DatabaseReset`.
+
+  **The defect was worse than the item described, and it was not limited to the test database.**
+  Reproduced on a scratch `DATABASE_URL` before changing anything:
+  `db:drop` unlinks the file, the process keeps its connection to that now-deleted inode, and
+  `db:create` does not re-establish one — `ActiveRecord::Base.establish_connection` deliberately
+  returns the existing pool when the `db_config` is unchanged. So `db:create` reported "Created
+  database", `db:migrate` ran all 36 migrations, and **no file existed afterwards**; `/proc/self/fd`
+  showed the live handles as `scratch.sqlite3 (deleted)`. A fresh process then read **0 tables**.
+
+  **Why it looked fine in development.** `db:drop` and `db:create` act on the *test* database too in
+  development (`each_current_environment` appends it). Creating that second file disconnects the
+  development pool, and `create_current`'s final `establish_connection` then builds a new pool that
+  opens the new development file by name. The next phase therefore reopened the file by accident.
+  That is the whole of the protection, and it is contingent: with `DATABASE_URL` or
+  `SKIP_TEST_DATABASE` there is no second database, nothing reconnects, and the reset produces
+  nothing. The item's own warning — that it "stops being harmless if the development database is
+  ever a multi-file configuration" — understated it, because the reconnection was already the only
+  thing holding it up.
+
+  **Separate rake invocations were the other option, and rejected.** It is what CI's
+  `migrations-from-zero` job does, and it is the strongest form of the guarantee. Against it: three
+  extra Rails boots on every reset, the parent process still holds the stale handle and would need
+  its own reconnect before loading demo data, and the outcome would depend on a subprocess exiting
+  zero. Releasing the connection around the drop is a few lines and is verified from the file
+  afterwards, which is the property that actually matters. The release has to happen *after*
+  `drop_current` returns, not instead of it: its protected-environment check connects before it
+  unlinks, so a handle to the deleted file exists again by the time it returns.
+
+  **The verification is the deliverable, and it cannot live inside the resetting process.** An
+  in-process check cannot see this class of failure, because the stale handle answers every query
+  from the file that is already gone. `DatabaseReset` therefore re-reads each database through a
+  connection opened after the last handle was released and raises when the file is missing, has no
+  `schema_migrations` table, is missing a migration version, or has no `universes` table. The probe
+  table matters for the same reason: the deleted inode carries a *complete* `schema_migrations`
+  table, so versions alone would not catch it.
+
+  - **The coverage runs the real task in its own process.** `test/services/development/database_reset_test.rb`
+    shells out to `bin/rails db:restart` and `bin/rails db:demo:reset` with a `DATABASE_URL` of the
+    test's own, in the deliberately vulnerable single-database shape, and then reads the rebuilt file
+    with the `sqlite3` gem rather than through Active Record — going back through the framework would
+    put the handle under suspicion back in the path. `DATABASE_URL` replaces the whole configuration,
+    so the subprocess cannot reach `storage/development.sqlite3` or `storage/test.sqlite3`; this was
+    checked rather than assumed, by comparing the inode, size, and modification time of both files
+    across a full run of the new file, and `storage/development.sqlite3` was unchanged.
+    Getting that isolation right is not automatic, and it is worth stating how it nearly went wrong:
+    `ActiveRecord::Base.configurations` is *not* the only source of a task's database, and a probe
+    that redirects the database with anything other than `DATABASE_URL` silently runs against
+    `config/database.yml` instead. `DATABASE_CONFIG` is a Rails 5 variable that Rails 8 ignores
+    entirely, so a diagnostic that set it and then invoked `db:drop` dropped and recreated both local
+    databases. It was caught only by comparing file sizes before and after.
+  - **Each assertion was checked against its own regression.** Reverting the connection handling
+    fails all three tests ("left no database file at …"). Reverting only the `skip_initialize` below
+    fails exactly the third, with `Expected: [0] Actual: [1]` on the `schema_sha1` count — so the
+    schema-load assertion is not passing vacuously.
+- **[fixed]** **A fresh database is now built from the migration files, which is known quirk 55.**
+  The owner chose to fix the related open quirk in this change rather than leave it open, which is
+  why it is here rather than in a separate delivery.
+
+  Rails 8.1's `DatabaseTasks.initialize_database` loads `db/schema.rb` when the target database has
+  no `schema_migrations` table. `db:migrate` on a database it just created therefore records every
+  version as applied **without executing a single migration file**, so an amended migration changes
+  nothing, the regenerated `db/schema.rb` keeps the old shape, and the only symptom is a later
+  unknown column in a form or a manifest. Verified directly: a fresh `db:create` + `db:migrate`
+  leaves `schema_sha1` in `ar_internal_metadata`, a row only `DatabaseTasks.load_schema` writes.
+  `DatabaseReset` passes `skip_initialize: true`, which asks Active Record for the migrations, and
+  regenerates the schema dump in the same process so CI's `git diff --exit-code db/schema.rb` still
+  compares the migrations against the dump.
+
+  **Pre-creating `schema_migrations` was the other option, and rejected.** It works — creating the
+  table makes `initialize_database` treat the database as initialized — but it achieves the right
+  outcome through a side effect a reader has to infer from Rails' internals. `skip_initialize` states
+  the intent in Active Record's own vocabulary.
+
+  **No schema drift.** Running the 36 migrations from zero and dumping reproduces the checked-in
+  `db/schema.rb` byte for byte, which is the evidence that the reset was building the right database
+  all along and only writing it to the wrong file. `git status` is clean for `db/schema.rb` after
+  every reset run in this delivery.
+- **[chore]** **The reset kept its scope, deliberately.** A first version iterated
+  `ActiveRecord::Base.configurations.configs_for(env_name: Rails.env)` for the drop and the create,
+  which quietly narrowed the reset to the development database and would have delivered the separate
+  "keep the demo reset isolated to the development database" backlog item as a side effect. Dropping
+  and creating now go through Active Record's own `drop_current`/`create_current`, so a development
+  reset still empties `storage/test.sqlite3` exactly as before. That item stays open, and this
+  change makes it safe to pick up: the connection lifecycle is now correct whether or not the second
+  database is there.
+- **[security]** **A GitHub personal access token was committed into `docs/backlog.md`.** Item 26's
+  paragraph contained `ogithub_pat_…` spliced into the middle of a sentence, in the position where
+  the word "owner" belonged — a paste accident that landed in commit `af2fcde`. It is redacted, and
+  the paragraph now records what happened and what it does not fix.
+
+  **Severity was overstated here, and the owner corrected it.** The first version of this entry said
+  the token "must be revoked", on the reasoning that it was live in committed history. That is true
+  but not the whole picture, and the missing half is the important one: the owner reports it as
+  read-only against a **public** repository. A public repository's contents are already readable by
+  anyone, so the realistic exposure is close to zero and this was a hygiene failure rather than a
+  disclosure. The entry now says so, and still recommends revocation as a cheap precaution rather than
+  as a response to an incident — which is the honest weight for it.
+
+  What survives from the original reasoning is narrower and still worth keeping in the file: the
+  token's grants are held on GitHub's side, not here, so "read-only" is an account this repository
+  cannot verify. Only rotation settles it. That is a real limit on what the note can claim, and it is
+  the reason to leave the paragraph in the backlog rather than quietly deleting the mention — a reader
+  who finds it in a year needs to know the string is still in `git log`, whatever its scope turned out
+  to be.
+
+  - The shape of the string matters for one narrow reason: `github_pat_` plus two underscore-separated
+    segments is GitHub's fine-grained PAT format, so it was a real credential and not a placeholder
+    someone invented. That says nothing about its scope, and the entry no longer implies otherwise.
+  - The tree was scanned afterwards for `ghp_`, `gho_`, `github_pat_`, `sk-`, and
+    `-----BEGIN … PRIVATE KEY` across all tracked files; nothing else was found.
+  - Backlog item 26 itself stays open and keeps its content; only the pasted token is gone.
+- **[fixed]** **CI's `migrations-from-zero` job now migrates from zero instead of loading the schema
+  dump.** The owner approved fixing it in this change rather than leaving it recorded.
+
+  The job ran `db:drop`, `db:create`, and `db:migrate` as three processes, and the separate-processes
+  part was already correct. What it never did was execute a migration: on a freshly created database
+  `db:migrate` loads `db/schema.rb`, which records all 36 versions as applied, so
+  `db:migrate:status` reported every one `up` and `git diff --exit-code db/schema.rb` compared the
+  dump against itself. The job had been green since it was added while proving nothing about the
+  migrations.
+
+  **The fix is one extra step, and it is the same idea as the reset.** Creating `schema_migrations`
+  before migrating makes `initialize_database` treat the database as initialized, so the migration
+  files run. `Development::DatabaseReset` reaches the same outcome through `skip_initialize: true`;
+  here the pre-creation is the right tool because the job drives plain `bin/rails` commands and has
+  no business reaching into a development-only reset.
+
+  **The guard is the part that makes it durable.** A pre-creation trick silently stops working if
+  Rails changes how `initialize_database` decides, and the failure mode is a green no-op — the worst
+  kind, because it looks like coverage. So the job now asserts that `ar_internal_metadata` holds no
+  `schema_sha1`, which only `DatabaseTasks.load_schema` writes, and fails with a message naming the
+  cause. It reads `internal_metadata` through Active Record rather than raw SQL: the first attempt
+  used `"schema_sha1"` inline, which SQLite parses as an *identifier*, and failed on the happy path
+  as well as the unhappy one. It also checks `table_exists?` first, so an empty database reports
+  itself instead of raising a stack trace.
+
+  - **Verified in both directions, with a real regression rather than a reading.** A shipped
+    migration was amended to add a column to `characters`. The old sequence reported 36 migrations
+    `up`, left `db/schema.rb` untouched, and the column absent from the database — it passed. The
+    new sequence ran the migration, put the column in the database, and failed on the schema diff
+    with `+ t.string "amended_probe_column"`. The guard was then checked against a from-zero
+    database (passes), a schema-loaded one (fails naming the schema load), and an empty one (fails
+    naming the missing table).
+  - The migration and the dumped `db/schema.rb` were restored afterwards by re-running the migrations
+    from zero on a clean database, which reproduced the checked-in schema byte for byte. `db/` is
+    clean in `git status`.
+- **[docs]** **Three documentation passages were describing behaviour that no longer existed.**
+  `development.md` said `db:restart` and `db:demo:reset` "load the checked-in schema instead of
+  executing the migration files" — now true only of `db:migrate`, `db:prepare`, and `db:setup`. The
+  CI section said the `migrations-from-zero` job proves clean migrations; it now describes what the
+  job does and why the `schema_migrations` step and the guard exist. Known quirk 36 claimed a
+  from-zero migration run was missing from CI, which sent the reader looking for a job that exists
+  and, until this change, did not do that. Correcting a confident, wrong paragraph mattered more
+  than adding a new one, because quirk 36 is read before touching migrations.
+
 - **[added]** **"Remember last story": a sign-in returns to where the reader was working, and the
   preference that decides it has its own settings section.**
   The request was to land on the last universe and story after signing in, on by default, and it

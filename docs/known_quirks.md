@@ -11,21 +11,6 @@ pass. The separate DataFactor follow-up section below was checked against the cu
 2026-09-25; it is not a full replacement for the original audit. Severity labels distinguish
 reachable security/data-loss issues from lower-priority hardening and contract decisions.
 
-## Development workflow observations
-
-55. **Medium — editing an applied migration silently does nothing on a fresh database.**
-    `ActiveRecord::Tasks::DatabaseTasks.initialize_database` in Rails 8.1
-    (`activerecord-8.1.3.1/lib/active_record/tasks/database_tasks.rb:651-669`) loads
-    `db/schema.rb` when the target database has no `schema_migrations` table and a schema dump
-    exists. `db:migrate`, the guarded `db:restart`, and `db:demo:reset` therefore **load the
-    checked-in schema instead of executing the migration files** on a database they just created.
-    An amended create migration is never run, the regenerated `db/schema.rb` keeps the old shape,
-    and the only symptom is a later "unknown column"/"unknown attribute" failure in a form,
-    manifest, or test. This was hit while adding the Scene Section/Event/datetime references, which
-    is why they arrived in a separate `AddSceneReferencesToScenes` migration. Add a new migration
-    for any change to a table whose create migration has already shipped, and verify the column is
-    present before trusting a manifest or a form that uses it.
-
 ## Critical security observations
 
 5. **Critical — the exposed Kamal master key still requires owner rotation and history cleanup.**
@@ -174,6 +159,19 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     CI gate", "One-command containerized onboarding", and "Complete dependency, JavaScript, and
     container supply-chain checks". A green test job is not evidence that a clean
     production image or the full runtime can boot.
+    The `migrations-from-zero` job now closes the migration half of this. It used not to: it ran
+    `db:drop`, `db:create`, and `db:migrate` as three processes — which is required, because one
+    process migrates the inode `db:drop` unlinked — but on the freshly created database `db:migrate`
+    **loaded `db/schema.rb` rather than executing the migration files** (see
+    [development.md](development.md#amending-a-shipped-migration-does-not-work-here)), so
+    `db:migrate:status` reported every migration `up` and `git diff --exit-code db/schema.rb`
+    compared the dump against itself. Verified on 2026-10-01, then fixed the same day: the job
+    creates `schema_migrations` before migrating so the migration files execute, and a guard step
+    fails the job if a `schema_sha1` was recorded in `ar_internal_metadata` — a row only
+    `DatabaseTasks.load_schema` writes. Verified by amending a shipped migration to add a column: the
+    old sequence reported all 36 migrations `up` with the column absent from the database, and the
+    new one runs the migration and fails on the schema diff. The local reset path is covered
+    separately by `test/services/development/database_reset_test.rb`.
 
 37. **Low — development fixtures and documentation overstate baseline coverage.**
     `docs/development.md` says all content and tag fixtures are present, but relation,

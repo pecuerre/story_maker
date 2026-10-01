@@ -54,6 +54,10 @@ UI patterns and the Timeline algorithm. Conventions are in
      authenticated session starts or ends, when password reset invalidates the current browser
      session, and when a stale authentication cookie is encountered, so it cannot cross accounts.
    A `story_id` from another universe raises `RecordNotFound` → 404 (cross-scope protection).
+   When the resolved story is one a reader **explicitly selected**, it is also written to the
+   browser's remembered destination (`RememberedDestination`), which is the cross-sign-in half of
+   the same fact. The write is skipped when the destination has not changed, so ordinary browsing
+   does not put a `Set-Cookie` on every response.
 
 Per-request state lives in **`Current`** (`ActiveSupport::CurrentAttributes`):
 `session`, `universe`, `story`, plus `delegate :user, to: :session`. It is reset between requests
@@ -68,8 +72,19 @@ The language is a second browser-owned preference of exactly the same kind. `App
 signed cookie `um_locale`, and `ApplicationController#switch_locale` is an `around_action` that sets
 `I18n.locale` for the request **before any action runs**, so a redirect's flash is already
 translated. The layout renders `<html lang="...">` from the same value, so the first paint is in the
-right language. Both preferences, and why the layout owns them, are in
+right language. The start page (`AppStartPage`, signed cookie `um_start_page`) is a third, and it is
+navigation state rather than display state: it decides where a sign-in with nothing to return to
+lands, and it has its own section on `/settings`. All three, and why the layout owns them, are in
 [features/settings.md](features/settings.md).
+
+Because the session story map is cleared at every session boundary, the remembered **destination** is
+separate state: a signed browser cookie (`um_last_scope`) holding the account id, universe slug, and
+story id that were last worked in. `RememberedDestination.for` returns it only for the account that
+wrote it, and only after re-resolving the records and re-checking `readable_by?` — a signed cookie
+cannot be forged, but it can be stale. Every way it can be unusable (no cookie, another account's
+cookie, a universe that is now private, a revoked membership, a deleted story) answers `nil`, which
+is the universes list. The decision is in
+[ADR 0017](adr/0017-browser-owned-start-page-and-remembered-destination.md).
 
 A frozen constant holds an I18n **key**, never a translated string: a constant that called `t()` at
 class-load time would resolve once, in whatever locale loaded the class first.
@@ -102,11 +117,25 @@ Other global behavior: `allow_browser versions: :modern`,
   `session[…]`. Wrong nesting fails with `ArgumentError: One or more password arguments are
   required` (500).
 - `start_new_session_for(user)` creates a `Session` row (user agent, IP) and sets
-  `cookies.signed.permanent[:session_id]`.
+  `cookies.signed[:session_id]` with an expiry that matches the session's own absolute deadline, so
+  the browser stops presenting a credential the server will not honour.
+- **Session lifetime and source binding.** `Session` carries the policy
+  ([ADR 0018](adr/0018-session-lifetime-and-user-agent-binding.md)): `expires_at` is an absolute
+  deadline that use never extends, and `last_used_at` drives an idle timeout, refreshed at most once
+  an hour so an active session is not written on every request. `find_session_by_cookie` refuses a
+  session that is past either limit or that was created by a **different user agent** than the one
+  presenting it, deletes its cookie, and destroys the row. The IP address is recorded and never
+  enforced, because an address identifies a network rather than a person and mobile, VPN, and
+  office/home switching all change it legitimately. A row with no recorded user agent, or no recorded
+  lifetime, is left alone so a schema change cannot sign everybody out. `ApplicationCable::Connection`
+  applies the same two checks, because a websocket does not run this concern and would otherwise
+  accept a cookie the request path already refused. `PurgeExpiredSessionsJob` removes dead rows on a
+  schedule; nothing depends on it, since an expired session is already refused without its row.
 - Post-login destination (`sessions#new` remembers the page, `Authentication#after_authentication_url`
   resolves it):
   - a page remembered by `request_authentication`, or the same-host referer of the sign-in page, is
-    returned to; anything else lands on `root_url` (the universe list);
+    returned to; otherwise, if the start-page preference is `remember`, the account's remembered
+    destination is returned to; anything else lands on `root_url` (the universe list);
   - `Authentication#authentication_page?` rejects `/session`, `/session/new`, and `/passwords/*` as
     destinations, both when storing the referer and when resolving it. This is load-bearing: a wrong
     password reopens the form, and the browser sends that form (or the `POST /session` endpoint) as
@@ -118,8 +147,10 @@ Other global behavior: `allow_browser versions: :modern`,
     of a bare status code, because a refusal there answers "nothing happened" to a sign-in that
     succeeded. Every other refusal keeps the bare 403/404.
 - Sign-out destroys the `Current.session`, deletes the cookie, and clears remembered story
-  selections. Starting a new authenticated session performs the same context cleanup, and a
-  request with a stale/deleted authentication session clears its cookie and story context.
+  selections. It deliberately does **not** clear the browser's remembered destination, which is what
+  lets a reader resume after signing in again. Starting a new authenticated session performs the
+  same session-scoped context cleanup, and a request with a stale/deleted authentication session
+  clears its cookie and story context.
 - Password reset: `passwords#create` mails a token link, `passwords#edit/update` change the
   password and destroy all of that user's sessions. Password-reset responses set `Cache-Control:
   no-store` and `Referrer-Policy: no-referrer`. The custom `PasswordResetPathFilter` redacts the

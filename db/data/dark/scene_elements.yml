@@ -6,6 +6,10 @@
 # The data deliberately includes every state the editor has to handle: a dialogue
 # with one speaker and with three, a narration with no content, a Scene with no
 # elements at all, and a speaker who is not a stored participant of the Scene.
+#
+# A Scene Element belongs to a Scene and reaches the Story and the Universe
+# through it, so the second and third stories in this directory have their own
+# elements while the speakers are still the same universe Characters.
 
 # A Scene with three elements, including a Dialogue whose two speakers are not
 # stored participants: they are derived from the dialogue alone.
@@ -94,5 +98,100 @@
 # may hold any number of them, including none.
 - scene: Scene.interlude
   name: No music
+  kind: narration
+  position: 0
+
+# The second story's elements. The speakers are the same eight universe
+# Characters the first story uses; only the Scene that holds them is different.
+- scene: Scene.darker-hollow-tree
+  name: The lid, already off
+  kind: narration
+  body: "The hollow tree has been opened recently, and the leaves packed back down by someone who meant to hide it."
+  position: 0
+
+- scene: Scene.darker-hollow-tree
+  name: "An hour earlier"
+  kind: dialogue
+  body: "You will want to know what is in there. You will not want to have been the one to look."
+  characters: [ Character.bartosz, Character.jonas ]
+  position: 1
+
+- scene: Scene.darker-bartoszs-version
+  name: The older man's account
+  kind: narration
+  body: "Bartosz draws the three steps wrong on purpose, and Jonas memorizes them wrong for thirty-three years."
+  position: 0
+
+# A title-only closing block, as the first story has one.
+- scene: Scene.darker-bartoszs-version
+  name: "What he does not say"
+  kind: narration
+  position: 1
+
+- scene: Scene.darker-second-grave
+  name: Under the headstone
+  kind: dialogue
+  body: "There is no Noah. There is a photograph of Noah, and a date, and nothing underneath either."
+  characters: [ Character.martha, Character.hannah ]
+  position: 0
+
+- scene: Scene.darker-what-the-wind-remembers
+  name: The plant, after hours
+  kind: narration
+  body: "Claudia has kept the 1986 log in a drawer at the plant, and she has never once read it."
+  position: 0
+
+- scene: Scene.darker-cold-open
+  name: No one speaks
+  kind: narration
+  body: "The cave is lit before anyone arrives, and the light goes out on its own."
+  position: 0
+
+# The third story's elements. This story's first scene is a player's arrival, so
+# its dialogue is with a character who has no stored role in the scene at all.
+- scene: Scene.bethesda-arrival
+  name: The platform
+  kind: narration
+  body: "The station clock is wrong by a year and nobody in Winden thinks that is worth mentioning."
+  position: 0
+
+- scene: Scene.bethesda-arrival
+  name: "The stranger on the platform"
+  kind: dialogue
+  body: "You are not from here. Nobody comes to Winden on purpose twice."
+  characters: [ Character.bartosz, Character.claudia ]
+  position: 1
+
+- scene: Scene.bethesda-power-plant
+  name: The guided tour
+  kind: narration
+  body: "Claudia walks the player through four floors and stops on the fifth, where the logs are kept."
+  position: 0
+
+- scene: Scene.bethesda-power-plant
+  name: "Why you are still here"
+  kind: dialogue
+  body: "Everyone who leaves this town comes back. The town does not consider that a problem."
+  characters: [ Character.claudia ]
+  position: 1
+
+# Two speakers, one of whom is also a stored participant below.
+- scene: Scene.bethesda-wardens-bridge
+  name: "Terms of the fight"
+  kind: dialogue
+  body: "Cross the bridge or come back with the device. I will not do this part twice."
+  characters: [ Character.ulrich, Character.egon ]
+  position: 0
+
+- scene: Scene.bethesda-cave-mouth
+  name: The device turns
+  kind: narration
+  body: "The Tannhaus device opens the Sic Mundus mouth from the outside, which no scene in the first story shows."
+  position: 0
+
+# "Winden's Fair" and "The Grotto" hold no elements, so the same empty state is
+# reachable in more than one story.
+- scene: Scene.bethesda-windens-fair
+  name: "The prize wheel"
   kind: narration
   position: 0

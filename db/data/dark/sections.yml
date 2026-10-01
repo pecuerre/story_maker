@@ -1,3 +1,11 @@
+# Sections belong to a Story, so every section below declares the story it
+# groups. `netflix-dark` keeps the season/episode shape it has always had;
+# `netflix-darker` groups by act with nested sequences; `bethesda-dark` uses a
+# flat run of chapters plus one side quest, so switching story changes both the
+# sections and the taxonomy applied to them.
+#
+# Positions are omitted throughout and normalized from file order.
+
 - story: Story.netflix-dark
   name: "Season 1"
   slug: s1
@@ -84,3 +92,55 @@
   slug: s3e3
   section_tags: [ SectionTag.episode ]
   parent: Section.s3
+
+# "Netflix Darker". The Act tree is the same hierarchy the other story uses for
+# seasons, so the nesting behaviour is exercised twice under two taxonomies.
+- story: Story.netflix-darker
+  name: "Act One: The Hollow Tree"
+  slug: act-one
+  section_tags: [ SectionTag.act ]
+
+- story: Story.netflix-darker
+  name: "Sequence 1: What Is Inside"
+  slug: act1s1
+  section_tags: [ SectionTag.sequence ]
+  parent: Section.act-one
+
+- story: Story.netflix-darker
+  name: "Sequence 2: Who Left It"
+  slug: act1s2
+  section_tags: [ SectionTag.sequence ]
+  parent: Section.act-one
+
+- story: Story.netflix-darker
+  name: "Act Two: The Second Grave"
+  slug: act-two
+  section_tags: [ SectionTag.act ]
+
+- story: Story.netflix-darker
+  name: "Cold Open"
+  slug: cold-open
+  section_tags: [ SectionTag.cold-open ]
+
+# "Bethesda Dark". Three chapters in a row plus one side quest that is not part
+# of the main line, so a Story whose sections are not evenly nested is in the
+# data too.
+- story: Story.bethesda-dark
+  name: "Chapter 1: Arrival"
+  slug: ch1
+  section_tags: [ SectionTag.chapter ]
+
+- story: Story.bethesda-dark
+  name: "Chapter 2: The Power Plant"
+  slug: ch2
+  section_tags: [ SectionTag.chapter ]
+
+- story: Story.bethesda-dark
+  name: "Chapter 3: The Cave"
+  slug: ch3
+  section_tags: [ SectionTag.chapter, SectionTag.main-quest ]
+
+- story: Story.bethesda-dark
+  name: "Side Quest: Winden's Fair"
+  slug: side-quest-winden
+  section_tags: [ SectionTag.side-quest ]

@@ -27,6 +27,67 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-01
+
+- **[added]** **"Remember last story": a sign-in returns to where the reader was working, and the
+  preference that decides it has its own settings section.**
+  The request was to land on the last universe and story after signing in, on by default, and it
+  left the settings category to the implementer.
+
+  The obstacle was that the application already remembers a story and that memory could not answer
+  the question. `set_current_story` keeps a per-universe map in `session[:current_story_ids]`, and
+  `Authentication` deliberately deletes it whenever a session starts or ends, is invalidated by a
+  stale cookie, or is destroyed by a password reset. That is correct — it is what stops one
+  account's story choices reaching the next account on the same browser — and it means the memory is
+  gone before the next sign-in.
+
+  Four decisions followed. **The preference is a third browser-owned signed cookie** (`AppStartPage`,
+  `um_start_page`, two values, `remember` by default), following ADR 0013 exactly: no migration, no
+  model, and it works for a guest on the landing page. **It gets its own section on `/settings`**
+  rather than joining Appearance or Language, because a theme and a language change how a page is
+  drawn and this changes which page is opened; the sections became a list (`SETTINGS_SECTIONS`) so
+  that adding one stays a single declarative entry. **The remembered destination is separate state** —
+  a second signed cookie holding the account id, universe slug, and story id — because mixing
+  moving state into the durable preference would rewrite the preference on every page view.
+  **The destination is bound to the account that wrote it and is re-authorized on every read.**
+  `RememberedDestination.for` returns nothing unless the stored account id is the one signing in,
+  then resolves live records, checks `readable_by?`, and finds the story *through that universe's
+  own collection*. A signed cookie cannot be forged but it can be stale, so every way it can be
+  unusable — no cookie, another account's cookie, a universe now private, a revoked membership, a
+  deleted story — answers `nil`, which is the universes list a reader with no memory gets.
+
+  Two boundaries were held deliberately. A page to return to still wins over the remembered
+  story; the preference only answers "and when there is nothing to return to?". And **no fallback to
+  the universe's first story** was introduced anywhere: ADR 0001 rules it out, a universe holds any
+  number of stories, and the remembered value is the only story that may be a landing page because
+  the reader chose it. The root path was also left alone — `/` is still where a universe is chosen
+  and created.
+
+  Sign-out deliberately does **not** forget the destination, which is the whole point, while the
+  session-scoped map is still cleared at every session boundary.
+
+  The browser work turned up a **pre-existing system-test failure** that is recorded as quirk 58
+  rather than fixed here: `authentication_test.rb`'s sign-out case fails because Capybara's
+  synthetic click misses a control inside the `position: fixed-top` navbar. It was verified to fail
+  on an unmodified copy of `HEAD` before this work, and the application's sign-out is correct — the
+  same click driven from the DOM reaches `/session/new`. `settings_start_page_test.rb` works around
+  it with a scripted click rather than pretending the ordinary path works.
+
+  See [ADR 0017](adr/0017-browser-owned-start-page-and-remembered-destination.md).
+
+- **[security]** **Sessions now end on a lifetime and are bound to the user agent.** This resolved
+  quirk 12, which is recorded in full under **Resolved quirks and tech debt** below.
+
+- **[added]** **Two stories in the `dark` development universe.** `netflix-darker` and
+  `bethesda-dark` now sit beside `netflix-dark`, sharing the universe's Characters, Locations,
+  Items, and Events while each declares its own sections, section tags, scene tags, and scene
+  sequence, with `position` restarting at 0 per story. This is what makes the login → universe →
+  story flow and a universe that is not a single story exercisable by hand. `netflix-dark` stays
+  first in `stories.yml` so it remains the story offered first, and `bethesda-dark` carries no
+  photo so the "a Story without one" state is visible without inventing a record. Bartosz gained a
+  Character record: the `Jonas meets Bartosz` Event already named him, and the new stories need him
+  to speak.
+
 ### 2026-09-30
 
 - **[chore]** **Four CI failures, and none of them was a flake: each was a place where the
@@ -2287,6 +2348,56 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk 12: sessions had no expiry or source binding (fixed)
+
+**Then:** a session row recorded who it belonged to and which client created it, and nothing about
+when it would end. The finding was recorded as Medium and named four symptoms:
+
+- Sign-in created a **permanent** cookie while the row it named had no deadline, so a stolen session
+  cookie stayed usable until the owner signed out, reset their password, or was deleted. The cookie
+  outliving the row was the norm rather than an edge case: a permanent cookie lives about twenty
+  years.
+- The `sessions` table had **no expiry or last-used field**, so nothing could tell an abandoned
+  session from an active one.
+- Lookup **validated neither the recorded IP address nor the user agent**, even though both were
+  being written.
+- Old rows had **no cleanup path at all**, so the table grew without bound.
+
+**Fix:** two columns, `expires_at` and `last_used_at`, with the policy on the `Session` model
+(`IDLE_TIMEOUT` two weeks, `ABSOLUTE_TIMEOUT` one year, `LAST_USED_REFRESH_INTERVAL` one hour). The
+two limits answer two different questions and were kept as two different kinds of rule: the idle
+limit is measured from `last_used_at` and moves with use, the absolute limit is measured from
+creation and never moves, so no amount of activity can push it back. `last_used_at` is refreshed on a
+coarse interval rather than per request, because a timestamp written on every page view would make
+each request a write for a precision nobody can observe. The cookie now carries `expires_at` as its
+expiry instead of being permanent, so the browser stops presenting a credential the server has
+already stopped honouring. A refused session is destroyed rather than merely ignored, and
+`PurgeExpiredSessionsJob` removes dead rows on a daily schedule — which nothing depends on, since an
+expired session is refused on its next request whether or not its row exists.
+
+**The binding decision was the owner's, and it is the part worth recording.** The obvious fix binds a
+session to both the IP address and the user agent, and the IP half is a trap: an address identifies a
+**network**, not a person. Mobile connections change it routinely, a VPN changes it on every
+reconnect, office and home networks differ, and a corporate proxy puts several people behind one
+address. Binding to it would sign out legitimate readers at the moments they least expect it, and the
+failure would look like a broken application rather than a security decision. The user agent is the
+part of "source" that actually differs when a cookie is replayed somewhere else, so the session is
+bound to it and the address is recorded for diagnostics only. A request test changes the stored
+address and asserts the session survives, so the intent cannot be quietly reversed later.
+
+Two things the original finding did not name turned out to matter:
+
+- **`ApplicationCable::Connection` resolves sessions outside the controller's authentication
+  concern.** Without applying the same two checks there, a websocket opened with a cookie the
+  request path would already have refused would still be accepted, and the request-time checks would
+  be theatre.
+- **A row with no recorded user agent, or no recorded lifetime, is left alone.** It cannot be
+  checked, and refusing to match a missing value against a present one would end sessions for a
+  reason that has nothing to do with the client presenting them. This is why both columns are
+  nullable and why the migration sets no default: a schema change must not sign everybody out.
+
+See [ADR 0018](adr/0018-session-lifetime-and-user-agent-binding.md).
 
 **Resolved vestigial code**
 

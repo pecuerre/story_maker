@@ -1,5 +1,30 @@
+# Three stories in one Universe. A Universe owns the shared world records — its
+# Characters, Locations, Items, Events, and their taxonomies — and every Story
+# inside it draws on those same records while keeping its own Sections, Section
+# Tags, Scene Tags, and Scenes. Switching Story therefore never changes the
+# Universe Bible, only the story-scoped work under it, which is exactly what
+# this dataset exists to show.
+#
+# `netflix-dark` is the fullest of the three and stays first in the file, so the
+# narrative sample the rest of the manifests depend on loads first.
+
 - universe: Universe.dark
   name: "Netflix Dark"
   slug: netflix-dark
   description: "The Netflix Dark series explores the mysterious events in the small German town of Winden."
   photo: Photo.winden
+
+- universe: Universe.dark
+  name: "Netflix Darker"
+  slug: netflix-darker
+  description: "A darker second telling of the Winden mystery, where the hollow tree is opened before anyone knows what is inside it."
+  # Photos belong to the Universe, not to a Story, so this one is deliberately
+  # shared with `netflix-dark`, which carries the other checked-in image.
+  photo: Photo.the_tannhaus
+
+- universe: Universe.dark
+  name: "Bethesda Dark"
+  slug: bethesda-dark
+  description: "The same town as a player walks it: quests instead of episodes, and a story whose events are optional to trigger."
+  # No photo on purpose: a Story without one is a valid Story, and the third one
+  # in the list is where that state is visible without adding a record.

@@ -1606,6 +1606,7 @@ es:
     tabs:
       appearance: "Apariencia"
       language: "Idioma"
+      start_page: "Página de inicio"
     appearance:
       title: "Apariencia"
       description: "Así representa este navegador Universe Maker. Todas las páginas siguen la elección y nada más del espacio de trabajo cambia con ella."
@@ -1624,11 +1625,30 @@ es:
       option_description:
         en: "El idioma en el que está escrita actualmente la aplicación."
         es: "Español. La aplicación, sus páginas y sus mensajes."
+    # Ni Apariencia ni Idioma: esta sección cambia qué página se abre, no cómo
+    # está dibujada la página.
+    start_page:
+      title: "Página de inicio"
+      description: "Adonde va este navegador después de iniciar sesión, cuando no hay ninguna página a la que volver."
+      legend: "Después de iniciar sesión"
+      hint: "La elección se recuerda en este navegador. Volver a tu última historia solo ocurre si esa historia la elegiste tú; Universe Maker nunca elige una historia por ti."
+      submit: "Guardar la página de inicio"
     flash:
       theme_saved: "El tema ahora es %{theme}."
       locale_saved: "El idioma ahora es %{language}."
+      start_page_saved: "Después de iniciar sesión, irás a %{start_page}."
       theme_unknown: "Elige entre el tema claro y el oscuro."
       locale_unknown: "Elige uno de los idiomas que ofrece la aplicación."
+      start_page_unknown: "Elige entre tu última historia y la lista de universos."
+
+  # Las dos páginas de inicio, nombradas como las pediría un lector.
+  start_pages:
+    remember:
+      label: "Mi última historia"
+      description: "Abre el universo y la historia en la que estabas trabajando."
+    universes:
+      label: "La lista de universos"
+      description: "Empieza siempre por la lista de universos que puedes abrir."
 
   themes:
     light:

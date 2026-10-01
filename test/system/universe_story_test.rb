@@ -30,6 +30,59 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_match %r{/u/system-test-universe/s/\d+/sections\z}, current_path
   end
 
+  # The login -> universe -> story flow with more than one story present. The
+  # story picker is the universe page, so switching stories is a second visit to
+  # that same page rather than a dropdown, and the Universe Bible the two stories
+  # share must not change when the story does.
+  test "a reader signs in, opens a universe of several stories, and switches between two" do
+    universe = universes(:universe_one)
+    first = stories(:story_one)
+    second = stories(:story_alt)
+
+    sign_in_via_form(users(:user_one))
+
+    # Sign-in lands on the universe list, and the universe is one click from it.
+    assert_selector "h1", text: "Universes"
+    click_link universe.name
+
+    assert_selector "h1", text: universe.name
+    assert_selector "#universe-stories-title", text: "2 stories"
+
+    # No story is implied: with no selection the sidebar says so rather than
+    # falling back to the first of the two.
+    assert_selector ".sidebar-story-name", text: "None selected"
+
+    find("#universe-stories-title ~ .list-group a[aria-label='Open #{first.name}']").click
+
+    assert_selector "h1", text: first.name
+    assert_selector ".sidebar-story-name", text: first.name
+
+    # Back to the picker for the second story. The one just left is marked, so
+    # the reader can see which of the two is current.
+    click_link "Universe Maker"
+    click_link universe.name
+    assert_selector ".badge", text: "Current"
+    assert_text first.name
+
+    find("#universe-stories-title ~ .list-group a[aria-label='Open #{second.name}']").click
+
+    assert_selector "h1", text: second.name
+    assert_selector ".sidebar-story-name", text: second.name
+
+    # The Universe Bible is shared: both stories reach the same universe-level
+    # Characters, which is what makes them two stories in one universe rather
+    # than two universes.
+    within "nav[aria-label='Universe and story navigation']" do
+      click_link "Characters"
+    end
+
+    assert_current_path universe_characters_path(universe_slug: universe.slug)
+    assert_selector "h1", text: "Characters"
+    within "aside.workspace-sidebar" do
+      assert_selector ".sidebar-story-name", text: second.name
+    end
+  end
+
   test "a name whose address is taken is refused, and the address field answers it" do
     sign_in_via_form(users(:user_one))
 

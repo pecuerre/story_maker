@@ -1,3 +1,8 @@
+# Scene Tags belong to a Story, so each story in this directory carries its own
+# vocabulary. `netflix-darker` tags scenes by how they read and `bethesda-dark`
+# by how the player meets them, so the same Universe Bible produces three
+# different scene taxonomies rather than one repeated.
+
 - story: Story.netflix-dark
   name: Mood
   slug: mood
@@ -22,4 +27,56 @@
   name: Revelation
   slug: revelation
   parent: SceneTag.turning-point
+  position: 0
+
+- story: Story.netflix-darker
+  name: Register
+  slug: register
+  bgcolor: "#4a4a4a"
+  fgcolor: "#ffffff" # white
+  position: 0
+
+- story: Story.netflix-darker
+  name: Cold
+  slug: cold
+  parent: SceneTag.register
+  bgcolor: "#8c9baa"
+  fgcolor: "#000000" # black
+  position: 0
+
+- story: Story.netflix-darker
+  name: Without relief
+  slug: without-relief
+  bgcolor: "#5a1f1f"
+  fgcolor: "#ffffff" # white
+  position: 1
+
+- story: Story.bethesda-dark
+  name: Playable
+  slug: playable
+  bgcolor: "#2e7d32"
+  fgcolor: "#ffffff" # white
+  position: 0
+
+- story: Story.bethesda-dark
+  name: Combat
+  slug: combat
+  parent: SceneTag.playable
+  bgcolor: "#c62828"
+  fgcolor: "#ffffff" # white
+  position: 0
+
+- story: Story.bethesda-dark
+  name: Cutscene
+  slug: cutscene
+  bgcolor: "#6a1b9a"
+  fgcolor: "#ffffff" # white
+  position: 1
+
+- story: Story.bethesda-dark
+  name: Optional
+  slug: optional
+  parent: SceneTag.cutscene
+  bgcolor: "#bdbdbd"
+  fgcolor: "#000000" # black
   position: 0

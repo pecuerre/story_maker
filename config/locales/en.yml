@@ -1532,6 +1532,7 @@ en:
     tabs:
       appearance: "Appearance"
       language: "Language"
+      start_page: "Start page"
     appearance:
       title: "Appearance"
       description: "How this browser renders Universe Maker. Every page follows the choice, and nothing else about the workspace changes with it."
@@ -1552,11 +1553,30 @@ en:
       option_description:
         en: "The language this application is currently written in."
         es: "Spanish. The application, its pages, and its messages."
+    # Not Appearance and not Language: this section changes which page opens,
+    # rather than how the page is drawn.
+    start_page:
+      title: "Start page"
+      description: "Where this browser goes after you sign in, when there is no page to return to."
+      legend: "After signing in"
+      hint: "The choice is remembered in this browser. Returning to your last story still only happens when you picked that story yourself; Universe Maker never chooses a story for you."
+      submit: "Save start page"
     flash:
       theme_saved: "Theme set to %{theme}."
       locale_saved: "Language set to %{language}."
+      start_page_saved: "After signing in, you will go to %{start_page}."
       theme_unknown: "Choose either the light or the dark theme."
       locale_unknown: "Choose a language this application offers."
+      start_page_unknown: "Choose either your last story or the universes list."
+
+  # The two start pages, named the way a reader would ask for them.
+  start_pages:
+    remember:
+      label: "My last story"
+      description: "Open the universe and story you were last working in."
+    universes:
+      label: "The universes list"
+      description: "Always start from the list of universes you can open."
 
   # The two themes, named in the reader's own language.
   themes:

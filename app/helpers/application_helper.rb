@@ -32,28 +32,54 @@ module ApplicationHelper
     @current_locale ||= AppLocale.read(cookies)
   end
 
+  # Where this reader is sent when they sign in with nothing to return to. Read
+  # from a signed cookie for the same reason as the theme and the language, and
+  # therefore subject to the same "unknown value is the default" rule.
+  def current_start_page
+    @current_start_page ||= AppStartPage.read(cookies)
+  end
+
   # The settings sections, in the order the vertical navigation lists them. Each
   # one owns a real destination, so the navigation is URL-backed like every other
   # tab strip in the application: no `data-bs-toggle`, no in-document panes. The
-  # first tab is the page itself, and a later tab that needs its own state gets a
-  # query parameter in the shape of the taxonomy workspace — hence the Language
-  # tab's `?section=language`, which is that own state rather than a second
-  # route for the same page.
+  # first section owns the page's own URL (`/settings`) rather than a query
+  # parameter, so one section does not have two addresses; a later section that
+  # needs its own state gets `?section=…`, which is that own state rather than a
+  # second route for the same page.
+  #
+  # Adding a section is one entry here, one in `SETTINGS_SECTIONS`, and one panel
+  # in the view — the sections are a list rather than a pair of booleans for
+  # exactly that reason.
+  SETTINGS_SECTIONS = %w[appearance language start_page].freeze
+
   def settings_tabs
     [
       { label: t("settings.tabs.appearance"), icon: "palette", path: settings_path,
-        active: controller_name == "settings" && !settings_language_section? },
+        active: settings_section?("appearance") },
       { label: t("settings.tabs.language"), icon: "translate", path: settings_path(section: "language"),
-        active: controller_name == "settings" && settings_language_section? }
+        active: settings_section?("language") },
+      { label: t("settings.tabs.start_page"), icon: "box-arrow-in-right", path: settings_path(section: "start_page"),
+        active: settings_section?("start_page") }
     ]
   end
 
-  # Whether this request is the Language section rather than the page's own
-  # Appearance section. The query parameter is the only thing that distinguishes
-  # them, so the navigation, the panel, and the redirect after a save all read
-  # this one predicate.
-  def settings_language_section?
-    params[:section].to_s == "language"
+  # Which settings section this request is showing. The query parameter is the
+  # only thing that distinguishes them, so the navigation, the panel, and the
+  # redirect after a save all read this one answer. An absent or unrecognised
+  # parameter is the first section, which is the page's own address — so
+  # `/settings` and `/settings?section=nonsense` are the same page rather than an
+  # error.
+  def current_settings_section
+    requested = params[:section].to_s
+    SETTINGS_SECTIONS.include?(requested) ? requested : SETTINGS_SECTIONS.first
+  end
+
+  def settings_section?(name)
+    current_settings_section == name.to_s
+  end
+
+  def settings_path_for(section)
+    section == SETTINGS_SECTIONS.first ? settings_path : settings_path(section: section)
   end
 
   def icon(name)

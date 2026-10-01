@@ -1,0 +1,70 @@
+# Sessions are fixtures here because the session model now carries real policy:
+# an idle limit, an absolute limit, and a user-agent binding. Each row states the
+# one condition it exists to prove, and the `SessionTest` cases read them by
+# label.
+#
+# There is no slug column, so a fixture declares its own id from its label — the
+# same value `sign_in_as` would produce for the same label, so a test can move
+# between a fixture session and a signed-in one without bookkeeping.
+#
+# `created_at`, `last_used_at`, and `expires_at` are ERB so a row can be written
+# as "idle by just under the limit" instead of drifting as time passes.
+
+<% now = Time.current %>
+<% idle = Session::IDLE_TIMEOUT %>
+<% absolute = Session::ABSOLUTE_TIMEOUT %>
+
+# The ordinary case: created now, well inside both limits, and bound to a
+# recorded browser.
+active:
+  id: <%= ActiveRecord::FixtureSet.identify(:active) %>
+  user: user_one
+  user_agent: "Mozilla/5.0 (recorded browser)"
+  ip_address: "198.51.100.10"
+  created_at: <%= (now - 10.minutes).to_fs(:db) %>
+  expires_at: <%= (now - 10.minutes + absolute).to_fs(:db) %>
+  # Well inside the refresh interval, so the fixture represents a session that
+  # is plainly in use rather than one sitting on the refresh boundary.
+  last_used_at: <%= (now - 10.minutes).to_fs(:db) %>
+
+# A row as it looked before the lifetime columns existed. It must not be treated
+# as expired or bound, because a schema change cannot be allowed to sign out
+# everyone who already had a session.
+without_lifetime:
+  id: <%= ActiveRecord::FixtureSet.identify(:without_lifetime) %>
+  user: user_one
+  ip_address: "198.51.100.11"
+  created_at: <%= (now - 3.days).to_fs(:db) %>
+
+# Past its absolute deadline, so it is refused and is what the cleanup task
+# removes. It was also used moments before expiring, which is what proves the
+# two limits are independent.
+expired:
+  id: <%= ActiveRecord::FixtureSet.identify(:expired) %>
+  user: user_two
+  user_agent: "Mozilla/5.0 (recorded browser)"
+  ip_address: "198.51.100.12"
+  created_at: <%= (now - absolute - 1.day).to_fs(:db) %>
+  expires_at: <%= (now - 1.day).to_fs(:db) %>
+  last_used_at: <%= (now - 2.hours).to_fs(:db) %>
+
+# A session whose recorded user agent is the thing under test, kept apart from
+# `active` so the binding cases do not depend on the idle/absolute cases.
+bound:
+  id: <%= ActiveRecord::FixtureSet.identify(:bound) %>
+  user: user_one
+  user_agent: "Mozilla/5.0 (recorded browser)"
+  ip_address: "198.51.100.14"
+  created_at: <%= (now - 2.hours).to_fs(:db) %>
+  expires_at: <%= (now - 2.hours + absolute).to_fs(:db) %>
+  last_used_at: <%= (now - 2.hours).to_fs(:db) %>
+
+# Inside its absolute deadline but unused for longer than the idle timeout.
+idle:
+  id: <%= ActiveRecord::FixtureSet.identify(:idle) %>
+  user: user_two
+  user_agent: "Mozilla/5.0 (recorded browser)"
+  ip_address: "198.51.100.13"
+  created_at: <%= (now - idle - 1.day).to_fs(:db) %>
+  expires_at: <%= (now - idle - 1.day + absolute).to_fs(:db) %>
+  last_used_at: <%= (now - idle - 1.hour).to_fs(:db) %>

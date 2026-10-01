@@ -57,3 +57,54 @@
 - scene: Scene.the-golden-beast
   location: Location.winden
   role: the alternate world
+
+# "Netflix Darker" links the same eight universe Locations, including a nested
+# room beside its own parent in one scene, exactly as the first story does.
+- scene: Scene.darker-hollow-tree
+  location: Location.winden_forest
+  role: the hollow tree
+
+- scene: Scene.darker-hollow-tree
+  location: Location.jonas_room
+  role:
+
+- scene: Scene.darker-bartoszs-version
+  location: Location.jonas_house
+  role: the attic conversation
+
+- scene: Scene.darker-second-grave
+  location: Location.winden
+  role: the cemetery
+
+- scene: Scene.darker-what-the-wind-remembers
+  location: Location.winden
+  role:
+
+- scene: Scene.darker-cold-open
+  location: Location.winden_cave
+  role: lit before anyone arrives
+
+# "Bethesda Dark" links the same places, and one scene in it holds a building
+# and a nested room so the Locations tab shows both ancestor paths again.
+- scene: Scene.bethesda-arrival
+  location: Location.winden
+  role: arrives at the station
+
+- scene: Scene.bethesda-power-plant
+  location: Location.winden
+  role: the plant
+
+- scene: Scene.bethesda-wardens-bridge
+  location: Location.winden_forest
+  role: the bridge
+
+- scene: Scene.bethesda-wardens-bridge
+  location: Location.nielsen_house
+  role: the house at the far end
+
+- scene: Scene.bethesda-cave-mouth
+  location: Location.winden_cave
+  role: the main quest
+
+# The fair is deliberately left with no linked locations, so the empty state of
+# the Locations tab is reachable in more than one story.

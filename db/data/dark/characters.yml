@@ -30,3 +30,10 @@
 - universe: Universe.dark
   name: Claudia
   character_tags: [ CharacterTag.family_tiedemann, CharacterTag.nuclear_plant ]
+
+# Bartosz is named by the "Jonas meets Bartosz" Event but had no Character record
+# until the second and third stories needed him to speak. He belongs to the
+# Universe, so every story may use him.
+- universe: Universe.dark
+  name: Bartosz
+  character_tags: [ CharacterTag.sic_mundus ]

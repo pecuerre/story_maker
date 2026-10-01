@@ -37,14 +37,6 @@ reachable security/data-loss issues from lower-priority hardening and contract d
    See [`delivery_history.md`](delivery_history.md) for the repository-containment change and
    [`config/deploy.yml`](../config/deploy.yml) for the local secret contract.
 
-12. **Medium — sessions have no application-enforced expiry or source binding.** Login creates a
-    permanent cookie and stores only its session ID (`app/controllers/concerns/authentication.rb:41-50`).
-    The `sessions` table has no expiry or last-used field (`db/schema.rb:265-272`,
-    `app/models/session.rb:1-3`), and lookup validates neither the recorded IP address nor user
-    agent (`authentication.rb:24-30,42`). A stolen cookie remains usable until logout, password
-    reset, or user deletion, and old rows have no cleanup path. Basic cookie flags now have a
-    request regression, but no idle/absolute expiration policy or source-binding test exists.
-
 ## Mutation, route, and data-contract observations
 
 19. **Medium — nonexistent optional association IDs escape the JSON error contract.** Hierarchical
@@ -263,6 +255,22 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `app/views/pwa/service-worker.js` have no route or layout link, and the PWA palette contains a
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
+
+58. **Medium — a synthetic click on a control inside the fixed navbar misses it.** The navbar is
+    `position: fixed-top` (`app/views/layouts/_navbar.html.erb:1`). Capybara scrolls an element into
+    view before clicking it, and a fixed navbar does not move with the document, so the element has
+    shifted between the scroll and the click and the click lands somewhere else — silently, because
+    the click still hits *something*. `test/system/authentication_test.rb`'s "a user can sign in and
+    sign out" fails for this reason and has done so before any recent change: clicking **Log out**,
+    which is a `button_to` inside a Bootstrap dropdown in that navbar, leaves the reader still signed
+    in and still on the page they were on. This is **not** a defect in sign-out — the form is correct,
+    the session is destroyed, and driving the same click from the DOM reaches `/session/new`. It is a
+    test-harness limitation, and it is currently worked around rather than fixed:
+    `test/system/settings_start_page_test.rb` submits the same form with a scripted click. The fix is
+    either to stop the harness scrolling for elements inside the fixed navbar (a Capybara
+    configuration or a shared helper) or to move the account menu out of the fixed element. Until
+    then, the sign-out path has no browser-level coverage that does not work around it, and the
+    request suite is the only place sign-out is actually asserted.
 
 56. **Medium — an index write the engine refuses asynchronously is invisible to the job that queued
     it.** `Search::IndexRecordJob` and `Search::RemoveRecordJob` hand a document to the engine and

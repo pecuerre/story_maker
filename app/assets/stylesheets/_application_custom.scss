@@ -1224,6 +1224,25 @@ $um-search-match: #ffc107;
   background: $gray-900;
 }
 
+// A settings option that has no colour to preview — the start page is a
+// destination, not a palette — carries an icon where the theme options carry a
+// swatch. It is sized to the same square so the two sections' option cards
+// line up, and it takes the page's own text colour rather than a fixed one, so
+// it stays legible in the dark theme.
+.theme-option-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .375rem;
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+  font-size: 1rem;
+}
+
 // Details pages: one identity card followed by related-records sections. The
 // structure is stable on purpose, because each record type adds its own facts
 // and sections to it as the universe grows.

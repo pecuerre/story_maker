@@ -113,6 +113,22 @@ class ApplicationController < ActionController::Base
     else
       Current.story = stories.find_by(id: remembered_story_ids[Current.universe.id.to_s])
     end
+
+    remember_start_page
+  end
+
+  # Keep the browser's copy of "where this account was last working" current.
+  #
+  # Only an explicitly selected story is recorded, and only for a signed-in
+  # reader: arriving in a universe with no story chosen is not a destination
+  # anyone asked to return to, and a guest has no account for the value to be
+  # bound to. `RememberedDestination.remember` skips the write when nothing
+  # changed, so this costs nothing on an ordinary page view.
+  def remember_start_page
+    return if Current.story.nil?
+
+    RememberedDestination.remember(cookies,
+      user: Current.user, universe: Current.story.universe, story: Current.story)
   end
 
   def remembered_story_ids

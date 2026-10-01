@@ -1,6 +1,11 @@
 # Several scenes share one section (Season 1 / Episode 1), several scenes stay
 # ungrouped, and the remaining sections keep one scene each, so grouping and
 # narrative order can be seen to be different things.
+#
+# The three stories each own their own flat scene sequence, and `position` is
+# per Story: the second story starts again at 0 rather than continuing the first
+# one's numbering, because narrative order is a property of a Story and nothing
+# else.
 - story: Story.netflix-dark
   name: Secrets
   slug: secrets
@@ -110,3 +115,105 @@
   name: Interlude
   slug: interlude
   position: 11
+
+# "Netflix Darker" restages the same Winden cast as its own story. The Scenes
+# reuse the universe's Characters, Items, Locations, and Events — they are shared
+# by every story in the universe — while their Sections, Tags, and positions are
+# entirely this story's own.
+- story: Story.netflix-darker
+  name: The Hollow Tree
+  slug: darker-hollow-tree
+  description: "Jonas opens the hollow tree a day before the series opens it, and finds it already empty."
+  section: Section.act1s1
+  event: Event.jonas_meets_bartosz
+  scene_tags: [ SceneTag.register, SceneTag.cold ]
+  datetime: "1986-08-31T07:15"
+  position: 0
+
+- story: Story.netflix-darker
+  name: "Bartosz's Version"
+  slug: darker-bartoszs-version
+  description: "The older Jonas explains what the box is for, and refuses to say who emptied it."
+  section: Section.act1s1
+  event: Event.conversation1
+  scene_tags: [ SceneTag.without-relief ]
+  position: 1
+
+# Two scenes under one sequence, and a third left ungrouped: the grouping and
+# the narrative order stay separate things here as they are above.
+- story: Story.netflix-darker
+  name: The Second Grave
+  slug: darker-second-grave
+  description: "Martha opens the second grave in the cemetery and finds nothing but a box of photographs."
+  section: Section.act1s2
+  scene_tags: [ SceneTag.register, SceneTag.without-relief ]
+  datetime: "2019-11-08T16:40"
+  position: 2
+
+- story: Story.netflix-darker
+  name: What the Wind Remembers
+  slug: darker-what-the-wind-remembers
+  description: "Claudia meets Jonas at the plant and offers him the record she has been keeping since 1986."
+  section: Section.act-two
+  event: Event.meeting
+  scene_tags: [ SceneTag.cold ]
+  position: 3
+
+# The cold open is told first in this story and happens last in-world, and the
+# sequence restarts at 0 while `netflix-dark` is still on its twelfth scene.
+- story: Story.netflix-darker
+  name: Cold Open
+  slug: darker-cold-open
+  description: "The Sic Mundus cave, in 1953, before anything this story has told has happened yet."
+  datetime: "1953-11-05T04:00"
+  position: 4
+
+# "Bethesda Dark" is the same universe told as something the reader walks
+# through. Its scene tags describe the mode rather than the mood, and its main
+# quest is optional to trigger, which is the one fact a Scene's own fields cannot
+# state and its tags have to carry.
+- story: Story.bethesda-dark
+  name: Arrival in Winden
+  slug: bethesda-arrival
+  description: "The player arrives at Winden station with a suitcase and no idea what the town is for."
+  section: Section.ch1
+  scene_tags: [ SceneTag.playable ]
+  datetime: "2024-01-01T09:00"
+  position: 0
+
+- story: Story.bethesda-dark
+  name: The Power Plant
+  slug: bethesda-power-plant
+  description: "Claudia gives the player the tour she gives no one else, and the tour is a trap."
+  section: Section.ch2
+  event: Event.explosion
+  scene_tags: [ SceneTag.cutscene ]
+  position: 1
+
+# A playable fight that is also a cutscene: two tags from different branches of
+# this story's taxonomy on one scene.
+- story: Story.bethesda-dark
+  name: "Warden's Bridge"
+  slug: bethesda-wardens-bridge
+  description: "The bridge fight the player can either fight or talk their way past."
+  section: Section.ch3
+  event: Event.party
+  scene_tags: [ SceneTag.playable, SceneTag.combat, SceneTag.cutscene ]
+  datetime: "2024-01-01T11:30"
+  position: 2
+
+- story: Story.bethesda-dark
+  name: The Cave Mouth
+  slug: bethesda-cave-mouth
+  description: "The cave the main quest points at, opened with the Tannhaus device the player has been carrying since chapter one."
+  section: Section.ch3
+  event: Event.time_travel
+  scene_tags: [ SceneTag.playable, SceneTag.optional ]
+  position: 3
+
+# The side quest: ungrouped from the chapter line, tagged as optional, and the
+# only scene here with no description and no in-world time.
+- story: Story.bethesda-dark
+  name: "Winden's Fair"
+  slug: bethesda-windens-fair
+  position: 4

@@ -1,3 +1,8 @@
+# Section Tags belong to a Story, not to a Universe, so each of the three
+# stories in this directory declares its own taxonomy and a tag from one story
+# can never be applied to a section in another. Positions are omitted here and
+# normalized from file order, as they are in the rest of this directory.
+
 - story: Story.netflix-dark
   name: Season
   slug: season
@@ -14,4 +19,46 @@
   name: Finale
   slug: finale
   bgcolor: "#6699cc" # blue gray
+  fgcolor: "#000000" # black
+
+# "Netflix Darker" is organized by act rather than by episode, so its taxonomy
+# is a different shape rather than the same two names again.
+- story: Story.netflix-darker
+  name: Act
+  slug: act
+  bgcolor: "#8c8c8c"
+  fgcolor: "#000000" # black
+
+- story: Story.netflix-darker
+  name: Sequence
+  slug: sequence
+  parent: SectionTag.act
+  bgcolor: "#b3b3b3"
+  fgcolor: "#000000" # black
+
+- story: Story.netflix-darker
+  name: Cold open
+  slug: cold-open
+  bgcolor: "#6699cc" # blue gray
+  fgcolor: "#000000" # black
+
+# The game story groups by chapter and marks the optional ones, so it exercises
+# a third shape in the same universe.
+- story: Story.bethesda-dark
+  name: Chapter
+  slug: chapter
+  bgcolor: "#8c8c8c"
+  fgcolor: "#000000" # black
+
+- story: Story.bethesda-dark
+  name: Side quest
+  slug: side-quest
+  parent: SectionTag.chapter
+  bgcolor: "#b3b3b3"
+  fgcolor: "#000000" # black
+
+- story: Story.bethesda-dark
+  name: Main quest
+  slug: main-quest
+  bgcolor: "#ffd700" # gold
   fgcolor: "#000000" # black

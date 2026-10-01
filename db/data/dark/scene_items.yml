@@ -45,3 +45,48 @@
 - scene: Scene.the-journey
   item: Item.st_christopher_medal
   role: around Hannah's neck
+
+# "Netflix Darker" links the same five universe Items. The key that is carried in
+# the first story is found in the tree in the second, which is the same Item row
+# and a different fact about it.
+- scene: Scene.darker-hollow-tree
+  item: Item.jonas_key
+  role: missing, and opened anyway
+
+- scene: Scene.darker-bartoszs-version
+  item: Item.sphere_machine
+  role: described, not shown
+
+- scene: Scene.darker-second-grave
+  item: Item.st_christopher_medal
+  role: in the photograph
+
+- scene: Scene.darker-what-the-wind-remembers
+  item: Item.tannhaus_clockwork_device
+  role:
+
+- scene: Scene.darker-cold-open
+  item: Item.the_god_particle
+  role:
+
+# "Bethesda Dark". The Tannhaus device is the one the player carries from the
+# first chapter to the last, so it appears in two scenes three scenes apart.
+- scene: Scene.bethesda-arrival
+  item: Item.tannhaus_clockwork_device
+  role: still packed
+
+- scene: Scene.bethesda-power-plant
+  item: Item.the_god_particle
+  role: on the fifth floor
+
+- scene: Scene.bethesda-wardens-bridge
+  item: Item.sphere_machine
+  role:
+
+- scene: Scene.bethesda-cave-mouth
+  item: Item.tannhaus_clockwork_device
+  role: opens the cave
+
+# "Winden's Fair" is deliberately left with no linked items, and so is the
+# second story's cold open, so the empty state of the Items tab is reachable in
+# more than one story.

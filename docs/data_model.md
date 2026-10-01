@@ -111,7 +111,7 @@ method. Each rule is stated in full in [features/photos.md](features/photos.md).
 | Table | Columns (beyond timestamps) | Notes |
 |---|---|---|
 | `users` | `email_address` (unique), `name`, `password_digest`, `slug` (unique) | `has_secure_password`; email normalized (`strip.downcase`) via `normalizes` |
-| `sessions` | `user_id` FK, `ip_address`, `user_agent` | created on sign-in; referenced by the signed cookie |
+| `sessions` | `user_id` FK, `ip_address`, `user_agent`, `expires_at`, `last_used_at` | created on sign-in; referenced by the signed cookie, which expires with `expires_at`. `expires_at` is the absolute deadline (never extended by use) and `last_used_at` drives the idle timeout; both are set by the model, not by a column default, because the limits are policy values. Both are nullable so a row written before the columns existed is treated as still valid rather than signing everyone out. `user_agent` is enforced (a mismatch ends the session); `ip_address` is recorded for diagnostics only |
 | `universes` | `name`, `owner_id` FK→users, `private` (bool, default `false`, **NOT NULL**), `slug` (unique) | `visible_to(user)` includes public universes plus private universes owned by or joined by the user; only explicit `false` grants public access |
 | `universe_memberships` | `universe_id` FK, `user_id` FK, `access_level` (1=read, 2=write, 3=admin; default 1) | unique per `[universe_id, user_id]`; the owner is implicitly admin and is not stored as a membership |
 

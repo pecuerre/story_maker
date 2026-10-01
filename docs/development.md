@@ -256,7 +256,7 @@ There is one subdirectory per universe, named by its slug:
 
 ```text
 db/data/
-  dark/       # the more complete Dark dataset
+  dark/       # the more complete Dark dataset, and three stories in one universe
   lotr/       # the smaller Lord of the Rings dataset
   star_wars/  # future universe data
 ```
@@ -273,6 +273,16 @@ sections, section tags, world-building records, taxonomies, and relationships. A
 directory is not a feature directory. For example, a future `Dialog` model belongs in
 `db/data/dark/dialogs.yml` (and in `db/data/lotr/dialogs.yml` when that universe should exercise
 it), not in `db/data/dialog/`.
+
+`dark` holds **three stories in one universe** — `netflix-dark`, `netflix-darker`, and
+`bethesda-dark` — so the login → universe → story flow and a universe that is not a single story are
+both exercisable by hand. The three share the universe's Characters, Locations, Items, and Events and
+differ in everything story-scoped: each declares its own sections, section tags, scene tags, and scene
+sequence, and each scene's `position` starts again at `0` rather than continuing a universe-wide
+numbering. `netflix-dark` is first in `stories.yml` so it stays the Story a reader is offered first,
+and its slug-prefixed manifest entries (`s1`, `s1e1`, `secrets`, …) are the ones the rest of the
+narrative sample data refers to. `bethesda-dark` carries no photo, so the "a Story without one"
+state is visible without inventing a record.
 
 The shared development loader is `Development::UniverseDataLoader`, configured by
 `app/services/development/universe_data_registry.rb`. It walks one registry order for every
@@ -383,7 +393,12 @@ UNIVERSE=lotr bin/rails db:demo:load                       # optional second uni
 bin/rails server
 ```
 
-Log in with the documented Dark development user, open `/u/dark/s/<story_id>/scenes`, and check:
+Sign in with the documented Dark development user, open `/u/dark`, and check that all three stories
+are listed with **Open** actions, that **None selected** is the sidebar's story state until one is
+opened, and that switching between them changes the Sections and Scenes under the Story while
+Characters, Locations, Items, and Events stay the same records.
+
+Then open `/u/dark/s/<story_id>/scenes` and check:
 the sidebar **Scenes** entry links to the selected story and shows the scene count; the list is in
 narrative order with position pills; each row shows its nested Section path or **Ungrouped**; Move
 up/Move down reorder the sequence and are disabled at the boundaries; the delete confirmation

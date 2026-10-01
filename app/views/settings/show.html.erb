@@ -1,7 +1,7 @@
 <%# Settings is a platform page, not universe content, so it is reached from the top
-    bar and renders without a workspace. The page has one address per section,
-    selected by `?section=language`; a new section is one entry in `settings_tabs`,
-    one panel here, and one value the section predicate matches. %>
+    bar and renders without a workspace. Each section has one address, selected
+    by `?section=…`; a new section is one entry in `settings_tabs`, one value in
+    `SETTINGS_SECTIONS`, and one panel here. %>
 <%= render "shared/page_header",
   title: t("settings.title"),
   eyebrow: t("settings.eyebrow"),
@@ -18,7 +18,7 @@
 <div class="settings-layout">
   <%= render "shared/settings_navigation", tabs: settings_tabs %>
 
-  <% if settings_language_section? %>
+  <% if settings_section?("language") %>
     <section class="settings-panel" aria-labelledby="language-title">
       <h2 class="settings-panel-title" id="language-title"><%= t("settings.language.title") %></h2>
       <p class="settings-panel-description"><%= t("settings.language.description") %></p>
@@ -30,7 +30,7 @@
           any already-loaded page in the old one. A real page load is the one
           navigation that guarantees the whole document changes language at
           once. %>
-      <%= form_with url: settings_path(section: "language"), method: :patch, class: "form-surface settings-form",
+      <%= form_with url: settings_path_for("language"), method: :patch, class: "form-surface settings-form",
         data: { turbo: false } do |form| %>
         <fieldset class="settings-fieldset">
           <legend class="form-label"><%= t("settings.language.legend") %></legend>
@@ -58,6 +58,51 @@
 
         <div class="form-actions">
           <%= form.submit t("settings.language.submit"), class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </section>
+  <% elsif settings_section?("start_page") %>
+    <%# This section is neither display nor language: it changes which page opens
+        rather than how the page is drawn, which is why it has its own tab. %>
+    <section class="settings-panel" aria-labelledby="start-page-title">
+      <h2 class="settings-panel-title" id="start-page-title"><%= t("settings.start_page.title") %></h2>
+      <p class="settings-panel-description"><%= t("settings.start_page.description") %></p>
+
+      <%# A plain full-page form, opting out of Turbo for consistency with the
+          other two sections rather than out of necessity: nothing here lives on
+          the root element, so a Turbo submission would work. It is still a real
+          page load, so every section of this page saves the same way — the
+          section navigation's active state and the flash are both rendered by
+          the response rather than re-derived from the request that preceded it. %>
+      <%= form_with url: settings_path_for("start_page"), method: :patch, class: "form-surface settings-form",
+        data: { turbo: false } do |form| %>
+        <fieldset class="settings-fieldset">
+          <legend class="form-label"><%= t("settings.start_page.legend") %></legend>
+          <p class="settings-hint" id="start-page-hint"><%= t("settings.start_page.hint") %></p>
+
+          <div class="theme-options">
+            <% AppStartPage.names.each do |name| %>
+              <%# The label is the card, so the checked state is one adjacent-sibling
+                  rule away and the control needs no scripting. %>
+              <div class="theme-option">
+                <%= form.radio_button :start_page, name,
+                  checked: name == current_start_page,
+                  class: "form-check-input",
+                  aria: { describedby: "start-page-hint" } %>
+                <label class="theme-option-label" for="start_page_<%= name %>">
+                  <span class="theme-option-icon" aria-hidden="true"><i class="bi bi-<%= AppStartPage.icon_for(name) %>"></i></span>
+                  <span class="theme-option-copy">
+                    <span class="theme-option-name"><%= AppStartPage.label_for(name) %></span>
+                    <span class="theme-option-description"><%= AppStartPage.description_for(name) %></span>
+                  </span>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <%= form.submit t("settings.start_page.submit"), class: "btn btn-primary" %>
         </div>
       <% end %>
     </section>

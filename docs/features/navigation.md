@@ -21,8 +21,9 @@ visible is scoped to that choice.
 
 There is deliberately **no fallback to the universe's first story** — a story only becomes current when
 the user picks it, and the remembered selection is cleared whenever an authenticated session starts
-or ends. Why is in [architecture.md](../architecture.md#request-lifecycle); what the reader sees
-because of it is the explicit **None selected** state below.
+or ends. A universe may hold any number of stories, so "the first story" would be an arbitrary
+choice among equally valid ones. Why is in [architecture.md](../architecture.md#request-lifecycle);
+what the reader sees because of it is the explicit **None selected** state below.
 
 ## Top bar — `app/views/layouts/_navbar.html.erb`
 
@@ -36,9 +37,10 @@ reader types.
 - **Universe: [name]** — a plain link to the current universe page, present when `Current.universe`
   exists. Changing universes happens on the landing page.
 - **Story: [name]** — a plain link to the current story page, present when `Current.story` exists.
-  Changing stories happens on the universe page, which lists the universe's stories with an **Open**
-  action each; the stories index carries **New story**. There is no **Select** placeholder: with no
-  current story there is simply no story link, because a story is never implied.
+  Changing stories happens on the universe page, which lists **every** story in the universe with an
+  **Open** action each and a **Current** badge beside the selected one; the stories index carries
+  **New story**. There is no **Select** placeholder: with no current story there is simply no story
+  link, because a story is never implied.
 - **Search** — one GET form between the scope links and the actions, plus the dropdown that answers
   while someone types. See [features/search.md](search.md).
 - **Account** — the top bar's only action, a dropdown rendered for every visitor. A signed-in reader

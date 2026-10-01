@@ -5,6 +5,9 @@
 # These links are separate from dialogue speakers. A character may appear in both
 # lists, in which case the Characters tab shows one row labelled as both, and
 # several characters here appear only as speakers and therefore have no row here.
+#
+# Presence belongs to a Scene, so the second and third stories keep their own
+# rows while the Characters they point at are the same universe records.
 
 # Jonas is a stored participant and also, in other scenes, a speaker.
 - scene: Scene.secrets
@@ -41,3 +44,56 @@
 - scene: Scene.the-grotto
   character: Character.hannah
   role: gives birth
+
+# "Netflix Darker". The same eight characters, a different set of scenes.
+- scene: Scene.darker-hollow-tree
+  character: Character.jonas
+  role: opens the tree
+
+# Bartosz speaks in this scene but is not a stored participant, which is the
+# same derived-speaker state the first story exercises with Katharina.
+- scene: Scene.darker-bartoszs-version
+  character: Character.jonas
+  role: memorizes it wrong
+
+- scene: Scene.darker-bartoszs-version
+  character: Character.bartosz
+  role:
+
+- scene: Scene.darker-second-grave
+  character: Character.martha
+  role: digs
+
+- scene: Scene.darker-second-grave
+  character: Character.hannah
+  role: watches
+
+- scene: Scene.darker-what-the-wind-remembers
+  character: Character.claudia
+  role: offers the log
+
+- scene: Scene.darker-cold-open
+  character: Character.bartosz
+  role: not yet arrived
+
+# "Bethesda Dark". Claudia is the player's guide in two of these scenes.
+- scene: Scene.bethesda-arrival
+  character: Character.claudia
+  role: the stranger on the platform
+
+- scene: Scene.bethesda-power-plant
+  character: Character.claudia
+  role: gives the tour
+
+# Egon speaks in the bridge scene and is stored there too, so his row is both.
+- scene: Scene.bethesda-wardens-bridge
+  character: Character.egon
+  role: blocks the bridge
+
+- scene: Scene.bethesda-cave-mouth
+  character: Character.bartosz
+  role: already inside
+
+# "Winden's Fair" is deliberately left with no participants and no items: a
+# Scene may hold any number of presence links, including none, and the second
+# story's fair is a different Scene entirely.

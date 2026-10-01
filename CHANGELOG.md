@@ -29,6 +29,18 @@ Labels used below:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-01
+
+- **[added]** A **Start page** preference: a sign-in with nothing to return to lands on the universe and story the reader was last working in, on by default, and `/settings` has a third section for it because it is navigation state rather than display state.
+- **[added]** The remembered destination is a signed browser cookie bound to the account that wrote it, and is re-resolved and re-authorized on every read, so a stale value answers the universes list instead of a dead or forbidden page.
+- **[security]** **Sessions now end on a lifetime and are bound to the user agent.** A new `expires_at` column is the absolute deadline that use never extends and a new `last_used_at` drives an idle timeout, refreshed at most hourly; the session cookie expires with its deadline instead of being permanent; a refused session is destroyed; `PurgeExpiredSessionsJob` clears dead rows on a schedule; and `ApplicationCable::Connection` applies the same checks the request path does.
+- **[security]** A session is bound to the **user agent** that created it and deliberately **not** to the IP address, because an address identifies a network rather than a person and mobile, VPN, and office/home switching all change it legitimately.
+- **[added]** The `dark` development universe now holds **three stories** — `netflix-dark`, `netflix-darker`, and `bethesda-dark` — sharing one set of Characters, Locations, Items, and Events while each declares its own Sections, Section Tags, Scene Tags, and scene sequence, so the login → universe → story flow and a multi-story universe can be exercised by hand.
+- **[added]** A browser test for the login → universe → story flow with several stories present, and loader coverage that the shared universe records and the story-scoped records stay separate.
+- **[chore]** The Dark manifests give **Bartosz** a Character record; the "Jonas meets Bartosz" Event already named him, and the two new stories need him to speak.
+- **[docs]** `features/settings.md` documents the three preferences and why the start page is not Appearance; `architecture.md` and `data_model.md` record the remembered destination and the session columns; ADR 0017 and ADR 0018 state the decisions.
+- **[docs]** Quirk 12 leaves `known_quirks.md` for the history file, and quirk 58 records a **pre-existing** system-test failure: Capybara's synthetic click misses controls inside the `position: fixed-top` navbar, which is why `authentication_test.rb`'s sign-out case has been failing before any of this work.
+
 ## 2026-09-30
 
 - **[fixed]** `has_many_tags.rb`'s "include child tags" query no longer splices table and column names into a SQL string, so `bin/brakeman` reports no warnings and CI's `scan_ruby` job passes again. The join is built by Arel now, which also closes the backlog item that named the warning.

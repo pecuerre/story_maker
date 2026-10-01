@@ -28,13 +28,77 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal "Dark", universe.name
     assert_equal "Netflix Dark", story.name
     assert_equal "netflix-dark", story.slug
-    assert_equal 1, universe.stories.count
     assert_equal 15, story.sections.count
     assert_equal 4, story.scene_tags.count
     assert_equal 0, Universe.where(slug: "lotr").count
     assert_equal [ 0, 1, 2 ], story.sections.where(parent_id: nil).order(:position, :id).pluck(:position)
     assert_equal [ 0, 1, 2 ], story.section_tags.order(:position, :id).pluck(:position)
     assert_equal [ 0, 1 ], story.scene_tags.where(parent_id: nil).order(:position, :id).pluck(:position)
+  end
+
+  # Several stories in one universe is the shape the Dark directory exists to
+  # show: the universe-level records are shared by all of them, while everything
+  # story-scoped is each story's own.
+  test "loads several stories into one universe with shared world records and per-story scope" do
+    Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false).load!
+
+    universe = Universe.find_by!(slug: "dark")
+
+    assert_equal [ "Bethesda Dark", "Netflix Dark", "Netflix Darker" ], universe.stories.order(:slug).pluck(:name)
+    assert_equal [ "bethesda-dark", "netflix-dark", "netflix-darker" ], universe.stories.order(:slug).pluck(:slug)
+    # `netflix-dark` is first in stories.yml, so it is the first Story a reader
+    # is offered, and the other two follow it rather than replacing it.
+    assert_equal "Netflix Dark", universe.stories.order(:id).first.name
+
+    # Universe-level records belong to the universe, so each story links the same
+    # eight Locations and the same nine Characters rather than its own copies.
+    # The three stories still reach different subsets of them, which is the
+    # point: a shared record set is not a shared usage.
+    assert_equal 9, universe.characters.count
+    assert_equal 8, universe.locations.count
+    linked_locations = universe.stories.sort_by { |story| story.slug }
+      .map { |story| story.scenes.joins(:scene_locations).distinct.pluck(:location_id).sort }
+    # Ordered by slug: bethesda-dark reaches four of the eight, netflix-dark
+    # reaches all eight, and netflix-darker reaches five.
+    assert_equal [ 4, 8, 5 ], linked_locations.map(&:size)
+    assert_equal universe.locations.pluck(:id).sort, linked_locations.flatten.uniq.sort
+
+    # Sections, tags, and scene positions are story-scoped, so each story has
+    # its own of them and none of them leaks into a sibling. Ordered by slug:
+    # bethesda-dark, netflix-dark, netflix-darker.
+    assert_equal [ 4, 15, 5 ], universe.stories.order(:slug).map { |story| story.sections.count }
+    assert_equal [ 5, 12, 5 ], universe.stories.order(:slug).map { |story| story.scenes.count }
+    assert_equal [ 3, 3, 3 ], universe.stories.order(:slug).map { |story| story.section_tags.count }
+    assert_equal [ 4, 4, 3 ], universe.stories.order(:slug).map { |story| story.scene_tags.count }
+
+    darker = universe.stories.find_by!(slug: "netflix-darker")
+    bethesda = universe.stories.find_by!(slug: "bethesda-dark")
+
+    # Each story's scene sequence starts again at 0: `position` is narrative
+    # order inside one story and is never a universe-wide running number.
+    assert_equal [ 0, 1, 2, 3, 4 ], darker.scenes.reorder(:position, :id).pluck(:position)
+    assert_equal [ 0, 1, 2, 3, 4 ], bethesda.scenes.reorder(:position, :id).pluck(:position)
+
+    # Sections nest inside their own story only, and each story's taxonomy is its
+    # own vocabulary rather than the same names repeated.
+    assert_equal [ "Act One: The Hollow Tree", "Act Two: The Second Grave", "Cold Open" ],
+      darker.sections.where(parent_id: nil).order(:position, :id).pluck(:name)
+    assert_equal [ "Act", "Cold open" ], darker.section_tags.where(parent_id: nil).order(:position, :id).pluck(:name)
+    assert_equal [ "Chapter", "Main quest" ], bethesda.section_tags.where(parent_id: nil).order(:position, :id).pluck(:name)
+    assert_equal "Chapter", bethesda.section_tags.find_by!(slug: "side-quest").parent.name
+    assert_equal "Act", darker.section_tags.find_by!(slug: "sequence").parent.name
+    assert_equal "Act One: The Hollow Tree", darker.sections.find_by!(slug: "act1s1").parent.name
+    # The sibling stories have no sections of the other's shape, because a
+    # Section belongs to its Story and cannot be reached from a second one.
+    assert_nil bethesda.sections.find_by(slug: "act1s1")
+    assert_nil universe.stories.find_by!(slug: "netflix-dark").sections.find_by(slug: "act1s1")
+
+    # A Story without a photo is a valid Story, so the third one has none while
+    # the other two carry the universe's two checked-in images between them.
+    assert_nil bethesda.photo
+    assert_equal 2, universe.stories.where.not(photo_id: nil).distinct.count(:photo_id)
+    assert_equal Photo.where(universe_id: universe.id).order(:id).pluck(:id),
+      universe.stories.where.not(photo_id: nil).pluck(:photo_id).sort
   end
 
   test "loads the Dark scenes as a contiguous flat narrative sequence" do
@@ -402,9 +466,10 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
     # The same item is linked into two scenes, and one scene holds two items, so
     # neither the unique-per-scene index nor the plural tab is exercised only in
-    # its simplest case.
-    god_particle_scenes = Item.find_by!(name: "The God Particle").scene_items.includes(:scene)
-      .map { |link| link.scene }.sort_by { |scene| [ scene.position, scene.id ] }.map(&:name)
+    # its simplest case. Scoped to this Story: an Item belongs to the universe
+    # and the sibling stories link it too.
+    god_particle_scenes = story.scenes.joins(scene_items: :item)
+      .where(items: { name: "The God Particle" }).order(:position, :id).pluck(:name)
     assert_equal [ "Truths", "Sic Mundus Creatus Est" ], god_particle_scenes
     assert_equal [ "Sphere Machine", "The God Particle" ],
       story.scenes.find_by!(slug: "sic-mundus-creatus-est").scene_items.includes(:item)

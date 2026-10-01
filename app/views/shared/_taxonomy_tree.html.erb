@@ -37,7 +37,6 @@ end %>
   <%= render "shared/page_header",
     title: title,
     eyebrow: local_assigns[:eyebrow],
-    description: local_assigns[:description],
     count: count,
     count_label: count_label do %>
     <% if local_assigns[:secondary_url].present? %>
@@ -54,6 +53,12 @@ end %>
     <% end %>
   <% end %>
 
+  <%# The taxonomy's own sentence belongs below its navigation rather than in the
+      page header, for the reason `shared/_content_intro` gives. It is rendered here
+      rather than handed to the navigation partial because a tree has three ways of
+      being reached — the tag workspace's own two strips, a record workspace's tab
+      strip, or no navigation at all — and one place after all of them is what keeps
+      them reading the same way. %>
   <% if local_assigns[:tag_workspace_scope].present? %>
     <%= render "shared/tag_workspace_navigation",
       scope: local_assigns.fetch(:tag_workspace_scope),
@@ -63,6 +68,8 @@ end %>
       aria_label: local_assigns.fetch(:tabs_aria_label),
       tabs: local_assigns.fetch(:tabs) %>
   <% end %>
+
+  <%= render "shared/content_intro", intro: local_assigns[:description] %>
 
   <div class="taxonomy-surface">
     <% if editable %>

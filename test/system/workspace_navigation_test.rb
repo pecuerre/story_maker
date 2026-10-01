@@ -41,7 +41,12 @@ class WorkspaceNavigationTest < ApplicationSystemTestCase
       assert_selector ".entity-description", text: "Created from a system test."
     end
 
+    # The Timeline is the second tab of the Event workspace, so it is reached
+    # through that workspace's strip rather than through its own sidebar entry.
     within "nav[aria-label='Universe and story navigation']" do
+      click_link "Events"
+    end
+    within "nav[aria-label='Event workspace']" do
       click_link "Timeline"
     end
     assert_selector "h1", text: "Timeline"

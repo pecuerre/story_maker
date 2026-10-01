@@ -1,10 +1,17 @@
-<%# The name and the facts inside a record's identity card, with or without the
-    photo beside them. Split out so the two layouts in
-    `shared/_record_details` render exactly the same identity block and cannot
-    drift apart. %>
+<%# The identity block every details page starts with. `facts` is a list of
+    [ label, value ] pairs so each record type can add or reorder its own
+    information as the page grows, without changing this partial.
+
+    An empty list renders nothing rather than an empty `<dl>`: a page whose facts
+    are all prose passes none here and gives them the card's full width through
+    `shared/_record_details`'s `wide_facts` instead. %>
+<% facts = local_assigns[:facts] || [] %>
+
 <% if local_assigns[:label].present? %>
   <div class="page-eyebrow"><%= local_assigns.fetch(:label) %></div>
   <h2 class="h4 text-break mb-3"><%= local_assigns.fetch(:title) %></h2>
 <% end %>
 
-<%= render "shared/detail_facts", facts: local_assigns.fetch(:facts) %>
+<% if facts.present? %>
+  <%= render "shared/detail_facts", facts: facts %>
+<% end %>

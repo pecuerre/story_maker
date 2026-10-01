@@ -4,7 +4,16 @@
       record     - the record being shown
       eyebrow    - scope label, e.g. "Universe Bible" or "Story: <name>"
       label      - record type, e.g. "Character"
-      facts      - [ label, value ] pairs for shared/detail_facts
+      facts      - [ label, value ] pairs for shared/detail_facts. Optional: a
+                    page whose facts are all prose passes none, because an empty
+                    grid would render as an empty `<dl>`.
+      wide_facts - [ label, value ] pairs rendered full width *below* the photo
+                    row rather than beside the photo. A long value the reader
+                    reads as prose (a description) belongs to the card's whole
+                    measure, not to the column the photo leaves.
+      footer     - the record's own settings as compact `label: value` pairs on
+                    one quiet line at the bottom of the card. See
+                    `shared/_detail_footer` for the shape and why.
       back_url / back_label - where the list this page was opened from lives
       edit_url / edit_label - optional editor link, writers only
       block      - optional content between the page header and the identity
@@ -15,7 +24,8 @@
     A record with a photo shows it in the left part of the identity card, with
     the facts beside it. A record without one is laid out exactly as it was
     before photos existed: the two branches below differ only by the presence of
-    the picture. %>
+    the picture. `wide_facts` and `footer` sit outside both branches, so they
+    span the whole card whatever the photo layout is. %>
 <% record = local_assigns.fetch(:record) %>
 <% title = local_assigns[:title] || record_label(record) %>
 <% photo = record.try(:photo) %>
@@ -36,6 +46,10 @@
   <%= yield %>
 <% end %>
 
+<% facts = local_assigns[:facts] || [] %>
+<% wide_facts = local_assigns[:wide_facts] || [] %>
+<% footer = local_assigns[:footer] || [] %>
+
 <div class="surface-card p-4">
   <% if photo %>
     <div class="row g-4 align-items-start">
@@ -46,13 +60,19 @@
         <%= render "shared/record_details_identity",
           title: title,
           label: local_assigns[:label],
-          facts: local_assigns.fetch(:facts) %>
+          facts: facts %>
       </div>
     </div>
   <% else %>
     <%= render "shared/record_details_identity",
       title: title,
       label: local_assigns[:label],
-      facts: local_assigns.fetch(:facts) %>
+      facts: facts %>
   <% end %>
+
+  <% if wide_facts.present? %>
+    <%= render "shared/detail_facts", facts: wide_facts, class_name: "detail-facts-wide" %>
+  <% end %>
+
+  <%= render "shared/detail_footer", facts: footer %>
 </div>

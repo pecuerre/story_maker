@@ -100,6 +100,27 @@ A content tag with `show_in_menu: true` also appears on its workspace page. Thos
 `from=workspace`, so the tag details page renders the same workspace tabs only for that explicit
 navigation, while the taxonomy tree's Details link stays canonical and omits them.
 
+## The tag details card
+
+All eight tag pages share one identity card, built by
+`TagsHelper#tag_identity_details` and rendered through `shared/_record_details`. Its shape is a
+deliberate split between **information** and **settings**:
+
+- the **description** is the only labelled fact, and it is given the card's **whole width**
+  (`wide_facts`, not `facts`) rather than the column a photo leaves, because it is prose;
+- the **scope** and the **colour** are the tag's settings, so they are one quiet line at the bottom of
+  the card (`footer`, rendered by `shared/_detail_footer`) instead of two rows in the grid above. Each
+  is a whole `label: value` sentence written per locale (`tags.show.scope_line.*`,
+  `tags.show.color_line`), never a label with its value spliced into it;
+- the **explanation of what a scope means** moved out of the card and behind the scope line's info
+  button (`popover_controller.js`, `hover focus click`, the same trigger set the Timeline's node
+  popovers use). It is the same `tags.show.scope_*_description` copy the grid showed inline, not a
+  rewording, and the button's accessible name is `tags.show.scope_hint_label` because its visible
+  content is an icon.
+
+The scope is derived from the record — a `story_id` means story-scoped — rather than passed in, so a
+taxonomy cannot disagree with its own model about who owns it.
+
 ## Ordering
 
 A tag tree is a `Hierarchical` tree with a `position`, and the positioned-controller rules in

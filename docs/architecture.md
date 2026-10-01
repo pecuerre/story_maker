@@ -257,8 +257,9 @@ accordingly.
 
 ## Timeline
 
-The layering algorithm, and the rule that keeps the drawn arrows from contradicting the rows they
-span, are in [features/events.md](features/events.md).
+The layering algorithm, the rule that keeps the drawn arrows from contradicting the rows they span,
+and the fact that the Timeline is a tab of the Event workspace rather than a page of its own, are in
+[features/events.md](features/events.md).
 
 ## Caching / performance notes
 

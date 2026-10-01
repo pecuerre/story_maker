@@ -185,9 +185,12 @@ the same change, or `db:demo:check` fails.
 
 ### Views - Three Patterns
 
-Every work page starts with `shared/_page_header` (eyebrow, sentence-case title, optional count and
-description, right-aligned actions) and uses `shared/_empty_state` instead of bare “No records yet”
-text. Mutation controls are rendered only when `can_write_universe?`; universe settings and member
+Every work page starts with `shared/_page_header` (eyebrow, sentence-case title, optional count,
+optional description, right-aligned actions) and uses `shared/_empty_state` instead of bare “No records
+yet” text. A workspace that has a **tab strip** does not put its own sentence in the header: it passes
+it as `shared/_content_intro`, which renders below the strip and above the list as
+`.content-intro`. The header's `description` is for a page that is the thing it describes; the intro
+is for the list under the reader's chosen tab. Mutation controls are rendered only when `can_write_universe?`; universe settings and member
 controls use `can_administer_universe?`. The shared row/taxonomy partials enforce this so read-only
 members and public guests see the same content without misleading edit affordances. Flat entity
 rows use `shared/_row_actions`: neutral overflow menus for edit/delete, with
@@ -314,14 +317,25 @@ The page is composed from four shared partials:
   columns with the square on the left; a record without one renders the identity block alone, so the
   page is unchanged from what it was before photos existed. Both branches share
   `shared/_record_details_identity`, so there is one identity layout rather than two; Universe,
-  Story, and Scene pages have their own identity partials and follow the same rule;
+  Story, and Scene pages have their own identity partials and follow the same rule. Two optional
+  locals sit **outside** both branches, so they span the whole card whichever photo layout is in
+  place: `wide_facts` for prose that would wrap into the narrow column, and `footer` for the record's
+  own settings as compact `label: value` pairs (`shared/_detail_footer`). Both are optional, and
+  `facts` is too — a page whose facts are all prose passes none rather than rendering an empty grid;
 - `shared/_detail_facts` — the `[ label, value ]` grid, fed by the `detail_fact` helper so a missing
-  value renders explicit copy instead of a blank row;
+  value renders explicit copy instead of a blank row. `class_name` is what makes the wide variant the
+  same partial rather than a second copy of it;
 - `shared/_detail_section` — one related-records section, with a `count` badge, and its empty state
   whenever the count is zero or no block was given;
 - `shared/_tagged_record_list` — the records carrying a tag, each linking to its own page and showing
   every tag it carries (not just the one filtering the list), batch-loaded through `RecordTags` so the
   badge row costs one grouped query rather than one per record.
+
+A **taxonomy tag** page is the one details page whose facts are split rather than listed: its
+description is a `wide_fact` and its scope and colour are `footer` pairs, with the explanation of what
+a scope means behind the scope line's info button. That shape is specified in
+[features/tags.md](features/tags.md#the-tag-details-card) and is built by one helper,
+`TagsHelper#tag_identity_details`, so all eight tag pages cannot drift apart.
 
 A content page currently identifies the record and then states honestly that the related information
 will appear later. A Section additionally lists the scenes grouped under it, each still showing its
@@ -503,6 +517,11 @@ subsystems it shares helpers and Stimulus controllers with.
   that it must stay a **named** class export.
 - `timeline_controller.js` — redraws the edges between Timeline nodes on resize, and opens each
   node's Bootstrap popover. It is not a pan/zoom surface: the Timeline is a static layered view.
+- `popover_controller.js` — a Bootstrap popover on a control that is not otherwise interactive, used
+  by the info button beside a tag's `scope:` line. Its title and content are Stimulus values rendered
+  by the server rather than client-side literals, for the reason in
+  [features/i18n.md](features/i18n.md#a-string-the-browser-has-to-have); its only job beyond that is
+  constructing the instance and releasing it on disconnect.
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
 
 Both editors that mutate through `fetch` send the page's `csrf-token` meta tag as `X-CSRF-Token`

@@ -4,11 +4,7 @@
   record: @location_tag,
   eyebrow: t("tags.show.eyebrow"),
   label: t("tags.types.location.record_label"),
-  facts: [
-    detail_fact(t("tags.show.scope"), t("tags.show.scope_universe_description")),
-    detail_fact(t("tags.show.description"), @location_tag.description, blank: t("tags.show.description_blank")),
-    detail_fact(t("tags.show.color"), @location_tag.bgcolor)
-  ],
+  **tag_identity_details(@location_tag),
   back_url: universe_location_tags_path,
   back_label: t("tags.types.location.all_label") do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "location", tag: @location_tag %>

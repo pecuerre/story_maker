@@ -66,9 +66,11 @@ always knows which scope a link belongs to:
 - **Current universe** context: the universe name. The navbar already states the universe's
   visibility and access level, and the universe page lists the stories, so the context block stays a
   statement of scope.
-- **Universe Bible**: direct links to Characters, Locations, Events, Timeline, and Items. Characters
-  and Items open their related record tabs (Relations and Ownerships respectively); Locations,
-  Events, and Sections remain single-record workspaces.
+- **Universe Bible**: direct links to Characters, Locations, Events, and Items. Characters
+  and Items open their related record tabs (Relations and Ownerships respectively). **Events** opens
+  the Event workspace, whose second tab is the **Timeline**, so the Timeline has no sidebar entry of
+  its own and that one link stays current across both tabs. Locations and Sections remain
+  single-record workspaces.
 - **Current story** context: the story name — or an explicit **None selected** state with a prompt
   when no story is current. The section/scene counts and the description stay out of this block and
   live on the story's own pages.

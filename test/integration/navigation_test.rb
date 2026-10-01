@@ -85,7 +85,6 @@ class NavigationTest < ActionDispatch::IntegrationTest
       characters: universe_characters_path(universe_slug: @universe.slug),
       locations: universe_locations_path(universe_slug: @universe.slug),
       events: universe_events_path(universe_slug: @universe.slug),
-      timeline: universe_timeline_path(universe_slug: @universe.slug),
       items: universe_items_path(universe_slug: @universe.slug)
     }.each do |label, path|
       assert_select "aside.workspace-sidebar section[aria-labelledby='universe-bible-title'] a.sidebar-link[href=?]",
@@ -103,6 +102,11 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar section[aria-labelledby='configuration-title']", count: 0
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_tags_path(universe_slug: @universe.slug), count: 0
+    # The Timeline is the second tab of the Event workspace rather than a
+    # destination of its own, so the sidebar has no separate entry for it and the
+    # route is reachable from the Event workspace's tab strip.
+    assert_select "aside.workspace-sidebar a[href=?]",
+      universe_timeline_path(universe_slug: @universe.slug), count: 0
     assert_select "aside.workspace-sidebar a", text: "Tags", count: 0
     assert_select "aside.workspace-sidebar a", text: "Members", count: 0
 
@@ -198,13 +202,19 @@ class NavigationTest < ActionDispatch::IntegrationTest
       characters: universe_characters_path(universe_slug: @universe.slug),
       locations: universe_locations_path(universe_slug: @universe.slug),
       events: universe_events_path(universe_slug: @universe.slug),
-      timeline: universe_timeline_path(universe_slug: @universe.slug),
       items: universe_items_path(universe_slug: @universe.slug)
     }.each do |label, path|
       assert_select "aside.workspace-sidebar a.sidebar-link[href=?]", path do
         assert_select ".sidebar-link-label", text: label.to_s.capitalize
       end
     end
+
+    # The Event entry stays current while its Timeline tab is open, because the
+    # two are one workspace rather than two destinations.
+    get universe_timeline_url(universe_slug: @universe.slug)
+
+    assert_select "aside.workspace-sidebar a.sidebar-link.active[aria-current=page][href=?]",
+      universe_events_path(universe_slug: @universe.slug)
 
     # The selected story is remembered for the rest of the session.
     get universe_url(@universe)

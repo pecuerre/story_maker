@@ -32,19 +32,15 @@
         path: universe_locations_path,
         controllers: %i[ locations ] %>
 
+      <%# The Timeline is the second tab of the Event workspace, so the sidebar has
+          one Event entry rather than two, and it stays current on both tabs. %>
       <%= render "shared/sidebar_link",
         icon: "calendar-event",
         label: t("sidebar.events"),
         count_label: "event",
         count: menu_counts[:events],
         path: universe_events_path,
-        controllers: %i[ events ] %>
-
-      <%= render "shared/sidebar_link",
-        icon: "calendar-range",
-        label: t("sidebar.timeline"),
-        path: universe_timeline_path,
-        controllers: %i[ timeline ] %>
+        controllers: %i[ events timeline ] %>
 
       <%= render "shared/sidebar_link",
         icon: "box-seam",

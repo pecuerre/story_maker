@@ -61,6 +61,67 @@ class TagImprovementsTest < ApplicationSystemTestCase
     end
   end
 
+  test "a tag's scope and colour are one quiet line at the bottom of its card" do
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(users(:user_one))
+    visit universe_character_tag_path(universe_slug: universe.slug, id: tag)
+    assert_stimulus_loaded
+
+    # The scope and the colour are the tag's settings, not information a reader
+    # scans for, so they are one line at the card's bottom rather than two rows in
+    # the labelled grid above them.
+    within ".detail-footer" do
+      assert_selector ".detail-footer-item", count: 2
+      assert_selector ".detail-footer-item", text: "scope: universe"
+      assert_selector ".detail-footer-item", text: "color: #{tag.bgcolor}"
+    end
+    # The description is the card's only fact and it is the wide variant, so the
+    # narrow grid the other record types use is not rendered at all here.
+    assert_selector "dl.detail-facts:not(.detail-facts-wide)", count: 0
+
+    # The explanation of what a scope means moved behind this button rather than
+    # onto the card, and it opens by click as well as by hover and focus, because
+    # a touch pointer never hovers.
+    hint = find(".detail-footer button[aria-label='What this scope means']")
+    assert_equal "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it.",
+      hint["data-popover-content-value"]
+
+    hint.click
+    assert_selector ".popover", wait: 5
+    within ".popover" do
+      assert_selector ".popover-header", text: "What this scope means"
+      assert_selector ".popover-body", text: /belongs to the universe/
+    end
+  end
+
+  test "a tag's description takes the whole card, not the column a photo leaves" do
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+    tag.update!(description: "A long description that would wrap into a narrow column beside a photo.")
+
+    sign_in_via_form(users(:user_one))
+    visit universe_character_tag_path(universe_slug: universe.slug, id: tag)
+    assert_stimulus_loaded
+
+    # Prose set in the grid would be three words per line in the column the photo
+    # leaves, so the description is given the card's whole measure. Measured in the
+    # browser because the fact under test is the layout.
+    widths = page.evaluate_script(<<~JS)
+      (() => {
+        const card = document.querySelector(".surface-card");
+        const wide = document.querySelector(".detail-facts-wide");
+        const rect = (el) => el.getBoundingClientRect().width;
+        return [ rect(card), rect(wide) ].join(" ");
+      })()
+    JS
+
+    card_width, wide_width = widths.split.map(&:to_f)
+
+    assert_operator wide_width, :>, card_width * 0.8
+  end
+
   test "the taxonomy editor carries a Taggable checkbox and a content tag offers Show in menu" do
     universe = universes(:universe_one)
     tag = character_tags(:character_tag_one)

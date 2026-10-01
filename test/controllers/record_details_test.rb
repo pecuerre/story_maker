@@ -51,6 +51,12 @@ class RecordDetailsTest < ActionDispatch::IntegrationTest
       assert_select "h1", text: tag.name
       assert_includes response.body, label
       assert_select ".detail-section", minimum: 1
+      # A tag's identity card is its description plus its settings: the scope and
+      # the colour are a compact line at the bottom rather than two labelled rows
+      # in the grid, and the scope's explanation sits behind an info button.
+      assert_select ".detail-facts-wide", minimum: 1
+      assert_select ".detail-footer-item", minimum: 2
+      assert_select ".detail-footer-item button[aria-label=?]", "What this scope means"
 
       tag.tagged_records.each do |record|
         element_path = page[:path].to_s.sub(/_tag_path\z/, "_path")

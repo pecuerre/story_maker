@@ -491,8 +491,15 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_equal section_tag.name, rendered_title
     assert_select ".page-eyebrow", text: "Historia: Story One"
     assert_select ".surface-card .page-eyebrow", text: "Etiqueta de sección"
-    assert_select "dt", text: "Ámbito"
-    assert_select ".detail-facts dd", text: /Las etiquetas son etiquetas opcionales y pertenecen a esta historia/
+    # El ámbito es un par compacto en el pie de la tarjeta, y la explicación de lo
+    # que significa vive en el popover de su botón de información, no en la
+    # tarjeta. El valor del botón es su propio nombre accesible, así que también
+    # es lo que un lector de pantalla anuncia.
+    assert_select ".detail-footer-item", text: "ámbito: historia"
+    assert_select ".detail-footer-item button[aria-label=?][data-popover-content-value=?]",
+      "Qué significa este ámbito",
+      "Las etiquetas son etiquetas opcionales y pertenecen a esta historia, no al universo."
+    assert_select "dt", text: "Ámbito", count: 0
     assert_select "h2", text: "Secciones con esta etiqueta"
     assert_select ".page-actions a", text: "Todas las etiquetas de secciones"
     assert_select ".form-check-label", text: "Incluir registros de las etiquetas hijas"

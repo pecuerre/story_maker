@@ -982,6 +982,10 @@ es:
       simultaneous: "al mismo tiempo que %{event}"
     tabs:
       events: "Sucesos"
+      # La Cronología es la segunda pestaña de este espacio de trabajo y no una
+      # página propia, así que la lista la nombra aquí igual que las listas de
+      # Personajes y Objetos nombran su segunda pestaña.
+      timeline: "Cronología"
 
   items:
     title: "Objetos"
@@ -1168,22 +1172,34 @@ es:
   tags:
     # La página de detalles de una taxonomía. El antetítulo nombra la sección de
     # la barra lateral derecha y no la taxonomía, así que una sola clave sirve
-    # para las ocho, y los datos Ámbito/Descripción/Color son los mismos tres en
-    # todas ellas.
-    #
-    # El color no tiene estado vacío: `bgcolor` es NOT NULL con valor por defecto,
-    # así que siempre tiene un valor y una copia en blanco nunca se renderizaría.
+    # para las ocho, y el dato Descripción es el mismo en todas ellas.
     show:
       eyebrow: "Configuración · Etiquetas"
-      scope: "Ámbito"
       scope_universe_description: "Las etiquetas son etiquetas opcionales. Esta taxonomía pertenece al universo y la comparten todas sus historias."
-      # Las taxonomías de ámbito de historia dicen los mismos tres hechos sobre un
-      # dueño distinto, así que la frase es su propia clave y no una segunda copia
-      # con «universo» sustituido.
+      # Las taxonomías de ámbito de historia dicen los mismos hechos sobre un dueño
+      # distinto, así que la frase es su propia clave y no una segunda copia con
+      # «universo» sustituido. Las dos frases quedan detrás del botón de
+      # información del ámbito; consulta `TagsHelper#tag_identity_details`.
       scope_story_description: "Las etiquetas son etiquetas opcionales y pertenecen a esta historia, no al universo."
+      # El pie de la tarjeta declara el ámbito como un par «etiqueta: valor»
+      # compacto en vez de una fila con etiqueta en la rejilla de datos, así que
+      # cada uno es una frase completa escrita por idioma y no una etiqueta con su
+      # valor pegado dentro.
+      scope_line:
+        universe: "ámbito: universo"
+        story: "ámbito: historia"
+      # El nombre accesible del botón de información y el título de su popover: es
+      # el único control que lleva la explicación, así que tiene que decir qué
+      # explica.
+      scope_hint_label: "Qué significa este ámbito"
+      # El color no tiene estado vacío: `bgcolor` es NOT NULL con valor por
+      # defecto, así que siempre tiene un valor y una copia en blanco nunca se
+      # renderizaría. Se declara como par por el mismo motivo que el ámbito, y el
+      # valor hexadecimal son datos del autor, así que se interpola y no se
+      # traduce.
+      color_line: "color: %{color}"
       description: "Descripción"
       description_blank: "Todavía no hay descripción."
-      color: "Color"
     title: "Etiquetas"
     scope:
       universe: "Etiquetas del universo"

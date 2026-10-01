@@ -282,6 +282,15 @@ Use `app/views/shared/_page_header.html.erb` for work pages. It accepts:
 The primary action belongs in the header's action area. On narrow screens actions wrap below the
 copy. Avoid placing a title and its primary button in unrelated vertical sections.
 
+The header's `description` is for a page that **is** the thing it describes. A workspace that has a
+**tab strip** states what it holds in `shared/_content_intro` instead, rendered *below* the strip and
+above the list — `.content-intro`, the same `.page-description` treatment pulled back up against the
+tabs. The header then states only what identifies the page: eyebrow, title, count. `shared/_content_tabs`
+renders the intro itself when given one, and `shared/_taxonomy_tree` renders it after whichever
+navigation it used. Characters, Relations, Locations, Events, Items, Ownerships, the Timeline, and
+every taxonomy tree are on this treatment; a page with no strip (a universe, a story, a settings
+section) keeps its sentence in the header.
+
 ### Empty states
 
 Use `shared/_empty_state` for no records. It must explain what the record belongs to and why it is
@@ -339,13 +348,15 @@ row. Ownerships use the same readable relationship treatment.
 ### Related content navigation
 
 Use `shared/_content_tabs` for related record workspaces. The Character workspace has Characters
-and Relations; the Item workspace has Items and Ownerships. Locations, Events, and Sections each
-have one record tab. Use `shared/_tag_workspace_navigation` for Configuration → Tags: the outer
-Universe/Story selector is followed by the six universe taxonomy tabs or the two story taxonomy
-(Section/Scene) tabs. Use `shared/_settings_navigation` for the platform Settings page, whose tab
-strip is the same pattern turned vertical (`nav nav-tabs flex-column`). All tabs are URL-backed
-Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not add
-`data-bs-toggle="tab"` because each destination is a separate request.
+and Relations; the Item workspace has Items and Ownerships; the Event workspace has Events and the
+**Timeline**. Locations and Sections each have one record tab. The Timeline is a tab rather than a
+sidebar entry of its own: the sidebar keeps one Event link, current across both tabs, and the two are
+reached through `content_workspace_tabs(:event)`. Use `shared/_tag_workspace_navigation` for
+Configuration → Tags: the outer Universe/Story selector is followed by the six universe taxonomy tabs
+or the two story taxonomy (Section/Scene) tabs. Use `shared/_settings_navigation` for the platform
+Settings page, whose tab strip is the same pattern turned vertical (`nav nav-tabs flex-column`). All
+tabs are URL-backed Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not
+add `data-bs-toggle="tab"` because each destination is a separate request.
 
 ### Details-page treatment
 
@@ -357,6 +368,21 @@ its own empty state. The empty copy states what will appear later and must not t
 read-only member to add records. The identity card's two-column layout when a record has a photo is
 in [conventions.md](conventions.md#record-details-pages).
 
+Two variants exist for facts that do not want to be a labelled grid row, and a details page picks per
+fact rather than per record:
+
+- **`.detail-facts-wide`** — the facts span the card's whole measure instead of the column a photo
+  leaves, because they are prose. A tag's description is the case that uses it.
+- **`.detail-footer`** — the record's own *settings* as compact `label: value` pairs on one quiet
+  line below a rule, set in the secondary colour. They are configuration rather than something a
+  reader scans for. A tag's `scope: universe` and `color: #d3d3d3` are the case that uses it; the
+  scope's explanation lives in a popover behind an info button, not on the card, and the button keeps
+  a visible focus ring because it is a control wearing plain text.
+
+Neither is a second partial: both are the same `shared/_detail_facts` and a new `shared/_detail_footer`,
+so a fact's label/value contract stays one thing. The painted shapes are here; the rules are in
+[features/tags.md](features/tags.md#the-tag-details-card).
+
 ### Taxonomy trees and other hierarchy pages
 
 The taxonomy system's rules — the DSL, the mandatory scope, the tree's row and menu contract, the
@@ -364,8 +390,9 @@ The taxonomy system's rules — the DSL, the mandatory scope, the tree's row and
 [features/tags.md](features/tags.md). The painted shape of the tree:
 
 - `shared/_taxonomy_tree` and `shared/_taxonomy_node` render tag indexes, Sections, and Locations
-  with a page header carrying an explicit `title`, count, description, and a human-readable add
-  label, optional URL-backed workspace tabs, and a consistent empty state.
+  with a page header carrying an explicit `title`, count, and a human-readable add label, optional
+  URL-backed workspace tabs, the taxonomy's own sentence below that navigation as `.content-intro`,
+  and a consistent empty state.
 - The name carries a native rename button for users with write access, sized to its own text so only
   hovering or focusing the name starts a rename; clicking the rest of the row does nothing.
 - A `.record-count` pill sits next to the name and its tags, naming the number of records that page

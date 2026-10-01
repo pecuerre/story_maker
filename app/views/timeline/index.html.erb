@@ -4,13 +4,21 @@
   <%= render "shared/page_header",
     title: t("sidebar.timeline"),
     eyebrow: t("sidebar.universe_bible"),
-    description: t("timeline.description"),
     count: @layers.sum(&:size),
     count_label: "event" do %>
     <% if can_write_universe? %>
       <%= link_to t("timeline.add_event"), universe_events_path, class: "btn btn-primary" %>
     <% end %>
   <% end %>
+
+  <%# The Timeline is the second tab of the Event workspace rather than a page of
+      its own, so it carries the same strip as the Events list and the sentence
+      below it that the strip introduces. The strip is built by the same helper, so
+      the Timeline tab is the active one here and the Events tab is active there. %>
+  <%= render "shared/content_tabs",
+    aria_label: t("events.tabs_aria_label"),
+    intro: t("timeline.description"),
+    tabs: content_workspace_tabs(:event) %>
 
   <% if @layers.blank? || @layers.all?(&:empty?) %>
     <%= render "shared/empty_state",

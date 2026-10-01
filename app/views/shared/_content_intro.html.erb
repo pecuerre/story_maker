@@ -1,0 +1,15 @@
+<%# The workspace's own sentence, rendered *below* its tab strip and above whatever
+    the active tab lists.
+
+    It is deliberately not the page header's `description`. The header states what
+    the page is — eyebrow, title, count, actions — while this states what the list
+    under the reader's chosen tab holds, so it belongs with the tabs it explains.
+    A page with no tab strip passes no intro at all rather than repeating itself.
+
+    `shared/_content_tabs` renders this itself when it is given an `intro`; a page
+    whose navigation is a shared partial it does not own (a taxonomy tree's tag
+    workspace navigation) renders it directly after that navigation. %>
+<% intro = local_assigns[:intro] %>
+<% if intro.present? %>
+  <p class="page-description content-intro"><%= intro %></p>
+<% end %>

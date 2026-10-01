@@ -193,7 +193,8 @@ module TagsHelper
     "event" => {
       key: "events",
       tabs: [
-        { name: "events", path: :universe_events_path, controller: :events }
+        { name: "events", path: :universe_events_path, controller: :events },
+        { name: "timeline", path: :universe_timeline_path, controller: :timeline }
       ]
     },
     "item" => {
@@ -204,6 +205,35 @@ module TagsHelper
       ]
     }
   }.freeze
+
+  # A taxonomy tag's own identity card, as the two shapes `shared/_record_details`
+  # accepts: the description across the card's full width, and the tag's settings
+  # as a compact footer line.
+  #
+  # The scope is derived from the record rather than passed in, so a taxonomy can
+  # never disagree with its own model about who owns it: a story-scoped tag has a
+  # `story_id`, and everything else belongs to the universe. The explanation of
+  # what a scope means is the same `scope_*_description` copy the grid used to
+  # show inline — it moved behind the footer's info button rather than being
+  # reworded, because no reader needs it while scanning the tagged records.
+  def tag_identity_details(tag)
+    scope = tag.respond_to?(:story_id) ? "story" : "universe"
+
+    {
+      wide_facts: [
+        detail_fact(t("tags.show.description"), tag.description,
+          blank: t("tags.show.description_blank"))
+      ],
+      footer: [
+        {
+          text: t("tags.show.scope_line.#{scope}"),
+          hint: t("tags.show.scope_#{scope}_description"),
+          hint_label: t("tags.show.scope_hint_label")
+        },
+        { text: t("tags.show.color_line", color: tag.bgcolor) }
+      ]
+    }
+  end
 
   def content_workspace_tabs(type, active_tag: nil)
     type = type.to_s

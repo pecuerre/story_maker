@@ -509,12 +509,22 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     # both `.page-eyebrow`, so each is asserted where it is rendered.
     assert_select ".page-header .page-eyebrow", text: "Configuración · Etiquetas"
     assert_select ".surface-card .page-eyebrow", text: "Etiqueta de personaje"
-    assert_select "dt", text: "Ámbito"
-    assert_select "dt", text: "Descripción"
-    assert_select "dt", text: "Color"
-    assert_select ".detail-facts dd", text: "Todavía no hay descripción."
-    # The colour is NOT NULL with a default, so this fact is never blank.
-    assert_includes fact_values, [ "Color", tag.bgcolor ]
+    # The description is the one fact, and it takes the card's whole width rather
+    # than a column beside the photo.
+    assert_select ".detail-facts-wide dt", text: "Descripción"
+    assert_select ".detail-facts-wide dd", text: "Todavía no hay descripción."
+    # The scope is a compact `ámbito: universo` line at the bottom of the card, and
+    # the explanation moved behind its info button, so it is not on the card at
+    # all. The button's visible content is an icon, so its value is its own
+    # accessible name — which is also what a screen reader announces.
+    assert_select ".detail-footer-item", text: "ámbito: universo"
+    assert_select ".detail-footer-item button[aria-label=?][data-popover-content-value=?]",
+      "Qué significa este ámbito",
+      "Las etiquetas son etiquetas opcionales. Esta taxonomía pertenece al universo y la comparten todas sus historias."
+    assert_select "dt", text: "Ámbito", count: 0
+    # The colour is NOT NULL with a default, so it is never blank, and it is
+    # stated as a pair for the same reason the scope is.
+    assert_select ".detail-footer-item", text: "color: #{tag.bgcolor}"
     assert_select "h2", text: "Personajes con esta etiqueta"
     assert_select ".page-actions a", text: "Todas las etiquetas de personajes"
   end

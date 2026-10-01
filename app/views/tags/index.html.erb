@@ -5,10 +5,13 @@
     names both. %>
 <% scope_label = @tag_scope == "story" ? t("tags.scope.story") : t("tags.scope.universe") %>
 
-<%= render "shared/tag_workspace_navigation",
-  scope: @tag_scope,
-  taxonomy: @tag_type %>
-
+<%# The workspace's two navigation strips and the taxonomy tree below them are
+    built by `shared/taxonomy_tree`, exactly as the six per-taxonomy workspaces
+    (`/u/:slug/character_tags` and its siblings) build them. This page used to
+    render its own copy of the strips above the tree, which meant the same strips
+    sat in a different order here than on every sibling page. The one branch that
+    has no taxonomy renders them itself, because it has no tree to hand them to;
+    its sentence is its own and stays in its header, since it has no list. %>
 <% if tag_config.present? %>
   <%= render "shared/taxonomy_tree",
     title: t("tags.title"),
@@ -17,6 +20,8 @@
     count: tag_config.fetch(:count),
     count_label: "tag",
     new_label: tag_config.fetch(:new_label),
+    tag_workspace_scope: @tag_scope,
+    tag_workspace_taxonomy: @tag_type,
     empty_description: tag_config.fetch(:empty_description),
     read_only_empty_description: tag_config[:read_only_empty_description],
     confirm_message: tag_config[:confirm_message],
@@ -29,6 +34,10 @@
     details_count_label: tag_config.fetch(:details_count_label),
     modal_fields: tag_config.fetch(:modal_fields) %>
 <% elsif @tag_scope == "story" %>
+  <%= render "shared/tag_workspace_navigation",
+    scope: @tag_scope,
+    taxonomy: @tag_type %>
+
   <%= render "shared/page_header",
     title: t("tags.title"),
     eyebrow: scope_label,

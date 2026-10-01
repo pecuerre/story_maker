@@ -1,4 +1,10 @@
 <% tabs = local_assigns.fetch(:tabs) %>
+<%# `intro` is the workspace's own sentence, rendered *below* the strip and above
+    whatever the active tab lists. It is deliberately not the page header's
+    `description`: the header states what the page is, this states what the list
+    under the reader's chosen tab holds, so it belongs with the tabs it explains.
+    A workspace that has no strip passes no `intro`. %>
+<% intro = local_assigns[:intro] %>
 <% tab_classes = [ "nav", "nav-tabs", "content-tabs", "mb-4", local_assigns[:class_name] ].compact.join(" ") %>
 
 <nav class="<%= tab_classes %>" aria-label="<%= local_assigns.fetch(:aria_label) %>">
@@ -18,3 +24,7 @@
     <% end %>
   <% end %>
 </nav>
+
+<% if intro.present? %>
+  <%= render "shared/content_intro", intro: intro %>
+<% end %>

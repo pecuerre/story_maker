@@ -9,7 +9,6 @@
   <%= render "shared/page_header",
     title: t("items.title"),
     eyebrow: t("sidebar.universe_bible"),
-    description: t("items.description"),
     count: @items.size,
     count_label: "item" do %>
     <% if can_write_universe? %>
@@ -27,6 +26,7 @@
 
   <%= render "shared/content_tabs",
     aria_label: t("items.tabs_aria_label"),
+    intro: t("items.description"),
     tabs: content_workspace_tabs(:item) %>
 
   <% if @items.any? %>

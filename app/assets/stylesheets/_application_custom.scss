@@ -830,6 +830,13 @@ $um-search-match: #ffc107;
   color: var(--bs-body-secondary-color);
 }
 
+// The same sentence, rendered below a tab strip instead of inside the header.
+// The strip carries `mb-4`, so this pulls the copy back up against the tabs and
+// re-establishes the gap before the list that follows.
+.content-intro {
+  margin: -.5rem 0 1.25rem;
+}
+
 .page-actions {
   flex-shrink: 0;
   gap: .5rem;
@@ -1253,8 +1260,60 @@ $um-search-match: #ffc107;
   margin: 0;
 }
 
+// Facts that belong to the card's whole measure rather than to the column a
+// photo leaves. A description is prose, and prose set in a third of the width
+// wraps into a column of two or three words per line.
+//
+// The card's own width is the measure here, deliberately with no `max-width` of
+// its own: the point of the variant is that the description is no longer boxed in
+// beside the photo, and the main column already keeps a readable line length. The
+// grid collapses to one column so the pair reads as a block rather than as one
+// fact in a row of several.
+.detail-facts-wide {
+  margin-top: 1.5rem;
+  grid-template-columns: 1fr;
+}
+
 .detail-fact-value {
   margin: 0;
+}
+
+// The card's own settings, as one quiet line at its bottom edge: `scope: universe`
+// with the explanation behind its info button, and `color: #d3d3d3`. These are
+// the record's configuration rather than information a reader scans for, so they
+// are separated from the facts above by a rule and set in the secondary colour.
+.detail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .375rem 1.5rem;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bs-border-color);
+  color: var(--bs-body-secondary-color);
+  font-size: .8125rem;
+}
+
+.detail-footer-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+}
+
+.detail-footer-hint {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  line-height: 1;
+}
+
+// The info button is a control, so it keeps a visible focus ring even though it
+// is styled as plain text; a keyboard reader must be able to see where they are.
+.detail-footer-hint:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
+  border-radius: var(--bs-border-radius-sm);
 }
 
 .detail-section {

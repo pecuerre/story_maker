@@ -989,6 +989,10 @@ en:
       simultaneous: "same time as %{event}"
     tabs:
       events: "Events"
+      # The Timeline is the second tab of this workspace rather than a page of its
+      # own, so the strip names it here the way the Character and Item strips name
+      # their second tab.
+      timeline: "Timeline"
 
   items:
     title: "Items"
@@ -1174,21 +1178,31 @@ en:
   tags:
     # A taxonomy's own details page. The eyebrow names the right sidebar's
     # section rather than the taxonomy, so one key serves all eight, and the
-    # Scope/Description/Color facts are the same three on every one of them.
-    #
-    # The colour has no blank state: `bgcolor` is NOT NULL with a default, so it
-    # always holds a value and a blank copy here could never be rendered.
+    # Description fact is the same on every one of them.
     show:
       eyebrow: "Configuration · Tags"
-      scope: "Scope"
       scope_universe_description: "Tags are optional labels. This taxonomy belongs to the universe and is shared by every story in it."
-      # The story-scoped taxonomies say the same three facts about a different
-      # owner, so the sentence is its own key rather than a second copy with
-      # "universe" replaced.
+      # The story-scoped taxonomies say the same facts about a different owner, so
+      # the sentence is its own key rather than a second copy with "universe"
+      # replaced. Both sentences sit behind the scope line's info button rather
+      # than on the card itself; see `TagsHelper#tag_identity_details`.
       scope_story_description: "Tags are optional labels and belong to this story, not to the universe."
+      # The card's footer states the scope as one compact `label: value` pair
+      # instead of a labelled row in the facts grid, so each is a whole sentence
+      # written per locale rather than a label with its value spliced into it.
+      scope_line:
+        universe: "scope: universe"
+        story: "scope: story"
+      # The info button's own accessible name and its popover title: it is the
+      # only control carrying the explanation, so it has to name what it explains.
+      scope_hint_label: "What this scope means"
+      # The colour has no blank state: `bgcolor` is NOT NULL with a default, so it
+      # always holds a value and a blank copy here could never be rendered. It is
+      # stated as a pair for the same reason the scope is, and the hex value is
+      # the author's own data, so it is interpolated rather than translated.
+      color_line: "color: %{color}"
       description: "Description"
       description_blank: "No description yet."
-      color: "Color"
     title: "Tags"
     # One label serves both the scope tab strip and this page's eyebrow.
     scope:

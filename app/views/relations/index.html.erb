@@ -15,7 +15,6 @@
   <%= render "shared/page_header",
     title: t("relations.title"),
     eyebrow: t("relations.eyebrow"),
-    description: t("relations.description"),
     count: @relations.size,
     count_label: "relation" do %>
     <% if can_write_universe? %>
@@ -37,6 +36,7 @@
 
   <%= render "shared/content_tabs",
     aria_label: t("characters.tabs_aria_label"),
+    intro: t("relations.description"),
     tabs: content_workspace_tabs(:character) %>
 
   <% if @relations.any? %>

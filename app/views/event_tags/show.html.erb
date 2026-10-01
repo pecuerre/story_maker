@@ -4,11 +4,7 @@
   record: @event_tag,
   eyebrow: t("tags.show.eyebrow"),
   label: t("tags.types.event.record_label"),
-  facts: [
-    detail_fact(t("tags.show.scope"), t("tags.show.scope_universe_description")),
-    detail_fact(t("tags.show.description"), @event_tag.description, blank: t("tags.show.description_blank")),
-    detail_fact(t("tags.show.color"), @event_tag.bgcolor)
-  ],
+  **tag_identity_details(@event_tag),
   back_url: universe_event_tags_path,
   back_label: t("tags.types.event.all_label") do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "event", tag: @event_tag %>

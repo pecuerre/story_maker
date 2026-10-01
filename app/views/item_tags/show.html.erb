@@ -4,11 +4,7 @@
   record: @item_tag,
   eyebrow: t("tags.show.eyebrow"),
   label: t("tags.types.item.record_label"),
-  facts: [
-    detail_fact(t("tags.show.scope"), t("tags.show.scope_universe_description")),
-    detail_fact(t("tags.show.description"), @item_tag.description, blank: t("tags.show.description_blank")),
-    detail_fact(t("tags.show.color"), @item_tag.bgcolor)
-  ],
+  **tag_identity_details(@item_tag),
   back_url: universe_item_tags_path,
   back_label: t("tags.types.item.all_label") do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "item", tag: @item_tag %>

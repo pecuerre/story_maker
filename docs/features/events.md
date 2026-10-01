@@ -61,6 +61,13 @@ row opens.
 
 ## The Timeline algorithm
 
+The Timeline is the **second tab of the Event workspace**, not a page of its own. It renders the same
+`shared/_content_tabs` strip as the Events list, built by the same
+`content_workspace_tabs(:event)`, so each tab is the active one on its own page and the strip is the
+way between them. That is why the left sidebar has one **Events** link rather than two: the Timeline
+route is unchanged and remains canonical, it is simply reached through the strip. The Timeline's own
+sentence is a `shared/_content_intro` below the strip, like every other workspace's.
+
 `TimelineController` (`get "timeline", to: "timeline#index"`) hands the universe's events to
 **`TimelineLayout`** (`app/models/timeline_layout.rb`) with **`UnionFind`**
 (`app/models/union_find.rb`):

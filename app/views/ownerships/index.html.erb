@@ -15,7 +15,6 @@
   <%= render "shared/page_header",
     title: t("ownerships.title"),
     eyebrow: t("ownerships.eyebrow"),
-    description: t("ownerships.description"),
     count: @ownerships.size,
     count_label: "ownership" do %>
     <% if can_write_universe? %>
@@ -42,6 +41,7 @@
       tell the two constructions apart. %>
   <%= render "shared/content_tabs",
     aria_label: t("items.tabs_aria_label"),
+    intro: t("ownerships.description"),
     tabs: [
       { label: t("items.tabs.items"), path: universe_items_path, controller: :items },
       { label: t("items.tabs.ownerships"), path: universe_ownerships_path, controller: :ownerships }

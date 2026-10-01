@@ -1,0 +1,41 @@
+<%# The compact metadata a record's identity card ends with: a set of
+    `label: value` pairs, optionally carrying an explanation behind a popover.
+
+    This is the treatment for a fact that is a *property of the record's own
+    plumbing* rather than information a reader scans for. "scope: universe" and
+    "color: #d3d3d3" belong on one quiet line at the bottom of the card, not in
+    the labelled facts grid above it: the grid is what a reader reads, and these
+    two are the record's settings.
+
+    `facts` is a list of hashes, each with:
+      text       - the whole rendered pair, already a complete locale-written
+                   string, so neither a label nor a value is spliced into a
+                   sentence here;
+      hint       - the longer explanation, shown in a popover (optional);
+      hint_label - the popover's title and the trigger's accessible name, which
+                   is what a screen reader announces for a control with no
+                   visible text of its own. Required with `hint`. %>
+<% facts = local_assigns.fetch(:facts) %>
+<% if facts.present? %>
+  <div class="detail-footer">
+    <% facts.each do |fact| %>
+      <span class="detail-footer-item">
+        <%= fact.fetch(:text) %>
+        <% if fact[:hint].present? %>
+          <%# `hover focus click` because a touch pointer never hovers, and the
+              same trigger set the Timeline's node popovers use. %>
+          <button type="button" class="detail-footer-hint"
+            data-controller="popover"
+            data-popover-content-value="<%= fact.fetch(:hint) %>"
+            data-popover-title-value="<%= fact.fetch(:hint_label) %>"
+            data-bs-trigger="hover focus click"
+            data-bs-placement="top"
+            data-bs-custom-class="custom-popover"
+            aria-label="<%= fact.fetch(:hint_label) %>">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+          </button>
+        <% end %>
+      </span>
+    <% end %>
+  </div>
+<% end %>

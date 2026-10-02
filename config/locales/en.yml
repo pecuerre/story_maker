@@ -137,6 +137,12 @@ en:
         must_exist: "does not exist"
         cannot_be_itself: "cannot be itself"
         cannot_be_descendant: "cannot be a descendant"
+      # A polymorphic reference — one `record_type`/`record_id` pair naming any
+      # content record — reports a type or id that resolves to nothing. It keeps
+      # its own key because it is not a hierarchy's `parent_id`, and the
+      # wrong-scope case for the same pair is the `same_scope` sentence above.
+      reference:
+        must_exist: "does not exist"
       tagged_records:
         scope_change_with_tags: "cannot be changed while tagged records exist"
       color:

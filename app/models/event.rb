@@ -12,6 +12,7 @@ class Event < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+  include HasDiscussion
 
   searchable kind: "event", title: :name, body: :description, route: "event"
   invalidates_menu_counts_for :universe

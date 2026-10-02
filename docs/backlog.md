@@ -125,19 +125,11 @@ it has a useful destination and clear empty/loading/error states.
 
 20. **Collaboration system — Phase 1: Foundation (collaboration mode + discussions)**
 
-    The universe collaboration mode (`direct`/`wikipedia`/`github`) is delivered; what is left of this
-    phase is a discussion page on every record. No draft functionality yet. Decisions: discussions are
-    configurable per model via a `HasDiscussion` concern (initially all content models + tags);
-    SceneElement/SceneCharacter etc. have discussions inside their Scene page, not as a separate user
-    concern for now.
+    The universe collaboration mode (`direct`/`wikipedia`/`github`) and the discussion data model are
+    delivered; what is left of this phase is the discussion page on every record. No draft
+    functionality yet. Decisions: a discussion page lives inside a Scene's own page for
+    SceneElement/SceneCharacter etc., not as a separate user concern for now.
 
-    - **Slice 1.2:** Create `discussions` table (`record_type`, `record_id`, `universe_id`, `title`,
-      timestamps) and `discussion_messages` table (`discussion_id`, `user_id`, `body`, timestamps).
-      `Discussion` model (polymorphic belongs_to :record, belongs_to :universe, has_many :messages),
-      `DiscussionMessage` model (belongs_to :discussion, belongs_to :user). Create `HasDiscussion`
-      concern (`has_one :discussion, as: :record, dependent: :destroy` + `find_or_create_discussion`
-      helper). Include in all content models and tag models. Tests: model tests, polymorphic
-      association tests.
     - **Slice 1.3:** Routes: `resources :discussions, only: [:show, :create]` nested under universe,
       with `resources :messages, only: [:create]` nested under discussions. `DiscussionsController#show`
       (loads record through authorized scope, renders record details + discussion thread),

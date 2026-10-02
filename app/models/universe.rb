@@ -75,6 +75,11 @@ class Universe < ApplicationRecord
   belongs_to :owner, class_name: "User"
   has_many :memberships, class_name: "UniverseMembership", dependent: :destroy
   has_many :members, through: :memberships, source: :user
+  # A thread belongs to one record and one universe. The record's own destroy
+  # already takes its thread, so this is what covers the universe cascade: a
+  # thread that outlived the record it was about would be an orphan row nothing
+  # can reach.
+  has_many :discussions, dependent: :destroy
   has_many :stories, dependent: :destroy
   has_many :sections, through: :stories
   has_many :scenes, through: :stories

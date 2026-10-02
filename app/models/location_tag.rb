@@ -6,6 +6,7 @@ class LocationTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
+  include HasDiscussion
 
   searchable kind: "tag", title: :name, body: :description, route: "location_tag", taxonomy: "Location"
   soft_deletes :children

@@ -6,6 +6,7 @@ class EventTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
+  include HasDiscussion
 
   searchable kind: "tag", title: :name, body: :description, route: "event_tag", taxonomy: "Event"
   soft_deletes :children

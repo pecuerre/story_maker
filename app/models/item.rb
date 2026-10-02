@@ -6,6 +6,7 @@ class Item < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+  include HasDiscussion
 
   searchable kind: "item", title: :name, body: :description, route: "item"
   invalidates_menu_counts_for :universe
@@ -16,7 +17,9 @@ class Item < ApplicationRecord
   has_many :ownerships, dependent: :destroy
   # The Scene presence side. Deleting an Item removes its presence links; it
   # never removes a Scene, and the Item itself is shared by every Story.
-  has_many :scene_items, dependent: :delete_all
+  # `:destroy` rather than `:delete_all`: a presence link carries a discussion,
+  # and `delete_all` skips the callbacks that would take it along. See Character.
+  has_many :scene_items, dependent: :destroy
 
   validates :name, presence: true
 end

@@ -6,6 +6,7 @@ class SceneTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
+  include HasDiscussion
 
   searchable kind: "tag", title: :name, body: :description, route: "scene_tag", taxonomy: "Scene", scope: :story
   soft_deletes :children

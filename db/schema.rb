@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_02_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_02_130100) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -79,6 +79,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120000) do
     t.integer "character_id", null: false
     t.integer "character_tag_id", null: false
     t.index ["character_id", "character_tag_id"], name: "index_characters_character_tags_unique", unique: true
+  end
+
+  create_table "discussion_messages", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.integer "discussion_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["discussion_id", "created_at", "id"], name: "idx_on_discussion_id_created_at_id_7366ff0c27"
+    t.index ["discussion_id"], name: "index_discussion_messages_on_discussion_id"
+    t.index ["user_id"], name: "index_discussion_messages_on_user_id"
+  end
+
+  create_table "discussions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "record_id", null: false
+    t.string "record_type", null: false
+    t.string "title"
+    t.integer "universe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["record_type", "record_id"], name: "index_discussions_on_record_type_and_record_id", unique: true
+    t.index ["universe_id"], name: "index_discussions_on_universe_id"
   end
 
   create_table "event_tags", force: :cascade do |t|
@@ -539,6 +561,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120000) do
   add_foreign_key "characters", "universes"
   add_foreign_key "characters_character_tags", "character_tags"
   add_foreign_key "characters_character_tags", "characters"
+  add_foreign_key "discussion_messages", "discussions"
+  add_foreign_key "discussion_messages", "users"
+  add_foreign_key "discussions", "universes"
   add_foreign_key "event_tags", "event_tags", column: "parent_id"
   add_foreign_key "event_tags", "photos", on_delete: :nullify
   add_foreign_key "event_tags", "universes"

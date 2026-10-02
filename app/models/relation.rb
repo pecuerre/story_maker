@@ -6,6 +6,7 @@ class Relation < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+  include HasDiscussion
 
   searchable kind: "relation", title: :display_string, body: :description, route: "relation"
   invalidates_menu_counts_for :universe

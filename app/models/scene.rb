@@ -9,6 +9,7 @@ class Scene < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+  include HasDiscussion
 
   searchable kind: "scene", title: :name, body: :description, route: "scene", scope: :story
   soft_deletes :scene_elements, :scene_characters, :scene_items, :scene_locations

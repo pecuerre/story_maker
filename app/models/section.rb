@@ -6,6 +6,7 @@ class Section < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+  include HasDiscussion
 
   searchable kind: "section", title: :name, body: :description, route: "section", scope: :story
   invalidates_menu_counts_for :story

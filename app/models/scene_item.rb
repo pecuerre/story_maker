@@ -10,6 +10,7 @@
 # source the way a Character's Dialogue speaker link does.
 class SceneItem < ApplicationRecord
   include SoftDeletable
+  include HasDiscussion
 
   belongs_to :scene
   belongs_to :item

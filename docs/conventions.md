@@ -105,7 +105,10 @@ the same change, or `db:demo:check` fails.
   it as forbidden would let a stored `record_type` be used as an oracle. `RecordTarget` returns
   instances only, which is deliberate: the content rules are instance blocks, and CanCan answers a
   block rule with `true` when given the class, so a class-level `authorize!` on a content model is
-  a silent allow. See [ADR 0019](adr/0019-collaboration-foundations.md).
+  a silent allow. `Discussion` is its first live caller, and it is why a row storing both a
+  polymorphic record **and** its own `universe_id` must validate the two against each other in the
+  model: neither half is a foreign key, so nothing below the application would notice them
+  disagreeing. See [ADR 0019](adr/0019-collaboration-foundations.md).
 - **A remembered change's version is a `VersionStamp`, never a bare `updated_at`.** `VersionStamp.capture`
   normalizes a record's version to a fixed-format UTC string and `VersionStamp.changed?` compares
   stamps as strings. Comparing a `Time` to the string it was serialized from is never equal, so the

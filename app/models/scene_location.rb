@@ -8,6 +8,7 @@
 # it a Scene used — that remains the author's own free-text role.
 class SceneLocation < ApplicationRecord
   include SoftDeletable
+  include HasDiscussion
 
   belongs_to :scene
   belongs_to :location

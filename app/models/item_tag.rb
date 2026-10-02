@@ -6,6 +6,7 @@ class ItemTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
+  include HasDiscussion
 
   searchable kind: "tag", title: :name, body: :description, route: "item_tag", taxonomy: "Item"
   soft_deletes :children

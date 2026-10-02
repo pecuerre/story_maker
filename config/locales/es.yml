@@ -131,6 +131,8 @@ es:
         must_exist: "no existe"
         cannot_be_itself: "no puede ser él mismo"
         cannot_be_descendant: "no puede ser un descendiente"
+      reference:
+        must_exist: "no existe"
       tagged_records:
         scope_change_with_tags: "no se puede cambiar mientras existan registros etiquetados"
       color:

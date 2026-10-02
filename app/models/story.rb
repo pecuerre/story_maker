@@ -6,6 +6,7 @@ class Story < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
+  include HasDiscussion
 
   searchable kind: "story", title: :name, body: :description, route: "story"
   soft_deletes :sections, :section_tags, :scene_tags, :scenes

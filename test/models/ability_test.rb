@@ -164,8 +164,22 @@ class AbilityTest < ActiveSupport::TestCase
     elsewhere = %w[ Universe UniverseMembership ]
     not_content = {
       "Session" => "one signed-in browser, never universe-scoped content",
-      "User" => "the person, not something a universe contains"
+      "User" => "the person, not something a universe contains",
+      # A thread is authorized through the record it is about: the controller
+      # resolves the record through `RecordTarget` inside the authorized universe
+      # and asks `Ability` about *that*. Registering the thread itself would give
+      # CanCan a rule whose answer could disagree with the record's, and a
+      # polymorphic rule is exactly the class-level hole `RecordTarget` closes.
+      "Discussion" => "authorized through the record it is about, never on its own",
+      "DiscussionMessage" => "reachable only through its discussion's record scope"
     }
+
+    # Zeitwerk loads a model the first time something names it, so a model this
+    # worker has not happened to touch yet is simply absent from `descendants` —
+    # and this test would pass by not seeing the model it exists to catch. Every
+    # name it reasons about is therefore loaded first. A name that does not
+    # resolve at all raises here, which is the failure this test wants.
+    (Ability::CONTENT_CLASS_NAMES + elsewhere + not_content.keys).each(&:constantize)
 
     persisted = ApplicationRecord.descendants.reject(&:abstract_class?).map do |model|
       model.name

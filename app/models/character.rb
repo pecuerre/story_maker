@@ -6,6 +6,7 @@ class Character < ApplicationRecord
   include SoftDeletable
   include InvalidatesMenuCounts
   include Searchable
+  include HasDiscussion
 
   searchable kind: "character", title: :name, body: :description, route: "character"
   invalidates_menu_counts_for :universe
@@ -19,7 +20,10 @@ class Character < ApplicationRecord
   # The speaker side of the Scene Element link. Deleting a Character removes its
   # speaker links and presence links; it never removes a Scene.
   has_and_belongs_to_many :scene_elements, join_table: :scene_element_speakers, foreign_key: :character_id
-  has_many :scene_characters, dependent: :delete_all
+  # `:destroy` rather than `:delete_all`, because a presence link is a record in
+  # its own right: it carries a discussion, and `delete_all` skips callbacks, so
+  # it would remove the link row and leave the thread behind pointing at nothing.
+  has_many :scene_characters, dependent: :destroy
 
   validates :name, presence: true
 end

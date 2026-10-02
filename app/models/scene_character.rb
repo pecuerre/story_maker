@@ -10,6 +10,7 @@
 # explicit participant and a speaker.
 class SceneCharacter < ApplicationRecord
   include SoftDeletable
+  include HasDiscussion
 
   belongs_to :scene
   belongs_to :character

@@ -6,6 +6,7 @@ class RelationTag < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include Searchable
+  include HasDiscussion
 
   searchable kind: "tag", title: :name, body: :description, route: "relation_tag", taxonomy: "Relation"
   soft_deletes :children

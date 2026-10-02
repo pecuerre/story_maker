@@ -1,10 +1,6 @@
 - slug: dark-admin
   name: Dark Admin User
   email_address: dark@dark
-  password: dark
-  password_confirmation: dark
 - slug: dark-collaborator
   name: Dark Collaborator
   email_address: collaborator@dark
-  password: collaborator
-  password_confirmation: collaborator

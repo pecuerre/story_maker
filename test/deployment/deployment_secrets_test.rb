@@ -69,7 +69,40 @@ class DeploymentSecretsTest < ActiveSupport::TestCase
       "RAILS_MASTER_KEY must never appear in the env.clear list."
   end
 
+  # `.gitignore` excludes every `.env*` path so a developer's real values stay
+  # local, and `.env.example` is the single deliberate exception: a value-free
+  # template naming the variables. Both halves are asserted, because the failure
+  # that matters is silent — a `.env` that quietly stopped being ignored, or a
+  # template that accumulated somebody's password.
+  test "the environment template is tracked while real environment files stay ignored" do
+    template = Rails.root.join(".env.example")
+
+    assert template.exist?, "the value-free .env.example template must exist"
+    assert_not ignored?(template), ".env.example must not be ignored; it is the reviewed exception"
+    assert ignored?(Rails.root.join(".env")), "a real .env must stay ignored"
+    assert ignored?(Rails.root.join(".env.local")), "a real .env.local must stay ignored"
+  end
+
+  test "the environment template names variables without carrying values" do
+    assignments = Rails.root.join(".env.example").read.scan(/^\s*([A-Z][A-Z0-9_]*)=(.*)$/)
+
+    assert_includes assignments.map(&:first), Development::LocalPassword::ENV_KEY,
+      ".env.example must document the development password variable."
+
+    assignments.each do |name, value|
+      assert_equal "", value.strip,
+        ".env.example must leave #{name} empty; a value in a tracked template is the thing it exists to avoid."
+    end
+  end
+
   private
+    # `--no-index` because the check is about the ignore rules themselves, not
+    # about whether git happens to know the path yet.
+    def ignored?(path)
+      system("git", "check-ignore", "--no-index", "--quiet", "--", path.to_s,
+        chdir: Rails.root.to_s, out: File::NULL, err: File::NULL)
+    end
+
     def master_key = MASTER_KEY_PATH.read.strip
 
     def kamal_secret

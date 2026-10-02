@@ -4263,3 +4263,120 @@ vendored asset changed), `UNIVERSE=dark|lotr bin/rails db:demo:check`, `db:demo:
 (no `db/data` manifest or schema changed; the reset tasks are destructive and need approval), and a
 manual browser pass outside the automated suite. Reduced motion was not exercised: the window this fix
 closes is the opening transition itself, and the fix does not depend on which transition produced it.
+
+### Former quirk #53: development and smoke-test credentials were literals in tracked files (fixed)
+
+**Then:** the two development manifests stated their users' passwords outright
+(`db/data/lotr/users.yml`, `db/data/dark/users.yml`) and `docs/smoke_test_stories.sh` defaulted to
+`PASSWORD=lotr` while documenting that default in its usage comment. The accounts are disposable and
+the strings are synthetic, which is exactly why the literals were easy to leave in place: they
+looked like data rather than like a credential, so a hygiene scan kept flagging the repository and
+the finding sat open across several audits. Backlog item 17 asked for the same fix.
+
+**Fix:** the manifests now name the account and nothing else, and
+`Development::LocalPassword` (`app/services/development/local_password.rb`) owns the value. It
+resolves `UNIVERSE_MAKER_DEV_PASSWORD` when the developer has exported it — so the login is one they
+can type and is the same across every universe — and otherwise generates a value for that load.
+`Development::UniverseDataLoader` resolves it once, before the transaction, so every account in one
+universe shares one value and a load that fails leaves nothing half-known. After a successful load it
+reports the addresses it created and, for a generated value, the exact `export` line that reuses it;
+nothing else prints or stores it.
+
+The rejected alternative was to keep a manifest-declared password and read it from an env var with a
+literal fallback. That still checks a credential into the repository, which is the whole finding, and
+it would keep a working default in place for anyone who forgot to set the variable. The loader
+rejects `password` and `password_confirmation` in a user manifest outright, with a message naming
+the variable, so the contract is enforced rather than advisory — and the smoke script fails with the
+same instruction instead of quietly signing in with a known value. `.env.example` is the value-free
+template, tracked through a deliberate `!/.env.example` unignore rule next to `/.env*`, and it states
+that nothing in the boot path reads a `.env` file: `bin/dev` starts foreman with `--env /dev/null`, so
+the variable has to be exported.
+
+`db:seed`, `db:prepare`, and every deploy path are untouched, and the loader still refuses to write
+outside development. The credential report is gated on `Rails.env.development?`, so the test suite
+never prints a value even while exercising the loader's write path.
+
+**Verification (2026-10-02)**
+
+- `bin/rails test test/services/development/` — 54 runs, 287 assertions, 0 failures, 0 errors, 0 skips
+  (7 new cases in `local_password_test.rb`, 5 in `universe_data_loader_test.rb`).
+- `bin/rails test test/deployment/deployment_secrets_test.rb` — 7 runs, 11 assertions, 0 failures,
+  0 errors, 3 skips (the three key-file cases skip without local key files). The two new cases were
+  checked against the defect: removing the `!/.env.example` rule fails the ignore test, and a value in
+  the template fails the value-free test.
+- `bin/rails test` — 1,379 runs, 8,585 assertions, 0 failures, 0 errors, 10 skips.
+- `SE_CHROME_NO_SANDBOX=1 PARALLEL_WORKERS=2 bin/rails test:system` — 139 tests, 1,827 assertions,
+  0 failures, 0 errors, 0 skips.
+- `bin/rubocop` — 368 files, no offenses.
+- Brakeman: 79 checks, 0 errors, 0 security warnings. The command was `bundle exec brakeman --no-pager
+  -f plain`, because `bin/brakeman --no-pager` could not be used at the time: it passed
+  `--ensure-latest`, and with a newer Brakeman published it stopped with exit 5 before scanning. A
+  pristine `HEAD` checkout failed the same way, so the gate was not caused by this change. It is
+  fixed below, in the same day's work.
+- `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` — both passed.
+- `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset`, then `UNIVERSE=lotr bin/rails
+  db:demo:load` — the development database was rebuilt and both universes are present again with 4
+  stories and 3 users. Both loads printed their sign-in report.
+- Queried the rebuilt database: `dark@dark` and `collaborator@dark` authenticate with the value the
+  Dark load printed and share it; `lotr@lotr` authenticates with the value the LOTR load printed and
+  rejects the Dark one; all three reject the old literals `dark`, `collaborator`, and `lotr`.
+- `bash docs/smoke_test_stories.sh` with no password — fails in under a second with the load
+  instruction and exit 1, without contacting the server. With `PASSWORD`, with
+  `UNIVERSE_MAKER_DEV_PASSWORD`, and with both — the last run passed, proving `PASSWORD` wins — all
+  ten checks passed against a server on :3123 and the script removed its story again.
+
+Not run: `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no dependency, importmap pin, or
+vendored asset changed), and `bun run check:js` (no file under `app/javascript` changed). No container
+build or Kamal validation. The browser was exercised only through the smoke script; the sign-in page
+itself was not clicked by hand.
+
+**One thing found and deliberately left alone:** the smoke script's login check reports success for
+any `302`, and a failed sign-in also redirects, so `ok - login succeeds` can be true with the wrong
+password — which is exactly how the run above with a deliberate wrong password still printed it. The
+later checks fail, so the script as a whole still fails, but that one line is weaker than it reads.
+Changing it is a separate question from credential hygiene and was not bundled here.
+
+**One mistake worth recording, because nothing reported it:** the first version of the `.gitignore`
+change wrote the pattern as `#/.env*`. That comment made `/.env*` inert, so a developer's real `.env`
+and `.env.local` stopped being ignored and became untracked-but-visible candidates for a commit. No
+test caught it, because the repository-hygiene cases had not been written yet and nothing else looks
+at the ignore rules. `git check-ignore --no-index -- .env`, run while confirming that the new template
+is tracked, is what found it. The two cases now in `DeploymentSecretsTest` assert both halves of the
+rule directly, and each was verified to fail against the defect.
+
+### The Brakeman binstub stopped the scan it was supposed to run (fixed)
+
+**Then:** `bin/brakeman` was the Rails-generated binstub, which does `ARGV.unshift("--ensure-latest")`
+before loading the gem. That flag is a tripwire, not a preference: Brakeman exits **before scanning**
+whenever a newer version exists anywhere in the world. Brakeman 8.1.0 is published, so on 2026-10-02
+`bin/brakeman --no-pager` exited 5 with no report at all — locally and in CI, whose `scan_ruby` job
+runs the same command. The failure is quiet in the worst way: the command still prints something, a
+version notice, so a reader can take it for a scan that found nothing.
+
+It was found while verifying the credential work above, which needed a security scan and could not get
+one. A pristine `HEAD` checkout archived to a scratch directory failed identically, which is what
+established that the gate was not a consequence of that change.
+
+**Fix:** the flag is gone, with a comment saying why it must not come back and why upgrading Brakeman
+is a separate, owner-made dependency decision. `docs/development.md`'s lint-and-security section states
+the same rule, because that document owns the command rather than the incident.
+`development.md`'s DataFactor section already said a clean Brakeman run does not cover browser or log
+paths; that remains true and is unaffected.
+
+**Verification (2026-10-02)**
+
+- `bin/brakeman --no-pager -f plain` — 79 checks, Controllers 30, Models 58, Templates 99, **Errors 0,
+  Security Warnings 0**, exit 0.
+- `bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error`, the exact `scan_ruby` command in
+  `.github/workflows/ci.yml` and `config/ci.rb` — exit 0, 0 errors, 0 security warnings.
+- Before the change, both forms exited 5 and printed only `Brakeman 8.0.6 is not the latest version
+  8.1.0`; the same two commands on an archived `HEAD` tree behaved identically.
+
+Not run: `bin/rails test` and `bin/rails test:system` (a binstub that passes one fewer flag touches no
+application code, and the full suites were run for the credential change in this same day's work),
+`bin/rubocop` (the file is Ruby but is not in RuboCop's inspected paths — 368 files, no offenses, was
+reported there), and the dependency audits.
+
+**Two findings this surfaced were deliberately left open**, both now recorded in
+[`known_quirks.md`](known_quirks.md) rather than bundled: the smoke script's `login succeeds` check
+(number 62) and the DataFactor guidance's stale work-package list (number 63).

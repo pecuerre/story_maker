@@ -9,11 +9,17 @@ module Development
 
     REFERENCE_PATTERN = /\A([A-Z][A-Za-z0-9_]*)\.([A-Za-z0-9_-]+)\z/
     VIRTUAL_ATTRIBUTES = {
-      "User" => %w[password password_confirmation],
       # A path to a checked-in image rather than inline bytes, so a photo
       # manifest stays readable. `Photo#source_file=` runs it through the same
       # processing an upload does.
       "Photo" => %w[source_file]
+    }.freeze
+    # Attributes the loader assigns itself, which a manifest must not set. A
+    # development password comes from `UNIVERSE_MAKER_DEV_PASSWORD` or from
+    # `Development::LocalPassword`, so a manifest that names one is checked in a
+    # credential rather than describing the data.
+    LOADER_ASSIGNED_ATTRIBUTES = {
+      "User" => %w[password password_confirmation]
     }.freeze
     UNIVERSE_ASSOCIATION_FIELDS = %w[
       character1
@@ -80,12 +86,21 @@ module Development
         raise ValidationError, "Universe '#{target_identifier}' already exists; run db:demo:reset before loading it again"
       end
 
+      # Resolved once, before the transaction, so every user in the universe
+      # shares one value and a failed load does not leave a half-known one.
+      @password = LocalPassword.resolve
+
       ApplicationRecord.transaction(requires_new: true) do
         @records.each { |record| create_record(record) }
         normalize_positions!
       end
       Rails.cache.clear
+      report_credentials!
       self
+    end
+
+    def password
+      @password ||= LocalPassword.resolve
     end
 
     private
@@ -200,11 +215,18 @@ module Development
 
       def validate_attribute_names!(definition, attributes, path, source_index, validate_schema:)
         model = definition.model
+        loader_assigned = LOADER_ASSIGNED_ATTRIBUTES.fetch(definition.model_name, [])
 
         attributes.each_key do |attribute|
           attribute = attribute.to_s
           if %w[id created_at updated_at].include?(attribute)
             raise ValidationError, "#{path}:#{source_index + 1} must not set #{attribute}"
+          end
+
+          if loader_assigned.include?(attribute)
+            raise ValidationError,
+              "#{path}:#{source_index + 1} must not set #{attribute}; the loader takes the development " \
+              "password from #{LocalPassword::ENV_KEY} or generates one for the load"
           end
 
           if attribute.end_with?("_id") && model.reflect_on_association(attribute.delete_suffix("_id"))
@@ -521,6 +543,7 @@ module Development
 
       def create_record(record)
         attributes = materialize(record.resolved_attributes)
+        attributes = attributes.merge(loader_attributes(record))
         model = record.definition.model
         record.loaded_record = model.create!(attributes)
         puts "Created #{model.name}: #{record_label_for_output(record)}" if @verbose
@@ -528,6 +551,34 @@ module Development
         raise ValidationError, "#{record_label(record)} failed validation: #{error.record.errors.full_messages.to_sentence}"
       rescue ActiveRecord::RecordNotUnique => error
         raise ValidationError, "#{record_label(record)} conflicts with an existing record: #{error.message}"
+      end
+
+      # The attributes a manifest cannot supply. Only User has one: its password
+      # is a local credential rather than a description of the record, so it
+      # comes from the environment or from a value generated for this load.
+      def loader_attributes(record)
+        return {} unless record.definition.model_name == "User"
+
+        { "password" => password.value, "password_confirmation" => password.value }
+      end
+
+      # Where the local sign-in just written can be found. A generated value is
+      # otherwise unknowable, and a development login nobody can type is not a
+      # login, so it is reported once here: never written to the manifests, to a
+      # log, or to any other file in the repository.
+      def report_credentials!
+        return unless Rails.env.development?
+
+        addresses = records_for_model("User").filter_map { |record| record.loaded_record&.email_address }
+        return if addresses.empty?
+
+        puts
+        puts "Development sign-in for #{target_identifier}: #{addresses.join(', ')}"
+        return unless password.generated?
+
+        puts "Password (generated for this load; local only, never stored in this repository):"
+        puts "  #{password.export_command}"
+        puts "docs/smoke_test_stories.sh reads PASSWORD or #{LocalPassword::ENV_KEY}."
       end
 
       def materialize(value)

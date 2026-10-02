@@ -123,16 +123,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-17. **Development credential and environment hygiene (DataFactor follow-up)**
-
-   Replace hardcoded local/demo passwords in the LOTR development users, Dark user data, and smoke script
-   with an explicit environment variable or a generated local-only value. Make missing values fail
-   clearly. Preserve or update the documented synthetic development login and exact load/verification
-   instructions in the same change. Add a value-free `.env.example` only with an intentional
-   `.gitignore` exception and document variable names/purposes without values. Never commit real
-   `.env` files. This item is separate from the critical tracked `.kamal/secrets` rotation/removal
-   work already recorded in `known_quirks.md`.
-
 18. **Complete dependency, JavaScript, and container supply-chain checks (DataFactor follow-up)**
 
    Preserve the committed `bun.lock` and frozen installs. Add a supported Bun/npm audit path,

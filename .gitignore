@@ -7,8 +7,11 @@
 # Ignore bundler config.
 /.bundle
 
-# Ignore all environment files.
+# Ignore all environment files, except the value-free template that documents the
+# local variable names. The exception is deliberate and reviewed: `.env.example`
+# holds no value.
 /.env*
+!/.env.example
 
 # Ignore all logfiles and tempfiles.
 /log/*

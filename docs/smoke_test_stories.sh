@@ -13,8 +13,13 @@
 #   7. a story id from another universe is rejected (404)
 #
 # Usage:
-#   bash docs/smoke_test_stories.sh
-#   BASE=http://localhost:3000 EMAIL=lotr@lotr PASSWORD=lotr bash docs/smoke_test_stories.sh
+#   PASSWORD='<the development password>' bash docs/smoke_test_stories.sh
+#   BASE=http://localhost:3000 EMAIL=lotr@lotr PASSWORD='<the development password>' bash docs/smoke_test_stories.sh
+#
+# There is no default password on purpose. db:demo:reset / db:demo:load print the
+# development password together with the export command that makes it available to
+# this shell; PASSWORD (or UNIVERSE_MAKER_DEV_PASSWORD) carries it in. The script
+# never prints or stores the value.
 #
 # Requires a running server (development DB). It creates one story and deletes
 # it again at the end. Cookie jar goes to ${TMPDIR:-/tmp}/smoke_cookies.txt.
@@ -26,7 +31,17 @@ cd "$(dirname "$0")/.." || exit 1
 
 BASE="${BASE:-http://localhost:3000}"
 EMAIL="${EMAIL:-lotr@lotr}"
-PASSWORD="${PASSWORD:-lotr}"
+PASSWORD="${PASSWORD:-${UNIVERSE_MAKER_DEV_PASSWORD:-}}"
+if [ -z "$PASSWORD" ]; then
+  {
+    echo "FAIL - no password supplied for $EMAIL."
+    echo "  This script has no default credential on purpose. Load the development"
+    echo "  universe (CONFIRM_DB_RESET=1 UNIVERSE=lotr bin/rails db:demo:reset) and use"
+    echo "  the password it prints, or the one you exported as UNIVERSE_MAKER_DEV_PASSWORD:"
+    echo "    PASSWORD='<that value>' bash docs/smoke_test_stories.sh"
+  } >&2
+  exit 1
+fi
 export UNIVERSE="${UNIVERSE:-lotr}"
 JAR="${TMPDIR:-/tmp}/smoke_cookies.txt"
 rm -f "$JAR"

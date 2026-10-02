@@ -33,12 +33,44 @@ The current examples are:
 - `lotr/` — the smaller Lord of the Rings dataset, now expressed in the same YAML format.
 
 The Dark directory includes a delegated-admin example: after loading it with the explicit
-development task, sign in as the synthetic `collaborator@dark` / `collaborator` account and open
-`/u/dark/members` to exercise membership management. These credentials are disposable development
-values, not production secrets.
+development task, sign in as the synthetic `collaborator@dark` account and open
+`/u/dark/members` to exercise membership management. Its password comes from the loader — see
+**Development credentials** below.
 
 A subdirectory represents a **universe**, not a feature. There should not be a separate
 `db/data/dialog/` directory for a Dialog feature.
+
+## Development credentials
+
+`users.yml` names the account and nothing else. **No manifest under `db/data/` carries a
+password**, and the loader rejects one that does: the password is a local credential, not a
+description of the record.
+
+`Development::LocalPassword` resolves it once per load:
+
+- `UNIVERSE_MAKER_DEV_PASSWORD` when it is exported, so a developer can choose a login that is
+  the same in every universe they load;
+- otherwise a value generated for that load, which the loader reports on the terminal:
+
+  ```text
+  Development sign-in for dark: dark@dark, collaborator@dark
+  Password (generated for this load; local only, never stored in this repository):
+    export UNIVERSE_MAKER_DEV_PASSWORD=…
+  ```
+
+Every account in one load shares that one value, and two loads of two universes get two
+different ones — the value belongs to the load that created the accounts, so keep the export line
+the loader printed. Set `UNIVERSE_MAKER_DEV_PASSWORD` yourself to make it stable across loads:
+
+```bash
+export UNIVERSE_MAKER_DEV_PASSWORD='choose-your-own-local-value'
+```
+
+The value is never written to a manifest, a log, or any other tracked file, and it is used in
+development only: `db/seeds/` and every deploy path are untouched.
+[`.env.example`](../.env.example) is the value-free template naming the variable. **The
+application does not read that file** — `bin/dev` starts foreman with `--env /dev/null`, so
+export the variable in your shell.
 
 ## Adding a universe
 

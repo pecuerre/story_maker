@@ -2,6 +2,10 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest")
-
+# No `--ensure-latest` here, deliberately. The Rails-generated binstub adds it, and it
+# turns the security scan into a tripwire: Brakeman exits before scanning as soon as any
+# newer version exists anywhere in the world, so an unrelated upstream release silently
+# stops the scan locally and in CI while still looking like it ran. Upgrading Brakeman is
+# a dependency decision for the owner to make in its own change; until then this command
+# reports what the pinned version actually finds.
 load Gem.bin_path("brakeman", "brakeman")

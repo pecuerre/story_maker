@@ -36,6 +36,80 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal [ 0, 1 ], story.scene_tags.where(parent_id: nil).order(:position, :id).pluck(:position)
   end
 
+  # The manifests used to carry a literal password, so a credential-shaped string
+  # was part of the repository. The loader now owns the value: nothing under
+  # `db/data` states one, and every account it creates authenticates with the
+  # value the loader resolved for that load.
+  test "the loader gives every user in the universe the password it resolved" do
+    loader = Development::UniverseDataLoader.new(universe: "dark", environment: :development, verbose: false)
+    loader.load!
+
+    assert loader.password.generated?
+
+    addresses = User.where(slug: %w[dark-admin dark-collaborator]).order(:slug).pluck(:email_address)
+    assert_equal [ "dark@dark", "collaborator@dark" ], addresses
+
+    addresses.each do |address|
+      assert User.authenticate_by(email_address: address, password: loader.password.value),
+        "the user #{address} must be able to sign in with the password the loader resolved"
+    end
+  end
+
+  test "an exported development password is what every loaded user gets" do
+    previous = ENV[Development::LocalPassword::ENV_KEY]
+    ENV[Development::LocalPassword::ENV_KEY] = "a-password-the-developer-chose"
+
+    loader = Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false)
+    loader.load!
+
+    assert_not loader.password.generated?
+    assert_equal "a-password-the-developer-chose", loader.password.value
+    assert User.authenticate_by(email_address: "lotr@lotr", password: "a-password-the-developer-chose")
+  ensure
+    ENV[Development::LocalPassword::ENV_KEY] = previous
+  end
+
+  test "a user manifest that states a password is rejected" do
+    with_data_copy do |directory|
+      users_path = File.join(directory, "db/data/dark/users.yml")
+      File.write(users_path, "#{File.read(users_path).chomp}\n  password: literal-in-a-manifest\n")
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/must not set password/, error.message)
+      assert_match(/#{Development::LocalPassword::ENV_KEY}/, error.message)
+    end
+  end
+
+  test "a user manifest that states a password confirmation is rejected" do
+    with_data_copy do |directory|
+      users_path = File.join(directory, "db/data/dark/users.yml")
+      File.write(users_path, "#{File.read(users_path).chomp}\n  password_confirmation: literal-in-a-manifest\n")
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/must not set password_confirmation/, error.message)
+    end
+  end
+
+  # The manifest rejection is what keeps a value out of the repository, so the
+  # tracked text itself is asserted rather than only the loader's reaction to it.
+  test "no checked-in development manifest states a password" do
+    manifests = Dir[Rails.root.join("db/data/**/users.yml")]
+
+    assert_not_empty manifests
+
+    manifests.each do |path|
+      assert_no_match(/^\s*password(_confirmation)?:/, Pathname(path).read,
+        "#{path.delete_prefix("#{Rails.root}/")} states a password. The loader assigns it from " \
+        "#{Development::LocalPassword::ENV_KEY}, or generates one for the load.")
+    end
+  end
+
   # Several stories in one universe is the shape the Dark directory exists to
   # show: the universe-level records are shared by all of them, while everything
   # story-scoped is each story's own.

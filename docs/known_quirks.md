@@ -205,6 +205,20 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     forcing the development environment. It is not part of GitHub CI and should not be treated as a
     reliable cleanup boundary.
 
+62. **Low — the smoke script's login check cannot tell a success from a rejection.**
+    `docs/smoke_test_stories.sh:67` asserts `login succeeds` by comparing the response code to `302`,
+    and `SessionsController#create` answers `302` in both branches: a successful sign-in redirects to
+    `after_authentication_url`, while a rejected one redirects back to `new_session_path` with the
+    `sessions.failed` alert (`app/controllers/sessions_controller.rb:15-21`). The check therefore
+    also passes with a wrong password, a rate-limited sign-in, or an expired CSRF token. Observed on
+    2026-10-02 by running the script against a live server with a deliberately wrong password: it
+    printed `ok - login succeeds` and then failed the following checks, so the script as a whole
+    still fails and the run is not silently green — but that one line asserts far less than it
+    reads, and it is the only thing between a bad credential and nine pages of meaningless output.
+    Asserting the redirect *target*, or the presence of the signed-session cookie, would make it mean
+    something. Separate from quirk 39, which concerns the script's filesystem and environment
+    handling rather than its assertions.
+
 ## Contract-dependent and future-feature footguns
 
 These observations are code-proven but depend on a product/deployment decision or are not reachable
@@ -326,26 +340,31 @@ used with a frozen install in CI and Docker. Finding 51 below is closed; see
 [architecture.md](architecture.md#runtime-logging-and-observability) and
 [`../CHANGELOG.md`](../CHANGELOG.md).
 
+63. **Low — the DataFactor guidance still lists two delivered work packages as pending.** Checked on
+    2026-10-02: `data_factor_guidance.md` marks §3 (test coverage) and §5 (credential literals) as
+    `delivered` but leaves §4 "Structured logging and runtime observability — priority:
+    later/high signal", although backlog item 16 delivered the structured `request`/`error` events,
+    the request-id correlation key, the gated error tracker, and the `/up` regression test on
+    2026-10-02. Only §4's standing rules (log redaction, no logged passwords or DSNs, an
+    environment-gated tracker, a deliberate metrics decision) still apply; its framing as future work
+    sends a reader looking for something to build. The paragraph above is stale in the same way: it
+    names "observability" and "credential hygiene" as pending `backlog.md` items, and both items are
+    gone from that file. §2, §6, and §7 were checked at the same time and are still correct — their
+    backlog items (15, 18, and 19) are open. The fix is to give §4 the same `delivered` treatment §3
+    and §5 received, pointing at
+    [architecture.md](architecture.md#runtime-logging-and-observability), and to drop the two
+    delivered items from the list in this section's introduction.
+
 
 
 52. **Medium — clean container onboarding is absent.** The repository has a production-oriented
-    `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`,
-    devcontainer, or value-free `.env.example`. A fresh clone therefore still depends on the
-    documented host toolchain, and there is no clean-checkout proof that the image, SQLite paths,
-    CSS assets, and `/up` work together. The compose path must not run development data in
-    production; this is the "One-command containerized onboarding" item in
-    [`backlog.md`](backlog.md).
-
-53. **Low/conditional — local demo and smoke-test credentials are literal values.** The LOTR
-    development users contain literal passwords (`db/data/lotr/users.yml:1-6`), the Dark fixture
-    users contain literal passwords (`db/data/dark/users.yml:1-10`), and
-    `docs/smoke_test_stories.sh:17,28-29` documents/defaults a real-looking password. These are
-    disposable fixtures rather than production credentials, but literals are easy to reuse and
-    trigger security hygiene checks. Require an explicit environment value or generate a local
-    value instead, while preserving the documented synthetic development login and load commands
-    for manual verification. A value-free template is not a secret. The separate critical master-key
-    rotation/history task remains open (quirk 5 above). This is the "Development credential and
-    environment hygiene" item in [`backlog.md`](backlog.md).
+    `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`
+    or devcontainer. A fresh clone therefore still depends on the documented host toolchain, and
+    there is no clean-checkout proof that the image, SQLite paths, CSS assets, and `/up` work
+    together. The compose path must not run development data in production; this is the
+    "One-command containerized onboarding" item in [`backlog.md`](backlog.md). The value-free
+    `.env.example` template this entry used to list as missing now exists; the container onboarding
+    it served is still absent.
 
 ## Audit baseline and evidence
 

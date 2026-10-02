@@ -163,27 +163,31 @@ A JSON formatter such as Lograge is a possible implementation, not a mandate to 
 Rails 8 compatibility, structured Active Support events, log volume, and redaction before selecting
 it. Add focused tests/configuration checks and run the security scans after the change.
 
-### 5. Credential-like literals and environment documentation — priority: now when touched/low risk
+### 5. Credential-like literals and environment documentation — priority: delivered
 
-The report flagged literal local/demo passwords in `db/data/lotr/users.yml`,
+Delivered on 2026-10-02. The report flagged literal local/demo passwords in `db/data/lotr/users.yml`,
 `db/data/dark/users.yml`, and `docs/smoke_test_stories.sh`, plus a missing environment template.
-These are synthetic development fixtures, but treat every credential-like string as potentially real
-until reviewed. The project intentionally documents some synthetic logins for manual verification;
-if a password source changes, update the exact development login and load instructions in the same
-change rather than making the data impossible to reproduce.
+Those literals are gone: no manifest under `db/data/` states a password and the loader rejects one
+that does. `Development::LocalPassword` takes the value from `UNIVERSE_MAKER_DEV_PASSWORD` or
+generates one for the load and reports it, so the documented development login is still exact and
+still reproducible. [`../db/data/README.md`](../db/data/README.md#development-credentials) owns
+the contract; the smoke script's requirement is stated in
+[`development.md`](development.md#smoke-test-end-to-end-over-http); [`../CHANGELOG.md`](../CHANGELOG.md)
+records the delivery.
 
-- Require a local/demo password through an explicitly named environment variable, or generate a
-  non-production value at runtime and print the exact command needed to use it. Do not retain a
-  real-looking fallback in tracked code merely to satisfy a scanner.
-- Make the smoke script fail clearly when its password is absent; do not print or persist it.
-- Add `.env.example` only as a documented, value-free template. A future implementation may use a
-  clear name such as `DEMO_USER_PASSWORD`, but must document that the app does not automatically
-  load every `.env` file. The current `.gitignore` excludes `.env*`, so the template requires an
-  explicit, reviewed unignore rule. Never create or modify a real `.env` file as part of this work.
-- Do not put demo data in production seeds or deploy commands.
-- Treat the critical tracked `.kamal/secrets` finding as a separate security remediation: rotate it
-  if it was exposed and remove it from version control through an approved process. Never reproduce
-  its value in documentation, tests, logs, or chat.
+The rules the implementation follows, which stay in force:
+
+- a local/demo password comes from an explicitly named environment variable, or from a value
+  generated at runtime and printed with the exact command that reuses it; no real-looking
+  fallback is retained in tracked code merely to satisfy a scanner;
+- the smoke script fails clearly when its password is absent, and never prints or persists it;
+- `.env.example` is a documented, value-free template behind an explicit, reviewed `.gitignore`
+  unignore rule, and it says plainly that nothing in the boot path reads a `.env` file. A real
+  `.env` is never created or modified as part of this work;
+- demo data stays out of production seeds and deploy commands;
+- the tracked `.kamal/secrets` finding is a separate security remediation: rotate it if it was
+  exposed and remove it from version control through an approved process. Never reproduce its
+  value in documentation, tests, logs, or chat.
 
 Run Brakeman and the relevant tests after changing credential or logging paths. A clean Brakeman
 result does not prove that a client-side DOM or log-redaction issue is absent.

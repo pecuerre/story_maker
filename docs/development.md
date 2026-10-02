@@ -235,6 +235,11 @@ from `config/importmap.rb`; it does not infer a version from a version banner in
 JavaScript file. Keep the comment, `bun.lock`, and the vendored asset synchronized when updating
 Tom Select.
 
+`bin/brakeman` deliberately omits the `--ensure-latest` flag the Rails-generated binstub adds. That
+flag makes the scan a tripwire: Brakeman exits before scanning as soon as any newer version is
+published, so an unrelated upstream release silently stops the security scan locally and in CI while
+the command still looks like it ran. Keep the flag out; upgrade the pinned gem in its own change.
+
 ## Repository quality and DataFactor follow-up
 
 The 2026-09-25 DataFactor report is a point-in-time snapshot, not a release gate or a reason to
@@ -366,6 +371,12 @@ it never invokes `db:seed`. `db:seed` and `db:prepare` load only production-safe
 `db/seeds/` and never load `db/data/`. The guarded `db:restart` task resets the schema without
 loading demo data.
 
+Both writing tasks report the local sign-in they created: the accounts that now exist and the
+password they got. No manifest states a password — the loader takes it from
+`UNIVERSE_MAKER_DEV_PASSWORD` or generates one for the load and prints the export command.
+[`db/data/README.md`](../db/data/README.md#development-credentials) owns that contract; the
+`docs/smoke_test_stories.sh` section below is its only other consumer.
+
 Both destructive tasks rebuild through `Development::DatabaseReset`, and the way it rebuilds is
 load-bearing rather than incidental:
 
@@ -481,10 +492,11 @@ UNIVERSE=lotr bin/rails db:demo:load                       # optional second uni
 bin/rails server
 ```
 
-Sign in with the documented Dark development user, open `/u/dark`, and check that all three stories
-are listed with **Open** actions, that **None selected** is the sidebar's story state until one is
-opened, and that switching between them changes the Sections and Scenes under the Story while
-Characters, Locations, Items, and Events stay the same records.
+Sign in with the Dark development user and the password the load reported (see
+[`db/data/README.md`](../db/data/README.md#development-credentials)), open `/u/dark`, and check
+that all three stories are listed with **Open** actions, that **None selected** is the sidebar's
+story state until one is opened, and that switching between them changes the Sections and Scenes
+under the Story while Characters, Locations, Items, and Events stay the same records.
 
 Then open `/u/dark/s/<story_id>/scenes` and check:
 the sidebar **Scenes** entry links to the selected story and shows the scene count; the list is in
@@ -679,9 +691,14 @@ universe should be rebuilt and reloaded. The guarded `db:restart` task resets sc
 Stories index, creates a story, and opens its sections:
 
 ```bash
-# with a server on :3000 (defaults BASE=http://localhost:3000 EMAIL=lotr@lotr PASSWORD=lotr)
-bash docs/smoke_test_stories.sh
+# with a server on :3000
+PASSWORD='<the password db:demo:reset printed>' bash docs/smoke_test_stories.sh
 ```
+
+It has no default credential. `PASSWORD` (or `UNIVERSE_MAKER_DEV_PASSWORD`) must carry the
+development password, and the script fails with that instruction when neither is set; it never
+prints or stores the value. `BASE` and `EMAIL` still default to `http://localhost:3000` and
+`lotr@lotr`.
 
 It was moved from `/tmp/opencode/` into `docs/` so it is tracked by git. Note: it creates a real
 story in the development DB and deletes it again at the end.

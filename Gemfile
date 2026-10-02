@@ -57,6 +57,11 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Runs `Procfile.dev` for `bin/dev`. It used to be installed by that script at runtime, unpinned,
+  # so every developer's `bin/dev` ran whatever foreman had published most recently. Bundler owns it
+  # now, and `BUNDLE_WITHOUT="development:test"` keeps it out of the production image.
+  gem "foreman", "~> 0.90"
 end
 
 group :test do

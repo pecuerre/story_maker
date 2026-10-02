@@ -36,10 +36,12 @@ first; NOW/LATER/NEVER applies to whatever extra turns up afterwards. The rules 
 
 ## Prerequisites & running
 
-- Ruby **3.4.10** via [mise](https://mise.jdx.dev) (`mise.toml`); `bundle install`.
+- Ruby **3.4.10** via [mise](https://mise.jdx.dev) (`mise.toml`); `bundle install`. `bin/dev` needs
+  that bundle: foreman is a development dependency in the `Gemfile`, not a gem the script installs.
 - **Google Chrome** (or a compatible browser) for `bin/rails test:system`.
 - **Bun** for CSS/JS assets: `bun install`; `bun.lock` is the committed source of truth. Use
-  `bun install --frozen-lockfile` in CI and other reproducible environments.
+  `bun install --frozen-lockfile` in CI and other reproducible environments. The pinned version is the
+  one `mise.toml` declares.
 - **An image library**, for record photos. Either **libvips** or **ImageMagick**: `PhotoProcessing`
   prefers `ImageProcessing::Vips` and falls back to `ImageProcessing::MiniMagick` when libvips is not
   installed, so one of the two is enough. libvips is installed in the `Dockerfile` and in CI;
@@ -78,6 +80,38 @@ nothing and search reports itself unavailable until you start them.
   that makes it — as the first rule, because `@use` cannot follow a style rule. The deprecated
   global built-ins (`mix`, `darken`, `lighten`, `transparentize`, …) still work but warn on every
   build, and the compile step only silences the `@import` deprecation.
+
+## Pinned toolchain versions
+
+The Ruby and Bun versions are declared in more than one file, and **none of those files derives from
+another**. `test/deployment/pin_consistency_test.rb` is what keeps them in agreement, so a bump that
+misses one place fails the suite instead of quietly producing a different build:
+
+| Pin | Where |
+|---|---|
+| Ruby, for a developer | `mise.toml` |
+| Ruby, for the image | the `FROM` line in `Dockerfile`, tag **and** `sha256` digest |
+| Bun, for a developer | `mise.toml` |
+| Bun, for the image | `ARG BUN_VERSION` in `Dockerfile` |
+| Bun, declared to tooling | `packageManager` in `package.json` |
+| Bun, in CI | `bun-version:` in every job that installs it |
+| GitHub Actions | the commit SHA in each `uses:` line, with the release tag as a comment |
+
+- The base image is pinned to an **OCI index digest**, so amd64 (CI, and the Kamal builder) and arm64
+  (a local `docker build` on Apple silicon) both resolve through one pin. The tag stays beside the
+  digest as the human-readable statement of what was pinned; the digest is what is enforced. To
+  update it, read the current digest from Docker Hub for `library/ruby:<version>-slim` — the registry
+  API returns the same `Docker-Content-Digest` for the manifest list — or let Dependabot's `docker`
+  ecosystem open the pull request and review that it moved the version and the digest together.
+- The Dockerfile installs Bun from its **GitHub release archive**, verified against the SHA-256
+  manifest the same release publishes, rather than by piping a mutable install script into `bash`. The
+  architecture is chosen at build time so an arm64 build still works.
+- Every `uses:` line is a commit SHA with `# vX.Y` after it. The comment is not decoration: without it
+  the SHA says nothing about which release it is. Dependabot's `github-actions` ecosystem updates the
+  SHA and the comment together.
+- To bump Bun: `mise.toml`, the Dockerfile's `ARG BUN_VERSION`, `package.json`'s `packageManager`,
+  and the workflow's `bun-version:` lines. To bump Ruby: `mise.toml` and the Dockerfile's `FROM`
+  line. Neither is a one-line change, which is the point.
 
 ## Test suite (Minitest)
 
@@ -841,7 +875,9 @@ once while this was built.
 ## CI (`.github/workflows/ci.yml`, runs on PR + push to main)
 
 The test jobs install the pinned Bun version and run `bun install --frozen-lockfile` before
-starting Rails, so CSS builds use the same dependency graph as local development.
+starting Rails, so CSS builds use the same dependency graph as local development. That version comes
+from `mise.toml` and is repeated in each job's `bun-version:`; see
+[Pinned toolchain versions](#pinned-toolchain-versions).
 
 | Job | Command |
 |---|---|
@@ -912,11 +948,10 @@ Dependabot config: `.github/dependabot.yml`. Four ecosystems: `bundler`, `bun`, 
 `github-actions`. The JavaScript entry is **`bun`, not `npm`**: this repository installs with
 `bun install --frozen-lockfile` and commits `bun.lock`, and Dependabot's npm ecosystem does not
 reliably rewrite a Bun lockfile, which turns every update PR into a failing frozen install. Dependabot
-does not run Bun security updates, so `bun audit` in CI is what covers advisories. A `docker` PR that
-moves the base image also has to be reconciled with the pins that must agree with it — `mise.toml` for
-Ruby, `package.json`'s `packageManager` for Bun, and the `bun-version` each CI job installs Bun with.
-Those four are the same version and are not derived from one another, so a PR that moves one has to
-move all of them.
+does not run Bun security updates, so `bun audit` in CI is what covers advisories. The `docker` entry
+updates the base image's tag and digest together, and the `github-actions` entry updates the commit
+SHAs the jobs are pinned to — so a PR from either has to be read as a change to the pins in
+[Pinned toolchain versions](#pinned-toolchain-versions), not as a routine bump.
 
 ## Deployment (Kamal)
 
@@ -975,10 +1010,10 @@ move all of them.
   the deploy, and the test proves that by requiring Kamal to reject a deliberately invalid file.
 - `Dockerfile` builds the app (comments show `docker build -t universe_maker .`); the image runs
   Rails behind **thruster**; volume `universe_maker_storage:/rails/storage` persists Active
-  Storage (local disk per `config/storage.yml`). The image excludes the `development` and `test`
-  bundle groups and drops `node_modules` after precompiling, and CI's `production-boot` job asserts
-  both. A real deploy to a real host is still unverified; the image build, its contents, and `/up`
-  are what CI proves.
+  Storage (local disk per `config/storage.yml`). The base image is pinned by digest, the image excludes
+  the `development` and `test` bundle groups and drops `node_modules` after precompiling, and CI's
+  `production-boot` job asserts the last two. A real deploy to a real host is still unverified; the
+  image build, its contents, and `/up` are what CI proves.
 - A MySQL accessory is sketched in `deploy.yml` but commented; the app itself is SQLite.
 
 ## Adding a new content model (checklist)

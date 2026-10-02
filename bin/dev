@@ -1,11 +1,10 @@
 #!/usr/bin/env sh
 
-if gem list --no-installed --exact --silent foreman; then
-  echo "Installing foreman..."
-  gem install foreman
-fi
+# foreman is a bundled development dependency (see the Gemfile). It used to be installed here at
+# runtime with an unpinned `gem install`, which meant `bin/dev` ran whatever foreman had published
+# most recently and a new release could change the dev server behaviour without a commit.
 
 # Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
 
-exec foreman start -f Procfile.dev --env /dev/null "$@"
+exec bundle exec foreman start -f Procfile.dev --env /dev/null "$@"

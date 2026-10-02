@@ -221,13 +221,15 @@ through Kamal's own loader rather than by running `bin/kamal config`, which prin
 [`development.md`](development.md#lint--security-scans) owns the commands, the vendored-JavaScript
 contract, and the CI job table; [`../CHANGELOG.md`](../CHANGELOG.md) records the delivery.
 
-Two things stayed deliberately out, and the reasons still apply:
+Three things stayed deliberately out, and the reasons still apply:
 
 - no deploy job and no typecheck job. A real deployment still needs an owner-approved target,
   credentials, and a rollback plan, and the project still has no type-checking tool;
-- the base image is still tag-pinned rather than digest-pinned, and GitHub Actions are still pinned
-  to major tags. Digest pinning fights the Docker Dependabot ecosystem that is now enabled, so it
-  remains an open finding in [`known_quirks.md`](known_quirks.md) rather than a change made here.
+- the base image and the GitHub Actions were still tag-pinned when this package landed. Both are now
+  pinned — the image by OCI index digest, the actions by commit SHA — and
+  `test/deployment/pin_consistency_test.rb` keeps every Ruby and Bun version in the repository in
+  agreement, so the remaining cost of those pins is that a version bump is no longer a one-line
+  change. [`development.md`](development.md#pinned-toolchain-versions) owns the contract.
 
 ### 7. Reduce shared-helper duplication without behavior drift — priority: later/low signal
 

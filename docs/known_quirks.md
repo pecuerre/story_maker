@@ -179,13 +179,6 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     been clarified, and the dead `schema.txt` links this finding used to report were removed on
     2026-09-30; the fixture, `images-to-ai`, and `test/helpers` issues in this finding remain open.
 
-38. **Low — setup and supply-chain reproducibility has gaps.** `bin/dev:3-5` installs an unpinned
-    `foreman` gem at runtime; the Dockerfile comment refers to a nonexistent `.ruby-version` while
-    the actual pin is `mise.toml`; and CI/Docker install `libvips` although the local prerequisites
-    do not list it. GitHub Actions use mutable major tags, the Docker base image is not digest-pinned,
-    and Bun is installed through a remote script. These are hardening/reproducibility concerns,
-    not current application failures.
-
 39. **Low — the smoke script is not environment-guarded or concurrency-safe.**
     `docs/smoke_test_stories.sh:22-114` uses fixed `/tmp` filenames, has no cleanup trap, can leave
     a created story behind after an extraction failure, and invokes `bin/rails runner` without

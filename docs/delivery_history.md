@@ -29,6 +29,98 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-02
 
+- **[chore]** **Known quirk 38: setup and supply-chain reproducibility.** Four of the finding's five
+  live parts were unambiguous and three of them were an owner decision, so it was asked about rather
+  than assumed; the owner chose all three pins. `foreman` is now a bundled development dependency
+  instead of an unpinned `gem install` inside `bin/dev`, the Docker base image is pinned to an OCI
+  **index** digest, Bun is installed from its GitHub release archive verified against that release's
+  published SHA-256 manifest instead of `curl … | bash`, and all 22 `uses:` lines are pinned to commit
+  SHAs with their release tag kept as a comment. `test/deployment/pin_consistency_test.rb` asserts
+  every Ruby and Bun version in the repository agrees, and asserts the *shape* of each pin, so
+  neither the digest nor a SHA can be quietly reverted to a tag.
+
+  **The finding was also wrong about one thing, which is worth recording separately from the fix.**
+  It claimed CI and Docker install `libvips` "although the local prerequisites do not list it". They
+  have listed it since `154e400` (2026-09-29), four days after the finding was written: the
+  prerequisites offer libvips *or* ImageMagick, explain the preference order, and say that libvips is
+  what the image and CI install. Nothing needed changing there, and a "fix" would have been a
+  duplicate of a correct paragraph. The verification rule — check a report claim against the tree
+  before acting on it — earned its keep on the very entry it was written into.
+
+  **Digest-pinning the base image, and why the `ARG` had to go.** `ARG RUBY_VERSION=3.4.10` feeding
+  `FROM ruby:$RUBY_VERSION-slim` is a mutable reference wearing the costume of a pin: a publisher can
+  re-point the tag, and the build changes without a commit here. Adding a digest beside it would have
+  been worse than leaving it alone, because when both a tag and a digest are present the digest wins
+  and the tag — and therefore the ARG — stops selecting anything. So the ARG was removed rather than
+  kept as documentation, and the version is stated literally next to the digest where it is enforced.
+  The digest is the **multi-architecture index** digest, not an amd64 manifest: it covers
+  linux/amd64, arm64, arm, 386, ppc64le, riscv64 and s390x, so CI and the Kamal builder (amd64) and a
+  developer's `docker build` on Apple silicon all resolve through one pin. Verified against Docker
+  Hub's registry API rather than assumed, and the same command is in the documentation for the next
+  person who has to move it.
+
+  **Replacing `curl … | bash`.** The build stage now downloads `bun-linux-<arch>.zip` from the pinned
+  release, downloads that release's `SHASUMS256.txt`, and verifies the archive against its own entry
+  before unpacking it. Three details were wrong on the first attempt and each was caught by running
+  the sequence locally rather than by reading it:
+
+  - `sha256sum --check` verifies the **filename in the manifest**, not an arbitrary path, so the
+    archive has to be stored under the name the manifest uses and the check has to run in that
+    directory. Downloading to `/tmp/bun.zip` fails with `FAILED open or read` even when the bytes are
+    correct.
+  - the architecture has to be read at build time. A hardcoded `bun-linux-x64.zip` — the obvious
+    simplification — breaks a local build on Apple silicon, which the script this replaced handled
+    for free.
+  - the archive unpacks to `bun-linux-x64/bun`, so the binary path is derived from the archive name
+    rather than written twice.
+
+  The whole sequence was run end to end under `dash` (the shell in the image), and the tampered-archive
+  path was run too: the check prints `FAILED` and exits 1. What this does **not** do is defend against
+  a compromised release — the checksum comes from the same place as the archive — so it is a
+  stronger check than a pipe to `bash` and a weaker one than a hardcoded digest. That is the trade
+  this change made deliberately; a hardcoded Bun digest would need updating with every Bun release in
+  three files.
+
+  **Actions pinned to SHAs, with the tag kept in a comment.** Twenty-two `uses:` lines across eight
+  jobs, each resolved from the GitHub API for the exact tag it already used, so the change alters what
+  a job runs not at all. The trailing `# v6` comment is load-bearing: a bare SHA says nothing about
+  which release it is, which is the only reason a reviewer can tell a routine Dependabot update from
+  something else. Dependabot's `github-actions` ecosystem updates the SHA and the comment together.
+
+  **The test is the part that makes the pins survive.** A pin is one `sed` away from being reverted by
+  someone tidying up, and no CI signal reports it: an image pinned to the wrong Ruby builds fine, and a
+  job pinned to the wrong Bun audits a graph nobody else sees. `test/deployment/pin_consistency_test.rb`
+  therefore asserts agreement (`mise.toml`, `package.json`'s `packageManager`, the Dockerfile's
+  `ARG BUN_VERSION` and `FROM` tag, and every workflow `bun-version:`) *and* shape (every `FROM` line
+  naming the Ruby image carries a 64-character `sha256`, every `uses:` is a 40-character SHA with a
+  version comment), plus that `bin/dev` still contains no `gem install`. Each case was verified to
+  fail against its defect: bumping `mise.toml` alone, dropping the digest from the `FROM` line,
+  adding a second unpinned Ruby `FROM`, changing one job's `bun-version:`, reverting one action to
+  `@v6`, and re-adding `gem install foreman` to `bin/dev`.
+
+  **Verification (2026-10-02)**
+
+  - `bundle install` after adding `foreman` — 30 dependencies, 133 gems; `Gemfile.lock` gained
+    `foreman (0.90.0)` and its `sha256`, and the existing global install of the same version means no
+    local behaviour changed.
+  - `bundle exec foreman check -f Procfile.dev` — "valid procfile detected (web, css, meilisearch)".
+  - `bin/dev` — all three processes started (`web`, `css`, `meilisearch`) and were stopped again by a
+    timeout a few seconds later.
+  - `bin/rails test test/deployment/pin_consistency_test.rb` — 5 runs, 57 assertions, 0 failures, and
+    each of the six negative checks above produced the intended failure message.
+  - `bin/rails test` with `CI=1` — 1,393 runs, 8,670 assertions, 0 failures, 0 errors, 10 skips; coverage
+    94.57% line and 81.19% branch against the 90%/75% gate.
+  - `bin/rubocop` — 371 files, no offenses. `bin/brakeman --no-pager` — no warnings.
+    `bin/bundler-audit` — no vulnerabilities found.
+  - The Bun install sequence was run under `dash` for x64: the manifest check passed, `bun --version`
+    printed `1.4.2`, and appending one byte to the archive made the same check fail with exit 1.
+  - The workflow parses, all 22 `uses:` values are SHAs, and every one keeps its version comment.
+
+  Not run: `docker build` and the `production-boot` job — no Docker is available in this environment,
+  so the digest-pinned base image and the new Bun install path are unverified end to end until CI
+  builds them. `bun run check:js` (no file under `app/javascript` changed) and
+  `bin/rails test:system` (no view or client-side behaviour changed).
+
 - **[chore]** **Dependency, JavaScript, and container supply-chain checks — backlog item 18.** The
   item asked for four things the tree did not have: an audit of the committed Bun graph, proof that a
   locally vendored asset is the release it claims to be, Dependabot coverage for the ecosystems the
@@ -113,12 +205,12 @@ are linked rather than repeated, so there is one place to keep them current.
   in `public/assets`. The asset half is what makes the check worth having: if the digests were not
   there, the failure would otherwise be a stylesheet with no icon font in production.
 
-  **The rejected alternatives are worth recording.** A digest-pinned base image and SHA-pinned GitHub
-  Actions were left open (known quirk 38) after discussion: a digest pin fights the Docker Dependabot
-  ecosystem this change adds, and the unpinned `foreman` in `bin/dev` is a developer-workflow change
-  the owner did not want bundled here. A deploy job and a typecheck job were not added, for the
-  reasons the item gave: there is no approved deployment contract and no static-type toolchain, and an
-  empty job of either kind is worse than no job.
+  **The rejected alternatives are worth recording.** A deploy job and a typecheck job were not added,
+  for the reasons the item gave: there is no approved deployment contract and no static-type
+  toolchain, and an empty job of either kind is worse than no job. The digest-pinned base image,
+  SHA-pinned actions, and a bundled `foreman` were left out of *this* change and delivered in a
+  separate one the same day — each trades maintenance for hardening and each is an owner decision.
+  See the entry above.
 
   **Verification (2026-10-02)**
 
@@ -4559,6 +4651,33 @@ shell logic was exercised against a staged tree and rejects each of `node_module
 gem, a missing font, and a missing Bootstrap bundle. Not run: `docker build`, `docker run`, and the
 `production-boot` job itself — no Docker was available in the environment this was done in, so the
 image-level result is unverified until CI runs it.
+
+### Former quirk #38: setup and supply-chain reproducibility had gaps (fixed)
+
+**Then:** five reproducibility gaps, recorded on 2026-09-25 against commit `8fcf4d4` and none of them
+a current application failure. `bin/dev` ran `gem install foreman` at runtime, unpinned, so every
+developer's dev server ran whatever foreman had published most recently. The Dockerfile's comment
+pointed at a `.ruby-version` file the repository does not have, which sent the next reader looking
+for a pin that lives in `mise.toml`. GitHub Actions were referenced by mutable major tag, so a job
+could start running different code without a commit. The Docker base image was referenced by tag,
+which its publisher can re-point. Bun was installed by piping `https://bun.sh/install` into `bash`.
+And the finding claimed CI and Docker install `libvips` "although the local prerequisites do not
+list it".
+
+**Fix and the stale clause.** The five live parts are described in the dated entry for 2026-10-02
+above: `foreman` moved into the `Gemfile`'s development group, the base image is pinned to an OCI
+index digest, Bun comes from a checksum-verified release archive, and all 22 `uses:` lines are pinned
+to commit SHAs with their release tag in a comment. `test/deployment/pin_consistency_test.rb` keeps
+the versions in agreement and the pins in shape.
+
+The `libvips` clause was already false when the work started. `154e400` ("add photos", 2026-09-29)
+added a prerequisites entry offering libvips or ImageMagick, explaining that `PhotoProcessing`
+prefers libvips, and naming the Dockerfile and CI as the places that install it — four days after the
+finding was written. Nothing was changed for it, and no duplicate paragraph was added. That is the
+whole argument for checking a recorded finding against the tree before working on it.
+
+**Verification:** see the dated entry above, including the five negative checks that confirm the new
+test fails when a pin is reverted.
 
 ### The production image could not be built at all (fixed)
 

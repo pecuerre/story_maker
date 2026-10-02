@@ -7,9 +7,16 @@
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
-ARG RUBY_VERSION=3.4.10
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+# The base image is pinned by digest, with the tag kept beside it as the human-readable statement of
+# what was pinned. A tag is a mutable name that a publisher can re-point; the digest is what makes the
+# build reproducible, and this one is the multi-architecture OCI *index*, so amd64 (CI and the Kamal
+# builder) and arm64 (a local `docker build` on Apple silicon) both resolve through it.
+#
+# There is no `ARG RUBY_VERSION` here any more: with a digest present the tag no longer selects
+# anything, so an ARG beside it would be ignored silently. `test/deployment/pin_consistency_test.rb`
+# asserts this version is the one in `mise.toml`, because a Ruby bump has to move the version and the
+# digest together. Dependabot's `docker` ecosystem updates both.
+FROM docker.io/library/ruby:3.4.10-slim@sha256:b573616eed67613e1d380ebb777d87aa094fad7505bdbc2d1b45dca9dd9116b9 AS base
 
 # Rails app lives here
 WORKDIR /rails
@@ -30,12 +37,30 @@ ENV RAILS_ENV="production" \
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems and the Bun-based CSS toolchain
+# Install packages needed to build gems and the Bun-based CSS toolchain.
+#
+# Bun comes from its GitHub release archive, verified against the SHA-256 manifest that same release
+# publishes, rather than from `curl … | bash` of a mutable install script. The architecture is read
+# at build time so a local build on Apple silicon still gets an arm64 Bun, and the archive is stored
+# under the name the manifest uses so `sha256sum --check` can verify it. A truncated or mismatched
+# download fails here instead of part-way through a CSS build.
 ARG BUN_VERSION=1.4.2
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libvips libyaml-dev pkg-config unzip && \
-    curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" && \
-    ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
+    case "$(uname -m)" in \
+      x86_64) bun_archive=bun-linux-x64.zip ;; \
+      aarch64|arm64) bun_archive=bun-linux-aarch64.zip ;; \
+      *) echo "unsupported architecture $(uname -m) for the pinned Bun build" >&2; exit 1 ;; \
+    esac && \
+    bun_release="https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}" && \
+    curl -fsSLo "/tmp/${bun_archive}" "${bun_release}/${bun_archive}" && \
+    curl -fsSLo /tmp/SHASUMS256.txt "${bun_release}/SHASUMS256.txt" && \
+    cd /tmp && \
+    grep " ${bun_archive}\$" SHASUMS256.txt | sha256sum --check --strict - && \
+    unzip -q "${bun_archive}" -d /tmp/bun && \
+    install -m 0755 "/tmp/bun/${bun_archive%.zip}/bun" /usr/local/bin/bun && \
+    cd / && \
+    rm -rf /tmp/bun "/tmp/${bun_archive}" /tmp/SHASUMS256.txt && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems

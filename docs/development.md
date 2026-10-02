@@ -1033,7 +1033,9 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    through `UniverseScopeResolver`: give it its own `#universe` that delegates to its owner, or give
    it an owner association named `story`, `scene`, or `section`. Register it in
    `Ability::CONTENT_CLASS_NAMES` as well, and validate any shared scope in the model rather than
-   trusting a foreign key.
+   trusting a foreign key. Registration is not optional bookkeeping: `test/models/ability_test.rb`
+   requires every persisted model to be content, authorized by another rule group, or listed there
+   with a reason, so a model that is none of those fails the suite.
 3. Controller in `app/controllers/` — `Current.universe.<assoc>` scoping,
    `include MaintainsSiblingPositions` + `maintains_sibling_positions_for :model` (or
    `maintains_flat_positions_for` for a parentless sequence) if positioned,

@@ -41,6 +41,9 @@ reasoning as of its date.
 | [0014](0014-global-search-with-meilisearch.md) | Accepted | Answer the top-bar search with Meilisearch, filtered by what the reader may read, and state it when there is no engine |
 | [0015](0015-record-photos.md) | Accepted | Give every main record one optional `Photo`, cropped to a square and stored as a 300×300 re-encode |
 | [0016](0016-internationalization-and-browser-locale.md) | Accepted | Translate application chrome through I18n keys, and keep the language a browser-owned preference |
+| [0017](0017-browser-owned-start-page-and-remembered-destination.md) | Accepted | Remember where the reader was headed across sign-in in the browser rather than the session |
+| [0018](0018-session-lifetime-and-user-agent-binding.md) | Accepted | End sessions on a lifetime, and bind them to the user agent rather than the IP |
+| [0019](0019-collaboration-foundations.md) | Accepted | Settle the collaboration system's authorization, version-stamp, and page-shape foundations before building it |
 
 ## Format
 

@@ -153,6 +153,46 @@ class AbilityTest < ActiveSupport::TestCase
     end
   end
 
+  test "every persisted model is content, or is authorized elsewhere, or is on the list" do
+    # `CONTENT_CLASS_NAMES` is the registry CanCan builds its content rules from,
+    # and a model missing from it has no rule at all, so every authorization check
+    # against it is denied. That failure is silent — nothing crashes, a control
+    # simply never renders — so the registry is inverted here: a new persisted
+    # model fails this test until it is deliberately registered or deliberately
+    # excused. An inclusion list cannot do that; an exclusion list can, because
+    # the default becomes "you forgot".
+    elsewhere = %w[ Universe UniverseMembership ]
+    not_content = {
+      "Session" => "one signed-in browser, never universe-scoped content",
+      "User" => "the person, not something a universe contains"
+    }
+
+    persisted = ApplicationRecord.descendants.reject(&:abstract_class?).map do |model|
+      model.name
+    end.sort
+
+    unregistered = persisted - Ability::CONTENT_CLASS_NAMES - elsewhere
+    stale = not_content.keys - persisted
+    unjustified = unregistered - not_content.keys
+
+    assert_empty stale,
+      "Models listed here as not content but no longer exist:\n  #{stale.join("\n  ")}"
+    assert_empty unjustified,
+      "Persisted models that are neither content, nor authorized elsewhere, nor " \
+      "excused. Register the content ones in Ability::CONTENT_CLASS_NAMES and give " \
+      "the rest a reason in this test:\n  #{unjustified.join("\n  ")}"
+  end
+
+  test "the content registry names only real content classes" do
+    Ability::CONTENT_CLASS_NAMES.each do |name|
+      model = name.constantize
+
+      assert model < ApplicationRecord, name
+      assert_not model.abstract_class?, name
+      assert_equal name, model.name, "a nested class must be registered by its full name"
+    end
+  end
+
   test "a scene resolves its universe through its story" do
     private_story = Story.create!(universe: @private_universe, name: "Private story")
     scene = private_story.scenes.create!(name: "Private scene")

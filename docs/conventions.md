@@ -94,6 +94,26 @@ the same change, or `db:demo:check` fails.
   `photo_data=` (the cropped square as a `data:` URL) and `remove_photo=` rather than a `photo_id`.
   The full contract, the stored-file rules, and the one control that serves all three page patterns
   are in [features/photos.md](features/photos.md).
+- **A polymorphic record reference is resolved only through `RecordTarget`.** A
+  `record_type`/`record_id` pair is two untrusted strings, and it is never constantized directly:
+  `RecordTarget.model_for` matches the type against `Ability::CONTENT_CLASS_NAMES` first, so the
+  registry that CanCan builds its content rules from is also the only gate on what a reference can
+  name. `find!` additionally requires the record to resolve to a given universe through
+  `UniverseScopeResolver`, and refuses an unknown type, an unknown id, a soft-deleted record, and a
+  foreign record as one indistinguishable `ActiveRecord::RecordNotFound` (a **404** in the test
+  environment). An unknown type is a missing record rather than a permission decision, so refusing
+  it as forbidden would let a stored `record_type` be used as an oracle. `RecordTarget` returns
+  instances only, which is deliberate: the content rules are instance blocks, and CanCan answers a
+  block rule with `true` when given the class, so a class-level `authorize!` on a content model is
+  a silent allow. See [ADR 0019](adr/0019-collaboration-foundations.md).
+- **A remembered change's version is a `VersionStamp`, never a bare `updated_at`.** `VersionStamp.capture`
+  normalizes a record's version to a fixed-format UTC string and `VersionStamp.changed?` compares
+  stamps as strings. Comparing a `Time` to the string it was serialized from is never equal, so the
+  naive comparison reports a conflict on *every* change. The comparison is conservative on purpose:
+  an unknown or missing base counts as moved, because a false conflict is answerable and a silently
+  overwritten edit is not. Whether a record is *deleted* is a separate question from whether it
+  moved — a soft delete bumps `updated_at` — so ask `deleted?` rather than inferring it from the
+  stamp. See [ADR 0019](adr/0019-collaboration-foundations.md).
 - **A group of related value objects gets its own namespace directory.** `Search` is the current
   example: `app/models/search/` holds the query, scope, catalog, client, and the rest of one
   subsystem, rather than sixteen top-level files. A standalone value object with no siblings to

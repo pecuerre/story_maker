@@ -208,8 +208,14 @@ through the current normal UI. They are recorded so they are not mistaken for se
   content classes use instance blocks (`app/models/ability.rb:59-81`); a guest class-level
   `authorize!(:read, Character)` can be allowed even though an instance check is denied. Current
   `UniverseAuthorization` passes concrete universe objects, so no active route bypass was found.
-  The content-class registry is also hard-coded (`app/models/ability.rb:11-27`), while the documented
-  new-model workflow does not explicitly require updating it.
+  The content-class registry is still hard-coded (`app/models/ability.rb:11-27`) and is now
+  load-bearing twice over, since `RecordTarget` gates polymorphic record references through the same
+  list. Two things changed on 2026-10-02: the claim that the new-model workflow does not require
+  registration was wrong — `development.md` has required it since the checklist was written — and
+  `test/models/ability_test.rb` now requires every persisted model to be content, authorized by
+  another rule group, or listed there with a reason, so an unregistered model fails the suite
+  instead of silently losing its rules. The footgun itself is unchanged: nothing in the application
+  prevents a future caller from authorizing a class, only `RecordTarget` declining to hand one out.
 - **Ownership-scope resolution now has one shared adapter.** `UniverseScopeResolver`
   (`app/models/universe_scope_resolver.rb`) answers which universe owns a record, and both
   `Ability#universe_for` and `ApplicationHelper#universe_for_record` delegate to it, so
@@ -217,8 +223,9 @@ through the current normal UI. They are recorded so they are not mistaken for se
   through its own `#universe` or through a declared owner association (`story`, `scene`,
   `section`). Two limits remain: a model nested deeper than one of those must define its own
   `#universe` (otherwise it resolves to nothing and silently loses controls and checks), and the
-  content-class registry in `app/models/ability.rb:11-28` is still hard-coded, so a new model must
-  be added to it or CanCan will not match a rule for it at all.
+  content-class registry in `app/models/ability.rb:11-34` is still hard-coded, so a new model must
+  be added to it or CanCan will not match a rule for it at all — that half is now a failing test
+  rather than a silent omission, see the entry above.
 - **Implicit owner access is missing from association APIs.** `User#universes` and
   `Universe#members` are membership-only associations (`app/models/user.rb:6-8`,
   `app/models/universe.rb:41-43`), while the owner is intentionally not stored as a membership row.

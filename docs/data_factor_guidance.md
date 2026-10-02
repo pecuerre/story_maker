@@ -36,7 +36,8 @@ Several observations in the report are already stale or have changed in this rep
   silence its expected request log, and add/verify a regression test rather than adding a second
   health route.
 - `bun.lock` is committed and CI/Docker use `bun install --frozen-lockfile`. The report's claim
-  that no Bun lockfile existed does not describe the current tree. Preserve the lockfile.
+  that no Bun lockfile existed does not describe the current tree. Preserve the lockfile. The whole
+  graph in it is now audited in CI as well; see §6.
 - The repository already has date-based changelog discipline, RuboCop, Brakeman, Bundler Audit,
   Importmap Audit, and a browser system-test job. The remaining gaps are enforcement and coverage
   of areas those checks do not exercise.
@@ -192,21 +193,41 @@ The rules the implementation follows, which stay in force:
 Run Brakeman and the relevant tests after changing credential or logging paths. A clean Brakeman
 result does not prove that a client-side DOM or log-redaction issue is absent.
 
-### 6. Dependency, JavaScript, and container supply-chain checks — priority: later/medium
+### 6. Dependency, JavaScript, and container supply-chain checks — priority: delivered
 
-The report's lockfile warning is outdated for the current tree: keep `bun.lock` committed and use
-`--frozen-lockfile` in CI and Docker. The local Tom Select pin now includes machine-readable
-`# @2.6.2` metadata, so Importmap Audit includes that direct package/version; the audit still does
-not verify the provenance of the vendored bytes or cover the complete Bun/npm dependency graph.
-That graph is not currently covered by the CI workflow. Consider a `bun audit` (or an equivalent
-supported audit) step, inventory vendored assets, and add the appropriate npm/Bun and Docker
-Dependabot ecosystems. Keep updates reviewable and reproducible rather than pinning arbitrary
-versions.
+Delivered on 2026-10-02. `bun.lock` was already committed and installed with `--frozen-lockfile`;
+what was missing was the audit of the graph behind it. `bun audit` now runs in CI's `scan_js` job
+beside `bin/importmap audit`, and it found what the advisory database had not been consulted for:
+`bun.lock` resolved `brace-expansion` 5.0.9, two high and one moderate DoS advisory, reachable
+through `nodemon > minimatch`. `bun audit fix` moved it to 5.0.12 in range, without touching
+`package.json`, which is what makes the gate green rather than aspirational.
 
-A deploy job is not automatically an improvement: a real deployment requires an owner-approved
-target, credentials, rollback plan, and Kamal validation. A container build/boot smoke test and
-Kamal configuration validation may be safer first steps. Do not add a typecheck job until the
-project adopts a type-checking tool; an empty or ceremonial typecheck job is not useful.
+The vendored half is covered too. Importmap Audit reads a version out of a pin comment and never
+looks at the file's bytes, so `config/vendored_javascript.yml` plus
+`test/vendored_javascript_test.rb` prove that the vendored copy is the release `bun.lock` locks:
+Bun verifies each tarball's sha512 on install, so a byte-identical comparison against
+`node_modules` is a provenance answer with no network call. The pin comment, the resolved version,
+and the `package.json` range are asserted to be one version.
+
+Dependabot gained the `bun` ecosystem rather than `npm` — the npm ecosystem does not reliably
+rewrite a Bun lockfile, so its PRs would fail the frozen install — plus a `docker` ecosystem for the
+base image. A production-image build/boot check already existed but could not pass: `assets:precompile`
+boots the production environment, which refuses to start without `APP_HOST`, `MAILER_FROM`, and
+`SMTP_ADDRESS`, so `docker build` failed on every run. Those three names are now build arguments with
+`.invalid` defaults. The image also stopped keeping the `test` bundle group next to `development` and
+dropped `node_modules` after precompiling, and CI now inspects the built image to prove both. Kamal
+configuration is validated in the suite
+through Kamal's own loader rather than by running `bin/kamal config`, which prints secrets.
+[`development.md`](development.md#lint--security-scans) owns the commands, the vendored-JavaScript
+contract, and the CI job table; [`../CHANGELOG.md`](../CHANGELOG.md) records the delivery.
+
+Two things stayed deliberately out, and the reasons still apply:
+
+- no deploy job and no typecheck job. A real deployment still needs an owner-approved target,
+  credentials, and a rollback plan, and the project still has no type-checking tool;
+- the base image is still tag-pinned rather than digest-pinned, and GitHub Actions are still pinned
+  to major tags. Digest pinning fights the Docker Dependabot ecosystem that is now enabled, so it
+  remains an open finding in [`known_quirks.md`](known_quirks.md) rather than a change made here.
 
 ### 7. Reduce shared-helper duplication without behavior drift — priority: later/low signal
 

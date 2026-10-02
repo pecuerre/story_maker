@@ -7,6 +7,7 @@ CI.run do
 
   step "Security: Gem audit", "bin/bundler-audit"
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
+  step "Security: JavaScript dependency audit", "bun install --frozen-lockfile && bun audit"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Tests: Rails", "bin/rails test"
   step "Checks: Dark development data", "env RAILS_ENV=test UNIVERSE=dark bin/rails db:demo:check"

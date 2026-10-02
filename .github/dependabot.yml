@@ -5,6 +5,22 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+# `bun`, not `npm`: this repository installs with `bun install --frozen-lockfile` and commits
+# `bun.lock`, and Dependabot's npm ecosystem does not reliably rewrite a Bun lockfile -- which
+# makes every PR fail the frozen install in CI. The Bun ecosystem updates both files. Bun security
+# updates are not supported by Dependabot, which is why `bun audit` runs in CI instead.
+- package-ecosystem: bun
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 10
+# The Dockerfile's base image. A PR that moves it also has to be reconciled with the pins that
+# have to agree with it: `mise.toml` (Ruby) and `package.json`'s `packageManager` (Bun).
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 5
 - package-ecosystem: github-actions
   directory: "/"
   schedule:

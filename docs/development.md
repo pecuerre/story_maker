@@ -227,12 +227,36 @@ bun run lint:js              # Biome over the Stimulus controllers and their uni
 bin/brakeman --no-pager      # static security analysis
 bin/bundler-audit            # vulnerable gems
 bin/importmap audit          # vulnerable JS pins
+bun audit                    # vulnerable packages in the whole committed Bun graph
 ```
+
+The two JavaScript checks answer different questions, and neither replaces the other.
+`bin/importmap audit` reads the packages `config/importmap.rb` names, which is the right check for a
+locally vendored asset. `bun audit` reads `bun.lock`, which is the only check that sees anything below
+the direct dependencies; it exits non-zero on a finding, so it works as a CI gate, and
+`bun audit fix` upgrades only the vulnerable packages, to the lowest version that still satisfies
+every dependent's range. Both need the pinned Bun from `mise.toml`, because `bun audit` reads the
+lockfile through the same Bun that wrote it: an unpinned `bun` on `PATH` audits a differently
+resolved graph.
 
 For a locally vendored npm asset, keep a same-line version comment on its importmap pin, for
 example `pin "tom-select", to: "tom-select.js" # @2.6.2`. Importmap Audit reads this metadata
 from `config/importmap.rb`; it does not infer a version from a version banner inside the
-JavaScript file. Keep the comment, `bun.lock`, and the vendored asset synchronized when updating
+JavaScript file, and it never looks at the file's bytes. `config/vendored_javascript.yml` records
+where each vendored asset lives inside its npm package, and `test/vendored_javascript_test.rb`
+closes that gap:
+
+- every file in `vendor/javascript/` is declared in the manifest;
+- the pin's `# @version` comment, the version `bun.lock` resolves, and the range `package.json`
+  declares are one version;
+- `bun.lock` records a `sha512` integrity for the package, which is what makes the next check
+  meaningful;
+- the vendored bytes are byte-identical to the same file inside `node_modules`, which Bun extracted
+  from the tarball whose digest `bun.lock` pins. That is a real provenance answer and needs no
+  network call. It **skips** when `node_modules` is absent, but only locally: the CI job installs
+  the dependencies before the suite runs, so a missing file there fails instead.
+
+Keep the manifest, the pin comment, `bun.lock`, and the vendored asset synchronized when updating
 Tom Select.
 
 `bin/brakeman` deliberately omits the `--ensure-latest` flag the Rails-generated binstub adds. That
@@ -249,16 +273,16 @@ add ceremonial dependencies or Git history. Its actionable recommendations are d
 Verify each recommendation against the current tree before acting. In particular, `/up` is already
 routed and `bun.lock` is already committed and used with `--frozen-lockfile` in CI and Docker.
 
-The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, Minitest with a
-line/branch coverage gate, checked-in development-data manifest checks, a from-zero migration run, a
-browser smoke suite, and a production-image build/boot check against `/up`. Structured request and
-error logging is implemented and needs no CI job: it is a middleware and an initializer that run in
-every environment, covered by `test/integration/request_log_middleware_test.rb` and
+The current CI baseline runs RuboCop, Brakeman, Bundler Audit, Importmap Audit, `bun audit` over the
+committed lockfile, Minitest with a line/branch coverage gate, checked-in development-data manifest
+checks, a from-zero migration run, a browser smoke suite, and a production-image build/boot check
+against `/up` that also inspects the image for leftover test and build artifacts. Structured request
+and error logging is implemented and needs no CI job: it is a middleware and an initializer that
+run in every environment, covered by `test/integration/request_log_middleware_test.rb` and
 `test/lib/error_tracking_test.rb`. Optional error **forwarding** is off unless
 `ERROR_TRACKING_DSN` is set, and no CI job exercises it against a real collector — do not claim it
-does. It does **not** yet audit the complete Bun/npm graph or provide a one-command Compose setup.
-Those are follow-up work, not current capabilities; do not claim them in release or onboarding copy
-until they are implemented and documented.
+does. It does **not** provide a one-command Compose setup. That is follow-up work, not a current
+capability; do not claim it in release or onboarding copy until it is implemented and documented.
 
 When planning one of those improvements, preserve the development-only data boundary, the
 universe/story authorization model, and the no-secrets rules. A value-free `.env.example` may be
@@ -822,13 +846,13 @@ starting Rails, so CSS builds use the same dependency graph as local development
 | Job | Command |
 |---|---|
 | `scan_ruby` | `bin/brakeman --no-pager`, `bin/bundler-audit` |
-| `scan_js` | `bin/importmap audit` |
+| `scan_js` | `bin/importmap audit`, then `bun install --frozen-lockfile` and `bun audit` |
 | `lint` | `bin/rubocop -f github` (cached) |
 | `js-check` | `bun run lint:js`, `bun run test:js` |
 | `test` | `bin/rails db:test:prepare test` with `CI=1` (the coverage gate), then `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check`; uploads the `coverage` artifact from `tmp/coverage` |
 | `migrations-from-zero` | `bin/rails db:drop`, `bin/rails db:create`, `schema_migration.create_table`, `bin/rails db:migrate` as four separate processes, then a guard that the migrations ran, `bin/rails db:migrate:status`, and `git diff --exit-code db/schema.rb` |
 | `system-test` | `bin/rails db:test:prepare test:system` (browser-based smoke tests; uploads screenshots on failure). No `CI`, so it writes its own report to `tmp/coverage-system` and gates nothing |
-| `production-boot` | `docker build` the production image, run it with throwaway environment variables, and require `GET /up` to answer `200`. Fails within 120 seconds, and prints the container log on failure |
+| `production-boot` | `docker build` the production image, assert the image carries no test or build artifacts, run it with throwaway environment variables, and require `GET /up` to answer `200`. Fails within 120 seconds, and prints the container log on failure |
 
 `CI=1` is set explicitly in the `test` job rather than relying on GitHub Actions' own `CI`, because a
 run that silently lost the gate would still be green. `production-boot` uses only locally-unusable
@@ -836,6 +860,21 @@ values: `APP_HOST` and `MAILER_FROM` are on the reserved `.invalid` TLD, `SMTP_A
 contacted, and `SECRET_KEY_BASE` is `openssl rand` output for that run. It boots the container
 exactly as the entrypoint does, so the first request also proves the production schema, the Solid
 Cache/Queue/Cable databases, and the precompiled assets came up.
+
+The artifact check in `production-boot` is what makes the Dockerfile's pruning enforceable rather
+than aspirational. It asserts that `/rails/node_modules` and `.git` are absent and that none of the
+development/test gems (Capybara, Selenium, SimpleCov, Brakeman, RuboCop, Bundler Audit, debug,
+web-console) reached the image — and, in the same pass, that `application-*.css`,
+`bootstrap.bundle.min-*.js` and `fonts/bootstrap-icons-*.woff2` **are** in `public/assets`. The last
+part is what keeps the `node_modules` removal honest: the stylesheet, the Bootstrap bundle, and the
+icon font can only be resolved while `node_modules` exists, so if they were missing from
+`public/assets` the image would serve a broken stylesheet in production and nothing else would fail.
+
+`assets:precompile` boots the production environment, and `config/environments/production.rb` refuses
+to boot without `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`. The Dockerfile therefore passes those
+three names to that one build step as `ARG`s defaulting to `.invalid` hosts. They are build-time
+arguments, not image environment variables, so the running container still has to be given real
+values; the digests in `public/assets` do not depend on them.
 
 The migration commands must be separate processes. `db:drop` unlinks the SQLite file while the
 process still holds a connection to it, so one `bin/rails db:drop db:create db:migrate` migrates the
@@ -869,7 +908,15 @@ launch smoke check so a browser startup failure is reported during setup rather 
 Selenium test error. System tests quit the browser after each test so Chrome profile state, including
 password/autofill data, cannot leak from one test into the next.
 
-Dependabot config: `.github/dependabot.yml`.
+Dependabot config: `.github/dependabot.yml`. Four ecosystems: `bundler`, `bun`, `docker`, and
+`github-actions`. The JavaScript entry is **`bun`, not `npm`**: this repository installs with
+`bun install --frozen-lockfile` and commits `bun.lock`, and Dependabot's npm ecosystem does not
+reliably rewrite a Bun lockfile, which turns every update PR into a failing frozen install. Dependabot
+does not run Bun security updates, so `bun audit` in CI is what covers advisories. A `docker` PR that
+moves the base image also has to be reconciled with the pins that must agree with it — `mise.toml` for
+Ruby, `package.json`'s `packageManager` for Bun, and the `bun-version` each CI job installs Bun with.
+Those four are the same version and are not derived from one another, so a PR that moves one has to
+move all of them.
 
 ## Deployment (Kamal)
 
@@ -922,10 +969,16 @@ Dependabot config: `.github/dependabot.yml`.
 - `config/deploy.yml` must receive the variables above through its `env.clear`/`env.secret` lists,
   backed by the host environment or an approved secret store. Do not run `bin/kamal config` in
   shared CI or paste its output into tickets: the resolved configuration can contain secrets.
+  `test/deployment/kamal_configuration_test.rb` is the safe substitute — it loads the file through
+  Kamal's own loader, which runs the same ERB rendering, YAML parsing, and schema validation
+  `bin/kamal config` runs, and asserts on structure only. A mistyped key fails the suite instead of
+  the deploy, and the test proves that by requiring Kamal to reject a deliberately invalid file.
 - `Dockerfile` builds the app (comments show `docker build -t universe_maker .`); the image runs
   Rails behind **thruster**; volume `universe_maker_storage:/rails/storage` persists Active
-  Storage (local disk per `config/storage.yml`). A clean production image/Kamal boot remains a
-  separate verification item.
+  Storage (local disk per `config/storage.yml`). The image excludes the `development` and `test`
+  bundle groups and drops `node_modules` after precompiling, and CI's `production-boot` job asserts
+  both. A real deploy to a real host is still unverified; the image build, its contents, and `/up`
+  are what CI proves.
 - A MySQL accessory is sketched in `deploy.yml` but commented; the app itself is SQLite.
 
 ## Adding a new content model (checklist)

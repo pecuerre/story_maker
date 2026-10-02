@@ -123,16 +123,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-18. **Complete dependency, JavaScript, and container supply-chain checks (DataFactor follow-up)**
-
-   Preserve the committed `bun.lock` and frozen installs. Add a supported Bun/npm audit path,
-   verify the provenance and version consistency of locally vendored JavaScript, and add appropriate
-   npm/Bun and Docker Dependabot ecosystems. Consider a clean production-image build/boot smoke
-   check and Kamal configuration validation. Do not add a deploy job or typecheck job without an
-   approved deployment contract or a real static-type toolchain; avoid unpinned or ceremonial CI
-   steps. Coordinate with the existing known findings about vendored assets, image size, and
-   reproducibility.
-
 19. **Reduce shared editor/helper duplication (DataFactor follow-up)**
 
    Characterize the serialized field and JSON contracts used by `modal_fields.rb` and

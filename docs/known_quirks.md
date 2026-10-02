@@ -137,37 +137,24 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     instead of re-counting. The row-level authorization and recursive-children costs above are
     unchanged.
 
-34. **Medium — dependency auditing does not cover the complete JavaScript dependency graph.**
-    The local Tom Select pin now carries `# @2.6.2` version metadata in `config/importmap.rb:9`,
-    so `bin/importmap audit` includes that direct package/version in its advisory request. The
-    audit still does not verify that the vendored file's bytes came from that npm release, and it
-    does not replace an audit of the complete Bun/npm graph. That graph is not audited in CI, and
-    `.github/dependabot.yml:1-12` has no JavaScript/Bun or Docker ecosystem entry. A local
-    `bun audit` currently reports no vulnerabilities, but that check is absent from the workflow.
-    The DataFactor report's observation that no JavaScript lockfile exists is stale: `bun.lock` is
-    committed and CI/Docker use `bun install --frozen-lockfile`. The remaining audit/Dependabot
-    coverage is pending work: the "Complete dependency, JavaScript, and container supply-chain
-    checks" item in [`backlog.md`](backlog.md).
-
-35. **Medium — the production image retains test and build artifacts.** `Dockerfile:24-28` excludes
-    only the `development` bundle group, not `development:test`, so Capybara/Selenium and shared
-    development/test gems remain installed. The build stage runs `bun install`
-    (`Dockerfile:51-54`) and the final image copies the entire build-stage `/rails` tree
-    (`Dockerfile:74-76`), including `node_modules` and build tooling. CI does not build/inspect the
-    production image to catch this.
-
 36. **Medium — CI proves a production image boots, but not a deployment.** The test job runs
     `db:test:prepare test` against the checked-in schema (`.github/workflows/ci.yml:125-131`), so it
     was never a from-zero migration run, a Docker build, a production asset boot, or a Solid
     Cache/Queue/Cable setup; there was no coverage measurement or threshold either. A green test job
     was therefore not evidence that a clean production image or the full runtime could boot.
     Two of those halves are now closed. `migrations-from-zero` runs the migration files from zero
-    (below), and `production-boot` builds the production image, runs it with throwaway environment
-    variables, and requires `GET /up` to answer `200` — which also exercises `db:prepare`, the four
-    production SQLite databases, and the precompiled assets. Neither job validates Kamal
-    configuration or production mailer URL/SMTP behavior, and the remaining follow-ups are pending
-    in [`backlog.md`](backlog.md) under "One-command containerized onboarding" and "Complete
-    dependency, JavaScript, and container supply-chain checks".
+    (below), and `production-boot` builds the production image, inspects it, runs it with throwaway
+    environment variables, and requires `GET /up` to answer `200` — which also exercises
+    `db:prepare`, the four production SQLite databases, and the precompiled assets.
+    That job **was failing on every run**: `assets:precompile` boots the production environment, which
+    raises without `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`, so `docker build` never finished.
+    Verified through the GitHub Actions API on 2026-10-02 and reproduced locally; those three names
+    are now build arguments in the Dockerfile with `.invalid` defaults. `config/deploy.yml` is
+    validated on every test run through Kamal's own loader by
+    `test/deployment/kamal_configuration_test.rb`, because `bin/kamal config` cannot be run in CI —
+    it prints resolved secrets — but loading a configuration is not the same as deploying it. Neither
+    the boot check nor that validation exercises production mailer URL/SMTP behavior, and no deploy
+    has ever been performed.
     The `migrations-from-zero` job closes the migration half. It used not to: it ran
     `db:drop`, `db:create`, and `db:migrate` as three processes — which is required, because one
     process migrates the inode `db:drop` unlinked — but on the freshly created database `db:migrate`
@@ -349,11 +336,12 @@ used with a frozen install in CI and Docker. Finding 51 below is closed; see
     environment-gated tracker, a deliberate metrics decision) still apply; its framing as future work
     sends a reader looking for something to build. The paragraph above is stale in the same way: it
     names "observability" and "credential hygiene" as pending `backlog.md` items, and both items are
-    gone from that file. §2, §6, and §7 were checked at the same time and are still correct — their
-    backlog items (15, 18, and 19) are open. The fix is to give §4 the same `delivered` treatment §3
-    and §5 received, pointing at
-    [architecture.md](architecture.md#runtime-logging-and-observability), and to drop the two
-    delivered items from the list in this section's introduction.
+    gone from that file. §2 and §7 were checked at the same time and are still correct — their
+    backlog items (15 and 19) are open. §6 has since joined §3 and §5: it was marked `delivered` on
+    2026-10-02, so the list in this section's introduction has three stale names rather than two. The
+    fix is to give §4 the same `delivered` treatment §3, §5, and §6 received, pointing at
+    [architecture.md](architecture.md#runtime-logging-and-observability), and to drop the delivered
+    items from the list in this section's introduction.
 
 
 

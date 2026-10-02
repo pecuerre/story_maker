@@ -1,0 +1,18 @@
+# `vendor/javascript/` holds copies fetched from npm by `./bin/importmap pin --download`, so the
+# committed bytes are only as trustworthy as whoever last refreshed them. Each entry records where
+# a vendored asset comes from, which is what lets `test/vendored_javascript_test.rb` check it:
+#
+# - `package` and `package_path` locate the same file inside `node_modules/`, which Bun extracted
+#   from the tarball whose sha512 `bun.lock` pins, so a byte-identical copy is that release;
+# - `file` is the importmap pin's `to:` target, the file the browser is actually served.
+#
+# The version itself is deliberately not repeated here. It is asserted in one place instead: the
+# `# @x.y.z` comment on the importmap pin, the version `bun.lock` resolves, and the range
+# `package.json` declares must all agree.
+#
+# Refresh one with `./bin/importmap pin --download <package>@<version>`, then `bun install
+# --frozen-lockfile` and `bun run build:css`, keeping the pin comment and this manifest in step.
+tom-select:
+  file: tom-select.js
+  package: tom-select
+  package_path: dist/js/tom-select.complete.min.js

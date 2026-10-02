@@ -29,6 +29,126 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-02
 
+- **[chore]** **Dependency, JavaScript, and container supply-chain checks — backlog item 18.** The
+  item asked for four things the tree did not have: an audit of the committed Bun graph, proof that a
+  locally vendored asset is the release it claims to be, Dependabot coverage for the ecosystems the
+  repository actually uses, and Kamal configuration validation that can run in CI. It also said what
+  *not* to add — no deploy job, no typecheck job, no unpinned or ceremonial steps — and none of those
+  were added. Delivered as: `bun audit` in the `scan_js` job; `config/vendored_javascript.yml` with
+  `test/vendored_javascript_test.rb`; `bun` and `docker` Dependabot ecosystems; and
+  `test/deployment/kamal_configuration_test.rb`. Known quirks 34 and 35 were closed in the same
+  change, and one thing found on the way — a production image that could not be built at all — is
+  recorded below.
+
+  **The audit gate had to be green on the day it was added, and it was not.** `bun audit` on the
+  pinned Bun 1.4.2 reported three advisories in `brace-expansion` 5.0.9 (two high, one moderate
+  denial-of-service), reachable through `nodemon > minimatch`. A gate that is red when it lands is a
+  gate nobody trusts, and a gate added with `--audit-level=critical` or a blanket `--ignore` would be
+  the ceremonial step the item warned against. `bun audit fix` was the tool for it: it moves only the
+  vulnerable packages, to the lowest version that still satisfies every dependent's range. The result
+  is a one-line `bun.lock` change to `brace-expansion` 5.0.12 with a new sha512, and `package.json`
+  is untouched. `bun audit fix --latest`, which rewrites declared ranges, was not used: it would have
+  turned a security bump into an unrelated dependency upgrade.
+
+  **Provenance was answered without a network call, by chaining two guarantees.** Importmap Audit
+  reads a version out of a `# @x.y.z` comment on the pin and never looks at the vendored bytes, so a
+  hand-edited copy of `vendor/javascript/tom-select.js` passed every check and would have been served
+  to every browser. Bun, on the other hand, verifies the sha512 of each tarball it installs against
+  `bun.lock`. Comparing the vendored file with the same file inside `node_modules` therefore proves
+  the vendored file is the locked release, offline. The rejected alternatives were a checked-in
+  checksum of the vendored file (it asserts that nobody ever changed the file again, including the
+  legitimate act of re-vendoring, and it proves nothing about *which* release it was) and downloading
+  the tarball in CI to hash it (a network call in the test suite, and a second supply chain to trust).
+  `config/vendored_javascript.yml` records only the file name, the package, and the path inside the
+  package; the version is deliberately not repeated there, because it is asserted in one place
+  instead — the pin comment, the version `bun.lock` resolves, and the range `package.json` declares
+  must be one version. Each case was verified to fail against the defect: a tampered vendored file, a
+  pin comment that disagrees with the lockfile, an undeclared file in `vendor/javascript/`, and a
+  missing `node_modules` under `CI`.
+
+  **Dependabot uses `bun`, not `npm`.** Dependabot's Bun ecosystem has been generally available since
+  February 2025 and updates `bun.lock` with `package.json`; its npm ecosystem does not reliably
+  rewrite a Bun lockfile, which turns every update PR into a failing `bun install --frozen-lockfile`.
+  Dependabot does not run Bun *security* updates at all, which is the reason `bun audit` is in CI
+  rather than "Dependabot will tell us". The `docker` ecosystem was added for the base image, and the
+  workflow's own documentation says what a maintainer has to reconcile when one arrives: the Ruby pin
+  in `mise.toml` and the Bun pin in `package.json`'s `packageManager` have to move with it.
+
+  **Kamal validation runs in the suite, not in CI as `bin/kamal config`.** `bin/kamal config` prints
+  the *resolved* configuration, which includes secret values, and the documentation forbids running it
+  in shared CI — so the deployment file had no automated check at all and a mistyped key would surface
+  at deploy time. `test/deployment/kamal_configuration_test.rb` loads `config/deploy.yml` through
+  `Kamal::Configuration.create_from`, which is the same ERB rendering, YAML parsing, and schema
+  validation `bin/kamal config` performs, then asserts on structure only: the web role and its hosts,
+  a builder arch, the storage volume, and the asset path. No value from the file or from
+  `.kamal/secrets` is read into an assertion. A fourth case keeps the result honest by requiring the
+  same loader to reject a file containing one unknown key, so a passing validation cannot be a loader
+  that accepts anything. The master-key secret contract stays where it was: `DeploymentSecretsTest`
+  already asserts it, and restating it here would create a second owner.
+
+  **The production image build was broken, and finding that out was the point of the item.** The item
+  asked for a clean production-image build/boot smoke check and noted the interaction with the
+  vendored-asset, image-size, and reproducibility findings. `production-boot` already existed and had
+  never passed: `config/environments/production.rb` raises when `APP_HOST`, `MAILER_FROM`, or
+  `SMTP_ADDRESS` is missing, `assets:precompile` boots the production environment, and the Dockerfile
+  supplied none of the three. `docker build` therefore died at that step on every run. Confirmed
+  through the GitHub Actions API — the six most recent runs of `main` all fail at "Build the
+  production image" — and
+  reproduced locally — `bin/rails assets:precompile` with the production environment fails on
+  `APP_HOST` and succeeds with the three `.invalid` names. The fix is three `ARG`s with reserved
+  `.invalid` defaults passed to that single build step. They are build arguments rather than image
+  environment variables on purpose: a deploy still has to supply real values, and the asset digests do
+  not depend on them.
+
+  **Removing `node_modules` needed evidence, not an assumption.** The build stage needs it — the Sass
+  load path and `config/initializers/assets.rb`'s two propshaft paths point into it — but the running
+  container does not, because precompiling digests `application.css`, `bootstrap.bundle.min.js`, and
+  the bootstrap-icons font into `public/assets`. That was confirmed by running the production
+  precompile locally and reading the output. The removal therefore happens in the **build** stage
+  after precompiling: a later `rm -rf` in the final stage would have hidden the files behind a layer
+  without shrinking the image, which is the "test and build artifacts" finding in name only. And
+  because that reasoning is the kind that can be wrong, the `production-boot` job now inspects the
+  image it built — no `node_modules`, no `.git`, none of the development/test gems, and, in the same
+  pass, `application-*.css`, `bootstrap.bundle.min-*.js`, and `fonts/bootstrap-icons-*.woff2` present
+  in `public/assets`. The asset half is what makes the check worth having: if the digests were not
+  there, the failure would otherwise be a stylesheet with no icon font in production.
+
+  **The rejected alternatives are worth recording.** A digest-pinned base image and SHA-pinned GitHub
+  Actions were left open (known quirk 38) after discussion: a digest pin fights the Docker Dependabot
+  ecosystem this change adds, and the unpinned `foreman` in `bin/dev` is a developer-workflow change
+  the owner did not want bundled here. A deploy job and a typecheck job were not added, for the
+  reasons the item gave: there is no approved deployment contract and no static-type toolchain, and an
+  empty job of either kind is worse than no job.
+
+  **Verification (2026-10-02)**
+
+  - `bun audit` with the pinned Bun 1.4.2 — "No vulnerabilities found (checked 116 packages)", exit 0;
+    before the fix, 3 vulnerabilities (2 high, 1 moderate) and exit 1.
+  - `bun install --frozen-lockfile` — "Checked 114 installs across 120 packages (no changes)".
+  - `bin/importmap audit` — no known vulnerabilities.
+  - `bin/rails test test/vendored_javascript_test.rb` — 5 runs, 11 assertions, 0 failures. Each case
+    was verified against its defect: appending a byte to the vendored file, changing the pin comment to
+    `2.6.1`, dropping an undeclared `.js` file into `vendor/javascript/`, pointing the manifest at a
+    path that does not exist, and running with `CI=1` without `node_modules` (which fails rather than
+    skipping, as it must in CI).
+  - `bin/rails test test/deployment/kamal_configuration_test.rb` — 4 runs, 10 assertions, 0 failures.
+  - `bin/rails test` with `CI=1` — 1,388 runs, 8,610 assertions, 0 failures, 0 errors, 10 skips; line
+    coverage 94.57% and branch coverage 81.19% against the 90%/75% gate.
+  - `bin/rubocop` — 370 files, no offenses.
+  - `bun run check:js` — Biome clean and 200 Bun unit tests passing.
+  - `bin/brakeman --no-pager` — no warnings. `bin/bundler-audit` — no vulnerabilities found.
+  - `bin/importmap audit` — no vulnerable packages found.
+  - `UNIVERSE=dark bin/rails db:demo:check` and `UNIVERSE=lotr bin/rails db:demo:check` — both passed.
+  - The image-inspection step's shell logic was exercised against a staged directory tree: a clean
+    tree passes, and `node_modules`, a `development:test` gem, a missing font, and a missing Bootstrap
+    bundle each fail it with the intended message.
+
+  Not run: `docker build`, `docker run`, and therefore the `production-boot` job itself — no Docker is
+  available in the environment this change was made in. The Dockerfile edits and the new inspection
+  step are reasoned from the local production precompile and are unverified end to end until CI runs
+  them. `bin/rails test:system` (no client-side or view code changed). `bin/kamal config`, by design:
+  it prints resolved secrets.
+
 - **[added]** **Structured runtime logging and an optional, gated error tracker.** Backlog item 16
   asked for the production gap known quirk 51 described: logs to tagged `STDOUT`, a redaction rule
   for password-reset path segments, no structured request formatter, no error tracking, no metrics
@@ -4380,3 +4500,87 @@ reported there), and the dependency audits.
 **Two findings this surfaced were deliberately left open**, both now recorded in
 [`known_quirks.md`](known_quirks.md) rather than bundled: the smoke script's `login succeeds` check
 (number 62) and the DataFactor guidance's stale work-package list (number 63).
+
+### Former quirk #34: dependency auditing did not cover the JavaScript dependency graph (fixed)
+
+**Then:** the repository had three dependency checks and none of them covered the graph. `bin/brakeman`
+and `bin/bundler-audit` cover Ruby; `bin/importmap audit` covers the packages `config/importmap.rb`
+names, which after the Tom Select version-comment work meant one direct package and nothing else.
+Nothing looked at `bun.lock`, so every transitive dependency — Sass, PostCSS, Bootstrap, Biome,
+happy-dom — was unaudited, and `.github/dependabot.yml` had only the `bundler` and `github-actions`
+ecosystems. The finding had been right about the shape of the problem and wrong about one detail: it
+recorded "no JavaScript lockfile exists", which stopped being true before it was written, since
+`bun.lock` is committed and CI and Docker both install with `--frozen-lockfile`.
+
+**Fix:** `bun audit` runs in the `scan_js` job next to the importmap audit, and the two ecosystems
+were added to Dependabot. The reasoning, the alternatives, and the provenance design behind the
+vendored-asset half are in the dated entry for 2026-10-02 above; the summary is that the graph is now
+audited in CI, a vendored asset is proved to be the release `bun.lock` locks, and Dependabot watches
+`bun.lock` and the image's base version.
+
+One thing this exposed is worth its own note, because it is what made the gate landable: `bun.lock`
+resolved `brace-expansion` 5.0.9 with two high and one moderate denial-of-service advisory. The
+2026-09-24 audit baseline recorded "bun audit — no current vulnerabilities", which was true of the
+advisory database on that date and is not a property of the tree. A committed lockfile has to be
+re-audited as the database grows; that is the whole reason the check belongs in CI rather than in a
+notebook.
+
+**Verification:** `bun audit` with the pinned Bun 1.4.2 reports no vulnerabilities across 116 packages
+and exits 0, against 3 vulnerabilities and exit 1 before the lockfile was corrected;
+`bun install --frozen-lockfile` reports no changes; `bin/importmap audit` reports no vulnerable
+packages; the vendored-asset cases each fail against a tampered file, a mismatched pin comment, and an
+undeclared vendored file.
+
+### Former quirk #35: the production image retained test and build artifacts (fixed)
+
+**Then:** `Dockerfile` set `BUNDLE_WITHOUT="development"`, which leaves the `test` bundle group
+installed, so Capybara, Selenium, SimpleCov, and every gem declared in both `development` and `test`
+shipped to a production container. The build stage ran `bun install --frozen-lockfile` and the final
+stage copied the entire build-stage `/rails` tree, so `node_modules` — several hundred packages of CSS
+toolchain — shipped too. Nothing inspected the image, so none of it was visible: the cost was image
+size and attack surface with no signal anywhere.
+
+**Fix:** `BUNDLE_WITHOUT="development:test"`, and `node_modules` is removed at the end of the **build**
+stage, after precompiling, so the final copy never sees it. The stage matters: a `rm -rf` in the final
+stage would have left the bytes in a lower layer and shrunk nothing, which is the finding restated in
+a form that looks fixed. The CI `production-boot` job now runs an inspection over the image it built.
+
+The risk in dropping `node_modules` is that `config/initializers/assets.rb` puts two paths inside it on
+the propshaft load path and `application.bootstrap.scss` imports `bootstrap-icons/font/bootstrap-icons`
+from it, so a wrong assumption shows up as an application with no icon font rather than as a failed
+build. The inspection therefore asserts both directions in one pass: `node_modules`, `.git`, and the
+development/test gems are **absent**, and `application-*.css`, `bootstrap.bundle.min-*.js`, and
+`fonts/bootstrap-icons-*.woff2` are **present** in `public/assets`, which is where precompiling puts
+them while `node_modules` still exists.
+
+**Verification (2026-10-02):** the production precompile was run locally and its output read, which is
+what established that the digested copies exist independently of `node_modules`; the inspection step's
+shell logic was exercised against a staged tree and rejects each of `node_modules`, a `development:test`
+gem, a missing font, and a missing Bootstrap bundle. Not run: `docker build`, `docker run`, and the
+`production-boot` job itself — no Docker was available in the environment this was done in, so the
+image-level result is unverified until CI runs it.
+
+### The production image could not be built at all (fixed)
+
+**Then:** CI's `production-boot` job, added on 2026-10-01 to prove that the production runtime boots,
+had never passed. `docker build` died at `assets:precompile`, because `config/environments/production.rb`
+raises on a missing `APP_HOST`, `MAILER_FROM`, or `SMTP_ADDRESS` — a deliberate guard, added on
+2026-09-25 — while `assets:precompile` boots the production environment and the Dockerfile supplied
+none of the three. The job's own comment claimed it "boots the container the way the entrypoint does",
+and the run never got as far as the entrypoint.
+
+**Why it stayed invisible:** the finding behind this change asked for a clean production-image
+build/boot check and to coordinate with the image-size finding. Following that question is what turned
+up the failure, and it was visible from outside the repository — every recent run of `main` fails at
+the "Build the production image" step — long before anyone looked at a Dockerfile. A CI job that has
+never been green reads exactly like a job that works.
+
+**Fix:** the three names are `ARG`s in the Dockerfile with reserved `.invalid` defaults, passed only to
+the precompile step. They are build arguments rather than `ENV` variables, so a running container
+still has to be given real ones, and asset digests do not depend on them. No secret is involved, and
+the same `.invalid` convention the boot step already used is kept.
+
+**Verification:** `RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bin/rails assets:precompile`
+fails on `APP_HOST` with no arguments and completes with the three `.invalid` names; the GitHub Actions
+API shows the build step failing on the six most recent runs of `main`. Not run: `docker build`
+itself, for the reason above.

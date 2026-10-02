@@ -43,8 +43,25 @@ jobs:
         with:
           bundler-cache: true
 
+      # The pinned Bun version, which is also the one in `mise.toml`, in `package.json`'s
+      # `packageManager`, and in the Dockerfile. Keep the four in step: `bun audit` reads the
+      # lockfile through the same Bun that wrote it, so a drift here would silently audit a
+      # differently resolved graph.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      # Importmap Audit sees the packages `config/importmap.rb` names and nothing else. That is the
+      # right check for a locally vendored asset, and it is not a check of the dependency graph:
+      # everything under the direct dependencies in `bun.lock` was invisible to it.
       - name: Scan for security vulnerabilities in JavaScript dependencies
         run: bin/importmap audit
+
+      - name: Audit the committed Bun lockfile
+        run: |
+          bun install --frozen-lockfile
+          bun audit
 
   lint:
     runs-on: ubuntu-latest
@@ -302,6 +319,38 @@ jobs:
       # repository would defeat that.
       - name: Build the production image
         run: docker build --tag universe_maker:ci .
+
+      # The image is built from the checked-in Dockerfile, so this inspects what a deploy would
+      # actually receive. Two things are checked: that the pruning in the Dockerfile really happened,
+      # and that the assets which can only be resolved while `node_modules` still exists were
+      # digested into `public/assets` before it was removed. The second half is the one that would
+      # otherwise fail as a missing stylesheet font in production rather than here.
+      - name: Verify the image carries no test or build artifacts
+        run: |
+          docker run --rm --user root --entrypoint sh universe_maker:ci -c '
+            for path in /rails/node_modules /rails/.git; do
+              if [ -e "$path" ]; then
+                echo "::error::$path is present in the production image"
+                exit 1
+              fi
+            done
+
+            for gem in capybara selenium-webdriver simplecov brakeman rubocop-rails-omakase bundler-audit debug web-console; do
+              if ls -d /usr/local/bundle/ruby/*/gems/${gem}-* >/dev/null 2>&1; then
+                echo "::error::${gem} is installed in the production bundle"
+                exit 1
+              fi
+            done
+
+            for asset in "public/assets/application-*.css" "public/assets/bootstrap.bundle.min-*.js" "public/assets/fonts/bootstrap-icons-*.woff2"; do
+              if ! ls /rails/${asset} >/dev/null 2>&1; then
+                echo "::error::${asset} is missing from the precompiled assets"
+                exit 1
+              fi
+            done
+
+            echo "no test or build artifacts, and the node_modules-derived assets were precompiled"
+          '
 
       - name: Boot the container and check /up
         env:

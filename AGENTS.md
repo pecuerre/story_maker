@@ -118,11 +118,12 @@ There are two files, with two different jobs. Keep them that way.
 - Group related changes under one date and use a concise label such as `[added]`, `[changed]`,
   `[fixed]`, `[security]`, `[docs]`, `[chore]`, or `[planned]`. Do not rewrite historical entries;
   add a new entry when behavior changes again.
-- Inside a date, keep the labels grouped in the order listed in the changelog's label legend and
-  put each new entry at the top of its label group, which is newest-first. Blank lines separate two
-  label groups and two date sections, and every `##` date heading has one above and below it.
-  Never add a blank line between entries of the same label, and never separate work batches with
-  blank lines.
+- Inside a date, each label is its own `###` heading with that label's entries as a plain `- ` list
+  below it: the label is named once per date by its heading, never repeated at the start of an entry.
+  Keep the headings in the order listed in the changelog's label legend, put each new entry at the
+  top of its label group, which is newest-first, and never add a blank line between two entries of
+  the same label. A blank line surrounds every heading, and one separates two date sections, so
+  every `##` date heading and every `###` label heading has one above and below it.
 - When reconstructing the first historical entries, use the repository's Git history and existing
   documentation. Mark future work as `[planned]` rather than describing it as implemented. Do not
   invent detail that the repository does not contain; where an early entry is thin, point at the

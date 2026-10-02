@@ -1,5 +1,6 @@
 # Scene-specific descriptors for the stable HTML editor and the grouping
-# workspace. Scene JSON is not used: the Scene flow keeps the HTML
+# workspace, plus the two answers every Scene participation surface shares. Scene
+# JSON is not used: the Scene flow keeps the HTML
 # redirect/re-render responsibility, and the JSON+Stimulus responsibility stays
 # with the Element and presence-link flows added in later slices.
 module ScenesHelper
@@ -15,6 +16,40 @@ module ScenesHelper
   # disagree about what the group is called.
   def scene_grouping_label_by_id(section_paths, section_id)
     section_paths.label_for(section_id) || section_paths.ungrouped_label
+  end
+
+  # [ label, value ] pairs for a picker of universe records, in the order it is
+  # given.
+  #
+  # The label is the author's own record name and the value is the record id, so
+  # neither is translated. `[ label, value ]` is Rails' own order and the reverse
+  # of what a `data-*` pair or a serialized hash looks like, which is why the three
+  # Scene pickers that offer a flat list share one method rather than three
+  # spellings: a reversed pair still renders a full-looking dropdown and submits
+  # the wrong value, and a name sent where an id belongs fails the model's
+  # reference validation rather than selecting the wrong row.
+  def name_id_choices(records)
+    records.map { |record| [ record.name, record.id ] }
+  end
+
+  # The free-text role as a Scene row states it, or the honest statement that the
+  # author recorded the appearance without saying how.
+  #
+  # A blank role is a real state, not a missing value, so it is stated rather than
+  # rendered as an empty cell. Only the fallback sentence is chrome: the role
+  # itself is the author's own words and is returned unchanged.
+  #
+  # This has one home because four surfaces answer the same question — the
+  # Characters, Items, and Locations tabs, and the "Appears in Scenes" section on a
+  # record's own details page — and a Character linked in one of them and the same
+  # Character on another page have to be described identically. Both entry types
+  # answer `#role`, which is the only thing this reads.
+  #
+  # It takes no view of *why* a row exists. `SceneAppearances::Entry` calls it only
+  # for a stored link, because a derived speaker and a depicted Event never carry
+  # a role at all; the three tabs have no such row to confuse.
+  def scene_role_label(entry)
+    entry.role.presence || t("scenes.participation.no_role")
   end
 
   # [ label, value ] pairs in Rails' select order: an explicit **None** first,

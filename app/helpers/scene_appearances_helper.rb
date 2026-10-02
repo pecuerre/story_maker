@@ -5,7 +5,8 @@
 # The reason strings are the ones the three tabs also use, so a Character linked
 # in the Characters tab and the same Character on this page are labelled
 # identically; only the *count* in the speaker badge needs a `count:`, and
-# `count_with_label` chooses the plural.
+# `count_with_label` chooses the plural. The blank-role sentence is
+# `ScenesHelper#scene_role_label`, shared with all three tabs.
 module SceneAppearancesHelper
   # Why a record appears in a Scene. A record can appear for more than one reason
   # in the same Scene, and the reasons are always listed rather than collapsed,
@@ -21,11 +22,12 @@ module SceneAppearancesHelper
 
   # The free-text role, or the honest statement that the author recorded the
   # appearance without saying how. Only a stored link has a role at all: a derived
-  # speaker and a depicted Event never carry one.
+  # speaker and a depicted Event never carry one, so this states nothing rather
+  # than falling back to a sentence about a role nobody recorded.
   def scene_appearance_role_label(entry)
     return unless entry.linked?
 
-    entry.role.presence || t("scenes.participation.no_role")
+    scene_role_label(entry)
   end
 
   # Where a derived speaker's appearance comes from. A stored link has no such

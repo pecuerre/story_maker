@@ -123,14 +123,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-19. **Reduce shared editor/helper duplication (DataFactor follow-up)**
-
-   Characterize the serialized field and JSON contracts used by `modal_fields.rb` and
-   `tags_helper.rb` before changing them. Then extract declarative/shared helpers only where they
-   remove real drift risk, with focused model/request/browser regressions. Preserve the existing
-   three UI patterns, JSON-only mutation contracts, optional tags, authorization, and accessible
-   error states. Do not refactor solely to improve a line-count metric.
-
 20. **Collaboration system — Phase 1: Foundation (collaboration mode + discussions)**
 
     Universes gain a collaboration mode setting, and every record gains a discussion page. No draft

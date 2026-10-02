@@ -2,21 +2,23 @@
 # shown side by side and never merged into one stored row, so a Character who
 # both participates explicitly and speaks is labelled as doing both.
 #
-# The role is the author's own free text and is returned unchanged. Only the
-# fallback that stands in for a blank role is chrome, and it is the one sentence
-# the Items tab, the Locations tab, and the "Appears in scenes" section share.
+# The role is the author's own free text and is returned unchanged, and the pairs
+# this tab offers are a record's own name and id. Both answers have one home in
+# `ScenesHelper`, which the Items tab, the Locations tab, the Dialogue speaker
+# picker, and the "Appears in Scenes" section share, so this tab and those cannot
+# describe the same participation differently.
 module SceneCharactersHelper
   # [ label, value ] pairs for the add picker, in the same name order the
-  # Characters workspace uses. The names are the author's own record names and
-  # the values are record ids, so neither is translated.
+  # Characters workspace uses. The names are record names and the values are record
+  # ids, so neither is translated.
   def scene_character_choices(characters)
-    characters.map { |character| [ character.name, character.id ] }
+    name_id_choices(characters)
   end
 
   # The role as the row states it. A blank role is a real state, not a missing
   # value: the author recorded participation without saying how.
   def scene_character_role_label(entry)
-    entry.role.presence || t("scenes.participation.no_role")
+    scene_role_label(entry)
   end
 
   # The badges one participant row carries, so the difference between a stored

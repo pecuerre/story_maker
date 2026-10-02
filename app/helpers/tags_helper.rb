@@ -17,72 +17,45 @@ module TagsHelper
   # one entry here plus its locale block rather than a second hand-maintained
   # block that can drift from the routes and from `modal_fields.rb`.
   #
+  # The copy keys are derived the same way, because every taxonomy's locale block
+  # is the same shape and `COPY_SUFFIXES` is that shape written once. Eight
+  # hand-written blocks of five keys meant two silent failures: a taxonomy listed
+  # without one of them still rendered, because `translated_metadata` merges only
+  # the keys a block happens to contain and the tree would have been handed a
+  # `nil` where a sentence was expected; and a sentence added to every taxonomy
+  # had to be copied into eight places with nothing to catch a missed one.
+  #
   # The values are *keys*, not copy: a constant holding translated strings would
   # be built once, in whatever locale loaded the class first, and every later
   # request would render that one language. `tag_workspace_base` resolves them.
-  UNIVERSE_TAG_METADATA = {
-    "character" => {
-      title_key: "tags.types.character.title",
-      description_key: "tags.types.character.description",
-      empty_description_key: "tags.types.character.empty_description",
-      read_only_empty_description_key: "tags.types.character.read_only_empty_description",
-      new_label_key: "tags.types.character.new_label"
-    },
-    "relation" => {
-      title_key: "tags.types.relation.title",
-      description_key: "tags.types.relation.description",
-      empty_description_key: "tags.types.relation.empty_description",
-      read_only_empty_description_key: "tags.types.relation.read_only_empty_description",
-      new_label_key: "tags.types.relation.new_label"
-    },
-    "location" => {
-      title_key: "tags.types.location.title",
-      description_key: "tags.types.location.description",
-      empty_description_key: "tags.types.location.empty_description",
-      read_only_empty_description_key: "tags.types.location.read_only_empty_description",
-      new_label_key: "tags.types.location.new_label"
-    },
-    "event" => {
-      title_key: "tags.types.event.title",
-      description_key: "tags.types.event.description",
-      empty_description_key: "tags.types.event.empty_description",
-      read_only_empty_description_key: "tags.types.event.read_only_empty_description",
-      new_label_key: "tags.types.event.new_label"
-    },
-    "item" => {
-      title_key: "tags.types.item.title",
-      description_key: "tags.types.item.description",
-      empty_description_key: "tags.types.item.empty_description",
-      read_only_empty_description_key: "tags.types.item.read_only_empty_description",
-      new_label_key: "tags.types.item.new_label"
-    },
-    "ownership" => {
-      title_key: "tags.types.ownership.title",
-      description_key: "tags.types.ownership.description",
-      empty_description_key: "tags.types.ownership.empty_description",
-      read_only_empty_description_key: "tags.types.ownership.read_only_empty_description",
-      new_label_key: "tags.types.ownership.new_label"
-    }
+  COPY_NAMESPACE = "tags.types"
+
+  COPY_SUFFIXES = {
+    title_key: "title",
+    description_key: "description",
+    empty_description_key: "empty_description",
+    read_only_empty_description_key: "read_only_empty_description",
+    new_label_key: "new_label"
   }.freeze
 
+  # The copy a taxonomy needs beyond the five every taxonomy has. The Scene
+  # taxonomy is the only one today: its delete confirmation is a lambda the tree
+  # calls per tag, because "Delete “<name>” and its children?" cannot be
+  # resolved once for a whole page.
+  EXTRA_COPY_SUFFIXES = { "scene" => { confirm_message_key: "delete_confirm" } }.freeze
+
+  # A module function rather than an instance method on purpose: this runs while
+  # the constants below are being built, and a view helper here would be callable
+  # from a template for no reason.
+  def self.tag_copy_metadata(type)
+    COPY_SUFFIXES.merge(EXTRA_COPY_SUFFIXES.fetch(type, {}))
+      .to_h { |key, suffix| [ key, "#{COPY_NAMESPACE}.#{type}.#{suffix}" ] }
+  end
+
+  UNIVERSE_TAG_METADATA = UNIVERSE_TAG_TYPES.to_h { |type| [ type, tag_copy_metadata(type) ] }.freeze
+
   # The per-type copy for this story's section and scene taxonomies.
-  STORY_TAG_METADATA = {
-    "section" => {
-      title_key: "tags.types.section.title",
-      description_key: "tags.types.section.description",
-      empty_description_key: "tags.types.section.empty_description",
-      read_only_empty_description_key: "tags.types.section.read_only_empty_description",
-      new_label_key: "tags.types.section.new_label"
-    },
-    "scene" => {
-      title_key: "tags.types.scene.title",
-      description_key: "tags.types.scene.description",
-      empty_description_key: "tags.types.scene.empty_description",
-      read_only_empty_description_key: "tags.types.scene.read_only_empty_description",
-      new_label_key: "tags.types.scene.new_label",
-      confirm_message_key: "tags.types.scene.delete_confirm"
-    }
-  }.freeze
+  STORY_TAG_METADATA = STORY_TAG_TYPES.to_h { |type| [ type, tag_copy_metadata(type) ] }.freeze
 
   def tag_workspace_navigation_data(scope:, taxonomy:)
     scope = scope.to_s == "story" ? "story" : "universe"

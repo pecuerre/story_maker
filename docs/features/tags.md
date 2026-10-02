@@ -96,6 +96,25 @@ Tag management lives under the right sidebar's **Configuration → Tags**
 `app/helpers/tags_helper.rb` build it, and `TagsHelper#tagged_record_counts` is the per-page grouped
 count described above. The scope tabs are Universe/Story and the scope-specific taxonomy selector.
 
+A taxonomy's workspace block is declarative metadata rather than a hand-written block per type: its
+copy is a set of `tags.types.<type>.*` keys, and everything mechanical — the model parameter, the name
+of its editor's field builder, and all four of its URLs — is derived from the type name. Adding a
+taxonomy is therefore one metadata entry plus its locale block, and that trade only holds while the
+two type lists, the two metadata tables, the field-builder helpers, and the routes agree with each
+other. A type listed without a metadata entry raises a `KeyError` while the page renders, a block that
+drops one of its five copy keys still renders but hands the tree a `nil` where a sentence was expected,
+and a route renamed away from the derived name is a URL that cannot be generated. All four are checked
+in `test/helpers/tags_helper_test.rb`.
+
+The copy keys themselves are derived the same way, because every taxonomy's locale block is the same
+shape: `COPY_SUFFIXES` in `tags_helper.rb` is that shape written once, `EXTRA_COPY_SUFFIXES` holds
+the sentences a taxonomy needs beyond the shared five, and `UNIVERSE_TAG_METADATA` /
+`STORY_TAG_METADATA` are built from the type lists. So a shared sentence added to every taxonomy is
+one line rather than eight, and a taxonomy cannot be listed without all five keys — which the
+hand-written blocks allowed, because `translated_metadata` merges only the keys a block happens to
+contain. `TagsHelper.tag_copy_metadata` is a module function rather than a view helper because it
+runs while those constants are being built.
+
 A content tag with `show_in_menu: true` also appears on its workspace page. Those links include
 `from=workspace`, so the tag details page renders the same workspace tabs only for that explicit
 navigation, while the taxonomy tree's Details link stays canonical and omits them.

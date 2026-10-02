@@ -144,13 +144,16 @@ Two of the points the original recommendation listed still govern it:
   which measures a fraction of the application by design. A gate that fires there makes the number a
   reason to avoid running a test at all.
 
-### 4. Structured logging and runtime observability — priority: later/high signal
+### 4. Structured logging and runtime observability — priority: delivered
 
-A deployed Rails application needs request IDs, structured and redacted logs, a useful health check,
-and a deliberate error-reporting policy. The current `/up` route is the right health primitive;
-verify it with a test and keep it free of private application data.
+Delivered on 2026-10-02. The `/up` route was already the right health primitive, so what was missing
+was everything around it: the `request`/`error` structured events, the request-id correlation key, the
+environment-gated error tracker, and a `/up` regression test.
+[architecture.md](architecture.md#runtime-logging-and-observability) owns the runtime behavior and
+`docs/development.md` owns the commands; [`../CHANGELOG.md`](../CHANGELOG.md) records the delivery.
 
-Before enabling a request formatter or an external error tracker:
+Its standing rules still govern any further logging, health, or metrics work, and they are why the
+report's checklist was not a work order:
 
 - audit all log paths, including URL path segments such as password-reset tokens;
 - preserve parameter filtering and redact request IDs/headers only when they cannot identify a user;
@@ -160,9 +163,9 @@ Before enabling a request formatter or an external error tracker:
 - decide whether a metrics endpoint is actually needed; if it is added, define authentication,
   cardinality, retention, and data-minimization rules instead of exposing model counts publicly.
 
-A JSON formatter such as Lograge is a possible implementation, not a mandate to add a gem. Check
-Rails 8 compatibility, structured Active Support events, log volume, and redaction before selecting
-it. Add focused tests/configuration checks and run the security scans after the change.
+A JSON formatter such as Lograge stayed a possible implementation rather than a mandate to add a gem:
+it would need a Rails 8 compatibility check, a structured-event survey, a volume estimate, and a
+redaction review before selection.
 
 ### 5. Credential-like literals and environment documentation — priority: delivered
 
@@ -231,15 +234,43 @@ Three things stayed deliberately out, and the reasons still apply:
   agreement, so the remaining cost of those pins is that a version bump is no longer a one-line
   change. [`development.md`](development.md#pinned-toolchain-versions) owns the contract.
 
-### 7. Reduce shared-helper duplication without behavior drift — priority: later/low signal
+### 7. Reduce shared-helper duplication without behavior drift — priority: delivered
 
-The report identified repeated field-builder logic in `app/helpers/modal_fields.rb` and
-`app/helpers/tags_helper.rb`. The repository's small-file profile is a strength, so do not refactor
-only to lower a line count. First characterize the serialized field/JSON contracts, form parameter
-shapes, and browser behavior with focused tests. Then extract declarative descriptors or shared
-helpers where it removes real drift risk, while preserving the established modal/taxonomy patterns,
-JSON-only mutations, tag optionality, and accessible error states. Refactoring and bug fixes should
-be separate, reviewable changes.
+Delivered on 2026-10-02, in two changes. The characterization came first and changed no application
+code: `test/helpers/modal_fields_helper_test.rb` pins each of the five `*_fields_json` key sets, all
+eight taxonomies' editor descriptors in order and against their own tables' columns, the shared photo
+descriptor, the nested-record editors' agreement with each other, and the parent selector's blank
+option and depth indentation; `test/helpers/tags_helper_test.rb` pins the derivations — the two type
+lists against the two metadata tables, the copy keys every block must declare, every declared key's
+translation in both locales, the existence of each `*_tag_taxonomy_fields` helper, and the routes each
+taxonomy's URLs are derived from; and `test/controllers/modal_json_contract_test.rb` closes the loop
+from the browser's side, reading each rendered flat editor's form fields and each row's serialized
+values back out of the page and requiring them to name the same fields, and doing the same for every
+taxonomy tree's descriptors and node prefill values.
+
+That characterization is what decided the extractions, and each was verified to produce byte-identical
+output rather than a smaller file:
+
+- `tags_helper.rb`'s two hand-maintained metadata tables — 8 × 5 copy keys all following one
+  `tags.types.<type>.*` pattern — are now derived from the type lists through one
+  `COPY_SUFFIXES` table plus a small `EXTRA_COPY_SUFFIXES`. This was the largest duplication and the
+  one with two silent failure modes: a taxonomy listed without a key still rendered, because
+  `translated_metadata` merges only the keys a block happens to contain.
+- `location_taxonomy_fields` and `section_taxonomy_fields` — two hand-written copies of one
+  five-descriptor editor — became one `nested_record_taxonomy_fields` taking the two values that
+  actually differ.
+- The six `&.strftime(DATETIME_LOCAL_FORMAT)` call sites became one `datetime_local_value`. This is
+  the one that had already drifted once, silently, in the shape that rewrites a stored second.
+- Outside the two files the report named, the three Scene workspace tabs, the Dialogue speaker
+  picker, and the "Appears in Scenes" section each spelled out the same blank-role sentence and the
+  same `[ name, id ]` pairs. Those moved to `ScenesHelper#scene_role_label` and
+  `ScenesHelper#name_id_choices`, with `test/helpers/scene_participation_helper_test.rb` holding all
+  four surfaces. This last one widened the item's stated scope and was the owner's separate decision.
+
+What was deliberately left alone: the badge builders, which genuinely differ per surface, and the
+per-tab `*_fields_json` serializers, which differ by record. Three UI patterns, JSON-only mutation
+contracts, optional tags, authorization, and accessible error states are unchanged, and the browser
+suite and the full request suite both pass.
 
 ### 8. Documentation, onboarding, and releases — priority: ongoing
 

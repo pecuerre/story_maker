@@ -312,31 +312,14 @@ The 2026-09-25 DataFactor report identified several maintenance and onboarding g
 checked against the current tree and are recorded here as open follow-ups, not as requirements to
 maximize an automated score. The distilled policy is in
 [`data_factor_guidance.md`](data_factor_guidance.md), and the corresponding implementation work is
-the run of DataFactor follow-up items in [`backlog.md`](backlog.md) (coverage measurement,
-containerized onboarding, observability, credential hygiene, supply-chain checks, and shared
-editor/helper duplication). The report's claims that no `/up` route or JavaScript
-lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
-used with a frozen install in CI and Docker. Finding 51 below is closed; see
+the run of DataFactor follow-up items in [`backlog.md`](backlog.md) — of which one remains open:
+container onboarding (finding 52 below). Coverage measurement, credential literals, supply-chain
+checks, structured logging, and shared editor/helper duplication have all been delivered; that
+document's §3 through §7 say so and say what replaced them, and finding 51 below is closed; see
 [architecture.md](architecture.md#runtime-logging-and-observability) and
-[`../CHANGELOG.md`](../CHANGELOG.md).
-
-63. **Low — the DataFactor guidance still lists two delivered work packages as pending.** Checked on
-    2026-10-02: `data_factor_guidance.md` marks §3 (test coverage) and §5 (credential literals) as
-    `delivered` but leaves §4 "Structured logging and runtime observability — priority:
-    later/high signal", although backlog item 16 delivered the structured `request`/`error` events,
-    the request-id correlation key, the gated error tracker, and the `/up` regression test on
-    2026-10-02. Only §4's standing rules (log redaction, no logged passwords or DSNs, an
-    environment-gated tracker, a deliberate metrics decision) still apply; its framing as future work
-    sends a reader looking for something to build. The paragraph above is stale in the same way: it
-    names "observability" and "credential hygiene" as pending `backlog.md` items, and both items are
-    gone from that file. §2 and §7 were checked at the same time and are still correct — their
-    backlog items (15 and 19) are open. §6 has since joined §3 and §5: it was marked `delivered` on
-    2026-10-02, so the list in this section's introduction has three stale names rather than two. The
-    fix is to give §4 the same `delivered` treatment §3, §5, and §6 received, pointing at
-    [architecture.md](architecture.md#runtime-logging-and-observability), and to drop the delivered
-    items from the list in this section's introduction.
-
-
+[`../CHANGELOG.md`](../CHANGELOG.md). The report's claims that no `/up` route or JavaScript
+lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
+used with a frozen install in CI and Docker.
 
 52. **Medium — clean container onboarding is absent.** The repository has a production-oriented
     `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`

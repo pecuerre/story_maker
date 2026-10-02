@@ -112,11 +112,30 @@ module ModalFields
     ])
   end
 
+  # The value a `datetime-local` control has to carry, from a stored column.
+  #
+  # One named expression rather than `&.strftime(DATETIME_LOCAL_FORMAT)` written
+  # at each call site, because the six in-world datetimes this application
+  # serializes had drifted before: they were formatted with a minute-precision
+  # format that dropped the stored second, so opening an editor and saving it
+  # again rewrote the column. A single call site cannot drift from itself, and
+  # `test/helpers/modal_fields_helper_test.rb` holds what it produces.
+  #
+  # This is the *control's* format, not the reader's. `DATE_FORMAT` is what a
+  # reader is shown and stays minute-precision; a `datetime-local` control cannot
+  # hold a second unless it carries `step: 1`, which every control fed by this one
+  # does. `ScenesHelper#scene_datetime_field_value` is the Scene form's version of
+  # the same rule, and it additionally keeps a rejected raw value so a validation
+  # error does not clear the input.
+  def datetime_local_value(datetime)
+    datetime&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT)
+  end
+
   def event_fields_json(event)
     {
       title: event.title,
-      start_datetime: event.start_datetime&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
-      end_datetime: event.end_datetime&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
+      start_datetime: datetime_local_value(event.start_datetime),
+      end_datetime: datetime_local_value(event.end_datetime),
       before_event_id: event.before_event_id,
       after_event_id: event.after_event_id,
       simultaneous_event_id: event.simultaneous_event_id,
@@ -160,7 +179,20 @@ module ModalFields
     content_tag_taxonomy_fields(nodes)
   end
 
-  def location_taxonomy_fields(location_tags, locations = [])
+  # The editor the two hierarchical, tag-selecting records share.
+  #
+  # Location and Section are the only two models with both a parent and a tag
+  # assignment, so they are the only two editors with a parent selector beside a
+  # tag selector. They were maintained separately and had to be kept in step by
+  # hand; they differ in two values and nothing else — which field carries the tag
+  # ids, and what that selector is called — so those are the only two arguments.
+  #
+  # `tags` and `parents` are the two per-call lists: the parent's own editor is
+  # built from its siblings and its tag selector from its taxonomy's tags. The
+  # option *value* is an id in both selectors, and the option *text* is the
+  # author's own record name, so neither is translated — only the blank parent's
+  # label and the two selectors' own labels are chrome.
+  def nested_record_taxonomy_fields(tags, parents = [], tag_field:, tag_label_key:)
     [
       {
         name: "name",
@@ -177,19 +209,23 @@ module ModalFields
         name: "parent_id",
         label_key: "modal_fields.parent",
         type: "select",
-        options: taxonomy_parent_options(locations)
+        options: taxonomy_parent_options(parents)
       },
       {
-        name: "location_tag_ids",
-        label_key: "modal_fields.location_tags",
+        name: tag_field,
+        label_key: tag_label_key,
         type: "select",
         multiple: true,
-        options: location_tags.map { |location_tag|
-          [ location_tag.id, location_tag.name ]
-        }
+        options: tags.map { |tag| [ tag.id, tag.name ] }
       },
       photo_field
     ].map { |field| modal_field(field) }
+  end
+
+  def location_taxonomy_fields(location_tags, locations = [])
+    nested_record_taxonomy_fields(location_tags, locations,
+      tag_field: "location_tag_ids",
+      tag_label_key: "modal_fields.location_tags")
   end
 
   def ownership_tag_taxonomy_fields(nodes = [])
@@ -203,8 +239,8 @@ module ModalFields
       character_id: ownership.character_id,
       ownership_tag_ids: ownership.ownership_tag_ids,
       description: ownership.description,
-      from_date: ownership.from_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
-      to_date: ownership.to_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
+      from_date: datetime_local_value(ownership.from_date),
+      to_date: datetime_local_value(ownership.to_date),
       photo_url: record_photo_url(ownership)
     }.to_json
   end
@@ -232,8 +268,8 @@ module ModalFields
       character2_id: relation.character2_id,
       relation_tag_ids: relation.relation_tag_ids,
       description: relation.description,
-      from_date: relation.from_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
-      to_date: relation.to_date&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT),
+      from_date: datetime_local_value(relation.from_date),
+      to_date: datetime_local_value(relation.to_date),
       photo_url: record_photo_url(relation)
     }.to_json
   end
@@ -247,34 +283,8 @@ module ModalFields
   end
 
   def section_taxonomy_fields(section_tags, sections = [])
-    [
-      {
-        name: "name",
-        label_key: "modal_fields.name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label_key: "modal_fields.description",
-        type: "textarea"
-      },
-      {
-        name: "parent_id",
-        label_key: "modal_fields.parent",
-        type: "select",
-        options: taxonomy_parent_options(sections)
-      },
-      {
-        name: "section_tag_ids",
-        label_key: "modal_fields.section_tags",
-        type: "select",
-        multiple: true,
-        options: section_tags.map { |section_tag|
-          [ section_tag.id, section_tag.name ]
-        }
-      },
-      photo_field
-    ].map { |field| modal_field(field) }
+    nested_record_taxonomy_fields(section_tags, sections,
+      tag_field: "section_tag_ids",
+      tag_label_key: "modal_fields.section_tags")
   end
 end

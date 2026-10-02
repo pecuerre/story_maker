@@ -11,6 +11,17 @@ require "test_helper"
 #   Turbo's redirect;
 # - a JSON-only endpoint refuses an HTML mutation instead of committing the write
 #   and then answering 406, which is what the old HTML form submission did.
+#
+# The last two tests are the other half of the same boundary: what the browser is
+# *handed* has to match the editor it fills. A record's serialized values and its
+# editor's field names are the same list, written down twice — once by a `*_fields_json`
+# helper and once by a `form_with` — and nothing else compares them. A field the
+# editor renders that the serializer omits opens empty; a key the serializer
+# carries that the editor does not render submits a value nobody chose. Neither
+# raises, which is why they are pinned here rather than left to a reading of the
+# two files. The taxonomy half needs no serializer — the descriptor list *is* the
+# editor's definition — so the equivalent check is between a tree's descriptors
+# and the per-node prefill values serialized beside them.
 class ModalJsonContractTest < ActionDispatch::IntegrationTest
   JSON_PAGES = {
     "characters" => :universe_characters_path,
@@ -21,6 +32,18 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
   HTML_PAGES = {
     "relations" => [ :universe_relations_path, :universe_relation_path, :relation ],
     "ownerships" => [ :universe_ownerships_path, :universe_ownership_path, :ownership ]
+  }.freeze
+
+  # Every flat-list editor, with the form scope whose field names its serializer
+  # has to match. `Relation` and `Ownership` are created here because the
+  # development fixtures carry none, so their editors would otherwise have no row
+  # to carry a serialized payload.
+  EDITOR_SCOPES = {
+    "characters" => [ :universe_characters_path, "character" ],
+    "items" => [ :universe_items_path, "item" ],
+    "events" => [ :universe_events_path, "event" ],
+    "relations" => [ :universe_relations_path, "relation" ],
+    "ownerships" => [ :universe_ownerships_path, "ownership" ]
   }.freeze
 
   setup do
@@ -276,4 +299,102 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
       assert_select "button[data-action='modal-form#destroy']", 0, "#{name} must not offer a delete control"
     end
   end
+
+  test "each flat editor's form fields are exactly the keys its rows are handed" do
+    Relation.create!(universe: @universe, character1: characters(:character_one), character2: characters(:character_two))
+    Ownership.create!(universe: @universe, character: characters(:character_one), item: items(:item_one))
+
+    EDITOR_SCOPES.each do |name, (index_helper, scope)|
+      get public_send(index_helper, universe_slug: @universe.slug)
+
+      assert_response :success, "#{name} index"
+      # `photo_url` is the one serialized key with no field behind it: it names the
+      # row's stored image so the shared photo control can show what it is about to
+      # replace, and the control builds its own inputs from it.
+      assert_equal serialized_row_keys(scope) - [ "photo_url" ], form_field_names(scope),
+        "#{name}'s editor and its serialized values name different fields, so opening " \
+        "a row either cannot prefill a control or fills one that does not exist"
+    end
+  end
+
+  test "each taxonomy tree's prefill values name exactly its editor descriptors" do
+    RelationTag.create!(universe: @universe, name: "Kin")
+    OwnershipTag.create!(universe: @universe, name: "Held")
+
+    taxonomy_pages.each do |name, path|
+      get path
+
+      assert_response :success, "#{name} index"
+      # The tree controller builds the whole editor from the descriptors and fills
+      # it from the node's own values, so the two lists have to be the same list.
+      # A descriptor with no value leaves the field blank on open; a value with no
+      # descriptor is prefill for a control that does not exist.
+      assert_equal descriptor_names(name), node_value_names(name),
+        "#{name}'s descriptors and its serialized node values name different fields"
+    end
+  end
+
+  private
+    # The taxonomy tree pages, with a taxonomy in each scope plus the two
+    # nested-record trees, because they share the same editor contract.
+    def taxonomy_pages
+      story = stories(:story_one)
+      universe = @universe.slug
+
+      {
+        "character tags" => universe_character_tags_path(universe_slug: universe),
+        "relation tags" => universe_relation_tags_path(universe_slug: universe),
+        "location tags" => universe_location_tags_path(universe_slug: universe),
+        "event tags" => universe_event_tags_path(universe_slug: universe),
+        "item tags" => universe_item_tags_path(universe_slug: universe),
+        "ownership tags" => universe_ownership_tags_path(universe_slug: universe),
+        "section tags" => universe_story_section_tags_path(universe_slug: universe, story_id: story),
+        "scene tags" => universe_story_scene_tags_path(universe_slug: universe, story_id: story),
+        "locations" => universe_locations_path(universe_slug: universe),
+        "sections" => universe_story_sections_path(universe_slug: universe, story_id: story)
+      }
+    end
+
+    # The keys the page hands the browser for its first editable row, read out of
+    # the DOM rather than by calling the helper, because the contract is what the
+    # browser receives rather than what Ruby returns. The trigger is the row's own
+    # edit button — distinguished by the record id it carries, because the page's
+    # create button is the same control with an empty payload.
+    def serialized_row_keys(scope)
+      raw = document.at_css(
+        "button[data-action='modal-form#open'][data-modal-form-record-id][data-modal-form-values-value]"
+      )&.attribute("data-modal-form-values-value")&.value
+
+      assert raw, "no row on the page carries serialized values to prefill the #{scope} editor"
+
+      JSON.parse(raw).keys.sort
+    end
+
+    def form_field_names(scope)
+      document.css(
+        "form[data-modal-form-target='form'] input[name], " \
+        "form[data-modal-form-target='form'] select[name], " \
+        "form[data-modal-form-target='form'] textarea[name]"
+      ).filter_map { |node| node["name"][/\A#{scope}\[(.+?)\](\[\])?\z/, 1] }.uniq.sort
+    end
+
+    def descriptor_names(name)
+      raw = document.at_css("[data-taxonomy-tree-modal-fields-value]")&.attribute("data-taxonomy-tree-modal-fields-value")&.value
+
+      assert raw, "#{name} renders no editor descriptors"
+
+      JSON.parse(raw).map { |field| field.fetch("name") }.sort
+    end
+
+    def node_value_names(name)
+      raw = document.at_css("li.taxonomy-node[data-taxonomy-values]")&.attribute("data-taxonomy-values")&.value
+
+      assert raw, "#{name} renders no node to prefill the editor from"
+
+      JSON.parse(raw).keys.sort
+    end
+
+    def document
+      Nokogiri::HTML(response.body)
+    end
 end

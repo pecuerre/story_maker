@@ -414,25 +414,61 @@ value objects, and the deletion contract are one feature with one home, in
     The per-type `*_tag_taxonomy_fields(nodes)` helpers delegate to these, e.g.
     `event_tag_taxonomy_fields`, `section_tag_taxonomy_fields`, `scene_tag_taxonomy_fields`.
   - `*_taxonomy_fields(tags)` — content editors with tag selectors, e.g.
-    `location_taxonomy_fields`, `section_taxonomy_fields`.
+    `location_taxonomy_fields`, `section_taxonomy_fields`. Both delegate to one
+    `nested_record_taxonomy_fields(tags, parents, tag_field:, tag_label_key:)`, because Location and
+    Section are the only two models with a parent *and* a tag assignment and their editors are the
+    same editor apart from those two named values. Keeping them as two hand-written blocks meant
+    adding a field to one and not the other, which nothing but the two trees rendering differently
+    would have shown.
+  - `datetime_local_value(datetime)` — the one expression that turns a stored in-world datetime into
+    what a `datetime-local` control has to carry. The six call sites this replaces had drifted before:
+    they were formatted minute-precision and dropped the stored second, so opening an editor and
+    saving it again rewrote the column. `ScenesHelper#scene_datetime_field_value` is the Scene form's
+    version of the same rule and additionally keeps a rejected raw value, so a validation error never
+    clears the input.
   - `*_fields_json(record)` — serializes a record for modal pre-filling:
     `event_fields_json`, `character_fields_json`, `item_fields_json`,
     `ownership_fields_json`, `relation_fields_json`. Each carries a `photo_url` alongside the
     record's columns, because the photo is a stored image rather than a column and the shared modal
-    is what tells the photo control which row it is about to edit. Every in-world datetime is
-    serialized with `ApplicationHelper::DATETIME_LOCAL_FORMAT`, and every control that receives one
+    is what tells the photo control which row it is about to edit. Every in-world datetime goes
+    through `datetime_local_value` above, and every control that receives one
     carries `step: 1`: the serializer and the control's step have to agree, or the browser drops the
     seconds the server sent and an open-and-save rewrites the column to zero. That format is
     deliberately distinct from `DATE_FORMAT`, which is what a *reader* is shown and stays
     minute-precision. A serializer's keys are the editor's field names, so a field the editor renders
-    but the serializer omits cannot be prefilled — and vice versa.
+    but the serializer omits cannot be prefilled — and vice versa. That agreement is the only thing
+    joining a serializer to a `form_with`, and neither failure raises, so it is checked rather than
+    assumed: `test/helpers/modal_fields_helper_test.rb` pins each key set, and
+    `test/controllers/modal_json_contract_test.rb` reads the serialized values and the rendered form
+    back out of the page and compares them for every flat editor.
+  - A **descriptor is the editor's definition**, not a description of a form: the taxonomy controller
+    builds the whole editor from them and `shared/_taxonomy_node` serializes one prefill value per
+    descriptor with `node.public_send`. So a descriptor naming a field its tag model cannot produce
+    raises mid-render, and a `label_key` that survives into the serialized JSON publishes a key nobody
+    renders. Both are checked for all eight taxonomies, and each taxonomy's descriptors are held to
+    its own table's columns, in `test/helpers/modal_fields_helper_test.rb`.
   - `PHOTO_FIELD` / `photo_field` — the one descriptor every photo-capable editor shares. `url: true`
     marks the descriptor as naming a stored image: `shared/_taxonomy_node` then serializes
     `record_photo_url(node)` for it instead of calling `node.public_send(field[:name])`. See
     [features/photos.md](features/photos.md).
 - `app/helpers/scenes_helper.rb` — Scene grouping/event/time descriptors and
   `scene_tag_choices`; the latter uses `SceneTagPaths` so nested tag options are root-first and
-  query-free.
+  query-free. It also owns the two answers every Scene participation surface shares, because the
+  Characters, Items, and Locations tabs, the Dialogue speaker picker, and the "Appears in Scenes"
+  section all answer the same questions and must not answer them differently:
+  - `name_id_choices(records)` — `[ label, value ]` pairs where the label is the author's own record
+    name and the value is the id. Rails' order, and the reverse of what a `data-*` pair or a
+    serialized hash looks like; a reversed pair still renders a full-looking dropdown and submits the
+    wrong value. It shares the *builder*, not the candidate list: `scene_element_speaker_choices`
+    offers every universe Character because the same Character may speak in any number of Elements,
+    while the three tabs offer the Scene's own rows. `scene_location_choices` is the exception and
+    builds depth-indented pairs from `LocationPaths`, so two places called "Room" are not ambiguous.
+  - `scene_role_label(entry)` — the free-text role as the row states it, or the honest sentence for a
+    blank one. Both `SceneParticipants::Entry` (the tabs) and `SceneAppearances::Entry` (a record's
+    own details page) answer `#role`, which is all this reads; only the fallback is chrome.
+    `SceneAppearances` calls it for a stored link alone, because a derived speaker and a depicted Event
+    never carry a role and stating one would be a claim nobody made.
+  `test/helpers/scene_participation_helper_test.rb` holds both, across all four surfaces.
 - `app/helpers/application_helper.rb` — `active_if`, `aria_current_for`, `visible?`, `icon`,
   `icon_text_count`, `nav_stories` (the universe page's memoized story list), universe access helpers
   (`can_read_universe?`, `can_write_universe?`, `can_administer_universe?`,

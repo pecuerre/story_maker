@@ -29,6 +29,127 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-02
 
+- **[chore]** **Extracting what the characterization found — backlog item 19, remaining slices.** With
+  the contracts pinned and no drift on record, the owner asked for the three remaining extractions
+  rather than one. Each was decided by what the tests had shown, not by the report's line count, and
+  each was verified to produce **byte-identical** output before and after.
+
+  **The metadata tables, the largest duplication.** `TagsHelper::UNIVERSE_TAG_METADATA` and
+  `STORY_TAG_METADATA` were eight hand-written blocks of five I18n keys each — 59 lines to state one
+  shape. They are now built from the type lists: `COPY_SUFFIXES` is the shape written once,
+  `EXTRA_COPY_SUFFIXES` holds the Scene taxonomy's one extra sentence, and
+  `TagsHelper.tag_copy_metadata` interpolates the type name. It is a module function rather than an
+  instance method because it runs while the constants it fills are being defined, and a view helper
+  would have been callable from a template for no reason.
+
+  What this bought was not fewer lines but the removal of a *silent* failure. `translated_metadata`
+  merges only the keys a block happens to contain, so a taxonomy whose block was missing one of the
+  five would have rendered perfectly and handed the tree a `nil` where a sentence was expected — no
+  exception, no missing translation, just an empty field in an editor. The same held for a sentence
+  added to every taxonomy: eight edits with nothing to catch a missed one. Both are now structurally
+  impossible, and `test/helpers/tags_helper_test.rb` keeps the remaining boundaries — that every key
+  resolves in **both** locales and that each one names its own taxonomy's block rather than another
+  taxonomy's copy.
+
+  Verified by loading the pre-change constants under a throwaway module name and comparing: the
+  derived tables are equal to the hand-written ones.
+
+  **The nested-record editor and the in-world datetime.** `location_taxonomy_fields` and
+  `section_taxonomy_fields` were two hand-written copies of one five-descriptor editor, differing in
+  two named values; they are now one `nested_record_taxonomy_fields` taking `tag_field:` and
+  `tag_label_key:`. The six `&.strftime(ApplicationHelper::DATETIME_LOCAL_FORMAT)` call sites became
+  `datetime_local_value`. That second one is the one worth arguing for, because those six had already
+  drifted once: they were formatted minute-precision, so a `datetime-local` control could not hold the
+  stored second and an open-and-save rewrote the column to zero. One named expression cannot drift
+  from itself.
+
+  Verified by dumping every descriptor and every serialized payload — all eight taxonomies, the two
+  nested-record editors, the parent selector, and the five `*_fields_json` records — through
+  `git show HEAD:`'s copy of the file and through the new one, and diffing: identical to the byte.
+  `ScenesHelper#scene_datetime_field_value` deliberately keeps its own `strftime`, because it also
+  holds a rejected raw value so a validation error cannot clear the input, which is a different rule.
+
+  **The Scene participation surfaces, which widened the item.** Four surfaces answered the same two
+  questions and each carried its own copy: the blank-role sentence was written four times and the
+  `[ name, id ]` pair three. Both moved to `ScenesHelper`. This was outside the two files the report
+  named and outside the item's stated scope, and was the owner's separate decision to include.
+
+  It needed its own characterization first, because nothing covered it: `test/helpers/scenes_helper_test.rb`
+  held the event and tag pickers and none of the participation ones. The new test also caught a
+  distinction worth keeping — `scene_element_speaker_choices` offers *every* universe Character while
+  the three tabs offer the Scene's own rows, so they share the pair builder and deliberately not the
+  candidate list. Writing that as one assertion is what stopped the shared method from being read as
+  "the participants", which would have been a behavior change disguised as a refactor.
+
+  Verified by mutation: giving the Items tab a different fallback sentence, reversing one picker's
+  pair, and letting the Appears section claim a role for a derived speaker each fail the suite.
+
+  Left alone on purpose: the badge builders, which genuinely differ per surface, and the per-record
+  serializers, which differ by record. Three UI patterns, JSON-only mutation contracts, optional tags,
+  authorization, and accessible error states are unchanged.
+
+  Verification: `CI=1 bin/rails test` (1422 runs, 9258 assertions, 0 failures, 0 errors, 10 skips;
+  coverage 94.58% line / 81.20% branch), `PARALLEL_WORKERS=2 bin/rails test:system` (139 runs, 1827
+  assertions, 0 failures, 0 errors — run with two workers because of known quirk 58), `bin/rubocop`
+  (373 files, no offenses). Not run: `bun run check:js` and `bun audit` (no file under
+  `app/javascript` changed), `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit` (no
+  controller, route, dependency, or view template changed), and `bun run build:css` (no asset
+  changed).
+
+- **[chore]** **Characterizing the shared editor's contracts before touching them — backlog item 19,
+  first slice.** The item says to characterize the serialized field and JSON contracts before
+  changing them, and then to extract only where that removes real drift risk. The two halves were put
+  to the owner as a slicing decision rather than assumed, and characterization was chosen on its own,
+  with no application change: it is the half that decides which extractions are worth making, and
+  doing both at once would have made it impossible to tell which tests were characterizing the old
+  behavior and which were describing the new one.
+
+  **What already existed, and what it did not cover.** An earlier delivery had already removed the
+  duplication the 2026-09-25 report pointed at: eight hand-written `*_tag_taxonomy_fields` copies
+  became shared `ModalFields` builders, and the workspace config became declarative metadata with the
+  mechanical keys derived from the type name. What survived that delivery was *unpinned*. The suite
+  proved a stored second is not truncated and that a Spanish reader sees Spanish labels for two
+  taxonomies, but nothing compared a serializer's key set to its form, nothing held a metadata
+  block's five copy keys, and nothing checked that a descriptor names a column its own tag table
+  has. Each of those fails silently or late: a field the form renders and the serializer omits opens
+  an editor empty, a dropped copy key hands the tree a `nil` where a sentence was expected, and a
+  descriptor naming a nonexistent column raises `NoMethodError` inside `shared/_taxonomy_node`'s
+  `node.public_send` while a page is rendering.
+
+  **Delivered.** `test/helpers/modal_fields_helper_test.rb` gained the descriptor and serializer
+  contracts: all eight taxonomies' field lists in order, every descriptor held to its own table's
+  columns, the shared photo descriptor, the two nested-record editors required to be the same
+  five-descriptor editor, and the parent selector's blank option and depth indentation.
+  `test/helpers/tags_helper_test.rb` is new and covers the derivations — the two type lists against
+  the two metadata tables, the five copy keys, every declared key's translation in both locales, each
+  `*_tag_taxonomy_fields` helper's existence and signature, and the routes each taxonomy's URLs are
+  derived from. `test/controllers/modal_json_contract_test.rb` closes the loop from the browser's
+  side: it reads each rendered flat editor's form field names and its first row's serialized values
+  back out of the DOM and requires them to agree, and does the same for all ten taxonomy tree pages'
+  descriptors and node prefill values.
+
+  **The rules that shaped the tests.** The expected field lists are written out explicitly rather
+  than derived from the builders: a derived expectation would restate whatever the helper happens to
+  produce and pass on exactly the drift it exists to catch. Values are read out of the DOM rather
+  than by calling the helper, so the assertion is about what the browser receives — the idiom
+  `universe_bible_locale_test.rb` already used for the same attribute. `Relation` and `Ownership` are
+  created inside the test because the development fixtures carry none (that is part of known quirk
+  37), so their editors would otherwise have no row to carry a payload.
+
+  **Verified by mutation, not by inspection.** Each contract was checked by breaking the thing it
+  describes and confirming the suite notices: dropping the shared `taggable` descriptor, turning the
+  Section tag selector into a text field, renaming a serializer key, a form field nothing serializes,
+  a serialized key no control renders, a descriptor naming a column that does not exist, a type added
+  to a type list with no metadata entry, a metadata block that drops one of its five copy keys, a
+  field helper given a second argument, and a duplicated descriptor name — the last of which is the
+  one case where the tree's descriptors and its node values could diverge without any helper changing
+  at all, since both are built from the same list.
+
+  Not run: `bin/rails test:system` (no view, controller, or client-side behavior changed — these are
+  assertions about existing output) and `bun run check:js` (no file under `app/javascript` changed).
+  The browser-side halves of these contracts were already covered by `test/javascript` and the
+  taxonomy-tree system test.
+
 - **[chore]** **Known quirk 38: setup and supply-chain reproducibility.** Four of the finding's five
   live parts were unambiguous and three of them were an owner decision, so it was asked about rather
   than assumed; the owner chose all three pins. `foreman` is now a bundled development dependency
@@ -4703,3 +4824,38 @@ the same `.invalid` convention the boot step already used is kept.
 fails on `APP_HOST` with no arguments and completes with the three `.invalid` names; the GitHub Actions
 API shows the build step failing on the six most recent runs of `main`. Not run: `docker build`
 itself, for the reason above.
+
+### Former quirk #63: the DataFactor guidance listed delivered work as pending (fixed)
+
+**Then:** `data_factor_guidance.md` marked §3 (test coverage) and §5 (credential literals) as
+`delivered` and §6 (supply-chain checks) joined them later the same day, but §4 "Structured logging
+and runtime observability" was still headed `priority: later/high signal` although backlog item 16 had
+delivered the structured `request`/`error` events, the request id as the correlation key, the
+environment-gated error tracker, and the `/up` regression test. Only §4's *standing rules* — log
+redaction, no logged passwords or DSNs, a gated tracker, a deliberate metrics decision — still
+applied; its framing as future work sent a reader looking for something to build. The introductory
+paragraph of the same section in `known_quirks.md` had the same problem one level up: it named
+"observability", "credential hygiene", and "supply-chain checks" as pending `backlog.md` work
+packages when two of the three were no longer in that file.
+
+**Why it mattered more than its Low label.** A guidance document's job is to send the next reader to
+the right place, and this one was pointing at work that had already been done. The failure mode is
+the one this project's documentation rules are written against: a confident, well-written, wrong
+paragraph gets acted on. Here the wrong action was cheap — redoing a delivered package — but it also
+made the two genuinely open items, container onboarding and shared-helper duplication, harder to see
+in a list that was three-quarters wrong.
+
+**Fix:** §4 carries the same `delivered` treatment §3, §5, and §6 received — what was delivered, on
+which date, a pointer to [architecture.md](architecture.md#runtime-logging-and-observability) for the
+behavior and to `development.md` for the environment variable — and keeps its standing rules as rules
+rather than as a to-do list. The Lograge paragraph became a statement about why no formatter gem was
+added and what a future one would have to be checked for, which is the decision that still matters to
+anyone considering one. The `known_quirks.md` introduction now names the two open items and lists the
+delivered ones with their owners. §7 was touched in the same change because the characterization half
+of that work package had landed, and marking it `delivered` would have been wrong while marking
+nothing would have been stale; a later change on the same day marked it delivered once the extraction
+half landed too, so this entry states what was true at the point it was written.
+
+**Verification:** `bin/rails test docs_test.rb`, which resolves every relative link and every
+cross-document anchor in the affected files, and a read of each section against the `CHANGELOG.md`
+entries it claims to describe.

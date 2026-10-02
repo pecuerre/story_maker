@@ -60,8 +60,11 @@ module SceneElementsHelper
 
   # [ label, value ] pairs for the many-speaker picker. Every universe Character
   # is offered, because the same Character may speak in any number of Elements.
+  # The pairs are `ScenesHelper#name_id_choices`, shared with the three
+  # participation tabs, so a Character offered here is offered under the same name
+  # and with the same value there.
   def scene_element_speaker_choices(characters)
-    characters.map { |character| [ character.name, character.id ] }
+    name_id_choices(characters)
   end
 
   # A short, single-line preview of the Element content. The full prose stays on

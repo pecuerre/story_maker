@@ -305,7 +305,7 @@ es:
     new_description: "Crea un mundo que contendrá sus propias historias y sus registros de construcción del mundo compartidos."
     edit: "Editar universo"
     edit_document_title: "Editar %{name}"
-    edit_description: "Actualiza el nombre que identifica este universo."
+    edit_description: "Actualiza el nombre, la visibilidad y el modo de colaboración de este universo."
     open: "Abrir universo"
     manage_members: "Gestionar miembros"
     delete: "Eliminar universo"
@@ -329,6 +329,11 @@ es:
       slug_hint_current: "Déjalo en blanco para conservar /u/%{slug}. Un nombre nuevo reconstruye la dirección a partir del nombre."
       private: "Universo privado"
       private_hint: "Los universos públicos pueden leer los visitantes y en ellos pueden colaborar los usuarios que han iniciado sesión. Los universos privados solo son visibles para sus miembros."
+      collaboration_mode_hint: "Cómo se hacen los cambios aquí. Solo el propietario y los administradores del universo pueden cambiarlo."
+      collaboration_modes:
+        direct: "Directo — un cambio se guarda inmediatamente"
+        wikipedia: "Wikipedia — un cambio se recuerda hasta que su autor lo aplica"
+        github: "GitHub — un cambio se recuerda hasta que un propietario o administrador lo revisa"
       submit_create: "Crear universo"
       submit_update: "Actualizar universo"
     show:
@@ -1312,6 +1317,7 @@ es:
       universe:
         name: "Nombre"
         private: "Privado"
+        collaboration_mode: "Modo de colaboración"
         # El nombre humano del atributo de una validación, no la etiqueta de un
         # formulario. Una dirección ocupada se lee «Slug ya está en uso» junto al
         # campo «Slug de la dirección» que la responde.

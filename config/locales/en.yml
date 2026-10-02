@@ -316,7 +316,7 @@ en:
     # The browser tab names the record being edited; the page below it keeps the
     # workspace's own "Edit universe" title.
     edit_document_title: "Edit %{name}"
-    edit_description: "Update the name used to identify this universe."
+    edit_description: "Update the name, visibility, and collaboration mode of this universe."
     open: "Open universe"
     manage_members: "Manage members"
     delete: "Delete universe"
@@ -342,6 +342,14 @@ en:
       slug_hint_current: "Leave this blank to keep /u/%{slug}. A new name rebuilds the address from the name."
       private: "Private universe"
       private_hint: "Public universes can be read by guests and contributed to by signed-in users. Private universes are visible only to their members."
+      # Each option label carries its own one-line meaning, because the three
+      # modes are told apart by what happens to a change and the reader should not
+      # have to choose one to find out. The hint says who may change the mode.
+      collaboration_mode_hint: "How changes are made here. Only the owner and the universe's administrators can change this."
+      collaboration_modes:
+        direct: "Direct — a change is saved straight away"
+        wikipedia: "Wikipedia — a change is remembered until its author applies it"
+        github: "GitHub — a change is remembered until an owner or administrator reviews it"
       # The default submit label comes from Rails' own `helpers.submit.*`, which
       # is English only, so the label is named here rather than inherited.
       submit_create: "Create Universe"
@@ -1620,6 +1628,7 @@ en:
       universe:
         name: "Name"
         private: "Private"
+        collaboration_mode: "Collaboration mode"
         # The human name of a validation's attribute, not a form label. A taken
         # address reads "Slug has already been taken" beside the Address slug
         # field that answers it.

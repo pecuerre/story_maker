@@ -158,6 +158,65 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_not @universe.reload.private?
   end
 
+  test "an admin can change the collaboration mode" do
+    patch universe_url(@universe), params: { universe: { collaboration_mode: "wikipedia" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert @universe.reload.wikipedia?
+    assert @universe.draft_based?
+  end
+
+  test "a collaboration mode the application has no behaviour for is refused" do
+    patch universe_url(@universe), params: { universe: { collaboration_mode: "consensus" } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert] li", text: /Collaboration mode is not included in the list/
+    assert @universe.reload.direct?
+  end
+
+  test "an unknown collaboration mode is refused in the JSON contract" do
+    patch universe_url(@universe), params: { universe: { collaboration_mode: "consensus" } }, as: :json
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["collaboration_mode"], "is not included in the list"
+    assert @universe.reload.direct?
+  end
+
+  test "an ordinary public contributor cannot change the collaboration mode" do
+    sign_in_as(users(:user_two))
+
+    patch universe_url(@universe), params: { universe: { collaboration_mode: "wikipedia" } }
+
+    assert_response :forbidden
+    assert @universe.reload.direct?
+  end
+
+  test "a universe admin can change the collaboration mode" do
+    UniverseMembership.create!(universe: @universe, user: users(:user_two), access_level: :admin)
+    sign_in_as(users(:user_two))
+
+    patch universe_url(@universe), params: { universe: { collaboration_mode: "github" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert @universe.reload.github?
+  end
+
+  test "the edit form offers every collaboration mode and the one in use" do
+    get edit_universe_url(@universe)
+
+    assert_response :success
+    assert_select "select#universe_collaboration_mode option", count: Universe::COLLABORATION_MODES.size
+    assert_select "select#universe_collaboration_mode option[selected]", text: "Direct — a change is saved straight away"
+  end
+
+  test "a universe can be created in a draft-based collaboration mode" do
+    post universes_url, params: { universe: { name: "Reviewed", collaboration_mode: "github" } }
+
+    universe = Universe.order(:id).last
+    assert universe.github?
+    assert_redirected_to universe_url(universe)
+  end
+
   test "any signed-in user can contribute to a public universe" do
     sign_in_as(users(:user_two))
 

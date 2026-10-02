@@ -89,8 +89,13 @@ class UniversesController < ApplicationController
   # regenerate the slug on an *unrelated* save — toggling Private would silently
   # republish the universe under a new address and invalidate every path stored
   # below it — so a blank value is dropped and the attribute is never assigned.
+  #
+  # `collaboration_mode` needs no guard of its own: a value the model does not
+  # accept is a field error rather than a silent fallback, and `update` is already
+  # an admin-level action, so this parameter cannot change how a universe writes
+  # for anyone but its owner or an administrator.
   def universe_params
-    permitted = params.expect(universe: [ *photo_params, :name, :private, :slug ])
+    permitted = params.expect(universe: [ *photo_params, :name, :private, :slug, :collaboration_mode ])
     permitted.delete(:slug) if permitted[:slug].blank?
     permitted
   end

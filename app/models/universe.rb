@@ -1,6 +1,14 @@
 class Universe < ApplicationRecord
   MENU_COUNT_ASSOCIATIONS = %i[characters relations locations events items ownerships].freeze
 
+  # The one value that decides how a change reaches a record in this universe:
+  # `direct` writes straight through, while the other two remember the change for
+  # its author to apply instead. The stored string is not the interface — read the
+  # mode through the predicates below, so a new value cannot arrive with callers
+  # still comparing the string themselves and answering "not direct" without
+  # saying what it is.
+  COLLABORATION_MODES = %w[direct wikipedia github].freeze
+
   include HasSlug
   include HasPhoto
   include SoftDeletable
@@ -20,6 +28,10 @@ class Universe < ApplicationRecord
   validates :name, presence: true
   validates :owner, presence: true
   validates :private, inclusion: { in: [ true, false ] }
+  # The column's default and the validation are the same list on purpose. A mode
+  # the application has no behaviour for is a field error an admin can answer,
+  # rather than a universe whose writes quietly do the wrong thing.
+  validates :collaboration_mode, inclusion: { in: COLLABORATION_MODES }
   # A universe slug is its public address (`/u/<slug>`) and is global, so
   # `HasSlug` deriving it from the name means two universes whose names slugify
   # alike collide. The partial unique index on `universes.slug` only sees live
@@ -78,6 +90,27 @@ class Universe < ApplicationRecord
   has_many :ownerships, dependent: :destroy
   has_many :event_tags, dependent: :destroy
   has_many :events, dependent: :destroy
+
+  def direct?
+    collaboration_mode == "direct"
+  end
+
+  def wikipedia?
+    collaboration_mode == "wikipedia"
+  end
+
+  def github?
+    collaboration_mode == "github"
+  end
+
+  # Whether a change is remembered rather than written straight through. This is
+  # the negation of `direct?` rather than `wikipedia? || github?` on purpose: a
+  # mode this version does not know about counts as draft-based, so an
+  # unrecognized value holds a change for an author to look at instead of
+  # writing it. A missed change is recoverable; a written one is not.
+  def draft_based?
+    !direct?
+  end
 
   # Only an explicit false grants the public baseline. Treating any other
   # value (including legacy NULL data) as private prevents ambiguous records

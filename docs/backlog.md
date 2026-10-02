@@ -125,15 +125,12 @@ it has a useful destination and clear empty/loading/error states.
 
 20. **Collaboration system — Phase 1: Foundation (collaboration mode + discussions)**
 
-    Universes gain a collaboration mode setting, and every record gains a discussion page. No draft
-    functionality yet. Decisions: discussions are configurable per model via a `HasDiscussion` concern
-    (initially all content models + tags); SceneElement/SceneCharacter etc. have discussions inside
-    their Scene page, not as a separate user concern for now.
+    The universe collaboration mode (`direct`/`wikipedia`/`github`) is delivered; what is left of this
+    phase is a discussion page on every record. No draft functionality yet. Decisions: discussions are
+    configurable per model via a `HasDiscussion` concern (initially all content models + tags);
+    SceneElement/SceneCharacter etc. have discussions inside their Scene page, not as a separate user
+    concern for now.
 
-    - **Slice 1.1:** Add `collaboration_mode` column to `universes` (string, default `"direct"`, not
-      null; values: `direct`, `wikipedia`, `github`). Add `Universe#direct?`, `#wikipedia?`,
-      `#github?`, `#draft_based?` helpers. Add a setting on the universe settings page (owner/admin
-      only) to change the mode. Update docs + changelog. Tests: model validation, request test.
     - **Slice 1.2:** Create `discussions` table (`record_type`, `record_id`, `universe_id`, `title`,
       timestamps) and `discussion_messages` table (`discussion_id`, `user_id`, `body`, timestamps).
       `Discussion` model (polymorphic belongs_to :record, belongs_to :universe, has_many :messages),

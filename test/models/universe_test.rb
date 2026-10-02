@@ -109,6 +109,66 @@ class UniverseTest < ActiveSupport::TestCase
     assert_not Ability.new(users(:user_two)).can?(:write, story)
   end
 
+  test "defaults the collaboration mode to direct" do
+    universe = Universe.create!(owner: users(:user_one), name: "Default collaboration")
+
+    assert_equal "direct", universe.reload[:collaboration_mode]
+    assert universe.direct?
+    assert_not universe.draft_based?
+  end
+
+  test "rejects a collaboration mode the application has no behaviour for" do
+    universe = Universe.new(owner: users(:user_one), name: "Unknown mode", collaboration_mode: "consensus")
+
+    assert_not universe.valid?
+    assert_includes universe.errors[:collaboration_mode], "is not included in the list"
+  end
+
+  test "database rejects a null collaboration mode" do
+    universe = universes(:universe_one)
+
+    assert_not Universe.columns_hash.fetch("collaboration_mode").null
+    assert_raises ActiveRecord::NotNullViolation do
+      Universe.where(id: universe.id).update_all(collaboration_mode: nil)
+    end
+    assert_equal "direct", universe.reload[:collaboration_mode]
+  end
+
+  test "each collaboration mode is asked about through its own predicate" do
+    assert_equal %w[direct wikipedia github], Universe::COLLABORATION_MODES
+
+    direct = Universe.new(collaboration_mode: "direct")
+    wikipedia = Universe.new(collaboration_mode: "wikipedia")
+    github = Universe.new(collaboration_mode: "github")
+
+    assert direct.direct?
+    assert wikipedia.wikipedia?
+    assert github.github?
+
+    assert_not direct.wikipedia?
+    assert_not direct.github?
+    assert_not wikipedia.direct?
+    assert_not wikipedia.github?
+    assert_not github.direct?
+    assert_not github.wikipedia?
+
+    assert_not direct.draft_based?
+    assert wikipedia.draft_based?
+    assert github.draft_based?
+  end
+
+  test "an unrecognized collaboration mode is treated as draft-based" do
+    # The column is NOT NULL and validated, so this only happens through a raw
+    # write. It is worth pinning because the answer decides whether a change is
+    # written straight through: holding one for an author to look at is
+    # recoverable, writing one that was never meant to be is not.
+    universe = Universe.create!(owner: users(:user_one), name: "Future mode", collaboration_mode: "wikipedia")
+    Universe.where(id: universe.id).update_all(collaboration_mode: "gitlab")
+
+    assert universe.reload.draft_based?
+    assert_not universe.direct?
+  end
+
   test "writable and administrated scopes match instance policy" do
     private_universe = Universe.create!(owner: users(:user_one), name: "Private", slug: "private", private: true)
     writer = User.create!(name: "Writer", email_address: "writer-scope@example.com", password: "password")

@@ -33,6 +33,21 @@
     <%= t("universes.form.private_hint") %>
   </p>
 
+  <div class="mb-3">
+    <%# The options come from the model's own list rather than being spelled out
+        here, so the select can only offer a value the model accepts. The stored
+        value travels in the form field and is therefore not translated; the word
+        beside it is a key, and each label carries its own short meaning so the
+        three modes can be told apart without opening anything. %>
+    <%= form.label :collaboration_mode, class: "form-label" %>
+    <%= form.select :collaboration_mode,
+      Universe::COLLABORATION_MODES.map { |mode| [ t("universes.form.collaboration_modes.#{mode}"), mode ] },
+      {}, class: "form-select" %>
+    <div class="form-text">
+      <%= t("universes.form.collaboration_mode_hint") %>
+    </div>
+  </div>
+
   <div class="form-actions">
     <%# The default submit label comes from Rails' English-only
         `helpers.submit.*`, so the label is named here. %>

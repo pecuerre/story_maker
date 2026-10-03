@@ -2,6 +2,7 @@ class SectionsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :section
@@ -56,6 +57,7 @@ class SectionsController < ApplicationController
   def create
     attributes = section_params
     @section = @story.sections.new(attributes)
+    return if remember_draft_create(@section, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@section, requested_position: attributes[:position])
@@ -67,8 +69,11 @@ class SectionsController < ApplicationController
   end
 
   def update
+    attributes = section_params
+    return if remember_draft_update(@section, attributes)
+
     respond_to do |format|
-      if update_section
+      if update_section(attributes)
         format.json { render json: section_json, status: :ok }
       else
         format.json { render json: @section.errors, status: :unprocessable_content }
@@ -77,6 +82,8 @@ class SectionsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@section)
+
     destroy_with_sibling_position(@section)
     respond_to do |format|
       format.json { head :no_content }
@@ -106,8 +113,7 @@ class SectionsController < ApplicationController
     params.expect(section: [ *photo_params, :name, :description, { section_tag_ids: [] }, :parent_id, :position ])
   end
 
-  def update_section
-    attributes = section_params
+  def update_section(attributes)
     update_with_sibling_position(@section, attributes)
   end
 

@@ -2,6 +2,7 @@ class EventTagsController < ApplicationController
   include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :event_tag
@@ -28,6 +29,7 @@ class EventTagsController < ApplicationController
   def create
     attributes = event_tag_params
     @event_tag = Current.universe.event_tags.new(attributes)
+    return if remember_draft_create(@event_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@event_tag, requested_position: attributes[:position])
@@ -40,8 +42,11 @@ class EventTagsController < ApplicationController
 
   # PATCH/PUT /event_tags/1 or /event_tags/1.json
   def update
+    attributes = event_tag_params
+    return if remember_draft_update(@event_tag, attributes)
+
     respond_to do |format|
-      if update_event_tag
+      if update_event_tag(attributes)
         format.json { render json: event_tag_json, status: :ok }
       else
         format.json { render json: @event_tag.errors, status: :unprocessable_content }
@@ -51,6 +56,8 @@ class EventTagsController < ApplicationController
 
   # DELETE /event_tags/1 or /event_tags/1.json
   def destroy
+    return if remember_draft_delete(@event_tag)
+
     destroy_with_sibling_position(@event_tag)
 
     respond_to do |format|
@@ -85,8 +92,7 @@ class EventTagsController < ApplicationController
     params.expect(event_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
-  def update_event_tag
-    attributes = event_tag_params
+  def update_event_tag(attributes)
     update_with_sibling_position(@event_tag, attributes)
   end
 end

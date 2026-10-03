@@ -29,6 +29,107 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-03
 
+- **[added]** **Collaboration phase 2, slice 2.2: a mutation in a draft-based universe is remembered
+  instead of written.** `app/controllers/concerns/draft_mutation.rb`, called from all twenty mutation
+  controllers, and the request tests that hold each of them to it. The four decisions the slice text
+  left open are in ADR 0020; what follows is the reasoning and the verification.
+
+  **The interception is a call inside the action, and that is a real cost, taken on purpose.** The
+  obvious design is one `before_action` on twenty controllers: nothing to forget, one place to read. It
+  cannot describe a `create`, because the filter runs before the action builds the record, so it would
+  have to rebuild it from the request — twenty copies of "what would this action write?", each of which
+  has to agree with the twenty originals or a draft describes a change nobody made. Instead each action
+  calls `remember_draft_create`/`_update`/`_delete` as its first statement, at the one point where it
+  already holds both the record it would have written and the attributes it was going to write with it,
+  and each call returns `false` in a `direct` universe so **the live write below it is unchanged line
+  for line**. The price is that a controller can forget the call and write straight through in a
+  draft-based universe, and nothing in the framework prevents it. That is paid for with
+  `test/controllers/draft_mutation_test.rb`, which walks all twenty controllers in both modes — a table
+  of twenty literal rows, one `create`/`update`/`destroy` pair each, asserting the single thing that
+  differs — so a forgotten call fails the suite naming the controller. 58 tests, 710 assertions.
+
+  **The payload is the submitted attributes, not the record.** `record.attributes` is the tempting
+  source for a `create` and it is wrong twice over. It does not hold a tag id list, because a HABTM
+  association is not a column; and it cannot hold a photo at all, because `HasPhoto` keeps `photo_data`
+  and `remove_photo` in instance variables and never marks them dirty — so `record.changes` is *empty*
+  for a photo-only edit, and the one version of this that would have used dirty tracking would have
+  silently discarded the author's picture. The submitted attributes are the only source that holds tag
+  assignments, the cropped photo, and the virtual `remove_photo` flag together. What the submitted
+  attributes cannot say is **where the record goes**: `story_id` and `scene_id` were answered by the
+  association the controller built through and were never submitted, so the payload is the submitted
+  attributes merged with the one scope column, chosen the way `UniverseScopeResolver` walks
+  (`universe_id`, `story_id`, `scene_id`). Nothing *else* is copied out of the record. Copying every
+  unsubmitted column — the rejected alternative — would make a `create` remember a nil `position` where
+  `PositionedResourceOrder` was going to compute one and a nil `slug` where `HasSlug` was going to
+  generate one, and the applier would then have to know which of those it may believe.
+
+  **The three Scene presence links are the exception that proved the rule.** Their editors use a blank
+  counterpart to mean "keep what is stored", and they resolve the Character, Item, or Location through
+  the authorized universe before saving, so what they write is not what was submitted. Remembering the
+  submission would store `character_id: ""` as a value to write. They assign first and pass no attributes
+  at all, so the record's own pending changes are remembered — which for a link is exactly the resolved
+  foreign key the live path would have written.
+
+  **A remembered change is not validated when it is remembered.** ADR 0019 settled that applying a change
+  re-runs the live mutation path so the model's own validations are authoritative. Validating here too
+  would produce two answers to one question about one record, and the author would be shown whichever ran
+  first — and the first would be taken by a modal that renders a 422. So a create the live path would
+  refuse is remembered and reported as remembered, and the refusal arrives when it is applied. What is
+  *not* tolerated is a change `DraftChange` itself refuses (an unregistered type, a cross-universe
+  record): that is a defect in a controller, not something an author typed, so it raises rather than
+  pretending to have remembered something.
+
+  **Each controller answers in its own flow, which the slice text got wrong.** The plan said "return
+  JSON". Fifteen controllers would have been right; Relations, Ownerships, and Scenes are plain HTML
+  forms submitted through Turbo, and a JSON body in a browser is a page of raw text. The JSON workspaces
+  answer `202 Accepted` with `{ draft: true, draft_id, change: { … } }` — which the shared modal already
+  handles, since it treats any `2xx` as "saved, refresh" — and the HTML ones keep the documented
+  redirect. The HTML redirect cannot name a record that was never written, so it uses
+  `redirect_back_or_to`: the author's own last page, falling back to the universe, with the verb's
+  status preserved (`see_other` for PATCH and DELETE).
+
+  **`move` and `group` were added to the slice by decision, because the plan's list left three holes.**
+  The slice enumerated `create`/`update`/`destroy`, but a Scene's narrative `move`, its Section `group`,
+  and a Scene Element's `move` are writes too. A universe that remembers a rename and quietly reorders a
+  scene is worse than one that does neither, because the author has been told their changes are pending.
+  All three remember the `position` or `section_id` they asked for. `group` still resolves its Section
+  *before* remembering, so a grouping into another story's Section remains a 404 — the known quirk that
+  action resolved had to survive the change. One honest limitation is now documented rather than hidden:
+  a remembered move is a *position*, not a move, so applied later against a sequence that has moved on it
+  is clamped rather than repeated.
+
+  **`Draft.open_for!` is the one place a draft is created outside a test**, and "one open draft per
+  author per universe" is now a question the model answers rather than a sentence in a comment: the
+  `open` scope, `OPEN_STATUSES`, and `open?` read one list, so the draft a change joins, the draft `open?`
+  describes, and the draft the apply workflow will touch cannot disagree. An applied or discarded draft is
+  history and is never resumed; a submitted one is waiting for a reviewer, so it *is* the draft an author
+  is working in.
+
+  **What a reader sees today is the honest limit of this stage.** Remembering works end to end, and a
+  change survives to be listed, applied, and discarded by the next stages — but nothing does those yet, so
+  switching a universe to `wikipedia` collects changes nobody can see. That is recorded in the backlog
+  under the slices that give a draft a page rather than presented as a finished mode.
+
+  **Verification.** `bin/rails test` — 1,613 runs, 10,726 assertions, 0 failures/errors, 10 skips (the
+  same pre-existing skips). `bin/rails test:system` — 142 runs, 1,858 assertions, 0 failures/errors,
+  0 skips: nothing in the browser changed shape, and the HTML-flow editors still get a redirect to
+  follow. `bin/rubocop` — 404 files, no offenses. `bin/brakeman --no-pager
+  --exit-on-warn --exit-on-error` — 0 warnings. `bin/bundler-audit` and `bin/importmap audit` — clean.
+  The draft-mode assertions run against both stored modes plus one the application does not know, and
+  each controller's remembered payload is compared with the scope it must carry.
+  `test/controllers/csrf_mutation_test.rb` gained the case that matters most for this design: a forged
+  token in a draft-based universe is refused **and remembers nothing**, which is what proves the token is
+  checked before any in-action code runs. `bun run check:js` — Biome clean, 200 Bun tests passing; no
+  file under `app/javascript` changed, and the draft-mode interface that would need a client-side case
+  does not exist yet.
+
+  **A reachable trap, recorded rather than left implicit.** The mode selector is on the universe form and
+  `UniversesController#update` is admin-level, so an administrator can put a working universe into
+  `wikipedia` today: every mutation is then remembered and nothing is written, and nothing can yet show
+  or apply those changes. That is a finding about today's tree, not a plan, so it is in
+  [`known_quirks.md`](known_quirks.md) rather than only in the backlog's next slice.
+
+
 - **[added]** **Collaboration phase 2, slice 2.1: the `drafts` and `draft_changes` tables.** The
   data model for remembered changes, with no controller, no route, and no page — the interception
   slice reads them and nothing yet writes one outside a test.

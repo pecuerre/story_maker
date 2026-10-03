@@ -29,6 +29,13 @@
 class Draft < ApplicationRecord
   STATUSES = %w[draft applied discarded submitted].freeze
 
+  # The statuses a change may still be added to and applied from. It is a list
+  # rather than a second `open?` expression because both the finder below and the
+  # predicate read it: "is this draft still open" has to be the same question
+  # wherever it is asked, or a second editing session could be opened onto a draft
+  # whose changes the apply workflow would not touch.
+  OPEN_STATUSES = %w[draft submitted].freeze
+
   belongs_to :user
   belongs_to :universe
 
@@ -37,6 +44,24 @@ class Draft < ApplicationRecord
   has_many :draft_changes, -> { order(:created_at, :id) }, dependent: :destroy
 
   validates :status, presence: true, inclusion: { in: STATUSES }
+
+  scope :open, -> { where(status: OPEN_STATUSES) }
+
+  # The one draft an author is working in inside one universe, or nil when there is
+  # none. The most recent open draft wins, because that is the session an author
+  # resumes; an older open draft is one they left behind, and this rule — not a
+  # constraint — is what keeps the collaboration plan's "one draft at a time per
+  # author per universe" honest.
+  def self.open_for(user, universe)
+    open.where(user: user, universe: universe).order(:id).last
+  end
+
+  # `open_for`, opening one when there is none. This is what the interception path
+  # asks, and it is the only place a draft is created outside a test, so "which
+  # draft does this change join" has one answer.
+  def self.open_for!(user, universe)
+    open_for(user, universe) || create!(user: user, universe: universe)
+  end
 
   # The stored values, asked about by name, so that no caller re-derives a
   # lifecycle state from a raw string. `draft?` is the unfinished state the
@@ -65,6 +90,6 @@ class Draft < ApplicationRecord
   # reviewer's decision, which the reviewing workflow owns rather than its
   # author.
   def open?
-    draft? || submitted?
+    OPEN_STATUSES.include?(status)
   end
 end

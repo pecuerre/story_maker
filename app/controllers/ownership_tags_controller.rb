@@ -1,6 +1,7 @@
 class OwnershipTagsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :ownership_tag
@@ -30,6 +31,7 @@ class OwnershipTagsController < ApplicationController
   def create
     attributes = ownership_tag_params
     @ownership_tag = Current.universe.ownership_tags.new(attributes)
+    return if remember_draft_create(@ownership_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@ownership_tag, requested_position: attributes[:position])
@@ -41,8 +43,11 @@ class OwnershipTagsController < ApplicationController
   end
 
   def update
+    attributes = ownership_tag_params
+    return if remember_draft_update(@ownership_tag, attributes)
+
     respond_to do |format|
-      if update_ownership_tag
+      if update_ownership_tag(attributes)
         format.json { render json: ownership_tag_json, status: :ok }
       else
         format.json { render json: @ownership_tag.errors, status: :unprocessable_content }
@@ -51,6 +56,8 @@ class OwnershipTagsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@ownership_tag)
+
     destroy_with_sibling_position(@ownership_tag)
     head :no_content
   end
@@ -65,8 +72,8 @@ class OwnershipTagsController < ApplicationController
     params.expect(ownership_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
   end
 
-  def update_ownership_tag
-    update_with_sibling_position(@ownership_tag, ownership_tag_params)
+  def update_ownership_tag(attributes)
+    update_with_sibling_position(@ownership_tag, attributes)
   end
 
   def ownership_tag_json

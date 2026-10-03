@@ -9,6 +9,7 @@
 class SceneElementsController < ApplicationController
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   maintains_flat_positions_for :scene_element
 
@@ -25,7 +26,9 @@ class SceneElementsController < ApplicationController
   # permitted: the only way to order Elements is the Move controls, so a form
   # can never renumber the sequence behind the author's back.
   def create
-    @scene_element = @scene.scene_elements.new(scene_element_attributes)
+    attributes = scene_element_attributes
+    @scene_element = @scene.scene_elements.new(attributes)
+    return if remember_draft_create(@scene_element, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@scene_element)
@@ -43,8 +46,11 @@ class SceneElementsController < ApplicationController
   # the same request. `remove_speakers` is that confirmation; without it the
   # stored speakers are simply left alone.
   def update
+    attributes = scene_element_attributes
+    return if remember_draft_update(@scene_element, attributes)
+
     respond_to do |format|
-      if update_with_sibling_position(@scene_element, scene_element_attributes)
+      if update_with_sibling_position(@scene_element, attributes)
         format.json { render json: scene_element_json, status: :ok }
       else
         format.json { render json: @scene_element.errors, status: :unprocessable_content }
@@ -59,6 +65,7 @@ class SceneElementsController < ApplicationController
   # control there, so nothing partial is ever written.
   def move
     target = @scene_element.position + (move_direction == "up" ? -1 : 1)
+    return if remember_draft_update(@scene_element, position: target)
 
     respond_to do |format|
       if update_with_sibling_position(@scene_element, position: target)
@@ -71,6 +78,8 @@ class SceneElementsController < ApplicationController
 
   # DELETE /u/:universe_slug/s/:story_id/scenes/:scene_id/elements/:id
   def destroy
+    return if remember_draft_delete(@scene_element)
+
     destroy_with_sibling_position(@scene_element)
 
     head :no_content

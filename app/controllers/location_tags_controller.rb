@@ -2,6 +2,7 @@ class LocationTagsController < ApplicationController
   include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :location_tag
@@ -26,6 +27,7 @@ class LocationTagsController < ApplicationController
   def create
     attributes = location_tag_params
     @location_tag = Current.universe.location_tags.new(attributes)
+    return if remember_draft_create(@location_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@location_tag, requested_position: attributes[:position])
@@ -37,8 +39,11 @@ class LocationTagsController < ApplicationController
   end
 
   def update
+    attributes = location_tag_params
+    return if remember_draft_update(@location_tag, attributes)
+
     respond_to do |format|
-      if update_location_tag
+      if update_location_tag(attributes)
         format.json { render json: location_tag_json, status: :ok }
       else
         format.json { render json: @location_tag.errors, status: :unprocessable_content }
@@ -47,6 +52,8 @@ class LocationTagsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@location_tag)
+
     destroy_with_sibling_position(@location_tag)
     head :no_content
   end
@@ -61,8 +68,7 @@ class LocationTagsController < ApplicationController
     params.expect(location_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
-  def update_location_tag
-    attributes = location_tag_params
+  def update_location_tag(attributes)
     update_with_sibling_position(@location_tag, attributes)
   end
 

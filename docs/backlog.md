@@ -138,16 +138,23 @@ it has a useful destination and clear empty/loading/error states.
       `base_version` may only be filled through `DraftChange.capture_base_version`, so it is always
       a comparable string; and a change is append-only — `created_at`, no `updated_at`, updates
       raise.
-    - **Slice 2.2:** Create `app/controllers/concerns/draft_mutation.rb`. The concern intercepts
-      `create`, `update`, `destroy` actions. When the universe is in a draft mode: for `create` store
-      `action=create`, `record_id=null`, `changes`=new attributes; for `update` store `action=update`,
-      `record_id=id`, `changes`=changed attributes, `base_version`=record's `updated_at`; for
-      `destroy` store `action=delete`, `record_id=id`, `base_version`=record's `updated_at`. Return
-      JSON response indicating the change was stored as a draft. In `direct` mode: proceed with
-      current behavior. Include the concern in all mutation controllers (characters, locations, items,
-      events, relations, ownerships, sections, scenes, all tags, scene_elements, scene_characters,
-      scene_items, scene_locations). Tests: request tests for each controller in both direct and draft
-      mode.
+    - **Slice 2.2 (delivered 2026-10-03):** `app/controllers/concerns/draft_mutation.rb` intercepts
+      every mutation controller, and in a `wikipedia` or `github` universe the mutation is remembered in
+      the request author's open draft instead of written. `remember_draft_create`/`_update`/`_delete` are
+      called inside each action and return `false` in a `direct` universe, so the live write below them is
+      untouched; all twenty mutation controllers call them, and the twenty also answer a remembered change
+      in their own response flow (JSON `202`, or the HTML redirect with `drafts.flash.remembered`). A
+      remembered `create` stores the submitted attributes plus the column that places the record in its
+      scope. Four decisions the slice text did not settle, all in
+      [ADR 0020](adr/0020-remembering-mutations-instead-of-writing-them.md): the interception is a call
+      inside the action rather than a callback, because only there does the controller hold both the record
+      it would have written and the attributes it was going to write with it; a remembered change is not
+      validated when it is remembered, because the applier re-runs the live path where the validations are
+      authoritative; each controller keeps its own response flow rather than answering JSON everywhere; and
+      a Scene's `move`, its `group`, and a Scene Element's `move` are intercepted too, so no write path is
+      left open in a draft-based universe. `Draft.open_for!` is the one place a draft is opened outside a
+      test, and `test/controllers/draft_mutation_test.rb` walks all twenty controllers in both modes.
+      Draft mode still has no page, so a remembered change cannot yet be listed, applied, or discarded.
     - **Slice 2.3:** `DraftsController#index` (lists current user's drafts for the universe),
       `#show` (shows one draft with all its changes), `#apply` (applies all non-conflicting changes;
       conflict resolution comes in Phase 3), `#discard` (discards a draft). Views: draft list page,

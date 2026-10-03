@@ -154,6 +154,30 @@ the same change, or `db:demo:check` fails.
   distinguish it from an unknown universe. The owner is always admin, and a membership's level
   applies uniformly to all universe/story components. Admin membership management is an HTML flow
   at `/u/:universe_slug/members`.
+- **In a universe that is not `direct`, a mutation is remembered rather than written.** Every mutation
+  controller includes `DraftMutation` and calls one of three methods as the first statement of the action
+  that would otherwise write — `remember_draft_create(record, attributes)`,
+  `remember_draft_update(record, attributes)` (or `remember_draft_update(record)` for a link the action has
+  already assigned), `remember_draft_delete(record)` — and each returns `true` once it has remembered a
+  change and rendered the response, so the call is written `return if …` and the live write below it stays
+  untouched. The call is **inside the action, not a `before_action`**: only there does the controller hold
+  both the record it would have written and the attributes it was going to write with it, and a callback
+  would have to answer "what would this action write?" a second time — two answers that drift. It is also
+  deliberately a call a controller can forget, so `test/controllers/draft_mutation_test.rb` walks all
+  twenty mutation controllers in both modes rather than testing the concern alone: a controller that omitted
+  it would write straight through and nothing else would notice. `move` and `group` are mutations too, and
+  remember the position or the section they asked for. A remembered change is **not validated when it is
+  remembered** — it is the author's statement of intent, and the applier re-runs the live mutation path, where
+  the model's own validations are authoritative; a second answer here would be a second opinion about the
+  same record. See [ADR 0020](adr/0020-remembering-mutations-instead-of-writing-them.md).
+- What a remembered `create` stores is the submitted attributes **plus the column that places the record in
+  its scope** (`universe_id`, `story_id`, or `scene_id`, read the way `UniverseScopeResolver` walks), because a
+  payload of submitted values alone cannot say which story or scene the record belongs to. The submitted
+  attributes — not the record's own attributes — are the payload, because they are the only source for the
+  values no column holds: tag id lists, and the two virtual photo fields, which `HasPhoto` keeps in instance
+  variables and never marks as changed. Nothing else is copied out of the record: a column the author never
+  submitted (a nil `position`, a not-yet-generated `slug`) would be remembered as a value to write rather than
+  as a value to let the live path decide.
 - Password-reset responses set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
   `PasswordResetPathFilter` redacts reset-token path segments from Rails request logs; upstream
   proxy/access-log retention remains an external deployment responsibility.

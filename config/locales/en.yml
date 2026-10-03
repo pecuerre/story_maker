@@ -420,6 +420,12 @@ en:
       message_created: "Your message was posted."
 
   drafts:
+    flash:
+      # The one sentence the HTML workspaces say when a universe remembers a
+      # change instead of writing it. It says the change was *remembered*, never
+      # that the record was saved, because nothing was: the author is looking at
+      # the same page, and a "created" flash would be a lie about the universe.
+      remembered: "Your change was remembered. It is not live until you apply it."
     errors:
       # A `record_type` is a half of a polymorphic reference, so a type the
       # content registry does not know is a reference that resolves to nothing.

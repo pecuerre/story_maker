@@ -1,6 +1,7 @@
 class RelationTagsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :relation_tag
@@ -30,6 +31,7 @@ class RelationTagsController < ApplicationController
   def create
     attributes = relation_tag_params
     @relation_tag = Current.universe.relation_tags.new(attributes)
+    return if remember_draft_create(@relation_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@relation_tag, requested_position: attributes[:position])
@@ -41,8 +43,11 @@ class RelationTagsController < ApplicationController
   end
 
   def update
+    attributes = relation_tag_params
+    return if remember_draft_update(@relation_tag, attributes)
+
     respond_to do |format|
-      if update_relation_tag
+      if update_relation_tag(attributes)
         format.json { render json: relation_tag_json, status: :ok }
       else
         format.json { render json: @relation_tag.errors, status: :unprocessable_content }
@@ -51,6 +56,8 @@ class RelationTagsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@relation_tag)
+
     destroy_with_sibling_position(@relation_tag)
     head :no_content
   end
@@ -65,8 +72,8 @@ class RelationTagsController < ApplicationController
     params.expect(relation_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :symmetric, :inverse ])
   end
 
-  def update_relation_tag
-    update_with_sibling_position(@relation_tag, relation_tag_params)
+  def update_relation_tag(attributes)
+    update_with_sibling_position(@relation_tag, attributes)
   end
 
   def relation_tag_json

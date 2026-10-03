@@ -6,6 +6,7 @@
 # Scene without ever becoming a second stored row.
 class SceneCharactersController < ApplicationController
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index ]
 
@@ -41,6 +42,7 @@ class SceneCharactersController < ApplicationController
 
     link = @scene.scene_characters.new(character: Current.universe.characters.find(attributes[:character_id]),
       role: attributes[:role])
+    return if remember_draft_create(link, attributes)
 
     respond_to do |format|
       if link.save
@@ -59,6 +61,11 @@ class SceneCharactersController < ApplicationController
   # scene is the model's duplicate error rather than a second row.
   def update
     @scene_character.assign_attributes(editable_scene_character_attributes)
+    # No attributes are passed: the link has already been assigned, and what the
+    # live path would have written is the record's own pending change rather than
+    # the submitted payload — a blank `character_id` means "keep the stored one"
+    # here, and the resolved foreign key is the value that must be remembered.
+    return if remember_draft_update(@scene_character)
 
     respond_to do |format|
       if @scene_character.save
@@ -74,6 +81,8 @@ class SceneCharactersController < ApplicationController
   # Removing a presence link never removes a Character and never changes who
   # speaks in an Element: those are separate links with separate consequences.
   def destroy
+    return if remember_draft_delete(@scene_character)
+
     @scene_character.soft_delete
 
     respond_to do |format|

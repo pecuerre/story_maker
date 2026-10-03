@@ -380,6 +380,12 @@ es:
       message_created: "Tu mensaje se ha publicado."
 
   drafts:
+    flash:
+      # La única frase que dicen los espacios de trabajo HTML cuando un universo
+      # recuerda un cambio en lugar de escribirlo. Dice que el cambio fue
+      # *recordado*, nunca que el registro se guardó, porque no se guardó nada: el
+      # autor está viendo la misma página y un aviso de "creado" mentiría.
+      remembered: "Tu cambio se ha recordado. No será visible hasta que lo apliques."
     errors:
       # Un `record_type` es la mitad de una referencia polimórfica, así que un
       # tipo que el registro de contenido no conoce es una referencia que no

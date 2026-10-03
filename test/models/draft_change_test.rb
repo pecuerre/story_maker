@@ -2,7 +2,8 @@ require "test_helper"
 
 class DraftChangeTest < ActiveSupport::TestCase
   setup do
-    @draft = Draft.create!(user: users(:user_one), universe: universes(:universe_one))
+    @universe = universes(:universe_one)
+    @draft = Draft.create!(user: users(:user_one), universe: @universe)
     @character = characters(:character_one)
   end
 
@@ -175,5 +176,41 @@ class DraftChangeTest < ActiveSupport::TestCase
     end
     assert_match(/append-only/, error.message)
     assert_equal({ "name" => "X" }, change.reload.payload)
+  end
+
+  # The two answers a page reading a change needs: which record it is about, and
+  # which of the stored payload keys is the plumbing that placed it.
+
+  test "resolves the record it names, and refuses the ones it cannot vouch for" do
+    update = @draft.draft_changes.create!(record_type: "Character", action: "update", record_id: @character.id,
+      base_version: DraftChange.capture_base_version(@character), payload: { "name" => "X" })
+
+    assert_equal @character, update.resolved_record
+
+    deleted = @draft.draft_changes.create!(record_type: "Character", action: "update", record_id: @character.id,
+      base_version: DraftChange.capture_base_version(@character), payload: { "name" => "Y" })
+    @character.soft_delete
+
+    # Read through `RecordTarget`, so a soft-deleted record resolves to nothing
+    # rather than being found through the association and rendered as a link to a
+    # page that answers 404.
+    assert_nil deleted.reload.resolved_record
+  end
+
+  test "names the payload column that places the record in its scope" do
+    universe_scoped = @draft.draft_changes.create!(record_type: "Character", action: "create",
+      payload: { "name" => "X", "universe_id" => @universe.id })
+    story_scoped = @draft.draft_changes.create!(record_type: "Scene", action: "create",
+      payload: { "name" => "Y", "story_id" => stories(:story_one).id })
+    scene_scoped = @draft.draft_changes.create!(record_type: "SceneElement", action: "create",
+      payload: { "name" => "Z", "scene_id" => scenes(:scene_one).id })
+    without_payload = @draft.draft_changes.create!(record_type: "Character", action: "delete",
+      record_id: @character.id, base_version: DraftChange.capture_base_version(@character))
+
+    assert_equal "universe_id", universe_scoped.scope_attribute
+    assert_equal "story_id", story_scoped.scope_attribute
+    assert_equal "scene_id", scene_scoped.scope_attribute
+    # A delete carries nothing to place, so there is no column to name.
+    assert_nil without_payload.scope_attribute
   end
 end

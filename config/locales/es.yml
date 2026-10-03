@@ -57,6 +57,11 @@ es:
       tags: "Etiquetas"
       members: "Miembros"
       collaboration: "Colaboración"
+      # La única entrada viva del grupo Colaboración. Apunta a los cambios
+      # recordados del propio lector, y solo se ofrece donde eso puede existir: un
+      # universo `direct` nunca abre un borrador, y un borrador pertenece a una
+      # persona, no a un visitante.
+      pending_changes: "Cambios pendientes"
       collaborators: "Colaboradores"
       conflicts: "Conflictos"
       branches: "Ramas"
@@ -380,12 +385,92 @@ es:
       message_created: "Tu mensaje se ha publicado."
 
   drafts:
+    # Las palabras del propio flujo. `statuses` es el `Draft::STATUSES` almacenado
+    # leído como frase y no como valor de columna, para que el historial de un
+    # borrador se llame igual donde se muestre; `actions` es la `action`
+    # almacenada de un cambio, en su propio tiempo verbal porque un cambio
+    # recordado es un cambio *pendiente*.
+    statuses:
+      draft: "Borrador"
+      applied: "Aplicado"
+      discarded: "Descartado"
+      submitted: "Enviado"
+    actions:
+      create: "Crear"
+      update: "Actualizar"
+      delete: "Eliminar"
+    # Los tres tipos de registro que un cambio puede nombrar y que no son
+    # documentos de búsqueda, así que `searches.kinds` deliberadamente no los
+    # nombra. Van en minúsculas porque la frase que los lleva encima dice
+    # "Nuevo/a %{kind}".
+    kinds:
+      scene_character: "personaje de la escena"
+      scene_item: "objeto de la escena"
+      scene_location: "localización de la escena"
+      unknown: "registro"
+    # Los dos escritores virtuales de la foto tal y como los muestra una fila.
+    # `photo_data` es una URL `data:` y `remove_photo` es un booleano, así que
+    # ninguno puede imprimirse tal como se almacena; se dice la intención.
+    attributes:
+      photo: "una foto nueva"
+      photo_removed: "la foto eliminada"
     flash:
       # La única frase que dicen los espacios de trabajo HTML cuando un universo
       # recuerda un cambio en lugar de escribirlo. Dice que el cambio fue
       # *recordado*, nunca que el registro se guardó, porque no se guardó nada: el
       # autor está viendo la misma página y un aviso de "creado" mentiría.
       remembered: "Tu cambio se ha recordado. No será visible hasta que lo apliques."
+      # Lo que hizo una aplicación. Un borrador aplicado entero y un borrador en el
+      # que algunos cambios no se pudieron escribir son frases distintas porque
+      # son resultados distintos, y la segunda dice dónde siguen esos cambios en
+      # lugar de insinuar que han desaparecido.
+      applied:
+        one: "%{count} cambio recordado ya es visible."
+        other: "%{count} cambios recordados ya son visibles."
+      partially_applied: "%{applied} cambios ya son visibles. No se pudieron aplicar %{skipped}: los registros que nombran han cambiado desde que los recordaste, o el universo rechazó la escritura. Este borrador está cerrado y esos cambios siguen en él."
+      discarded: "El borrador se ha descartado. No se escribió nada."
+      closed: "Ese borrador ya se aplicó o se descartó, así que no queda nada que hacer con él."
+    index:
+      title: "Cambios pendientes"
+      description: "Los cambios que has hecho en este universo y que se recuerdan en lugar de escribirse, con los borradores a los que pertenecen."
+      back: "Volver al universo"
+      changes:
+        one: "%{count} cambio recordado"
+        other: "%{count} cambios recordados"
+      remembered_at_html: "Recordado %{at}."
+      review: "Revisar"
+      apply: "Aplicar"
+      discard: "Descartar"
+      # Ambas confirmaciones son decisiones irreversibles, así que cada una dice
+      # qué ocurre en lugar de preguntar si quieres continuar.
+      apply_confirm:
+        one: "¿Aplicar el cambio recordado?Pasará a ser visible inmediatamente."
+        other: "¿Aplicar los %{count} cambios recordados?Pasarán a ser visibles inmediatamente."
+      discard_confirm:
+        one: "¿Descartar este borrador?Su cambio recordado no se escribirá."
+        other: "¿Descartar este borrador?Sus %{count} cambios recordados no se escribirán."
+      empty_title: "No hay nada pendiente de aplicar"
+      empty_description: "En un universo que recuerda cambios, lo que editas se reúne aquí hasta que lo aplicas. No ha quedado nada pendiente en este universo."
+    show:
+      title: "Cambios para revisar"
+      description: "Todos los cambios que recuerda este borrador, en el orden en que los hiciste. Nada de esto se ha escrito hasta que lo apliques."
+      back: "Todos los cambios pendientes"
+      apply: "Aplicar cambios"
+      discard: "Descartar borrador"
+      apply_confirm: "¿Aplicar todos los cambios recordados?Pasarán a ser visibles inmediatamente."
+      discard_confirm: "¿Descartar este borrador?Sus cambios recordados no se escribirán y no podrán aplicarse después."
+      remembered_at_html: "Recordado %{at}."
+      # Una creación recordada no nombra ningún registro, así que su fila lleva el
+      # título del tipo que crearía. Un cambio cuyo registro se ha borrado desde
+      # entonces cae en el mismo título, porque sigue siendo un cambio *sobre* ese
+      # tipo.
+      new_record: "Nuevo/a %{kind}"
+      # Un borrado no lleva carga útil, así que la fila dice lo que haría en lugar
+      # de no listar nada.
+      removes_record: "Este cambio elimina el registro."
+      no_values: "No se recordó ningún valor de campo para este cambio."
+      empty_title: "Este borrador no recuerda ningún cambio"
+      empty_description: "Aquí no hay nada que aplicar. Un borrador lo abre el primer cambio que recuerdas, así que este está vacío."
     errors:
       # Un `record_type` es la mitad de una referencia polimórfica, así que un
       # tipo que el registro de contenido no conoce es una referencia que no
@@ -1386,10 +1471,16 @@ es:
         name: "Nombre"
         description: "Descripción"
         parent: "Personaje padre"
+        # La colección que rellena el `character_tag_ids` de un formulario, con
+        # nombre aquí porque la página de un borrador imprime la asignación
+        # recordada por su asociación: quien edita conoce "Etiquetas de
+        # personajes" y nunca ha visto el nombre del escritor.
+        character_tags: "Etiquetas de personajes"
       location:
         name: "Nombre"
         description: "Descripción"
         parent: "Lugar padre"
+        location_tags: "Etiquetas de lugares"
       event:
         name: "Nombre"
         title: "Título"
@@ -1402,13 +1493,16 @@ es:
         before_event: "Ocurre antes"
         after_event: "Ocurre después"
         simultaneous_event: "Al mismo tiempo que"
+        event_tags: "Etiquetas de sucesos"
       item:
         name: "Nombre"
         description: "Descripción"
         parent: "Objeto padre"
+        item_tags: "Etiquetas de objetos"
       relation:
         name: "Nombre"
         description: "Descripción"
+        relation_tags: "Etiquetas de relaciones"
         character1: "Personaje 1"
         character2: "Personaje 2"
         from_date: "Desde"
@@ -1416,6 +1510,7 @@ es:
       ownership:
         name: "Nombre"
         description: "Descripción"
+        ownership_tags: "Etiquetas de propiedades"
         item: "Objeto"
         character: "Personaje"
         from_date: "Desde"
@@ -1783,6 +1878,16 @@ es:
   member:
     one: "miembro"
     other: "miembros"
+  # Los cambios recordados de un autor, y uno de ellos. Las dos páginas pasan
+  # estas palabras como `count_label:` junto al distintivo de su cabecera, así que
+  # el sustantivo junto a una cifra suelta es siempre una clave y no una palabra
+  # que la plantilla pluralice.
+  draft:
+    one: "borrador"
+    other: "borradores"
+  change:
+    one: "cambio"
+    other: "cambios"
 
   # El sujeto de un error de registro, con la clave `model_param` que un
   # controlador ya tiene. Los dos editores del navegador imprimen un mensaje

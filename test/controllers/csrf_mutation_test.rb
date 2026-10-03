@@ -216,6 +216,38 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "applying a draft is refused without a token and writes nothing" do
+    # Applying is a Turbo `button_to`, so it is an ordinary HTML form post with its
+    # own hidden token rather than a `fetch`. It is also the one mutation in this
+    # application whose effect is a *bulk* write: a forged request that got
+    # through would write every remembered change in a draft rather than one row.
+    @universe.update!(collaboration_mode: "wikipedia")
+    character = characters(:character_one)
+    draft = Draft.create!(user: @user, universe: @universe)
+    draft.draft_changes.create!(action: "update", record_type: "Character", record_id: character.id,
+      base_version: DraftChange.capture_base_version(character), payload: { "name" => "Token verified apply" })
+    token = nil
+
+    with_forgery_protection do
+      token = fetch_page_token(universe_drafts_path(universe_slug: @universe.slug))
+
+      assert_no_difference -> { Character.count } do
+        post apply_universe_draft_url(universe_slug: @universe.slug, id: draft)
+      end
+
+      assert_includes 406..422, response.status
+      assert_not_equal "Token verified apply", character.reload.name
+      assert_predicate draft.reload, :draft?, "a refused apply must leave the draft exactly as it was"
+
+      post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
+        headers: { "X-CSRF-Token" => token }
+
+      assert_response :see_other
+      assert_equal "Token verified apply", character.reload.name
+      assert_predicate draft.reload, :applied?
+    end
+  end
+
   test "the settings form is refused without a token and accepted with one" do
     with_forgery_protection do
       token = fetch_page_token(settings_path)

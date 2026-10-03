@@ -1,0 +1,48 @@
+<% content_for :title, t("drafts.show.title") %>
+
+<%= render "shared/page_header",
+  title: t("drafts.show.title"),
+  eyebrow: Current.universe.name,
+  description: t("drafts.show.description"),
+  count: @draft.draft_changes.size,
+  count_label: "change" do %>
+  <%= link_to t("drafts.show.back"), universe_drafts_path, class: "btn btn-outline-secondary" %>
+
+  <%# The only page in the application whose `show` carries mutation controls,
+      because acting on a draft is what this page is for. They exist only while
+      the draft can be acted on: an applied or discarded draft is history, and a
+      control that would do nothing is worse than no control. %>
+  <% if @draft.open? %>
+    <%= button_to t("drafts.show.apply"), apply_universe_draft_path(id: @draft),
+      class: "btn btn-primary",
+      data: { turbo_confirm: t("drafts.show.apply_confirm") } %>
+    <%= button_to t("drafts.show.discard"), discard_universe_draft_path(id: @draft),
+      class: "btn btn-outline-danger",
+      data: { turbo_confirm: t("drafts.show.discard_confirm") } %>
+  <% end %>
+<% end %>
+
+<div class="content-surface">
+  <div class="list-group list-group-flush">
+    <div class="list-group-item draft-summary d-flex align-items-center gap-2 flex-wrap">
+      <span class="badge rounded-pill text-bg-light border"><%= t("drafts.statuses.#{@draft.status}") %></span>
+      <%= t("drafts.show.remembered_at_html",
+        at: time_tag(@draft.created_at, l(@draft.created_at, format: :short))) %>
+    </div>
+
+    <%# A draft remembers at least one change whenever the remembering path could
+        finish, so an empty one is a defect the page states rather than hides —
+        and an author who got here by pressing **Apply** deserves to be told it
+        had nothing to write. %>
+    <% if @draft.draft_changes.any? %>
+      <%= render partial: "drafts/change", collection: @draft.draft_changes, as: :change %>
+    <% else %>
+      <div class="list-group-item">
+        <%= render "shared/empty_state",
+          title: t("drafts.show.empty_title"),
+          description: t("drafts.show.empty_description"),
+          icon: "journal-text" %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -198,7 +198,7 @@ scenes, which controllers answer which format, and the URL of every workspace �
 | Flow | Controllers | Behavior |
 |---|---|---|
 | JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 
 Every PATCH and DELETE in the HTML flow sends `status: :see_other`; a `create` is a POST, so its
 default 302 is correct. A 302 after a non-GET verb asks the browser to repeat the mutation as a GET
@@ -217,6 +217,15 @@ remembered change for the JSON-only rows, and the HTML redirect with `drafts.fla
 redirect rows. There is no record to redirect *to* for a remembered create, so the HTML flow returns the
 author to the page they submitted from and falls back to the universe. `DraftMutation` is where this is
 implemented; [conventions.md](conventions.md#controllers) owns the call each mutation action makes.
+
+`DraftsController` is where those remembered changes are read and acted on. It is the only controller
+whose every action requires a session, because a draft belongs to a person, and it is read as its own
+author's inside the universe the request has already authorized rather than through CanCan — `Draft` is
+deliberately not a content class. Applying writes through the same services and the same model validations
+the live path uses, reports a change it could not write instead of writing it, and closes the draft either
+way; [conventions.md](conventions.md#the-drafts-page) owns the page and the two controls, and
+[ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) owns why a conflict is reported
+rather than resolved in this phase.
 
 `scene_elements` has no read action at all, because Elements are read on Scene Details; every one of
 its actions is a mutation and therefore authenticated. `scene_characters`, `scene_items`, and

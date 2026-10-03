@@ -62,6 +62,11 @@ en:
       tags: "Tags"
       members: "Members"
       collaboration: "Collaboration"
+      # The one live entry in the Collaboration group. It points at the reader's
+      # own remembered changes, and it is offered only where such a thing can
+      # exist: a `direct` universe never opens a draft, and a draft belongs to a
+      # person rather than to a visitor.
+      pending_changes: "Pending changes"
       collaborators: "Collaborators"
       conflicts: "Conflicts"
       branches: "Branches"
@@ -420,12 +425,89 @@ en:
       message_created: "Your message was posted."
 
   drafts:
+    # The workflow's own words. `statuses` is the stored `Draft::STATUSES` read as
+    # a sentence rather than as a column value, so a draft's history is named the
+    # same way wherever it is shown; `actions` is the stored `action` of a change,
+    # in its own tense because a remembered change is a *pending* one.
+    statuses:
+      draft: "Draft"
+      applied: "Applied"
+      discarded: "Discarded"
+      submitted: "Submitted"
+    actions:
+      create: "Create"
+      update: "Update"
+      delete: "Delete"
+    # The three record types a change can name that are not search documents, so
+    # `searches.kinds` deliberately does not name them. They are lower-case nouns
+    # because the sentence above them reads "New %{kind}".
+    kinds:
+      scene_character: "scene character"
+      scene_item: "scene item"
+      scene_location: "scene location"
+      unknown: "record"
+    # The two virtual photo writers as a row states them. `photo_data` is a `data:`
+    # URL and `remove_photo` is a boolean, so neither can be printed as it is
+    # stored; the author's intent is stated instead.
+    attributes:
+      photo: "a new photo"
+      photo_removed: "the photo removed"
     flash:
       # The one sentence the HTML workspaces say when a universe remembers a
       # change instead of writing it. It says the change was *remembered*, never
       # that the record was saved, because nothing was: the author is looking at
       # the same page, and a "created" flash would be a lie about the universe.
       remembered: "Your change was remembered. It is not live until you apply it."
+      # What an apply did. A draft applied whole and a draft where some changes
+      # could not be written are different sentences because they are different
+      # outcomes, and the second one says where the changes still are rather than
+      # implying they are gone.
+      applied:
+        one: "%{count} remembered change is now live."
+        other: "%{count} remembered changes are now live."
+      partially_applied: "%{applied} changes are now live. %{skipped} could not be applied: the records they name have changed since you remembered them, or the universe refused the write. This draft is closed, and those changes are still listed on it."
+      discarded: "The draft was discarded. Nothing was written."
+      closed: "That draft has already been applied or discarded, so there is nothing left to do with it."
+    index:
+      title: "Pending changes"
+      description: "Changes you have made in this universe that are remembered rather than written, and the drafts they belong to."
+      back: "Back to the universe"
+      changes:
+        one: "%{count} remembered change"
+        other: "%{count} remembered changes"
+      remembered_at_html: "Remembered %{at}."
+      review: "Review"
+      apply: "Apply"
+      discard: "Discard"
+      # Both confirmations are irreversible decisions, so each says what happens
+      # rather than asking whether to continue.
+      apply_confirm:
+        one: "Apply the %{count} remembered change? It becomes live immediately."
+        other: "Apply the %{count} remembered changes? They become live immediately."
+      discard_confirm:
+        one: "Discard this draft? Its %{count} remembered change will not be written."
+        other: "Discard this draft? Its %{count} remembered changes will not be written."
+      empty_title: "Nothing is waiting to be applied"
+      empty_description: "In a universe that remembers changes, what you edit is collected here until you apply it. Nothing has been waiting in this universe."
+    show:
+      title: "Changes to review"
+      description: "Every change this draft remembers, in the order you made them. Nothing here has been written until you apply it."
+      back: "All pending changes"
+      apply: "Apply changes"
+      discard: "Discard draft"
+      apply_confirm: "Apply every remembered change? They become live immediately."
+      discard_confirm: "Discard this draft? Its remembered changes will not be written and cannot be applied afterwards."
+      remembered_at_html: "Remembered %{at}."
+      # A remembered create names no record, so its row is titled by the type it
+      # would create. A change whose record has since been deleted falls back to
+      # the same title, because it is still a change *about* that type.
+      new_record: "New %{kind}"
+      # A delete carries no payload, so the row says what it would do rather than
+      # listing nothing.
+      removes_record: "This change removes the record."
+      no_values: "No field values were remembered for this change."
+      empty_title: "This draft remembers no changes"
+      empty_description: "There is nothing here to apply. A draft is opened by the first change you remember, so this one is empty."
     errors:
       # A `record_type` is a half of a polymorphic reference, so a type the
       # content registry does not know is a reference that resolves to nothing.
@@ -1712,10 +1794,15 @@ en:
         name: "Name"
         description: "Description"
         parent: "Parent character"
+        # The collection a form's `character_tag_ids` fills, named here because a
+        # draft's page prints the remembered assignment by its association: the
+        # editor knows "Character tags" and has never seen the writer's name.
+        character_tags: "Character tags"
       location:
         name: "Name"
         description: "Description"
         parent: "Parent location"
+        location_tags: "Location tags"
       event:
         name: "Name"
         title: "Title"
@@ -1727,13 +1814,16 @@ en:
         before_event: "Happens before"
         after_event: "Happens after"
         simultaneous_event: "Same time as"
+        event_tags: "Event tags"
       item:
         name: "Name"
         description: "Description"
         parent: "Parent item"
+        item_tags: "Item tags"
       relation:
         name: "Name"
         description: "Description"
+        relation_tags: "Relation tags"
         character1: "Character 1"
         character2: "Character 2"
         from_date: "From"
@@ -1741,6 +1831,7 @@ en:
       ownership:
         name: "Name"
         description: "Description"
+        ownership_tags: "Ownership tags"
         item: "Item"
         character: "Character"
         from_date: "From"
@@ -1868,6 +1959,15 @@ en:
   member:
     one: "member"
     other: "members"
+  # One author's remembered changes, and one of them. Both pages pass these as
+  # `count_label:` beside their page header's badge, so the noun beside a bare
+  # number is always a key rather than a word the template pluralizes.
+  draft:
+    one: "draft"
+    other: "drafts"
+  change:
+    one: "change"
+    other: "changes"
 
   # The subject of a record-level error, keyed by the `model_param` a controller
   # already holds. Both browser editors print a `base` message as a sentence

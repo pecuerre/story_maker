@@ -1,0 +1,55 @@
+<% content_for :title, t("drafts.index.title") %>
+
+<%= render "shared/page_header",
+  title: t("drafts.index.title"),
+  eyebrow: Current.universe.name,
+  description: t("drafts.index.description"),
+  count: @drafts.size,
+  count_label: "draft" do %>
+  <%= link_to t("drafts.index.back"), universe_path(Current.universe), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<% if @drafts.any? %>
+  <div class="content-surface entity-list">
+    <div class="list-group list-group-flush">
+      <% @drafts.each do |draft| %>
+        <div class="list-group-item entity-row d-flex align-items-start gap-3">
+          <div class="entity-copy flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="entity-title"><%= t("drafts.index.changes", count: draft.draft_changes.size) %></span>
+              <span class="badge rounded-pill text-bg-light border"><%= t("drafts.statuses.#{draft.status}") %></span>
+            </div>
+            <%# The moment is the draft's own `created_at`: it is when the first
+                change of this editing session was remembered, which is what the
+                reader is dating. %>
+            <div class="entity-description">
+              <%= t("drafts.index.remembered_at_html",
+                at: time_tag(draft.created_at, l(draft.created_at, format: :short))) %>
+            </div>
+          </div>
+
+          <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            <%= link_to t("drafts.index.review"), universe_draft_path(id: draft), class: "btn btn-sm btn-outline-secondary" %>
+
+            <%# An applied or discarded draft is history. Offering to apply or
+                discard it again would be offering a control that does nothing,
+                so the row only offers what the draft's own status allows. %>
+            <% if draft.open? %>
+              <%= button_to t("drafts.index.apply"), apply_universe_draft_path(id: draft),
+                class: "btn btn-sm btn-primary",
+                data: { turbo_confirm: t("drafts.index.apply_confirm", count: draft.draft_changes.size) } %>
+              <%= button_to t("drafts.index.discard"), discard_universe_draft_path(id: draft),
+                class: "btn btn-sm btn-outline-danger",
+                data: { turbo_confirm: t("drafts.index.discard_confirm", count: draft.draft_changes.size) } %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+    title: t("drafts.index.empty_title"),
+    description: t("drafts.index.empty_description"),
+    icon: "journal-text" %>
+<% end %>

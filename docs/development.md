@@ -1075,10 +1075,16 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    If the feature changes access or persistence, also update `universe_memberships.yml` where a
    sample universe should exercise private or delegated-admin access.
 
-   This step is for a model a reader can reach. `Draft` and `DraftChange` are the current
-   exception, by decision rather than omission: a draft is one author's transient pending state
-   with no page of its own, and a manifest cannot express one whose first change *creates* the
-   record it names. Their manifests arrive with the slice that gives a draft a list to appear in.
+   `Draft` and `DraftChange` are the one settled exception, and it is that they are **not
+   expressible** rather than that they are later. A manifest resolves references, not moments:
+   a change's `base_version` has to be the record's `updated_at` captured through
+   `DraftChange.capture_base_version`, and a hardcoded stamp in YAML would be wrong the moment the
+   record was touched, so every change would report itself a conflict on the first apply. Its
+   `payload` is the *submitted attributes* the controller would have built, which the loader would
+   have to invent rather than record. And a `Draft` has no slug — a pending change is not a
+   published address — so no manifest can reference one and `draft_changes.yml` could not name the
+   draft its changes belong to. Verifying the drafts page by hand does not need them: set the
+   universe's collaboration mode to `wikipedia`, edit something, then follow **Pending changes**.
 
 ### Full-stack data contract for a new model
 

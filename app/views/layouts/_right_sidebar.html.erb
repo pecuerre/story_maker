@@ -32,6 +32,20 @@
   <section class="sidebar-section sidebar-section--tools" aria-labelledby="collaboration-tools-title">
     <h3 class="sidebar-section-title" id="collaboration-tools-title"><%= t("sidebar.tools.collaboration") %></h3>
     <ul class="sidebar-list">
+      <%# The one live entry in this group. In a universe that remembers changes
+          rather than writing them, the reader's own pending work has to be
+          reachable from somewhere: an editor who is told their change was
+          remembered and then cannot find it has no way to see it, apply it, or
+          throw it away. It is offered only where it can exist — a `direct`
+          universe never opens a draft — and only to a signed-in reader, because a
+          draft belongs to a person. %>
+      <% if Current.universe.draft_based? && authenticated? %>
+        <%= render "shared/sidebar_link",
+          icon: "journal-text",
+          label: t("sidebar.tools.pending_changes"),
+          path: universe_drafts_path,
+          controllers: %i[ drafts ] %>
+      <% end %>
       <li>
         <%= link_to icon_text_count("people", t("sidebar.tools.collaborators")), "#",
           class: "sidebar-link sidebar-placeholder-link",

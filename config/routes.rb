@@ -67,6 +67,17 @@ Rails.application.routes.draw do
     resources :event_tags, only: %i[ index show create update destroy ]
     resources :events
     get "timeline", to: "timeline#index", as: :timeline
+    # One author's remembered changes for this universe. `apply` and `discard`
+    # are two POSTs rather than a `resources` verb list: each is a decision the
+    # author makes about their own pending work, and neither is idempotent — an
+    # `apply` writes records, and a `discard` closes the draft. Both answer with
+    # a redirect, as the HTML flow requires. The page has no `create` or
+    # `destroy` because a draft is opened by the remembering path
+    # (`Draft.open_for!`) and is never deleted, only moved to another status.
+    resources :drafts, only: %i[ index show ] do
+      post :apply, on: :member
+      post :discard, on: :member
+    end
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

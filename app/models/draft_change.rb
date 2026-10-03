@@ -98,6 +98,44 @@ class DraftChange < ApplicationRecord
   # needs.
   before_update :refuse_to_be_rewritten
 
+  # The record this change names, or nil when there is none to name.
+  #
+  # Read through `RecordTarget` rather than through the `record` association, so
+  # a soft-deleted record, an unknown id, and an unregistered type are one refusal
+  # here — the same one a discussion gets, and the same reason: a remembered
+  # change to a record that cannot be found cannot be applied or conflict-checked.
+  #
+  # It is public because a draft's own page has to name and link the record a
+  # change is about, and that page must resolve it the same way the validations
+  # below do rather than reaching for the association and getting a different
+  # answer: a deleted record would render there and be refused here.
+  #
+  # The answer is deliberately not remembered. The validations below call it during
+  # the save that wrote this change, and a draft's page calls it days later — after
+  # the record may have been deleted. A remembered answer would be a record the
+  # page links to and a 404 answers.
+  def resolved_record
+    RecordTarget.find(record_type: record_type, record_id: record_id)
+  end
+
+  # The column in `payload` that says which universe, story, or scene a remembered
+  # **create** belongs to, or nil when the change carries no payload.
+  #
+  # `DraftMutation` merged that column in because a payload of submitted values
+  # alone cannot say where the record goes, and it named the same way
+  # `UniverseScopeResolver` names every model's scope. A draft's page needs the
+  # answer too, for the opposite reason: it is the one value in a payload a reader
+  # cannot use, so it must be recognised as plumbing rather than printed as a bare
+  # id.
+  def scope_attribute
+    return if payload.blank?
+
+    model = RecordTarget.model_for(record_type)
+    association = model && UniverseScopeResolver.owner_association_for(model)
+
+    association ? "#{association}_id" : "universe_id"
+  end
+
   private
 
     # A `record_type` outside the content registry names a class the application
@@ -171,9 +209,5 @@ class DraftChange < ApplicationRecord
 
         errors.add(:base_version, I18n.t("drafts.errors.base_version_required"))
       end
-    end
-
-    def resolved_record
-      @resolved_record ||= RecordTarget.find(record_type: record_type, record_id: record_id)
     end
 end

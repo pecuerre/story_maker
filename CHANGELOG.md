@@ -42,6 +42,12 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A draft has a page: `/u/:universe_slug/drafts` lists your own drafts and `DraftsController` shows,
+  applies, and discards them.** The right sidebar carries a **Pending changes** entry wherever a draft
+  can exist. See [ADR 0021](docs/adr/0021-applying-a-draft-through-the-live-mutation-path.md).
+- **Applying a draft writes through the live mutation path.** `DraftApplier` routes an ordered collection
+  through `PositionedResourceOrder` and the rest through the model, deciding which from the model's own
+  columns; a change whose record has moved is reported rather than written, and the draft closes either way.
 - **A mutation in a non-direct universe is remembered instead of written.** `DraftMutation` is called from
   every mutation controller and stores the change in the author's open draft; all twenty answer it in their
   own response flow, and a Scene's move, grouping, and a Scene Element's move are intercepted too.
@@ -55,6 +61,11 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Which column places a record in its scope has one answer.**
+  `UniverseScopeResolver.owner_association_for` names it from the model's own columns, read by the
+  remembering path, the applier, and a draft's page alike.
+- **The right sidebar's Collaboration group leads with a live entry.** **Pending changes** points at
+  the reader's own drafts, rendered only where a draft can exist.
 - **A discussion message says who wrote it and when.** The author and a localized moment share one
   line above the body, with the exact instant kept in a `<time datetime>`; a blank author falls back
   to `shared.detail_fact.blank` instead of an empty span.
@@ -62,8 +73,18 @@ Labels used below, in the order their groups appear:
   guest and a read-only member are only told what will appear there, matching the split every list
   already makes.
 
+### docs
+
+- **The draft system's open limits are recorded as findings.** A reported conflict has to be retyped, an
+  apply's outcome is lost, two tabs can open two drafts, a draft's page costs a query per row, and a
+  Spanish reader sees English attribute names for the Scene-owned models.
+- **A draft has no development manifest, and the reason is that one is not expressible.** A change's
+  version stamp is a moment rather than a reference, and a `Draft` has no slug a manifest could name.
+
 ### fixed
 
+- **A draft-based universe no longer collects changes no page can show.** A remembered change can now
+  be listed, applied, or discarded, so a mode change is no longer a state its editors cannot get out of.
 - **A taxonomy tree costs one query for its rows, whatever its depth.** Every tree page loads its
   whole hierarchy once and a new `HierarchyIndex` answers roots and children in memory, carrying each
   node's tags and photo with it.

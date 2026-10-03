@@ -21,6 +21,21 @@ module UniverseScopeResolver
 
   module_function
 
+  # The owner association a model reaches its universe through, or nil when it
+  # reaches it directly and so has no owner association at all.
+  #
+  # It is asked of a *class* rather than of a record because three callers need
+  # the answer before there is a record: `DraftMutation` choosing the one column to
+  # store alongside a remembered create, `DraftApplier` choosing the collection to
+  # order when it writes that create, and `DraftChange` naming the column again so
+  # a draft's own page can tell plumbing from something it can print. Reading the
+  # model's columns is what keeps those three answers one answer.
+  def owner_association_for(model)
+    OWNER_ASSOCIATIONS.find do |association|
+      model.column_names.include?("#{association}_id")
+    end
+  end
+
   def universe_for(record, visited = [])
     return if record.nil?
     return record.universe if record.respond_to?(:universe)

@@ -9,7 +9,10 @@ This re-audit was performed on 2026-09-24 against commit `8fcf4d4`. It is an obs
 only: no application, test, configuration, dependency, or generated-asset fixes were made in this
 pass. The separate DataFactor follow-up section below was checked against the current tree on
 2026-09-25; it is not a full replacement for the original audit. Severity labels distinguish
-reachable security/data-loss issues from lower-priority hardening and contract decisions.
+reachable security/data-loss issues from lower-priority hardening and contract decisions. Entries
+numbered **63 and above** were added on 2026-10-03 while the collaboration draft system was being
+built, verified the same way, and listed here rather than left in [`backlog.md`](backlog.md) because
+each one is reachable now rather than only pending.
 
 ## Critical security observations
 
@@ -72,7 +75,7 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     `new`/`edit` routes and the session/password actions remain open.
 
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
-    maintenance.** The controller-facing `PositionedResourceOrder` service now transactionally
+    maintenance.** The `PositionedResourceOrder` service now transactionally
     handles create, move, reparent, and destroy for current positioned controllers, and the
     `Hierarchical` callback closes gaps after direct hierarchical destroys. Two flat sequences were
     added with the Scene deliveries — the Story-owned `Scene` order and the Scene-owned
@@ -84,6 +87,12 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     still bypass the service for both hierarchies and flat sequences, and SQLite has no
     portable row-lock/unique-position guarantee. Do not treat those paths as normalized without an
     explicit import/console workflow; see ADR 0009 and [`delivery_history.md`](delivery_history.md).
+    One caller was added on 2026-10-03 that is not a controller: `DraftApplier` writes a draft's
+    remembered changes through the same service, so applying a draft in a draft-based universe does
+    normalize. It decides *which* models are ordered by reading their own columns rather than by
+    asking a controller, and `test/services/draft_applier_test.rb` holds that derivation against every
+    routed controller in both directions — so this finding's list of bypassing paths is unchanged, and
+    the applier is a maintained caller rather than a new hole.
 
 23. **Medium — legacy HABTM join tables have no database integrity constraints.** The seven
     pre-Scene join tables contain only two integer columns and no indexes, foreign keys, or
@@ -117,6 +126,46 @@ reachable security/data-loss issues from lower-priority hardening and contract d
     (`app/models/relation.rb:43`, `app/models/ownership.rb:42`). Creating equivalent records
     with tags supplied in a different order can produce different slugs, which matters for
     symbolic development-data references and class-level lookup.
+
+63. **Medium — a remembered change that has moved is reported and then closed with its draft, so the
+    author has to redo it by hand.** `DraftsController#apply` writes the changes whose record is still at
+    the version they were remembered against, reports the rest in one flash sentence, and moves the
+    draft to `applied` regardless (`app/services/draft_applier.rb`,
+    `app/controllers/drafts_controller.rb:51-62`). Nothing stores an outcome per change and a remembered
+    change is append-only, so the unapplied change's values survive only as a row on the draft's page
+    (`draft_changes.payload`), where nothing reads them back into an editor. In practice: an
+    administrator sets a universe to `wikipedia`, two contributors edit the same record, and the second
+    one's edit is reported once and then has to be retyped. The draft always closing is deliberate and
+    load-bearing — a remembered `create` names no record, so an apply left open could write the author a
+    second copy of it (ADR 0021) — and the resolution UI that removes this cost is Phase 3, recorded in
+    [`backlog.md`](backlog.md) as item 22.
+
+64. **Low — the apply's outcome is reported once and then lost.** `DraftApplier::Result` carries what was
+    written and why the rest was not, and the controller turns it into one flash message; nothing records
+    it on the draft. A draft's page therefore cannot say which of its changes were applied and which were
+    not, and deliberately does not try to infer it: an apply moves every version it writes, so comparing
+    a record's current version with the remembered one cannot distinguish "written by this draft" from
+    "changed by somebody else" (ADR 0021). The consequence is that an applied draft reads as a list of
+    remembered intentions rather than as a record of what happened, which is the part of "draft history"
+    that Phase 5 will want.
+
+65. **Low — two concurrent requests can open two drafts for one author, and applying both writes both.**
+    `drafts` has no unique index on `[user_id, universe_id]` (ADR 0019, `db/schema.rb:118-127`), so two
+    tabs that mutate at the same moment each open a draft. That was harmless while a draft had no page; now
+    both can be applied, so the second one's changes are written over whatever the first one left, and any
+    collision between them surfaces as the reported conflict above rather than as a refusal. The index
+    cannot be the fix on its own — an applied draft stays behind as history — so the open question is
+    whether the editing flow should look up the open draft on entry rather than rely on two requests not
+    colliding.
+
+66. **Low — a draft's page costs a record lookup per remembered change, plus one per remembered id list.**
+    `DraftChange#resolved_record` deliberately does not remember its answer (a record deleted after the
+    change was written must stop resolving), so each row resolves its own record, and each remembered
+    `*_ids` value resolves its tags through `DraftsHelper#association_names` one query at a time. A draft
+    with a handful of changes is a handful of queries and nothing to see; a draft assembled from a long
+    editing session is a query per row. The page is the only unbounded-per-row read added so far — every
+    list page in the application preloads through a grouped query — so this is where a
+    `DraftChanges::Reader` that resolves a draft's records and tag names in two queries would go.
 
 ## Performance, test, and tooling observations
 
@@ -215,16 +264,20 @@ through the current normal UI. They are recorded so they are not mistaken for se
   The policy-aware `User#accessible_universes` and the membership view compensate manually
   (`app/models/user.rb:12-14`, `app/views/memberships/index.html.erb:64-70`); new code using the
   ordinary associations can omit owners and report incomplete access/collaboration data.
-- **A draft-based universe collects changes that no page can show.** `DraftMutation` is wired into every
-  mutation controller, and `Universe#collaboration_mode` is editable from the universe form
-  (`UniversesController#update` is admin-level), so switching a universe to `wikipedia` or `github` is
-  reachable today. Every mutation in it is then remembered rather than written, and the author is told so
-  by a flash or a `202` body — but nothing yet **lists** a draft's changes, applies them, or discards
-  them, so those changes cannot be seen, applied, or thrown away through the interface. The pending work
-  is the `DraftsController` stage in [`backlog.md`](backlog.md). It is recorded here rather than only
-  there because the trap is reachable now rather than pending: an administrator can put a working universe
-  into a mode where its editors appear to save and nothing is saved, and the only way back is to set the
-  mode to `direct` again.
+- **A remembered create's page does not say which story or scene it would belong to.** The payload's scope
+  column (`DraftChange#scope_attribute`) is dropped as plumbing, because the page is already inside the
+  universe it would place the record in and a bare `story_id` is a number a reader cannot name. An author
+  reviewing twenty remembered scenes therefore sees twenty rows that say what each scene is called and
+  nothing about where each one would land, and has to go to the record's own workspace to find out. A
+  resolved name per create would cost one lookup per row, which is the same trade as finding 66.
+- **The applier raises rather than reporting a change it cannot interpret.** An unregistered `record_type`
+  on a remembered create, or a payload naming an attribute no column holds, is a corrupt row rather than
+  something an author typed, and `DraftApplier` lets it raise (`ActiveRecord::RecordNotFound`,
+  `ActiveRecord::UnknownAttributeError`) instead of guessing. The run's transaction makes that safe — the
+  draft is left exactly as it was — but through the controller it answers as a bare 404
+  (`rescue_from ActiveRecord::RecordNotFound`), which reads as "this draft does not exist" rather than as
+  "this draft is damaged", and the author's only way forward is **Discard**. The decision is documented
+  (ADR 0021); the shape of the answer is the part a reviewer may want to change.
 - **No mutation rate limits exist beyond sign-in/password-reset.** Public universes intentionally
   allow every signed-in contributor to write, so throttling content/story/tag/membership mutations
   is a product decision rather than a confirmed defect.
@@ -243,6 +296,15 @@ through the current normal UI. They are recorded so they are not mistaken for se
   route-surface check.
 
 ## Additional UI and interaction observations
+
+67. **Low — a draft's page prints English attribute names for the models the Scenes workspace never
+    translated.** A remembered value is labelled with `Model.human_attribute_name`, and
+    `config/locales/*.yml` names the attributes only for the models whose forms are rendered there, so a
+    Spanish reader looking at a remembered **Section** or **Scene Element** create sees "Name" and
+    "Description" beside Spanish chrome — the documented humanized-English fallback, not a missing key.
+    The six collection names the page prints most often (the eight taxonomies' tag assignments) are named
+    in both files now, and the Scene-owned models are the rest. Naming those models is the Scenes
+    workspace's translation work; this entry exists so it is a known gap rather than a surprise.
 
 49. **Low/conditional — Turbo page snapshots may retain private views after session invalidation.**
     The layout does not disable Turbo caching and defines no `turbo-cache-control`

@@ -166,10 +166,8 @@ module DraftMutation
     # generated `slug` — would be remembered as a value to write rather than as a
     # value to let the live path decide.
     def draft_scope_attributes(record)
-      owner = UniverseScopeResolver::OWNER_ASSOCIATIONS.find do |association|
-        record.class.column_names.include?("#{association}_id")
-      end
-      scope_attribute = owner ? "#{owner}_id" : "universe_id"
+      association = UniverseScopeResolver.owner_association_for(record.class)
+      scope_attribute = association ? "#{association}_id" : "universe_id"
 
       record.attributes.slice(scope_attribute)
     end

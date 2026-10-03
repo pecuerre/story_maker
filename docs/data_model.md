@@ -421,4 +421,7 @@ the crop rather than passing through. `db/photos/` is a checked-in asset directo
 Records made only in the UI are intentionally lost and are not merged back into YAML. Neither
 `db:seed` nor `db:prepare` loads `db/data/`. Development data is for browser/manual validation only;
 automated tests use `test/fixtures/`, and production bootstrap data belongs in
-`db/seeds.rb`/`db/seeds/`.
+`db/seeds.rb`/`db/seeds/`. `Draft` and `DraftChange` are the one model with no manifest at all, and
+the reason is in
+[development.md](development.md#adding-a-new-content-model-checklist) — a change's version stamp is
+a moment rather than a reference.

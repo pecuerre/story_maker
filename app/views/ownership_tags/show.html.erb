@@ -6,7 +6,8 @@
   label: t("tags.types.ownership.record_label"),
   **tag_identity_details(@ownership_tag),
   back_url: universe_ownership_tags_path,
-  back_label: t("tags.types.ownership.all_label") %>
+  back_label: t("tags.types.ownership.all_label"),
+  actions: discussion_control(@ownership_tag) %>
 
 <%= render "shared/include_descendants_toggle" %>
 

@@ -6,7 +6,8 @@
   label: t("tags.types.relation.record_label"),
   **tag_identity_details(@relation_tag),
   back_url: universe_relation_tags_path,
-  back_label: t("tags.types.relation.all_label") %>
+  back_label: t("tags.types.relation.all_label"),
+  actions: discussion_control(@relation_tag) %>
 
 <%= render "shared/include_descendants_toggle" %>
 

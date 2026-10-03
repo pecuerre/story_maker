@@ -12,6 +12,7 @@
     detail_fact(t("locations.show.facts.description"), @location.description, blank: t("locations.show.facts.description_blank"))
   ],
   back_url: universe_locations_path,
-  back_label: t("locations.show.back_label") %>
+  back_label: t("locations.show.back_label"),
+  actions: discussion_control(@location) %>
 
 <%= render "scene_appearances/section", record: @location %>

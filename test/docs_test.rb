@@ -23,6 +23,14 @@ class DocsTest < ActiveSupport::TestCase
   # rather than to extend this list.
   KNOWN_DUPLICATED_HEADINGS = {}.freeze
 
+  # The changelog's entry-length ceiling. CHANGELOG.md is the short form — one or two sentences
+  # naming the subject — and docs/delivery_history.md is where the reasoning lives. A paragraph in
+  # the short form is the one thing that makes the file unreadable: it answers "why?" where the
+  # reader asked "what and when?", and it buries the entries around it. The ceiling is a proxy for
+  # that, not the definition of it, so it is set where a careful two-sentence summary still fits
+  # with room to spare and a paragraph does not.
+  CHANGELOG_ENTRY_WORD_LIMIT = 60
+
   test "every relative markdown link resolves" do
     broken = markdown_files.flat_map { |file| broken_links(file) }
 
@@ -80,7 +88,41 @@ class DocsTest < ActiveSupport::TestCase
       "Documentation files missing from docs/README.md:\n  #{unlisted.join("\n  ")}"
   end
 
+  test "no changelog entry is a paragraph" do
+    # docs/delivery_history.md is exempt by construction: it is the long form, and it is frozen.
+    overlong = changelog_entries.map { |line, entry| [ line, entry_words(entry) ] }
+      .reject { |_line, count| count <= CHANGELOG_ENTRY_WORD_LIMIT }
+
+    assert_empty overlong,
+      "Changelog entries over #{CHANGELOG_ENTRY_WORD_LIMIT} words. An entry names the subject in " \
+      "one or two sentences; the reasoning belongs in docs/delivery_history.md or in the document " \
+      "that owns the subject:\n#{overlong.map { |line, count| "  line #{line}: #{count} words" }.join("\n")}"
+  end
+
   private
+
+  # Each top-level "- " bullet in the changelog as [line number, text], with its continuation lines
+  # joined in. A dated entry is one bullet: it may wrap over several lines, and it is the bullet plus
+  # what follows it that has to stay short.
+  def changelog_entries
+    @changelog_entries ||= begin
+      entries = []
+      Rails.root.join("CHANGELOG.md").read.split("\n").each_with_index do |line, index|
+        if line.start_with?("- ")
+          entries << [ index + 1, line ]
+        elsif entries.any? && !line.strip.empty? && !line.start_with?("#")
+          entries.last[1] = "#{entries.last[1]} #{line.strip}"
+        end
+      end
+      entries
+    end
+  end
+
+  # Words as a reader counts them: inline code, emphasis, and link syntax are punctuation around the
+  # words, not words of their own.
+  def entry_words(entry)
+    entry.gsub(/[`*_\[\]()#|]/, "").split.size
+  end
 
   def markdown_files
     @markdown_files ||= Dir.glob(DOCS_ROOT.join("**/*.md")).sort.map { |file| Pathname(file) }

@@ -939,6 +939,54 @@ $um-search-match: #ffc107;
   background: var(--um-row-hover);
 }
 
+// The discussion thread: a conversation, not a table of records, so a message is
+// a quiet block with its author and moment on one line and its body as prose
+// beneath, separated by a hairline rather than boxed. The composer sits below the
+// thread with the same surface treatment as the card around it, and the empty
+// state reuses the shared one above, so a thread with no messages reads as "not
+// started" rather than as a broken page.
+.discussion-thread {
+  margin-bottom: 0;
+}
+
+.discussion-message {
+  padding: 1rem 0;
+  border-top: 1px solid var(--um-tag-badge-border);
+}
+
+.discussion-message:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.discussion-message-meta {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  flex-wrap: wrap;
+  color: var(--bs-body-secondary-color);
+  font-size: .8125rem;
+}
+
+.discussion-message-author {
+  color: var(--bs-body-color);
+  font-weight: 650;
+}
+
+// The body is plain text in this version, so it wraps as prose at the measure a
+// reader reads rather than filling the card's whole width.
+.discussion-message-body {
+  max-width: 52rem;
+  margin: .35rem 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.discussion-composer {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--um-tag-badge-border);
+}
+
 .entity-copy {
   min-width: 0;
 }

@@ -321,6 +321,28 @@ section, because a display preference belongs to the browser rather than to a un
 independent preferences, the vertical tab strip, the labelled-card radio groups, and the
 `data: { turbo: false }` requirement are in [features/settings.md](features/settings.md).
 
+## The discussion page
+
+A thread is a **fourth page shape**, and it is the one place a read is not a plain read. The
+`show`-never-writes rule is not bent to accommodate it: `DiscussionsController#show` is a
+guest-readable read of an append-only list, and the find-or-create that opens a thread happens in
+`create`, which the **Discuss** control submits to and which redirects to the thread. A `GET` never
+creates anything, which is why the control is a button on a record with no thread and a plain link
+on a record that already has one — the second case is a page like any other.
+
+**The composer is the only difference between readers.** A guest and a read-only member see
+identical messages; the composer renders only for a user who may write, so `assert_select "main
+form", count: 0` still holds on a thread for either of them. The author is `Current.user` and the
+request cannot name one — the strong parameter list has no `user_id` at all.
+
+A thread resolves its record twice, and both resolutions are the authorized ones: the thread
+through its `universe_id`, the record through `RecordTarget` inside the universe the request has
+already authorized. The page's back link is the record's own page, built from the record's search
+declaration rather than by naming a route per record type, which is the same answer a stored search
+document holds. Body text is plain: markdown in discussions is a later decision, so nothing here
+renders a fragment. Where a message is refused, the thread re-renders with the reason beside the
+composer rather than redirecting, because a redirect would discard what was typed.
+
 ## Record details pages
 
 A details page is a fourth *page* shape, not a fourth editing pattern: it has no editor, so it is

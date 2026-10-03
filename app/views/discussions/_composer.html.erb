@@ -1,0 +1,18 @@
+<%# The reply form, rendered only for a reader who may write. It posts to the
+    thread's own nested action rather than to the thread's `show`, so the write is
+    a request of its own and an append-only conversation has exactly one way to
+    grow. A refused message re-renders this page with the reason beside the field
+    and keeps what was typed. %>
+<%= form_with(model: message, url: universe_discussion_messages_path(discussion_id: discussion.id),
+  class: "discussion-composer mt-4", scope: :discussion_message) do |form| %>
+  <% if message.errors.any? %>
+    <%= render "shared/error_summary", record: message, subject: t("discussions.message_subject") %>
+  <% end %>
+
+  <%= form.label :body, t("discussions.composer.label"), class: "form-label" %>
+  <%= form.text_area :body, rows: 3, class: "form-control" %>
+
+  <div class="form-actions">
+    <%= form.submit t("discussions.composer.submit"), class: "btn btn-primary" %>
+  </div>
+<% end %>

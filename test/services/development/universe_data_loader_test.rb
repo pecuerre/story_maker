@@ -382,7 +382,10 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
       # The Scene's own components belong to the manifest scenes that were just
       # replaced, so they are emptied rather than left referencing missing scenes.
-      %w[scene_elements scene_characters scene_items scene_locations].each do |file|
+      # A thread is the same: this one is about a Scene, so it goes too — and its
+      # messages with it, because a reply to a thread that is not there is the same
+      # dangling reference.
+      %w[scene_elements scene_characters scene_items scene_locations discussions discussion_messages].each do |file|
         File.write(File.join(directory, "db/data/dark/#{file}.yml"), "[]\n")
       end
 

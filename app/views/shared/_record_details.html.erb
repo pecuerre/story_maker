@@ -16,6 +16,11 @@
                     `shared/_detail_footer` for the shape and why.
       back_url / back_label - where the list this page was opened from lives
       edit_url / edit_label - optional editor link, writers only
+      actions     - optional already-rendered controls placed in the page header's
+                    action group, after the back and edit links. A page passes one
+                    only when the control is genuinely its own: the "Discuss"
+                    control decides for itself whether a reader may use it, so
+                    passing it cannot give a guest a control to press.
       block      - optional content between the page header and the identity
                     card. The tab strip belongs to the page's navigation
                     chrome, not to the record, so a workspace that stays open
@@ -40,6 +45,7 @@
     <%= link_to local_assigns.fetch(:edit_label), local_assigns.fetch(:edit_url),
       class: "btn btn-primary" %>
   <% end %>
+  <%= local_assigns[:actions] %>
 <% end %>
 
 <% if block_given? %>

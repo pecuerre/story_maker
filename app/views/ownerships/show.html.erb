@@ -12,7 +12,8 @@
     detail_fact(t("ownerships.show.facts.description"), @ownership.description, blank: t("ownerships.show.facts.description_blank"))
   ],
   back_url: universe_ownerships_path,
-  back_label: t("ownerships.show.back_label") %>
+  back_label: t("ownerships.show.back_label"),
+  actions: discussion_control(@ownership) %>
 
 <%= render "shared/detail_section",
   title: t("ownerships.show.related.title"),

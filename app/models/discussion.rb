@@ -30,6 +30,16 @@ class Discussion < ApplicationRecord
   validate :record_reference_exists
   validate :record_belongs_to_universe
 
+  # A thread has no slug of its own: what identifies it is the record pair the
+  # unique index already holds, and one thread per record means there is never a
+  # second name to collide with. The development-data loader still needs a stable
+  # identifier to reference a thread from a manifest, and a thread's title is what
+  # identifies it there — so this is `slugify` alone, without `HasSlug`, whose slug
+  # column and name callback a thread has no use for.
+  def self.slugify(value)
+    value.to_s.parameterize.presence
+  end
+
   private
 
     def record_reference_exists

@@ -8,7 +8,14 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
     # Scene is loaded after Event because it may reference a shared universe
     # Event, and a symbolic reference may not point at a later model file. Its
     # own components follow it for the same reason: they reference a Scene.
-    assert_equal "SceneLocation", model_names.last
+    # Discussion follows every one of them, because a thread's `record` reference
+    # may name any of them.
+    assert_equal "DiscussionMessage", model_names.last
+    assert_operator model_names.index("Discussion"), :<, model_names.index("DiscussionMessage")
+    Ability::CONTENT_CLASS_NAMES.each do |class_name|
+      assert_operator model_names.index(class_name), :<, model_names.index("Discussion"),
+        "#{class_name} must load before a thread may be about it"
+    end
     assert_operator model_names.index("Event"), :<, model_names.index("Scene")
     assert_operator model_names.index("Section"), :<, model_names.index("Scene")
     assert_operator model_names.index("SceneTag"), :<, model_names.index("Scene")

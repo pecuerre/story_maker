@@ -59,6 +59,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Every record has a discussion page.** A **Discuss** control on a details page opens or creates the record's thread, and a reply posts to the thread's own action. The thread is guest-readable and append-only; only the composer differs between readers, so a guest and a read-only member see the same messages. A `GET` never creates a thread.
+- **`Searchable#search_url` is public.** It was a search detail; the thread page's back link and the details controls now use it, so a details page, a back link, and a stored search document cannot drift apart. A Scene presence link answers with its Scene's page.
 - **Every record can carry a discussion.** `discussions` holds one thread per `record_type`/`record_id` pair and `discussion_messages` holds the replies; the polymorphic pair carries no foreign key and is resolved only through `RecordTarget`, which rejects a type outside the content registry as a field error. `HasDiscussion` is in all 21 content and tag models except `Photo`.
 - **A universe has a collaboration mode.** `universes.collaboration_mode` is a `NOT NULL` string defaulting to `direct`, with `wikipedia` and `github`, and it is the first slice of the collaboration system. `Universe` owns the value list and the `direct?`/`wikipedia?`/`github?`/`draft_based?` predicates, an unrecognized stored value counts as draft-based, and the admin-level universe form is where it is set.
 - **A version stamp for a remembered change.** `VersionStamp` captures a record's version as a fixed-format UTC string and compares stamps as strings, because the collaboration plan's `base_version` string was never equal to the `Time` it was compared against and every stored change would have been a conflict. An unknown base counts as moved on purpose.
@@ -68,6 +70,8 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **The demo-data registry can name a model that has no slug.** A registry definition may declare `identifier_field:`, which is how a discussion thread is referenced by its title. Deriving that field from the model's columns instead made the identifier depend on a schema that `db:demo:reset`'s preflight deliberately runs without, so the checked-in manifests passed `db:demo:check` and failed the reset.
+- **The content-registry test no longer passes by not looking.** `test/models/ability_test.rb` reads `ApplicationRecord.descendants`, and Zeitwerk loads a model only once something names it — so a model this worker had not touched was missing and reported as one that "no longer exists". Every name the test reasons about is now loaded first.
 - **The production image builds again.** `assets:precompile` boots the production environment, which refuses to start without `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`, so `docker build` failed. Those three names are now build arguments with reserved `.invalid` defaults, scoped to that one step.
 - **An unknown optional reference id is now a 422 field error instead of a 500.** A `parent_id`, `before_event_id`, `after_event_id`, or `simultaneous_event_id` naming nothing used to answer with a foreign-key exception and no error summary; three model validations now put a message on the attribute that carried the id. This closes known quirk 19.
 

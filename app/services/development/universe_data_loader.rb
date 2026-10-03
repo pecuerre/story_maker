@@ -244,9 +244,19 @@ module Development
         end
       end
 
+      # A record's stable identifier comes from its slug, or from the field its
+      # registry definition names as the one that plays slug's role for it — an
+      # Event is titled rather than named, and a discussion thread is titled
+      # because the record it is about is its subject — or from its name. A model
+      # with none of the three has no identifier, and no manifest can reference it.
+      #
+      # The fallback field is declared in the registry rather than inferred from the
+      # model's columns, because `check!` also runs as a schema-independent preflight
+      # ahead of a reset: asking the database here would make the identifier depend
+      # on a schema that deliberately does not exist yet at that point.
       def identifier_for(definition, attributes)
         value = attributes["slug"]
-        value = attributes["title"] if value.blank? && definition.model_name == "Event"
+        value = attributes[definition.identifier_field] if value.blank? && definition.identifier_field
         value = attributes["name"] if value.blank?
         return if value.blank?
 
@@ -352,9 +362,19 @@ module Development
           raise ValidationError, "#{record_label(record)} references missing #{value}"
         end
 
-        if association && referenced_record.definition.model_name != association.klass.name
+        if association && !association.polymorphic? && referenced_record.definition.model_name != association.klass.name
           field_name = field || value
           raise ValidationError, "#{record_label(record)} field '#{field_name}' must reference #{association.klass.name}, not #{referenced_record.definition.model_name}"
+        end
+
+        # A polymorphic reference names any registered content model, so the
+        # registry that gates what a reference may resolve to is the content
+        # registry — the same one `RecordTarget` uses at runtime. Without this a
+        # manifest could hang a thread off a `User` or a `Session`.
+        if association&.polymorphic? && !Ability::CONTENT_CLASS_NAMES.include?(referenced_model_name)
+          field_name = field || value
+          raise ValidationError,
+            "#{record_label(record)} field '#{field_name}' must reference a content model, not #{referenced_model_name}"
         end
 
         current_definition_index = UniverseDataRegistry.model_names.index(record.definition.model_name)

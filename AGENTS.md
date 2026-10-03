@@ -102,8 +102,9 @@ then applies to anything extra that turns up during the work.
 There are two files, with two different jobs. Keep them that way.
 
 - The root [`CHANGELOG.md`](CHANGELOG.md) is the **short form**: a date-based project history whose
-  entries are one or two sentences naming the subject. The project does not currently use release
-  versions, so do not invent a versioning scheme. This is the file agents and the owner cite.
+  entries are one or two sentences naming the subject, and **never a paragraph**. The project does
+  not currently use release versions, so do not invent a versioning scheme. This is the file agents
+  and the owner cite, so its value is that a whole year of history can be skimmed in one sitting.
 - [`docs/delivery_history.md`](docs/delivery_history.md) is the **long form**: the reasoning behind a
   change, the alternatives that were rejected, and the verification it went through, plus the quirks
   and tech debt that have been resolved. It is a frozen historical record in the same way an ADR is:
@@ -111,13 +112,23 @@ There are two files, with two different jobs. Keep them that way.
 - Every change to application code, site/UI behavior, schema or development data, tests,
   documentation, configuration, security, or tooling must add or update a short changelog entry in
   the same work, using the actual calendar date of the change.
+- **An entry is one or two sentences, not a paragraph.** This is the rule that breaks first,
+  because the reasoning is still fresh and genuinely interesting, and it belongs somewhere else: in
+  the `docs/` document that owns the subject if it is a fact about the system, or in
+  `docs/delivery_history.md` if it is the reasoning behind a past change. A 60-word ceiling is
+  enforced by `test/docs_test.rb`, and it is a symptom, not the definition — two sentences of setup
+  before the subject arrives is already too long, and an entry that only says what changed without
+  naming the subject is too short. When a change genuinely needs more than one entry, write more
+  entries, each one line, rather than one longer entry.
 - Write the long form into `docs/delivery_history.md` in the same change **only** when the reasoning
   is worth keeping and no live document owns it. A fact that a document in `docs/` already states
   belongs there, not in the history file — restating it creates the second source of truth that the
   one-fact-one-home rule exists to prevent.
 - Group related changes under one date and use a concise label such as `[added]`, `[changed]`,
-  `[fixed]`, `[security]`, `[docs]`, `[chore]`, or `[planned]`. Do not rewrite historical entries;
-  add a new entry when behavior changes again.
+  `[fixed]`, `[security]`, `[docs]`, `[chore]`, or `[planned]`. Do not rewrite a historical entry's
+  meaning — add a new entry when behavior changes again. Reducing an old entry to the length rule
+  is the one edit that is always allowed, because it loses nothing the long form does not keep; that
+  normalization has now been done twice, for 299 entries on 2026-09-30 and 27 on 2026-10-03.
 - Inside a date, each label is its own `###` heading with that label's entries as a plain `- ` list
   below it: the label is named once per date by its heading, never repeated at the start of an entry.
   Keep the headings in the order listed in the changelog's label legend, put each new entry at the

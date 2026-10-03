@@ -6,7 +6,8 @@
   label: t("tags.types.event.record_label"),
   **tag_identity_details(@event_tag),
   back_url: universe_event_tags_path,
-  back_label: t("tags.types.event.all_label") do %>
+  back_label: t("tags.types.event.all_label"),
+  actions: discussion_control(@event_tag) do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "event", tag: @event_tag %>
 <% end %>
 

@@ -10,6 +10,7 @@
     detail_fact(t("characters.show.facts.description"), @character.description, blank: t("characters.show.facts.description_blank"))
   ],
   back_url: universe_characters_path,
-  back_label: t("characters.show.back_label") %>
+  back_label: t("characters.show.back_label"),
+  actions: discussion_control(@character) %>
 
 <%= render "scene_appearances/section", record: @character %>

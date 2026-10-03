@@ -73,14 +73,6 @@ Labels used below, in the order their groups appear:
   guest and a read-only member are only told what will appear there, matching the split every list
   already makes.
 
-### docs
-
-- **The draft system's open limits are recorded as findings.** A reported conflict has to be retyped, an
-  apply's outcome is lost, two tabs can open two drafts, a draft's page costs a query per row, and a
-  Spanish reader sees English attribute names for the Scene-owned models.
-- **A draft has no development manifest, and the reason is that one is not expressible.** A change's
-  version stamp is a moment rather than a reference, and a `Draft` has no slug a manifest could name.
-
 ### fixed
 
 - **A draft-based universe no longer collects changes no page can show.** A remembered change can now
@@ -111,6 +103,11 @@ Labels used below, in the order their groups appear:
 - **A label is a heading, not a prefix.** Each date section now carries one `###` heading per
   label with that label's entries as a plain list below it, instead of repeating `- **[label]**` on
   every entry. No entry was added, removed, or reworded.
+- **The draft system's open limits are recorded as findings.** A reported conflict has to be retyped, an
+  apply's outcome is lost, two tabs can open two drafts, a draft's page costs a query per row, and a
+  Spanish reader sees English attribute names for the Scene-owned models.
+- **A draft has no development manifest, and the reason is that one is not expressible.** A change's
+  version stamp is a moment rather than a reference, and a `Draft` has no slug a manifest could name.
 
 ### chore
 

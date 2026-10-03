@@ -8,10 +8,11 @@ class RelationTagsController < ApplicationController
   before_action :set_relation_tag, only: %i[ show update destroy ]
 
   def index
-    @relation_tags = Current.universe.relation_tags
-    @relation_tags = @relation_tags.includes(:children)
-    @relation_tags = @relation_tags.where(parent_id: nil)
-    @relation_tags = @relation_tags.order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(Current.universe.relation_tags.includes(:photo))
+    @relation_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.relation_tags)
   end
 

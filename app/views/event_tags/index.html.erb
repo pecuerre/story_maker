@@ -12,10 +12,11 @@
   empty_description: t("tags.types.event.empty_description"),
   read_only_empty_description: t("tags.types.event.read_only_empty_description"),
   nodes: @event_tags,
+  hierarchy: @hierarchy,
   create_url: universe_event_tags_path,
   update_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
   model_param: "event_tag",
   details_url: ->(event_tag) { universe_event_tag_path(id: event_tag) },
   details_count: ->(tag) { @tagged_counts.fetch(tag.id, 0) },
   details_count_label: "event",
-  modal_fields: event_tag_taxonomy_fields(Current.universe.event_tags.order(:position, :id)) %>
+  modal_fields: event_tag_taxonomy_fields(@hierarchy.records) %>

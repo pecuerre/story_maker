@@ -10,7 +10,14 @@ class EventsController < ApplicationController
   before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
-    @events = Current.universe.events.includes(:event_tags).order(:id)
+    # An event with no title and no dates is labelled through the event it
+    # references, so the three temporal associations are loaded here for the same
+    # reason the tags are: the list prints that label several times over — the
+    # name, the row's delete confirmation, and the modal's three reference
+    # pickers — and each print would otherwise read its own association.
+    # `TimelineController#index` loads the same four.
+    @events = Current.universe.events
+      .includes(:event_tags, :before_event, :after_event, :simultaneous_event).order(:id)
     @events_for_select = @events
     @event_tags = Current.universe.event_tags.where(taggable: true).order(:position, :id)
   end

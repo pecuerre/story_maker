@@ -27,6 +27,72 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-03
+
+- **[fixed]** **All five of quirk 31's query-cost paths, in two deliveries.** Three were the query
+  shapes — row-level authorization, the membership page's per-row user dereference, and the
+  relation-only event labels — and two changed a shared contract and an algorithm, delivered the same
+  day after the owner split the finding rather than leaving it half-written. Quirk 31 is closed; its
+  history is the "Former quirk #31" entry below.
+
+  **Why the memo is on the view and not on the model.** `shared/_row_actions` asks
+  `can_write_universe?(universe_for_record(record))` once per row, and CanCan reaches that through
+  `Universe#access_level_for`, which read `memberships.find_by(user_id:)` every time. The first
+  version of this fix memoized the model — one answer per user on the universe object — and it
+  **failed the suite**, which is the part worth keeping: `test/models/ability_test.rb` builds a
+  `Scene` from a universe held in a local, grants and then upgrades a membership, and then asks a
+  *fresh* `Ability` about the *same* object. A model-level answer cannot survive that, and the
+  only ways to make it survive are a global "the membership table changed" signal or instance-graph
+  invalidation that depends on Active Record setting the inverse association — both far more
+  machinery than the bug deserved, and both invisible to the next reader.
+
+  So the memo moved one layer out, to the view context, which is built and discarded per request:
+  `ApplicationHelper` remembers each `can?` answer per universe id, and `universe_access_level`
+  remembers its string the same way. A render cannot change a membership, so the window is exactly
+  as long as the answer is valid, and `AbilityTest`'s half of the contract is untouched because the
+  model still reads the table on every call. Both memos key with `key?` rather than a truthy test,
+  because "cannot write" and "no access level" are answers a page repeats as often as the positive
+  ones, and a cached `false`/`nil` read as a miss would put the query straight back. The key is the
+  universe id, not the object: `_row_actions` asks about the *record's* universe rather than the
+  current one, and one universe's answer must never stand in for another's.
+
+  In the verification run a characters page issued 19 membership reads with two rows and 25 with
+  five — two per row, from the row menu and the page header — and a flat **5** for both row counts
+  once the memo was in place. Five is what the page's own constant questions cost: the two
+  `authorize!` calls in `UniverseAuthorization`, and the layout, the page header, and the record's
+  own Details check asking through the view.
+
+  **The taxonomy tree needed no equivalent for authorization.** `shared/_taxonomy_tree` already
+  computes `editable` once and passes it down the recursion, so the partial's per-row authorization
+  was already one lookup; the architecture note that listed it as an N+1 was wrong about that half
+  and is corrected. The *descent* into `node.children` was the remaining half of the finding, and
+  the "Former quirk #31" entry below is where it was delivered.
+
+  **The two one-line changes were not one-line each.** `MembershipsController#load_memberships`
+  used `joins(:user)`, which joins without loading, so the view dereferenced `membership.user` per
+  row; `includes(:user).references(:user)` keeps the join the `LOWER(users.name)` ordering needs and
+  makes the users arrive with the rows. `EventsController#index` included only `:event_tags`, while
+  an event with no title and no dates is named through the event it references — so every such row
+  read `before_event`, `after_event`, or `simultaneous_event`, and the label that triggered it is
+  printed six times over (the name, the row's delete confirmation, and three reference pickers in
+  the modal). `TimelineController#index` already loaded all three, so the events list now matches
+  it. A deeper chain (an event named through an event that is itself named through a third) still
+  reads one association: the preloading covers each row's own references, not an unbounded
+  recursion, and the cycle guard in `display_label` is what keeps that finite.
+
+  **Verification.** Three guards, each confirmed to fail without its fix and pass with it: the
+  characters page went from a count that grew with the rows (19 then 25) to a flat 5, the members list
+  from 4 user queries to 3 with the second member added, and the events list from 8 event queries to 5
+  with the fourth reference-only event added. The page tests assert that the count **does not
+  change** when a row is added rather than pinning an absolute number, so an unrelated query added
+  to the layout does not fail them; the events test adds its new events through the same association
+  on purpose, because a count that grows by one query *per association that has any reference* is
+  correct behaviour rather than an N+1. `test/models/universe_test.rb` holds the other half —
+  that `access_level_for` reports a membership change to the next question about it — because that is
+  the contract the rejected model memo would have broken silently. The counting helper that makes
+  those assertions possible moved to `test/test_helpers/query_count_test_helper.rb`; the two tests
+  that had each grown their own copy still carry theirs, which is a cleanup nobody asked for.
+
 ### 2026-10-02
 
 - **[chore]** **Extracting what the characterization found — backlog item 19, remaining slices.** With
@@ -4824,6 +4890,75 @@ the same `.invalid` convention the boot step already used is kept.
 fails on `APP_HOST` with no arguments and completes with the three `.invalid` names; the GitHub Actions
 API shows the build step failing on the six most recent runs of `main`. Not run: `docker build`
 itself, for the reason above.
+
+### Former quirk #31: several ordinary list/tree paths had avoidable N+1 or superlinear work (fixed)
+
+**Then:** five query-cost paths in ordinary pages, recorded on 2026-09-24 against commit `8fcf4d4` and
+spread across five files. `shared/_row_actions` asked `can_write_universe?` once per row and each
+answer read the membership table; the membership page joined users without loading them and the view
+dereferenced each one per row; the Events list loaded only tags, so an event with no title and no
+dates — named through the event it references — read a temporal association per row; every taxonomy
+controller preloaded `children` one level deep while the recursive node partial descended further;
+and `TimelineLayout` made three pairwise passes with a reachability walk per candidate edge. The
+owner split the finding: the three query shapes first, then the two that change a shared contract and
+an algorithm. All five are delivered.
+
+**Row-level authorization: the memo belongs to the view, not the model.** The first attempt memoized
+`Universe#access_level_for` per user on the universe object and **failed the suite**, which is the
+part worth keeping: `test/models/ability_test.rb` builds a `Scene` from a universe held in a local,
+grants and then upgrades a membership, and asks a *fresh* `Ability` about the *same* object. A
+model-level answer cannot survive that without a global "the membership table changed" signal or
+invalidation that depends on Active Record having set the inverse association — far more machinery
+than the bug deserved. So the memo moved to `ApplicationHelper`, on the view context, which is built
+and discarded per request, and `universe_test.rb` now pins the model half: a membership change is
+visible to the next question about it. A characters page went from 19 membership reads with two rows
+and 25 with five to a flat 5.
+
+**The taxonomy tree: one load, and an index instead of an association.** Rails cannot preload an
+unknown depth, so `includes(:children)` reached the first level and the rest asked again — twice per
+parent row, because `children.any?` on an unloaded association counts separately from the
+`children.each` after it, and on the content trees each deeper node asked again for its tags. The fix
+is `HierarchyIndex`, the same value-object shape as the `SectionPaths`/`LocationPaths` family: the
+page loads its hierarchy once, ordered as `Hierarchical`'s own scope orders it, and the recursive
+partial asks the index for children. `hierarchy` is a **required** local rather than a defaulted one,
+because a caller that forgot it would render a flat list of roots with no error anywhere.
+
+Two adjacent costs were in the lines being rewritten and the owner approved taking them in the same
+change: each node's photo, which the editor's stored-image descriptor reads per row, now arrives with
+the load; and the editor descriptors, which were handed a fresh relation for a list the page had
+already loaded, now read `HierarchyIndex#records`. Locations went from 35 queries to 15, a tag
+workspace from 26 to 15, Sections from 33 to 19.
+
+**`TimelineLayout`: the walk is dead code on a well-formed timeline, and that is provable.** The
+reachability walk exists to refuse an edge that closes a cycle, and on a timeline whose events each
+stand alone — no simultaneity grouping — with well-formed intervals, a date-pass edge *cannot* close
+one. The argument: a group of one event means an edge is justified by that event on each side, so
+along any path the declared starts are non-decreasing (`end_x <= start_y` plus a well-formed range)
+and the declared ends are non-decreasing (`end_x <= start_y <= end_y`). A pass-2 edge wants
+`start_a < start_b` and a pass-3 edge wants `end_a < end_b`, so both contradict the path outright; a
+pass-1 edge wants `end_a <= start_b`, which leaves only every involved value being equal — two
+zero-length events at one instant, checked separately by `same_instant?`. `dates_speak_first?`
+establishes the condition once. A timeline that groups simultaneous events, or that carries an
+interval ending before it starts (nothing validates that yet, and quirk 28 is still open), walks every
+candidate edge exactly as before: a group of several events can justify one edge through its earliest
+event and another through its latest, and a reversed interval breaks the argument.
+
+The adjacency sets became `Set`s, which is the other half of the cost: `include?` ran once per
+candidate edge and again for the "already ordered" test, over a graph that a sequential timeline fills
+with one edge per pair. `UnionFind#find` is now resolved once per event instead of twice per pair —
+on a 400-event timeline that call alone was the largest single cost. The three passes stay pairwise,
+because the rules they implement are pairwise; the cubic term is what went.
+
+**Verification.** Every guard was confirmed to fail without its fix: the characters page's count grew
+with its rows before the memo, the members list and the events list grew with their rows before their
+`includes`, and the locations tree grew with its depth before the index. For the layout, equivalence
+was established by a differential harness rather than by reading: the previous implementation was run
+beside the new one over 1,200+ randomized inputs drawn from a deliberately coarse pool of times, with
+ties, zero-length intervals, reversed intervals, simultaneity chains, and contradictory declarations
+included, and every scenario produced identical layers and identical edges. The committed tests pin
+the three boundary shapes the fast path has to get right (zero-length instants, a reversed interval, a
+contradicting declaration across a simultaneous group) plus a 60-event chain. Not run: a browser
+suite — no client-side code changed and the rendered markup is identical.
 
 ### Former quirk #63: the DataFactor guidance listed delivered work as pending (fixed)
 

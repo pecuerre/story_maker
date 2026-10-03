@@ -15,6 +15,29 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, @event.title
   end
 
+  # An event with no title and no dates is named through the event it references,
+  # so its label reads a temporal association. The label is printed several times
+  # over per row — the name, the delete confirmation, and the modal's three
+  # reference pickers — and the references have to come with the list rather than
+  # with each row.
+  test "adding a reference-only event does not add a query for that event" do
+    anchor = events(:event_one)
+    @universe.events.create!(before_event: anchor)
+
+    with_one = count_queries(/FROM "events"/) do
+      get universe_events_url(universe_slug: @universe.slug)
+    end
+
+    3.times { @universe.events.create!(before_event: anchor) }
+
+    with_four = count_queries(/FROM "events"/) do
+      get universe_events_url(universe_slug: @universe.slug)
+    end
+
+    assert_response :success
+    assert_equal with_one, with_four
+  end
+
   test "should create event with only a title as json" do
     assert_difference("Event.count") do
       post universe_events_url(universe_slug: @universe.slug),

@@ -9,10 +9,11 @@ class ItemTagsController < ApplicationController
   before_action :set_item_tag, only: %i[ show update destroy ]
 
   def index
-    @item_tags = Current.universe.item_tags
-    @item_tags = @item_tags.includes(:children)
-    @item_tags = @item_tags.where(parent_id: nil)
-    @item_tags = @item_tags.order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(Current.universe.item_tags.includes(:photo))
+    @item_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.item_tags)
   end
 

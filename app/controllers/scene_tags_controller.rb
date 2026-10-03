@@ -11,10 +11,11 @@ class SceneTagsController < ApplicationController
   before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
-    @scene_tags = @story.scene_tags
-      .includes(:children)
-      .where(parent_id: nil)
-      .order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(@story.scene_tags.includes(:photo))
+    @scene_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(@story.scene_tags)
   end
 

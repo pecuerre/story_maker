@@ -13,6 +13,7 @@
   read_only_empty_description: t("locations.read_only_empty_description"),
   confirm_message: ->(location) { t("locations.delete_confirm", name: location.name) },
   nodes: @locations,
+  hierarchy: @hierarchy,
   new_url: ->(parent = nil) { new_universe_location_path(parent_id: parent&.id) },
   create_url: universe_locations_path,
   edit_url: ->(location) { edit_universe_location_path(id: location) },

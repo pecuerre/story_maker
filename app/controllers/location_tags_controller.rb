@@ -9,10 +9,11 @@ class LocationTagsController < ApplicationController
   before_action :set_location_tag, only: %i[ show update destroy ]
 
   def index
-    @location_tags = Current.universe.location_tags
-    @location_tags = @location_tags.includes(:children)
-    @location_tags = @location_tags.where(parent_id: nil)
-    @location_tags = @location_tags.order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(Current.universe.location_tags.includes(:photo))
+    @location_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.location_tags)
   end
 

@@ -109,6 +109,30 @@ class UniverseTest < ActiveSupport::TestCase
     assert_not Ability.new(users(:user_two)).can?(:write, story)
   end
 
+  # `access_level_for` reads the membership table every time on purpose: a
+  # membership write followed by a second question has to see the write, so a
+  # caller may not be handed a remembered answer. The place that answers the same
+  # question many times in one render is `ApplicationHelper`, and the request
+  # test in `test/controllers/characters_controller_test.rb` holds that half.
+  test "a membership change is visible to the next question about it" do
+    private_universe = Universe.create!(owner: users(:user_one), name: "Private", slug: "private", private: true)
+    reader = users(:user_two)
+
+    assert_nil private_universe.access_level_for(reader)
+
+    membership = UniverseMembership.create!(universe: private_universe, user: reader, access_level: :write)
+
+    assert_equal "write", private_universe.access_level_for(reader)
+
+    membership.update!(access_level: :read)
+
+    assert_equal "read", private_universe.access_level_for(reader)
+
+    membership.soft_delete
+
+    assert_nil private_universe.access_level_for(reader)
+  end
+
   test "defaults the collaboration mode to direct" do
     universe = Universe.create!(owner: users(:user_one), name: "Default collaboration")
 

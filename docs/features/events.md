@@ -82,6 +82,15 @@ sentence is a `shared/_content_intro` below the strip, like every other workspac
    resize, and the node popovers carry content from `TimelineHelper#event_popover_content` (dates,
    tags, relations, description).
 
+**The three date passes are pairwise, and the cycle test is not run per pair.** The reachability walk
+that refuses an edge only has anything to refuse when the dates contradict something: on a timeline
+whose events each stand alone (no simultaneity grouping) and whose intervals are well-formed, a date
+edge can never close a cycle, so `TimelineLayout#dates_speak_first?` establishes that once and the
+walks are skipped. A timeline that groups simultaneous events, or that carries an interval ending
+before it starts (nothing validates that yet), walks every candidate edge exactly as before. The one
+date-pass candidate that can still close a cycle is two zero-length events at the same instant, which
+is checked separately rather than by skipping the whole pass.
+
 **`@layers` is the only source of the rendered order, and `@edges` is read back off it** rather than
 off the raw associations. That is the whole point: a `before_event`/`after_event` the graph refused —
 because it contradicted a stronger signal, or because accepting it would have closed a cycle — is

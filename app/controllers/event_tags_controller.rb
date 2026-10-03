@@ -10,10 +10,11 @@ class EventTagsController < ApplicationController
 
   # GET /event_tags or /event_tags.json
   def index
-    @event_tags = Current.universe.event_tags
-    @event_tags = @event_tags.includes(:children)
-    @event_tags = @event_tags.where(parent_id: nil)
-    @event_tags = @event_tags.order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(Current.universe.event_tags.includes(:photo))
+    @event_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.event_tags)
   end
 

@@ -51,6 +51,16 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **A taxonomy tree costs one query for its rows, whatever its depth.** Every tree page loads its
+  whole hierarchy once and a new `HierarchyIndex` answers roots and children in memory, carrying each
+  node's tags and photo with it.
+- **`TimelineLayout` no longer walks the graph once per candidate edge.** Three pairwise date passes
+  stay, and the cycle test now runs only where a contradiction can actually arrive.
+- **A row menu no longer reads the membership table once per row.** The universe ability helpers
+  remember their answer per universe for one render, so a list page's cost stops following its row
+  count; `Universe#access_level_for` still reads the table on every call.
+- **The Members list loads its users with its memberships, and the Events list loads each event's
+  three temporal references**, so a relation-only event's label is no longer a query per row.
 - **`test/models/discussion_test.rb` no longer counts the `discussions` table.** `fixtures :all`
   never cleans a table it has no fixture file for, so one stray thread left in the test database
   failed a cascade that was working; the test now names the thread and messages that must be gone.
@@ -70,6 +80,8 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Query counting moved into one shared test helper**, with an optional SQL pattern so a page test
+  counts its own subject instead of everything the layout issues.
 - `test/docs_test.rb` now fails when a `CHANGELOG.md` entry runs past 60 words, so a paragraph
   fails the suite instead of being skimmed.
 

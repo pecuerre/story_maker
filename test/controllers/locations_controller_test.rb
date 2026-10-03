@@ -8,6 +8,31 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
+  # The tree descends one level per row, so a hierarchy deeper than two levels used
+  # to ask the database twice per parent row — once to count the children and once
+  # to read them — plus once more for each deeper node's tags. What must not happen
+  # is the query count following the tree's depth.
+  test "a deeper hierarchy does not add queries" do
+    shallow = count_queries(/FROM "locations"/) do
+      get universe_locations_url(universe_slug: @universe.slug)
+    end
+
+    parent = nil
+    4.times do |depth|
+      parent = @universe.locations.create!(name: "Nested #{depth}", position: 10 + depth, parent: parent)
+    end
+
+    deep = count_queries(/FROM "locations"/) do
+      get universe_locations_url(universe_slug: @universe.slug)
+    end
+
+    assert_response :success
+    assert_equal shallow, deep
+    # The deepest row is on the page, so the count cannot be flat because nothing
+    # was rendered.
+    assert_select ".taxonomy-node", minimum: 4
+  end
+
   test "should get index with location tag options" do
     get universe_locations_url(universe_slug: @universe.slug)
 

@@ -12,10 +12,11 @@
   empty_description: t("tags.types.section.empty_description"),
   read_only_empty_description: t("tags.types.section.read_only_empty_description"),
   nodes: @section_tags,
+  hierarchy: @hierarchy,
   create_url: universe_story_section_tags_path(story_id: @story),
   update_url: ->(section_tag) { universe_story_section_tag_path(story_id: @story, id: section_tag) },
   model_param: "section_tag",
   details_url: ->(section_tag) { universe_story_section_tag_path(story_id: @story, id: section_tag) },
   details_count: ->(tag) { @tagged_counts.fetch(tag.id, 0) },
   details_count_label: "section",
-  modal_fields: section_tag_taxonomy_fields(@story.section_tags.order(:position, :id)) %>
+  modal_fields: section_tag_taxonomy_fields(@hierarchy.records) %>

@@ -11,10 +11,11 @@ class SectionTagsController < ApplicationController
 
   # GET /section_tags or /section_tags.json
   def index
-    @section_tags = @story.section_tags
-    @section_tags = @section_tags.includes(:children)
-    @section_tags = @section_tags.where(parent_id: nil)
-    @section_tags = @section_tags.order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(@story.section_tags.includes(:photo))
+    @section_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(@story.section_tags)
   end
 

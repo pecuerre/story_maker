@@ -107,6 +107,61 @@ class DraftTest < ActiveSupport::TestCase
     assert_equal 2, Draft.where(user: @author, universe: @universe).count
   end
 
+  test "the open draft is the author's most recent unfinished one, and only theirs" do
+    foreign_author = Draft.create!(user: users(:user_two), universe: @universe)
+    foreign_author.update!(status: "applied")
+
+    assert_nil Draft.open_for(@author, @universe), "an author with no unfinished draft has none to resume"
+    assert_nil Draft.open_for(@author, universes(:universe_two)), "a draft in another universe is another scope"
+
+    first = Draft.create!(user: @author, universe: @universe)
+    assert_equal first, Draft.open_for(@author, @universe)
+
+    # An applied draft is history, so the next unfinished one is what an author
+    # resuming their work means.
+    first.update!(status: "discarded")
+    second = Draft.create!(user: @author, universe: @universe)
+    assert_equal second, Draft.open_for(@author, @universe)
+
+    # A submitted draft is waiting for a reviewer, so it is still the one an author
+    # is working in, and it must not be opened a second time.
+    second.update!(status: "submitted")
+    assert_equal second, Draft.open_for(@author, @universe)
+    assert_equal second, Draft.open_for!(@author, @universe)
+
+    # A newer open draft is the session that was interrupted last, so it wins over
+    # an older one left behind.
+    newer = Draft.create!(user: @author, universe: @universe)
+    assert_equal newer, Draft.open_for(@author, @universe)
+  end
+
+  test "opening a draft creates one only when there is none to resume" do
+    assert_difference -> { Draft.count }, 1 do
+      opened = Draft.open_for!(@author, @universe)
+
+      assert_predicate opened, :open?
+      assert_equal "draft", opened.status
+    end
+
+    resumed = Draft.open_for!(@author, @universe)
+
+    assert_no_difference -> { Draft.count } do
+      assert_equal resumed, Draft.open_for!(@author, @universe)
+    end
+  end
+
+  test "the open scope and the predicate name the same statuses" do
+    draft = Draft.create!(user: @author, universe: @universe)
+
+    Draft::STATUSES.each do |status|
+      draft.update!(status: status)
+
+      assert_equal draft.open?, Draft.open.where(id: draft.id).exists?,
+        "`open` and `open?` must answer the same question, or a draft the finder resumes is one the " \
+        "apply workflow would not touch"
+    end
+  end
+
   test "a destroyed universe leaves no draft behind" do
     draft = Draft.create!(user: @author, universe: @universe)
     draft.draft_changes.create!(record_type: "Character", action: "create", payload: { "name" => "Ariadne" })

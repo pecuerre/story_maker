@@ -2,6 +2,7 @@ class ItemTagsController < ApplicationController
   include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :item_tag
@@ -26,6 +27,7 @@ class ItemTagsController < ApplicationController
   def create
     attributes = item_tag_params
     @item_tag = Current.universe.item_tags.new(attributes)
+    return if remember_draft_create(@item_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@item_tag, requested_position: attributes[:position])
@@ -37,8 +39,11 @@ class ItemTagsController < ApplicationController
   end
 
   def update
+    attributes = item_tag_params
+    return if remember_draft_update(@item_tag, attributes)
+
     respond_to do |format|
-      if update_item_tag
+      if update_item_tag(attributes)
         format.json { render json: item_tag_json, status: :ok }
       else
         format.json { render json: @item_tag.errors, status: :unprocessable_content }
@@ -47,6 +52,8 @@ class ItemTagsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@item_tag)
+
     destroy_with_sibling_position(@item_tag)
     head :no_content
   end
@@ -61,8 +68,7 @@ class ItemTagsController < ApplicationController
     params.expect(item_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
-  def update_item_tag
-    attributes = item_tag_params
+  def update_item_tag(attributes)
     update_with_sibling_position(@item_tag, attributes)
   end
 

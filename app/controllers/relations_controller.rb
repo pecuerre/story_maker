@@ -1,5 +1,6 @@
 class RelationsController < ApplicationController
   include PhotoParams
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   before_action :set_relation, only: %i[ show update destroy ]
@@ -16,7 +17,9 @@ class RelationsController < ApplicationController
   end
 
   def create
-    @relation = Current.universe.relations.new(relation_params)
+    attributes = relation_params
+    @relation = Current.universe.relations.new(attributes)
+    return if remember_draft_create(@relation, attributes)
 
     if @relation.save
       redirect_to universe_relations_path(), notice: t("relations.flash.created")
@@ -32,7 +35,10 @@ class RelationsController < ApplicationController
   # browser to repeat the mutation as a GET against the redirect target, which
   # Turbo then has to reinterpret. `create` is a POST, so its 302 is correct.
   def update
-    if @relation.update(relation_params)
+    attributes = relation_params
+    return if remember_draft_update(@relation, attributes)
+
+    if @relation.update(attributes)
       redirect_to universe_relations_path(), notice: t("relations.flash.updated"), status: :see_other
     else
       load_form_options
@@ -42,6 +48,8 @@ class RelationsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@relation)
+
     @relation.soft_delete
     redirect_to universe_relations_path(), notice: t("relations.flash.deleted"), status: :see_other
   end

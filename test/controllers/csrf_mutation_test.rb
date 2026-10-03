@@ -180,6 +180,27 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a refused token remembers nothing in a draft-based universe" do
+    # The interception is a call inside the action rather than a callback, so the
+    # only thing standing between a forged request and a remembered change is the
+    # order of the checks. The token is verified before any action code runs, and
+    # this is what proves it: a universe that stores an author's pending changes
+    # must not let an unauthenticated one fill them.
+    @universe.update!(collaboration_mode: "wikipedia")
+
+    with_forgery_protection do
+      fetch_page_token
+
+      assert_no_difference [ -> { Draft.count }, -> { DraftChange.count }, -> { Character.count } ] do
+        post universe_characters_url(universe_slug: @universe.slug),
+          params: { character: { name: "Never remembered" } },
+          as: :json
+      end
+
+      assert_response :forbidden
+    end
+  end
+
   test "an html request keeps Rails' own handling of a rejected token" do    with_forgery_protection do
       fetch_page_token
 

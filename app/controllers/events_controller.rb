@@ -2,6 +2,7 @@ class EventsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :event
@@ -37,6 +38,7 @@ class EventsController < ApplicationController
   def create
     attributes = event_params
     @event = Current.universe.events.new(attributes)
+    return if remember_draft_create(@event, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@event, requested_position: attributes[:position])
@@ -48,8 +50,11 @@ class EventsController < ApplicationController
   end
 
   def update
+    attributes = event_params
+    return if remember_draft_update(@event, attributes)
+
     respond_to do |format|
-      if update_event
+      if update_event(attributes)
         format.json { render json: event_json, status: :ok }
       else
         format.json { render json: @event.errors, status: :unprocessable_content }
@@ -58,6 +63,8 @@ class EventsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@event)
+
     destroy_with_sibling_position(@event)
     head :no_content
   end
@@ -73,8 +80,7 @@ class EventsController < ApplicationController
       :simultaneous_event_id, :description, { event_tag_ids: [] }, :parent_id, :position ])
   end
 
-  def update_event
-    attributes = event_params
+  def update_event(attributes)
     update_with_sibling_position(@event, attributes)
   end
 

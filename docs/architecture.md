@@ -211,6 +211,13 @@ HTML is the shareable results page and JSON is the autocomplete dropdown. It nev
 there is no ambiguous HTML-and-JSON *mutation* to forbid, and
 `RequiresJsonMutationFormat` does not apply to it.
 
+A mutation in a universe whose collaboration mode is not `direct` is remembered instead of written, and
+it answers in **its own controller's flow rather than a third one**: `202 Accepted` with a body naming the
+remembered change for the JSON-only rows, and the HTML redirect with `drafts.flash.remembered` for the
+redirect rows. There is no record to redirect *to* for a remembered create, so the HTML flow returns the
+author to the page they submitted from and falls back to the universe. `DraftMutation` is where this is
+implemented; [conventions.md](conventions.md#controllers) owns the call each mutation action makes.
+
 `scene_elements` has no read action at all, because Elements are read on Scene Details; every one of
 its actions is a mutation and therefore authenticated. `scene_characters`, `scene_items`, and
 `scene_locations` mix the two: each `index` is a real HTML read page and each one's mutations are

@@ -1,5 +1,6 @@
 class OwnershipsController < ApplicationController
   include PhotoParams
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   before_action :set_ownership, only: %i[ show update destroy ]
@@ -16,7 +17,9 @@ class OwnershipsController < ApplicationController
   end
 
   def create
-    @ownership = Current.universe.ownerships.new(ownership_params)
+    attributes = ownership_params
+    @ownership = Current.universe.ownerships.new(attributes)
+    return if remember_draft_create(@ownership, attributes)
 
     if @ownership.save
       redirect_to universe_ownerships_path(), notice: t("ownerships.flash.created")
@@ -32,7 +35,10 @@ class OwnershipsController < ApplicationController
   # browser to repeat the mutation as a GET against the redirect target, which
   # Turbo then has to reinterpret. `create` is a POST, so its 302 is correct.
   def update
-    if @ownership.update(ownership_params)
+    attributes = ownership_params
+    return if remember_draft_update(@ownership, attributes)
+
+    if @ownership.update(attributes)
       redirect_to universe_ownerships_path(), notice: t("ownerships.flash.updated"), status: :see_other
     else
       load_form_options
@@ -42,6 +48,8 @@ class OwnershipsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@ownership)
+
     @ownership.soft_delete
     redirect_to universe_ownerships_path(), notice: t("ownerships.flash.deleted"), status: :see_other
   end

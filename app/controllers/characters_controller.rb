@@ -2,6 +2,7 @@ class CharactersController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :character
@@ -37,6 +38,7 @@ class CharactersController < ApplicationController
   def create
     attributes = character_params
     @character = Current.universe.characters.new(attributes)
+    return if remember_draft_create(@character, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@character, requested_position: attributes[:position])
@@ -48,8 +50,11 @@ class CharactersController < ApplicationController
   end
 
   def update
+    attributes = character_params
+    return if remember_draft_update(@character, attributes)
+
     respond_to do |format|
-      if update_character
+      if update_with_sibling_position(@character, attributes)
         format.json { render json: character_json, status: :ok }
       else
         format.json { render json: @character.errors, status: :unprocessable_content }
@@ -58,6 +63,8 @@ class CharactersController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@character)
+
     destroy_with_sibling_position(@character)
     head :no_content
   end
@@ -70,11 +77,6 @@ class CharactersController < ApplicationController
 
   def character_params
     params.expect(character: [ *photo_params, :name, :description, { character_tag_ids: [] }, :parent_id, :position ])
-  end
-
-  def update_character
-    attributes = character_params
-    update_with_sibling_position(@character, attributes)
   end
 
   def character_json

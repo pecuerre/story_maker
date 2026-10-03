@@ -215,6 +215,16 @@ through the current normal UI. They are recorded so they are not mistaken for se
   The policy-aware `User#accessible_universes` and the membership view compensate manually
   (`app/models/user.rb:12-14`, `app/views/memberships/index.html.erb:64-70`); new code using the
   ordinary associations can omit owners and report incomplete access/collaboration data.
+- **A draft-based universe collects changes that no page can show.** `DraftMutation` is wired into every
+  mutation controller, and `Universe#collaboration_mode` is editable from the universe form
+  (`UniversesController#update` is admin-level), so switching a universe to `wikipedia` or `github` is
+  reachable today. Every mutation in it is then remembered rather than written, and the author is told so
+  by a flash or a `202` body — but nothing yet **lists** a draft's changes, applies them, or discards
+  them, so those changes cannot be seen, applied, or thrown away through the interface. The pending work
+  is the `DraftsController` stage in [`backlog.md`](backlog.md). It is recorded here rather than only
+  there because the trap is reachable now rather than pending: an administrator can put a working universe
+  into a mode where its editors appear to save and nothing is saved, and the only way back is to set the
+  mode to `direct` again.
 - **No mutation rate limits exist beyond sign-in/password-reset.** Public universes intentionally
   allow every signed-in contributor to write, so throttling content/story/tag/membership mutations
   is a product decision rather than a confirmed defect.

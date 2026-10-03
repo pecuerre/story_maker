@@ -1,6 +1,7 @@
 class SectionTagsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :section_tag
@@ -34,6 +35,7 @@ class SectionTagsController < ApplicationController
   def create
     attributes = section_tag_params
     @section_tag = @story.section_tags.new(attributes)
+    return if remember_draft_create(@section_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@section_tag, requested_position: attributes[:position])
@@ -46,8 +48,11 @@ class SectionTagsController < ApplicationController
 
   # PATCH/PUT /section_tags/1 or /section_tags/1.json
   def update
+    attributes = section_tag_params
+    return if remember_draft_update(@section_tag, attributes)
+
     respond_to do |format|
-      if update_section_tag
+      if update_section_tag(attributes)
         format.json { render json: section_tag_json, status: :ok }
       else
         format.json { render json: @section_tag.errors, status: :unprocessable_content }
@@ -57,6 +62,8 @@ class SectionTagsController < ApplicationController
 
   # DELETE /section_tags/1 or /section_tags/1.json
   def destroy
+    return if remember_draft_delete(@section_tag)
+
     destroy_with_sibling_position(@section_tag)
 
     respond_to do |format|
@@ -103,8 +110,7 @@ class SectionTagsController < ApplicationController
     params.expect(section_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
   end
 
-  def update_section_tag
-    attributes = section_tag_params
+  def update_section_tag(attributes)
     update_with_sibling_position(@section_tag, attributes)
   end
 end

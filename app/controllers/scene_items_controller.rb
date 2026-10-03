@@ -6,6 +6,7 @@
 # the mutations change are the same list.
 class SceneItemsController < ApplicationController
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index ]
 
@@ -42,6 +43,7 @@ class SceneItemsController < ApplicationController
 
     link = @scene.scene_items.new(item: Current.universe.items.find(attributes[:item_id]),
       role: attributes[:role])
+    return if remember_draft_create(link, attributes)
 
     respond_to do |format|
       if link.save
@@ -60,6 +62,11 @@ class SceneItemsController < ApplicationController
   # is the model's duplicate error rather than a second row.
   def update
     @scene_item.assign_attributes(editable_scene_item_attributes)
+    # No attributes are passed: the link has already been assigned, and what the
+    # live path would have written is the record's own pending change rather than
+    # the submitted payload — a blank `item_id` means "keep the stored one" here,
+    # and the resolved foreign key is the value that must be remembered.
+    return if remember_draft_update(@scene_item)
 
     respond_to do |format|
       if @scene_item.save
@@ -76,6 +83,8 @@ class SceneItemsController < ApplicationController
   # Universe and is shared by every Story, so this only withdraws one Scene's
   # claim on it.
   def destroy
+    return if remember_draft_delete(@scene_item)
+
     @scene_item.soft_delete
 
     respond_to do |format|

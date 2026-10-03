@@ -6,6 +6,7 @@
 # participation source to reconcile here the way the Characters tab has.
 class SceneLocationsController < ApplicationController
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index ]
 
@@ -46,6 +47,7 @@ class SceneLocationsController < ApplicationController
 
     link = @scene.scene_locations.new(location: Current.universe.locations.find(attributes[:location_id]),
       role: attributes[:role])
+    return if remember_draft_create(link, attributes)
 
     respond_to do |format|
       if link.save
@@ -64,6 +66,11 @@ class SceneLocationsController < ApplicationController
   # scene is the model's duplicate error rather than a second row.
   def update
     @scene_location.assign_attributes(editable_scene_location_attributes)
+    # No attributes are passed: the link has already been assigned, and what the
+    # live path would have written is the record's own pending change rather than
+    # the submitted payload — a blank `location_id` means "keep the stored one"
+    # here, and the resolved foreign key is the value that must be remembered.
+    return if remember_draft_update(@scene_location)
 
     respond_to do |format|
       if @scene_location.save
@@ -80,6 +87,8 @@ class SceneLocationsController < ApplicationController
   # place: a Location belongs to the Universe and is shared by every Story, so
   # this only withdraws one Scene's claim on it.
   def destroy
+    return if remember_draft_delete(@scene_location)
+
     @scene_location.soft_delete
 
     respond_to do |format|

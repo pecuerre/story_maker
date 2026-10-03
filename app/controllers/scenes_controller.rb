@@ -1,6 +1,7 @@
 class ScenesController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_flat_positions_for :scene
@@ -60,7 +61,9 @@ class ScenesController < ApplicationController
 
   # POST /u/:universe_slug/s/:story_id/scenes
   def create
-    @scene = @story.scenes.new(scene_params)
+    attributes = scene_params
+    @scene = @story.scenes.new(attributes)
+    return if remember_draft_create(@scene, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@scene)
@@ -81,8 +84,11 @@ class ScenesController < ApplicationController
 
   # PATCH/PUT /u/:universe_slug/s/:story_id/scenes/:id
   def update
+    attributes = scene_params
+    return if remember_draft_update(@scene, attributes)
+
     respond_to do |format|
-      if update_with_sibling_position(@scene, scene_params)
+      if update_with_sibling_position(@scene, attributes)
         format.html do
           redirect_to universe_story_scene_path(story_id: @story, id: @scene),
             notice: t("scenes.flash.updated"),
@@ -99,6 +105,8 @@ class ScenesController < ApplicationController
     direction = move_direction
     original_position = @scene.position
     target_position = original_position + (direction == "up" ? -1 : 1)
+    return if remember_draft_update(@scene, position: target_position)
+
     flash_message = move_flash(direction, original_position, target_position)
 
     respond_to do |format|
@@ -112,8 +120,14 @@ class ScenesController < ApplicationController
   #
   # The Section grouping workspace alternative to the Details form. It changes
   # only `section_id`; the narrative position is never touched here.
+  #
+  # The chosen Section is resolved *before* the change is remembered, so a foreign
+  # or unknown group is still a 404 rather than something a draft would carry.
   def group
-    assign_scene_group
+    section = grouping_section
+    return if remember_draft_update(@scene, section_id: section&.id)
+
+    assign_scene_group(section)
 
     respond_to do |format|
       format.html do
@@ -124,6 +138,8 @@ class ScenesController < ApplicationController
 
   # DELETE /u/:universe_slug/s/:story_id/scenes/:id
   def destroy
+    return if remember_draft_delete(@scene)
+
     destroy_with_sibling_position(@scene)
 
     respond_to do |format|
@@ -266,9 +282,7 @@ class ScenesController < ApplicationController
     end
   end
 
-  def assign_scene_group
-    section = grouping_section
-
+  def assign_scene_group(section)
     update_with_sibling_position(@scene, section_id: section&.id)
   end
 

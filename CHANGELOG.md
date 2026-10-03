@@ -42,6 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A mutation in a non-direct universe is remembered instead of written.** `DraftMutation` is called from
+  every mutation controller and stores the change in the author's open draft; all twenty answer it in their
+  own response flow, and a Scene's move, grouping, and a Scene Element's move are intercepted too.
+  See [ADR 0020](docs/adr/0020-remembering-mutations-instead-of-writing-them.md).
 - **`drafts` and `draft_changes` store one author's remembered changes for a universe.** The
   remembered attributes live in `payload` and the version in `base_version`, which only
   `DraftChange.capture_base_version` may fill so the stamp is always a comparable string.

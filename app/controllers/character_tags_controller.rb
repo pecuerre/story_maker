@@ -2,6 +2,7 @@ class CharacterTagsController < ApplicationController
   include PhotoParams
   include TagDetails
   include MaintainsSiblingPositions
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :character_tag
@@ -26,6 +27,7 @@ class CharacterTagsController < ApplicationController
   def create
     attributes = character_tag_params
     @character_tag = Current.universe.character_tags.new(attributes)
+    return if remember_draft_create(@character_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@character_tag, requested_position: attributes[:position])
@@ -37,8 +39,11 @@ class CharacterTagsController < ApplicationController
   end
 
   def update
+    attributes = character_tag_params
+    return if remember_draft_update(@character_tag, attributes)
+
     respond_to do |format|
-      if update_character_tag
+      if update_character_tag(attributes)
         format.json { render json: character_tag_json, status: :ok }
       else
         format.json { render json: @character_tag.errors, status: :unprocessable_content }
@@ -47,6 +52,8 @@ class CharacterTagsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@character_tag)
+
     destroy_with_sibling_position(@character_tag)
     head :no_content
   end
@@ -61,8 +68,7 @@ class CharacterTagsController < ApplicationController
     params.expect(character_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable, :show_in_menu ])
   end
 
-  def update_character_tag
-    attributes = character_tag_params
+  def update_character_tag(attributes)
     update_with_sibling_position(@character_tag, attributes)
   end
 

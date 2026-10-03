@@ -2,6 +2,7 @@ class SceneTagsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :scene_tag
@@ -33,6 +34,7 @@ class SceneTagsController < ApplicationController
   def create
     attributes = scene_tag_params
     @scene_tag = @story.scene_tags.new(attributes)
+    return if remember_draft_create(@scene_tag, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@scene_tag, requested_position: attributes[:position])
@@ -44,8 +46,11 @@ class SceneTagsController < ApplicationController
   end
 
   def update
+    attributes = scene_tag_params
+    return if remember_draft_update(@scene_tag, attributes)
+
     respond_to do |format|
-      if update_scene_tag
+      if update_scene_tag(attributes)
         format.json { render json: scene_tag_json, status: :ok }
       else
         format.json { render json: @scene_tag.errors, status: :unprocessable_content }
@@ -54,6 +59,8 @@ class SceneTagsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@scene_tag)
+
     destroy_with_sibling_position(@scene_tag)
 
     respond_to do |format|
@@ -84,8 +91,7 @@ class SceneTagsController < ApplicationController
       params.expect(scene_tag: [ *photo_params, :name, :description, :bgcolor, :fgcolor, :parent_id, :position, :taggable ])
     end
 
-    def update_scene_tag
-      attributes = scene_tag_params
+    def update_scene_tag(attributes)
       update_with_sibling_position(@scene_tag, attributes)
     end
 

@@ -44,6 +44,7 @@ reasoning as of its date.
 | [0017](0017-browser-owned-start-page-and-remembered-destination.md) | Accepted | Remember where the reader was headed across sign-in in the browser rather than the session |
 | [0018](0018-session-lifetime-and-user-agent-binding.md) | Accepted | End sessions on a lifetime, and bind them to the user agent rather than the IP |
 | [0019](0019-collaboration-foundations.md) | Accepted | Settle the collaboration system's authorization, version-stamp, and page-shape foundations before building it |
+| [0020](0020-remembering-mutations-instead-of-writing-them.md) | Accepted | Remember a mutation inside the action that would have written it, and keep each controller's own response flow |
 
 ## Format
 

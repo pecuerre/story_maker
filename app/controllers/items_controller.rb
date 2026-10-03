@@ -2,6 +2,7 @@ class ItemsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :item
@@ -34,6 +35,7 @@ class ItemsController < ApplicationController
   def create
     attributes = item_params
     @item = Current.universe.items.new(attributes)
+    return if remember_draft_create(@item, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@item, requested_position: attributes[:position])
@@ -45,8 +47,11 @@ class ItemsController < ApplicationController
   end
 
   def update
+    attributes = item_params
+    return if remember_draft_update(@item, attributes)
+
     respond_to do |format|
-      if update_item
+      if update_item(attributes)
         format.json { render json: item_json, status: :ok }
       else
         format.json { render json: @item.errors, status: :unprocessable_content }
@@ -55,6 +60,8 @@ class ItemsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@item)
+
     destroy_with_sibling_position(@item)
     head :no_content
   end
@@ -69,8 +76,7 @@ class ItemsController < ApplicationController
     params.expect(item: [ *photo_params, :name, :description, { item_tag_ids: [] }, :parent_id, :position ])
   end
 
-  def update_item
-    attributes = item_params
+  def update_item(attributes)
     update_with_sibling_position(@item, attributes)
   end
 

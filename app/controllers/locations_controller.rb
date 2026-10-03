@@ -2,6 +2,7 @@ class LocationsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
+  include DraftMutation
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :location
@@ -31,6 +32,7 @@ class LocationsController < ApplicationController
   def create
     attributes = location_params
     @location = Current.universe.locations.new(attributes)
+    return if remember_draft_create(@location, attributes)
 
     respond_to do |format|
       if create_with_sibling_position(@location, requested_position: attributes[:position])
@@ -42,8 +44,11 @@ class LocationsController < ApplicationController
   end
 
   def update
+    attributes = location_params
+    return if remember_draft_update(@location, attributes)
+
     respond_to do |format|
-      if update_location
+      if update_location(attributes)
         format.json { render json: location_json, status: :ok }
       else
         format.json { render json: @location.errors, status: :unprocessable_content }
@@ -52,6 +57,8 @@ class LocationsController < ApplicationController
   end
 
   def destroy
+    return if remember_draft_delete(@location)
+
     destroy_with_sibling_position(@location)
     head :no_content
   end
@@ -66,8 +73,7 @@ class LocationsController < ApplicationController
     params.expect(location: [ *photo_params, :name, :description, { location_tag_ids: [] }, :parent_id, :position ])
   end
 
-  def update_location
-    attributes = location_params
+  def update_location(attributes)
     update_with_sibling_position(@location, attributes)
   end
 

@@ -6,6 +6,7 @@
   description: t("scenes.show.description",
     position: @scene.position + 1, total: @scene_total, story: @story.name) do %>
   <%= link_to t("scenes.show.all_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-secondary" %>
+  <%= discussion_control(@scene) %>
   <% if can_write_universe? %>
     <%= link_to t("scenes.edit_title"), edit_universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-primary" %>
   <% end %>

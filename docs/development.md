@@ -412,6 +412,15 @@ and tags where those associations exist so the browser scenario exercises the re
 Add the model to the shared registry and provide its file in every registered universe directory,
 using `[]` where the model is intentionally not exercised.
 
+Two rules apply when a model is not keyed by a slug of its own. Its registry definition declares
+`identifier_field:`, naming the field a manifest reference is keyed on instead — that is how `Event`
+is referenced by title, and how a `Discussion` is, since the record it is about is its subject.
+Do not infer that field from the model's columns: the loader resolves references in a preflight
+that runs before the schema exists, so an identifier read from the database would silently fail
+during `db:demo:reset` while passing every `db:demo:check`. A model with no slug and no
+`identifier_field` has no stable identifier, and no manifest can reference it — a `SceneElement` is
+the current example, so development data cannot name one.
+
 ### Explicit development data tasks
 
 `db:demo:check` is read-only and may run in development or test. `db:demo:load` and

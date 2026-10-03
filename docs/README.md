@@ -63,7 +63,8 @@ How to use these docs:
 - Changing behavior? Update the document that owns the subject, in the same change.
 - After every code, site, data, test, documentation, configuration, security, or tooling change,
   add or update a dated entry in [`../CHANGELOG.md`](../CHANGELOG.md) using the actual work date.
-  That entry is the short form — one or two sentences naming the subject. When a change has
+  That entry is the short form — one or two sentences naming the subject, never a paragraph, and
+  over 60 words fails `test/docs_test.rb`. When a change has
   reasoning worth keeping that no live document owns, the long form goes to
   [delivery_history.md](delivery_history.md) in the same change.
 

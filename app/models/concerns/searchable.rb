@@ -152,6 +152,30 @@ module Searchable
     }
   end
 
+  # Where this record is read.
+  #
+  # Public because it is the one answer to that question rather than a search
+  # detail: a document stores it because the engine returns no route, but the same
+  # declaration builds it live at render time for a details page or a back link, so
+  # those cannot name a route helper and drift from the routes. A record with no
+  # page of its own defines its own answer here, pointing at the page it is read on.
+  def search_url
+    declaration = self.class.search_declaration
+    routes = Rails.application.routes.url_helpers
+
+    if declaration.self?
+      # `universe_path` is the one top-level route a record can be reached by,
+      # and it takes the record so `to_param` supplies the slug.
+      routes.universe_path(self)
+    elsif declaration.story?
+      routes.public_send(:"universe_story_#{declaration.route!}_path",
+        universe_slug: story.universe.to_param, story_id: story_id, id: id)
+    else
+      routes.public_send(:"universe_#{declaration.route!}_path",
+        universe_slug: universe.to_param, id: id)
+    end
+  end
+
   private
     # Both callbacks are internal to this concern: the only way a model becomes
     # searchable is by declaring it. The document is built here, at commit time,
@@ -192,24 +216,5 @@ module Searchable
       return nil unless self.class.search_declaration.story?
 
       respond_to?(:story_id) ? story_id : story&.id
-    end
-
-    # Both nested scopes end in the record's own id, so the two shapes only
-    # differ in the keys they need.
-    def search_url
-      declaration = self.class.search_declaration
-      routes = Rails.application.routes.url_helpers
-
-      if declaration.self?
-        # `universe_path` is the one top-level route a record can be reached by,
-        # and it takes the record so `to_param` supplies the slug.
-        routes.universe_path(self)
-      elsif declaration.story?
-        routes.public_send(:"universe_story_#{declaration.route!}_path",
-          universe_slug: story.universe.to_param, story_id: story_id, id: id)
-      else
-        routes.public_send(:"universe_#{declaration.route!}_path",
-          universe_slug: universe.to_param, id: id)
-      end
     end
 end

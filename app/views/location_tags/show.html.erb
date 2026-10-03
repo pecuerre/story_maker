@@ -6,7 +6,8 @@
   label: t("tags.types.location.record_label"),
   **tag_identity_details(@location_tag),
   back_url: universe_location_tags_path,
-  back_label: t("tags.types.location.all_label") do %>
+  back_label: t("tags.types.location.all_label"),
+  actions: discussion_control(@location_tag) do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "location", tag: @location_tag %>
 <% end %>
 

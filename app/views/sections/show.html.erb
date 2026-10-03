@@ -11,7 +11,8 @@
     detail_fact(t("sections.show.facts.description"), @section.description, blank: t("sections.show.facts.description_blank"))
   ],
   back_url: universe_story_sections_path(story_id: @story),
-  back_label: t("sections.show.back_label") %>
+  back_label: t("sections.show.back_label"),
+  actions: discussion_control(@section) %>
 
 <%# "Details" on a Section in the tree leads here, so the scenes grouped under this
     Section are visible on their own. The number shown is the scene's narrative

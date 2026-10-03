@@ -6,7 +6,8 @@
   label: t("tags.types.scene.record_label"),
   **tag_identity_details(@scene_tag),
   back_url: universe_story_scene_tags_path(story_id: @story),
-  back_label: t("tags.types.scene.all_label") %>
+  back_label: t("tags.types.scene.all_label"),
+  actions: discussion_control(@scene_tag) %>
 
 <%= render "shared/include_descendants_toggle" %>
 

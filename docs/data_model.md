@@ -189,6 +189,16 @@ that removes a record also runs its callbacks — which is why `Character`, `Ite
 the row is unreachable rather than disclosed. Which modes decide that a change is stored rather
 than written is in [ADR 0019](adr/0019-collaboration-foundations.md).
 
+`discussions.yml` and `discussion_messages.yml` load after every model in the registry, because a
+thread's `record` reference may name any of them. A manifest names that record with one
+`Model.slug` reference — `record: Character.martha` — which the loader resolves against
+`Ability::CONTENT_CLASS_NAMES`, the same gate `RecordTarget` applies at runtime, so a manifest
+cannot hang a thread off a `User` or a `Session`. A thread is identified in a manifest by its
+**title**, declared as the definition's `identifier_field` rather than inferred from the model's
+columns: the loader's preflight runs before the schema exists, so an identifier that asked the
+database would not resolve during a reset. A `SceneElement` has no stable identifier and so cannot
+be named by a manifest, although the application can carry a thread about one.
+
 ### Non-app tables
 `solid_cache` / `solid_cable` / `solid_queue` live in their own schema files
 (`db/cache_schema.rb`, `db/cable_schema.rb`, `db/queue_schema.rb`).

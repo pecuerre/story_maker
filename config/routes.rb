@@ -56,6 +56,14 @@ Rails.application.routes.draw do
     resources :ownership_tags, only: %i[ index show create update destroy ]
     resources :ownerships, only: %i[ index show create update destroy ]
     resources :memberships, only: %i[ index new create update destroy ], path: "members"
+    # One conversation per record. `show` is a guest-readable read of an
+    # append-only thread; it never creates anything. The "Discuss" control on a
+    # record's details page POSTs to `create`, which finds or creates the thread
+    # and redirects to it, so no GET ever writes. Replies post to their own
+    # nested action rather than to the thread's `show`.
+    resources :discussions, only: %i[ show create ] do
+      resources :messages, only: :create, controller: "messages"
+    end
     resources :event_tags, only: %i[ index show create update destroy ]
     resources :events
     get "timeline", to: "timeline#index", as: :timeline

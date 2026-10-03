@@ -385,6 +385,34 @@ en:
       deleted: "Universe was successfully deleted."
 
   # The stories workspace, which shares the universe's own page as its picker.
+  # Every record's conversation. The thread is the fourth page shape: a
+  # guest-readable read of an append-only list, with a composer rendered only for
+  # a reader who may write.
+  discussions:
+    control:
+      # Two controls, because the two states are different requests. A record that
+      # already has a thread links to it — a GET is not a write — and only a record
+      # without one offers the button that asks for it.
+      open: "Discussion"
+      start: "Discuss"
+    show:
+      eyebrow: "Discussion"
+      description: "What has been said about this record. Everyone who can read it can read this."
+      heading: "Messages"
+      back_label: "Back to the record"
+      participation_label: "Scene participation"
+      empty_title: "No messages yet"
+      empty_description: "This discussion has not been started. Be the first to say something."
+    composer:
+      label: "Message"
+      submit: "Post message"
+    # The subject the error summary names a refused message by. A locale supplies
+    # the whole phrase, because "this message" and "este mensaje" are not the same
+    # words in the same order.
+    message_subject: "this message"
+    flash:
+      message_created: "Your message was posted."
+
   stories:
     title: "Stories"
     description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe."

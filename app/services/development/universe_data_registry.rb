@@ -8,6 +8,7 @@ module Development
       :scope,
       :positioned,
       :position_mode,
+      :identifier_field,
       keyword_init: true
     ) do
       def model
@@ -20,6 +21,15 @@ module Development
 
       def hierarchical_position?
         position_mode.to_s != "flat"
+      end
+
+      # The field a manifest reference is keyed on, when `slug` is not the model's
+      # own answer. An Event is titled rather than named; a discussion thread is
+      # titled because the record it is about is its subject. Declared here rather
+      # than inferred from the model's columns, because the loader resolves
+      # references in a preflight that deliberately runs before the schema exists.
+      def identifier_field
+        self[:identifier_field]&.to_s
       end
     end
 
@@ -48,7 +58,8 @@ module Development
       ModelDefinition.new(model_name: "OwnershipTag", file_name: "ownership_tags", scope: :universe, positioned: true),
       ModelDefinition.new(model_name: "Ownership", file_name: "ownerships", scope: :universe),
       ModelDefinition.new(model_name: "EventTag", file_name: "event_tags", scope: :universe, positioned: true),
-      ModelDefinition.new(model_name: "Event", file_name: "events", scope: :universe, positioned: true),
+      ModelDefinition.new(model_name: "Event", file_name: "events", scope: :universe, positioned: true,
+        identifier_field: "title"),
       # Loaded after Event because a Scene may reference a shared universe
       # event; a symbolic reference may not point at a later model file.
       ModelDefinition.new(model_name: "Scene", file_name: "scenes", scope: :story, positioned: true, position_mode: :flat),
@@ -60,9 +71,20 @@ module Development
       # The remaining two world-presence links. Same shape as SceneCharacter: a
       # Scene owns them and they reach the Universe through it.
       ModelDefinition.new(model_name: "SceneItem", file_name: "scene_items", scope: :scene),
-      ModelDefinition.new(model_name: "SceneLocation", file_name: "scene_locations", scope: :scene)
+      ModelDefinition.new(model_name: "SceneLocation", file_name: "scene_locations", scope: :scene),
+      # A thread and its messages, loaded after every model they can be about: a
+      # manifest names the record with a `Model.slug` reference, and a symbolic
+      # reference may not point at a later model file. They are the first entries
+      # that carry a polymorphic `record` reference, which the loader resolves
+      # against the content registry — the same gate `RecordTarget` applies at
+      # runtime, so a manifest cannot name a `User` or a `Session`.
+      ModelDefinition.new(model_name: "Discussion", file_name: "discussions", scope: :universe,
+        identifier_field: "title"),
+      # A message reaches its universe through its thread, which is the record it
+      # was loaded with, so it declares no universe of its own — exactly as a User
+      # declares none. `scope: :none` is what says so.
+      ModelDefinition.new(model_name: "DiscussionMessage", file_name: "discussion_messages", scope: :none)
     ].freeze
-
     UNIVERSES = {
       "dark" => "dark",
       "lotr" => "lotr"

@@ -1,0 +1,15 @@
+# One conversation per record. `record` is a polymorphic reference — one
+# `Model.slug` reference naming any content model — which the loader resolves
+# against the content registry, so a thread cannot be hung off a User or a Session.
+#
+# `title` is what identifies a thread here, because it is the only name a thread
+# has: the record is its subject and is shown above it. Nothing in the application
+# writes the column; these entries are the one place it is used, so a load fails
+# loudly on a duplicate title rather than on a duplicate thread.
+- universe: Universe.dark
+  title: Is she the heir?
+  record: Character.martha
+
+- universe: Universe.dark
+  title: What they heard in the corridor
+  record: Scene.the-golden-beast

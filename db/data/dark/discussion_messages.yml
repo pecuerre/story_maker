@@ -1,0 +1,20 @@
+# The messages of a thread. `discussion` and `user` are ordinary references; a
+# thread is identified by its title, so `Discussion.is-she-the-heir` is how the
+# manifest names it. Bodies are plain text, because markdown in discussions is a
+# later decision.
+- discussion: Discussion.is-she-the-heir
+  user: User.dark-admin
+  body: >-
+    Hannah still asks about the letter every birthday. Do we keep it as her
+    motivation, or has she moved on to the wound instead?
+
+- discussion: Discussion.is-she-the-heir
+  user: User.dark-collaborator
+  body: >-
+    Keep the letter. The wound works because she keeps measuring herself against
+    what the letter promised.
+
+- discussion: Discussion.what-they-heard-in-the-corridor
+  user: User.dark-collaborator
+  body: >-
+    Should the kids hear the whole line, or should the element stop just before it?

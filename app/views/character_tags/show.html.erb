@@ -6,7 +6,8 @@
   label: t("tags.types.character.record_label"),
   **tag_identity_details(@character_tag),
   back_url: universe_character_tags_path,
-  back_label: t("tags.types.character.all_label") do %>
+  back_label: t("tags.types.character.all_label"),
+  actions: discussion_control(@character_tag) do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "character", tag: @character_tag %>
 <% end %>
 

@@ -23,6 +23,16 @@ class SceneCharacter < ApplicationRecord
     scene&.universe
   end
 
+# Not searchable: a presence link is a statement inside its Scene rather than a
+# page of its own. `search_url` is nevertheless the one answer to "where is this
+# record read", so it answers with the Scene page — which is exactly where this
+# link is shown and where its own workspace lives.
+def search_url
+  Rails.application.routes.url_helpers.universe_story_scene_path(
+    universe_slug: scene.universe.to_param, story_id: scene.story_id, id: scene_id
+  )
+end
+
   # Blank input means no role, not an empty-string role that reads as an
   # intentional value later.
   def role=(value)

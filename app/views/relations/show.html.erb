@@ -12,7 +12,8 @@
     detail_fact(t("relations.show.facts.description"), @relation.description, blank: t("relations.show.facts.description_blank"))
   ],
   back_url: universe_relations_path,
-  back_label: t("relations.show.back_label") %>
+  back_label: t("relations.show.back_label"),
+  actions: discussion_control(@relation) %>
 
 <%= render "shared/detail_section",
   title: t("relations.show.related.title"),

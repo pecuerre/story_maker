@@ -1,0 +1,12 @@
+<%# One message. The author and the moment it was written are shown plainly: a
+    conversation whose entries are anonymous blocks is not a conversation, and the
+    order is the thread's own, which `Discussion#messages` orders. The body is text,
+    because the collaboration plan defers markdown in discussions and a rendered
+    fragment would be a formatting decision this page has not made. %>
+<li class="discussion-message">
+  <div class="discussion-message-meta">
+    <span class="discussion-message-author"><%= message.user.name %></span>
+    <time datetime="<%= message.created_at.iso8601 %>"><%= l message.created_at, format: :short %></time>
+  </div>
+  <p class="discussion-message-body"><%= message.body %></p>
+</li>

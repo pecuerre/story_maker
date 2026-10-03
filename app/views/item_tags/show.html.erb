@@ -6,7 +6,8 @@
   label: t("tags.types.item.record_label"),
   **tag_identity_details(@item_tag),
   back_url: universe_item_tags_path,
-  back_label: t("tags.types.item.all_label") do %>
+  back_label: t("tags.types.item.all_label"),
+  actions: discussion_control(@item_tag) do %>
   <%= render "shared/menu_tag_content_tabs", tag_type: "item", tag: @item_tag %>
 <% end %>
 

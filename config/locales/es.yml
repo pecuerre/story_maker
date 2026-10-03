@@ -359,6 +359,25 @@ es:
       updated: "El universo se ha actualizado correctamente."
       deleted: "El universo se ha eliminado correctamente."
 
+  discussions:
+    control:
+      open: "Discusión"
+      start: "Discutir"
+    show:
+      eyebrow: "Discusión"
+      description: "Lo que se ha dicho sobre este registro. Todas las personas que pueden leerlo pueden leer esto."
+      heading: "Mensajes"
+      back_label: "Volver al registro"
+      participation_label: "Participación en la escena"
+      empty_title: "Todavía no hay mensajes"
+      empty_description: "Esta discusión no se ha iniciado. Sé la primera persona en decir algo."
+    composer:
+      label: "Mensaje"
+      submit: "Publicar mensaje"
+    message_subject: "este mensaje"
+    flash:
+      message_created: "Tu mensaje se ha publicado."
+
   stories:
     title: "Historias"
     description: "Cada historia es dueña de su trama y de sus secciones, y comparte los personajes, los lugares, los sucesos y los objetos de este universo."

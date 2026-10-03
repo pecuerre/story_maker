@@ -1,0 +1,33 @@
+<% content_for :title, "#{record_label(@record)} — #{t('discussions.show.eyebrow')}" %>
+
+<%# The record's own identity, not its page: a thread is about one record, so the
+    reader needs to know which one, and the back link is the way back to everything
+    else that page carries. The record's URL comes from its own search declaration,
+    which is the one answer to "where is this record read" — a details page, a
+    back link, and a stored search document cannot disagree. %>
+<%= render "shared/record_details",
+  record: @record,
+  eyebrow: t("discussions.show.eyebrow"),
+  label: record_type_label(@record),
+  description: t("discussions.show.description"),
+  back_url: @record.search_url,
+  back_label: t("discussions.show.back_label") %>
+
+<section class="surface-card p-4">
+  <h2 class="h4"><%= t("discussions.show.heading") %></h2>
+
+  <% if @messages.any? %>
+    <ol class="discussion-thread list-unstyled mb-0">
+      <%= render partial: "discussions/message", collection: @messages, as: :message %>
+    </ol>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: t("discussions.show.empty_title"),
+      description: t("discussions.show.empty_description"),
+      icon: "chat-square-text" %>
+  <% end %>
+
+  <% if can_write_universe? %>
+    <%= render "discussions/composer", discussion: @discussion, message: @message %>
+  <% end %>
+</section>

@@ -125,20 +125,14 @@ it has a useful destination and clear empty/loading/error states.
 
 20. **Collaboration system — Phase 1: Foundation (collaboration mode + discussions)**
 
-    The universe collaboration mode (`direct`/`wikipedia`/`github`) and the discussion data model are
-    delivered; what is left of this phase is the discussion page on every record. No draft
-    functionality yet. Decisions: a discussion page lives inside a Scene's own page for
-    SceneElement/SceneCharacter etc., not as a separate user concern for now.
+    The universe collaboration mode (`direct`/`wikipedia`/`github`), the discussion data model, and
+    the discussion page are delivered; what is left of this phase is the polish slice below. No draft
+    functionality yet. Decisions: a discussion page for a Scene-owned record lives inside its
+    Scene's own page rather than as a separate user concern for now.
 
-    - **Slice 1.3:** Routes: `resources :discussions, only: [:show, :create]` nested under universe,
-      with `resources :messages, only: [:create]` nested under discussions. `DiscussionsController#show`
-      (loads record through authorized scope, renders record details + discussion thread),
-      `DiscussionsController#create` (find or create discussion for a record),
-      `MessagesController#create` (add message). Views: discussion page uses `shared/_record_details`
-      for the record header, then message thread + reply form. Add "Discuss" link on every record's
-      details page. Tests: request tests, system test.
-    - **Slice 1.4:** Message timestamps, author names, empty state copy. Update
-      `docs/conventions.md` with the discussion page pattern. Update changelog.
+    - **Slice 1.4:** Message timestamps, author names, empty state copy. The
+      `docs/conventions.md` page pattern and the thread's own styling are already recorded, so this
+      is the remaining presentation of messages and the empty states. Update changelog.
 
 21. **Collaboration system — Phase 2: Draft system (core data model + interception)**
 

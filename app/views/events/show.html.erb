@@ -12,7 +12,8 @@
     detail_fact(t("events.show.facts.description"), @event.description, blank: t("events.show.facts.description_blank"))
   ],
   back_url: universe_events_path,
-  back_label: t("events.show.back_label") %>
+  back_label: t("events.show.back_label"),
+  actions: discussion_control(@event) %>
 
 <%# Several Scenes may depict one Event, and they are never merged: the section
     lists each Scene in the order its Story is told, not in the Event's timeline. %>

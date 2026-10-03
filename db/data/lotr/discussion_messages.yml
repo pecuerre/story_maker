@@ -1,0 +1,14 @@
+# The messages of a thread. `discussion` and `user` are ordinary references; a
+# thread is identified by its title, so `Discussion.who-carries-the-ring-to-rivendell`
+# is how the manifest names it. Bodies are plain text, because markdown in
+# discussions is a later decision.
+- discussion: Discussion.who-carries-the-ring-to-rivendell
+  user: User.lotr-user
+  body: >-
+    The council decides here and Frodo is still the only one who can carry it. Should
+    the scene say so outright, or leave the reader to remember it?
+
+- discussion: Discussion.who-carries-the-ring-to-rivendell
+  user: User.lotr-user
+  body: >-
+    Leaving it implicit. The oath matters because nobody suggests an alternative.

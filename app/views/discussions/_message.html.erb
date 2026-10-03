@@ -4,8 +4,21 @@
     because the collaboration plan defers markdown in discussions and a rendered
     fragment would be a formatting decision this page has not made. %>
 <li class="discussion-message">
+  <%# The author falls back to the shared blank copy rather than rendering an
+      empty name. `users.name` is `NOT NULL` but carries no presence validation
+      (known quirk 27), so an author created by a seed or import caller can have a
+      blank name; a message with no visible author is the anonymous block this
+      partial exists to avoid. `shared.detail_fact.blank` is the application's
+      one answer to "this value is not set", so it is reused instead of a second
+      wording invented here.
+
+      The moment is rendered through `l` with a named format, and the machine
+      value rides in `datetime`: `%d %b %H:%M` reads as a moment in a
+      conversation rather than a date a reader has to interpret, and the
+      `datetime` attribute is the exact instant for anything that is not a human
+      reading it. %>
   <div class="discussion-message-meta">
-    <span class="discussion-message-author"><%= message.user.name %></span>
+    <span class="discussion-message-author"><%= message.user.name.presence || t("shared.detail_fact.blank") %></span>
     <time datetime="<%= message.created_at.iso8601 %>"><%= l message.created_at, format: :short %></time>
   </div>
   <p class="discussion-message-body"><%= message.body %></p>

@@ -40,6 +40,24 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-03
 
+### changed
+
+- **A discussion message says who wrote it and when.** The author and a localized moment share one
+  line above the body, with the exact instant kept in a `<time datetime>`; a blank author falls back
+  to `shared.detail_fact.blank` instead of an empty span.
+- **An empty thread has two empty states.** A writer is invited to start the conversation, while a
+  guest and a read-only member are only told what will appear there, matching the split every list
+  already makes.
+
+### fixed
+
+- **`test/models/discussion_test.rb` no longer counts the `discussions` table.** `fixtures :all`
+  never cleans a table it has no fixture file for, so one stray thread left in the test database
+  failed a cascade that was working; the test now names the thread and messages that must be gone.
+- **The thread page renders in Spanish.** `activesupport` ships no `es.yml`, so `time.formats.short`
+  and the month and weekday names it reaches for were missing and raised
+  `I18n::MissingTranslationData`; they are translated beside the other Rails-subset keys.
+
 ### docs
 
 - **An entry is a summary, not a paragraph.** `AGENTS.md` and this file's preamble now state the

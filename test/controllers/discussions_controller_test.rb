@@ -53,6 +53,80 @@ class DiscussionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".discussion-composer", count: 0
   end
 
+  test "each message carries its author and the moment it was written" do
+    message = @discussion.messages.create!(user: users(:user_two), body: "She was here in the spring.")
+
+    get universe_discussion_url(universe_slug: @universe.slug, id: @discussion)
+
+    assert_response :success
+    assert_select ".discussion-message-author", text: users(:user_two).name
+    # The machine value and the printed one are the same moment in two forms: the
+    # `datetime` attribute is what anything that is not a human reading it uses,
+    # so it has to be the exact instant rather than the localized string.
+    time = css_select(".discussion-message time").first
+    assert_equal message.created_at.iso8601, time["datetime"]
+    assert_equal I18n.l(message.created_at, format: :short), time.text.strip
+  end
+
+  test "a message whose author has no name states it rather than rendering an empty author" do
+    # `users.name` is `NOT NULL` but has no presence validation (known quirk 27),
+    # and `NOT NULL` rejects only `NULL`, so an empty string is what a seed or
+    # import caller leaves behind. A message with no visible author is exactly the
+    # anonymous block the thread refuses to show, so the shared blank copy stands
+    # in for it.
+    author = User.create!(name: "", email_address: "nameless-#{SecureRandom.hex(4)}@example.com",
+      password: "abcdefgh")
+    @discussion.messages.create!(user: author, body: "Still says something.")
+
+    get universe_discussion_url(universe_slug: @universe.slug, id: @discussion)
+
+    assert_response :success
+    assert_select ".discussion-message-author", text: I18n.t("shared.detail_fact.blank")
+  end
+
+  test "an empty thread invites a writer to start it but only states what will appear to a guest" do
+    empty = @universe.characters.create!(name: "Undiscussed").find_or_create_discussion
+
+    get universe_discussion_url(universe_slug: @universe.slug, id: empty)
+
+    assert_response :success
+    assert_select ".empty-description", text: I18n.t("discussions.show.empty_writable_description")
+
+    # A guest has no composer, so being told to be the first to say something
+    # names an action this page does not offer them. The split is the same one
+    # every list in the application makes for its own empty state.
+    sign_out
+    get universe_discussion_url(universe_slug: @universe.slug, id: empty)
+
+    assert_response :success
+    assert_select ".empty-description", text: I18n.t("discussions.show.empty_read_only_description")
+    assert_select ".discussion-composer", count: 0
+  end
+
+  test "the thread renders in Spanish, timestamps included" do
+    message = @discussion.messages.create!(user: users(:user_two), body: "¿Es la heredera?")
+    patch settings_url, params: { locale: "es" }
+
+    get universe_discussion_url(universe_slug: @universe.slug, id: @discussion)
+
+    assert_response :success
+    assert_select ".discussion-message-body", text: "¿Es la heredera?"
+    assert_select ".discussion-message-author", text: users(:user_two).name
+    # `activesupport` ships no Spanish locale file at all, so `time.formats.short`
+    # and the `%b` it is written with had to be translated here. Without them this
+    # request raised `I18n::MissingTranslationData` rather than falling back,
+    # because `raise_on_missing_translations` is on in the test environment.
+    #
+    # The expectation is built inside `with_locale` rather than against the
+    # process default, which is English: the assertion that matters is that the
+    # page rendered *Spanish*, so comparing against English would pass whether or
+    # not the translation existed.
+    spanish = I18n.with_locale(:es) { I18n.l(message.created_at, format: :short) }
+    assert_select ".discussion-message time", text: spanish
+    assert_match(/[a-záéíóú]/, spanish)
+    assert_not_equal I18n.l(message.created_at, format: :short, locale: :en), spanish
+  end
+
   test "a read-only member reads the same thread with no composer" do
     private_universe = Universe.create!(owner: users(:user_one), name: "Private threads", slug: "private-threads",
       private: true)

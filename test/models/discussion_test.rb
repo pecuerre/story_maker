@@ -100,8 +100,20 @@ class DiscussionTest < ActiveSupport::TestCase
     discussion = Discussion.create!(universe: @universe, record: @character)
     discussion.messages.create!(user: users(:user_one), body: "A note")
 
-    assert_difference([ "Discussion.count", "DiscussionMessage.count" ], -1) do
-      @universe.destroy
-    end
+    @universe.destroy
+
+    # The contract is what is gone, not a number: `discussions` and
+    # `discussion_messages` have no fixture files, and a table `fixtures :all`
+    # does not own keeps whatever row a committed run left in it. Counting the
+    # whole table therefore measured the test database's history rather than the
+    # cascade, and one stray thread — the first one this suite did not write —
+    # failed a passing cascade. The thread and its messages are named instead.
+    assert_not Discussion.exists?(discussion.id)
+    assert_not DiscussionMessage.exists?(discussion_id: discussion.id)
+    # Reached by universe and by record, because the two `dependent: :destroy`
+    # declarations are independent: the universe's and the record's own. A thread
+    # left behind would be an orphan row nothing can reach.
+    assert_empty Discussion.where(universe_id: @universe.id)
+    assert_empty Discussion.where(record: @character)
   end
 end

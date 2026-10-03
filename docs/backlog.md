@@ -123,17 +123,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-20. **Collaboration system — Phase 1: Foundation (collaboration mode + discussions)**
-
-    The universe collaboration mode (`direct`/`wikipedia`/`github`), the discussion data model, and
-    the discussion page are delivered; what is left of this phase is the polish slice below. No draft
-    functionality yet. Decisions: a discussion page for a Scene-owned record lives inside its
-    Scene's own page rather than as a separate user concern for now.
-
-    - **Slice 1.4:** Message timestamps, author names, empty state copy. The
-      `docs/conventions.md` page pattern and the thread's own styling are already recorded, so this
-      is the remaining presentation of messages and the empty states. Update changelog.
-
 21. **Collaboration system — Phase 2: Draft system (core data model + interception)**
 
     In `wikipedia` or `github` mode, mutations are stored as draft changes instead of written directly.

@@ -74,4 +74,32 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
       ability.send(:universe_for, scene_owned)
     assert ability.can?(:write, scene)
   end
+
+  # The same walk, asked of a class rather than of a record, because three callers
+  # need it before there is a record to walk from: the remembering path choosing
+  # the column a create stores, the applier choosing the collection to order, and a
+  # draft's own page telling that plumbing from something it can print.
+
+  test "names the owner association a model reaches its universe through" do
+    assert_equal :story, UniverseScopeResolver.owner_association_for(Section)
+    assert_equal :story, UniverseScopeResolver.owner_association_for(Scene)
+    assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneElement)
+    assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneCharacter)
+    # A record with a `universe_id` of its own has no owner association to walk.
+    assert_nil UniverseScopeResolver.owner_association_for(Character)
+  end
+
+  test "the answer agrees with the walk, for every model it is asked about" do
+    [ Section, Scene, SceneElement, SceneCharacter, Character ].each do |model|
+      record = model.first
+      next if record.nil?
+
+      owner = UniverseScopeResolver.owner_association_for(model)
+      walked = owner ? record.public_send(owner)&.universe : record.universe
+
+      assert_equal UniverseScopeResolver.universe_for(record), walked,
+        "#{model.name}: the column the derivation reads and the walk the resolver performs must reach the " \
+        "same universe, or a remembered change would be placed in a scope the record is not in"
+    end
+  end
 end

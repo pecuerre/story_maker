@@ -1,0 +1,43 @@
+<%# One remembered change, as the author stated it. The row says which action it
+    remembers, which record it is about, and the values it carries — and it does
+    not say whether the change was applied. Only the apply that wrote it can know
+    that, and a row that guessed from a version stamp would be reporting a second
+    answer about the same record. %>
+<% record = change.resolved_record %>
+<% attributes = draft_change_attributes(change) %>
+<div class="list-group-item entity-row draft-change">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <span class="badge rounded-pill text-bg-light border"><%= t("drafts.actions.#{change.action}") %></span>
+    <span class="entity-title">
+      <%# A change about a record that has since been deleted is plain text: a
+          link to a page that answers 404 would be a dead affordance, and the kind
+          beside it still says what the change was about. The record is resolved
+          once here, because `DraftChange#resolved_record` deliberately does not
+          remember its answer. %>
+      <% if record.present? %>
+        <%= link_to draft_change_subject(change, record), record.search_url %>
+      <% else %>
+        <%= draft_change_subject(change, record) %>
+      <% end %>
+    </span>
+    <span class="small text-body-secondary"><%= draft_change_kind(change) %></span>
+    <time class="small text-body-secondary" datetime="<%= change.created_at.iso8601 %>">
+      <%= l change.created_at, format: :short %>
+    </time>
+  </div>
+
+  <% if attributes.any? %>
+    <div class="entity-description">
+      <% attributes.each do |label, value| %>
+        <div><span class="fw-semibold"><%= label %>:</span> <%= value %></div>
+      <% end %>
+    </div>
+  <% else %>
+    <%# A delete carries no payload at all, and a create whose only remembered
+        values were the scope column has nothing a reader could use. Both are
+        stated rather than left as a row with an empty second line. %>
+    <div class="entity-description">
+      <%= change.deleting? ? t("drafts.show.removes_record") : t("drafts.show.no_values") %>
+    </div>
+  <% end %>
+</div>

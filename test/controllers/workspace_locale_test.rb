@@ -401,6 +401,50 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_equal "La historia se ha eliminado correctamente.", flash[:notice]
   end
 
+  test "the drafts workspace and its two pages are Spanish" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    draft = Draft.create!(user: users(:user_one), universe: @universe)
+    draft.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Personaje recordado", "universe_id" => @universe.id, "character_tag_ids" => [ character_tags(:character_tag_one).id ] })
+
+    get universe_drafts_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_equal "es", rendered_lang
+    assert_select "h1", text: "Cambios pendientes"
+    assert_select ".entity-title", text: "1 cambio recordado"
+    assert_select ".entity-row .badge", text: "Borrador"
+    assert_select ".entity-row-actions a", text: "Revisar"
+    assert_select ".entity-row-actions button", text: "Aplicar"
+    assert_select ".entity-row-actions button", text: "Descartar"
+    # The sidebar entry is the one an editor arrives at from the flash that told
+    # them their change was remembered, so it is chrome too.
+    assert_select "aside.right-sidebar .sidebar-link", text: "Cambios pendientes"
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_response :success
+    assert_select "h1", text: "Cambios para revisar"
+    assert_select ".draft-change .badge", text: "Crear"
+    # A remembered create names no record, so its row is titled by the type, and a
+    # submitted tag list is printed as the tag's own name rather than as an id.
+    assert_select ".draft-change .entity-title", text: "Nuevo/a Personaje"
+    # The remembered values, with a label resolved the way every form label is:
+    # the author's own words, and the collection's own name rather than the
+    # `character_tag_ids` a form submits.
+    assert_select ".draft-change .entity-description", text: /Nombre: Personaje recordado/
+    assert_select ".draft-change .entity-description", text: /Etiquetas de personajes: #{character_tags(:character_tag_one).name}/
+    assert_select ".page-actions button", text: "Aplicar cambios"
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_equal "1 cambio recordado ya es visible.", flash[:notice]
+
+    post discard_universe_draft_url(universe_slug: @universe.slug, id: Universe.find(@universe.id).drafts.create!(user: users(:user_one), universe: @universe))
+
+    assert_equal "El borrador se ha descartado. No se escribió nada.", flash[:notice]
+  end
+
   private
     def rendered_lang
       Nokogiri::HTML(response.body).at_css("html")["lang"]

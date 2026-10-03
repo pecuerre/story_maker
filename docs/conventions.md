@@ -178,6 +178,29 @@ the same change, or `db:demo:check` fails.
   variables and never marks as changed. Nothing else is copied out of the record: a column the author never
   submitted (a nil `position`, a not-yet-generated `slug`) would be remembered as a value to write rather than
   as a value to let the live path decide.
+- **Which column that is has one answer, read from the model rather than re-derived.**
+  `UniverseScopeResolver.owner_association_for(model)` names the owner association a model's columns give it,
+  and three callers read it: `DraftMutation` choosing the column to merge into a create's payload,
+  `DraftApplier` choosing the collection to order and the scope to resolve, and `DraftChange#scope_attribute`
+  naming the same column so a draft's own page can recognise it as plumbing rather than print it.
+- **`DraftsController` is the only page that reads a draft, and it requires a signed-in user.** A draft
+  belongs to a person, so there is no guest-readable version of `/u/:universe_slug/drafts`. A draft is read
+  as its own author's inside the universe the request has already authorized — `Draft` is deliberately not a
+  content class (ADR 0019), so there is no CanCan rule to ask and the scope is the query itself. Another
+  author's draft, a draft in another universe, and a draft that does not exist are one **404**. `index` and
+  `show` are reads; `apply` and `discard` are writes, and the shared universe policy asks for `write` from
+  the action's name alone.
+- **An apply writes through the live mutation path, and the applier derives a model's ordering rather than
+  listing it.** `DraftApplier` routes an ordered collection through `PositionedResourceOrder` and an
+  unordered one through `save`/`update`/`soft_delete`, deciding which from the model's own columns — a
+  `position` column means the service maintains that sequence, a `parent_id` column means its siblings are
+  scoped by one — with the sibling collection being the owner's association that every positioned
+  controller's `sibling_collection` already returns. `test/services/draft_applier_test.rb` holds that
+  derivation against every routed controller that declares itself positioned, in both directions, because a
+  second list of ordered models would drift from the fifteen controllers that declare their own. A change
+  whose record has moved since it was remembered, whose record is gone, or that the live path refuses is
+  reported rather than written, and the draft is closed either way; the reasoning, and why refusing the whole
+  apply was rejected, are in [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md).
 - Password-reset responses set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
   `PasswordResetPathFilter` redacts reset-token path segments from Rails request logs; upstream
   proxy/access-log retention remains an external deployment responsibility.
@@ -231,6 +254,12 @@ the same change, or `db:demo:check` fails.
   are admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
   and `taxonomy=character|relation|location|event|item|ownership|section` query parameters;
   timeline is `get "timeline", to: "timeline#index"`; `root` → `universes#index`; health check `/up`.
+- **Drafts are `index`/`show` plus two member POSTs**, mounted at `/u/:universe_slug/drafts`:
+  `resources :drafts, only: %i[ index show ]` with `post :apply, on: :member` and `post :discard, on:
+  :member`. The two are POSTs rather than `resources` verbs because each is a decision the author makes
+  about their own pending work and neither is idempotent — an `apply` writes records, and a `discard`
+  closes the draft — and there is no `create` or `destroy` because a draft is opened by the remembering
+  path and is never deleted, only moved to another status.
 - Platform settings are `resource :settings, only: %i[show update]` at `/settings`, outside the
   universe scope, because a display preference belongs to the browser rather than to a universe
   ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). `SettingsController` skips
@@ -386,6 +415,39 @@ an `en.yml` and **no** `es.yml`, so `time.formats.short` and the `date.abbr_mont
 is written with are translated in `config/locales/es.yml` alongside the other Rails-subset keys. A
 `l` call with a format this file does not translate raises for a Spanish reader rather than falling
 back, because `raise_on_missing_translations` is on in the test environment.
+
+## The drafts page
+
+A draft is **the reader's own pending work**, so this is a fifth page shape rather than another reading
+of `show`. It is not a record's details page, and the "a `show` renders no mutation control" rule does
+not apply to it: acting on a draft *is* what the page is for. What the rule above it does say is kept —
+every action requires a session, `index` and `show` are reads the universe policy answers at `read`,
+and the two controls are rendered only while `Draft#open?`, so an applied or discarded draft offers
+nothing to do.
+
+**Two pages, one list and one draft.** `/u/:universe_slug/drafts` lists the reader's own drafts in that
+universe with the actionable one first, because history sorted above the pending work would push the
+draft the reader came for out of the list; `/u/:universe_slug/drafts/:id` shows one draft's changes in
+the order they were remembered. There is no `new` page and no `create`: a draft is opened by the
+remembering path (`Draft.open_for!`), never by an author.
+
+**A row states what a change says, and never that it was written.** Each change names its action
+(create, update, delete), the record it is about, and the values it carries. A remembered create names
+no record, so its row is titled by the type it would create; a change whose record has since been
+deleted keeps its row and loses its link, because a link to a page that answers 404 is a dead
+affordance. Whether a change was applied is not a fact the page can know — the apply itself moves every
+version it writes, so a comparison cannot distinguish "written by this draft" from "changed by somebody
+else" — and the outcome is reported once, in the flash that follows the apply. Three stored values need
+reading rather than printing, and `DraftsHelper` owns all three: a submitted id list (a tag assignment,
+a Dialogue's speakers) is printed as the names its own association resolves, the scope column is dropped
+because a bare `story_id` is nothing a reader can name, and the two virtual photo writers are stated as
+a new photo or a removed one rather than as a `data:` URL and a boolean.
+
+**The page has to be reachable.** The right utility sidebar's **Collaboration** group carries a
+**Pending changes** entry, rendered only where a draft can exist — a `direct` universe never opens one
+— and only for a signed-in reader, because a draft belongs to a person. An editor who is told their
+change was remembered and cannot then find it has no way to see it, apply it, or throw it away; which
+block that entry belongs to is in [features/navigation.md](features/navigation.md).
 
 ## Record details pages
 

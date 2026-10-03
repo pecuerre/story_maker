@@ -29,6 +29,122 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-03
 
+- **[added]** **Collaboration phase 2, slice 2.3: a draft has a page, and applying it writes through the
+  live mutation path.** `DraftsController` (`index`, `show`, `apply`, `discard`), `DraftApplier`, the two
+  views, and the right sidebar's **Pending changes** entry. The decisions are in
+  [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md); what follows is the reasoning
+  and the verification.
+
+  **An applier that keeps its own list of ordered models is a gap waiting to happen.** Fifteen of the
+  twenty mutation controllers maintain sibling positions, and each already says so through
+  `MaintainsSiblingPositions`, with the collection it orders written against a record the controller
+  holds. An applier holding a stored payload has no such record, so the obvious move is a table of
+  which models are ordered — and then there are two lists, and a model added to one and not the other is
+  written with a plain `save`, lands at the `position` default of 0, and sits inside somebody else's
+  sibling group. A sequence that looks ordered until somebody moves a row, with nothing failing. Instead
+  the applier **derives** it from the model's own columns — a `position` column means
+  `PositionedResourceOrder` maintains that collection, a `parent_id` column means its siblings are scoped
+  by one — and the sibling collection is the owner's association, which is exactly what every positioned
+  controller's `sibling_collection` already returns. The guard is
+  `test/services/draft_applier_test.rb`, and it walks **every controller the route set reaches** and reads
+  what each one declares, rather than being handed a list to compare against: a controller whose model has
+  no `position` column, and a model that grew one without a controller, both fail. That is the same shape
+  as `test/models/ability_test.rb`'s content registry — an inclusion list fails by being forgotten
+  silently, so the test reads the other list.
+
+  **The scope column had one home and three copies of the rule, so it now has one answer.** Which column
+  places a record in its scope — `universe_id`, `story_id`, or `scene_id` — was derived inline in
+  `DraftMutation`. The applier needs the same answer to choose the collection to order, and a draft's own
+  page needs it for the opposite reason: to recognise the column as plumbing rather than print a bare
+  `story_id` at a reader. It is now `UniverseScopeResolver.owner_association_for(model)`, asked of a
+  class rather than of a record because all three callers need it before there is a record to walk from,
+  and `DraftChange#scope_attribute` names it again for the page. A new model test holds the answer to the
+  walk the resolver performs, so the derivation and the walk cannot disagree about where a record lives.
+
+  **A change that cannot be written is reported, and the draft is closed either way.** The alternative —
+  refuse the whole apply, roll back, and report — is atomic and lossless and has no exit. The author's only
+  controls would be *apply again*, which produces the same refusal, and *discard*, which throws away the
+  other nineteen changes along with the one that cannot be written; there is no per-change control in this
+  phase and no conflict page to send them to, so a draft could be stranded open forever. Closing the draft
+  is also forced from the other side: a remembered `create` names no record, so applying a partly-written
+  draft twice would write the author a **second copy** of it and `PositionedResourceOrder` would place
+  that copy happily. So the run always ends `applied`, a skipped change stays readable on the draft's page,
+  and the flash says how many were written and how many were not. That is the honest cost to state: **a
+  conflict in this phase is reported, not resolved**, and the author's values have to be redone by hand
+  until Phase 3 replaces the report with the resolution page.
+
+  **One transaction around the run, with the status change inside it.** A skipped change is not a failure
+  and must not roll anything back, but an *unexpected* one — a payload naming an attribute no column
+  holds — must not leave a universe that is partly written behind a draft that still looks applyable, which
+  is the same duplicate-create hazard by another route. `PositionedResourceOrder` opens its own
+  `requires_new: true` transaction, so each change commits to a savepoint inside this one and a refused
+  write rolls back only to its own; the scope owner's row lock is then held until the run commits, which
+  serializes two applies in one universe. `test/services/draft_applier_test.rb` proves the invariant by
+  writing one change and then raising in the next, and asserting that neither the record nor the draft
+  moved.
+
+  **A draft's page states what a change says and never that it was written.** That is not a stylistic
+  choice: the apply moves every version it writes, so comparing a record's current version with the
+  remembered one cannot distinguish "written by this draft" from "changed by somebody else", and inferring
+  it would be a second answer about the same record. Storing an outcome per change would contradict
+  ADR 0019's append-only decision, and it is the Phase 3 data model built twice. So the row names the
+  action, the record, and the remembered values, the outcome is reported once in the flash, and the three
+  stored values that cannot be printed are read rather than dumped: a submitted id list (a tag
+  assignment, a Dialogue's speakers) as the names its own association resolves, the scope column dropped
+  as plumbing, and the two virtual photo writers stated as a new photo or a removed one instead of a
+  `data:` URL and a boolean. A remembered create names no record, so its row is titled by the type it
+  would create, using `Search::Kinds` so a Character is called a character here and in the search
+  dropdown.
+
+  **The page had to be reachable, or the trap was still open.** Slice 2.2 left the known quirk that an
+  administrator can put a working universe into `wikipedia` and its editors then appear to save while
+  nothing is saved. Listing, applying, and discarding exist now, but a page nothing links to is the same
+  trap with a URL attached, so the right sidebar's **Collaboration** group carries a **Pending changes**
+  entry — rendered only where a draft can exist (a `direct` universe never opens one) and only for a
+  signed-in reader, because a draft belongs to a person. Slice 2.4 still owns the pending-change *count*
+  beside it.
+
+  **A remembered value is labelled the way a form labels it, and that has a Spanish consequence.** A
+  submitted id list is labelled by the collection it fills — "Character tags", not `character_tag_ids` —
+  and the six collection names that page prints are now named in both locale files, because the drafts
+  page is the first surface that reads `human_attribute_name` for them. The remaining gap is deliberate: a
+  remembered create for a Section or a Scene Element still prints English attribute names, because those
+  models have no `activerecord.attributes` block at all — the Scenes workspace labels its own forms with
+  explicit `scenes.form.*` keys instead, which is why. `human_attribute_name`'s humanized-English fallback
+  is the documented behaviour for an unnamed attribute, and naming those models is the Scenes workspace's
+  translation work rather than this slice's.
+
+  Verification: `bin/rails test test/controllers/drafts_controller_test.rb` (27 tests, 123 assertions),
+  `test/services/draft_applier_test.rb` (9 tests, 67), the two model files (39 tests, 163), the drafts case
+  added to `test/controllers/workspace_locale_test.rb` and the apply case added to
+  `test/controllers/csrf_mutation_test.rb`, and `bin/rails test test/system/draft_workflow_test.rb` with
+  `PARALLEL_WORKERS=2` (2 tests, 36 assertions) — the browser journey, which is the only place the
+  `button_to` confirmations and the Turbo navigation are covered. Over the whole change: `bin/rails test`
+  (1655 runs, 10994 assertions, 10 skips, 0 failures), `bin/rails test:system` with `PARALLEL_WORKERS=2`
+  (144 tests, 1894 assertions, 0 failures), `bin/rubocop` (410 files, no offenses), `bin/brakeman --no-pager`
+  (0 warnings), and `bun run check:js` (200 pass, 0 fail).
+
+  **The development manifests are not coming, and the reason is worth recording.** ADR 0019 said the two
+  files would arrive with the slice that gave a draft a page. They cannot be written, for three reasons
+  that compound: a manifest resolves *references*, and a change's `base_version` has to be the record's
+  `updated_at` captured through `DraftChange.capture_base_version` — a stamp written into YAML is wrong
+  the instant the record is touched, so every demo change would report itself a conflict on the first
+  apply; a change's `payload` is the *submitted attributes* a controller would have built, which the
+  loader would have to invent rather than record; and a `Draft` has no slug — a pending change is not a
+  published address — so `draft_changes.yml` could not name the draft its changes belong to at all. Adding
+  `HasSlug` to `Draft` to make it referenceable would mean a migration and a column the domain has no use
+  for, so the exception is recorded as *not expressible* in the new-model checklist
+  ([`development.md`](development.md#adding-a-new-content-model-checklist)) and linked from the
+  development-data convention, with the manual verification path written down: set the universe to
+  `wikipedia`, edit something, follow **Pending changes**.
+
+- **[fixed]** **A draft-based universe collected changes that no page could show.** The known quirk is
+  resolved: `/u/:universe_slug/drafts` lists the reader's own drafts and each change in one, and the
+  editor can apply or discard them, so switching a universe to `wikipedia` or `github` is no longer a
+  state its editors cannot get out of. See the 2026-10-03 entry above for what that took, and
+  [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) for what an apply still does not
+  do — a change whose record has moved is reported, not resolved, which is Phase 3's page.
+
 - **[added]** **Collaboration phase 2, slice 2.2: a mutation in a draft-based universe is remembered
   instead of written.** `app/controllers/concerns/draft_mutation.rb`, called from all twenty mutation
   controllers, and the request tests that hold each of them to it. The four decisions the slice text

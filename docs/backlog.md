@@ -105,9 +105,10 @@ still the analyzer's job, and nothing here performs it.
 
 Universe-level access management is implemented: public/private visibility and read/write/admin
 memberships are available from the universe workspace. The right sidebar still reserves temporary
-links for Tracking, Analyzer, richer Collaboration, Graphs, Analytics, and AI tools. Those remain
-future product areas. Before replacing the placeholders with navigation, specify the underlying
-records and permissions: inconsistency detection, incomplete/undefined records, submissions,
+links for Collaborators, Conflicts, Branches, Forks, Analytics, and AI tools, and it now leads its
+Collaboration group with the live **Pending changes** entry a draft-based universe needs. Those
+remaining placeholders stay future product areas. Before replacing them with navigation, specify the
+underlying records and permissions: inconsistency detection, incomplete/undefined records, submissions,
 changes/forks, graphs, analytics, and drafts. A feature should appear as a live navigation item when
 it has a useful destination and clear empty/loading/error states.
 
@@ -154,16 +155,36 @@ it has a useful destination and clear empty/loading/error states.
       a Scene's `move`, its `group`, and a Scene Element's `move` are intercepted too, so no write path is
       left open in a draft-based universe. `Draft.open_for!` is the one place a draft is opened outside a
       test, and `test/controllers/draft_mutation_test.rb` walks all twenty controllers in both modes.
-      Draft mode still has no page, so a remembered change cannot yet be listed, applied, or discarded.
-    - **Slice 2.3:** `DraftsController#index` (lists current user's drafts for the universe),
-      `#show` (shows one draft with all its changes), `#apply` (applies all non-conflicting changes;
-      conflict resolution comes in Phase 3), `#discard` (discards a draft). Views: draft list page,
-      draft detail page. Routes: `resources :drafts, only: [:index, :show, :apply, :discard]`.
-      Tests: request tests, system test.
+      This slice left draft mode with no page; slice 2.3 below delivered it.
+    - **Slice 2.3 (delivered 2026-10-03):** `DraftsController#index` (lists current user's drafts for the
+      universe), `#show` (shows one draft with all its changes), `#apply` (applies all non-conflicting
+      changes; conflict resolution comes in Phase 3), and `#discard` (discards a draft), with a draft list
+      page and a draft detail page, `resources :drafts, only: %i[index show]` plus two member POSTs, and
+      request, service, and system tests. Three decisions the slice text did not settle, all in
+      [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md): an applier must write through
+      the live mutation path, so it derives a model's ordering from its own columns rather than keeping a
+      second list of the fifteen controllers that declare theirs — `test/services/draft_applier_test.rb`
+      holds that derivation against every routed controller in both directions; a change whose record has
+      moved, whose record is gone, or that the live path refuses is **reported** rather than asked about,
+      because refusing the whole apply would strand a draft that can neither be applied nor closed; and the
+      draft becomes `applied` either way, because a remembered create names no record and applying a
+      partly-written draft twice would write a second copy of it. The whole run is one transaction with the
+      status change inside it, so an unexpected failure leaves the draft exactly as it was. A conflict is
+      therefore reported rather than resolved until Phase 3: the author sees how many changes were written
+      and how many were not, and the rest stay readable on the draft's page. A draft is read as its own
+      author's inside the authorized universe — no guest can reach the page at all — and the right sidebar
+      carries a **Pending changes** entry wherever a draft can exist, because a page nothing links to
+      leaves the trap slice 2.2 closed only in the code.
     - **Slice 2.4:** Add "Start editing" / "Stop editing" toggle button in the universe view (visible
       to users with write access in draft-based modes). When in draft mode, show "N pending changes"
       indicator. Toggle stored in session. When entering draft mode, create a draft for the user if one
       doesn't exist. Tests: request tests, system test.
+      Two review questions ride on this slice. The sidebar's **Pending changes** entry was added in 2.3
+      and renders wherever a draft *can* exist, which means a reader with nothing pending in a
+      draft-based universe is offered an empty page; decide then whether the count should also decide the
+      entry's presence. And "create a draft for the user if one doesn't exist" collides with finding 65 in
+      [`known_quirks.md`](known_quirks.md) — two tabs can each open one — so decide whether entering draft
+      mode should *look up* the open draft instead of relying on two requests not arriving together.
     - **Slice 2.5:** When in draft mode, show pending changes as a panel/sidebar. For draft-created
       records: show them in the list with a "draft" badge. For draft-edited records: show current
       values with a "pending edit" badge. For draft-deleted records: show the record with a "pending
@@ -177,21 +198,36 @@ it has a useful destination and clear empty/loading/error states.
     when a draft change is created, store the record's `updated_at`; at apply time, a mismatch means
     someone else modified the record.
 
-    - **Slice 3.1:** Create `app/services/draft_conflict_detector.rb`. For each draft change:
+    Three questions this phase has to settle before the slices below, all recorded while slice 2.3 was
+    delivered and all consequences of what it had to choose (ADR 0021): whether a change's **outcome** is
+    stored on the row or only returned by the applier — nothing records it today, so a draft's page
+    cannot say which of its changes were written (finding 64 in
+    [`known_quirks.md`](known_quirks.md)); where an author's **unapplied** values live, because today they
+    are a `payload` on a closed draft that nothing reads back into an editor, so a reported conflict has
+    to be retyped (finding 63); and whether a **delete answered "mine"** is a restore-then-edit or an
+    update-in-place, since the record is soft-deleted and `PositionedResourceOrder` normalized its
+    siblings when it went.
+
+    - **Slice 3.1:** Create `app/services/draft_conflict_detector.rb`. The rule itself already
+       exists as `DraftApplier`'s skip decision; this slice promotes it to a detector that reports each
+       conflict with its change and the record's current state, which is what the resolution page shows.
+       For each draft change:
       **Create** → no conflict possible. **Update** → if record's `updated_at` != `base_version` →
       CONFLICT; if record is soft-deleted → CONFLICT. **Delete** → if record's `updated_at` !=
       `base_version` → CONFLICT; if record is already soft-deleted → no conflict (already gone).
-      Returns a list of conflicts with the draft change and the current record state. Tests: unit
-      tests for all conflict scenarios.
+      Tests: unit tests for all conflict scenarios.
     - **Slice 3.2:** Conflict resolution UI. When applying a draft with conflicts, show a conflict
       resolution page. For each conflict: show the record name and type, what the current user wants
       to do, what "theirs" means, two buttons: "Apply theirs" (discard my change for this record) and
       "Apply mine" (overwrite with my change). For "apply mine" on a delete conflict: restore the
       record and apply the edit. For "apply mine" on an edit conflict: overwrite the current values
       with the draft values. Tests: request tests, system test.
-    - **Slice 3.3:** Create `app/services/draft_applier.rb`. Applies non-conflicting changes directly.
-      For conflicting changes, applies the user's choice. Runs in a transaction. Returns a summary of
-      what was applied. Tests: unit tests, integration tests.
+    - **Slice 3.3:** Extend `app/services/draft_applier.rb`, which slice 2.3 delivered with the
+      non-conflicting half already done — it writes a draft's changes through the live mutation path,
+      reports what it could not write, and closes the draft inside one transaction. This slice adds the
+      user's choice for a conflicting change: "theirs" discards it, "mine" applies it over the current
+      values, and a delete conflict answered "mine" restores the record first. The returned summary
+      includes which changes were answered and how. Tests: unit tests, integration tests.
 
 23. **Collaboration system — Phase 4: Wikipedia mode (end-to-end)**
 

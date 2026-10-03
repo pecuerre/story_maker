@@ -149,15 +149,6 @@ each one is reachable now rather than only pending.
     remembered intentions rather than as a record of what happened, which is the part of "draft history"
     that Phase 5 will want.
 
-65. **Low — two concurrent requests can open two drafts for one author, and applying both writes both.**
-    `drafts` has no unique index on `[user_id, universe_id]` (ADR 0019, `db/schema.rb:118-127`), so two
-    tabs that mutate at the same moment each open a draft. That was harmless while a draft had no page; now
-    both can be applied, so the second one's changes are written over whatever the first one left, and any
-    collision between them surfaces as the reported conflict above rather than as a refusal. The index
-    cannot be the fix on its own — an applied draft stays behind as history — so the open question is
-    whether the editing flow should look up the open draft on entry rather than rely on two requests not
-    colliding.
-
 66. **Low — a draft's page costs a record lookup per remembered change, plus one per remembered id list.**
     `DraftChange#resolved_record` deliberately does not remember its answer (a record deleted after the
     change was written must stop resolving), so each row resolves its own record, and each remembered

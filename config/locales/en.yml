@@ -468,6 +468,29 @@ en:
       partially_applied: "%{applied} changes are now live. %{skipped} could not be applied: the records they name have changed since you remembered them, or the universe refused the write. This draft is closed, and those changes are still listed on it."
       discarded: "The draft was discarded. Nothing was written."
       closed: "That draft has already been applied or discarded, so there is nothing left to do with it."
+      # The editing session. Starting says what the session *is* — a claim that
+      # opens the draft, not a switch that decides whether a change is written —
+      # because that is the one thing the control would otherwise leave an author
+      # guessing. Stopping names what is still waiting, so a release is never read
+      # as a loss.
+      editing_started: "You are editing this universe. Changes you make are remembered until you apply them."
+      editing_stopped:
+        zero: "Editing stopped. Nothing was waiting on your draft."
+        one: "Editing stopped. 1 remembered change is still waiting on your draft."
+        other: "Editing stopped. %{count} remembered changes are still waiting on your draft."
+      # Answering a toggle posted from a stale page in a universe that writes
+      # straight through: there was never an editing session to stop.
+      not_draft_based: "This universe writes changes straight through, so there is no editing session to start or stop."
+    # The **Start editing** / **Stop editing** control on the universe page. The
+    # pending count is one button rather than a badge because the number is only
+    # interesting as a way into the changes it is counting.
+    editing:
+      start: "Start editing"
+      stop: "Stop editing"
+      pending_changes:
+        zero: "No pending changes yet"
+        one: "1 pending change"
+        other: "%{count} pending changes"
     index:
       title: "Pending changes"
       description: "Changes you have made in this universe that are remembered rather than written, and the drafts they belong to."

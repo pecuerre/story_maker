@@ -447,7 +447,48 @@ a new photo or a removed one rather than as a `data:` URL and a boolean.
 **Pending changes** entry, rendered only where a draft can exist — a `direct` universe never opens one
 — and only for a signed-in reader, because a draft belongs to a person. An editor who is told their
 change was remembered and cannot then find it has no way to see it, apply it, or throw it away; which
-block that entry belongs to is in [features/navigation.md](features/navigation.md).
+block that entry belongs to is in [features/navigation.md](features/navigation.md). The entry's presence
+does **not** depend on the reader having something pending: it is how a reader with nothing pending
+reaches the history the drafts list also shows, and a control that appears and disappears with a count
+is a control whose absence has to be explained.
+
+## The editing session
+
+The universe page carries a **Start editing** / **Stop editing** control, and the reader's editing
+session is a **session value, not a record** (`DraftEditingSession`): one boolean per universe in
+`session[:draft_editing_universe_ids]`, keyed the way `current_story_ids` is, so a visit spanning two
+universes does not make the second inherit the first's session. `Authentication#clear_session_context`
+drops it at every session boundary, so one account's claim cannot cross accounts on a shared browser; a
+draft outlives the session, and the sidebar entry is how it is reached afterwards.
+
+**It is a claim, not a gate.** No mutation path reads the flag. In a draft-based universe every mutation
+is remembered whether the reader pressed the control or not ([ADR
+0020](adr/0020-remembering-mutations-instead-of-writing-them.md)), and the control is deliberately not a
+second answer to that question — a reader who forgot to press it would otherwise write straight through
+a universe whose mode exists to stop exactly that ([ADR
+0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)). What entering a
+session does is **open the draft before the first change is made** (`Draft.open_for!`, which resumes an
+existing draft rather than replacing it), and what the flag gives the page is a count: the pending count
+is a link into the drafts page, because a number is only interesting as a way into the changes it is
+counting.
+
+The control is rendered where the server accepts it: a draft-based universe, a signed-in reader, and
+`write` access — the same three conditions `draft_editing_available?` states and the two actions enforce
+through the shared universe policy. Both actions need `write`, so an author whose access is revoked
+mid-session loses the control with the access rather than keeping a mode whose changes could not be
+remembered. **Stopping is not discarding**: the draft stays open and every remembered change stays in it,
+and the flash states how much is still waiting, so a release is never read as a loss.
+
+Both actions are a singleton `resource` (`POST`/`DELETE /u/:universe_slug/editing`), the same shape
+`resource :session` uses, and there is no `show`: the universe page renders the current state, and a GET
+never begins an editing session. A toggle posted from a stale page in a universe that has since become
+`direct` is answered with the universe and `drafts.flash.not_draft_based` rather than silently accepted.
+
+**One open draft per author per universe is a partial unique index** on `[user_id, universe_id]` over the
+open statuses, so two tabs cannot each open one. History is outside the index, which is what lets a
+second editing session have a row of its own. `Draft.open_for!` resolves the race the index leaves by
+re-reading the winner's row rather than raising, and re-raises if that row is gone — the index's status
+list is compared against `Draft::OPEN_STATUSES` by `test/models/draft_test.rb` so the two cannot drift.
 
 ## Record details pages
 

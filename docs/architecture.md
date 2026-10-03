@@ -146,11 +146,13 @@ Other global behavior: `allow_browser versions: :modern`,
     404), `ApplicationController#refuse_request` redirects to the universe list with an alert instead
     of a bare status code, because a refusal there answers "nothing happened" to a sign-in that
     succeeded. Every other refusal keeps the bare 403/404.
-- Sign-out destroys the `Current.session`, deletes the cookie, and clears remembered story
-  selections. It deliberately does **not** clear the browser's remembered destination, which is what
-  lets a reader resume after signing in again. Starting a new authenticated session performs the
-  same session-scoped context cleanup, and a request with a stale/deleted authentication session
-  clears its cookie and story context.
+- Sign-out destroys the `Current.session`, deletes the cookie, and clears the session's
+  per-visit context — `clear_session_context` drops both the remembered story selections and the
+  editing sessions claimed in them (`DraftEditingSession::KEY`). It deliberately does **not** clear the
+  browser's remembered destination, which is what lets a reader resume after signing in again, and a
+  sign-out is not a draft discard: the open draft and its remembered changes are still there.
+  Starting a new authenticated session performs the same session-scoped context cleanup, and a request
+  with a stale/deleted authentication session clears its cookie and story context too.
 - Password reset: `passwords#create` mails a token link, `passwords#edit/update` change the
   password and destroy all of that user's sessions. Password-reset responses set `Cache-Control:
   no-store` and `Referrer-Policy: no-referrer`. The custom `PasswordResetPathFilter` redacts the
@@ -198,7 +200,7 @@ scenes, which controllers answer which format, and the URL of every workspace �
 | Flow | Controllers | Behavior |
 |---|---|---|
 | JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts**, **draft_editing** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 
 Every PATCH and DELETE in the HTML flow sends `status: :see_other`; a `create` is a POST, so its
 default 302 is correct. A 302 after a non-GET verb asks the browser to repeat the mutation as a GET
@@ -226,6 +228,18 @@ the live path uses, reports a change it could not write instead of writing it, a
 way; [conventions.md](conventions.md#the-drafts-page) owns the page and the two controls, and
 [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) owns why a conflict is reported
 rather than resolved in this phase.
+
+`DraftEditingController` is the universe page's **Start editing** / **Stop editing** control: a singleton
+`resource` with a POST and a DELETE, the same shape `resource :session` uses. It answers the HTML flow —
+a POST redirects with the default 302, a DELETE with `see_other` — and both actions need `write` access
+from the shared policy, which is the same rule that decides where the control renders. **It is not a gate
+on remembering**: no mutation path reads the editing session, so a draft-based universe remembers every
+mutation whether the reader pressed the control or not, and entering a session opens the draft before the
+first change is made. The session flag is per universe and is dropped by
+`Authentication#clear_session_context` at every session boundary;
+[conventions.md](conventions.md#the-editing-session) owns it and
+[ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md) owns why the control
+claims the browser rather than deciding what is written.
 
 `scene_elements` has no read action at all, because Elements are read on Scene Details; every one of
 its actions is a mutation and therefore authenticated. `scene_characters`, `scene_items`, and

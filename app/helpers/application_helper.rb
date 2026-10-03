@@ -151,6 +151,37 @@ module ApplicationHelper
     end
   end
 
+  # The editing session, as three questions the universe page asks. They sit next
+  # to the `can_*_universe?` predicates because all four are about what this
+  # request's reader may do here, and because `draft_editing?` is only meaningful
+  # once `draft_editing_available?` has said the control may be rendered at all.
+  #
+  # `draft_editing_available?` is the whole visibility rule for the control: a
+  # universe that writes changes straight through has no editing session, and a
+  # reader who cannot write has nothing to edit. It is deliberately the same
+  # condition `DraftEditingController` enforces, so the button is never offered to
+  # someone the server would refuse.
+  def draft_editing_available?(universe = Current.universe)
+    universe.present? && universe.draft_based? && authenticated? && can_write_universe?(universe)
+  end
+
+  # Whether this browser is editing this universe in this session. A false answer
+  # means nothing at all was changed — the open draft, and every change in it, is
+  # still there, reachable from the right sidebar (ADR 0022).
+  def draft_editing?(universe = Current.universe)
+    return false unless draft_editing_available?(universe)
+
+    DraftEditingSession.active?(session: session, user: Current.user, universe: universe)
+  end
+
+  # How many remembered changes this reader has waiting in this universe, which is
+  # what the universe page states beside the control. A draft with nothing in it
+  # is a real state — the session was started and no change has been made yet — so
+  # the answer is a count rather than a boolean.
+  def pending_draft_changes_count(user = Current.user, universe = Current.universe)
+    Draft.pending_changes_count(user, universe)
+  end
+
   # Universe authorization and this helper must resolve a record's Universe the
   # same way, or a writer sees missing controls while a record-level check
   # denies an allowed mutation. Both use the shared resolver.

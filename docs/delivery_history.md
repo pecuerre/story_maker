@@ -29,6 +29,96 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-03
 
+- **[added]** **Collaboration phase 2, slice 2.4: an editing session on the universe page, and one open
+  draft is a database rule.** `DraftEditingSession`, `DraftEditingController`, the universe page's
+  **Start editing** / **Stop editing** control with its pending count, and a partial unique index over the
+  open statuses of `drafts`. The decisions are in
+  [ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md); what follows is
+  the reasoning and the verification.
+
+  **The control was almost a switch, and being a switch would have been the unsafe answer.** The slice
+  asked for a toggle, and the obvious reading is that it decides whether a change is remembered: press it
+  and edits are held, leave it alone and edits are written. That reading fails on the author who has not
+  noticed the switch — which is precisely the author whose edit should have been held, and in a
+  `wikipedia` universe a write that lands unreviewed is the outcome the mode exists to prevent. Slice 2.2
+  already made remembering unconditional in every mutation controller, so a control that gated it would be
+  a second, weaker answer to a question with one right answer. So the control says what it actually is: a
+  claim by this browser that its user is working in this universe right now. It earns that by doing two
+  things a bare mutation never did — entering it **opens the draft before the first change is made**, so
+  the thing changes are remembered into exists before anything needs remembering, and it gives the page a
+  count to state. No mutation path reads the flag, and
+  `test/controllers/draft_editing_controller_test.rb` asserts that directly: a `wikipedia` edit made
+  without ever pressing the control is remembered and not written.
+
+  **The two readings that would have made the button a real gate were both rejected deliberately.**
+  Refusing mutations while the control is off is the safest possible reading and the wrong one for this
+  phase: it needs a JSON *and* HTML refusal contract across all twenty mutation controllers, every
+  workspace refuses until the author finds a control on a different page, and a reader who cannot find it
+  is left with a universe they cannot edit at all — the gate has to be discoverable before it is
+  load-bearing, and a control that refuses work until pressed is not. Writing straight through while it
+  is off is the other way, and it makes the collaboration mode a per-session preference: the same universe
+  review-gated for an author who pressed the button and open for one who did not, and the one who did not
+  press it is the one who forgot.
+
+  **Stopping is not discarding, and the flash has to say so.** A remembered change is append-only and the
+  draft is where it lives, so throwing the draft away on a stop would delete work the reader can still
+  see, review, and apply. What a stop changes is the session's answer to "am I editing?", which is why
+  `editing_stopped` counts what is still waiting — otherwise a release reads as a loss and the author's
+  next thought is that stopping destroyed something. The same reasoning put the editing session in the
+  **session** rather than in a record: it answers "is this browser in the middle of a session?", true of
+  one visit and false of the next, where a row would answer "has this author ever edited?", which the open
+  draft itself answers and which would make a mode that ends at a sign-out look permanent. It is keyed by
+  universe id the way `current_story_ids` is, because a visit can span two universes and the second must
+  not inherit the first's session, and `Authentication#clear_session_context` (the method
+  `clear_remembered_stories` was renamed to, since it now clears two things) drops it at every session
+  boundary. A sign-out releases the claim and **keeps** the draft — the sidebar's **Pending changes**
+  entry is how it is reached afterwards.
+
+  **Both of the review questions the slice raised came out against the count.** The sidebar's **Pending
+  changes** entry stays rendered wherever a draft can exist rather than following the count: it is also
+  how a reader reaches the drafts list's history, and a navigation entry that appears and disappears with
+  a number needs an explanation every time it is absent. And "create a draft if one doesn't exist" is no
+  longer a convention two requests can disagree about.
+
+  **One open draft per author per universe is now a partial unique index.** ADR 0019 deliberately left
+  `[user_id, universe_id]` unindexed-unique because applied drafts stay behind as history and a
+  constraint across *every* status would make a second editing session impossible — that reasoning is
+  untouched, and the index is partial: it covers `OPEN_STATUSES` and nothing else, while the plain
+  composite index stays for the list that reads history too. This was known quirk 65, and it had stopped
+  being harmless once a draft had a page: two drafts could each be applied, so the second one's changes
+  landed over whatever the first one left. A slice that opens drafts from a user action makes the race
+  easier to hit, not harder — the same click in two tabs. `Draft.open_for!` resolves what the index
+  leaves behind by re-reading the winner's row instead of raising, since both requests' changes belong to
+  one author in one universe and must land on one draft that one apply closes; it re-raises if that row
+  is gone rather than handing the caller a draft-less session. The migration freezes its statuses as SQL,
+  because a migration has to keep saying what it said on the day it ran, and
+  `test/models/draft_test.rb` reads the index back out of the database and compares it with
+  `Draft::OPEN_STATUSES` — the same "test the other list" shape the applier's ordering derivation uses.
+  `Draft.open_for`'s "most recent open draft wins" rule went away with the possibility of two, and
+  `test/services/draft_applier_test.rb` had to be reordered: it opened two drafts for one author, which
+  is now impossible, and the second draft only becomes available once the first has been applied.
+
+  **Two test-environment details cost time and are worth recording.** Minitest 6 ships no `Object#stub`,
+  so the lost-race cases swap `Draft.open_for`/`create!` for the duration of a block with a small
+  `ensure`-restored helper rather than adding a mocking dependency for two tests. And the integration
+  suite's `session` reader needs a controller to have run, so a test that wants to observe the claim has
+  to make a request first; `last_session` reads `response.request.session` instead, which says which
+  request's session it is.
+
+  Verification: `bin/rails test test/controllers/draft_editing_controller_test.rb` (18 tests, 82
+  assertions), `test/models/draft_editing_session_test.rb` (9 tests, 27),
+  `test/models/draft_test.rb` (17 tests, 76), the editing-session case added to
+  `test/controllers/csrf_mutation_test.rb`, and `bin/rails test test/system/draft_workflow_test.rb` (4
+  tests, 68 assertions) — the browser journey from pressing the control through the pending count to the
+  flash after stopping. Over the whole change: `bin/rails test` (1688 runs, 11142 assertions, 10 skips, 0
+  failures).
+
+- **[fixed]** **Two concurrent requests could open two drafts for one author.** Known quirk 65 is
+  resolved: `drafts` has a partial unique index over the open statuses, and the losing request re-reads
+  the winner's row, so applying both is no longer reachable. The finding's own note was that the index
+  could not be the whole fix — an applied draft stays behind as history — which is why the index is
+  partial and why the flow also looks the open draft up on entry, through `Draft.open_for!`.
+
 - **[added]** **Collaboration phase 2, slice 2.3: a draft has a page, and applying it writes through the
   live mutation path.** `DraftsController` (`index`, `show`, `apply`, `discard`), `DraftApplier`, the two
   views, and the right sidebar's **Pending changes** entry. The decisions are in

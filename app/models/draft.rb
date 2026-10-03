@@ -15,12 +15,13 @@
 # content rules are instance blocks over universe-scoped records; a draft is
 # read as its owner's, inside the universe the request has already authorized.
 #
-# There is no unique index on `[user_id, universe_id]`, and that is a decision
-# rather than an omission: the collaboration plan keeps one draft at a time per
-# author per universe, but an applied draft stays behind as history, so a
-# constraint across *all* statuses would make a second editing session
-# impossible. "One open draft" is a rule of the editing flow that asks this
-# model, not of the schema.
+# There **is** a unique index on `[user_id, universe_id]`, and it is partial: it
+# covers `OPEN_STATUSES` and nothing else. An applied or discarded draft stays
+# behind as history, so a constraint across *all* statuses would make a second
+# editing session impossible (ADR 0019), while no constraint at all let two tabs
+# open two drafts that could then both be applied (ADR 0022). One **open** draft
+# per author per universe is the rule, so that is what the database says, and
+# `open_for!` is what resolves the one race it leaves behind.
 #
 # The status vocabulary is owned here and validated against `STATUSES`, the same
 # list the column default comes from: a status the application has no behaviour
@@ -30,10 +31,11 @@ class Draft < ApplicationRecord
   STATUSES = %w[draft applied discarded submitted].freeze
 
   # The statuses a change may still be added to and applied from. It is a list
-  # rather than a second `open?` expression because both the finder below and the
-  # predicate read it: "is this draft still open" has to be the same question
-  # wherever it is asked, or a second editing session could be opened onto a draft
-  # whose changes the apply workflow would not touch.
+  # rather than a second `open?` expression because four things read it: the finder
+  # below, the pending-count query, the predicate, and the partial unique index that
+  # makes "one open draft" something the database says. "Is this draft still open"
+  # has to be the same question wherever it is asked, or a second editing session
+  # could be opened onto a draft whose changes the apply workflow would not touch.
   OPEN_STATUSES = %w[draft submitted].freeze
 
   belongs_to :user
@@ -48,19 +50,38 @@ class Draft < ApplicationRecord
   scope :open, -> { where(status: OPEN_STATUSES) }
 
   # The one draft an author is working in inside one universe, or nil when there is
-  # none. The most recent open draft wins, because that is the session an author
-  # resumes; an older open draft is one they left behind, and this rule — not a
-  # constraint — is what keeps the collaboration plan's "one draft at a time per
-  # author per universe" honest.
+  # none. There can only be one: the partial unique index refuses a second open
+  # draft for the same author and universe, so this is a lookup rather than a
+  # search for the most recent of several. History is not in the scope, which is
+  # what lets a second editing session have a row of its own.
   def self.open_for(user, universe)
-    open.where(user: user, universe: universe).order(:id).last
+    open.find_by(user: user, universe: universe)
   end
 
   # `open_for`, opening one when there is none. This is what the interception path
-  # asks, and it is the only place a draft is created outside a test, so "which
-  # draft does this change join" has one answer.
+  # and the editing session ask, so "which draft does this change join" and "which
+  # draft did this author start editing" have one answer.
+  #
+  # Two requests that arrive together can both read "no open draft" before either
+  # has inserted. The index decides between them, and the loser re-reads the
+  # winner's row instead of raising: both requests' changes belong to one author
+  # working in one universe, so they belong on one draft that one apply closes.
+  # Without this, the second draft would sit there waiting to be applied over
+  # whatever the first one left.
   def self.open_for!(user, universe)
     open_for(user, universe) || create!(user: user, universe: universe)
+  rescue ActiveRecord::RecordNotUnique
+    open_for(user, universe) || raise
+  end
+
+  # How many changes this author has waiting in this universe, which is what the
+  # universe page states while they are editing. It counts the changes rather than
+  # the drafts, and it reads the open scope so an applied or discarded draft's
+  # remembered intentions stop counting the moment they stop being pending.
+  def self.pending_changes_count(user, universe)
+    return 0 if user.nil? || universe.nil?
+
+    DraftChange.where(draft: open.where(user: user, universe: universe)).count
   end
 
   # The stored values, asked about by name, so that no caller re-derives a

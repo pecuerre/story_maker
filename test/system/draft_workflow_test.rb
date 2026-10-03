@@ -109,4 +109,80 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     assert_no_selector ".entity-row button", text: "Apply"
     assert_equal character.name, character.reload.name
   end
+
+  test "an author starts editing, and the universe page says how much is waiting" do
+    # The editing session is the one thing here that only a browser shows as a
+    # journey: press the control, walk into a workspace, come back, and the page
+    # has counted what was remembered in between. The flash that follows stopping
+    # is part of it too, because it is what tells an author their pending work did
+    # not disappear.
+    sign_in_via_form(@user)
+
+    visit universe_path(universe_slug: @universe.slug)
+    assert_selector ".page-actions", text: "Start editing"
+    assert_selector ".page-actions", text: "No pending changes yet", count: 0
+
+    click_button "Start editing"
+
+    # Entering the session opens the draft, so the count is honest from the first
+    # moment rather than appearing only once something has been remembered.
+    assert_selector ".page-actions", text: "No pending changes yet"
+    assert_selector ".page-actions", text: "Stop editing"
+    assert_equal 1, Draft.open_for(@user, @universe).id
+
+    # The claim is per universe and survives navigation, which is the difference
+    # between an editing session and a one-page banner.
+    visit universe_characters_path(universe_slug: @universe.slug)
+    click_button "Add character"
+    within ".modal.show" do
+      fill_in "Name", with: "Counted while editing"
+      click_button "Save character"
+    end
+
+    visit universe_path(universe_slug: @universe.slug)
+
+    assert_selector ".page-actions", text: "1 pending change"
+    assert_selector ".page-actions", text: "Stop editing"
+
+    # The count is a way into the changes, so following it lands on the draft.
+    click_on "1 pending change"
+    assert_selector "h1", text: "Pending changes"
+    assert_selector ".entity-row", text: "1 remembered change"
+
+    visit universe_path(universe_slug: @universe.slug)
+    click_button "Stop editing"
+
+    assert_selector ".page-actions", text: "Start editing"
+    # Stopping released the session, not the work, and the flash says where it went.
+    assert_selector ".flash-stack .flash-toast", text: "1 remembered change is still waiting on your draft"
+    assert_equal 1, Draft.open_for(@user, @universe).draft_changes.count
+  end
+
+  test "a change made without pressing start editing is still remembered" do
+    # The property the whole design rests on, and the reason the control is a claim
+    # rather than a switch: an author who never pressed it must still be unable to
+    # write straight through a universe that remembers changes.
+    sign_in_via_form(@user)
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    assert_no_selector ".page-actions", text: "Stop editing"
+
+    click_button "Add character"
+    within ".modal.show" do
+      fill_in "Name", with: "Remembered without the toggle"
+      click_button "Save character"
+    end
+
+    # The Characters workspace answers JSON, so nothing was written and there is
+    # nothing on the page to see but the missing row: the draft is where the change
+    # went, and the right sidebar is how an editor reaches it. Going there is also
+    # how the test waits for the write, because the JSON mutation carries no page
+    # change of its own.
+    within "aside.right-sidebar" do
+      click_on "Pending changes"
+    end
+
+    assert_selector ".entity-row", text: "1 remembered change"
+    assert_nil Character.find_by(name: "Remembered without the toggle")
+  end
 end

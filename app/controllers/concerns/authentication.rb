@@ -114,7 +114,7 @@ module Authentication
     end
 
     def start_new_session_for(user)
-      clear_remembered_stories
+      clear_session_context
       user.sessions.create!(user_agent: request.user_agent, ip_address: request.remote_ip).tap do |session|
         Current.session = session
         # The cookie expires with the session's absolute deadline rather than
@@ -133,7 +133,7 @@ module Authentication
     end
 
     def terminate_session
-      clear_remembered_stories
+      clear_session_context
       Current.session.destroy
       Current.session = nil
       cookies.delete(:session_id)
@@ -146,13 +146,22 @@ module Authentication
     # session is over, and keeping the row would preserve a record of a
     # credential that has already been refused.
     def invalidate_stale_session(session = nil)
-      clear_remembered_stories
+      clear_session_context
       cookies.delete(:session_id)
       session&.destroy
       nil
     end
 
-    def clear_remembered_stories
+    # Everything this session remembers about **who is working where**, dropped at
+    # every boundary where one account's context must not become another's: the
+    # story per universe, and the editing sessions claimed in them.
+    #
+    # Both are per-visit context rather than durable preferences. Neither is worth
+    # carrying across an account switch on a shared browser, and both are
+    # re-derivable — the remembered destination cookie is what survives a sign-out,
+    # and an open draft is a row rather than a claim.
+    def clear_session_context
       session.delete(:current_story_ids)
+      session.delete(DraftEditingSession::KEY)
     end
 end

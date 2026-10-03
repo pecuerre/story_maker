@@ -22,6 +22,28 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", universe_memberships_path(universe_slug: @universe.slug)
   end
 
+  # Every row prints a name, an address, and an aria label, so the users have to
+  # arrive with the memberships. What is asserted is that the count does not
+  # change with the number of rows: the queries the layout and `Current` add are
+  # a fixed number and are deliberately not pinned here.
+  test "adding a member does not add a query for that member" do
+    UniverseMembership.create!(universe: @universe, user: @user, access_level: :read)
+
+    with_one = count_queries(/FROM "users"/) do
+      get universe_memberships_url(universe_slug: @universe.slug)
+    end
+
+    third = User.create!(name: "User Three", email_address: "three@example.com", password: "password")
+    UniverseMembership.create!(universe: @universe, user: third, access_level: :read)
+
+    with_two = count_queries(/FROM "users"/) do
+      get universe_memberships_url(universe_slug: @universe.slug)
+    end
+
+    assert_response :success
+    assert_equal with_one, with_two
+  end
+
   test "owner can open the add member page" do
     get new_universe_membership_url(universe_slug: @universe.slug)
 

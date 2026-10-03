@@ -15,6 +15,11 @@
 # `@layers` is the single source of truth for that ordering, and the arrows the view
 # draws are derived from it rather than from the raw associations, so the two can
 # never contradict each other.
+#
+# An edge is refused when it would close a cycle, which is the only thing that keeps a
+# declaration the author wrote from contradicting the dates. `dates_speak_first?`
+# establishes when that refusal is *possible* at all, which is what keeps the build from
+# walking the graph once per candidate edge: see that method for the argument.
 class TimelineLayout
   attr_reader :layers, :edges
 
@@ -26,86 +31,147 @@ class TimelineLayout
 
   private
 
-  def build
-    union = build_union_find
-    groups = Hash.new { |hash, key| hash[key] = [] }
-    @events.each { |event| groups[union.find(event.id)] << event }
+    def build
+      union = build_union_find
+      # Resolved once. `UnionFind#find` is idempotent once every union is done, and
+      # the three passes below ask it for both members of every pair — which on a long
+      # timeline is half a million calls, more than everything else the build does.
+      roots = @events.to_h { |event| [ event.id, union.find(event.id) ] }
+      groups = Hash.new { |hash, key| hash[key] = [] }
+      @events.each { |event| groups[roots[event.id]] << event }
 
-    adjacency = Hash.new { |hash, key| hash[key] = [] }
-    reverse_adjacency = Hash.new { |hash, key| hash[key] = [] }
+      # Sets rather than Arrays: `include?` runs once per candidate edge and again for
+      # the `ordered` test below, and a timeline of disjoint events produces one edge
+      # per pair. An Array would make those two tests quadratic in a graph that is
+      # already quadratic, which is what made this build superlinear.
+      adjacency = Hash.new { |hash, key| hash[key] = Set.new }
+      reverse_adjacency = Hash.new { |hash, key| hash[key] = Set.new }
 
-    add_edge = lambda do |from_root, to_root|
-      next if from_root.nil? || to_root.nil? || from_root == to_root
-      next if adjacency[from_root].include?(to_root)
-      next if reachable?(adjacency, to_root, from_root)
+      dates_speak_first = dates_speak_first?(groups)
 
-      adjacency[from_root] << to_root
-      reverse_adjacency[to_root] << from_root
-    end
+      # `walk` is whether this candidate needs the reachability test. It is false for
+      # the date passes on a timeline whose dates cannot contradict each other, and
+      # always true for the explicit relations, which are the one place a contradiction
+      # actually arrives from.
+      add_edge = lambda do |from_root, to_root, walk: true|
+        next if from_root.nil? || to_root.nil? || from_root == to_root
+        next if adjacency[from_root].include?(to_root)
+        next if walk && reachable?(adjacency, to_root, from_root)
 
-    ordered = lambda do |root_a, root_b|
-      adjacency[root_a].include?(root_b) || adjacency[root_b].include?(root_a)
-    end
+        adjacency[from_root] << to_root
+        reverse_adjacency[to_root] << from_root
+      end
 
-    @events.combination(2).each do |a, b|
-      root_a, root_b = union.find(a.id), union.find(b.id)
-      next if root_a == root_b
+      ordered = lambda do |root_a, root_b|
+        adjacency[root_a].include?(root_b) || adjacency[root_b].include?(root_a)
+      end
 
-      if a.start_datetime && a.end_datetime && b.start_datetime && b.end_datetime
+      # Each pass below only ever looked at the pairs it could decide on, so it is
+      # handed just those rows. Filtering keeps the pairs, and the order they arrive
+      # in, exactly as iterating all of them and skipping the rest did.
+      dated = @events.select { |event| event.start_datetime && event.end_datetime }
+      started = @events.select(&:start_datetime)
+      ended = @events.select(&:end_datetime)
+
+      dated.combination(2).each do |a, b|
+        root_a, root_b = roots[a.id], roots[b.id]
+        next if root_a == root_b
+
         if a.end_datetime <= b.start_datetime
-          add_edge.call(root_a, root_b)
+          add_edge.call(root_a, root_b, walk: !dates_speak_first || same_instant?(a, b))
         elsif b.end_datetime <= a.start_datetime
-          add_edge.call(root_b, root_a)
+          add_edge.call(root_b, root_a, walk: !dates_speak_first || same_instant?(a, b))
         end
       end
-    end
 
-    @events.combination(2).each do |a, b|
-      root_a, root_b = union.find(a.id), union.find(b.id)
-      next if root_a == root_b || ordered.call(root_a, root_b)
-      next unless a.start_datetime && b.start_datetime
+      started.combination(2).each do |a, b|
+        root_a, root_b = roots[a.id], roots[b.id]
+        next if root_a == root_b || ordered.call(root_a, root_b)
 
-      if a.start_datetime < b.start_datetime
-        add_edge.call(root_a, root_b)
-      elsif b.start_datetime < a.start_datetime
-        add_edge.call(root_b, root_a)
-      end
-    end
-
-    @events.combination(2).each do |a, b|
-      root_a, root_b = union.find(a.id), union.find(b.id)
-      next if root_a == root_b || ordered.call(root_a, root_b)
-      next unless a.end_datetime && b.end_datetime
-
-      if a.end_datetime < b.end_datetime
-        add_edge.call(root_a, root_b)
-      elsif b.end_datetime < a.end_datetime
-        add_edge.call(root_b, root_a)
-      end
-    end
-
-    @events.each do |event|
-      # `before_event` happens no earlier than `event`; `after_event` happens no later than `event`.
-      if event.before_event_id && @by_id[event.before_event_id]
-        add_edge.call(union.find(event.id), union.find(event.before_event_id))
+        if a.start_datetime < b.start_datetime
+          add_edge.call(root_a, root_b, walk: !dates_speak_first)
+        elsif b.start_datetime < a.start_datetime
+          add_edge.call(root_b, root_a, walk: !dates_speak_first)
+        end
       end
 
-      if event.after_event_id && @by_id[event.after_event_id]
-        add_edge.call(union.find(event.after_event_id), union.find(event.id))
+      ended.combination(2).each do |a, b|
+        root_a, root_b = roots[a.id], roots[b.id]
+        next if root_a == root_b || ordered.call(root_a, root_b)
+
+        if a.end_datetime < b.end_datetime
+          add_edge.call(root_a, root_b, walk: !dates_speak_first)
+        elsif b.end_datetime < a.end_datetime
+          add_edge.call(root_b, root_a, walk: !dates_speak_first)
+        end
       end
+
+      @events.each do |event|
+        # `before_event` happens no earlier than `event`; `after_event` happens no later than `event`.
+        if event.before_event_id && @by_id[event.before_event_id]
+          add_edge.call(roots[event.id], roots[event.before_event_id])
+        end
+
+        if event.after_event_id && @by_id[event.after_event_id]
+          add_edge.call(roots[event.after_event_id], roots[event.id])
+        end
+      end
+
+      levels = compute_levels(groups.keys, reverse_adjacency)
+
+      max_level = levels.values.max || 0
+      @layers = Array.new(max_level + 1) { [] }
+      groups.each do |root, group_events|
+        @layers[levels[root]].concat(group_events.sort_by(&:id))
+      end
+      @layers.each { |layer| layer.sort_by! { |event| event.id } }
+
+      @edges = build_edges(union, levels)
     end
 
-    levels = compute_levels(groups.keys, reverse_adjacency)
-
-    max_level = levels.values.max || 0
-    @layers = Array.new(max_level + 1) { [] }
-    groups.each do |root, group_events|
-      @layers[levels[root]].concat(group_events.sort_by(&:id))
+    # Whether an edge from one of the three date passes can close a cycle, which is
+    # the only reason the reachability walk exists.
+    #
+    # It cannot, when every group is a single event and every declared range is
+    # well-formed (no validation refuses `end` before `start` yet, so such a row is
+    # legal data). Both conditions are needed, and together they make the walk dead
+    # code:
+    #
+    # * A group of one event means an edge is justified by *that* event on each side,
+    #   so along any path `v -> ... -> u` the declared starts are non-decreasing (pass 1
+    #   needs `end_x <= start_y` plus a well-formed range; pass 2 states it outright).
+    #   A pass-2 edge wants `start_a < start_b`, and a pass-1 edge wants
+    #   `end_a <= start_b`, so with non-decreasing starts along the path either one
+    #   contradicts the path unless every value involved is equal — which leaves only
+    #   zero-length events at a single instant, checked separately as `same_instant?`.
+    # * A pass-3 edge wants `end_a < end_b`. Ends are non-decreasing along a path for
+    #   the same reason (`end_x <= start_y <= end_y`), so that one is a contradiction
+    #   outright.
+    #
+    # What is left refusing an edge is the author's own `before_event`/`after_event`,
+    # and those are one per event rather than one per pair.
+    #
+    # A timeline that declares simultaneity, or that carries a reversed interval, gets
+    # the walk on every candidate edge exactly as before: a group of several events can
+    # justify one edge through its earliest event and another through its latest, and a
+    # reversed interval breaks the non-decreasing argument above. Both are rare, and
+    # neither may change an answer.
+    def dates_speak_first?(groups)
+      groups.size == @events.size && @events.all? { |event| well_formed_range?(event) }
     end
-    @layers.each { |layer| layer.sort_by! { |event| event.id } }
 
-    @edges = build_edges(union, levels)
-  end
+    def well_formed_range?(event)
+      event.start_datetime.nil? || event.end_datetime.nil? ||
+        event.end_datetime >= event.start_datetime
+    end
+
+    # The one date-pass candidate that can still close a cycle: two zero-length events
+    # at the same instant, where "a ends before b starts" holds and so does its
+    # reverse, and a path between them can exist among further such events.
+    def same_instant?(a, b)
+      a.start_datetime == a.end_datetime && b.start_datetime == b.end_datetime &&
+        a.start_datetime == b.start_datetime
+    end
 
   # The arrows the view draws are read off the resolved layout, never off the raw
   # associations. A `before_event`/`after_event` the graph refused — because the
@@ -170,7 +236,7 @@ class TimelineLayout
       next if visited.include?(node)
       visited << node
       return true if node == to
-      stack.concat(adjacency[node])
+      stack.concat(adjacency[node].to_a)
     end
 
     false

@@ -1,5 +1,8 @@
 <% nodes = local_assigns.fetch(:nodes) %>
-<% children_method = local_assigns.fetch(:children_method, :children) %>
+<%# `hierarchy` is required, not defaulted: the tree descends through it at every
+    level, so a caller that forgot it would render a flat list of roots with no
+    error anywhere. `HierarchyIndex` is what turns one query into that descent. %>
+<% hierarchy = local_assigns.fetch(:hierarchy) %>
 <% create_url = local_assigns.fetch(:create_url) %>
 <% update_url = local_assigns.fetch(:update_url) %>
 <% model_param = local_assigns.fetch(:model_param) %>
@@ -94,7 +97,7 @@ end %>
       <% nodes.each do |node| %>
         <%= render "shared/taxonomy_node",
           node: node,
-          children_method: children_method,
+          hierarchy: hierarchy,
           update_url: update_url,
           model_param: model_param,
           modal_fields: modal_fields,

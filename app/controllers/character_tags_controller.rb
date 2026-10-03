@@ -9,10 +9,11 @@ class CharacterTagsController < ApplicationController
   before_action :set_character_tag, only: %i[ show update destroy ]
 
   def index
-    @character_tags = Current.universe.character_tags
-    @character_tags = @character_tags.includes(:children)
-    @character_tags = @character_tags.where(parent_id: nil)
-    @character_tags = @character_tags.order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(Current.universe.character_tags.includes(:photo))
+    @character_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.character_tags)
   end
 

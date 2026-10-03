@@ -73,8 +73,14 @@ class MembershipsController < ApplicationController
       @membership.user == Current.user
     end
 
+    # `references` keeps the join the name ordering needs, and it is what makes
+    # `includes` load the users with the memberships instead of leaving the view
+    # to fetch one per row: every row prints a name, an address, and an aria
+    # label.
     def load_memberships
-      @memberships = Current.universe.memberships.joins(:user).order("LOWER(users.name)").to_a
+      @memberships = Current.universe.memberships
+        .includes(:user).references(:user)
+        .order("LOWER(users.name)").to_a
     end
 
     def create_membership_params

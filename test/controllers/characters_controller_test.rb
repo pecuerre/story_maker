@@ -28,6 +28,28 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
       universe_relations_path(universe_slug: @universe.slug), text: "Relations"
   end
 
+  # The row menu asks whether this reader may write the record once per row, and
+  # every one of those answers reads the membership table. A signed-in reader who
+  # is not the owner is the case that needs it at all, since a public universe
+  # answers everybody else from its own column. What must not happen is the
+  # lookup count following the row count.
+  test "adding rows does not add write-access lookups" do
+    sign_in_as(users(:user_two))
+
+    with_two = count_queries(/FROM "universe_memberships"/) do
+      get universe_characters_url(universe_slug: @universe.slug)
+    end
+
+    3.times { |index| @universe.characters.create!(name: "Listed #{index}") }
+
+    with_five = count_queries(/FROM "universe_memberships"/) do
+      get universe_characters_url(universe_slug: @universe.slug)
+    end
+
+    assert_response :success
+    assert_equal with_two, with_five
+  end
+
   test "index does not render a corrupt cross-universe tag join" do
     foreign_tag = character_tags(:character_tag_three)
     ActiveRecord::Base.connection.execute(<<~SQL.squish)

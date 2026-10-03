@@ -16,6 +16,7 @@
   read_only_empty_description: t("sections.index.read_only_empty_description"),
   confirm_message: ->(section) { t("sections.index.delete_confirm", name: section.name) },
   nodes: @sections,
+  hierarchy: @hierarchy,
   new_url: ->(parent = nil) { new_universe_story_section_path(story_id: @story, parent_id: parent&.id) },
   create_url: universe_story_sections_path(story_id: @story),
   edit_url: ->(section) { edit_universe_story_section_path(story_id: @story, id: section) },

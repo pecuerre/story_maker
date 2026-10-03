@@ -8,10 +8,11 @@ class OwnershipTagsController < ApplicationController
   before_action :set_ownership_tag, only: %i[ show update destroy ]
 
   def index
-    @ownership_tags = Current.universe.ownership_tags
-    @ownership_tags = @ownership_tags.includes(:children)
-    @ownership_tags = @ownership_tags.where(parent_id: nil)
-    @ownership_tags = @ownership_tags.order(:position, :id)
+    # One query for the whole taxonomy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, and the photo is
+    # read for every node because the editor carries its stored image.
+    @hierarchy = HierarchyIndex.build(Current.universe.ownership_tags.includes(:photo))
+    @ownership_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.ownership_tags)
   end
 

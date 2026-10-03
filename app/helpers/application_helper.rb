@@ -112,20 +112,32 @@ module ApplicationHelper
     @nav_stories ||= Current.universe.stories.order(:id).to_a
   end
 
+  # Whether this reader may read, write, or administer a universe. Every one of
+  # these reaches `Universe#access_level_for`, which reads the membership table,
+  # and a list page asks about every row it renders — so an answer is remembered
+  # per universe for the length of one render. The memo is on the view context,
+  # which is built and discarded per request, rather than on the model: a
+  # membership write followed by a second question has to see the write, which is
+  # what `test/models/ability_test.rb` holds.
   def can_read_universe?(universe = Current.universe)
-    universe.present? && current_ability.can?(:read, universe)
+    universe_ability(universe, :read)
   end
 
   def can_write_universe?(universe = Current.universe)
-    universe.present? && current_ability.can?(:write, universe)
+    universe_ability(universe, :write)
   end
 
   def can_administer_universe?(universe = Current.universe)
-    universe.present? && current_ability.can?(:admin, universe)
+    universe_ability(universe, :admin)
   end
 
   def universe_access_level(universe = Current.universe)
-    current_ability.access_level_for(universe)
+    return if universe.nil?
+
+    levels = universe_access_levels
+    return levels[universe.id] if levels.key?(universe.id)
+
+    levels[universe.id] = current_ability.access_level_for(universe)
   end
 
   def universe_access_label(universe = Current.universe)
@@ -265,6 +277,26 @@ module ApplicationHelper
   end
 
   private
+    # `key?` rather than a truthy test in both memos: "cannot write" and "no access
+    # level" are answers this render repeats as often as the positive ones, and a
+    # cached `false` or `nil` that read as a miss would put the query straight back.
+    # Keyed by universe id because `_row_actions` asks about the record's universe
+    # rather than the current one, and one universe's answer must never stand in
+    # for another's.
+    def universe_ability(universe, action)
+      return false if universe.blank?
+
+      abilities = (@universe_abilities ||= {})
+      key = [ universe.id, action ]
+      return abilities[key] if abilities.key?(key)
+
+      abilities[key] = current_ability.can?(action, universe)
+    end
+
+    def universe_access_levels
+      @universe_access_levels ||= {}
+    end
+
     def tag_badge(tag)
       bgcolor = tag.respond_to?(:bgcolor) ? tag.bgcolor : "#d3d3d3"
       fgcolor = tag.respond_to?(:fgcolor) ? tag.fgcolor : "#000000"

@@ -127,6 +127,12 @@ class Universe < ApplicationRecord
   # The effective level for a user. Public universes give every signed-in user
   # write access; private universes use the explicit membership level. The
   # owner is always an admin, even when no membership row exists.
+  #
+  # Nothing is remembered here: this method reads the membership table every time
+  # it is called, because a caller may change a membership and ask again in the
+  # same breath, and a remembered answer would outlive the write that made it
+  # wrong. The place that answers the same question many times in one render is
+  # `ApplicationHelper`, whose memo is discarded with the view.
   def access_level_for(user)
     return nil unless user
 

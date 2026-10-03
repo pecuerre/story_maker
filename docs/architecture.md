@@ -356,6 +356,19 @@ and the fact that the Timeline is a tab of the Event workspace rather than a pag
   over the HABTM table, because the scoped tag associations have an instance-dependent scope and
   cannot be eager loaded or grouped through Active Record. Every taxonomy index and the shared
   taxonomy workspace load it once, so a row's count pill is not an N+1. The Section tree's scene
-  counts come from one `@story.scenes.group(:section_id).count` for the same reason. Row-level
-  authorization in `shared/_row_actions` and the recursive taxonomy partial remain N+1 and are still
-  tracked in [`known_quirks.md`](known_quirks.md).
+  counts come from one `@story.scenes.group(:section_id).count` for the same reason.
+- Row-level authorization costs a **fixed number of membership reads per render**, not one per
+  record. `shared/_row_actions` asks `can_write_universe?` once per row, and each answer reaches
+  `Universe#access_level_for`, which reads the membership table. `ApplicationHelper` remembers each
+  answer per universe on the **view context**, which is built and discarded per request; the model
+  remembers nothing, because a membership write followed by a second question must see the write.
+- The taxonomy tree costs **one query for its own rows, whatever its depth**. Every tree page loads
+  its whole hierarchy once and wraps it in a `HierarchyIndex` (`app/models/hierarchy_index.rb`),
+  which answers roots and children in memory; the recursive partial descends through the index
+  rather than through `node.children`, because Rails cannot preload an unknown depth and
+  `children.any?` on an unloaded association counts separately from the `children.each` after it.
+  The same load carries each node's tags and photo, so a row's badges and the editor's stored image
+  do not query per row either.
+- `TimelineLayout` still makes three pairwise passes over a universe's events, because the rules it
+  implements are pairwise, but its cycle test no longer runs once per candidate edge. See
+  [features/events.md](features/events.md) for the layering algorithm.

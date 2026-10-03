@@ -57,6 +57,11 @@ treatment is in [visual_design.md](../visual_design.md). What defines it:
   `details_count_label` for the row's **Details** link and count pill. A row's only URL surface is
   `data-update-url` (update, move, delete, inline rename) and the Details link; the editor is a
   DOM-built modal, so there are no `new`/`edit` routes and no per-row edit/delete URL attributes.
+- The tree descends through a **`HierarchyIndex`** (`app/models/hierarchy_index.rb`) built from the
+  page's own load of the hierarchy, and `hierarchy` is a **required** local for that reason: the
+  partial asks the index for a node's children instead of `node.children`, so one query answers every
+  depth. The index is built from the same ordered list the page already needed for its parent
+  selector and editor descriptors, and that load carries each row's tags and photo.
 - The page header's count badge is **every tag in the taxonomy, nested children included**, not the
   number of root rows the tree lists: `tags_helper.rb` passes `Current.universe.<type>_tags.count`,
   and a nested grouping tag is a tag like any other. A create, rename, or delete performs a same-URL

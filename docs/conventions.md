@@ -557,7 +557,9 @@ value objects, and the deletion contract are one feature with one home, in
 - `app/views/shared/_taxonomy_tree.html.erb` accepts an optional `confirm_message` lambda that
   supplies the destructive copy for each node, an optional `read_only_empty_description` so a
   read-only member is not told to add or drag records, and the `details_url`/`details_count`/
-  `details_count_label` trio that renders the row's Details link and count pill. `_row_actions`
+  `details_count_label` trio that renders the row's Details link and count pill. It also requires a
+  `hierarchy` local — a `HierarchyIndex` over the page's own load — because the recursive node partial
+  descends through it rather than through `node.children`. `_row_actions`
   accepts the same kind of `confirm_text`.
 - **A select that must not offer the record being edited declares it on the control.** One modal form
   serves every row, so the server cannot exclude a row's own record from an option list and the row's

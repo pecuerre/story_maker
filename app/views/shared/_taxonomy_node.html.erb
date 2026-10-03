@@ -146,7 +146,10 @@
     </span>
   </div>
 
-  <% children = node.public_send(children_method) %>
+  <%# The children come from the page's `HierarchyIndex` rather than from
+      `node.children`, so descending into a node costs memory instead of a query and
+      the depth of the tree does not change what the page asks the database. %>
+  <% children = hierarchy.children_of(node) %>
   <% if children.any? %>
     <ul class="taxonomy-list list-unstyled ms-4 ps-3"
       <% if editable %>data-action="dragover->taxonomy-tree#allowDrop drop->taxonomy-tree#drop"<% end %>
@@ -154,7 +157,7 @@
       <% children.each do |child| %>
         <%= render "shared/taxonomy_node",
           node: child,
-          children_method: children_method,
+          hierarchy: hierarchy,
           update_url: update_url,
           model_param: model_param,
           modal_fields: modal_fields,

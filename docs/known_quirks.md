@@ -120,23 +120,6 @@ reachable security/data-loss issues from lower-priority hardening and contract d
 
 ## Performance, test, and tooling observations
 
-31. **Medium — several ordinary list/tree paths have avoidable N+1 or superlinear work.** Row-level
-    authorization checks call `Universe#access_level_for` for each record (`app/views/shared/_row_actions.html.erb:1-3`,
-    `app/models/universe.rb:62-71`); membership pages use `joins(:user)` and then dereference each
-    user (`app/controllers/memberships_controller.rb:62-64`); hierarchy controllers preload only
-    immediate children while the recursive partial descends further
-    (`app/controllers/locations_controller.rb:8-15`, `app/views/shared/_taxonomy_node.html.erb:86-105`);
-    relation-only event display strings can query temporal associations
-    (`app/controllers/events_controller.rb:8-11`, `app/models/event.rb:21-42`); and TimelineLayout
-    performs three pairwise event passes with reachability checks
-    (`app/models/timeline_layout.rb:46-81,126-153`). These costs are separate from the explicitly
-    backlogged search/filter work.
-    The new record details pages deliberately added none of this: tag usage counts come from
-    `TaggedRecordCounts` (one grouped query) and the Section tree's scene counts from one
-    `group(:section_id).count`, and the universe page reuses its memoized story list
-    instead of re-counting. The row-level authorization and recursive-children costs above are
-    unchanged.
-
 36. **Medium — CI proves a production image boots, but not a deployment.** The test job runs
     `db:test:prepare test` against the checked-in schema (`.github/workflows/ci.yml:125-131`), so it
     was never a from-zero migration run, a Docker build, a production asset boot, or a Solid

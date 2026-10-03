@@ -12,10 +12,11 @@
   empty_description: t("tags.types.item.empty_description"),
   read_only_empty_description: t("tags.types.item.read_only_empty_description"),
   nodes: @item_tags,
+  hierarchy: @hierarchy,
   create_url: universe_item_tags_path,
   update_url: ->(item_tag) { universe_item_tag_path(id: item_tag) },
   model_param: "item_tag",
   details_url: ->(item_tag) { universe_item_tag_path(id: item_tag) },
   details_count: ->(tag) { @tagged_counts.fetch(tag.id, 0) },
   details_count_label: "item",
-  modal_fields: item_tag_taxonomy_fields(Current.universe.item_tags.order(:position, :id)) %>
+  modal_fields: item_tag_taxonomy_fields(@hierarchy.records) %>

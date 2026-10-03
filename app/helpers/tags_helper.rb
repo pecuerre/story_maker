@@ -285,17 +285,21 @@ module TagsHelper
     end
 
     def tag_workspace_base(records, metadata)
-      ordered_records = records.order(:position, :id).to_a
-      nodes = records.where(parent_id: nil).includes(:children).order(:position, :id)
+      # One query for the whole taxonomy. `includes(:children)` reached the first
+      # level only and every deeper level asked again, so the tree descends
+      # through this index instead; the photo comes with it because the editor
+      # carries each node's stored image.
+      hierarchy = HierarchyIndex.build(records.includes(:photo))
       counts = tagged_record_counts(records)
 
       translated_metadata(metadata).merge(
-        count: ordered_records.length,
-        nodes: nodes,
+        count: hierarchy.records.length,
+        nodes: hierarchy.roots,
+        hierarchy: hierarchy,
         details_url: metadata.fetch(:details_url),
         details_count: ->(tag) { counts.fetch(tag.id, 0) },
         details_count_label: metadata.fetch(:details_count_label),
-        modal_fields: public_send(metadata.fetch(:fields), ordered_records)
+        modal_fields: public_send(metadata.fetch(:fields), hierarchy.records)
       )
     end
 

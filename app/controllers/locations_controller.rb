@@ -10,14 +10,16 @@ class LocationsController < ApplicationController
   before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
-    @locations = Current.universe.locations
-    @locations = @locations.includes(:children, :location_tags)
-    @locations = @locations.where(parent_id: nil)
-    @locations = @locations.order(:position, :id)
+    # One query for the whole hierarchy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, every deeper node
+    # asked again for its tags, and the parent selector below asked for the same
+    # ordered list a third time.
+    @hierarchy = HierarchyIndex.build(Current.universe.locations.includes(:location_tags, :photo))
+    @locations = @hierarchy.roots
+    @location_options = @hierarchy.records
 
     @location_tags = Current.universe.location_tags
     @location_tags = @location_tags.where(taggable: true).order(:name)
-    @location_options = Current.universe.locations.reorder(:position, :id).to_a
   end
 
   # GET /locations/:id — the record's own read-only details page. It identifies the

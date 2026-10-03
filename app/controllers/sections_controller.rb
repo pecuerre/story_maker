@@ -11,14 +11,16 @@ class SectionsController < ApplicationController
   before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
-    @sections = @story.sections
-    @sections = @sections.includes(:children, :section_tags)
-    @sections = @sections.where(parent_id: nil)
-    @sections = @sections.order(:position, :id)
+    # One query for the whole hierarchy, and the index the tree descends through.
+    # `includes(:children)` used to reach the first level only, every deeper node
+    # asked again for its tags, and the paths below asked for the same ordered list
+    # a second time.
+    @hierarchy = HierarchyIndex.build(@story.sections.includes(:section_tags, :photo))
+    @sections = @hierarchy.roots
+    @section_options = @hierarchy.records
 
     @section_tags = @story.section_tags
     @section_tags = @section_tags.where(taggable: true).order(:name)
-    @section_options = @story.sections.reorder(:position, :id).to_a
     # The Section tree above and the ungrouped Scene list below share one
     # ordered Section list, so ancestor paths cost a single extra query for the
     # Story's Scenes and never a query per Scene. The move form needs every Scene

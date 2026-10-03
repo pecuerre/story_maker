@@ -402,7 +402,13 @@ en:
       back_label: "Back to the record"
       participation_label: "Scene participation"
       empty_title: "No messages yet"
-      empty_description: "This discussion has not been started. Be the first to say something."
+      # Two empty states, because the thread has two audiences. A writer is
+      # invited to start the conversation; a guest or a read-only member has no
+      # composer at all, so telling them to be the first to say something names
+      # an action the page does not offer them. Same rule as every list's
+      # `empty_writable_description` / `empty_read_only_description` pair.
+      empty_writable_description: "This discussion has not been started. Be the first to say something."
+      empty_read_only_description: "Messages about this record will appear here once they have been written."
     composer:
       label: "Message"
       submit: "Post message"

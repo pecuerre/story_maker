@@ -21,9 +21,16 @@
       <%= render partial: "discussions/message", collection: @messages, as: :message %>
     </ol>
   <% else %>
+    <%# An empty thread has two audiences, so it has two descriptions. A writer is
+        invited to start the conversation; a guest or a read-only member is only
+        told what will appear here, because the composer below is not theirs to
+        use. This is the same writable/read-only split every list in the
+        application makes, and for the same reason: telling a reader to do
+        something the page does not offer them is the defect. %>
     <%= render "shared/empty_state",
       title: t("discussions.show.empty_title"),
-      description: t("discussions.show.empty_description"),
+      description: can_write_universe? ? t("discussions.show.empty_writable_description") :
+        t("discussions.show.empty_read_only_description"),
       icon: "chat-square-text" %>
   <% end %>
 

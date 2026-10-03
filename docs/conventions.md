@@ -343,6 +343,26 @@ document holds. Body text is plain: markdown in discussions is a later decision,
 renders a fragment. Where a message is refused, the thread re-renders with the reason beside the
 composer rather than redirecting, because a redirect would discard what was typed.
 
+**A message states who wrote it and when.** The author and the moment share one line above the body,
+because a conversation whose entries are anonymous blocks is not a conversation. The moment is
+`l created_at, format: :short` inside a `<time datetime=…>` carrying `created_at.iso8601`, so the
+printed value is localized and the machine value stays the exact instant. A blank author name falls
+back to `shared.detail_fact.blank` rather than rendering an empty span: `users.name` carries no
+presence validation (known quirk 27), and a message with no visible author is the anonymous block
+this line exists to prevent.
+
+**An empty thread has two empty states, like every list.** A writer is invited to start the
+conversation; a guest and a read-only member are only told what will appear there. Telling a reader
+to be the first to say something names an action the page does not offer them, which is the same
+defect `docs/visual_design.md` records for a details page's empty copy, and the same
+`empty_writable_description` / `empty_read_only_description` pair the lists use.
+
+The Spanish keys for the moment are this application's, not the framework's: `activesupport` ships
+an `en.yml` and **no** `es.yml`, so `time.formats.short` and the `date.abbr_month_names` its `%b`
+is written with are translated in `config/locales/es.yml` alongside the other Rails-subset keys. A
+`l` call with a format this file does not translate raises for a Spanish reader rather than falling
+back, because `raise_on_missing_translations` is on in the test environment.
+
 ## Record details pages
 
 A details page is a fourth *page* shape, not a fourth editing pattern: it has no editor, so it is

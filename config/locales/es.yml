@@ -370,7 +370,8 @@ es:
       back_label: "Volver al registro"
       participation_label: "Participación en la escena"
       empty_title: "Todavía no hay mensajes"
-      empty_description: "Esta discusión no se ha iniciado. Sé la primera persona en decir algo."
+      empty_writable_description: "Esta discusión no se ha iniciado. Sé la primera persona en decir algo."
+      empty_read_only_description: "Los mensajes sobre este registro aparecerán aquí cuando se hayan escrito."
     composer:
       label: "Mensaje"
       submit: "Publicar mensaje"
@@ -1816,6 +1817,29 @@ es:
   # reaches a key not listed here — is the `rails-i18n` gem, which would replace
   # this block wholesale. It is deliberately not added: that is a dependency
   # change, and this subset is what the application currently needs.
+  # The date and time formats, and the month and weekday names they are written
+  # with. A discussion message prints the moment it was written with
+  # `l created_at, format: :short`, and Rails' `activesupport` ships **only**
+  # `en.yml` — there is no Spanish `es.yml` at all. So `format: :short` was
+  # missing, and so was every `%b` and `%a` a format string could reach for: the
+  # thread page raised `I18n::MissingTranslationData` for a Spanish reader rather
+  # than falling back, which is the same failure this block already exists to
+  # prevent for validation messages.
+  #
+  # `%d %b %H:%M` is deliberately the same pattern Rails defines in English
+  # (`time.formats.short`) rather than a Spanish word order: it is a moment in a
+  # conversation, not a sentence, and the day and the clock time are the parts a
+  # reader scans for.
+  time:
+    formats:
+      short: "%d %b %H:%M"
+  date:
+    abbr_month_names: [~, "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+    month_names: [~, "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+      "septiembre", "octubre", "noviembre", "diciembre"]
+    abbr_day_names: [~, "dom", "lun", "mar", "mié", "jue", "vie", "sáb"]
+    day_names: [~, "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
+
   datetime:
     distance_in_words:
       half_a_minute: "medio minuto"

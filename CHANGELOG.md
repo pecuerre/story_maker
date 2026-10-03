@@ -40,6 +40,15 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-03
 
+### added
+
+- **`drafts` and `draft_changes` store one author's remembered changes for a universe.** The
+  remembered attributes live in `payload` and the version in `base_version`, which only
+  `DraftChange.capture_base_version` may fill so the stamp is always a comparable string.
+- **A remembered change is append-only.** `draft_changes` carries `created_at` and no `updated_at`,
+  and updating one raises rather than letting a payload drift away from the version it was captured
+  against.
+
 ### changed
 
 - **A discussion message says who wrote it and when.** The author and a localized moment share one

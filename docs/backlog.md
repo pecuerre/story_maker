@@ -128,12 +128,16 @@ it has a useful destination and clear empty/loading/error states.
     In `wikipedia` or `github` mode, mutations are stored as draft changes instead of written directly.
     Users can see their pending changes and apply them. Conflict resolution comes in Phase 3.
 
-    - **Slice 2.1:** Create `drafts` table (`user_id`, `universe_id`, `status` string default `"draft"`
-      not null: `draft`/`applied`/`discarded`/`submitted`, timestamps) and `draft_changes` table
-      (`draft_id`, `record_type`, `record_id` nullable, `action` string: `create`/`update`/`delete`,
-      `changes` JSON/text, `base_version` string nullable, `created_at`). `Draft` model (belongs_to
-      :user, belongs_to :universe, has_many :draft_changes), `DraftChange` model (belongs_to :draft).
-      Validations: action inclusion, record_type presence. Tests: model tests, association tests.
+    - **Slice 2.1 (delivered 2026-10-03):** `drafts` (`user_id`, `universe_id`, `status` string
+      default `"draft"` not null: `draft`/`applied`/`discarded`/`submitted`, timestamps) and
+      `draft_changes` (`draft_id`, `record_type`, `record_id` nullable, `action` string:
+      `create`/`update`/`delete`, `base_version` string nullable, `created_at`) exist, with `Draft`
+      and `DraftChange` and their model tests. Three deviations from the text above, all settled and
+      recorded in [ADR 0019](adr/0019-collaboration-foundations.md): the remembered attributes are
+      `payload`, because Rails refuses an attribute named `changes` (or `attributes`);
+      `base_version` may only be filled through `DraftChange.capture_base_version`, so it is always
+      a comparable string; and a change is append-only — `created_at`, no `updated_at`, updates
+      raise.
     - **Slice 2.2:** Create `app/controllers/concerns/draft_mutation.rb`. The concern intercepts
       `create`, `update`, `destroy` actions. When the universe is in a draft mode: for `create` store
       `action=create`, `record_id=null`, `changes`=new attributes; for `update` store `action=update`,

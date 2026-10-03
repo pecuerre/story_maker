@@ -117,6 +117,22 @@ edit, and only one of those two is recoverable.
 `updated_at` is the version rather than an integer revision column. See the alternatives below for
 why.
 
+The draft's own column is named `payload`, not `changes`. Rails 8.1 raises
+`ActiveRecord::DangerousAttributeError` for an attribute Active Record already defines, and `changes`
+is `ActiveModel::Dirty`'s; `attributes` is refused the same way. Because the name could not be the
+obvious one, `DraftChange.capture_base_version` is the *only* supported way to fill `base_version`
+rather than a convention in a comment — a caller that wrote `record.updated_at` would store a
+`Time`, and every change would then look like a conflict.
+
+A remembered change is **append-only**: `draft_changes` has `created_at` and no `updated_at`, and
+`DraftChange` raises on update. What a change states — these attributes, this version — is a
+statement about one moment, and the row keeps carrying the `base_version` that was captured against
+the *original* attributes, so an editable payload could be applied against a version describing
+something else with nothing afterwards able to tell. Rejecting a change is done by moving the
+**draft's** status, which is why `Draft` stays editable and `DraftChange` does not. `readonly?` was
+the obvious alternative and is wrong here: it also refuses `destroy`, which would leave a discarded
+draft undeletable.
+
 ### Applying remembered changes reuses the live mutation path
 
 An applier must not write records directly. Where a controller routes a mutation through a service
@@ -149,13 +165,35 @@ That is the intended cost.
   incidental, and a future change to how positions are written would change conflict behaviour.
 - **A false conflict is possible and normal.** Two people editing one record will collide by design.
   The resolution UI has to be genuinely usable, because it is a common path rather than an edge case.
-- **Two new classes have no callers yet.** `RecordTarget` and `VersionStamp` are consumed by the
-  collaboration phases, not by existing code. They are small, tested, and would otherwise be written
-  mid-phase and get the reasoning wrong.
+- **`Draft` and `DraftChange` have no callers yet.** Both models are reachable from a universe
+  cascade and are fully validated, but nothing in the request path writes or reads one until the
+  interception slice. They are in the same position `RecordTarget` and `VersionStamp` were in when
+  this ADR was accepted — `VersionStamp` is now consumed by `DraftChange.capture_base_version`, and
+  `RecordTarget` by `Discussion` — which is what "settle it in writing first" was for.
+- **A draft has no development manifests.** `db/data/` cannot express one whose first change creates
+  the record it names, so the two files arrive with the slice that gives a draft a page. This is a
+  deliberate exception to the new-model checklist in [`../development.md`](../development.md), not
+  an omission in it.
 - **One shared scope is validated twice** — in the model and, for the request path, through
   `find!`. That is deliberate: the model check covers every writer including the console, and the
   controller check keeps the failure a 404.
 - **ADR 0017 and ADR 0018 were missing from the ADR index** and have been added alongside this one.
+
+### Rejected: a `changes` column for the remembered attributes
+
+The collaboration plan named it, and the name cannot be used: Rails refuses an attribute that
+Active Record already defines, and `changes` is `ActiveModel::Dirty`'s. `attributes` is refused the
+same way, which is the more annoying of the two because it was the obvious fallback. The column is
+`payload`, matching the notifications table the same plan specifies, and the honest word for what it
+holds — the attributes as they were remembered, not a diff and not a changeset.
+
+### Rejected: a mutable remembered change
+
+`draft_changes` could have carried `t.timestamps` and left a remembered change editable. It cannot:
+the row keeps the `base_version` that was captured against the *original* attributes, so a rewritten
+payload would be applied against a version describing something else, with nothing afterwards able
+to tell that it had moved. Nothing in the collaboration flow needs to edit a change — every phase
+that rejects one moves the **draft's** status — so the change is append-only and the draft is not.
 
 ### Rejected: an integer revision column (`lock_version`)
 
@@ -176,12 +214,6 @@ merge policy per model, and a half-built merge is worse than an honest "you two 
 
 It would have kept the "Discuss" control a plain link, at the cost of a page load that writes, which
 is exactly the class of surprise the `show` rule exists to prevent.
-
-### Rejected: storing the record's class as a free string with no registry check
-
-A `record_type` straight into `constantize` is a loadable-constant injection point. The registry is
-the gate, and sharing it with CanCan means the gate is already the thing the authorization decision
-is made from.
 
 ## Related documentation
 

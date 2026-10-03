@@ -1084,7 +1084,8 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    have to invent rather than record. And a `Draft` has no slug — a pending change is not a
    published address — so no manifest can reference one and `draft_changes.yml` could not name the
    draft its changes belong to. Verifying the drafts page by hand does not need them: set the
-   universe's collaboration mode to `wikipedia`, edit something, then follow **Pending changes**.
+   universe's collaboration mode to `wikipedia`, press **Start editing** on the universe page, edit
+   something, then follow the pending count or the sidebar's **Pending changes** entry.
 
 ### Full-stack data contract for a new model
 

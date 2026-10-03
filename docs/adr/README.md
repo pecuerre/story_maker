@@ -45,6 +45,8 @@ reasoning as of its date.
 | [0018](0018-session-lifetime-and-user-agent-binding.md) | Accepted | End sessions on a lifetime, and bind them to the user agent rather than the IP |
 | [0019](0019-collaboration-foundations.md) | Accepted | Settle the collaboration system's authorization, version-stamp, and page-shape foundations before building it |
 | [0020](0020-remembering-mutations-instead-of-writing-them.md) | Accepted | Remember a mutation inside the action that would have written it, and keep each controller's own response flow |
+| [0021](0021-applying-a-draft-through-the-live-mutation-path.md) | Accepted | Apply a draft through the live mutation path, and report a change that has moved rather than ask about it |
+| [0022](0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md) | Accepted | Let an editing session claim the browser without gating remembering, and make one open draft a database rule |
 
 ## Format
 

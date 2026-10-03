@@ -103,7 +103,11 @@ then the sections that follow it:
   **Collaborators**, **Conflicts**, **Branches**, and **Forks** placeholders, for which no model or route
   exists yet. The live entry is first because it is the one a reader arrives at from the flash that told
   them their change was remembered; an editor who cannot find that change has no way to apply or throw
-  it away.
+  it away. Its presence is **not** conditional on the reader having something pending — it is also how
+  a reader reaches the drafts list's history, and a navigation entry that appears and disappears with a
+  count needs an explanation whenever it is absent. The **Start editing** / **Stop editing** control on
+  the universe page is a second way in, and it is the one that opens a draft; both belong to the
+  universe workspace rather than to either sidebar.
 - **Analytics** and **AI**: placeholder groups; no model or route exists for those entries yet.
 
 Configuration is about **the universe**: Tags and Members only. A platform preference belongs in the

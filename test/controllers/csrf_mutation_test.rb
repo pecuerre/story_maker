@@ -248,6 +248,32 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "starting an editing session is refused without a token and claims nothing" do
+    # The editing toggle is a Turbo `button_to` like every other HTML control here,
+    # so its token comes from the form's hidden field rather than a `fetch`. What
+    # makes it worth its own case is what a forged request would achieve: it would
+    # open a draft for this author that nothing else in the request asked for.
+    @universe.update!(collaboration_mode: "wikipedia")
+    token = nil
+
+    with_forgery_protection do
+      token = fetch_page_token(universe_url(@universe))
+
+      assert_no_difference -> { Draft.count } do
+        post universe_editing_url(universe_slug: @universe.slug)
+      end
+
+      assert_includes 406..422, response.status
+      assert_nil Draft.open_for(@user, @universe), "a refused request must not have opened a draft"
+
+      post universe_editing_url(universe_slug: @universe.slug),
+        headers: { "X-CSRF-Token" => token }
+
+      assert_redirected_to universe_url(@universe)
+      assert_predicate Draft.open_for(@user, @universe), :open?
+    end
+  end
+
   test "the settings form is refused without a token and accepted with one" do
     with_forgery_protection do
       token = fetch_page_token(settings_path)

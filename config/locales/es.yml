@@ -430,6 +430,19 @@ es:
       partially_applied: "%{applied} cambios ya son visibles. No se pudieron aplicar %{skipped}: los registros que nombran han cambiado desde que los recordaste, o el universo rechazó la escritura. Este borrador está cerrado y esos cambios siguen en él."
       discarded: "El borrador se ha descartado. No se escribió nada."
       closed: "Ese borrador ya se aplicó o se descartó, así que no queda nada que hacer con él."
+      editing_started: "Estás editando este universo. Los cambios que hagas se recuerdan hasta que los apliques."
+      editing_stopped:
+        zero: "Dejaste de editar. Tu borrador no tenía nada pendiente."
+        one: "Dejaste de editar. Todavía espera 1 cambio recordado en tu borrador."
+        other: "Dejaste de editar. Todavía esperan %{count} cambios recordado en tu borrador."
+      not_draft_based: "Este universo escribe los cambios directamente, así que no hay ninguna sesión de edición que iniciar o detener."
+    editing:
+      start: "Empezar a editar"
+      stop: "Dejar de editar"
+      pending_changes:
+        zero: "Aún no hay cambios pendientes"
+        one: "1 cambio pendiente"
+        other: "%{count} cambios pendientes"
     index:
       title: "Cambios pendientes"
       description: "Los cambios que has hecho en este universo y que se recuerdan en lugar de escribirse, con los borradores a los que pertenecen."

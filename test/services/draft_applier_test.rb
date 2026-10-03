@@ -135,10 +135,8 @@ class DraftApplierTest < ActiveSupport::TestCase
     update.draft_changes.create!(action: "update", record_type: "Character", record_id: @character.id,
       base_version: DraftChange.capture_base_version(@character), payload: { "name" => "X" })
       .update_column(:record_type, "Session")
-    creating = Draft.create!(user: @user, universe: @universe)
-    creating.draft_changes.create!(action: "create", record_type: "Character",
-      payload: { "name" => "Y", "universe_id" => @universe.id }).update_column(:record_type, "Session")
-
+    # The apply above closed `update`, which is what frees the slot for the one open
+    # draft per author per universe (ADR 0022), so the second draft can be opened.
     # An update names a record, so an unresolvable type is reported: there is
     # nothing to write, and reporting it is what the author can act on.
     result = DraftApplier.new(update).apply
@@ -146,6 +144,12 @@ class DraftApplierTest < ActiveSupport::TestCase
     assert_equal 1, result.skipped_count
     assert_equal :missing, result.skipped.first.reason
     assert_predicate update.reload, :applied?
+
+    # The apply closed `update`, which is what frees the slot for this author's one
+    # open draft (ADR 0022), so the second can be opened at all.
+    creating = Draft.create!(user: @user, universe: @universe)
+    creating.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Y", "universe_id" => @universe.id }).update_column(:record_type, "Session")
 
     # A create needs the class to build anything at all, so there is no answer to
     # report: it raises, and the run's transaction is what makes that safe.

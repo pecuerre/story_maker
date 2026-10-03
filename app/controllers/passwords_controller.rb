@@ -49,7 +49,7 @@ class PasswordsController < ApplicationController
       user.sessions.destroy_all
       return unless current_session_belongs_to_user
 
-      clear_remembered_stories
+      clear_session_context
       cookies.delete(:session_id)
       Current.session = nil
     end

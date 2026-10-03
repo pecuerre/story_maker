@@ -42,6 +42,9 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **The universe page has a Start editing / Stop editing control and a pending-change count.**
+  `DraftEditingController` is a POST/DELETE singleton at `/u/:universe_slug/editing`, rendered only where
+  it is enforced. See [ADR 0022](docs/adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md).
 - **A draft has a page: `/u/:universe_slug/drafts` lists your own drafts and `DraftsController` shows,
   applies, and discards them.** The right sidebar carries a **Pending changes** entry wherever a draft
   can exist. See [ADR 0021](docs/adr/0021-applying-a-draft-through-the-live-mutation-path.md).
@@ -75,6 +78,8 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Two tabs can no longer open two drafts for one author.** `drafts` gained a partial unique index over
+  the open statuses, and `Draft.open_for!` re-reads the winner's row on a lost race.
 - **A draft-based universe no longer collects changes no page can show.** A remembered change can now
   be listed, applied, or discarded, so a mode change is no longer a state its editors cannot get out of.
 - **A taxonomy tree costs one query for its rows, whatever its depth.** Every tree page loads its

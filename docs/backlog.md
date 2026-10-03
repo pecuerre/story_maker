@@ -175,16 +175,24 @@ it has a useful destination and clear empty/loading/error states.
       author's inside the authorized universe — no guest can reach the page at all — and the right sidebar
       carries a **Pending changes** entry wherever a draft can exist, because a page nothing links to
       leaves the trap slice 2.2 closed only in the code.
-    - **Slice 2.4:** Add "Start editing" / "Stop editing" toggle button in the universe view (visible
-      to users with write access in draft-based modes). When in draft mode, show "N pending changes"
-      indicator. Toggle stored in session. When entering draft mode, create a draft for the user if one
-      doesn't exist. Tests: request tests, system test.
-      Two review questions ride on this slice. The sidebar's **Pending changes** entry was added in 2.3
-      and renders wherever a draft *can* exist, which means a reader with nothing pending in a
-      draft-based universe is offered an empty page; decide then whether the count should also decide the
-      entry's presence. And "create a draft for the user if one doesn't exist" collides with finding 65 in
-      [`known_quirks.md`](known_quirks.md) — two tabs can each open one — so decide whether entering draft
-      mode should *look up* the open draft instead of relying on two requests not arriving together.
+    - **Slice 2.4 (delivered 2026-10-03):** `DraftEditingController` is a `POST`/`DELETE` singleton
+      `/u/:universe_slug/editing` behind a **Start editing** / **Stop editing** control on the universe
+      page, rendered only where it is enforced — a draft-based universe, a signed-in reader, `write`
+      access — and the page states the pending count as a link into the drafts list. Four decisions the
+      slice text did not settle, all in
+      [ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md): the control
+      **claims the session rather than gating remembering**, because a reader who forgot to press it must
+      not write straight through a universe whose mode exists to stop exactly that, and the interception
+      from 2.2 stays unconditional — entering a session opens the draft *before* the first change instead;
+      the flag is a session value keyed by universe (`DraftEditingSession`), dropped by
+      `clear_session_context` at every session boundary, so a sign-out releases the claim but keeps the
+      draft; **stopping is not discarding**, and the flash says how much is still waiting; and the two
+      review questions the slice raised are both answered against the count — the sidebar's **Pending
+      changes** entry stays rendered wherever a draft can exist, because it is also how the history is
+      reached, while "create a draft if one doesn't exist" is now enforced by a **partial unique index**
+      over the open statuses (closing finding 65 in [`known_quirks.md`](known_quirks.md)) with
+      `Draft.open_for!` re-reading the winner's row on a lost race. Tests: request, model, CSRF, and
+      system coverage of the control, the flag's boundaries, and the "remembered without the toggle" case.
     - **Slice 2.5:** When in draft mode, show pending changes as a panel/sidebar. For draft-created
       records: show them in the list with a "draft" badge. For draft-edited records: show current
       values with a "pending edit" badge. For draft-deleted records: show the record with a "pending

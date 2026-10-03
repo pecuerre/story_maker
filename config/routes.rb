@@ -78,6 +78,14 @@ Rails.application.routes.draw do
       post :apply, on: :member
       post :discard, on: :member
     end
+    # Whether this reader is editing this universe right now. It is a session
+    # claim rather than a record, so it is a singleton `resource` with the two
+    # verbs that begin and end one — the same shape `resource :session` uses for
+    # signing in and out. It deliberately has no `show`: the universe page renders
+    # the current state, and a GET that mutates nothing must not be a way to start
+    # one. Neither action decides whether a mutation is remembered; `DraftMutation`
+    # does that, in a draft-based universe, on every request (ADR 0022).
+    resource :editing, controller: "draft_editing", only: %i[ create destroy ], path: "editing"
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

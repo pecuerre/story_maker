@@ -98,15 +98,23 @@ then the sections that follow it:
   selected by default and **Story Tags** for the story-scoped taxonomies, plus the universe
   **Members** access manager, which only admins see. The list itself is unconditional, so a guest or
   read-only member still gets **Tags** without an empty Configuration header.
-- **Collaboration**: **Pending changes**, the reader's own drafts for this universe, which exists only in
-  a universe that remembers changes rather than writing them and only for a signed-in reader; then the
-  **Collaborators**, **Conflicts**, **Branches**, and **Forks** placeholders, for which no model or route
-  exists yet. The live entry is first because it is the one a reader arrives at from the flash that told
-  them their change was remembered; an editor who cannot find that change has no way to apply or throw
-  it away. Its presence is **not** conditional on the reader having something pending — it is also how
-  a reader reaches the drafts list's history, and a navigation entry that appears and disappears with a
-  count needs an explanation whenever it is absent. The **Start editing** / **Stop editing** control on
-  the universe page is a second way in, and it is the one that opens a draft; both belong to the
+- **Collaboration**: the reader's own pending work, which exists only in a universe that remembers changes
+  rather than writing them and only for a signed-in reader. It is **a panel and a link**, in that order:
+  the panel states how many changes are waiting and names each one with the action and the record, and
+  the **Pending changes** entry below it leads to the drafts list. The panel exists because the link alone
+  answers "where are they" and not "are there any" — an editor who is told their change was remembered
+  would otherwise have to open the draft to find out whether anything is waiting at all. It is a **glance,
+  not a second drafts page**: each row resolves the record its change names, so it is capped at
+  `DraftPreview::PANEL_LIMIT` and the remainder is counted rather than dropped, and it renders at **zero** as
+  well as at any count. The **Collaborators**, **Conflicts**, **Branches**, and **Forks** placeholders
+  follow, for which no model or route exists yet. The live block is first because it is the one a reader
+  arrives at from the flash that told them their change was remembered; an editor who cannot find that
+  change has no way to apply or throw it away. Its presence is **not** conditional on the reader having
+  something pending — it is also how a reader reaches the drafts list's history, and a navigation entry
+  that appears and disappears with a count needs an explanation whenever it is absent. The panel is its own
+  `<li>` beside the link rather than around it, because the shared link partial is itself a list item and
+  a `<li>` inside a `<li>` is hoisted back out by the parser. The **Start editing** / **Stop editing**
+  control on the universe page is a second way in, and it is the one that opens a draft; both belong to the
   universe workspace rather than to either sidebar.
 - **Analytics** and **AI**: placeholder groups; no model or route exists for those entries yet.
 

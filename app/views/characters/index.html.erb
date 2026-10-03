@@ -1,8 +1,11 @@
 <% content_for :title, t("characters.title") %>
 <%# The list has two empty states because it has two audiences: a writer is told
     to add the first character, and a guest or read-only member is only told what a
-    character is. Both are chrome, so both are keys. %>
+    character is. Both are chrome, so both are keys. A remembered create counts as
+    something to show, or a writer who has added a character in a universe that
+    remembers changes would be told they have none. %>
 <% empty_description = can_write_universe? ? t("characters.empty_writable_description") : t("characters.empty_read_only_description") %>
+<% pending_creates = draft_pending_creates_for(Character) %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
@@ -32,7 +35,7 @@
     intro: t("characters.description"),
     tabs: content_workspace_tabs(:character) %>
 
-  <% if @characters.any? %>
+  <% if @characters.any? || pending_creates.any? %>
     <div class="content-surface entity-list">
       <div class="list-group list-group-flush">
         <% @characters.each do |character| %>
@@ -41,6 +44,7 @@
               <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="entity-title"><%= character.name %></span>
                 <%= entity_tag_badge(character) %>
+                <%= render "shared/draft_pending_badge", state: draft_pending_state(character) %>
               </div>
               <% if character.description.present? %>
                 <div class="entity-description"><%= character.description %></div>
@@ -62,6 +66,8 @@
               values: character_fields_json(character) %>
           </div>
         <% end %>
+
+        <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
       </div>
     </div>
   <% else %>

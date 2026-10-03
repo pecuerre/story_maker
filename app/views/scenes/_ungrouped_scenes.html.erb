@@ -11,6 +11,12 @@
 <% editable = local_assigns.fetch(:editable) %>
 <% ungrouped = scenes.reject { |scene| scene.section_id.present? } %>
 <% grouped = scenes.size - ungrouped.size %>
+<%# This list is the **Ungrouped** end of the workspace, so a remembered Scene
+    create appears here only when it remembers no section: one that names a parent
+    would be listed on that Section's own page once it existed, and listing it here
+    as well would put the same future record in two places. Its `section_id` is a
+    column, so the payload carries it and the record says which. %>
+<% pending = draft_pending_creates_for(Scene).reject { |scene| scene.section_id.present? } %>
 
 <div class="content-surface scene-grouping mt-4">
   <div class="p-3 p-md-4 border-bottom">
@@ -70,7 +76,7 @@
     <% end %>
   </div>
 
-  <% if scenes.empty? %>
+  <% if scenes.empty? && pending.empty? %>
     <div class="p-3 p-md-4">
       <%= render "shared/empty_state",
         title: t("scenes.grouping.empty_title"),
@@ -81,7 +87,7 @@
         <% end %>
       <% end %>
     </div>
-  <% elsif ungrouped.empty? %>
+  <% elsif ungrouped.empty? && pending.empty? %>
     <div class="p-3 p-md-4">
       <p class="text-body-secondary mb-0"><%= t("scenes.grouping.all_grouped", story: story.name) %></p>
     </div>
@@ -92,22 +98,34 @@
             this list is a subset of the story and the bare figure is ambiguous
             next to the story's own scene count. Its own pluralized label lives
             here rather than at the root with the record-type nouns, because
-            "ungrouped scene" is a state of a scene and not a record type. %>
+            "ungrouped scene" is a state of a scene and not a record type. A
+            remembered create counts in it: it is a scene this workspace will hold
+            once the draft is applied, and leaving it out would make the figure
+            disagree with the rows underneath it. %>
         <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
           <span class="badge rounded-pill text-bg-light border">
-            <%= t("scenes.grouping.count", count: ungrouped.size) %>
+            <%= t("scenes.grouping.count", count: ungrouped.size + pending.size) %>
           </span>
         </div>
         <%# The narrative-position pill carries the order, so the list stays
             unordered rather than being an ordered list with its own markers
             suppressed. This list is one Scene's subset, so the badge announces
-            the position without a total. %>
+            the position without a total. A remembered create has no position
+            until the applier gives it one, so its row states the record and
+            nothing about where it would land in the sequence. %>
         <ul class="list-unstyled mb-0">
           <% ungrouped.each do |scene| %>
             <li class="d-flex align-items-center gap-2 py-1">
               <span class="badge rounded-pill text-bg-light border"
                 aria-label="<%= t("shared.scene_position_aria_short", position: scene.position + 1) %>"><%= scene.position + 1 %></span>
               <%= link_to scene.name, universe_story_scene_path(story_id: story, id: scene), class: "text-break" %>
+              <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
+            </li>
+          <% end %>
+          <% pending.each do |scene| %>
+            <li class="d-flex align-items-center gap-2 py-1 draft-pending-row">
+              <span class="text-break"><%= scene.name %></span>
+              <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
             </li>
           <% end %>
         </ul>

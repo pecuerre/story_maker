@@ -1,0 +1,27 @@
+<%# One remembered create, shown in the taxonomy tree it would have joined.
+    #
+    # A tree node is more than a row: it is a drag target, a rename trigger, an
+    # edit menu, and a details link, and every one of those needs an id. A
+    # remembered create has no id (ADR 0019), so this row is the read-only half of
+    # the node — the same `.taxonomy-row` shape so it reads as a member of the
+    # tree, with none of the controls that would have nowhere to go.
+    #
+    # It is deliberately **not** `.taxonomy-node`: `taxonomy_tree_controller` counts
+    # `.taxonomy-node` children to place insert separators and to compute a new
+    # sibling's position, and a row that is in neither list cannot be dragged,
+    # moved past, or renamed by a reader who cannot see it yet. It sits after the
+    # real roots, because a remembered create has no parent to hang it under — the
+    # same accepted limit the drafts page has for a create's story or scene. %>
+<li class="taxonomy-pending">
+  <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom">
+    <span class="taxonomy-name-area d-flex align-items-center gap-2 flex-wrap">
+      <span class="taxonomy-name-text text-break">
+        <span class="entity-title"><%= record.name %></span>
+        <%= render "shared/draft_pending_badge", state: draft_pending_state(record) %>
+        <% if record.description.present? %>
+          <span class="entity-description d-block"><%= record.description %></span>
+        <% end %>
+      </span>
+    </span>
+  </div>
+</li>

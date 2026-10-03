@@ -53,7 +53,7 @@ class DraftEditingControllerTest < ActionDispatch::IntegrationTest
 
     # The count is asserted against the actions row as a substring rather than as the
     # row's whole text, because that row carries the other page actions too.
-    assert_includes page_actions_text, I18n.t("drafts.editing.pending_changes", count: 0)
+    assert_includes page_actions_text, I18n.t("drafts.pending.count", count: 0)
 
     draft = Draft.open_for(@user, @universe)
     draft.draft_changes.create!(action: "create", record_type: "Character",
@@ -61,7 +61,7 @@ class DraftEditingControllerTest < ActionDispatch::IntegrationTest
 
     get universe_url(@universe)
 
-    assert_includes page_actions_text, I18n.t("drafts.editing.pending_changes", count: 1)
+    assert_includes page_actions_text, I18n.t("drafts.pending.count", count: 1)
 
     # Somebody else's pending work is not part of this reader's count, and neither
     # is the history of a draft that has already been applied.
@@ -75,7 +75,7 @@ class DraftEditingControllerTest < ActionDispatch::IntegrationTest
 
     get universe_url(@universe)
 
-    assert_includes page_actions_text, I18n.t("drafts.editing.pending_changes", count: 1)
+    assert_includes page_actions_text, I18n.t("drafts.pending.count", count: 1)
   end
 
   test "the count is a link into the changes it is counting" do
@@ -138,7 +138,7 @@ class DraftEditingControllerTest < ActionDispatch::IntegrationTest
 
     get universe_url(@universe)
 
-    assert_includes page_actions_text, I18n.t("drafts.editing.pending_changes", count: 1),
+    assert_includes page_actions_text, I18n.t("drafts.pending.count", count: 1),
       "a second start must not strand the change already waiting in the reader's draft"
   end
 

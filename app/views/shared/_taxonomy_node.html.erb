@@ -55,6 +55,7 @@
             <span class="entity-title"><%= node.name %></span>
             <%= entity_tag_badge(node) %>
           <% end %>
+          <%= render "shared/draft_pending_badge", state: draft_pending_state(node) %>
           <%# The count is a fact about this record, so it sits with the name and
               the tags on the left instead of inside the Details link. %>
           <%= record_count_badge(record_count, details_count_label) %>
@@ -70,6 +71,7 @@
             <span class="entity-title"><%= node.name %></span>
             <%= entity_tag_badge(node) %>
           <% end %>
+          <%= render "shared/draft_pending_badge", state: draft_pending_state(node) %>
           <%= record_count_badge(record_count, details_count_label) %>
           <% if node.description.present? %>
             <span class="entity-description d-block"><%= node.description %></span>

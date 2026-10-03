@@ -21,6 +21,11 @@
 <% count_label = local_assigns[:count_label] || model_param.humanize.downcase.pluralize %>
 <% new_label = local_assigns[:new_label] || "Add #{model_param.humanize.downcase}" %>
 <% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(nodes.first) || Current.universe) } %>
+<%# A remembered create belongs in the taxonomy that would have held it, and this
+    partial is the only place that knows which taxonomy it is drawing. The answer
+    is resolved once here because the same one is needed twice below: to decide
+    whether the tree is empty, and to render the rows. %>
+<% pending_creates = draft_pending_taxonomy_creates(model_param) %>
 <% empty_description = if editable
   local_assigns[:empty_description] || t("shared.taxonomy_tree.empty_description")
 else
@@ -82,7 +87,7 @@ end %>
       <p class="visually-hidden" data-taxonomy-tree-status aria-live="polite"></p>
     <% end %>
 
-    <% if nodes.empty? %>
+    <% if nodes.empty? && pending_creates.empty? %>
       <div class="p-3 p-md-4" data-taxonomy-tree-empty>
         <%= render "shared/empty_state",
           title: t("taxonomies.#{model_param}.none_yet"),
@@ -108,6 +113,10 @@ end %>
           details_count_label: details_count_label,
           editable: editable %>
       <% end %>
+
+      <%# After the real roots, and read-only: a remembered create has no id, so it
+          has no place in the sequence the tree orders and nothing to drag. %>
+      <%= render partial: "shared/draft_pending_nodes", collection: pending_creates, as: :record %>
     </ul>
   </div>
 </div>

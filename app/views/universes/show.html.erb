@@ -14,15 +14,16 @@
   <%# The editing session comes first because it is a mode rather than an action:
       it says whether the buttons beside it remember what they do. The pending
       count is a link rather than a badge, because the number is only interesting as
-      a way into the changes it is counting — and the right sidebar's **Pending
-      changes** entry leads to the same page. Nothing here decides whether a
-      mutation is remembered: in a draft-based universe every mutation is,
-      pressed or not (ADR 0022). %>
+      a way into the changes it is counting — and the right sidebar's panel states
+      the same number from the same `DraftPreview`, so the two cannot disagree. A
+      draft with nothing in it is a real state, so the answer is a count rather
+      than a boolean. Nothing here decides whether a mutation is remembered: in a
+      draft-based universe every mutation is, pressed or not (ADR 0022). %>
   <% if draft_editing_available? %>
     <% if draft_editing? %>
       <%= link_to universe_drafts_path, class: "btn btn-outline-primary" do %>
         <i class="bi bi-journal-text" aria-hidden="true"></i>
-        <span><%= t("drafts.editing.pending_changes", count: pending_draft_changes_count) %></span>
+        <span><%= t("drafts.pending.count", count: draft_preview.count) %></span>
       <% end %>
       <%= button_to t("drafts.editing.stop"), universe_editing_path, method: :delete,
         class: "btn btn-outline-secondary" %>

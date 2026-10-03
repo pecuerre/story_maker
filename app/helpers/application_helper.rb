@@ -174,14 +174,6 @@ module ApplicationHelper
     DraftEditingSession.active?(session: session, user: Current.user, universe: universe)
   end
 
-  # How many remembered changes this reader has waiting in this universe, which is
-  # what the universe page states beside the control. A draft with nothing in it
-  # is a real state — the session was started and no change has been made yet — so
-  # the answer is a count rather than a boolean.
-  def pending_draft_changes_count(user = Current.user, universe = Current.universe)
-    Draft.pending_changes_count(user, universe)
-  end
-
   # Universe authorization and this helper must resolve a record's Universe the
   # same way, or a writer sees missing controls while a record-level check
   # denies an allowed mutation. Both use the shared resolver.

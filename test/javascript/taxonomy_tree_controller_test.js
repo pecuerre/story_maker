@@ -445,3 +445,48 @@ describe("taxonomy announcements", () => {
     expect(controller.escapeRegExp("a[b]c")).toBe("a\\[b\\]c")
   })
 })
+
+describe("the empty state beside a remembered create", () => {
+  // A remembered create is rendered server-side as a read-only `.taxonomy-pending`
+  // row, and the server suppresses the empty state when it is the only thing in the
+  // tree. The client must not put the empty state back: showing a reader both is
+  // two answers to "is this taxonomy empty?".
+  function emptyTree({ pending = false } = {}) {
+    const pendingRow = pending
+      ? '<li class="taxonomy-pending"><div class="taxonomy-row">Remembered</div></li>'
+      : ""
+    const template = document.createElement("div")
+    template.innerHTML = '<div class="p-3" data-taxonomy-tree-empty>No tags yet</div>'
+
+    const { controller, host } = build({
+      elementHtml: `<div class="taxonomy-surface"><ul class="taxonomy-list">${pendingRow}</ul></div>`
+    })
+    controller.emptyStateTemplate = template.firstElementChild
+    return { controller, host }
+  }
+
+  test("is not restored while a pending row is on the page", () => {
+    const { controller, host } = emptyTree({ pending: true })
+
+    controller.restoreEmptyState()
+
+    expect(host.querySelector("[data-taxonomy-tree-empty]")).toBeNull()
+  })
+
+  test("is restored once the tree has a real node", () => {
+    const { controller, host } = emptyTree()
+    host.querySelector(".taxonomy-list").insertAdjacentHTML("afterbegin", '<li class="taxonomy-node" data-node-id="1"></li>')
+
+    controller.restoreEmptyState()
+
+    expect(host.querySelector("[data-taxonomy-tree-empty]")).toBeNull()
+  })
+
+  test("is restored on a tree that has neither", () => {
+    const { controller, host } = emptyTree()
+
+    controller.restoreEmptyState()
+
+    expect(host.querySelector("[data-taxonomy-tree-empty]")).not.toBeNull()
+  })
+})

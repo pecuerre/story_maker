@@ -483,14 +483,39 @@ en:
       not_draft_based: "This universe writes changes straight through, so there is no editing session to start or stop."
     # The **Start editing** / **Stop editing** control on the universe page. The
     # pending count is one button rather than a badge because the number is only
-    # interesting as a way into the changes it is counting.
+    # interesting as a way into the changes it is counting — so it reads
+    # `drafts.pending.count`, which is the one sentence for "how much is waiting on
+    # this reader's draft" and is shared with the sidebar panel.
     editing:
       start: "Start editing"
       stop: "Stop editing"
-      pending_changes:
+    # What the reader's open draft would do to the lists around it. Three states,
+    # because three different things are true — and a row is never changed to match
+    # one: a pending edit shows the values that are stored today, and a pending
+    # deletion shows the record as it is until the draft is applied.
+    pending:
+      count:
         zero: "No pending changes yet"
         one: "1 pending change"
         other: "%{count} pending changes"
+      states:
+        draft: "Draft"
+        draft_title: "This record is only in your draft. It becomes real when you apply the draft."
+        draft_icon: "bi-journal-plus"
+        edit: "Pending edit"
+        edit_title: "Your draft holds an edit to this record. Applying the draft writes it."
+        edit_icon: "bi-pencil"
+        deletion: "Pending deletion"
+        deletion_title: "Your draft holds a delete for this record. Applying the draft removes it."
+        deletion_icon: "bi-trash"
+      # The sidebar panel is a glance, not a second drafts page: each row resolves
+      # the record its change names, and the panel is rendered on every page of the
+      # universe, so the rest of a long draft is counted rather than printed.
+      panel:
+        empty: "Nothing is waiting on your draft in this universe."
+        more:
+          one: "and 1 more change"
+          other: "and %{count} more changes"
     index:
       title: "Pending changes"
       description: "Changes you have made in this universe that are remembered rather than written, and the drafts they belong to."

@@ -189,7 +189,9 @@ the same change, or `db:demo:check` fails.
   content class (ADR 0019), so there is no CanCan rule to ask and the scope is the query itself. Another
   author's draft, a draft in another universe, and a draft that does not exist are one **404**. `index` and
   `show` are reads; `apply` and `discard` are writes, and the shared universe policy asks for `write` from
-  the action's name alone.
+  the action's name alone. It is the only page that reads a draft's **whole** change list: the list
+  workspaces and the sidebar panel read the same draft through `DraftPreview`, which is the same query
+  under the same scope rather than a second way in.
 - **An apply writes through the live mutation path, and the applier derives a model's ordering rather than
   listing it.** `DraftApplier` routes an ordered collection through `PositionedResourceOrder` and an
   unordered one through `save`/`update`/`soft_delete`, deciding which from the model's own columns — a
@@ -444,13 +446,14 @@ because a bare `story_id` is nothing a reader can name, and the two virtual phot
 a new photo or a removed one rather than as a `data:` URL and a boolean.
 
 **The page has to be reachable.** The right utility sidebar's **Collaboration** group carries a
-**Pending changes** entry, rendered only where a draft can exist — a `direct` universe never opens one
-— and only for a signed-in reader, because a draft belongs to a person. An editor who is told their
-change was remembered and cannot then find it has no way to see it, apply it, or throw it away; which
-block that entry belongs to is in [features/navigation.md](features/navigation.md). The entry's presence
-does **not** depend on the reader having something pending: it is how a reader with nothing pending
-reaches the history the drafts list also shows, and a control that appears and disappears with a count
-is a control whose absence has to be explained.
+**Pending changes** entry with a panel of what is waiting above it, rendered only where a draft can
+exist — a `direct` universe never opens one — and only for a signed-in reader, because a draft belongs
+to a person. An editor who is told their change was remembered and cannot then find it has no way to
+see it, apply it, or throw it away; which block that entry belongs to is in
+[features/navigation.md](features/navigation.md). Neither the panel nor the entry's presence depends on
+the reader having something pending: it is how a reader with nothing pending reaches the history the
+drafts list also shows, and a control that appears and disappears with a count is a control whose
+absence has to be explained.
 
 ## The editing session
 
@@ -470,7 +473,9 @@ a universe whose mode exists to stop exactly that ([ADR
 session does is **open the draft before the first change is made** (`Draft.open_for!`, which resumes an
 existing draft rather than replacing it), and what the flag gives the page is a count: the pending count
 is a link into the drafts page, because a number is only interesting as a way into the changes it is
-counting.
+counting. That count is `draft_preview.count`, which the universe page's button and the sidebar's panel
+both read, because it is one fact about one draft read once per request; the sentence for it is
+`drafts.pending.count`, and two keys for one fact is how a fact goes stale in one place.
 
 The control is rendered where the server accepts it: a draft-based universe, a signed-in reader, and
 `write` access — the same three conditions `draft_editing_available?` states and the two actions enforce
@@ -489,6 +494,52 @@ open statuses, so two tabs cannot each open one. History is outside the index, w
 second editing session have a row of its own. `Draft.open_for!` resolves the race the index leaves by
 re-reading the winner's row rather than raising, and re-raises if that row is gone — the index's status
 list is compared against `Draft::OPEN_STATUSES` by `test/models/draft_test.rb` so the two cannot drift.
+
+## Pending changes in a list
+
+In a universe that remembers changes, a list shows two things: what is stored, and what the reader's
+own open draft would do to it. Both come from `DraftPreview`, built once per request by
+`DraftsHelper#draft_preview` and answered three ways — what is waiting, what is waiting **on this
+record**, and what new records the draft would have created.
+
+**The draft is the query; the content query is untouched.** A remembered create names no record
+([ADR 0019](adr/0019-collaboration-foundations.md)), so there is no row a content query could return and
+no join that would produce one. A list therefore keeps its own ordering, `includes`, and count, and the
+preview is a parallel source beside it — see [ADR
+0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md). Every list workspace
+carries it: the six universe-level flat lists (Characters, Locations, Items, Events, Relations,
+Ownerships), the Sections tree, the eight taxonomy trees, and the Scenes list.
+
+**A pending record is an unsaved instance of the model**, built from the payload sliced to
+`model.column_names`, so a pending row renders through the same `record_label` ladder a live row uses
+and no model gains a second way of naming itself. Slicing is what keeps the collection writers
+(`character_tag_ids`) and the virtual photo attributes out: assigning them would build an association
+the row throws away, and not assigning them is what makes a payload naming a renamed column harmless.
+What a pending row cannot have is a **Details link, an editor, a delete menu, or a position** — all four
+need an id — so `shared/_row_actions` and `shared/_taxonomy_node` are never handed one.
+
+**A row is never rewritten to match its badge.** A pending **edit** shows the values that are stored
+today and a pending **deletion** shows the record with its links and menu, because none of that has
+stopped being true; the badge is the only new thing on the row. The three states are
+`drafts.pending.states`, and a **deletion wins an edit** on the same record rather than badging one
+row twice.
+
+**Pending rows are appended after the real rows**, in the order they were remembered, never sorted
+into the list: a record with no id has no place in a sequence the controller computed from real rows,
+and re-sorting would mean re-deriving each controller's ordering in Ruby. Two places refuse them
+outright, for the same reason — a record that does not exist cannot answer a question about one that
+does. A **filtered** Scenes list stays filtered, and a remembered Scene that names a `section_id` is
+not listed among the ungrouped ones.
+
+**A list whose only content is a pending create does not say it is empty.** The empty-state guard on
+every list reads `@records.any? || pending.any?`, and `shared/_taxonomy_tree` does the same for the
+tree, because telling a writer they have no characters while a row with a name sits under the message
+is two answers to one question.
+
+In a taxonomy tree the pending row is **`.taxonomy-pending`, never `.taxonomy-node`**: the tree
+controller counts `.taxonomy-node` children to place separators and compute positions, so a row in that
+list would be draggable and renameable before it exists. `restoreEmptyState` checks for it, so the
+client does not put the empty state back on a tree the server rendered a pending row into.
 
 ## Record details pages
 

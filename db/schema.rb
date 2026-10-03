@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_02_130100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_152427) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -101,6 +101,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_130100) do
     t.datetime "updated_at", null: false
     t.index ["record_type", "record_id"], name: "index_discussions_on_record_type_and_record_id", unique: true
     t.index ["universe_id"], name: "index_discussions_on_universe_id"
+  end
+
+  create_table "draft_changes", force: :cascade do |t|
+    t.string "action", null: false
+    t.string "base_version"
+    t.datetime "created_at", null: false
+    t.integer "draft_id", null: false
+    t.json "payload"
+    t.integer "record_id"
+    t.string "record_type", null: false
+    t.index ["draft_id", "created_at", "id"], name: "index_draft_changes_on_draft_id_and_created_at_and_id"
+    t.index ["draft_id"], name: "index_draft_changes_on_draft_id"
+  end
+
+  create_table "drafts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "status", default: "draft", null: false
+    t.integer "universe_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["universe_id"], name: "index_drafts_on_universe_id"
+    t.index ["user_id", "universe_id"], name: "index_drafts_on_user_id_and_universe_id"
+    t.index ["user_id"], name: "index_drafts_on_user_id"
   end
 
   create_table "event_tags", force: :cascade do |t|
@@ -564,6 +587,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_130100) do
   add_foreign_key "discussion_messages", "discussions"
   add_foreign_key "discussion_messages", "users"
   add_foreign_key "discussions", "universes"
+  add_foreign_key "draft_changes", "drafts"
+  add_foreign_key "drafts", "universes"
+  add_foreign_key "drafts", "users"
   add_foreign_key "event_tags", "event_tags", column: "parent_id"
   add_foreign_key "event_tags", "photos", on_delete: :nullify
   add_foreign_key "event_tags", "universes"

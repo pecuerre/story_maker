@@ -199,6 +199,26 @@ columns: the loader's preflight runs before the schema exists, so an identifier 
 database would not resolve during a reset. A `SceneElement` has no stable identifier and so cannot
 be named by a manifest, although the application can carry a thread about one.
 
+### Remembered changes
+| Table | Columns | Notes |
+|---|---|---|
+| `drafts` | `user_id` FK (NOT NULL), `universe_id` FK (NOT NULL), `status` (string, default `draft`, NOT NULL) | one author's pending changes in one universe. Index `[user_id, universe_id]`. **No** unique index on that pair, deliberately: an applied draft stays behind as history, so a constraint across all statuses would make a second editing session impossible; "one open draft" is a rule of the editing flow, not of the schema. `status` is one of `draft`/`applied`/`discarded`/`submitted`, the same list the column default comes from |
+| `draft_changes` | `draft_id` FK (NOT NULL), `record_type` (NOT NULL), `record_id` (nullable), `action` (NOT NULL), `payload` json (nullable), `base_version` (nullable), `created_at` | `action` is `create`/`update`/`delete`. The polymorphic pair gets **no** foreign key and is registry-gated by `RecordTarget`, like a thread's. `record_id` is nullable only because a `create` remembers a record that does not exist yet; `base_version` is required for the other two actions and refused for a `create`, which has nothing to version. `created_at` with **no** `updated_at`: a change is append-only and `before_update` raises. Index `[draft_id, created_at, id]` |
+
+The column is `payload`, not `changes` as the collaboration plan named it: Rails 8.1 refuses an
+attribute that Active Record already defines, and `changes` is `ActiveModel::Dirty`'s
+(`ActiveRecord::DangerousAttributeError`); `attributes` is refused the same way. `payload` is the
+name the notifications table already uses for opaque stored data.
+
+`base_version` is a **string**, and `DraftChange.capture_base_version` is the only supported way to
+fill it, because it routes through `VersionStamp`. A raw `updated_at` written here is a `Time`, a
+`Time` is never equal to the string it is compared against, and every stored change would then be
+reported as a conflict. See [ADR 0019](adr/0019-collaboration-foundations.md).
+
+Neither model is in `Ability::CONTENT_CLASS_NAMES`, and neither is universe content: a draft is
+one author's pending work, so registering it would let the content rules answer `read` for a guest in
+a public universe. `test/models/ability_test.rb` carries the reason.
+
 ### Non-app tables
 `solid_cache` / `solid_cable` / `solid_queue` live in their own schema files
 (`db/cache_schema.rb`, `db/cable_schema.rb`, `db/queue_schema.rb`).
@@ -252,7 +272,10 @@ maintenance if they become supported workflows.
 
 Not hierarchical: **Relation**, **Ownership** (link records), **Scene** and **SceneElement** (flat
 story- and scene-owned sequences), **SceneCharacter**, **SceneItem**, **SceneLocation** (link
-records), **Story**, **Universe**, **User**, **Session**.
+records), **Story**, **Universe**, **User**, **Session**, **Draft** and **DraftChange**. A draft
+change *is* ordered — by `created_at`, then `id`, which is the order it was remembered in — but it
+is an append-only log rather than a sequence an author rearranges, so it carries no `position` and
+no `parent_id`.
 
 ## Validations & invariants (per model)
 
@@ -262,6 +285,8 @@ records), **Story**, **Universe**, **User**, **Session**.
 | `UniverseMembership` | user/universe presence; access level in read/write/admin; unique user per universe; owner cannot be a separate member |
 | `Discussion` | `universe` and `record` are both required. The polymorphic `record` is `optional: true` on purpose — Rails' own presence validation reads the association, which would `constantize` a stored `record_type` before `RecordTarget` had gated it — so the two model validations own the reference: "does not exist" for a type outside `CONTENT_CLASS_NAMES`, an unknown id, or a soft-deleted record, and "must belong to the same universe" for a record the stored universe does not own. One thread per record is enforced by the unique pair index |
 | `DiscussionMessage` | `discussion` and `user` presence; `body` presence | no authorization check: who may write is asked by the controller about the thread's *record* |
+| `Draft` | `user` and `universe` presence; `status` inclusion in `STATUSES` (`draft`/`applied`/`discarded`/`submitted`), the same list the column default comes from — a status nothing behaves for would be a draft no control can apply or discard. Four predicates plus `open?` (`draft` or `submitted`; an applied or discarded draft is history) so no caller re-derives a lifecycle state from a raw string | no authorization check: who may see a draft is asked by the controller about its **owner**, not about a universe record |
+| `DraftChange` | `draft` presence; `action` inclusion in `ACTIONS` (`create`/`update`/`delete`); `record_type` presence **and** registration in `CONTENT_CLASS_NAMES`; a `create` must leave `record_id` and `base_version` blank and an `update`/`delete` must supply both; a named record must resolve through `RecordTarget` (so an unknown id and a soft-deleted record are one "does not exist") and must belong to the **draft's** universe; updates raise (`append-only`) | no authorization check: a change is reached only through its draft's owner |
 | `Story` | `name` presence + unique per universe; `slug` unique per universe |
 | `Section` | `name` presence; `story` required; parent rules scoped to the story; `section_tags` optional, but when present they must all belong to the section's story through the shared HABTM scope; `has_many :scenes, dependent: :nullify` |
 | `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |

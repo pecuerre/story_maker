@@ -80,6 +80,10 @@ class Universe < ApplicationRecord
   # thread that outlived the record it was about would be an orphan row nothing
   # can reach.
   has_many :discussions, dependent: :destroy
+  # A draft is authorized inside one universe, so the universe cascade covers it
+  # for the same reason it covers a thread: a draft left behind would be an orphan
+  # row holding changes against records that no longer exist.
+  has_many :drafts, dependent: :destroy
   has_many :stories, dependent: :destroy
   has_many :sections, through: :stories
   has_many :scenes, through: :stories

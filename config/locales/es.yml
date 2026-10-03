@@ -379,6 +379,26 @@ es:
     flash:
       message_created: "Tu mensaje se ha publicado."
 
+  drafts:
+    errors:
+      # Un `record_type` es la mitad de una referencia polimórfica, así que un
+      # tipo que el registro de contenido no conoce es una referencia que no
+      # resuelve a nada. Tiene su propia frase, aparte de
+      # `shared.errors.reference.must_exist`, porque la columna que falla es el
+      # tipo y no un id de registro.
+      record_type_unknown: "debe nombrar un registro que este universo puede contener"
+      # Las dos formas que una acción puede tener. Una creación recuerda un
+      # registro que todavía no existe, así que nombrarlo no significa nada; una
+      # actualización o un borrado de nada no tiene registro al que aplicarse ni
+      # con el que comparar la versión.
+      record_id_for_create: "no puede nombrar un registro que todavía no existe"
+      record_id_required: "debe nombrar un registro que ya existe"
+      # Una versión es lo que permite aplicar más adelante un cambio recordado con
+      # seguridad. Una creación no recuerda nada que no exista todavía, y una
+      # actualización o un borrado sin versión no tiene con qué comparar.
+      base_version_for_create: "no puede recordar la versión de un registro que todavía no existe"
+      base_version_required: "debe recordar la versión del registro"
+
   stories:
     title: "Historias"
     description: "Cada historia es dueña de su trama y de sus secciones, y comparte los personajes, los lugares, los sucesos y los objetos de este universo."

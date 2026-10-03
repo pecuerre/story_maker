@@ -171,7 +171,14 @@ class AbilityTest < ActiveSupport::TestCase
       # CanCan a rule whose answer could disagree with the record's, and a
       # polymorphic rule is exactly the class-level hole `RecordTarget` closes.
       "Discussion" => "authorized through the record it is about, never on its own",
-      "DiscussionMessage" => "reachable only through its discussion's record scope"
+      "DiscussionMessage" => "reachable only through its discussion's record scope",
+      # A draft is one author's pending changes, not something the universe
+      # publishes. Registering it as content would let the content rules answer
+      # `read` for a guest in a public universe — exactly the wrong answer for
+      # somebody else's unfinished work — so a draft is read as its owner's, inside
+      # the universe the request has already authorized.
+      "Draft" => "one author's pending changes, authorized through its owner and universe",
+      "DraftChange" => "reachable only through its draft's owner and universe scope"
     }
 
     # Zeitwerk loads a model the first time something names it, so a model this

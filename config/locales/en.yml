@@ -419,6 +419,24 @@ en:
     flash:
       message_created: "Your message was posted."
 
+  drafts:
+    errors:
+      # A `record_type` is a half of a polymorphic reference, so a type the
+      # content registry does not know is a reference that resolves to nothing.
+      # It keeps its own sentence from `shared.errors.reference.must_exist`
+      # because the column at fault is the type, not a record id.
+      record_type_unknown: "must name a record this universe can hold"
+      # The two shapes an action may carry. A create remembers a record that does
+      # not exist yet, so naming one is meaningless; an update or a delete of
+      # nothing has no record to apply to or to conflict-check.
+      record_id_for_create: "cannot name a record that does not exist yet"
+      record_id_required: "must name a record that already exists"
+      # A version is what lets a remembered change be applied safely later. One
+      # remembers nothing that does not exist yet, and an update or a delete
+      # without one has nothing to compare the record against.
+      base_version_for_create: "cannot remember a version of a record that does not exist yet"
+      base_version_required: "must remember the record's version"
+
   stories:
     title: "Stories"
     description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe."

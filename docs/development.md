@@ -1075,6 +1075,11 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    If the feature changes access or persistence, also update `universe_memberships.yml` where a
    sample universe should exercise private or delegated-admin access.
 
+   This step is for a model a reader can reach. `Draft` and `DraftChange` are the current
+   exception, by decision rather than omission: a draft is one author's transient pending state
+   with no page of its own, and a manifest cannot express one whose first change *creates* the
+   record it names. Their manifests arrive with the slice that gives a draft a list to appear in.
+
 ### Full-stack data contract for a new model
 
 When the owner asks for a new model, treat the request as a complete feature rather than stopping

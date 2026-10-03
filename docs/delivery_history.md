@@ -29,6 +29,71 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-03
 
+- **[added]** **Collaboration phase 2, slice 2.1: the `drafts` and `draft_changes` tables.** The
+  data model for remembered changes, with no controller, no route, and no page — the interception
+  slice reads them and nothing yet writes one outside a test.
+
+  **Two of the slice's four column names could not be built as written, and both refusals are
+  worth keeping because the error is not the obvious one.** The plan named the remembered attributes
+  `changes`, and Rails 8.1 answers an attribute that Active Record already defines with
+  `ActiveRecord::DangerousAttributeError` — `changes` is `ActiveModel::Dirty`'s. `attributes`, the
+  obvious fallback, is refused the same way. The column is **`payload`**, which is also what
+  backlog item 24.1 calls the opaque stored data on `notifications`, so one word covers both.
+  Every other planned column (`action`, `status`, `base_version`, `record_type`, `record_id`)
+  survives the check; that was verified by probe rather than assumed, since a name collision with
+  the framework is not something reading the schema reveals.
+
+  **The version stamp is a method, not a convention.** ADR 0019 settles that a remembered change is
+  stamped with `updated_at` and that a `Time` is never equal to the string it is compared against,
+  which makes the naive comparison wrong in a way that fails silently and totally. Slice 2.2 is the
+  code that would have written the raw `updated_at`, and a comment asking it not to is exactly the
+  kind of instruction that is obeyed until it is inconvenient. So
+  `DraftChange.capture_base_version(record)` is the only supported way to fill the column, and the
+  model validation *refuses* an `update`/`delete` with no `base_version` — an unknown base counts as
+  moved (`VersionStamp`), so a missing stamp is not a silent gap but a guaranteed false conflict on
+  every change, which is worse than a validation error an author can see.
+
+  **The change is append-only, and `readonly?` was the wrong way to say so.** The first attempt
+  overrode `readonly?` to `persisted?`, which is the obvious spelling of "this row cannot be
+  updated" — and it broke three things at once, which is what the failure was for. It refuses
+  `destroy`, so a **discarded** draft could not be deleted, which is the opposite of what the
+  discard workflow needs. It also refused the `save` that follows a `create!` on the same instance,
+  because a persisted record is no longer `new_record?`. `before_update` raising
+  `ActiveRecord::ReadOnlyRecord` draws the line exactly where the invariant is: a remembered change
+  is a statement about one moment, and the row keeps the `base_version` captured against the
+  *original* attributes, so a rewritten payload would be applied against a version describing
+  something else with nothing afterwards able to tell. The draft's own row stays editable, because
+  every phase that rejects a change moves the **draft's** status.
+
+  **Where the validation work went beyond the slice's two lines.** The plan asked for an action
+  inclusion and a `record_type` presence. Both are there, and three more rules exist because a row
+  that passes only those is one the later slices have to guess about: `record_type` must be
+  registered in `CONTENT_CLASS_NAMES` (ADR 0019's registry gate, so a stored type is never
+  `constantize`d and a draft can only remember a change to universe content); a `create` must leave
+  `record_id` and `base_version` blank while an `update`/`delete` must supply both, because
+  `action` is what decides which of the two shapes is coherent; and a named record must both resolve
+  through `RecordTarget` and belong to **the draft's** universe — the draft stores its own
+  `universe_id`, so the same two-independent-columns disagreement `Discussion` validates applies,
+  and a foreign key cannot prove either half.
+
+  **`Draft` and `DraftChange` are deliberately not in `CONTENT_CLASS_NAMES`**, and
+  `test/models/ability_test.rb` carries the reason rather than being satisfied by an exception. A
+  draft is one author's pending work; registering it as content would let the content rules answer
+  `read` for a guest in a public universe, which is precisely the wrong answer for somebody else's
+  unfinished edits. There is also **no** unique index on `[user_id, universe_id]`, though the plan
+  defers "one draft at a time per author per universe": an applied draft stays behind as history, so
+  a constraint across every status would make a second editing session impossible. "One open draft"
+  is a rule of the editing flow, asked of this model, not of the schema.
+
+  **Verification.** `bin/rails test` — 1,551 runs, 9,986 assertions, 0 failures/errors, 10 skips
+  (the same pre-existing skips). `bin/rubocop` — 402 files, no offenses. `bin/brakeman
+  --exit-on-warn --exit-on-error` — 0 warnings. `bin/rails db:migrate` regenerated
+  `db/schema.rb`; the two Rails name collisions were established by a throwaway probe table, and
+  the tables it created were dropped and the schema dump regenerated so no probe reached the
+  committed schema. Not run: `bin/rails test:system` (no client-side or view change in this slice),
+  `bun run check:js` (no JavaScript touched), and the `migrations-from-zero` CI job (these are
+  ordinary new create migrations, and CI runs it on every push).
+
 - **[fixed]** **All five of quirk 31's query-cost paths, in two deliveries.** Three were the query
   shapes — row-level authorization, the membership page's per-row user dereference, and the
   relation-only event labels — and two changed a shared contract and an algorithm, delivered the same

@@ -1,0 +1,51 @@
+<%# The reader's own pending work, in the sidebar that already leads with a way
+    # into it.
+    #
+    # The **Pending changes** entry beside this answers "where are they"; this
+    # answers "what are they", so a reader who is told their change was remembered
+    # can see the same fact on every page of the universe instead of having to open
+    # the draft to find out whether anything is waiting at all.
+    #
+    # It is a **glance, not a second drafts page**: each row resolves the record its
+    # change names, and this partial is rendered on every page of the universe, so
+    # an unbounded list would put one lookup per remembered change on all of them.
+    # `DraftPreview::PANEL_LIMIT` caps it and the rest is counted rather than
+    # hidden.
+    #
+    # It is rendered only where a draft can exist — a `direct` universe never opens
+    # one, and a draft belongs to a person — and it renders at **zero** as well as
+    # at any count, because the entry beside it is also how a reader with nothing
+    # pending reaches the history.
+    #
+    # The **Pending changes** entry is a sibling `<li>` rather than a child: the
+    # shared link partial is itself a list item, and a list item inside a list item
+    # is invalid HTML that a parser hoists back out, which would quietly move the
+    # entry outside the panel it belongs to. %>
+<% preview = local_assigns.fetch(:preview) %>
+<li class="draft-pending-panel">
+  <p class="draft-pending-summary">
+    <i class="bi bi-journal-text" aria-hidden="true"></i>
+    <span><%= t("drafts.pending.count", count: preview.count) %></span>
+  </p>
+
+  <% if preview.any? %>
+    <ul class="draft-pending-changes list-unstyled mb-0">
+      <% preview.panel_changes.each do |change| %>
+        <%# A remembered create names no record, so asking for one would be a
+            lookup that cannot answer: the row is titled by the type it would
+            create, exactly as the draft's own page titles it. %>
+        <% record = change.creating? ? nil : change.resolved_record %>
+        <li class="draft-pending-change">
+          <span class="badge rounded-pill text-bg-light border"><%= t("drafts.actions.#{change.action}") %></span>
+          <span class="text-break"><%= draft_change_subject(change, record) %></span>
+        </li>
+      <% end %>
+    </ul>
+
+    <% if preview.hidden_change_count.positive? %>
+      <p class="draft-pending-more mb-0"><%= t("drafts.pending.panel.more", count: preview.hidden_change_count) %></p>
+    <% end %>
+  <% else %>
+    <p class="draft-pending-more mb-0"><%= t("drafts.pending.panel.empty") %></p>
+  <% end %>
+</li>

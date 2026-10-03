@@ -1,5 +1,9 @@
 <% content_for :title, t("ownerships.title") %>
 <% empty_description = can_write_universe? ? t("ownerships.empty_writable_description") : t("ownerships.empty_read_only_description") %>
+<%# See `relations/index`: a rejected submission is an unsaved record on this page
+    too, and the pending rows below come from the reader's own draft rather than
+    from it. %>
+<% pending_creates = draft_pending_creates_for(Ownership) %>
 <%# A rejected submission re-renders this index with the invalid record, so the
     entered values are serialized into the trigger that reopens the editor
     instead of being thrown away: the Add trigger for a rejected create, and only
@@ -47,7 +51,7 @@
       { label: t("items.tabs.ownerships"), path: universe_ownerships_path, controller: :ownerships }
     ] %>
 
-  <% if @ownerships.any? %>
+  <% if @ownerships.any? || pending_creates.any? %>
     <div class="content-surface entity-list">
       <div class="list-group list-group-flush">
         <% @ownerships.each do |ownership| %>
@@ -59,6 +63,7 @@
                 <%= entity_tag_badge(ownership) %>
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 <span class="entity-title"><%= ownership.character.name %></span>
+                <%= render "shared/draft_pending_badge", state: draft_pending_state(ownership) %>
               </div>
               <% if ownership.description.present? %>
                 <div class="entity-description"><%= ownership.description %></div>
@@ -77,6 +82,8 @@
               values: (rejected&.persisted? && rejected.id == ownership.id) ? ownership_fields_json(rejected) : ownership_fields_json(ownership) %>
           </div>
         <% end %>
+
+        <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
       </div>
     </div>
   <% else %>

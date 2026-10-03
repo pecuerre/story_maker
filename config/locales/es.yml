@@ -439,10 +439,35 @@ es:
     editing:
       start: "Empezar a editar"
       stop: "Dejar de editar"
-      pending_changes:
+    # Lo que el borrador abierto del lector haría con las listas que lo rodean.
+    # Tres estados porque son tres cosas distintas las que son ciertas, y una fila
+    # nunca se cambia para coincidir con uno: una edición pendiente muestra los
+    # valores guardados hoy, y un borrado pendiente muestra el registro tal como
+    # está hasta que se aplique el borrador.
+    pending:
+      count:
         zero: "Aún no hay cambios pendientes"
         one: "1 cambio pendiente"
         other: "%{count} cambios pendientes"
+      states:
+        draft: "Borrador"
+        draft_title: "Este registro solo está en tu borrador. Se hará real cuando apliques el borrador."
+        draft_icon: "bi-journal-plus"
+        edit: "Edición pendiente"
+        edit_title: "Tu borrador guarda una edición de este registro. Al aplicar el borrador se escribirá."
+        edit_icon: "bi-pencil"
+        deletion: "Borrado pendiente"
+        deletion_title: "Tu borrador guarda un borrado de este registro. Al aplicar el borrador se eliminará."
+        deletion_icon: "bi-trash"
+      # El panel de la barra lateral es un vistazo, no una segunda página de
+      # borradores: cada fila resuelve el registro que nombra su cambio, y el panel
+      # se muestra en todas las páginas del universo, así que el resto de un
+      # borrador largo se cuenta en lugar de imprimirse.
+      panel:
+        empty: "Tu borrador de este universo no tiene nada pendiente."
+        more:
+          one: "y 1 cambio más"
+          other: "y %{count} cambios más"
     index:
       title: "Cambios pendientes"
       description: "Los cambios que has hecho en este universo y que se recuerdan en lugar de escribirse, con los borradores a los que pertenecen."

@@ -10,7 +10,8 @@ only: no application, test, configuration, dependency, or generated-asset fixes 
 pass. The separate DataFactor follow-up section below was checked against the current tree on
 2026-09-25; it is not a full replacement for the original audit. Severity labels distinguish
 reachable security/data-loss issues from lower-priority hardening and contract decisions. Entries
-numbered **63 and above** were added on 2026-10-03 while the collaboration draft system was being
+numbered **63 and above** were added on 2026-10-03 and **68 and above** on 2026-10-04, while the
+collaboration draft system was being
 built, verified the same way, and listed here rather than left in [`backlog.md`](backlog.md) because
 each one is reachable now rather than only pending.
 
@@ -138,7 +139,8 @@ each one is reachable now rather than only pending.
     one's edit is reported once and then has to be retyped. The draft always closing is deliberate and
     load-bearing — a remembered `create` names no record, so an apply left open could write the author a
     second copy of it (ADR 0021) — and the resolution UI that removes this cost is Phase 3, recorded in
-    [`backlog.md`](backlog.md) as item 22.
+    [`backlog.md`](backlog.md) as **Collaboration system — Phase 3: Conflict resolution**. A backlog
+    number is not cited here on purpose: it is deleted when the item is done, and this entry outlives it.
 
 64. **Low — the apply's outcome is reported once and then lost.** `DraftApplier::Result` carries what was
     written and why the rest was not, and the controller turns it into one flash message; nothing records
@@ -149,14 +151,47 @@ each one is reachable now rather than only pending.
     remembered intentions rather than as a record of what happened, which is the part of "draft history"
     that Phase 5 will want.
 
-66. **Low — a draft's page costs a record lookup per remembered change, plus one per remembered id list.**
-    `DraftChange#resolved_record` deliberately does not remember its answer (a record deleted after the
+66. **Low — resolving a draft's records costs a lookup per change, and the sidebar panel pays it on every
+    page.** `DraftChange#resolved_record` deliberately does not remember its answer (a record deleted after the
     change was written must stop resolving), so each row resolves its own record, and each remembered
-    `*_ids` value resolves its tags through `DraftsHelper#association_names` one query at a time. A draft
-    with a handful of changes is a handful of queries and nothing to see; a draft assembled from a long
-    editing session is a query per row. The page is the only unbounded-per-row read added so far — every
-    list page in the application preloads through a grouped query — so this is where a
-    `DraftChanges::Reader` that resolves a draft's records and tag names in two queries would go.
+    `*_ids` value resolves its tags through `DraftsHelper#association_names` one query at a time. The right
+    sidebar's pending panel reads the same draft on **every** page of the universe and resolves each change's
+    record, so the cost is no longer one page but all of them; `DraftPreview::PANEL_LIMIT` caps it at five
+    rows and counts the remainder, which bounds the exposure without removing it. The panel is one bounded
+    read added this way, and a draft assembled from a long editing session is still a query per row. The
+    drafts page is the other, and is unbounded per row as before — every other list page in the application
+    preloads through a grouped query, so these are the two places that do not. Both would be answered by a
+    `DraftChanges::Reader` that resolves a draft's records and tag names in two queries.
+
+68. **Medium — a remembered create is not validated, so a list can show a pending row the universe would
+    have refused.** ADR 0020 deliberately does not validate a change when it is remembered: the applier
+    re-runs the live path, where the model's own validations are authoritative. That is right for the
+    drafts page, which reports what the author *asked for*. It is not right for a **list**, because
+    `DraftPreview#creates_for` builds the pending record straight from the payload with no validation at
+    all (`app/models/draft_preview.rb`). Verified on 2026-10-04 in a `wikipedia` universe: posting an Event
+    with no title and no dates answers **202** and the Events list renders a pending row reading
+    **“Event #”** — `Event#display_label`'s last rung, `t("events.display_label.unidentified", id: nil)`
+    — where the same submission on the `direct` path answers **422 must have a title, a date, or a
+    relation to another event**. A nameless Character create is the same defect with a quieter face: the
+    row renders its badge and its description with **no subject at all**, and a nameless taxonomy create
+    renders a bare **Draft** badge. The row has no id, so there is nothing to name it by, and no way to
+    withdraw it from the list except discarding the whole draft. The deep cause is the one finding 64
+    records: nothing stores an outcome per change before an apply, so the list cannot know which
+    remembered changes will be refused. Whether a row that will not apply is badged differently, named
+    from its type, or withheld is a product decision and belongs with **Collaboration system — Phase 3:
+    Conflict resolution** in [`backlog.md`](backlog.md), not here.
+
+69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
+    submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`
+    (`app/models/draft_preview.rb`), which is what keeps the collection writers (`character_tag_ids`) and
+    the two virtual photo attributes off a record that will never be saved — and is also why a payload
+    naming a renamed column is harmless. The cost is visible: a new Character the author tagged
+    *Protagonist* and gave a portrait appears in the Characters list with a **Draft** badge and no tag
+    badge and no picture, while the same change on the draft's own page shows both, because that page is
+    where the payload's values are read rather than printed. Resolving a tag list per pending row costs a
+    query per row, which is the trade finding 66 already describes; deciding whether the row should pay
+    it is recorded as **What a pending record shows outside the list workspaces** in
+    [`backlog.md`](backlog.md).
 
 ## Performance, test, and tooling observations
 
@@ -255,12 +290,17 @@ through the current normal UI. They are recorded so they are not mistaken for se
   The policy-aware `User#accessible_universes` and the membership view compensate manually
   (`app/models/user.rb:12-14`, `app/views/memberships/index.html.erb:64-70`); new code using the
   ordinary associations can omit owners and report incomplete access/collaboration data.
-- **A remembered create's page does not say which story or scene it would belong to.** The payload's scope
-  column (`DraftChange#scope_attribute`) is dropped as plumbing, because the page is already inside the
-  universe it would place the record in and a bare `story_id` is a number a reader cannot name. An author
-  reviewing twenty remembered scenes therefore sees twenty rows that say what each scene is called and
-  nothing about where each one would land, and has to go to the record's own workspace to find out. A
-  resolved name per create would cost one lookup per row, which is the same trade as finding 66.
+- **A remembered create says nothing about which story, scene, or section it would belong to.** The payload's
+  scope column (`DraftChange#scope_attribute`) is dropped as plumbing on the drafts page, because the page is
+  already inside the universe it would place the record in and a bare `story_id` is a number a reader cannot
+  name. The list workspaces now show remembered creates too, and they drop it for the same reason — and
+  additionally because a pending row is an unsaved record whose position and parent are the applier's to
+  decide, so it is appended after the real rows and placed under no parent. An author reviewing twenty
+  remembered scenes therefore sees twenty rows that say what each scene is called and nothing about where
+  each one would land, and has to go to the record's own workspace to find out. A resolved name per create
+  would cost one lookup per row, which is the same trade as finding 66; the reasoning for reading a create
+  as an unsaved model rather than a row is in [ADR
+  0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
 - **The applier raises rather than reporting a change it cannot interpret.** An unregistered `record_type`
   on a remembered create, or a payload naming an attribute no column holds, is a corrupt row rather than
   something an author typed, and `DraftApplier` lets it raise (`ActiveRecord::RecordNotFound`,

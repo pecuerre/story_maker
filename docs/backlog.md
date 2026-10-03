@@ -41,13 +41,16 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
 3. **Contextual inspector / right-side utility panel**
 
-The right utility sidebar now reserves a stable home for future collaboration, analytics, and AI
-tools. Replace its temporary `aria-disabled` links with a real contextual inspector as the
-underlying product areas become concrete. The inspector should show information relevant to the
-current page: selected entity details, related records, taxonomy usage, filters, or quick actions.
-It remains a Bootstrap `offcanvas-end` below `xl` and can be hidden when there is nothing useful
-to show. Candidate data includes selected-character relations/ownerships, relation-tag usage
-counts, and story outline progress.
+The right utility sidebar now holds one live block — the reader's pending-changes panel and the
+**Pending changes** entry above it — and reserves the rest of its space for future collaboration,
+analytics, and AI tools. Replace the remaining temporary `aria-disabled` links with a real contextual
+inspector as the underlying product areas become concrete. The inspector should show information
+relevant to the current page: selected entity details, related records, taxonomy usage, filters, or
+quick actions. It remains a Bootstrap `offcanvas-end` below `xl` and can be hidden when there is
+nothing useful to show. Two constraints the panel sets: it is the first thing in the Collaboration
+group rather than a bare link, so a second live block has to earn its place the same way, and it is
+bounded at five rows because it is rendered on every page of the universe. Candidate data includes
+selected-character relations/ownerships, relation-tag usage counts, and story outline progress.
 
 4. **Search, filtering, and sorting for large lists**
 
@@ -64,6 +67,15 @@ already has this shape (text, Section group, Scene Tag, inclusive in-world date 
 query in the URL); reuse its `SceneFilter` conventions here instead of inventing a second filter
 pattern, and reuse `Search::Scope` for the boundary rather than re-deciding what "this universe"
 means.
+
+**A filter also has to say what happens to a pending row.** In a universe that remembers changes, a
+list appends the records the reader's own draft would create and badges the ones it would edit or
+delete ([ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)). A pending
+row has no id, so it cannot satisfy a filter on any column the author did not submit, and the Scenes
+list already answers this by staying filtered. Decide deliberately per workspace: hide pending rows
+when a filter is active (what Scenes does), keep them and show a count, or match them on the values
+the payload carries. The third is the only one that can ever put a pending row in a result set, and it
+is the one that needs the filter to read a payload rather than a record.
 
 5. **Richer relationship and entity rows**
 
@@ -106,7 +118,8 @@ still the analyzer's job, and nothing here performs it.
 Universe-level access management is implemented: public/private visibility and read/write/admin
 memberships are available from the universe workspace. The right sidebar still reserves temporary
 links for Collaborators, Conflicts, Branches, Forks, Analytics, and AI tools, and it now leads its
-Collaboration group with the live **Pending changes** entry a draft-based universe needs. Those
+Collaboration group with the reader's own **pending-changes panel** and the **Pending changes** entry
+beneath it, which is what a draft-based universe needs. Those
 remaining placeholders stay future product areas. Before replacing them with navigation, specify the
 underlying records and permissions: inconsistency detection, incomplete/undefined records, submissions,
 changes/forks, graphs, analytics, and drafts. A feature should appear as a live navigation item when
@@ -124,81 +137,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-21. **Collaboration system — Phase 2: Draft system (core data model + interception)**
-
-    In `wikipedia` or `github` mode, mutations are stored as draft changes instead of written directly.
-    Users can see their pending changes and apply them. Conflict resolution comes in Phase 3.
-
-    - **Slice 2.1 (delivered 2026-10-03):** `drafts` (`user_id`, `universe_id`, `status` string
-      default `"draft"` not null: `draft`/`applied`/`discarded`/`submitted`, timestamps) and
-      `draft_changes` (`draft_id`, `record_type`, `record_id` nullable, `action` string:
-      `create`/`update`/`delete`, `base_version` string nullable, `created_at`) exist, with `Draft`
-      and `DraftChange` and their model tests. Three deviations from the text above, all settled and
-      recorded in [ADR 0019](adr/0019-collaboration-foundations.md): the remembered attributes are
-      `payload`, because Rails refuses an attribute named `changes` (or `attributes`);
-      `base_version` may only be filled through `DraftChange.capture_base_version`, so it is always
-      a comparable string; and a change is append-only — `created_at`, no `updated_at`, updates
-      raise.
-    - **Slice 2.2 (delivered 2026-10-03):** `app/controllers/concerns/draft_mutation.rb` intercepts
-      every mutation controller, and in a `wikipedia` or `github` universe the mutation is remembered in
-      the request author's open draft instead of written. `remember_draft_create`/`_update`/`_delete` are
-      called inside each action and return `false` in a `direct` universe, so the live write below them is
-      untouched; all twenty mutation controllers call them, and the twenty also answer a remembered change
-      in their own response flow (JSON `202`, or the HTML redirect with `drafts.flash.remembered`). A
-      remembered `create` stores the submitted attributes plus the column that places the record in its
-      scope. Four decisions the slice text did not settle, all in
-      [ADR 0020](adr/0020-remembering-mutations-instead-of-writing-them.md): the interception is a call
-      inside the action rather than a callback, because only there does the controller hold both the record
-      it would have written and the attributes it was going to write with it; a remembered change is not
-      validated when it is remembered, because the applier re-runs the live path where the validations are
-      authoritative; each controller keeps its own response flow rather than answering JSON everywhere; and
-      a Scene's `move`, its `group`, and a Scene Element's `move` are intercepted too, so no write path is
-      left open in a draft-based universe. `Draft.open_for!` is the one place a draft is opened outside a
-      test, and `test/controllers/draft_mutation_test.rb` walks all twenty controllers in both modes.
-      This slice left draft mode with no page; slice 2.3 below delivered it.
-    - **Slice 2.3 (delivered 2026-10-03):** `DraftsController#index` (lists current user's drafts for the
-      universe), `#show` (shows one draft with all its changes), `#apply` (applies all non-conflicting
-      changes; conflict resolution comes in Phase 3), and `#discard` (discards a draft), with a draft list
-      page and a draft detail page, `resources :drafts, only: %i[index show]` plus two member POSTs, and
-      request, service, and system tests. Three decisions the slice text did not settle, all in
-      [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md): an applier must write through
-      the live mutation path, so it derives a model's ordering from its own columns rather than keeping a
-      second list of the fifteen controllers that declare theirs — `test/services/draft_applier_test.rb`
-      holds that derivation against every routed controller in both directions; a change whose record has
-      moved, whose record is gone, or that the live path refuses is **reported** rather than asked about,
-      because refusing the whole apply would strand a draft that can neither be applied nor closed; and the
-      draft becomes `applied` either way, because a remembered create names no record and applying a
-      partly-written draft twice would write a second copy of it. The whole run is one transaction with the
-      status change inside it, so an unexpected failure leaves the draft exactly as it was. A conflict is
-      therefore reported rather than resolved until Phase 3: the author sees how many changes were written
-      and how many were not, and the rest stay readable on the draft's page. A draft is read as its own
-      author's inside the authorized universe — no guest can reach the page at all — and the right sidebar
-      carries a **Pending changes** entry wherever a draft can exist, because a page nothing links to
-      leaves the trap slice 2.2 closed only in the code.
-    - **Slice 2.4 (delivered 2026-10-03):** `DraftEditingController` is a `POST`/`DELETE` singleton
-      `/u/:universe_slug/editing` behind a **Start editing** / **Stop editing** control on the universe
-      page, rendered only where it is enforced — a draft-based universe, a signed-in reader, `write`
-      access — and the page states the pending count as a link into the drafts list. Four decisions the
-      slice text did not settle, all in
-      [ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md): the control
-      **claims the session rather than gating remembering**, because a reader who forgot to press it must
-      not write straight through a universe whose mode exists to stop exactly that, and the interception
-      from 2.2 stays unconditional — entering a session opens the draft *before* the first change instead;
-      the flag is a session value keyed by universe (`DraftEditingSession`), dropped by
-      `clear_session_context` at every session boundary, so a sign-out releases the claim but keeps the
-      draft; **stopping is not discarding**, and the flash says how much is still waiting; and the two
-      review questions the slice raised are both answered against the count — the sidebar's **Pending
-      changes** entry stays rendered wherever a draft can exist, because it is also how the history is
-      reached, while "create a draft if one doesn't exist" is now enforced by a **partial unique index**
-      over the open statuses (closing finding 65 in [`known_quirks.md`](known_quirks.md)) with
-      `Draft.open_for!` re-reading the winner's row on a lost race. Tests: request, model, CSRF, and
-      system coverage of the control, the flag's boundaries, and the "remembered without the toggle" case.
-    - **Slice 2.5:** When in draft mode, show pending changes as a panel/sidebar. For draft-created
-      records: show them in the list with a "draft" badge. For draft-edited records: show current
-      values with a "pending edit" badge. For draft-deleted records: show the record with a "pending
-      deletion" badge. Modify list queries to include draft changes for the current user. Tests:
-      request tests, system test.
-
 22. **Collaboration system — Phase 3: Conflict resolution**
 
     When applying a draft, detect conflicts and let the user choose "theirs" or "mine" per conflicting
@@ -206,15 +144,20 @@ it has a useful destination and clear empty/loading/error states.
     when a draft change is created, store the record's `updated_at`; at apply time, a mismatch means
     someone else modified the record.
 
-    Three questions this phase has to settle before the slices below, all recorded while slice 2.3 was
-    delivered and all consequences of what it had to choose (ADR 0021): whether a change's **outcome** is
-    stored on the row or only returned by the applier — nothing records it today, so a draft's page
-    cannot say which of its changes were written (finding 64 in
+    Five questions this phase has to settle before the slices below, all consequences of what the
+    remembering and the applier had to choose ([ADR
+    0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) and [ADR
+    0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)): whether a change's
+    **outcome** is stored on the row or only returned by the applier — nothing records it today, so a
+    draft's page cannot say which of its changes were written, and a list cannot tell an author which of
+    their remembered changes will be refused (findings 64 and 68 in
     [`known_quirks.md`](known_quirks.md)); where an author's **unapplied** values live, because today they
     are a `payload` on a closed draft that nothing reads back into an editor, so a reported conflict has
-    to be retyped (finding 63); and whether a **delete answered "mine"** is a restore-then-edit or an
+    to be retyped (finding 63); whether a **delete answered "mine"** is a restore-then-edit or an
     update-in-place, since the record is soft-deleted and `PositionedResourceOrder` normalized its
-    siblings when it went.
+    siblings when it went; and what a **pending badge in a list** has to say beyond its state — today a
+    record with three remembered edits carries one **Pending edit** badge and nothing about which fields
+    moved or how many changes are waiting on it (item 26 below).
 
     - **Slice 3.1:** Create `app/services/draft_conflict_detector.rb`. The rule itself already
        exists as `DraftApplier`'s skip decision; this slice promotes it to a detector that reports each
@@ -230,22 +173,27 @@ it has a useful destination and clear empty/loading/error states.
       "Apply mine" (overwrite with my change). For "apply mine" on a delete conflict: restore the
       record and apply the edit. For "apply mine" on an edit conflict: overwrite the current values
       with the draft values. Tests: request tests, system test.
-    - **Slice 3.3:** Extend `app/services/draft_applier.rb`, which slice 2.3 delivered with the
-      non-conflicting half already done — it writes a draft's changes through the live mutation path,
-      reports what it could not write, and closes the draft inside one transaction. This slice adds the
-      user's choice for a conflicting change: "theirs" discards it, "mine" applies it over the current
-      values, and a delete conflict answered "mine" restores the record first. The returned summary
-      includes which changes were answered and how. Tests: unit tests, integration tests.
+    - **Slice 3.3:** Extend `app/services/draft_applier.rb`, which already writes a draft's changes
+      through the live mutation path, reports what it could not write, and closes the draft inside one
+      transaction (ADR 0021). This slice adds the user's choice for a conflicting change: "theirs"
+      discards it, "mine" applies it over the current values, and a delete conflict answered "mine"
+      restores the record first. The returned summary includes which changes were answered and how.
+      Tests: unit tests, integration tests.
 
 23. **Collaboration system — Phase 4: Wikipedia mode (end-to-end)**
 
     The full wikipedia flow works: start editing → make changes → apply → changes are live.
 
-    - **Slice 4.1:** Ensure all mutation controllers properly intercept in `wikipedia` mode. Ensure
-      the apply flow works end-to-end. Ensure conflict resolution works in `wikipedia` mode. Update
-      the UI to guide the user through the flow. Tests: full request + system test coverage.
-    - **Slice 4.2:** Flash messages for successful apply. Empty state for no pending changes. Draft
-      history (list of applied drafts). Update docs. Update changelog.
+    - **Slice 4.1:** Prove the whole `wikipedia` journey end to end. The interception itself is done and
+      is held by `test/controllers/draft_mutation_test.rb` across all twenty mutation controllers in both
+      modes, so what this slice adds is the **flow**: start editing → make changes → see them in the lists
+      → apply → see them live, with conflict resolution reachable in `wikipedia` mode, and copy that
+      guides a first-time author through it. Tests: request + system coverage of the journey.
+    - **Slice 4.2:** The draft list's history. The apply already reports itself in a flash and the
+      sidebar panel already says when nothing is waiting, but the drafts list offers no **history**: an
+      applied draft is a row in it, and there is no way to see when it was applied or what it contained
+      once it was closed (finding 64 in [`known_quirks.md`](known_quirks.md)). Add the history view, and
+      settle whether an applied draft stays inspectable or is only listed. Update docs. Update changelog.
 
 24. **Collaboration system — Phase 5: GitHub mode (review workflow)**
 
@@ -289,6 +237,48 @@ it has a useful destination and clear empty/loading/error states.
     collaborative editing (async with explicit apply, not Google Docs style); markdown in discussions
     (plain text first); email notifications (in-app first, email later); draft branching/forking (a
     draft is a linear set of changes); draft merging (one draft at a time per user per universe).
+
+26. **What a pending badge has to say beyond its state**
+
+    A list row carrying a remembered edit says **Pending edit** and nothing else. That is accurate — the
+    row is the stored record, and the change is not in it — and thin: a record with three remembered edits
+    on three different fields carries one badge, and a reader cannot tell which fields their draft would
+    write, in what order, or whether two of the three changes touch the same attribute. The values are
+    available (each change's `payload`), and finding 68 shows what is missing is not the data but a rule
+    for how much of it a row may read. Decide what the badge carries: the fields a remembered edit touched,
+    a count of the changes on that record, or the draft's own page as the only place any of it is said. The
+    last is the status quo and costs nothing; the first costs a per-row payload read, which is the trade in
+    finding 66, and the second is a number without a subject. This is the fifth question the conflict phase
+    has to answer before its resolution page can be built, recorded in the Phase 3 entry above; a decision
+    made here should be made once, not once per surface.
+
+27. **What a pending record shows outside the list workspaces**
+
+    The pending badges live in the nine list workspaces and nowhere else. Three places a reader would
+    reasonably look carry no sign of pending work: a **record's own details page** (read-only by design, so
+    the question is whether a badge belongs there at all or whether "Details" is deliberately a clean
+    record of what is stored), the **global search dropdown** (which indexes stored documents, so a
+    remembered create cannot appear in it), and a **tag's list of the records carrying it**
+    (`shared/_tagged_record_list`, which renders stored rows only). Separately, a pending row itself shows
+    **no tags and no photo** even though the payload carries both, because resolving them costs a query per
+    row — finding 69 has the verified behaviour. Decide, per surface: badge it, leave it clean, or resolve
+    the values. Start from the details page: it is the one a reader reaches from a pending row's name, and
+    today that link is absent for a create because there is nothing yet to link to.
+
+28. **A draft-based development universe**
+
+    Every `db/data/<universe_slug>/universes.yml` sets no `collaboration_mode`, so both registered demo
+    universes are `direct` and **none of the collaboration workflow is reachable by hand**. The remembering
+    path, the drafts pages, the editing-session control, and the pending badges in the lists all have to be
+    exercised by switching a universe to Wikipedia in its settings, which is also the only way to see what
+    the direct path feels like without. Add a third `db/data/` universe in a draft-based mode, or set one
+    of the existing two, with enough records to show a pending create, a pending edit, and a pending delete
+    at once, and record the known development login, the scoped URL, and the exact load command. Two
+    things to weigh first: a draft-based demo universe makes **every** mutation in it remembered, so the
+    ordinary manual verification of the direct path disappears for that universe; and drafts are
+    per-author, so the demo only shows pending work for the login that made it — a second author sees
+    nothing at all, which is correct and is not what a demo is for. Neither is a reason to skip it, but
+    both change what the demo is.
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

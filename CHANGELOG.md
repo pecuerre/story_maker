@@ -38,6 +38,48 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-04
+
+### added
+
+- **A remembered create shows in the list it would have joined, badged Draft; a remembered edit and a
+  remembered delete badge the record that is still there.** All nine list workspaces carry it, and a row is
+  never rewritten to match its badge. See [ADR 0023](docs/adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
+- **The right sidebar's Collaboration group leads with a panel of the reader's pending changes**, above the
+  Pending changes link. It is bounded, and it renders at zero as well as at any count.
+- **`DraftPreview` reads one reader's open draft** and answers what is waiting, what is waiting on a record,
+  and what the draft would have created. A pending record is an unsaved instance of the model.
+
+### changed
+
+- **A list whose only content is a remembered create no longer says it is empty.** Every workspace's
+  empty-state guard counts pending rows, including the taxonomy tree's.
+- **A remembered Scene that names a section is no longer listed as ungrouped**, and a filtered Scenes list
+  stays filtered: a record that does not exist cannot answer a question about one that does.
+- **The pending-change count is one sentence in `drafts.pending.count`**, read by the universe page's
+  control and the sidebar panel alike, replacing `drafts.editing.pending_changes`. Both read the same
+  `DraftPreview`, so the button and the panel cannot disagree and the page no longer looks the draft up twice.
+
+### docs
+
+- **The draft system's completed phase left the backlog**, and three open decisions about it joined it:
+  what a pending badge says beyond its state, what a pending record shows outside the list workspaces,
+  and the missing draft-based development universe. Two stale slice-number citations inside the still-open
+  phase entries now name the stage by what it added.
+- **ADR 0023** states why the draft is the query rather than a join into each list, why a pending record is
+  an unsaved model, and why a row is never rewritten to match its badge.
+- **Finding 66** now covers the sidebar panel, which pays the same per-change record lookup on every page of
+  a universe; the remembered-create footgun covers the lists as well as the drafts page.
+- **Finding 68 records that a remembered create is not validated, so a list can show a pending row the
+  universe would have refused** — verified: an Event with no title and no dates answers 202 and lists as
+  "Event #", where the direct path answers 422. **Finding 69** records that a pending row carries no tags
+  and no photo.
+
+### fixed
+
+- **The taxonomy tree no longer restores its empty state over a remembered create.** The client-side check
+  learned about the new read-only pending row, matching the server's suppression.
+
 ## 2026-10-03
 
 ### added

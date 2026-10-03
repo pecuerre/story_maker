@@ -896,7 +896,12 @@ export default class extends Controller {
   }
 
   restoreEmptyState() {
-    if (this.element.querySelector("[data-node-id]") || !this.emptyStateTemplate) return
+    // A remembered create is rendered as a read-only row, so it carries neither
+    // `data-node-id` nor `.taxonomy-node`. The empty state still must not come
+    // back while one is on the page: the server suppresses it for exactly that
+    // case, and re-adding it here would show the reader both.
+    if (this.element.querySelector("[data-node-id]") || this.element.querySelector(".taxonomy-pending")) return
+    if (!this.emptyStateTemplate) return
     this.element.querySelector(".taxonomy-surface")?.prepend(this.emptyStateTemplate.cloneNode(true))
   }
 

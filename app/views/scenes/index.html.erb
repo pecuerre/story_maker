@@ -37,10 +37,17 @@ end %>
   total: @scene_total,
   shown: @scenes.size %>
 
-<% if @scenes.any? %>
+<% filter_params = @scene_filter.query_params %>
+<%# A remembered Scene create belongs to this story's list, but **not to a
+    filtered one**: `SceneFilter` narrows the Story's real scenes, and a record
+    that does not exist cannot match a section, a tag, or a date range. Offering
+    a pending row beside a "nothing matched these filters" message would be
+    answering a question the reader did not ask, so a narrowed list stays narrowed
+    and the pending rows are the unfiltered list's own. %>
+<% pending_creates = filtered ? [] : draft_pending_creates_for(Scene) %>
+<% if @scenes.any? || pending_creates.any? %>
   <div class="content-surface entity-list">
     <div class="list-group list-group-flush">
-      <% filter_params = @scene_filter.query_params %>
       <% @scenes.each do |scene| %>
         <div class="list-group-item entity-row d-flex align-items-start gap-3">
           <div class="entity-copy flex-grow-1">
@@ -79,6 +86,7 @@ end %>
                 <%= @participant_counts.fetch(scene.id, 0) %>
               </span>
               <%= entity_tag_badge(scene) %>
+              <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
             </div>
             <% if scene.description.present? %>
               <div class="entity-description"><%= scene.description %></div>
@@ -152,6 +160,8 @@ end %>
           </div>
         </div>
       <% end %>
+
+      <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
     </div>
   </div>
 <% elsif filtered %>

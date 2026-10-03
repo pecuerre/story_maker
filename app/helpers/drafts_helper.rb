@@ -1,10 +1,17 @@
-# Reading a remembered change on a draft's own page.
+# Reading a remembered change, on a draft's own page and in the lists around it.
 #
-# A change is the author's *statement of intent*, and this page's whole job is to
+# A change is the author's *statement of intent*, and this helper's whole job is to
 # say what that statement is: which record it is about, what it would do to it,
 # and what values it carries. It deliberately does not say whether the change was
 # written. Only the apply that wrote it can know that, and a page that inferred it
 # from a version stamp would be reporting a second answer about the same record.
+#
+# The same reading answers two kinds of page. A draft's own page prints a change;
+# a list workspace has to say what the same change would do to *its* rows — a
+# remembered create appears in the list it would have joined, a remembered edit
+# and delete badge the record that is still there. Both are answers about one
+# reader's one open draft, so both are read through one `DraftPreview`, built once
+# per request.
 #
 # Three shapes need reading rather than printing:
 #
@@ -23,6 +30,52 @@
 # * **A photo** is stored as a `data:` URL and removed by a boolean. Printing
 #   either would put a base64 blob or a bare `0` on the page, so both are stated.
 module DraftsHelper
+  # This request's reader's view of their own open draft, built once.
+  #
+  # It is memoized on the view rather than fetched per call because the same three
+  # answers are asked by the right sidebar, by every list workspace, and by each
+  # row of those lists — and `Draft.open_for` is a query. The memoization lives
+  # for one request and dies with the view, which is the same lifetime `Current`
+  # itself has: nothing here is ever read on a later request.
+  def draft_preview
+    return @draft_preview if defined?(@draft_preview)
+
+    @draft_preview = DraftPreview.new(user: Current.user, universe: Current.universe)
+  end
+
+  # What a row should say about a record, as one of three badge states: `:draft`
+  # for a record a remembered create would have made, `:edit`, `:deletion`, or nil
+  # when the row has nothing pending on it.
+  #
+  # **An unsaved record is `:draft` by construction.** Nothing else puts one in a
+  # list: `DraftPreview#creates_for` is the only source of them, and it builds them
+  # for exactly this purpose. The badge partial therefore takes the state rather
+  # than the record, so a row and a pending row read it the same way.
+  def draft_pending_state(record)
+    return :draft if record.present? && record.new_record?
+
+    draft_preview.state_for(record)
+  end
+
+  # The records this draft would have added to `model`'s list, as unsaved
+  # instances. Empty in a `direct` universe, for a guest, and for a model nobody
+  # has remembered a create of, so a workspace can call it unconditionally.
+  def draft_pending_creates_for(model)
+    draft_preview.creates_for(model)
+  end
+
+  # The records a taxonomy tree's remembered creates would have added, resolved
+  # from the tree's own `model_param` (`"character_tag"` → `CharacterTag`).
+  #
+  # `RecordTarget.model_for` is the gate, so a `model_param` names a content class
+  # or nothing — the tree is rendered from a fixed set of workspaces, and a param
+  # that named something else would find no pending rows rather than a constant.
+  def draft_pending_taxonomy_creates(model_param)
+    model = RecordTarget.model_for(model_param.to_s.camelize)
+
+    model ? draft_pending_creates_for(model) : []
+  end
+
   # What a change's row calls itself: the record's own label when the change names
   # one that is still there, and the type it would create when it does not.
   #

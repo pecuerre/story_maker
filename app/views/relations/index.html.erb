@@ -1,5 +1,11 @@
 <% content_for :title, t("relations.title") %>
 <% empty_description = can_write_universe? ? t("relations.empty_writable_description") : t("relations.empty_read_only_description") %>
+<%# A rejected submission is an unsaved record on this page, and it must not be
+    mistaken for a remembered create: this is the one list where an unsaved record
+    already appears, and the pending rows below are built from the reader's own
+    draft. `draft_pending_creates_for` reads only that draft, so the two cannot
+    be confused by a reader or by the badge. %>
+<% pending_creates = draft_pending_creates_for(Relation) %>
 <%# A rejected submission re-renders this index with the invalid record, so the
     entered values are serialized into the trigger that reopens the editor
     instead of being thrown away: the Add trigger for a rejected create, and only
@@ -39,7 +45,7 @@
     intro: t("relations.description"),
     tabs: content_workspace_tabs(:character) %>
 
-  <% if @relations.any? %>
+  <% if @relations.any? || pending_creates.any? %>
     <div class="content-surface entity-list">
       <div class="list-group list-group-flush">
         <% @relations.each do |relation| %>
@@ -54,6 +60,7 @@
                 <%= entity_tag_badge(relation) %>
                 <i class="bi bi-arrow-right text-body-secondary" aria-hidden="true"></i>
                 <span class="entity-title"><%= relation.character2.name %></span>
+                <%= render "shared/draft_pending_badge", state: draft_pending_state(relation) %>
               </div>
               <% if relation.description.present? %>
                 <div class="entity-description"><%= relation.description %></div>
@@ -72,6 +79,8 @@
               values: (rejected&.persisted? && rejected.id == relation.id) ? relation_fields_json(rejected) : relation_fields_json(relation) %>
           </div>
         <% end %>
+
+        <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
       </div>
     </div>
   <% else %>

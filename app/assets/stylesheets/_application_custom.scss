@@ -700,6 +700,55 @@ $um-search-match: #ffc107;
   color: var(--um-primary-strong);
 }
 
+// The reader's pending work, above the **Pending changes** entry that leads into
+// the drafts page. It is a reading surface rather than a link, so it carries the
+// tools scope's own hue at a weight below the section title — enough to belong to
+// the Collaboration group, not enough to look like a fourth section. The rows
+// truncate nothing and wrap, because a record's name is the reader's own text.
+.draft-pending-panel {
+  margin: .25rem .35rem 0;
+  padding: .5rem .625rem;
+  border-inline-start: 3px solid var(--um-scope-tools);
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+  background: var(--um-scope-tools-soft);
+}
+
+.draft-pending-summary {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin: 0 0 .4rem;
+  color: var(--um-scope-tools);
+  font-size: .8125rem;
+  font-weight: 700;
+}
+
+.draft-pending-changes {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  margin: 0 0 .4rem;
+}
+
+.draft-pending-change {
+  display: flex;
+  align-items: baseline;
+  gap: .4rem;
+  font-size: .8125rem;
+  line-height: 1.35;
+}
+
+.draft-pending-change .badge {
+  flex: none;
+  font-weight: 500;
+}
+
+.draft-pending-more {
+  color: var(--bs-body-secondary-color);
+  font-size: .75rem;
+}
+
 .sidebar-dropdown-toggle {
   width: 100%;
   border: 0;

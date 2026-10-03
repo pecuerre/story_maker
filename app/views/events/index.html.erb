@@ -1,5 +1,6 @@
 <% content_for :title, t("events.title") %>
 <% empty_description = can_write_universe? ? t("events.empty_writable_description") : t("events.empty_read_only_description") %>
+<% pending_creates = draft_pending_creates_for(Event) %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
@@ -29,7 +30,7 @@
     intro: t("events.description"),
     tabs: content_workspace_tabs(:event) %>
 
-  <% if @events.any? %>
+  <% if @events.any? || pending_creates.any? %>
     <div class="content-surface entity-list">
       <div class="list-group list-group-flush">
         <% @events.each do |event| %>
@@ -38,6 +39,7 @@
               <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="entity-title"><%= event.display_label %></span>
                 <%= entity_tag_badge(event) %>
+                <%= render "shared/draft_pending_badge", state: draft_pending_state(event) %>
               </div>
               <% if event.description.present? %>
                 <div class="entity-description"><%= event.description %></div>
@@ -57,6 +59,8 @@
               values: event_fields_json(event) %>
           </div>
         <% end %>
+
+        <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
       </div>
     </div>
   <% else %>

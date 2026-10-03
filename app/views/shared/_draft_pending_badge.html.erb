@@ -1,0 +1,20 @@
+<%# One remembered change's effect on a record the page is showing, as one badge.
+    #
+    # Three states, and they are three different sentences because three different
+    # things are true: a `draft` row would not exist until the draft is applied, an
+    # `edit` row is showing values somebody else may change, and a `deletion` row is
+    # about to stop existing. The `title` says which, because the badge word alone
+    # is a claim the reader has to take on trust — the rows themselves are
+    # unchanged: a remembered edit shows the values that are stored today, and a
+    # remembered delete shows the record as it is until the draft is applied.
+    #
+    # The state is passed in rather than derived from the record so that the same
+    # partial serves a stored row and a pending one; see `DraftsHelper#draft_pending_state`. %>
+<% state = local_assigns.fetch(:state) %>
+<% if state.present? %>
+  <span class="badge rounded-pill text-bg-warning border draft-pending-badge"
+    title="<%= t("drafts.pending.states.#{state}_title") %>">
+    <i class="bi <%= t("drafts.pending.states.#{state}_icon") %>" aria-hidden="true"></i>
+    <%= t("drafts.pending.states.#{state}") %>
+  </span>
+<% end %>

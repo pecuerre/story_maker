@@ -39,6 +39,12 @@
 class ReviewRequestsController < ApplicationController
   include AppliesDrafts
 
+  # What the notes field shows, which is the request's own answer or the stored
+  # decision's — a view may not read either of those without saying which one it
+  # wants. `helper_method` is the way a controller hands one of its own readings to a
+  # template; the same line `SearchesController` uses for its page number.
+  helper_method :review_notes_field
+
   before_action :set_review_request, only: %i[ show approve reject ]
   # `reject` is here for the page it re-renders rather than for anything it decides: a
   # rejection never reads a remembered change, and this action is the one that leaves a
@@ -97,8 +103,18 @@ class ReviewRequestsController < ApplicationController
   # inside its own, and the request's approval has to land in the same one: an approved
   # request over a draft that was not applied is a queue entry claiming a review that
   # never happened, and it is unreachable afterwards because the draft is closed.
+  #
+  # **An approval may carry a note, and it is optional.** The column is nullable for
+  # exactly this reason: most approvals have nothing to explain, and a rejection is the
+  # decision that has to. What the note is for is the author, so it travels with the
+  # decision and is stored on it rather than on the draft — and it is kept through both
+  # refusals below, because an approval is reached twice when a change has moved and the
+  # reviewer should not write the same sentence again on the way in.
   def approve
     return refuse_decided_request unless @review_request.pending?
+
+    @review_notes = review_notes
+
     return show_refusal if @damaged.damaged?
 
     conflicts = draft_conflicts(draft)
@@ -110,7 +126,7 @@ class ReviewRequestsController < ApplicationController
 
     ApplicationRecord.transaction do
       result = DraftApplier.new(draft, answers: answers).apply
-      @review_request.update!(status: "approved", reviewed_by: Current.user)
+      @review_request.update!(status: "approved", reviewed_by: Current.user, review_notes: @review_notes)
     end
 
     redirect_to universe_review_request_path(universe_slug: Current.universe.slug, id: @review_request),
@@ -124,6 +140,10 @@ class ReviewRequestsController < ApplicationController
   # reason beside the field rather than redirecting, because a redirect would discard
   # what the reviewer typed, which is the rule every other form in the application
   # follows.
+  #
+  # **A blank note arrives as nil rather than an empty string**, which is what the
+  # model's own validation asks about and what keeps `review_notes` from storing an
+  # approval's empty box as if a reviewer had said something.
   #
   # Nothing about the draft's changes is read here: a rejection does not interpret a
   # remembered change, so a submission carrying one the applier could not read is still
@@ -174,6 +194,18 @@ class ReviewRequestsController < ApplicationController
     end
 
     def review_notes
-      params.expect(review_request: [ :review_notes ])[:review_notes]
+      notes = params[:review_request]
+      return nil unless notes.is_a?(ActionController::Parameters)
+
+      notes.permit(:review_notes)[:review_notes].presence
+    end
+
+    # What the notes field shows: what this request carried, or what the stored
+    # decision said. Held apart from the record because an approval's note is not
+    # saved until the run has happened — a draft that cannot be applied yet has not
+    # been approved, and a re-render that dropped the sentence would make the reviewer
+    # write it twice.
+    def review_notes_field
+      @review_notes || @review_request.review_notes
     end
 end

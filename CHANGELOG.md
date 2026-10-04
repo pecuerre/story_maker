@@ -38,6 +38,14 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-05
+
+### changed
+
+- **A reviewer can leave a note with an approval.** The approve control is now a form with an optional note
+  for the author, stored as nothing when the box is empty and carried through the conflict question an
+  approval is asked before it is written. A rejection's notes stay required.
+
 ## 2026-10-04
 
 ### added

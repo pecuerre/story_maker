@@ -7,16 +7,6 @@
   count: @review_request.draft.draft_changes.size,
   count_label: "change" do %>
   <%= link_to t("review_requests.show.back"), universe_review_requests_path, class: "btn btn-outline-secondary" %>
-
-  <%# The decision is offered only while there is one to make. A decided request is
-      history, and a control that would refuse rather than act is worse than no
-      control: the answer it would give is a redirect with a reason, which the reader
-      has to read to learn what the badge already said. %>
-  <% if @review_request.pending? %>
-    <%= button_to t("review_requests.show.apply"), approve_universe_review_request_path(id: @review_request),
-      class: "btn btn-primary",
-      data: { turbo_confirm: t("review_requests.show.apply_confirm") } %>
-  <% end %>
 <% end %>
 
 <%# Said before the reviewer presses anything, and again behind an approval that was
@@ -36,10 +26,11 @@
       </span>
     </div>
 
-    <%# What a rejection said. The notes are required for a rejection and never asked
-        for on an approval, so this line exists for exactly one state — and it is the
-        only place an author can read why their draft came back. %>
-    <% if @review_request.rejected? %>
+    <%# What the decision said. `ReviewRequest` requires notes for a rejection and
+        leaves them optional for an approval, so this line is here for whichever
+        reviewer wrote something — and it is the only place an author can read it
+        until slice 5.3 gives their own page a view of the submission. %>
+    <% if @review_request.review_notes.present? %>
       <div class="list-group-item review-request-notes">
         <%= t("review_requests.index.notes", notes: @review_request.review_notes) %>
       </div>
@@ -63,27 +54,51 @@
 </div>
 
 <% if @review_request.pending? %>
-  <%# The rejection is a form, not a confirmation: notes are required, so the question
-      has to be asked beside a field that can hold the answer. It posts to its own
-      action and never to this page's, and a rejection without notes re-renders here
-      with the reason rather than redirecting — a redirect would discard what the
-      reviewer typed, which is the rule every other form in the application follows. %>
-  <section class="surface-card p-4 mt-3 review-request-rejection">
-    <h2 class="h5"><%= t("review_requests.show.reject") %></h2>
-    <p class="page-description"><%= t("review_requests.show.reject_notes_hint") %></p>
-
-    <%= form_with(model: @review_request, scope: :review_request, method: :post,
-      url: reject_universe_review_request_path(id: @review_request)) do |form| %>
-      <% if @review_request.errors.any? %>
-        <%= render "shared/error_summary", record: @review_request %>
-      <% end %>
-
-      <%= form.label :review_notes, t("review_requests.show.reject_notes"), class: "form-label" %>
-      <%= form.text_area :review_notes, rows: 3, class: "form-control" %>
+  <%# The decision is offered only while there is one to make. A decided request is
+      history, and a control that would refuse rather than act is worse than no
+      control: the answer it would give is a redirect with a reason, which the reader
+      has to read to learn what the badge already said. %>
+  <%# Two forms rather than one control and one form, because an approval carries
+      notes too: a reviewer's note is for the author, and a note they can only leave
+      by rejecting would say the opposite of what most approvals mean. The notes are
+      the same column both ways and the same wording is not — only a rejection has to
+      say why — so the two fields are told apart by their own ids rather than sharing
+      one binding. %>
+  <section class="surface-card p-4 mt-3 review-request-decisions">
+    <%= form_with(url: approve_universe_review_request_path(id: @review_request), method: :post,
+      class: "review-request-approval mb-4",
+      data: { turbo_confirm: t("review_requests.show.apply_confirm") }) do %>
+      <%= label_tag "approve_notes", t("review_requests.show.apply_notes"), class: "form-label" %>
+      <%= text_area_tag "review_request[review_notes]", review_notes_field, rows: 3,
+        id: "approve_notes", class: "form-control" %>
+      <p class="page-description"><%= t("review_requests.show.apply_notes_hint") %></p>
 
       <div class="page-actions d-flex align-items-center flex-wrap gap-2 mt-3">
-        <%= form.submit t("review_requests.show.reject_submit"), class: "btn btn-outline-danger" %>
+        <%= submit_tag t("review_requests.show.apply"), class: "btn btn-primary" %>
       </div>
     <% end %>
+
+    <%# The rejection posts to its own action and never to this page's, and one
+        without notes re-renders here with the reason rather than redirecting — a
+        redirect would discard what the reviewer typed, which is the rule every other
+        form in the application follows. %>
+    <div class="review-request-rejection">
+      <h2 class="h5"><%= t("review_requests.show.reject") %></h2>
+      <p class="page-description"><%= t("review_requests.show.reject_notes_hint") %></p>
+
+      <%= form_with(model: @review_request, scope: :review_request, method: :post,
+        url: reject_universe_review_request_path(id: @review_request)) do |form| %>
+        <% if @review_request.errors.any? %>
+          <%= render "shared/error_summary", record: @review_request %>
+        <% end %>
+
+        <%= form.label :review_notes, t("review_requests.show.reject_notes"), class: "form-label" %>
+        <%= form.text_area :review_notes, rows: 3, class: "form-control" %>
+
+        <div class="page-actions d-flex align-items-center flex-wrap gap-2 mt-3">
+          <%= form.submit t("review_requests.show.reject_submit"), class: "btn btn-outline-danger" %>
+        </div>
+      <% end %>
+    </div>
   </section>
 <% end %>

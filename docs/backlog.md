@@ -213,6 +213,18 @@ it has a useful destination and clear empty/loading/error states.
     nothing at all, which is correct and is not what a demo is for. Neither is a reason to skip it, but
     both change what the demo is.
 
+29. **Dropping one change a draft cannot describe**
+
+   A draft holding a remembered change the applier cannot read is refused in words rather than applied,
+   and the author's only way out is **Discard**, which throws away the other changes in the draft with it.
+   The refusal names the change and leaves it listed, so nothing is hidden — but a draft with one corrupt
+   change among nineteen cannot be applied at all, and a draft-based universe is a place where an editor can
+   reach that state by accident (a hand-edited `draft_changes` row, a model renamed under the demo data, a
+   loader from an older version). The general answer is the per-change control ADR 0021 deferred for
+   conflicts: a way to drop one remembered change and apply the rest. Decided on 2026-10-05: not now. It
+   belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
+   settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
+
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

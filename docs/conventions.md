@@ -567,6 +567,22 @@ unreachable afterwards. Both actions therefore refuse a request that is already 
 redirect to its own page and the reason, exactly as `DraftsController` refuses an applied draft — the
 duplicate-write hazard is the same one.
 
+**Both decisions carry notes, and only a rejection requires them.** The approval is a form rather than a
+`button_to` because a reviewer's note is for the author and most approvals still have something to say —
+"applied mine over Thursday's rename" is the sentence that explains a decision the author can otherwise
+only discover happened. So the page carries two forms over the one column: an approval's note is
+optional and is stored as `nil` when the box is empty, because an empty string would read back later as
+something a reviewer said; a rejection's is required by `ReviewRequest` and its refusal re-renders the
+page with the reason beside the field. The note is held apart from the record (`review_notes_field`)
+because an approval is **reached twice** when a change has moved: the conflict page posts back to
+`approve` and carries the note with it, so the reviewer writes the sentence once.
+
+**Two things are deliberately not rules.** An author who is also the universe owner **may approve their
+own submission** — it grants them nothing they could not do by applying the draft directly, and a rule
+against it would only stop the owner from being told a draft was ready. And these pages are **not gated
+to `github` mode**: a submission can only exist where one was made, so the mode belongs on the first
+control that can make one — the **Submit for review** action, which is slice 5.3's.
+
 **A rejection is the one reversible decision, because it hands the draft back.**
 `ReviewRequest#reject!` moves the request and the draft's status in one transaction (`submit!`'s reason
 read backwards), so a rejection cannot leave a draft nobody can edit or a queue entry the author still

@@ -22,6 +22,18 @@
     </div>
   </div>
 
+  <%# The note the reviewer typed on the review page is part of the same approval, so
+      it travels here rather than being asked for twice: this page posts back to the
+      approval it is answering, and a field that came back empty would make the
+      reviewer write it again. It is the same optional field that page offers. %>
+  <div class="content-surface mt-3">
+    <div class="p-3">
+      <%= label_tag "approve_notes", t("review_requests.show.apply_notes"), class: "form-label" %>
+      <%= text_area_tag "review_request[review_notes]", review_notes_field, rows: 2,
+        id: "approve_notes", class: "form-control" %>
+    </div>
+  </div>
+
   <div class="page-actions d-flex align-items-center flex-wrap gap-2 mt-3">
     <%= button_tag t("review_requests.conflicts.submit"), type: "submit", class: "btn btn-primary" %>
   </div>

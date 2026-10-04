@@ -703,6 +703,12 @@ es:
       submitted_by_html: "Enviado por %{author} %{at}."
       apply: "Aprobar cambios"
       apply_confirm: "¿Apruebas todos los cambios recordados? Se vuelven reales de inmediato."
+      # La nota de una aprobación es para el autor y es opcional, al contrario que la
+      # de un rechazo. Se dice en el control y no se insinúa en la etiqueta, porque lo
+      # que un revisor quiere que sepa el autor es el motivo de la nota — «apliqué lo
+      # mío» sobre un registro que otro ya había editado, por ejemplo.
+      apply_notes: "Nota para el autor (opcional)"
+      apply_notes_hint: "El autor lee esto junto a su envío. Solo un rechazo tiene que decir por qué."
       # El rechazo es un formulario y no una confirmación, porque es la única
       # decisión que tiene algo que decir: las notas son obligatorias, así que la
       # pregunta se hace junto al campo en lugar de en un diálogo que las

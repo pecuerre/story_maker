@@ -735,6 +735,12 @@ en:
       submitted_by_html: "Submitted by %{author} %{at}."
       apply: "Approve changes"
       apply_confirm: "Approve every remembered change? They become live immediately."
+      # An approval's note is for the author and is optional, unlike a rejection's.
+      # It is said on the control rather than implied by a label, because the reason a
+      # reviewer writes one is the thing they want the author to know — "applied mine"
+      # over a record somebody else had edited, for instance.
+      apply_notes: "Note for the author (optional)"
+      apply_notes_hint: "The author reads this beside their submission. Only a rejection has to say why."
       # The rejection is a form rather than a confirmation, because it is the one
       # decision that has something to say: notes are required, so the question is
       # asked beside the field instead of in a dialog that would discard them.

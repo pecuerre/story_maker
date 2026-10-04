@@ -27,6 +27,53 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-05
+
+- **[changed]** **A reviewer can leave a note with an approval, and three questions the slice raised were answered.**
+  The approval control became a form with an optional "note for the author", stored as `nil` when the box is
+  empty and carried through the conflict question that makes an approval a two-step; a rejection's note stays
+  required. The owner's answers: an author who is also the owner **may** approve their own submission; the
+  `github`-mode gate waits for slice 5.3, which is the first thing that can submit anything; the damaged-draft
+  per-change control is a later phase, now backlog item 29.
+
+  **An approval needed a form, which is why this is not only a locale change.** The owner answered "the
+  approver should be able to leave a note to the author", and an optional note cannot travel on a
+  `button_to`: the decision is one POST with a field, or it is a POST with nothing to type into. So the
+  approve control moved out of the page header into a decision section beside the rejection, and both forms
+  write the same `review_notes` column — which is why the two fields are told apart by their own ids rather
+  than sharing one model binding. That reads as an approval *and* a rejection at a glance, which is the honest
+  description of the page.
+
+  **An approval is reached twice when a change has moved, so the note is held apart from the record.** The
+  conflict page posts its answers back to `approve`, and a note that came back empty would make the reviewer
+  write the same sentence a second time — the "a re-render must not discard what was typed" rule, which this
+  page inherited from `discussions/_composer` and would otherwise have broken on its first use. The note lives
+  in `review_notes_field` until the run has happened, and is stored in the applier's transaction beside the
+  approval: a draft that cannot be applied yet has not been approved, so nothing about the decision is saved
+  until it has.
+
+  **An empty box is stored as `nil`, not as `""`.** `review_notes` is nullable because an approval usually has
+  nothing to explain, and a blank field that saved an empty string would read back later as a sentence a
+  reviewer wrote. `review_notes` therefore normalizes a blank to `nil` for both actions, which is also what
+  makes the rejection's required-notes validation answer the same question the model asks.
+
+  **The three answers, and why two of them are "not a rule".** Self-approval is allowed because it grants the
+  owner nothing they could not do by applying the draft directly, and a rule against it would only stop them
+  being told a draft was ready. The mode gate waits for 5.3 because a submission can only exist where one was
+  made: the mode belongs on the first control that can make one, and putting it on the reader's pages earlier
+  would be a rule nothing could exercise — the same argument 5.1's delivery history made for the model's
+  missing guard. The per-change control is deferred, so the refusal stands on its own: it names the change and
+  leaves the draft open, and Discard remains the exit.
+
+  **What this did not do.** The author still cannot *see* a reviewer's note from their own side: their page has
+  no view of the submission's decision yet, which is slice 5.3's "the draft owner can see the status of their
+  submission". The note is stored and shown on the reviewer's pages and in the queue; who else reads it is the
+  next slice's question.
+
+  **Verification:** `bin/rails test` (1851 runs, 12145 assertions, 0 failures, 0 errors, 10 skips),
+  `bin/rails test:system` (156 runs, 2106 assertions, 0 failures, 0 errors, 0 skips) and
+  `bin/rubocop` (438 files, no offenses).
+
 ### 2026-10-04
 
 - **[added]** **Collaboration phase 5, slice 5.2: a reviewer can approve or reject a submitted draft, and an
@@ -5892,3 +5939,8 @@ story-scoped create case caught it, which is the argument for keeping that case.
 
 The same refusal now runs on a reviewer's approval, because that action is the author's apply — see the
 slice 5.2 entry above for why that sharing was the decision the slice turned on.
+
+**What this leaves open, by decision.** The author's way out of a damaged draft is still **Discard**, which
+drops the other changes with it, so a draft with one corrupt change among nineteen cannot be applied at all.
+The owner decided on 2026-10-05 that the per-change control ADR 0021 deferred is a later phase rather than
+part of this fix; it is now backlog item 29, not a note in this file.

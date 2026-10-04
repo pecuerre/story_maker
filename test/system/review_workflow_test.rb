@@ -41,18 +41,26 @@ class ReviewWorkflowTest < ApplicationSystemTestCase
     assert_selector ".draft-change .entity-description", text: "Approved in the browser"
     assert_nil Character.find_by(name: "Approved in the browser")
 
-    accept_confirm do
-      click_on "Approve changes"
+    # An approval is a form rather than a bare button, because a reviewer may leave a
+    # note for the author — and the same page's rejection is a form for the note it
+    # requires.
+    within ".review-request-approval" do
+      fill_in "Note for the author (optional)", with: "Checked against Thursday's rename"
+      accept_confirm do
+        click_on "Approve changes"
+      end
     end
 
     # The decision landed and the run's outcome is stored, so this page now says what
     # the approval actually did rather than only what the change said.
     assert_selector ".review-request-summary .badge", text: "Approved", wait: REFRESH_WAIT
     assert_selector ".draft-change .draft-change-outcome", text: "Live"
+    assert_selector ".review-request-notes", text: "Checked against Thursday's rename"
     # A decided submission offers nothing to decide, so the rejection form is gone.
     assert_no_selector ".review-request-rejection"
     assert Character.find_by(name: "Approved in the browser").present?
     assert_predicate review_request.reload, :approved?
+    assert_equal "Checked against Thursday's rename", review_request.review_notes
   end
 
   test "a reviewer rejects a submission and the author gets their draft back" do

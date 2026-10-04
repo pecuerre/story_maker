@@ -181,6 +181,51 @@ class ReviewRequestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Approved in the request suite", outcome.draft_change.payload["name"]
   end
 
+  test "an approval may carry a note for the author, and an empty box says nothing" do
+    noted = review_request(remember_create("Approved with a note"))
+
+    post approve_universe_review_request_url(universe_slug: @universe.slug, id: noted),
+      params: { review_request: { review_notes: "Applied over the rename from Thursday" } }
+
+    assert_redirected_to universe_review_request_url(universe_slug: @universe.slug, id: noted)
+    assert_equal "Applied over the rename from Thursday", noted.reload.review_notes
+    assert_predicate noted, :approved?
+
+    # And the note is the one place an author can read what a reviewer decided, so it
+    # has to be on the page rather than only in the row.
+    get universe_review_request_url(universe_slug: @universe.slug, id: noted)
+    assert_select ".review-request-notes", text: /Applied over the rename from Thursday/
+
+    plain = review_request(remember_create("Approved without a note"), by: another_author)
+
+    post approve_universe_review_request_url(universe_slug: @universe.slug, id: plain),
+      params: { review_request: { review_notes: "" } }
+
+    # An empty box is not something a reviewer said, so it is stored as nothing at all
+    # rather than as an empty string that reads back as a decision.
+    assert_nil plain.reload.review_notes
+  end
+
+  test "a note survives the conflict question it was written before" do
+    request_record = review_request(remember_update("Renamed by a submission"))
+    remembered = request_record.draft.draft_changes.sole
+    @character.update!(name: "Somebody else got here first")
+
+    post approve_universe_review_request_url(universe_slug: @universe.slug, id: request_record),
+      params: { review_request: { review_notes: "Chose mine over Thursday's rename" } }
+
+    assert_response :unprocessable_content
+    # The note is part of this approval, and the approval is reached twice: the field
+    # comes back with the question rather than asking for the sentence a second time.
+    assert_select "textarea[name=?]", "review_request[review_notes]", text: "Chose mine over Thursday's rename"
+
+    post approve_universe_review_request_url(universe_slug: @universe.slug, id: request_record),
+      params: { resolutions: { remembered.id.to_s => "mine" },
+        review_request: { review_notes: "Chose mine over Thursday's rename" } }
+
+    assert_equal "Chose mine over Thursday's rename", request_record.reload.review_notes
+  end
+
   test "the approval page offers no control once the decision has been made" do
     request_record = review_request(submitted_change, status: "approved", reviewed_by: @owner)
 

@@ -386,19 +386,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
     merely *mention* the universe are unaffected, because a document stores ids rather than names
     and the displayed context is resolved per request.
 
-58. **Medium — the browser suite is unreliable when the machine is saturated, and it fails as
-    unrelated-looking errors.** `bin/rails test:system` parallelizes over
-    `number_of_processors`, and each worker holds its own SQLite test database and its own Chrome. On
-    an eight-core machine the box is saturated (load average 20+), SQLite's five-second busy timeout
-    (`config/database.yml`) expires inside a request, and the resulting `SQLite3::BusyException`
-    surfaces through Capybara as "expected `/session/new` to equal `/`", a modal that never opened, or
-    a heading that never appeared — in tests that have nothing to do with the database. Verified on a
-    pristine checkout of `aa224a2` (10 failures, 41 errors, unchanged by any later work), so it is not
-    caused by the change it was noticed during; `PARALLEL_WORKERS=2 bin/rails test:system` is green.
-    CI is less exposed because its runners have fewer cores and therefore fewer workers, which is also
-    why this has not been seen there. Do not read a single browser run as a verdict, and do not
-    "fix" a test that failed this way — re-run it with fewer workers first.
-
 ## DataFactor report follow-up observations (2026-09-25)
 
 The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They were

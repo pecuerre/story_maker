@@ -7,17 +7,16 @@
     "autoprefixer": "^10.5.4",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
-    "nodemon": "^3.1.14",
     "postcss": "^8.5.26",
-    "postcss-cli": "^11.0.1",
-    "sass": "^1.103.1",
+    "postcss-cli": "^12.0.0",
+    "sass": "^1.105.1",
     "tom-select": "^2.6.2"
   },
   "scripts": {
     "build:css:compile": "sass ./app/assets/stylesheets/application.bootstrap.scss:./app/assets/builds/application.css --no-source-map --load-path=node_modules --quiet-deps --silence-deprecation=import",
     "build:css:prefix": "postcss ./app/assets/builds/application.css --use=autoprefixer --output=./app/assets/builds/application.css",
     "build:css": "bun run build:css:compile && bun run build:css:prefix",
-    "watch:css": "nodemon --watch ./app/assets/stylesheets/ --ext scss --exec \"bun run build:css\"",
+    "watch:css": "bun script/watch_css.js",
     "lint:js": "biome lint",
     "test:js": "bun test",
     "check:js": "bun run lint:js && bun run test:js"

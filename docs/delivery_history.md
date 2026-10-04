@@ -3524,6 +3524,27 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Former browser-suite saturation finding: parallel SQLite tests exhausted the busy timeout (fixed)
+
+**Then:** Rails selected one test process per CPU. On a sufficiently busy hosted runner or workstation,
+fixture resets and browser requests overlapped until SQLite's five-second busy timeout expired. The
+result looked like unrelated application regressions — a sign-in redirecting back to `/session/new`,
+a modal absent from the page, or a regular request test failing while setting up a session — but the
+root exception was `SQLite3::BusyException`.
+
+**Fix:** the request-test CI job explicitly sets `PARALLEL_WORKERS=2`, while the system-test job sets
+it to `1`. Rails treats that environment variable as the authoritative worker count, so the request
+suite retains parallel execution while the browser smoke suite avoids competing SQLite writers,
+Chrome instances, and shared test infrastructure. The development guide now documents the same
+override for a saturated local machine.
+
+The failing CI run also exposed two independent maintenance faults. `bun audit` could not repair the
+high-severity `braces@3.0.3` advisory because its dependants allowed no patched release. The unused
+`nodemon` watcher was replaced with a small Bun-native stylesheet watcher, and PostCSS CLI moved to
+its Chokidar 5 release; the refreshed lockfile therefore removes `braces` entirely. Finally,
+`actions/upload-artifact` moved from v4 to pinned v5 so GitHub no longer has to force its Node 20
+action onto Node 24.
+
 ### Quirk 12: sessions had no expiry or source binding (fixed)
 
 **Then:** a session row recorded who it belonged to and which client created it, and nothing about

@@ -84,6 +84,8 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **CI caps Rails request tests at two workers and serializes browser tests, eliminating SQLite lock contention; artifact uploads run
+  on Node 24, and the CSS watcher no longer pulls the vulnerable `braces` dependency graph.**
 - **The taxonomy tree no longer restores its empty state over a remembered create.** The client-side check
   learned about the new read-only pending row, matching the server's suppression.
 

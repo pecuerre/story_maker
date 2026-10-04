@@ -1,0 +1,37 @@
+<%# How a remembered change becomes a live record, in three steps.
+    #
+    # A draft-based universe is the one place in this application where pressing
+    # **Save** does not change what the universe holds, and every other piece of
+    # copy about the workflow is a consequence rather than an explanation: the flash
+    # that says a change was *remembered*, the badge on a row, the two controls on a
+    # draft. An author who arrives here from that flash has three questions, and a
+    # list of remembered changes answers none of them — where a change comes from,
+    # why nothing on the pages they edited has moved, and what makes it live.
+    #
+    # It is rendered on **both** drafts pages — the list and one draft — because the
+    # two are the same page for this workflow: the list is where an author finds out
+    # something is waiting, and the draft is where they decide about it. One partial
+    # and one set of keys means the two cannot disagree, and the copy lives with the
+    # pages rather than in a help centre nothing navigates to.
+    #
+    # It is rendered only where a draft can exist at all (`DraftPreview#available?`
+    # is the same gate the sidebar's panel uses). In a `direct` universe a draft is
+    # never opened and the steps would describe a workflow that does not happen, so
+    # the sentences would be the one true lie on the page.
+    #
+    # The steps are a plain ordered list in the same `content-surface` the change
+    # rows use, with no styling of its own: this is a sentence about a page, not a
+    # feature, and a block that looked like a control would ask to be pressed. %>
+<% if draft_preview.available? %>
+  <div class="content-surface draft-workflow-guide mb-3">
+    <div class="p-3">
+      <h2 class="h6 mb-1"><i class="bi bi-journal-text me-1" aria-hidden="true"></i><%= t("drafts.guide.heading") %></h2>
+      <p class="page-description mt-0 mb-2"><%= t("drafts.guide.lead") %></p>
+      <ol class="mb-0 ps-3">
+        <li><%= t("drafts.guide.steps.remember") %></li>
+        <li><%= t("drafts.guide.steps.review") %></li>
+        <li><%= t("drafts.guide.steps.apply") %></li>
+      </ol>
+    </div>
+  </div>
+<% end %>

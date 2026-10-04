@@ -10,11 +10,17 @@
     # The values are the ones the payload carries, so a row shows what the author
     # submitted. A submitted tag list or photo is not among them: those are
     # collection and virtual writers rather than columns, and the drafts page is
-    # where they are read. %>
+    # where they are read.
+    #
+    # The subject is `draft_pending_record_label`, not `record_label`, because a
+    # remembered create is not validated and may be a record the universe would
+    # refuse — and one with nothing to be called by would otherwise print a
+    # placeholder id or no subject at all. The fallback is the type it would
+    # create, which is the same sentence the drafts page gives that change. %>
 <div class="list-group-item entity-row draft-pending-row">
   <div class="entity-copy flex-grow-1">
     <div class="d-flex align-items-center gap-2 flex-wrap">
-      <span class="entity-title text-break"><%= record_label(record) %></span>
+      <span class="entity-title text-break"><%= draft_pending_record_label(record) %></span>
       <%= render "shared/draft_pending_badge", state: draft_pending_state(record) %>
     </div>
     <% if record.description.present? %>

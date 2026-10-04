@@ -42,6 +42,12 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **The whole `wikipedia` journey is covered end to end.** A request test and a browser test walk start
+  editing, a remembered create, edit, and deletion, the pending rows in the lists, one apply, and the live
+  records, with conflict resolution reachable on the way there.
+- **Both drafts pages now say how the workflow works**, in three steps, where a draft can exist at all.
+- **A pending row with nothing to be called by is titled by the type it would create** instead of printing a
+  placeholder id or no subject, and its badge says that nothing about it has been checked until you apply.
 - **A conflicting apply opens a resolution page instead of reporting its conflicts.** Each row names the record and type, what you want and what theirs means, and offers **Apply theirs** / **Apply mine**; "mine" on a deleted record restores it and applies your edit.
 - **`DraftApplier` honors those answers.** "Theirs" discards the change, "mine" writes it over the current values, and the returned summary counts which changes were answered and how.
 - **`DraftConflictDetector` reports whether each remembered change can still be written.** It names the two

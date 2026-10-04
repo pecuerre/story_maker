@@ -116,6 +116,47 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     ).display_string
   end
 
+  test "a pending row with nothing to be called by is titled by the type it would create" do
+    # A remembered create is not validated when it is remembered (ADR 0020), so the
+    # row can be a record the universe would refuse to write — and one with no name
+    # of its own has nothing for `record_label` to return. An Event falls back to
+    # `display_label`'s last rung, which is a phrase about an id it does not have,
+    # and a Character returns a blank label, so the row would carry a badge with no
+    # subject or a subject that reads like a stored record.
+    #
+    # The row therefore says what the change *would* create, which is the sentence
+    # the drafts page already gives that change. Nothing here validates the record
+    # or withholds the row: whether the applier will accept it is not knowable
+    # before the apply, so the row does not claim to be a record.
+    remember_create("Event", "title" => "", "start_datetime" => "")
+    remember_create("Character", "name" => "")
+    remember_create("CharacterTag", "name" => "")
+
+    get universe_events_path(universe_slug: @universe.slug)
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: I18n.t("drafts.show.new_record", kind: "Event")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: I18n.t("drafts.show.new_record", kind: "Character")
+
+    get universe_character_tags_path(universe_slug: @universe.slug)
+    assert_response :success
+    assert_select ".taxonomy-pending .entity-title", text: I18n.t("drafts.show.new_record", kind: "Character tag")
+  end
+
+  test "a pending row keeps the record's own name where it has one" do
+    # The fallback is for a row with nothing to be called by, not a second naming
+    # rule: an Event the universe *could* write is still named by its own label, so
+    # the lists and the drafts page keep agreeing about what the change is about.
+    remember_create("Event", "title" => "The reckoning", "start_datetime" => "1200-01-01 09:00")
+
+    get universe_events_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: /The reckoning/
+  end
+
   test "a pending row is badged as a draft and carries no controls" do
     remember_create("Character", "name" => "Pending character", "description" => "Not live yet")
 

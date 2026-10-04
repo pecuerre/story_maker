@@ -92,11 +92,49 @@ module DraftsHelper
     record_label(record)
   end
 
+  # What a **pending row** calls itself: the record's own label where it has one to
+  # give, and otherwise the type the change would create — the same sentence
+  # `draft_change_subject` gives a remembered create on a draft's page and in the
+  # sidebar panel.
+  #
+  # The fallback is what a change's payload cannot supply is for. A remembered
+  # create is built straight from the payload without being validated (ADR 0020),
+  # so it can be a record the universe would refuse: an Event with no title and no
+  # dates has no label of its own and `Event#display_label`'s last rung is a
+  # phrase about an id it does not have, and a nameless Character has no label at
+  # all. Printing either would put a row in a list that reads as a stored record —
+  # or as a row with no subject — for something that does not exist and may never
+  # be written.
+  #
+  # **This asks the model, rather than re-deriving the label's ladder.** `Event`
+  # publishes `#identifiable?` for exactly this question, because "can this record
+  # call itself?" is the model's own rule and a view that answered it by comparing
+  # a rendered string against a translated fallback would be a second copy of the
+  # ladder that could drift from the first.
+  #
+  # Nothing here validates the record or withholds the row: whether the applier
+  # will accept a remembered create is not knowable before the apply (finding 64),
+  # so the row does not claim to be one. It says what the change would create and
+  # leaves the decision to the apply, which is where the model's own validations
+  # are authoritative.
+  def draft_pending_record_label(record)
+    label = record_label(record)
+    return label if label.present? && draft_identifiable?(record)
+
+    t("drafts.show.new_record", kind: draft_record_kind(record.class.name))
+  end
+
   # The word for the record type a change names, whether or not the record is
   # still there: a change about a record somebody else has since deleted still
   # has to say what it was about.
   def draft_change_kind(change)
-    model = RecordTarget.model_for(change.record_type)
+    draft_record_kind(change.record_type)
+  end
+
+  # The word for a record type, derived once from the content registry and the
+  # search declarations rather than listed per workspace.
+  def draft_record_kind(record_type)
+    model = RecordTarget.model_for(record_type)
     return t("drafts.kinds.unknown") if model.nil?
 
     declaration = model.searchable? ? model.search_declaration : nil
@@ -169,6 +207,14 @@ module DraftsHelper
   end
 
   private
+    # Whether the model can name this record at all. A model that has its own rule
+    # for the question publishes it (`Event#identifiable?`), and a model that does
+    # not is answerable by its own label — every other model's label *is* its name
+    # or its endpoints, so a blank label is the whole answer.
+    def draft_identifiable?(record)
+      record.respond_to?(:identifiable?) ? record.identifiable? : true
+    end
+
     # The attribute's own name, resolved the way every form label and every
     # `errors.format` sentence in this application resolves it. A column the
     # locale has not named falls back to a humanized English name, which is the

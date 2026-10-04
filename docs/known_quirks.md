@@ -149,23 +149,25 @@ each one is reachable now rather than only pending.
     preloads through a grouped query, so these are the two places that do not. Both would be answered by a
     `DraftChanges::Reader` that resolves a draft's records and tag names in two queries.
 
-68. **Medium — a remembered create is not validated, so a list can show a pending row the universe would
-    have refused.** ADR 0020 deliberately does not validate a change when it is remembered: the applier
-    re-runs the live path, where the model's own validations are authoritative. That is right for the
-    drafts page, which reports what the author *asked for*. It is not right for a **list**, because
-    `DraftPreview#creates_for` builds the pending record straight from the payload with no validation at
-    all (`app/models/draft_preview.rb`). Verified on 2026-10-04 in a `wikipedia` universe: posting an Event
-    with no title and no dates answers **202** and the Events list renders a pending row reading
-    **“Event #”** — `Event#display_label`'s last rung, `t("events.display_label.unidentified", id: nil)`
-    — where the same submission on the `direct` path answers **422 must have a title, a date, or a
-    relation to another event**. A nameless Character create is the same defect with a quieter face: the
-    row renders its badge and its description with **no subject at all**, and a nameless taxonomy create
-    renders a bare **Draft** badge. The row has no id, so there is nothing to name it by, and no way to
-    withdraw it from the list except discarding the whole draft. The deep cause is the one finding 64
-    records: nothing stores an outcome per change before an apply, so the list cannot know which
-    remembered changes will be refused. Whether a row that will not apply is badged differently, named
-    from its type, or withheld is a product decision and belongs with **What a pending badge has to say
-    beyond its state** in [`backlog.md`](backlog.md), not here.
+68. **Medium — a list cannot say which remembered creates the applier will refuse.** ADR 0020
+    deliberately does not validate a change when it is remembered: the applier re-runs the live path,
+    where the model's own validations are authoritative. That is right for the drafts page, which
+    reports what the author *asked for*, and it is what leaves a list unable to answer a question about
+    a pending row. Nothing stores an outcome per change before an apply (finding 64), and a pending
+    record is built from the payload sliced to `model.column_names`, so the collection writers and the
+    two virtual photo attributes are never assigned — validating that half-built object would be a
+    second answer about a record the applier will build differently, not a preview of the applier's
+    own. A remembered Event create with no title and no dates therefore still appears in the Events
+    list, and it appears as a row the universe would refuse, because that is genuinely what it is.
+    What was delivered on 2026-10-04 is that the row no longer **claims** to be a record: a pending row
+    with nothing to be called by is titled by the type it would create (`Event#identifiable?` and
+    `DraftsHelper#draft_pending_record_label`, stated in
+    [conventions.md](conventions.md#pending-changes-in-a-list)) rather than by an unidentified Event's
+    last display-label rung or by no subject at all, and the badge's `title` says that nothing about it
+    has been checked yet and that the apply is where the universe decides. Whether such a row should be
+    badged differently still or withheld is a product decision that belongs with **What a pending badge
+    has to say beyond its state** in [`backlog.md`](backlog.md), and the remaining half of this finding
+    is closed by whatever per-change outcome storage slice 4.2 of the drafts history settles.
 
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`

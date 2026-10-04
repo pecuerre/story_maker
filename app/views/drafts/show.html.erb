@@ -22,6 +22,13 @@
   <% end %>
 <% end %>
 
+<%# The same guide the list carries, because this page and that list are one place
+    for this workflow: the list is where an author finds out something is waiting
+    and this page is where they decide about it, and a guide that vanished on
+    arrival would explain the workflow only to the reader who had not started it.
+    See `drafts/_workflow_guide`. %>
+<%= render "drafts/workflow_guide" %>
+
 <div class="content-surface">
   <div class="list-group list-group-flush">
     <div class="list-group-item draft-summary d-flex align-items-center gap-2 flex-wrap">

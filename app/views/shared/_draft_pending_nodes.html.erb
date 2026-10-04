@@ -11,12 +11,17 @@
     # sibling's position, and a row that is in neither list cannot be dragged,
     # moved past, or renamed by a reader who cannot see it yet. It sits after the
     # real roots, because a remembered create has no parent to hang it under — the
-    # same accepted limit the drafts page has for a create's story or scene. %>
+    # same accepted limit the drafts page has for a create's story or scene.
+    #
+    # The name comes from `draft_pending_record_label` rather than `record.name`
+    # because a remembered create is not validated: a taxonomy create with no name
+    # has no name to print, and the row would carry a badge and nothing to hang it
+    # on. It is titled by the type it would create instead. %>
 <li class="taxonomy-pending">
   <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom">
     <span class="taxonomy-name-area d-flex align-items-center gap-2 flex-wrap">
       <span class="taxonomy-name-text text-break">
-        <span class="entity-title"><%= record.name %></span>
+        <span class="entity-title"><%= draft_pending_record_label(record) %></span>
         <%= render "shared/draft_pending_badge", state: draft_pending_state(record) %>
         <% if record.description.present? %>
           <span class="entity-description d-block"><%= record.description %></span>

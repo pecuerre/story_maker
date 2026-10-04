@@ -459,7 +459,7 @@ es:
         other: "%{count} cambios pendientes"
       states:
         draft: "Borrador"
-        draft_title: "Este registro solo está en tu borrador. Se hará real cuando apliques el borrador."
+        draft_title: "Este registro solo está en tu borrador. Todavía no se ha comprobado nada: se hace real cuando aplicas el borrador, y el universo decide entonces si se puede escribir."
         draft_icon: "bi-journal-plus"
         edit: "Edición pendiente"
         edit_title: "Tu borrador guarda una edición de este registro. Al aplicar el borrador se escribirá."
@@ -476,6 +476,20 @@ es:
         more:
           one: "y 1 cambio más"
           other: "y %{count} cambios más"
+    # Los tres pasos, en el orden en que el autor los encuentra. Son el único
+    # sitio donde se explica el flujo en lugar de remitirse a él: todas las demás
+    # frases sobre él —el aviso que dice que un cambio se ha recordado, la insignia
+    # de una fila, los dos controles de un borrador— son consecuencia de alguno de
+    # estos tres, y quien llega desde ese aviso necesita saber cuáles son sus
+    # consecuencias. Se muestra en las dos páginas de borradores, así que las claves
+    # se dicen una sola vez aquí y no dos en las vistas.
+    guide:
+      heading: "Cómo funcionan aquí tus cambios"
+      lead: "Este universo recuerda tus cambios en lugar de escribirlos al momento. Nada de lo que cambies es visible hasta el tercer paso."
+      steps:
+        remember: "Edita lo que quieras en este universo. Cada cambio se recuerda en tu borrador en lugar de escribirse."
+        review: "Tus listas muestran lo que está pendiente: una fila para el registro que has añadido y una insignia en el que has editado o eliminado."
+        apply: "Aplica el borrador para escribir todos los cambios recordados a la vez, o descártalo y no escribir nada."
     index:
       title: "Cambios pendientes"
       description: "Los cambios que has hecho en este universo y que se recuerdan en lugar de escribirse, con los borradores a los que pertenecen."

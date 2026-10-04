@@ -124,7 +124,10 @@
           <% end %>
           <% pending.each do |scene| %>
             <li class="d-flex align-items-center gap-2 py-1 draft-pending-row">
-              <span class="text-break"><%= scene.name %></span>
+              <%# A remembered Scene create that carries no name is titled by the
+                  type it would create, the same answer every other pending row
+                  gives and the one a Scene with no title cannot give itself. %>
+              <span class="text-break"><%= draft_pending_record_label(scene) %></span>
               <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
             </li>
           <% end %>

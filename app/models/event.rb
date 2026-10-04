@@ -67,6 +67,21 @@ class Event < ApplicationRecord
     I18n.with_locale(AppLocale::DEFAULT) { display_label(visited) }
   end
 
+  # Whether this event has anything to be **called** by — a title, a date, or a
+  # temporal reference. It is the same set `display_label` reads, and the same set
+  # `must_be_identifiable` refuses to save without.
+  #
+  # It is public because a second caller needs it outside a save: the pending row a
+  # remembered Event create renders in a list asks the model whether it can name
+  # itself, rather than the view comparing a rendered label against a translated
+  # fallback. An event with nothing to be identified by has no name to print, so the
+  # row is titled by the type it would create instead of by `display_label`'s last
+  # rung, which reads as a record with an id it does not have.
+  def identifiable?
+    title.present? || start_datetime.present? || end_datetime.present? ||
+      before_event.present? || after_event.present? || simultaneous_event.present?
+  end
+
   # The same label, in the reader's language. The four phrases are chrome and the
   # event's own title, dates, and id are data, so a chain of relationships reads
   # as a chain of translated sentences: a referenced event's label is itself one.
@@ -183,8 +198,7 @@ class Event < ApplicationRecord
   end
 
   def must_be_identifiable
-    return if title.present? || start_datetime.present? || end_datetime.present? ||
-      before_event.present? || after_event.present? || simultaneous_event.present?
+    return if identifiable?
 
     errors.add(:base, I18n.t("events.errors.must_be_identifiable"))
   end

@@ -29,6 +29,68 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-04
 
+- **[added]** **Collaboration phase 4, slice 4.1: the whole `wikipedia` journey is proved end to end, the
+  drafts pages say what the workflow is, and a pending row with nothing to be called by is named by its
+  type.** The slice asked for the flow rather than for behaviour: the interception is already held by
+  `test/controllers/draft_mutation_test.rb` across all twenty mutation controllers in both modes, so what
+  was missing was proof that one author's remembered create, edit, and delete survive the whole round
+  trip, plus copy that takes a first-time author through it.
+
+  **No existing test could fail on a broken seam between the steps.** `draft_mutation_test.rb` proves a
+  mutation is remembered; `draft_pending_list_test.rb` renders a draft the test built by hand, with no
+  request that remembered anything; `drafts_controller_test.rb` reads and applies a draft the test built
+  the same way; and the two browser tests walk one half each. Every part is held and none of them joins
+  them, so a journey that remembered three changes and wrote two of them — or badged a record the apply
+  never touched — would have passed the whole suite. That is the property slice 4.1 exists to assert, and
+  it is asserted twice: `test/controllers/draft_journey_test.rb` over requests (start editing, three kinds
+  of change on one workspace, the badges in the list, the apply, the live records, and conflict resolution
+  reachable on the way there in `wikipedia` mode), and `test/system/draft_wikipedia_journey_test.rb` as one
+  browser pass without stopping between the steps. The request suite's first case deliberately edits one
+  record and deletes **another**: a deletion wins an edit on the same record in the lists, so sharing one
+  record would leave the edit with nothing to prove.
+
+  **The guidance is a page, not a help centre, and it is rendered on both drafts pages.** The reasoning
+  the slice leaves implicit is that a `wikipedia` universe is the one place in this application where
+  pressing **Save** does not change what the universe holds, and every other sentence about that is a
+  consequence rather than an explanation: the flash that says a change was *remembered*, a row's badge,
+  the two controls on a draft. An author who arrives from that flash has three questions — where does a
+  change come from, why has nothing on the pages I edited moved, and what makes it live — and a list of
+  remembered changes answers none of them. The owner chose the drafts pages for it over the sidebar panel,
+  and the pair of pages rather than one because the list is where an author finds out something is waiting
+  and the draft is where they decide about it: a guide that vanished on arrival would explain the workflow
+  only to a reader who had not started it. `drafts/_workflow_guide` with one set of keys under
+  `drafts.guide` renders both, so they cannot disagree; it is drawn from `content-surface` with no styling
+  of its own, because a block that looked like a control would ask to be pressed; and it renders only where
+  `DraftPreview#available?` holds, because in a `direct` universe the steps would describe a workflow that
+  does not happen. Spanish copy came with it — `test/models/translations_test.rb` holds the key sets
+  equal — and the badge's `title` now says that nothing about a pending row has been checked yet and that
+  the apply is where the universe decides.
+
+  **Finding 68 was narrowed rather than closed, and the half that was closed was the half a list can
+  answer.** A remembered create is not validated when it is remembered (ADR 0020), which is right for the
+  drafts page and leaves a list unable to say which pending creates the applier will refuse. The
+  tempting fix is to run the model's validations on the pending record — but that object is built from the
+  payload sliced to `model.column_names`, so the collection writers and the two virtual photo attributes
+  are never assigned, and validating the half-built object would be a second answer about a record the
+  applier will build differently rather than a preview of the applier's own write. What the list can do
+  without claiming anything is stop asserting a name: an Event with no title and no dates fell through
+  `display_label` to a phrase about an id it does not have, and a nameless Character rendered its badge
+  with no subject at all, so `DraftsHelper#draft_pending_record_label` now falls back to
+  `drafts.show.new_record` — the sentence the drafts page and the sidebar panel already give that change.
+  "Can this record call itself?" is the model's own question, so `Event` publishes `#identifiable?` and
+  `#must_be_identifiable` reads it, with `EventTest` asserting the predicate against the validation rather
+  than restating the set. The remaining half — whether such a row should be badged differently or
+  withheld — is the product decision backlog item 26 owns, and needs the per-change outcome storage
+  finding 64 records, so the finding stays open with its delivered half stated.
+
+  **Verification.** `bin/rails test` — 1773 runs, 11652 assertions, 0 failures, 0 errors, 10 skips (the
+  pre-existing skips). New: `test/controllers/draft_journey_test.rb` (3) and
+  `test/system/draft_wikipedia_journey_test.rb` (1, run alone). Grew: `draft_pending_list_test.rb` with the
+  naming rule and its "keeps its own name where it has one" counterpart, `event_test.rb` with the
+  predicate, and `test/models/translations_test.rb` by way of the new `en`/`es` keys. Also run:
+  `bin/rubocop` and `test/docs_test.rb`. Not run: `bun run check:js` (no JavaScript changed),
+  `bin/rails test:system` beyond the new case, `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit`.
+
 - **[added]** **Collaboration phase 3, slices 3.2 and 3.3: a conflicting apply asks before it writes, and
   `DraftApplier` obeys the answer.** `DraftsController#apply` renders `drafts/conflicts` when the detector
   finds one, and the applier takes an answer per conflicting change — `"mine"` writes the remembered values

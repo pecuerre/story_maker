@@ -477,6 +477,18 @@ a Dialogue's speakers) is printed as the names its own association resolves, the
 because a bare `story_id` is nothing a reader can name, and the two virtual photo writers are stated as
 a new photo or a removed one rather than as a `data:` URL and a boolean.
 
+**Both drafts pages carry the workflow in three steps.** `drafts/_workflow_guide` renders
+`drafts.guide` on the list and on a draft, because those two pages are one place in this workflow: the
+list is where an author finds out something is waiting, and the draft is where they decide about it. A
+`wikipedia` universe is the one place in this application where pressing **Save** does not change what
+the universe holds, and every other sentence about that — the flash that says a change was
+*remembered*, a row's badge, the two controls — is a consequence of one of the three steps rather than
+an explanation of it, so an author arriving from that flash has three questions and a list of
+remembered changes answers none of them. It is one partial and one set of keys so the two pages cannot
+disagree, it is drawn from `content-surface` with no styling of its own so it reads as a sentence and
+not as a control, and it is rendered only where `DraftPreview#available?` holds — in a `direct`
+universe the steps would describe a workflow that does not happen.
+
 **The page has to be reachable.** The right utility sidebar's **Collaboration** group carries a
 **Pending changes** entry with a panel of what is waiting above it, rendered only where a draft can
 exist — a `direct` universe never opens one — and only for a signed-in reader, because a draft belongs
@@ -544,11 +556,27 @@ Ownerships), the Sections tree, the eight taxonomy trees, and the Scenes list.
 
 **A pending record is an unsaved instance of the model**, built from the payload sliced to
 `model.column_names`, so a pending row renders through the same `record_label` ladder a live row uses
-and no model gains a second way of naming itself. Slicing is what keeps the collection writers
+and no model gains a second way of naming itself — with the one exception below, for a record the
+ladder has nothing to name. Slicing is what keeps the collection writers
 (`character_tag_ids`) and the virtual photo attributes out: assigning them would build an association
 the row throws away, and not assigning them is what makes a payload naming a renamed column harmless.
 What a pending row cannot have is a **Details link, an editor, a delete menu, or a position** — all four
 need an id — so `shared/_row_actions` and `shared/_taxonomy_node` are never handed one.
+
+**A pending row with nothing to be called by is titled by the type it would create.** A remembered
+create is not validated when it is remembered ([ADR
+0020](adr/0020-remembering-mutations-instead-of-writing-them.md)), so a pending record can be one the
+universe would refuse to write — and one with nothing to name it by has no label to print: an Event
+falls through `display_label` to a phrase about an id it does not have, and a nameless Character has
+a blank label, so the row would carry a badge with no subject or with a subject that reads like a
+stored record. `DraftsHelper#draft_pending_record_label` answers with the type in that case, which is
+the sentence `drafts.show.new_record` already gives that change on a draft's page and in the sidebar
+panel. Whether the record can name itself is the **model's** question, so `Event` publishes
+`#identifiable?` (the same set `#display_label` reads and `#must_be_identifiable` refuses to save
+without) rather than the view comparing a rendered label against a translated fallback. Nothing is
+validated and no row is withheld: whether the applier will accept a remembered create is not knowable
+before the apply (finding 64), so the row says what the change would create and leaves the decision
+to the apply, where the model's own validations are authoritative.
 
 **A row is never rewritten to match its badge.** A pending **edit** shows the values that are stored
 today and a pending **deletion** shows the record with its links and menu, because none of that has

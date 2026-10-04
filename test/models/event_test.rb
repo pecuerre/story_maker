@@ -1,6 +1,30 @@
 require "test_helper"
 
 class EventTest < ActiveSupport::TestCase
+  test "identifiable? answers the same question as the validation that refuses without it" do
+    # It is public because the pending row a remembered Event create renders in a
+    # list asks it, so a model with nothing to be identified by can be titled by its
+    # type instead of by `display_label`'s last rung — which reads as a record with
+    # an id it does not have. Two answers to one question about one record is what
+    # the naming would otherwise be, so the two are asserted against each other
+    # rather than the predicate being written a second time.
+    universe = universes(:universe_one)
+    other = events(:event_one)
+
+    [
+      Event.new(universe: universe),
+      Event.new(universe: universe, title: "A title"),
+      Event.new(universe: universe, start_datetime: Time.current),
+      Event.new(universe: universe, end_datetime: Time.current),
+      Event.new(universe: universe, before_event: other),
+      Event.new(universe: universe, after_event: other),
+      Event.new(universe: universe, simultaneous_event: other)
+    ].each do |event|
+      assert_equal event.valid?, event.identifiable?,
+        "an event with the same attributes cannot be both valid and unidentifiable"
+    end
+  end
+
   test "requires at least a title, a date, or a relation to another event" do
     event = Event.new(universe: universes(:universe_one))
 

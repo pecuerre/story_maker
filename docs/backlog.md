@@ -139,13 +139,11 @@ it has a useful destination and clear empty/loading/error states.
 
 23. **Collaboration system — Phase 4: Wikipedia mode (end-to-end)**
 
-    The full wikipedia flow works: start editing → make changes → apply → changes are live.
+    The full wikipedia flow works end to end: start editing → make changes → apply → changes are live,
+    proved over requests and in one browser pass with conflict resolution reachable on the way, and the
+    drafts pages carry the workflow in three steps for a first-time author. See the dated entries in
+    [`../CHANGELOG.md`](../CHANGELOG.md).
 
-    - **Slice 4.1:** Prove the whole `wikipedia` journey end to end. The interception itself is done and
-      is held by `test/controllers/draft_mutation_test.rb` across all twenty mutation controllers in both
-      modes, so what this slice adds is the **flow**: start editing → make changes → see them in the lists
-      → apply → see them live, with conflict resolution reachable in `wikipedia` mode, and copy that
-      guides a first-time author through it. Tests: request + system coverage of the journey.
     - **Slice 4.2:** The draft list's history. The apply already reports itself in a flash and the
       sidebar panel already says when nothing is waiting, but the drafts list offers no **history**: an
       applied draft is a row in it, and there is no way to see when it was applied or what it contained

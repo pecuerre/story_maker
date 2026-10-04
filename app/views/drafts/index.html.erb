@@ -9,6 +9,12 @@
   <%= link_to t("drafts.index.back"), universe_path(Current.universe), class: "btn btn-outline-secondary" %>
 <% end %>
 
+<%# Before the list rather than after it: an author who comes here from the flash
+    that told them their change was remembered needs to know what this page is
+    *for* before they read a row of it, and the list is what the guide is
+    explaining. See `drafts/_workflow_guide`. %>
+<%= render "drafts/workflow_guide" %>
+
 <% if @drafts.any? %>
   <div class="content-surface entity-list">
     <div class="list-group list-group-flush">

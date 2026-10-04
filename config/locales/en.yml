@@ -489,6 +489,20 @@ en:
       # Answering a toggle posted from a stale page in a universe that writes
       # straight through: there was never an editing session to stop.
       not_draft_based: "This universe writes changes straight through, so there is no editing session to start or stop."
+    # The three steps, in the order an author meets them. They are the only place
+    # the workflow is explained rather than referred to: every other sentence about
+    # it — the flash that says a change was remembered, a row's badge, the two
+    # controls on a draft — is a consequence of one of these three, and an author
+    # who arrives from that flash has to be told what the consequences are. Rendered
+    # on both drafts pages, so the keys are stated once here rather than twice in the
+    # views.
+    guide:
+      heading: "How your changes work here"
+      lead: "This universe remembers your changes instead of writing them straight away. Nothing you change is live until the third step."
+      steps:
+        remember: "Edit anything in this universe. Each change is remembered on your draft rather than written."
+        review: "Your lists show what is waiting: a row for a record you added, and a badge on a record you edited or deleted."
+        apply: "Apply the draft to write every remembered change at once, or discard it and write nothing."
     # The **Start editing** / **Stop editing** control on the universe page. The
     # pending count is one button rather than a badge because the number is only
     # interesting as a way into the changes it is counting — so it reads
@@ -508,7 +522,7 @@ en:
         other: "%{count} pending changes"
       states:
         draft: "Draft"
-        draft_title: "This record is only in your draft. It becomes real when you apply the draft."
+        draft_title: "This record is only in your draft. Nothing about it has been checked yet: it becomes real when you apply the draft, and the universe decides then whether it can be written."
         draft_icon: "bi-journal-plus"
         edit: "Pending edit"
         edit_title: "Your draft holds an edit to this record. Applying the draft writes it."

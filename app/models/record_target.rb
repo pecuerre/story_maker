@@ -62,6 +62,40 @@ class RecordTarget
       record
     end
 
+    # `find`, for the one caller whose question is whether the row is *still
+    # there* rather than whether it is visible: `DraftConflictDetector`, which has
+    # to tell a record somebody has since deleted from a record that was never
+    # there, because those two are different answers to "has this change moved?"
+    # and `find` collapses them.
+    #
+    # It stays here rather than in the detector so that there is still one place a
+    # stored `record_type`/`record_id` pair is turned into a record. The registry
+    # gate and the universe check are not repeated by the caller that wants a
+    # deleted row; a detector with its own query would be a second reader of the
+    # same stored reference, which is the drift this class exists to prevent.
+    #
+    # Soft-deletability is asked of the model as a capability rather than kept in a
+    # list of our own: a model that includes `SoftDeletable` answers `with_deleted`
+    # and one that does not — a `Photo`, which is destroyed rather than marked —
+    # answers `find_by` exactly as `find` does. `test/models/record_target_test.rb`
+    # holds the two against each other, so a model that grows a `deleted_at` column
+    # without the concern fails the suite rather than silently answering as though
+    # nothing could be deleted.
+    def find_including_deleted(record_type:, record_id:)
+      model = model_for(record_type)
+      return if model.nil?
+
+      (model.respond_to?(:with_deleted) ? model.with_deleted : model).find_by(id: record_id)
+    end
+
+    # Whether a record a reference resolved to has been soft-deleted. A model that
+    # cannot be soft-deleted is not deleted, which is why this is a capability
+    # question and not a column read: `Photo` rows are destroyed, so there is no
+    # `deleted_at` to be blank.
+    def soft_deleted?(record)
+      record.respond_to?(:deleted?) && record.deleted?
+    end
+
     # Whether a reference resolves to a record inside `within`. This is the shape
     # a model validation wants; `find!` is the shape a controller wants; both ask
     # the same question so they cannot answer it differently.

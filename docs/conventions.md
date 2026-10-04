@@ -116,7 +116,12 @@ the same change, or `db:demo:check` fails.
   an unknown or missing base counts as moved, because a false conflict is answerable and a silently
   overwritten edit is not. Whether a record is *deleted* is a separate question from whether it
   moved — a soft delete bumps `updated_at` — so ask `deleted?` rather than inferring it from the
-  stamp. See [ADR 0019](adr/0019-collaboration-foundations.md).
+  stamp. `DraftConflictDetector` is where both are asked, and it asks deletion **first**, because
+  `soft_delete` writes `deleted_at` *and* moves the stamp: checking the version first would report
+  every already-deleted record as moved and make "already gone" unreachable. That needs a record
+  `RecordTarget.find` refuses, so the detector resolves through `RecordTarget.find_including_deleted`
+  and reads the deleted state through `RecordTarget.soft_deleted?` rather than with a query of its
+  own. See [ADR 0019](adr/0019-collaboration-foundations.md).
 - **A group of related value objects gets its own namespace directory.** `Search` is the current
   example: `app/models/search/` holds the query, scope, catalog, client, and the rest of one
   subsystem, rather than sixteen top-level files. A standalone value object with no siblings to
@@ -199,10 +204,16 @@ the same change, or `db:demo:check` fails.
   scoped by one — with the sibling collection being the owner's association that every positioned
   controller's `sibling_collection` already returns. `test/services/draft_applier_test.rb` holds that
   derivation against every routed controller that declares itself positioned, in both directions, because a
-  second list of ordered models would drift from the fifteen controllers that declare their own. A change
-  whose record has moved since it was remembered, whose record is gone, or that the live path refuses is
-  reported rather than written, and the draft is closed either way; the reasoning, and why refusing the whole
-  apply was rejected, are in [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md).
+  second list of ordered models would drift from the fifteen controllers that declare their own. Whether a
+  change *can* be written is not decided here: `DraftApplier` asks `DraftConflictDetector` and writes
+  only a change it calls writable, so the apply's skip decision and the resolution page's list of
+  conflicts are one answer rather than two comparisons. The five reasons are `SKIP_REASONS` — `:moved`
+  and `:deleted` (the two conflicts, from the detector), `:missing`, `:gone` (a delete whose record is
+  already deleted, which is reported rather than claimed as written), and the applier's own
+  `:unplaceable` and `:refused`. A create is not asked about a version at all: it names no record, and
+  its two failures are about a stored scope column and the live path's refusal. The draft is closed
+  either way; the reasoning, and why refusing the whole apply was rejected, are in
+  [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md).
 - Password-reset responses set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
   `PasswordResetPathFilter` redacts reset-token path segments from Rails request logs; upstream
   proxy/access-log retention remains an external deployment responsibility.

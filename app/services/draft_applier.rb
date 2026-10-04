@@ -32,15 +32,23 @@
 #   rather than being applied with a plain `save` that leaves a gap in the
 #   sequence.
 #
-# **What a change that cannot be written is.** `VersionStamp` compares the
-# version a change was remembered against with the record's version now, and
-# counts an unknown base as moved: a conflict an author is told about is
-# recoverable, a silently overwritten edit is not. A change that has moved, a
-# change whose record is gone, a change the universe cannot place, and a change
-# the live path refuses are each reported in the result and none of them is
-# written. That rule is deliberately the whole of the conflict treatment for now:
-# `DraftConflictDetector` promotes it to a detector with a per-conflict report
-# once the resolution UI exists, and nothing here will change when it does.
+# **What a change that cannot be written is.** `DraftConflictDetector` owns that
+# question — it compares the version a change was remembered against with the
+# record's version now, counts an unknown base as moved, and tells a record that
+# has been soft-deleted from one that was never there. This service asks it rather
+# than repeating the comparison, so the apply's skip decision and the resolution
+# page's list of conflicts cannot disagree. A change that has moved, a change whose
+# record is gone, a change the universe cannot place, and a change the live path
+# refuses are each reported in the result and none of them is written.
+#
+# **The reasons are named, and there are five.** `:moved` and `:deleted` are the
+# two conflicts; `:missing` is a record that does not resolve at all; `:gone` is a
+# delete whose record somebody has already deleted, which is reported as skipped
+# rather than claimed as written — nothing was written, and the author's intent
+# already holds, so the honest answer is the one the draft's page can print. The
+# apply still closes its draft in every one of those cases (below), and the flash
+# that follows already says a change could not be applied because the record has
+# changed since it was remembered.
 #
 # **The draft is closed whatever the outcome.** Applying twice is the one failure
 # this must not have: a remembered `create` names no record, so a second apply
@@ -50,6 +58,13 @@
 # that was skipped is still listed on the draft's own page, so the author can see
 # what it said and redo it from the record's own page.
 class DraftApplier
+  # The five states a change can be left in when it is not written, named once so
+  # a test asserts the vocabulary rather than a symbol spelled out at the call site.
+  # `:unplaceable` and `:refused` are this service's own two answers — a create
+  # whose stored scope does not place it here, and a write the live path declined —
+  # and the other three are `DraftConflictDetector::Report` states.
+  SKIP_REASONS = %i[moved deleted missing gone unplaceable refused].freeze
+
   # What one change's application did: `reason` is nil when the change was
   # written, and otherwise why it was not.
   Outcome = Data.define(:change, :reason) do
@@ -76,6 +91,7 @@ class DraftApplier
 
   def initialize(draft)
     @draft = draft
+    @detector = DraftConflictDetector.new(draft)
   end
 
   # Whether a model's writes go through the ordering service, and whether its
@@ -143,48 +159,25 @@ class DraftApplier
       write(create_resource(resource, model)) ? nil : :refused
     end
 
+    # The detector's answer is the precondition: a change it does not call writable
+    # is reported under its own state and nothing is written. `:gone` is the one
+    # non-conflict state that reaches here — a delete whose record somebody has
+    # already deleted — and it is reported rather than counted as written because
+    # this service reports what it wrote.
     def update(change)
-      record = record_for(change)
-      return :missing if record.nil?
-      return :moved if moved?(change, record)
+      report = @detector.report_for(change)
+      return report.state unless report.writable?
 
-      write(update_resource(record, change.payload.symbolize_keys)) ? nil : :refused
+      write(update_resource(report.record, change.payload.symbolize_keys)) ? nil : :refused
     end
 
     def delete(change)
-      record = record_for(change)
-      return :missing if record.nil?
-      return :moved if moved?(change, record)
+      report = @detector.report_for(change)
+      return report.state unless report.writable?
 
-      delete_resource(record)
+      delete_resource(report.record)
 
       nil
-    end
-
-    # Whether a change that names a record may still be written. A `create` names
-    # no record, so it has nothing to have moved.
-    def moved?(change, record)
-      !change.creating? && VersionStamp.changed?(record, change.base_version)
-    end
-
-    # The record a change names, read the one way a polymorphic reference is read
-    # anywhere in this application: through the content registry, and required to
-    # belong to the draft's own universe. A soft-deleted record does not resolve,
-    # so a change whose record somebody else has since deleted is reported as
-    # missing rather than written onto a row that is no longer there.
-    #
-    # A `record_type` outside that registry does not resolve either, so it lands on
-    # the same answer rather than on its own exception: there is nothing to write,
-    # and reporting it is what the author can act on. A **create** has no such
-    # answer to fall back on — it needs the class to build a record at all — so
-    # `model_for` refuses there, and the run's transaction is what makes that
-    # refusal safe.
-    def record_for(change)
-      record = RecordTarget.find(record_type: change.record_type, record_id: change.record_id)
-      return if record.nil?
-      return unless RecordTarget.owned_by?(record, @draft.universe)
-
-      record
     end
 
     # The ordered collection's own write, or the plain one. `position` is the

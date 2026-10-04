@@ -1,0 +1,39 @@
+<%# The changes an applier cannot read at all, and what that stops.
+    #
+    # This is not a conflict page and deliberately does not borrow its shape: a conflict
+    # is a question with two answers, while a change this application cannot interpret has
+    # no answer to choose between — there is nothing on the other side to compare it
+    # against. So the notice names the changes and stops, and the run behind it wrote
+    # nothing at all.
+    #
+    # It lives in `shared/` rather than under `drafts/` because two surfaces render it and
+    # the copy belongs to neither: the author reading their own draft's page and a reviewer
+    # reading a submission. One partial and one set of keys (`drafts.damaged.*`) means the
+    # two cannot describe the same damage differently.
+    #
+    # Rendered from the controller that already holds a `DraftIntegrity`, rather than built
+    # here, so a page cannot say a draft is damaged while the action behind it decides
+    # otherwise — see `DraftIntegrity#damaged?`. %>
+<% if damaged.damaged? %>
+  <div class="content-surface draft-damaged mb-3">
+    <div class="p-3">
+      <h2 class="h6 mb-1">
+        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i><%= t("drafts.damaged.heading") %>
+      </h2>
+      <p class="page-description mt-0 mb-2"><%= t("drafts.damaged.lead") %></p>
+      <ul class="mb-0 ps-3">
+        <% damaged.offenders.each do |offender| %>
+          <li class="draft-damaged-change">
+            <span class="badge rounded-pill text-bg-light border"><%= t("drafts.actions.#{offender.change.action}") %></span>
+            <%# The action and the offending value are the diagnosis; the record type's
+                friendly name is not, and for the one reason that cannot be printed at all
+                it is exactly the information that is missing — hence the stored class
+                name in the sentence rather than a kind. %>
+            <%= t("drafts.damaged.reasons.#{offender.reason}",
+              type: offender.change.record_type, attribute: offender.attribute) %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+<% end %>

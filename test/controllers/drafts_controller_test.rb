@@ -507,6 +507,48 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate moved.reload, :applied?
   end
 
+  # A change the applier cannot read at all
+  #
+  # `DraftIntegrity`'s rule is asserted in `test/services/draft_integrity_test.rb`.
+  # What only this path can show is the *answer*: the author's own page, refusing in
+  # words, with nothing written and the draft still open — rather than a 404 that reads
+  # as "this draft does not exist" for a draft the author is looking at.
+
+  test "a change the applier cannot read refuses the apply in words and writes nothing" do
+    damaged = draft_with(remember_create_payload("A remembered create", "Character",
+      { "universe_id" => @universe.id }, extra: { "wibble" => 1 }))
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: damaged)
+
+    assert_response :unprocessable_content
+    assert_select ".draft-damaged", text: /cannot be applied as it stands/
+    assert_select ".draft-damaged", text: /wibble/
+    assert_select ".draft-change", { count: 1 }, "the change is still listed: it is still what the author asked for"
+    assert_nil Character.find_by(name: "A remembered create")
+    assert_predicate damaged.reload, :draft?, "a refused run leaves the author's way out — Discard — untouched"
+  end
+
+  test "a create naming a record type this application does not have is refused by name" do
+    damaged = draft_with(remember_create_payload)
+    damaged.draft_changes.sole.update_column(:record_type, "RetiredModel")
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: damaged)
+
+    assert_response :unprocessable_content
+    assert_select ".draft-damaged", text: /RetiredModel/
+    assert_predicate damaged.reload, :draft?
+  end
+
+  test "the draft's own page says what cannot be read before the author presses anything" do
+    damaged = draft_with(remember_create_payload("A remembered create", "Character",
+      { "universe_id" => @universe.id }, extra: { "wibble" => 1 }))
+
+    get universe_draft_url(universe_slug: @universe.slug, id: damaged)
+
+    assert_response :success
+    assert_select ".draft-damaged", text: /wibble/
+  end
+
   test "answering a conflict with mine writes the remembered fields over what is there" do
     moved = draft_with(remember_update_payload("Renamed by a draft"), remember_create_payload)
     change = moved.draft_changes.first

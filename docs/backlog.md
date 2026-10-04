@@ -141,11 +141,6 @@ it has a useful destination and clear empty/loading/error states.
 
     In `github` mode, drafts are submitted for review. Owner+admins review and apply or reject.
 
-    - **Slice 5.2:** `ReviewRequestsController#index` (lists pending review requests, owner+admin
-      only), `#show` (shows a review request with the draft's changes), `#approve` (applies the
-      draft's changes with conflict resolution if needed), `#reject` (rejects with notes, changes
-      draft status back to `draft`). Routes: `resources :review_requests, only: [:index, :show,
-      approve, reject]`. Tests: request tests, system test.
     - **Slice 5.3:** In `github` mode, the "Apply changes" button becomes "Submit for review". The
       user can add a submission message. The draft status changes to `submitted`. The draft owner can
       see the status of their submission. Tests: request tests, system test.

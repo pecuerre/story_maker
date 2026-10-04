@@ -71,6 +71,48 @@ class ReviewRequest < ApplicationRecord
     !pending?
   end
 
+  # The reviewer's other answer: this submission is refused and the draft comes
+  # back to its author as working work.
+  #
+  # **The two writes are one transaction for `submit!`'s reason read backwards.** A
+  # rejected request whose draft still says `submitted` is a request the queue has
+  # answered and a draft nobody can edit, and a draft back in the author's hands
+  # while the queue still lists it as pending is the opposite failure. So either
+  # both move or neither does, and a refusal from this row's own validations — the
+  # notes a rejection must carry — leaves the draft exactly as it was.
+  #
+  # The draft goes back to `draft` rather than being closed: a rejection is not the
+  # author's decision about their own work, it is somebody else's, and the changes
+  # are still theirs to edit and submit again. That is also why this method returns
+  # whether it wrote rather than raising: a rejection with no notes is an answer the
+  # reviewer can still give, so it is a form error beside the field and not a crash.
+  #
+  # **A refused rejection leaves the stored row saying `pending`, and the instance says
+  # so too.** The caller renders the submission the queue is looking at, with these
+  # errors beside the field; an instance left holding `status = "rejected"` it never
+  # saved would hide the controls that produce the answer, because a page that has
+  # decided the review would have nothing left to offer.
+  #
+  # **Approving is deliberately not here.** An approval is an apply — `DraftApplier`
+  # writing every remembered change — and its decision must land in the same
+  # transaction as the run, which is a service's transaction to own. The asymmetry is
+  # the honest shape of the two actions rather than an oversight.
+  def reject!(reviewer, notes:)
+    assign_attributes(status: "rejected", reviewed_by: reviewer, review_notes: notes)
+
+    unless valid?
+      restore_attributes
+      return false
+    end
+
+    transaction do
+      save!
+      draft.update!(status: "draft")
+    end
+
+    true
+  end
+
   private
 
     # A stored column that disagrees with the draft is refused rather than

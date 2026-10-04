@@ -1,0 +1,28 @@
+<% content_for :title, t("review_requests.conflicts.title") %>
+
+<%= render "shared/page_header",
+  title: t("review_requests.conflicts.title"),
+  eyebrow: Current.universe.name,
+  description: t("review_requests.conflicts.description"),
+  count: @conflicts.size,
+  count_label: "conflict" do %>
+  <%= link_to t("review_requests.conflicts.back"),
+    universe_review_request_path(id: @review_request), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<%# The same form, and the same rows, that an author's own apply stops on: one row per
+    conflict, both halves of the choice, two answers whose buttons carry that row's
+    answer, and one submit. The rows are `drafts/_conflict` and the answers are posted
+    back to `approve`, which is the action that is waiting for them — so a reviewer and
+    # an author are asked the same question in the same words, by the same partial. %>
+<%= form_with url: approve_universe_review_request_path(id: @review_request), method: :post do %>
+  <div class="content-surface">
+    <div class="list-group list-group-flush">
+      <%= render partial: "drafts/conflict", collection: @conflicts, as: :conflict %>
+    </div>
+  </div>
+
+  <div class="page-actions d-flex align-items-center flex-wrap gap-2 mt-3">
+    <%= button_tag t("review_requests.conflicts.submit"), type: "submit", class: "btn btn-primary" %>
+  </div>
+<% end %>

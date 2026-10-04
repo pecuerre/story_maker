@@ -37,6 +37,11 @@ module UniverseAuthorization
     def universe_access_for_request
       return :admin if controller_name == "universes" && %w[edit update destroy].include?(action_name)
       return :admin if controller_name == "memberships"
+      # Reading somebody else's unfinished work and deciding what happens to it is the
+      # owner's and the admins' call, and it is the *whole* controller rather than two of
+      # its four actions: a list of submissions is itself the answer to "what is waiting
+      # here", and a queue a plain writer can read is a queue they have no business in.
+      return :admin if controller_name == "review_requests"
       return :read if %w[index show].include?(action_name)
 
       :write

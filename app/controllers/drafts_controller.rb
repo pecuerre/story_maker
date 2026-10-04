@@ -28,8 +28,18 @@
 # (this is an apply being refused until it is told what to do), and it posts back
 # to the same action — so `apply` is reached twice on that journey, once to show
 # the question and once with the answers.
+#
+# **A draft the applier cannot read is refused before it is run, in words rather than as
+# a 404.** `DraftIntegrity` is asked first, because an unreadable remembered change is not
+# a conflict — there is nothing to choose between — and letting the applier raise would
+# answer "this draft does not exist" for a draft that is sitting right there. See
+# `DraftIntegrity` and ADR 0021, whose decision to *refuse* such a change is unchanged:
+# only the shape of the answer is.
 class DraftsController < ApplicationController
+  include AppliesDrafts
+
   before_action :set_draft, only: %i[ show apply discard ]
+  before_action :set_damaged, only: %i[ show apply ]
 
   # GET /u/:universe_slug/drafts
   #
@@ -70,8 +80,9 @@ class DraftsController < ApplicationController
   # request, which is why a failed apply leaves a draft that simply asks again.
   def apply
     return refuse_closed_draft unless @draft.open?
+    return show_damaged if @damaged.damaged?
 
-    conflicts = DraftConflictDetector.new(@draft).conflicts
+    conflicts = draft_conflicts(@draft)
     answers = submitted_answers
 
     return show_conflicts(conflicts, answers) unless answered_all?(conflicts, answers)
@@ -79,7 +90,7 @@ class DraftsController < ApplicationController
     result = DraftApplier.new(@draft, answers: answers).apply
 
     redirect_to universe_draft_path(universe_slug: Current.universe.slug, id: @draft),
-      notice: apply_notice(result), status: :see_other
+      notice: draft_apply_notice(result), status: :see_other
   end
 
   # POST /u/:universe_slug/drafts/:id/discard
@@ -105,39 +116,23 @@ class DraftsController < ApplicationController
       Current.universe.drafts.where(user: Current.user)
     end
 
-    # The conflicts, as the page that asks about them needs them.
+    # What the applier could not read, asked once and held for the page.
     #
-    # The answers are kept only if they are answers for a conflict on *this*
-    # page: a hidden field carrying yesterday's choice for a change that no
-    # longer conflicts would be an answer to a question nobody asked, and the
-    # applier would happily treat it as an instruction to write over a record
-    # that is perfectly fine. Filtering here is what makes the page's question
-    # and the applier's answers one list.
-    def show_conflicts(conflicts, answers)
-      @conflicts = conflicts
-      @answers = answers.slice(*conflicts.map { |conflict| conflict.change.id.to_s })
-
-      render :conflicts, status: :unprocessable_content
+    # It is set for `show` as well as `apply`, because the two are the same fact about
+    # the draft: an author who can read "one of these changes names a record type this
+    # application does not have" before pressing Apply is not told about it by a 404
+    # afterwards, and the page behind the refusal renders the same notice from the same
+    # object rather than re-deriving it.
+    def set_damaged
+      @damaged = DraftIntegrity.new(@draft)
     end
 
-    # The answers this request carries, keyed by change id and valued with one
-    # of `DraftApplier::ANSWERS`.
-    #
-    # A missing `resolutions` param is an empty list rather than an error, and
-    # anything that is not a plain hash is dropped whole: an answer is an
-    # instruction to write over somebody else's record, so it is read from a
-    # shape this application produced rather than from whatever arrived.
-    def submitted_answers
-      raw = params[:resolutions]
-      return {} unless raw.respond_to?(:to_unsafe_h)
-
-      raw.to_unsafe_h.each_with_object({}) do |(change_id, answer), answers|
-        answers[change_id.to_s] = answer.to_s if DraftApplier::ANSWERS.include?(answer.to_s)
-      end
-    end
-
-    def answered_all?(conflicts, answers)
-      conflicts.all? { |conflict| answers.key?(conflict.change.id.to_s) }
+    # The refusal, as this page: the changes are still listed, and the notice says which
+    # of them cannot be read. Nothing was written and the draft is still open, so the
+    # author's own way out — Discard, which is the only control that can remove a change
+    # it cannot interpret — is untouched.
+    def show_damaged
+      render :show, status: :unprocessable_content
     end
 
     def set_draft
@@ -150,37 +145,5 @@ class DraftsController < ApplicationController
     def refuse_closed_draft
       redirect_to universe_draft_path(universe_slug: Current.universe.slug, id: @draft),
         alert: t("drafts.flash.closed"), status: :see_other
-    end
-
-    # What an apply did, as one or two sentences: what was written, then what the
-    # author chose to leave alone. They stay separate because they are separate
-    # outcomes — a change dropped on purpose was not skipped, is not in `skipped`,
-    # and does not make the apply partial — so folding it into either count would
-    # report the apply as failed when the author simply decided.
-    def apply_notice(result)
-      sentences = []
-      sentences << progress_sentence(result) unless only_keeping?(result)
-      sentences << t("drafts.flash.kept_theirs", count: result.kept_count) if result.kept_count.positive?
-
-      sentences.join(" ")
-    end
-
-    # An apply where nothing was written because every conflict was answered
-    # `"theirs"` has no progress to report. "0 remembered changes are now live"
-    # answers a question the author did not ask and buries the one they did, so
-    # the kept sentence stands alone — unless something was also refused, which
-    # is news the partial sentence has to carry either way.
-    def only_keeping?(result)
-      result.complete? && result.applied_count.zero? && result.kept_count.positive?
-    end
-
-    # What an apply did, in one sentence. A draft applied whole and a draft where
-    # some changes could not be written are different sentences because they are
-    # different outcomes, and the second one says that the changes are still
-    # listed rather than implying they are gone.
-    def progress_sentence(result)
-      return t("drafts.flash.applied", count: result.applied_count) if result.complete?
-
-      t("drafts.flash.partially_applied", applied: result.applied_count, skipped: result.skipped_count)
     end
 end

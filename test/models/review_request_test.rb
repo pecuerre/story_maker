@@ -6,7 +6,9 @@ require "test_helper"
 # answerable here is the model: which statuses a row may hold, that it cannot
 # claim a universe or an author its draft does not have, that a rejection has to
 # say why and a decision has to say who, that only one review per draft is in
-# flight, and that the whole thing goes when the draft does.
+# flight, that a rejection moves the draft's status in the same transaction (and
+# moves neither when it cannot say why), and that the whole thing goes when the
+# draft does.
 class ReviewRequestTest < ActiveSupport::TestCase
   setup do
     @universe = universes(:universe_one)
@@ -223,6 +225,40 @@ class ReviewRequestTest < ActiveSupport::TestCase
     assert_empty @draft.review_requests
     assert_nil @draft.pending_review_request
     assert_not_predicate @draft, :submitted?
+  end
+
+  # Rejecting
+  #
+  # The two writes are the model's, and the question is whether they can disagree: a
+  # request the queue has answered over a draft nobody can edit, or a draft back in
+  # its author's hands while the queue still waits on it.
+
+  test "a rejection moves the request and the draft's status together" do
+    request = @draft.submit!
+    assert_predicate @draft, :submitted?
+
+    assert request.reject!(users(:user_two), notes: "The name is the old one")
+
+    assert_predicate request, :rejected?
+    assert_equal users(:user_two), request.reviewed_by
+    assert_equal "The name is the old one", request.review_notes
+    # Back to working work, with its changes: a rejection is somebody else's decision
+    # about the author's draft, so it goes back for editing and another submission.
+    assert_predicate @draft.reload, :draft?
+    assert_nil @draft.pending_review_request
+  end
+
+  test "a rejection without its notes moves nothing, and says why in both places" do
+    request = @draft.submit!
+
+    assert_not request.reject!(users(:user_two), notes: "  ")
+
+    # The stored row and the instance both still say `pending`: a page that had
+    # decided the review would have nothing left to offer the reviewer.
+    assert_predicate request, :pending?
+    assert_predicate @draft.reload, :submitted?
+    assert_equal @draft, request.reload.draft
+    assert_includes request.errors[:review_notes], I18n.t("review_requests.errors.notes_required")
   end
 
   private

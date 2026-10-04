@@ -164,6 +164,9 @@ Other global behavior: `allow_browser versions: :modern`,
     member may change universe settings or memberships;
   - private universe: only the owner and members may enter; read members cannot mutate, write
     members can contribute, and admin members can also manage access;
+  - two controllers ask for `admin` on **every** action rather than following the `index`/`show` →
+    `read`, everything else → `write` rule: **memberships** and **review_requests**, because what
+    they carry is access itself and somebody else's unfinished work;
   - access is inherited by every story and component in the universe; story-scoped records are
     authorized through their story's universe.
 - `Universe.visible_to(user)` applies the same policy to the universes index (the landing page).
@@ -200,7 +203,7 @@ scenes, which controllers answer which format, and the URL of every workspace �
 | Flow | Controllers | Behavior |
 |---|---|---|
 | JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts**, **draft_editing** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts**, **draft_editing**, **review_requests** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 
 Every PATCH and DELETE in the HTML flow sends `status: :see_other`; a `create` is a POST, so its
 default 302 is correct. A 302 after a non-GET verb asks the browser to repeat the mutation as a GET
@@ -235,6 +238,17 @@ its own page, all written by the applier inside the same transaction as the stat
 controls on a draft's own page, and
 [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) owns why the draft closes
 either way.
+
+`ReviewRequestsController` is that same apply reached from the other side: a submission an author
+handed over rather than applied, and the one decision somebody else makes about it. Every one of its
+actions asks for **admin** on the universe through `UniverseAuthorization`, the line memberships use —
+the queue names every author who has submitted something, so read access is not enough and neither is
+`write`. `approve` runs the same conflict page, the same `DraftApplier`, and the same stored outcome as
+`DraftsController#apply` (all three through the shared `AppliesDrafts` concern), with the request's own
+decision landing in the applier's transaction; `reject` moves the request and the draft's status
+together, so the author gets their draft back with its changes. Both refuse a draft the applier cannot
+read, in words, rather than letting the exception escape as a 404.
+[conventions.md](conventions.md#the-reviewers-page) owns those pages.
 
 `DraftEditingController` is the universe page's **Start editing** / **Stop editing** control: a singleton
 `resource` with a POST and a DELETE, the same shape `resource :session` uses. It answers the HTML flow —

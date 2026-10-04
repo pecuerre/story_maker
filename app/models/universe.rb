@@ -84,6 +84,11 @@ class Universe < ApplicationRecord
   # for the same reason it covers a thread: a draft left behind would be an orphan
   # row holding changes against records that no longer exist.
   has_many :drafts, dependent: :destroy
+  # A submission is authorized inside one universe, and its universe is validated
+  # against its draft rather than trusted, so the cascade is what covers a row whose
+  # universe was destroyed before its draft: a review request that outlived the draft it
+  # reviews would be a row nobody can render.
+  has_many :review_requests, dependent: :destroy
   has_many :stories, dependent: :destroy
   has_many :sections, through: :stories
   has_many :scenes, through: :stories

@@ -29,6 +29,93 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-04
 
+- **[added]** **Collaboration phase 5, slice 5.2: a reviewer can approve or reject a submitted draft, and an
+  apply the application cannot interpret is refused in words instead of answering 404.** `ReviewRequestsController`
+  serves a queue and a submission with two POSTs; `approve` runs the author's own apply through the applier and
+  the request's decision lands in the applier's transaction; `reject` moves the request and the draft's status
+  together; `DraftIntegrity` is asked before either run and names the change it cannot read. The known finding
+  about a bare 404 on a corrupt change left `known_quirks.md` with this change.
+
+  **The reviewer is the same apply, so it is the same code and not a second implementation.** This was the
+  decision the slice turned on. `approve` calls the same `DraftConflictDetector`, renders the same conflict
+  rows through the same `drafts/_conflict` partial, posts its answers back to itself, calls the same
+  `DraftApplier`, and reports the run with the same sentences as `DraftsController#apply`. The three things
+  both actions have to agree about — what is in conflict, what the request answered, and what the run did —
+  moved into a shared `AppliesDrafts` concern rather than being written twice. Two copies would be two answers
+  to "what does approving do", and they would drift on the first change to `DraftApplier` one of them was not
+  updated for. Only the rendering differs: the reviewer's conflicts page has its own header and posts to
+  `approve`, because a resolution page that asked a reviewer different questions would be two answers to one
+  conflict.
+
+  **Answers are security-relevant reading, which is why they are shared.** An answer is an instruction to
+  write over somebody else's record and it arrives in request parameters, so both halves of the check have to
+  hold for both callers: the controller drops any value that is not one of `DraftApplier::ANSWERS`, the
+  applier drops any answer that is not for a change it is actually applying, and the answers are kept only
+  for conflicts found on *this* request. A hidden field carrying yesterday's choice for a change that no
+  longer conflicts is an answer to a question nobody asked. That reasoning was written once for the author's
+  apply; duplicating it for the reviewer is how the second copy ends up missing a half.
+
+  **Owner and admins only, on every action including the two reads.** `UniverseAuthorization` gained one
+  line, next to the one memberships use. The drafts pages answer "may this person see and act on their own
+  pending work" at `read`/`write`; the review pages answer a different question — "may this person see what
+  other people have asked to change here, and decide it" — and `admin` is its answer. Read access would not
+  do: the queue names every author who has submitted something. The list is itself an answer, which is the
+  same reason `ReviewRequest` is deliberately not in `Ability::CONTENT_CLASS_NAMES`, for `Draft`'s reason.
+
+  **A rejection is the only reversible decision, and its two writes are one transaction.** `ReviewRequest#reject!`
+  moves the request to `rejected` and the draft back to `draft` together — `submit!`'s reason read backwards,
+  since a rejected request over a draft still saying `submitted` is a queue entry the author cannot act on and a
+  draft back in the author's hands still sitting in the queue is the same failure the other way round. The draft
+  returns to `draft` rather than to a closed status because a rejection is somebody else's decision about the
+  author's work: the changes are still theirs to edit and submit again. A refusal restores the stored state on
+  the instance, so a rejection without its required notes is re-rendered as what it is — a waiting submission
+  whose form still has the controls — instead of a page that had decided the review.
+
+  **Approval is deliberately not on the model.** It is an apply, and `DraftApplier` owns its transaction, so
+  the request's approval lands inside that transaction rather than beside it. The asymmetry with `reject!` is
+  the honest shape of the two actions: one is a decision about a queue entry and the other is a bulk write.
+
+  **A decision cannot be taken twice**, by redirecting to the request's own page with the reason — the shape
+  `DraftsController` already used for an applied draft, because the hazard is the same one: re-running an
+  approval writes a remembered `create` a second time.
+
+  **The finding that came with it: a corrupt change no longer answers 404.** The owner chose to fix the
+  known quirk in this change rather than leave it, and the fix is deliberately narrower than "report damage
+  better". ADR 0021's decision stands — a change this application cannot describe is *refused*, not guessed
+  at, and nothing is written — so `DraftIntegrity` asks its question **before** the run and refuses with a
+  `422` that names the change, on the author's apply and on a reviewer's approval alike. The applier still
+  raises; what changed is that it no longer escapes as `ActiveRecord::RecordNotFound` → 404 for a draft the
+  reader is looking at. Two consequences were decided rather than assumed:
+
+    * **The flagged rows are the ones the applier would raise on, not every unreadable row.** An update or a
+      delete whose `record_type` is outside the content registry is *not* flagged, because the detector resolves
+      the record first and reports `:missing` without raising. Flagging it would turn a change that is skipped
+      into a run that cannot happen at all — a new refusal dressed up as a clearer answer, and a regression for
+      a row that works today.
+    * **A payload key is checked against an unsaved instance, not against `column_names`.** What a payload may
+      name is "something with a writer", and a tag id list (`character_tag_ids`) and the two virtual photo fields
+      have writers and no columns. The first implementation used `model.method_defined?` and reported every
+      remembered create as damaged, because Rails generates attribute writers lazily and `method_defined?`
+      answered `false` until something had defined them — caught by the existing story-scoped create case in
+      `drafts_controller_test.rb` rather than by the new service test, which is the argument for keeping that
+      case.
+
+  **One partial and one set of words for a notice two surfaces render.** The refusal renders the page the reader
+  was already on — a draft's own page, or a reviewer's — with `shared/_draft_damaged` above the changes it could
+  not interpret. It is not a conflict page and deliberately does not borrow that shape: there is nothing to
+  choose between, so the notice names the changes and stops.
+
+  **What was left, and to whom.** No `github`-mode gate: the pages exist wherever a submission can exist, and the
+  model still has no mode guard, so slice 5.3 — the first thing that can submit anything — is where that rule
+  arrives. No sidebar entry (5.4), no submit control or submission message (5.3), no notifications (5.5). No
+  self-approval rule: an author who is also the owner may approve their own submission, which grants them
+  nothing they could not do by applying it directly. No `db/data/` manifest, continuing ADR 0019's settled
+  exception — a submission loaded from YAML would be a review of nobody's actual changes.
+
+  **Verification:** `bin/rails test` (1849 runs, 12134 assertions, 0 failures, 0 errors, 10 skips),
+  `bin/rails test:system` (156 runs, 2104 assertions, 0 failures, 0 errors, 0 skips) and
+  `bin/rubocop` (437 files, no offenses).
+
 - **[added]** **Collaboration phase 5, slice 5.1: a draft can be handed over instead of applied.** The new
   `review_requests` table and `ReviewRequest` model store one author's request that somebody else look at a
   draft, `Draft#submit!` creates that request and moves the draft to `submitted` inside one transaction,
@@ -5774,3 +5861,34 @@ first of those false. So the page stayed, and the history was added to it rather
 satisfied: a stored outcome records what the apply decided, so it cannot answer which pending creates the
 applier will refuse **before** the apply, and that product decision stays open in
 [`backlog.md`](backlog.md). ADR 0024 owns the decision; this entry is why it was the shape it was.
+
+### Former finding: the applier raised a bare 404 for a change it could not interpret (fixed)
+
+**Then:** a remembered `create` naming a `record_type` outside the content registry, or a payload naming a
+value the model has no writer for, made `DraftApplier` raise — `ActiveRecord::RecordNotFound` for the first
+and `ActiveRecord::UnknownAttributeError` for the second — rather than guessing. That decision was correct
+and documented (ADR 0021): such a row could only have been written by something that is not this
+application, and the run's transaction makes raising safe. What was wrong was the shape of the answer. The
+raise escaped a controller through `rescue_from ActiveRecord::RecordNotFound` and came out as a bare **404**,
+which says "this draft does not exist" about a draft the author was looking at, while the draft itself was
+sitting there with its changes. The only way forward was **Discard**, and the page that offered it was the
+one the 404 replaced.
+
+**Fix:** `DraftIntegrity` asks the prior question — can the applier read this row at all — and the two
+actions that can run a draft ask it *before* the run. A refused draft re-renders the page the reader was
+already on, as a `422`, with a notice naming the change that cannot be read. Nothing is written, so the
+draft stays open, its changes stay listed, and Discard stays reachable. The applier still raises; it is now
+the last resort rather than the answer a reader sees.
+
+**Two boundaries were decided rather than discovered.** The flagged rows are the ones the applier would
+**raise on**, not every row it cannot fully interpret: an update or a delete with an unregistered
+`record_type` is still reported as `:missing` and skipped, because flagging it would refuse a run that works
+today over a change that has no answer to give. And a payload key is checked against an unsaved instance
+rather than against `column_names`, because what a payload may name is "something with a writer" — a tag id
+list and the two virtual photo fields have writers and no columns, and a column check would report ordinary
+remembered values as damage. The first implementation asked the class instead of an instance and failed
+every remembered create, because Rails generates attribute writers lazily; `drafts_controller_test.rb`'s
+story-scoped create case caught it, which is the argument for keeping that case.
+
+The same refusal now runs on a reviewer's approval, because that action is the author's apply — see the
+slice 5.2 entry above for why that sharing was the decision the slice turned on.

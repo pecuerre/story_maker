@@ -78,6 +78,17 @@ Rails.application.routes.draw do
       post :apply, on: :member
       post :discard, on: :member
     end
+    # What a reviewer answers: somebody else's submitted draft, and the one
+    # decision that can be made about it. `approve` and `reject` are POSTs for
+    # the reason `apply` and `discard` are: an approval writes every remembered
+    # change and a rejection closes the submission, and neither is idempotent.
+    # `approve` is also the action a conflict page posts back to, so it is
+    # reached twice on that journey. Every action here asks for `admin` on the
+    # universe, so the reader queue is the owner and the admins and nobody else.
+    resources :review_requests, only: %i[ index show ] do
+      post :approve, on: :member
+      post :reject, on: :member
+    end
     # Whether this reader is editing this universe right now. It is a session
     # claim rather than a record, so it is a singleton `resource` with the two
     # verbs that begin and end one — the same shape `resource :session` uses for

@@ -241,6 +241,16 @@ nothing would leave an author waiting for a reviewer who was never asked.
 `Draft#pending_review_request` reads the pending scope rather than the newest request, because a draft
 that was rejected and is being edited again still carries the rejected request behind it.
 
+A **rejection** is `ReviewRequest#reject!`, and it is the same one-transaction rule read backwards: the
+request's own status and the draft's status to `draft` move together, so a rejected request cannot leave
+a draft nobody can edit, and a draft back in its author's hands cannot sit in the queue still marked
+pending. The draft returns to `draft` rather than to a closed status, and keeps its `draft_change_outcomes`
+untouched, because a rejection is somebody else's decision about the author's work: the changes are still
+there to edit and submit again. A refusal restores the stored state on the instance, so a rejected
+rejection is rendered as what it is. **Approval is deliberately not on the model** — an approval is an
+apply, and its decision has to land inside the applier's transaction; see
+[conventions.md](conventions.md#the-reviewers-page).
+
 A remembered `create` carries the submitted attributes **and** the column that places the record in its
 scope, so the payload alone says where the record goes. See
 [conventions.md](conventions.md#controllers) for which column that is per model and

@@ -42,6 +42,9 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A reviewer can approve or reject a submitted draft.** The queue and each submission are new
+  owner-and-admin pages; approving runs the author's own apply through the applier, and rejecting hands
+  the draft back with the required notes. Both decisions go through the shared apply concern.
 - **A draft can be submitted for review.** `review_requests` stores one author's request that somebody
   else apply a draft, and `Draft#submit!` creates it and moves the draft to `submitted` together. A
   rejection has to say why; only one review per draft is in flight. See
@@ -104,6 +107,9 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **A draft the applier cannot read no longer answers 404.** An unregistered record type or a value the
+  model has no writer for is refused in words, naming the change, with nothing written and the draft still
+  open. On an author's apply and on a reviewer's approval alike.
 - **A remembered change whose record has moved is no longer reported once and then closed with its draft**
   (former finding 63): the resolution page asks first, so the author chooses instead of retyping — "mine"
   writes their values, "theirs" drops them, and a conflict left unanswered still reports rather than writes.

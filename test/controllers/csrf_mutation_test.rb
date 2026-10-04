@@ -274,6 +274,65 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "approving a submission is refused without a token and writes nothing" do
+    # Approving is a Turbo `button_to` like every other HTML control here, so its token
+    # comes from the form's hidden field rather than a `fetch`. What makes it worth its
+    # own case is the same thing that makes an apply worth one: the mutation whose
+    # effect is a *bulk* write — every remembered change in somebody else's draft, and a
+    # reviewer's decision recorded against it.
+    review_request = submitted_review_request
+    token = nil
+
+    with_forgery_protection do
+      token = fetch_page_token(universe_review_requests_path(universe_slug: @universe.slug))
+
+      assert_no_difference [ -> { Character.count }, -> { ReviewRequest.where(status: "approved").count } ] do
+        post approve_universe_review_request_url(universe_slug: @universe.slug, id: review_request)
+      end
+
+      assert_includes 406..422, response.status
+      assert_nil Character.find_by(name: "Token verified approval")
+      assert_predicate review_request.reload, :pending?, "a refused decision must leave the queue exactly as it was"
+
+      post approve_universe_review_request_url(universe_slug: @universe.slug, id: review_request),
+        headers: { "X-CSRF-Token" => token }
+
+      assert_response :see_other
+      assert Character.find_by(name: "Token verified approval").present?
+      assert_predicate review_request.reload, :approved?
+    end
+  end
+
+  test "rejecting a submission is refused without a token and decides nothing" do
+    # The other half of the same decision, and the one that hands a draft back: a forged
+    # rejection would take somebody's work out of the queue without their author ever
+    # hearing about it.
+    review_request = submitted_review_request
+    token = nil
+
+    with_forgery_protection do
+      token = fetch_page_token(universe_review_request_path(universe_slug: @universe.slug, id: review_request))
+
+      assert_no_difference [ -> { ReviewRequest.where(status: "rejected").count },
+  -> { Draft.where(status: "submitted").count } ] do
+        post reject_universe_review_request_url(universe_slug: @universe.slug, id: review_request),
+          params: { review_request: { review_notes: "Never recorded" } }
+      end
+
+      assert_includes 406..422, response.status
+      assert_predicate review_request.reload, :pending?
+      assert_predicate review_request.draft.reload, :submitted?
+
+      post reject_universe_review_request_url(universe_slug: @universe.slug, id: review_request),
+        params: { review_request: { review_notes: "Recorded with the page's own token" } },
+        headers: { "X-CSRF-Token" => token }
+
+      assert_response :see_other
+      assert_predicate review_request.reload, :rejected?
+      assert_predicate review_request.draft.reload, :draft?
+    end
+  end
+
   test "the settings form is refused without a token and accepted with one" do
     with_forgery_protection do
       token = fetch_page_token(settings_path)
@@ -307,5 +366,16 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     # The theme the last response rendered onto the root element.
     def rendered_theme
       Nokogiri::HTML(response.body).at_css("html")["data-bs-theme"]
+    end
+
+    # A submitted draft waiting for a decision, in the mode that hands drafts over.
+    # Built through the model's own workflow rather than by setting two columns, so
+    # these cases exercise the same queue a reviewer would see.
+    def submitted_review_request
+      draft = Draft.create!(user: users(:user_two), universe: @universe)
+      draft.draft_changes.create!(action: "create", record_type: "Character",
+        payload: { "name" => "Token verified approval", "universe_id" => @universe.id })
+
+      draft.submit!
     end
 end

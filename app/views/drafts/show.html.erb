@@ -22,6 +22,11 @@
   <% end %>
 <% end %>
 
+<%# What the applier could not read, said before the author presses anything rather
+    than as a 404 afterwards. The same notice renders behind an apply that was
+    refused for it, from the same `DraftIntegrity` — see `shared/_draft_damaged`. %>
+<%= render "shared/draft_damaged", damaged: @damaged %>
+
 <%# The same guide the list carries, because this page and that list are one place
     for this workflow: the list is where an author finds out something is waiting
     and this page is where they decide about it, and a guide that vanished on

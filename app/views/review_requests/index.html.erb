@@ -1,0 +1,69 @@
+<% content_for :title, t("review_requests.index.title") %>
+
+<%= render "shared/page_header",
+  title: t("review_requests.index.title"),
+  eyebrow: Current.universe.name,
+  description: t("review_requests.index.description"),
+  count: @review_requests.size,
+  count_label: "request" do %>
+  <%= link_to t("review_requests.index.back"), universe_path(Current.universe), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<% if @review_requests.any? %>
+  <div class="content-surface entity-list">
+    <div class="list-group list-group-flush">
+      <% @review_requests.each do |review_request| %>
+        <div class="list-group-item entity-row d-flex align-items-start gap-3">
+          <div class="entity-copy flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <%# The subject of the row is what the author asked for and who asked for
+                  it. The author is named rather than implied because the decision is
+                  about their work: a reviewer reads who is waiting before they read
+                  what for. %>
+              <span class="entity-title">
+                <%= t("review_requests.index.changes",
+                  count: review_request.draft.draft_changes.size,
+                  author: record_label(review_request.submitted_by)) %>
+              </span>
+              <span class="badge rounded-pill text-bg-light border review-request-status">
+                <%= t("review_requests.statuses.#{review_request.status}") %>
+              </span>
+            </div>
+
+            <div class="entity-description">
+              <%= t("review_requests.index.submitted_at_html",
+                at: time_tag(review_request.created_at, l(review_request.created_at, format: :short))) %>
+            </div>
+
+            <%# What a decision recorded. `ReviewRequest` validates a reviewer onto every
+                decided row, so "who let this through" is answerable from this page
+                rather than from the database — which is the reason that validation
+                exists and the reason the row does not carry the field for a pending one. %>
+            <% if review_request.decided? %>
+              <div class="entity-description review-request-decision">
+                <%= t("review_requests.index.decided_by", reviewer: record_label(review_request.reviewed_by)) %>
+                <% if review_request.review_notes.present? %>
+                  — <%= t("review_requests.index.notes", notes: review_request.review_notes) %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            <%= link_to t("review_requests.index.open"),
+              universe_review_request_path(id: review_request),
+              class: "btn btn-sm btn-outline-secondary" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <%# The queue is a reviewer's page, so its empty state has to say what would put
+      something here rather than leaving a bare heading: an author handing a draft
+      over is the event this list exists to show. %>
+  <%= render "shared/empty_state",
+    title: t("review_requests.index.empty_title"),
+    description: t("review_requests.index.empty_description"),
+    icon: "inbox" %>
+<% end %>

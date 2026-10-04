@@ -211,7 +211,9 @@ the same change, or `db:demo:check` fails.
   and `:deleted` (the two conflicts, from the detector), `:missing`, `:gone` (a delete whose record is
   already deleted, which is reported rather than claimed as written), and the applier's own
   `:unplaceable` and `:refused`. A create is not asked about a version at all: it names no record, and
-  its two failures are about a stored scope column and the live path's refusal. The draft is closed
+  its two failures are about a stored scope column and the live path's refusal. A change the applier
+  cannot *interpret* is a prior question rather than one of these five, and `DraftIntegrity` owns it —
+  see [the drafts page](#the-drafts-page). The draft is closed
   either way; the reasoning, and why refusing the whole apply was rejected, are in
   [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md).
 - Password-reset responses set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
@@ -227,7 +229,7 @@ the same change, or `db:demo:check` fails.
     `SceneLocationsController` also
     include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
   - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Universe
-    memberships, Sessions, Passwords.
+    memberships, Sessions, Passwords, Drafts, Review Requests.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
   memberships. `show/edit` exist for Universes, Stories, and Scenes; `show` also exists for every
   content model (Character, Location, Item, Event, Relation, Ownership, Section) and every tag
@@ -273,6 +275,11 @@ the same change, or `db:demo:check` fails.
   about their own pending work and neither is idempotent — an `apply` writes records, and a `discard`
   closes the draft — and there is no `create` or `destroy` because a draft is opened by the remembering
   path and is never deleted, only moved to another status.
+- **Review requests are the same shape**, mounted at `/u/:universe_slug/review_requests`:
+  `resources :review_requests, only: %i[ index show ]` with `post :approve, on: :member` and `post
+  :reject, on: :member`, for the same reason and one more — an `approve` writes every remembered change
+  in somebody else's draft. Every action is admin-only, and `approve` is also where a conflict page
+  posts back to.
 - Platform settings are `resource :settings, only: %i[show update]` at `/settings`, outside the
   universe scope, because a display preference belongs to the browser rather than to a universe
   ([ADR 0013](adr/0013-platform-settings-and-browser-theme.md)). `SettingsController` skips
@@ -512,6 +519,66 @@ see it, apply it, or throw it away; which block that entry belongs to is in
 the reader having something pending: it is how a reader with nothing pending reaches the drafts list,
 which is where a closed draft's history is kept, and a control that appears and disappears with a count
 is a control whose absence has to be explained.
+
+**A draft holding a change the applier cannot read says so on its own page.** `DraftIntegrity` answers
+a prior question to the conflict detector's — can the applier read the row at all — and the two do not
+overlap: a create naming a `record_type` outside the content registry, or a payload naming a value the
+model has no writer for, is not a conflict because there is nothing to choose between. The applier still
+raises on both ([ADR
+0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) decided that, and the transaction is
+what makes it safe), but a raise escaping a controller answers `404`, which reads as "this draft does not
+exist" for a draft the reader is looking at. So `DraftIntegrity` is asked first, `apply` refuses with a
+`422` that renders this page, and nothing is written: the draft stays open, its changes stay listed, and
+**Discard** — the author's only way out of a change the universe cannot describe — is untouched. The
+notice is `shared/_draft_damaged` and the keys are `drafts.damaged.*`, one partial and one set of words
+for every surface that has to state it.
+
+The check that decides which rows those are is **raise-equivalence, not unreadability in general**: an
+update or a delete whose `record_type` is outside the registry is not flagged, because the detector
+resolves the record first and reports `:missing` without raising, and refusing the whole run over a
+change it would have skipped is a new refusal dressed as a clearer answer. A payload key is checked
+against an unsaved instance rather than against `column_names`, because what a payload may name is
+"something with a writer" — a tag id list and the two virtual photo fields have writers and no columns,
+and a check against the columns would report ordinary remembered values as damage.
+
+## The reviewer's page
+
+A submission is somebody else's draft, so its pages are the drafts page read from the other side:
+`/u/:universe_slug/review_requests` is the queue and `/u/:universe_slug/review_requests/:id` is one
+submission, with `approve` and `reject` as two POSTs for the reason `apply` and `discard` are. **Every
+action asks for `admin`** on the universe, through the `UniverseAuthorization` line memberships use
+rather than the `index`/`show` → `read` rule. The queue names every author who has submitted something
+and what they want done with it, so a plain writer is not a reader of it either.
+
+**An approval is the author's apply, in full, and it is shared rather than reimplemented.** `approve`
+runs the same `DraftConflictDetector`, renders the same conflict rows (`drafts/_conflict`, one partial
+for both callers), posts its answers back to itself, calls the same `DraftApplier`, and reports the run
+with the same flash sentences. `AppliesDrafts` is where the three of those live, because each is a
+question asked once and answered twice: what is in conflict, what the request answered (an answer is an
+instruction to write over somebody else's record, so both the controller's filter and the applier's are
+kept), and what the run did. Only the rendering differs — the reviewer's conflicts page has its own
+header and posts to `approve` — because a resolution page that asked a reviewer different questions
+would be two answers to one conflict.
+
+**The decision and the run are one transaction, and a decision cannot be taken twice.** The applier
+closes the draft inside its own transaction, so the request's approval has to land in the same one: an
+approved request over a draft that was not applied claims a review that never happened and is
+unreachable afterwards. Both actions therefore refuse a request that is already answered, with a
+redirect to its own page and the reason, exactly as `DraftsController` refuses an applied draft — the
+duplicate-write hazard is the same one.
+
+**A rejection is the one reversible decision, because it hands the draft back.**
+`ReviewRequest#reject!` moves the request and the draft's status in one transaction (`submit!`'s reason
+read backwards), so a rejection cannot leave a draft nobody can edit or a queue entry the author still
+owns. The draft returns to `draft`, not to a closed status: a rejection is somebody else's decision
+about the author's work, and the changes are still theirs to edit and submit again. A refused rejection —
+notes are required, and `ReviewRequest` says why — restores the stored state on the instance so the page
+still offers the controls, and re-renders with the reason beside the field rather than redirecting, which
+is the rule every other form here follows.
+
+**Nothing about the draft's changes is read to reject one.** That is why a submission holding a change
+the applier cannot read is still rejectable, and why `reject` renders `show`: refusing it must not be a
+reviewer's only option, or one damaged row would block the queue behind the author's problem to fix.
 
 ## The editing session
 

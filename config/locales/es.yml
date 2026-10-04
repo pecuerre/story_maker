@@ -644,6 +644,19 @@ es:
       # de poder actuar, o su historial tendría que leer el momento de
       # `updated_at`.
       closed_at_required: "debe registrar cuándo se cerró el borrador"
+    # Un cambio que el aplicador no puede leer en absoluto. Esto no es un
+    # conflicto —no hay nada que elegir—, así que el aviso dice qué no se puede
+    # leer y se detiene, en lugar de ofrecer las dos respuestas de una página de
+    # conflictos. Las dos razones de `DraftIntegrity`, una frase cada una, y el
+    # valor culpable con nombre donde nombrarlo es todo el diagnóstico: un tipo de
+    # registro dice qué clase ya no existe, un atributo dice qué clave no responde
+    # ninguna columna ni ningún escritor de colección.
+    damaged:
+      heading: "Este borrador no se puede aplicar tal como está"
+      lead: "No se puede escribir nada de él mientras uno de estos cambios nombre algo que esta aplicación no puede leer, así que no se escribió ningún cambio y el borrador sigue abierto."
+      reasons:
+        unknown_record_type: "nombra un tipo de registro que esta aplicación no tiene: %{type}"
+        unknown_attribute: "nombra un valor que ese tipo de registro no tiene en ningún campo: %{attribute}"
 
   review_requests:
     # Una `ReviewRequest` almacena lo que el borrador ya dice — su universo, su
@@ -655,6 +668,59 @@ es:
       submitted_by_must_be_author: "debe ser el autor del borrador"
       notes_required: "debe decir por qué se rechazó el envío"
       reviewer_required: "debe registrar quién lo revisó"
+    # El `ReviewRequest::STATUSES` almacenado, leído como palabras y no como valor
+    # de columna, para la insignia que llevan las filas de la cola. Son tres
+    # estados y no dos más una bandera, porque «esperando una decisión» y
+    # «respondido» son las dos cosas que pregunta cada superficie, y ninguna se
+    # deduce de la otra.
+    statuses:
+      pending: "Esperando"
+      approved: "Aprobado"
+      rejected: "Rechazado"
+    index:
+      title: "Solicitudes de revisión"
+      description: "Borradores que los autores han entregado en este universo, con los que aún esperan una decisión primero."
+      back: "Volver al universo"
+      # El asunto de la fila es lo que pidió el autor, así que el número es lo
+      # primero que lee quien revisa: «3 cambios recordados» es el tamaño de la
+      # decisión.
+      changes:
+        one: "%{count} cambio recordado de %{author}"
+        other: "%{count} cambios recordados de %{author}"
+      submitted_at_html: "Enviado %{at}."
+      # Lo que quien ya decidió tiene que ver para responder «quién dejó pasar
+      # esto», que es la razón por la que `ReviewRequest` valida un revisor en
+      # cada fila decidida.
+      decided_by: "por %{reviewer}"
+      notes: "Notas: %{notes}"
+      open: "Revisar"
+      empty_title: "No hay nada esperando una decisión"
+      empty_description: "Cuando un autor entrega un borrador en este universo en lugar de aplicarlo, aparece aquí."
+    show:
+      title: "Cambios para revisar"
+      description: "Todos los cambios que recuerda este borrador enviado, en el orden en que los hizo el autor. Nada de esto se ha escrito hasta que lo apruebes."
+      back: "Todas las solicitudes de revisión"
+      submitted_by_html: "Enviado por %{author} %{at}."
+      apply: "Aprobar cambios"
+      apply_confirm: "¿Apruebas todos los cambios recordados? Se vuelven reales de inmediato."
+      # El rechazo es un formulario y no una confirmación, porque es la única
+      # decisión que tiene algo que decir: las notas son obligatorias, así que la
+      # pregunta se hace junto al campo en lugar de en un diálogo que las
+      # descartaría.
+      reject: "Rechazar el envío"
+      reject_notes: "¿Por qué lo rechazas?"
+      reject_notes_hint: "El autor ve estas notas y conserva su borrador, así que puede cambiarlo y volver a enviarlo."
+      reject_submit: "Rechazar y devolver el borrador"
+      empty_title: "Este borrador no recuerda ningún cambio"
+      empty_description: "Aquí no hay nada que aprobar."
+    conflicts:
+      title: "Conflictos por resolver"
+      description: "Estos cambios no se pueden aprobar tal como están: los registros que nombran han cambiado desde que el autor los recordó. Elige, para cada uno, si gana el cambio del autor o lo que hay ahora."
+      back: "Volver a la solicitud de revisión"
+      submit: "Aprobar con estas decisiones"
+    flash:
+      rejected: "El envío se rechazó y el borrador volvió a manos de su autor. No se escribió nada."
+      decided: "Esa solicitud de revisión ya se respondió, así que no queda nada que decidir sobre ella."
 
   stories:
     title: "Historias"
@@ -2058,6 +2124,12 @@ es:
   conflict:
     one: "conflicto"
     other: "conflictos"
+  # Un envío en la cola de revisión, por la misma razón que los tres anteriores: el
+  # sustantivo junto al distintivo de la cabecera es una clave, así que el plural
+  # viene del idioma.
+  request:
+    one: "solicitud de revisión"
+    other: "solicitudes de revisión"
 
   # El sujeto de un error de registro, con la clave `model_param` que un
   # controlador ya tiene. Los dos editores del navegador imprimen un mensaje

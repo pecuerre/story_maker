@@ -13,6 +13,12 @@
   tally on the draft — and a closed draft is still inspectable and says what became of each change.
   The reasoning the storage did not overturn stands: an outcome is a new row rather than an attribute
   of a remembered change, and it is never inferred from a version stamp.
+- **The "still raises on a payload it cannot describe" cost below still holds, and is now the last
+  resort rather than the answer.** `DraftIntegrity` is asked before a run and refuses such a draft in
+  words — naming the change the application cannot read — so the raise no longer escapes a controller
+  as a 404 for a draft that is sitting in front of the reader. What it decides is unchanged: a change
+  this application cannot describe is refused, not guessed at, and nothing is written. The same
+  refusal now runs on a reviewer's approval, because that is the same apply.
 - **Date:** 2026-10-03
 - **Related:** [`../conventions.md`](../conventions.md),
   [`../architecture.md`](../architecture.md),

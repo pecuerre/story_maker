@@ -14,7 +14,9 @@ numbered **63 and above** were added on 2026-10-03 and **68 and above** on 2026-
 collaboration draft system was being
 built, verified the same way, and listed here rather than left in [`backlog.md`](backlog.md) because
 each one is reachable now rather than only pending. Finding 64 left this file on 2026-10-04, when the
-apply's outcome became stored rather than reported once; see
+apply's outcome became stored rather than reported once, and the unnumbered finding that read "the applier
+raises rather than reporting a change it cannot interpret" left it the same day, when the apply and a
+reviewer's approval started refusing such a draft in words; see
 [`delivery_history.md`](delivery_history.md).
 
 ## Critical security observations
@@ -285,14 +287,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
   would cost one lookup per row, which is the same trade as finding 66; the reasoning for reading a create
   as an unsaved model rather than a row is in [ADR
   0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
-- **The applier raises rather than reporting a change it cannot interpret.** An unregistered `record_type`
-  on a remembered create, or a payload naming an attribute no column holds, is a corrupt row rather than
-  something an author typed, and `DraftApplier` lets it raise (`ActiveRecord::RecordNotFound`,
-  `ActiveRecord::UnknownAttributeError`) instead of guessing. The run's transaction makes that safe — the
-  draft is left exactly as it was — but through the controller it answers as a bare 404
-  (`rescue_from ActiveRecord::RecordNotFound`), which reads as "this draft does not exist" rather than as
-  "this draft is damaged", and the author's only way forward is **Discard**. The decision is documented
-  (ADR 0021); the shape of the answer is the part a reviewer may want to change.
 - **No mutation rate limits exist beyond sign-in/password-reset.** Public universes intentionally
   allow every signed-in contributor to write, so throttling content/story/tag/membership mutations
   is a product decision rather than a confirmed defect.

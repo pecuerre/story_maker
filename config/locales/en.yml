@@ -679,6 +679,18 @@ en:
       # A draft that can no longer be acted on has to say when it stopped being
       # actionable, or its history would have to read the moment off `updated_at`.
       closed_at_required: "must record when the draft was closed"
+    # A change the applier cannot read at all. This is not a conflict — there is
+    # nothing to choose between — so the notice says what cannot be read and stops,
+    # rather than offering the two answers a conflict page offers. `DraftIntegrity`'s
+    # two reasons, one sentence each, and the offending value named where naming it
+    # is the whole diagnosis: a record type says which class is gone, an attribute
+    # says which key no column or collection writer answers.
+    damaged:
+      heading: "This draft cannot be applied as it stands"
+      lead: "Nothing in it can be written while one of these changes names something this application cannot read, so no change was written and this draft is still open."
+      reasons:
+        unknown_record_type: "names a record type this application does not have: %{type}"
+        unknown_attribute: "names a value that kind of record has no field for: %{attribute}"
 
   review_requests:
     # A `ReviewRequest` stores what the draft already says — its universe, its one
@@ -691,6 +703,55 @@ en:
       submitted_by_must_be_author: "must be the draft's author"
       notes_required: "must say why the submission was rejected"
       reviewer_required: "must record who reviewed it"
+    # The stored `ReviewRequest::STATUSES`, read as words rather than as a column
+    # value, for the badge the queue's rows carry. They are three states and not two
+    # plus a flag because "waiting for a decision" and "answered" are the two things
+    # every surface asks, and neither is derived from the other.
+    statuses:
+      pending: "Waiting"
+      approved: "Approved"
+      rejected: "Rejected"
+    index:
+      title: "Review requests"
+      description: "Drafts that authors have handed over in this universe, with the ones still waiting for a decision first."
+      back: "Back to the universe"
+      # The row's subject is what the author asked for, so the count is the first
+      # thing a reviewer reads: "3 remembered changes" is the size of the decision.
+      changes:
+        one: "%{count} remembered change from %{author}"
+        other: "%{count} remembered changes from %{author}"
+      submitted_at_html: "Submitted %{at}."
+      # What a reviewer who decided has to see to answer "who let this through",
+      # which is why `ReviewRequest` validates a reviewer onto every decided row.
+      decided_by: "by %{reviewer}"
+      notes: "Notes: %{notes}"
+      open: "Review"
+      empty_title: "Nothing is waiting for a decision"
+      empty_description: "When an author hands a draft over in this universe instead of applying it, it appears here."
+    show:
+      title: "Changes to review"
+      description: "Every change this submitted draft remembers, in the order the author made them. Nothing here has been written until you approve it."
+      back: "All review requests"
+      submitted_by_html: "Submitted by %{author} %{at}."
+      apply: "Approve changes"
+      apply_confirm: "Approve every remembered change? They become live immediately."
+      # The rejection is a form rather than a confirmation, because it is the one
+      # decision that has something to say: notes are required, so the question is
+      # asked beside the field instead of in a dialog that would discard them.
+      reject: "Reject submission"
+      reject_notes: "Why are you rejecting it?"
+      reject_notes_hint: "The author sees these notes and keeps their draft, so they can change it and submit again."
+      reject_submit: "Reject and hand the draft back"
+      empty_title: "This draft remembers no changes"
+      empty_description: "There is nothing here to approve."
+    conflicts:
+      title: "Conflicts to resolve"
+      description: "These changes cannot be approved as they are: the records they name have changed since the author remembered them. Choose, for each one, whether the author's change or what is there now wins."
+      back: "Back to the review request"
+      submit: "Approve with these choices"
+    flash:
+      rejected: "The submission was rejected and the draft was handed back to its author. Nothing was written."
+      decided: "That review request has already been answered, so there is nothing left to decide about it."
 
   stories:
     title: "Stories"
@@ -2139,6 +2200,11 @@ en:
   conflict:
     one: "conflict"
     other: "conflicts"
+  # A submission in the reviewer's queue, for the same reason as the three above: the
+  # noun beside the header's badge is a key, so the plural comes from the locale.
+  request:
+    one: "review request"
+    other: "review requests"
 
   # The subject of a record-level error, keyed by the `model_param` a controller
   # already holds. Both browser editors print a `base` message as a sentence

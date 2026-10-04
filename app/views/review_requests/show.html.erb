@@ -1,0 +1,89 @@
+<% content_for :title, t("review_requests.show.title") %>
+
+<%= render "shared/page_header",
+  title: t("review_requests.show.title"),
+  eyebrow: Current.universe.name,
+  description: t("review_requests.show.description"),
+  count: @review_request.draft.draft_changes.size,
+  count_label: "change" do %>
+  <%= link_to t("review_requests.show.back"), universe_review_requests_path, class: "btn btn-outline-secondary" %>
+
+  <%# The decision is offered only while there is one to make. A decided request is
+      history, and a control that would refuse rather than act is worse than no
+      control: the answer it would give is a redirect with a reason, which the reader
+      has to read to learn what the badge already said. %>
+  <% if @review_request.pending? %>
+    <%= button_to t("review_requests.show.apply"), approve_universe_review_request_path(id: @review_request),
+      class: "btn btn-primary",
+      data: { turbo_confirm: t("review_requests.show.apply_confirm") } %>
+  <% end %>
+<% end %>
+
+<%# Said before the reviewer presses anything, and again behind an approval that was
+    refused for it, from the same `DraftIntegrity` — see `shared/_draft_damaged`. %>
+<%= render "shared/draft_damaged", damaged: @damaged %>
+
+<div class="content-surface">
+  <div class="list-group list-group-flush">
+    <div class="list-group-item review-request-summary d-flex align-items-center gap-2 flex-wrap">
+      <span class="badge rounded-pill text-bg-light border"><%= t("review_requests.statuses.#{@review_request.status}") %></span>
+      <%# Who submitted, and when. The author is named rather than linked: their own
+          drafts page is theirs to read, and this row is about the submission. %>
+      <span class="review-request-submitted-by">
+        <%= t("review_requests.show.submitted_by_html",
+          author: record_label(@review_request.submitted_by),
+          at: time_tag(@review_request.created_at, l(@review_request.created_at, format: :short))) %>
+      </span>
+    </div>
+
+    <%# What a rejection said. The notes are required for a rejection and never asked
+        for on an approval, so this line exists for exactly one state — and it is the
+        only place an author can read why their draft came back. %>
+    <% if @review_request.rejected? %>
+      <div class="list-group-item review-request-notes">
+        <%= t("review_requests.index.notes", notes: @review_request.review_notes) %>
+      </div>
+    <% end %>
+
+    <%# The changes, through the draft's own partial: a reviewer reads a remembered
+        value — a tag id list, a photo, a scope column — exactly as its author reads
+        it, because this is the same partial and therefore the same reading of one
+        change. %>
+    <% if @review_request.draft.draft_changes.any? %>
+      <%= render partial: "drafts/change", collection: @review_request.draft.draft_changes, as: :change %>
+    <% else %>
+      <div class="list-group-item">
+        <%= render "shared/empty_state",
+          title: t("review_requests.show.empty_title"),
+          description: t("review_requests.show.empty_description"),
+          icon: "journal-text" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<% if @review_request.pending? %>
+  <%# The rejection is a form, not a confirmation: notes are required, so the question
+      has to be asked beside a field that can hold the answer. It posts to its own
+      action and never to this page's, and a rejection without notes re-renders here
+      with the reason rather than redirecting — a redirect would discard what the
+      reviewer typed, which is the rule every other form in the application follows. %>
+  <section class="surface-card p-4 mt-3 review-request-rejection">
+    <h2 class="h5"><%= t("review_requests.show.reject") %></h2>
+    <p class="page-description"><%= t("review_requests.show.reject_notes_hint") %></p>
+
+    <%= form_with(model: @review_request, scope: :review_request, method: :post,
+      url: reject_universe_review_request_path(id: @review_request)) do |form| %>
+      <% if @review_request.errors.any? %>
+        <%= render "shared/error_summary", record: @review_request %>
+      <% end %>
+
+      <%= form.label :review_notes, t("review_requests.show.reject_notes"), class: "form-label" %>
+      <%= form.text_area :review_notes, rows: 3, class: "form-control" %>
+
+      <div class="page-actions d-flex align-items-center flex-wrap gap-2 mt-3">
+        <%= form.submit t("review_requests.show.reject_submit"), class: "btn btn-outline-danger" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

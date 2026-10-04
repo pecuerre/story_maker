@@ -279,22 +279,182 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     assert_equal (0...other_story.scenes.count).to_a, other_story.scenes.reorder(:position, :id).pluck(:position)
   end
 
-  test "a change whose record has moved since it was remembered is reported rather than written" do
+  # Resolving a conflict
+  #
+  # A conflict stops the apply: nothing is written until every conflict has an
+  # answer, so the page and the applier are two halves of one decision. What the
+  # author is *shown* is asserted here; what an answer *does* to a record is
+  # `test/services/draft_applier_test.rb`.
+
+  test "an apply that finds a conflict shows it instead of writing" do
     moved = draft_with(remember_update_payload("Renamed by a draft"), remember_create_payload)
     change = moved.draft_changes.first
-    # Somebody else saved the same record after the change was remembered, which
-    # is what `base_version` exists to notice.
-    @character.update!(description: "Changed by somebody else")
+    # Somebody else renamed the same record after the change was remembered,
+    # which is what `base_version` exists to notice.
+    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
     assert VersionStamp.changed?(@character, change.base_version)
 
     post apply_universe_draft_url(universe_slug: @universe.slug, id: moved)
 
-    assert_equal I18n.t("drafts.flash.partially_applied", applied: 1, skipped: 1), flash[:notice]
-    assert_not_equal "Renamed by a draft", @character.reload.name,
-      "a change remembered against an older version must not overwrite the newer one"
+    assert_response :unprocessable_content
+    assert_select "h1", text: "Conflicts to resolve"
+    assert_select "form[action=?]", apply_universe_draft_path(universe_slug: @universe.slug, id: moved), count: 1
+    assert_select ".draft-conflict", count: 1
+    # The record, its type, and the state that put the row here.
+    assert_select ".draft-conflict .entity-title a[href=?]", @character.search_url, count: 1
+    assert_select ".draft-conflict-kind", text: "Character"
+    assert_select ".draft-conflict-state", text: "Changed elsewhere"
+    # Both halves of the choice, so the buttons can be evaluated rather than
+    # pressed at random. They print the same field under the same label, which is
+    # what makes them a comparison instead of two sentences about a record.
+    assert_select ".draft-conflict-mine", text: /Renamed by a draft/
+    assert_select ".draft-conflict-theirs", text: /Renamed by somebody else/
+    assert_select ".draft-conflict-choice", text: /Choosing theirs keeps what is there now/
+    assert_select "button[name=?][value=?]", "resolutions[#{change.id}]", "theirs", count: 1
+    assert_select "button[name=?][value=?]", "resolutions[#{change.id}]", "mine", count: 1
+    assert_select ".draft-conflict button", text: "Apply theirs"
+    assert_select ".draft-conflict button", text: "Apply mine"
+    # Nothing is written, and the draft is still applyable: the answers are what
+    # the write was waiting for. The rest of the draft waits with it, because a
+    # half-applied draft and a remembered create are the duplicate-write hazard
+    # ADR 0021 closes.
+    assert_equal "Renamed by somebody else", @character.reload.name
+    assert_nil Character.find_by(name: "Remembered create")
+    assert_predicate moved.reload, :draft?
+  end
+
+  test "an update onto a record somebody deleted is shown as a conflict, without a link to it" do
+    draft = draft_with(remember_update_payload("Renamed by a draft"))
+    @character.soft_delete
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_response :unprocessable_content
+    assert_select ".draft-conflict", count: 1
+    assert_select ".draft-conflict-state", text: "Deleted elsewhere"
+    assert_select ".draft-conflict .entity-title a", count: 0
+    assert_select ".draft-conflict-theirs", text: /the record stays deleted/
+    assert_select ".draft-conflict-theirs", text: /Somebody deleted this record/
+    assert_select ".draft-conflict-choice", text: /brings the record back/
+    assert_predicate @character.reload, :deleted?, "showing a conflict must not write anything"
+    assert_predicate draft.reload, :draft?
+  end
+
+  test "answering a conflict with theirs keeps the record and drops the change" do
+    moved = draft_with(remember_update_payload("Renamed by a draft"), remember_create_payload)
+    change = moved.draft_changes.first
+    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: moved),
+      params: { resolutions: { change.id => "theirs" } }
+
+    assert_redirected_to universe_draft_url(universe_slug: @universe.slug, id: moved)
+    # A change dropped on purpose is not a change that failed: the progress
+    # sentence still counts what was written, and the choice gets its own.
+    assert_equal [
+      I18n.t("drafts.flash.applied", count: 1),
+      I18n.t("drafts.flash.kept_theirs", count: 1)
+    ].join(" "), flash[:notice]
+    assert_equal "Renamed by somebody else", @character.reload.name,
+      "theirs keeps the record as the other editor left it"
     assert Character.find_by(name: "Remembered create").present?,
-      "the rest of the draft is still written: one unappliable change does not block the others"
+      "the rest of the draft is still written: one decision does not block the others"
     assert_predicate moved.reload, :applied?
+  end
+
+  test "answering a conflict with mine writes the remembered fields over what is there" do
+    moved = draft_with(remember_update_payload("Renamed by a draft"), remember_create_payload)
+    change = moved.draft_changes.first
+    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: moved),
+      params: { resolutions: { change.id => "mine" } }
+
+    assert_equal I18n.t("drafts.flash.applied", count: 2), flash[:notice]
+    assert_equal "Renamed by a draft", @character.reload.name
+    # "Overwrite with my change" is the change's own payload, not the whole row:
+    # a conflict is per record, and a field the author never submitted is still
+    # the other editor's.
+    assert_equal "Also changed by somebody else", @character.description
+    assert_predicate moved.reload, :applied?
+  end
+
+  test "an update onto a deleted record, answered with mine, brings the record back with the change" do
+    draft = draft_with(remember_update_payload("Renamed by a draft"), remember_create_payload)
+    change = draft.draft_changes.first
+    @character.soft_delete
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
+      params: { resolutions: { change.id => "mine" } }
+
+    # The restored update and the remembered create are both written, which is
+    # what makes the answer atomic rather than a restore that then waited.
+    assert_equal I18n.t("drafts.flash.applied", count: 2), flash[:notice]
+    assert_not_predicate @character.reload, :deleted?
+    assert_equal "Renamed by a draft", @character.name
+    assert Character.find_by(name: "Remembered create").present?
+    assert_predicate draft.reload, :applied?
+  end
+
+  test "a delete whose record has changed, answered with mine, removes it anyway" do
+    removed = locations(:location_one)
+    draft = draft_with(remember_delete_payload(removed))
+    change = draft.draft_changes.first
+    removed.update!(name: "Renamed by somebody else")
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
+      params: { resolutions: { change.id => "mine" } }
+
+    assert_equal I18n.t("drafts.flash.applied", count: 1), flash[:notice]
+    assert_predicate removed.reload, :deleted?
+    assert_predicate draft.reload, :applied?
+  end
+
+  test "answers already given are carried so the remaining conflicts can still be chosen" do
+    other = characters(:character_two)
+    draft = draft_with(
+      remember_update_payload("Renamed by a draft"),
+      remember_update_payload("Renamed too", other),
+      remember_create_payload
+    )
+    first, second = draft.draft_changes.to_a
+    @character.update!(description: "Changed by somebody else")
+    other.update!(description: "Changed by somebody else too")
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
+      params: { resolutions: { first.id => "mine" } }
+
+    assert_response :unprocessable_content
+    assert_select ".draft-conflict", count: 2
+    # The answer already given is a hidden field, rendered before that row's own
+    # buttons, so re-pressing the row overrides it rather than losing it.
+    assert_select "input[type=hidden][name=?][value=?]", "resolutions[#{first.id}]", "mine", count: 1
+    assert_select "input[type=hidden][name=?]", "resolutions[#{second.id}]", count: 0
+    assert_equal "Character one", @character.reload.name,
+      "nothing is written while one conflict is still unanswered"
+    assert_predicate draft.reload, :draft?
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
+      params: { resolutions: { first.id => "mine", second.id => "theirs" } }
+
+    assert_response :see_other
+    assert_equal "Renamed by a draft", @character.reload.name
+    assert_equal "Character two", other.reload.name
+    assert Character.find_by(name: "Remembered create").present?
+    assert_predicate draft.reload, :applied?
+  end
+
+  test "an answer that is not one of the two the page offers is ignored" do
+    draft = draft_with(remember_update_payload("Renamed by a draft"))
+    change = draft.draft_changes.first
+    @character.update!(description: "Changed by somebody else")
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
+      params: { resolutions: { change.id => "perhaps" } }
+
+    assert_response :unprocessable_content
+    assert_equal "Character one", @character.reload.name
+    assert_predicate draft.reload, :draft?
   end
 
   test "a change the universe refuses is reported rather than half-written" do

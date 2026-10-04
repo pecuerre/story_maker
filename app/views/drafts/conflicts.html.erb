@@ -1,0 +1,29 @@
+<% content_for :title, t("drafts.conflicts.title") %>
+
+<%= render "shared/page_header",
+  title: t("drafts.conflicts.title"),
+  eyebrow: Current.universe.name,
+  description: t("drafts.conflicts.description"),
+  count: @conflicts.size,
+  count_label: "conflict" do %>
+  <%= link_to t("drafts.conflicts.back"), universe_draft_path(id: @draft), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<%# One form holds every conflict, because the answers belong to the apply that
+    uses them and a second submit would be a second apply of a draft that has
+    already closed. Each row's own two buttons carry that row's answer in their
+    `name`/`value`, so the row the author pressed decides one conflict and the
+    hidden fields carry the ones already decided on an earlier pass — Rack keeps
+    the last value of a repeated key, and each hidden field is rendered before
+    its row's buttons, so re-pressing a row overrides rather than losing. %>
+<%= form_with url: apply_universe_draft_path(id: @draft), method: :post do %>
+  <div class="content-surface">
+    <div class="list-group list-group-flush">
+      <%= render partial: "drafts/conflict", collection: @conflicts, as: :conflict %>
+    </div>
+  </div>
+
+  <div class="page-actions d-flex align-items-center flex-wrap gap-2 mt-3">
+    <%= button_tag t("drafts.conflicts.submit"), type: "submit", class: "btn btn-primary" %>
+  </div>
+<% end %>

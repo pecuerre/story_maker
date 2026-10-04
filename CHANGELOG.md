@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A conflicting apply opens a resolution page instead of reporting its conflicts.** Each row names the record and type, what you want and what theirs means, and offers **Apply theirs** / **Apply mine**; "mine" on a deleted record restores it and applies your edit.
+- **`DraftApplier` honors those answers.** "Theirs" discards the change, "mine" writes it over the current values, and the returned summary counts which changes were answered and how.
 - **`DraftConflictDetector` reports whether each remembered change can still be written.** It names the two
   conflicts — a record that moved and a record somebody has deleted — separately from a change that is
   already gone and one whose record does not resolve, and it carries the record's current state.
@@ -69,6 +71,10 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Phase 3's conflict resolution left the backlog, and finding 63 left the open-quirks list with it.**
+  `conventions.md` and `architecture.md` describe the drafts' third page, ADR 0021 is annotated, and what
+  the phase did not settle stays where it lives: findings 64/68, the badge decision as a backlog item, and
+  two stale ADR pointers deferred to FUTURE WORK.
 - **The draft system's completed phase left the backlog**, and three open decisions about it joined it:
   what a pending badge says beyond its state, what a pending record shows outside the list workspaces,
   and the missing draft-based development universe. Two stale slice-number citations inside the still-open
@@ -84,6 +90,9 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **A remembered change whose record has moved is no longer reported once and then closed with its draft**
+  (former finding 63): the resolution page asks first, so the author chooses instead of retyping — "mine"
+  writes their values, "theirs" drops them, and a conflict left unanswered still reports rather than writes.
 - **CI caps Rails request tests at two workers and serializes browser tests, eliminating SQLite lock contention; artifact uploads run
   on Node 24, and the CSS watcher no longer pulls the vulnerable `braces` dependency graph.**
 - **The taxonomy tree no longer restores its empty state over a remembered create.** The client-side check

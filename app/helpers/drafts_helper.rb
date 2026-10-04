@@ -1,4 +1,5 @@
-# Reading a remembered change, on a draft's own page and in the lists around it.
+# Reading a remembered change, on a draft's own page, on the page that resolves a
+# conflict, and in the lists around it.
 #
 # A change is the author's *statement of intent*, and this helper's whole job is to
 # say what that statement is: which record it is about, what it would do to it,
@@ -6,12 +7,13 @@
 # written. Only the apply that wrote it can know that, and a page that inferred it
 # from a version stamp would be reporting a second answer about the same record.
 #
-# The same reading answers two kinds of page. A draft's own page prints a change;
+# The same reading answers three kinds of page. A draft's own page prints a change;
 # a list workspace has to say what the same change would do to *its* rows — a
 # remembered create appears in the list it would have joined, a remembered edit
-# and delete badge the record that is still there. Both are answers about one
-# reader's one open draft, so both are read through one `DraftPreview`, built once
-# per request.
+# and delete badge the record that is still there; and the conflict page prints
+# the change *beside the record as it stands now*, which is the only way an author
+# can choose between them. All three are answers about one reader's one open
+# draft, so all three are read through one `DraftPreview`, built once per request.
 #
 # Three shapes need reading rather than printing:
 #
@@ -122,6 +124,48 @@ module DraftsHelper
       association = id_list_association(model, name)
       [ draft_change_label(model, name, association), draft_change_value(model, name, value, association) ]
     end
+  end
+
+  # The record's side of one conflict, as the same `[ label, value ]` pairs the
+  # change's own half prints — so "your change" and "theirs" are two columns of
+  # the same rows and the reader compares them line against line.
+  #
+  # Only what the record can actually answer is listed. A field is dropped when
+  # it is not an attribute the model has or an id list it has a collection for,
+  # which is what keeps the two photo writers (`photo_data`, `remove_photo` —
+  # form fields with no reader) from printing an object description, and what
+  # keeps a payload naming a column nobody has from raising here: the page is
+  # showing a *conflict*, not re-running the applier's write.
+  #
+  # An empty answer is the honest one for a remembered delete, which carries no
+  # payload at all: there is no field the record is being asked about, and the
+  # page says the record simply stays instead of printing an empty column.
+  def draft_conflict_current_attributes(report)
+    change = report.change
+    return [] if change.payload.blank? || report.record.nil?
+
+    model = RecordTarget.model_for(change.record_type)
+    record = report.record
+
+    change.payload.filter_map do |name, _value|
+      next if name == change.scope_attribute
+      next if model.blank? || !record.respond_to?(name)
+      next unless model.column_names.include?(name) || id_list_association(model, name)
+
+      association = id_list_association(model, name)
+      [ draft_change_label(model, name, association), draft_change_value(model, name, record.public_send(name), association) ]
+    end
+  end
+
+  # What the two buttons do, for the conflict this row is asking about. There are
+  # three answers rather than one because there are three different decisions:
+  # overwriting a record that moved, bringing back a record somebody deleted, and
+  # deleting a record that moved underneath the author. A sentence that described
+  # all three would be wrong on two of them, which is worse than saying nothing.
+  def draft_conflict_choice(report)
+    return t("drafts.conflicts.choose.deleted") if report.state == :deleted
+
+    t("drafts.conflicts.choose.#{report.change.deleting? ? :removed : :moved}")
   end
 
   private

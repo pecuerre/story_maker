@@ -128,20 +128,6 @@ each one is reachable now rather than only pending.
     with tags supplied in a different order can produce different slugs, which matters for
     symbolic development-data references and class-level lookup.
 
-63. **Medium — a remembered change that has moved is reported and then closed with its draft, so the
-    author has to redo it by hand.** `DraftsController#apply` writes the changes whose record is still at
-    the version they were remembered against, reports the rest in one flash sentence, and moves the
-    draft to `applied` regardless (`app/services/draft_applier.rb`,
-    `app/controllers/drafts_controller.rb:51-62`). Nothing stores an outcome per change and a remembered
-    change is append-only, so the unapplied change's values survive only as a row on the draft's page
-    (`draft_changes.payload`), where nothing reads them back into an editor. In practice: an
-    administrator sets a universe to `wikipedia`, two contributors edit the same record, and the second
-    one's edit is reported once and then has to be retyped. The draft always closing is deliberate and
-    load-bearing — a remembered `create` names no record, so an apply left open could write the author a
-    second copy of it (ADR 0021) — and the resolution UI that removes this cost is Phase 3, recorded in
-    [`backlog.md`](backlog.md) as **Collaboration system — Phase 3: Conflict resolution**. A backlog
-    number is not cited here on purpose: it is deleted when the item is done, and this entry outlives it.
-
 64. **Low — the apply's outcome is reported once and then lost.** `DraftApplier::Result` carries what was
     written and why the rest was not, and the controller turns it into one flash message; nothing records
     it on the draft. A draft's page therefore cannot say which of its changes were applied and which were
@@ -178,8 +164,8 @@ each one is reachable now rather than only pending.
     withdraw it from the list except discarding the whole draft. The deep cause is the one finding 64
     records: nothing stores an outcome per change before an apply, so the list cannot know which
     remembered changes will be refused. Whether a row that will not apply is badged differently, named
-    from its type, or withheld is a product decision and belongs with **Collaboration system — Phase 3:
-    Conflict resolution** in [`backlog.md`](backlog.md), not here.
+    from its type, or withheld is a product decision and belongs with **What a pending badge has to say
+    beyond its state** in [`backlog.md`](backlog.md), not here.
 
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`

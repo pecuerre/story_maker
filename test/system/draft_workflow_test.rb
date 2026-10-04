@@ -110,6 +110,58 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     assert_equal character.name, character.reload.name
   end
 
+  test "an editor who runs into a conflict chooses between their change and what is there" do
+    # The one part of conflict resolution a request test cannot show: the apply
+    # button is a confirming Turbo form, and the answer is a second form on a
+    # page Turbo has to render *in place* — a 422 that redirected, or that
+    # answered with a bare 200, would drop the author somewhere else entirely.
+    # The request suite sends neither a confirmation nor a CSRF token.
+    character = characters(:character_one)
+    sign_in_via_form(@user)
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    within first(".list-group-item", text: character.name) do
+      find("button[aria-expanded='false']").click
+      click_button "Edit"
+    end
+    within ".modal.show" do
+      fill_in "Name", with: "Renamed in the browser"
+      click_button "Save character"
+    end
+    assert_no_selector ".entity-row .entity-title", text: "Renamed in the browser", wait: REFRESH_WAIT
+
+    # Somebody else renames the same record after the change was remembered,
+    # which is the conflict `base_version` exists to notice.
+    character.update!(name: "Renamed by somebody else")
+
+    within "aside.right-sidebar" do
+      click_on "Pending changes"
+    end
+    assert_selector ".entity-row", text: "1 remembered change"
+    click_on "Review"
+    accept_confirm do
+      click_on "Apply changes"
+    end
+
+    # The apply is refused until it is told what to do, and the page that asks
+    # replaces the one the author was on.
+    assert_selector "h1", text: "Conflicts to resolve", wait: REFRESH_WAIT
+    assert_selector ".draft-conflict-state", text: "Changed elsewhere"
+    assert_selector ".draft-conflict-mine", text: "Renamed in the browser"
+    assert_selector ".draft-conflict-theirs", text: "Renamed by somebody else"
+
+    within ".draft-conflict" do
+      click_button "Apply theirs"
+    end
+
+    assert_selector ".draft-summary .badge", text: "Applied", wait: REFRESH_WAIT
+    # Nothing was written and nothing failed: the choice gets its own sentence
+    # rather than being counted as a change the universe refused.
+    assert_selector ".flash-stack .flash-toast", text: "left exactly as it is now"
+    assert_equal "Renamed by somebody else", character.reload.name,
+      "theirs keeps the record as the other editor left it"
+  end
+
   test "an author starts editing, and the universe page says how much is waiting" do
     # The editing session is the one thing here that only a browser shows as a
     # journey: press the control, walk into a workspace, come back, and the page

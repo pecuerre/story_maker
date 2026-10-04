@@ -1,0 +1,87 @@
+<%# One conflict, and the two answers to it.
+    #
+    # The row has to say four things before its buttons mean anything: which
+    # record this is and of what kind, which state put it here, what the author
+    # wants written, and what is there now — that last one being the whole
+    # question, since an author cannot choose between their change and somebody
+    # else's work without seeing both. The two halves print through the same
+    # helper under the same labels, so they are columns of one comparison rather
+    # than two sentences about the same field. %>
+<% change = conflict.change %>
+<% answer = @answers[change.id.to_s] %>
+<% yours = draft_change_attributes(change) %>
+<% current = draft_conflict_current_attributes(conflict) %>
+<div class="list-group-item entity-row draft-conflict">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <span class="badge rounded-pill text-bg-light border"><%= t("drafts.actions.#{change.action}") %></span>
+    <%# A conflict always names a record that resolves, and only a record that is
+        still there has a page to go to: a link to a soft-deleted record answers
+        404, which is a dead affordance on the one row that is asking the author
+        to decide about it. %>
+    <span class="entity-title">
+      <% if conflict.state == :moved %>
+        <%= link_to draft_change_subject(change, conflict.record), conflict.record.search_url %>
+      <% else %>
+        <%= draft_change_subject(change, conflict.record) %>
+      <% end %>
+    </span>
+    <span class="small text-body-secondary draft-conflict-kind"><%= draft_change_kind(change) %></span>
+    <span class="badge rounded-pill text-bg-light border draft-conflict-state">
+      <%= t("drafts.conflicts.states.#{conflict.state}") %>
+    </span>
+  </div>
+
+  <div class="entity-description">
+    <div class="draft-conflict-mine">
+      <div class="fw-semibold"><%= t("drafts.conflicts.yours") %></div>
+      <% if yours.any? %>
+        <% yours.each do |label, value| %>
+          <div class="ps-3"><span class="fw-semibold"><%= label %>:</span> <%= value %></div>
+        <% end %>
+      <% else %>
+        <%# A remembered delete carries no payload, so there are no values to
+            compare and the row says what the change does instead of printing an
+            empty half. %>
+        <div class="ps-3"><%= t("drafts.conflicts.removes_record") %></div>
+      <% end %>
+    </div>
+
+    <div class="draft-conflict-theirs">
+      <div class="fw-semibold">
+        <%= conflict.state == :deleted ? t("drafts.conflicts.theirs_gone") : t("drafts.conflicts.theirs_now") %>
+      </div>
+      <% if conflict.state == :deleted %>
+        <%# The record is gone, so there is nothing live to show beside the
+            author's values: what "theirs" means here is that it stays gone, and
+            that is what the row states. %>
+        <div class="ps-3"><%= t("drafts.conflicts.deleted_record") %></div>
+      <% elsif current.any? %>
+        <% current.each do |label, value| %>
+          <div class="ps-3"><span class="fw-semibold"><%= label %>:</span> <%= value %></div>
+        <% end %>
+      <% else %>
+        <div class="ps-3"><%= t("drafts.conflicts.keeps_record") %></div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="small text-body-secondary draft-conflict-choice"><%= draft_conflict_choice(conflict) %></div>
+
+  <div class="d-flex gap-2 flex-wrap">
+    <%# The hidden field carries this row's answer from an earlier pass, and it
+        is rendered before the buttons so that pressing one of them overrides it
+        rather than being overridden by it: Rack keeps the last value of a
+        repeated key. %>
+    <%= hidden_field_tag "resolutions[#{change.id}]", answer if answer.present? %>
+    <%= button_tag t("drafts.conflicts.apply_theirs"),
+      type: "submit",
+      name: "resolutions[#{change.id}]",
+      value: "theirs",
+      class: "btn btn-outline-secondary" %>
+    <%= button_tag t("drafts.conflicts.apply_mine"),
+      type: "submit",
+      name: "resolutions[#{change.id}]",
+      value: "mine",
+      class: "btn btn-primary" %>
+  </div>
+</div>

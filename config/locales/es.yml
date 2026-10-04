@@ -428,6 +428,14 @@ es:
         one: "%{count} cambio recordado ya es visible."
         other: "%{count} cambios recordados ya son visibles."
       partially_applied: "%{applied} cambios ya son visibles. No se pudieron aplicar %{skipped}: los registros que nombran han cambiado desde que los recordaste, o el universo rechazó la escritura. Este borrador está cerrado y esos cambios siguen en él."
+      # Lo que el autor eligió dejar tal como está. Es una frase aparte que se
+      # añade a la de progreso, no un recuento dentro de ella: un cambio
+      # descartado a propósito no se ha omitido, no entra en `skipped`, no hace
+      # parcial la aplicación y contarlo en cualquiera de los dos diría que la
+      # aplicación falló cuando el autor simplemente decidió.
+      kept_theirs:
+        one: "1 cambio se ha quedado exactamente como está, porque elegiste lo de ellos."
+        other: "%{count} cambios se han quedado exactamente como están, porque elegiste lo de ellos."
       discarded: "El borrador se ha descartado. No se escribió nada."
       closed: "Ese borrador ya se aplicó o se descartó, así que no queda nada que hacer con él."
       editing_started: "Estás editando este universo. Los cambios que hagas se recuerdan hasta que los apliques."
@@ -509,6 +517,39 @@ es:
       no_values: "No se recordó ningún valor de campo para este cambio."
       empty_title: "Este borrador no recuerda ningún cambio"
       empty_description: "Aquí no hay nada que aplicar. Un borrador lo abre el primer cambio que recuerdas, así que este está vacío."
+    # La página que responde a la aplicación que detuvo. Una página de
+    # conflicto es una pregunta, así que cada fila muestra las dos mitades de la
+    # elección —lo que recordaste y lo que hay ahora— porque un botón que el
+    # autor no puede evaluar es un botón que se pulsa a ciegas. Las respuestas
+    # se publican de vuelta a `apply`, que es donde se leen; aquí no se guarda
+    # nada.
+    conflicts:
+      title: "Conflictos que resolver"
+      description: "Estos cambios no se pueden aplicar tal como están: los registros que nombran han cambiado desde que los recordaste. Elige, para cada uno, si gana tu cambio o lo que hay ahora."
+      back: "Todos los cambios pendientes"
+      submit: "Aplicar con estas elecciones"
+      yours: "Tu cambio"
+      theirs_now: "Su versión — lo que hay ahora"
+      theirs_gone: "Su versión — el registro sigue eliminado"
+      apply_theirs: "Aplicar lo de ellos"
+      apply_mine: "Aplicar lo mío"
+      removes_record: "Este cambio elimina el registro."
+      keeps_record: "El registro queda exactamente como está ahora."
+      deleted_record: "Alguien eliminó este registro después de que recordaras tu cambio."
+      # Los dos estados que son un conflicto, como el distintivo que nombra por
+      # qué está la fila aquí. `DraftConflictDetector::CONFLICT_REASONS` son las
+      # mismas dos palabras.
+      states:
+        moved: "Cambiado en otro sitio"
+        deleted: "Eliminado en otro sitio"
+      # Qué hace cada botón **para esta fila**. Tres frases porque hay tres
+      # decisiones: sobrescribir un registro que ha cambiado, devolver un
+      # registro que alguien eliminó y eliminar un registro que ha cambiado
+      # debajo del autor. Una sola frase para las tres sería errónea en dos.
+      choose:
+        moved: "Si eliges lo de ellos, se mantiene lo que hay ahora y se descarta tu cambio. Si eliges lo mío, tu cambio se escribe sobre lo que hay ahora."
+        deleted: "Si eliges lo de ellos, el registro sigue eliminado y se descarta tu cambio. Si eliges lo mío, el registro vuelve y tu cambio se escribe encima."
+        removed: "Si eliges lo de ellos, el registro se mantiene y se descarta tu borrado. Si eliges lo mío, el registro se elimina aunque haya cambiado."
     errors:
       # Un `record_type` es la mitad de una referencia polimórfica, así que un
       # tipo que el registro de contenido no conoce es una referencia que no
@@ -1916,16 +1957,20 @@ es:
   member:
     one: "miembro"
     other: "miembros"
-  # Los cambios recordados de un autor, y uno de ellos. Las dos páginas pasan
-  # estas palabras como `count_label:` junto al distintivo de su cabecera, así que
-  # el sustantivo junto a una cifra suelta es siempre una clave y no una palabra
-  # que la plantilla pluralice.
+  # Los cambios recordados de un autor, uno de ellos y un conflicto en el que
+  # uno de ellos está. Cada página pasa una de estas palabras como
+  # `count_label:` junto al distintivo de su cabecera, así que el sustantivo
+  # junto a una cifra suelta es siempre una clave y no una palabra que la
+  # plantilla pluralice.
   draft:
     one: "borrador"
     other: "borradores"
   change:
     one: "cambio"
     other: "cambios"
+  conflict:
+    one: "conflicto"
+    other: "conflictos"
 
   # El sujeto de un error de registro, con la clave `model_param` que un
   # controlador ya tiene. Los dos editores del navegador imprimen un mensaje

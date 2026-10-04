@@ -137,46 +137,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-22. **Collaboration system — Phase 3: Conflict resolution**
-
-    When applying a draft, detect conflicts and let the user choose "theirs" or "mine" per conflicting
-    record. Conflict detection is per-record (not per-field). Uses `updated_at` as a version stamp:
-    when a draft change is created, store the record's `updated_at`; at apply time, a mismatch means
-    someone else modified the record.
-
-    Five questions this phase has to settle before the slices below, all consequences of what the
-    remembering and the applier had to choose ([ADR
-    0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) and [ADR
-    0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)): whether a change's
-    **outcome** is stored on the row or only returned by the applier — nothing records it today, so a
-    draft's page cannot say which of its changes were written, and a list cannot tell an author which of
-    their remembered changes will be refused (findings 64 and 68 in
-    [`known_quirks.md`](known_quirks.md)); where an author's **unapplied** values live, because today they
-    are a `payload` on a closed draft that nothing reads back into an editor, so a reported conflict has
-    to be retyped (finding 63); whether a **delete answered "mine"** is a restore-then-edit or an
-    update-in-place, since the record is soft-deleted and `PositionedResourceOrder` normalized its
-    siblings when it went; and what a **pending badge in a list** has to say beyond its state — today a
-    record with three remembered edits carries one **Pending edit** badge and nothing about which fields
-    moved or how many changes are waiting on it (item 26 below).
-
-     The rule that says *whether* a change is in conflict is now a detector of its own,
-     `DraftConflictDetector`: it reports `:moved` and `:deleted` as the two conflicts, and `:missing`
-     and `:gone` as the answers that are not choices, and `DraftApplier` asks it instead of repeating
-     the comparison. A create is never asked about a version, because it names no record. What is
-     still missing is what an author does about each conflict.
-    - **Slice 3.2:** Conflict resolution UI. When applying a draft with conflicts, show a conflict
-      resolution page. For each conflict: show the record name and type, what the current user wants
-      to do, what "theirs" means, two buttons: "Apply theirs" (discard my change for this record) and
-      "Apply mine" (overwrite with my change). For "apply mine" on a delete conflict: restore the
-      record and apply the edit. For "apply mine" on an edit conflict: overwrite the current values
-      with the draft values. Tests: request tests, system test.
-    - **Slice 3.3:** Extend `app/services/draft_applier.rb`, which already writes a draft's changes
-      through the live mutation path, reports what it could not write, and closes the draft inside one
-      transaction (ADR 0021). This slice adds the user's choice for a conflicting change: "theirs"
-      discards it, "mine" applies it over the current values, and a delete conflict answered "mine"
-      restores the record first. The returned summary includes which changes were answered and how.
-      Tests: unit tests, integration tests.
-
 23. **Collaboration system — Phase 4: Wikipedia mode (end-to-end)**
 
     The full wikipedia flow works: start editing → make changes → apply → changes are live.
@@ -245,9 +205,10 @@ it has a useful destination and clear empty/loading/error states.
     for how much of it a row may read. Decide what the badge carries: the fields a remembered edit touched,
     a count of the changes on that record, or the draft's own page as the only place any of it is said. The
     last is the status quo and costs nothing; the first costs a per-row payload read, which is the trade in
-    finding 66, and the second is a number without a subject. This is the fifth question the conflict phase
-    has to answer before its resolution page can be built, recorded in the Phase 3 entry above; a decision
-    made here should be made once, not once per surface.
+    finding 66, and the second is a number without a subject. This is the fifth question the conflict
+    phase raised; its resolution page asks per record and never reaches a list row, so the phase
+    delivered without settling it and the decision stands here: it should be made once, not once per
+    surface.
 
 27. **What a pending record shows outside the list workspaces**
 
@@ -282,6 +243,15 @@ before expanding a feature task; the DataFactor report is directional evidence, 
 work order.
 
 ## FUTURE WORK
+- **Two accepted ADRs point at something this change moved.** [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md)
+  forecasts Phase 3's data model as per-change outcome storage, which the delivered conflict
+  resolution page does not do (findings 64 and 68 stay open), and
+  [ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) cites finding
+  63, which left [`known_quirks.md`](known_quirks.md) when the conflict page removed the cost of
+  retyping an unapplied change. Both decisions stand and only the pointers are stale, so the fix is
+  an annotation — a note on ADR 0021's Status line and one clause on ADR 0023's "pending create says
+  nothing about where it would go" bullet — not a rewrite of either body. Deferred by owner decision
+  on 2026-10-04.
 - **change universes to subdomains**. replace the /u/universe_slug for universe_slug.<website>.com
 - **Structured dialogue turns.** Replace or augment free-text Dialogue elements with ordered lines,
   speaker changes, parentheticals, and optional character attribution once the MVP reveals real usage.

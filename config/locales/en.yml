@@ -466,6 +466,14 @@ en:
         one: "%{count} remembered change is now live."
         other: "%{count} remembered changes are now live."
       partially_applied: "%{applied} changes are now live. %{skipped} could not be applied: the records they name have changed since you remembered them, or the universe refused the write. This draft is closed, and those changes are still listed on it."
+      # What the author chose to leave alone. It is a separate sentence added to
+      # the progress one rather than a count inside it, because a change dropped
+      # on purpose was not skipped: it is not in `skipped`, it does not make the
+      # apply partial, and folding it into either count would say the apply
+      # failed when the author simply decided.
+      kept_theirs:
+        one: "1 change was left exactly as it is now, because you chose theirs."
+        other: "%{count} changes were left exactly as they are now, because you chose theirs."
       discarded: "The draft was discarded. Nothing was written."
       closed: "That draft has already been applied or discarded, so there is nothing left to do with it."
       # The editing session. Starting says what the session *is* — a claim that
@@ -556,6 +564,37 @@ en:
       no_values: "No field values were remembered for this change."
       empty_title: "This draft remembers no changes"
       empty_description: "There is nothing here to apply. A draft is opened by the first change you remember, so this one is empty."
+    # The page that answers the apply it stopped. A conflict page is a question,
+    # so every row shows both halves of the choice — what the author remembered
+    # and what is there now — because a button an author cannot evaluate is a
+    # button they press at random. The answers are posted back to `apply`, which
+    # is where they are read; nothing here is stored.
+    conflicts:
+      title: "Conflicts to resolve"
+      description: "These changes cannot be applied as they are: the records they name have changed since you remembered them. Choose, for each one, whether your change or what is there now wins."
+      back: "All pending changes"
+      submit: "Apply with these choices"
+      yours: "Your change"
+      theirs_now: "Theirs — what is there now"
+      theirs_gone: "Theirs — the record stays deleted"
+      apply_theirs: "Apply theirs"
+      apply_mine: "Apply mine"
+      removes_record: "This change removes the record."
+      keeps_record: "The record is left exactly as it is now."
+      deleted_record: "Somebody deleted this record after you remembered your change."
+      # The two states that are a conflict, as the badge naming why the row is
+      # here. `DraftConflictDetector::CONFLICT_REASONS` is the same two words.
+      states:
+        moved: "Changed elsewhere"
+        deleted: "Deleted elsewhere"
+      # What each button does *for this row*. Three sentences because there are
+      # three decisions: overwriting a record that moved, bringing back a record
+      # somebody deleted, and deleting a record that moved underneath the author.
+      # One sentence covering all three would be wrong on two of them.
+      choose:
+        moved: "Choosing theirs keeps what is there now and drops your change. Choosing mine writes your change over what is there now."
+        deleted: "Choosing theirs leaves the record deleted and drops your change. Choosing mine brings the record back and writes your change onto it."
+        removed: "Choosing theirs keeps the record and drops your delete. Choosing mine removes the record even though it has changed."
     errors:
       # A `record_type` is a half of a polymorphic reference, so a type the
       # content registry does not know is a reference that resolves to nothing.
@@ -2007,15 +2046,19 @@ en:
   member:
     one: "member"
     other: "members"
-  # One author's remembered changes, and one of them. Both pages pass these as
-  # `count_label:` beside their page header's badge, so the noun beside a bare
-  # number is always a key rather than a word the template pluralizes.
+  # One author's remembered changes, one of them, and one conflict one of them
+  # is in. Each page passes one of these as `count_label:` beside its page
+  # header's badge, so the noun beside a bare number is always a key rather than
+  # a word the template pluralizes.
   draft:
     one: "draft"
     other: "drafts"
   change:
     one: "change"
     other: "changes"
+  conflict:
+    one: "conflict"
+    other: "conflicts"
 
   # The subject of a record-level error, keyed by the `model_param` a controller
   # already holds. Both browser editors print a `base` message as a sentence

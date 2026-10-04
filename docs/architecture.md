@@ -223,11 +223,14 @@ implemented; [conventions.md](conventions.md#controllers) owns the call each mut
 `DraftsController` is where those remembered changes are read and acted on. It is the only controller
 whose every action requires a session, because a draft belongs to a person, and it is read as its own
 author's inside the universe the request has already authorized rather than through CanCan — `Draft` is
-deliberately not a content class. Applying writes through the same services and the same model validations
-the live path uses, reports a change it could not write instead of writing it, and closes the draft either
-way; [conventions.md](conventions.md#the-drafts-page) owns the page and the two controls, and
-[ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) owns why a conflict is reported
-rather than resolved in this phase.
+deliberately not a content class. Applying writes through the same services and the same model
+validations the live path uses, and closes the draft either way; a change it cannot write because the
+record has moved or been deleted **stops the apply and is asked about first**, on a `drafts/conflicts`
+page that answers `422` and posts back to the same action, and an unanswered conflict is reported
+rather than written. [conventions.md](conventions.md#the-drafts-page) owns that page and the two
+controls on a draft's own page, and
+[ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) owns why the draft closes
+either way.
 
 `DraftEditingController` is the universe page's **Start editing** / **Stop editing** control: a singleton
 `resource` with a POST and a DELETE, the same shape `resource :session` uses. It answers the HTML flow —

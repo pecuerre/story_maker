@@ -122,6 +122,113 @@ class DraftApplierTest < ActiveSupport::TestCase
     assert_equal %i[moved deleted missing gone unplaceable refused], DraftApplier::SKIP_REASONS
   end
 
+  # The author's answers, as this service sees them. Which *states* there are is
+  # `test/services/draft_conflict_detector_test.rb`, and what the resolution page
+  # shows for each is `test/controllers/drafts_controller_test.rb`.
+
+  test "the two answers are the only two a caller may give" do
+    assert_equal %w[mine theirs], DraftApplier::ANSWERS
+  end
+
+  test "an update answered with mine is written over a record that moved" do
+    draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
+    change = draft.draft_changes.first
+    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+
+    result = DraftApplier.new(draft, answers: { change.id => "mine" }).apply
+
+    assert_equal "Renamed", @character.reload.name
+    # "Overwrite with my change" is the change's own payload. A conflict is per
+    # record, not per field, and the applier writes what the author remembered —
+    # a field they never submitted is still the other editor's.
+    assert_equal "Also changed by somebody else", @character.description
+    assert_predicate result, :complete?
+    assert_equal 1, result.applied_count
+    assert_equal({ change.id => "mine" }, result.answered)
+    assert_equal 0, result.kept_count
+  end
+
+  test "an update answered with theirs is dropped, and is not reported as a failure" do
+    draft = draft_with(
+      change(action: "update", record: @character, payload: { "name" => "Renamed" }),
+      change(action: "create", type: "Character", payload: { "name" => "Other", "universe_id" => @universe.id })
+    )
+    change = draft.draft_changes.first
+    @character.update!(name: "Renamed by somebody else")
+
+    result = DraftApplier.new(draft, answers: { change.id => "theirs" }).apply
+
+    assert_equal "Renamed by somebody else", @character.reload.name
+    assert_equal 1, result.applied_count, "the rest of the draft is still written"
+    # The whole point of `answered`: a change the author chose to drop is neither
+    # written nor refused, so it must not land in `skipped` and make the apply
+    # read as partial.
+    assert_equal 0, result.skipped_count
+    assert_predicate result, :complete?
+    assert_equal({ change.id => "theirs" }, result.answered)
+    assert_equal 1, result.kept_count
+  end
+
+  test "an update onto a record somebody deleted, answered with mine, restores it with the change" do
+    draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
+    change = draft.draft_changes.first
+    @character.soft_delete
+
+    result = DraftApplier.new(draft, answers: { change.id => "mine" }).apply
+
+    assert_predicate result, :complete?
+    assert_not_predicate @character.reload, :deleted?
+    assert_equal "Renamed", @character.name
+    # The siblings were renumbered when the record went, so coming back is a
+    # re-entry into that sequence: the positions left behind must still be one
+    # contiguous run rather than a restored row sharing a number with a live one.
+    positions = @universe.characters.reorder(:position, :id).pluck(:position)
+    assert_equal (0...positions.size).to_a, positions.sort
+  end
+
+  test "an answer that is not one of the two is not an instruction to write" do
+    draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
+    change = draft.draft_changes.first
+    @character.update!(name: "Renamed by somebody else")
+
+    result = DraftApplier.new(draft, answers: { change.id => "perhaps" }).apply
+
+    assert_equal "Renamed by somebody else", @character.reload.name
+    assert_equal :moved, result.skipped.first.reason
+    assert_empty result.answered
+  end
+
+  test "an answer for a change nothing conflicts with is not an answer at all" do
+    # The applier consults an answer only for a conflict, and a conflict that is
+    # not there any more means the record's version is the one the change was
+    # remembered against — the record looks exactly as the author last saw it, so
+    # writing the change is what they wanted before the conflict appeared, and
+    # dropping it would be the applier second-guessing a button they pressed.
+    draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
+    change = draft.draft_changes.first
+
+    result = DraftApplier.new(draft, answers: { change.id => "theirs" }).apply
+
+    assert_equal "Renamed", @character.reload.name
+    assert_equal 1, result.applied_count
+    assert_predicate result, :complete?
+    assert_empty result.answered
+  end
+
+  test "called without answers, a conflict is reported rather than written" do
+    # The conservative direction the whole rule inherits from `VersionStamp`, and
+    # the behaviour every caller that is not the resolution page gets: an
+    # unanswered conflict is reported, never guessed at.
+    draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
+    @character.update!(name: "Renamed by somebody else")
+
+    result = DraftApplier.new(draft).apply
+
+    assert_equal :moved, result.skipped.first.reason
+    assert_equal "Renamed by somebody else", @character.reload.name
+    assert_empty result.answered
+  end
+
   test "a create whose stored scope is another universe is unplaceable rather than written here" do
     draft = draft_with(change(action: "create", type: "Character",
       payload: { "name" => "Out of place", "universe_id" => universes(:universe_two).id }))

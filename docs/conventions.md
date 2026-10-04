@@ -438,11 +438,32 @@ every action requires a session, `index` and `show` are reads the universe polic
 and the two controls are rendered only while `Draft#open?`, so an applied or discarded draft offers
 nothing to do.
 
-**Two pages, one list and one draft.** `/u/:universe_slug/drafts` lists the reader's own drafts in that
-universe with the actionable one first, because history sorted above the pending work would push the
-draft the reader came for out of the list; `/u/:universe_slug/drafts/:id` shows one draft's changes in
-the order they were remembered. There is no `new` page and no `create`: a draft is opened by the
-remembering path (`Draft.open_for!`), never by an author.
+**Three pages: one list, one draft, and the conflicts an apply stops on.** `/u/:universe_slug/drafts`
+lists the reader's own drafts in that universe with the actionable one first, because history sorted
+above the pending work would push the draft the reader came for out of the list;
+`/u/:universe_slug/drafts/:id` shows one draft's changes in the order they were remembered. There is
+no `new` page and no `create`: a draft is opened by the remembering path (`Draft.open_for!`), never by
+an author. The third page is not reached by a link — it is what `apply` answers when the draft it is
+applying holds a conflict, and it posts back to the same action (below).
+
+**A conflict stops the apply and is asked about instead of written or skipped.** `apply` runs
+`DraftConflictDetector` on *this* request, before anything else, and if it finds a conflict it renders
+`drafts/conflicts` as a `422` — an apply being refused until it is told what to do — with one row per
+conflict: the record and its kind, the state that put it here, the author's remembered values beside
+the record's current ones under the same labels, one sentence saying what each of the two buttons
+would do *to that row*, and then **Apply theirs** / **Apply mine**. Nothing is written until every
+conflict has an answer, because a half-applied draft and a remembered create are the duplicate-write
+hazard [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) closes.
+
+The answers are **per-request parameters, never stored**: one form holds every conflict, each row's
+two buttons carry that row's answer in their `name`/`value`, and an answer decided on an earlier pass
+comes back in a hidden field rendered *before* its row's buttons — Rack keeps the last value of a
+repeated key, so re-pressing a row overrides rather than loses. Only values `DraftApplier::ANSWERS`
+holds are read, and only for a change that still conflicts on the request that uses them, which is
+why an answer is an instruction to write over somebody else's record and neither the controller nor
+the applier may skip its half of that check. A change answered `"theirs"` is dropped on purpose: it
+is reported in `Result#answered`, not in `skipped`, so the apply is not partial and the flash adds
+`drafts.flash.kept_theirs` as a sentence of its own rather than as a count in the progress one.
 
 **A row states what a change says, and never that it was written.** Each change names its action
 (create, update, delete), the record it is about, and the values it carries. A remembered create names

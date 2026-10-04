@@ -1,6 +1,10 @@
 # ADR 0021: Applying a draft writes through the live mutation path, and a change that has moved is reported rather than asked about
 
-- **Status:** Accepted
+- **Status:** Accepted — **annotated 2026-10-04.** Phase 3's resolution page now exists, so a
+  conflict is asked about before the write rather than only reported after it: `apply` renders
+  `drafts/conflicts` as a `422` and waits for an answer per conflicting change. What this ADR
+  decided is untouched and still holds — the draft closes either way, an unanswered conflict is
+  reported rather than written, and the run stays one transaction.
 - **Date:** 2026-10-03
 - **Related:** [`../conventions.md`](../conventions.md),
   [`../architecture.md`](../architecture.md),

@@ -144,7 +144,7 @@ class TranslationsTest < ActiveSupport::TestCase
     # they are used. A root noun that stopped resolving would raise in the test
     # environment and render "translation missing" in production — on every count
     # badge in the application.
-    nouns = %w[character entry event item location member ownership record
+    nouns = %w[character conflict entry event item location member ownership record
                relation scene section story tag universe]
 
     %i[en es].each do |locale|

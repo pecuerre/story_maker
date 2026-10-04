@@ -749,6 +749,22 @@ $um-search-match: #ffc107;
   font-size: .75rem;
 }
 
+// One row of the conflict page. `.entity-description` clamps a list row to two
+// lines so a long record stays scannable, which is right for a row the reader is
+// browsing and wrong for the one row they are deciding on: here the clamp would
+// hide the record's current values behind the very ellipsis that makes them
+// worth showing, so this row shows everything it says. The two halves are spaced
+// apart rather than set side by side, because a delete has one half and a
+// restored record will have several lines in each.
+.draft-conflict .entity-description {
+  display: block;
+  overflow: visible;
+
+  > div + div {
+    margin-top: .5rem;
+  }
+}
+
 .sidebar-dropdown-toggle {
   width: 100%;
   border: 0;

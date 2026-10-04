@@ -29,6 +29,91 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-04
 
+- **[added]** **Collaboration phase 3, slices 3.2 and 3.3: a conflicting apply asks before it writes, and
+  `DraftApplier` obeys the answer.** `DraftsController#apply` renders `drafts/conflicts` when the detector
+  finds one, and the applier takes an answer per conflicting change — `"mine"` writes the remembered values
+  over what is there now, `"theirs"` leaves the record alone — with `Result#answered` saying which changes
+  were decided and how. What follows is the reasoning the code's own comments do not carry, and the
+  verification.
+
+  **The question is the apply's own `422`, answered by a second POST to the same action.** Re-rendering at
+  `422` is this application's HTML-flow answer to a refused submission (`MessagesController` is the other
+  example), and that is what this is: an apply refused until it is told what to do. The alternative was a
+  `GET` conflicts action beside it, and two actions would each have to decide what a conflict is — the
+  detector would run once to show the page and once more to write it, with only a URL holding the two
+  answers together. With one action, the conflicts the author sees and the conflicts the apply acts on are
+  the detector's answer *on that request*: a record that moves while the page is open comes back on the
+  page rather than being skipped silently, and an answer for a conflict that has since vanished is dropped
+  rather than honored, because a record whose version equals the base is what the author wanted written in
+  the first place. `turbo-rails` 2.0.23 renders a form submission's `422` body in place of the page, which
+  the system test proves in a real browser: press Apply, read the conflicts, answer, and the same journey
+  continues.
+
+  **One form holds every conflict, and the order of the fields inside it is what makes a re-press work.**
+  Each row's two buttons are themselves `resolutions[<id>]` inputs, and a row decided on an earlier pass
+  carries that answer in a hidden field rendered *before* its buttons: Rack keeps the last value of a
+  repeated key, so the button the author presses wins and the carried answer is only the fallback. The
+  hidden field rendered after the buttons would have been the quiet version of this bug — the page accepts
+  the answer, then silently reverts it to the previous one, with nothing failing and the wrong change
+  written. The single form is the other half: a second submit would be a second apply of a draft that has
+  already closed.
+
+  **An answer is filtered twice and stored nowhere.** The controller keeps only values in
+  `DraftApplier::ANSWERS` and only for changes this page's detector still calls conflicts, so a hidden
+  field naming a change that no longer conflicts is an answer to a question nobody asked; the applier
+  drops any answer for a change it is not applying, because an answer is an instruction to write over
+  somebody else's record and neither half may be skipped because the other looked safe. Nothing persists
+  either: a remembered change is append-only (ADR 0019), and an answer is a decision about one run rather
+  than a statement the author observed, so it belongs to that run — a run that fails leaves a draft that
+  simply asks again.
+
+  **"Apply mine" on a deleted record is one write, not a restore followed by an edit.** `restore` runs with
+  `validate: false`, so restoring first and then writing the payload could resurrect a record the live path
+  then refused, leaving the author's answer half-made. Folding `deleted_at: nil` into the same attributes
+  means the model's own validations decide both halves in one `save`, and a refusal leaves the record
+  exactly as somebody else left it. The ordered case also carries the record's own `position`, which is now
+  a number inside a sequence `PositionedResourceOrder#destroy` renumbered without a gap: handing that number
+  back to `PositionedResourceOrder#update` re-inserts the record at that index and renumbers the rest, which
+  is the one way to bring it back without a duplicate position mid-sequence. This settles the backlog's
+  "restore-then-edit or update-in-place" question by making them the same write.
+
+  **A change the author chose to drop is answered, not skipped, and the flash reads accordingly.**
+  `Result#skipped` excludes `Outcome#kept?`, so `complete?` keeps meaning "nothing is unexplained" rather
+  than "nothing was dropped", and `answered` / `answered_count` / `kept_count` are what the controller turns
+  into a second sentence after the progress one. Where every conflict was answered `"theirs"`, the progress
+  sentence would announce that zero changes are now live — an answer to a question the author did not ask,
+  burying the one they did — so `only_keeping?` suppresses it and the kept sentence stands alone, unless
+  something was also refused, which is news the partial sentence has to carry either way.
+
+  **The row's comparison was invisible until the stylesheet said so.** `.entity-description` clamps a list
+  row's description to two lines (`-webkit-line-clamp`), which is right for a row and wrong for two
+  attribute lists being compared: the system test's screenshot showed the "theirs" half cut off after two
+  lines, so the conflict row un-clamps its own description and stacks the two halves with a gap. Built with
+  `bun run build:css`.
+
+  **What stayed open, on purpose.** Nothing stores an outcome per change, so an applied draft still cannot
+  say which of its changes were written (finding 64) and a list still cannot know which remembered changes
+  will be refused (finding 68); both now name the badge decision by its heading rather than by a phase that
+  no longer exists in the backlog. That decision — what a pending badge says beyond its state — is the one
+  of the phase's five questions its resolution page never needed, since the page asks per record and never
+  reaches a list row. Finding 63 left `known_quirks.md` with this change: the values a conflict would have
+  made the author retype are printed on the page and written by `"mine"`. Two stale pointers this exposed —
+  ADR 0021 forecasting per-change outcome storage as Phase 3's data model, and ADR 0023 citing finding 63 —
+  were raised with the owner and deferred to `backlog.md`'s FUTURE WORK rather than annotated in place.
+
+  **Verification.** `bin/rails test` — 1767 runs, 11574 assertions, 0 failures, 0 errors, 10 skips (the
+  pre-existing skips), run again after the documentation edits above. `test/controllers/drafts_controller_test.rb`
+  grew to 34 tests and holds the page, both answers, the restore-on-delete, a delete whose record changed
+  underneath, carried hidden answers, an invalid answer, and a conflict whose record was deleted while the
+  page was open; `test/services/draft_applier_test.rb` grew to 19 and holds each answer's write, the two
+  cases where an answer is not an instruction, the call with no answers at all, and the shared vocabulary;
+  `test/system/draft_workflow_test.rb` grew to 5 and was run for the journey — press Apply, read the
+  conflicts, answer each, see the record live; `test/models/translations_test.rb` holds the new `en`/`es`
+  strings and the new root noun. Also run: `bin/rubocop` (422 files, no offenses), `bun run check:js`
+  (203 tests), `test/docs_test.rb`. Not run: the rest of `bin/rails test:system`, `bin/brakeman`,
+  `bin/bundler-audit`, and `bin/importmap audit` — none of them is touched by a view, a helper, a service,
+  and translated strings.
+
 - **[added]** **Collaboration phase 3, slice 3.1: conflict detection is its own service, and `DraftApplier`
   asks it.** `DraftConflictDetector` answers, for every change in a draft, whether it can still be written
   and what the record it names looks like now. The slice's premise was that the rule "already exists as
@@ -80,6 +165,12 @@ are linked rather than repeated, so there is one place to keep them current.
   against each content model's own columns. `bin/rubocop` clean over 355 files, `bin/brakeman` 0 warnings,
   `test/docs_test.rb` green. Not run: `bin/rails test:system` and `bun run check:js` — this slice adds no
   view, no JavaScript, and no route.
+
+- **[fixed]** **A remembered change whose record has moved is no longer reported once and then closed with
+  its draft.** Known finding 63 is resolved: the conflicts page asks before the write, so the author chooses
+  instead of retyping, and a conflict they never answered still reports rather than writes. The finding's
+  own text moves here with it — the draft still closes either way, which is deliberate and load-bearing
+  (ADR 0021), so what changed is the cost, not the closing.
 
 ### 2026-10-03
 

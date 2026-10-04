@@ -59,6 +59,37 @@ class RecordTargetTest < ActiveSupport::TestCase
     end
   end
 
+  # The other question about the same reference: not "is it visible" but "is the row
+  # still there". `DraftConflictDetector` needs the difference, because a record
+  # somebody has deleted and a record that was never there are different answers to
+  # "has this change moved?" — and `find` collapses them into one.
+
+  test "find_including_deleted resolves a soft-deleted record that find refuses" do
+    @character.soft_delete
+
+    record = RecordTarget.find_including_deleted(record_type: "Character", record_id: @character.id)
+
+    assert_equal @character, record
+    assert RecordTarget.soft_deleted?(record)
+    assert_nil RecordTarget.find(record_type: "Character", record_id: @character.id),
+      "the ordinary answer is unchanged: a deleted row is not a resolvable reference"
+  end
+
+  test "find_including_deleted refuses what find refuses, and asks a model that cannot be deleted" do
+    assert_nil RecordTarget.find_including_deleted(record_type: "Nope", record_id: @character.id)
+    assert_nil RecordTarget.find_including_deleted(record_type: nil, record_id: nil)
+    assert_nil RecordTarget.find_including_deleted(record_type: "Character", record_id: 0)
+    assert_equal @character, RecordTarget.find_including_deleted(record_type: "Character", record_id: @character.id)
+
+    # A `Photo` is destroyed rather than marked, so it answers as though nothing
+    # could be deleted — and `soft_deleted?` says so without reading a column the
+    # model does not have.
+    photo = Photo.new(universe: @universe, name: "portrait.png")
+    assert_not_respond_to Photo, :with_deleted
+    assert_not RecordTarget.soft_deleted?(photo)
+    assert_nil RecordTarget.find_including_deleted(record_type: "Photo", record_id: photo.id)
+  end
+
   test "find! refuses an unknown type, an unknown id, and a blank reference alike" do
     [
       { record_type: "Nope", record_id: @character.id },

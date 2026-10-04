@@ -159,14 +159,11 @@ it has a useful destination and clear empty/loading/error states.
     record with three remembered edits carries one **Pending edit** badge and nothing about which fields
     moved or how many changes are waiting on it (item 26 below).
 
-    - **Slice 3.1:** Create `app/services/draft_conflict_detector.rb`. The rule itself already
-       exists as `DraftApplier`'s skip decision; this slice promotes it to a detector that reports each
-       conflict with its change and the record's current state, which is what the resolution page shows.
-       For each draft change:
-      **Create** → no conflict possible. **Update** → if record's `updated_at` != `base_version` →
-      CONFLICT; if record is soft-deleted → CONFLICT. **Delete** → if record's `updated_at` !=
-      `base_version` → CONFLICT; if record is already soft-deleted → no conflict (already gone).
-      Tests: unit tests for all conflict scenarios.
+     The rule that says *whether* a change is in conflict is now a detector of its own,
+     `DraftConflictDetector`: it reports `:moved` and `:deleted` as the two conflicts, and `:missing`
+     and `:gone` as the answers that are not choices, and `DraftApplier` asks it instead of repeating
+     the comparison. A create is never asked about a version, because it names no record. What is
+     still missing is what an author does about each conflict.
     - **Slice 3.2:** Conflict resolution UI. When applying a draft with conflicts, show a conflict
       resolution page. For each conflict: show the record name and type, what the current user wants
       to do, what "theirs" means, two buttons: "Apply theirs" (discard my change for this record) and

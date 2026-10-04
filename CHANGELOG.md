@@ -42,6 +42,9 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **`DraftConflictDetector` reports whether each remembered change can still be written.** It names the two
+  conflicts — a record that moved and a record somebody has deleted — separately from a change that is
+  already gone and one whose record does not resolve, and it carries the record's current state.
 - **A remembered create shows in the list it would have joined, badged Draft; a remembered edit and a
   remembered delete badge the record that is still there.** All nine list workspaces carry it, and a row is
   never rewritten to match its badge. See [ADR 0023](docs/adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
@@ -52,6 +55,10 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **`DraftApplier` asks the detector instead of repeating the version comparison**, and its skip reasons are
+  named: an update onto a soft-deleted record is now reported as `deleted` rather than as `missing`, and a
+  delete of an already-deleted record as `gone`. `RecordTarget.find_including_deleted` and
+  `RecordTarget.soft_deleted?` are the one reader of that question.
 - **A list whose only content is a remembered create no longer says it is empty.** Every workspace's
   empty-state guard counts pending rows, including the taxonomy tree's.
 - **A remembered Scene that names a section is no longer listed as ungrouped**, and a filtered Scenes list

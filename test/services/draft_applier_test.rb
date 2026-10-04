@@ -86,6 +86,42 @@ class DraftApplierTest < ActiveSupport::TestCase
     assert_equal "Renamed", @character.reload.name, "the change the universe could write is still written"
   end
 
+  # What the detector decides, as this service sees it: a change it does not call
+  # writable is reported under its own state and nothing is written. Which
+  # *states* there are, and why a record somebody has deleted is not the same answer
+  # as a record that was never there, is `test/services/draft_conflict_detector_test.rb`.
+
+  test "an update whose record somebody has deleted is reported as deleted, not written onto a hidden row" do
+    draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
+    @character.soft_delete
+
+    result = DraftApplier.new(draft).apply
+
+    assert_equal :deleted, result.skipped.first.reason
+    assert_equal "Character one", @character.reload.name, "a deleted record is not written through"
+    assert_predicate @character, :deleted?, "and it stays deleted"
+    assert_predicate draft.reload, :applied?
+  end
+
+  test "a delete whose record is already deleted needs no write and is reported rather than claimed" do
+    location = locations(:location_one)
+    draft = draft_with(change(action: "delete", record: location))
+    location.soft_delete
+
+    result = DraftApplier.new(draft).apply
+
+    # Nothing was written, so it is not claimed as applied: the applier reports what
+    # it wrote. The author's intent already holds, which is why the detector does not
+    # call this a conflict.
+    assert_equal :gone, result.skipped.first.reason
+    assert_equal 0, result.applied_count
+    assert_predicate location.reload, :deleted?
+  end
+
+  test "every skip reason is one this service names" do
+    assert_equal %i[moved deleted missing gone unplaceable refused], DraftApplier::SKIP_REASONS
+  end
+
   test "a create whose stored scope is another universe is unplaceable rather than written here" do
     draft = draft_with(change(action: "create", type: "Character",
       payload: { "name" => "Out of place", "universe_id" => universes(:universe_two).id }))

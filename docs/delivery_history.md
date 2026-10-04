@@ -27,6 +27,60 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-04
+
+- **[added]** **Collaboration phase 3, slice 3.1: conflict detection is its own service, and `DraftApplier`
+  asks it.** `DraftConflictDetector` answers, for every change in a draft, whether it can still be written
+  and what the record it names looks like now. The slice's premise was that the rule "already exists as
+  `DraftApplier`'s skip decision"; it did not, quite, and closing that gap is most of what this change is.
+
+  **The rule as written could not have been implemented from where the code was.** The backlog's table says
+  an update onto a soft-deleted record is a conflict and a delete of an already-deleted record is not — two
+  different answers about the same row. `DraftApplier` could not tell them apart: it resolved the record
+  through `RecordTarget.find`, whose default scope hides soft-deleted rows, so both cases arrived as the same
+  `:missing`. That conflation is deliberate and documented in two places — `DraftChange`'s `named_record_resolves`
+  validation and the `DraftChange` row in [`data_model.md`](data_model.md) both state that an unknown id and a
+  soft-deleted record are one "does not exist" — and it is the right answer for a *validation*: a change that
+  names a record which is gone cannot be applied. It is the wrong answer for a *conflict detector*, because a
+  record somebody has deleted and a record that was never there are different situations and the author acts
+  on them differently. So the detector resolves through a second `RecordTarget` entry point,
+  `find_including_deleted`, rather than through a query of its own: a stored `record_type`/`record_id` pair
+  still gets turned into a record in exactly one place, and the registry gate and universe check are not
+  re-implemented by a second reader.
+
+  **Deletion is asked before the version, and the order is load-bearing rather than stylistic.** `soft_delete`
+  writes `deleted_at` *and* moves `updated_at`, so a record somebody has already deleted satisfies "the
+  version changed" as well. A detector that checked the stamp first would report every already-deleted record
+  as `:moved`, which makes the backlog's "already gone, no conflict" row unreachable and tells the author
+  their delete collided when the record they wanted gone is gone. The cost of the order is that an update
+  onto a deleted record is reported as `:deleted` rather than `:moved` — accepted deliberately, because
+  "the record is gone" is the more useful of the two and it is the one the resolution page has to act on
+  (restore, or let it go).
+
+  **A delete whose record is already deleted is skipped, not claimed.** The author's intent already holds,
+  so it is not a conflict and there is nothing to resolve; but nothing was written either, and `DraftApplier`
+  reports what it wrote. Counting it as applied would be a claim the service cannot back, and the draft's
+  page would inherit it. It is reported as `:gone` among `SKIP_REASONS`, which means a draft whose only
+  unwritten change is an already-deleted delete reports itself as partially applied. The flash copy already
+  covers it — a change could not be applied because the record has changed since it was remembered — so no
+  translated string changed.
+
+  **What stayed open, on purpose.** Nothing stores an outcome per change (finding 64), so an applied draft
+  still cannot say which of its changes were written, and a remembered change's values still have to be
+  retyped by hand after a conflict (finding 63); both are Phase 3's remaining slices, and the phase's five
+  open questions are listed in [`backlog.md`](backlog.md). The detector is deliberately not called from a
+  list workspace or from the sidebar's pending panel: resolving a record per change is a query per row
+  (finding 66), and detection belongs at apply time, where the rows are one draft.
+
+  **Verification.** `bin/rails test` — 1753 tests, 11451 assertions, 0 failures, 0 errors, 10 skips (the
+  pre-existing skips). `test/services/draft_conflict_detector_test.rb` is new and holds every row of the rule
+  including the two that are not conflicts; `test/services/draft_applier_test.rb` gained the two states whose
+  behaviour changed (`:deleted`, `:gone`) and a test holding the two services' vocabularies against each
+  other; `test/models/record_target_test.rb` covers `find_including_deleted` and holds soft-deletability
+  against each content model's own columns. `bin/rubocop` clean over 355 files, `bin/brakeman` 0 warnings,
+  `test/docs_test.rb` green. Not run: `bin/rails test:system` and `bun run check:js` — this slice adds no
+  view, no JavaScript, and no route.
+
 ### 2026-10-03
 
 - **[added]** **Collaboration phase 2, slice 2.4: an editing session on the universe page, and one open

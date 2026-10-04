@@ -178,7 +178,12 @@ class AbilityTest < ActiveSupport::TestCase
       # somebody else's unfinished work — so a draft is read as its owner's, inside
       # the universe the request has already authorized.
       "Draft" => "one author's pending changes, authorized through its owner and universe",
-      "DraftChange" => "reachable only through its draft's owner and universe scope"
+      "DraftChange" => "reachable only through its draft's owner and universe scope",
+      # What one change's apply decided. It is read by `DraftsController`, which has
+      # already resolved the draft as its own author's, and by nothing else: no
+      # action authorizes it, so registering it would give CanCan a rule for a row
+      # nobody reaches directly.
+      "DraftChangeOutcome" => "read on a draft's own page, authorized through its draft"
     }
 
     # Zeitwerk loads a model the first time something names it, so a model this

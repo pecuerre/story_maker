@@ -227,7 +227,11 @@ deliberately not a content class. Applying writes through the same services and 
 validations the live path uses, and closes the draft either way; a change it cannot write because the
 record has moved or been deleted **stops the apply and is asked about first**, on a `drafts/conflicts`
 page that answers `422` and posts back to the same action, and an unanswered conflict is reported
-rather than written. [conventions.md](conventions.md#the-drafts-page) owns that page and the two
+rather than written. A closed draft is still served by `show` — it is history, not a 404 — and reports
+the run it recorded: the moment it closed and its tally on both pages, one stored outcome per change on
+its own page, all written by the applier inside the same transaction as the status change
+([ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)).
+[conventions.md](conventions.md#the-drafts-page) owns that page, its history, and the two
 controls on a draft's own page, and
 [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) owns why the draft closes
 either way.

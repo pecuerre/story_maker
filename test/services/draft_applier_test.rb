@@ -122,6 +122,125 @@ class DraftApplierTest < ActiveSupport::TestCase
     assert_equal %i[moved deleted missing gone unplaceable refused], DraftApplier::SKIP_REASONS
   end
 
+  # What the run leaves behind. The history these rows and columns make is
+  # `drafts_controller_test.rb`'s to read; what is only answerable here is that the
+  # applier writes them at all, that it writes them from the same `Result` it
+  # returns, and that the stored vocabulary cannot drift from the one this service
+  # reports under.
+
+  test "the run stores the moment, the tally, and one outcome per change" do
+    draft = draft_with(
+      change(action: "create", type: "Character", payload: { "name" => "First", "universe_id" => @universe.id }),
+      change(action: "update", record: @character, payload: { "name" => "Renamed" })
+    )
+
+    result = DraftApplier.new(draft).apply
+
+    draft.reload
+    assert_predicate draft, :closed?
+    assert_not_nil draft.closed_at, "a closed draft says when it stopped being actionable"
+    # The columns and the rows are the same fact written twice, so they are compared
+    # rather than trusted: a summary counted separately from the outcomes could
+    # disagree with them, and a draft's list row and its page would then print
+    # different runs.
+    assert_equal result.applied_count, draft.applied_count
+    assert_equal result.skipped_count, draft.skipped_count
+    assert_equal result.kept_count, draft.kept_count
+    assert_equal draft.draft_changes.count, draft.draft_change_outcomes.count
+    assert_equal [ "written", "written" ], draft.draft_change_outcomes.order(:draft_change_id).pluck(:state)
+  end
+
+  test "an outcome says why a change was not written, and the draft's counts agree with the rows" do
+    draft = draft_with(
+      change(action: "update", record: @character, payload: { "name" => "Renamed" }),
+      # A create the live path will refuse: remembered without validation (ADR 0020),
+      # so it exists as a row and cannot be written.
+      change(action: "create", type: "Character", payload: { "name" => "", "universe_id" => @universe.id })
+    )
+
+    DraftApplier.new(draft).apply
+
+    draft.reload
+    outcomes = draft.draft_change_outcomes.order(:draft_change_id)
+    assert_equal [ "written", "refused" ], outcomes.pluck(:state)
+    assert_equal [ nil, nil ], outcomes.pluck(:answer), "nothing here was a conflict the author had to answer"
+    assert_equal 1, draft.applied_count
+    assert_equal 1, draft.skipped_count
+    assert_equal 0, draft.kept_count
+    # The three predicates a row is drawn by are the applier's own, so the badge a
+    # draft's page prints and the count its history reports cannot disagree.
+    assert_equal [ true, false ], outcomes.map(&:written?)
+    assert_equal [ false, false ], outcomes.map(&:kept?)
+    assert_equal [ false, true ], outcomes.map(&:skipped?)
+  end
+
+  test "a change the author answered with theirs is stored as their decision, not as a refusal" do
+    draft = draft_with(
+      change(action: "update", record: @character, payload: { "name" => "Renamed" }),
+      change(action: "create", type: "Character", payload: { "name" => "First", "universe_id" => @universe.id })
+    )
+    conflicting = draft.draft_changes.first
+    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+
+    result = DraftApplier.new(draft, answers: { conflicting.id => "theirs" }).apply
+
+    draft.reload
+    kept = draft.draft_change_outcomes.find_by!(draft_change: conflicting)
+    # The state is still the conflict that put the change there and the answer says
+    # what the author did about it: one column would have to answer two questions.
+    assert_equal "moved", kept.state
+    assert_equal "theirs", kept.answer
+    assert_predicate kept, :kept?
+    assert_not_predicate kept, :written?
+    assert_not_predicate kept, :skipped?
+    assert_equal 1, draft.applied_count
+    assert_equal 0, draft.skipped_count
+    assert_equal 1, draft.kept_count
+    assert_equal result.kept_count, draft.kept_count
+  end
+
+  test "an answer of mine is stored beside a written state, because it was written" do
+    draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
+    conflicting = draft.draft_changes.first
+    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+
+    DraftApplier.new(draft, answers: { conflicting.id => "mine" }).apply
+
+    outcome = draft.reload.draft_change_outcomes.find_by!(draft_change: conflicting)
+    assert_equal "written", outcome.state
+    assert_equal "mine", outcome.answer
+    assert_predicate outcome, :written?
+  end
+
+  test "a failed run leaves no outcome behind and the draft exactly as it was" do
+    draft = draft_with(change(action: "create", type: "Character",
+      payload: { "name" => "First", "universe_id" => @universe.id }))
+    draft.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Second", "universe_id" => @universe.id, "no_such_column" => 1 })
+
+    assert_raises ActiveModel::UnknownAttributeError do
+      DraftApplier.new(draft).apply
+    end
+
+    draft.reload
+    # The run is one transaction with the draft's own status change (ADR 0021), so a
+    # failure cannot leave a closed draft holding a tally for writes that were
+    # rolled back.
+    assert_predicate draft, :open?
+    assert_nil draft.closed_at
+    assert_equal 0, draft.applied_count
+    assert_empty draft.draft_change_outcomes
+    assert_nil Character.find_by(name: "First"), "the first write rolled back with the run"
+  end
+
+  test "every state a row may hold is one this service reports under" do
+    # The stored vocabulary is derived from the applier's own, so a reason added to
+    # `SKIP_REASONS` and not to the model would be a reason no history could print.
+    # This is the guard that makes the derivation worth having.
+    assert_equal DraftApplier::SKIP_REASONS.map(&:to_s), DraftChangeOutcome::SKIP_REASONS
+    assert_equal [ DraftChangeOutcome::WRITTEN, *DraftChangeOutcome::SKIP_REASONS ], DraftChangeOutcome::STATES
+  end
+
   # The author's answers, as this service sees them. Which *states* there are is
   # `test/services/draft_conflict_detector_test.rb`, and what the resolution page
   # shows for each is `test/controllers/drafts_controller_test.rb`.

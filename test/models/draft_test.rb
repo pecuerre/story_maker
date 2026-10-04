@@ -49,11 +49,11 @@ class DraftTest < ActiveSupport::TestCase
     assert_predicate draft, :draft?
     assert_not draft.applied?
 
-    draft.update!(status: "applied")
+    draft.update!(status: "applied", closed_at: Time.current)
     assert_predicate draft, :applied?
     assert_not draft.open?
 
-    draft.update!(status: "discarded")
+    draft.update!(status: "discarded", closed_at: Time.current)
     assert_predicate draft, :discarded?
 
     draft.update!(status: "submitted")
@@ -100,7 +100,7 @@ class DraftTest < ActiveSupport::TestCase
     # same author in the same universe, because applying both would write the
     # second one's changes over whatever the first one left (ADR 0022).
     first = Draft.create!(user: @author, universe: @universe)
-    first.update!(status: "applied")
+    first.update!(status: "applied", closed_at: Time.current)
 
     second = Draft.create!(user: @author, universe: @universe)
 
@@ -114,7 +114,7 @@ class DraftTest < ActiveSupport::TestCase
     # The same rule for a discarded draft, and for another author's draft: the
     # index is per author and per universe, not a claim on the whole universe.
     # Closing the second draft is also what frees the slot for the next session.
-    second.update!(status: "discarded")
+    second.update!(status: "discarded", closed_at: Time.current)
     assert_equal 0, Draft.open.where(user: @author, universe: @universe).count
     assert_nil Draft.open_for(@author, @universe)
     assert Draft.create!(user: @author, universe: @universe).persisted?
@@ -139,7 +139,7 @@ class DraftTest < ActiveSupport::TestCase
     # The `open` scope names the statuses the index protects, so the finder and the
     # constraint cannot disagree about which rows are "open".
     finished = Draft.create!(user: @author, universe: @universe)
-    finished.update!(status: "applied")
+    finished.update!(status: "applied", closed_at: Time.current)
     open = Draft.create!(user: @author, universe: @universe)
 
     assert_equal open, Draft.open_for(@author, @universe)
@@ -150,7 +150,7 @@ class DraftTest < ActiveSupport::TestCase
 
   test "the open draft is the author's most recent unfinished one, and only theirs" do
     foreign_author = Draft.create!(user: users(:user_two), universe: @universe)
-    foreign_author.update!(status: "applied")
+    foreign_author.update!(status: "applied", closed_at: Time.current)
 
     assert_nil Draft.open_for(@author, @universe), "an author with no unfinished draft has none to resume"
     assert_nil Draft.open_for(@author, universes(:universe_two)), "a draft in another universe is another scope"
@@ -160,7 +160,7 @@ class DraftTest < ActiveSupport::TestCase
 
     # An applied draft is history, so the next unfinished one is what an author
     # resuming their work means.
-    first.update!(status: "discarded")
+    first.update!(status: "discarded", closed_at: Time.current)
     second = Draft.create!(user: @author, universe: @universe)
     assert_equal second, Draft.open_for(@author, @universe)
 
@@ -241,7 +241,7 @@ class DraftTest < ActiveSupport::TestCase
     # A closed draft's changes are history, so they stop being pending the moment
     # the draft is applied or discarded — the count is what is left to write, not
     # what this author has ever typed.
-    draft.update!(status: "applied")
+    draft.update!(status: "applied", closed_at: Time.current)
     assert_equal 0, Draft.pending_changes_count(@author, @universe)
 
     assert_equal 0, Draft.pending_changes_count(nil, @universe),
@@ -253,7 +253,10 @@ class DraftTest < ActiveSupport::TestCase
     draft = Draft.create!(user: @author, universe: @universe)
 
     Draft::STATUSES.each do |status|
-      draft.update!(status: status)
+      # A status outside the open ones is a closure, and a closure says when it
+      # happened: `closed_at` is written by whatever action closed the draft, and
+      # the model refuses a closed row without one.
+      draft.update!(status: status, closed_at: (status == "draft" ? nil : Time.current))
 
       assert_equal draft.open?, Draft.open.where(id: draft.id).exists?,
         "`open` and `open?` must answer the same question, or a draft the finder resumes is one the " \
@@ -273,6 +276,49 @@ class DraftTest < ActiveSupport::TestCase
     # test database's history instead of the cascade.
     assert_not DraftChange.exists?(draft_id: draft.id)
     assert_empty Draft.where(universe_id: @universe.id)
+  end
+
+  # The history a closed draft keeps. What the drafts list and a draft's own page
+  # make of these columns is `test/controllers/drafts_controller_test.rb`'s to
+  # read; what is only answerable here is that a draft which can no longer be acted
+  # on has to say when, and that the run's tally is three separate numbers rather
+  # than one.
+
+  test "a draft that can no longer be acted on has to say when" do
+    draft = Draft.new(user: @author, universe: @universe, status: "applied")
+
+    assert_not draft.valid?
+    # Without the moment, the history would have to read it off `updated_at`, which
+    # is only the same answer by coincidence: it exists to say a row changed, and it
+    # is the first column anything writes the next time this draft is touched.
+    assert_includes draft.errors[:closed_at], I18n.t("drafts.errors.closed_at_required")
+
+    assert draft.update(closed_at: Time.current)
+    assert_predicate draft, :closed?
+  end
+
+  test "an open draft has no moment to record, and a submitted one is still open" do
+    draft = Draft.create!(user: @author, universe: @universe)
+
+    assert_predicate draft, :open?
+    assert_not_predicate draft, :closed?
+    assert_nil draft.closed_at
+    # A submitted draft is waiting for a reviewer rather than finished, so it has no
+    # closure moment — which is what the word is for.
+    draft.update!(status: "submitted")
+    assert_predicate draft, :open?
+    assert_not_predicate draft, :closed?
+  end
+
+  test "the run's tally is three counts, and they start at nothing" do
+    draft = Draft.create!(user: @author, universe: @universe)
+
+    # Written, not written, and dropped on purpose are three different outcomes, and
+    # a change the author answered "theirs" is not a failure — so the two numbers
+    # cannot be one.
+    assert_equal 0, draft.applied_count
+    assert_equal 0, draft.skipped_count
+    assert_equal 0, draft.kept_count
   end
 
   private

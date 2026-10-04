@@ -55,7 +55,7 @@ class DraftPreviewTest < ActiveSupport::TestCase
     # counting the moment they stop being pending, which is what the open scope in
     # `Draft.pending_changes_count` already says and what a list page would
     # contradict if it read closed drafts too.
-    @draft.update!(status: "applied")
+    @draft.update!(status: "applied", closed_at: Time.current)
 
     assert_equal 0, preview_for(@author).count
   end

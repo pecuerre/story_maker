@@ -108,6 +108,21 @@ class DraftWikipediaJourneyTest < ApplicationSystemTestCase
     assert_selector ".draft-summary .badge", text: "Applied", wait: REFRESH_WAIT
     assert_selector ".flash-stack .flash-toast", text: "3 remembered changes are now live"
 
+    # **The history the flash does not keep.** The toast above is the only report of
+    # this run that a reader gets once; what an author comes back to is the draft's
+    # own page and the list it sits in, so the run has to be readable there too — and
+    # each change says what became of it beside the values it carried.
+    assert_selector ".draft-history", text: "Applied"
+    assert_selector ".draft-history", text: "3 remembered changes are live"
+    assert_selector ".draft-change .draft-change-outcome", text: "Live", count: 3
+
+    visit universe_drafts_path(universe_slug: @universe.slug)
+
+    within ".entity-row", text: "3 remembered changes" do
+      assert_selector ".draft-history", text: "Applied"
+      assert_selector ".draft-history", text: "3 remembered changes are live"
+    end
+
     # **See them live**: the three pending rows are now three records, and each one
     # carries the controls a remembered create never had.
     visit universe_characters_path(universe_slug: @universe.slug)

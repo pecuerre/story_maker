@@ -435,7 +435,7 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
 
     # An applied draft is history. A second editing session opens a new one rather
     # than adding to what was already written to the universe.
-    draft.update!(status: "applied")
+    draft.update!(status: "applied", closed_at: Time.current)
 
     post universe_characters_url(universe_slug: @universe.slug),
       params: { character: { name: NEW } }, as: :json

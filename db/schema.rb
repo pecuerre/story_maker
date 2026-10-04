@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_04_120100) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -103,6 +103,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_230000) do
     t.index ["universe_id"], name: "index_discussions_on_universe_id"
   end
 
+  create_table "draft_change_outcomes", force: :cascade do |t|
+    t.string "answer"
+    t.datetime "created_at", null: false
+    t.integer "draft_change_id", null: false
+    t.integer "draft_id", null: false
+    t.string "state", null: false
+    t.index ["draft_change_id"], name: "index_draft_change_outcomes_on_draft_change_id", unique: true
+    t.index ["draft_id"], name: "index_draft_change_outcomes_on_draft_id"
+  end
+
   create_table "draft_changes", force: :cascade do |t|
     t.string "action", null: false
     t.string "base_version"
@@ -116,7 +126,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_230000) do
   end
 
   create_table "drafts", force: :cascade do |t|
+    t.integer "applied_count", default: 0, null: false
+    t.datetime "closed_at"
     t.datetime "created_at", null: false
+    t.integer "kept_count", default: 0, null: false
+    t.integer "skipped_count", default: 0, null: false
     t.string "status", default: "draft", null: false
     t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
@@ -588,6 +602,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_230000) do
   add_foreign_key "discussion_messages", "discussions"
   add_foreign_key "discussion_messages", "users"
   add_foreign_key "discussions", "universes"
+  add_foreign_key "draft_change_outcomes", "draft_changes"
+  add_foreign_key "draft_change_outcomes", "drafts"
   add_foreign_key "draft_changes", "drafts"
   add_foreign_key "drafts", "universes"
   add_foreign_key "drafts", "users"

@@ -42,6 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A closed draft keeps its history.** The drafts list and the draft's own page now say when it stopped
+  being actionable and what its apply wrote, refused, or left alone.
+- **Each remembered change says what became of it** once an apply has decided, beside the values it
+  carried. See [ADR 0024](docs/adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md).
 - **The whole `wikipedia` journey is covered end to end.** A request test and a browser test walk start
   editing, a remembered create, edit, and deletion, the pending rows in the lists, one apply, and the live
   records, with conflict resolution reachable on the way there.

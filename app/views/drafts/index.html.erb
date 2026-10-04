@@ -32,6 +32,17 @@
               <%= t("drafts.index.remembered_at_html",
                 at: time_tag(draft.created_at, l(draft.created_at, format: :short))) %>
             </div>
+
+            <%# What a closed draft is for, now that it cannot be acted on: when
+                it stopped being actionable and what its run did. An open draft has
+                no history yet, so the line is absent rather than empty — see
+                `DraftsHelper#draft_history_sentence`, which the draft's own page
+                reads the same sentence from. %>
+            <% if draft.closed? %>
+              <div class="entity-description draft-history">
+                <%= draft_history_sentence(draft) %>
+              </div>
+            <% end %>
           </div>
 
           <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">

@@ -5,6 +5,14 @@
   `drafts/conflicts` as a `422` and waits for an answer per conflicting change. What this ADR
   decided is untouched and still holds — the draft closes either way, an unanswered conflict is
   reported rather than written, and the run stays one transaction.
+- **Superseded in part, 2026-10-04:** the "reported, not resolved" cost below, and the rejected
+  *an outcome page for this phase* and *inferring each change's outcome after the fact* alternatives,
+  describe what Phase 3 and then
+  [0024](0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md) changed. The
+  run's outcome **is** now stored — one row per change in `draft_change_outcomes`, and the moment and
+  tally on the draft — and a closed draft is still inspectable and says what became of each change.
+  The reasoning the storage did not overturn stands: an outcome is a new row rather than an attribute
+  of a remembered change, and it is never inferred from a version stamp.
 - **Date:** 2026-10-03
 - **Related:** [`../conventions.md`](../conventions.md),
   [`../architecture.md`](../architecture.md),

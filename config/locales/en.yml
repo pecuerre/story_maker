@@ -137,6 +137,7 @@ en:
       same_scope:
         universe: "must belong to the same universe"
         story: "must belong to the same story"
+        draft: "must belong to the same draft"
       hierarchy:
         scope_change_with_children: "cannot be changed while child records exist"
         must_exist: "does not exist"
@@ -503,6 +504,56 @@ en:
         remember: "Edit anything in this universe. Each change is remembered on your draft rather than written."
         review: "Your lists show what is waiting: a row for a record you added, and a badge on a record you edited or deleted."
         apply: "Apply the draft to write every remembered change at once, or discard it and write nothing."
+    # What one change's apply did to it, as the badge its row carries and the
+    # sentence that says why it is not live. `DraftApplier::SKIP_REASONS` and
+    # `DraftChangeOutcome::STATES` are the same words; `kept` is the one key that
+    # is not a state, because a change the author answered `"theirs"` was decided
+    # rather than refused and is badged as that.
+    outcomes:
+      badge:
+        written: "Live"
+        kept: "Kept theirs"
+        moved: "Not applied"
+        deleted: "Not applied"
+        missing: "Not applied"
+        gone: "Nothing to do"
+        unplaceable: "Not applied"
+        refused: "Refused"
+      # One sentence per state that is not `written`, and each names the one thing
+      # the author can still do: the remembered values are still on the row either
+      # way, and a change that was not written is redone from the record's own page.
+      reason:
+        kept: "You chose theirs, so the record keeps what is there now and this change was dropped."
+        moved: "The record changed after you remembered this change, so it was not written over."
+        deleted: "Somebody deleted this record after you remembered this change, so there was nothing to write onto."
+        missing: "The record this change names could not be found, so it was not written."
+        gone: "The record had already been deleted, so this change had nothing left to do."
+        unplaceable: "The story or universe this change names is not part of this universe, so it could not be placed here."
+        refused: "The universe would not accept this change, so nothing was written for it."
+    # What a closed draft's history says: when it stopped being actionable, and what
+    # the run did. Read by `DraftsHelper#draft_history_sentence` for both the list
+    # row and the draft's own page, so the two cannot compose it differently. The
+    # first two keys are `_html` because the moment is a `<time>` element, and they
+    # are keyed by the stored `status` rather than by a second set of booleans.
+    history:
+      applied_html: "Applied %{at}."
+      discarded_html: "Discarded %{at}."
+      # Three sentences that stay three sentences for the flash's reason: a change
+      # dropped on purpose was not skipped, so folding the kept count into either of
+      # the others would report the run as failed when the author simply decided.
+      live:
+        one: "1 remembered change is live."
+        other: "%{count} remembered changes are live."
+      not_applied:
+        one: "1 remembered change could not be applied."
+        other: "%{count} remembered changes could not be applied."
+      kept:
+        one: "1 remembered change was left exactly as it is, because you chose theirs."
+        other: "%{count} remembered changes were left exactly as they are, because you chose theirs."
+      # The absence of all three counts, which is a fact in its own right: a
+      # discarded draft gets it, and so does an applied draft whose every change
+      # could not be written.
+      nothing_written: "Nothing was written."
     # The **Start editing** / **Stop editing** control on the universe page. The
     # pending count is one button rather than a badge because the number is only
     # interesting as a way into the changes it is counting — so it reads
@@ -625,6 +676,9 @@ en:
       # without one has nothing to compare the record against.
       base_version_for_create: "cannot remember a version of a record that does not exist yet"
       base_version_required: "must remember the record's version"
+      # A draft that can no longer be acted on has to say when it stopped being
+      # actionable, or its history would have to read the moment off `updated_at`.
+      closed_at_required: "must record when the draft was closed"
 
   stories:
     title: "Stories"

@@ -131,6 +131,9 @@ es:
         # delante: no es un marco con «el mismo» pegado al final.
         universe: "debe pertenecer al mismo universo"
         story: "debe pertenecer a la misma historia"
+        # El ámbito de un borrador es el suyo propio, y el género es «borrador»,
+        # así que el determinante de la frase es el de ese sustantivo.
+        draft: "debe pertenecer al mismo borrador"
       hierarchy:
         scope_change_with_children: "no se puede cambiar mientras existan registros hijos"
         must_exist: "no existe"
@@ -476,6 +479,61 @@ es:
         more:
           one: "y 1 cambio más"
           other: "y %{count} cambios más"
+    # Lo que hizo la aplicación de un cambio a ese cambio, como el distintivo que
+    # lleva su fila y la frase que dice por qué no está visible.
+    # `DraftApplier::SKIP_REASONS` y `DraftChangeOutcome::STATES` son las mismas
+    # palabras; `kept` es la única clave que no es un estado, porque un cambio al
+    # que el autor respondió «theirs» se decidió en lugar de rechazarse, y así se
+    # distingue.
+    outcomes:
+      badge:
+        written: "Visible"
+        kept: "Se quedó lo de ellos"
+        moved: "No se aplicó"
+        deleted: "No se aplicó"
+        missing: "No se aplicó"
+        gone: "No había nada que hacer"
+        unplaceable: "No se aplicó"
+        refused: "Rechazado"
+      # Una frase por estado que no sea `written`, y cada una nombra lo único que
+      # el autor todavía puede hacer: los valores recordados siguen en la fila de
+      # todos modos, y un cambio que no se escribió se rehace desde la página del
+      # propio registro.
+      reason:
+        kept: "Elegiste lo de ellos, así que el registro se queda como está ahora y este cambio se descartó."
+        moved: "El registro cambió después de que recordaras este cambio, así que no se escribió encima."
+        deleted: "Alguien eliminó este registro después de que recordaras este cambio, así que no había nada sobre lo que escribir."
+        missing: "No se ha podido encontrar el registro que nombra este cambio, así que no se escribió."
+        gone: "El registro ya estaba eliminado, así que a este cambio no le quedaba nada que hacer."
+        unplaceable: "La historia o el universo que nombra este cambio no son parte de este universo, así que no se pudo colocar aquí."
+        refused: "El universo no ha aceptado este cambio, así que no se escribió nada para él."
+    # Lo que dice el historial de un borrador cerrado: cuándo dejó de poder actuar
+    # sobre él y qué hizo la aplicación. Lo lee
+    # `DraftsHelper#draft_history_sentence` tanto para la fila de la lista como
+    # para la página del propio borrador, así que las dos no pueden componerlo de
+    # forma distinta. Las dos primeras claves son `_html` porque el momento es un
+    # elemento `<time>`, y van indexadas por el `status` almacenado y no por un
+    # segundo conjunto de booleanos.
+    history:
+      applied_html: "Aplicado %{at}."
+      discarded_html: "Descartado %{at}."
+      # Tres frases que siguen siendo tres por la razón que tienen en el aviso: un
+      # cambio descartado a propósito no se ha omitido, así que mezclar el recuento
+      # de «kept» con cualquiera de las otras dos diría que la aplicación falló
+      # cuando el autor simplemente decidió.
+      live:
+        one: "1 cambio recordado ya es visible."
+        other: "%{count} cambios recordados ya son visibles."
+      not_applied:
+        one: "No se pudo aplicar 1 cambio recordado."
+        other: "No se pudieron aplicar %{count} cambios recordados."
+      kept:
+        one: "1 cambio se ha quedado exactamente como está, porque elegiste lo de ellos."
+        other: "%{count} cambios se han quedado exactamente como están, porque elegiste lo de ellos."
+      # La ausencia de los tres recuentos, que es un hecho por derecho propio: un
+      # borrador descartado lo recibe, y también un borrador aplicado en el que
+      # ningún cambio se pudo escribir.
+      nothing_written: "No se escribió nada."
     # Los tres pasos, en el orden en que el autor los encuentra. Son el único
     # sitio donde se explica el flujo en lugar de remitirse a él: todas las demás
     # frases sobre él —el aviso que dice que un cambio se ha recordado, la insignia
@@ -582,6 +640,10 @@ es:
       # actualización o un borrado sin versión no tiene con qué comparar.
       base_version_for_create: "no puede recordar la versión de un registro que todavía no existe"
       base_version_required: "debe recordar la versión del registro"
+      # Un borrador sobre el que ya no se puede actuar tiene que decir cuándo dejó
+      # de poder actuar, o su historial tendría que leer el momento de
+      # `updated_at`.
+      closed_at_required: "debe registrar cuándo se cerró el borrador"
 
   stories:
     title: "Historias"

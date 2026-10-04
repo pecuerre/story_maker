@@ -71,13 +71,23 @@
 # What the run decided is in `Result#answered`, keyed by change id, so a caller
 # can tell a change the author *chose* to drop from one this service refused.
 #
+# **The run is stored, not just returned.** Every outcome becomes a
+# `DraftChangeOutcome` row and the tally becomes the draft's own `closed_at` and
+# three count columns, all inside the transaction below (ADR 0024). Before this,
+# the outcome existed only in the flash that followed it: the apply's own page
+# could not say which of its changes were written, because the run moves every
+# version it writes and a later comparison cannot tell "written by this draft" from
+# "changed by somebody else". Both halves are written from one `Result`, so a
+# draft's page and its history row cannot disagree about what happened.
+#
 # **The draft is closed whatever the outcome.** Applying twice is the one failure
 # this must not have: a remembered `create` names no record, so a second apply
 # would write the author a second copy of it, and `PositionedResourceOrder` would
 # happily place it. `Draft#open?` is therefore the precondition for calling
 # `#apply` at all, and every run ends by moving the draft to `applied`. A change
-# that was skipped is still listed on the draft's own page, so the author can see
-# what it said and redo it from the record's own page.
+# that was skipped is still listed on the draft's own page beside the reason it was
+# not written, so the author can see what it said and redo it from the record's own
+# page.
 class DraftApplier
   # The five states a change can be left in when it is not written, named once so
   # a test asserts the vocabulary rather than a symbol spelled out at the call site.
@@ -101,6 +111,11 @@ class DraftApplier
   # what tells a change dropped on purpose (`"theirs"`) apart from one this
   # service refused, since neither is written and both would otherwise be a
   # skipped row with a reason on it.
+  #
+  # This object is what a run decides, and `DraftChangeOutcome` is what it leaves
+  # behind. `state` is the two of them in the vocabulary a column holds: nil reason
+  # is `written`, and every reason above is its own name, so a row stores what
+  # this object already knows rather than a second derivation of it.
   Outcome = Data.define(:change, :reason, :answer) do
     def written?
       reason.nil?
@@ -111,6 +126,10 @@ class DraftApplier
     # failure either, so it is reported in its own half of the summary.
     def kept?
       answer == "theirs"
+    end
+
+    def state
+      reason ? reason.to_s : DraftChangeOutcome::WRITTEN
     end
   end
 
@@ -186,21 +205,63 @@ class DraftApplier
   # written with the rest, `"theirs"` is dropped from `skipped` into `answered`,
   # and either way the draft closes with the same status change as everything else.
   def apply
-    outcomes = []
+    result = nil
 
     ApplicationRecord.transaction do
-      @draft.draft_changes.each { |change| outcomes << apply_change(change) }
-      @draft.update!(status: "applied")
+      outcomes = @draft.draft_changes.map { |change| record_outcome(apply_change(change)) }
+
+      result = result_for(outcomes)
+      @draft.update!(status: "applied", closed_at: Time.current, **summary_attributes(result))
     end
 
-    Result.new(
-      applied: outcomes.select(&:written?).map(&:change),
-      skipped: outcomes.reject { |outcome| outcome.written? || outcome.kept? },
-      answered: outcomes.filter_map { |outcome| [ outcome.change.id, outcome.answer ] if outcome.answer }.to_h
-    )
+    result
   end
 
   private
+    # What the run did, in the halves three different callers need: the flash that
+    # follows the apply, the row each `DraftChangeOutcome` stores, and the three
+    # count columns the draft's history reads. One derivation for all three is the
+    # point — a summary counted twice is a summary that can disagree with itself.
+    def result_for(outcomes)
+      Result.new(
+        applied: outcomes.select(&:written?).map(&:change),
+        skipped: outcomes.reject { |outcome| outcome.written? || outcome.kept? },
+        answered: outcomes.filter_map { |outcome| [ outcome.change.id, outcome.answer ] if outcome.answer }.to_h
+      )
+    end
+
+    # One remembered change's outcome, kept so a closed draft can be read
+    # afterwards (ADR 0024). It is written inside the run's own transaction
+    # alongside the records it describes, so a draft can never close holding a
+    # tally whose rows were rolled back — and because it is a new row rather than
+    # an attribute of the change, the change itself stays append-only (ADR 0019).
+    #
+    # The `draft:` is the draft that is being applied, and the model checks it
+    # against the change's own draft rather than trusting the pair.
+    def record_outcome(outcome)
+      DraftChangeOutcome.create!(
+        draft: @draft,
+        draft_change: outcome.change,
+        state: outcome.state,
+        answer: outcome.answer
+      )
+
+      outcome
+    end
+
+    # The run's tally, stored beside the moment on the draft's own row so the
+    # drafts list can print a history without resolving anything (ADR 0024). The
+    # numbers are the `Result`'s own counts rather than a second count of the same
+    # outcomes, and `test/services/draft_applier_test.rb` asserts the columns
+    # against the rows that were written.
+    def summary_attributes(result)
+      {
+        applied_count: result.applied_count,
+        skipped_count: result.skipped_count,
+        kept_count: result.kept_count
+      }
+    end
+
     def apply_change(change)
       report = @detector.report_for(change)
       answer = report.conflict? ? answer_for(change) : nil

@@ -469,13 +469,27 @@ is reported in `Result#answered`, not in `skipped`, so the apply is not partial 
 (create, update, delete), the record it is about, and the values it carries. A remembered create names
 no record, so its row is titled by the type it would create; a change whose record has since been
 deleted keeps its row and loses its link, because a link to a page that answers 404 is a dead
-affordance. Whether a change was applied is not a fact the page can know — the apply itself moves every
-version it writes, so a comparison cannot distinguish "written by this draft" from "changed by somebody
-else" — and the outcome is reported once, in the flash that follows the apply. Three stored values need
-reading rather than printing, and `DraftsHelper` owns all three: a submitted id list (a tag assignment,
-a Dialogue's speakers) is printed as the names its own association resolves, the scope column is dropped
-because a bare `story_id` is nothing a reader can name, and the two virtual photo writers are stated as
-a new photo or a removed one rather than as a `data:` URL and a boolean.
+affordance. Whether a change was applied is not a fact the page can *infer* — the apply itself moves
+every version it writes, so a comparison cannot distinguish "written by this draft" from "changed by
+somebody else" — but it is a fact the apply **stored**, so a closed draft says it (below). Three stored
+values need reading rather than printing, and `DraftsHelper` owns all three: a submitted id list (a
+tag assignment, a Dialogue's speakers) is printed as the names its own association resolves, the scope
+column is dropped because a bare `story_id` is nothing a reader can name, and the two virtual photo
+writers are stated as a new photo or a removed one rather than as a `data:` URL and a boolean.
+
+**A closed draft says when it was closed and what its run did.** An applied or discarded draft is
+still served by its own page and still lists every change it remembered — that is what
+[ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) promised when it decided that
+a skipped change stays listed — and it now carries a **history** the flash cannot be: the moment it
+stopped being actionable (`closed_at`, one column rather than one per closing reason because `status`
+already names which closure it was) and the run's tally. Each change's own row adds the outcome the
+apply stored, beside the values it carries and never instead of them, because a change the universe
+refused is still what the author asked for and is still redoable by hand. The sentences are
+`drafts.history.*` and `drafts.outcomes.*`, and both surfaces read them through
+`DraftsHelper#draft_history_sentence` so the list and the page cannot compose the same fact
+separately. `DraftApplier` writes the moment, the tally, and one `DraftChangeOutcome` per change from
+a single `Result` inside its transaction; [ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)
+owns that decision, and `docs/data_model.md` owns the columns.
 
 **Both drafts pages carry the workflow in three steps.** `drafts/_workflow_guide` renders
 `drafts.guide` on the list and on a draft, because those two pages are one place in this workflow: the
@@ -495,9 +509,9 @@ exist — a `direct` universe never opens one — and only for a signed-in reade
 to a person. An editor who is told their change was remembered and cannot then find it has no way to
 see it, apply it, or throw it away; which block that entry belongs to is in
 [features/navigation.md](features/navigation.md). Neither the panel nor the entry's presence depends on
-the reader having something pending: it is how a reader with nothing pending reaches the history the
-drafts list also shows, and a control that appears and disappears with a count is a control whose
-absence has to be explained.
+the reader having something pending: it is how a reader with nothing pending reaches the drafts list,
+which is where a closed draft's history is kept, and a control that appears and disappears with a count
+is a control whose absence has to be explained.
 
 ## The editing session
 
@@ -575,8 +589,10 @@ panel. Whether the record can name itself is the **model's** question, so `Event
 `#identifiable?` (the same set `#display_label` reads and `#must_be_identifiable` refuses to save
 without) rather than the view comparing a rendered label against a translated fallback. Nothing is
 validated and no row is withheld: whether the applier will accept a remembered create is not knowable
-before the apply (finding 64), so the row says what the change would create and leaves the decision
-to the apply, where the model's own validations are authoritative.
+before the apply — an outcome is recorded when the apply runs, not predicted before it
+([ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)) — so the row
+says what the change would create and leaves the decision to the apply, where the model's own validations
+are authoritative.
 
 **A row is never rewritten to match its badge.** A pending **edit** shows the values that are stored
 today and a pending **deletion** shows the record with its links and menu, because none of that has

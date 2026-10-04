@@ -137,19 +137,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-23. **Collaboration system — Phase 4: Wikipedia mode (end-to-end)**
-
-    The full wikipedia flow works end to end: start editing → make changes → apply → changes are live,
-    proved over requests and in one browser pass with conflict resolution reachable on the way, and the
-    drafts pages carry the workflow in three steps for a first-time author. See the dated entries in
-    [`../CHANGELOG.md`](../CHANGELOG.md).
-
-    - **Slice 4.2:** The draft list's history. The apply already reports itself in a flash and the
-      sidebar panel already says when nothing is waiting, but the drafts list offers no **history**: an
-      applied draft is a row in it, and there is no way to see when it was applied or what it contained
-      once it was closed (finding 64 in [`known_quirks.md`](known_quirks.md)). Add the history view, and
-      settle whether an applied draft stays inspectable or is only listed. Update docs. Update changelog.
-
 24. **Collaboration system — Phase 5: GitHub mode (review workflow)**
 
     In `github` mode, drafts are submitted for review. Owner+admins review and apply or reject.
@@ -241,15 +228,15 @@ before expanding a feature task; the DataFactor report is directional evidence, 
 work order.
 
 ## FUTURE WORK
-- **Two accepted ADRs point at something this change moved.** [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md)
-  forecasts Phase 3's data model as per-change outcome storage, which the delivered conflict
-  resolution page does not do (findings 64 and 68 stay open), and
-  [ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) cites finding
+- **One accepted ADR still points at something this change moved.** [ADR
+  0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) cites finding
   63, which left [`known_quirks.md`](known_quirks.md) when the conflict page removed the cost of
-  retyping an unapplied change. Both decisions stand and only the pointers are stale, so the fix is
-  an annotation — a note on ADR 0021's Status line and one clause on ADR 0023's "pending create says
-  nothing about where it would go" bullet — not a rewrite of either body. Deferred by owner decision
-  on 2026-10-04.
+  retyping an unapplied change. The decision stands and only the pointer is stale, so the fix is one
+  clause on its "pending create says nothing about where it would go" bullet — not a rewrite of the
+  body. ADR 0021's half of the same note was done on 2026-10-04 when the stored outcomes landed: its
+  Status line now says which costs
+  [ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)
+  superseded and which of its reasoning still holds. Deferred by owner decision on 2026-10-04.
 - **change universes to subdomains**. replace the /u/universe_slug for universe_slug.<website>.com
 - **Structured dialogue turns.** Replace or augment free-text Dialogue elements with ordered lines,
   speaker changes, parentheticals, and optional character attribution once the MVP reveals real usage.

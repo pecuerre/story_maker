@@ -13,7 +13,9 @@ reachable security/data-loss issues from lower-priority hardening and contract d
 numbered **63 and above** were added on 2026-10-03 and **68 and above** on 2026-10-04, while the
 collaboration draft system was being
 built, verified the same way, and listed here rather than left in [`backlog.md`](backlog.md) because
-each one is reachable now rather than only pending.
+each one is reachable now rather than only pending. Finding 64 left this file on 2026-10-04, when the
+apply's outcome became stored rather than reported once; see
+[`delivery_history.md`](delivery_history.md).
 
 ## Critical security observations
 
@@ -128,15 +130,6 @@ each one is reachable now rather than only pending.
     with tags supplied in a different order can produce different slugs, which matters for
     symbolic development-data references and class-level lookup.
 
-64. **Low — the apply's outcome is reported once and then lost.** `DraftApplier::Result` carries what was
-    written and why the rest was not, and the controller turns it into one flash message; nothing records
-    it on the draft. A draft's page therefore cannot say which of its changes were applied and which were
-    not, and deliberately does not try to infer it: an apply moves every version it writes, so comparing
-    a record's current version with the remembered one cannot distinguish "written by this draft" from
-    "changed by somebody else" (ADR 0021). The consequence is that an applied draft reads as a list of
-    remembered intentions rather than as a record of what happened, which is the part of "draft history"
-    that Phase 5 will want.
-
 66. **Low — resolving a draft's records costs a lookup per change, and the sidebar panel pays it on every
     page.** `DraftChange#resolved_record` deliberately does not remember its answer (a record deleted after the
     change was written must stop resolving), so each row resolves its own record, and each remembered
@@ -153,8 +146,10 @@ each one is reachable now rather than only pending.
     deliberately does not validate a change when it is remembered: the applier re-runs the live path,
     where the model's own validations are authoritative. That is right for the drafts page, which
     reports what the author *asked for*, and it is what leaves a list unable to answer a question about
-    a pending row. Nothing stores an outcome per change before an apply (finding 64), and a pending
-    record is built from the payload sliced to `model.column_names`, so the collection writers and the
+    a pending row. **An outcome is now stored per change, but only once the apply has run**, which does
+    not help a row that is still pending: `draft_change_outcomes` is written by `DraftApplier`, so what
+    it holds is what the apply decided, not a prediction of it. A pending record is also built from the
+    payload sliced to `model.column_names`, so the collection writers and the
     two virtual photo attributes are never assigned — validating that half-built object would be a
     second answer about a record the applier will build differently, not a preview of the applier's
     own. A remembered Event create with no title and no dates therefore still appears in the Events
@@ -166,8 +161,9 @@ each one is reachable now rather than only pending.
     last display-label rung or by no subject at all, and the badge's `title` says that nothing about it
     has been checked yet and that the apply is where the universe decides. Whether such a row should be
     badged differently still or withheld is a product decision that belongs with **What a pending badge
-    has to say beyond its state** in [`backlog.md`](backlog.md), and the remaining half of this finding
-    is closed by whatever per-change outcome storage slice 4.2 of the drafts history settles.
+    has to say beyond its state** in [`backlog.md`](backlog.md), and it stays open: the stored outcomes
+    are a record of what happened, so the only way to answer the question **before** an apply would be to
+    validate a half-built record or to predict the applier, and both are refused here.
 
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`

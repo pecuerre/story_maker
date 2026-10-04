@@ -39,6 +39,13 @@ class DraftChange < ApplicationRecord
 
   belongs_to :draft
 
+  # What the apply that closed this change's draft decided about it, or nil while
+  # the draft is still open. It is a `has_one` rather than a column here because a
+  # remembered change is append-only: what it said is never rewritten, so what
+  # became of it is a second row (ADR 0024). A draft's page preloads this, and a
+  # change with no outcome renders exactly as it did before outcomes existed.
+  has_one :outcome, class_name: "DraftChangeOutcome", dependent: :destroy
+
   # `optional: true` is deliberate, for the reason `Discussion`'s is: Rails' own
   # presence validation on a polymorphic `belongs_to` reads the association,
   # which would `constantize` a stored `record_type` before `RecordTarget` had

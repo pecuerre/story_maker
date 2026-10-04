@@ -119,7 +119,7 @@ class DraftPendingPanelTest < ActionDispatch::IntegrationTest
 
     # An applied draft is history, and a change's pendingness is the draft's status
     # and nothing else — so the panel empties when the draft closes.
-    @draft.update!(status: "discarded")
+    @draft.update!(status: "discarded", closed_at: Time.current)
 
     get universe_characters_path(universe_slug: @universe.slug)
 

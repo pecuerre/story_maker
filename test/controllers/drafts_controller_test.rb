@@ -48,7 +48,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the draft that can still be acted on is the first one in the list" do
-    history = draft_with(remember_create_payload("Applied"), status: "applied")
+    history = draft_with(remember_create_payload("Applied"), closed: "applied")
     open = draft_with(remember_create_payload("Still open"))
 
     get universe_drafts_url(universe_slug: @universe.slug)
@@ -192,6 +192,128 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # The history of a closed draft.
+  #
+  # Before this, an apply's outcome existed only in the flash that followed it, so an
+  # applied draft was a row that said when its changes were *remembered* and nothing
+  # about what became of them. What is asserted here is that both surfaces now say
+  # it, that they say the same thing, and that each change's own row says what
+  # became of it — the whole of finding 64.
+
+  test "a closed draft in the list says when it was closed and what its run did" do
+    applied = draft_with(remember_create_payload, remember_create_payload("Second"), closed: "applied")
+    applied.update!(closed_at: 3.days.ago, applied_count: 2)
+    draft_with(remember_create_payload("Waiting"))
+
+    get universe_drafts_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    history = css_select(".entity-row .draft-history").first.text
+    # The moment the draft stopped being actionable, and the tally of what the run
+    # wrote. The remembered-at line above it is still there: a draft's history
+    # does not replace what it remembered, it says what became of it.
+    assert_match(/Applied/, history)
+    assert_match(/#{Regexp.escape(I18n.l(3.days.ago, format: :short))}/, history)
+    assert_match(/2 remembered changes are live/, history)
+  end
+
+  test "a closed draft's own page says the same history as its list row" do
+    target = draft_with(remember_create_payload, closed: "applied")
+    target.update!(closed_at: 2.days.ago, applied_count: 1)
+
+    get universe_drafts_url(universe_slug: @universe.slug)
+    listed = css_select(".entity-row .draft-history").first.text.squish
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+    shown = css_select(".draft-history").first.text.squish
+
+    # One sentence for one fact, read by one helper: a list and a page that composed
+    # their own would eventually disagree about what an apply did.
+    assert_equal listed, shown
+    assert_match(/1 remembered change is live/, shown)
+  end
+
+  test "each remembered change says what became of it once the apply has decided" do
+    target = draft_with(
+      remember_update_payload("Renamed by a draft"),
+      # A create the live path will refuse, so the run has something to report.
+      remember_create_payload("")
+    )
+    change = target.draft_changes.first
+    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: target),
+      params: { resolutions: { change.id => "theirs" } }
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    rows = css_select(".draft-change")
+    assert_equal 2, rows.size
+    # The first change was decided, not refused, and the row says so in its own
+    # words: a change the author chose to drop and one the universe refused are
+    # different outcomes.
+    assert_match(/Kept theirs/, rows[0].text)
+    assert_match(/You chose theirs/, rows[0].text)
+    assert_match(/Refused/, rows[1].text)
+    assert_match(/would not accept this change/, rows[1].text)
+    # What the author asked for is still on the row beside the outcome. A skipped
+    # change stays readable, and stays redoable from the record's own page.
+    assert_match(/Name: Renamed by a draft/, rows[0].text)
+    assert_match(/Renamed by somebody else/, rows[0].text)
+  end
+
+  test "an open draft's changes say nothing about an outcome that has not happened" do
+    target = draft_with(remember_create_payload)
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select ".draft-change-outcome", count: 0
+    assert_select ".draft-change-outcome-reason", count: 0
+    # No history sentence either: an open draft has no closure to report.
+    assert_select ".draft-history", count: 0
+    # The page is still exactly what it was before outcomes existed: what each
+    # change says, and nothing more.
+    assert_select ".draft-change", count: 1
+    assert_select ".draft-change .entity-description", text: /Remembered create/
+  end
+
+  test "a discarded draft says when it was discarded and that nothing was written" do
+    target = draft_with(remember_create_payload)
+
+    post discard_universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    history = css_select(".draft-history").first.text
+    assert_match(/Discarded/, history)
+    assert_match(/Nothing was written/, history)
+    # The remembered change is still listed: rejecting a draft records the decision
+    # on the draft, and does not rewrite what the change said.
+    assert_select ".draft-change", count: 1
+    # Nothing was applied, so no change has an outcome to be badged with.
+    assert_select ".draft-change-outcome", count: 0
+  end
+
+  test "the apply's own flash and the history it leaves behind report the same run" do
+    target = draft_with(remember_create_payload, remember_create_payload(""))
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: target)
+    notice = flash[:notice]
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    history = css_select(".draft-history").first.text
+    # One run, two reports: the flash scrolls away and the history is what a reader
+    # comes back to. Two numbers derived separately would be two answers.
+    assert_equal I18n.t("drafts.flash.partially_applied", applied: 1, skipped: 1), notice
+    assert_match(/1 remembered change is live/, history)
+    assert_match(/1 remembered change could not be applied/, history)
+    assert_equal 1, target.reload.applied_count
+    assert_equal 1, target.skipped_count
+  end
+
   test "an empty draft states that it remembers nothing" do
     target = draft_with
 
@@ -202,9 +324,32 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".draft-change", count: 0
   end
 
+  test "a closed draft's history is rendered in Spanish as well as English" do
+    # The key sets being equal is `translations_test.rb`'s job; what it cannot see is
+    # a plural form or an interpolation that only renders wrong in the second
+    # language, and `raise_on_missing_translations` makes a missing key raise here
+    # rather than fall back to English.
+    target = draft_with(remember_create_payload)
+    # The language is a browser preference carried in a **signed** cookie, so it is
+    # set the way a reader sets it — through the settings action — rather than
+    # written onto the jar unsigned, which the signed reader refuses.
+    patch settings_url, params: { locale: "es" }
+    # The apply runs in Spanish too, so the history under test is the one a Spanish
+    # reader is really given rather than one this test assembled by hand.
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    history = css_select(".draft-history").first.text.squish
+    assert_match(/Aplicado/, history)
+    assert_match(/1 cambio recordado ya es visible/, history)
+    assert_select ".draft-change-outcome", text: "Visible"
+  end
+
   test "the apply and discard controls are offered only while the draft is open" do
     open = draft_with(remember_create_payload)
-    history = draft_with(remember_create_payload("Already applied"), status: "applied")
+    history = draft_with(remember_create_payload("Already applied"), closed: "applied")
 
     get universe_draft_url(universe_slug: @universe.slug, id: open)
     assert_select "form[action=?]", apply_universe_draft_path(universe_slug: @universe.slug, id: open), count: 1
@@ -541,7 +686,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "discarding a draft that is already applied changes nothing" do
-    target = draft_with(remember_create_payload, status: "applied")
+    target = draft_with(remember_create_payload, closed: "applied")
 
     post discard_universe_draft_url(universe_slug: @universe.slug, id: target)
 
@@ -584,8 +729,13 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def draft_with(*changes, status: "draft")
-      Draft.create!(user: @user, universe: @universe, status: status).tap do |draft|
+    def draft_with(*changes, status: "draft", closed: nil)
+      # A closed draft has to say when it stopped being actionable, which is what
+      # `DraftsController#discard` and the applier both write. A test that builds
+      # one by hand closes it the same way, rather than leaving the model to infer
+      # the moment from `updated_at`.
+      Draft.create!(user: @user, universe: @universe,
+        status: closed || status, closed_at: closed ? Time.current : nil).tap do |draft|
         changes.each { |change| draft.draft_changes.create!(change) }
       end
     end

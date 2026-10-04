@@ -45,10 +45,15 @@ class DraftsController < ApplicationController
 
   # GET /u/:universe_slug/drafts/:id
   #
-  # Every change the draft remembers, in the order they were remembered. The page
-  # reports what each change *says*; it does not claim a change was written, which
-  # only the apply that wrote it can know.
+  # Every change the draft remembers, in the order they were remembered, each
+  # beside what the apply that wrote it recorded. An open draft has no outcomes
+  # yet, so the page states what each change *says* and nothing more; a closed one
+  # says both, because the answer is stored rather than inferred (ADR 0024).
+  #
+  # The outcomes are preloaded here rather than resolved per row, which is the one
+  # query the page adds over the changes themselves.
   def show
+    @draft.draft_changes.includes(:outcome)
   end
 
   # POST /u/:universe_slug/drafts/:id/apply
@@ -82,10 +87,14 @@ class DraftsController < ApplicationController
   # Rejecting a draft moves the **draft's** status rather than deleting anything:
   # a remembered change is append-only, so what the author decided about it is
   # recorded on the draft and the change itself keeps saying what it said.
+  #
+  # `closed_at` is written here for the same reason the applier writes its own:
+  # a draft that can no longer be acted on has to say when it stopped being
+  # actionable, or its history would have to read the moment off `updated_at`.
   def discard
     return refuse_closed_draft unless @draft.open?
 
-    @draft.update!(status: "discarded")
+    @draft.update!(status: "discarded", closed_at: Time.current)
 
     redirect_to universe_drafts_path(universe_slug: Current.universe.slug),
       notice: t("drafts.flash.discarded"), status: :see_other

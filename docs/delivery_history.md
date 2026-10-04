@@ -29,6 +29,79 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-04
 
+- **[added]** **Collaboration phase 4, slice 4.2: an apply's outcome is stored instead of reported once, and a
+  closed draft says what became of every change it remembered.** `draft_change_outcomes` holds one row per
+  change per run; `drafts` gains `closed_at` and three counts; the drafts list and a draft's own page both
+  print the moment and the tally; and each change's row gains the outcome the apply recorded.
+
+  **The gap was that a closed draft read as a list of intentions.** `DraftApplier::Result` knew exactly what
+  was written, what was refused, and why, and the controller turned that into one flash that scrolled away.
+  The list showed a status badge and `created_at` as "Remembered …" — a moment from *before* anything was
+  applied — and an author coming back to "which of my edits went through?" had nothing to read. The page
+  could not be closed by inference either, which [ADR
+  0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) had already explained: an apply moves
+  every version it writes, so comparing a record's current version with the remembered `base_version`
+  cannot distinguish "written by this draft" from "changed by somebody else". That is finding 64, and it is
+  why the fix is storage rather than cleverness.
+
+  **A new row per change, not columns on `draft_changes`, and the reasoning is ADR 0019's.** A remembered
+  change is append-only because what it said is a statement about one moment; an outcome is a statement
+  about a *later* one, so it is its own row. That also makes the unique index on `draft_change_id` the rule
+  "one outcome per change" rather than a convention, and the rule holds because a draft closes on its first
+  apply. `state` and `answer` are separate columns for the same reason the flash's sentences are: a change
+  answered `"mine"` **is** written, while one answered `"theirs"` is not written and its state is still the
+  conflict that put it there, so one column would have to answer two questions. `DraftChangeOutcome` derives
+  its vocabulary from `DraftApplier::SKIP_REASONS` rather than listing it, and
+  `test/services/draft_applier_test.rb` fails when a reason is added to the service and not to the model —
+  the same "read the other list" shape ADR 0021 used for the applier's ordering derivation.
+
+  **The tally is stored on the draft, which was the owner's call against deriving it.** The drafts list
+  prints a history for every row it renders, so a list that first grouped the outcome table would be the
+  one list in the application that resolves per row. `closed_at` is one column rather than `applied_at` plus
+  `discarded_at` because `status` already says *which* closure it was; a `submitted` draft is open, so a
+  review request in flight has no closure moment, which is exactly what the word is for. `Draft` validates
+  that a draft outside the open statuses has one — without that rule the moment would quietly become
+  `updated_at`, which is only the same answer by coincidence. `DraftApplier` builds one `Result` and writes
+  the rows, the counts, and the flash from it inside the single transaction it already had, and the service
+  test asserts the columns against the rows rather than trusting the derivation; another test asserts that a
+  failed run leaves no outcome and no `closed_at` at all, because the status change is in that transaction
+  too.
+
+  **"Inspectable or only listed" was settled by the repository, not by a preference.** ADR 0021 says a
+  skipped change "is still listed on the draft's own page, so the author can see what it said and redo it
+  from the record's own page"; ADR 0019 says rejecting a draft records the decision on the draft rather than
+  deleting what the change said; `conventions.md` says the two controls render only while `Draft#open?`,
+  which is a statement about controls and not about reachability. Hiding the page would have made the first
+  of those false, and deleting the changes would have destroyed the only record of what the author asked
+  for. So the page stays, the controls stay gone, and each change's row now carries its outcome *beside* the
+  values it carries — never instead of them, because a refused change is still what the author asked for
+  and is still redoable by hand.
+
+  **One sentence, one helper, two surfaces.** The list row and the draft's page read
+  `DraftsHelper#draft_history_sentence`, so they cannot compose the same fact separately; a request test
+  asserts the two are the same string. The three counts stay three sentences for the reason the flash's do:
+  a change dropped on purpose was not skipped, and folding the kept count into either of the others would
+  report the run as failed when the author simply decided. A discarded draft gets "Discarded …. Nothing was
+  written." — one sentence rather than a summary of three zeroes — and no outcome rows, because nothing ran.
+  The pending-row question was left alone on purpose: what a stored outcome records is what the apply
+  decided, so it cannot answer a question **before** the apply, and finding 68 stays open with its pointer
+  corrected rather than closed by the arrival of the table.
+
+  **[ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)** owns the
+  decision and the four alternatives it refused (hide the page, an outcome column on the change, infer it
+  from versions, derive the list's tally). ADR 0021's Status line now says which of its costs the storage
+  superseded and which of its reasoning still holds, which is the annotation the FUTURE WORK note in
+  [`backlog.md`](backlog.md) had already scoped for it.
+
+  **Verification.** `bin/rails test` — 1796 runs, 11799 assertions, 0 failures, 0 errors, 10 skips (the
+  pre-existing skips). New: `test/models/draft_change_outcome_test.rb` (8), five history cases in
+  `drafts_controller_test.rb`, six in `draft_applier_test.rb`, three in `draft_test.rb`, and the history
+  assertions added to `test/system/draft_wikipedia_journey_test.rb` (1, run alone). Grew:
+  `ability_test.rb`, by way of `DraftChangeOutcome` being recorded as authorized through its draft, and
+  `test/models/translations_test.rb` by way of the new `en`/`es` keys. Also run: `bin/rubocop`,
+  `test/docs_test.rb`, and `bin/brakeman --no-pager`. Not run: `bun run check:js` (no JavaScript changed),
+  `bin/rails test:system` beyond the new case, `bin/bundler-audit`, `bin/importmap audit`.
+
 - **[added]** **Collaboration phase 4, slice 4.1: the whole `wikipedia` journey is proved end to end, the
   drafts pages say what the workflow is, and a pending row with nothing to be called by is named by its
   type.** The slice asked for the flow rather than for behaviour: the interception is already held by
@@ -5594,3 +5667,47 @@ half landed too, so this entry states what was true at the point it was written.
 **Verification:** `bin/rails test docs_test.rb`, which resolves every relative link and every
 cross-document anchor in the affected files, and a read of each section against the `CHANGELOG.md`
 entries it claims to describe.
+
+### Former quirk #64: the apply's outcome was reported once and then lost (fixed)
+
+**Then:** `DraftApplier::Result` carried what was written and why the rest was not, and
+`DraftsController#apply_notice` turned that into one flash message; nothing recorded it anywhere. A draft's
+page could therefore not say which of its changes had been applied, and deliberately did not try to infer
+it, because an apply moves every version it writes and a comparison cannot distinguish "written by this
+draft" from "changed by somebody else" (ADR 0021). The drafts list made it worse in the reader's terms: an
+applied draft was a row with a change count, a status badge, and `created_at` printed as "Remembered …" —
+a moment from *before* anything was applied — and no way at all to see when it had been applied. The
+finding named the consequence precisely: an applied draft read as a list of remembered intentions rather
+than as a record of what happened, which is the part of "draft history" Phase 5 would want.
+
+**Fix:** the outcome is stored, in two places written by one caller from one object. `draft_change_outcomes`
+holds one row per change per run, with the `state` the run left it in (`written`, or one of
+`DraftApplier::SKIP_REASONS`) and the author's `answer` where a conflict was answered; `drafts` holds
+`closed_at` and three counts, so the list can print a history for every row without resolving anything.
+`DraftApplier` writes both halves and its own returned `Result` from one derivation inside the transaction
+it already had, and `test/services/draft_applier_test.rb` asserts the columns against the rows rather than
+trusting that. The reading is shared: `DraftsHelper#draft_history_sentence` composes the sentence once for
+both the list row and the draft's own page, and each change's row gains its stored outcome beside the
+values it carries.
+
+**Three decisions inside it that are worth keeping.** The outcome is a **new row**, not columns on
+`draft_changes`, because a remembered change is append-only (ADR 0019) and the unique index on
+`draft_change_id` then makes "one outcome per change" a database rule rather than a convention. `state` and
+`answer` are **two** columns because a change answered `"mine"` *is* written while one answered `"theirs"`
+is not, so one column would have to answer two questions. And `closed_at` is **validated**, because without
+that rule the moment would quietly become `updated_at` — a timestamp that exists to say a row changed and
+is the first column anything writes the next time the draft is touched, which is the same answer today only
+by coincidence.
+
+**The question the finding did not ask, and the answer.** The slice also asked whether an applied draft
+stays inspectable or is only listed. Three existing decisions answered it before any new code was written:
+ADR 0021 says a skipped change "is still listed on the draft's own page, so the author can see what it said
+and redo it from the record's own page", ADR 0019 says rejecting a draft records the decision on the draft
+rather than deleting what the change said, and `conventions.md` says the two controls render only while
+`Draft#open?` — a statement about controls, not about reachability. Hiding the page would have made the
+first of those false. So the page stayed, and the history was added to it rather than replacing it.
+
+**What did *not* close.** Finding 68's pointer to this storage was corrected rather than treated as
+satisfied: a stored outcome records what the apply decided, so it cannot answer which pending creates the
+applier will refuse **before** the apply, and that product decision stays open in
+[`backlog.md`](backlog.md). ADR 0024 owns the decision; this entry is why it was the shape it was.

@@ -366,7 +366,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     # The draft's status is the one thing that makes a change pending or not, and
     # it is what the apply and the discard both move. A list reading closed drafts
     # would keep badging a record whose edit was either written or thrown away.
-    @draft.update!(status: "applied")
+    @draft.update!(status: "applied", closed_at: Time.current)
 
     get universe_characters_path(universe_slug: @universe.slug)
 

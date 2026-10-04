@@ -3,9 +3,11 @@
 #
 # A change is the author's *statement of intent*, and this helper's whole job is to
 # say what that statement is: which record it is about, what it would do to it,
-# and what values it carries. It deliberately does not say whether the change was
-# written. Only the apply that wrote it can know that, and a page that inferred it
-# from a version stamp would be reporting a second answer about the same record.
+# and what values it carries. What became of it is a separate fact with a separate
+# source — `DraftChangeOutcome`, written by the apply that decided it — and this
+# helper reads that too, but only where one exists. It does not infer an outcome
+# from a version stamp: only the apply can know, and a page that guessed would be
+# reporting a second answer about the same record (ADR 0019, ADR 0024).
 #
 # The same reading answers three kinds of page. A draft's own page prints a change;
 # a list workspace has to say what the same change would do to *its* rows — a
@@ -32,6 +34,54 @@
 # * **A photo** is stored as a `data:` URL and removed by a boolean. Printing
 #   either would put a base64 blob or a bare `0` on the page, so both are stated.
 module DraftsHelper
+  # **What a closed draft's history says**, as one line: when it stopped being
+  # actionable, and what the run that closed it did to its changes.
+  #
+  # Both surfaces that read a closed draft read it from here — the row in the
+  # drafts list and the summary on the draft's own page — because they are one
+  # fact about one draft, and two compositions of it is how a list and a page
+  # come to disagree about what an apply did (ADR 0024).
+  #
+  # The counts come from the draft's own columns rather than from its outcome rows:
+  # the list prints one sentence for every row it renders, and a row that had to
+  # group the outcome table first would be the one list in the application that
+  # resolves per row. The rows themselves are what a draft's page draws per change,
+  # so both are stored by the same run in the same transaction.
+  #
+  # Nothing is said about a draft that is still open, and nothing about the
+  # remembered values — those are the draft's own page, one row per change. This is
+  # the moment and the tally, and it is empty rather than speculative for a draft
+  # whose closure left nothing to report.
+  def draft_history_sentence(draft)
+    sentences = [ draft_closure_sentence(draft) ]
+    sentences += draft_apply_count_sentences(draft) if draft.closed?
+
+    safe_join(sentences.compact, " ")
+  end
+
+  # What one change's own row says about what became of it: the badge that names
+  # the state, and the sentence that says why — or nil when the draft has not been
+  # applied yet, because an open change has no outcome and a badge guessing at one
+  # would be the second answer this page used to be careful not to give.
+  #
+  # A change the author answered `"theirs"` is badged as that rather than as the
+  # conflict that put it there, because the two are different outcomes: one was
+  # refused, the other was decided. The badge key is therefore the outcome's own
+  # vocabulary, and `kept` is the one state that is not a reason.
+  def draft_change_outcome_badge(outcome)
+    t("drafts.outcomes.badge.#{outcome.kept? ? :kept : outcome.state}")
+  end
+
+  # Why a change was not written, or nil when it was — a written change needs no
+  # explanation, and its badge already says so. The sentence is what makes a
+  # skipped row actionable: it names the one thing the author can still do about
+  # it, which is redo it from the record's own page.
+  def draft_change_outcome_reason(outcome)
+    return if outcome.written?
+
+    t("drafts.outcomes.reason.#{outcome.kept? ? :kept : outcome.state}")
+  end
+
   # This request's reader's view of their own open draft, built once.
   #
   # It is memoized on the view rather than fetched per call because the same three
@@ -113,7 +163,8 @@ module DraftsHelper
   # ladder that could drift from the first.
   #
   # Nothing here validates the record or withholds the row: whether the applier
-  # will accept a remembered create is not knowable before the apply (finding 64),
+  # will accept a remembered create is not knowable before the apply, and a stored
+  # outcome records what the apply decided rather than predicting it (ADR 0024),
   # so the row does not claim to be one. It says what the change would create and
   # leaves the decision to the apply, which is where the model's own validations
   # are authoritative.
@@ -207,6 +258,42 @@ module DraftsHelper
   end
 
   private
+    # When this draft stopped being actionable, as a sentence named by its own
+    # status: `Applied …` and `Discarded …` are different facts and `status` is
+    # what tells them apart, so the keys are the statuses rather than two more
+    # booleans on the model.
+    #
+    # It is nil for an open draft — there is no moment yet — and the `_html` suffix
+    # is what lets the moment be a `<time>` element with the machine-readable
+    # attribute beside the readable one, which is the same shape the row's
+    # "remembered at" line already uses.
+    def draft_closure_sentence(draft)
+      return if draft.open? || draft.closed_at.blank?
+
+      t("drafts.history.#{draft.status}_html",
+        at: time_tag(draft.closed_at, l(draft.closed_at, format: :short)))
+    end
+
+    # What the run did, in as many sentences as there are distinct outcomes — up to
+    # three, and they stay separate for the reason the flash's sentences do: a
+    # change dropped on purpose was not skipped, so folding the kept count into
+    # either of the others would report the run as failed when the author simply
+    # decided.
+    #
+    # The fourth sentence is the absence of all three. It is not "0 changes are
+    # live" — a run that wrote nothing is a fact worth stating plainly, and it is
+    # the sentence a discarded draft gets as well as an applied one with nothing in
+    # it.
+    def draft_apply_count_sentences(draft)
+      sentences = []
+      sentences << t("drafts.history.live", count: draft.applied_count) if draft.applied_count.positive?
+      sentences << t("drafts.history.not_applied", count: draft.skipped_count) if draft.skipped_count.positive?
+      sentences << t("drafts.history.kept", count: draft.kept_count) if draft.kept_count.positive?
+      sentences << t("drafts.history.nothing_written") if sentences.empty?
+
+      sentences
+    end
+
     # Whether the model can name this record at all. A model that has its own rule
     # for the question publishes it (`Event#identifiable?`), and a model that does
     # not is answerable by its own label — every other model's label *is* its name

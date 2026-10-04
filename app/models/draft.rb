@@ -23,6 +23,16 @@
 # per author per universe is the rule, so that is what the database says, and
 # `open_for!` is what resolves the one race it leaves behind.
 #
+# **A closed draft says when it was closed, and what its run did.** `closed_at` is
+# the moment the draft left `OPEN_STATUSES`, and the three counts beside it are the
+# run's tally, stored rather than recomputed so the drafts list can print a
+# history without resolving anything. `DraftChangeOutcome` holds the same run one
+# change at a time, and `DraftApplier` writes both halves from one `Result` inside
+# one transaction; `test/services/draft_applier_test.rb` asserts the columns
+# against the rows. The validation below is what keeps "when" from being an
+# inference: a draft that cannot be acted on any more and does not say when it
+# stopped being actionable is a row whose history would have to guess.
+#
 # The status vocabulary is owned here and validated against `STATUSES`, the same
 # list the column default comes from: a status the application has no behaviour
 # for would otherwise be a draft that nothing can apply or discard, and the
@@ -45,7 +55,14 @@ class Draft < ApplicationRecord
   # one clock tick still have an order, so `id` is the tiebreaker.
   has_many :draft_changes, -> { order(:created_at, :id) }, dependent: :destroy
 
+  # What the apply decided about each of those changes. It is a separate table
+  # rather than columns on `draft_changes` because a remembered change is
+  # append-only (ADR 0019), and it is destroyed with the draft because an outcome
+  # is a statement about a run that happened inside this draft.
+  has_many :draft_change_outcomes, dependent: :destroy
+
   validates :status, presence: true, inclusion: { in: STATUSES }
+  validate :closed_draft_records_when_it_was_closed
 
   scope :open, -> { where(status: OPEN_STATUSES) }
 
@@ -113,4 +130,26 @@ class Draft < ApplicationRecord
   def open?
     OPEN_STATUSES.include?(status)
   end
+
+  # The other half of `open?`, asked about by name because four surfaces ask it:
+  # the drafts list, a draft's own page, the applier's precondition, and the
+  # sentence the two mutation controls are hidden behind. One question, one
+  # answer — `!open?` spelled twice is the kind of duplication that lets a fifth
+  # surface decide for itself what history means.
+  def closed?
+    !open?
+  end
+
+  private
+
+    # A draft that can no longer be acted on has to say when it stopped being
+    # actionable. Without the moment its history would have to be read off
+    # `updated_at`, which is only the same answer by coincidence — it is a
+    # timestamp that exists to say a row changed, and the first column to be
+    # touched the next time anything writes this draft.
+    def closed_draft_records_when_it_was_closed
+      return if open? || closed_at.present?
+
+      errors.add(:closed_at, I18n.t("drafts.errors.closed_at_required"))
+    end
 end

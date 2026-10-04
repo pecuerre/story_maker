@@ -69,7 +69,7 @@ class DraftEditingControllerTest < ActionDispatch::IntegrationTest
     someone_else.draft_changes.create!(action: "create", record_type: "Character",
       payload: { "name" => "Theirs", "universe_id" => @universe.id })
     history = Draft.create!(user: @user, universe: universes(:universe_two))
-    history.update!(status: "applied")
+    history.update!(status: "applied", closed_at: Time.current)
     history.draft_changes.create!(action: "create", record_type: "Character",
       payload: { "name" => "Old", "universe_id" => universes(:universe_two).id })
 

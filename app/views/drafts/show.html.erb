@@ -37,6 +37,16 @@
         at: time_tag(@draft.created_at, l(@draft.created_at, format: :short))) %>
     </div>
 
+    <%# A closed draft's own history: when it stopped being actionable and what its
+        run did, in one sentence per outcome. It is the same sentence the drafts
+        list prints for this draft's row, read from the same helper, so the list
+        and this page cannot disagree about the run (ADR 0024). %>
+    <% if @draft.closed? %>
+      <div class="list-group-item draft-history">
+        <%= draft_history_sentence(@draft) %>
+      </div>
+    <% end %>
+
     <%# A draft remembers at least one change whenever the remembering path could
         finish, so an empty one is a defect the page states rather than hides —
         and an author who got here by pressing **Apply** deserves to be told it

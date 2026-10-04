@@ -119,7 +119,14 @@ misses one place fails the suite instead of quietly producing a different build:
 bin/rails test                # models, controllers, helpers (runs in parallel, all fixtures)
 bin/rails test test/models/section_test.rb
 bin/rails test:system         # browser-based system tests
+PARALLEL_WORKERS=1 bin/rails test:system # serial browser suite
 ```
+
+The suite normally uses one process per available CPU. SQLite permits one writer at a time, so the
+CI request job uses `PARALLEL_WORKERS=2` and the browser job uses `PARALLEL_WORKERS=1`: this keeps
+request coverage parallel while avoiding SQLite and browser-test contention. Use the same settings
+when a local parallel run reports `SQLite3::BusyException`; Rails honours them over the default in
+`test/test_helper.rb`.
 
 ### Test coverage
 

@@ -205,6 +205,7 @@ be named by a manifest, although the application can carry a thread about one.
 | `drafts` | `user_id` FK (NOT NULL), `universe_id` FK (NOT NULL), `status` (string, default `draft`, NOT NULL), `closed_at` (datetime, nullable), `applied_count`/`skipped_count`/`kept_count` (integer, NOT NULL, default 0) | one author's pending changes in one universe. Index `[user_id, universe_id]`, plus a **partial unique** index on the same pair over `status IN ('draft','submitted')`: applied and discarded drafts stay behind as history and a second editing session needs its own row, but two *unfinished* drafts for one author are refused by the database rather than left to two requests not colliding ([ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)). `status` is one of `draft`/`applied`/`discarded`/`submitted`, the same list the column default comes from, and the same list the partial index names. `closed_at` plus the three counts are a closed draft's **history**: the moment it left the open statuses and the run's tally, written by whatever closed it — the applier inside its own transaction, `DraftsController#discard` outside one — from the same `Result` that wrote the `draft_change_outcomes` rows ([ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)). `Draft` validates that a draft outside the open statuses has a `closed_at`, so the moment is stored rather than read off `updated_at`; a `submitted` draft is open and has none |
 | `draft_changes` | `draft_id` FK (NOT NULL), `record_type` (NOT NULL), `record_id` (nullable), `action` (NOT NULL), `payload` json (nullable), `base_version` (nullable), `created_at` | `action` is `create`/`update`/`delete`. The polymorphic pair gets **no** foreign key and is registry-gated by `RecordTarget`, like a thread's. `record_id` is nullable only because a `create` remembers a record that does not exist yet; `base_version` is required for the other two actions and refused for a `create`, which has nothing to version. `created_at` with **no** `updated_at`: a change is append-only and `before_update` raises. Index `[draft_id, created_at, id]` |
 | `draft_change_outcomes` | `draft_id` FK (NOT NULL), `draft_change_id` FK (NOT NULL, **unique**), `state` (NOT NULL), `answer` (nullable), `created_at` | what one change's apply did, so a closed draft can be read afterwards. A **new row per change** rather than columns on `draft_changes`, because a remembered change is append-only and what a run decided is a statement about a *later* moment; the unique index is then the rule "one outcome per change", which holds because a draft closes on its first apply. `state` is `written` or one of `DraftApplier::SKIP_REASONS` and `answer` is one of `DraftApplier::ANSWERS` or NULL, as two columns because a change answered `mine` **is** written while one answered `theirs` is not. `draft_id` is derivable from the change and validated against it. No `updated_at`: append-only, and `before_update` raises ([ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)) |
+| `review_requests` | `draft_id` FK (NOT NULL), `universe_id` FK (NOT NULL), `submitted_by_id` FK to `users` (NOT NULL), `status` (string, default `pending`, NOT NULL), `reviewed_by_id` FK to `users` (nullable), `review_notes` text (nullable), `created_at`/`updated_at` | one author's request that somebody else apply a draft: the stored half of Phase 5's review workflow. A **new row per submission** rather than columns on `drafts`, because a rejected draft comes back as a working draft and may be submitted again, so "which review is this draft waiting for" is a history rather than one fact about the draft. `universe_id` and `submitted_by_id` are both derivable from the draft — the universe its changes were authorized in, and its one author — and both are stored so a reviewer's queue needs no join; both are validated against the draft rather than trusted, as a thread's `universe_id` is. `reviewed_by_id` is nullable because nobody has reviewed a pending request, and `review_notes` is nullable because an approval has nothing to explain but **required** for a rejection. The **partial unique** index on `draft_id` over `status = 'pending'` is the rule "one draft has one review in flight": a rejected submission stays behind as history and the author may submit again, while two *pending* requests would mean two reviewers racing to apply the same changes. `status` is `pending`/`approved`/`rejected`, the same list the column default comes from |
 
 The column is `payload`, not `changes` as the collaboration plan named it: Rails 8.1 refuses an
 attribute that Active Record already defines, and `changes` is `ActiveModel::Dirty`'s
@@ -216,9 +217,10 @@ fill it, because it routes through `VersionStamp`. A raw `updated_at` written he
 `Time` is never equal to the string it is compared against, and every stored change would then be
 reported as a conflict. See [ADR 0019](adr/0019-collaboration-foundations.md).
 
-Neither model is in `Ability::CONTENT_CLASS_NAMES`, and neither is universe content: a draft is
-one author's pending work, so registering it would let the content rules answer `read` for a guest in
-a public universe. `test/models/ability_test.rb` carries the reason.
+None of these three models is in `Ability::CONTENT_CLASS_NAMES`, and none is universe content: a draft
+is one author's pending work and a review request is that work under somebody else's decision, so
+registering either would let the content rules answer `read` for a guest in a public universe.
+`test/models/ability_test.rb` carries the reasons.
 
 "One open draft at a time" is the rule the missing unique index left to the editing flow, and it is
 `Draft`'s to answer rather than a controller's: the `open` scope, `OPEN_STATUSES`, and
@@ -228,6 +230,16 @@ the **most recent** unfinished draft (an applied or discarded one is history and
 `open_for!` opens one when there is none — which is the only place a draft is created outside a test.
 Two requests arriving together can each find no open draft and each open one; the consequence is two
 drafts for one author rather than a refused write.
+
+Submitting is `Draft#submit!`, and it is one operation rather than two: it creates the review request
+and moves the draft to `submitted` inside a single transaction, because either half alone is wrong in
+both directions — a `submitted` draft with no request is a draft nobody is ever going to look at, and a
+request against a draft that still says `draft` is a reviewer's queue entry whose subject the author can
+still edit under. Only a working draft may be submitted, and that refusal **raises** rather than
+returning false, because the caller is a workflow step rather than a form and a control that quietly did
+nothing would leave an author waiting for a reviewer who was never asked.
+`Draft#pending_review_request` reads the pending scope rather than the newest request, because a draft
+that was rejected and is being edited again still carries the rejected request behind it.
 
 A remembered `create` carries the submitted attributes **and** the column that places the record in its
 scope, so the payload alone says where the record goes. See
@@ -303,6 +315,7 @@ no `parent_id`.
 | `DiscussionMessage` | `discussion` and `user` presence; `body` presence | no authorization check: who may write is asked by the controller about the thread's *record* |
 | `Draft` | `user` and `universe` presence; `status` inclusion in `STATUSES` (`draft`/`applied`/`discarded`/`submitted`), the same list the column default comes from — a status nothing behaves for would be a draft no control can apply or discard. Four predicates plus `open?` (`OPEN_STATUSES`: `draft` or `submitted`; an applied or discarded draft is history) so no caller re-derives a lifecycle state from a raw string, and the `open` scope reads that same list so a finder and the apply workflow cannot disagree | no authorization check: who may see a draft is asked by the controller about its **owner**, not about a universe record |
 | `DraftChange` | `draft` presence; `action` inclusion in `ACTIONS` (`create`/`update`/`delete`); `record_type` presence **and** registration in `CONTENT_CLASS_NAMES`; a `create` must leave `record_id` and `base_version` blank and an `update`/`delete` must supply both; a named record must resolve through `RecordTarget` (so an unknown id and a soft-deleted record are one "does not exist") and must belong to the **draft's** universe; updates raise (`append-only`). That collapsing is the *validation's* answer; `RecordTarget.find_including_deleted` asks the other one, because a record somebody has since deleted and a record that was never there are different answers to "has this change moved?" — see [conventions.md](conventions.md) | no authorization check: a change is reached only through its draft's owner |
+| `ReviewRequest` | `draft`, `universe`, and `submitted_by` presence; `status` inclusion in `STATUSES` (`pending`/`approved`/`rejected`), the same list the column default comes from — a status nothing behaves for would be a review no page can answer. `universe` must be the **draft's**, and `submitted_by` must be the **draft's author**, so the two stored-but-derivable columns cannot quietly disagree with the one they came from. A `rejected` request must carry `review_notes`, because saying why is the whole of a rejection; an `approved` one need not, because an approval has nothing to explain. An `approved` or `rejected` request must name its `reviewed_by`, so a decision can answer who let it through; a `pending` one has no reviewer yet, which is why that association is `optional`. Three status predicates plus `decided?` and the `pending` scope all read `PENDING`, so no caller re-derives a review state from a raw string | no authorization check: a reviewer's queue is a query inside a universe the request has already authorized at the admin level, and no action authorizes one of these rows on its own |
 | `Story` | `name` presence + unique per universe; `slug` unique per universe |
 | `Section` | `name` presence; `story` required; parent rules scoped to the story; `section_tags` optional, but when present they must all belong to the section's story through the shared HABTM scope; `has_many :scenes, dependent: :nullify` |
 | `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |
@@ -422,7 +435,9 @@ the crop rather than passing through. `db/photos/` is a checked-in asset directo
 Records made only in the UI are intentionally lost and are not merged back into YAML. Neither
 `db:seed` nor `db:prepare` loads `db/data/`. Development data is for browser/manual validation only;
 automated tests use `test/fixtures/`, and production bootstrap data belongs in
-`db/seeds.rb`/`db/seeds/`. `Draft` and `DraftChange` are the one model with no manifest at all, and
+`db/seeds.rb`/`db/seeds/`. `Draft`, `DraftChange`, `DraftChangeOutcome`, and `ReviewRequest` are the
+models with no manifest at all, and
 the reason is in
 [development.md](development.md#adding-a-new-content-model-checklist) — a change's version stamp is
-a moment rather than a reference.
+a moment rather than a reference, and a submission is somebody's unfinished work rather than universe
+content.

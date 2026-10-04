@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_04_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_04_130000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -378,6 +378,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_04_120100) do
     t.index ["relation_id", "relation_tag_id"], name: "index_relations_relation_tags_unique", unique: true
   end
 
+  create_table "review_requests", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "draft_id", null: false
+    t.text "review_notes"
+    t.integer "reviewed_by_id"
+    t.string "status", default: "pending", null: false
+    t.integer "submitted_by_id", null: false
+    t.integer "universe_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["draft_id"], name: "index_review_requests_on_draft_id"
+    t.index ["draft_id"], name: "index_review_requests_on_draft_while_pending", unique: true, where: "status = 'pending'"
+    t.index ["reviewed_by_id"], name: "index_review_requests_on_reviewed_by_id"
+    t.index ["submitted_by_id"], name: "index_review_requests_on_submitted_by_id"
+    t.index ["universe_id"], name: "index_review_requests_on_universe_id"
+  end
+
   create_table "scene_characters", force: :cascade do |t|
     t.integer "character_id", null: false
     t.datetime "created_at", null: false
@@ -653,6 +669,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_04_120100) do
   add_foreign_key "relations", "universes"
   add_foreign_key "relations_relation_tags", "relation_tags"
   add_foreign_key "relations_relation_tags", "relations"
+  add_foreign_key "review_requests", "drafts"
+  add_foreign_key "review_requests", "universes"
+  add_foreign_key "review_requests", "users", column: "reviewed_by_id"
+  add_foreign_key "review_requests", "users", column: "submitted_by_id"
   add_foreign_key "scene_characters", "characters"
   add_foreign_key "scene_characters", "scenes"
   add_foreign_key "scene_element_speakers", "characters"

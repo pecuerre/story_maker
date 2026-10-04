@@ -61,6 +61,13 @@ class Draft < ApplicationRecord
   # is a statement about a run that happened inside this draft.
   has_many :draft_change_outcomes, dependent: :destroy
 
+  # The submissions this draft has been handed over for, oldest first. A rejected
+  # one stays behind as history and the author may submit again, so this is the
+  # draft's history of asking rather than one row about the draft; destroying the
+  # draft takes them, because a submission reviews the changes the draft carries
+  # and cannot outlive them.
+  has_many :review_requests, dependent: :destroy, inverse_of: :draft
+
   validates :status, presence: true, inclusion: { in: STATUSES }
   validate :closed_draft_records_when_it_was_closed
 
@@ -99,6 +106,40 @@ class Draft < ApplicationRecord
     return 0 if user.nil? || universe.nil?
 
     DraftChange.where(draft: open.where(user: user, universe: universe)).count
+  end
+
+  # Hand this draft over for review instead of applying it, which is what
+  # `github` mode does and `wikipedia` does not.
+  #
+  # The two writes are one operation because one of them without the other is
+  # wrong in both directions: a `submitted` draft with no request is a draft
+  # nobody is ever going to look at, and a request against a draft that still says
+  # `draft` is a reviewer's queue entry whose subject the author can still edit
+  # under. So they share a transaction, and a refusal from the request's own
+  # validations leaves the draft exactly as it was.
+  #
+  # Only a working draft can be submitted, and the refusal is a raise rather than
+  # a validation error because this is not a form: the caller is a workflow step
+  # that already knows the draft's state, and a control that quietly did nothing
+  # would leave the author waiting for a reviewer who was never asked.
+  def submit!
+    raise ActiveRecord::RecordNotSaved, "only a working draft can be submitted: Draft #{id} is #{status}" unless draft?
+
+    transaction do
+      request = review_requests.create!(universe: universe, submitted_by: user)
+
+      update!(status: "submitted")
+
+      request
+    end
+  end
+
+  # The submission this draft is waiting on, or nil when it is not waiting on one.
+  # It reads the pending scope rather than the newest request because a draft that
+  # was rejected and is being edited again still has the old request behind it,
+  # and that one is history rather than the reviewer's queue.
+  def pending_review_request
+    review_requests.pending.order(:id).last
   end
 
   # The stored values, asked about by name, so that no caller re-derives a

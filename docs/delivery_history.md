@@ -29,6 +29,69 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-04
 
+- **[added]** **Collaboration phase 5, slice 5.1: a draft can be handed over instead of applied.** The new
+  `review_requests` table and `ReviewRequest` model store one author's request that somebody else look at a
+  draft, `Draft#submit!` creates that request and moves the draft to `submitted` inside one transaction,
+  and slices 5.2–5.5 still own the reviewer's pages, the submit control, the sidebar entry, and the
+  end-to-end flow.
+
+  **Nothing in the schema was missing for this.** [ADR
+  0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md) froze `submitted` into the
+  partial unique index on `[user_id, universe_id]` and recorded that it was there before the reviewing
+  workflow existed, precisely because `OPEN_STATUSES` already had to agree with it; ADR 0024 recorded that a
+  `submitted` draft is *open*, so a review request in flight has no `closed_at` moment — "which is exactly
+  what the word is for". So this slice wrote the one status nothing had written yet and added the table the
+  handoff needs. No ADR was added: the decisions Phase 5 rests on are already owned by ADR 0019, and the
+  collaboration architecture ADR is slice 6.3's.
+
+  **Four decisions inside it, and two of them were the owner's.** The questions asked before writing the
+  model were whether a rejection must carry notes (it does) and whether the model should refuse a request
+  outside `github` mode (it does not, yet). The other two were settled from existing practice. **A rejection
+  must say why** is `Draft`'s `closed_at` validation in another shape: a fact that cannot be recovered
+  afterwards is stored now or not at all, and an approval needs no notes because it has nothing to explain,
+  so the rule sits on the rejection rather than on every decision. **A decision must name its reviewer**
+  came from the same place — a reviewed row with no reviewer cannot answer "who let this through" — and the
+  pending row is why that association is `optional`.
+
+  **A new row per submission rather than columns on `drafts`.** A rejected draft comes back as a working
+  draft and may be submitted again, so "which review is this draft waiting for" is a *history* of
+  submissions, not one fact about the draft. That is also why the uniqueness rule is a **partial** unique
+  index on `draft_id` over `status = 'pending'` rather than a plain unique one: a rejected submission stays
+  behind as history and the author may submit again, while two pending requests for one draft would mean two
+  reviewers racing to apply the same changes. The status is frozen in SQL because a migration has to keep
+  saying what it said on the day it ran, and `test/models/review_request_test.rb` holds the two lists
+  together — the same arrangement as the open-draft index.
+
+  **`universe_id` and `submitted_by_id` are stored even though both are derivable.** They are what a
+  reviewer's queue is queried by without a join, and a derivable column that is also stored is exactly the
+  case where two columns can disagree, so both are validated against the draft rather than trusted. That is
+  `DraftChangeOutcome`'s `draft_id` arrangement and `Discussion`'s `universe_id`, and it is why
+  `submitted_by` must be the draft's author: otherwise a request could say one author asked for changes the
+  draft says another author is waiting to apply. `ReviewRequest` is deliberately **not** registered in
+  `Ability::CONTENT_CLASS_NAMES`, for `Draft`'s reason — somebody's unfinished work under somebody else's
+  decision is not something a universe publishes, and registering it would let the content rules answer
+  `read` for a guest in a public universe. `test/models/ability_test.rb` carries the reason.
+
+  **`Draft#submit!` is one operation because either half alone is wrong in both directions.** A `submitted`
+  draft with no request is a draft nobody is ever going to look at, and a request against a draft that still
+  says `draft` is a reviewer's queue entry whose subject the author can still edit under, so the two writes
+  share a transaction and a refusal from the request's own validations leaves the draft exactly as it was.
+  Only a working draft may be submitted, and that refusal **raises** rather than returning false: the caller
+  is a workflow step rather than a form, and a control that quietly did nothing would leave an author waiting
+  for a reviewer who was never asked. `Draft#pending_review_request` reads the pending scope rather than the
+  newest request, because a draft that was rejected and is being edited again still carries the rejected
+  request behind it — that one is history, not a queue entry.
+
+  **What was deliberately left, and to whom it belongs.** No controller, route, or view: 5.2 owns the
+  reviewer's queue and the approve/reject actions, 5.3 the submit control. No `github`-mode guard on the
+  model, per the owner's answer above — it arrives with the first thing that can submit anything, so a
+  validation nothing could exercise would be a rule with no failing case. No `db/data/` manifest, which
+  continues [ADR 0019](adr/0019-collaboration-foundations.md)'s settled exception: a manifest resolves
+  references, not moments, and a submission loaded from YAML would be a review of nobody's actual changes.
+
+  **Verification:** `bin/rails test` (1812 runs, 11894 assertions, 0 failures, 0 errors, 10 skips) and
+  `bin/rubocop` (431 files, no offenses).
+
 - **[added]** **Collaboration phase 4, slice 4.2: an apply's outcome is stored instead of reported once, and a
   closed draft says what became of every change it remembered.** `draft_change_outcomes` holds one row per
   change per run; `drafts` gains `closed_at` and three counts; the drafts list and a draft's own page both

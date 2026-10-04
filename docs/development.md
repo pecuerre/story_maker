@@ -1082,7 +1082,8 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    If the feature changes access or persistence, also update `universe_memberships.yml` where a
    sample universe should exercise private or delegated-admin access.
 
-   `Draft` and `DraftChange` are the one settled exception, and it is that they are **not
+   `Draft`, `DraftChange`, `DraftChangeOutcome`, and `ReviewRequest` are the settled exception, and
+   it is that they are **not
    expressible** rather than that they are later. A manifest resolves references, not moments:
    a change's `base_version` has to be the record's `updated_at` captured through
    `DraftChange.capture_base_version`, and a hardcoded stamp in YAML would be wrong the moment the
@@ -1092,7 +1093,10 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    published address — so no manifest can reference one and `draft_changes.yml` could not name the
    draft its changes belong to. Verifying the drafts page by hand does not need them: set the
    universe's collaboration mode to `wikipedia`, press **Start editing** on the universe page, edit
-   something, then follow the pending count or the sidebar's **Pending changes** entry.
+   something, then follow the pending count or the sidebar's **Pending changes** entry. The same
+   applies to `DraftChangeOutcome`, which records what a run did, and to `ReviewRequest`, which is
+   somebody's unfinished work under somebody else's decision: both are moments a manifest would have
+   to invent, and a submission that loaded from YAML would be a review of nobody's actual changes.
 
 ### Full-stack data contract for a new model
 

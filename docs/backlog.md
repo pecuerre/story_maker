@@ -141,11 +141,6 @@ it has a useful destination and clear empty/loading/error states.
 
     In `github` mode, drafts are submitted for review. Owner+admins review and apply or reject.
 
-    - **Slice 5.1:** Create `review_requests` table (`draft_id`, `universe_id`, `submitted_by_id`,
-      `status` string: `pending`/`approved`/`rejected`, `reviewed_by_id`, `review_notes` text,
-      timestamps). `ReviewRequest` model (belongs_to :draft, :universe, :submitted_by, :reviewed_by).
-      When a draft is submitted, create a review request and change the draft status to `submitted`.
-      Tests: model tests.
     - **Slice 5.2:** `ReviewRequestsController#index` (lists pending review requests, owner+admin
       only), `#show` (shows a review request with the draft's changes), `#approve` (applies the
       draft's changes with conflict resolution if needed), `#reject` (rejects with notes, changes

@@ -183,7 +183,13 @@ class AbilityTest < ActiveSupport::TestCase
       # already resolved the draft as its own author's, and by nothing else: no
       # action authorizes it, so registering it would give CanCan a rule for a row
       # nobody reaches directly.
-      "DraftChangeOutcome" => "read on a draft's own page, authorized through its draft"
+      "DraftChangeOutcome" => "read on a draft's own page, authorized through its draft",
+      # Somebody's unfinished work under somebody else's decision, which is the
+      # same reason a draft is not content: registering it would let the content
+      # rules answer `read` for a guest in a public universe. A reviewer's queue
+      # is a query inside a universe the request already authorized at the admin
+      # level, and no action authorizes one of these rows on its own.
+      "ReviewRequest" => "a draft's submission, authorized through its draft's universe and reviewer access"
     }
 
     # Zeitwerk loads a model the first time something names it, so a model this

@@ -645,6 +645,17 @@ es:
       # `updated_at`.
       closed_at_required: "debe registrar cuándo se cerró el borrador"
 
+  review_requests:
+    # Una `ReviewRequest` almacena lo que el borrador ya dice — su universo, su
+    # único autor — así que un desacuerdo entre los dos es una negativa y no una
+    # fila que revisa calladamente otra cosa. Las frases de notas y de revisor
+    # son el mismo argumento que `drafts.errors` hace sobre `closed_at`: un dato
+    # que nadie puede recuperar después se guarda ahora o no se guarda.
+    errors:
+      submitted_by_must_be_author: "debe ser el autor del borrador"
+      notes_required: "debe decir por qué se rechazó el envío"
+      reviewer_required: "debe registrar quién lo revisó"
+
   stories:
     title: "Historias"
     description: "Cada historia es dueña de su trama y de sus secciones, y comparte los personajes, los lugares, los sucesos y los objetos de este universo."

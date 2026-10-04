@@ -680,6 +680,18 @@ en:
       # actionable, or its history would have to read the moment off `updated_at`.
       closed_at_required: "must record when the draft was closed"
 
+  review_requests:
+    # A `ReviewRequest` stores what the draft already says — its universe, its one
+    # author — so a disagreement between the two is a refusal rather than a row
+    # that quietly reviews the wrong thing. The rejected-notes and
+    # decided-reviewer sentences are the same argument `drafts.errors` makes
+    # about `closed_at`: a fact nobody can recover afterwards is stored now or not
+    # at all.
+    errors:
+      submitted_by_must_be_author: "must be the draft's author"
+      notes_required: "must say why the submission was rejected"
+      reviewer_required: "must record who reviewed it"
+
   stories:
     title: "Stories"
     description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe."

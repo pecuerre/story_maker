@@ -42,6 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A draft can be submitted for review.** `review_requests` stores one author's request that somebody
+  else apply a draft, and `Draft#submit!` creates it and moves the draft to `submitted` together. A
+  rejection has to say why; only one review per draft is in flight. See
+  [ADR 0019](docs/adr/0019-collaboration-foundations.md).
 - **A closed draft keeps its history.** The drafts list and the draft's own page now say when it stopped
   being actionable and what its apply wrote, refused, or left alone.
 - **Each remembered change says what became of it** once an apply has decided, beside the values it

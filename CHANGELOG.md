@@ -83,6 +83,15 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **The collaboration item's deliberate deferrals are now open findings.** Per-record conflict
+  detection, a draft's linearity, in-app-only notification, plain-text discussion messages, and
+  asynchronous explicit application each reach a reader today, so each is recorded as a verified open
+  quirk rather than as a decision nobody has made.
+- **Two ADRs record the notification and live-update decisions.** A notification is a stored sentence
+  with no foreign key and one recipient rule per kind; a live update is a signed refresh, never
+  rendered content.
+- **`discussion_reply` is now named in the data model's two notification entries**, which still listed
+  the three review kinds and would have read as the whole set.
 - **Finding 68 is settled: a pending row stays badged as it is and is never withheld.** A remembered
   create the apply may refuse keeps its **Draft** badge, whose title says nothing about it has been
   checked; predicting the applier or validating a half-built record is refused. What any pending badge

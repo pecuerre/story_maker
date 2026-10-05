@@ -14,7 +14,10 @@ numbered **63 and above** were added on 2026-10-03, **68 and above** on 2026-10-
 2026-10-05, while the
 collaboration draft system was being
 built, verified the same way, and listed here rather than left in [`backlog.md`](backlog.md) because
-each one is reachable now rather than only pending. Finding 64 left this file on 2026-10-04, when the
+each one is reachable now rather than only pending. Entries **71 and above** were added on 2026-10-05
+when the collaboration backlog item's *deliberately deferred* paragraph was converted: each is a
+behaviour a reader can reach today and be surprised by, where the backlog item had recorded a decision
+nobody had made yet, so the two files were answering different questions and the item could be deleted. Finding 64 left this file on 2026-10-04, when the
 apply's outcome became stored rather than reported once, and the unnumbered finding that read "the applier
 raises rather than reporting a change it cannot interpret" left it the same day, when the apply and a
 reviewer's approval started refusing such a draft in words. Finding 68 left this file on 2026-10-05,
@@ -152,6 +155,63 @@ See [`delivery_history.md`](delivery_history.md).
     query per class — but a pending row is on the **list's** side, not the draft's page's, and a list
     resolves no payload at all; deciding whether the row should pay that read is recorded as **What a
     pending record shows outside the list workspaces** in [`backlog.md`](backlog.md).
+
+71. **Low — conflict detection is per-record, so two people editing different fields of one record still
+    collide.** `DraftConflictDetector` compares one stored `base_version` against the record's current
+    version, which is a whole-record fact: any save between remembering and applying makes every change
+    to that record conflict, whatever field it touched. The cost is a common path rather than an edge
+    case — ADR 0019 states that two people editing one record collide by design — and it lands as a
+    resolution page asking the author to choose between values on a field the other person never
+    touched. Nothing is lost: **Apply theirs** keeps the other edit and reports the author's change in
+    `Result#answered`, so it is redoable by hand from the draft's own page. The alternative is a
+    field-level diff and a merge policy per model, which is why the decision is
+    [ADR 0019](adr/0019-collaboration-foundations.md)'s and not a defect; revisit it only with real usage
+    showing authors routinely losing unrelated edits to it.
+
+72. **Low — a draft is a linear set of changes, so branching, forking, and merging are refused rather
+    than absent.** One open draft per author per universe is a partial unique index
+    ([ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)), so an
+    author who wants to pursue two directions for one record cannot, and the second attempt is a
+    refused write rather than a second line of work. Merging two drafts has no path at all: `apply`
+    closes its draft on the first run, and `DraftApplier` takes one draft's changes. This is
+    consistent with the rest of the workflow rather than a gap in it — a change is append-only
+    ([ADR 0019](adr/0019-collaboration-foundations.md)) and an apply is one transaction — and the
+    product decision of what a branch *is* has not been made. The right sidebar's **Branches** and
+    **Forks** entries stay `aria-disabled` placeholders for it, which is
+    [features/navigation.md](features/navigation.md)'s rule rather than a missing route.
+
+73. **Low — a notification reaches the bell only; nothing is delivered outside the application.**
+    There is no email, no push, and no digest: a submission, a decision, or a reply is written as a
+    row, counted uncached, and announced to the reader's own websocket stream. A reader who is not
+    looking at the page when a draft is decided learns about it by returning, and a reader who never
+    returns does not learn it at all — there is no row anyone else can see, because a notification has
+    exactly one reader. In-app first was a deliberate choice ([ADR
+    0025](adr/0025-a-notification-is-a-stored-sentence.md)) and email is its own decision rather than a
+    delivery detail: it needs an address the reader can unsubscribe, a retention answer the in-app row
+    does not have, and a locale the request no longer supplies. `PasswordsMailer` is the only mailer in
+    the application, and `config/environments/production.rb` already configures SMTP — so the transport
+    exists and the question is entirely what a notice may promise.
+
+74. **Low — a discussion message is plain text, so a reader who types markdown gets their own
+    punctuation.** `discussion_messages.body` is plain text and the thread renders it as such, with no
+    sanitizing step because there is no formatting step to sanitize: `**bold**`, `# heading`, and
+    `- item` all appear verbatim in the message. This is reachable now and visible to any writer
+    accustomed to a markdown editor elsewhere, and it is a deliberate first version
+    ([ADR 0019](adr/0019-collaboration-foundations.md) deferred it; the ADR that would settle it does
+    not exist). Formatting is not only a render change: it makes the stored body untrusted input on
+    every surface that prints it — the thread, a notification sentence carrying a reviewer's note, and
+    any future export — so it needs a decision about which dialect is allowed and where escaping
+    happens, not just a template.
+
+75. **Low — real-time updates are asynchronous and explicit, so two readers never see each other's
+    unsaved work.** A second reader's write reaches a browser as a refresh and nothing more
+    ([ADR 0026](adr/0026-a-live-update-is-a-refresh-and-never-a-page.md)), which means a draft is never
+    shared while it is being written: the other reader sees nothing until it is applied, and a held
+    refresh is dropped rather than queued. That is the accepted answer for an asynchronous
+    with-explicit-apply workflow, and the alternative — a shared editing surface where two people type
+    into one record — is a different product with a different failure mode, not a missing feature here.
+    Worth recording so that a reader reporting "the other person was typing and I saw nothing" is
+    answered with the decision rather than investigated as a bug.
 
 ## Performance, test, and tooling observations
 

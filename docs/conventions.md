@@ -684,7 +684,9 @@ reviewer's only option, or one damaged row would block the queue behind the auth
 ## Notifications
 
 One person is told what happened to them while they were elsewhere, and the questions that takes are
-the model, the writes, and the bell.
+the model, the writes, and the bell. [ADR 0025](adr/0025-a-notification-is-a-stored-sentence.md) is
+why this is a stored sentence with a recipient rule per kind rather than a pointer, and the reasoning
+behind the rules below lives there.
 
 **What a notification is: a stored sentence, not a pointer.** `Notification`'s `payload` carries the
 universe's slug and name, whatever it is about, the other person's name, and a reviewer's note where
@@ -781,6 +783,8 @@ link to `/u//discussions/`.
 When something another reader did changes what this page would show, this page says so without being
 asked. `LiveUpdates` owns what is published and to whom; `live_update_controller.js` owns what the
 browser does about it; `config/cable.yml` owns which adapter delivers it.
+[ADR 0026](adr/0026-a-live-update-is-a-refresh-and-never-a-page.md) records why a broadcast is a
+refresh rather than rendered content, and why the client decides whether to apply it.
 
 **A live update is a signal, never a page.** Every broadcast is a Turbo Stream `refresh` carrying one
 `data-live-update` marker, and nothing else. The alternative — broadcasting the rendered rows, the

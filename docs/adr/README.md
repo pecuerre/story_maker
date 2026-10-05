@@ -49,6 +49,8 @@ reasoning as of its date.
 | [0022](0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md) | Accepted | Let an editing session claim the browser without gating remembering, and make one open draft a database rule |
 | [0023](0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) | Accepted | Read pending changes from the draft and draw them as badges, and never rewrite a list row to match one |
 | [0024](0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md) | Accepted | Store an apply's outcome per change and on the draft, and keep a closed draft inspectable |
+| [0025](0025-a-notification-is-a-stored-sentence.md) | Accepted | Make a notification a stored sentence with no foreign key, and give each kind its own recipient rule |
+| [0026](0026-a-live-update-is-a-refresh-and-never-a-page.md) | Accepted | Publish a live update as a signed refresh to three streams, and apply it only when the page holds nothing unsent |
 
 ## Format
 

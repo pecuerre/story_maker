@@ -159,13 +159,18 @@ it has a useful destination and clear empty/loading/error states.
       [conventions.md](conventions.md#real-time-updates) for the audience and commit rules and the dated
       entries in [`../CHANGELOG.md`](../CHANGELOG.md). The test environment's cable adapter is `async`
       rather than `test`, which is what lets a browser test observe a real delivery.
-    - **Slice 6.3:** Write an ADR for the collaboration system architecture. Update all relevant docs.
-      Update changelog.
-
-    **Deliberately deferred:** per-field conflict detection (per-record only for now); real-time
-    collaborative editing (async with explicit apply, not Google Docs style); markdown in discussions
-    (plain text first); email notifications (in-app first, email later); draft branching/forking (a
-    draft is a linear set of changes); draft merging (one draft at a time per user per universe).
+    - **Slice 6.3, delivered:** The two collaboration decisions that arrived without an ADR now have
+      one. [ADR 0025](adr/0025-a-notification-is-a-stored-sentence.md) records why a notification is a
+      stored sentence with no foreign key and why each kind has its own recipient rule; [ADR
+      0026](adr/0026-a-live-update-is-a-refresh-and-never-a-page.md) records why a live update is a
+      signed refresh rather than rendered content. Every other collaboration decision already had one
+      (0019–0024), so no overview ADR was written: it would have been a map over six records that
+      explain themselves and no decision of its own to state. The deferrals this item recorded became
+      open findings in [`known_quirks.md`](known_quirks.md) — per-record conflict detection, the
+      linearity of a draft, in-app-only notification, plain-text messages, and asynchronous explicit
+      application — because each is reachable now and surprises a reader, where this paragraph had been
+      recording decisions nobody had made yet. They outlive the item. See the dated entries in
+      [`../CHANGELOG.md`](../CHANGELOG.md).
 
 26. **What a pending badge has to say beyond its state**
 

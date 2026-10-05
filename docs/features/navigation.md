@@ -47,7 +47,9 @@ reader types. The notifications bell does issue one, and says why below.
   inside it, and **rendered only for a signed-in reader**: there is nothing there addressed to a
   guest, and asking costs a query. It is server-rendered Bootstrap, which is why this feature added
   no Stimulus controller and no `test/javascript` case. What it shows, and the two rules that decide
-  it, are in [conventions.md](../conventions.md#notifications).
+  it, are in [conventions.md](../conventions.md#notifications); the figure also moves under a reader
+  who is on another page, through the reader stream described in
+  [Real-time updates](../conventions.md#real-time-updates).
 - **Account** — the other action, a dropdown rendered for every visitor. A signed-in reader
   sees their email, **Settings**, and **Log out**; a guest sees **Log in** and **Settings**. The
   menu button carries `.active` and `aria-current="page"` on the settings page.

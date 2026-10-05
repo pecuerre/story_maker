@@ -29,6 +29,51 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-05
 
+- **[docs]** **The two collaboration decisions that arrived without an ADR now have one.** The notification
+  system and the live-update channel were delivered with their rules written down and no record of why,
+  which is the one thing an ADR is for. ADR 0025 holds the notification decision — a stored sentence
+  with no foreign key, and one recipient rule per kind — and ADR 0026 holds the live-update decision —
+  a signed refresh, never rendered content. Neither restates `conventions.md`; each records the forces
+  that made the alternatives wrong.
+
+  **Why two ADRs rather than one "collaboration architecture" record.** Every other collaboration
+  decision already has one, and they are per-decision for a reason: 0019 settles the mode, the
+  polymorphic reference, and the version stamp; 0020 the interception; 0021 the applier; 0022 the
+  editing session; 0023 the badges; 0024 the stored outcome. A single architecture ADR on top of those
+  would be a map that could fall out of step with six records that already explain themselves, and it
+  would have no decision of its own to state — which is the test the format asks for. The gap was
+  narrower and easier to name: the notification bell and the websocket were the two halves of phase 6
+  that had no reasoning behind them, because neither was a decision somebody had to make twice.
+
+  **The deferrals became open findings rather than a status paragraph.** The collaboration item
+  carried a `**Deliberately deferred:**` list — per-field conflict detection, Google-Docs-style
+  collaborative editing, markdown in discussions, email notifications, draft branching/forking,
+  draft merging — which would have been deleted with the item. Each is now a numbered finding in
+  [`known_quirks.md`](known_quirks.md) (71–75), because every one of them is a behaviour a reader can
+  reach today and be surprised by, which is what that file holds; the backlog item had been recording
+  decisions nobody had made, which is what that file holds. The distinction matters: a quirk says "this
+  is what happens and here is why it is defensible", while a backlog item says "somebody should decide
+  this", and mixing them is how a pending product question ends up documented as though it were a
+  settled behaviour. Branching and merging share one entry (72) because they are the same fact — a
+  draft is a linear set of changes — with one cause (the partial unique index) rather than two
+  findings. ADR 0025 and 0026 keep the *rejected alternative* for each of the two that touch their
+  decisions (email delivery, shared editing); a rejection explains why and a finding says what a
+  reader sees, and the reader-facing half is what was at risk of being lost.
+
+  **Verification.** `bin/rails test` — 1973 runs, 12701 assertions, 0 failures, 0 errors, 10 skips,
+  including `test/docs_test.rb`, which checks every link, every cross-document anchor, and that no
+  heading is owned by two documents. Not run: `bin/rails test:system` and the linters, since no
+  application code, test, or style changed.
+
+  **What else moved.** `data_model.md`'s two `notifications` entries listed three kinds and named
+  `Notification::KINDS`, so after the fourth kind landed they read as the whole set; both now name
+  `discussion_reply`. `conventions.md`, `architecture.md`, and `features/navigation.md` gained links
+  from the sections that own each rule to the ADR that owns its reasoning. No application code, test,
+  or schema changed.
+
+  **Verification.** See the deferrals entry above, which supersedes this line: the full suite was run
+  for the whole slice, not only the documentation test.
+
 - **[added]** **Collaboration phase 6, slice 6.2: a page says so when another reader's write changes
   what it would show.** `LiveUpdates` publishes a Turbo Stream refresh to three signed streams —
   universe, discussion, reader — and `live_update_controller.js` applies the refresh only when the page

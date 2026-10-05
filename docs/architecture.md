@@ -272,8 +272,21 @@ is `GET /notifications` plus two POSTs, `read` and `read_all`, answering the HTM
 needs an account and the scope is `Current.user.notifications` — a notification has exactly one reader,
 so there is no CanCan rule to ask, and `Notification` is not a content class for the same reason `Draft`
 is not. Each notice is written inside the transaction that made the event.
-[conventions.md](conventions.md#notifications) owns who is told what, and the navbar bell that renders
-them is described in [features/navigation.md](features/navigation.md).
+[conventions.md](conventions.md#notifications) owns who is told what, the navbar bell that renders
+them is described in [features/navigation.md](features/navigation.md), and
+[ADR 0025](adr/0025-a-notification-is-a-stored-sentence.md) owns why a notice is a stored sentence with
+a recipient rule per kind.
+
+`LiveUpdates` is the other half of the bell and the only thing this application publishes over the
+websocket: a Turbo Stream **refresh**, and never rendered content, because a broadcast is rendered
+outside any request — with no session, no `Current`, and no locale or authorization answer for the
+reader receiving it. Three stream names — universe, discussion, and reader — are named by the
+service and signed by `turbo_stream_from`; an applied draft, a posted reply, and every notification
+reach a browser that way, so a page in a draft-based universe needs no broadcast of its own.
+`layouts/_live_updates` renders the subscriptions, and `live_update_controller.js` applies a refresh
+only when the page holds nothing unsent. [conventions.md](conventions.md#real-time-updates) owns the
+rules and [ADR 0026](adr/0026-a-live-update-is-a-refresh-and-never-a-page.md) owns why a refresh is
+the only thing a broadcast may carry.
 
 `DraftEditingController` is the universe page's **Start editing** / **Stop editing** control: a singleton
 `resource` with a POST and a DELETE, the same shape `resource :session` uses. It answers the HTML flow —

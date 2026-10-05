@@ -226,15 +226,20 @@ implemented; [conventions.md](conventions.md#controllers) owns the call each mut
 `DraftsController` is where those remembered changes are read and acted on. It is the only controller
 whose every action requires a session, because a draft belongs to a person, and it is read as its own
 author's inside the universe the request has already authorized rather than through CanCan — `Draft` is
-deliberately not a content class. Applying writes through the same services and the same model
-validations the live path uses, and closes the draft either way; a change it cannot write because the
-record has moved or been deleted **stops the apply and is asked about first**, on a `drafts/conflicts`
-page that answers `422` and posts back to the same action, and an unanswered conflict is reported
-rather than written. A closed draft is still served by `show` — it is history, not a 404 — and reports
-the run it recorded: the moment it closed and its tally on both pages, one stored outcome per change on
-its own page, all written by the applier inside the same transaction as the status change
-([ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)).
-[conventions.md](conventions.md#the-drafts-page) owns that page, its history, and the two
+deliberately not a content class. **Which of its two ways out applies is the universe's collaboration
+mode**: `apply` writes the remembered changes through the same services and the same model validations
+the live path uses, and closes the draft either way, while `submit` hands the draft to a reviewer with
+the author's optional message. Each refuses the other mode with `drafts.flash.wrong_mode`, so the rule
+holds for a POST that skipped the page as well as for a reader who pressed the button. A change an apply
+cannot write because the record has moved or been deleted **stops the apply and is asked about first**,
+on a `drafts/conflicts` page that answers `422` and posts back to the same action, and an unanswered
+conflict is reported rather than written. A closed draft is still served by `show` — it is history, not a
+404 — and reports the run it recorded: the moment it closed and its tally on both pages, one stored
+outcome per change on its own page, all written by the applier inside the same transaction as the status
+change ([ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)).
+Discarding a draft that is with a reviewer withdraws the submission in the same transaction, so the
+queue never waits on work the author threw away.
+[conventions.md](conventions.md#the-drafts-page) owns that page, its history, and the
 controls on a draft's own page, and
 [ADR 0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md) owns why the draft closes
 either way.
@@ -247,7 +252,8 @@ the queue names every author who has submitted something, so read access is not 
 `DraftsController#apply` (all three through the shared `AppliesDrafts` concern), with the request's own
 decision landing in the applier's transaction; `reject` moves the request and the draft's status
 together, so the author gets their draft back with its changes. Both refuse a draft the applier cannot
-read, in words, rather than letting the exception escape as a 404.
+read, in words, rather than letting the exception escape as a 404, and both refuse a request that is no
+longer `pending` — which now includes a submission the author **withdrew** by discarding its draft.
 [conventions.md](conventions.md#the-reviewers-page) owns those pages.
 
 `DraftEditingController` is the universe page's **Start editing** / **Stop editing** control: a singleton

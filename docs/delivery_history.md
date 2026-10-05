@@ -29,6 +29,77 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-05
 
+- **[added]** **Collaboration phase 5, slice 5.3: an author can hand a draft over for review, read where
+  their submission stands, and withdraw it by discarding the draft.** `DraftsController#submit` is the
+  third control on the drafts pages and the first control anywhere that can make a submission; the
+  `github` mode is enforced on `apply` and `submit` rather than only on the buttons; `review_requests`
+  gained `submission_message` and a fourth status, `withdrawn`; `drafts/_submission_status` is the
+  author's own view of the newest submission. Slice 5.2's note that "the author still cannot *see* a
+  reviewer's note from their own side" is closed by this entry.
+
+  **The mode gate is on the actions, and that is the half that matters.** Hiding the other mode's button
+  is where the rule is *read*; refusing the action is where it is *decided*. A POST that skipped the page
+  — a stale tab, a scripted request, a bookmarked form — is answered with the same sentence the page would
+  have shown rather than doing the other mode's work, and in a `github` universe the author's own apply is
+  exactly the write the mode exists to prevent. The reviewer's pages stay ungated, as slice 5.2 decided:
+  a submission can only exist where one was made, so the mode belongs on the one control that makes one.
+
+  **The handover is a form with a field, not a `button_to`.** An optional message cannot travel on a
+  control, which slice 5.2 had already learned the expensive way with the approval's note. The field is a
+  parameter of the *submission* rather than a column an author edits: `Draft#submit!(message:)` writes it
+  onto the `ReviewRequest` it creates, so a rejected draft handed over again carries its own message
+  instead of overwriting the last one. A blank is stored as `nil` for `review_notes`' reason — an empty
+  string would read back on the reviewer's page as something the author wrote.
+
+  **The author's page reads the newest submission, not the pending one.** `Draft#pending_review_request`
+  is the reviewer's queue, but a rejected submission hands the draft back, so the draft says `draft` again
+  and the row carrying the reviewer's reason is the only thing that still holds it. Reading the draft's
+  status instead would have reported "still a draft" to the person whose work was just refused. The
+  status is printed from `ReviewRequest`'s own vocabulary rather than from `Draft::STATUSES`, because it
+  is the request's status and four statuses now answer it.
+
+  **Discarding a submitted draft withdraws the submission, and the slice would have shipped a live-write
+  hazard without it.** `DraftsController#discard` checks `Draft#open?`, and `submitted` is open, so a
+  `github` author could throw away a draft a reviewer was about to approve — and `DraftApplier#apply` has
+  no `open?` guard, so the approval would still have written every remembered change. Its class comment
+  claims `open?` is "the precondition for calling `#apply` at all" and nothing enforces it, which is a
+  latent gap this slice turned reachable. The owner's decision was to **withdraw rather than refuse**:
+  `ReviewRequest#withdraw!` moves the request and the draft's status in one transaction, `reject!`'s rule a
+  third time, and the request gains a fourth status. The alternative — refusing to discard — would have
+  left an author who submitted by mistake with no way out but to wait for a reviewer.
+
+  **A withdrawal is the author's answer, so it is not `decided?`.** It carries no `reviewed_by` and no
+  notes, because nobody reviewed it, and a reviewer recorded against it would be a fiction. That forced
+  the reviewer validation to ask about `decided?` rather than `!pending?`, so the rule does not go stale
+  when a status joins the list, and the queue's "by %{reviewer}" sentence is not the one that prints it.
+  `waiting?` was added as the positive name for `pending?` because "was this answered" and "is anybody
+  waiting" are two questions that come apart exactly where a fourth status exists.
+
+  **The owner's answer on editing a submitted draft was to keep appending, and that is now finding 70.**
+  `Draft::OPEN_STATUSES` includes `submitted`, so `DraftMutation#current_draft` still finds the submitted
+  draft and a `github` author who keeps editing has those changes appended after the message was written.
+  The alternative was to refuse the mutation in words while a submission is in flight, which is
+  `DraftIntegrity`'s shape and would have been consistent with it — but it is a product decision about
+  what an author's editing means while their work is under somebody else's decision, and it interacts
+  with the one-open-draft rule. The owner chose the behaviour that changes nothing, so it is recorded as
+  a verified open finding rather than silently shipped.
+
+  **The system test drives two clicks through the page, and this is worth stating rather than hiding.**
+  Slice 5.2's system test built its submissions through the model, which is right for a reviewer's
+  journey and wrong for this one: the handover is the slice, and no request test can show a field. While
+  writing it, a native Chrome click in this suite was measured to be **silently dropped** — a
+  capture-phase listener on `document` records no event at all, while `elementFromPoint` still returns the
+  control and `visible?` is true, and a click that never focuses a field leaves `activeElement` on
+  `BODY`, so `fill_in` types into the page. The cause is the **machine**, not the application: the drops
+  appeared only while the load average was around 24 on 8 cores, and every affected case — including
+  several this slice does not touch — passed on an idle machine. That is the failure
+  `ApplicationSystemTestCase#visit` already guards against for a page's readiness, and the same class of
+  thing as finding 58, which is why `sign_out_via_account` is already scripted. The controls this case
+  submits through are therefore dispatched from the page and the typed value is set with the events a
+  keystroke would produce, which costs nothing and keeps the case deterministic on a loaded runner. What
+  it still proves is that the field is named into the submission, which is the part this application
+  owns.
+
 - **[changed]** **A reviewer can leave a note with an approval, and three questions the slice raised were answered.**
   The approval control became a form with an optional "note for the author", stored as `nil` when the box is
   empty and carried through the conflict question that makes an approval a two-step; a rejection's note stays

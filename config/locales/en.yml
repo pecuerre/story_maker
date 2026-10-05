@@ -477,6 +477,17 @@ en:
         other: "%{count} changes were left exactly as they are now, because you chose theirs."
       discarded: "The draft was discarded. Nothing was written."
       closed: "That draft has already been applied or discarded, so there is nothing left to do with it."
+      # The other mode's answer, refused by the action rather than only hidden by
+      # the view. One sentence for both directions because they are the same fact
+      # seen from two pages: this universe does not do that, and the draft's own
+      # page — which is where the redirect lands — carries the control it does offer.
+      wrong_mode: "This universe does not work that way, so nothing was done. The page you are on has the control it uses."
+      # A submitted draft is open, so both of the controls on its page would be
+      # refused, and neither "apply" nor "discard" describes its state.
+      waiting_for_review: "That draft is waiting for a reviewer, so there is nothing left to submit or apply."
+      # What a handover did. It says nothing was written, because a submission is
+      # the opposite of an apply and the two flashes must not read alike.
+      submitted: "Your draft was submitted for review. Nothing was written."
       # The editing session. Starting says what the session *is* — a claim that
       # opens the draft, not a switch that decides whether a change is written —
       # because that is the one thing the control would otherwise leave an author
@@ -504,6 +515,11 @@ en:
         remember: "Edit anything in this universe. Each change is remembered on your draft rather than written."
         review: "Your lists show what is waiting: a row for a record you added, and a badge on a record you edited or deleted."
         apply: "Apply the draft to write every remembered change at once, or discard it and write nothing."
+        # The same third step in a `github` universe, where the author is not the
+        # person who makes a change live. It says what a rejection means for the
+        # author's work — it comes back to be edited — because that is the part of
+        # handing something over that is not obvious from the word "review".
+        submit: "Hand the draft to a reviewer, who approves it or sends it back with a reason. Nothing is written until they approve it."
     # What one change's apply did to it, as the badge its row carries and the
     # sentence that says why it is not live. `DraftApplier::SKIP_REASONS` and
     # `DraftChangeOutcome::STATES` are the same words; `kept` is the one key that
@@ -599,7 +615,16 @@ en:
       remembered_at_html: "Remembered %{at}."
       review: "Review"
       apply: "Apply"
+      submit: "Submit for review"
       discard: "Discard"
+      # What this universe does with a draft, said once above the rows rather than
+      # in each of them. Two sentences because they are two different promises: one
+      # ends with the author's own button, the other ends with somebody else's.
+      apply_note: "Applying a draft writes every remembered change at once."
+      review_note: "Nothing here is written until an owner or admin approves the draft, and a rejected draft comes back to you to edit."
+      submit_confirm:
+        one: "Submit the %{count} remembered change for review? An owner or admin decides whether it is applied."
+        other: "Submit the %{count} remembered changes for review? An owner or admin decides whether they are applied."
       # Both confirmations are irreversible decisions, so each says what happens
       # rather than asking whether to continue.
       apply_confirm:
@@ -613,6 +638,9 @@ en:
     show:
       title: "Changes to review"
       description: "Every change this draft remembers, in the order you made them. Nothing here has been written until you apply it."
+      # The same page in a `github` universe. It cannot say "until you apply it",
+      # because that is the one thing this mode does not let its author do.
+      review_description: "Every change this draft remembers, in the order you made them. Nothing here has been written until a reviewer approves it."
       back: "All pending changes"
       apply: "Apply changes"
       discard: "Discard draft"
@@ -629,6 +657,27 @@ en:
       no_values: "No field values were remembered for this change."
       empty_title: "This draft remembers no changes"
       empty_description: "There is nothing here to apply. A draft is opened by the first change you remember, so this one is empty."
+    # The handover form on a draft's own page, in a `github` universe. It is a form
+    # rather than a button because the message is a field: most submissions need no
+    # explanation and some need a great deal, and one control cannot carry both.
+    submission:
+      heading: "Submit this draft for review"
+      lead: "Nothing on this page is written when you submit. An owner or an admin reads the changes and either approves them or sends the draft back with a reason, and a draft that comes back is still yours to edit."
+      message: "Anything the reviewer should know? (optional)"
+      message_hint: "The reviewer reads this above your changes. A name that looks like a mistake, a change you tried twice, a scene you deliberately left alone — say it here rather than hoping it is obvious."
+      submit: "Submit for review"
+    # Where the author's own submission stands, on the author's own page. The four
+    # sentences are keyed by the stored `ReviewRequest` status, because that is where
+    # the answer lives: a rejected draft goes back to saying "Draft", so the status
+    # of the *submission* is a separate fact with a separate row.
+    submission_status:
+      heading: "Your submission"
+      pending_html: "Waiting for a reviewer since %{at}."
+      approved_html: "Approved by %{reviewer} %{at}. Your changes are live."
+      rejected_html: "Rejected by %{reviewer} %{at}. Your draft is back with you, with its changes, and you can edit it and submit again."
+      withdrawn_html: "You withdrew this submission %{at}, so nothing was written."
+      message: "You wrote: %{message}"
+      notes: "The reviewer said: %{notes}"
     # The page that answers the apply it stopped. A conflict page is a question,
     # so every row shows both halves of the choice — what the author remembered
     # and what is there now — because a button an author cannot evaluate is a
@@ -711,6 +760,7 @@ en:
       pending: "Waiting"
       approved: "Approved"
       rejected: "Rejected"
+      withdrawn: "Withdrawn"
     index:
       title: "Review requests"
       description: "Drafts that authors have handed over in this universe, with the ones still waiting for a decision first."
@@ -725,6 +775,9 @@ en:
       # which is why `ReviewRequest` validates a reviewer onto every decided row.
       decided_by: "by %{reviewer}"
       notes: "Notes: %{notes}"
+      # A withdrawal has no reviewer, so it cannot use `decided_by`. It reads as
+      # the author's own act because that is what it is.
+      withdrawn: "Withdrawn — the author discarded this draft, so nothing was written."
       open: "Review"
       empty_title: "Nothing is waiting for a decision"
       empty_description: "When an author hands a draft over in this universe instead of applying it, it appears here."
@@ -733,6 +786,12 @@ en:
       description: "Every change this submitted draft remembers, in the order the author made them. Nothing here has been written until you approve it."
       back: "All review requests"
       submitted_by_html: "Submitted by %{author} %{at}."
+      # The author's own sentence, above the changes. It is the context for reading
+      # the diffs, so it is labelled as a quotation rather than as prose: a reviewer
+      # has to be able to see where the author's words end and the application's
+      # begin, because everything below this block is the application's reading.
+      submission_message_label: "The author wrote:"
+      withdrawn_html: "The author withdrew this submission %{at} by discarding its draft. Nothing was written, and there is nothing to decide."
       apply: "Approve changes"
       apply_confirm: "Approve every remembered change? They become live immediately."
       # An approval's note is for the author and is optional, unlike a rejection's.

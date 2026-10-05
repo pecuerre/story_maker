@@ -3,19 +3,33 @@
 <%= render "shared/page_header",
   title: t("drafts.show.title"),
   eyebrow: Current.universe.name,
-  description: t("drafts.show.description"),
+  description: t(Current.universe.github? ? "drafts.show.review_description" : "drafts.show.description"),
   count: @draft.draft_changes.size,
   count_label: "change" do %>
   <%= link_to t("drafts.show.back"), universe_drafts_path, class: "btn btn-outline-secondary" %>
 
   <%# The only page in the application whose `show` carries mutation controls,
       because acting on a draft is what this page is for. They exist only while
-      the draft can be acted on: an applied or discarded draft is history, and a
-      control that would do nothing is worse than no control. %>
+      the draft can still be acted on: an applied or discarded draft is history, and a
+      control that would do nothing is worse than no control.
+
+      **Which control is primary is the universe's mode.** A `wikipedia` universe
+      applies the draft here and now; a `github` universe hands it to a reviewer, so
+      the same place offers a form with a field rather than a button with a
+      confirmation — see `drafts/_submission` for why the submission is a form and
+      not a `button_to`. The server enforces the same split, so this is where the
+      rule is *read*, not where it is *decided*. %>
   <% if @draft.open? %>
-    <%= button_to t("drafts.show.apply"), apply_universe_draft_path(id: @draft),
-      class: "btn btn-primary",
-      data: { turbo_confirm: t("drafts.show.apply_confirm") } %>
+    <%# A `github` universe offers no apply here at all — its decision is the handover
+        below, beside the message it carries, which is not a control the header's row
+        of buttons can hold. Discard stays in the header because it needs no
+        explanation and is not the decision the mode is about: it is the way out of
+        this draft in either mode. %>
+    <% unless Current.universe.github? %>
+      <%= button_to t("drafts.show.apply"), apply_universe_draft_path(id: @draft),
+        class: "btn btn-primary",
+        data: { turbo_confirm: t("drafts.show.apply_confirm") } %>
+    <% end %>
     <%= button_to t("drafts.show.discard"), discard_universe_draft_path(id: @draft),
       class: "btn btn-outline-danger",
       data: { turbo_confirm: t("drafts.show.discard_confirm") } %>
@@ -52,6 +66,18 @@
       </div>
     <% end %>
 
+    <%# Where this draft's submission stands, from the author's side. It is here and
+        not only on the reviewer's page because the author is the person waiting:
+        a `github` universe can hold a draft for days, and "did anybody look at
+        this?" has to be answerable without being an admin or opening somebody
+        else's queue. Rendered from the stored request rather than derived from the
+        draft's status, because a rejected submission leaves the draft saying
+        `draft` — the rejection is the fact, and only the request carries it.
+        See `drafts/_submission_status`. %>
+    <% if Current.universe.github? && @review_request %>
+      <%= render "drafts/submission_status", review_request: @review_request %>
+    <% end %>
+
     <%# A draft remembers at least one change whenever the remembering path could
         finish, so an empty one is a defect the page states rather than hides —
         and an author who got here by pressing **Apply** deserves to be told it
@@ -68,3 +94,10 @@
     <% end %>
   </div>
 </div>
+
+<%# The submission form, only where there is something to submit and only in the
+    mode that has a reviewer. It is below the changes rather than in the page
+    header because it is a form with a field in it, and the header is a row of
+    buttons; that is the same reason a reviewer's approval moved out of its page
+    header in slice 5.2. %>
+<%= render "drafts/submission", draft: @draft if Current.universe.github? && @draft.draft? %>

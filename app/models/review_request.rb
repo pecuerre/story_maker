@@ -27,8 +27,25 @@
 # `reviewed_by` is optional because nobody has reviewed a pending request yet.
 # `review_notes` is optional because an approval has nothing to explain, and
 # **required** for a rejection, whose only purpose is to say why.
+#
+# **`withdrawn` is the fourth status, and it is the author's own answer rather than a
+# reviewer's.** Discarding a submitted draft used to close the draft while its request
+# stayed `pending`, which left the reviewer's queue holding a submission whose draft
+# was already gone — and `DraftApplier` does not ask whether a draft is open, so
+# approving it would still have written the changes live. A withdrawal says the
+# submission is no longer waiting for anybody, which is what the author meant by
+# discarding the draft it belonged to. It carries **no reviewer and no notes**,
+# because nobody reviewed it: it is a queue row answered by the absence of work, and a
+# reviewer recorded against it would be a fiction. That is also why `withdrawn?` is
+# not `decided?` — "decided" answers "did a reviewer rule on this", which is the
+# question an audit of this universe has to be able to ask.
+#
+# **`submission_message` is the author's side of the same conversation.** It says what
+# the author wants a reviewer to know before reading the diffs, and it is nullable
+# because a request with nothing to add is still a request — the opposite of a
+# rejection, whose whole purpose is to explain itself.
 class ReviewRequest < ApplicationRecord
-  STATUSES = %w[pending approved rejected].freeze
+  STATUSES = %w[pending approved rejected withdrawn].freeze
 
   # The one status a reviewer has not yet answered. It is named rather than
   # repeated as a literal at the two places that ask it, so the scope, the
@@ -63,12 +80,54 @@ class ReviewRequest < ApplicationRecord
     status == "rejected"
   end
 
-  # Whether a reviewer has answered. The other half of `pending?`, asked about by
-  # name because a reviewer's list and an author's own view both need it, and
-  # `!pending?` spelled twice is the kind of duplication that lets a fifth surface
-  # decide for itself what "still waiting" means.
+  # The submission is no longer waiting for a reviewer, because its author
+  # withdrew it rather than because anybody ruled on it. It is a fourth answer
+  # rather than a third, because "rejected" and "withdrawn" say opposite things to
+  # the author: one is somebody else's decision and hands the draft back to be
+  # edited, the other is the author saying there is nothing left to decide.
+  def withdrawn?
+    status == "withdrawn"
+  end
+
+  # Whether a **reviewer** has answered. The other half of `pending?` among the
+  # three statuses a person reaches, asked about by name because a reviewer's list
+  # and an author's own view both need it, and `!pending?` spelled twice is the kind
+  # of duplication that lets a fifth surface decide for itself what "still waiting"
+  # means.
+  #
+  # **A withdrawal is not a decision**, so it is excluded: the queue's index sorts
+  # waiting first and this history behind it, and a withdrawn row belongs in that
+  # history — but the "by %{reviewer}" sentence reads a reviewer off the row, and
+  # there is none to read.
   def decided?
-    !pending?
+    !pending? && !withdrawn?
+  end
+
+  # Whether the queue is still waiting on this row at all. It is `pending?` today
+  # and the other half of `decided?`, named separately because "was this answered"
+  # and "is anybody waiting" are the two questions a queue and an author's page ask,
+  # and a fourth status is exactly where the two come apart.
+  def waiting?
+    pending?
+  end
+
+  # The author takes the submission back, because they discarded the draft it was
+  # about. **It moves the draft's status in the same transaction, for `reject!`'s
+  # reason read once more**: a discarded draft whose submission still said
+  # `pending` is a queue entry waiting on work that no longer exists, and an
+  # approval of it would write the changes live because the applier asks whether a
+  # draft is open nowhere.
+  #
+  # Unlike `reject!` this **raises nothing and answers nothing**. There is no form
+  # here: discarding a draft is the author's own control on their own page, it has
+  # no field to get wrong, and a refusal would leave the draft half-discarded. The
+  # only failure mode is the transaction, which is the reason the two writes share
+  # one.
+  def withdraw!
+    transaction do
+      update!(status: "withdrawn")
+      draft.update!(status: "discarded", closed_at: Time.current)
+    end
   end
 
   # The reviewer's other answer: this submission is refused and the draft comes
@@ -147,9 +206,12 @@ class ReviewRequest < ApplicationRecord
     # A decision says who made it. A reviewed request with no reviewer is a row
     # that cannot answer "who let this through", which is the one question an
     # audit of this universe has to be able to ask. A pending request has no
-    # reviewer yet, which is what `optional: true` above is for.
+    # reviewer yet, which is what `optional: true` above is for, and a **withdrawn**
+    # one has no reviewer because nobody reviewed it at all — so the rule asks about
+    # `decided?` rather than about `!pending?`, which is the same question by name
+    # and does not go stale when a fourth status joins the list.
     def reviewed_by_matches_a_decision
-      return if pending?
+      return if pending? || withdrawn?
       return if reviewed_by.present?
 
       errors.add(:reviewed_by, I18n.t("review_requests.errors.reviewer_required"))

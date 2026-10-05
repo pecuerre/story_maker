@@ -28,11 +28,36 @@
 
     <%# What the decision said. `ReviewRequest` requires notes for a rejection and
         leaves them optional for an approval, so this line is here for whichever
-        reviewer wrote something — and it is the only place an author can read it
-        until slice 5.3 gives their own page a view of the submission. %>
+        reviewer wrote something — and the author reads it on their own draft's page,
+        beside the status of the submission it belongs to. %>
     <% if @review_request.review_notes.present? %>
       <div class="list-group-item review-request-notes">
         <%= t("review_requests.index.notes", notes: @review_request.review_notes) %>
+      </div>
+    <% end %>
+
+    <%# The author's own sentence, above the changes rather than below them: it is
+        the context for reading the diffs, so it is the first thing said after the
+        summary. Optional by design — a handover with nothing to add is still a
+        handover — so the block is absent rather than empty. %>
+    <% if @review_request.submission_message.present? %>
+      <div class="list-group-item review-request-submission-message">
+        <span class="review-request-message-label"><%= t("review_requests.show.submission_message_label") %></span>
+        <%= simple_format(@review_request.submission_message, class: "mb-0") %>
+      </div>
+    <% end %>
+
+    <%# A withdrawn submission is history: the author discarded the draft it was
+        about, so there is nothing to approve and nothing to reject. It says that is
+        what happened, because a queue row that simply stopped appearing would leave
+        a reviewer unable to tell a withdrawal from a mistake. The moment is the **draft's**
+        # `closed_at` rather than this row's `created_at`, which is when it was submitted —
+        # `withdraw!` closes the draft in the same transaction, so that is the one column
+        # that says when it stopped being actionable. %>
+    <% if @review_request.withdrawn? %>
+      <div class="list-group-item review-request-withdrawn">
+        <%= t("review_requests.show.withdrawn_html",
+          at: time_tag(@review_request.draft.closed_at, l(@review_request.draft.closed_at, format: :short))) %>
       </div>
     <% end %>
 

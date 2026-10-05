@@ -53,12 +53,15 @@ class ReviewRequestsController < ApplicationController
 
   # GET /u/:universe_slug/review_requests
   #
-  # The queue, with the decided submissions behind the waiting ones rather than beside
-  # them: a reviewer comes here to decide something, and a decision sorted above a
-  # pending submission would push the thing they came for down the page. The decided
-  # rows are history rather than noise — they are where "who let this through" is
-  # answered, and `ReviewRequest` validates a reviewer onto every one of them for
-  # exactly that reason.
+  # The queue, with the answered submissions behind the waiting ones rather than
+  # beside them: a reviewer comes here to decide something, and a decision sorted
+  # above a pending submission would push the thing they came for down the page. The
+  # rows behind are history rather than noise — they are where "who let this through"
+  # is answered, and `ReviewRequest` validates a reviewer onto every one of them for
+  # exactly that reason. The sort asks `waiting?` rather than `pending?` because those
+  # two come apart at `withdrawn`: a withdrawn submission is answered, and a
+  # withdrawn row belongs in this history rather than waiting at the top of a queue
+  # nobody is going to act on.
   #
   # The sort is in Ruby for the same reason the drafts list's is: this is one
   # universe's submissions, a few rows at most, and a second `ORDER BY` would be a
@@ -66,7 +69,7 @@ class ReviewRequestsController < ApplicationController
   def index
     @review_requests = Current.universe.review_requests
       .includes(:draft, :submitted_by).order(:id)
-      .sort_by { |request| [ request.pending? ? 0 : 1, -request.id ] }
+      .sort_by { |request| [ request.waiting? ? 0 : 1, -request.id ] }
   end
 
   # GET /u/:universe_slug/review_requests/:id

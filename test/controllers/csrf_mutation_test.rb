@@ -333,6 +333,37 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "submitting a draft for review is refused without a token and hands nothing over" do
+    # The handover is a form with a field, like the reviewer's approval, so its token
+    # comes from the form's own hidden field. What makes it worth a case is what a
+    # forged request would achieve: it would put somebody's work into another person's
+    # review queue with a message that reads as though they wrote it.
+    @universe.update!(collaboration_mode: "github")
+    draft = remembered_draft
+    token = nil
+
+    with_forgery_protection do
+      token = fetch_page_token(universe_draft_path(universe_slug: @universe.slug, id: draft))
+
+      assert_no_difference [ -> { ReviewRequest.count }, -> { Draft.where(status: "submitted").count } ] do
+        post submit_universe_draft_url(universe_slug: @universe.slug, id: draft),
+          params: { review_request: { submission_message: "Never recorded" } }
+      end
+
+      assert_includes 406..422, response.status
+      assert_predicate draft.reload, :draft?, "a refused handover must leave the draft exactly as it was"
+      assert_empty draft.review_requests
+
+      post submit_universe_draft_url(universe_slug: @universe.slug, id: draft),
+        params: { review_request: { submission_message: "Recorded with the page's own token" } },
+        headers: { "X-CSRF-Token" => token }
+
+      assert_response :see_other
+      assert_predicate draft.reload, :submitted?
+      assert_equal "Recorded with the page's own token", draft.pending_review_request.submission_message
+    end
+  end
+
   test "the settings form is refused without a token and accepted with one" do
     with_forgery_protection do
       token = fetch_page_token(settings_path)
@@ -366,6 +397,16 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     # The theme the last response rendered onto the root element.
     def rendered_theme
       Nokogiri::HTML(response.body).at_css("html")["data-bs-theme"]
+    end
+
+    # A draft an author is about to hand over: one remembered change and nothing
+    # else, which is what the remembering path would have left behind.
+    def remembered_draft
+      draft = Draft.create!(user: @user, universe: @universe)
+      draft.draft_changes.create!(action: "create", record_type: "Character",
+        payload: { "name" => "Token verified handover", "universe_id" => @universe.id })
+
+      draft
     end
 
     # A submitted draft waiting for a decision, in the mode that hands drafts over.

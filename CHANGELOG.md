@@ -40,6 +40,15 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-05
 
+### added
+
+- **An author can submit a draft for review.** In `github` mode the draft page's primary control becomes a
+  form with an optional message instead of **Apply changes**, and the mode is refused on the actions too.
+- **The author reads where their submission stands.** The newest submission's status, moment, their own
+  message and the reviewer's notes are printed on the draft's own page.
+- **Discarding a submitted draft withdraws the submission** in the same transaction, with a fourth status
+  that carries no reviewer because nobody reviewed it.
+
 ### changed
 
 - **A reviewer can leave a note with an approval.** The approve control is now a form with an optional note

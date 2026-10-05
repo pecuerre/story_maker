@@ -38,13 +38,23 @@
             <%# What a decision recorded. `ReviewRequest` validates a reviewer onto every
                 decided row, so "who let this through" is answerable from this page
                 rather than from the database — which is the reason that validation
-                exists and the reason the row does not carry the field for a pending one. %>
+                exists and the reason the row does not carry the field for a pending one.
+                #
+                # **A withdrawal reads its own sentence**, because nobody reviewed it:
+                # there is no reviewer to name, and naming one would be a fiction. It is
+                # a row that stopped waiting because the author threw the draft away,
+                # and a reviewer reading this history has to be able to tell that from a
+                # row that was never submitted. %>
             <% if review_request.decided? %>
               <div class="entity-description review-request-decision">
                 <%= t("review_requests.index.decided_by", reviewer: record_label(review_request.reviewed_by)) %>
                 <% if review_request.review_notes.present? %>
                   — <%= t("review_requests.index.notes", notes: review_request.review_notes) %>
                 <% end %>
+              </div>
+            <% elsif review_request.withdrawn? %>
+              <div class="entity-description review-request-decision review-request-withdrawn">
+                <%= t("review_requests.index.withdrawn") %>
               </div>
             <% end %>
           </div>

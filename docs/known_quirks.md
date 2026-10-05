@@ -10,7 +10,8 @@ only: no application, test, configuration, dependency, or generated-asset fixes 
 pass. The separate DataFactor follow-up section below was checked against the current tree on
 2026-09-25; it is not a full replacement for the original audit. Severity labels distinguish
 reachable security/data-loss issues from lower-priority hardening and contract decisions. Entries
-numbered **63 and above** were added on 2026-10-03 and **68 and above** on 2026-10-04, while the
+numbered **63 and above** were added on 2026-10-03, **68 and above** on 2026-10-04, and **70** on
+2026-10-05, while the
 collaboration draft system was being
 built, verified the same way, and listed here rather than left in [`backlog.md`](backlog.md) because
 each one is reachable now rather than only pending. Finding 64 left this file on 2026-10-04, when the
@@ -305,6 +306,21 @@ through the current normal UI. They are recorded so they are not mistaken for se
   route-surface check.
 
 ## Additional UI and interaction observations
+
+70. **Medium — a draft an author has already submitted keeps accepting remembered changes, so a reviewer
+    can approve work the submission never described.** `Draft::OPEN_STATUSES` is `%w[draft submitted]`
+    (`app/models/draft.rb`), and `DraftMutation#current_draft` opens or finds the author's **open** draft
+    (`app/controllers/concerns/draft_mutation.rb`), so in a `github` universe an author who keeps editing
+    after pressing **Submit for review** has those changes appended to the same draft a reviewer is
+    reading — after the submission message was written, and with nothing in the request saying which
+    changes were in it when it was made. The reviewer's page and the applier both read the draft's changes
+    live, so nothing is written that the reviewer cannot see; what is lost is the guarantee that what was
+    reviewed is what was submitted. **The owner chose to keep appending rather than freeze the draft** on
+    2026-10-05, and this entry is the record of that choice. Fixing it means deciding what a mutation
+    does while a submission is in flight — refuse it in words, as `DraftIntegrity` refuses a change the
+    applier cannot read — which is a product decision, not a bug fix; freezing would also mean deciding
+    what happens to the one open draft an author per universe is allowed. `test/controllers/draft_mutation_test.rb`
+    asserts the remembering path in `github` mode and does not distinguish the two states.
 
 67. **Low — a draft's page prints English attribute names for the models the Scenes workspace never
     translated.** A remembered value is labelled with `Model.human_attribute_name`, and

@@ -360,6 +360,230 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", discard_universe_draft_path(universe_slug: @universe.slug, id: history), count: 0
   end
 
+  # Submitting for review
+  #
+  # The third control on this page, and the one the universe's mode decides: a
+  # `wikipedia` universe applies the draft here and now, a `github` one hands it to
+  # a reviewer. What is asserted here is both halves of that — the rows a `github`
+  # universe has instead, and the fact that the **actions** refuse the other mode's
+  # answer rather than only the buttons being absent. A control hidden in the view
+  # and a POST the server honours are two different things, and only the second one
+  # is a rule.
+
+  test "a github universe offers the handover instead of the apply, with a message field" do
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_response :success
+    assert_select "form[action=?]", submit_universe_draft_path(universe_slug: @universe.slug, id: draft), count: 1
+    assert_select "textarea[name=?]", "review_request[submission_message]", count: 1
+    # The apply is gone rather than merely disabled, and Discard stays: throwing
+    # your own work away needs no reviewer and no mode.
+    assert_select "form[action=?]", apply_universe_draft_path(universe_slug: @universe.slug, id: draft), count: 0
+    assert_select "form[action=?]", discard_universe_draft_path(universe_slug: @universe.slug, id: draft), count: 1
+  end
+
+  test "submitting hands the draft over, stores the author's message, and writes nothing" do
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+
+    assert_no_difference -> { Character.count } do
+      post submit_universe_draft_url(universe_slug: @universe.slug, id: draft),
+        params: { review_request: { submission_message: "This is the second attempt" } }
+    end
+
+    assert_redirected_to universe_draft_url(universe_slug: @universe.slug, id: draft)
+    assert_equal I18n.t("drafts.flash.submitted"), flash[:notice]
+    # Both halves of the handover, or neither: the row and the status are what make
+    # this a submission rather than a rename.
+    request_record = draft.reload.pending_review_request
+    assert_predicate draft, :submitted?
+    assert_predicate request_record, :pending?
+    assert_equal @user, request_record.submitted_by
+    assert_equal "This is the second attempt", request_record.submission_message
+  end
+
+  test "a submission message is optional and a blank one is stored as nothing" do
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+
+    post submit_universe_draft_url(universe_slug: @universe.slug, id: draft),
+      params: { review_request: { submission_message: "   " } }
+
+    assert_predicate draft.reload, :submitted?
+    # Not `""`, which would read back on the reviewer's page as something the
+    # author wrote. This is `review_notes`' rule applied to the other column.
+    assert_nil draft.pending_review_request.submission_message
+  end
+
+  test "a github universe refuses the author's own apply rather than doing it" do
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+
+    assert_no_difference -> { Character.count } do
+      post apply_universe_draft_url(universe_slug: @universe.slug, id: draft)
+    end
+
+    assert_redirected_to universe_draft_url(universe_slug: @universe.slug, id: draft)
+    assert_equal I18n.t("drafts.flash.wrong_mode"), flash[:alert]
+    assert_predicate draft.reload, :draft?, "a refused apply must leave the draft exactly as it was"
+    assert_nil draft.pending_review_request
+  end
+
+  test "a universe with no reviewer refuses a submission rather than handing it over" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    draft = draft_with(remember_create_payload)
+
+    post submit_universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_redirected_to universe_draft_url(universe_slug: @universe.slug, id: draft)
+    assert_equal I18n.t("drafts.flash.wrong_mode"), flash[:alert]
+    assert_predicate draft.reload, :draft?
+    assert_empty draft.review_requests
+  end
+
+  test "a draft that is already with a reviewer cannot be submitted twice" do
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+    submitted = draft.submit!
+
+    assert_no_difference -> { ReviewRequest.count } do
+      post submit_universe_draft_url(universe_slug: @universe.slug, id: draft)
+    end
+
+    # Its own reason rather than the closed-draft one: this draft is very much
+    # still open, and "already applied or discarded" would be a wrong answer for it.
+    assert_equal I18n.t("drafts.flash.waiting_for_review"), flash[:alert]
+    assert_equal [ submitted ], draft.reload.review_requests.to_a
+  end
+
+  test "another author's draft cannot be submitted" do
+    @universe.update!(collaboration_mode: "github")
+    theirs = Draft.create!(user: users(:user_two), universe: @universe)
+    theirs.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Theirs", "universe_id" => @universe.id })
+
+    post submit_universe_draft_url(universe_slug: @universe.slug, id: theirs)
+
+    assert_response :not_found
+    assert_predicate theirs.reload, :draft?
+    assert_empty theirs.review_requests
+  end
+
+  test "a submission carrying a change the applier cannot read is still submittable" do
+    # The same reasoning that keeps a damaged draft rejectable: a submission does
+    # not interpret a remembered change, so refusing it here would leave the author
+    # with a draft only **Discard** can clear and the reviewer with nothing to say
+    # about it. The damage is still reported on the page.
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload("Unreadable", "Character",
+      { "universe_id" => @universe.id }, extra: { "wibble" => 1 }))
+
+    post submit_universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_redirected_to universe_draft_url(universe_slug: @universe.slug, id: draft)
+    assert_predicate draft.reload, :submitted?
+    assert_predicate draft.pending_review_request, :pending?
+
+    # And the page behind the redirect still says what cannot be read, so the
+    # reviewer finds out from the submission rather than from a failed approval.
+    follow_redirect!
+    assert_select ".draft-damaged", text: /wibble/
+  end
+
+  test "discarding a submitted draft withdraws the submission with it" do
+    # Otherwise the reviewer's queue keeps waiting on work the author has thrown
+    # away, and approving it would still write the changes: `DraftApplier` asks
+    # whether a draft is open nowhere.
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+    submitted = draft.submit!
+
+    post discard_universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_redirected_to universe_drafts_url(universe_slug: @universe.slug)
+    assert_predicate draft.reload, :discarded?
+    assert_predicate submitted.reload, :withdrawn?
+    # It is no longer waiting on anybody, which is what a withdrawal means, and it
+    # is nobody's decision, so it carries no reviewer.
+    assert_nil draft.pending_review_request
+    assert_not_includes ReviewRequest.pending, submitted
+    assert_not_predicate submitted, :decided?
+    assert_nil submitted.reviewed_by
+    # And the draft still says when it stopped being actionable, which is the same
+    # `closed_at` an ordinary discard writes.
+    assert_not_nil draft.closed_at
+  end
+
+  test "an author reads where their own submission stands, and the reviewer's reason with it" do
+    # The author's side is the half that was missing: a rejection's notes exist to
+    # tell the author why, and a `github` draft can sit for days. A rejected draft
+    # says "Draft" again, so the status of the *submission* can only come from the
+    # request.
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+    submitted = draft.submit!(message: "This is the second attempt")
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+    assert_select ".draft-submission-status .badge", text: "Waiting"
+    assert_select ".draft-submission-state", text: /Waiting for a reviewer/
+    assert_select ".draft-submission-message", text: /This is the second attempt/
+
+    submitted.reject!(users(:user_two), notes: "The name is the old one")
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+    # The badge is the request's own status, not the draft's: the draft says "Draft"
+    # again and the reason it came back is the fact the author came to read.
+    assert_select ".draft-submission-status .badge", text: "Rejected"
+    assert_select ".draft-submission-state", text: /Rejected by User Two/
+    assert_select ".draft-submission-notes", text: /The name is the old one/
+    # And the author can submit it again, because it is their working work.
+    assert_select "form[action=?]", submit_universe_draft_path(universe_slug: @universe.slug, id: draft), count: 1
+  end
+
+  test "a wikipedia draft's page says nothing about a submission it never made" do
+    draft = draft_with(remember_create_payload)
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_response :success
+    assert_select ".draft-submission", count: 0
+    assert_select ".draft-submission-status", count: 0
+  end
+
+  test "the handover and its status are rendered in Spanish as well as English" do
+    # Every string on this page is chosen by the mode, so the mode branch has two sets
+    # of words behind it and the key sets being equal — `translations_test.rb`'s job —
+    # cannot see an interpolation that only renders wrong in the second language.
+    @universe.update!(collaboration_mode: "github")
+    draft = draft_with(remember_create_payload)
+    patch settings_url, params: { locale: "es" }
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_response :success
+    assert_select ".draft-workflow-guide", text: /Entrega el borrador a quien lo revise/
+    assert_select ".draft-submission", text: /Enviar este borrador a revisión/
+    assert_select ".draft-submission", text: /Al enviar no se escribe nada/
+
+    draft.submit!(message: "Es el segundo intento")
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_select ".draft-submission-status .badge", text: "Esperando"
+    # The author's own sentence and the reviewer's reason are both read on this page,
+    # and a rejection's notes are the one that says why.
+    assert_select ".draft-submission-message", text: /Es el segundo intento/
+    draft.pending_review_request.reject!(users(:user_two), notes: "El nombre es el antiguo")
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_select ".draft-submission-status .badge", text: "Rechazado"
+    assert_select ".draft-submission-notes", text: /El nombre es el antiguo/
+  end
+
   # Applying
   #
   # The live mutation path is the point: the same services, the same model

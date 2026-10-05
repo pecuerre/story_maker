@@ -141,12 +141,10 @@ it has a useful destination and clear empty/loading/error states.
 
     In `github` mode, drafts are submitted for review. Owner+admins review and apply or reject.
 
-    - **Slice 5.3:** In `github` mode, the "Apply changes" button becomes "Submit for review". The
-      user can add a submission message. The draft status changes to `submitted`. The draft owner can
-      see the status of their submission. Tests: request tests, system test.
-    - **Slice 5.4:** A "Review requests" link in the right sidebar (owner+admin only). The review
-      page shows the draft's changes, the submitter's message. Approve button (with conflict
-      resolution if needed). Reject button with a notes field. Tests: request tests, system test.
+    - **Slice 5.4:** A "Review requests" link in the right sidebar (owner+admin only). The queue and
+      the submission's page, its approve button (with conflict resolution) and its reject button with
+      a notes field were delivered in 5.2; what is left is the sidebar entry, so the queue has a way in
+      from the workspace. Tests: request tests, system test.
     - **Slice 5.5:** Full flow: start editing → make changes → submit for review → owner reviews →
       approve/reject. In-app notifications: when a review request is submitted, when it's
       approved/rejected. Update docs. Update changelog.

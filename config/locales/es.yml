@@ -441,6 +441,17 @@ es:
         other: "%{count} cambios se han quedado exactamente como están, porque elegiste lo de ellos."
       discarded: "El borrador se ha descartado. No se escribió nada."
       closed: "Ese borrador ya se aplicó o se descartó, así que no queda nada que hacer con él."
+      # La respuesta del otro modo, negada por la acción y no solo oculta por la
+      # vista. Una sola frase para las dos direcciones porque son el mismo hecho
+      # visto desde dos páginas: este universo no hace eso, y la página del
+      # borrador —que es adonde redirige— lleva el control que sí ofrece.
+      wrong_mode: "Este universo no funciona así, así que no se ha hecho nada. La página en la que estás tiene el control que usa."
+      # Un borrador enviado sigue abierto, así que los dos controles de su página
+      # serían negados, y ni «aplicar» ni «descartar» describe su estado.
+      waiting_for_review: "Ese borrador está esperando a quien lo revise, así que no queda nada que enviar ni que aplicar."
+      # Lo que hizo un envío. Dice que no se escribió nada, porque un envío es lo
+      # contrario de una aplicación y los dos avisos no pueden leerse igual.
+      submitted: "Tu borrador se ha enviado a revisión. No se ha escrito nada."
       editing_started: "Estás editando este universo. Los cambios que hagas se recuerdan hasta que los apliques."
       editing_stopped:
         zero: "Dejaste de editar. Tu borrador no tenía nada pendiente."
@@ -548,6 +559,11 @@ es:
         remember: "Edita lo que quieras en este universo. Cada cambio se recuerda en tu borrador en lugar de escribirse."
         review: "Tus listas muestran lo que está pendiente: una fila para el registro que has añadido y una insignia en el que has editado o eliminado."
         apply: "Aplica el borrador para escribir todos los cambios recordados a la vez, o descártalo y no escribir nada."
+        # El mismo tercer paso en un universo `github`, donde el autor no es quien
+        # decide si un cambio se vuelve real. Dice qué significa un rechazo para el
+        # trabajo del autor —que vuelve con él para editarlo— porque esa es la parte
+        # de entregar algo que no se deduce de la palabra «revisar».
+        submit: "Entrega el borrador a quien lo revise, que lo aprobará o lo devolverá con un motivo. No se escribe nada hasta que lo apruebe."
     index:
       title: "Cambios pendientes"
       description: "Los cambios que has hecho en este universo y que se recuerdan en lugar de escribirse, con los borradores a los que pertenecen."
@@ -558,7 +574,16 @@ es:
       remembered_at_html: "Recordado %{at}."
       review: "Revisar"
       apply: "Aplicar"
+      submit: "Enviar a revisión"
       discard: "Descartar"
+      # Lo que hace este universo con un borrador, dicho una vez encima de las filas
+      # y no dentro de cada una. Dos frases porque son dos promesas distintas: una
+      # termina en el botón del autor y la otra en el de otra persona.
+      apply_note: "Aplicar un borrador escribe todos los cambios recordados de una vez."
+      review_note: "Nada de esto se escribe hasta que una persona propietaria o administradora apruebe el borrador, y un borrador rechazado vuelve a ti para editarlo."
+      submit_confirm:
+        one: "¿Envías el %{count} cambio recordado a revisión? Quien sea propietario o administrador decide si se aplica."
+        other: "¿Envías los %{count} cambios recordados a revisión? Quien sea propietario o administrador decide si se aplican."
       # Ambas confirmaciones son decisiones irreversibles, así que cada una dice
       # qué ocurre en lugar de preguntar si quieres continuar.
       apply_confirm:
@@ -572,6 +597,9 @@ es:
     show:
       title: "Cambios para revisar"
       description: "Todos los cambios que recuerda este borrador, en el orden en que los hiciste. Nada de esto se ha escrito hasta que lo apliques."
+      # La misma página en un universo `github`. No puede decir «hasta que lo
+      # apliques», porque eso es justo lo que este modo no deja hacer a su autor.
+      review_description: "Todos los cambios que recuerda este borrador, en el orden en que los hiciste. Nada de esto se ha escrito hasta que alguien lo apruebe."
       back: "Todos los cambios pendientes"
       apply: "Aplicar cambios"
       discard: "Descartar borrador"
@@ -589,6 +617,28 @@ es:
       no_values: "No se recordó ningún valor de campo para este cambio."
       empty_title: "Este borrador no recuerda ningún cambio"
       empty_description: "Aquí no hay nada que aplicar. Un borrador lo abre el primer cambio que recuerdas, así que este está vacío."
+    # El formulario de entrega en la página del propio borrador, en un universo
+    # `github`. Es un formulario y no un botón porque el mensaje es un campo: la
+    # mayoría de los envíos no necesitan explicación y algunos necesitan mucha, y un
+    # solo control no puede llevar las dos cosas.
+    submission:
+      heading: "Enviar este borrador a revisión"
+      lead: "Al enviar no se escribe nada de esta página. Quien sea propietario o administrador lee los cambios y o bien los aprueba o bien devuelve el borrador con un motivo, y un borrador que vuelve sigue siendo tuyo para editarlo."
+      message: "¿Algo que deba saber quien lo revise? (opcional)"
+      message_hint: "Quien lo revise lee esto antes que tus cambios. Un nombre que parece una errata, un cambio que intentaste dos veces, una escena que dejaste sin tocar a propósito: dilo aquí en lugar de esperar que sea evidente."
+      submit: "Enviar a revisión"
+    # Dónde está el envío del autor, en la página del propio autor. Las cuatro
+    # frases van indexadas por el `status` almacenado de `ReviewRequest`, porque ahí
+    # está la respuesta: un borrador rechazado vuelve a decir «Borrador», así que el
+    # estado del *envío* es un hecho aparte con su propia fila.
+    submission_status:
+      heading: "Tu envío"
+      pending_html: "Esperando a revisión desde las %{at}."
+      approved_html: "Aprobado por %{reviewer} las %{at}. Tus cambios son visibles."
+      rejected_html: "Rechazado por %{reviewer} las %{at}. Tu borrador ha vuelto contigo, con sus cambios, y puedes editarlo y volver a enviarlo."
+      withdrawn_html: "Retiraste este envío las %{at}, así que no se escribió nada."
+      message: "Escribiste: %{message}"
+      notes: "La persona que revisó dijo: %{notes}"
     # La página que responde a la aplicación que detuvo. Una página de
     # conflicto es una pregunta, así que cada fila muestra las dos mitades de la
     # elección —lo que recordaste y lo que hay ahora— porque un botón que el
@@ -677,6 +727,7 @@ es:
       pending: "Esperando"
       approved: "Aprobado"
       rejected: "Rechazado"
+      withdrawn: "Retirado"
     index:
       title: "Solicitudes de revisión"
       description: "Borradores que los autores han entregado en este universo, con los que aún esperan una decisión primero."
@@ -693,6 +744,9 @@ es:
       # cada fila decidida.
       decided_by: "por %{reviewer}"
       notes: "Notas: %{notes}"
+      # Una retirada no tiene revisor, así que no puede usar `decided_by`. Se lee
+      # como un acto del autor porque eso es exactamente lo que es.
+      withdrawn: "Retirado: el autor descartó este borrador, así que no se escribió nada."
       open: "Revisar"
       empty_title: "No hay nada esperando una decisión"
       empty_description: "Cuando un autor entrega un borrador en este universo en lugar de aplicarlo, aparece aquí."
@@ -701,6 +755,12 @@ es:
       description: "Todos los cambios que recuerda este borrador enviado, en el orden en que los hizo el autor. Nada de esto se ha escrito hasta que lo apruebes."
       back: "Todas las solicitudes de revisión"
       submitted_by_html: "Enviado por %{author} %{at}."
+      # Las palabras del autor, encima de los cambios. Son el contexto para leer las
+      # diferencias, así que se etiquetan como cita y no como prosa: quien revisa tiene
+      # que poder ver dónde acaban las palabras del autor y empieza la lectura de la
+      # aplicación, porque todo lo que hay debajo de este bloque es de la aplicación.
+      submission_message_label: "El autor escribió:"
+      withdrawn_html: "El autor retiró este envío las %{at} al descartar su borrador. No se escribió nada y no hay nada que decidir."
       apply: "Aprobar cambios"
       apply_confirm: "¿Apruebas todos los cambios recordados? Se vuelven reales de inmediato."
       # La nota de una aprobación es para el autor y es opcional, al contrario que la

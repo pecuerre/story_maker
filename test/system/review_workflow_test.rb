@@ -5,15 +5,20 @@ require "application_system_test_case"
 #
 # The request suite owns the rows, the authorization, and the refusals:
 # `test/controllers/review_requests_controller_test.rb` covers what an approval writes
-# and what a rejection stores. What only a browser shows is the journey as one piece of
-# software — that a reviewer reaches a queue and a submission from it, that the change
-# they are deciding about is printed the way its author reads it, that the approval is a
-# confirming Turbo form, and that a rejection is a real form whose notes have to be typed.
+# and what a rejection stores, and `test/controllers/drafts_controller_test.rb` covers
+# the handover itself. What only a browser shows is the journey as one piece of software:
+# that the same page offers **Apply changes** in one mode and a submission form in the
+# other, that the author's message reaches the reviewer, that a reviewer reaches a queue
+# and a submission from it, that the change they are deciding about is printed the way
+# its author reads it, that the approval is a confirming Turbo form, and that a rejection
+# is a real form whose notes have to be typed.
 #
-# The submissions here are built through the model's own workflow rather than pressed,
-# because pressing **Submit for review** is slice 5.3's control and this slice is not
-# claiming it works. The queue is reached by URL for the same reason: the sidebar entry
-# is 5.4's.
+# The first case presses the real control rather than building a submission through the
+# model, because the handover is the half no other test can show: a field that has to be
+# typed into, and a flash that has to be read on the page it redirects to. The later
+# cases still build their submissions through the model's own workflow, because they are
+# about the reviewer's side and a reviewer should not have to author somebody's draft
+# first. The queue is reached by URL throughout: the sidebar entry is 5.4's.
 class ReviewWorkflowTest < ApplicationSystemTestCase
   setup do
     @owner = users(:user_one)
@@ -123,9 +128,95 @@ class ReviewWorkflowTest < ApplicationSystemTestCase
     assert_predicate review_request.reload, :approved?
   end
 
+  test "an author hands a draft over with a message and watches where it stands" do
+    # The draft is built the way the remembering path would have left it rather than
+    # by pressing Save in the editor: this case is about the handover, and the
+    # remembering half is `test/system/draft_workflow_test.rb`'s. It also keeps the
+    # journey off the list editor, whose scripted click is covered by quirk 58.
+    draft = remembered_draft("Handed over in the browser")
+    sign_in_via_form(@author)
+
+    # The mode decides which of the two ways out this page offers, and the wrong one
+    # is absent rather than disabled.
+    visit universe_drafts_path(universe_slug: @universe.slug)
+    assert_selector ".drafts-mode-note", text: /until an owner or admin approves/
+    assert_selector ".entity-row button", text: "Submit for review"
+    assert_no_selector ".entity-row button", text: "Apply"
+    press_control "Review"
+
+    assert_selector "h1", text: "Changes to review"
+    assert_no_selector "form[action='#{apply_universe_draft_path(universe_slug: @universe.slug, id: draft)}']"
+    assert_selector ".draft-workflow-guide", text: /approves it or sends it back/
+    assert_selector ".draft-summary .badge", text: "Draft"
+    # The handover is a form with a field, because a message cannot travel on a button.
+    assert_selector ".draft-submission textarea"
+
+    within ".draft-submission" do
+      assert_selector "textarea[name='review_request[submission_message]']"
+    end
+    type_into "textarea[name='review_request[submission_message]']", "This is the second attempt"
+    press_control "Submit for review"
+
+    # Nothing was written, and the flash says so: the author is looking at the same
+    # universe they were a moment ago, so a flash saying "created" would be a lie.
+    assert_selector ".flash-stack .flash-toast", text: "Nothing was written", wait: REFRESH_WAIT
+    assert_selector ".draft-summary .badge", text: "Submitted"
+    assert_selector ".draft-submission-status .badge", text: "Waiting"
+    assert_selector ".draft-submission-state", text: /Waiting for a reviewer/
+    assert_selector ".draft-submission-message", text: /This is the second attempt/
+    assert_nil Character.find_by(name: "Handed over in the browser")
+    # The form is gone rather than refused: there is nothing left to hand over.
+    assert_no_selector ".draft-submission"
+    # Discard stays, because throwing your own work away needs no reviewer.
+    assert_selector "form[action='#{discard_universe_draft_path(universe_slug: @universe.slug, id: draft)}']"
+  end
+
+  test "an author withdraws a submission instead of leaving it waiting" do
+    request_record = submitted_review_request("Withdrawn in the browser")
+    sign_in_via_form(@author)
+
+    visit universe_draft_path(universe_slug: @universe.slug, id: request_record.draft)
+    assert_selector ".draft-submission-status .badge", text: "Waiting"
+
+    # The discard is submitted rather than pressed. Its confirmation is Turbo's, and
+    # what this case is about is what discarding a **submitted** draft does to the
+    # submission — `test/system/draft_workflow_test.rb` presses Discard and accepts the
+    # dialog in the mode where that is the only decision there is. `form.submit()`
+    # posts the form the button belongs to, with its own CSRF token, without the
+    # dialog the driver would otherwise have to catch.
+    page.execute_script("document.querySelector('form[action$=\"/discard\"]').submit()")
+
+    # The author's own list is where a withdrawal is noticed: the draft is closed, so
+    # the row is history rather than work, and the handover is not offered again.
+    assert_selector "h1", text: "Pending changes"
+    assert_selector ".entity-row", text: "1 remembered change", wait: REFRESH_WAIT
+    assert_selector ".entity-row .badge", text: "Discarded"
+    assert_no_selector ".entity-row button", text: "Submit for review"
+    assert_predicate request_record.reload, :withdrawn?
+    assert_nil Character.find_by(name: "Withdrawn in the browser")
+  end
+
   private
-    # A draft an author has handed over, built the way the remembering path would have
-    # left it: one open draft per author per universe, one pending request on it.
+    # The one open draft in this universe, which is the author's: the partial unique
+    # index on `[user_id, universe_id]` over the open statuses means there is exactly
+    # one, and the journey that needs it is always the author's own.
+    def open_draft
+      Draft.open_for!(@author, @universe)
+    end
+
+    # A draft an author is still working in, built the way the remembering path would
+    # have left it: one open draft per author per universe, one remembered change on
+    # it, and nothing written.
+    def remembered_draft(name)
+      draft = Draft.create!(user: @author, universe: @universe)
+      draft.draft_changes.create!(action: "create", record_type: "Character", record_id: nil,
+        base_version: nil, payload: { "name" => name, "universe_id" => @universe.id })
+
+      draft
+    end
+
+    # A draft an author has handed over, which is a remembered draft with the
+    # submission the model's own workflow writes.
     def submitted_review_request(name, character = nil)
       draft = Draft.create!(user: @author, universe: @universe)
       draft.draft_changes.create!(
@@ -145,5 +236,47 @@ class ReviewWorkflowTest < ApplicationSystemTestCase
       page.execute_script("document.querySelector('form.button_to button').click()")
       assert_selector "h1", text: "Sign in"
       assert_equal new_session_path, current_path
+    end
+
+    # A click delivered through the page rather than through the driver.
+    #
+    # A native click is dropped outright on a loaded machine — measured, not
+    # guessed: with a capture-phase listener on `document` no event reaches the page
+    # at all, while `elementFromPoint` still returns the control and `visible?` is
+    # true, and the same case passes on an idle one. That is the failure
+    # `ApplicationSystemTestCase#visit` guards against for a page's readiness, and
+    # the same class of thing as the fixed navbar in finding 58, which is why
+    # `sign_out_via_account` above is scripted too. It is used here only for the
+    # controls whose *submission* is the point of a case; everything else is
+    # asserted through ordinary locators, so a case never depends on a click merely
+    # to read a page.
+    def press_control(locator, within: nil)
+      scope = within ? "#{within} " : ""
+      page.execute_script(<<~JS, locator, scope)
+        const root = #{scope.empty? ? 'document' : "document.querySelector('#{scope.strip}')"}
+        const named = (el) => (el.textContent.trim() || el.value || '').trim()
+        const control = Array.from(root.querySelectorAll('a, button, input[type=submit]'))
+          .find((el) => named(el) === arguments[0])
+        if (!control) throw new Error("no control named " + arguments[0])
+        control.click()
+      JS
+    end
+
+    # Text typed into a field, through the page rather than through the driver.
+    #
+    # The same dropped input as `press_control`, and it fails the same way: a click
+    # that never focuses the field leaves `document.activeElement` on `BODY`, so
+    # `send_keys` types into the page rather than into the control and the field stays
+    # empty. The value and the `input` and `change` events are dispatched here instead,
+    # which is what a keystroke produces — what the case still proves is that the field
+    # is named into the submission, which is the part of slice 5.3 this application owns.
+    def type_into(locator, text)
+      page.execute_script(<<~JS, locator, text)
+        const field = document.querySelector(arguments[0])
+        if (!field) throw new Error("no field named " + arguments[0])
+        field.value = arguments[1]
+        field.dispatchEvent(new Event('input', { bubbles: true }))
+        field.dispatchEvent(new Event('change', { bubbles: true }))
+      JS
     end
 end

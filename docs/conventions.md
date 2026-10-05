@@ -442,8 +442,50 @@ A draft is **the reader's own pending work**, so this is a fifth page shape rath
 of `show`. It is not a record's details page, and the "a `show` renders no mutation control" rule does
 not apply to it: acting on a draft *is* what the page is for. What the rule above it does say is kept —
 every action requires a session, `index` and `show` are reads the universe policy answers at `read`,
-and the two controls are rendered only while `Draft#open?`, so an applied or discarded draft offers
+and the controls are rendered only while `Draft#open?`, so an applied or discarded draft offers
 nothing to do.
+
+**Which control is primary is the universe's collaboration mode, and the mode is on the actions as
+well as on the buttons.** A `wikipedia` universe has one author and no reviewer, so the primary control
+is **Apply changes**, which writes the remembered changes live. A `github` universe has a reviewer, so
+the same control becomes **Submit for review**, which hands the draft over instead — and **Discard** is
+the third control in both, because throwing away your own pending work needs neither a reviewer nor a
+mode. `apply` refuses a `github` universe and `submit` refuses every other, each with
+`drafts.flash.wrong_mode`: hiding the other mode's button is where the rule is *read*, and refusing the
+action is where it is *decided*. A draft in a `github` universe may also be closed, so `apply`'s mode
+check comes first — it is the more fundamental of the two refusals.
+
+**The handover is a form with a field, not a `button_to`.** The author's optional message cannot travel
+on a control, which is the same reason a reviewer's approval is a form (see
+[The reviewer's page](#the-reviewers-page)). It is a parameter of the submission rather than a column
+an author edits — `Draft#submit!(message:)` writes it onto the `ReviewRequest` it creates — because a
+rejected draft comes back as working work and the next handover gets its own message. A blank message
+is stored as `nil`, for `review_notes`' reason: an empty box would read back as something the author
+wrote. The list's row offers the same handover as a plain button, since a message is optional and a list
+row has nowhere to type one; the draft's own page is where it is written.
+
+**Nothing about a draft's changes is read to submit one**, for `reject`'s reason on the other side: a
+submission carrying a change the applier cannot read is still submittable and still rejectable, and
+refusing it would leave the author with a draft only **Discard** can clear. **Only a working draft can be
+submitted**: a submitted one is already with a reviewer and the partial unique index would refuse the
+second row anyway, and it is refused with `drafts.flash.waiting_for_review` rather than the closed-draft
+sentence, because it is very much still open.
+
+**The author reads where their submission stands, on their own page.** `drafts/_submission_status` renders
+the **newest** `ReviewRequest` — not the pending one — because a rejected submission hands the draft
+back, so the draft says `draft` again and the row carrying the reviewer's reason is the only thing that
+still holds it. It shows the stored status, the moment, the author's own message and the reviewer's
+notes, because `ReviewRequest` requires a rejection to say why and those notes are written *for the
+author*. That is the half slice 5.2 left open: the notes were stored and only ever printed where the
+reviewer stood, which made the requirement a message into a place the author cannot reach.
+
+**Discarding a submitted draft withdraws the submission with it**, in one transaction
+(`ReviewRequest#withdraw!`). Otherwise the reviewer's queue keeps waiting on work the author has thrown
+away and approving it would still write the changes, because `DraftApplier` asks whether a draft is open
+nowhere. A withdrawal is the author's own answer rather than a reviewer's, so the row carries **no
+reviewer and no notes** — nobody reviewed it — which is also why `withdrawn?` is not `decided?`: "decided"
+answers "did a reviewer rule on this", which is the question an audit asks. It stays in the queue's
+history rather than disappearing, and both the queue and the submission's page say who ended it.
 
 **Three pages: one list, one draft, and the conflicts an apply stops on.** `/u/:universe_slug/drafts`
 lists the reader's own drafts in that universe with the actionable one first, because history sorted
@@ -501,14 +543,21 @@ owns that decision, and `docs/data_model.md` owns the columns.
 **Both drafts pages carry the workflow in three steps.** `drafts/_workflow_guide` renders
 `drafts.guide` on the list and on a draft, because those two pages are one place in this workflow: the
 list is where an author finds out something is waiting, and the draft is where they decide about it. A
-`wikipedia` universe is the one place in this application where pressing **Save** does not change what
+draft-based universe is the one place in this application where pressing **Save** does not change what
 the universe holds, and every other sentence about that — the flash that says a change was
 *remembered*, a row's badge, the two controls — is a consequence of one of the three steps rather than
 an explanation of it, so an author arriving from that flash has three questions and a list of
 remembered changes answers none of them. It is one partial and one set of keys so the two pages cannot
 disagree, it is drawn from `content-surface` with no styling of its own so it reads as a sentence and
 not as a control, and it is rendered only where `DraftPreview#available?` holds — in a `direct`
-universe the steps would describe a workflow that does not happen.
+universe the steps would describe a workflow that does not happen. **The third step is the mode's**,
+because it is the only one that differs: `drafts.guide.steps.apply` for a `wikipedia` universe,
+`drafts.guide.steps.submit` for a `github` one. The first two steps are the same either way, and a
+guide describing an apply in a universe whose page has no apply would describe a control that is not
+there. The list says the same thing once above its rows, in `drafts.index.review_note` or
+`drafts.index.apply_note`, because "which control will my rows carry" is the question an author has when
+they arrive from a remembered-change flash — and it is a property of the universe, so one sentence above
+the list rather than one per row.
 
 **The page has to be reachable.** The right utility sidebar's **Collaboration** group carries a
 **Pending changes** entry with a panel of what is waiting above it, rendered only where a draft can
@@ -580,8 +629,16 @@ because an approval is **reached twice** when a change has moved: the conflict p
 **Two things are deliberately not rules.** An author who is also the universe owner **may approve their
 own submission** — it grants them nothing they could not do by applying the draft directly, and a rule
 against it would only stop the owner from being told a draft was ready. And these pages are **not gated
-to `github` mode**: a submission can only exist where one was made, so the mode belongs on the first
-control that can make one — the **Submit for review** action, which is slice 5.3's.
+to `github` mode**: a submission can only exist where one was made, and the mode is enforced on the one
+control that can make one — [`DraftsController#submit`](#the-drafts-page), which refuses every other
+mode, while the reviewer's pages stay reachable in any mode.
+
+**The author's message is printed above the changes, labelled as their words.** It is the context for
+reading the diffs, and a reviewer has to be able to see where the author's sentence ends and the
+application's reading begins, because everything below that block is the latter. It is optional by
+design, so the block is absent rather than empty. **A withdrawn submission says what happened** instead
+of naming a reviewer who never saw it, and offers neither decision — it is history, and
+[`ReviewRequest#withdraw!`](#the-drafts-page) is what makes it so.
 
 **A rejection is the one reversible decision, because it hands the draft back.**
 `ReviewRequest#reject!` moves the request and the draft's status in one transaction (`submit!`'s reason

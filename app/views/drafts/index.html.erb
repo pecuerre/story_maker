@@ -15,6 +15,15 @@
     explaining. See `drafts/_workflow_guide`. %>
 <%= render "drafts/workflow_guide" %>
 
+<%# One sentence for what this universe does with a draft, above the rows rather
+    than inside each of them: it is a property of the universe and not of a draft,
+    and a per-row copy would be one sentence repeated once per row. This is also
+    the only place the list says which control its rows will carry, which is the
+    question an author has when they arrive from a remembered-change flash. %>
+<p class="page-description drafts-mode-note">
+  <%= t(Current.universe.github? ? "drafts.index.review_note" : "drafts.index.apply_note") %>
+</p>
+
 <% if @drafts.any? %>
   <div class="content-surface entity-list">
     <div class="list-group list-group-flush">
@@ -50,11 +59,24 @@
 
             <%# An applied or discarded draft is history. Offering to apply or
                 discard it again would be offering a control that does nothing,
-                so the row only offers what the draft's own status allows. %>
+                so the row only offers what the draft's own status allows — and in
+                a `github` universe the primary control is the handover rather than
+                the apply, for the reason the page states above the list. The list
+                submits without a message because the message is optional; the
+                draft's own page is where an author writes one, and its row says
+                so. %>
             <% if draft.open? %>
-              <%= button_to t("drafts.index.apply"), apply_universe_draft_path(id: draft),
-                class: "btn btn-sm btn-primary",
-                data: { turbo_confirm: t("drafts.index.apply_confirm", count: draft.draft_changes.size) } %>
+              <% if Current.universe.github? %>
+                <% if draft.draft? %>
+                  <%= button_to t("drafts.index.submit"), submit_universe_draft_path(id: draft),
+                    class: "btn btn-sm btn-primary",
+                    data: { turbo_confirm: t("drafts.index.submit_confirm", count: draft.draft_changes.size) } %>
+                <% end %>
+              <% else %>
+                <%= button_to t("drafts.index.apply"), apply_universe_draft_path(id: draft),
+                  class: "btn btn-sm btn-primary",
+                  data: { turbo_confirm: t("drafts.index.apply_confirm", count: draft.draft_changes.size) } %>
+              <% end %>
               <%= button_to t("drafts.index.discard"), discard_universe_draft_path(id: draft),
                 class: "btn btn-sm btn-outline-danger",
                 data: { turbo_confirm: t("drafts.index.discard_confirm", count: draft.draft_changes.size) } %>

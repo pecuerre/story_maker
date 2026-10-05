@@ -67,15 +67,20 @@ Rails.application.routes.draw do
     resources :event_tags, only: %i[ index show create update destroy ]
     resources :events
     get "timeline", to: "timeline#index", as: :timeline
-    # One author's remembered changes for this universe. `apply` and `discard`
-    # are two POSTs rather than a `resources` verb list: each is a decision the
-    # author makes about their own pending work, and neither is idempotent — an
-    # `apply` writes records, and a `discard` closes the draft. Both answer with
-    # a redirect, as the HTML flow requires. The page has no `create` or
-    # `destroy` because a draft is opened by the remembering path
-    # (`Draft.open_for!`) and is never deleted, only moved to another status.
+    # One author's remembered changes for this universe. `apply`, `submit`, and
+    # `discard` are three POSTs rather than a `resources` verb list: each is a
+    # decision the author makes about their own pending work, and none of them is
+    # idempotent — an `apply` writes records, a `submit` hands the draft over to a
+    # reviewer, and a `discard` closes the draft. All three answer with a redirect,
+    # as the HTML flow requires. `submit` is the `github`-mode one and carries the
+    # author's optional message; `apply` is what the other draft-based mode does
+    # instead, and each refuses the other mode's answer rather than only hiding the
+    # control. The page has no `create` or `destroy` because a draft is opened by
+    # the remembering path (`Draft.open_for!`) and is never deleted, only moved to
+    # another status.
     resources :drafts, only: %i[ index show ] do
       post :apply, on: :member
+      post :submit, on: :member
       post :discard, on: :member
     end
     # What a reviewer answers: somebody else's submitted draft, and the one

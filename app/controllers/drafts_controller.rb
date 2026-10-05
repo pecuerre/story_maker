@@ -18,9 +18,22 @@
 #
 # This is the fifth page shape rather than a record's `show`: it is a workspace
 # page for the reader's own pending work, and unlike a details page it carries
-# mutation controls, because acting on a draft *is* the page. The two controls are
+# mutation controls, because acting on a draft *is* the page. The controls are
 # shown only while the draft can still be acted on, which is `Draft#open?` read
 # once here rather than re-derived in the view.
+#
+# **Which of the two ways out the page offers is the universe's collaboration
+# mode.** A `wikipedia` universe has one author and no reviewer, so its primary
+# control is **Apply changes**, which writes the remembered changes live. A
+# `github` universe has a reviewer, so the same control becomes **Submit for
+# review**, which hands the draft over instead — with a field for the author's own
+# sentence about it. **Discard** is the third control and belongs to both: throwing
+# away your own pending work needs no reviewer and no mode.
+#
+# The mode is enforced on the actions as well as on the buttons, which is the half
+# that matters: `apply` refuses a `github` universe and `submit` refuses anything
+# else, so a POST that skipped the page is answered with the same sentence the page
+# would have shown rather than doing the other mode's work.
 #
 # `apply` is the one action that can answer with a page of its own: when it finds
 # conflicts it renders them instead of writing, because the author's answer is
@@ -38,7 +51,7 @@
 class DraftsController < ApplicationController
   include AppliesDrafts
 
-  before_action :set_draft, only: %i[ show apply discard ]
+  before_action :set_draft, only: %i[ show apply submit discard ]
   before_action :set_damaged, only: %i[ show apply ]
 
   # GET /u/:universe_slug/drafts
@@ -64,12 +77,25 @@ class DraftsController < ApplicationController
   # query the page adds over the changes themselves.
   def show
     @draft.draft_changes.includes(:outcome)
+    # The submission this page describes, which is the **newest** one rather than the
+    # pending one: a rejected handover leaves the draft back at `draft`, so the row
+    # that still carries the reviewer's reason is history from the draft's point of
+    # view and exactly what the author came to read. Nil in every draft of a
+    # `wikipedia` universe, which is where the page renders nothing.
+    @review_request = @draft.review_requests.includes(:reviewed_by).order(:id).last
   end
 
   # POST /u/:universe_slug/drafts/:id/apply
   #
   # Writes the changes through the live mutation path and closes the draft. See
   # `DraftApplier` for why the draft is closed even when a change is skipped.
+  #
+  # **A `github` universe refuses this action**, because that mode exists precisely
+  # so that a draft does not become live on the author's say-so: `submit` is that
+  # mode's answer, and a reviewer's approval is the only apply it allows. The check
+  # is first because it is the more fundamental of the two refusals — a draft in a
+  # `github` universe may well be closed as well, and "this universe reviews drafts"
+  # is the reason that matters.
   #
   # **A conflict stops the apply and is shown instead.** The detector is asked on
   # *this* request rather than remembered from the last one, so the conflicts the
@@ -79,6 +105,7 @@ class DraftsController < ApplicationController
   # answer, and the answers are not remembered either — they belong to this
   # request, which is why a failed apply leaves a draft that simply asks again.
   def apply
+    return refuse_wrong_mode if Current.universe.github?
     return refuse_closed_draft unless @draft.open?
     return show_damaged if @damaged.damaged?
 
@@ -93,6 +120,40 @@ class DraftsController < ApplicationController
       notice: draft_apply_notice(result), status: :see_other
   end
 
+  # POST /u/:universe_slug/drafts/:id/submit
+  #
+  # Hands the draft to a reviewer instead of applying it, which is what a `github`
+  # universe does and a `wikipedia` one does not. `Draft#submit!` writes both halves
+  # — the review request and the draft's `submitted` status — in one transaction, so
+  # this action has one job left: refuse the two states that are not a submission.
+  #
+  # **A draft that is not a working draft cannot be submitted.** A `submitted` one is
+  # already with a reviewer, and the partial unique index would refuse the second row
+  # anyway; an applied or discarded one has nothing left to hand over. Both are the
+  # same answer as `apply` gives a closed draft, so the page says so rather than
+  # raising out of the model — but the reason names which of the two it was, because
+  # "already waiting for a reviewer" and "already applied" are different facts about
+  # the same button.
+  #
+  # **Nothing about the draft's changes is read here**, for `ReviewRequestsController#reject`'s
+  # reason: a submission does not interpret a remembered change, so one the applier
+  # could not read is still submittable and still rejectable. Refusing to submit it
+  # would leave the author with a damaged draft that only **Discard** can clear, and
+  # refusing to reject it would leave the reviewer with nothing they can do.
+  #
+  # **The message is optional and a blank one is stored as nothing**, in the model
+  # rather than here: a `github` handover often needs no explanation, and an empty
+  # string would read back on the reviewer's page as something the author wrote.
+  def submit
+    return refuse_wrong_mode unless Current.universe.github?
+    return refuse_closed_draft unless @draft.draft?
+
+    @draft.submit!(message: submission_message)
+
+    redirect_to universe_draft_path(universe_slug: Current.universe.slug, id: @draft),
+      notice: t("drafts.flash.submitted"), status: :see_other
+  end
+
   # POST /u/:universe_slug/drafts/:id/discard
   #
   # Rejecting a draft moves the **draft's** status rather than deleting anything:
@@ -102,16 +163,43 @@ class DraftsController < ApplicationController
   # `closed_at` is written here for the same reason the applier writes its own:
   # a draft that can no longer be acted on has to say when it stopped being
   # actionable, or its history would have to read the moment off `updated_at`.
+  #
+  # **Discarding a draft that is with a reviewer withdraws the submission too**, in
+  # one transaction (`ReviewRequest#withdraw!`). Otherwise the reviewer's queue keeps
+  # waiting on work the author has thrown away, and approving it would still write
+  # the changes — `DraftApplier` asks whether a draft is open nowhere, so a discarded
+  # draft is applied like any other. A withdrawal is the author's own answer rather
+  # than a reviewer's, so the request carries no reviewer: it is a queue row answered
+  # by the absence of work, and it stays in the queue's history rather than being
+  # hidden.
   def discard
     return refuse_closed_draft unless @draft.open?
 
-    @draft.update!(status: "discarded", closed_at: Time.current)
+    if (submission = @draft.pending_review_request)
+      submission.withdraw!
+    else
+      @draft.update!(status: "discarded", closed_at: Time.current)
+    end
 
     redirect_to universe_drafts_path(universe_slug: Current.universe.slug),
       notice: t("drafts.flash.discarded"), status: :see_other
   end
 
   private
+
+    # What the author typed into the submission message, or nothing.
+    #
+    # It is read as a parameter rather than assigned, because there is no
+    # `ReviewRequest` on this page yet — the row is created by the model's own
+    # `submit!`, which is what writes the draft's status in the same transaction.
+    # The shape check is `review_notes`' reason: a form field is a string, and
+    # anything else that arrives is not one.
+    def submission_message
+      notes = params[:review_request]
+      return nil unless notes.is_a?(ActionController::Parameters)
+
+      notes.permit(:submission_message)[:submission_message].presence
+    end
     def drafts
       Current.universe.drafts.where(user: Current.user)
     end
@@ -142,8 +230,29 @@ class DraftsController < ApplicationController
     # An applied or discarded draft is history. Applying it again would write a
     # remembered create a second time, so the answer is the draft's own page with
     # the reason rather than a silent no-op.
+    #
+    # **A submitted draft is refused with the same control and a different
+    # sentence**, because it is the one state where the page still offers controls
+    # and both of them would be refused: `apply` and `submit` are the other mode's
+    # answer. Saying "already applied or discarded" would be a wrong reason for a
+    # draft that is very much still open.
     def refuse_closed_draft
       redirect_to universe_draft_path(universe_slug: Current.universe.slug, id: @draft),
-        alert: t("drafts.flash.closed"), status: :see_other
+        alert: t(@draft.submitted? ? "drafts.flash.waiting_for_review" : "drafts.flash.closed"),
+        status: :see_other
+    end
+
+    # **The mode belongs on the action, not only on the control.** A `github` universe
+    # has a reviewer decide whether a draft becomes live, so an author cannot apply
+    # it themselves; a `wikipedia` one has nobody to hand it to, so there is nothing
+    # to submit. Hiding the wrong button is half the rule — the other half is that a
+    # forged or stale POST is refused with the same sentence the page would have
+    # shown, which is why both refusals share one key rather than composing a second.
+    #
+    # The answer is the draft's own page rather than a 404: the draft exists, the
+    # reader is its author, and the page is where the right control is.
+    def refuse_wrong_mode
+      redirect_to universe_draft_path(universe_slug: Current.universe.slug, id: @draft),
+        alert: t("drafts.flash.wrong_mode"), status: :see_other
     end
 end

@@ -69,8 +69,10 @@ class ReviewRequestTest < ActiveSupport::TestCase
     request = build_request
 
     assert_predicate request, :pending?
+    assert_predicate request, :waiting?
     assert_not_predicate request, :approved?
     assert_not_predicate request, :rejected?
+    assert_not_predicate request, :withdrawn?
 
     request.update!(status: "approved", reviewed_by: users(:user_two))
     assert_predicate request, :approved?
@@ -80,6 +82,14 @@ class ReviewRequestTest < ActiveSupport::TestCase
     request.update!(status: "rejected", review_notes: "This belongs to another story")
     assert_predicate request, :rejected?
     assert_predicate request, :decided?
+
+    request.update!(status: "withdrawn", reviewed_by: nil, review_notes: nil)
+    assert_predicate request, :withdrawn?
+    assert_not_predicate request, :waiting?
+    # **A withdrawal is not a decision.** Nothing reviewed this submission, so the
+    # "who let this through" question has no answer to give, and the queue's
+    # "decided by %{reviewer}" sentence must not be the one that prints it.
+    assert_not_predicate request, :decided?
   end
 
   test "a submission cannot claim a universe its draft is not in" do
@@ -185,6 +195,31 @@ class ReviewRequestTest < ActiveSupport::TestCase
     assert_nil @draft.closed_at
   end
 
+  test "a submission carries the author's own sentence, and a blank one is nothing" do
+    request = @draft.submit!(message: "This is the second attempt")
+
+    assert_equal "This is the second attempt", request.submission_message
+
+    request.reject!(users(:user_two), notes: "Not this name")
+
+    # Optional, unlike a rejection's notes: a request with nothing to add is still a
+    # request. Stored as `nil` rather than `""`, so the reviewer's page never reads an
+    # empty box back as something the author wrote.
+    assert_nil @draft.submit!(message: "  ").submission_message
+  end
+
+  test "the submission message belongs to one handover rather than to the draft" do
+    first = @draft.submit!(message: "The first attempt")
+    first.reject!(users(:user_two), notes: "Not this name")
+
+    second = @draft.submit!(message: "Renamed as asked")
+
+    assert_equal "Renamed as asked", second.submission_message
+    assert_equal "The first attempt", first.reload.submission_message,
+      "what an earlier handover said is part of the draft's history, not overwritten by the next one"
+    assert_equal second, @draft.reload.pending_review_request
+  end
+
   test "only a working draft can be submitted" do
     submitted = @draft.submit!
 
@@ -259,6 +294,57 @@ class ReviewRequestTest < ActiveSupport::TestCase
     assert_predicate @draft.reload, :submitted?
     assert_equal @draft, request.reload.draft
     assert_includes request.errors[:review_notes], I18n.t("review_requests.errors.notes_required")
+  end
+
+  # Withdrawing
+  #
+  # The author's own answer rather than a reviewer's, and it closes the draft as
+  # well as the request: a discarded draft whose submission still said `pending`
+  # would be a queue entry waiting on work that no longer exists, and approving it
+  # would write the changes live because the applier asks whether a draft is open
+  # nowhere.
+
+  test "a withdrawal moves the request and the draft's status together" do
+    request = @draft.submit!
+
+    request.withdraw!
+
+    assert_predicate request, :withdrawn?
+    assert_predicate @draft.reload, :discarded?
+    # `closed_at` too, for the same reason every other closure writes it: a draft
+    # that can no longer be acted on has to say when it stopped being actionable.
+    assert_not_nil @draft.closed_at
+    assert_nil @draft.pending_review_request
+    assert_not_includes ReviewRequest.pending, request
+  end
+
+  test "a withdrawal records no reviewer, because nobody reviewed it" do
+    request = @draft.submit!
+
+    assert request.withdraw!, "nobody reviewed this submission, so there is nothing that can be refused"
+
+    assert_nil request.reviewed_by
+    assert_nil request.review_notes
+    # The one validation that asks for a reviewer has to ask about `decided?` rather
+    # than about `!pending?`, or a fourth status would fail a rule about decisions.
+    assert request.reload.valid?
+  end
+
+  test "a withdrawn submission leaves the draft in flight and the queue free" do
+    first = @draft.submit!(message: "The first attempt")
+    first.withdraw!
+
+    # Closed, not open: the author threw the draft away, so there is nothing left to
+    # submit again — which is what the next assertion is about.
+    assert_predicate @draft.reload, :discarded?
+
+    other = Draft.create!(user: users(:user_two), universe: @universe)
+    second = other.submit!
+
+    # The partial index covers `pending` only, so a withdrawn row does not block the
+    # next handover — the same reason a rejected one does not.
+    assert_equal [ second ], ReviewRequest.pending.to_a
+    assert_equal 2, @universe.review_requests.count
   end
 
   private

@@ -21,7 +21,15 @@
     #
     # The steps are a plain ordered list in the same `content-surface` the change
     # rows use, with no styling of its own: this is a sentence about a page, not a
-    # feature, and a block that looked like a control would ask to be pressed. %>
+    # feature, and a block that looked like a control would ask to be pressed.
+    #
+    # **The third step is the universe's mode**, because it is the one step that
+    # differs: a `wikipedia` author applies the draft and the changes go live, while
+    # in a `github` universe the draft is handed to a reviewer and becomes live only
+    # when a reviewer approves it. The first two steps are the same either way, which
+    # is why only the last one branches — and a guide describing an apply in a
+    # universe whose page has no apply would be describing a control that is not
+    # there. %>
 <% if draft_preview.available? %>
   <div class="content-surface draft-workflow-guide mb-3">
     <div class="p-3">
@@ -30,7 +38,7 @@
       <ol class="mb-0 ps-3">
         <li><%= t("drafts.guide.steps.remember") %></li>
         <li><%= t("drafts.guide.steps.review") %></li>
-        <li><%= t("drafts.guide.steps.apply") %></li>
+        <li><%= t(Current.universe.github? ? "drafts.guide.steps.submit" : "drafts.guide.steps.apply") %></li>
       </ol>
     </div>
   </div>

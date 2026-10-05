@@ -409,6 +409,79 @@ class ReviewRequestsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate request_record.draft.reload, :draft?
   end
 
+  # What the author said with the handover
+  #
+  # Slice 5.3 stores a submission message, and a stored message nobody can read is a
+  # column that costs a write and says nothing. It is the context for reading the
+  # diffs, so it is printed above them and labelled as the author's words.
+
+  test "the review page shows the author's message above the changes" do
+    request_record = review_request(submitted_change, message: "This is the second attempt")
+
+    get universe_review_request_url(universe_slug: @universe.slug, id: request_record)
+
+    assert_response :success
+    assert_select ".review-request-submission-message", text: /The author wrote/
+    assert_select ".review-request-submission-message", text: /This is the second attempt/
+  end
+
+  test "a submission with no message says nothing rather than an empty box" do
+    request_record = review_request(submitted_change)
+
+    get universe_review_request_url(universe_slug: @universe.slug, id: request_record)
+
+    assert_response :success
+    assert_select ".review-request-submission-message", count: 0
+  end
+
+  # Withdrawing
+  #
+  # The author's own answer, and the fourth status in the queue. Both decisions must
+  # refuse it: a withdrawn submission's draft was discarded, and `DraftApplier` asks
+  # whether a draft is open nowhere, so approving one would write the changes live
+  # after the author threw them away.
+
+  test "a withdrawn submission is history, and cannot be approved or rejected" do
+    request_record = review_request(submitted_change)
+    request_record.withdraw!
+
+    assert_no_difference -> { Character.count } do
+      post approve_universe_review_request_url(universe_slug: @universe.slug, id: request_record)
+    end
+
+    assert_redirected_to universe_review_request_url(universe_slug: @universe.slug, id: request_record)
+    assert_equal I18n.t("review_requests.flash.decided"), flash[:alert]
+    assert_predicate request_record.reload, :withdrawn?
+    assert_predicate request_record.draft.reload, :discarded?
+
+    post reject_universe_review_request_url(universe_slug: @universe.slug, id: request_record),
+      params: { review_request: { review_notes: "Changed my mind" } }
+
+    assert_equal I18n.t("review_requests.flash.decided"), flash[:alert]
+    assert_predicate request_record.reload, :withdrawn?
+  end
+
+  test "a withdrawn submission says so instead of naming a reviewer who never saw it" do
+    request_record = review_request(submitted_change)
+    request_record.withdraw!
+
+    get universe_review_request_url(universe_slug: @universe.slug, id: request_record)
+
+    assert_response :success
+    assert_select ".review-request-summary .badge", text: "Withdrawn"
+    # Dated by the draft's closure rather than the submission: a reviewer is being told
+    # when the author took it back, not when they handed it over.
+    assert_select ".review-request-withdrawn",
+      text: /#{Regexp.escape(I18n.l(request_record.draft.closed_at, format: :short))}/
+    assert_select ".review-request-withdrawn", text: /Nothing was written/
+    # Nothing to decide, so neither form is offered.
+    assert_select ".review-request-decisions", count: 0
+
+    get universe_review_requests_url(universe_slug: @universe.slug)
+
+    assert_select ".review-request-withdrawn", text: /author discarded this draft/
+  end
+
   private
     # A third person, for the one case that needs two authors in one universe: the
     # partial unique index on `[user_id, universe_id]` refuses two *open* drafts for one
@@ -418,11 +491,11 @@ class ReviewRequestsControllerTest < ActionDispatch::IntegrationTest
     end
 
     def review_request(*changes, status: "pending", reviewed_by: nil, notes: nil,
-      universe: nil, by: nil)
+      universe: nil, by: nil, message: nil)
       universe ||= @universe
       draft = Draft.create!(user: by || @author, universe: universe)
       changes.each { |attributes| draft.draft_changes.create!(attributes) }
-      draft.submit!.tap do |review_request|
+      draft.submit!(message: message).tap do |review_request|
         review_request.update!(status: status, reviewed_by: reviewed_by, review_notes: notes) unless status == "pending"
       end
     end

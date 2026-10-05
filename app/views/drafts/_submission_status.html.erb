@@ -1,0 +1,52 @@
+<%# Where this draft's submission stands, read from the stored request on the
+    # author's own page.
+    #
+    # **It is rendered from the request rather than from the draft's status**, because
+    # the two come apart exactly where the author most needs an answer: a rejected
+    # submission hands the draft back, so the draft says `draft` again while the
+    # request is the only row that carries the reviewer's reason. A page that read
+    # the status would report "still a draft" to the person whose work was just
+    # refused.
+    #
+    # **It shows the reviewer's notes, not just the badge.** `ReviewRequest` requires
+    # a rejection to say why, and those notes are written *for the author* — the
+    # reviewer's own page says so on the field. Before this, they were stored and
+    # only ever printed where the reviewer stood, which made the requirement a
+    # message into a place the author cannot reach.
+    #
+    # A withdrawn submission is the fourth answer and says what it is: the author
+    # took it back, nobody reviewed it, and nothing was written.
+    #
+    # It takes the request as a local rather than reading the draft, so this surface
+    # and the controller agree about *which* submission is being described — the
+    # newest one, because a rejected handover is history and the draft goes back to
+    # being working work.
+    %>
+<div class="list-group-item draft-submission-status">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <span class="badge rounded-pill text-bg-light border draft-submission-badge">
+      <%= t("review_requests.statuses.#{review_request.status}") %>
+    </span>
+    <span><%= t("drafts.submission_status.heading") %></span>
+  </div>
+
+  <div class="entity-description draft-submission-state">
+    <%= t("drafts.submission_status.#{review_request.status}_html",
+      reviewer: record_label(review_request.reviewed_by),
+      at: time_tag(review_request.created_at, l(review_request.created_at, format: :short))) %>
+  </div>
+
+  <%# The author's own sentence back to them, because a handover is a statement
+      about one moment and this is the moment it was made. %>
+  <% if review_request.submission_message.present? %>
+    <div class="entity-description draft-submission-message">
+      <%= t("drafts.submission_status.message", message: review_request.submission_message) %>
+    </div>
+  <% end %>
+
+  <% if review_request.review_notes.present? %>
+    <div class="entity-description draft-submission-notes">
+      <%= t("drafts.submission_status.notes", notes: review_request.review_notes) %>
+    </div>
+  <% end %>
+</div>

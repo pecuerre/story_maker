@@ -122,11 +122,22 @@ class Draft < ApplicationRecord
   # a validation error because this is not a form: the caller is a workflow step
   # that already knows the draft's state, and a control that quietly did nothing
   # would leave the author waiting for a reviewer who was never asked.
-  def submit!
+  #
+  # **`message` is the author's own sentence, and it is optional.** It belongs to
+  # the submission rather than to the draft, because a rejected draft comes back as
+  # working work and may be submitted again with a different message; what was asked
+  # for is a statement about one handover. A blank message is stored as `nil` rather
+  # than as an empty string, for `review_notes`' reason: a blank box would read back
+  # later as something the author wrote.
+  def submit!(message: nil)
     raise ActiveRecord::RecordNotSaved, "only a working draft can be submitted: Draft #{id} is #{status}" unless draft?
 
     transaction do
-      request = review_requests.create!(universe: universe, submitted_by: user)
+      request = review_requests.create!(
+        universe: universe,
+        submitted_by: user,
+        submission_message: message.presence
+      )
 
       update!(status: "submitted")
 

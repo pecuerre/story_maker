@@ -1,0 +1,37 @@
+<%# The handover form for a `github` universe: one optional message from the author
+    # and one submit, posting to `drafts#submit`.
+    #
+    # **It is a form rather than a `button_to` because the message cannot travel on
+    # a button.** An optional field and a bare control are two different shapes of
+    # the same decision, and the reviewer's approval already found this out in slice
+    # 5.2: a note that has to be typed cannot ride in a `data:` attribute or survive
+    # a confirmation dialog. `Draft#submit!` writes the message onto the request it
+    # creates, so the field is a parameter of a submission rather than a column an
+    # author edits — a rejected draft comes back as working work and the next
+    # handover gets its own message.
+    #
+    # **It renders only while the draft is a working one** (`draft?`, not `open?`),
+    # because a draft that is already with a reviewer has nothing left to hand over
+    # and one that is closed has nothing at all. A control that would be refused is
+    # worse than no control, which is the same rule the page header follows.
+    #
+    # The section rather than a button also gives the mode's sentence somewhere to
+    # live: a `wikipedia` author pressing **Apply changes** needs nothing explained,
+    # and a `github` author pressing **Submit for review** needs to know that nothing
+    # is written yet and that somebody else decides. %>
+<section class="surface-card p-4 mt-3 draft-submission">
+  <h2 class="h5"><%= t("drafts.submission.heading") %></h2>
+  <p class="page-description"><%= t("drafts.submission.lead") %></p>
+
+  <%= form_with(url: submit_universe_draft_path(id: draft), method: :post,
+    class: "draft-submission-form") do %>
+    <%= label_tag "submission_message", t("drafts.submission.message"), class: "form-label" %>
+    <%= text_area_tag "review_request[submission_message]", nil, rows: 3,
+      id: "submission_message", class: "form-control" %>
+    <p class="page-description"><%= t("drafts.submission.message_hint") %></p>
+
+    <div class="page-actions d-flex align-items-center flex-wrap gap-2 mt-3">
+      <%= submit_tag t("drafts.submission.submit"), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</section>

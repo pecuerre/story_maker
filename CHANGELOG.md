@@ -63,6 +63,13 @@ Labels used below, in the order their groups appear:
   for the author, stored as nothing when the box is empty and carried through the conflict question an
   approval is asked before it is written. A rejection's notes stay required.
 
+### docs
+
+- **Finding 68 is settled: a pending row stays badged as it is and is never withheld.** A remembered
+  create the apply may refuse keeps its **Draft** badge, whose title says nothing about it has been
+  checked; predicting the applier or validating a half-built record is refused. What any pending badge
+  carries beyond its state stays in the backlog.
+
 ## 2026-10-04
 
 ### added

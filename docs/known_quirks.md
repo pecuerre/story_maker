@@ -17,7 +17,9 @@ built, verified the same way, and listed here rather than left in [`backlog.md`]
 each one is reachable now rather than only pending. Finding 64 left this file on 2026-10-04, when the
 apply's outcome became stored rather than reported once, and the unnumbered finding that read "the applier
 raises rather than reporting a change it cannot interpret" left it the same day, when the apply and a
-reviewer's approval started refusing such a draft in words; see
+reviewer's approval started refusing such a draft in words. Finding 68 left this file on 2026-10-05,
+when a pending row the apply may refuse was settled as badged exactly as it is and never withheld, which
+is a decision rather than a change and left no code behind it; see
 [`delivery_history.md`](delivery_history.md).
 
 ## Critical security observations
@@ -149,29 +151,6 @@ reviewer's approval started refusing such a draft in words; see
     deliberately rather than overlooked — a decision has to lower it on the page it redirects to, which a
     `MenuCountCache` entry could not promise for up to its TTL — so the trade is freshness against one
     aggregate query per page rather than the left sidebar's stale-but-free counts.
-
-68. **Medium — a list cannot say which remembered creates the applier will refuse.** ADR 0020
-    deliberately does not validate a change when it is remembered: the applier re-runs the live path,
-    where the model's own validations are authoritative. That is right for the drafts page, which
-    reports what the author *asked for*, and it is what leaves a list unable to answer a question about
-    a pending row. **An outcome is now stored per change, but only once the apply has run**, which does
-    not help a row that is still pending: `draft_change_outcomes` is written by `DraftApplier`, so what
-    it holds is what the apply decided, not a prediction of it. A pending record is also built from the
-    payload sliced to `model.column_names`, so the collection writers and the
-    two virtual photo attributes are never assigned — validating that half-built object would be a
-    second answer about a record the applier will build differently, not a preview of the applier's
-    own. A remembered Event create with no title and no dates therefore still appears in the Events
-    list, and it appears as a row the universe would refuse, because that is genuinely what it is.
-    What was delivered on 2026-10-04 is that the row no longer **claims** to be a record: a pending row
-    with nothing to be called by is titled by the type it would create (`Event#identifiable?` and
-    `DraftsHelper#draft_pending_record_label`, stated in
-    [conventions.md](conventions.md#pending-changes-in-a-list)) rather than by an unidentified Event's
-    last display-label rung or by no subject at all, and the badge's `title` says that nothing about it
-    has been checked yet and that the apply is where the universe decides. Whether such a row should be
-    badged differently still or withheld is a product decision that belongs with **What a pending badge
-    has to say beyond its state** in [`backlog.md`](backlog.md), and it stays open: the stored outcomes
-    are a record of what happened, so the only way to answer the question **before** an apply would be to
-    validate a half-built record or to predict the applier, and both are refused here.
 
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`

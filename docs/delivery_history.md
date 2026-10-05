@@ -29,6 +29,11 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-05
 
+- **[docs]** **Finding 68 is settled as a decision, and the decision changed no code.** A pending row the
+  apply may refuse is badged exactly as it is and is never withheld; what any pending badge carries beyond
+  its state stays with the backlog item that owns it. See the resolved entry at the end of this file for why
+  the two engineering answers stay refused and what the badge already says.
+
 - **[added]** **Collaboration phase 5, slice 5.5: the full review flow end to end, with in-app
   notifications.** A `notifications` table, a bell in the navbar, and `/notifications` behind it;
   `Notification.review_submitted!` writes from `Draft#submit!` and `Notification.review_decided!` from
@@ -6119,3 +6124,46 @@ change is remembered again; a withdrawn one closes the draft, so the next change
 `test/controllers/draft_mutation_test.rb` asserts both, plus that a create, an edit, a delete, and the
 HTML flow are all refused, and `test/system/review_workflow_test.rb` shows the sentence an author
 actually reads in the modal.
+
+### Former finding 68: a list could not say which remembered creates the applier would refuse (resolved)
+
+**Then:** a remembered create is not validated when it is remembered ([ADR
+0020](adr/0020-remembering-mutations-instead-of-writing-them.md)), so a pending row in a list workspace can
+be a record the universe would refuse to write, and the list could not say so. The stored per-change
+outcomes did not answer it either: `draft_change_outcomes` is written by `DraftApplier`, so what it holds is
+what an apply decided, not a prediction of one made before it. What the list *could* do without claiming
+anything — a pending row with nothing to be called by is titled by the type it would create — was delivered
+on 2026-10-04 with `Event#identifiable?` and `DraftsHelper#draft_pending_record_label`. The finding stayed
+open for the rest of its question: whether such a row should be badged differently still, or withheld.
+
+**The two engineering answers stay refused, and the reasoning has not moved.** Running the model's
+validations on the pending record would be a second answer about a record the applier will build
+differently: `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`, so the
+collection writers and the two virtual photo attributes are never assigned, and a pending row is not what
+the applier constructs. Predicting the applier would mean re-running its decisions outside it, which is
+the duplication ADR 0019 settled the other way — the applier goes through the live mutation path rather
+than around it, so there is no second copy of the rules to consult early.
+
+**The owner's decision on 2026-10-05 was to leave the row exactly as it is.** The strongest statement
+available before an apply is the one the badge already makes: `drafts.pending.states.draft_title` says that
+nothing about the row has been checked yet, that it becomes real when the draft is applied, and that the
+universe decides then whether it can be written. Withdrawing the row would have contradicted
+[`conventions.md`](conventions.md#pending-changes-in-a-list) and ADR 0023 — a list whose only content is a
+pending create must not answer that it is empty — and would hide the author's own remembered work, which is
+the thing the badges exist to make visible. A fourth badge state was considered and declined: it would
+separate rows by a distinction the reader cannot act on differently, since in either case the apply decides,
+which makes it a difference in wording rather than in what the reader can do.
+
+**What stays open is a different question.** **What a pending badge has to say beyond its state** in
+[`backlog.md`](backlog.md) owns what any badge carries — the fields a remembered edit touched, a count, or
+the draft's own page as the only place any of it is said. That is a question about how much of a payload a
+row may read, which is the per-row query trade finding 66 records, and it is not reopened by this
+decision: nothing here asked whether a badge could say more. Findings 66 and 69 are unchanged, and the
+pointer this finding left in the backlog now names the document that owns the pending-row rules rather
+than a number that no longer exists.
+
+**Verification.** `bin/rails test test/docs_test.rb` — link, anchor, heading-ownership, index, and
+changelog-length checks, which is the whole suite that a documentation-only change can affect. Not run, and
+not applicable: `bin/rails test` in full, `bin/rails test:system`, `bin/rubocop`, `bun run check:js`,
+`bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit` — no application code, view, JavaScript, schema,
+or translated string changed.

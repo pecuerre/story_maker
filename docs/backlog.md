@@ -165,8 +165,9 @@ it has a useful destination and clear empty/loading/error states.
     row is the stored record, and the change is not in it — and thin: a record with three remembered edits
     on three different fields carries one badge, and a reader cannot tell which fields their draft would
     write, in what order, or whether two of the three changes touch the same attribute. The values are
-    available (each change's `payload`), and finding 68 shows what is missing is not the data but a rule
-    for how much of it a row may read. Decide what the badge carries: the fields a remembered edit touched,
+    available (each change's `payload`), and the rules a pending row follows say what is missing is not
+    the data but a rule for how much of it a row may read
+    ([`conventions.md`](conventions.md#pending-changes-in-a-list)). Decide what the badge carries: the fields a remembered edit touched,
     a count of the changes on that record, or the draft's own page as the only place any of it is said. The
     last is the status quo and costs nothing; the first costs a per-row payload read, which is the trade in
     finding 66, and the second is a number without a subject. This is the fifth question the conflict

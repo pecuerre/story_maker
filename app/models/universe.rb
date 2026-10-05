@@ -74,7 +74,6 @@ class Universe < ApplicationRecord
 
   belongs_to :owner, class_name: "User"
   has_many :memberships, class_name: "UniverseMembership", dependent: :destroy
-  has_many :members, through: :memberships, source: :user
   # A thread belongs to one record and one universe. The record's own destroy
   # already takes its thread, so this is what covers the universe cascade: a
   # thread that outlived the record it was about would be an orphan row nothing
@@ -168,6 +167,23 @@ class Universe < ApplicationRecord
 
   def administrable_by?(user)
     user.present? && access_level_for(user) == "admin"
+  end
+
+  # Everybody who collaborates in this universe: its owner plus its members.
+  #
+  # **It is a method rather than `has_many :members, through: :memberships` because
+  # the owner is not a membership row.** `UniverseMembership` refuses to record one
+  # (`user_is_not_universe_owner`), so the association answers "the people I invited"
+  # and leaves out the person who founded the universe — the one collaborator every
+  # universe has and the one most likely to be dropped from a list of members. An
+  # ordinary reader asking "who is in this universe with me?" has no way to know that
+  # half the answer has no row, so the union is done once here.
+  #
+  # `Universe#administrators` is the same union narrowed to `admin`, and
+  # `User#universes` is this relation seen from the other end; all three name the
+  # owner explicitly, which is what makes them agree.
+  def members
+    User.where(id: [ owner_id ] + memberships.pluck(:user_id))
   end
 
   # Everybody who administers this universe: its owner, plus the members whose level is

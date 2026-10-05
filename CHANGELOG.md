@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A reply in a discussion notifies the people already in the thread.** A fourth notification kind goes
+  to everybody else who posted there and can still read the universe, and links at the thread.
 - **In-app notifications for the review workflow.** A `notifications` table records a submission handed
   over and each decision, a bell in the top bar shows what is unread, and `/notifications` lists it.
 - **The reviewer's queue is reachable from the workspace.** The right sidebar's Collaboration group gains a
@@ -56,6 +58,9 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **`User#universes` and `Universe#members` answer with the owner in them.** Both were membership-only
+  associations and the owner of a universe is deliberately not a membership row, so both omitted the
+  universe's founder. That finding has left the open-quirks list.
 - **A draft that is with a reviewer refuses new changes.** A change arriving while the submission is
   pending is refused in words, in each workspace's own response shape, instead of joining the draft under
   the reviewer. Finding 70 has left the open-quirks list.

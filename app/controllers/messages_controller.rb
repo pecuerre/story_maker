@@ -13,7 +13,9 @@ class MessagesController < ApplicationController
 
     @message = @discussion.messages.new(message_params.merge(user: Current.user))
 
-    if @message.save
+    # `post!` rather than `save`, because the reply and the notice its conversation
+    # receives are one write — see `DiscussionMessage#post!`.
+    if @message.post!
       redirect_to universe_discussion_path(id: @discussion), status: :see_other,
         notice: t("discussions.flash.message_created")
     else

@@ -94,6 +94,47 @@ class NotificationsControllerTest < ActionDispatch::IntegrationTest
       universe_review_request_path(universe_slug: @universe.slug, id: notification.payload["review_request_id"])
   end
 
+  test "a reply links at the thread inside its own universe" do
+    discussion = characters(:character_one).find_or_create_discussion
+    discussion.messages.create!(user: users(:user_two), body: "Is she the heir?")
+    notification = Notification.discussion_replied!(
+      discussion.messages.create!(user: users(:user_one), body: "Keep the letter.")
+    ).sole
+    sign_in_as(users(:user_two))
+
+    get notifications_url
+
+    assert_response :success
+    assert_select ".notification-sentence", text: /User One replied in your conversation about Character one in Universe one/
+    # A reply is the one kind whose target is not a page of this application's own: the
+    # thread is resolved through the universe its path carries, so the notice follows
+    # the reader into a different universe and still opens the conversation.
+    assert_select "a[href=?]", universe_discussion_path(universe_slug: @universe.slug, id: discussion.id)
+
+    get root_url
+
+    assert_select ".notification-menu a[href=?]",
+      universe_discussion_path(universe_slug: @universe.slug, id: discussion.id)
+  end
+
+  test "a reply about a record that has since been deleted still renders its sentence" do
+    character = @universe.characters.create!(name: "Doomed character")
+    discussion = character.find_or_create_discussion
+    discussion.messages.create!(user: @author, body: "What about her?")
+    notification = Notification.discussion_replied!(
+      discussion.messages.create!(user: @owner, body: "Nothing left to say")
+    ).sole
+    # A soft delete keeps the thread and the message that carried the record's name, so
+    # the stored name still reads where a join would resolve nothing.
+    character.soft_delete
+    sign_in_as(@author)
+
+    get notifications_url
+
+    assert_response :success
+    assert_select ".notification-sentence", text: /replied in your conversation about Doomed character/
+  end
+
   test "a notification about a universe that no longer exists still renders" do
     sign_in_as(@author)
     announced(submitted_request, decision: :approved)

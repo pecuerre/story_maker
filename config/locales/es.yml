@@ -817,14 +817,16 @@ es:
     read_all: "Marcar todo como leído"
     empty: "Todavía no se te ha dicho nada."
     empty_title: "Todavía no se te ha dicho nada"
-    empty_description: "Cuando alguien te envíe un borrador para revisión, o responda a uno que enviaste, aparecerá aquí."
+    empty_description: "Cuando alguien te envíe un borrador a revisión, responda a uno que enviaste, o conteste en una conversación en la que participas, aparecerá aquí."
     sentences:
       review_submitted: "%{actor} ha enviado un borrador a revisión en %{universe}."
       review_approved: "%{reviewer} ha aprobado tu envío en %{universe}. Tus cambios ya están escritos."
       review_rejected: "%{reviewer} ha rechazado tu envío en %{universe}. Tu borrador vuelve a ti, con sus cambios, y puedes editarlo y volver a enviarlo."
+      discussion_reply: "%{actor} ha contestado en tu conversación sobre %{record} en %{universe}."
     notes: "Quien lo revisó dijo: %{notes}"
     someone: "Alguien"
     a_universe: "un universo"
+    a_record: "un registro"
     index:
       title: "Notificaciones"
       description: "Lo que se te ha dicho sobre tu trabajo, de lo más reciente a lo más antiguo."

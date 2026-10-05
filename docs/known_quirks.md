@@ -22,7 +22,10 @@ when a pending row the apply may refuse was settled as badged exactly as it is a
 is a decision rather than a change and left no code behind it, and finding 66 left it the same day, when
 `DraftChanges::Reader` read a draft's records and tag names once per class instead of once per row;
 the right sidebar's **Review requests** figure it also described stays, and is a deliberate uncached
-`COUNT` rather than an oversight. See [`delivery_history.md`](delivery_history.md).
+`COUNT` rather than an oversight. The unnumbered finding "implicit owner access is missing from
+association APIs" left it on 2026-10-05 as well, when `User#universes` and `Universe#members` became
+owner-aware readers instead of membership-only associations.
+See [`delivery_history.md`](delivery_history.md).
 
 ## Critical security observations
 
@@ -241,12 +244,7 @@ through the current normal UI. They are recorded so they are not mistaken for se
   content-class registry in `app/models/ability.rb:11-34` is still hard-coded, so a new model must
   be added to it or CanCan will not match a rule for it at all — that half is now a failing test
   rather than a silent omission, see the entry above.
-- **Implicit owner access is missing from association APIs.** `User#universes` and
-  `Universe#members` are membership-only associations (`app/models/user.rb:6-8`,
-  `app/models/universe.rb:41-43`), while the owner is intentionally not stored as a membership row.
-  The policy-aware `User#accessible_universes` and the membership view compensate manually
-  (`app/models/user.rb:12-14`, `app/views/memberships/index.html.erb:64-70`); new code using the
-  ordinary associations can omit owners and report incomplete access/collaboration data.
+
 - **A remembered create says nothing about which story, scene, or section it would belong to.** The payload's
   scope column (`DraftChange#scope_attribute`) is dropped as plumbing on the drafts page, because the page is
   already inside the universe it would place the record in and a bare `story_id` is a number a reader cannot

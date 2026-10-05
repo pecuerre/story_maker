@@ -141,13 +141,14 @@ it has a useful destination and clear empty/loading/error states.
 
     The collaboration system feels complete and polished.
 
-    - **Slice 6.1:** The remaining in-app notification: a **reply to a discussion** somebody started with
-      you. The `notifications` table, the bell, and the two review-workflow notices already exist from
-      slice 5.5, and the column is `kind` rather than the `type` this slice originally named, because
-      `type` is Active Record's STI discriminator — see
-      [conventions.md](conventions.md#notifications). The open question this slice settles: a reply names
-      the record and the thread, so the notice has to link at a discussion inside the universe it is in,
-      which the review notices never had to do. Tests: model tests, request tests.
+    - **Slice 6.1, delivered:** A **reply in a discussion notifies the people already in the thread** —
+      the thread's other authors who can still read the universe, never the reply's own author and
+      never a member who has not posted. Its notice links at the thread inside its universe, which is
+      the first universe-scoped notification target, and it stores the record's name so the bell can say
+      which conversation it is. See [conventions.md](conventions.md#notifications) for the recipient
+      rules and the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). The `notifications` table,
+      the bell, and the two review-workflow notices came from slice 5.5, and the column is `kind` rather
+      than the `type` this slice originally named, because `type` is Active Record's STI discriminator.
     - **Slice 6.2:** Real-time updates via Solid Cable. Broadcast when a draft is applied (so other
       users see the changes), when a discussion message is posted, when a review request is
       submitted/approved/rejected. Tests: system tests.

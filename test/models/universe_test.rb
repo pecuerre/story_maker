@@ -1,6 +1,10 @@
 require "test_helper"
 
 class UniverseTest < ActiveSupport::TestCase
+  setup do
+    @universe = universes(:universe_one)
+  end
+
   test "requires a name" do
     universe = Universe.new(owner: users(:user_one))
 
@@ -191,6 +195,40 @@ class UniverseTest < ActiveSupport::TestCase
 
     assert universe.reload.draft_based?
     assert_not universe.direct?
+  end
+
+  # `members` is a method rather than `has_many :members, through: :memberships`
+  # because the owner is not a membership row. These hold the union from this side, and
+  # the two of them are what keeps `administrators` and `User#universes` honest about the
+  # founder being in the answer.
+  test "members are the owner plus everybody with a membership row" do
+    writer = User.create!(name: "Writer", email_address: "writer-members@example.com", password: "password")
+    UniverseMembership.create!(universe: @universe, user: writer, access_level: :write)
+
+    # The owner is an admin with no membership row at all, so an association built from
+    # memberships alone would leave out the one person every universe has.
+    assert_empty @universe.memberships.where(user_id: users(:user_one))
+    assert_equal [ users(:user_one), writer ].sort_by(&:id), @universe.members.sort_by(&:id)
+  end
+
+  test "a member's level does not decide who is a member, and the owner is always an administrator" do
+    reader = User.create!(name: "Reader", email_address: "reader-members@example.com", password: "password")
+    admin = User.create!(name: "Admin", email_address: "admin-members@example.com", password: "password")
+    UniverseMembership.create!(universe: @universe, user: reader, access_level: :read)
+    UniverseMembership.create!(universe: @universe, user: admin, access_level: :admin)
+
+    assert_includes @universe.members, reader
+    assert_equal [ users(:user_one), admin ].sort_by(&:id), @universe.administrators.sort_by(&:id)
+  end
+
+  test "a soft-deleted membership leaves the collaborators, and the owner never leaves" do
+    member = User.create!(name: "Leaving", email_address: "leaving@example.com", password: "password")
+    membership = UniverseMembership.create!(universe: @universe, user: member, access_level: :write)
+
+    membership.soft_delete
+
+    assert_equal [ users(:user_one) ], @universe.members.to_a
+    assert_equal [ users(:user_one) ], @universe.administrators.to_a
   end
 
   test "writable and administrated scopes match instance policy" do

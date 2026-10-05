@@ -22,6 +22,50 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert-success", text: /#{I18n.t('discussions.flash.message_created')}/
   end
 
+  # Who a reply tells. The notice is written by the model inside the message's own
+  # transaction, so the request suite is where it can be checked as a whole: that it
+  # was written at all, that it reached the right people, and that a refused reply
+  # wrote none.
+  test "a reply tells the people already in the thread and nobody else" do
+    @discussion.messages.create!(user: users(:user_two), body: "Is she the heir?")
+    # A member who has never posted is not in the conversation, and the author of the
+    # reply is the one person the news is not news for.
+    bystander = User.create!(name: "User Three", email_address: "three@example.com", password: "password")
+    UniverseMembership.create!(universe: @universe, user: bystander, access_level: "write")
+
+    assert_difference("Notification.count", 1) do
+      post universe_discussion_messages_url(universe_slug: @universe.slug, discussion_id: @discussion.id),
+        params: { discussion_message: { body: "Keep the letter." } }
+    end
+
+    notification = users(:user_two).notifications.sole
+    assert_equal "discussion_reply", notification.kind
+    assert_empty users(:user_one).notifications
+    assert_empty bystander.notifications
+  end
+
+  test "a reply to a thread nobody else has joined in is told to nobody" do
+    assert_no_difference("Notification.count") do
+      post universe_discussion_messages_url(universe_slug: @universe.slug, discussion_id: @discussion.id),
+        params: { discussion_message: { body: "Nobody to hear this" } }
+    end
+
+    assert_response :see_other
+  end
+
+  test "a refused reply writes no message and no notice" do
+    @discussion.messages.create!(user: users(:user_two), body: "Is she the heir?")
+
+    assert_no_difference("Notification.count") do
+      assert_no_difference("DiscussionMessage.count") do
+        post universe_discussion_messages_url(universe_slug: @universe.slug, discussion_id: @discussion.id),
+          params: { discussion_message: { body: "" } }
+      end
+    end
+
+    assert_response :unprocessable_content
+  end
+
   test "an empty reply is refused and keeps what was typed" do
     assert_no_difference("DiscussionMessage.count") do
       post universe_discussion_messages_url(universe_slug: @universe.slug, discussion_id: @discussion.id),

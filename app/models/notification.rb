@@ -27,11 +27,12 @@
 # no foreign key to the thing being announced, and that is the point above rather than
 # an omission.
 class Notification < ApplicationRecord
-  # The two events and their two answers, rather than one kind per universe or per
-  # actor: "a submission is waiting" and "your submission was answered" are the two
-  # questions the collaboration workflow leaves a person waiting on, and every surface
-  # that shows a notification is showing one of those two answers.
-  KINDS = %w[review_submitted review_approved review_rejected].freeze
+  # The three events and their three answers, rather than one kind per universe or per
+  # actor: "a submission is waiting", "your submission was answered", and "somebody
+  # answered you in a conversation you are part of" are the questions the collaboration
+  # workflow leaves a person waiting on, and every surface that shows a notification is
+  # showing one of those three answers.
+  KINDS = %w[review_submitted review_approved review_rejected discussion_reply].freeze
 
   # How many the navbar's dropdown prints. The cap is here rather than in the view for
   # `DraftPreview::PANEL_LIMIT`'s reason: the dropdown is rendered on every page of the
@@ -108,7 +109,63 @@ class Notification < ApplicationRecord
     )
   end
 
-  # The payload both entry points write, from the one row they are both about.
+  # Somebody answered in a conversation this person is already part of.
+  #
+  # **The recipients are the thread's other authors, not the universe's people.** A
+  # thread is the one place in this application where two people have chosen to talk
+  # to each other about one record, so "who is waiting on an answer here" has exactly
+  # one answer: whoever else has spoken in it. A member who has never posted, and the
+  # universe's administrators, are not in the conversation and are not told about it —
+  # which is why this is the one kind whose recipients are not `Universe#administrators`
+  # or another access list.
+  #
+  # **The author of the reply is excluded**, because they are the one person in the
+  # universe for whom this news is not news. Replying to your own thread is answered
+  # by silence rather than by a row saying you spoke.
+  #
+  # **A participant who can no longer read the universe is dropped.** The thread's
+  # other authors are read from stored messages, and a membership can be removed after
+  # somebody posts: telling a reader that a reply arrived in a universe they can no
+  # longer open discloses the fact that they said something, to somebody who may not
+  # know they ever did. `readable_by?` is asked per participant rather than in one
+  # query because a thread holds a handful of authors and the question is per person.
+  #
+  # **The record's name travels and its class does not.** The sentence says which
+  # conversation this is, because "somebody replied" in a bell a reader opens from
+  # another universe is a sentence with nothing in it; the class would add nothing
+  # printable. The name is read through `RecordTarget` rather than through the
+  # thread's own `record` association, for `Discussion`'s reason: a stored
+  # `record_type` is a string that must never be constantized, and a name for a
+  # record that no longer resolves is a fallback word rather than an exception.
+  def self.discussion_replied!(message)
+    discussion = message.discussion
+    universe = discussion.universe
+
+    notify(
+      kind: "discussion_reply",
+      recipients: thread_readers(discussion, except: message.user, universe: universe),
+      payload: {
+        universe_slug: universe.slug,
+        universe_name: universe.name,
+        discussion_id: discussion.id,
+        record_name: RecordTarget.find(record_type: discussion.record_type, record_id: discussion.record_id)&.name,
+        actor_name: message.user&.name
+      }
+    )
+  end
+
+  # Everybody but `except` who has spoken in `discussion` and can still read its
+  # universe. The author list is the thread's own messages rather than a column on
+  # the thread: a thread has no participants, it has a history, and a person who has
+  # posted in it is part of it however many times.
+  def self.thread_readers(discussion, except:, universe:)
+    author_ids = discussion.messages.where.not(user_id: except&.id).distinct.pluck(:user_id)
+
+    User.where(id: author_ids).select { |participant| universe.readable_by?(participant) }
+  end
+  private_class_method :thread_readers
+
+  # The payload both review entry points write, from the one row they are both about.
   #
   # **The other person's name is stored rather than their id**, and this is the only
   # value here that could have been a pointer instead. A notification renders whatever

@@ -858,16 +858,20 @@ en:
     # rows in it reads as broken rather than as empty.
     empty: "Nothing has been said to you yet."
     empty_title: "Nothing has been said to you yet"
-    empty_description: "When somebody hands you a draft for review, or answers one you handed over, it appears here."
+    empty_description: "When somebody hands you a draft for review, answers one you handed over, or replies in a conversation you are part of, it appears here."
     sentences:
       review_submitted: "%{actor} submitted a draft for review in %{universe}."
       review_approved: "%{reviewer} approved your submission in %{universe}. Your changes are live."
       review_rejected: "%{reviewer} rejected your submission in %{universe}. Your draft is back with you, with its changes, and you can edit it and submit again."
+      discussion_reply: "%{actor} replied in your conversation about %{record} in %{universe}."
     notes: "The reviewer said: %{notes}"
     # Stand-ins for a payload that does not carry the value. Every row this
-    # application writes has both, so these only answer a row written by something else.
+    # application writes has these, so they only answer a row written by something
+    # else — or one whose record has since been soft-deleted, which is the case
+    # `record_name` can be nil for while the row it names is perfectly readable.
     someone: "Someone"
     a_universe: "a universe"
+    a_record: "a record"
     index:
       title: "Notifications"
       description: "What has been said to you about your work, newest first."

@@ -683,31 +683,66 @@ reviewer's only option, or one damaged row would block the queue behind the auth
 
 ## Notifications
 
-One person is told what happened to them while they were elsewhere, and the three questions that
-takes are the model, the two writes, and the bell.
+One person is told what happened to them while they were elsewhere, and the questions that takes are
+the model, the writes, and the bell.
 
 **What a notification is: a stored sentence, not a pointer.** `Notification`'s `payload` carries the
-universe's slug and name, the draft and submission it is about, the other person's name, and a
-reviewer's note where there is one. It has **no foreign key to any of them**, and that is the whole
-design rather than an omission: the submission it names is destroyed with its draft and with its
-universe, so a row that resolved any of that to print itself would raise on a page that has to keep
-working. The trade is names stored twice, validated by nothing, deliberately. The column is `kind`
-rather than the `type` the plan named, because `type` is Active Record's single-table-inheritance
-discriminator and a row whose type was `"review_submitted"` would be looked up as a class name — the
-same answer ADR 0019 gave for `draft_changes.payload`. `created_at` with no `updated_at`: nothing
-reports when a reader opened their bell.
+universe's slug and name, whatever it is about, the other person's name, and a reviewer's note where
+there is one. It has **no foreign key to any of them**, and that is the whole design rather than an
+omission: the submission it names is destroyed with its draft and with its universe, and a thread is
+destroyed with its record and with its universe, so a row that resolved any of that to print itself
+would raise on a page that has to keep working. The trade is names stored twice, validated by
+nothing, deliberately. The column is `kind` rather than the `type` the plan named, because `type` is
+Active Record's single-table-inheritance discriminator and a row whose type was `"review_submitted"`
+would be looked up as a class name — the same answer ADR 0019 gave for `draft_changes.payload`.
+`created_at` with no `updated_at`: nothing reports when a reader opened their bell.
 
-**Who is told, and who is not.** `admin` access is the whole of who may read a reviewer's queue, so a
-submission goes to the universe's administrators (`Universe#administrators`: the owner plus the
-`admin` members — the owner is included explicitly because `UniverseMembership` refuses to record
-one) and to nobody else. The **author is not told about their own submission**, because they pressed
-the control that caused it and the page they land on already says it; an author who is also their
-universe's only administrator therefore gets nothing, which is correct rather than unfortunate. A
-**decision** goes to the author alone, because the decision is addressed to them. Every notice is
-written **inside the transaction that made the event** — `Draft#submit!`, `ReviewRequest#reject!`, and
-the approval's own transaction in `ReviewRequestsController` — because a decision that committed
-without its notice leaves an author waiting for a verdict that has already been given. An approval
-stopped by a conflict announces nothing, because the decision was never taken.
+**Who is told, and who is not.** The three kinds have three different recipient rules, and each is
+the answer to a different question rather than a variation on one.
+
+- A **submission** goes to the universe's administrators (`Universe#administrators`: the owner plus
+  the `admin` members — the owner is included explicitly because `UniverseMembership` refuses to
+  record one) and to nobody else, because `admin` access is the whole of who may read a reviewer's
+  queue. The **author is not told about their own submission**: they pressed the control that caused
+  it and the page they land on already says it, so an author who is also their universe's only
+  administrator gets nothing — which is correct rather than unfortunate, since there is nobody else
+  who could review the draft.
+- A **decision** goes to the author alone, because the decision is addressed to them.
+- A **reply** goes to everybody else who has posted in that thread and can still read the universe
+  (`Notification.discussion_replied!`). The recipients are the thread's **other authors** rather than
+  the universe's people, because a thread is the one place here where two people have chosen to talk
+  to each other about one record: a member who has never posted is not in the conversation and is not
+  told about it, and the author of the reply is not told about their own message. The recipients are
+  read from the thread's stored messages rather than from a participants column, because a thread has
+  a history rather than a membership — so somebody who posted three times is one recipient, and one
+  row each, as `notify` is for every kind. A participant whose membership was **removed after they
+  posted** is dropped, because telling a reader that a reply arrived in a universe they can no longer
+  open discloses that they said something, to somebody who may not know they ever did.
+
+Every notice is written **inside the transaction that made the event** — `Draft#submit!`,
+`ReviewRequest#reject!`, the approval's own transaction in `ReviewRequestsController`, and
+`DiscussionMessage#post!` — because a decision that committed without its notice leaves an author
+waiting for a verdict that has already been given, and a message that landed while its notice failed
+to write leaves the thread looking like it did not answer. An approval stopped by a conflict announces
+nothing, because the decision was never taken. `post!` is the one of these that answers `true`/`false`
+rather than raising, because an empty composer is an ordinary form error the thread re-renders beside
+the field rather than a crash; the transaction still rolls back, so a refused reply writes no message
+and no notice.
+
+**A reply is the one kind whose target is universe-scoped rather than one of this application's own
+pages.** `NotificationsHelper#notification_target` links it at
+`universe_discussion_path(universe_slug:, id:)`, because `DiscussionsController#show` resolves the
+thread through `Current.universe` and its path therefore carries the universe's slug — which is the
+same slug the payload stores, and why the notice still follows a reader who is standing in a
+different universe. It is also the one target whose reader may open it: `show` is guest-readable, so
+a recipient who is a plain member, a read-only member, or the universe's owner lands on the thread
+rather than on a refusal, which is not true of the reviewer's page. The record's **name** travels in
+the payload and its class does not: the sentence says which conversation this is, because "somebody
+replied" in a bell opened from another universe is a sentence with nothing in it, and the class would
+add nothing printable. The name is read through `RecordTarget` rather than through the thread's own
+`record` association, for `Discussion`'s reason — a stored `record_type` must never be constantized —
+and a soft-deleted record therefore leaves the stored name in place where a join would resolve
+nothing, with `notifications.a_record` as the fallback for a row that never had one.
 
 **The two writes, and why they are POSTs.** `POST /notifications/:id/read` and `POST
 /notifications/read_all`, both on the page rather than in the dropdown: a reader who has read three of
@@ -730,11 +765,14 @@ the bell would hide the way into it.
 submission notice leads to the reviewer's page, because the reviewer's page is where the approval and
 rejection controls are; a decision notice leads to the author's own draft page, which carries the
 submission's status and the reviewer's notes (`drafts/_submission_status`), because the reviewer's page
-would answer **404** to somebody with no admin access. Both pages are not universe-scoped, so the
-navbar can show a notice about a universe the reader is not currently in; a universe renamed since the
-notice was written makes its link a 404, which is the accepted price of a row that still renders. A
-row with nothing to link at prints its sentence and no link, so one row this application did not
-write cannot take the page down with it.
+would answer **404** to somebody with no admin access; a reply notice leads to the thread. All three
+carry the universe's slug in their own payload rather than reading the one the reader is standing in,
+so the navbar can show a notice about a universe the reader is not currently in; a universe renamed
+since the notice was written makes its link a 404, which is the accepted price of a row that still
+renders. A row with nothing to link at prints its sentence and no link, so one row this application
+did not write cannot take the page down with it — and because the three kinds name a different id in
+the payload, `notification_target` asks for its own and a half-filled payload is no link rather than a
+link to `/u//discussions/`.
 
 ## The editing session
 

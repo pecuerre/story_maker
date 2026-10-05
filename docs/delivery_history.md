@@ -29,6 +29,73 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-05
 
+- **[fixed]** **`User#universes` and `Universe#members` answer with the owner in them.** Both were
+  membership-only associations, and the owner of a universe is deliberately not a membership row, so
+  both omitted the universe's founder from an answer that looked complete. The open known-quirks entry
+  has left [`known_quirks.md`](known_quirks.md); the reasoning, and why the methods rather than a new
+  schema, are in the resolved entry at the end of this file.
+
+- **[added]** **Collaboration phase 6, slice 6.1: a reply in a discussion notifies the people already in
+  the thread.** A fourth `Notification` kind, `discussion_reply`, written by
+  `Notification.discussion_replied!` from `DiscussionMessage#post!`; the bell, the list, the unread
+  count, and the two read controls are unchanged. Slice 6.1's open question — a reply names a record
+  and a thread, so its notice has to link inside the universe it is in, which the review notices never
+  had to — is answered below.
+
+  **The recipients are the thread's other authors, which is the first rule in this feature that is not
+  an access level.** A submission goes to the universe's administrators because `admin` access is the
+  whole of who may read a reviewer's queue; a decision goes to its author because it is addressed to
+  them. Neither shape fits a conversation, where the question "who is waiting on an answer here" has one
+  answer — whoever else has spoken. So the recipients are read from the thread's stored messages, not
+  from `Universe#administrators` and not from any access list: a member who has never posted is not in
+  the conversation and is not told about it, and the author of the reply is not told about their own
+  message. A thread has a **history** rather than a participants list, so somebody who posted three
+  times is one recipient and gets one row, as `notify` already worked for every other kind.
+
+  **A participant who can no longer read the universe is dropped.** This is the one case where the
+  recipient rule consults access, and it is not optional: `readable_by?` is asked per participant
+  before the row is written, because a membership can be removed after somebody posts, and telling a
+  reader that a reply arrived in a universe they can no longer open discloses that they said something,
+  to somebody who may not know they ever did. The alternative — notifying every past poster and letting
+  the link 404 — was rejected: the stored sentence still renders, which is why the payload is a sentence,
+  but it renders the news too, and the news is the disclosure. The check is per participant rather than
+  one query because a thread holds a handful of authors and the question is per person.
+
+  **The notice links at the thread, which makes it the one universe-scoped target in the feature.**
+  `DiscussionsController#show` resolves the thread through `Current.universe`, so
+  `universe_discussion_path` carries the universe's slug — the same slug the payload stores, which is
+  what lets a reader standing in a different universe follow it. It is also the only one of the three
+  targets whose reader may open it: `show` is guest-readable, so a plain member, a read-only member,
+  and the universe's owner all land on the thread, where the reviewer's page would have answered 404.
+
+  **The record's name travels and its class does not.** The sentence says which conversation this is,
+  because "somebody replied" in a bell opened from another universe is a sentence with nothing in it;
+  the class would add nothing printable. The name is read through `RecordTarget` rather than through the
+  thread's `record` association, for `Discussion`'s reason — a stored `record_type` must never be
+  constantized — and a soft-deleted record therefore leaves the stored name readable where a join would
+  resolve nothing. `notifications.a_record` is the fallback for a row that never had one, beside the
+  existing `someone` and `a_universe` stand-ins.
+
+  **`DiscussionMessage#post!` writes the message and the notice as one transaction, and answers
+  `true`/`false` rather than raising.** Every other notice in the feature is written inside the
+  transaction that made the event; this one needed a method of its own because a message is a plain
+  `save`. It is the only one of these that does not raise, because an empty composer is an ordinary form
+  error the thread re-renders beside the field rather than a crash — and the transaction still rolls
+  back, so a refused reply writes neither the message nor the notice.
+
+  **Verification.** `bin/rails test` — 1962 runs, 12655 assertions, 0 failures, 0 errors, 10 skips (the
+  pre-existing skips). New cases in `test/models/notification_test.rb` (6: the recipient rule, one row
+  per reader, a read-only member who posted, a removed member, the payload, and the row outliving its
+  thread), `test/models/discussion_message_test.rb` (3: posting tells the thread, posting into an
+  unjoined thread tells nobody, a refused post writes neither), `test/controllers/messages_controller_test.rb`
+  (3: who a reply reaches through the request, an unjoined thread, a refused reply), and
+  `test/controllers/notifications_controller_test.rb` (2: the thread link on the page and in the bell
+  dropdown, and a sentence that survives a soft-deleted record). Also run: `bin/rubocop` (449 files, no
+  offenses), `test/docs_test.rb`, and `bin/brakeman --no-pager` (0 warnings). Not run, and not
+  applicable: `bun run check:js` (no JavaScript changed), `bin/rails test:system`,
+  `bin/bundler-audit`, `bin/importmap audit`. Slice 6.2's real-time delivery is untouched by this: the
+  bell is still read fresh on the page that renders it.
+
 - **[fixed]** **A page that draws a draft resolves its records and tag names once per class instead of once
   per change.** `DraftChanges::Reader` reads a whole collection of remembered changes in one query per
   record class and one per tag class, and the draft's page, a reviewer's page, the conflict page and the
@@ -6288,3 +6355,49 @@ because the HABTM associations carry an instance-dependent scope and cannot be e
 sidebar's **Review requests** figure, which the finding also listed, stays an uncached `COUNT`: it was
 and remains a decision about freshness, and a `MenuCountCache` entry could not promise to lower it on the
 page a decision redirects to.
+
+### Former finding: implicit owner access was missing from the association APIs (fixed)
+
+**Then:** `User#universes` and `Universe#members` were `has_many` associations through memberships, and
+the owner of a universe is deliberately **not** a membership row — `UniverseMembership` refuses to
+record one, because the owner is an implicit admin (`user_is_not_universe_owner`). So an ordinary reader
+asking "which universes am I in?" or "who collaborates here?" got an answer with the universe's founder
+missing from it, and nothing at the call site could tell: the association returned a relation, it just
+returned the wrong rows. Two call sites compensated by hand — `User#accessible_universes` through the
+policy-aware `Universe.visible_to`, and the members view, which prints the owner as a separate row above
+the memberships — and a third, `Universe#administrators`, spelled the owner out explicitly with a comment
+explaining why. The compensation was correct, and the footgun was that new code had a natural-looking
+association to reach for that answered a subtly different question.
+
+**Fix:** both are now **methods that union the two ways in**: `Universe#members` is the owner plus every
+live membership, and `User#universes` is the owned universes plus the membership ones. The names are
+unchanged, so every existing call site keeps working and keeps its meaning; what changed is that the name
+now says what a reader would have assumed it said.
+
+**Why methods rather than a scope or a second association.** An association could have been made
+owner-aware through a union, which Active Record does not express, or by adding an owner row to
+`universe_memberships` — which is exactly the storage decision `user_is_not_universe_owner` refuses. A
+method that unions is the smallest honest change: the relationship is real and the storage is asymmetric,
+and no schema change is warranted to make an asymmetry look symmetric.
+
+**`accessible_universes` deliberately stayed a different question.** It is what a reader may *open*,
+which for a public universe is every universe on the platform and for a private one the owner and its
+members. That is a superset `universes` does not approximate, and deriving one from the other would have
+made a list of your collaborations claim to be a list of what you can read.
+`test/models/user_test.rb` holds the two apart in both directions.
+
+**Not changed, and named.** `app/views/memberships/index.html.erb` still prints the owner as its own row
+and iterates the memberships separately, because that table's controls are per-membership: the owner's row
+carries a label rather than a level selector, and there is no membership row to edit. The hand-written
+compensation is the correct rendering of two different row shapes, not an instance of the footgun this
+finding named.
+
+**Verification.** `bin/rails test` — 1962 runs, 12655 assertions, 0 failures, 0 errors, 10 skips (the
+pre-existing skips). New cases in `test/models/universe_test.rb` (3: the union, a member's level not
+deciding membership, a soft-deleted membership leaving the collaborators while the owner stays) and
+`test/models/user_test.rb` (3: the same union from the other end, soft-deleted memberships, and the
+`accessible_universes` distinction). `test/models/ability_test.rb` needed no change: it reads
+`access_level_for`, which this does not touch. Also run: `bin/rubocop` (449 files, no offenses),
+`test/docs_test.rb`, and `bin/brakeman --no-pager` (0 warnings). Not run, and not applicable:
+`bun run check:js` (no JavaScript changed), `bin/rails test:system`, `bin/bundler-audit`,
+`bin/importmap audit`.

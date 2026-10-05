@@ -26,7 +26,7 @@ class NotificationTest < ActiveSupport::TestCase
   test "the kinds are validated against the stored list" do
     # The list the badge and the sentence frame are keyed by, so a kind with no
     # sentence behind it would be a row nothing can print.
-    assert_equal %w[review_submitted review_approved review_rejected], Notification::KINDS
+    assert_equal %w[review_submitted review_approved review_rejected discussion_reply], Notification::KINDS
   end
 
   test "a notification belongs to one reader" do
@@ -119,6 +119,108 @@ class NotificationTest < ActiveSupport::TestCase
     end
   end
 
+  # A reply
+
+  test "a reply is announced to the other authors in the thread" do
+    discussion = thread_in(@universe, @author => [ "Is she the heir?" ])
+
+    notification = Notification.discussion_replied!(
+      discussion.messages.create!(user: @owner, body: "Keep the letter.")
+    ).sole
+
+    assert_equal @author, notification.user
+    assert_equal "discussion_reply", notification.kind
+    # The author of the reply is the one person in the universe for whom this is not
+    # news: they are looking at the sentence they just wrote.
+    assert_empty @owner.notifications
+  end
+
+  test "a reply is announced to somebody who posted twice, once" do
+    discussion = thread_in(@universe, @author => [ "Is she the heir?", "She has the old ring." ])
+    third = User.create!(name: "User Three", email_address: "three@example.com", password: "password")
+
+    notifications = Notification.discussion_replied!(
+      discussion.messages.create!(user: third, body: "Third voice")
+    )
+
+    # A thread has a history rather than a participants list, so a reader who spoke
+    # twice is one recipient — one row per reader, as `notify` is for every kind.
+    assert_equal [ @author ], notifications.map(&:user)
+  end
+
+  test "a reply is announced to a member who has only read, because they posted" do
+    private_universe = Universe.create!(owner: @owner, name: "Private thread", slug: "private-thread",
+      private: true)
+    character = private_universe.characters.create!(name: "Private character")
+    discussion = character.find_or_create_discussion
+    UniverseMembership.create!(universe: private_universe, user: @author, access_level: :read)
+    discussion.messages.create!(user: @author, body: "Is she the heir?")
+
+    # `read` is the whole of access to a thread: it is a conversation somebody started
+    # with this reader, and not having posted in it yet is not a reason to be silent
+    # about the answer.
+    notification = Notification.discussion_replied!(
+      discussion.messages.create!(user: @owner, body: "Keep the letter.")
+    ).sole
+
+    assert_equal @author, notification.user
+  end
+
+  test "a reply is not announced to somebody who can no longer read the universe" do
+    private_universe = Universe.create!(owner: @owner, name: "Private thread", slug: "private-thread",
+      private: true)
+    character = private_universe.characters.create!(name: "Private character")
+    discussion = character.find_or_create_discussion
+    membership = UniverseMembership.create!(universe: private_universe, user: @author, access_level: :write)
+    discussion.messages.create!(user: @author, body: "Is she the heir?")
+    membership.soft_delete
+
+    notifications = Notification.discussion_replied!(
+      discussion.messages.create!(user: @owner, body: "Keep the letter.")
+    )
+
+    # Telling a reader that a reply arrived in a universe they can no longer open
+    # discloses that they said something, to somebody who may not know they ever did.
+    assert_empty notifications
+  end
+
+  test "a reply carries the conversation's universe and the record it is about" do
+    discussion = thread_in(@universe, @author => [ "Is she the heir?" ])
+
+    payload = Notification.discussion_replied!(
+      discussion.messages.create!(user: @owner, body: "Keep the letter.")
+    ).sole.payload
+
+    assert_equal @universe.slug, payload["universe_slug"]
+    assert_equal @universe.name, payload["universe_name"]
+    assert_equal discussion.id, payload["discussion_id"]
+    # The sentence says which conversation this is, because "somebody replied" in a bell
+    # opened from another universe is a sentence with nothing in it.
+    assert_equal "Character one", payload["record_name"]
+    assert_equal @owner.name, payload["actor_name"]
+    # A reply carries no draft, no submission, and no reviewer's note, and the absence is
+    # stored as absence rather than as an empty value a reader would print.
+    assert_nil payload["draft_id"]
+    assert_nil payload["review_request_id"]
+    assert_nil payload["review_notes"]
+  end
+
+  test "a reply's row outlives the conversation it is about" do
+    discussion = thread_in(@universe, @author => [ "Is she the heir?" ])
+    notification = Notification.discussion_replied!(
+      discussion.messages.create!(user: @owner, body: "Keep the letter.")
+    ).sole
+
+    # A thread is destroyed with its record and with its universe, so a row that resolved
+    # any of that to print itself would raise on a page that has to keep working.
+    discussion.destroy!
+
+    assert_predicate notification.reload, :persisted?
+    assert_equal @universe.name, notification.payload["universe_name"]
+    assert_equal "Character one", notification.payload["record_name"]
+    assert_equal @owner.name, notification.payload["actor_name"]
+  end
+
   # What is stored
 
   test "the payload says enough to print a row and to link at it" do
@@ -192,5 +294,20 @@ class NotificationTest < ActiveSupport::TestCase
         base_version: nil, payload: { "name" => "A remembered character" })
 
       draft.submit!
+    end
+
+    # One thread about `Character one` in `universe`, with the given users' messages
+    # already posted in it. Built through the record's own `find_or_create_discussion`
+    # because that is the path the application takes, so a notice under test is the one
+    # a real conversation writes.
+    def thread_in(universe, messages)
+      character = universe == @universe ? characters(:character_one) : universe.characters.create!(name: "Character one")
+      thread = character.find_or_create_discussion
+
+      messages.each do |user, bodies|
+        Array(bodies).each { |body| thread.messages.create!(user: user, body: body) }
+      end
+
+      thread
     end
 end

@@ -67,6 +67,11 @@ en:
       # exist: a `direct` universe never opens a draft, and a draft belongs to a
       # person rather than to a visitor.
       pending_changes: "Pending changes"
+      # The reviewer's queue, offered on `admin` alone because that is the whole of
+      # `ReviewRequestsController`'s authorization. Its pill counts what is waiting,
+      # not what the queue holds, so it is zero rather than absent once everything
+      # has been decided.
+      review_requests: "Review requests"
       collaborators: "Collaborators"
       conflicts: "Conflicts"
       branches: "Branches"

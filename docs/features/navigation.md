@@ -106,8 +106,9 @@ then the sections that follow it:
   would otherwise have to open the draft to find out whether anything is waiting at all. It is a **glance,
   not a second drafts page**: each row resolves the record its change names, so it is capped at
   `DraftPreview::PANEL_LIMIT` and the remainder is counted rather than dropped, and it renders at **zero** as
-  well as at any count. The **Collaborators**, **Conflicts**, **Branches**, and **Forks** placeholders
-  follow, for which no model or route exists yet. The live block is first because it is the one a reader
+  well as at any count. The **Review requests** entry described below follows it, and the **Collaborators**,
+  **Conflicts**, **Branches**, and **Forks** placeholders close the group, for which no model or route
+  exists yet. The live block is first because it is the one a reader
   arrives at from the flash that told them their change was remembered; an editor who cannot find that
   change has no way to apply or throw it away. Its presence is **not** conditional on the reader having
   something pending — it is also how a reader reaches the drafts list's history, and a navigation entry
@@ -116,6 +117,19 @@ then the sections that follow it:
   a `<li>` inside a `<li>` is hoisted back out by the parser. The **Start editing** / **Stop editing**
   control on the universe page is a second way in, and it is the one that opens a draft; both belong to the
   universe workspace rather than to either sidebar.
+- **Review requests**: the reviewer's queue, and the one entry in this group that answers for the reader
+  rather than about them. It is gated on **admin**, which is the whole of `review_requests`'s
+  authorization (`review_requests` and `memberships` are the two controllers whose every action asks for
+  `admin` rather than the `index`/`show` → `read` rule), because the queue names every author who has
+  submitted something. It is **not** gated on the collaboration mode: the mode is enforced on the one
+  control that can make a submission, so a submission made before a mode change is still a queue row
+  somebody has to decide, and the queue is a page in every mode. Its figure counts **what is waiting**
+  rather than what the queue holds, so decided and withdrawn submissions lower nothing a reviewer is
+  being asked to do, and it reads at **zero** rather than disappearing — the entry is also how a reviewer
+  reads who let a change through. That figure is **uncached**, unlike the left sidebar's counts: a
+  decision has to be able to lower it on the page it redirects to, which a `MenuCountCache` entry could
+  not promise for up to its TTL. It costs one `COUNT` over `review_requests.universe_id`, asked only by
+  the readers who may see the queue.
 - **Analytics** and **AI**: placeholder groups; no model or route exists for those entries yet.
 
 Configuration is about **the universe**: Tags and Members only. A platform preference belongs in the

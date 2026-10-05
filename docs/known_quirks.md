@@ -143,7 +143,12 @@ reviewer's approval started refusing such a draft in words; see
     read added this way, and a draft assembled from a long editing session is still a query per row. The
     drafts page is the other, and is unbounded per row as before — every other list page in the application
     preloads through a grouped query, so these are the two places that do not. Both would be answered by a
-    `DraftChanges::Reader` that resolves a draft's records and tag names in two queries.
+    `DraftChanges::Reader` that resolves a draft's records and tag names in two queries. The right sidebar's
+    **Review requests** figure is a third read of this kind, added on 2026-10-05: one `COUNT` over the indexed
+    `review_requests.universe_id`, on every page, for the readers who may see the queue. It is **uncached**
+    deliberately rather than overlooked — a decision has to lower it on the page it redirects to, which a
+    `MenuCountCache` entry could not promise for up to its TTL — so the trade is freshness against one
+    aggregate query per page rather than the left sidebar's stale-but-free counts.
 
 68. **Medium — a list cannot say which remembered creates the applier will refuse.** ADR 0020
     deliberately does not validate a change when it is remembered: the applier re-runs the live path,

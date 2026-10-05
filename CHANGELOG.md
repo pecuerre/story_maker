@@ -42,6 +42,9 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **The reviewer's queue is reachable from the workspace.** The right sidebar's Collaboration group gains a
+  **Review requests** entry for owners and admins, whose uncached figure counts submissions still waiting
+  rather than what the queue holds, so a decision lowers it on the page it redirects to.
 - **An author can submit a draft for review.** In `github` mode the draft page's primary control becomes a
   form with an optional message instead of **Apply changes**, and the mode is refused on the actions too.
 - **The author reads where their submission stands.** The newest submission's status, moment, their own

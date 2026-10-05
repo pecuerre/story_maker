@@ -18,7 +18,10 @@ require "application_system_test_case"
 # typed into, and a flash that has to be read on the page it redirects to. The later
 # cases still build their submissions through the model's own workflow, because they are
 # about the reviewer's side and a reviewer should not have to author somebody's draft
-# first. The queue is reached by URL throughout: the sidebar entry is 5.4's.
+# first. The queue is reached by URL throughout, because the sidebar entry's own rules —
+# who is shown it, and what its figure counts — are `review_requests_sidebar_test.rb`'s;
+# what only a browser shows is that the entry is really there in the column a reviewer
+# reads, which the first case now walks through.
 class ReviewWorkflowTest < ApplicationSystemTestCase
   setup do
     @owner = users(:user_one)
@@ -66,6 +69,44 @@ class ReviewWorkflowTest < ApplicationSystemTestCase
     assert Character.find_by(name: "Approved in the browser").present?
     assert_predicate review_request.reload, :approved?
     assert_equal "Checked against Thursday's rename", review_request.review_notes
+  end
+
+  test "a reviewer finds the queue in the sidebar and the figure follows their decision" do
+    submitted_review_request("Reached from the sidebar")
+    sign_in_via_form(@owner)
+
+    # The way in is the column a reviewer already reads, rather than a URL they would
+    # have to be told: the universe page is where a reviewer lands.
+    visit universe_path(universe_slug: @universe.slug)
+
+    within "nav.right-navigation" do
+      assert_selector "a.sidebar-link", text: "Review requests"
+      assert_selector ".sidebar-count", text: "1"
+      click_on "Review requests"
+    end
+
+    assert_selector "h1", text: "Review requests"
+    # The entry stays current on the queue, so the reviewer can tell which column they
+    # arrived through.
+    within "nav.right-navigation" do
+      assert_selector "a.sidebar-link[aria-current=page]", text: "Review requests"
+    end
+
+    click_on "Review"
+
+    within ".review-request-approval" do
+      accept_confirm do
+        click_on "Approve changes"
+      end
+    end
+
+    assert_selector ".review-request-summary .badge", text: "Approved", wait: REFRESH_WAIT
+    # The figure is read fresh rather than cached, so the column cannot contradict the
+    # decision the reviewer has just taken: nothing is waiting any more.
+    within "nav.right-navigation" do
+      assert_selector ".sidebar-count", text: "0"
+    end
+    assert Character.find_by(name: "Reached from the sidebar").present?
   end
 
   test "a reviewer rejects a submission and the author gets their draft back" do

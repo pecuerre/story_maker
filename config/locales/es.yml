@@ -62,6 +62,11 @@ es:
       # universo `direct` nunca abre un borrador, y un borrador pertenece a una
       # persona, no a un visitante.
       pending_changes: "Cambios pendientes"
+      # La cola de quien revisa, que solo se ofrece con `admin` porque esa es toda
+      # la autorización de `ReviewRequestsController`. Su cifra cuenta lo que está
+      # esperando, no lo que la cola guarda, así que queda en cero en lugar de
+      # desaparecer cuando ya no hay nada por decidir.
+      review_requests: "Solicitudes de revisión"
       collaborators: "Colaboradores"
       conflicts: "Conflictos"
       branches: "Ramas"

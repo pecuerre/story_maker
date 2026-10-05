@@ -597,7 +597,9 @@ A submission is somebody else's draft, so its pages are the drafts page read fro
 submission, with `approve` and `reject` as two POSTs for the reason `apply` and `discard` are. **Every
 action asks for `admin`** on the universe, through the `UniverseAuthorization` line memberships use
 rather than the `index`/`show` → `read` rule. The queue names every author who has submitted something
-and what they want done with it, so a plain writer is not a reader of it either.
+and what they want done with it, so a plain writer is not a reader of it either. A reviewer reaches it
+from the right sidebar's **Review requests** entry, which is offered on the same `admin` answer;
+[features/navigation.md](features/navigation.md) owns that entry.
 
 **An approval is the author's apply, in full, and it is shared rather than reimplemented.** `approve`
 runs the same `DraftConflictDetector`, renders the same conflict rows (`drafts/_conflict`, one partial

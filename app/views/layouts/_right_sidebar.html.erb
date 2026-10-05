@@ -43,7 +43,12 @@
           Both are offered only where a draft can exist (a `direct` universe never
           opens one, and a draft belongs to a person) and neither depends on the
           reader having something pending: an entry that appears and disappears
-          with a count is an entry whose absence needs explaining. %>
+          with a count is an entry whose absence needs explaining.
+
+          **Review requests** below is the same group read from the other side: other
+          people's work waiting for this reader to decide, rather than this reader's
+          own. It is offered on `admin` alone — the whole of
+          `ReviewRequestsController`'s authorization — and in every mode. %>
       <% if draft_preview.available? %>
         <%= render "layouts/draft_pending_panel", preview: draft_preview %>
 
@@ -52,6 +57,22 @@
           label: t("sidebar.tools.pending_changes"),
           path: universe_drafts_path,
           controllers: %i[ drafts ] %>
+      <% end %>
+
+      <%# Somebody else's submitted work, and the one entry here that answers for a
+          reader rather than about them: a plain writer is not a reader of this queue,
+          because the list is itself an answer to "what is waiting here". Its figure
+          counts what is **waiting** rather than what the queue holds, so a decided
+          universe reads zero — which is not a reason for the entry to disappear, since
+          it is also how a reviewer reads who let a change through. %>
+      <% if can_administer_universe? %>
+        <%= render "shared/sidebar_link",
+          icon: "inbox",
+          label: t("sidebar.tools.review_requests"),
+          path: universe_review_requests_path,
+          controllers: %i[ review_requests ],
+          count: pending_review_request_count,
+          count_label: "request" %>
       <% end %>
       <li>
         <%= link_to icon_text_count("people", t("sidebar.tools.collaborators")), "#",

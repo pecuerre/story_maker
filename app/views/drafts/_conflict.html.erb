@@ -7,9 +7,13 @@
     # else's work without seeing both. The two halves print through the same
     # helper under the same labels, so they are columns of one comparison rather
     # than two sentences about the same field. %>
+<%# `changes` is the collection of changes this page's conflicts are about, so the
+    remembered values every row prints are resolved once per class instead of once per
+    row — the same batching the drafts page uses, for the same reason (finding 66). %>
+<% changes = draft_changes(local_assigns) %>
 <% change = conflict.change %>
 <% answer = @answers[change.id.to_s] %>
-<% yours = draft_change_attributes(change) %>
+<% yours = draft_change_attributes(change, changes) %>
 <% current = draft_conflict_current_attributes(conflict) %>
 <div class="list-group-item entity-row draft-conflict">
   <div class="d-flex align-items-center gap-2 flex-wrap">

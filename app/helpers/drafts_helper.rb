@@ -34,6 +34,59 @@
 # * **A photo** is stored as a `data:` URL and removed by a boolean. Printing
 #   either would put a base64 blob or a bare `0` on the page, so both are stated.
 module DraftsHelper
+  # This request's reading of one draft's changes, built once and shared by every row
+  # that draws one.
+  #
+  # **It exists because the per-row reads it replaced cost a query per change.**
+  # `DraftChange#resolved_record` asks `RecordTarget` one row at a time and
+  # `association_names` asked the tag table one id at a time, so a draft assembled from a
+  # long editing session cost a query per row — and the sidebar's pending panel pays that
+  # on every page of the universe. `DraftChanges::Reader` asks once per **class** instead
+  # of once per id, so the number of queries is bounded by the models a draft touches
+  # rather than by how long its author has been editing.
+  #
+  # **Memoized on the view, for the same reason `draft_preview` is.** The drafts page and
+  # a reviewer's page each render a whole draft through this helper, and the sidebar panel
+  # renders a slice of one beside them; three readers over one draft would be three times
+  # the queries it exists to reduce. Nothing here outlives the request that built it.
+  #
+  # **The reader holds records, not words.** Turning a resolved row into a label is
+  # `record_label`'s job and stays in the view layer, because that ladder is the one this
+  # application has everywhere else and a service that re-derived it would be the second
+  # copy ADR 0023 refused to write.
+  def draft_changes_reader(changes)
+    @draft_changes_readers ||= {}
+
+    collection = changes.to_a
+
+    @draft_changes_readers[collection.object_id] ||= DraftChanges::Reader.new(collection)
+  end
+
+  # One change's resolved record, read through the reader for the collection it belongs
+  # to. `nil` for a remembered create, which names no record, and for a record somebody
+  # has since deleted — the same two answers `DraftChange#resolved_record` gives, with the
+  # create's `WHERE id IS NULL` query no longer asked.
+  #
+  # **The collection is what makes the batching possible**, so a row that knows only its
+  # own change gets a reader of one and the per-id read is back for that row alone. That
+  # is why `drafts/_change` passes the collection it was rendered from rather than
+  # letting this method guess it: a change does not know its siblings.
+  def draft_change_record(change, changes = nil)
+    draft_changes_reader(changes || [ change ]).entry_for(change).record
+  end
+
+  # The collection of changes a row was rendered from, read out of the partial's own
+  # locals.
+  #
+  # **It is passed explicitly because a change does not know its siblings.**
+  # `drafts/_change` and `layouts/_draft_pending_panel` are both handed the collection
+  # their caller is iterating, which is what makes one page's rows share one reader; a
+  # partial rendered without one falls back to a reader of a single change, so a new
+  # caller has to hand the collection over deliberately rather than have it inferred.
+  def draft_changes(local_assigns)
+    local_assigns[:changes]
+  end
+
   # **What a closed draft's history says**, as one line: when it stopped being
   # actionable, and what the run that closed it did to its changes.
   #
@@ -202,16 +255,23 @@ module DraftsHelper
   # bare `story_id` is a number the reader cannot name. Everything else is kept,
   # including the values a column does not hold, because a tag list or a photo is
   # the part of the change that `record.changes` would have dropped.
-  def draft_change_attributes(change)
+  #
+  # `changes` is the collection this change belongs to, and it is how the id lists are
+  # resolved in one pass rather than one id at a time — see `draft_changes_reader`. It
+  # is passed rather than derived because a change does not know its siblings, so a
+  # caller holding the collection is the only one that can say them.
+  def draft_change_attributes(change, changes = nil)
     return [] if change.payload.blank?
 
     model = RecordTarget.model_for(change.record_type)
+    entry = draft_changes_reader(changes || [ change ]).entry_for(change)
 
     change.payload.filter_map do |name, value|
       next if name == change.scope_attribute
 
       association = id_list_association(model, name)
-      [ draft_change_label(model, name, association), draft_change_value(model, name, value, association) ]
+      [ draft_change_label(model, name, association),
+        draft_change_value(model, name, value, association, entry: entry, key: name) ]
     end
   end
 
@@ -229,6 +289,13 @@ module DraftsHelper
   # An empty answer is the honest one for a remembered delete, which carries no
   # payload at all: there is no field the record is being asked about, and the
   # page says the record simply stays instead of printing an empty column.
+  #
+  # **An id list is read off the loaded association rather than re-fetched by id.** This
+  # half asks what is stored *now*, so it reads the live record rather than the payload,
+  # and reading `character_tag_ids` loads the association and then throws the records
+  # away — the ids it returned had to be fetched again one at a time to be printed. One
+  # association read per row is the floor here (the HABTM carries an instance-dependent
+  # scope and cannot be eager loaded), and this is that floor rather than twice it.
   def draft_conflict_current_attributes(report)
     change = report.change
     return [] if change.payload.blank? || report.record.nil?
@@ -242,7 +309,9 @@ module DraftsHelper
       next unless model.column_names.include?(name) || id_list_association(model, name)
 
       association = id_list_association(model, name)
-      [ draft_change_label(model, name, association), draft_change_value(model, name, record.public_send(name), association) ]
+      value = association.present? ? record.public_send(association.name) : record.public_send(name)
+      [ draft_change_label(model, name, association),
+        draft_change_value(model, name, value, association, resolved: association.present?) ]
     end
   end
 
@@ -321,8 +390,16 @@ module DraftsHelper
     # One remembered value, as the reader should see it. `nil` never reaches the
     # page as a blank cell, because a blank value is a state worth naming and
     # `shared.detail_fact.blank` is this application's one answer to it.
-    def draft_change_value(model, name, value, association)
-      return association_names(association, value) if association.present?
+    #
+    # An id list resolves through the reader's entry rather than one id at a time. `entry` is
+    # nil on the conflict page's "theirs" half, which reads the live record's own tag list
+    # and is handed the **records** the loaded association already holds, so nothing is
+    # fetched again. `resolved` says which of the two the value already is.
+    def draft_change_value(model, name, value, association, entry: nil, key: nil, resolved: false)
+      if association.present?
+        return association_names(association, value, entry: entry&.tags_for(key), resolved: resolved)
+      end
+
       return t("drafts.attributes.photo") if name == "photo_data"
       return t("drafts.attributes.photo_removed") if name == "remove_photo" && truthy?(value)
       return value.to_sentence if value.is_a?(Array)
@@ -340,15 +417,32 @@ module DraftsHelper
       model.reflect_on_association(name.delete_suffix("_ids").pluralize)
     end
 
-    # The names behind the ids, in the order the author submitted them, joined in
-    # the reader's language — `to_sentence` reads `support.array`, which both
-    # locale files carry. An id that no longer resolves is dropped rather than
-    # printed: it names nothing, and the change it was part of is the author's
-    # statement about the ids that are still there.
-    def association_names(association, value)
-      names = Array(value).filter_map { |id| association.klass.find_by(id: id) }.map { |record| record_label(record) }
+    # The names behind a list, joined in the reader's language — `to_sentence` reads
+    # `support.array`, which both locale files carry. A tag that no longer resolves is
+    # dropped rather than printed: it names nothing, and the change it was part of is the
+    # author's statement about the tags that are still there.
+    #
+    # **Three ways in, one sentence out.** `entry` is the reader's already-resolved answer
+    # for a remembered payload key, which is what a page of twenty changes uses so the tag
+    # table is asked once rather than twenty times; **order is the author's there, not the
+    # query's**, so the records are mapped back onto the submitted ids. `resolved: true`
+    # means the caller already holds records — the conflict page's live half, which reads
+    # an association it has just loaded. Anything else is a bare id list, resolved here in
+    # one query rather than one per id.
+    def association_names(association, value, entry: nil, resolved: false)
+      records = if entry
+        # The author's order, mapped back onto the submitted ids rather than printed as
+        # the query returned them.
+        Array(value).filter_map { |id| entry.find { |record| record.id == id } }
+      elsif resolved
+        Array(value)
+      else
+        # One query for the whole list, which is what this path is for: a caller with no
+        # reader and no loaded association still does not pay one query per id.
+        association.klass.where(id: Array(value)).to_a
+      end
 
-      names.to_sentence.presence || t("shared.detail_fact.blank")
+      records.map { |record| record_label(record) }.to_sentence.presence || t("shared.detail_fact.blank")
     end
 
     def truthy?(value)

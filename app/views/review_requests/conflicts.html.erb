@@ -18,7 +18,14 @@
 <%= form_with url: approve_universe_review_request_path(id: @review_request), method: :post do %>
   <div class="content-surface">
     <div class="list-group list-group-flush">
-      <%= render partial: "drafts/conflict", collection: @conflicts, as: :conflict %>
+      <%# The changes these conflicts are about, built once and handed to every row so
+          they share one `DraftChanges::Reader` — the same batching the author's own
+          conflict page uses. Leaving it out would not break the page, only make it per
+          row again, which is the quiet failure the local exists to prevent. The contract
+          is in [`conventions.md`](conventions.md#reading-a-drafts-changes). %>
+      <% changes = @conflicts.map(&:change) %>
+      <%= render partial: "drafts/conflict", collection: @conflicts, as: :conflict,
+        locals: { changes: changes } %>
     </div>
   </div>
 

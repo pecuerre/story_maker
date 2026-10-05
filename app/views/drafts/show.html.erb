@@ -82,8 +82,12 @@
         finish, so an empty one is a defect the page states rather than hides —
         and an author who got here by pressing **Apply** deserves to be told it
         had nothing to write. %>
-    <% if @draft.draft_changes.any? %>
-      <%= render partial: "drafts/change", collection: @draft.draft_changes, as: :change %>
+    <% if @changes.any? %>
+      <%# `@changes` is the collection the controller resolved and preloaded, and it is
+          what every row is handed so they share one `DraftChanges::Reader`. See the
+          controller and finding 66. %>
+      <%= render partial: "drafts/change", collection: @changes, as: :change,
+        locals: { changes: @changes } %>
     <% else %>
       <div class="list-group-item">
         <%= render "shared/empty_state",

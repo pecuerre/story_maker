@@ -6,11 +6,13 @@
     # can see the same fact on every page of the universe instead of having to open
     # the draft to find out whether anything is waiting at all.
     #
-    # It is a **glance, not a second drafts page**: each row resolves the record its
-    # change names, and this partial is rendered on every page of the universe, so
-    # an unbounded list would put one lookup per remembered change on all of them.
-    # `DraftPreview::PANEL_LIMIT` caps it and the rest is counted rather than
-    # hidden.
+    # It is a **glance, not a second drafts page**: it is rendered on every page of the
+    # universe, so its cost is every page rather than one. Two bounds keep that cost
+    # fixed rather than per row. `DraftPreview::PANEL_LIMIT` caps how many rows it prints
+    # and the rest is counted rather than hidden, and the rows it does print are resolved
+    # together by `DraftChanges::Reader` — one query per record class rather than one per
+    # change, which is finding 66's second half. A panel with no draft behind it resolves
+    # nothing at all.
     #
     # It is rendered only where a draft can exist — a `direct` universe never opens
     # one, and a draft belongs to a person — and it renders at **zero** as well as
@@ -30,11 +32,18 @@
 
   <% if preview.any? %>
     <ul class="draft-pending-changes list-unstyled mb-0">
-      <% preview.panel_changes.each do |change| %>
-        <%# A remembered create names no record, so asking for one would be a
-            lookup that cannot answer: the row is titled by the type it would
-            create, exactly as the draft's own page titles it. %>
-        <% record = change.creating? ? nil : change.resolved_record %>
+      <%# The panel's own slice is passed down so every row shares one
+          `DraftChanges::Reader`: one query per record class rather than one per change,
+          on every page of the universe. `DraftPreview#panel_changes` memoizes, so this
+          is one array rather than one per row. %>
+      <% panel_changes = preview.panel_changes %>
+      <% panel_changes.each do |change| %>
+        <%# Read through the panel's own changes rather than one row at a time: the
+            reader resolves every record the panel shows in one query per class, and it
+            answers nil for a remembered create without asking, which is what this row
+            used to do by hand — a create names no record, so asking was a lookup that
+            could not answer. See `DraftChanges::Reader` and finding 66. %>
+        <% record = draft_change_record(change, panel_changes) %>
         <li class="draft-pending-change">
           <span class="badge rounded-pill text-bg-light border"><%= t("drafts.actions.#{change.action}") %></span>
           <span class="text-break"><%= draft_change_subject(change, record) %></span>

@@ -62,6 +62,12 @@ Labels used below, in the order their groups appear:
 - **A reviewer can leave a note with an approval.** The approve control is now a form with an optional note
   for the author, stored as nothing when the box is empty and carried through the conflict question an
   approval is asked before it is written. A rejection's notes stay required.
+- **A page that draws a draft no longer costs a query per remembered change.** `DraftChanges::Reader`
+  resolves a whole collection of changes in one query per record class and one per tag class, and the
+  draft's page, a reviewer's page, the conflict page and the sidebar's pending panel all read through
+  it. Finding 66 has left the open-quirks list.
+- **A remembered create no longer asks for a record it does not have.** Resolving one was
+  `WHERE id IS NULL`, on every row of every page that draws a draft.
 
 ### docs
 

@@ -53,6 +53,8 @@ class DraftsController < ApplicationController
 
   before_action :set_draft, only: %i[ show apply submit discard ]
   before_action :set_damaged, only: %i[ show apply ]
+  before_action :set_changes, only: %i[ show apply ]
+  before_action :set_submission, only: %i[ show apply ]
 
   # GET /u/:universe_slug/drafts
   #
@@ -73,16 +75,10 @@ class DraftsController < ApplicationController
   # yet, so the page states what each change *says* and nothing more; a closed one
   # says both, because the answer is stored rather than inferred (ADR 0024).
   #
-  # The outcomes are preloaded here rather than resolved per row, which is the one
-  # query the page adds over the changes themselves.
+  # The action itself does nothing: what this page needs is `set_changes` and
+  # `set_submission`, both of which run for every action that renders this template —
+  # `show` and the refusal that re-renders it.
   def show
-    @draft.draft_changes.includes(:outcome)
-    # The submission this page describes, which is the **newest** one rather than the
-    # pending one: a rejected handover leaves the draft back at `draft`, so the row
-    # that still carries the reviewer's reason is history from the draft's point of
-    # view and exactly what the author came to read. Nil in every draft of a
-    # `wikipedia` universe, which is where the page renders nothing.
-    @review_request = @draft.review_requests.includes(:reviewed_by).order(:id).last
   end
 
   # POST /u/:universe_slug/drafts/:id/apply
@@ -213,6 +209,37 @@ class DraftsController < ApplicationController
     # object rather than re-deriving it.
     def set_damaged
       @damaged = DraftIntegrity.new(@draft)
+    end
+
+    # The changes this page draws, resolved once, with their outcomes preloaded.
+    #
+    # **A filter, not a line in `show`,** because two actions render this template: the
+    # page itself and the refusal that re-renders it, and a reader whose template needs a
+    # variable only one of its two entry points sets is a template that raises on the
+    # other.
+    #
+    # **The outcomes are preloaded onto this array rather than onto a discarded
+    # relation.** `includes` returns a new relation; the view iterates what this returns,
+    # so a preload that was not assigned attaches to instances nobody renders and every
+    # row resolves its own outcome — which is the query the old line's comment claimed to
+    # have removed.
+    #
+    # **The array is what every row is handed as its `changes` local**, so the rows share
+    # one `DraftChanges::Reader` rather than each resolving the record its change names
+    # and the tag names behind its payload: the per-row cost recorded as finding 66. The
+    # reader lives in the view layer because the reviewer's page and the sidebar panel
+    # read it too, and all three go through `DraftsHelper`.
+    def set_changes
+      @changes = @draft.draft_changes.includes(:outcome).to_a
+    end
+
+    # The submission this page describes, which is the **newest** one rather than the
+    # pending one: a rejected handover leaves the draft back at `draft`, so the row that
+    # still carries the reviewer's reason is history from the draft's point of view and
+    # exactly what the author came to read. Nil in every draft of a `wikipedia` universe,
+    # which is where the page renders nothing.
+    def set_submission
+      @review_request = @draft.review_requests.includes(:reviewed_by).order(:id).last
     end
 
     # The refusal, as this page: the changes are still listed, and the notice says which

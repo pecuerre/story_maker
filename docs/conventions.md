@@ -583,7 +583,11 @@ see it, apply it, or throw it away; which block that entry belongs to is in
 [features/navigation.md](features/navigation.md). Neither the panel nor the entry's presence depends on
 the reader having something pending: it is how a reader with nothing pending reaches the drafts list,
 which is where a closed draft's history is kept, and a control that appears and disappears with a count
-is a control whose absence has to be explained.
+is a control whose absence has to be explained. **The panel's rows are read in one pass** through
+`DraftChanges::Reader`, and capped by `DraftPreview::PANEL_LIMIT`: it is on every page, so its cost is
+every page rather than one, and both bounds are needed — a bounded five rows resolved one at a time is
+still five queries everywhere. The reading itself is in [Reading a draft's
+changes](#reading-a-drafts-changes).
 
 **A draft holding a change the applier cannot read says so on its own page.** `DraftIntegrity` answers
 a prior question to the conflict detector's — can the applier read the row at all — and the two do not
@@ -835,6 +839,47 @@ In a taxonomy tree the pending row is **`.taxonomy-pending`, never `.taxonomy-no
 controller counts `.taxonomy-node` children to place separators and compute positions, so a row in that
 list would be draggable and renameable before it exists. `restoreEmptyState` checks for it, so the
 client does not put the empty state back on a tree the server rendered a pending row into.
+
+## Reading a draft's changes
+
+A draft's changes are read through **`DraftChanges::Reader`**, which resolves a whole collection in a
+fixed number of queries: one per record class the changes name, one per tag class their payloads
+carry. Every other list in the application preloads through a grouped query, and these pages are the
+contract for the ones that read a draft — a draft's own page, a reviewer's page, the conflict page, and
+the sidebar's pending panel, which is on **every page of the universe**.
+
+**The collection is passed, not inferred.** A `DraftChange` does not know its siblings, so a surface
+renders `drafts/_change` with `collection:` **and** passes the same array as a `changes` local; a
+partial rendered with one change falls back to a reader of one, and the per-row read is back for that
+row alone. The array has to be materialized once — an association proxy is a new object per call, and
+the reader is memoized by the collection's identity, so a proxy would be a new reader per row.
+
+**Records come through the same gate as everywhere else.** The reader asks `RecordTarget.model_for`
+rather than constantizing a stored `record_type`, a soft-deleted record stays invisible because the
+class's default scope applies to `where` exactly as it did to `find_by`, and a **create resolves no
+record without a query** — it names none, and asking was a `WHERE id IS NULL` that could not answer.
+
+**A tag list keeps the author's order.** Ids are mapped back onto the submitted payload order rather
+than printed as the query returned them, and an id that no longer resolves is dropped, because the
+change is the author's statement about the ids that are still there.
+
+**Labels stay in the view layer.** The reader holds records; `record_label` turns them into words. A
+service that re-derived the ladder would be the second copy ADR 0023 refused to write.
+
+**The outcomes are preloaded onto the collection the view iterates.** `includes` returns a new
+relation, so a preload whose value is discarded attaches to instances nobody renders and every row
+resolves its own outcome. Both controllers that draw these rows resolve the collection in a
+`before_action`, because each of them has more than one action that renders the same template.
+
+**The conflict page's "theirs" half is one read per row, and that is the floor.** It reads the live
+record's own tag list, which is in no remembered payload and so has nothing preloaded for it; it reads
+the association it has just loaded rather than re-fetching the ids, and it cannot go lower — the HABTM
+associations carry an instance-dependent scope and cannot be eager loaded. Only the "yours" half reads a
+payload, and that half is batched.
+
+`test/controllers/draft_changes_query_count_test.rb` holds the three page-level surfaces, and
+`test/services/draft_changes/reader_test.rb` holds the answers — that a batched read returns the same
+set the per-row read did, refusal by refusal.
 
 ## Record details pages
 

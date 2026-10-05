@@ -19,7 +19,15 @@
 <%= form_with url: apply_universe_draft_path(id: @draft), method: :post do %>
   <div class="content-surface">
     <div class="list-group list-group-flush">
-      <%= render partial: "drafts/conflict", collection: @conflicts, as: :conflict %>
+      <%# One array of the **changes** these conflicts are about, built once and handed to
+          every row, so they share one `DraftChanges::Reader` for the remembered values
+          each one prints (finding 66). It is the changes rather than the reports because
+          the reader reads payloads and named records, and a `Report` is a state beside a
+          change rather than a change. The "theirs" half reads the live record's own tag
+          list, which is in no remembered payload, so it stays per row by design. %>
+      <% changes = @conflicts.map(&:change) %>
+      <%= render partial: "drafts/conflict", collection: @conflicts, as: :conflict,
+        locals: { changes: changes } %>
     </div>
   </div>
 

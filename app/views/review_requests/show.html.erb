@@ -65,8 +65,12 @@
         value — a tag id list, a photo, a scope column — exactly as its author reads
         it, because this is the same partial and therefore the same reading of one
         change. %>
-    <% if @review_request.draft.draft_changes.any? %>
-      <%= render partial: "drafts/change", collection: @review_request.draft.draft_changes, as: :change %>
+    <% if @changes.any? %>
+      <%# `@changes` is the collection the controller resolved and preloaded, and it is
+          what every row is handed so they share one `DraftChanges::Reader`. See the
+          controller and finding 66. %>
+      <%= render partial: "drafts/change", collection: @changes, as: :change,
+        locals: { changes: @changes } %>
     <% else %>
       <div class="list-group-item">
         <%= render "shared/empty_state",

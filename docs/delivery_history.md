@@ -29,6 +29,89 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-05
 
+- **[fixed]** **A page that draws a draft resolves its records and tag names once per class instead of once
+  per change.** `DraftChanges::Reader` reads a whole collection of remembered changes in one query per
+  record class and one per tag class, and the draft's page, a reviewer's page, the conflict page and the
+  sidebar's pending panel all read through it. Finding 66 has left
+  [`known_quirks.md`](known_quirks.md); the numbers, the two defects found on the way, and the reading
+  contract now in [`conventions.md`](conventions.md#reading-a-drafts-changes) are below.
+
+  **What it cost, measured on the tree before the change.** A draft's page issued 25 queries for two
+  remembered changes and 67 for fifteen; a reviewer's page 27 for two and 55 for ten. Three of those
+  were per row: `DraftChange#resolved_record` asked `RecordTarget` one record at a time,
+  `DraftsHelper#association_names` asked the tag table one id at a time, and each change's outcome was
+  read on its own. After: 26 for two and 26 for fifteen, and the sidebar panel is flat at 23 however long
+  the draft is. The panel was the expensive half — a bounded five rows is still five queries on **every
+  page of the universe**, and the whole layout carries it.
+
+  **Two defects the finding did not name, found by measuring it.** `DraftsController#show` and
+  `ReviewRequestsController#show` both ended with a bare `draft_changes.includes(:outcome)` whose return
+  value was discarded, so the preload attached to instances nobody rendered and each row resolved its
+  own outcome — the third per-row read, behind a comment claiming it had been removed. And
+  `drafts/_change` resolved a remembered **create**'s record unconditionally, which is `RecordTarget.find`
+  with a nil id: `WHERE id IS NULL`, once per remembered create, on every page that draws a draft. The
+  sidebar panel already guarded for this by hand; the page did not.
+
+  **Grouped by class, and the refusal is unchanged.** One query answers "every Character these changes
+  name" or "every CharacterTag these payloads carry", so the count is the number of *classes a draft
+  touches* rather than the number of ids it remembers. The registry gate still decides which
+  `record_type` may be loaded (`RecordTarget.model_for`, never `constantize`), a soft-deleted record and
+  a soft-deleted tag stay invisible because the class's default scope applies to `where` exactly as it did
+  to `find_by`, and an id that no longer resolves is dropped rather than printed. A batched read that
+  returned a different set would be worse than the N+1 it replaced, which is why
+  `test/services/draft_changes/reader_test.rb` pins every refusal the per-row read had.
+
+  **A create is answered without a query rather than with a wasted one.** The reader refuses to ask for
+  a record a create does not name, so the panel's hand-written `change.creating?` guard became redundant
+  and the page's missing one was simply removed. `DraftChange#resolved_record` is unchanged and still
+  answers the same two things for a caller holding one change: a reader of one is the per-row read, and
+  it is what a partial rendered without a collection falls back to deliberately.
+
+  **The reader holds records, not words.** `record_label` is the one label ladder in this application —
+  a Relation is two endpoints and an arrow, an Ownership a localized sentence — and ADR 0023 refused
+  exactly the second copy that resolving names inside a service would be. So the reader answers which
+  rows the ids name and the view layer turns them into words.
+
+  **Ids are mapped back onto the author's order.** A payload says "Protagonist, Antagonist" and the page
+  prints it that way; that is a fact about what was asked for rather than about the order the rows came
+  back in, and it is the only reason the resolution takes both the submitted ids and the records.
+
+  **The collection is passed, not inferred, and it has to be one object.** A `DraftChange` does not know
+  its siblings, so every surface renders `drafts/_change` with `collection:` *and* passes the same array
+  as a `changes` local. The first version of this passed the association proxy, and because the reader is
+  memoized by the collection's identity a proxy is a new object per call — the per-row read was back, and
+  measured 34 queries for two changes against 26 for the array. Both controllers now resolve the
+  collection in a `before_action` rather than in their action, because each has more than one action that
+  renders the same template: a refusal that re-renders the page needs the rows too, and a template whose
+  variable only `show` set raises on the way that is not `show`.
+
+  **The conflict page's "theirs" half is one query per row, and that is the floor.** It reads the live
+  record's own tag list, which is in no remembered payload and so has nothing preloaded for it; only the
+  "yours" half reads a payload, and that half is batched. Two things were true of it that were not: it
+  read `character_tag_ids`, which **loads the association and then threw the records away**, and fetched
+  the ids again one at a time to print them — so it cost twice what it had to. It now reads the loaded
+  collection, which is one association read per row and nothing more. It cannot be zero: the HABTM
+  associations carry an instance-dependent scope and cannot be eager loaded at all, the same reason
+  `TaggedRecordCounts` groups the join table by hand. `test/controllers/draft_changes_query_count_test.rb`
+  asserts the shape exactly — one batched read for all the remembered values, plus one live read per
+  conflict — because a page that quietly reverted to per-id reads would still render identical HTML.
+
+  **The tests assert a difference, not a number.** `test/controllers/draft_changes_query_count_test.rb`
+  renders each surface with a short draft and a long one and requires the two query counts to be equal; a
+  fixed total would be a number to rewrite every time the layout gains a query, and a per-row read would
+  still pass it. The two absolute assertions are `draft_change_outcomes`, where "exactly one" is a fact
+  about the preload, and the reviewer's conflict page, where the total is a stated formula rather than a
+  comparison. Each case was verified to fail when its own fix is reverted: the panel reverts by one query
+  per row, the draft's page by three.
+
+  **Verification.** `bin/rails test` — 1941 runs, 12573 assertions, 0 failures, 0 errors, 10 skips (the
+  pre-existing skips). New: `test/services/draft_changes/reader_test.rb` (13) and
+  `test/controllers/draft_changes_query_count_test.rb` (4); no existing test needed changing, because the
+  refusals the reader keeps are the ones the pages already asserted. Also run: `bin/rubocop` (449 files,
+  no offenses), `test/docs_test.rb`, and `bin/brakeman --no-pager` (0 warnings). Not run, and not
+  applicable: `bun run check:js` (no JavaScript changed), `bin/rails test:system`, `bin/bundler-audit`,
+  `bin/importmap audit`.
+
 - **[docs]** **Finding 68 is settled as a decision, and the decision changed no code.** A pending row the
   apply may refuse is badged exactly as it is and is never withheld; what any pending badge carries beyond
   its state stays with the backlog item that owns it. See the resolved entry at the end of this file for why
@@ -6167,3 +6250,41 @@ changelog-length checks, which is the whole suite that a documentation-only chan
 not applicable: `bin/rails test` in full, `bin/rails test:system`, `bin/rubocop`, `bun run check:js`,
 `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit` — no application code, view, JavaScript, schema,
 or translated string changed.
+
+### Former finding 66: resolving a draft's records cost a lookup per change (fixed)
+
+**Then:** three reads on every surface that draws a draft were per row. `DraftChange#resolved_record`
+asked `RecordTarget` one record at a time, deliberately not remembering its answer so that a record
+deleted after the change was written stops resolving; `DraftsHelper#association_names` asked the tag
+table one id at a time; and each change's outcome was read on its own. Measured on the tree: a draft's
+page issued 25 queries for two remembered changes and 67 for fifteen, a reviewer's page 27 for two and
+55 for ten. The right sidebar's pending panel paid the same price **on every page of the universe**,
+which is what made the bounded five rows the expensive half rather than the safe one.
+
+**Fix:** `DraftChanges::Reader` resolves a collection of changes in one query per record class and one
+per tag class, and every surface that draws a draft reads through it — the author's page, a reviewer's
+page, the conflict page, and the panel. After: 26 queries for two changes and 26 for fifteen, and the
+panel is flat at 23 however long the draft is.
+
+**Two defects the finding did not name, which measuring it turned up.** Both controllers ended with a
+bare `draft_changes.includes(:outcome)` whose return value was discarded: the preload attached to
+instances the view never rendered, so every row resolved its own outcome — the third per-row read,
+sitting behind a comment that claimed to have removed it. And `drafts/_change` resolved a remembered
+**create**'s record unconditionally, which is `RecordTarget.find` with a nil id, one `WHERE id IS NULL`
+per remembered create; the panel guarded for this by hand and the page did not. Both were in the same
+code path as the finding and were fixed with it, rather than being raised as separate work.
+
+**The refusals did not move.** The reader asks `RecordTarget.model_for` rather than `constantize`, so
+the registry gate still decides which `record_type` may be loaded; a soft-deleted record and a
+soft-deleted tag stay invisible because the class's default scope applies to `where` exactly as it did
+to `find_by`; an id that no longer resolves is dropped rather than printed; and a type outside the
+registry is no record rather than a `NameError`. `test/services/draft_changes/reader_test.rb` pins each
+of those, because a batched read returning a different set would be worse than the N+1 it replaced.
+
+**What was deliberately left per row.** The conflict page's "theirs" half reads the live record's own
+tag list, which is in no remembered payload and so has nothing preloaded; it now reads the association it
+has just loaded rather than re-fetching the ids one at a time, and cannot go below one read per row
+because the HABTM associations carry an instance-dependent scope and cannot be eager loaded. The right
+sidebar's **Review requests** figure, which the finding also listed, stays an uncached `COUNT`: it was
+and remains a decision about freshness, and a `MenuCountCache` entry could not promise to lower it on the
+page a decision redirects to.

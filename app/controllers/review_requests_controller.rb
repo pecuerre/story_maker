@@ -46,6 +46,11 @@ class ReviewRequestsController < ApplicationController
   helper_method :review_notes_field
 
   before_action :set_review_request, only: %i[ show approve reject ]
+  # Every action here renders this one template, so the collection it iterates is resolved
+  # by a filter rather than in `show`: the refusal and the rejection's re-render both
+  # reach the same rows, and a template whose variable only `show` sets raises on the
+  # other two.
+  before_action :set_changes, only: %i[ show approve reject ]
   # `reject` is here for the page it re-renders rather than for anything it decides: a
   # rejection never reads a remembered change, and this action is the one that leaves a
   # submission the reviewer cannot approve alone.
@@ -83,8 +88,10 @@ class ReviewRequestsController < ApplicationController
   # An open draft has no outcomes yet, so the rows say what each change *says* and
   # nothing more. Once approved, the rows carry the outcome the run stored, so this
   # page becomes the place a reviewer reads what their decision actually did (ADR 0024).
+  #
+  # The action does nothing itself: the rows come from `set_changes`, which runs for
+  # every action that renders this template.
   def show
-    draft.draft_changes.includes(:outcome)
   end
 
   # POST /u/:universe_slug/review_requests/:id/approve
@@ -178,6 +185,21 @@ class ReviewRequestsController < ApplicationController
     # another universe and a submission that does not exist are one answer.
     def set_review_request
       @review_request = Current.universe.review_requests.find(params.expect(:id))
+    end
+
+    # The submission's changes, resolved once, with their outcomes preloaded.
+    #
+    # **Preloaded onto this array, not onto a discarded relation.** `includes` returns a
+    # new relation and the view iterates what this returns, so a preload that is not
+    # assigned attaches to instances nobody renders and each row resolves its own outcome
+    # — which is what the bare `includes` this replaced did.
+    #
+    # **The array is what every row is handed as its `changes` local**, so the rows share
+    # one `DraftChanges::Reader` instead of each resolving the record its change names and
+    # the tag names behind its payload. The author reads the same rows through the same
+    # partial on the same terms; see finding 66.
+    def set_changes
+      @changes = draft.draft_changes.includes(:outcome).to_a
     end
 
     # What the applier could not read, asked once and held for the page, for the same

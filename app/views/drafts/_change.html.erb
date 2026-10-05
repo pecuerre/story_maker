@@ -4,8 +4,14 @@
     stored an answer: on an open draft there is no outcome, and a badge guessing at
     one from a version stamp would be a second answer about the same record
     (ADR 0024). %>
-<% record = change.resolved_record %>
-<% attributes = draft_change_attributes(change) %>
+<%# `changes` is the collection this row was rendered from, so every row on the page
+    shares one `DraftChanges::Reader` and the record and the tag names behind each change
+    are resolved once per class instead of once per row — the cost recorded as finding 66.
+    It is nil when a caller renders a single change, and the per-row read is back for that
+    row alone, so a new caller has to pass it. %>
+<% changes = draft_changes(local_assigns) %>
+<% record = draft_change_record(change, changes) %>
+<% attributes = draft_change_attributes(change, changes) %>
 <% outcome = change.outcome %>
 <div class="list-group-item entity-row draft-change">
   <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -19,8 +25,8 @@
       <%# A change about a record that has since been deleted is plain text: a
           link to a page that answers 404 would be a dead affordance, and the kind
           beside it still says what the change was about. The record is resolved
-          once here, because `DraftChange#resolved_record` deliberately does not
-          remember its answer. %>
+          once here, through the reader this page shares, because
+          `DraftChange#resolved_record` deliberately does not remember its answer. %>
       <% if record.present? %>
         <%= link_to draft_change_subject(change, record), record.search_url %>
       <% else %>

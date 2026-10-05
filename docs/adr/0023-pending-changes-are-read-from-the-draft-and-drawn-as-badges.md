@@ -2,6 +2,13 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-04
+- **Superseded in part (2026-10-05):** the "panel costs a query per row on every page" cost is no
+  longer paid. `DraftChanges::Reader` resolves a collection of changes in one query per record class
+  and one per tag class, and every surface that draws these rows goes through it. The decision this
+  ADR records is unchanged, and the body below is left as it was written; the reading contract now
+  lives in [`../conventions.md`](../conventions.md#reading-a-drafts-changes), the same way [ADR
+  0021](0021-applying-a-draft-through-the-live-mutation-path.md) points its superseded costs at [ADR
+  0024](0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md).
 - **Related:** [`../conventions.md`](../conventions.md),
   [`../architecture.md`](../architecture.md),
   [`../features/navigation.md`](../features/navigation.md),

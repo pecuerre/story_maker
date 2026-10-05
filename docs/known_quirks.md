@@ -19,8 +19,10 @@ apply's outcome became stored rather than reported once, and the unnumbered find
 raises rather than reporting a change it cannot interpret" left it the same day, when the apply and a
 reviewer's approval started refusing such a draft in words. Finding 68 left this file on 2026-10-05,
 when a pending row the apply may refuse was settled as badged exactly as it is and never withheld, which
-is a decision rather than a change and left no code behind it; see
-[`delivery_history.md`](delivery_history.md).
+is a decision rather than a change and left no code behind it, and finding 66 left it the same day, when
+`DraftChanges::Reader` read a draft's records and tag names once per class instead of once per row;
+the right sidebar's **Review requests** figure it also described stays, and is a deliberate uncached
+`COUNT` rather than an oversight. See [`delivery_history.md`](delivery_history.md).
 
 ## Critical security observations
 
@@ -135,23 +137,6 @@ is a decision rather than a change and left no code behind it; see
     with tags supplied in a different order can produce different slugs, which matters for
     symbolic development-data references and class-level lookup.
 
-66. **Low — resolving a draft's records costs a lookup per change, and the sidebar panel pays it on every
-    page.** `DraftChange#resolved_record` deliberately does not remember its answer (a record deleted after the
-    change was written must stop resolving), so each row resolves its own record, and each remembered
-    `*_ids` value resolves its tags through `DraftsHelper#association_names` one query at a time. The right
-    sidebar's pending panel reads the same draft on **every** page of the universe and resolves each change's
-    record, so the cost is no longer one page but all of them; `DraftPreview::PANEL_LIMIT` caps it at five
-    rows and counts the remainder, which bounds the exposure without removing it. The panel is one bounded
-    read added this way, and a draft assembled from a long editing session is still a query per row. The
-    drafts page is the other, and is unbounded per row as before — every other list page in the application
-    preloads through a grouped query, so these are the two places that do not. Both would be answered by a
-    `DraftChanges::Reader` that resolves a draft's records and tag names in two queries. The right sidebar's
-    **Review requests** figure is a third read of this kind, added on 2026-10-05: one `COUNT` over the indexed
-    `review_requests.universe_id`, on every page, for the readers who may see the queue. It is **uncached**
-    deliberately rather than overlooked — a decision has to lower it on the page it redirects to, which a
-    `MenuCountCache` entry could not promise for up to its TTL — so the trade is freshness against one
-    aggregate query per page rather than the left sidebar's stale-but-free counts.
-
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`
     (`app/models/draft_preview.rb`), which is what keeps the collection writers (`character_tag_ids`) and
@@ -159,10 +144,11 @@ is a decision rather than a change and left no code behind it; see
     naming a renamed column is harmless. The cost is visible: a new Character the author tagged
     *Protagonist* and gave a portrait appears in the Characters list with a **Draft** badge and no tag
     badge and no picture, while the same change on the draft's own page shows both, because that page is
-    where the payload's values are read rather than printed. Resolving a tag list per pending row costs a
-    query per row, which is the trade finding 66 already describes; deciding whether the row should pay
-    it is recorded as **What a pending record shows outside the list workspaces** in
-    [`backlog.md`](backlog.md).
+    where the payload's values are read rather than printed. Resolving a tag list per pending row is now a
+    scan rather than a query, because `DraftChanges::Reader` resolves a collection of changes in one
+    query per class — but a pending row is on the **list's** side, not the draft's page's, and a list
+    resolves no payload at all; deciding whether the row should pay that read is recorded as **What a
+    pending record shows outside the list workspaces** in [`backlog.md`](backlog.md).
 
 ## Performance, test, and tooling observations
 
@@ -269,7 +255,9 @@ through the current normal UI. They are recorded so they are not mistaken for se
   decide, so it is appended after the real rows and placed under no parent. An author reviewing twenty
   remembered scenes therefore sees twenty rows that say what each scene is called and nothing about where
   each one would land, and has to go to the record's own workspace to find out. A resolved name per create
-  would cost one lookup per row, which is the same trade as finding 66; the reasoning for reading a create
+  is a lookup the list would have to make per row, which is the shape
+  [`conventions.md`](conventions.md#reading-a-drafts-changes) now refuses for the pages that draw a
+  draft; the reasoning for reading a create
   as an unsaved model rather than a row is in [ADR
   0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
 - **No mutation rate limits exist beyond sign-in/password-reset.** Public universes intentionally

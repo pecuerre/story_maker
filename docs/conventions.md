@@ -759,7 +759,9 @@ just decided a submission, while this one moves because somebody else did someth
 browser, which nothing here can expire on — so a `MenuCountCache` entry would promise a stale bell
 for up to its TTL. It is one `COUNT` over `[user_id, read]`, asked only for a signed-in reader. The
 **bell stays when everything is read**: a reader who has read everything still has a list, and hiding
-the bell would hide the way into it.
+the bell would hide the way into it. The uncached figure is also what makes a live refresh of it worth
+having: writing a row publishes to that reader's own stream, which is how the badge moves under a
+reader who is on a different page — see [Real-time updates](#real-time-updates).
 
 **A notification is not an authorization.** Each kind links at the surface its own reader may open: a
 submission notice leads to the reviewer's page, because the reviewer's page is where the approval and
@@ -773,6 +775,69 @@ renders. A row with nothing to link at prints its sentence and no link, so one r
 did not write cannot take the page down with it — and because the three kinds name a different id in
 the payload, `notification_target` asks for its own and a half-filled payload is no link rather than a
 link to `/u//discussions/`.
+
+## Real-time updates
+
+When something another reader did changes what this page would show, this page says so without being
+asked. `LiveUpdates` owns what is published and to whom; `live_update_controller.js` owns what the
+browser does about it; `config/cable.yml` owns which adapter delivers it.
+
+**A live update is a signal, never a page.** Every broadcast is a Turbo Stream `refresh` carrying one
+`data-live-update` marker, and nothing else. The alternative — broadcasting the rendered rows, the
+message, the count — would be rendered by `ApplicationController.render` outside any request: with no
+session, no `Current`, no locale of the reader receiving it, and no authorization answer for them. A
+Spanish reader would be sent an English sentence, and a member whose access had since been withdrawn
+would be shown a universe they can no longer open. A refresh sends nothing but *look again*: the
+reader's own browser re-requests the page through their own session, in their own language, and the page
+answers for them. That is the same boundary [ADR 0016](adr/0016-internationalization-and-browser-locale.md)
+draws for the client-side strings, and the same reason `Notification` stores a sentence rather than a
+pointer.
+
+**Three streams, because there are three audiences.** A **universe** stream says *the records here
+changed* to everyone with that universe open — which is what an applied draft means, since a Character
+that did not exist a second ago is now stored and every list of the universe is stale. A **discussion**
+stream says *this thread has another message* to the readers already looking at it: a thread is a
+conversation between the people who posted in it, not a universe-wide event. A **reader** stream says
+*your bell has something new* to one person, and it is the delivery for every notification this
+application writes.
+
+**The review workflow's three events are announced through `Notification`, not by three more
+broadcasts.** A submission goes to the universe's administrators, a decision to the author, and a reply
+to the thread's other authors — and [Notifications](#notifications) already owns those recipient rules
+for the stored rows. A second copy of them here would be free to disagree with the rows.
+
+**A broadcast is published after the transaction that caused it commits**, which is why it hangs off an
+`after_commit` on the record rather than off the write path: `Draft` when it becomes `applied`,
+`DiscussionMessage` when it is created, `Notification` when it is written. A refresh published inside a
+transaction invites the reader to re-read a universe that has not been written yet, and waiting for the
+outermost commit is also what makes a reviewer's approval correct — that write is wrapped in the
+decision's own transaction above the applier's. A rolled-back apply and a refused reply therefore
+announce nothing.
+
+**The reader's own browser is not told.** `turbo_stream_refresh_tag` carries `request-id`, and the
+client controller leaves any broadcast carrying one to Turbo's own echo check: Turbo drops a refresh
+whose request id the page has just made itself, which is how the person who pressed **Apply changes**
+is not reloaded underneath the navigation they are already doing.
+
+**The stream name is signed, and that is the authorization.** `turbo_stream_from` signs what it
+renders; `Turbo::StreamsChannel` refuses a subscription whose signature does not verify, so a reader
+cannot name a stream their own pages never named. The subscriptions are in `layouts/_live_updates`,
+rendered only where the request has already authorized that reader for that universe — which is why a
+**guest has no subscription at all**, for `ApplicationCable::Connection`'s reason: a websocket with no
+session is refused, so the element would open a connection rejected on arrival. Guests read this
+application by loading pages, which is what they did before this existed.
+
+**A refresh is applied only when the page holds nothing unsent.** This application has unsent work in a
+composer, in a reviewer's notes, in a submission message, and in a modal editor's JSON payload, and a
+refresh throws all of it away without asking. `live_update_controller.js` cancels Turbo's own handling
+at `turbo:before-stream-render` and decides for itself, by one question: *does this page hold anything
+the reader typed that the server did not send?* A field is unsent when its value differs from the value
+the server rendered into it (`defaultValue`), and an open Bootstrap modal counts for the same reason a
+dirty field does. When the answer is no, the refresh is applied; when it is yes, the refresh is **held**
+and the floating notice in the same partial appears, so the reader decides when their work is worth
+losing. `range` and `color` inputs are excluded from the question — the photo editor's zoom slider
+arrives with no value and its controller writes `100` into it, so asking would report every list
+workspace as unsent and hold every update in the application.
 
 ## The editing session
 
@@ -1196,6 +1261,11 @@ subsystems it shares helpers and Stimulus controllers with.
   [features/i18n.md](features/i18n.md#a-string-the-browser-has-to-have); its only job beyond that is
   constructing the instance and releasing it on disconnect.
 - `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
+- `live_update_controller.js` — decides what happens when another reader's write arrives as a
+  Turbo Stream refresh: it cancels Turbo's own handling and applies the refresh only when the page holds
+  nothing unsent, otherwise it reveals the floating notice. It is described in
+  [Real-time updates](#real-time-updates), including the `TYPED_TYPES` set it asks its unsent-work
+  question of and why `range` inputs are not in it.
 
 Both editors that mutate through `fetch` send the page's `csrf-token` meta tag as `X-CSRF-Token`
 from the same code path, and a page without a token sends no header at all rather than the string

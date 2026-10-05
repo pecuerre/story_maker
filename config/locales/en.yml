@@ -876,6 +876,13 @@ en:
       title: "Notifications"
       description: "What has been said to you about your work, newest first."
 
+  live_updates:
+    # The notice a live update becomes when the page holds unsent work. It says
+    # what happened and offers the reader the choice, because the update was held
+    # precisely because the reader has something to lose by taking it now.
+    stale: "Somebody else changed this universe while this page was open."
+    reload: "Reload"
+
   stories:
     title: "Stories"
     description: "Each story owns its plot and sections while sharing the characters, locations, events, and items in this universe."

@@ -42,6 +42,11 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A page says so when another reader's write changes what it would show.** A signed websocket stream
+  per universe, per thread, and per reader publishes a refresh rather than content, so the page is
+  re-read in the reader's own session and language.
+- **A live update is held while the page holds unsent work.** A half-typed reply, a reviewer's notes, or
+  an open editor are not discarded: the update waits and a floating notice offers it.
 - **A reply in a discussion notifies the people already in the thread.** A fourth notification kind goes
   to everybody else who posted there and can still read the universe, and links at the thread.
 - **In-app notifications for the review workflow.** A `notifications` table records a submission handed
@@ -58,6 +63,8 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **The test environment's cable adapter is `async` rather than `test`,** so a browser test can observe
+  a real delivery instead of only a recorded broadcast.
 - **`User#universes` and `Universe#members` answer with the owner in them.** Both were membership-only
   associations and the owner of a universe is deliberately not a membership row, so both omitted the
   universe's founder. That finding has left the open-quirks list.

@@ -36,6 +36,11 @@
   <body class="um-page-canvas">
     <a class="visually-hidden-focusable skip-link" href="#main-content"><%= t("layouts.skip_to_content") %></a>
 
+    <%# Before the navbar, because the notice it carries is a floating control and
+        the subscriptions have to exist before anything else on the page can
+        receive a broadcast. See `layouts/_live_updates`. %>
+    <%= render "layouts/live_updates" %>
+
     <%= render "layouts/navbar" %>
 
     <% if Current.universe.present? %>

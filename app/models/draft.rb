@@ -200,7 +200,30 @@ class Draft < ApplicationRecord
     !open?
   end
 
+  # **A draft that becomes `applied` announces that the universe's records moved.**
+  #
+  # This is the only status that is a change other readers can see: a discarded
+  # draft's changes never existed as records, and a submitted one is a queue entry
+  # the author and the reviewers already have a notice about (see `Notification`).
+  # An apply, whether the author's own in a `wikipedia` universe or a reviewer's in
+  # a `github` one, writes live records — so every list anybody has open in that
+  # universe is stale the moment it commits, and this is what says so.
+  #
+  # It is a commit callback for `LiveUpdates`' reason: published inside the
+  # applier's transaction, a refresh would invite every reader in the universe to
+  # re-read a universe that has not been written yet. Waiting for the outermost
+  # transaction is also what makes a reviewer's approval correct, because that
+  # write is wrapped in the decision's own transaction above the applier's.
+  after_update_commit :announce_applied_changes
+
   private
+
+    # See `LiveUpdates` for why this is a refresh rather than the written records.
+    def announce_applied_changes
+      return unless saved_change_to_status? && applied?
+
+      LiveUpdates.draft_applied(self)
+    end
 
     # A draft that can no longer be acted on has to say when it stopped being
     # actionable. Without the moment its history would have to be read off

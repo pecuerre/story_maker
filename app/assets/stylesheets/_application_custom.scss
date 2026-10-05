@@ -978,6 +978,37 @@ $um-search-match: #ffc107;
   box-shadow: 0 .25rem 1rem rgba(31, 41, 55, .12);
 }
 
+// The notice a held live update becomes (`layouts/_live_updates`). It sits where
+// the flash stack sits and takes the same shape, because it answers the same
+// moment: something happened that this page does not show yet. The modifier class
+// rather than `hidden` is what keeps it out of the way — an element carrying
+// `display: flex` from a Bootstrap class would win against the `hidden`
+// attribute's own `display: none`.
+.live-update-notice {
+  position: fixed;
+  top: calc(var(--um-navbar-height) + 1rem);
+  right: 1rem;
+  z-index: 1080;
+  display: none;
+  gap: .75rem;
+  align-items: center;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: .75rem 1rem;
+  font-size: .875rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-body-bg);
+  box-shadow: 0 .25rem 1rem rgba(31, 41, 55, .12);
+}
+
+.live-update-notice--visible {
+  display: flex;
+}
+
+.live-update-notice-text {
+  flex: 1 1 auto;
+}
+
 .content-surface,
 .surface-card,
 .form-surface {

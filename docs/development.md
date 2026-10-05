@@ -175,7 +175,8 @@ bundle exec simplecov uncovered --input tmp/coverage/coverage.json --top 20 --mi
 
 Layout:
 - `test/controllers`, `test/models`, and `test/integration` — model, request, navigation, and
-  workspace coverage; `test/services` — development-data registry/loader coverage; `test/jobs` and
+  workspace coverage; `test/services` — development-data registry/loader coverage (including `live_updates_test.rb`, which
+  subscribes to each stream and asserts which audience an event reaches); `test/jobs` and
   `test/channels` — the queued search writes and the websocket connection's session rules;
   `test/system` — browser-level smoke coverage for the primary workspace journeys.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,

@@ -162,7 +162,8 @@ heading uppercase.
 2. a responsive left workspace navigation;
 3. one flexible main content region with a `page-shell` wrapper;
 4. a responsive right utility navigation;
-5. a skip link and one shared floating toast region for flash messages.
+5. a skip link, one shared floating toast region for flash messages, and one floating notice for a
+   held live update.
 
 The navbar is intentionally small: three links, one search box, and two actions. **What each
 entry contains and links to is in [features/navigation.md](features/navigation.md)** — read that for
@@ -216,6 +217,22 @@ text: three levels of loudness for three kinds of thing, and the middle one is t
 The menu's item wraps rather than truncating — `.dropdown-item` is single-line by default, which would
 cut a sentence off mid-word — and it carries no icon, because the action of a row is opening the thing
 it names rather than acting on it.
+
+### The held-update notice
+
+The painted treatment only. What a live update is, which three streams carry them, and why a refresh is
+applied only when the page holds nothing unsent are in
+[conventions.md](conventions.md#real-time-updates) — read that for *why*; this is what it looks like.
+
+The notice is a **floating card where the flash toasts are** — the same offset below the navbar, the
+same trailing edge, the same width cap, the same z-index — because it answers the same moment: something
+happened that this page does not show yet. It wears the page's own surface and border rather than a
+status color, since nothing has gone wrong; what distinguishes it is the pair of controls. The sentence
+sits on its own and the **Reload** button beside it is the primary outline, with the close button last.
+
+It is hidden with a modifier class rather than the `hidden` attribute, because the element's own
+`display: flex` would win against the attribute's `display: none` and the notice would be permanently
+visible on every page.
 
 The navbar is dark in both themes, so the box's colors are declared once and are **not** re-tinted by
 `data-bs-theme` — a widget that changed palette with the page theme inside an always-dark bar would

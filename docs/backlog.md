@@ -149,9 +149,16 @@ it has a useful destination and clear empty/loading/error states.
       rules and the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). The `notifications` table,
       the bell, and the two review-workflow notices came from slice 5.5, and the column is `kind` rather
       than the `type` this slice originally named, because `type` is Active Record's STI discriminator.
-    - **Slice 6.2:** Real-time updates via Solid Cable. Broadcast when a draft is applied (so other
-      users see the changes), when a discussion message is posted, when a review request is
-      submitted/approved/rejected. Tests: system tests.
+    - **Slice 6.2, delivered:** A page says so when another reader's write changes what it would show.
+      `LiveUpdates` publishes a Turbo Stream **refresh** — never content, which would be rendered
+      without the receiving reader's locale or access — to three signed streams: universe, discussion,
+      and reader. An applied draft, a posted reply, and every notification reach a browser that way, and
+      the review workflow's three events are delivered by the notification each of them already writes
+      rather than by broadcasts of their own. A refresh is applied only when the page holds nothing
+      unsent, so a half-typed reply, a reviewer's notes, and an open editor all survive it. See
+      [conventions.md](conventions.md#real-time-updates) for the audience and commit rules and the dated
+      entries in [`../CHANGELOG.md`](../CHANGELOG.md). The test environment's cable adapter is `async`
+      rather than `test`, which is what lets a browser test observe a real delivery.
     - **Slice 6.3:** Write an ADR for the collaboration system architecture. Update all relevant docs.
       Update changelog.
 

@@ -1,12 +1,29 @@
-# Async adapter only works within the same process, so for manually triggering cable updates from a console,
-# and seeing results in the browser, you must do so from the web console (running inside the dev process),
-# not a terminal started via bin/rails console! Add "console" to any action or any ERB template view
-# to make the web console appear.
+# Real-time updates arrive over this connection. The adapter decides what a
+# broadcast reaches, and each environment's is chosen for what it has to prove.
+#
+# **`async` works only within one process.** A broadcast is delivered to the
+# subscribers attached to the same Action Cable server, which is the whole reason
+# the development entry used to say that triggering a broadcast from
+# `bin/rails console` does nothing: a console is a second process. It is also why
+# that entry was never wrong for the browser: a browser update is broadcast by the
+# web process and delivered by the web process, so `async` is exactly right for
+# development and costs no second database.
 development:
   adapter: async
 
+# **`async`, not `test`.** The `test` adapter records what was broadcast and
+# delivers it to nobody, which is the right adapter for asserting a broadcast in a
+# request test and the wrong one for a browser: `test/system/live_updates_test.rb`
+# proves a second reader's page changes without being reloaded, and that cannot
+# happen if the subscription is never answered. The system suite runs the server in
+# the test process, so `async` delivers to it.
+#
+# The cost is that `ActionCable::TestHelper`'s `assert_broadcasts` is unavailable
+# here. `LiveUpdates`' own stream names are covered in `test/services/live_updates_test.rb`
+# by subscribing to the stream directly, which tests the thing this application
+# decided — which stream an event goes to — rather than Turbo's tag builder.
 test:
-  adapter: test
+  adapter: async
 
 production:
   adapter: solid_cable

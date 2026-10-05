@@ -44,4 +44,23 @@ class DiscussionMessage < ApplicationRecord
 
     posted
   end
+
+  # **A message that landed tells the thread's readers, and only after it has.**
+  #
+  # The stream is the thread's own rather than the universe's: a reply is a
+  # conversation between the people who posted in it, and the readers already
+  # looking at it are the only ones whose page has anything to say about it.
+  #
+  # `after_create_commit` rather than a broadcast inside `post!`, because `post!`
+  # answers `false` for an empty composer and rolls its transaction back: a thread
+  # refreshed onto a message that was refused is worse than a thread that did not
+  # move.
+  after_create_commit :announce_to_the_thread
+
+  private
+
+    # See `LiveUpdates` for why this is a refresh rather than the rendered message.
+    def announce_to_the_thread
+      LiveUpdates.discussion_replied(self)
+    end
 end

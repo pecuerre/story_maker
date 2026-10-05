@@ -831,6 +831,10 @@ es:
       title: "Notificaciones"
       description: "Lo que se te ha dicho sobre tu trabajo, de lo más reciente a lo más antiguo."
 
+  live_updates:
+    stale: "Alguien más ha cambiado este universo mientras esta página estaba abierta."
+    reload: "Recargar"
+
   stories:
     title: "Historias"
     description: "Cada historia es dueña de su trama y de sus secciones, y comparte los personajes, los lugares, los sucesos y los objetos de este universo."

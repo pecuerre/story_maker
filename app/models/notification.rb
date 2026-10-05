@@ -189,6 +189,21 @@ class Notification < ApplicationRecord
   end
   private_class_method :review_payload
 
+  # **A row is announced to its reader the moment it is written**, which is how a
+  # notification reaches a browser at all. The bell itself is deliberately
+  # uncached because its figure moves when somebody else does something in another
+  # browser — see `NotificationsHelper#unread_notification_count` — and a figure
+  # nothing can tell the page about is a figure that is only right when the page
+  # happens to be rendered. So the write publishes to that reader's own stream and
+  # the page re-reads itself through their own session.
+  #
+  # **It is `after_create_commit`, not a broadcast inside the transaction**, for
+  # `LiveUpdates`'s reason: a notice written inside a transaction that later rolls
+  # back would refresh its reader onto a bell with a row that is not there. Marking
+  # a row read announces nothing, because the reader is already looking at the
+  # page they pressed the control on.
+  after_create_commit :announce_to_the_reader
+
   def read?
     read
   end
@@ -205,4 +220,14 @@ class Notification < ApplicationRecord
 
     update!(read: true)
   end
+
+  private
+
+    # Publish this row to the stream its own reader has subscribed to. It is a
+    # refresh and nothing more: the row is not rendered here, because the person
+    # receiving it may be reading this application in another language and may no
+    # longer be able to open the universe the row is about.
+    def announce_to_the_reader
+      LiveUpdates.notification_written(self)
+    end
 end

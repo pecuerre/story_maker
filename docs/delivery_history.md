@@ -29,6 +29,100 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-05
 
+- **[added]** **Collaboration phase 6, slice 6.2: a page says so when another reader's write changes
+  what it would show.** `LiveUpdates` publishes a Turbo Stream refresh to three signed streams —
+  universe, discussion, reader — and `live_update_controller.js` applies the refresh only when the page
+  holds nothing unsent, holding it and showing a notice otherwise. The review workflow's three events
+  reach a browser through the notification each of them already writes; the current rules are in
+  [`conventions.md`](conventions.md#real-time-updates).
+
+  **A live update is a signal, never a page, and that was the whole design decision.** The obvious
+  implementation — broadcast the rendered rows, the appended message, the new bell count — is the one
+  this application cannot make. A broadcast is rendered by `ApplicationController.render` outside any
+  request: no session, no `Current`, no locale of the reader receiving it, no authorization answer for
+  them. Broadcasting a message would send it in whatever language the *sender* happened to be browsing
+  in, and broadcasting a list would announce records to a subscriber whose access to that universe had
+  since been withdrawn — which is not a hypothetical in this application, because
+  `Notification.discussion_replied!` already drops participants for exactly that reason. A refresh sends
+  nothing but *look again*: the reader's own browser re-requests the page through their own session, in
+  their own language, and the page answers for them. This is the same boundary ADR 0016 draws for
+  client-side strings — the server resolves it, the browser prints it — applied to a delivery channel,
+  and it is also why the design has no partial-rendering story to keep honest.
+
+  **Three streams, and the review workflow got none of its own.** The three audiences are the three
+  questions a reader can have: *did the records here change* (a draft was applied, so every list of the
+  universe is stale), *did this thread gain a message* (the readers already looking at it), and *was
+  something said to me* (one reader's bell). A submission and a decision **already** write a
+  notification to exactly the people who need to know, with recipient rules this feature has already
+  settled and tested. Broadcasting a fourth and fifth stream for them would have been a second copy of
+  those rules, free to disagree with the rows about who is told — so they are delivered by the
+  notification write itself, on the reader's own stream, which is one fact with one home.
+
+  **The refresh is taken over by the client, and that is not decoration.** A composer, a reviewer's
+  notes, a submission message, and a modal editor's JSON payload are all unsent work, and Turbo's own
+  handling of a refresh action — re-request the page — throws all of them away without asking.
+  `live_update_controller.js` cancels it at `turbo:before-stream-render` and decides by one question:
+  does this page hold anything the reader typed that the server did not send? A field is unsent when its
+  value differs from `defaultValue`, and an open modal counts for the same reason a dirty field does. The
+  answer being no, the refresh is applied; being yes, it is held and the floating notice appears, so the
+  reader decides when their work is worth losing. That is the only decision here that is actually theirs.
+
+  **Two things the question has to exclude, both found by the browser rather than by reading the code.**
+  A `range` input is given its value by the photo editor's own controller *after* the page arrives — the
+  zoom slider is rendered with no value and `100` is written into it — so comparing it against
+  `defaultValue` reported every list workspace as holding unsent work, because every modal editor is in
+  the DOM even while it is closed, and every live update in the application was held as a result. A
+  `checkbox` is worse: its `value` is the string `"on"` whether or not it is ticked, so asking would say
+  every page in the application is unsent. The set of types the question is asked of is now one constant
+  at the top of the controller, and both exclusions have a `bun test` naming the defect.
+
+  **The reader's own browser is left out by Turbo, not by us.** `turbo_stream_refresh_tag` carries
+  `request-id`, and the browser remembers the ids of requests it has just made, so a refresh carrying
+  one of them is its own echo. The controller deliberately **does not** take over a broadcast carrying
+  that attribute: the question it answers is about what is typed on the page, and re-deciding Turbo's
+  echo rule would mean keeping a second list of the browser's recent requests.
+
+  **The signed stream name is the authorization, and it is why a guest gets no live page at all.** A
+  stream a page never named cannot be subscribed to, because `Turbo::StreamsChannel` verifies the
+  signature and refuses one that does not check out. The subscriptions render only where the request
+  has already authorized that reader for that universe, and a **guest** renders none — for
+  `ApplicationCable::Connection`'s reason: a websocket with no session is refused, so the element would
+  open a connection rejected on arrival. Guests read this application by loading pages, which is what
+  they did before this slice, and that is now a stated boundary rather than an accident.
+
+  **The test environment's cable adapter changed from `test` to `async`,** and that is the price of
+  proving any of this in a browser. The `test` adapter records what was broadcast and delivers it to
+  nobody, so `test/system/live_updates_test.rb` could never see a page change. `async` works within one
+  process, which is exactly the shape of a system test, and it costs `assert_broadcasts` —
+  so `test/services/live_updates_test.rb` subscribes to each stream directly instead, which tests the
+  thing this application decided (which audience an event reaches) rather than Turbo's tag builder.
+  The `async` adapter posts onto Action Cable's event loop, so delivery is not synchronous; every case
+  therefore ends by publishing a sentinel to each stream it is asserting about and waiting for it, which
+  is what makes an `assert_empty` about a stream that should have been quiet a statement about the
+  application rather than about timing.
+
+  **Verification.** `bin/rails test` — 1973 runs, 12701 assertions, 0 failures, 0 errors, 10 skips (the
+  pre-existing skips). New cases in `test/services/live_updates_test.rb` (11: each event's audience and
+  the two it must not reach, the three audiences cannot name each other, a refresh carries no rendered
+  content, the request id, the announcement waits for the outermost commit, a rolled-back apply and a
+  refused reply announce nothing, reading a notification announces nothing again, and an approval
+  announces once for the run and the decision together), `test/javascript/live_update_controller_test.js`
+  (13: the unsent-work rule, each excluded input type, the notice's controls, a stream that is not ours,
+  the request-id echo, and disconnect), and `test/system/live_updates_test.rb` (6: another reader's apply
+  refreshes a list, a reply appears on the thread, a reply is held while the reader is writing one and
+  the notice's Reload takes it, a notification reaches the bell, a guest is offered neither subscription
+  nor notice, and a page subscribes to exactly its two streams). Also run: `bun run check:js` (lint plus
+  219 Bun tests), `bin/rubocop` (452 files, no offenses), the full browser suite
+  (`bin/rails test:system`, 168 runs, 2264 assertions, 0 failures), and `bin/brakeman --no-pager`
+  (0 warnings). Not run: `bin/bundler-audit`, `bin/importmap audit`.
+
+  **What this did not do.** There is no partial DOM update: a refresh re-reads the whole page, so a live
+  update on a list costs a full render, and the alternative — broadcasting the rows — is the option this
+  design rejected above for locale and authorization reasons. A single record's details page does not
+  subscribe to anything beyond its universe and the reader, so it refreshes on any of them. The Scenes
+  filter is not treated as unsent work, since it lives in the URL. And a browser that is not connected
+  learns about nothing until it navigates, which is the same answer a guest gets.
+
 - **[fixed]** **`User#universes` and `Universe#members` answer with the owner in them.** Both were
   membership-only associations, and the owner of a universe is deliberately not a membership row, so
   both omitted the universe's founder from an answer that looked complete. The open known-quirks entry

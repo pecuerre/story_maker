@@ -1,0 +1,45 @@
+<%# The websocket this reader's browser listens on, and the one control that goes
+    with it.
+    #
+    # **The subscriptions are rendered only for a signed-in reader, and that is the
+    # same condition `ApplicationCable::Connection` enforces.** The connection
+    # refuses a websocket with no session, so a guest has nothing to receive a
+    # broadcast on and a subscription element on a guest's page would be a
+    # connection that is opened and immediately rejected. A guest therefore reads
+    # this application by loading pages, which is what they did before slice 6.2.
+    #
+    # **A reader's own stream is rendered on every page** rather than inside a
+    # universe, because the bell is in the navbar and a notification carries its
+    # own universe's slug precisely so it can be read from anywhere (see
+    # `conventions.md#notifications`). **A universe's stream is rendered only inside
+    # that universe**, because `Current.universe` is set by the scope resolution the
+    # request has already authorized, so rendering the subscription is a statement
+    # this reader may read this universe — and the signed stream name is what stops
+    # them from naming a universe's stream from a page that never offered it.
+    #
+    # **The notice is what a refresh becomes when the page holds unsent work.** The
+    # alternative — a refresh regardless — throws away a half-typed reply, a
+    # reviewer's notes, a submission message, and anything typed into a modal
+    # editor, which is the one thing a real-time update must not do. So the notice
+    # is always in the DOM, hidden, and `live_update_controller.js` reveals it when
+    # it has refused a refresh; the sentence is rendered here rather than in
+    # JavaScript, for the same reason every other sentence in this application is.
+    #
+    # Nothing here is a guest's version of anything: the three streams are one
+    # reader's three audiences — their own bell, the universe they are standing in,
+    # and, on the thread page, the conversation in front of them. %>
+<% if Current.user.present? %>
+  <%= turbo_stream_from LiveUpdates.reader_stream(Current.user) %>
+  <% if Current.universe.present? %>
+    <%= turbo_stream_from LiveUpdates.universe_stream(Current.universe) %>
+  <% end %>
+
+  <div class="live-update-notice" data-controller="live-update">
+    <span class="live-update-notice-text"><%= t("live_updates.stale") %></span>
+    <button type="button" class="btn btn-sm btn-outline-primary" data-action="live-update#reload">
+      <%= t("live_updates.reload") %>
+    </button>
+    <button type="button" class="btn-close" data-action="live-update#dismiss"
+      aria-label="<%= t("shared.flash.close") %>"></button>
+  </div>
+<% end %>

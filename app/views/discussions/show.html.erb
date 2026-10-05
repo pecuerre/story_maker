@@ -13,6 +13,24 @@
   back_url: @record.search_url,
   back_label: t("discussions.show.back_label") %>
 
+<%# This thread's own stream, and only while there is a thread to subscribe to.
+    #
+    # The layout already subscribes the reader to their own bell and to the
+    # universe, so a reply is announced twice over for somebody standing here — the
+    # thread stream is what makes the message appear on the page in front of them,
+    # which the universe stream would do only by refreshing a page that may hold a
+    # half-typed reply (see `LiveUpdates`). The controller holds that refresh and
+    # shows the notice instead whenever the composer is not empty.
+    #
+    # A guest reads a thread (`allow_unauthenticated_access only: :show`) and is
+    # offered no subscription, for `ApplicationCable::Connection`'s reason: a
+    # websocket with no session is refused, so the element would open a connection
+    # that is rejected on arrival.
+%>
+<% if Current.user.present? %>
+  <%= turbo_stream_from LiveUpdates.discussion_stream(@discussion) %>
+<% end %>
+
 <section class="surface-card p-4">
   <h2 class="h4"><%= t("discussions.show.heading") %></h2>
 

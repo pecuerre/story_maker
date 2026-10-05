@@ -17,7 +17,7 @@ UI patterns and the Timeline algorithm. Conventions are in
 | Assets | Propshaft; `stylesheet_link_tag :app` + `javascript_importmap_tags`; development uses a dynamic `tmp/assets` manifest so the CSS watcher is not shadowed by a stale public manifest; `stale_when_importmap_changes` on `ApplicationController` |
 | Auth | `bcrypt` (`has_secure_password`), signed permanent cookie session |
 | JSON views | Jbuilder (only for `universes/*.json`) |
-| Jobs/cache/cable | `solid_queue`, `solid_cache`, `solid_cable` (DB-backed) |
+| Jobs/cache/cable | `solid_queue`, `solid_cache`, `solid_cable` (DB-backed); development uses the `async` cable adapter and so does the test environment, which is what lets a browser test observe a real delivery |
 | Mail | `PasswordsMailer` (`deliver_later`) |
 | Deploy | **Kamal** (`config/deploy.yml`, service `universe_maker`) + Dockerfile |
 | Extras | `cancancan` (universe authorization), `colorize` (seed output), `image_processing` |
@@ -129,8 +129,11 @@ Other global behavior: `allow_browser versions: :modern`,
   office/home switching all change it legitimately. A row with no recorded user agent, or no recorded
   lifetime, is left alone so a schema change cannot sign everybody out. `ApplicationCable::Connection`
   applies the same two checks, because a websocket does not run this concern and would otherwise
-  accept a cookie the request path already refused. `PurgeExpiredSessionsJob` removes dead rows on a
-  schedule; nothing depends on it, since an expired session is already refused without its row.
+  accept a cookie the request path already refused. That refusal is also why a **guest has no live
+  subscription at all**: the layout renders none for a reader with no session, so a guest's page opens
+  no websocket rather than one the connection would reject on arrival.
+  `PurgeExpiredSessionsJob` removes dead rows on a schedule; nothing depends on it, since an expired
+  session is already refused without its row.
 - Post-login destination (`sessions#new` remembers the page, `Authentication#after_authentication_url`
   resolves it):
   - a page remembered by `request_authentication`, or the same-host referer of the sign-in page, is

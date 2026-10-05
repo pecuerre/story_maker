@@ -1,0 +1,34 @@
+<% content_for :title, t("notifications.index.title") %>
+
+<%# The full list, and the two controls that answer a bell. The dropdown in the navbar
+    is a glance at the newest few; this page is where the rest of them are, and where
+    marking read happens — one row at a time for a reader who has read some of them,
+    or all of them at once for a reader who has been through the list.
+    #
+    # There is no filter for read or unread, because the reader of this page is the only
+    # person who can act on it and the whole list is short: a reader who wants only the
+    # unread ones can read, which is what the badge on the bell is for. %>
+<%= render "shared/page_header",
+  title: t("notifications.index.title"),
+  description: t("notifications.index.description"),
+  count: @notifications.size,
+  count_label: "notification" do %>
+  <%# One control, and it appears only when there is something for it to do. %>
+  <% if unread_notification_count.positive? %>
+    <%= button_to t("notifications.read_all"), read_all_notifications_path,
+      class: "btn btn-outline-secondary" %>
+  <% end %>
+<% end %>
+
+<div class="content-surface">
+  <% if @notifications.any? %>
+    <ul class="list-group list-group-flush notification-list">
+      <%= render partial: "notifications/notification", collection: @notifications, as: :notification %>
+    </ul>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: t("notifications.empty_title"),
+      description: t("notifications.empty_description"),
+      icon: "bell" %>
+  <% end %>
+</div>

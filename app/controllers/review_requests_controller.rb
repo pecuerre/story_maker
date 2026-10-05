@@ -113,6 +113,13 @@ class ReviewRequestsController < ApplicationController
   # decision and is stored on it rather than on the draft — and it is kept through both
   # refusals below, because an approval is reached twice when a change has moved and the
   # reviewer should not write the same sentence again on the way in.
+  #
+  # **The author's notice is written inside that same transaction**, and that is the
+  # only reason it is here rather than on `ReviewRequest`: an approval is an apply, so
+  # the decision cannot be committed without the run, and a decision that committed
+  # without its notice would leave an author waiting for a verdict that had already
+  # been given. `ReviewRequest#reject!` writes its own notice inside its transaction
+  # for the same reason on the other side of the decision.
   def approve
     return refuse_decided_request unless @review_request.pending?
 
@@ -130,6 +137,8 @@ class ReviewRequestsController < ApplicationController
     ApplicationRecord.transaction do
       result = DraftApplier.new(draft, answers: answers).apply
       @review_request.update!(status: "approved", reviewed_by: Current.user, review_notes: @review_notes)
+
+      Notification.review_decided!(@review_request)
     end
 
     redirect_to universe_review_request_path(universe_slug: Current.universe.slug, id: @review_request),

@@ -312,21 +312,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
 
 ## Additional UI and interaction observations
 
-70. **Medium — a draft an author has already submitted keeps accepting remembered changes, so a reviewer
-    can approve work the submission never described.** `Draft::OPEN_STATUSES` is `%w[draft submitted]`
-    (`app/models/draft.rb`), and `DraftMutation#current_draft` opens or finds the author's **open** draft
-    (`app/controllers/concerns/draft_mutation.rb`), so in a `github` universe an author who keeps editing
-    after pressing **Submit for review** has those changes appended to the same draft a reviewer is
-    reading — after the submission message was written, and with nothing in the request saying which
-    changes were in it when it was made. The reviewer's page and the applier both read the draft's changes
-    live, so nothing is written that the reviewer cannot see; what is lost is the guarantee that what was
-    reviewed is what was submitted. **The owner chose to keep appending rather than freeze the draft** on
-    2026-10-05, and this entry is the record of that choice. Fixing it means deciding what a mutation
-    does while a submission is in flight — refuse it in words, as `DraftIntegrity` refuses a change the
-    applier cannot read — which is a product decision, not a bug fix; freezing would also mean deciding
-    what happens to the one open draft an author per universe is allowed. `test/controllers/draft_mutation_test.rb`
-    asserts the remembering path in `github` mode and does not distinguish the two states.
-
 67. **Low — a draft's page prints English attribute names for the models the Scenes workspace never
     translated.** A remembered value is labelled with `Model.human_attribute_name`, and
     `config/locales/*.yml` names the attributes only for the models whose forms are rendered there, so a

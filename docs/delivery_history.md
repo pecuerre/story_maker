@@ -29,6 +29,75 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-05
 
+- **[added]** **Collaboration phase 5, slice 5.5: the full review flow end to end, with in-app
+  notifications.** A `notifications` table, a bell in the navbar, and `/notifications` behind it;
+  `Notification.review_submitted!` writes from `Draft#submit!` and `Notification.review_decided!` from
+  `ReviewRequest#reject!` and the approval's own transaction, all three inside the transaction that made
+  the event. Slice 5.2's open question — "who else reads a reviewer's note" — is answered here.
+
+  **What a notification is: a stored sentence, not a pointer.** The `payload` holds the universe's slug
+  and name, the draft and submission ids, the other person's name, and a reviewer's note where there is
+  one, and there is **no foreign key to any of them**. The submission is destroyed with its draft and with
+  its universe, so a row that resolved any of that to print itself would raise on a page that has to keep
+  working. The cost is names stored twice and validated by nothing, which is a trade rather than an
+  omission: `test/models/notification_test.rb` asserts that a notification outlives its universe, which is
+  the assertion that fails first if somebody adds a foreign key to make the schema tidier.
+
+  **The column is `kind`, not the `type` the collaboration plan named.** `type` is Active Record's
+  single-table-inheritance discriminator, so `Notification.create(type: "review_submitted")` would
+  constantize the kind as a class name and raise `SubclassNotFound` on a value this application invented.
+  Setting `inheritance_column` to something else would work and would be a second thing to remember about
+  this table, so the column is named for what it says — the same answer ADR 0019 gave for
+  `draft_changes.payload`, where `changes` is refused as `ActiveModel::Dirty`'s.
+
+  **Who is told, and who is deliberately not.** `admin` access is the whole of who may read a reviewer's
+  queue, so a submission goes to `Universe#administrators` — the owner plus the `admin` members, with the
+  owner named explicitly because `UniverseMembership` refuses to record one — and to nobody else. **The
+  author is not told about their own submission**: they pressed the control that caused it and the page
+  they land on already says it. An author who is also their universe's only administrator therefore gets
+  nothing here, which is correct rather than unfortunate — there is nobody else who could review the
+  draft, and the "an owner may approve their own submission" rule already covers that case. A **decision**
+  goes to the author alone.
+
+  **Every notice is written inside the transaction that made the event.** `Draft#submit!` and
+  `ReviewRequest#reject!` already were one transaction each, so their notice joins them there; the
+  approval's notice is written in `ReviewRequestsController#approve` rather than on the model, because
+  approval deliberately is not on the model — an approval is an apply, so its decision cannot commit
+  without the run. A submission nobody was told about is a queue entry that can sit for days, and a
+  decision whose notice failed to write leaves an author waiting for a verdict that was already given. An
+  approval stopped by a conflict announces **nothing**, because the decision was never taken and a notice
+  about an approval that did not happen is worse than silence.
+
+  **Marking read is on the page, not in the dropdown, and both writes are POSTs.** A reader who has read
+  three of five entries has not read the other two, so a dropdown that marked a row read as it was
+  rendered would answer that on the reader's behalf; and a GET that marked a row read would let a link, a
+  prefetch, or a crawler silence a bell on the reader's behalf. `test/controllers/csrf_mutation_test.rb`
+  covers both refusals.
+
+  **The dropdown is a glance and the page is the list.** The bell is capped at `Notification::PANEL_LIMIT`
+  because it renders on every page of the application, and it stays visible when everything is read — a
+  reader who has read everything still has a list, and hiding the bell would hide the way into it. The
+  badge counts unread rows and is **uncached**, for `pending_review_request_count`'s reason with one
+  difference: that figure moves because *this* request just decided a submission, while this one moves
+  because somebody else did something in another browser, which nothing here can expire on — a
+  `MenuCountCache` entry would promise a stale bell for up to its TTL.
+
+  **A notification is not an authorization.** A submission notice links to the reviewer's page, because the
+  approval and rejection controls are there; a decision notice links to the author's own draft page, which
+  carries the submission's status and the reviewer's notes, because the reviewer's page would answer
+  **404** to somebody with no admin access. The routes are deliberately **not** universe-scoped, so the
+  navbar can show a notice about a universe the reader is not currently standing in — which is the normal
+  case, since the person who submitted and the person who reviews are usually on different pages.
+
+  **What this did not do.** There is no discussion-reply notice: a reply to a thread is Phase 6's, and a
+  notification kind with no sentence behind it would be a badge nothing can read. There is no real-time
+  delivery either — the bell is read fresh on the page that renders it, and Solid Cable broadcasting is
+  slice 6.2.
+
+- **[changed]** **A draft that is with a reviewer refuses new changes.** Finding 70 left
+  `known_quirks.md` with this change; see the resolved entry at the end of this file for the reasoning
+  and the two response shapes.
+
 - **[added]** **Collaboration phase 5, slice 5.3: an author can hand a draft over for review, read where
   their submission stands, and withdraw it by discarding the draft.** `DraftsController#submit` is the
   third control on the drafts pages and the first control anywhere that can make a submission; the
@@ -6015,3 +6084,38 @@ slice 5.2 entry above for why that sharing was the decision the slice turned on.
 drops the other changes with it, so a draft with one corrupt change among nineteen cannot be applied at all.
 The owner decided on 2026-10-05 that the per-change control ADR 0021 deferred is a later phase rather than
 part of this fix; it is now backlog item 29, not a note in this file.
+
+### Former finding 70: a submitted draft kept accepting changes, so a reviewer could approve work the submission never described (fixed)
+
+**Then:** `Draft::OPEN_STATUSES` was `%w[draft submitted]`, and `DraftMutation#current_draft` opens or
+finds the author's **open** draft. So in a `github` universe an author who kept editing after pressing
+**Submit for review** had those changes appended to the same draft a reviewer was reading — after the
+submission message was written, and with nothing in the request saying which changes were in it when it
+was made. Nothing was hidden: the reviewer's page and the applier both read the draft's changes live, so
+there was no change a reviewer could not see. What was lost was the guarantee that what was reviewed is
+what was submitted.
+
+**The owner's decision on 2026-10-05 was to fix it in slice 5.5 rather than keep appending.** The
+alternative recorded at the time — freeze the draft — was rejected because freezing would also have
+decided what happens to the one open draft an author per universe is allowed, which is a larger change
+than the problem needs.
+
+**Fix:** `remember_draft_change` refuses a change whose draft is `submitted`, in the caller's own
+response shape: a `422` carrying a `base` message for a JSON editor, and a redirect to the draft's own
+page with the sentence as an alert for an HTML workspace. `base` is the one attribute with no field
+beside it, which is where a refusal that is not about one field belongs in the shared error summary, and
+the redirect lands on the page carrying the one control that clears this state. The refusal returns
+`true` rather than `false`, because `false` means "this is a `direct` universe, do nothing" and a caller
+that fell through would write the record directly — the one failure mode this whole concern exists to
+prevent.
+
+**It is `github`'s alone, not `draft_based?`'s.** The interception is reached through
+`Universe#draft_based?`, and a `wikipedia` universe can never have a `submitted` draft, so the check on
+the draft's status is the only thing that ever refuses. Asserting it through `draft_based?` would have
+been a second answer to "which universe is this", which is exactly what ADR 0019 settled.
+
+**Both ways out are the author's own.** A rejected submission moves the draft back to `draft` and the next
+change is remembered again; a withdrawn one closes the draft, so the next change opens a fresh one.
+`test/controllers/draft_mutation_test.rb` asserts both, plus that a create, an edit, a delete, and the
+HTML flow are all refused, and `test/system/review_workflow_test.rb` shows the sentence an author
+actually reads in the modal.

@@ -137,22 +137,17 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-24. **Collaboration system — Phase 5: GitHub mode (review workflow)**
-
-    In `github` mode, drafts are submitted for review. Owner+admins review and apply or reject.
-
-    - **Slice 5.5:** Full flow: start editing → make changes → submit for review → owner reviews →
-      approve/reject. In-app notifications: when a review request is submitted, when it's
-      approved/rejected. Update docs. Update changelog.
-
 25. **Collaboration system — Phase 6: Polish + notifications**
 
     The collaboration system feels complete and polished.
 
-    - **Slice 6.1:** In-app notifications. Create `notifications` table (`user_id`, `type`, `read`,
-      `payload` JSON, `created_at`). Notify when: your draft is approved, your draft is rejected,
-      someone submits a review request, someone replies to your discussion. Notification bell in the
-      navbar. Tests: model tests, request tests.
+    - **Slice 6.1:** The remaining in-app notification: a **reply to a discussion** somebody started with
+      you. The `notifications` table, the bell, and the two review-workflow notices already exist from
+      slice 5.5, and the column is `kind` rather than the `type` this slice originally named, because
+      `type` is Active Record's STI discriminator — see
+      [conventions.md](conventions.md#notifications). The open question this slice settles: a reply names
+      the record and the thread, so the notice has to link at a discussion inside the universe it is in,
+      which the review notices never had to do. Tests: model tests, request tests.
     - **Slice 6.2:** Real-time updates via Solid Cable. Broadcast when a draft is applied (so other
       users see the changes), when a discussion message is posted, when a review request is
       submitted/approved/rejected. Tests: system tests.

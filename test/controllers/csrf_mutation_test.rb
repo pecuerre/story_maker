@@ -364,6 +364,34 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "marking a notification read is refused without a token and marks nothing" do
+    # Marking read is the only write the notifications pages have, and it is a POST
+    # rather than a PATCH for exactly the reason every other case in this file is a
+    # POST: a GET that marked a row read would let a link, a prefetch, or a crawler
+    # answer a bell on the reader's behalf. A forged mark-all is the wider version of
+    # the same hazard — it silences somebody else's queue.
+    notification = Notification.create!(user: @user, kind: "review_submitted")
+    Notification.create!(user: @user, kind: "review_approved")
+    token = nil
+
+    with_forgery_protection do
+      token = fetch_page_token(notifications_path)
+
+      assert_no_difference -> { Notification.where(read: true).count } do
+        post read_notification_url(id: notification)
+        post read_all_notifications_url
+      end
+
+      assert_includes 406..422, response.status
+      assert_equal 0, Notification.where(read: true).count
+
+      post read_all_notifications_url, headers: { "X-CSRF-Token" => token }
+
+      assert_response :see_other
+      assert_equal 2, Notification.where(read: true).count
+    end
+  end
+
   test "the settings form is refused without a token and accepted with one" do
     with_forgery_protection do
       token = fetch_page_token(settings_path)

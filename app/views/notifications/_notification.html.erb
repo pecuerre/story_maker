@@ -1,0 +1,43 @@
+<%# One notification, as one row.
+    #
+    # The whole row is one link to the page where the news can be acted on — the
+    # reviewer's submission for a handover, the author's own draft for a decision — and
+    # the row is what says unread. It does not carry a "mark as read" control of its
+    # own: one control per row on a list the reader may have fifty of would make the
+    # page a wall of buttons, and the page's own **Mark all as read** is the control
+    # for a reader who has been through them.
+    #
+    # It is its own partial because the navbar prints the same sentence from the same
+    # helper in a different shape, and two copies of "who did what, when, and is it
+    # read" is how the bell and the page come to describe the same row differently. %>
+<li class="list-group-item notification-row<%= ' notification-row-unread' if notification.unread? %>">
+  <div class="d-flex align-items-start gap-2 flex-wrap">
+    <% if notification.unread? %>
+      <span class="badge rounded-pill text-bg-primary notification-unread-badge">
+        <%= t("notifications.unread") %>
+      </span>
+    <% end %>
+
+    <%# The row is a link where there is something to link at, and plain text where there
+        is not — see `NotificationsHelper#notification_target`. %>
+    <% if notification_target(notification) %>
+      <%= link_to notification_target(notification), class: "notification-link flex-grow-1" do %>
+        <span class="notification-sentence"><%= notification_sentence(notification) %></span>
+        <%# The moment is its own `<time>` element rather than a clause of the sentence:
+            an `_html` sentence would print a timestamp as a string no stylesheet could
+            date, and it would interpolate a stored payload into a string marked safe. %>
+        <span class="notification-moment">
+          <%= time_tag notification.created_at, l(notification.created_at, format: :short) %>
+        </span>
+      <% end %>
+    <% else %>
+      <span class="notification-sentence flex-grow-1"><%= notification_sentence(notification) %></span>
+    <% end %>
+  </div>
+
+  <%# A reviewer's note travels with the decision, in its own element. It is somebody
+      else's free text, so it is not folded into the sentence above it. %>
+  <% if notification_notes(notification).present? %>
+    <p class="notification-notes mb-0"><%= notification_notes(notification) %></p>
+  <% end %>
+</li>

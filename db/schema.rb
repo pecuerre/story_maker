@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -277,6 +277,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_120000) do
     t.integer "location_id", null: false
     t.integer "location_tag_id", null: false
     t.index ["location_id", "location_tag_id"], name: "index_locations_location_tags_unique", unique: true
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.json "payload"
+    t.boolean "read", default: false, null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "created_at", "id"], name: "index_notifications_on_user_id_and_created_at_and_id"
+    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "ownership_tags", force: :cascade do |t|
@@ -651,6 +662,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_120000) do
   add_foreign_key "locations", "universes"
   add_foreign_key "locations_location_tags", "location_tags"
   add_foreign_key "locations_location_tags", "locations"
+  add_foreign_key "notifications", "users"
   add_foreign_key "ownership_tags", "ownership_tags", column: "parent_id"
   add_foreign_key "ownership_tags", "photos", on_delete: :nullify
   add_foreign_key "ownership_tags", "universes"

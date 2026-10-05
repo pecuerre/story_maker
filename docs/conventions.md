@@ -477,7 +477,23 @@ back, so the draft says `draft` again and the row carrying the reviewer's reason
 still holds it. It shows the stored status, the moment, the author's own message and the reviewer's
 notes, because `ReviewRequest` requires a rejection to say why and those notes are written *for the
 author*. That is the half slice 5.2 left open: the notes were stored and only ever printed where the
-reviewer stood, which made the requirement a message into a place the author cannot reach.
+reviewer stood, which made the requirement a message into a place the author cannot reach. The same two
+facts travel to the author in a [notification](#notifications) when they are not on the page at all.
+
+**A submitted draft refuses new changes, in the caller's own response shape.** `DraftMutation` appends
+a change to the author's open draft, and `Draft::OPEN_STATUSES` is `%w[draft submitted]`, so a `github`
+author who kept editing after **Submit for review** used to have those changes land in the middle of
+the draft a reviewer was reading — after the submission message was written, with nothing in the
+request saying which changes were in it when it was made. Nothing was hidden: the reviewer's page and
+the applier both read the draft live. What was lost is the guarantee that what was reviewed is what
+was submitted, and a `DraftIntegrity`-shaped refusal restores it. A **JSON** editor gets a **`422` with
+a `base` message**, which is the one attribute with no field beside it and so belongs in the shared
+error summary; an **HTML** workspace gets a **redirect to the draft's own page with the sentence as an
+alert**, because that page is where the one control that clears this state — **Discard** — lives. The
+refusal returns `true`, so a caller cannot fall through to the direct write underneath it. It belongs to
+`github` alone rather than to `draft_based?`: nothing is ever submitted in a `wikipedia` universe, so
+there is no such state to refuse. Both ways out of it are the author's own — wait for a decision, or
+withdraw — and a rejection hands the draft straight back to being editable.
 
 **Discarding a submitted draft withdraws the submission with it**, in one transaction
 (`ReviewRequest#withdraw!`). Otherwise the reviewer's queue keeps waiting on work the author has thrown
@@ -642,6 +658,12 @@ design, so the block is absent rather than empty. **A withdrawn submission says 
 of naming a reviewer who never saw it, and offers neither decision — it is history, and
 [`ReviewRequest#withdraw!`](#the-drafts-page) is what makes it so.
 
+**Both decisions notify the author** — see [Notifications](#notifications), which owns what is
+written and who it reaches. The notice for an approval is written inside the decision's own
+transaction, which is also why it is here rather than on `ReviewRequest`: an approval is an apply, so
+the decision cannot commit without the run, and a decision that committed without its notice would
+leave an author waiting for a verdict that had already been given.
+
 **A rejection is the one reversible decision, because it hands the draft back.**
 `ReviewRequest#reject!` moves the request and the draft's status in one transaction (`submit!`'s reason
 read backwards), so a rejection cannot leave a draft nobody can edit or a queue entry the author still
@@ -654,6 +676,61 @@ is the rule every other form here follows.
 **Nothing about the draft's changes is read to reject one.** That is why a submission holding a change
 the applier cannot read is still rejectable, and why `reject` renders `show`: refusing it must not be a
 reviewer's only option, or one damaged row would block the queue behind the author's problem to fix.
+
+## Notifications
+
+One person is told what happened to them while they were elsewhere, and the three questions that
+takes are the model, the two writes, and the bell.
+
+**What a notification is: a stored sentence, not a pointer.** `Notification`'s `payload` carries the
+universe's slug and name, the draft and submission it is about, the other person's name, and a
+reviewer's note where there is one. It has **no foreign key to any of them**, and that is the whole
+design rather than an omission: the submission it names is destroyed with its draft and with its
+universe, so a row that resolved any of that to print itself would raise on a page that has to keep
+working. The trade is names stored twice, validated by nothing, deliberately. The column is `kind`
+rather than the `type` the plan named, because `type` is Active Record's single-table-inheritance
+discriminator and a row whose type was `"review_submitted"` would be looked up as a class name — the
+same answer ADR 0019 gave for `draft_changes.payload`. `created_at` with no `updated_at`: nothing
+reports when a reader opened their bell.
+
+**Who is told, and who is not.** `admin` access is the whole of who may read a reviewer's queue, so a
+submission goes to the universe's administrators (`Universe#administrators`: the owner plus the
+`admin` members — the owner is included explicitly because `UniverseMembership` refuses to record
+one) and to nobody else. The **author is not told about their own submission**, because they pressed
+the control that caused it and the page they land on already says it; an author who is also their
+universe's only administrator therefore gets nothing, which is correct rather than unfortunate. A
+**decision** goes to the author alone, because the decision is addressed to them. Every notice is
+written **inside the transaction that made the event** — `Draft#submit!`, `ReviewRequest#reject!`, and
+the approval's own transaction in `ReviewRequestsController` — because a decision that committed
+without its notice leaves an author waiting for a verdict that has already been given. An approval
+stopped by a conflict announces nothing, because the decision was never taken.
+
+**The two writes, and why they are POSTs.** `POST /notifications/:id/read` and `POST
+/notifications/read_all`, both on the page rather than in the dropdown: a reader who has read three of
+five entries has not read the other two, and a dropdown that marked a row read as it was rendered
+would answer that on the reader's behalf. `read_all` is a `POST` because a GET that marked a row read
+would let a link, a prefetch, or a crawler silence a bell on the reader's behalf.
+`test/controllers/csrf_mutation_test.rb` covers both refusals.
+
+**The bell is a glance; the page is the list.** `layouts/_notifications` prints at most
+`Notification::PANEL_LIMIT` entries and links to `/notifications`, which holds the rest, the two
+controls, and the count. The dropdown's figure is the **unread** count and is **uncached**, for
+`pending_review_request_count`'s reason with one difference: that figure moves because *this* request
+just decided a submission, while this one moves because somebody else did something in another
+browser, which nothing here can expire on — so a `MenuCountCache` entry would promise a stale bell
+for up to its TTL. It is one `COUNT` over `[user_id, read]`, asked only for a signed-in reader. The
+**bell stays when everything is read**: a reader who has read everything still has a list, and hiding
+the bell would hide the way into it.
+
+**A notification is not an authorization.** Each kind links at the surface its own reader may open: a
+submission notice leads to the reviewer's page, because the reviewer's page is where the approval and
+rejection controls are; a decision notice leads to the author's own draft page, which carries the
+submission's status and the reviewer's notes (`drafts/_submission_status`), because the reviewer's page
+would answer **404** to somebody with no admin access. Both pages are not universe-scoped, so the
+navbar can show a notice about a universe the reader is not currently in; a universe renamed since the
+notice was written makes its link a 404, which is the accepted price of a row that still renders. A
+row with nothing to link at prints its sentence and no link, so one row this application did not
+write cannot take the page down with it.
 
 ## The editing session
 

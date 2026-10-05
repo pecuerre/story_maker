@@ -170,6 +170,23 @@ class Universe < ApplicationRecord
     user.present? && access_level_for(user) == "admin"
   end
 
+  # Everybody who administers this universe: its owner, plus the members whose level is
+  # `admin`. It is the `administrated_by` scope read the other way round, and it is
+  # what says who a submitted draft is handed over to — `admin` access is the whole of
+  # `ReviewRequestsController`'s authorization, so this is exactly the set of people who
+  # can open the queue a submission lands in, and nobody else can.
+  #
+  # A **public** universe does not widen it: `access_level_for` grants every signed-in
+  # reader `write`, and `write` is not the queue's access level.
+  #
+  # The owner is listed alongside the memberships rather than through one, because the
+  # owner is an admin with no membership row at all — `UniverseMembership` refuses to
+  # record one — so a query built from `memberships` alone would leave out the one
+  # person who administers every universe there is.
+  def administrators
+    User.where(id: [ owner_id ] + memberships.admin.pluck(:user_id))
+  end
+
   alias_method :administered_by?, :administrable_by?
 
   def menu_counts

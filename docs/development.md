@@ -1097,6 +1097,9 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    applies to `DraftChangeOutcome`, which records what a run did, and to `ReviewRequest`, which is
    somebody's unfinished work under somebody else's decision: both are moments a manifest would have
    to invent, and a submission that loaded from YAML would be a review of nobody's actual changes.
+   `Notification` is excluded on the same ground and one more: its payload is a *copy* of a universe's
+   slug and name, a draft and submission id, and somebody's name, captured at the moment the notice was
+   written, so a manifest would have to invent all of it and the ids it names would not exist.
 
 ### Full-stack data contract for a new model
 

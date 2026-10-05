@@ -9,6 +9,10 @@ class User < ApplicationRecord
   # they own their sessions. Nothing deletes a user today; the association is here
   # so the row cannot outlive its author if that ever changes.
   has_many :drafts, dependent: :destroy
+  # A notification is written to one account, so a person keeps it the way they keep
+  # their drafts and their sessions. Nothing deletes a user today; the association is
+  # here so a row addressed to somebody who no longer exists cannot outlive them.
+  has_many :notifications, dependent: :destroy
   has_many :universes, through: :universe_memberships
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }

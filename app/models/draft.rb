@@ -129,6 +129,12 @@ class Draft < ApplicationRecord
   # for is a statement about one handover. A blank message is stored as `nil` rather
   # than as an empty string, for `review_notes`' reason: a blank box would read back
   # later as something the author wrote.
+  #
+  # **The notice to the reviewers is inside the same transaction**, for the same
+  # reason the two writes above are: a submission nobody was told about is a queue
+  # entry that can sit there for days, and the author who handed it over has no way
+  # back to it. It goes to the universe's administrators, which is exactly the set of
+  # people `ReviewRequestsController` will let open the queue.
   def submit!(message: nil)
     raise ActiveRecord::RecordNotSaved, "only a working draft can be submitted: Draft #{id} is #{status}" unless draft?
 
@@ -140,6 +146,8 @@ class Draft < ApplicationRecord
       )
 
       update!(status: "submitted")
+
+      Notification.review_submitted!(request)
 
       request
     end

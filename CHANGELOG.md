@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **In-app notifications for the review workflow.** A `notifications` table records a submission handed
+  over and each decision, a bell in the top bar shows what is unread, and `/notifications` lists it.
 - **The reviewer's queue is reachable from the workspace.** The right sidebar's Collaboration group gains a
   **Review requests** entry for owners and admins, whose uncached figure counts submissions still waiting
   rather than what the queue holds, so a decision lowers it on the page it redirects to.
@@ -54,6 +56,9 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **A draft that is with a reviewer refuses new changes.** A change arriving while the submission is
+  pending is refused in words, in each workspace's own response shape, instead of joining the draft under
+  the reviewer. Finding 70 has left the open-quirks list.
 - **A reviewer can leave a note with an approval.** The approve control is now a form with an optional note
   for the author, stored as nothing when the box is empty and carried through the conflict question an
   approval is asked before it is written. A rejection's notes stay required.

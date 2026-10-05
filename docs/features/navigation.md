@@ -27,9 +27,9 @@ what the reader sees because of it is the explicit **None selected** state below
 
 ## Top bar — `app/views/layouts/_navbar.html.erb`
 
-The navbar is deliberately three links, one search box, and one action. It is not a switcher, and it
-issues **no query of its own**: the box renders from `Current`, from `Search::Scope`, and from what a
-reader types.
+The navbar is deliberately three links, one search box, and two actions. It is not a switcher. The search
+box issues **no query of its own**: it renders from `Current`, from `Search::Scope`, and from what a
+reader types. The notifications bell does issue one, and says why below.
 
 - **Universe Maker** — the brand, and the landing page (`/`, the universes index). It is where the
   visitor sees the universes they may open and where a **New universe** is created, so there is no
@@ -43,14 +43,18 @@ reader types.
   link, because a story is never implied.
 - **Search** — one GET form between the scope links and the actions, plus the dropdown that answers
   while someone types. See [features/search.md](search.md).
-- **Account** — the top bar's only action, a dropdown rendered for every visitor. A signed-in reader
-  sees their email, **Settings**, and **Log out**; a guest sees **Log in** and **Settings**. It is
-  the navbar's only Bootstrap dropdown, and the menu button carries `.active` and
-  `aria-current="page"` on the settings page.
+- **Notifications** — a bell dropdown in `.navbar-actions`, beside the account menu rather than
+  inside it, and **rendered only for a signed-in reader**: there is nothing there addressed to a
+  guest, and asking costs a query. It is server-rendered Bootstrap, which is why this feature added
+  no Stimulus controller and no `test/javascript` case. What it shows, and the two rules that decide
+  it, are in [conventions.md](../conventions.md#notifications).
+- **Account** — the other action, a dropdown rendered for every visitor. A signed-in reader
+  sees their email, **Settings**, and **Log out**; a guest sees **Log in** and **Settings**. The
+  menu button carries `.active` and `aria-current="page"` on the settings page.
 - **Settings** — the platform settings page (`/settings`), inside the account menu in
   `.navbar-actions`, and rendered for every visitor including a guest, because its preferences belong
   to the browser rather than to a universe. It is deliberately **not** a **Configuration** link in
-  the right utility sidebar. See [features/settings.md](settings.md).
+  the right utility sidebar. See [settings.md](settings.md).
 
 A scope link carries `.active` plus `aria-current="page"` only on the page it points at, never as a
 permanent "you are in this scope" state. Nonfunctional dashboard links do not appear in the navbar

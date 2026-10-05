@@ -189,7 +189,13 @@ class AbilityTest < ActiveSupport::TestCase
       # rules answer `read` for a guest in a public universe. A reviewer's queue
       # is a query inside a universe the request already authorized at the admin
       # level, and no action authorizes one of these rows on its own.
-      "ReviewRequest" => "a draft's submission, authorized through its draft's universe and reviewer access"
+      "ReviewRequest" => "a draft's submission, authorized through its draft's universe and reviewer access",
+      # One person's record of what was said to them, which is not universe content at
+      # all: there is no guest version of the page, and no action authorizes one of
+      # these rows — the scope is `Current.user.notifications`, a query rather than a
+      # rule. Registering it would give the content rules a `universe` to ask about,
+      # and a notification belongs to a person rather than to a universe.
+      "Notification" => "one reader's own notices, authorized by who they were written to"
     }
 
     # Zeitwerk loads a model the first time something names it, so a model this

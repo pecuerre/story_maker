@@ -47,10 +47,15 @@
           results page, and the dropdown is only the enhancement of that. %>
       <%= render "shared/search_bar" %>
 
-      <%# One menu: the account dropdown is the top bar's only action. Settings is
-          platform-level, so it lives inside the same menu rather than beside it,
-          and a guest sees the same menu with Log in as its first entry. %>
+      <%# One menu plus one bell: the account dropdown is the top bar's actions, and
+          the notifications bell sits beside it because what happened to you while you
+          were elsewhere is not something to go looking for under "Account". Settings is
+          platform-level, so it lives inside the account menu rather than beside it,
+          and a guest sees the same menu with Log in as its first entry and no bell,
+          because there is nothing there addressed to a guest. %>
       <div class="navbar-actions ms-auto mt-3 mt-lg-0 d-flex align-items-center gap-2">
+        <%= render "layouts/notifications" %>
+
         <% on_settings_page = controller_name == "settings" %>
         <div class="dropdown">
           <button class="btn btn-outline-light btn-sm dropdown-toggle<%= ' active' if on_settings_page %>",

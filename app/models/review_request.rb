@@ -155,7 +155,14 @@ class ReviewRequest < ApplicationRecord
   # **Approving is deliberately not here.** An approval is an apply — `DraftApplier`
   # writing every remembered change — and its decision must land in the same
   # transaction as the run, which is a service's transaction to own. The asymmetry is
-  # the honest shape of the two actions rather than an oversight.
+  # the honest shape of the two actions rather than an oversight, and it is also where
+  # the approval's notice is written, since the decision cannot be committed without
+  # the run it belongs to.
+  #
+  # **The author's notice is inside the transaction**, for `submit!`'s reason read
+  # backwards: a rejection is the one decision that ends in somebody else being told
+  # their work was refused, and a decision whose notice failed to write would leave
+  # them waiting for a verdict that had already been given.
   def reject!(reviewer, notes:)
     assign_attributes(status: "rejected", reviewed_by: reviewer, review_notes: notes)
 
@@ -167,6 +174,8 @@ class ReviewRequest < ApplicationRecord
     transaction do
       save!
       draft.update!(status: "draft")
+
+      Notification.review_decided!(self)
     end
 
     true

@@ -5,6 +5,22 @@ Rails.application.routes.draw do
   # so the page is reachable before a universe is chosen and by a guest.
   resource :settings, only: %i[ show update ]
 
+  # What happened to you while you were elsewhere, and the one page that lists it.
+  # Also not universe-scoped, and deliberately so: a notification carries its own
+  # universe's slug in its payload, so the navbar can show a reader something from
+  # a universe they are not currently inside, and a bell scoped to one universe
+  # could not answer for the others.
+  #
+  # `read` and `read_all` are POSTs rather than a PATCH because they are the only
+  # two writes here and neither is idempotent in the sense a `PATCH` claims to be:
+  # marking one notification read twice is not an error but it is not the same
+  # request either, and a GET that marked a row read would let a link, a prefetch,
+  # or a crawler silently answer a bell on the reader's behalf.
+  resources :notifications, only: %i[ index ] do
+    post :read, on: :member
+    post :read_all, on: :collection
+  end
+
   resources :universes, param: :universe_slug, path: "u"
 
   # The top-bar search. It is a read with no page of its own per resource, so it

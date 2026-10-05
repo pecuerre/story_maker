@@ -113,7 +113,7 @@ method. Each rule is stated in full in [features/photos.md](features/photos.md).
 |---|---|---|
 | `users` | `email_address` (unique), `name`, `password_digest`, `slug` (unique) | `has_secure_password`; email normalized (`strip.downcase`) via `normalizes` |
 | `sessions` | `user_id` FK, `ip_address`, `user_agent`, `expires_at`, `last_used_at` | created on sign-in; referenced by the signed cookie, which expires with `expires_at`. `expires_at` is the absolute deadline (never extended by use) and `last_used_at` drives the idle timeout; both are set by the model, not by a column default, because the limits are policy values. Both are nullable so a row written before the columns existed is treated as still valid rather than signing everyone out. `user_agent` is enforced (a mismatch ends the session); `ip_address` is recorded for diagnostics only |
-| `universes` | `name`, `owner_id` FK→users, `private` (bool, default `false`, **NOT NULL**), `slug` (unique), `collaboration_mode` (string, default `direct`, **NOT NULL**) | `visible_to(user)` includes public universes plus private universes owned by or joined by the user; only explicit `false` grants public access. `collaboration_mode` is one of `direct`/`wikipedia`/`github` and decides whether a change is written straight through or remembered for its author; what each mode commits the application to, and why the column is `NOT NULL`, are in [ADR 0019](adr/0019-collaboration-foundations.md) |
+| `universes` | `name`, `owner_id` FK→users, `private` (bool, default `false`, **NOT NULL**), `slug` (unique), `collaboration_mode` (string, default `direct`, **NOT NULL**) | `visible_to(user)` includes public universes plus private universes owned by or joined by the user; only explicit `false` grants public access. `collaboration_mode` is one of `direct`/`wikipedia`/`github` and decides whether a change is written straight through or remembered for its author; what each mode commits the application to, and why the column is `NOT NULL`, are in [ADR 0019](adr/0019-collaboration-foundations.md). `#administrators` is the owner plus the `admin` members — the `administrated_by` scope read the other way, and the set a submission is announced to, because `admin` access is the whole of who may read a reviewer's queue |
 | `universe_memberships` | `universe_id` FK, `user_id` FK, `access_level` (1=read, 2=write, 3=admin; default 1) | unique per `[universe_id, user_id]`; the owner is implicitly admin and is not stored as a membership |
 
 ### Stories & sections
@@ -210,7 +210,7 @@ be named by a manifest, although the application can carry a thread about one.
 The column is `payload`, not `changes` as the collaboration plan named it: Rails 8.1 refuses an
 attribute that Active Record already defines, and `changes` is `ActiveModel::Dirty`'s
 (`ActiveRecord::DangerousAttributeError`); `attributes` is refused the same way. `payload` is the
-name the notifications table already uses for opaque stored data.
+name the notifications table uses for opaque stored data too.
 
 `base_version` is a **string**, and `DraftChange.capture_base_version` is the only supported way to
 fill it, because it routes through `VersionStamp`. A raw `updated_at` written here is a `Time`, a
@@ -268,6 +268,27 @@ scope, so the payload alone says where the record goes. See
 [conventions.md](conventions.md#controllers) for which column that is per model and
 [ADR 0020](adr/0020-remembering-mutations-instead-of-writing-them.md) for why nothing else is copied out
 of the record.
+
+A **submitted draft is not appendable**: a change arriving while its `ReviewRequest` is `pending` is
+refused in the caller's own response shape rather than appended, because the reviewer's page and the
+applier read the draft live and a change that arrived after the submission message was written is work
+the submission never described. Nothing was hidden by that, so the guarantee rather than the visibility
+is what is restored. See
+[conventions.md](conventions.md#the-drafts-page).
+
+### The `notifications` table
+
+| Table | Columns | Notes |
+|---|---|---|
+| `notifications` | `user_id` FK to `users` (NOT NULL), `kind` (NOT NULL), `read` (boolean, NOT NULL, default false), `payload` json (nullable), `created_at` | one thing that was said to one person. `user_id` with a cascade rather than an owner-and-type pair because a notification has exactly one reader — marking it read is that person's act, and no version of it is for somebody else. `kind` is `review_submitted`/`review_approved`/`review_rejected`, `Notification::KINDS`, and is **not** `type` as the collaboration plan named it: `type` is Active Record's single-table-inheritance discriminator, so a row whose type was `"review_submitted"` would be looked up as a class name (`SubclassNotFound`), which is the same answer the `payload` column gives for `changes` above. Indexes `[user_id, created_at, id]` for the reader's own list and `[user_id, read]` for the navbar's uncached unread count. `created_at` with **no `updated_at`**: `read` is the only column that changes after the row is written and nothing reports when a reader opened their bell. **No foreign key to the universe, draft, or submission** — see below |
+
+**The payload is a frozen sentence, not a pointer**, and that is why there is no foreign key to any of
+the rows it names: the universe's slug and name, the draft and submission ids, the other person's name,
+and a reviewer's note where there is one are all copied in. The submission is destroyed with its draft
+and with its universe, so a row that resolved any of them to print itself would raise on a page that
+has to keep working; the cost is names stored twice and validated by nothing, deliberately. A row with
+no payload at all is printable and simply has nothing to link at, which is what `payload` being
+nullable buys. See [conventions.md](conventions.md#notifications), which owns who is told what.
 
 ### Non-app tables
 `solid_cache` / `solid_cable` / `solid_queue` live in their own schema files
@@ -338,6 +359,7 @@ no `parent_id`.
 | `Draft` | `user` and `universe` presence; `status` inclusion in `STATUSES` (`draft`/`applied`/`discarded`/`submitted`), the same list the column default comes from — a status nothing behaves for would be a draft no control can apply or discard. Four predicates plus `open?` (`OPEN_STATUSES`: `draft` or `submitted`; an applied or discarded draft is history) so no caller re-derives a lifecycle state from a raw string, and the `open` scope reads that same list so a finder and the apply workflow cannot disagree | no authorization check: who may see a draft is asked by the controller about its **owner**, not about a universe record |
 | `DraftChange` | `draft` presence; `action` inclusion in `ACTIONS` (`create`/`update`/`delete`); `record_type` presence **and** registration in `CONTENT_CLASS_NAMES`; a `create` must leave `record_id` and `base_version` blank and an `update`/`delete` must supply both; a named record must resolve through `RecordTarget` (so an unknown id and a soft-deleted record are one "does not exist") and must belong to the **draft's** universe; updates raise (`append-only`). That collapsing is the *validation's* answer; `RecordTarget.find_including_deleted` asks the other one, because a record somebody has since deleted and a record that was never there are different answers to "has this change moved?" — see [conventions.md](conventions.md) | no authorization check: a change is reached only through its draft's owner |
 | `ReviewRequest` | `draft`, `universe`, and `submitted_by` presence; `status` inclusion in `STATUSES` (`pending`/`approved`/`rejected`/`withdrawn`), the same list the column default comes from — a status nothing behaves for would be a review no page can answer. `universe` must be the **draft's**, and `submitted_by` must be the **draft's author**, so the two stored-but-derivable columns cannot quietly disagree with the one they came from. A `rejected` request must carry `review_notes`, because saying why is the whole of a rejection; an `approved` one need not, because an approval has nothing to explain, and a `withdrawn` one carries neither, because nobody reviewed it. An `approved` or `rejected` request must name its `reviewed_by`, so a decision can answer who let it through; a `pending` or `withdrawn` one has no reviewer, which is why that association is `optional` and why the rule asks about `decided?` rather than `!pending?`. `submission_message` is unvalidated because it is optional by design. Four status predicates plus `decided?`, `waiting?`, and the `pending` scope all read named values rather than raw strings, so no caller re-derives a review state from a column | no authorization check: a reviewer's queue is a query inside a universe the request has already authorized at the admin level, and no action authorizes one of these rows on its own |
+| `Notification` | `user` presence; `kind` inclusion in `KINDS` (`review_submitted`/`review_approved`/`review_rejected`), so a kind with no sentence behind it is a field error rather than a badge nothing can read. `read` is a boolean with a default and nothing validates it — a notice is written once and marked, never edited | no authorization check: a notification has exactly one reader, so the scope is `Current.user.notifications` rather than a rule |
 | `Story` | `name` presence + unique per universe; `slug` unique per universe |
 | `Section` | `name` presence; `story` required; parent rules scoped to the story; `section_tags` optional, but when present they must all belong to the section's story through the shared HABTM scope; `has_many :scenes, dependent: :nullify` |
 | `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |

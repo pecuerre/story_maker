@@ -19,9 +19,11 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "nav a.navbar-brand[href=?]", root_path, text: "Universe Maker"
     assert_select "nav .navbar-nav .nav-item", 0
     assert_select "nav .navbar-nav a", 0
-    # The account menu is still the navbar's only Bootstrap dropdown. The search
-    # results panel is the search box's own listbox, not a menu.
-    assert_select "nav .dropdown", 1
+    # The navbar carries two Bootstrap dropdowns for a signed-in reader — the
+    # notifications bell and the account menu — and the search results panel is the
+    # search box's own listbox, not a third menu.
+    assert_select "nav .navbar-actions .dropdown", 2
+    assert_select "nav .dropdown .notification-menu", 1
     assert_select ".page-header h1", text: "Universes"
     assert_select ".page-actions a", text: /New universe/
     assert_select "a", text: "Dashboard", count: 0
@@ -64,7 +66,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "nav .navbar-nav a.nav-link[href=?]", universe_path(@universe),
       text: /Universe: #{@universe.name}/
     assert_select "nav .navbar-nav a.nav-link[aria-current=page]", 1
-    assert_select "nav .dropdown", 1
+    assert_select "nav .navbar-actions .dropdown", 2
 
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story workspace"
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Universe Bible"
@@ -175,7 +177,7 @@ class NavigationTest < ActionDispatch::IntegrationTest
       universe_story_path(universe_slug: @universe.slug, id: @story)
     assert_select "nav .navbar-nav a.nav-link[href=?][aria-current=page]",
       universe_path(@universe), count: 0
-    assert_select "nav .dropdown", 1
+    assert_select "nav .navbar-actions .dropdown", 2
 
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story workspace"
     assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
@@ -270,7 +272,10 @@ class NavigationTest < ActionDispatch::IntegrationTest
     sign_out
     get universes_url
 
-    assert_select "nav .dropdown", 1
+    # A guest gets the account menu and no bell: there is nothing in a notifications
+    # list addressed to somebody with no account, and asking would cost a query.
+    assert_select "nav .navbar-actions .dropdown", 1
+    assert_select "nav .dropdown .notification-menu", 0
     assert_select "nav .dropdown button", text: "Account"
     assert_select "nav .dropdown a[href=?]", settings_path, text: /Settings/
     assert_select "nav .dropdown a[href=?]", new_session_path, text: "Log in"
@@ -280,7 +285,10 @@ class NavigationTest < ActionDispatch::IntegrationTest
   test "a signed-in account menu holds settings and logout but no login" do
     get universes_url
 
-    assert_select "nav .dropdown", 1
+    # The account menu is one of the navbar's two dropdowns, so this asserts inside
+    # it rather than counting the navbar's menus — the bell's own rules are
+    # `notifications_controller_test.rb`'s and `review_workflow_test.rb`'s.
+    assert_select "nav .navbar-actions .dropdown", 2
     assert_select "nav .dropdown .navbar-account-label", text: users(:user_one).email_address
     assert_select "nav .dropdown a[href=?]", settings_path, text: /Settings/
     assert_select "nav .dropdown a[href=?]", new_session_path, count: 0

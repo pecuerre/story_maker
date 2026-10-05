@@ -1,0 +1,83 @@
+<%# What happened to this reader while they were somewhere else.
+    #
+    # **It is the second dropdown in the actions row**, beside the account menu and
+    # inside the same flex row, so `gap-2` spaces them and both collapse together on
+    # a small screen. It is server-rendered Bootstrap: the dropdown is markup, not a
+    # Stimulus controller, which is why this feature added no client-side code and no
+    # `test/javascript` case (ADR 0012).
+    #
+    # **The bell is offered whenever the reader has any notification at all, and the
+    # badge counts only the unread ones.** Those are two questions and the menu answers
+    # both: a reader who has read everything still has a list, and hiding the bell would
+    # hide the way into it, while a badge that counted read rows would say something was
+    # waiting when nothing was.
+    #
+    # **It is a glance, and the page behind it is the list.** The dropdown prints the
+    # newest `Notification::PANEL_LIMIT` sentences and links to the page that holds the
+    # rest, the two controls that mark read, and the count. It deliberately does not
+    # carry them itself: a reader who has read three of five entries has not read the
+    # other two, and a dropdown that marked a row read as it was rendered would answer
+    # that on the reader's behalf.
+    #
+    # **A row links at the ids in its own payload** — the reviewer's page for a
+    # submission, the author's draft page for a decision — so the bell is readable from
+    # any universe's page, or from the universe list, rather than only from inside the
+    # universe something happened in. A universe renamed since the notification was
+    # written makes that link a 404, which is the price of a row that still renders
+    # when the submission it names has been destroyed with its draft.
+    #
+    # Rendered only for a signed-in reader: there is no guest version of this menu, and
+    # `unread_notification_count` is the reason a guest costs no query here. %>
+<% if Current.user.present? %>
+  <% on_notifications_page = controller_name == "notifications" %>
+  <div class="dropdown">
+    <button class="btn btn-outline-light btn-sm dropdown-toggle<%= ' active' if on_notifications_page %>"
+      type="button" data-bs-toggle="dropdown" aria-expanded="false"
+      aria-label="<%= t("notifications.bell_aria") %>"
+      <% if on_notifications_page %>aria-current="page"<% end %>>
+      <i class="bi bi-bell" aria-hidden="true"></i>
+      <span class="visually-hidden"><%= t("notifications.bell") %></span>
+      <% if unread_notification_count.positive? %>
+        <span class="badge rounded-pill text-bg-danger notification-badge"><%= unread_notification_count %></span>
+      <% end %>
+    </button>
+
+    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end notification-menu">
+      <li class="dropdown-header d-flex justify-content-between align-items-center gap-2">
+        <span><%= t("notifications.bell") %></span>
+        <% if unread_notification_count.positive? %>
+          <span class="badge rounded-pill text-bg-secondary"><%= t("notifications.unread_count", count: unread_notification_count) %></span>
+        <% end %>
+      </li>
+
+      <% if recent_notifications.any? %>
+        <% recent_notifications.each do |notification| %>
+          <%# A row with nothing to link at is a `dropdown-item-text` rather than an item,
+              for the same reason the page prints it as text — see
+              `NotificationsHelper#notification_target`. %>
+          <li>
+            <% if notification_target(notification) %>
+              <%= link_to notification_target(notification), class: "dropdown-item notification-item#{' notification-item-unread' if notification.unread?}" do %>
+                <span class="notification-sentence"><%= notification_sentence(notification) %></span>
+                <span class="notification-moment">
+                  <%= time_tag notification.created_at, l(notification.created_at, format: :short) %>
+                </span>
+              <% end %>
+            <% else %>
+              <span class="dropdown-item-text notification-item<%= ' notification-item-unread' if notification.unread? %>">
+                <span class="notification-sentence"><%= notification_sentence(notification) %></span>
+              </span>
+            <% end %>
+          </li>
+        <% end %>
+      <% else %>
+        <li>
+          <span class="dropdown-item-text notification-empty"><%= t("notifications.empty") %></span>
+        </li>
+      <% end %>
+
+      <li><hr class="dropdown-divider"></li>
+      <li><%= link_to t("notifications.see_all"), notifications_path, class: "dropdown-item" %></li>
+    </ul>
+  </div>
+<% end %>

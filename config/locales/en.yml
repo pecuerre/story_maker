@@ -506,6 +506,17 @@ en:
       # Answering a toggle posted from a stale page in a universe that writes
       # straight through: there was never an editing session to stop.
       not_draft_based: "This universe writes changes straight through, so there is no editing session to start or stop."
+    # The one sentence for a change that was refused rather than remembered, and it is
+    # read by **both** response shapes the remembering path speaks: it is the flash on
+    # an HTML workspace's redirect and the `base` message a JSON editor prints in its
+    # error summary. It is a key of its own rather than one under `flash` because it is
+    # neither a flash about something that happened nor one about something that did
+    # not — nothing was written, but nothing was refused either; the change simply
+    # cannot be made while a reviewer has the draft. It names what is waiting and where
+    # the way out of it is, because the one control that clears this state is
+    # **Discard** on the draft's own page, and an author told only "not now" has to go
+    # looking for it.
+    submission_in_flight: "Your draft is with a reviewer, so this change was not remembered. A submitted draft cannot be edited: withdraw it from the draft's page, or wait for a decision."
     # The three steps, in the order an author meets them. They are the only place
     # the workflow is explained rather than referred to: every other sentence about
     # it — the flash that says a change was remembered, a row's badge, the two
@@ -822,6 +833,44 @@ en:
     flash:
       rejected: "The submission was rejected and the draft was handed back to its author. Nothing was written."
       decided: "That review request has already been answered, so there is nothing left to decide about it."
+
+  # What was said to this reader while they were somewhere else. The three sentences
+  # are `Notification::KINDS`, one each, because they are what the bell and the list
+  # print, and a kind with no sentence behind it would be a badge nothing can read.
+  #
+  # They are **not** `_html` keys, and the moment is not folded into them: the values
+  # interpolated into a sentence come out of a stored payload rather than out of a
+  # validated model, and a `<time>` element beside the sentence is a moment a stylesheet
+  # can date. A reviewer's note is a third element again, because it is somebody else's
+  # free text and a sentence frame around it has to guess where the punctuation goes.
+  notifications:
+    bell: "Notifications"
+    # The bell's own accessible name, read in place of the icon inside the button.
+    bell_aria: "Notifications, what was said to you"
+    unread: "New"
+    unread_count:
+      one: "1 unread"
+      other: "%{count} unread"
+    see_all: "See all notifications"
+    read_all: "Mark all as read"
+    # A dropdown with nothing in it still has to say something: it is opened by a
+    # button that is rendered because the reader has notifications, and a menu with no
+    # rows in it reads as broken rather than as empty.
+    empty: "Nothing has been said to you yet."
+    empty_title: "Nothing has been said to you yet"
+    empty_description: "When somebody hands you a draft for review, or answers one you handed over, it appears here."
+    sentences:
+      review_submitted: "%{actor} submitted a draft for review in %{universe}."
+      review_approved: "%{reviewer} approved your submission in %{universe}. Your changes are live."
+      review_rejected: "%{reviewer} rejected your submission in %{universe}. Your draft is back with you, with its changes, and you can edit it and submit again."
+    notes: "The reviewer said: %{notes}"
+    # Stand-ins for a payload that does not carry the value. Every row this
+    # application writes has both, so these only answer a row written by something else.
+    someone: "Someone"
+    a_universe: "a universe"
+    index:
+      title: "Notifications"
+      description: "What has been said to you about your work, newest first."
 
   stories:
     title: "Stories"
@@ -2275,6 +2324,10 @@ en:
   request:
     one: "review request"
     other: "review requests"
+  # One thing that was said to this reader, for the same reason as the four above.
+  notification:
+    one: "notification"
+    other: "notifications"
 
   # The subject of a record-level error, keyed by the `model_param` a controller
   # already holds. Both browser editors print a `base` message as a sentence

@@ -463,6 +463,15 @@ es:
         one: "Dejaste de editar. Todavía espera 1 cambio recordado en tu borrador."
         other: "Dejaste de editar. Todavía esperan %{count} cambios recordado en tu borrador."
       not_draft_based: "Este universo escribe los cambios directamente, así que no hay ninguna sesión de edición que iniciar o detener."
+    # La única frase para un cambio que se rechazó en vez de recordarse, y la leen
+    # **las dos** formas de respuesta que habla el camino del recuerdo: es el aviso de
+    # la redirección de un espacio HTML y el mensaje `base` que un editor JSON imprime
+    # en su resumen de errores. Es una clave propia y no una de las de arriba porque no
+    # es ninguna: no se escribió nada, pero tampoco se rechazó nada; el cambio
+    # simplemente no se puede hacer mientras alguien revise el borrador. Nombra qué
+    # está esperando y dónde está la salida, porque el único control que limpia este
+    # estado es **Descartar** en la página del borrador.
+    submission_in_flight: "Tu borrador está con quien lo revisa, así que este cambio no se recuerda. Un borrador enviado no se puede editar: retíralo desde la página del borrador o espera una decisión."
     editing:
       start: "Empezar a editar"
       stop: "Dejar de editar"
@@ -792,6 +801,33 @@ es:
     flash:
       rejected: "El envío se rechazó y el borrador volvió a manos de su autor. No se escribió nada."
       decided: "Esa solicitud de revisión ya se respondió, así que no queda nada que decidir sobre ella."
+
+  # Lo que se le dijo a este lector mientras estaba en otro sitio. Las tres frases son
+  # `Notification::KINDS`, una por cada tipo, y **no** son claves `_html`: los valores
+  # que interpolan salen de un payload guardado y no de un modelo validado, y el
+  # momento va aparte, en un elemento `<time>` que una hoja de estilos puede fechar.
+  notifications:
+    bell: "Notificaciones"
+    bell_aria: "Notificaciones, lo que se te ha dicho"
+    unread: "Nuevo"
+    unread_count:
+      one: "1 sin leer"
+      other: "%{count} sin leer"
+    see_all: "Ver todas las notificaciones"
+    read_all: "Marcar todo como leído"
+    empty: "Todavía no se te ha dicho nada."
+    empty_title: "Todavía no se te ha dicho nada"
+    empty_description: "Cuando alguien te envíe un borrador para revisión, o responda a uno que enviaste, aparecerá aquí."
+    sentences:
+      review_submitted: "%{actor} ha enviado un borrador a revisión en %{universe}."
+      review_approved: "%{reviewer} ha aprobado tu envío en %{universe}. Tus cambios ya están escritos."
+      review_rejected: "%{reviewer} ha rechazado tu envío en %{universe}. Tu borrador vuelve a ti, con sus cambios, y puedes editarlo y volver a enviarlo."
+    notes: "Quien lo revisó dijo: %{notes}"
+    someone: "Alguien"
+    a_universe: "un universo"
+    index:
+      title: "Notificaciones"
+      description: "Lo que se te ha dicho sobre tu trabajo, de lo más reciente a lo más antiguo."
 
   stories:
     title: "Historias"
@@ -2201,6 +2237,12 @@ es:
   request:
     one: "solicitud de revisión"
     other: "solicitudes de revisión"
+  # Una cosa que se le dijo a este lector, por el mismo motivo que las de arriba: el
+  # sustantivo junto a la insignia de la cabecera es una clave, así que el plural lo
+  # decide la configuración regional.
+  notification:
+    one: "notificación"
+    other: "notificaciones"
 
   # El sujeto de un error de registro, con la clave `model_param` que un
   # controlador ya tiene. Los dos editores del navegador imprimen un mensaje

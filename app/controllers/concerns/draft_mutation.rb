@@ -15,9 +15,10 @@
 # action write?" twice — once for real and once for the draft — and the two answers
 # drift. Here the call sits at the one point where the controller already holds both
 # halves: the record it would have written and the attributes it was going to write
-# with them. Each of the three methods returns `true` when it has remembered a change
-# and rendered the response, and `false` — doing nothing — in a `direct` universe,
-# so the caller is written as a guard and the write below it stays untouched:
+# with them. Each of the three methods returns `true` when it has answered the caller
+# — by remembering a change, or by refusing one, because a submission is in flight —
+# and `false` — doing nothing — in a `direct` universe, so the caller is written as a
+# guard and the write below it stays untouched:
 #
 #   def create
 #     attributes = character_params
@@ -109,7 +110,13 @@ module DraftMutation
     end
 
     def remember_draft_change(action:, record:, payload:)
-      change = current_draft.draft_changes.create!(
+      draft = current_draft
+
+      # A submitted draft is with a reviewer, and this change would join it after the
+      # submission was described — see `refuse_submission_in_flight`.
+      return refuse_submission_in_flight(draft) if draft.submitted?
+
+      change = draft.draft_changes.create!(
         action: action,
         record_type: record.class.name,
         # A create names no record: the id is the database's to assign when the
@@ -125,6 +132,46 @@ module DraftMutation
 
       render_draft_change(change)
       true
+    end
+
+    # **A change is not appended to a draft that is with a reviewer.**
+    #
+    # `Draft::OPEN_STATUSES` is `%w[draft submitted]` and `current_draft` opens the
+    # author's open draft, so a `github` author who keeps editing after pressing
+    # **Submit for review** used to have those changes land in the middle of the draft
+    # a reviewer was reading — after the submission message was written, with nothing
+    # in the request saying which changes were in it when it was made. Nothing was
+    # hidden: the reviewer's page and the applier both read the draft live. What was
+    # lost is the guarantee that what was reviewed is what was submitted.
+    #
+    # **It is refused in words, in the caller's own response shape**, for the same
+    # reason `DraftIntegrity` refuses a change the applier cannot read rather than
+    # letting the run raise: a JSON editor that got a status code with no explanation
+    # would report a save that failed for no stated reason. The author is told what is
+    # waiting and that the draft's own page is where they can take the submission
+    # back — **Discard** is the only way out of this state, and it is a control, not a
+    # dead end.
+    #
+    # The only states a refusal leaves behind are the author's own two: a rejected
+    # draft comes back to `draft` and can be edited again, and a withdrawn one is
+    # closed so the next change opens a fresh draft. Nothing is waiting on a decision
+    # that can no longer be answered.
+    #
+    # Returns `true`, like `render_draft_change` does: it has rendered a response and
+    # the caller must not fall through to the direct write underneath. `false` is
+    # reserved for a `direct` universe, where nothing here ran at all.
+    def refuse_submission_in_flight(draft)
+      sentence = t("drafts.submission_in_flight")
+
+      # The JSON workspaces read a `{ attribute => [messages] }` body, and `base` is the
+      # one attribute that has no field beside it: a record-level message belongs in the
+      # summary, which is where the shared editor puts anything it cannot attach to an
+      # input. A sentence that starts with a capital letter is printed as the server
+      # wrote it rather than folded into "the character …".
+      return render json: { base: [ sentence ] }, status: :unprocessable_content if request.format.json?
+
+      redirect_to universe_draft_path(universe_slug: Current.universe.slug, id: draft),
+        alert: sentence, status: draft_redirect_status
     end
 
     # The draft this change joins: the author's open one in this universe, or a new

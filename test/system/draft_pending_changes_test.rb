@@ -140,8 +140,11 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
     # Somebody else's pending work is not a page this reader may read, and it is
     # not shown to them either: a badge on a shared record would announce that
     # somebody is mid-edit.
+    # The account menu, named rather than found by class: the navbar carries the
+    # notifications bell as a second dropdown toggle, so `.dropdown-toggle` is
+    # ambiguous for a signed-in reader.
     within "nav.navbar" do
-      find(".dropdown-toggle").click
+      find(".dropdown-toggle", text: "Account").click
       click_on "Log out"
     end
     visit universe_characters_path(universe_slug: @universe.slug)

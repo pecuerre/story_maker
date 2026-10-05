@@ -237,6 +237,106 @@ class ReviewWorkflowTest < ApplicationSystemTestCase
     assert_nil Character.find_by(name: "Withdrawn in the browser")
   end
 
+  # The two sides of the journey, in one piece of software
+  #
+  # The rows, the authorization and every refusal are `test/controllers/
+  # review_requests_controller_test.rb` and `notifications_controller_test.rb`'s. What only
+  # a browser shows is that the person who was handed something is **told** by a bell in
+  # the top bar rather than by having to know there is a queue — and that the person who
+  # handed it over is not told their own news.
+
+  test "the reviewer is told by the bell that a draft is waiting, and not told of their own decision" do
+    review_request = submitted_review_request("Announced in the browser")
+    sign_in_via_form(@owner)
+
+    # A reviewer arrives on the universe page, which is where they land, and the bell is
+    # already there: the queue is a place they choose to go, and the bell is what says
+    # there is something to go for.
+    visit universe_path(universe_slug: @universe.slug)
+
+    # The badge is on the button rather than inside the menu, so it is read before the
+    # menu is opened: it is the part of a collapsed navbar that has to say something.
+    assert_selector ".notification-badge", text: "1"
+    open_bell
+    assert_selector ".notification-menu .notification-item", text: /User Two submitted a draft/
+    press_control "See all notifications"
+
+    assert_selector "h1", text: "Notifications"
+    assert_selector ".notification-row", text: /User Two submitted a draft for review in Universe one/
+    # The notice is addressed to the reviewer, so it leads to the reviewer's own page.
+    assert_selector "a[href='#{universe_review_request_path(universe_slug: @universe.slug, id: review_request)}']"
+
+    press_control "Mark all as read"
+    assert_selector ".notification-row .notification-unread-badge", count: 0, wait: REFRESH_WAIT
+
+    visit universe_review_request_path(universe_slug: @universe.slug, id: review_request)
+    within ".review-request-approval" do
+      accept_confirm do
+        click_on "Approve changes"
+      end
+    end
+    assert_selector ".review-request-summary .badge", text: "Approved", wait: REFRESH_WAIT
+
+    # The reviewer made that decision, so there is nothing to tell them about it: the
+    # bell does not gain a row.
+    assert_selector ".notification-badge", count: 0
+  end
+
+  test "the author is told by the bell that their submission was answered" do
+    review_request = submitted_review_request("Answered in the browser")
+    sign_in_via_form(@owner)
+
+    visit universe_review_request_path(universe_slug: @universe.slug, id: review_request)
+    within ".review-request-rejection" do
+      fill_in "Why are you rejecting it?", with: "This name is the old one"
+      click_button "Reject and hand the draft back"
+    end
+    assert_selector ".review-request-summary .badge", text: "Rejected", wait: REFRESH_WAIT
+
+    sign_out_via_account
+    sign_in_via_form(@author)
+    visit universe_path(universe_slug: @universe.slug)
+
+    assert_selector ".notification-badge", text: "1"
+    open_bell
+    assert_selector ".notification-menu .notification-item", text: /User One rejected your submission/
+    press_control "See all notifications"
+
+    # The rejection's reason is the whole point of the notice, so it travels with it
+    # rather than making the author go and look.
+    assert_selector ".notification-row", text: /User One rejected your submission/
+    assert_selector ".notification-notes", text: "This name is the old one"
+    # And it leads to the author's own draft, which is where the submission's status
+    # lives — a notification is not an authorization.
+    assert_selector ".notification-row a[href='#{universe_draft_path(universe_slug: @universe.slug,
+      id: review_request.draft_id)}']"
+  end
+
+  test "an author whose draft is with a reviewer is told why their next change was refused" do
+    review_request = submitted_review_request("Refused in the browser")
+    sign_in_via_form(@author)
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    # The submission is in flight, so the remembering path refuses the next change in
+    # words rather than appending it to the draft a reviewer is reading. The modal's own
+    # flow is used, unmodified, because what the case proves is the sentence the editor
+    # is given by a `base` message: an error with no field behind it.
+    press_control "Add character"
+    within ".modal.show" do
+      # `type_into` rather than `fill_in` for the same reason `press_control` is used
+      # below: a keystroke that never focuses the field leaves the modal empty, and a
+      # save with an empty required name is refused by the browser rather than by the
+      # application — which would make this case pass for the wrong reason.
+      type_into "input[name='character[name]']", "Remembered after submitting"
+      press_control "Save character"
+    end
+
+    assert_selector ".modal-errors", text: /Your draft is with a reviewer/, wait: REFRESH_WAIT
+    assert_nil Character.find_by(name: "Remembered after submitting")
+    assert_equal 1, review_request.draft.reload.draft_changes.count,
+      "the refusal is what keeps the reviewed draft the submitted one"
+  end
+
   private
     # The one open draft in this universe, which is the author's: the partial unique
     # index on `[user_id, universe_id]` over the open statuses means there is exactly
@@ -268,6 +368,19 @@ class ReviewWorkflowTest < ApplicationSystemTestCase
       )
 
       draft.submit!
+    end
+
+    # The bell's dropdown opened through the page rather than through the driver.
+    #
+    # A Bootstrap dropdown is Bootstrap's own JavaScript acting on a click, and the
+    # driver's click is subject to the dropped-click race `press_control` below describes;
+    # the `toggle` event it dispatches is the same one a real click produces, which is
+    # what makes the menu appear.
+    def open_bell
+      page.execute_script(<<~JS)
+        document.querySelector('.notification-menu').closest('.dropdown')
+          .querySelector('[data-bs-toggle="dropdown"]').click()
+      JS
     end
 
     # The account menu's own control, which is a `button_to` inside a fixed navbar —

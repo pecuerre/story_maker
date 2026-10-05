@@ -203,7 +203,7 @@ scenes, which controllers answer which format, and the URL of every workspace �
 | Flow | Controllers | Behavior |
 |---|---|---|
 | JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; `create/update/destroy` answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts**, **draft_editing**, **review_requests** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts**, **draft_editing**, **review_requests**, **notifications** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 
 Every PATCH and DELETE in the HTML flow sends `status: :see_other`; a `create` is a POST, so its
 default 302 is correct. A 302 after a non-GET verb asks the browser to repeat the mutation as a GET
@@ -255,6 +255,22 @@ together, so the author gets their draft back with its changes. Both refuse a dr
 read, in words, rather than letting the exception escape as a 404, and both refuse a request that is no
 longer `pending` — which now includes a submission the author **withdrew** by discarding its draft.
 [conventions.md](conventions.md#the-reviewers-page) owns those pages.
+
+A change arriving while the author's draft is with a reviewer is **refused rather than appended** to it,
+again in the caller's own response shape — a `422` with a `base` message for a JSON editor, an HTML
+redirect carrying the sentence to the draft's page — because a change that lands after the submission
+message was written is work the submission never described, even though nothing about it was hidden.
+[conventions.md](conventions.md#the-drafts-page) owns that refusal and its two ways out.
+
+`NotificationsController` is how any of this reaches the person it is about. It is **not
+universe-scoped**, because a notification carries its own universe's slug and name in its payload and
+the person who was handed something and the person who handed it over are rarely on the same page: it
+is `GET /notifications` plus two POSTs, `read` and `read_all`, answering the HTML flow. Every action
+needs an account and the scope is `Current.user.notifications` — a notification has exactly one reader,
+so there is no CanCan rule to ask, and `Notification` is not a content class for the same reason `Draft`
+is not. Each notice is written inside the transaction that made the event.
+[conventions.md](conventions.md#notifications) owns who is told what, and the navbar bell that renders
+them is described in [features/navigation.md](features/navigation.md).
 
 `DraftEditingController` is the universe page's **Start editing** / **Stop editing** control: a singleton
 `resource` with a POST and a DELETE, the same shape `resource :session` uses. It answers the HTML flow —

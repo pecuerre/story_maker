@@ -164,14 +164,13 @@ heading uppercase.
 4. a responsive right utility navigation;
 5. a skip link and one shared floating toast region for flash messages.
 
-The navbar is intentionally small: three links, one search box, and the account menu. **What each
+The navbar is intentionally small: three links, one search box, and two actions. **What each
 entry contains and links to is in [features/navigation.md](features/navigation.md)** — read that for
 the entries; this is only the shell.
 
 A scope link is marked current with `.active` **and** `aria-current="page"` only on the page it points
-at, so the bar never claims a scope that is not the page being viewed. The account menu is the
-navbar's only Bootstrap dropdown, and the top bar issues no query of its own — the search box renders
-from what the page already knows and asks the engine only for what a reader types.
+at, so the bar never claims a scope that is not the page being viewed. The search box issues no query of
+its own — it renders from what the page already knows and asks the engine only for what a reader types.
 
 ### Search
 
@@ -194,6 +193,29 @@ are the white overlay composited onto the bar's color in Sass, because CSS canno
 onto the surface beneath it. What the browser still owns is left to the browser: a dropdown styled in
 every detail would be a custom listbox, which would cost the plain GET form that works without
 scripting.
+
+### The notifications bell
+
+The painted treatment only. What a notification is, who is told what, and why the figure is uncached are
+in [conventions.md](conventions.md#notifications) — read that for *why*; this is what it looks like.
+
+The bell is a `btn-outline-light` sized like the account menu beside it, with the icon followed by its
+unread count as a `badge` **inside the button's flex row** rather than pinned to a corner: a corner
+badge has nowhere to sit at the navbar's small size, and a count the reader can read beats a dot, whose
+whole answer is "something". The count uses tabular numerals so a bell going 9 → 10 does not shift the
+button. The menu is `dropdown-menu-dark`, aligned to the bar's trailing edge like the account menu, and
+the widest of the two — a notification is a sentence and an account line is a word.
+
+An **unread** entry is bolder rather than tinted. The menu is dark and every other tint on it is already
+a hover or active state, so weight is the one difference left that survives both themes. On the page,
+the same row is marked by a three-pixel `--um-primary-strong` edge on its inline start and the same
+bold sentence, because the list is where a reader reads the entries in order rather than scanning them.
+A row's moment is secondary text at a smaller size, and a reviewer's note is a further line in secondary
+text: three levels of loudness for three kinds of thing, and the middle one is the news.
+
+The menu's item wraps rather than truncating — `.dropdown-item` is single-line by default, which would
+cut a sentence off mid-word — and it carries no icon, because the action of a row is opening the thing
+it names rather than acting on it.
 
 The navbar is dark in both themes, so the box's colors are declared once and are **not** re-tinted by
 `data-bs-theme` — a widget that changed palette with the page theme inside an always-dark bar would

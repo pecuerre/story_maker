@@ -603,7 +603,108 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # A submission in flight
+  #
+  # `Draft::OPEN_STATUSES` is `%w[draft submitted]`, so a `github` author who kept
+  # editing after **Submit for review** used to have those changes appended to the draft
+  # a reviewer was reading — after the submission message was written, with nothing in
+  # the request saying which changes were in it when it was made. Nothing was hidden: the
+  # reviewer's page and the applier both read the draft live. What was lost is the
+  # guarantee that what was reviewed is what was submitted, and these are the refusals
+  # that restore it, in both response shapes.
+  #
+  # A `wikipedia` universe has no such state: nothing is ever submitted there, so the
+  # refusal belongs to `github` alone rather than to `draft_based?`.
+
+  test "a create is refused in words while a submission is waiting for a decision" do
+    collaboration_mode("github")
+    submitted = submit_draft
+
+    assert_no_difference [ -> { DraftChange.count }, -> { Character.count } ] do
+      post universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: NEW } }, as: :json
+    end
+
+    assert_response :unprocessable_content
+    # A `base` message is the one attribute with no field beside it, which is where a
+    # refusal that is not about one field belongs in an editor's error summary.
+    assert_equal [ I18n.t("drafts.submission_in_flight") ], response.parsed_body["base"]
+    assert_predicate submitted.draft.reload, :submitted?
+    assert_predicate submitted.reload, :pending?
+  end
+
+  test "an edit and a delete are refused while a submission is waiting, not only a create" do
+    collaboration_mode("github")
+    submit_draft
+
+    assert_no_difference -> { DraftChange.count } do
+      patch universe_character_url(universe_slug: @universe.slug, id: @character.id),
+        params: { character: { name: RENAMED } }, as: :json
+    end
+    assert_response :unprocessable_content
+
+    assert_no_difference -> { DraftChange.count } do
+      delete universe_character_url(universe_slug: @universe.slug, id: @character.id), as: :json
+    end
+    assert_response :unprocessable_content
+    assert_predicate @character.reload, :persisted?
+  end
+
+  test "the html flow refuses a change while a submission is waiting, and lands on the draft's page" do
+    collaboration_mode("github")
+    submitted = submit_draft
+
+    assert_no_difference [ -> { DraftChange.count }, -> { Ownership.count } ] do
+      post universe_ownerships_url(universe_slug: @universe.slug),
+        params: { ownership: { character_id: @character.id, item_id: @item.id } }
+    end
+
+    # The refusal says where the way out of it is, so the redirect is the page holding
+    # the **Discard** control that is the only way out of this state.
+    assert_redirected_to universe_draft_path(universe_slug: @universe.slug, id: submitted.draft_id)
+    assert_equal I18n.t("drafts.submission_in_flight"), flash[:alert]
+  end
+
+  test "a rejected submission hands the draft back and it can be edited again" do
+    collaboration_mode("github")
+    submitted = submit_draft
+    submitted.reject!(users(:user_one), notes: "The name is the old one")
+
+    assert_predicate submitted.draft.reload, :draft?
+
+    patch universe_character_url(universe_slug: @universe.slug, id: @character.id),
+      params: { character: { name: RENAMED } }, as: :json
+
+    assert_response :accepted
+    assert_equal RENAMED, last_change.payload["name"]
+  end
+
+  test "a withdrawn submission closes the draft and the next change opens a fresh one" do
+    collaboration_mode("github")
+    submitted = submit_draft
+    submitted.withdraw!
+
+    assert_predicate submitted.draft.reload, :discarded?
+
+    post universe_characters_url(universe_slug: @universe.slug),
+      params: { character: { name: NEW } }, as: :json
+
+    assert_response :accepted
+    assert_predicate last_change.draft, :draft?
+    assert_not_equal submitted.draft_id, last_change.draft_id
+  end
+
   private
+
+    # A working draft with one remembered create, handed over in this universe — the
+    # state a change used to be appended to.
+    def submit_draft
+      draft = Draft.create!(user: users(:user_one), universe: @universe)
+      draft.draft_changes.create!(action: "create", record_type: "Character", record_id: nil,
+        base_version: nil, payload: { "name" => "A remembered character" })
+
+      draft.submit!
+    end
 
     def collaboration_mode(mode)
       @universe.update!(collaboration_mode: mode)

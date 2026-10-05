@@ -42,6 +42,12 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Owners and admins can see who has changed a universe.** The sidebar's **Collaborators** entry lists
+  everybody who has applied or discarded a draft here with the number of changes they remembered, and
+  each row leads to that person's history — the universe's change history narrowed to one author.
+- **A universe has a change history.** Owners and admins open every closed draft in the universe grouped
+  by the day it closed, each change drawn as the same row a draft's own page shows. A discarded draft is
+  listed too, and says that nothing was written.
 - **A page says so when another reader's write changes what it would show.** A signed websocket stream
   per universe, per thread, and per reader publishes a refresh rather than content, so the page is
   re-read in the reader's own session and language.
@@ -63,6 +69,11 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Pending changes lists pending work only.** The drafts list is scoped to the open statuses, so an
+  applied or discarded draft is no longer a row there; its own page still says what became of it.
+- **The Collaboration sidebar group no longer offers Conflicts, Branches, or Forks.** Three
+  `aria-disabled` entries with no model and no product decision behind them are gone; Collaborators is
+  held for the page that will replace it.
 - **The test environment's cable adapter is `async` rather than `test`,** so a browser test can observe
   a real delivery instead of only a recorded broadcast.
 - **`User#universes` and `Universe#members` answer with the owner in them.** Both were membership-only
@@ -81,8 +92,20 @@ Labels used below, in the order their groups appear:
 - **A remembered create no longer asks for a record it does not have.** Resolving one was
   `WHERE id IS NULL`, on every row of every page that draws a draft.
 
+### fixed
+
+- **Signing in no longer logs its own form fields as unpermitted parameters.** `SessionsController#create`
+  read the two credentials with `params.permit` on the top-level params, so `authenticity_token` and
+  `commit` were named as unpermitted on every attempt; it reads them by name with `params.expect` now.
+
 ### docs
 
+- **Reading top-level params is no longer left to `params.permit`.** The conventions state why a bare
+  permit list names a form's own fields, and why several bare keys are destructured rather than
+  permitted together.
+
+- **The collaboration polish phase leaves the backlog with nothing pending.** Its three slices are
+  delivered and the decisions it deferred are open findings, not an unfinished item.
 - **The collaboration item's deliberate deferrals are now open findings.** Per-record conflict
   detection, a draft's linearity, in-app-only notification, plain-text discussion messages, and
   asynchronous explicit application each reach a reader today, so each is recorded as a verified open

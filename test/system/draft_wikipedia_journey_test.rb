@@ -110,18 +110,19 @@ class DraftWikipediaJourneyTest < ApplicationSystemTestCase
 
     # **The history the flash does not keep.** The toast above is the only report of
     # this run that a reader gets once; what an author comes back to is the draft's
-    # own page and the list it sits in, so the run has to be readable there too — and
-    # each change says what became of it beside the values it carried.
+    # own page, so the run has to be readable there — and each change says what
+    # became of it beside the values it carried.
     assert_selector ".draft-history", text: "Applied"
     assert_selector ".draft-history", text: "3 remembered changes are live"
     assert_selector ".draft-change .draft-change-outcome", text: "Live", count: 3
 
+    # **The applied draft has left the pending list.** That list answers "what is my
+    # pending work", and this draft is no longer pending, so it is not a row there —
+    # the draft's own page is where a reader looks for a run that already happened.
     visit universe_drafts_path(universe_slug: @universe.slug)
 
-    within ".entity-row", text: "3 remembered changes" do
-      assert_selector ".draft-history", text: "Applied"
-      assert_selector ".draft-history", text: "3 remembered changes are live"
-    end
+    assert_selector ".entity-row", count: 0
+    assert_no_selector ".draft-history"
 
     # **See them live**: the three pending rows are now three records, and each one
     # carries the controls a remembered create never had.

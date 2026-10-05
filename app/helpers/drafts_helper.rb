@@ -90,16 +90,19 @@ module DraftsHelper
   # **What a closed draft's history says**, as one line: when it stopped being
   # actionable, and what the run that closed it did to its changes.
   #
-  # Both surfaces that read a closed draft read it from here — the row in the
-  # drafts list and the summary on the draft's own page — because they are one
-  # fact about one draft, and two compositions of it is how a list and a page
-  # come to disagree about what an apply did (ADR 0024).
+  # **One surface reads it: the draft's own page.** It used to be two, because the
+  # drafts list carried closed drafts behind the pending ones; `index` is scoped to
+  # the open statuses now and history has its own page, which composes the same fact
+  # from the same columns rather than from this sentence. The helper stays rather than
+  # being inlined because the page is where a reader lands from the apply's own
+  # redirect, and because the history page will need this reading — a list that
+  # composed its own copy of the tally is how a page and a list come to disagree
+  # about what an apply did (ADR 0024).
   #
   # The counts come from the draft's own columns rather than from its outcome rows:
-  # the list prints one sentence for every row it renders, and a row that had to
-  # group the outcome table first would be the one list in the application that
-  # resolves per row. The rows themselves are what a draft's page draws per change,
-  # so both are stored by the same run in the same transaction.
+  # a list that had to group the outcome table first would be one list in the
+  # application that resolves per row. The rows themselves are what a draft's page
+  # draws per change, so both are stored by the same run in the same transaction.
   #
   # Nothing is said about a draft that is still open, and nothing about the
   # remembered values — those are the draft's own page, one row per change. This is

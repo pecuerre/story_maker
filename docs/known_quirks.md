@@ -176,9 +176,11 @@ See [`delivery_history.md`](delivery_history.md).
     closes its draft on the first run, and `DraftApplier` takes one draft's changes. This is
     consistent with the rest of the workflow rather than a gap in it — a change is append-only
     ([ADR 0019](adr/0019-collaboration-foundations.md)) and an apply is one transaction — and the
-    product decision of what a branch *is* has not been made. The right sidebar's **Branches** and
-    **Forks** entries stay `aria-disabled` placeholders for it, which is
-    [features/navigation.md](features/navigation.md)'s rule rather than a missing route.
+    product decision of what a branch *is* has not been made. Nothing in the navigation offers a
+    destination for it: the right sidebar's **Branches** and **Forks** placeholders were removed on
+    2026-10-05 as entries with no model and no decision behind them, which is
+    [features/navigation.md](features/navigation.md)'s rule against a link to a route that does not
+    exist rather than a claim that the workflow supports it.
 
 73. **Low — a notification reaches the bell only; nothing is delivered outside the application.**
     There is no email, no push, and no digest: a submission, a decision, or a reply is written as a

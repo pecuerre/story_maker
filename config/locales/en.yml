@@ -72,10 +72,14 @@ en:
       # not what the queue holds, so it is zero rather than absent once everything
       # has been decided.
       review_requests: "Review requests"
+      # What has happened in this universe. Gated on `admin` and on `draft_based?`:
+      # the page names every author who has closed a draft, and a `direct` universe
+      # has no runs to list.
+      history: "Change history"
+      # Who has done any of it, which is the change history read per person. Gated on
+      # `admin` and on `draft_based?` like the history beside it: it names every author
+      # who has closed a draft, and a `direct` universe has none.
       collaborators: "Collaborators"
-      conflicts: "Conflicts"
-      branches: "Branches"
-      forks: "Forks"
       analytics: "Analytics"
       insights: "Insights"
       reports: "Reports"
@@ -563,10 +567,11 @@ en:
         unplaceable: "The story or universe this change names is not part of this universe, so it could not be placed here."
         refused: "The universe would not accept this change, so nothing was written for it."
     # What a closed draft's history says: when it stopped being actionable, and what
-    # the run did. Read by `DraftsHelper#draft_history_sentence` for both the list
-    # row and the draft's own page, so the two cannot compose it differently. The
-    # first two keys are `_html` because the moment is a `<time>` element, and they
-    # are keyed by the stored `status` rather than by a second set of booleans.
+    # the run did. Read by `DraftsHelper#draft_history_sentence` for the draft's own
+    # page, and by the universe history page that lists closed drafts, so the two
+    # cannot compose it differently. The first two keys are `_html` because the
+    # moment is a `<time>` element, and they are keyed by the stored `status` rather
+    # than by a second set of booleans.
     history:
       applied_html: "Applied %{at}."
       discarded_html: "Discarded %{at}."
@@ -623,7 +628,7 @@ en:
           other: "and %{count} more changes"
     index:
       title: "Pending changes"
-      description: "Changes you have made in this universe that are remembered rather than written, and the drafts they belong to."
+      description: "Changes you have made in this universe that are remembered rather than written, and the drafts they belong to. Applied and discarded drafts are history and are not listed here."
       back: "Back to the universe"
       changes:
         one: "%{count} remembered change"
@@ -833,6 +838,55 @@ en:
     flash:
       rejected: "The submission was rejected and the draft was handed back to its author. Nothing was written."
       decided: "That review request has already been answered, so there is nothing left to decide about it."
+
+  # What happened to this universe's content: every closed draft, grouped by the day it
+  # closed. Owned by `HistoriesController`, which asks for `admin` because the list
+  # names every author who has ever closed a draft here.
+  #
+  # **A discarded draft is listed too, and its changes say they were never written.**
+  # Omitting it would answer "who changed this universe" with a list that silently
+  # drops the work somebody threw away, which is the half an admin is likelier to need.
+  histories:
+    index:
+      title: "Change history"
+      description: "Every draft that has been applied or discarded in this universe, newest first, grouped by the day it closed. A discarded draft is here too, and its changes were never written."
+      back: "Back to the universe"
+      empty_title: "Nothing has changed yet"
+      empty_description: "In a universe that remembers changes, each applied or discarded draft appears here once it has closed."
+    # The draft's own block heading inside a day. It is a count of remembered changes
+    # because that is the size of what happened, and it links to the draft's page for
+    # the values behind each row.
+    draft_changes:
+      one: "%{count} remembered change"
+      other: "%{count} remembered changes"
+
+  # Who has changed this universe, and what one of them changed. Owned by
+  # `CollaboratorsController`, which asks for `admin` because the list names every
+  # author who has ever closed a draft here — the change history's question, at a
+  # narrower scope.
+  collaborators:
+    index:
+      title: "Collaborators"
+      description: "Everybody who has applied or discarded a draft in this universe, with the number of changes they remembered. Their changes count whether they were written or thrown away."
+      back: "Back to the universe"
+      # The row's figure is remembered changes rather than runs, because that is what
+      # the reader is about to read on the other side of the link. A discarded draft's
+      # changes are counted: remembering a change here is collaborating here.
+      changes:
+        one: "%{count} remembered change"
+        other: "%{count} remembered changes"
+      # The row's one navigation, on the right as every list row carries it. The
+      # accessible name names the person, because the visible word cannot.
+      open: "History"
+      open_aria: "History for %{name}"
+      empty_title: "Nobody has changed anything yet"
+      empty_description: "When an author applies or discards a draft in this universe, they appear here with the changes they remembered."
+    show:
+      title: "%{name}'s changes"
+      description: "Every draft this person applied or discarded in this universe, newest first, grouped by the day it closed. A discarded draft is here too, and its changes were never written."
+      back: "All collaborators"
+      empty_title: "Nothing here any more"
+      empty_description: "This person's runs in this universe are no longer listed."
 
   # What was said to this reader while they were somewhere else. The three sentences
   # are `Notification::KINDS`, one each, because they are what the bell and the list
@@ -2339,6 +2393,12 @@ en:
   notification:
     one: "notification"
     other: "notifications"
+  # One person who has changed a universe, for the same reason: the noun beside the
+  # collaborators list's own badge and beside the sidebar's figure, which counts people
+  # rather than the runs the history entry counts.
+  collaborator:
+    one: "collaborator"
+    other: "collaborators"
 
   # The subject of a record-level error, keyed by the `model_param` a controller
   # already holds. Both browser editors print a `base` message as a sentence

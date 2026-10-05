@@ -47,16 +47,59 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
       count: 0
   end
 
-  test "the draft that can still be acted on is the first one in the list" do
+  test "the list carries pending work only, and a closed draft has left it" do
     history = draft_with(remember_create_payload("Applied"), closed: "applied")
+    discarded = draft_with(remember_create_payload("Discarded"), closed: "discarded")
     open = draft_with(remember_create_payload("Still open"))
 
     get universe_drafts_url(universe_slug: @universe.slug)
 
     assert_response :success
-    # Read in the order the page renders them: the actionable draft first, then
-    # the history, each newest-first inside its own group.
-    assert_equal [ open.id, history.id ], css_select(".entity-row a.btn-outline-secondary").map { |link| link["href"].split("/").last.to_i }
+    # This page answers "what is my pending work", so a draft that can no longer be
+    # acted on is not on it. History has its own page; this is not the place a reader
+    # looks for a run that already happened.
+    assert_select ".content-surface .entity-row", count: 1
+    assert_select "a[href=?]", universe_draft_path(universe_slug: @universe.slug, id: open), count: 1
+    assert_select "a[href=?]", universe_draft_path(universe_slug: @universe.slug, id: history), count: 0
+    assert_select "a[href=?]", universe_draft_path(universe_slug: @universe.slug, id: discarded), count: 0
+  end
+
+  test "a closed draft is still on its own page and still refuses to be applied" do
+    # **The list dropping a closed draft is not the same as losing it.** `index` is
+    # scoped to the open statuses; the lookup `set_draft` uses is not, because a
+    # closed draft still has a page that says what its run did and still has to be
+    # refused in words rather than as a 404.
+    target = draft_with(remember_create_payload, closed: "applied")
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select ".draft-history", text: /Applied/
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :see_other
+    assert_predicate target.reload, :applied?
+  end
+
+  test "the pending list holds at most one draft, because one open draft is the rule" do
+    # **There is nothing to order.** The partial unique index on
+    # `[user_id, universe_id]` covers the open statuses, and both `draft` and
+    # `submitted` are open, so a reader can hold at most one actionable draft in one
+    # universe (ADR 0022). The list is that one row. This is asserted rather than left
+    # implicit because "the list shows this author's drafts" reads as though there
+    # were several, and a second one is a refused write rather than a row.
+    target = draft_with(remember_create_payload("Still open"))
+
+    get universe_drafts_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".content-surface .entity-row", count: 1
+    assert_select "a[href=?]", universe_draft_path(universe_slug: @universe.slug, id: target), count: 1
+
+    assert_raises ActiveRecord::RecordNotUnique do
+      Draft.create!(user: @user, universe: @universe)
+    end
   end
 
   test "an author with no drafts is told the list is empty" do
@@ -196,40 +239,42 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   #
   # Before this, an apply's outcome existed only in the flash that followed it, so an
   # applied draft was a row that said when its changes were *remembered* and nothing
-  # about what became of them. What is asserted here is that both surfaces now say
-  # it, that they say the same thing, and that each change's own row says what
-  # became of it — the whole of finding 64.
+  # about what became of them. What is asserted here is that a closed draft still says
+  # what became of it, and that each change's own row says what became of *it* — the
+  # whole of finding 64.
+  #
+  # **One surface carries the sentence now.** The drafts list used to print a closed
+  # draft's row below the pending ones, and both surfaces read the same helper so they
+  # could not disagree; `index` is scoped to the open statuses and the history has its
+  # own page, so the helper has one reader here and the list says nothing about a run.
 
-  test "a closed draft in the list says when it was closed and what its run did" do
+  test "a closed draft's own page says when it was closed and what its run did" do
     applied = draft_with(remember_create_payload, remember_create_payload("Second"), closed: "applied")
     applied.update!(closed_at: 3.days.ago, applied_count: 2)
-    draft_with(remember_create_payload("Waiting"))
 
-    get universe_drafts_url(universe_slug: @universe.slug)
+    get universe_draft_url(universe_slug: @universe.slug, id: applied)
 
     assert_response :success
-    history = css_select(".entity-row .draft-history").first.text
+    history = css_select(".draft-history").first.text
     # The moment the draft stopped being actionable, and the tally of what the run
-    # wrote. The remembered-at line above it is still there: a draft's history
-    # does not replace what it remembered, it says what became of it.
+    # wrote. This is the whole of what a closed draft says: it has left the pending
+    # list, so its own page is where the answer lives.
     assert_match(/Applied/, history)
     assert_match(/#{Regexp.escape(I18n.l(3.days.ago, format: :short))}/, history)
     assert_match(/2 remembered changes are live/, history)
   end
 
-  test "a closed draft's own page says the same history as its list row" do
-    target = draft_with(remember_create_payload, closed: "applied")
-    target.update!(closed_at: 2.days.ago, applied_count: 1)
+  test "the pending list says nothing about a closed draft's history" do
+    draft_with(remember_create_payload, closed: "applied")
+    draft_with(remember_create_payload("Waiting"))
 
     get universe_drafts_url(universe_slug: @universe.slug)
-    listed = css_select(".entity-row .draft-history").first.text.squish
-    get universe_draft_url(universe_slug: @universe.slug, id: target)
-    shown = css_select(".draft-history").first.text.squish
 
-    # One sentence for one fact, read by one helper: a list and a page that composed
-    # their own would eventually disagree about what an apply did.
-    assert_equal listed, shown
-    assert_match(/1 remembered change is live/, shown)
+    assert_response :success
+    # One row, and it carries no history sentence: every row here can still be acted
+    # on, so there is no run to report.
+    assert_select ".entity-row", count: 1
+    assert_select ".draft-history", count: 0
   end
 
   test "each remembered change says what became of it once the apply has decided" do

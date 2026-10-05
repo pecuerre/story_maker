@@ -1,0 +1,70 @@
+<%# One day of a universe's change history: every draft that closed on it, and every
+    change each of those drafts remembered.
+
+    **This partial is the shared half of the history surfaces.** The universe history
+    page and the per-person one below **Collaborators** are the same reading at two
+    scopes — one universe, and one author inside it — so the day grouping is here once
+    rather than composed twice. A second copy is how two pages end up disagreeing about
+    what a day contained, which is the same reason `drafts/_change` and
+    `DraftsHelper#draft_history_sentence` are each shared.
+
+    `changes` is the whole page's change collection, not this day's. It is passed down
+    as the `changes` local of every `drafts/_change` row so that all of them share one
+    `DraftChanges::Reader`: one query per record class for the page rather than one per
+    row, which is finding 66 and the reason a universe-wide list is where that cost
+    actually shows up. A day is a slice of the page, not a self-contained collection.
+
+    **The date is `closed_at`, the day the run happened**, and the moment inside it is
+    printed by the same helper that prints it on a draft's own page, so this page and
+    that one cannot report two different times for one run. It is deliberately not a
+    change's own `created_at`, which is when it was first remembered and can be days
+    before it became live.
+
+    `show_author` is false on the per-person page below **Collaborators**, whose own
+    heading is the author's name: a row repeating it once per run is the same fact
+    printed N times, and on that page it is the page's subject rather than a finding. %>
+<% show_author = local_assigns.fetch(:show_author, true) %>
+<% day = local_assigns.fetch(:day) %>
+<% drafts = local_assigns.fetch(:drafts) %>
+<% changes = local_assigns.fetch(:changes) %>
+<section class="history-day" aria-labelledby="history-day-<%= day.iso8601 %>">
+  <h2 class="history-day-heading h5" id="history-day-<%= day.iso8601 %>">
+    <time datetime="<%= day.iso8601 %>"><%= l day, format: :long %></time>
+  </h2>
+
+  <% drafts.each do |draft| %>
+    <%# **The run is a block, not a row of the list the changes sit in.** `drafts/_change`
+        renders `list-group-item`s, and a list-group-item nested inside another one picks
+        up the parent's padding and border and reads as a row inside a row. So the run's
+        own heading is a plain container and the changes are the list, which is the
+        shape `drafts/show` already uses for the same partial. %>
+    <article class="history-draft content-surface">
+      <header class="history-draft-header d-flex align-items-center gap-2 flex-wrap">
+        <%# The run's own heading links to the draft's page, which is where the full
+            payload of each change is read: this list is the day, and a reader who wants
+            the values behind a row follows the run. %>
+        <%= link_to t("histories.draft_changes", count: draft.draft_changes.size),
+          universe_draft_path(universe_slug: Current.universe.slug, id: draft),
+          class: "entity-title" %>
+        <span class="badge rounded-pill text-bg-light border"><%= t("drafts.statuses.#{draft.status}") %></span>
+        <%# Who closed it, where the page is not already about one person. %>
+        <% if show_author %>
+          <span class="small text-body-secondary"><%= draft.user.name %></span>
+        <% end %>
+      </header>
+
+      <%# The same sentence the draft's own page prints, from the same helper: one run,
+          one report, whether it is read here or there. %>
+      <p class="history-draft-history entity-description draft-history">
+        <%= draft_history_sentence(draft) %>
+      </p>
+    </article>
+
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <%= render partial: "drafts/change", collection: draft.draft_changes, as: :change,
+          locals: { changes: changes } %>
+      </div>
+    </div>
+  <% end %>
+</section>

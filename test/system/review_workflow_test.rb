@@ -227,12 +227,21 @@ class ReviewWorkflowTest < ApplicationSystemTestCase
     # dialog the driver would otherwise have to catch.
     page.execute_script("document.querySelector('form[action$=\"/discard\"]').submit()")
 
-    # The author's own list is where a withdrawal is noticed: the draft is closed, so
-    # the row is history rather than work, and the handover is not offered again.
+    # **A withdrawal closes the draft, and a closed draft is not pending.** The
+    # author's list is where that is noticed, and what it shows is the absence of the
+    # row rather than a Discarded one: the list is scoped to the open statuses, so a
+    # withdrawn draft has left it, and the handover is not offered again anywhere.
     assert_selector "h1", text: "Pending changes"
-    assert_selector ".entity-row", text: "1 remembered change", wait: REFRESH_WAIT
-    assert_selector ".entity-row .badge", text: "Discarded"
+    assert_no_selector ".entity-row"
     assert_no_selector ".entity-row button", text: "Submit for review"
+
+    # **The draft is still there and still says so.** It went to the draft's own page,
+    # not to nothing, which is what "discarding a submitted draft withdraws the
+    # submission with it" has to mean for the author who did it.
+    visit universe_draft_path(universe_slug: @universe.slug, id: request_record.draft)
+
+    assert_selector ".draft-summary .badge", text: "Discarded", wait: REFRESH_WAIT
+    assert_selector ".draft-history", text: /Nothing was written/
     assert_predicate request_record.reload, :withdrawn?
     assert_nil Character.find_by(name: "Withdrawn in the browser")
   end

@@ -73,6 +73,16 @@ class Draft < ApplicationRecord
 
   scope :open, -> { where(status: OPEN_STATUSES) }
 
+  # **The statuses a draft can no longer be acted on**, which is the complement of
+  # `OPEN_STATUSES` and is stated here as `where.not` rather than as a second list.
+  # A closed draft is history — it stopped being actionable at `closed_at` and its
+  # changes either became live or never did — and this scope is what the universe's
+  # history page reads. Spelling the two statuses out again would be a list that can
+  # fall behind `OPEN_STATUSES`: a fourth status added to that list would silently
+  # still be counted as history here, which is the wrong way round, since the error
+  # would report a draft nobody can act on as a finished run.
+  scope :closed, -> { where.not(status: OPEN_STATUSES) }
+
   # The one draft an author is working in inside one universe, or nil when there is
   # none. There can only be one: the partial unique index refuses a second open
   # draft for the same author and universe, so this is a lookup rather than a

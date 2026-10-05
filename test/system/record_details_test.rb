@@ -97,5 +97,18 @@ class RecordDetailsTest < ApplicationSystemTestCase
     within "aside.right-sidebar" do
       assert_selector "a.sidebar-placeholder-link[aria-disabled='true']", minimum: 1
     end
+
+    # **Where the remaining placeholders are, not merely that some exist.** The
+    # Collaboration group's Conflicts, Branches, and Forks entries were removed as
+    # noise with no model behind them, so the placeholders that are left belong to
+    # the Analytics and AI groups. Asserting only a count would let the
+    # Collaboration group quietly regain one.
+    within "aside.right-sidebar section[aria-labelledby='analytics-tools-title']" do
+      assert_selector "a.sidebar-placeholder-link[aria-disabled='true']", minimum: 1
+    end
+
+    within "aside.right-sidebar section[aria-labelledby='collaboration-tools-title']" do
+      assert_no_selector "a.sidebar-placeholder-link"
+    end
   end
 end

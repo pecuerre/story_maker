@@ -112,17 +112,40 @@ then the sections that follow it:
   would otherwise have to open the draft to find out whether anything is waiting at all. It is a **glance,
   not a second drafts page**: each row resolves the record its change names, so it is capped at
   `DraftPreview::PANEL_LIMIT` and the remainder is counted rather than dropped, and it renders at **zero** as
-  well as at any count. The **Review requests** entry described below follows it, and the **Collaborators**,
-  **Conflicts**, **Branches**, and **Forks** placeholders close the group, for which no model or route
-  exists yet. The live block is first because it is the one a reader
+  well as at any count. The **Review requests** entry described below follows it, and nothing closes the
+  group: its **Collaborators**, **Conflicts**, **Branches**, and **Forks** placeholders were removed on
+  2026-10-05, because an entry with no route is noise rather than a promise, and **Collaborators** is
+  reserved for the page that will replace it. The live block is first because it is the one a reader
   arrives at from the flash that told them their change was remembered; an editor who cannot find that
   change has no way to apply or throw it away. Its presence is **not** conditional on the reader having
-  something pending — it is also how a reader reaches the drafts list's history, and a navigation entry
+  something pending — it is also how a reader reaches the drafts list, and a navigation entry
   that appears and disappears with a count needs an explanation whenever it is absent. The panel is its own
   `<li>` beside the link rather than around it, because the shared link partial is itself a list item and
   a `<li>` inside a `<li>` is hoisted back out by the parser. The **Start editing** / **Stop editing**
   control on the universe page is a second way in, and it is the one that opens a draft; both belong to the
   universe workspace rather than to either sidebar.
+- **Change history**: the universe's closed drafts, grouped by the day each one closed, and the
+  third kind of answer in this group — not the reader's own work, not what a reviewer must decide, but
+  what the universe already holds. It is gated on **admin**, because the page names every author who
+  has closed a draft here, and it asks for the same reason the review queue does: a list of other
+  people's work is itself an answer. It is additionally gated on the universe's collaboration mode being
+  draft-based, because a `direct` universe remembers nothing and so has no runs to list — the entry
+  could only ever lead to an empty page. Its figure counts **closed drafts**, applied and discarded
+  alike, because the page groups by draft and a draft is the row it draws; it is **uncached**, for
+  the review queue's reason, since it moves on the very request that ran an apply. Both of its rows
+  are the ones `drafts/_change` already renders, and its day heading is the draft's `closed_at` rather
+  than a change's own `created_at`, which is when it was first remembered and can be days earlier.
+- **Collaborators**: who has changed this universe, each with the number of changes they remembered,
+  and a per-person page that is the change history above narrowed to that author — the same
+  `histories/_day` grouping and the same `drafts/_change` rows, with the author's own name omitted
+  because the page's heading is already that name. It shares the history's two gates: **admin**,
+  because the list names every author who has closed a draft here, and a draft-based collaboration
+  mode, because a `direct` universe has none. Its figure counts **people** while the history's counts
+  **runs**, which is the whole reason these are two entries rather than one filtered page: a reader
+  has to be able to ask "how many of us have worked here" and "how much has happened" and get an
+  answer to each. A collaborator is read from **closed drafts**, not from memberships — a member who
+  has changed nothing has not collaborated, and a writer in a public universe never gets a membership
+  row at all. A person who has not collaborated here is a **404**, not an empty page.
 - **Review requests**: the reviewer's queue, and the one entry in this group that answers for the reader
   rather than about them. It is gated on **admin**, which is the whole of `review_requests`'s
   authorization (`review_requests` and `memberships` are the two controllers whose every action asks for

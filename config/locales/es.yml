@@ -67,10 +67,15 @@ es:
       # esperando, no lo que la cola guarda, así que queda en cero en lugar de
       # desaparecer cuando ya no hay nada por decidir.
       review_requests: "Solicitudes de revisión"
+      # Qué ha pasado en este universo. Solo aparece con `admin` y con
+      # `draft_based?`: la página nombra a cada autor que ha cerrado un borrador, y un
+      # universo `direct` no tiene ninguna aplicación que listar.
+      history: "Historial de cambios"
+      # Quién ha hecho todo eso, que es el historial de cambios leído por persona.
+      # Solo aparece con `admin` y con `draft_based?` como el historial que tiene
+      # al lado: nombra a cada autor que ha cerrado un borrador, y un universo
+      # `direct` no tiene ninguno.
       collaborators: "Colaboradores"
-      conflicts: "Conflictos"
-      branches: "Ramas"
-      forks: "Bifurcaciones"
       analytics: "Análisis"
       insights: "Descubrimientos"
       reports: "Informes"
@@ -534,11 +539,11 @@ es:
         refused: "El universo no ha aceptado este cambio, así que no se escribió nada para él."
     # Lo que dice el historial de un borrador cerrado: cuándo dejó de poder actuar
     # sobre él y qué hizo la aplicación. Lo lee
-    # `DraftsHelper#draft_history_sentence` tanto para la fila de la lista como
-    # para la página del propio borrador, así que las dos no pueden componerlo de
-    # forma distinta. Las dos primeras claves son `_html` porque el momento es un
-    # elemento `<time>`, y van indexadas por el `status` almacenado y no por un
-    # segundo conjunto de booleanos.
+    # `DraftsHelper#draft_history_sentence` para la página del propio borrador y la
+    # página de historial del universo que lista los borradores cerrados, así que las
+    # dos no pueden componerlo de forma distinta. Las dos primeras claves son `_html`
+    # porque el momento es un elemento `<time>`, y van indexadas por el `status`
+    # almacenado y no por un segundo conjunto de booleanos.
     history:
       applied_html: "Aplicado %{at}."
       discarded_html: "Descartado %{at}."
@@ -580,7 +585,7 @@ es:
         submit: "Entrega el borrador a quien lo revise, que lo aprobará o lo devolverá con un motivo. No se escribe nada hasta que lo apruebe."
     index:
       title: "Cambios pendientes"
-      description: "Los cambios que has hecho en este universo y que se recuerdan en lugar de escribirse, con los borradores a los que pertenecen."
+      description: "Los cambios que has hecho en este universo y que se recuerdan en lugar de escribirse, con los borradores a los que pertenecen. Los borradores aplicados y descartados son historial y no se listan aquí."
       back: "Volver al universo"
       changes:
         one: "%{count} cambio recordado"
@@ -801,6 +806,55 @@ es:
     flash:
       rejected: "El envío se rechazó y el borrador volvió a manos de su autor. No se escribió nada."
       decided: "Esa solicitud de revisión ya se respondió, así que no queda nada que decidir sobre ella."
+
+  # Qué pasó con el contenido de este universo: cada borrador cerrado, agrupado por el
+  # día en que se cerró. Lo posee `HistoriesController`, que pide `admin` porque la
+  # lista nombra a cada autor que ha cerrado un borrador aquí.
+  #
+  # **Un borrador descartado también aparece, y sus cambios dicen que nunca se
+  # escribieron.** Omitlo respondería "¿quién cambió este universo?" con una lista que
+  # descarta en silencio el trabajo que alguien tiró, que es justo la mitad que un
+  # administrador necesita más.
+  histories:
+    index:
+      title: "Historial de cambios"
+      description: "Cada borrador que se ha aplicado o descartado en este universo, del más reciente al más antiguo, agrupado por el día en que se cerró. Los borradores descartados también aparecen aquí, y sus cambios nunca se escribieron."
+      back: "Volver al universo"
+      empty_title: "Todavía no ha cambiado nada"
+      empty_description: "En un universo que recuerda cambios, cada borrador aplicado o descartado aparece aquí una vez cerrado."
+    # El encabezado del bloque de un borrador dentro de un día. Es un conteo de
+    # cambios recordados porque ese es el tamaño de lo que pasó, y enlaza a la página
+    # del borrador para los valores detrás de cada fila.
+    draft_changes:
+      one: "%{count} cambio recordado"
+      other: "%{count} cambios recordados"
+
+  # Quién ha cambiado este universo, y qué cambió uno de ellos. Lo posee
+  # `CollaboratorsController`, que pide `admin` porque la lista nombra a cada autor que
+  # ha cerrado un borrador aquí: la pregunta del historial de cambios, más estrecha.
+  collaborators:
+    index:
+      title: "Colaboradores"
+      description: "Todo el que ha aplicado o descartado un borrador en este universo, con el número de cambios que recordó. Sus cambios cuentan tanto si se escribieron como si se tiraron."
+      back: "Volver al universo"
+      # La cifra de la fila son cambios recordados y no ejecuciones, porque eso es lo
+      # que el lector va a leer al otro lado del enlace. Los cambios de un borrador
+      # descartado cuentan: recordar un cambio aquí es colaborar aquí.
+      changes:
+        one: "%{count} cambio recordado"
+        other: "%{count} cambios recordados"
+      # La única navegación de la fila, a la derecha como en cualquier otra fila de
+      # lista. El nombre accesible nombra a la persona, porque la palabra visible no puede.
+      open: "Historial"
+      open_aria: "Historial de %{name}"
+      empty_title: "Todavía no ha cambiado nada nadie"
+      empty_description: "Cuando alguien aplique o descarte un borrador en este universo, aparece aquí con los cambios que recordó."
+    show:
+      title: "Cambios de %{name}"
+      description: "Cada borrador que esta persona aplicó o descartó en este universo, del más reciente al más antiguo, agrupado por el día en que se cerró. Los borradores descartados también aparecen, y sus cambios nunca se escribieron."
+      back: "Todos los colaboradores"
+      empty_title: "Aquí ya no queda nada"
+      empty_description: "Las ejecuciones de esta persona en este universo ya no se listan."
 
   # Lo que se le dijo a este lector mientras estaba en otro sitio. Las tres frases son
   # `Notification::KINDS`, una por cada tipo, y **no** son claves `_html`: los valores
@@ -2249,6 +2303,12 @@ es:
   notification:
     one: "notificación"
     other: "notificaciones"
+  # Una persona que ha cambiado un universo, por el mismo motivo: el sustantivo junto
+  # a la insignia de la lista de colaboradores y junto a la cifra de la barra lateral,
+  # que cuenta personas y no las ejecuciones que cuenta la entrada del historial.
+  collaborator:
+    one: "colaborador"
+    other: "colaboradores"
 
   # El sujeto de un error de registro, con la clave `model_param` que un
   # controlador ya tiene. Los dos editores del navegador imprimen un mensaje
@@ -2322,10 +2382,17 @@ es:
   # (`time.formats.short`) rather than a Spanish word order: it is a moment in a
   # conversation, not a sentence, and the day and the clock time are the parts a
   # reader scans for.
+  #
+  # `date.formats.long` is the change history's day heading, written with
+  # `l date, format: :long` and deliberately **not** a Spanish word order either: a
+  # heading reads as a label for the group under it rather than as a sentence, and
+  # `%e de %B de %Y` would be a Spanish order the rest of the interface does not use.
   time:
     formats:
       short: "%d %b %H:%M"
   date:
+    formats:
+      long: "%d %B %Y"
     abbr_month_names: [~, "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
     month_names: [~, "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
       "septiembre", "octubre", "noviembre", "diciembre"]

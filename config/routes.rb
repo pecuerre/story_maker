@@ -110,6 +110,18 @@ Rails.application.routes.draw do
       post :approve, on: :member
       post :reject, on: :member
     end
+    # What happened to this universe's content: every closed draft, grouped by the day
+    # it closed. A `get` and not a `resources` collection, because there is one page
+    # and no member of its own to address — the drafts it lists already have theirs.
+    # It asks for `admin` on the universe, like the review queue, because it reads
+    # every author's work rather than the reader's own pending work.
+    get "history", to: "histories#index", as: :history
+    # Who has changed this universe, and what one of them changed. Two reads rather
+    # than one page with a filter: the sidebar figure has to count people and the
+    # list's own figure has to count changes, and a filtered universe-wide page would
+    # have to be right about both in its chrome. The per-person page is the change
+    # history narrowed to an author, and it asks for `admin` like the history it reuses.
+    resources :collaborators, only: %i[ index show ]
     # Whether this reader is editing this universe right now. It is a session
     # claim rather than a record, so it is a singleton `resource` with the two
     # verbs that begin and end one — the same shape `resource :session` uses for

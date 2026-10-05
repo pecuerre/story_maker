@@ -41,46 +41,34 @@
               <%= t("drafts.index.remembered_at_html",
                 at: time_tag(draft.created_at, l(draft.created_at, format: :short))) %>
             </div>
-
-            <%# What a closed draft is for, now that it cannot be acted on: when
-                it stopped being actionable and what its run did. An open draft has
-                no history yet, so the line is absent rather than empty — see
-                `DraftsHelper#draft_history_sentence`, which the draft's own page
-                reads the same sentence from. %>
-            <% if draft.closed? %>
-              <div class="entity-description draft-history">
-                <%= draft_history_sentence(draft) %>
-              </div>
-            <% end %>
           </div>
 
           <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
             <%= link_to t("drafts.index.review"), universe_draft_path(id: draft), class: "btn btn-sm btn-outline-secondary" %>
 
-            <%# An applied or discarded draft is history. Offering to apply or
-                discard it again would be offering a control that does nothing,
-                so the row only offers what the draft's own status allows — and in
-                a `github` universe the primary control is the handover rather than
+            <%# Every row here is open — `index` is scoped to the open statuses — so
+                these controls are unconditional. They were guarded by `draft.open?`
+                while the list also carried history; that guard belonged to the mixed
+                list, not to these buttons, which a closed draft simply never reached.
+
+                In a `github` universe the primary control is the handover rather than
                 the apply, for the reason the page states above the list. The list
-                submits without a message because the message is optional; the
-                draft's own page is where an author writes one, and its row says
-                so. %>
-            <% if draft.open? %>
-              <% if Current.universe.github? %>
-                <% if draft.draft? %>
-                  <%= button_to t("drafts.index.submit"), submit_universe_draft_path(id: draft),
-                    class: "btn btn-sm btn-primary",
-                    data: { turbo_confirm: t("drafts.index.submit_confirm", count: draft.draft_changes.size) } %>
-                <% end %>
-              <% else %>
-                <%= button_to t("drafts.index.apply"), apply_universe_draft_path(id: draft),
+                submits without a message because the message is optional; the draft's
+                own page is where an author writes one, and its row says so. %>
+            <% if Current.universe.github? %>
+              <% if draft.draft? %>
+                <%= button_to t("drafts.index.submit"), submit_universe_draft_path(id: draft),
                   class: "btn btn-sm btn-primary",
-                  data: { turbo_confirm: t("drafts.index.apply_confirm", count: draft.draft_changes.size) } %>
+                  data: { turbo_confirm: t("drafts.index.submit_confirm", count: draft.draft_changes.size) } %>
               <% end %>
-              <%= button_to t("drafts.index.discard"), discard_universe_draft_path(id: draft),
-                class: "btn btn-sm btn-outline-danger",
-                data: { turbo_confirm: t("drafts.index.discard_confirm", count: draft.draft_changes.size) } %>
+            <% else %>
+              <%= button_to t("drafts.index.apply"), apply_universe_draft_path(id: draft),
+                class: "btn btn-sm btn-primary",
+                data: { turbo_confirm: t("drafts.index.apply_confirm", count: draft.draft_changes.size) } %>
             <% end %>
+            <%= button_to t("drafts.index.discard"), discard_universe_draft_path(id: draft),
+              class: "btn btn-sm btn-outline-danger",
+              data: { turbo_confirm: t("drafts.index.discard_confirm", count: draft.draft_changes.size) } %>
           </div>
         </div>
       <% end %>

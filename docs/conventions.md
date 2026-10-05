@@ -153,6 +153,13 @@ the same change, or `db:demo:check` fails.
   PhotoParams` and splat `*photo_params` into its `params.expect`, so the two virtual photo fields
   are declared once instead of in eighteen controllers; see
   [features/photos.md](features/photos.md).
+- Never read top-level params with `params.permit`. A form posts keys beyond the ones an action
+  needs — `authenticity_token` and `commit` on every Rails form — so permitting a bare list
+  classifies those as unpermitted and logs them on each request, which is noise that hides a real
+  unpermitted-parameter report. Read bare scalars by name instead: `params.expect(:email_address,
+  :password)` returns an Array when more than one key is asked for, so destructure it and pass the
+  values on by keyword. `expect` also calls `require`, so a missing or renamed field answers `400`
+  rather than authenticating against a `nil`.
 - Universe authorization is a three-level policy: `read`, `write`, and `admin`. Public universes
   grant guest read and signed-in write access; private universes require an owner or membership.
   A private-universe non-member, including a guest, receives 404 so slug enumeration cannot
@@ -550,11 +557,42 @@ stopped being actionable (`closed_at`, one column rather than one per closing re
 already names which closure it was) and the run's tally. Each change's own row adds the outcome the
 apply stored, beside the values it carries and never instead of them, because a change the universe
 refused is still what the author asked for and is still redoable by hand. The sentences are
-`drafts.history.*` and `drafts.outcomes.*`, and both surfaces read them through
-`DraftsHelper#draft_history_sentence` so the list and the page cannot compose the same fact
-separately. `DraftApplier` writes the moment, the tally, and one `DraftChangeOutcome` per change from
+`drafts.history.*` and `drafts.outcomes.*`, and every surface that reports a closed draft reads them
+through `DraftsHelper#draft_history_sentence` so the page and the history list cannot compose the same
+fact separately. The draft's own page is the only one of these on the pending-changes route: the list
+there is scoped to the open statuses. `DraftApplier` writes the moment, the tally, and one `DraftChangeOutcome` per change from
 a single `Result` inside its transaction; [ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)
 owns that decision, and `docs/data_model.md` owns the columns.
+
+**A closed draft is also reported by the universe's change history.** `HistoriesController` lists every
+closed draft in one universe, grouped by the day it closed, and each change is the same
+`drafts/_change` row the draft's own page draws — so a history list and a draft page cannot come to
+disagree about what a change said. The day grouping lives in **one** partial, `histories/_day`, because
+the per-person history under **Collaborators** is the same reading at a narrower scope; the date is the
+draft's `closed_at` rather than a change's own `created_at`, which is when it was first remembered and
+can be days before it became live. It asks for `admin`, like the review queue and not like the drafts
+pages: it names every author who has closed a draft here, and that is the review queue's question rather
+than the drafts pages' "may this person act on their own work". A **discarded** draft is listed, because
+omitting it would answer "who changed this universe" with a list that silently drops the work somebody
+threw away — nothing in the model marks those changes as never having existed, so the page reports the
+empty tally that `draft_history_sentence` already prints. **Both** the changes and the draft's author are
+preloaded: an association read in the view is one query per draft rather than one per author, and
+`draft_changes_query_count_test.rb` is what holds that.
+
+**A collaborator is an author with a closed draft, read from `drafts` and not from memberships.** A
+member who has changed nothing has not collaborated, and a writer in a public universe is never a
+member at all, so the membership table answers neither half. An open draft does not count either: it is
+pending work, it belongs to **Pending changes**, and it has not changed the universe yet. A
+**discarded** draft does count, because remembering a change here is collaborating here even when the
+run never wrote it, and the list's copy says so rather than leaving the number to be guessed at. The
+**Collaborators** page and its per-person page are the change history at a narrower scope, so they
+reuse `histories/_day` and `drafts/_change` rather than composing a second list; the two are separate
+pages rather than one filtered page because the sidebar figure has to count **people** and the list's
+own figure has to count **changes**, and one page would have to be right about both in its chrome. The
+per-person lookup is scoped through the universe's closed drafts, so "has not collaborated here" and
+"does not exist" are one **404** rather than an empty page confirming that a user id is somebody's at
+all. `Collaborators` is the query object behind both pages and its sidebar figure: two grouped counts
+and one load of the names, never an author resolved per row.
 
 **Both drafts pages carry the workflow in three steps.** `drafts/_workflow_guide` renders
 `drafts.guide` on the list and on a draft, because those two pages are one place in this workflow: the
@@ -582,8 +620,9 @@ to a person. An editor who is told their change was remembered and cannot then f
 see it, apply it, or throw it away; which block that entry belongs to is in
 [features/navigation.md](features/navigation.md). Neither the panel nor the entry's presence depends on
 the reader having something pending: it is how a reader with nothing pending reaches the drafts list,
-which is where a closed draft's history is kept, and a control that appears and disappears with a count
-is a control whose absence has to be explained. **The panel's rows are read in one pass** through
+and a control that appears and disappears with a count is a control whose absence has to be explained.
+That list is scoped to the open statuses, so it carries pending work only; a closed draft's history is
+read on the draft's own page and on the universe's history page. **The panel's rows are read in one pass** through
 `DraftChanges::Reader`, and capped by `DraftPreview::PANEL_LIMIT`: it is on every page, so its cost is
 every page rather than one, and both bounds are needed — a bounded five rows resolved one at a time is
 still five queries everywhere. The reading itself is in [Reading a draft's

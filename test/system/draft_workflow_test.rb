@@ -94,6 +94,12 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     assert_selector ".entity-row", text: "1 remembered change"
     click_on "Review"
 
+    # **The draft is found through the model, not through the address bar.** The
+    # row that carried it is about to leave the list, so this case has to come back
+    # to the draft afterwards, and there is exactly one draft for this author in this
+    # universe while it is open (ADR 0022).
+    draft = Draft.open_for(@user, @universe)
+
     assert_selector ".draft-change .entity-description", text: "Renamed in the browser"
     assert_selector ".draft-change a[href='#{character.search_url}']"
 
@@ -101,12 +107,21 @@ class DraftWorkflowTest < ApplicationSystemTestCase
       click_on "Discard draft"
     end
 
-    # The discarded draft stays in the list as history — a remembered change is
-    # append-only, so rejecting the draft is a status and not a deletion — and the
-    # row no longer offers anything to do with it.
-    assert_selector ".entity-row .badge", text: "Discarded", wait: REFRESH_WAIT
+    # **Discarding closes the draft, so it leaves the pending list.** The change is
+    # still remembered — a remembered change is append-only, so a discard is a status
+    # on the draft and not a deletion — and the draft's own page still lists it and
+    # says the decision. What the list no longer does is offer a row for a run that
+    # has already happened.
     assert_no_selector ".entity-row button", text: "Discard"
     assert_no_selector ".entity-row button", text: "Apply"
+    assert_no_selector ".entity-row .badge", text: "Discarded"
+
+    visit universe_draft_path(universe_slug: @universe.slug, id: draft.id)
+
+    assert_selector ".draft-summary .badge", text: "Discarded", wait: REFRESH_WAIT
+    assert_selector ".draft-history", text: /Discarded/
+    assert_selector ".draft-change", count: 1
+    assert_nil Character.find_by(name: "Renamed in the browser")
     assert_equal character.name, character.reload.name
   end
 

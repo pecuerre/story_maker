@@ -124,7 +124,13 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link[href=?]",
       universe_tags_path(universe_slug: @universe.slug)
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
-    assert_select "aside.right-sidebar a.sidebar-placeholder-link[href='#']", minimum: 3
+
+    # The Collaboration group keeps no placeholder. Conflicts, Branches, and Forks
+    # were removed as noise with no model and no product decision behind them, and
+    # Collaborators is reserved for the pages that will replace them, so what is
+    # left in this group is the two live entries above.
+    assert_select "aside.right-sidebar section[aria-labelledby='collaboration-tools-title'] a[href='#']", count: 0
+    assert_select "aside.right-sidebar section[aria-labelledby='collaboration-tools-title'] a.sidebar-placeholder-link", count: 0
   end
 
   test "the universe page is the story picker and owns New story" do

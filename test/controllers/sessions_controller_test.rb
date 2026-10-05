@@ -155,6 +155,29 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_nil cookies[:session_id]
   end
 
+  # The sign-in form posts `authenticity_token` and `commit` alongside the two
+  # credentials. Reading the credentials with `params.permit` on the top-level
+  # params treated both as unpermitted and logged them on every sign-in, so the
+  # two keys are read by name here instead.
+  test "signing in does not report the form's own fields as unpermitted parameters" do
+    unpermitted = []
+    subscriber = ActiveSupport::Notifications.subscribe("unpermitted_parameters.action_controller") do |*, payload|
+      unpermitted.concat(Array(payload[:keys]))
+    end
+
+    # A real browser posts both extra fields, so they are posted here too:
+    # an integration request adds no `authenticity_token` of its own.
+    post session_path, params: { email_address: @user.email_address,
+                                 password: "password",
+                                 authenticity_token: "token",
+                                 commit: "Sign in" }
+
+    assert_redirected_to root_path
+    assert_empty unpermitted
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
   test "destroy" do
     sign_in_as(User.take)
 

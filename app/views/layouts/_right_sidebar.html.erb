@@ -74,30 +74,36 @@
           count: pending_review_request_count,
           count_label: "request" %>
       <% end %>
-      <li>
-        <%= link_to icon_text_count("people", t("sidebar.tools.collaborators")), "#",
-          class: "sidebar-link sidebar-placeholder-link",
-          aria: { disabled: true },
-          data: { placeholder_link: true } %>
-      </li>
-      <li>
-        <%= link_to icon_text_count("exclamation-diamond", t("sidebar.tools.conflicts")), "#",
-          class: "sidebar-link sidebar-placeholder-link",
-          aria: { disabled: true },
-          data: { placeholder_link: true } %>
-      </li>
-      <li>
-        <%= link_to icon_text_count("diagram-2", t("sidebar.tools.branches")), "#",
-          class: "sidebar-link sidebar-placeholder-link",
-          aria: { disabled: true },
-          data: { placeholder_link: true } %>
-      </li>
-      <li>
-        <%= link_to icon_text_count("signpost-split", t("sidebar.tools.forks")), "#",
-          class: "sidebar-link sidebar-placeholder-link",
-          aria: { disabled: true },
-          data: { placeholder_link: true } %>
-      </li>
+
+      <%# What has happened in this universe, which is the third kind of answer in
+          this group: not the reader's own work, not what a reviewer must decide, but
+          what the universe already holds. It is gated on `admin` because the page
+          names every author who has closed a draft here, and on `draft_based?`
+          because a `direct` universe remembers nothing, so it has no runs to list —
+          the entry would lead to a page that can only ever be empty. %>
+      <% if can_administer_universe? && Current.universe.draft_based? %>
+        <%= render "shared/sidebar_link",
+          icon: "clock-history",
+          label: t("sidebar.tools.history"),
+          path: universe_history_path,
+          controllers: %i[ histories ],
+          count: closed_draft_count,
+          count_label: "draft" %>
+
+        <%# Who has done any of it. **This figure counts people and the one above
+            counts runs**, which is the whole reason these are two entries and not one
+            filtered page: a single figure cannot answer both "how many of us have
+            worked here" and "how much has happened". Same two gates as the history
+            beside it, for the same reasons — it names every author, and a `direct`
+            universe has none. %>
+        <%= render "shared/sidebar_link",
+          icon: "people",
+          label: t("sidebar.tools.collaborators"),
+          path: universe_collaborators_path,
+          controllers: %i[ collaborators ],
+          count: collaborator_count,
+          count_label: "collaborator" %>
+      <% end %>
     </ul>
   </section>
 

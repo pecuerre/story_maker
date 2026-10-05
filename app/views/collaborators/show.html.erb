@@ -1,0 +1,36 @@
+<% content_for :title, t("collaborators.show.title", name: @collaborator.name) %>
+
+<%= render "shared/page_header",
+  title: @collaborator.name,
+  eyebrow: Current.universe.name,
+  description: t("collaborators.show.description"),
+  count: @drafts.sum { |draft| draft.draft_changes.size },
+  count_label: "change" do %>
+  <%= link_to t("collaborators.show.back"), universe_collaborators_path,
+    class: "btn btn-outline-secondary" %>
+<% end %>
+
+<% if @drafts.any? %>
+  <%# **The universe's own history, narrowed to one author.** The day grouping is
+      `histories/_day` and the rows are `drafts/_change`, both shared with the
+      universe-wide page, and `show_author: false` because this page's heading is the
+      author's name. A second copy of this list would be a second answer to "what did
+      this person do here", which is the reason the two surfaces share rather than
+      repeat.
+
+      Grouped by day in Ruby, newest day first, for the history page's reason. %>
+  <% days = @drafts.group_by { |draft| draft.closed_at.to_date } %>
+
+  <% days.each do |day, drafts| %>
+    <%= render "histories/day", day: day, drafts: drafts, changes: @changes, show_author: false %>
+  <% end %>
+<% else %>
+  <%# Unreachable through the link, which only offers people who have closed a draft
+      here. It is rendered rather than assumed away, because a draft that was
+      **deleted** by a soft delete on its user would leave the row and the link behind
+      it disagreeing, and an empty page is a truer answer than a raise. %>
+  <%= render "shared/empty_state",
+    title: t("collaborators.show.empty_title"),
+    description: t("collaborators.show.empty_description"),
+    icon: "clock-history" %>
+<% end %>

@@ -1,0 +1,56 @@
+<% content_for :title, t("collaborators.index.title") %>
+
+<%= render "shared/page_header",
+  title: t("collaborators.index.title"),
+  eyebrow: Current.universe.name,
+  description: t("collaborators.index.description"),
+  count: @collaborators.size,
+  count_label: "collaborator" do %>
+  <%= link_to t("collaborators.index.back"), universe_path(Current.universe), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<% if @collaborators.any? %>
+  <div class="content-surface entity-list">
+    <div class="list-group list-group-flush">
+      <% @collaborators.each do |collaborator| %>
+        <div class="list-group-item entity-row collaborator-row d-flex align-items-center gap-3">
+          <div class="entity-copy flex-grow-1">
+            <%# **A plain name, not a link.** Every list row in this application names
+                its record in an `entity-title` span and puts the navigation on the
+                right as one explicit link, so a title that is also a link would be a
+                second destination on the row pointing at the same place. %>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="entity-title"><%= collaborator.user.name %></span>
+            </div>
+            <%# **The figure is remembered changes, not runs.** They are different
+                numbers and the change history's own sidebar entry counts runs, because
+                that page groups by run; this page's figure is about changes because
+                that is what the reader is about to read on the other side of the link.
+                A discarded draft's changes are in it — remembering a change is
+                collaborating here even when the run never wrote it. %>
+            <div class="entity-description">
+              <%= t("collaborators.index.changes", count: collaborator.changes) %>
+            </div>
+          </div>
+
+          <%= link_to universe_collaborator_path(
+              universe_slug: Current.universe.slug, id: collaborator.user),
+            class: "details-link",
+            aria: { label: t("collaborators.index.open_aria", name: collaborator.user.name) } do %>
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+            <span><%= t("collaborators.index.open") %></span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <%# **An empty list is the honest answer for a universe nothing has happened in.**
+      A `direct` universe never opens a draft, so it can only ever reach this page by
+      typing the address — the sidebar entry is gated on `draft_based?` — and it is
+      told so here rather than shown an empty list with nothing to explain it. %>
+  <%= render "shared/empty_state",
+    title: t("collaborators.index.empty_title"),
+    description: t("collaborators.index.empty_description"),
+    icon: "people" %>
+<% end %>

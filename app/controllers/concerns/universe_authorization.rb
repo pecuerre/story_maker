@@ -42,6 +42,16 @@ module UniverseAuthorization
       # its four actions: a list of submissions is itself the answer to "what is waiting
       # here", and a queue a plain writer can read is a queue they have no business in.
       return :admin if controller_name == "review_requests"
+      # The universe's change history reads every closed draft in it, which is every
+      # author who has ever applied or discarded one. It is the same question the
+      # reviewer's queue asks and not the drafts pages' question: those answer "may
+      # this person see and act on their own pending work", this one answers "may this
+      # person see what other people have done here".
+      return :admin if controller_name == "histories"
+      # The collaborators list is the change history read per person, so it asks the
+      # same question for the same reason: the list names every author who has ever
+      # closed a draft here, and a plain writer has no business reading that.
+      return :admin if controller_name == "collaborators"
       return :read if %w[index show].include?(action_name)
 
       :write

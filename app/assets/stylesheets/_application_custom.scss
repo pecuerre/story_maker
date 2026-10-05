@@ -749,6 +749,47 @@ $um-search-match: #ffc107;
   font-size: .75rem;
 }
 
+// The universe's change history, grouped by the day each run closed.
+//
+// The day is a **heading and not a section of its own surface**: it labels the runs
+// beneath it, and a boxed heading above a boxed list reads as two separate things
+// rather than as one day. It carries the tools scope's hue, which is the scope the
+// Collaboration group belongs to, and a top rule so consecutive days are told apart
+// without each of them needing a border of its own.
+.history-day {
+  margin-bottom: 1.75rem;
+}
+
+.history-day-heading {
+  margin: 0 0 .75rem;
+  padding-bottom: .375rem;
+  border-bottom: 1px solid var(--um-scope-tools-soft);
+  color: var(--um-scope-tools);
+  font-size: .9375rem;
+}
+
+// One run inside a day: its heading and the sentence the applier's own page would
+// print. It is separated from the list of changes beneath it by its own margin, so the
+// two surfaces read as a heading and its rows rather than as two surfaces.
+.history-draft {
+  padding: .75rem 1rem;
+  margin-bottom: .375rem;
+}
+
+.history-draft-header .entity-title {
+  font-size: .9375rem;
+}
+
+.history-draft-history {
+  margin: .25rem 0 0;
+}
+
+// The change rows of a run sit closer to it than to the next day, so the gap below a
+// run's list is the day's own spacing rather than the run's.
+.history-day > .entity-list:last-of-type {
+  margin-bottom: 0;
+}
+
 // One row of the conflict page. `.entity-description` clamps a list row to two
 // lines so a long record stays scannable, which is right for a row the reader is
 // browsing and wrong for the one row they are deciding on: here the clamp would

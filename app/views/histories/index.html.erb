@@ -1,0 +1,30 @@
+<% content_for :title, t("histories.index.title") %>
+
+<%= render "shared/page_header",
+  title: t("histories.index.title"),
+  eyebrow: Current.universe.name,
+  description: t("histories.index.description"),
+  count: @drafts.size,
+  count_label: "draft" do %>
+  <%= link_to t("histories.index.back"), universe_path(Current.universe), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<% if @drafts.any? %>
+  <%# Grouped by day in Ruby rather than by a SQL date function, for the drafts
+      index's reason: the list is one universe's runs, the grouping is a heading, and a
+      second `ORDER BY` over a relation the view would then have to re-group would be a
+      cheaper way to say the same thing badly. The days come back newest-first because
+      the query ordered them so, and `group_by` preserves that order — it is the one
+      thing `group_by` does promise, and `Hash#[]=`, which replaces an existing key,
+      is what would break it. %>
+  <% days = @drafts.group_by { |draft| draft.closed_at.to_date } %>
+
+  <% days.each do |day, drafts| %>
+    <%= render "histories/day", day: day, drafts: drafts, changes: @changes %>
+  <% end %>
+<% else %>
+  <%= render "shared/empty_state",
+    title: t("histories.index.empty_title"),
+    description: t("histories.index.empty_description"),
+    icon: "clock-history" %>
+<% end %>

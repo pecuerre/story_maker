@@ -1,5 +1,11 @@
-# One author's remembered changes for one universe: the list of them, one draft
-# in detail, and the two things an author can do about a draft.
+# One author's pending remembered changes for one universe: the list of them, one
+# draft in detail, and the two things an author can do about a draft.
+#
+# **The list carries the open drafts only.** An applied or discarded draft is
+# history rather than pending work, so it is not on this page: it has its own page
+# per universe, and its own `show` here still reports what became of it. `index`
+# narrowing is a separate scope from the lookup `set_draft` uses, because that
+# lookup has to keep finding closed drafts in order to refuse them in words.
 #
 # **Every action requires a signed-in user.** A draft belongs to a person, and a
 # draft with no owner is not a thing this application can represent, so there is
@@ -58,14 +64,22 @@ class DraftsController < ApplicationController
 
   # GET /u/:universe_slug/drafts
   #
-  # The reader's own drafts in this universe, with the one that can still be
-  # acted on first: an applied or discarded draft is history, and history sorted
-  # above the pending work would push the draft the reader came here for out of
-  # the list. The sort is in Ruby because the whole list is one person's drafts in
-  # one universe — a few rows at most — and a second `ORDER BY` would be a
-  # cheaper way to say the same thing badly.
+  # **What is waiting, and nothing else.** This list is the answer to "what is my
+  # pending work in this universe", so it is scoped to the open statuses. An applied
+  # or discarded draft is history, and history on this page pushed the draft the
+  # reader came for down the list and gave one page two jobs — it also had to be
+  # sorted open-first, which is a rule about a mixed list that no longer exists.
+  # History has its own page, and a closed draft's own page still says what became of
+  # it, so nothing here becomes unreachable.
+  #
+  # **There is nothing left to sort.** One open draft per author per universe is a
+  # partial unique index (ADR 0022) covering both open statuses, so this list is at
+  # most one row and the order is not load-bearing. It is written out rather than left
+  # implicit because the query is the only place that knows it, and a reader who adds
+  # a status to `OPEN_STATUSES` should not have to rediscover that this page silently
+  # renders an arbitrary one of their drafts.
   def index
-    @drafts = drafts.sort_by { |draft| [ draft.open? ? 0 : 1, -draft.id ] }
+    @drafts = pending_drafts.order(id: :desc)
   end
 
   # GET /u/:universe_slug/drafts/:id
@@ -196,8 +210,21 @@ class DraftsController < ApplicationController
 
       notes.permit(:submission_message)[:submission_message].presence
     end
+    # This reader's own drafts in this universe, of any status. **It is the scope a
+    # lookup goes through, not the list** — `index` narrows it to the open statuses,
+    # while `show`, `apply`, `submit`, and `discard` must still find a closed draft,
+    # because refusing one of those with a 404 would answer "this draft does not
+    # exist" for a draft the reader can see on its own page and that `apply` has to
+    # refuse in words (`refuse_closed_draft`).
     def drafts
       Current.universe.drafts.where(user: Current.user)
+    end
+
+    # **What `index` draws: only the drafts that can still be acted on.** Read
+    # through `drafts` rather than off `Current.universe` so the reader's own scope
+    # is stated once, in one place, and the list cannot drift from the lookup.
+    def pending_drafts
+      drafts.open
     end
 
     # What the applier could not read, asked once and held for the page.

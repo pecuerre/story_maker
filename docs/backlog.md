@@ -43,8 +43,9 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
 The right utility sidebar now holds one live block — the reader's pending-changes panel and the
 **Pending changes** entry above it — and reserves the rest of its space for future collaboration,
-analytics, and AI tools. Replace the remaining temporary `aria-disabled` links with a real contextual
-inspector as the underlying product areas become concrete. The inspector should show information
+analytics, and AI tools. The Collaboration group's temporary `aria-disabled` links were removed on
+2026-10-05 rather than replaced, and the remaining placeholders are in the Analytics and AI groups.
+Replace those with a real contextual inspector as the underlying product areas become concrete. The inspector should show information
 relevant to the current page: selected entity details, related records, taxonomy usage, filters, or
 quick actions. It remains a Bootstrap `offcanvas-end` below `xl` and can be hidden when there is
 nothing useful to show. Two constraints the panel sets: it is the first thing in the Collaboration
@@ -116,13 +117,14 @@ still the analyzer's job, and nothing here performs it.
 10. **Collaboration and universe analysis**
 
 Universe-level access management is implemented: public/private visibility and read/write/admin
-memberships are available from the universe workspace. The right sidebar still reserves temporary
-links for Collaborators, Conflicts, Branches, Forks, Analytics, and AI tools, and it now leads its
-Collaboration group with the reader's own **pending-changes panel** and the **Pending changes** entry
-beneath it, which is what a draft-based universe needs. Those
-remaining placeholders stay future product areas. Before replacing them with navigation, specify the
-underlying records and permissions: inconsistency detection, incomplete/undefined records, submissions,
-changes/forks, graphs, analytics, and drafts. A feature should appear as a live navigation item when
+memberships are available from the universe workspace. The right sidebar leads its Collaboration group
+with the reader's own **pending-changes panel** and the **Pending changes** entry beneath it, which is
+what a draft-based universe needs, and follows them with the admin-only **Review requests** queue. Its
+**Collaborators**, **Conflicts**, **Branches**, and **Forks** placeholders were removed on 2026-10-05
+rather than replaced; **Collaborators** and the History page beside it are specified in the separate
+item **Collaborators and universe change history in the Collaboration sidebar group**. What remains a
+future product area is Analytics and AI. Before replacing those with navigation, specify the underlying
+records and permissions: analytics and AI tools. A feature should appear as a live navigation item when
 it has a useful destination and clear empty/loading/error states.
 
 15. **One-command containerized onboarding (DataFactor follow-up)**
@@ -136,41 +138,6 @@ it has a useful destination and clear empty/loading/error states.
    as an alternative to the `mise`/`bundle`/`bun` setup. Do not run development data in a
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
-
-25. **Collaboration system — Phase 6: Polish + notifications**
-
-    The collaboration system feels complete and polished.
-
-    - **Slice 6.1, delivered:** A **reply in a discussion notifies the people already in the thread** —
-      the thread's other authors who can still read the universe, never the reply's own author and
-      never a member who has not posted. Its notice links at the thread inside its universe, which is
-      the first universe-scoped notification target, and it stores the record's name so the bell can say
-      which conversation it is. See [conventions.md](conventions.md#notifications) for the recipient
-      rules and the dated entries in [`../CHANGELOG.md`](../CHANGELOG.md). The `notifications` table,
-      the bell, and the two review-workflow notices came from slice 5.5, and the column is `kind` rather
-      than the `type` this slice originally named, because `type` is Active Record's STI discriminator.
-    - **Slice 6.2, delivered:** A page says so when another reader's write changes what it would show.
-      `LiveUpdates` publishes a Turbo Stream **refresh** — never content, which would be rendered
-      without the receiving reader's locale or access — to three signed streams: universe, discussion,
-      and reader. An applied draft, a posted reply, and every notification reach a browser that way, and
-      the review workflow's three events are delivered by the notification each of them already writes
-      rather than by broadcasts of their own. A refresh is applied only when the page holds nothing
-      unsent, so a half-typed reply, a reviewer's notes, and an open editor all survive it. See
-      [conventions.md](conventions.md#real-time-updates) for the audience and commit rules and the dated
-      entries in [`../CHANGELOG.md`](../CHANGELOG.md). The test environment's cable adapter is `async`
-      rather than `test`, which is what lets a browser test observe a real delivery.
-    - **Slice 6.3, delivered:** The two collaboration decisions that arrived without an ADR now have
-      one. [ADR 0025](adr/0025-a-notification-is-a-stored-sentence.md) records why a notification is a
-      stored sentence with no foreign key and why each kind has its own recipient rule; [ADR
-      0026](adr/0026-a-live-update-is-a-refresh-and-never-a-page.md) records why a live update is a
-      signed refresh rather than rendered content. Every other collaboration decision already had one
-      (0019–0024), so no overview ADR was written: it would have been a map over six records that
-      explain themselves and no decision of its own to state. The deferrals this item recorded became
-      open findings in [`known_quirks.md`](known_quirks.md) — per-record conflict detection, the
-      linearity of a draft, in-app-only notification, plain-text messages, and asynchronous explicit
-      application — because each is reachable now and surprises a reader, where this paragraph had been
-      recording decisions nobody had made yet. They outlive the item. See the dated entries in
-      [`../CHANGELOG.md`](../CHANGELOG.md).
 
 26. **What a pending badge has to say beyond its state**
 

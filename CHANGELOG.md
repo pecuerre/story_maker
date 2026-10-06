@@ -62,6 +62,9 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Two known-quirk entries that were already fixed left the file.** Findings 39 and 62 still described
+  the smoke script's environment handling and login check after both were fixed and recorded in the
+  delivery history; a stale pointer to the long-removed finding 51 went with them.
 - **`docs/development.md` names the fixtures that exist and the five that do not,** and
   `docs/README.md` no longer advertises an absent directory.
 - **Every open known-quirk was re-verified against the tree, and four needed correcting.** Two claimed

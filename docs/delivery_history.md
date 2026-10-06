@@ -29,6 +29,39 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-06
 
+- **[docs]** **`known_quirks.md` was cleaned of its own departure log, and two already-fixed findings
+  left it.** The file had grown a 55-line preamble narrating which findings had left it and when — a
+  hand-maintained changelog sitting in the one document whose stated rule is that it holds open
+  findings only — plus a `Sweep of 2026-10-06` section restating an entry already made here. Every
+  fact in that preamble was already recorded in this file (findings 64, 68, 66, 23, and 58 between
+  four and twelve mentions each), so the preamble was a second source of truth with no content of its
+  own and a standing obligation to be edited by hand on every future change.
+
+  **Why deleting the history is safer than keeping it current.** A departure noted in two places is
+  correct until one of them is missed, and the miss is invisible: the entry it names no longer exists
+  either way. Findings 39 and 62 were exactly that failure — both fixed on 2026-10-06, both recorded
+  here at that entry which calls them "two halves of one script's honesty", and both still sitting in
+  `known_quirks.md` with a "fixed on 2026-10-06" paragraph inside them, describing a defect a reader
+  could go looking for. The preamble's length was the symptom; the duplication was the cause.
+
+  **What replaced it.** A six-line preamble stating the rule that makes the duplication unnecessary —
+  findings are added and removed, not annotated as they leave, and the history lives here and in
+  `CHANGELOG.md` — the audit provenance, and the standing instruction to re-verify a finding against
+  the code before acting on it. That last lesson was the one durable thing in the `Sweep` section and
+  in the preamble, and it now appears once, in **Audit baseline and evidence**, where a reader meets
+  the 226-test numbers from the 2026-09-24 pass that are otherwise easy to mistake for today's. The
+  `Sweep` section went with the rest; the earlier entry above that describes adding it is left as
+  written, because this file is a frozen record and the section did exist when it was written.
+
+  Also removed: a dangling reference to `finding 51`, which left the file long before that pointer was
+  written. The 12 open findings, their severities, and their evidence were re-verified against the
+  tree first and none of them was stale — 22, 36, 37, 49, 50, 52, 56, 57, and 67 all still describe
+  the code, and 71–75 still describe ADR-backed decisions rather than defects.
+
+  Verification: `bin/rails test test/docs_test.rb` — 5 runs, 10 assertions, 0 failures, 0 errors,
+  0 skips. No application, test, configuration, or schema change, so the full suite, `test:system`,
+  RuboCop, and Brakeman were not run.
+
 - **[added]** **`script/demo` runs the development data tasks with the configured password.** The owner has
   a password in `.env` and kept getting a different one on every rebuild, and the cause was structural
   rather than accidental: `Development::LocalPassword` reads `UNIVERSE_MAKER_DEV_PASSWORD` from the

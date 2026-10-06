@@ -3,62 +3,20 @@
 Verified **open** oddities in this codebase — things that look like bugs, are bugs, or will
 surprise you. This file holds only open findings: when one is fixed, the whole entry moves to
 [delivery_history.md](delivery_history.md) with the history of the fix, and no "this used to be broken"
-note is left behind here. Index of all docs: [README.md](README.md).
+note is left behind here. Severity labels distinguish reachable security/data-loss issues from
+lower-priority hardening and contract decisions. Index of all docs: [README.md](README.md).
 
-This re-audit was performed on 2026-09-24 against commit `8fcf4d4`. It is an observation record
-only: no application, test, configuration, dependency, or generated-asset fixes were made in this
-pass. The separate DataFactor follow-up section below was checked against the current tree on
-2026-09-25; it is not a full replacement for the original audit. Severity labels distinguish
-reachable security/data-loss issues from lower-priority hardening and contract decisions.
+**This file is not a log.** Findings are added and removed here; they are not annotated as they
+leave. Which findings have left, when, and why is recorded in
+[`delivery_history.md`](delivery_history.md) and [`../CHANGELOG.md`](../CHANGELOG.md), which own that
+history — this file must never restate it, because a departure noted here is a second source of truth
+that goes stale the moment the fix is reverted or re-landed. The same rule governs a finding that is
+*corrected* rather than closed: the reasoning moves, the entry is simply rewritten.
 
-Entries numbered **63 and above** were added on 2026-10-03, **68 and above** on 2026-10-04,
-and **70** on 2026-10-05, while the collaboration draft system was being built, verified the same way,
-and listed here rather than left in [`backlog.md`](backlog.md) because each one is reachable now rather
-than only pending.
-
-Entries **71 and above** were added on 2026-10-05 when the collaboration backlog item's
-*deliberately deferred* paragraph was converted: each is a behaviour a reader can reach today and be
-surprised by, where the backlog item had recorded a decision nobody had made yet, so the two files
-were answering different questions and the item could be deleted.
-
-Finding 64 left this file on 2026-10-04, when the apply's outcome became stored rather than reported once,
-and the unnumbered finding that read "the applier raises rather than reporting a change it cannot
-interpret" left it the same day, when the apply and a reviewer's approval started refusing such a draft
-in words. Finding 68 left this file on 2026-10-05, when a pending row the apply may refuse was settled
-as badged exactly as it is and never withheld, which is a decision rather than a change and left no code
-behind it, and finding 66 left it the same day, when `DraftChanges::Reader` read a draft's records and
-tag names once per class instead of once per row; the right sidebar's **Review requests** figure it
-also described stays, and is a deliberate uncached `COUNT` rather than an oversight. The unnumbered
-finding "implicit owner access is missing from association APIs" left it on 2026-10-05 as well,
-when `User#universes` and `Universe#members` became owner-aware readers instead of membership-only
-associations. The unnumbered "Scenes are covered" finding left it on 2026-10-06, when the entry was
-confirmed to describe no open defect and to restate what `scenes.md` and `conventions.md` already own,
-so the resolved status note went instead of a numbered entry.
-
-Findings **20, 27, 28, 29, and 58** left this file on 2026-10-06, when the session and password
-resources were restricted to the actions their flows have, the four modal-edited content models lost
-their template-less `new` actions, `User` gained the presence validations its `NOT NULL` columns
-imply, a reversed interval became a validation error on all three models that record one, a composite
-slug began reading its tag segment in a defined order, and the fixed-navbar click finding turned out to
-describe a test that does not fail — see `delivery_history.md` for the verification each one went through.
-
-The **framework-routes** bullet in "Contract-dependent and future-feature footguns" was rewritten the
-same day after being probed rather than re-read. It had described Active Storage, Action Mailbox, and
-Action Text as one undifferentiated set of "unused" routes, which is the framing that leads a reader to
-delete something load-bearing: Active Storage serves every record photo, while the two families that
-genuinely are unused are inert — the Action Mailbox ingress endpoints 404 because
-`ActionMailbox.ingress` is `nil`, and the `rails/conductor` endpoints 403 outside development.
-
-Finding **23** left this file on 2026-10-06 without any code changing. It was written on 2026-09-25,
-`db/migrate/20260928120000_add_integrity_constraints_to_legacy_join_tables.rb` landed three days later
-and gave all seven legacy tag join tables the foreign keys and unique-pair index the finding said they
-lacked, and the 2026-09-28 changelog entry recorded it — but the finding was never closed, so this file
-went on asserting a defect the database had been rejecting for eight days. Verified against the running
-test database rather than the migration: every legacy table has both foreign keys and its unique index,
-an orphan insert raises `ActiveRecord::InvalidForeignKey`, and a duplicate raises
-`ActiveRecord::RecordNotUnique`.
-
-See [`delivery_history.md`](delivery_history.md).
+The numbered findings below were first gathered by an audit on 2026-09-24 against commit `8fcf4d4`,
+with the DataFactor follow-ups checked against the tree on 2026-09-25. Entries are not re-verified by
+being written down, so **re-read a finding against the code before acting on it** — see
+[Audit baseline and evidence](#audit-baseline-and-evidence) for what that pass actually ran.
 
 ## Mutation, route, and data-contract observations
 
@@ -227,30 +185,6 @@ See [`delivery_history.md`](delivery_history.md).
     That is a larger piece of work than this entry's severity has earned, and it is the owner's call
     rather than a bug fix. It stays open as the gap it is.
 
-39. **Low — the smoke script is not environment-guarded or concurrency-safe.**
-    `docs/smoke_test_stories.sh` used fixed `${TMPDIR:-/tmp}/smoke_*.txt` filenames with no cleanup
-    trap, could leave a created story behind on an early exit or a Ctrl-C, and invoked `bin/rails runner`
-    without forcing the development environment. All three are **fixed on 2026-10-06**: the script now
-    owns one `mktemp -d` directory removed by an `EXIT INT TERM` trap, `cleanup` destroys the story it
-    created (the id is recorded the moment it is known, before the assertion that can exit early), and
-    `RAILS_ENV=development` is exported so no task can be pointed at another environment's data. Two
-    runs can no longer collide on the cookie jar or a captured page, and nothing is left in `/tmp`.
-
-62. **Low — the smoke script's login check cannot tell a success from a rejection.**
-    The script asserted `login succeeds` by comparing the response code to `302`, and
-    `SessionsController#create` answers `302` in both branches: a successful sign-in redirects to
-    `after_authentication_url`, while a rejected one redirects back to `new_session_path` with the
-    `sessions.failed` alert (`app/controllers/sessions_controller.rb:15-21`). The check therefore also
-    passed with a wrong password, a rate-limited sign-in, or an expired CSRF token. Observed on
-    2026-10-02 by running the script against a live server with a deliberately wrong password: it
-    printed `ok - login succeeds` and then failed the following checks, so the run was not silently
-    green — but that one line asserted far less than it read, and it was the only thing between a bad
-    credential and nine pages of meaningless output. **Fixed on 2026-10-06** by asserting both halves
-    of the answer: the redirect **target** (a rejection's is the sign-in page itself, which now exits
-    with an explanation rather than continuing) and the presence of the signed `session_id` cookie the
-    next request is authorized by. Verified against a live development server with a deliberately
-    wrong password — the run stops at the login line with exit 1, where it previously reported success.
-
 ## Contract-dependent and future-feature footguns
 
 These observations are code-proven but depend on a product/deployment decision or are not reachable
@@ -381,7 +315,7 @@ maximize an automated score. The distilled policy is in
 the run of DataFactor follow-up items in [`backlog.md`](backlog.md) — of which one remains open:
 container onboarding (finding 52 below). Coverage measurement, credential literals, supply-chain
 checks, structured logging, and shared editor/helper duplication have all been delivered; that
-document's §3 through §7 say so and say what replaced them, and finding 51 below is closed; see
+document's §3 through §7 say so and say what replaced them; see
 [architecture.md](architecture.md#runtime-logging-and-observability) and
 [`../CHANGELOG.md`](../CHANGELOG.md). The report's claims that no `/up` route or JavaScript
 lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
@@ -396,26 +330,13 @@ used with a frozen install in CI and Docker.
     `.env.example` template this entry used to list as missing now exists; the container onboarding
     it served is still absent.
 
-## Sweep of 2026-10-06
-
-Every entry above was re-verified against the tree on 2026-10-06, because this file's findings were
-written on 2026-09-24 against commit `8fcf4d4` and three of them had gone stale in ways that sent a
-reader looking for defects that did not exist. The file has held only open findings since 2026-09-30,
-but "open" had come to mean "not yet re-read" for some entries. Two were corrected in place (36, 56),
-one was narrowed (37), and one was removed as already fixed (23, recorded in
-[`delivery_history.md`](delivery_history.md)). Nothing was added.
-
-The lesson is recorded rather than left implicit: **a finding here has to be re-verified before it is
-acted on.** Three entries — 58, 23, and 37's `test/helpers` claim — asserted something the code
-contradicted, and each had been sitting since before the work that contradicted it landed. Two of
-those three were documentation failures, not code defects, which means the cost of acting on them
-unverified would have been wasted work on the wrong thing.
-
 ## Audit baseline and evidence
 
-The following non-destructive checks passed during the 2026-09-24 re-audit. They are the evidence
-behind the findings above, not a current capability list; the verification run for each later change
-is recorded in [`delivery_history.md`](delivery_history.md).
+The findings here were gathered by a non-destructive audit on 2026-09-24 against commit `8fcf4d4`. The
+checks below are the evidence behind them. **The numbers are that pass's, not today's** — the suite has
+grown by an order of magnitude since — and they are recorded so a reader can judge how a finding was
+established, not as a capability list. The verification run for each later change is recorded in
+[`delivery_history.md`](delivery_history.md).
 
 - `bin/rails test` — 226 tests, 1,495 assertions, 0 failures/errors/skips.
 - `bin/rails test:system` — 4 tests, 55 assertions, 0 failures/errors/skips, with the 406 caveat
@@ -429,7 +350,13 @@ is recorded in [`delivery_history.md`](delivery_history.md).
 - `bin/rails db:migrate:status` — all application migrations up.
 - `git diff --check` and final `git status` — clean before this documentation-only edit.
 
-Not run: destructive development tasks (`db:restart`, `db:reset`, `db:drop`, `db:seed`,
-`db:seed:replant`), demo-data loaders, Docker/Kamal deployment, production SMTP delivery, a clean
-migration-from-zero job, or a live hostile-browser exploit. No production data or secret value was
-modified as part of documenting these findings; disposable test probes were rolled back or cleaned.
+That pass was an **observation record**: no application, test, configuration, dependency, or
+generated-asset fix came out of it. Not run, and therefore not claimed: destructive development tasks
+(`db:restart`, `db:reset`, `db:drop`, `db:seed`, `db:seed:replant`), demo-data loaders, Docker/Kamal
+deployment, production SMTP delivery, and a live hostile-browser exploit. No production data or secret
+value was modified; disposable test probes were rolled back or cleaned.
+
+**A finding has to be re-verified before it is acted on.** Three entries in the 2026-09-24 pass later
+turned out to assert something the code contradicted, each sitting unread since before the work that
+contradicted it landed, and two of the three were documentation failures rather than code defects —
+so acting on them unverified would have been wasted work on the wrong thing.

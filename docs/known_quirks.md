@@ -20,29 +20,6 @@ being written down, so **re-read a finding against the code before acting on it*
 
 ## Mutation, route, and data-contract observations
 
-22. **Medium — repairing a positioned sequence is three separate things, and only the first two are
-    automatic.** A write that reaches the model repairs its own sequence: `OrderedSequence` renumbers
-    the whole sibling group on `after_destroy`, `after_soft_delete`, and `after_restore`, for the
-    thirteen hierarchies and the two flat sequences alike, and `test/models/ordered_sequence_test.rb`
-    holds the model list and each flat model's owner declaration against the routed controllers.
-    A write that skips the model — `update_column`, `delete_all`, raw SQL, an import, or a `create!`
-    naming its own `position` — is repaired by **running** `bin/rails positions:normalize`, which walks
-    every positioned model, renumbers each group, and prints every record it moves;
-    `test/services/sequence_normalizer_test.rb` holds it, and its model list is held against the same
-    fifteen controllers.
-
-    **What remains is the gap between those two, and it is a concurrency gap rather than a repair
-    gap.** Nothing runs automatically for a statement that skips the model, so a person who pastes SQL
-    into a console and does not then run the command is left with a hole — the command is a step, not a
-    guarantee, and nothing detects that the step was missed. And the repair is not the service's
-    guarantee: it runs in whatever transaction the caller's write runs in, often none, and SQLite has
-    no portable row lock or unique-position constraint, so two out-of-band writes are made
-    self-consistent one after another rather than serialized. `PositionedResourceOrder` remains the
-    only place that locks a scope owner, and `DraftApplier` the only non-controller caller that routes
-    through it; its derivation is held against every routed controller in both directions by
-    `test/services/draft_applier_test.rb`. See ADR 0009 and
-    [`delivery_history.md`](delivery_history.md) for the reasoning behind each part.
-
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`
     (`app/models/draft_preview.rb`), which is what keeps the collection writers (`character_tag_ids`) and
@@ -56,132 +33,47 @@ being written down, so **re-read a finding against the code before acting on it*
     resolves no payload at all; deciding whether the row should pay that read is recorded as **What a
     pending record shows outside the list workspaces** in [`backlog.md`](backlog.md).
 
-71. **Low — conflict detection is per-record, so two people editing different fields of one record still
-    collide.** `DraftConflictDetector` compares one stored `base_version` against the record's current
-    version, which is a whole-record fact: any save between remembering and applying makes every change
-    to that record conflict, whatever field it touched. The cost is a common path rather than an edge
-    case — ADR 0019 states that two people editing one record collide by design — and it lands as a
-    resolution page asking the author to choose between values on a field the other person never
-    touched. Nothing is lost: **Apply theirs** keeps the other edit and reports the author's change in
-    `Result#answered`, so it is redoable by hand from the draft's own page. The alternative is a
-    field-level diff and a merge policy per model, which is why the decision is
-    [ADR 0019](adr/0019-collaboration-foundations.md)'s and not a defect; revisit it only with real usage
-    showing authors routinely losing unrelated edits to it.
-
 72. **Low — a draft is a linear set of changes, so branching, forking, and merging are refused rather
     than absent.** One open draft per author per universe is a partial unique index
     ([ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)), so an
     author who wants to pursue two directions for one record cannot, and the second attempt is a
     refused write rather than a second line of work. Merging two drafts has no path at all: `apply`
-    closes its draft on the first run, and `DraftApplier` takes one draft's changes. This is
-    consistent with the rest of the workflow rather than a gap in it — a change is append-only
-    ([ADR 0019](adr/0019-collaboration-foundations.md)) and an apply is one transaction — and the
-    product decision of what a branch *is* has not been made. Nothing in the navigation offers a
-    destination for it: the right sidebar's **Branches** and **Forks** placeholders were removed on
-    2026-10-05 as entries with no model and no decision behind them, which is
-    [features/navigation.md](features/navigation.md)'s rule against a link to a route that does not
-    exist rather than a claim that the workflow supports it.
-
-73. **Low — a notification reaches the bell only; nothing is delivered outside the application.**
-    There is no email, no push, and no digest: a submission, a decision, or a reply is written as a
-    row, counted uncached, and announced to the reader's own websocket stream. A reader who is not
-    looking at the page when a draft is decided learns about it by returning, and a reader who never
-    returns does not learn it at all — there is no row anyone else can see, because a notification has
-    exactly one reader. In-app first was a deliberate choice ([ADR
-    0025](adr/0025-a-notification-is-a-stored-sentence.md)) and email is its own decision rather than a
-    delivery detail: it needs an address the reader can unsubscribe, a retention answer the in-app row
-    does not have, and a locale the request no longer supplies. `PasswordsMailer` is the only mailer in
-    the application, and `config/environments/production.rb` already configures SMTP — so the transport
-    exists and the question is entirely what a notice may promise.
+    closes its draft on the first run, and `DraftApplier` takes one draft's changes. No ADR states what
+    a branch is, so this is the only place that cost is written down; it is a refused write a reader
+    will hit rather than a defect, and the product decision behind it has not been made.
 
 74. **Low — a discussion message is plain text, so a reader who types markdown gets their own
     punctuation.** `discussion_messages.body` is plain text and the thread renders it as such, with no
     sanitizing step because there is no formatting step to sanitize: `**bold**`, `# heading`, and
     `- item` all appear verbatim in the message. This is reachable now and visible to any writer
-    accustomed to a markdown editor elsewhere, and it is a deliberate first version
-    ([ADR 0019](adr/0019-collaboration-foundations.md) deferred it; the ADR that would settle it does
-    not exist). Formatting is not only a render change: it makes the stored body untrusted input on
-    every surface that prints it — the thread, a notification sentence carrying a reviewer's note, and
-    any future export — so it needs a decision about which dialect is allowed and where escaping
-    happens, not just a template.
-
-75. **Low — real-time updates are asynchronous and explicit, so two readers never see each other's
-    unsaved work.** A second reader's write reaches a browser as a refresh and nothing more
-    ([ADR 0026](adr/0026-a-live-update-is-a-refresh-and-never-a-page.md)), which means a draft is never
-    shared while it is being written: the other reader sees nothing until it is applied, and a held
-    refresh is dropped rather than queued. That is the accepted answer for an asynchronous
-    with-explicit-apply workflow, and the alternative — a shared editing surface where two people type
-    into one record — is a different product with a different failure mode, not a missing feature here.
-    Worth recording so that a reader reporting "the other person was typing and I saw nothing" is
-    answered with the decision rather than investigated as a bug.
+    accustomed to a markdown editor elsewhere. [ADR 0019](adr/0019-collaboration-foundations.md) deferred
+    it and no ADR has settled it, so this entry is where the cost lives. Formatting is not only a
+    render change: it makes the stored body untrusted input on every surface that prints it — the
+    thread, a notification sentence carrying a reviewer's note, and any future export — so it needs a
+    decision about which dialect is allowed and where escaping happens, not just a template.
 
 ## Performance, test, and tooling observations
 
-36. **Medium — CI proves a production image boots, but not a deployment.** Re-verified against
-    `.github/workflows/ci.yml` on 2026-10-06: of the four gaps this entry opened with, **three are
-    closed and one was never accurate.**
-    - **Coverage is measured and gated**, which this entry used to say it was not.
-      `test/coverage_helper.rb` sets `MINIMUM_LINE_COVERAGE = 90` and `MINIMUM_BRANCH_COVERAGE = 75`
-      against a measured baseline, and gates them only when `ENV["CI"]` is set — so a single-file run
-      measures a fraction of the application by design and is not failed for it. The `test` job sets
-      `CI: "1"` deliberately, with a comment saying a run that silently lost the gate would otherwise
-      still be green.
-    - **`migrations-from-zero` runs the migration files from zero.** It used not to: it ran `db:drop`,
-      `db:create`, and `db:migrate` as three processes — which is required, because one process
-      migrates the inode `db:drop` unlinked — but on the freshly created database `db:migrate`
-      **loaded `db/schema.rb` rather than executing the migration files** (see
-      [development.md](development.md#amending-a-shipped-migration-does-not-work-here)), so
-      `db:migrate:status` reported every migration `up` and `git diff --exit-code db/schema.rb`
-      compared the dump against itself. Verified on 2026-10-01, then fixed the same day: the job
-      creates `schema_migrations` before migrating so the migration files execute, and a guard step
-      aborts if a `schema_sha1` was recorded in `ar_internal_metadata` (`ci.yml:228`) — a row only
-      `DatabaseTasks.load_schema` writes. Verified then by amending a shipped migration to add a
-      column: the old sequence reported all 36 migrations `up` with the column absent, the new one
-      runs the migration and fails on the schema diff. (36 is what that experiment reported then; the
-      tree now carries 47 migration files.) The local reset path is covered separately by
-      `test/services/development/database_reset_test.rb`.
-    - **`production-boot` builds the production image, inspects it, and requires `GET /up` to answer
-      `200`.** That job **was failing on every run**: `assets:precompile` boots the production
-      environment, which raises without `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`, so
-      `docker build` never finished. Verified through the GitHub Actions API on 2026-10-02 and
-      reproduced locally; those three names are now build arguments in the Dockerfile with `.invalid`
-      defaults. The job also checks that `node_modules` and `.git` are absent, that nine development
-      gems are not in the production bundle, and that the assets which can only resolve while
-      `node_modules` exists were digested — which would otherwise surface in production as a missing
-      stylesheet font. It exercises `db:prepare`, the four production SQLite databases, and the
-      precompiled assets.
-    - **Solid Cache/Queue/Cable setup is not exercised anywhere**, by any job or test. This is the
-      half still open, and it is the part a real deployment depends on: the boot check proves the
-      container answers `/up`, not that a queued job runs, a cache entry lands, or a broadcast
-      reaches a subscriber.
-
-    `config/deploy.yml` is validated on every test run through Kamal's own loader by
-    `test/deployment/kamal_configuration_test.rb`, because `bin/kamal config` cannot be run in CI —
-    it prints resolved secrets — but loading a configuration is not the same as deploying it. Neither
-    the boot check nor that validation exercises production mailer URL/SMTP behavior, and no deploy
-    has ever been performed.
+36. **Medium — CI proves a production image boots, but not a deployment, and the job setup is not
+    exercised at all.** Three things a deployment depends on are unproven by any job or test:
+    - **Solid Cache, Solid Queue, and Solid Cable are set up and never touched.** The boot check proves
+      the container answers `/up`, not that a queued job runs, a cache entry lands, or a broadcast
+      reaches a subscriber. These are database-backed in production, so a wiring mistake would only
+      surface as a silently dead cache or a job that never executes.
+    - **No deploy has ever been performed**, and neither the boot check nor the `config/deploy.yml`
+      validation in `test/deployment/kamal_configuration_test.rb` exercises production mailer
+      URL/SMTP behavior.
+    - **`config/deploy.yml` is validated, not deployed.** Kamal's own loader runs on every test run
+      because `bin/kamal config` cannot be used in CI — it prints resolved secrets — but loading a
+      configuration is not the same as deploying it.
 
 37. **Low — `test/fixtures/` has no file for five tables, and the tests that need those records build
     them inline.** `relations`, `ownerships`, `relation_tags`, `ownership_tags`, and
-    `universe_memberships` are the five; every other persisted model has a fixture file. The two
-    documentation claims this finding used to make are now **fixed**: `docs/development.md` names the
-    four content models and four taxonomies that do have fixtures and says plainly which five do not,
-    and `docs/README.md` no longer advertises the absent `docs/images-to-ai/` directory.
-
-    **What remains is the gap itself, and it was attempted on 2026-10-06 and deliberately reverted.**
-    Five fixture files were written and the suite run: **nine tests failed**, and every failure was a
-    test reading the *absence* of the records rather than their content — `RelationTagsControllerTest#test_should_get_index`
-    asserts an empty taxonomy state, `HasManyTagsTest#test_a_tag's_record_list_stays_inside_its_own_universe_and_story`
-    asserts a tag carrying nothing, and three `MembershipsControllerTest` cases create the exact row a
-    fixture would already hold (the last failing with `User has already been taken`, the membership
-    unique index doing its job). A Character was also needed in universe two, which is not a fixture
-    change at all: every character fixture currently belongs to universe one, so a cross-scope
-    assertion had nothing on the far side to point at.
-
-    So closing this is not "add five files" but "add five files and rework the nine tests that assume
-    the tables are empty" — which changes what those tests assert, and therefore what they prove.
-    That is a larger piece of work than this entry's severity has earned, and it is the owner's call
-    rather than a bug fix. It stays open as the gap it is.
+    `universe_memberships` are the five; every other persisted model has a fixture file. Closing this is
+    not "add five files" — it is "add five files and rework the nine tests that read the *absence* of
+    those records", which changes what those tests assert and therefore what they prove. The reasoning,
+    including the attempted version that was reverted, is in
+    [`delivery_history.md`](delivery_history.md); the pending work is in [`backlog.md`](backlog.md).
 
 ## Contract-dependent and future-feature footguns
 
@@ -192,24 +84,20 @@ through the current normal UI. They are recorded so they are not mistaken for se
   content classes use instance blocks (`app/models/ability.rb:59-81`); a guest class-level
   `authorize!(:read, Character)` can be allowed even though an instance check is denied. Current
   `UniverseAuthorization` passes concrete universe objects, so no active route bypass was found.
-  The content-class registry is still hard-coded (`app/models/ability.rb:11-27`) and is now
-  load-bearing twice over, since `RecordTarget` gates polymorphic record references through the same
-  list. Two things changed on 2026-10-02: the claim that the new-model workflow does not require
-  registration was wrong — `development.md` has required it since the checklist was written — and
-  `test/models/ability_test.rb` now requires every persisted model to be content, authorized by
-  another rule group, or listed there with a reason, so an unregistered model fails the suite
-  instead of silently losing its rules. The footgun itself is unchanged: nothing in the application
-  prevents a future caller from authorizing a class, only `RecordTarget` declining to hand one out.
-- **Ownership-scope resolution now has one shared adapter.** `UniverseScopeResolver`
-  (`app/models/universe_scope_resolver.rb`) answers which universe owns a record, and both
-  `Ability#universe_for` and `ApplicationHelper#universe_for_record` delegate to it, so
-  record-level authorization and rendered mutation controls cannot drift. It resolves a record
-  through its own `#universe` or through a declared owner association (`story`, `scene`,
-  `section`). Two limits remain: a model nested deeper than one of those must define its own
-  `#universe` (otherwise it resolves to nothing and silently loses controls and checks), and the
-  content-class registry in `app/models/ability.rb:11-34` is still hard-coded, so a new model must
-  be added to it or CanCan will not match a rule for it at all — that half is now a failing test
-  rather than a silent omission, see the entry above.
+  The content-class registry (`app/models/ability.rb:11-27`) is load-bearing twice over, since
+  `RecordTarget` gates polymorphic record references through the same list, and
+  `test/models/ability_test.rb` requires every persisted model to be content, authorized by another
+  rule group, or listed there with a reason. The footgun itself is unguarded: nothing in the
+  application prevents a future caller from authorizing a class, only `RecordTarget` declining to
+  hand one out.
+- **Two limits on the shared ownership adapter.** `UniverseScopeResolver` answers which universe owns
+  a record for both `Ability#universe_for` and `ApplicationHelper#universe_for_record`, so
+  record-level authorization and rendered mutation controls cannot drift; the adapter itself is in
+  [`conventions.md`](conventions.md). Two things still have to be declared by a new model: one nested
+  deeper than the `story`, `scene`, and `section` associations must define its own `#universe`, or it
+  resolves to nothing and silently loses controls and checks; and the content-class registry is
+  hard-coded, so a new model must be added to it or CanCan will not match a rule for it — that half
+  is a failing test rather than a silent omission, see the entry above.
 
 - **A remembered create says nothing about which story, scene, or section it would belong to.** The payload's
   scope column (`DraftChange#scope_attribute`) is dropped as plumbing on the drafts page, because the page is
@@ -218,11 +106,9 @@ through the current normal UI. They are recorded so they are not mistaken for se
   additionally because a pending row is an unsaved record whose position and parent are the applier's to
   decide, so it is appended after the real rows and placed under no parent. An author reviewing twenty
   remembered scenes therefore sees twenty rows that say what each scene is called and nothing about where
-  each one would land, and has to go to the record's own workspace to find out. A resolved name per create
-  is a lookup the list would have to make per row, which is the shape
-  [`conventions.md`](conventions.md#reading-a-drafts-changes) now refuses for the pages that draw a
-  draft; the reasoning for reading a create
-  as an unsaved model rather than a row is in [ADR
+  each one would land, and has to go to the record's own workspace to find out. The rules for what a
+  pending row may read are in [`conventions.md`](conventions.md#pending-changes-in-a-list) and the
+  reasoning for reading a create as an unsaved model rather than a row is in [ADR
   0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
 - **No mutation rate limits exist beyond sign-in/password-reset.** Public universes intentionally
   allow every signed-in contributor to write, so throttling content/story/tag/membership mutations
@@ -236,26 +122,14 @@ through the current normal UI. They are recorded so they are not mistaken for se
   (`app/models/concerns/has_color.rb:4-7`), so an author can choose a combination that fails
   WCAG contrast. The badge shape still identifies the tag, and color is never the only signal, so
   this is a legibility review item rather than a security finding.
-- **Framework routes are broader than the current domain, and two of the three families are inert
-  while the third is in use.** `config/application.rb:3` loads `rails/all`, which mounts 25 routes no
-  view links to. They are not interchangeable, and reading them as one undifferentiated list is how a
-  reader ends up deleting something load-bearing:
-  - **Action Mailbox ingress** — nine `POST`/`GET` endpoints under `/rails/action_mailbox`. Inert
-    today because `ActionMailbox::BaseController#ensure_configured` answers **404** unless
-    `ActionMailbox.ingress` names the ingress, and that setting is `nil`. This is the one family with
-    real residual risk: it is **one configuration line away** from exposing nine write endpoints, and
-    nothing asserts it stays `nil`. A test that fails when `config.action_mailbox.ingress` becomes
-    truthy would close that.
-  - **`rails/conductor/action_mailbox`** — eight endpoints, guarded by
-    `Rails::Conductor::BaseController#ensure_development_env`, which answers **403** outside
-    development. Verified in production, not just assumed.
-  - **Active Storage** — the blob/proxy/disk/direct-upload set. **These are load-bearing, not unused:**
-    `HasPhoto` stores through `ActiveStorage::Blob.service` (`DiskService`), so these routes serve every
-    record photo and the cropper. They must not be treated as dead weight.
-  Action Text mounts no routes in this application. The application has no route allowlist and no
-  production route-surface check, and `test/routing/route_action_contract_test.rb` deliberately
-  **excludes** framework controllers rather than asserting anything about them — it decides membership
-  by where a controller's own file lives, so a framework route is outside its scope by construction.
+- **The Action Mailbox ingress routes are one configuration line from being live, and nothing asserts
+  they stay closed.** `config.action_mailbox.ingress` is `nil`, which is the only reason the nine
+  `POST`/`GET` endpoints under `/rails/action_mailbox` answer **404**:
+  `ActionMailbox::BaseController#ensure_configured` refuses unless the setting names an ingress. Set
+  it, and nine write endpoints are mounted. A test that fails when that setting becomes truthy would
+  close this. The rest of the framework route surface — which families are inert, which are
+  load-bearing, and why Active Storage must not be treated as dead weight — is in
+  [architecture.md](architecture.md#routing--url-generation-the-sharp-edges).
 
 ## Additional UI and interaction observations
 
@@ -306,27 +180,17 @@ through the current normal UI. They are recorded so they are not mistaken for se
 
 ## DataFactor report follow-up observations (2026-09-25)
 
-The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They were
-checked against the current tree and are recorded here as open follow-ups, not as requirements to
-maximize an automated score. The distilled policy is in
-[`data_factor_guidance.md`](data_factor_guidance.md), and the corresponding implementation work is
-the run of DataFactor follow-up items in [`backlog.md`](backlog.md) — of which one remains open:
-container onboarding (finding 52 below). Coverage measurement, credential literals, supply-chain
-checks, structured logging, and shared editor/helper duplication have all been delivered; that
-document's §3 through §7 say so and say what replaced them; see
-[architecture.md](architecture.md#runtime-logging-and-observability) and
-[`../CHANGELOG.md`](../CHANGELOG.md). The report's claims that no `/up` route or JavaScript
-lockfile exists are already stale: `config/routes.rb` exposes `/up`, and `bun.lock` is committed and
-used with a frozen install in CI and Docker.
+The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They are
+recorded here as open follow-ups, not as requirements to maximize an automated score. The distilled
+policy is in [`data_factor_guidance.md`](data_factor_guidance.md) and the pending implementation work
+is in [`backlog.md`](backlog.md).
 
 52. **Medium — clean container onboarding is absent.** The repository has a production-oriented
     `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`
     or devcontainer. A fresh clone therefore still depends on the documented host toolchain, and
     there is no clean-checkout proof that the image, SQLite paths, CSS assets, and `/up` work
-    together. The compose path must not run development data in production; this is the
-    "One-command containerized onboarding" item in [`backlog.md`](backlog.md). The value-free
-    `.env.example` template this entry used to list as missing now exists; the container onboarding
-    it served is still absent.
+    together. This is the **One-command containerized onboarding** item in
+    [`backlog.md`](backlog.md); the compose path must not run development data in production.
 
 ## Audit baseline and evidence
 
@@ -353,8 +217,3 @@ generated-asset fix came out of it. Not run, and therefore not claimed: destruct
 (`db:restart`, `db:reset`, `db:drop`, `db:seed`, `db:seed:replant`), demo-data loaders, Docker/Kamal
 deployment, production SMTP delivery, and a live hostile-browser exploit. No production data or secret
 value was modified; disposable test probes were rolled back or cleaned.
-
-**A finding has to be re-verified before it is acted on.** Three entries in the 2026-09-24 pass later
-turned out to assert something the code contradicted, each sitting unread since before the work that
-contradicted it landed, and two of the three were documentation failures rather than code defects —
-so acting on them unverified would have been wasted work on the wrong thing.

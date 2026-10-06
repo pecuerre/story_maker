@@ -42,10 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### added
 
-- **`bin/rails positions:normalize` renumbers ordered sequences by hand.** It is the repair path for a
-  write that skipped the model — raw SQL, `update_column`, an import — and reports every record it
-  moves; `Hierarchical` now declares its scope column at class level so the command and the model
-  agree on what a sequence is.
+- **`bin/rails positions:normalize` and `positions:status` renumber and report on ordered sequences.**
+  They are the path for a write that skipped the model — raw SQL, an import — and the check writes
+  nothing and exits non-zero, so a skipped step is visible; `Hierarchical` now declares its scope
+  column at class level so both agree with the model.
 
 ### fixed
 
@@ -77,6 +77,9 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **`known_quirks.md` holds only open findings again.** Four kinds of thing had drifted into it — logs of
+  what had been fixed, three decisions an ADR already owns as a cost, two descriptions of the current
+  system written as findings, and a preamble narrating delivered work; each moved to its owner.
 - **Two known-quirk entries that were already fixed left the file.** Findings 39 and 62 still described
   the smoke script's environment handling and login check after both were fixed and recorded in the
   delivery history; a stale pointer to the long-removed finding 51 went with them.

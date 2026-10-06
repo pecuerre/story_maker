@@ -372,6 +372,17 @@ positions. Run it after raw SQL, an import, or any `create!` that named its own 
     bin/rails positions:normalize                          # everything
     bin/rails positions:normalize_universe[netflix-dark]  # one universe
 
+The same walk without the writing is the check:
+
+    bin/rails positions:status                            # reports, writes nothing
+    bin/rails positions:status_universe[netflix-dark]
+
+**Why there is a check and not only a repair.** The command is a step somebody has to remember,
+and a repair cannot notice that it was forgotten. `#check` walks exactly the same models, groups,
+and records — so it cannot report on a different set than it would fix — and says `every sequence
+is contiguous` or lists what is not, **exiting non-zero when anything is**, which is what makes it
+usable from a script or a CI job rather than only by a person already watching the terminal.
+
 It runs in any environment, like `search:reindex`, because it repairs data the application already
 derives, and it reports every move rather than refusing outright — a reader's narrative order is
 their work, so a surprising line in the output has to be visible enough to undo by hand. It is

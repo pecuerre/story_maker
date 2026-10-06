@@ -9,8 +9,10 @@
   cost — raw SQL, `update_column`, and an import naming its own `position` — is repaired by running
   a command rather than by a callback, because no callback fires for a statement that skips the
   model: `bin/rails positions:normalize` walks every positioned model and renumbers each sibling
-  group, reporting every move. What remains of the cost is that two such writes racing each other
-  are still not serialized, which is the SQLite row-lock limitation this ADR already accepted. See
+  group, reporting every move, and `bin/rails positions:status` walks the same models and groups
+  without writing, so the step being forgotten is something a script can notice. What remains of the
+  cost is that two such writes racing each other are still not serialized, which is the SQLite
+  row-lock limitation this ADR already accepted. See
   [`../data_model.md`](../data_model.md#hierarchies--positions) for the rule as it stands.
 - **Date:** 2026-09-25
 - **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../conventions.md`](../conventions.md)

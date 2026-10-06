@@ -1,4 +1,5 @@
-# Renumbers every ordered sequence in the database, or in one universe.
+# Renumbers every ordered sequence in the database, or in one universe — and reports
+# the same walk without writing anything.
 #
 # `PositionedResourceOrder` maintains a sequence for an application mutation and
 # `OrderedSequence` repairs one for a write that reached a positioned model directly.
@@ -6,6 +7,12 @@
 # `update_column`, `delete_all`, or a `create!` that names its own `position`. Nothing
 # fires for a statement that does not run Active Record, so the gap such a write leaves
 # stays open until something walks the sequence and renumbers it. That something is this.
+#
+# **Two verbs, one walk.** `#call` repairs; `#check` reports the same moves and writes
+# nothing. They share every step of the derivation, so the check cannot drift onto a
+# different set than the repair would fix — and the check is what closes the half a
+# repair cannot: the command is a step somebody has to remember, and `#check` is how
+# somebody finds out they forgot.
 #
 # It is the explicit import/console workflow finding 22 in
 # [`docs/known_quirks.md`](../docs/known_quirks.md) says the raw paths would need, and
@@ -45,15 +52,22 @@ class SequenceNormalizer
       end
   end
 
-  Summary = Data.define(:groups, :records, :moves) do
+  Summary = Data.define(:groups, :records, :moves, :applied) do
     def changed?
       moves.any?
     end
 
+    # **The sentence says which of the two things happened.** One summary type serves
+    # both entries, and "moved 3 record(s)" printed by a command that changed nothing
+    # is the one way this output could mislead a person reading it.
     def to_s
-      return "every sequence is already contiguous" unless changed?
+      return applied ? "every sequence is already contiguous" : "every sequence is contiguous" unless changed?
 
-      "moved #{moves.size} record(s) across #{groups} sequence(s) holding #{records} record(s)"
+      if applied
+        "moved #{moves.size} record(s) across #{groups} sequence(s) holding #{records} record(s)"
+      else
+        "#{moves.size} record(s) across #{groups} sequence(s) holding #{records} record(s) are not contiguous"
+      end
     end
   end
 
@@ -81,7 +95,7 @@ class SequenceNormalizer
       .sort_by(&:name)
   end
 
-  # Every sequence in the database.
+  # Every sequence in the database, repaired.
   def call
     normalize(nil)
   end
@@ -93,31 +107,72 @@ class SequenceNormalizer
     normalize(universe)
   end
 
+  # The same walk, **writing nothing**. This is what closes the half of finding 22 a
+  # repair cannot: `positions:normalize` is a step somebody has to remember, and
+  # nothing noticed when it was forgotten. A check that reports the same thing without
+  # touching a row turns a missed step from silent into visible, which is the whole
+  # difference between "the command exists" and "somebody finds out".
+  def check
+    scan(nil)
+  end
+
+  # One universe's sequences, without writing.
+  def check_for_universe(universe)
+    scan(universe)
+  end
+
   private
     attr_reader :output
 
     def normalize(universe)
+      scan(universe, apply: true)
+    end
+
+    # One walk, two outcomes. The grouping, the ordering, and the set of records that
+    # are wrong are the same questions either way, and the only thing `apply` decides
+    # is whether the answer is written down — which is why the check cannot drift from
+    # the repair by reporting on a different set than it would fix.
+    def scan(universe, apply: false)
       groups = 0
       records = 0
       moves = []
 
       each_positioned_model do |model|
-        # One transaction per model rather than one for the run: a whole-database
-        # repair on SQLite holds a write lock for as long as it takes, and a failure
-        # half way through should leave the models it already finished consistent and
-        # the rest exactly as they were, rather than rolling back work that was fine.
         model_moves, model_groups, model_records =
-          ApplicationRecord.transaction { normalize_model(model, universe) }
+          if apply
+            # One transaction per model rather than one for the run: a whole-database
+            # repair on SQLite holds a write lock for as long as it takes, and a failure
+            # half way through should leave the models it already finished consistent and
+            # the rest exactly as they were, rather than rolling back work that was fine.
+            ApplicationRecord.transaction { normalize_model(model, universe) }
+          else
+            inspect_model(model, universe, prefix: "would move ")
+          end
 
         moves.concat(model_moves)
         groups += model_groups
         records += model_records
       end
 
-      Summary.new(groups: groups, records: records, moves: moves)
+      Summary.new(groups: groups, records: records, moves: moves, applied: apply)
     end
 
     def normalize_model(model, universe)
+      moves, groups, records = inspect_model(model, universe, prefix: "")
+      moves.each { |move| move.record.update_column(:position, move.to) }
+
+      [ moves, groups, records ]
+    end
+
+    # Every group this model's records form, and every record in one of them that is
+    # not where `(position, id)` says it should be. Nothing is written here, which is
+    # what makes this the whole of the check — and what lets the repair reuse it rather
+    # than keep a second copy of the same walk to drift.
+    #
+    # `prefix` is how a line says whether it describes a write that happened or one that
+    # would. The same word for both is the difference between a report a person can act
+    # on and one they have to re-read.
+    def inspect_model(model, universe, prefix:)
       records = relation_for(model, universe).reorder(:position, :id).to_a
       return [ [], 0, 0 ] if records.empty?
 
@@ -132,11 +187,10 @@ class SequenceNormalizer
 
           moves << Move.new(model: model, group: describe(group.first, model),
             record: record, from: record.position, to: index)
-          record.update_column(:position, index)
         end
       end
 
-      moves.each { |move| report(move.to_s) }
+      moves.each { |move| report("#{prefix}#{move}") }
       [ moves, groups, records.size ]
     end
 

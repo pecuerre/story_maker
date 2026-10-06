@@ -29,6 +29,52 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-06
 
+- **[docs]** **`known_quirks.md` was reduced to the findings that are actually open findings.** The file's
+  own rule is that it holds verified open oddities and is "not a log" — findings are added and removed,
+  never annotated as they leave — and reading it against that rule found four kinds of thing that had
+  drifted into it. None was a code defect; all of it was the file doing a job other documents own.
+
+  - **Departure logs.** Findings 36 and 37 narrated, in detail, the gaps that had *closed* since the
+    audit: three of 36's four gaps described as fixed with the verification each one got, and 37's
+    account of a fixture attempt that was written and reverted. That history lives in
+    `delivery_history.md`, which is where the file's preamble sends a reader looking for it. Both
+    entries now state only what is still open.
+  - **Decisions an ADR already owns as a cost.** Findings 71, 73, and 75 each restated a decision whose
+    cost the owning ADR already states in its own *Costs and constraints*: ADR 0019 says two people
+    editing one record collide by design and that a false conflict is normal, ADR 0025 records email
+    delivery as deferred and why, and ADR 0026 records that a held update is dropped rather than queued.
+    Three entries that are a second copy of a sentence three files down is exactly the duplication the
+    one-fact-one-home rule exists to prevent. Finding 72 (no branching, forking, or merging) and 74
+    (a discussion message is plain text) **stay**, because no ADR states either cost — an entry is the
+    only home for a fact nothing else owns.
+  - **Architecture described as a finding.** The "Ownership-scope resolution now has one shared adapter"
+    bullet was a description of the current system with a fix's framing on it. The adapter is in
+    `conventions.md`; what remained as a genuine footgun — the two things a new model must still
+    declare — stayed. The framework-route inventory was the same: which of the 25 framework routes are
+    inert, which are load-bearing, and why Active Storage must not be treated as dead weight is
+    agent-guidance about the system's shape, so it moved to
+    `architecture.md#routing--url-generation-the-sharp-edges`, and only the Action Mailbox ingress
+    stayed here as the footgun it is.
+  - **A section preamble that was itself a log.** The DataFactor follow-up section opened with what that
+    report's findings had *already* been delivered as and which of its claims were stale. The section now
+    introduces the one finding still open.
+
+  Finding 22 left the file entirely. What remained in it was a description of the repair that had just
+  been built plus a SQLite concurrency limitation ADR 0009 had already accepted as the reason it deferred
+  a unique position index — an architecture decision, which belongs in the ADR, and it is stated there.
+
+  Verification: `bin/rails test test/docs_test.rb` — 5 runs, 10 assertions. Documentation only; no
+  application, test, configuration, or schema change, so the full suite, `test:system`, RuboCop, and
+  Brakeman were not re-run for it.
+
+- **[docs]** **Finding 37's reverted fixture attempt moved to the history file, and the pending work became a
+  backlog item.** The entry had grown the account of why five fixture files were written and reverted —
+  nine tests reading the absence of records — which is history, and the delivery history already had it.
+  What is *pending* is "add five files and rework the nine tests that assume the tables are empty", which
+  changes what those tests assert and therefore what they prove; that is the owner's call to schedule
+  rather than a finding to record, so it is now **Five fixture files and the tests that assume the tables
+  are empty** in `backlog.md`.
+
 - **[added]** **`bin/rails positions:normalize` repairs the writes no callback can reach.** The second
   half of finding 22 in [known_quirks.md](known_quirks.md). `PositionedResourceOrder` maintains a
   sequence for an application mutation and `OrderedSequence` repairs one for a write that reached a
@@ -78,14 +124,49 @@ are linked rather than repeated, so there is one place to keep them current.
 
   **What this does not claim.** It is not a second writer and takes no scope-owner lock, so
   `PositionedResourceOrder` remains what maintains a sequence while the application is writing to it.
-  And it is a step a person runs, not a guarantee: nothing detects that they did not. Both halves stay
-  in finding 22, which is why it is still open rather than closed.
+  And a repair is a step somebody has to remember — which is what the second command below is for.
 
   Verification: `test/services/sequence_normalizer_test.rb` — 13 runs, 51 assertions. Run against the
   test database, whose fixtures are deliberately inconsistent (two Sections share position 0), the
   command reported `moved 11 record(s) across 32 sequence(s) holding 48 record(s)`; a second run
   reported `every sequence is already contiguous`. `bin/rails test` — 2,059 runs, 13,079 assertions, 0
   failures, 0 errors, 10 skips. `bin/rubocop` clean.
+
+- **[added]** **`bin/rails positions:status` reports a broken sequence without writing anything.** The
+  first half of this closes the repair path; this closes the half a repair cannot. `positions:normalize`
+  is a step somebody has to remember, and no amount of a good repair makes a forgotten step visible —
+  which is the difference between "the command exists" and "somebody finds out".
+
+  **One walk, two verbs, so the check cannot drift.** `#call` repairs and `#check` reports; both go
+  through the same `inspect_model`, and the only difference is a `prefix` on the report line and
+  whether the answer is written down. That is what makes the check trustworthy: it cannot end up
+  looking at a different set than the repair would fix, which would leave it going green while the
+  repair still had work to do — worse than having no check at all. A test asserts the two report the
+  same moves, not merely that both work.
+
+  **The lines say which of the two things happened.** `would move Scene "X" …` against a check and a
+  bare `Scene "X" …` against a repair, because "position 7 -> 3" printed by a command that changed
+  nothing is the one way this output could mislead somebody acting on it.
+
+  **It exits non-zero, and that is the point.** Run from CI or a script, "printed nothing" and
+  "everything is broken" have to be different answers, or the command only helps a person who is
+  already watching the terminal. The task tests hold the exit code, the refusal of an unknown slug,
+  and — the property that makes it usable from a build at all — that it **writes nothing**; a check
+  that quietly repaired would turn a failing build into a passing one.
+
+  **One thing the task tests had to get right, recorded because it cost three attempts.** `abort`
+  raises `SystemExit` from inside the task action and writes its message to **stderr**, so the helper
+  swaps both streams by hand rather than using `capture_io`, which would let the exception through and
+  lose everything written before the abort — which is the output the tests are about.
+
+  What remains open in finding 22 is now only the concurrency half: two out-of-band writes are made
+  self-consistent one after another rather than serialized, because SQLite has no portable row lock.
+  That is the limitation ADR 0009 already accepted.
+
+  Verification: `test/tasks/positions_tasks_test.rb` — 7 runs, 27 assertions, run three times for the
+  random ordering. `test/services/sequence_normalizer_test.rb` — 18 runs, 67 assertions. Run by hand
+  against the test database, `positions:status` exited 1 listing the broken sequences and wrote
+  nothing; after `positions:normalize` it exited 0 printing `every sequence is contiguous`.
 
 - **[fixed]** **`bin/rails test` was reading the developer's `.env`, and it made the suite
   non-deterministic.** Found while verifying finding 22, not by it: the ordered-sequence work made

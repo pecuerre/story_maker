@@ -76,6 +76,70 @@ class SequenceNormalizerTest < ActiveSupport::TestCase
     assert_not_includes output.string, "Kept"
   end
 
+  # The check is what makes the command something other than a step somebody has to
+  # remember, so "writes nothing" is the property it has to earn rather than assume.
+  test "the check reports a gap without writing anything" do
+    scene = @story.scenes.create!(name: "Displaced", position: 7)
+    before = @story.scenes.reload.map { |s| [ s.id, s.position ] }
+    output = StringIO.new
+
+    summary = SequenceNormalizer.new(output: output).check
+
+    assert summary.changed?
+    assert_includes output.string, 'would move Scene "Displaced"'
+    assert_includes output.string, "position 7 -> "
+    assert_equal before, @story.scenes.reload.map { |s| [ s.id, s.position ] }
+    assert_equal 7, scene.reload.position
+  end
+
+  test "the check says which sequence is broken, not only that something is" do
+    append_scene("First")
+    append_scene("Second")
+    @story.scenes.last.update_column(:position, 9)
+    output = StringIO.new
+
+    SequenceNormalizer.new(output: output).check
+
+    assert_includes output.string, @story.name
+  end
+
+  test "the check reports nothing once the sequences are contiguous" do
+    SequenceNormalizer.new.call
+    output = StringIO.new
+
+    summary = SequenceNormalizer.new(output: output).check
+
+    assert_not summary.changed?
+    assert_equal "every sequence is contiguous", summary.to_s
+    assert_empty output.string
+  end
+
+  # The check and the repair have to be looking at the same set. If they ever diverged,
+  # the check would go green while the repair still had work to do, which is worse than
+  # not having a check at all.
+  test "the check reports exactly what the repair would move" do
+    append_scene("First")
+    append_scene("Second")
+    @story.scenes.last.update_column(:position, 9)
+    checked = StringIO.new
+    repaired = StringIO.new
+
+    checked_summary = SequenceNormalizer.new(output: checked).check
+    repaired_summary = SequenceNormalizer.new(output: repaired).call
+
+    assert_equal repaired_summary.moves.map { |move| [ move.model.name, move.record.id, move.from, move.to ] },
+      checked_summary.moves.map { |move| [ move.model.name, move.record.id, move.from, move.to ] }
+  end
+
+  test "the check leaves another universe's gap unreported when asked for one" do
+    @other_universe.locations.create!(name: "Elsewhere", position: 4)
+    output = StringIO.new
+
+    SequenceNormalizer.new(output: output).check_for_universe(@universe)
+
+    assert_not_includes output.string, "Elsewhere"
+  end
+
   # Running it twice is the property a person relying on it needs: the second run has
   # nothing left to do, and says so rather than reporting the first run's work again.
   test "a second run finds nothing left to do" do

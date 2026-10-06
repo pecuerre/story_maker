@@ -201,6 +201,25 @@ scenes, which controllers answer which format, and the URL of every workspace �
 - A `story_id` from another universe raises `RecordNotFound` → 404, which is how a cross-scope
   reference in a URL is caught before any query runs.
 
+**The framework route surface is not one undifferentiated list.** `config/application.rb:3` loads
+`rails/all`, which mounts 25 routes no view links to. They are not interchangeable, and reading them
+as "unused" is how a reader ends up deleting something load-bearing:
+
+- **Action Mailbox ingress** — nine `POST`/`GET` endpoints under `/rails/action_mailbox`. Inert only
+  because `config.action_mailbox.ingress` is `nil`: `ActionMailbox::BaseController#ensure_configured`
+  answers **404** until that setting names an ingress, so setting it mounts nine write endpoints.
+- **`rails/conductor/action_mailbox`** — eight endpoints, guarded by
+  `Rails::Conductor::BaseController#ensure_development_env`, which answers **403** outside
+  development.
+- **Active Storage** — the blob/proxy/disk/direct-upload set. **These are load-bearing, not unused:**
+  `HasPhoto` stores through `ActiveStorage::Blob.service` (`DiskService`), so these routes serve every
+  record photo and the cropper.
+
+Action Text mounts no routes in this application. There is no route allowlist and no production
+route-surface check: `test/routing/route_action_contract_test.rb` deliberately **excludes** framework
+controllers, deciding membership by where a controller's own file lives, so a framework route is
+outside its scope by construction.
+
 ## Response formats per controller
 
 | Flow | Controllers | Behavior |

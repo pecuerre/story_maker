@@ -472,19 +472,21 @@ password they got. No manifest states a password — the loader takes it from
 
 An ordering list is normally maintained by the application, but a write that skips the model —
 raw SQL from a console, `update_column`, `delete_all`, or a `create!` that named its own `position`
-— leaves a gap nothing can repair on its own. Renumber the sequences with:
+— leaves a gap nothing can repair on its own. Report on them, and renumber them, with:
 
 ```bash
-bin/rails positions:normalize                          # every positioned sequence
-bin/rails positions:normalize_universe[netflix-dark]  # one universe only
+bin/rails positions:status                            # report only; exits non-zero if broken
+bin/rails positions:normalize                         # renumber everything
+bin/rails positions:normalize_universe[netflix-dark]  # renumber one universe only
 ```
 
-It prints every record it moves, with the sequence it was in and both positions, and says
-`every sequence is already contiguous` when it had nothing to do. Unlike `db:demo:*` it is not
-restricted to development — it repairs data the application derives, and is the step to run after a
-production import — but it is not a write path: it takes no scope-owner lock, so it belongs between
-writes rather than during them. What a sequence is and which records share one are in
-[data_model.md](data_model.md#hierarchies--positions).
+Each prints every record it would move, with the sequence it was in and both positions, and says
+`every sequence is contiguous` when it had nothing to do. Unlike `db:demo:*` these are not
+restricted to development — they work on data the application derives, and are the step to run after
+a production import — but they are not a write path: the repair takes no scope-owner lock, so it
+belongs between writes rather than during them. `positions:status` writes nothing at all, which is
+what makes it safe to run from a script or a CI job. What a sequence is and which records share one
+are in [data_model.md](data_model.md#hierarchies--positions).
 
 ### Running the tasks with the password from `.env`
 

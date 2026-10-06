@@ -35,26 +35,19 @@ associations. The unnumbered "Scenes are covered" finding left it on 2026-10-06,
 confirmed to describe no open defect and to restate what `scenes.md` and `conventions.md` already own,
 so the resolved status note went instead of a numbered entry.
 
+Findings **20, 27, 28, 29, and 58** left this file on 2026-10-06, when the session and password
+resources were restricted to the actions their flows have, the four modal-edited content models lost
+their template-less `new` actions, `User` gained the presence validations its `NOT NULL` columns
+imply, a reversed interval became a validation error on all three models that record one, a composite
+slug began reading its tag segment in a defined order, and the fixed-navbar click finding turned out to
+describe a test that does not fail — see `delivery_history.md` for the verification each one went
+through.
+
 See [`delivery_history.md`](delivery_history.md).
 
 ## Mutation, route, and data-contract observations
 
-20. **Medium — generated routes advertise unsupported actions and templates.** `config/routes.rb:2-25`
-    uses broad session, password, and content resources even though the documented action surface is
-    narrower (`docs/conventions.md:63-66`). Examples include missing
-    `sessions#show/edit/update`, `passwords#index/show/destroy`, content `show/edit` actions, and
-    `new` routes whose controllers have no templates. The route table contains dozens of entries
-    that cannot render a supported page; direct requests can produce 404, unsupported-format, or
-    missing-template responses. The existing route test checks positional helper arguments, not
-    route/action/template contracts.
-    Partly reduced on 2026-09-25: every content model and every tag model now has a real, tested
-    `show` action, so the `show` half of the content surface is no longer an empty route. The
-    `edit` routes for modal-edited content, the session/password actions, and the `new` routes
-    without templates are unchanged and still need either an action or a route restriction.
-    The tag-controller half was reduced on 2026-09-28: the eight `*_tags` resources are restricted
-    to `index/show/create/update/destroy`, the dead `new` actions are removed, and the taxonomy
-    node's vestigial `data-edit-url`/`data-create-url` attributes are gone. The content-controller
-    `new`/`edit` routes and the session/password actions remain open.
+
 
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
     maintenance.** The `PositionedResourceOrder` service now transactionally
@@ -91,23 +84,7 @@ See [`delivery_history.md`](delivery_history.md).
     HABTM collection writer can still write a join row before a later validation failure in a
     legacy table, however, because the database has no constraints to reject it.
 
-27. **Low — User model validation does not match its NOT NULL schema.** `users.name` and
-    `users.email_address` are `NULL: false` (`db/schema.rb:304-312`), but `User` has no presence
-    validations (`app/models/user.rb:1-10`). Model callers can see `valid? == true` and then receive
-    a database exception on `save!`. There is no public registration controller, which limits the
-    current blast radius, but seed/import callers are not protected.
 
-28. **Low, contract-dependent — reversed temporal intervals are accepted.** `Event`, `Relation`,
-    and `Ownership` do not validate that an end/to date follows its start/from date
-    (`app/models/event.rb:17-19,67-72`, `relation.rb:16-17`, `ownership.rb:16-17`). A range with
-    `end < start` saves successfully and can be displayed or interpreted inconsistently. The
-    desired treatment of unknown or intentionally open intervals should be made explicit.
-
-29. **Low — composite Relation/Ownership slugs depend on unordered tag input.** Their callbacks use
-    `relation_tags.first` or `ownership_tags.first` without an explicit order
-    (`app/models/relation.rb:43`, `app/models/ownership.rb:42`). Creating equivalent records
-    with tags supplied in a different order can produce different slugs, which matters for
-    symbolic development-data references and class-level lookup.
 
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`
@@ -327,21 +304,7 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
 
-58. **Medium — a synthetic click on a control inside the fixed navbar misses it.** The navbar is
-    `position: fixed-top` (`app/views/layouts/_navbar.html.erb:1`). Capybara scrolls an element into
-    view before clicking it, and a fixed navbar does not move with the document, so the element has
-    shifted between the scroll and the click and the click lands somewhere else — silently, because
-    the click still hits *something*. `test/system/authentication_test.rb`'s "a user can sign in and
-    sign out" fails for this reason and has done so before any recent change: clicking **Log out**,
-    which is a `button_to` inside a Bootstrap dropdown in that navbar, leaves the reader still signed
-    in and still on the page they were on. This is **not** a defect in sign-out — the form is correct,
-    the session is destroyed, and driving the same click from the DOM reaches `/session/new`. It is a
-    test-harness limitation, and it is currently worked around rather than fixed:
-    `test/system/settings_start_page_test.rb` submits the same form with a scripted click. The fix is
-    either to stop the harness scrolling for elements inside the fixed navbar (a Capybara
-    configuration or a shared helper) or to move the account menu out of the fixed element. Until
-    then, the sign-out path has no browser-level coverage that does not work around it, and the
-    request suite is the only place sign-out is actually asserted.
+
 
 56. **Medium — an index write the engine refuses asynchronously is invisible to the job that queued
     it.** `Search::IndexRecordJob` and `Search::RemoveRecordJob` hand a document to the engine and

@@ -146,13 +146,18 @@ class TimelineLayoutTest < ActiveSupport::TestCase
     assert_equal [ { from: second.id, to: first.id, kind: "sequence" } ], layout.edges
   end
 
-  # A reversed interval is legal data — nothing validates it yet — and it is the one
-  # shape that makes the dates disagree with themselves, so the walk runs on every
-  # candidate edge and the dates still win over a declaration.
+  # `Event` refuses to save a range that ends before it starts, so a reversed
+  # interval can now only arrive from outside the model: a direct SQL write, an
+  # import, or a row that predates the validation. `TimelineLayout` is handed
+  # whatever is in the table, so it still has to cope — this writes the row the way
+  # those paths do, by bypassing the validation rather than by removing it.
   test "a reversed interval does not let a contradicting declaration through" do
-    later = @universe.events.create!(title: "Later by start", start_datetime: "2026-01-01 10:00", end_datetime: "2026-01-01 09:00")
+    later = @universe.events.create!(title: "Later by start", start_datetime: "2026-01-01 10:00", end_datetime: "2026-01-01 11:00")
     earlier = @universe.events.create!(title: "Earlier by start", start_datetime: "2026-01-01 08:00", end_datetime: "2026-01-01 08:30")
-    later.update!(before_event: earlier)
+    later.update_column(:end_datetime, Time.utc(2026, 1, 1, 9, 0))
+    # The declaration is written the same way: a full `update!` would revalidate the
+    # row, which now has a reversed range, and refuse before reaching the layout.
+    later.update_column(:before_event_id, earlier.id)
 
     layout = TimelineLayout.new([ later.reload, earlier ])
 

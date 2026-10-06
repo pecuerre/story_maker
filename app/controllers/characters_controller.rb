@@ -28,13 +28,6 @@ class CharactersController < ApplicationController
   def show
   end
 
-  def new
-    @character = Current.universe.characters.new(parent_id: params[:parent_id])
-
-    @character_tags = Current.universe.character_tags
-    @character_tags = @character_tags.order(:name)
-  end
-
   def create
     attributes = character_params
     @character = Current.universe.characters.new(attributes)

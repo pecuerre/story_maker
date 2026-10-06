@@ -50,6 +50,25 @@ class OwnershipTest < ActiveSupport::TestCase
     )
   end
 
+  # The composite slug embeds one tag, so which tag is read decides the address.
+  # Two records with the same tags supplied in a different order are the same
+  # record as far as a reader and a `db/data` reference are concerned, so they have
+  # to reach the same slug.
+  test "the slug does not depend on the order the tags were supplied in" do
+    OwnershipTag.create!(universe: @universe, name: "Casts")
+    tags = OwnershipTag.where(universe: @universe).order(:slug).to_a
+    attributes = { universe: @universe, item: items(:item_one), character: characters(:character_one) }
+
+    forward = Ownership.create!(**attributes, ownership_tags: tags)
+    reversed = Ownership.create!(**attributes, ownership_tags: tags.reverse)
+
+    assert_equal forward.slug, reversed.slug
+    assert_equal(
+      "#{characters(:character_one).slug}-#{tags.first.slug}-#{items(:item_one).slug}",
+      forward.slug
+    )
+  end
+
   test "falls back to the composite slug when the name cannot be slugified" do
     ownership = Ownership.create!(
       universe: @universe,
@@ -59,6 +78,31 @@ class OwnershipTest < ActiveSupport::TestCase
     )
 
     assert_equal "#{characters(:character_one).slug}-#{items(:item_one).slug}", ownership.slug
+  end
+
+  # An interval whose end precedes its start used to save, and then rendered as
+  # "From the later date until the earlier one". A nil end is a different thing —
+  # an open or unknown interval — and stays allowed.
+  test "refuses a range that ends before it starts, but allows an open one" do
+    reversed = Ownership.new(
+      universe: @universe, item: items(:item_one), character: characters(:character_one),
+      from_date: Time.utc(2026, 5, 2), to_date: Time.utc(2026, 5, 1)
+    )
+
+    assert_not reversed.valid?
+    assert_includes reversed.errors[:to_date], "must not be before the date it starts"
+
+    open_ended = Ownership.new(
+      universe: @universe, item: items(:item_one), character: characters(:character_one),
+      from_date: Time.utc(2026, 5, 1)
+    )
+    assert open_ended.valid?
+
+    same_instant = Ownership.new(
+      universe: @universe, item: items(:item_one), character: characters(:character_one),
+      from_date: Time.utc(2026, 5, 1), to_date: Time.utc(2026, 5, 1)
+    )
+    assert same_instant.valid?
   end
 
   test "rejects associated records from another universe" do

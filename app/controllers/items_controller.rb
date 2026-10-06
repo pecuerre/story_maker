@@ -25,13 +25,6 @@ class ItemsController < ApplicationController
   def show
   end
 
-  def new
-    @item = Current.universe.items.new(parent_id: params[:parent_id])
-
-    @item_tags = Current.universe.item_tags
-    @item_tags = @item_tags.order(:name)
-  end
-
   def create
     attributes = item_params
     @item = Current.universe.items.new(attributes)

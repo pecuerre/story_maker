@@ -13,10 +13,16 @@ class Event < ApplicationRecord
   include InvalidatesMenuCounts
   include Searchable
   include HasDiscussion
+  include TemporalInterval
 
   searchable kind: "event", title: :name, body: :description, route: "event"
   invalidates_menu_counts_for :universe
   soft_deletes :children
+
+  # The event's own in-world span. Both datetimes are optional, and an absent
+  # `end_datetime` is an open or unknown end rather than a missing value; only a
+  # range with both ends and the end first is refused.
+  has_temporal_interval from: :start_datetime, to: :end_datetime
 
   belongs_to :universe
   has_many_tags :event_tag, scope: :universe_id

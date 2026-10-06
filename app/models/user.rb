@@ -14,6 +14,13 @@ class User < ApplicationRecord
   # here so a row addressed to somebody who no longer exists cannot outlive them.
   has_many :notifications, dependent: :destroy
 
+  # The schema declares both columns `null: false`, so without these a model caller
+  # can see `valid? == true` and then receive `ActiveRecord::NotNullViolation` from
+  # `save!`. There is no public registration controller, so the paths that reach a
+  # `User` are the fixtures, the development-data loader, and a console — which is
+  # exactly where a validation message is more use than a 500.
+  validates :name, :email_address, presence: true
+
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
   # The universes this person collaborates in: the ones they own plus the ones they

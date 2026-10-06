@@ -147,6 +147,12 @@ en:
         universe: "must belong to the same universe"
         story: "must belong to the same story"
         draft: "must belong to the same draft"
+      # `TemporalInterval`'s one rule, shared by the three models that record a
+      # span: an Event's datetimes and a Relation's or Ownership's dates. An absent
+      # end is an open interval and is allowed; this sentence only says that a range
+      # with both ends cannot end before it starts.
+      interval:
+        must_not_be_reversed: "must not be before the date it starts"
       hierarchy:
         scope_change_with_children: "cannot be changed while child records exist"
         must_exist: "does not exist"

@@ -1,6 +1,19 @@
 require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
+  # `users.name` and `users.email_address` are `null: false`. A model caller with no
+  # validation for either sees `valid? == true` and then gets a NotNullViolation from
+  # `save!`, which is a 500 in a loader or a console with no hint which column was wrong.
+  test "a user without a name or an email address is refused before the database is asked" do
+    nameless = User.new(email_address: "nameless@example.com", password: "password")
+    assert_not nameless.valid?
+    assert_includes nameless.errors.attribute_names, :name
+
+    anonymous = User.new(name: "Anonymous", password: "password")
+    assert_not anonymous.valid?
+    assert_includes anonymous.errors.attribute_names, :email_address
+  end
+
   test "downcases and strips email_address" do
     user = User.new(email_address: " DOWNCASED@EXAMPLE.COM ")
     assert_equal("downcased@example.com", user.email_address)

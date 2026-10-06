@@ -69,13 +69,16 @@ class DiscussionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a message whose author has no name states it rather than rendering an empty author" do
-    # `users.name` is `NOT NULL` but has no presence validation (known quirk 27),
-    # and `NOT NULL` rejects only `NULL`, so an empty string is what a seed or
-    # import caller leaves behind. A message with no visible author is exactly the
-    # anonymous block the thread refuses to show, so the shared blank copy stands
-    # in for it.
-    author = User.create!(name: "", email_address: "nameless-#{SecureRandom.hex(4)}@example.com",
-      password: "abcdefgh")
+    # `User` validates `name`'s presence, and `NOT NULL` rejects only `NULL`, so an
+    # empty string is what a direct write or an import leaves behind. A message with
+    # no visible author is exactly the anonymous block the thread refuses to show, so
+    # the shared blank copy stands in for it. The row is written the way those paths
+    # write it rather than by dropping the validation.
+    author = User.new(name: "", slug: "nameless-#{SecureRandom.hex(4)}",
+      email_address: "nameless-#{SecureRandom.hex(4)}@example.com", password: "abcdefgh")
+    # `validate: false` skips the callbacks too, and `HasSlug`'s runs there, so the
+    # slug is assigned above rather than left to one that never runs.
+    author.save!(validate: false)
     @discussion.messages.create!(user: author, body: "Still says something.")
 
     get universe_discussion_url(universe_slug: @universe.slug, id: @discussion)

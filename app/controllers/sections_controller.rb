@@ -35,14 +35,6 @@ class SectionsController < ApplicationController
     @scene_counts = @story.scenes.group(:section_id).count
   end
 
-  def new
-    @section = @story.sections.new(parent_id: params[:parent_id])
-
-    @section_tags = @story.section_tags
-    @section_tags = @section_tags.order(:name)
-    @section_options = @story.sections.reorder(:position, :id).to_a
-  end
-
   # GET /sections/:id — the Section's own details page. This is where "Details"
   # leads from the Section tree, and it lists the scenes grouped under this
   # Section in canonical narrative order. Grouping is organization only: the

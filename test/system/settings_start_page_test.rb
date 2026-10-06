@@ -110,7 +110,7 @@ class SettingsStartPageTest < ApplicationSystemTestCase
 
     def sign_out
       click_button "Account"
-      page.execute_script("document.querySelector('form.button_to button').click()")
+      click_on "Log out"
       assert_selector "h1", text: "Sign in"
       assert_equal new_session_path, current_path
     end

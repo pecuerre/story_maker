@@ -7,6 +7,7 @@ class Ownership < ApplicationRecord
   include InvalidatesMenuCounts
   include Searchable
   include HasDiscussion
+  include TemporalInterval
 
   searchable kind: "ownership", title: :display_string, body: :description, route: "ownership"
   invalidates_menu_counts_for :universe
@@ -15,6 +16,11 @@ class Ownership < ApplicationRecord
   belongs_to :item
   belongs_to :character
   has_many_tags :ownership_tag, scope: :universe_id
+
+  # The ownership's own span. Both dates are optional, and an absent `to_date` is
+  # an open interval rather than a missing value; only a range with both ends and
+  # the end first is refused.
+  has_temporal_interval from: :from_date, to: :to_date
 
   # Generate before HasSlug so the composite slug can be set on create.
   # Later endpoint or tag changes do not rewrite this creation-time snapshot.
@@ -51,8 +57,10 @@ class Ownership < ApplicationRecord
       return self.slug = name_slug if name_slug.present?
     end
 
-    # Tags are optional, so the tag segment may be missing entirely.
-    parts = [ character&.slug, ownership_tags.first&.slug, item&.slug ].compact
+    # Tags are optional, so the tag segment may be missing entirely. The tag is
+    # read through `first_tag_slug` rather than `ownership_tags.first`, because a
+    # composite slug has to be the same for equivalent records; see the concern.
+    parts = [ character&.slug, first_tag_slug(:ownership_tags), item&.slug ].compact
     self.slug = parts.presence&.join("-") || SecureRandom.hex(4)
   end
 

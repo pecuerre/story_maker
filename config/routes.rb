@@ -1,6 +1,14 @@
 Rails.application.routes.draw do
-  resource :session
-  resources :passwords, param: :token
+  # Only the three actions the sign-in flow has: a form, a submit, and a sign-out.
+  # `resource :session` on its own also advertises `show`, `edit`, and `update`,
+  # none of which exists — a route whose action is missing answers 404 rather than
+  # anything a reader could have meant.
+  resource :session, only: %i[ new create destroy ]
+  # A password reset is a form, a submit, and a token-addressed form pair. `index`
+  # and `show` would be a list of every outstanding token and a page reading one,
+  # which is not a thing this application offers; `destroy` would revoke a reset
+  # without a session to revoke it against.
+  resources :passwords, param: :token, only: %i[ new create edit update ]
   # Platform settings are not universe-scoped: a theme belongs to the browser,
   # so the page is reachable before a universe is chosen and by a guest.
   resource :settings, only: %i[ show update ]
@@ -35,7 +43,10 @@ Rails.application.routes.draw do
     get "search", to: "searches#show", as: :search
 
     resources :stories, path: "s" do
-      resources :sections
+      # A Section is created and edited through the JSON modal on the Sections
+      # workspace, so it has the same five actions as the other content models and
+      # no `new`/`edit` page — see the Characters resource below.
+      resources :sections, only: %i[ index show create update destroy ]
       resources :section_tags, only: %i[ index show create update destroy ]
       resources :scene_tags, only: %i[ index show create update destroy ]
       resources :scenes do
@@ -60,11 +71,18 @@ Rails.application.routes.draw do
     end
     get "tags", to: "tags#index", as: :tags
     resources :item_tags, only: %i[ index show create update destroy ]
-    resources :items
+    # The four modal-edited content models below all have the same five actions:
+    # `index`/`show` are the two reads, and create/update/destroy are the JSON
+    # mutations the workspace's modal issues. There is deliberately no `new` or
+    # `edit` page for any of them — the modal holds the form — so advertising
+    # those routes would answer a request with a missing-template error rather
+    # than with anything. `new` used to exist here as a bare `@record` builder
+    # with no template; the `parent_id` it read is still accepted by `create`.
+    resources :items, only: %i[ index show create update destroy ]
     resources :location_tags, only: %i[ index show create update destroy ]
-    resources :locations
+    resources :locations, only: %i[ index show create update destroy ]
     resources :character_tags, only: %i[ index show create update destroy ]
-    resources :characters
+    resources :characters, only: %i[ index show create update destroy ]
     resources :relation_tags, only: %i[ index show create update destroy ]
     # Relations and Ownerships are link records between two entities; they have a
     # read-only details page but no separate editor.
@@ -81,7 +99,9 @@ Rails.application.routes.draw do
       resources :messages, only: :create, controller: "messages"
     end
     resources :event_tags, only: %i[ index show create update destroy ]
-    resources :events
+    # An Event is modal-edited like the four above, and its `new` action built a
+    # `@events_for_select` collection that only its missing template read.
+    resources :events, only: %i[ index show create update destroy ]
     get "timeline", to: "timeline#index", as: :timeline
     # One author's remembered changes for this universe. `apply`, `submit`, and
     # `discard` are three POSTs rather than a `resources` verb list: each is a

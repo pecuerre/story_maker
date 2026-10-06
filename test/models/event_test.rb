@@ -72,6 +72,20 @@ class EventTest < ActiveSupport::TestCase
     assert event.valid?
   end
 
+  # An interval whose end precedes its start used to save, and then rendered as
+  # "From the later time until the earlier one". A nil end is a different thing —
+  # an open or unknown interval, which `is valid with only a start date` above
+  # already covers — and stays allowed.
+  test "refuses a range that ends before it starts" do
+    event = Event.new(
+      universe: universes(:universe_one),
+      start_datetime: Time.utc(2026, 5, 2, 10), end_datetime: Time.utc(2026, 5, 2, 9)
+    )
+
+    assert_not event.valid?
+    assert_includes event.errors[:end_datetime], "must not be before the date it starts"
+  end
+
   test "is valid with only a before_event relation" do
     event = Event.new(universe: universes(:universe_one), before_event: events(:event_one))
 

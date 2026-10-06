@@ -144,6 +144,11 @@ es:
         # El ámbito de un borrador es el suyo propio, y el género es «borrador»,
         # así que el determinante de la frase es el de ese sustantivo.
         draft: "debe pertenecer al mismo borrador"
+      # `TemporalInterval`: un final ausente es un intervalo abierto y está
+      # permitido; esta frase solo dice que un rango con ambos extremos no puede
+      # terminar antes de empezar.
+      interval:
+        must_not_be_reversed: "no puede ser anterior a la fecha de inicio"
       hierarchy:
         scope_change_with_children: "no se puede cambiar mientras existan registros hijos"
         must_exist: "no existe"

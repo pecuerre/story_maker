@@ -78,6 +78,125 @@ are linked rather than repeated, so there is one place to keep them current.
   `app/javascript` changed), `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no
   dependency, importmap pin, or vendored asset changed). No container build or Kamal validation.
 
+- **[fixed]** **Five open quirks from the 2026-09-24 audit are closed.** The route table advertised
+  actions no controller has and pages no template renders; `User` validated nothing its `NOT NULL`
+  columns imply; a reversed interval saved; a composite slug depended on tag assignment order; and the
+  fixed-navbar click finding described a test that does not fail.
+
+  **Routes (finding 20).** `resources` names seven verbs whether or not they exist, and the two ways
+  of being wrong look different from outside: a missing action answers `ActionNotFound` (**404**),
+  while an action with no template answers `ActionController::MissingExactTemplate` (**500**). The
+  session resource was advertising `show`, `edit`, and `update`, and the password resource `index`,
+  `show`, and `destroy` — `passwords#index` in particular would have been a page listing every
+  outstanding reset token. The worse half was the four modal-edited content models: Characters,
+  Items, Events, and Sections each had a `new` action that built an instance variable only a missing
+  `new.html.erb` would have read, so `GET /u/<slug>/characters/new` was a server error. Locations
+  had no `new` action at all, so the same URL was a 404 for a different reason.
+
+  **Why restrict rather than add pages.** The alternative was to implement `new` and `edit` for five
+  models. The modal already holds each of those forms, and a second page for the same record would be
+  a parallel UI pattern — the thing `conventions.md`'s three page patterns exist to prevent. The
+  `parent_id` the old `new` actions read is still accepted by `create`, so hierarchical creation is
+  unaffected. The dead `new_url`/`edit_url`/`delete_url` locals that `locations/index` and
+  `sections/index` passed to `shared/_taxonomy_tree` went with them: the partial has not read those
+  three since the tag controllers were restricted, so they were strings naming routes rather than
+  wiring.
+
+  **The test that keeps it closed** is `test/routing/route_action_contract_test.rb`, and it asserts
+  two halves rather than one, because the finding had two. Every route must resolve to an action the
+  controller implements, and every **GET** must resolve to an action with a template. The template
+  half is per request verb rather than per action, because a JSON-only mutation correctly renders
+  nothing — asserting it per action would have flagged every controller in the application. Framework
+  routes are excluded by asking where a controller's own file lives rather than by a name prefix,
+  since Rails and Turbo ship real controller classes that resolve to constants just as successfully
+  as ours do. Verified by mutation: widening `resources :characters` back to all seven verbs fails
+  three of the four cases, reporting both `(no template)` and `(no such action)`.
+
+- **[fixed]** **`User` validates the columns its schema declares `NOT NULL`.** `users.name` and
+  `users.email_address` are `null: false` and `User` had no presence validation, so a model caller
+  could see `valid? == true` and then receive `ActiveRecord::NotNullViolation` from `save!`. There
+  is no public registration controller, so the reachable callers are the fixtures, the
+  development-data loader, and a console — which is exactly where a validation message beats a 500.
+
+  **One existing caller was relying on the gap.** `DiscussionsControllerTest`'s "a message whose author
+  has no name states it rather than rendering an empty author" existed precisely because a nameless
+  user could be created. The behaviour it protects is real — `NOT NULL` rejects only `NULL`, so an
+  empty *string* from a direct write or an import is still possible, and a message with no visible
+  author is the anonymous block the thread refuses to show — so the test now writes its row with
+  `save!(validate: false)` and assigns the slug itself, because `HasSlug` runs in the same
+  `before_validation` chain the skip bypasses. The claim that `users.name` carries no presence
+  validation moved out of `conventions.md`'s discussion section with it.
+
+- **[fixed]** **A reversed interval is now a validation error, and an open one is not.** `Event`,
+  `Relation`, and `Ownership` all record a span, and all three accepted a range whose end precedes its
+  start — which saves, renders as "From the later date until the earlier one", and is then read
+  inconsistently by a reader, the Timeline, and `shared.in_world_range`. The decision asked of the
+  owner was the one the finding called contract-dependent: **reject reversed, allow open**. A nil end
+  is an interval that is still running or whose end is not known, and both existing fixtures and demo
+  data rely on it; refusing those would have needed a migration and a UI answer for what replaces an
+  open range. Only a range with **both** ends present is checked.
+
+  The rule lives in a `TemporalInterval` concern declared per model
+  (`has_temporal_interval from: :start_datetime, to: :end_datetime`) rather than as three
+  hand-written validators, because three copies of one sentence is how a fourth model ends up with
+  two of them. The error attaches to the **end** attribute, which is the field whose value cannot be
+  right, and the message is one `shared.errors.interval.must_not_be_reversed` key rather than three,
+  because `errors.format` already supplies the noun through the attribute name.
+
+  **The Timeline's tolerance stays, and is now reachable only from outside the model.**
+  `TimelineLayout#well_formed_range?` exists because a reversed range could reach it; it still can,
+  through direct SQL, an import, or a row written before this validation existed, so the guard was
+  left in place rather than removed. Its test now writes the row with `update_column` — twice, for the
+  reversed datetime and for the declaration that contradicts it — because a full `update!` would
+  revalidate the row and refuse before the layout ever saw it. The comment above that test said
+  outright that a reversed interval was "legal data — nothing validates it yet", which is exactly the
+  kind of stale duplicate this project keeps an owner document to prevent; it now says how the row is
+  actually written.
+
+- **[fixed]** **A composite slug reads its tag segment in a defined order.** `Relation` and
+  `Ownership` embed one tag in their generated slug and were reading `relation_tags.first` /
+  `ownership_tags.first` off an unordered HABTM collection, so two records carrying the same tags in a
+  different assignment order produced different slugs — which breaks a symbolic `db/data` reference
+  and a class-level lookup at the same time.
+
+  **Why order by slug rather than by id.** Either makes the answer deterministic; slug is the value
+  that ends up in the address, so ordering by it makes the segment a function of *which* tags are
+  assigned rather than of the order they were created in, and a data reload that reassigns ids does
+  not move the address. `HasManyTags#first_tag_slug` reads the association in Ruby rather than
+  issuing `ORDER BY slug LIMIT 1`, because the record being slugged is new and its join rows do not
+  exist yet — a query returns nothing and the segment silently vanishes, which is what the first
+  attempt did. Both models' tests assert the two orders produce the same slug *and* that the segment
+  is the first tag by slug, so a regression to "some tag" fails rather than passes quietly.
+
+- **[docs]** **The fixed-navbar click finding described a test that does not fail (finding 58).** The
+  entry claimed `test/system/authentication_test.rb`'s sign-in-and-sign-out case failed because
+  Capybara scrolls an element into view and a `position: fixed-top` navbar does not move with the
+  document, and that sign-out therefore had "no browser-level coverage that does not work around
+  it". The test asserts `assert_current_path new_session_path` immediately after clicking **Log out**
+  and the whole suite is green. Running the full browser suite at both the configured
+  `screen_size: [1400, 1400]` and a shorter `[1400, 900]` reproduced no failure either way, which is
+  consistent with the diagnosis: at either height the document does not scroll on these pages, so
+  Capybara's scroll-into-view is a no-op and the click lands where it is aimed. The entry was
+  removed rather than reworded, because what it described was a hypothesis about a harness limitation
+  that no evidence supported.
+
+  **The workaround it described is gone too, which is the part that was true.**
+  `SettingsStartPageTest#sign_out` drove the same form with
+  `page.execute_script("document.querySelector('form.button_to button').click()")`; it now clicks
+  **Log out** the way a reader does, and passes on repeated runs of the file and in the full suite.
+  Removing it is the coverage the finding said was missing: the sign-out path now has a browser-level
+  case that exercises the real control. The one thing worth keeping from the diagnosis is that a fixed
+  navbar *can* interact badly with a scrolling harness, so a future failure of this shape should be
+  read as a viewport problem before it is read as a defect in sign-out.
+
+  Verification: `bin/rails test` — 2,031 runs, 12,953 assertions, 0 failures, 0 errors, 10 skips;
+  line coverage 95.73%, branch 83.82%. `bin/rails test:system` — 173 runs, 2,336 assertions,
+  0 failures, 0 errors, 0 skips. `bin/rubocop` — no offenses. The route contract test was checked
+  against a deliberate mutation (see above). Not run: `bun run check:js` (no file under
+  `app/javascript` changed), `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit`, and
+  `bun audit` (no dependency or importmap pin changed), and `bun run build:css` (no asset changed).
+  No schema migration, so no `db:migrate` was needed and `db/data/**` was untouched.
+
 ### 2026-10-05
 
 - **[docs]** **The two collaboration decisions that arrived without an ADR now have one.** The notification

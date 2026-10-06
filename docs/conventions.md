@@ -55,12 +55,18 @@ the same change, or `db:demo:check` fails.
   be eager loaded, and the tree and its editor are all in [features/tags.md](features/tags.md).
 - `_tag` models include `HasColor` (validated `#rrggbb` `bgcolor`/`fgcolor`) and `HasSlug`.
   `SectionTag` and `SceneTag` additionally use the story-scoped `Hierarchical` scope.
-- Name presence is validated on: Universe, Character, Location, Item, Section, Story and all
+- Name presence is validated on: Universe, Character, Location, Item, Section, Story, User and all
   `_tag` models. Not on: Event (see [features/events.md](features/events.md)), Relation and
   Ownership (name optional). The two optional names are handled by the `OptionalName` concern
   (`app/models/concerns/optional_name.rb`), which stores a blank name as NULL and keeps the record's
   slug when a name is cleared or cannot be slugified — `HasSlug` would otherwise resolve that to a
   random hex and discard the composite slug those records' demo-data references depend on.
+- **A composite slug that embeds a tag reads that tag deterministically.**
+  `HasManyTags#first_tag_slug` picks the first tag *by slug* rather than off the collection's
+  arbitrary order, so two records carrying the same tags in a different assignment order reach the
+  same address — which a symbolic `db/data` reference and a class-level lookup both depend on. It
+  reads the association in Ruby rather than querying, because the record being slugged is new and its
+  join rows do not exist yet.
 - `Relation`, `Ownership` and `Event` add custom validators that keep their non-tag associated
   records inside the same universe. `HasManyTags` independently enforces the shared universe or
   story scope in both directions for all eight content/tag pairs (see the taxonomy matrix in
@@ -79,9 +85,15 @@ the same change, or `db:demo:check` fails.
   `test/controllers/unknown_reference_ids_test.rb` asserts this for every endpoint that accepts a
   `parent_id`.
 - **A concern lives in `app/models/concerns/`**, beside `HasSlug`, `HasManyTags`, `Hierarchical`,
-  `HasColor`, `InvalidatesMenuCounts`, and `SoftDeletable`. A model that needs behaviour declares it
-  with `include` and, where the behaviour is configurable, a class-level DSL on itself — as
-  `app/models/concerns/searchable.rb` does.
+  `HasColor`, `InvalidatesMenuCounts`, `SoftDeletable`, and `TemporalInterval`. A model that needs
+  behaviour declares it with `include` and, where the behaviour is configurable, a class-level DSL on
+  itself — as `app/models/concerns/searchable.rb` does.
+- **An interval that cannot run backwards** is `TemporalInterval`, declared with
+  `has_temporal_interval from: …, to: …`: `Event` on its two datetimes, `Relation` and `Ownership` on
+  `from_date`/`to_date`. A range with both ends whose end precedes its start is refused on the **end**
+  attribute (`shared.errors.interval.must_not_be_reversed`), because that is the field whose value
+  cannot be right. **An absent end is not this rule**: a nil end is an interval that is still open or
+  whose end is unknown, both legitimate, and only a range with both ends present is checked.
 - **Soft delete** is `SoftDeletable` (`app/models/concerns/soft_deletable.rb`): a `default_scope`
   hides records with a non-null `deleted_at`, `soft_delete`/`restore` mark and unmark a record, and
   `soft_deletes :assoc` declares the associations that cascade. A delete keeps the row, so a
@@ -242,6 +254,16 @@ the same change, or `db:demo:check` fails.
   content model (Character, Location, Item, Event, Relation, Ownership, Section) and every tag
   model, because each record has exactly one details page. `ScenesController#move` (narrative
   order) and `#group` (Section grouping) are the two member and collection actions beyond that set.
+- **A route may only advertise an action the controller has, and a GET may only name an action with a
+  template.** A `resources` line names seven verbs whether or not they exist, and the two ways of
+  being wrong look different from the outside: a missing action answers `ActionNotFound` (**404**),
+  while an action with no template answers `ActionController::MissingExactTemplate` (**500**). The
+  modal-edited content models — Characters, Locations, Items, Events, Sections — therefore carry
+  `only: %i[index show create update destroy]` and **no `new`/`edit` page at all**: the modal holds
+  the form, and the `parent_id` the old `new` action read is still accepted by `create`. Sessions and
+  passwords are the other two narrow surfaces, at `new`/`create`/`destroy` and `new`/`create`/`edit`/
+  `update` respectively. `test/routing/route_action_contract_test.rb` holds both halves of the
+  contract, per request verb rather than per action, because a mutation correctly renders no template.
 - A `show` action is **read-only and guest-readable** (`allow_unauthenticated_access only: %i[index
   show]`), loads its record through the authorized scope, and renders no mutation control. Because
   a details page has no form, `can_write_universe?` only decides whether an editor link is
@@ -427,9 +449,9 @@ composer rather than redirecting, because a redirect would discard what was type
 because a conversation whose entries are anonymous blocks is not a conversation. The moment is
 `l created_at, format: :short` inside a `<time datetime=…>` carrying `created_at.iso8601`, so the
 printed value is localized and the machine value stays the exact instant. A blank author name falls
-back to `shared.detail_fact.blank` rather than rendering an empty span: `users.name` carries no
-presence validation (known quirk 27), and a message with no visible author is the anonymous block
-this line exists to prevent.
+back to `shared.detail_fact.blank` rather than rendering an empty span: a message with no visible
+author is the anonymous block this line exists to prevent, and `User` validates `name`'s presence, so
+a blank one can now only arrive from a direct write or an import that bypassed the model.
 
 **An empty thread has two empty states, like every list.** A writer is invited to start the
 conversation; a guest and a read-only member are only told what will appear there. Telling a reader

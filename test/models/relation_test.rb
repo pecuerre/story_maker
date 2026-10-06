@@ -43,11 +43,47 @@ class RelationTest < ActiveSupport::TestCase
     assert_equal "#{@character.slug}-#{@relation_tag.slug}-#{other.slug}", relation.slug
   end
 
+  # The composite slug embeds one tag, so which tag is read decides the address.
+  # Two records with the same tags supplied in a different order are the same
+  # record as far as a reader and a `db/data` reference are concerned, so they have
+  # to reach the same slug.
+  test "the slug does not depend on the order the tags were supplied in" do
+    other = characters(:character_two)
+    RelationTag.create!(universe: @universe, name: "Child of")
+    RelationTag.create!(universe: @universe, name: "Ally of")
+    tags = RelationTag.where(universe: @universe).order(:slug).to_a
+
+    forward = Relation.create!(universe: @universe, character1: @character, character2: other, relation_tags: tags)
+    reversed = Relation.create!(universe: @universe, character1: @character, character2: other, relation_tags: tags.reverse)
+
+    assert_equal forward.slug, reversed.slug
+    # The segment it settled on is the first tag by slug, not merely one of the two.
+    assert_equal "#{@character.slug}-#{tags.first.slug}-#{other.slug}", forward.slug
+  end
+
   test "falls back to the composite slug when the name cannot be slugified" do
     other = characters(:character_two)
     relation = Relation.create!(universe: @universe, character1: @character, character2: other, name: "!!!")
 
     assert_equal "#{@character.slug}-#{other.slug}", relation.slug
+  end
+
+  # An interval whose end precedes its start used to save, and then rendered as
+  # "From the later date until the earlier one". A nil end is a different thing —
+  # an open or unknown interval — and stays allowed.
+  test "refuses a range that ends before it starts, but allows an open one" do
+    reversed = Relation.new(
+      universe: @universe, character1: @character, character2: characters(:character_two),
+      from_date: Time.utc(2026, 5, 2), to_date: Time.utc(2026, 5, 1)
+    )
+
+    assert_not reversed.valid?
+    assert_includes reversed.errors[:to_date], "must not be before the date it starts"
+
+    assert Relation.new(
+      universe: @universe, character1: @character, character2: characters(:character_two),
+      from_date: Time.utc(2026, 5, 1)
+    ).valid?
   end
 
   test "allows repeated relations between the same characters" do

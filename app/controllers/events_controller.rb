@@ -29,12 +29,6 @@ class EventsController < ApplicationController
   def show
   end
 
-  def new
-    @event = Current.universe.events.new(parent_id: params[:parent_id])
-    @events_for_select = Current.universe.events.order(:id)
-    @event_tags = Current.universe.event_tags.order(:position, :id)
-  end
-
   def create
     attributes = event_params
     @event = Current.universe.events.new(attributes)

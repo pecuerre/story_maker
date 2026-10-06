@@ -40,6 +40,20 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-06
 
+### fixed
+
+- **No route advertises an action its controller lacks or a page it cannot render.** Sessions and
+  passwords are restricted to their flows' actions, and the four modal-edited content models lost the
+  template-less `new`/`edit` pages they advertised.
+- **`User` validates the columns its schema declares `NOT NULL`.** A nameless or address-less record
+  is a validation error rather than a `NotNullViolation` from `save!`.
+- **A reversed interval is refused; an open one is not.** An Event, Relation, or Ownership whose end
+  precedes its start no longer saves; a nil end still means an interval that is open or unknown.
+- **A composite slug reads its tag segment in a defined order,** so equivalent records reach the same
+  address whatever order their tags were supplied in.
+- **Sign-out is covered in the browser by the control a reader clicks,** rather than by a scripted DOM
+  click that worked around a test failure which does not occur.
+
 ### docs
 
 - **`docs/known_quirks.md` no longer claims the Scene mutation guards are a finding.** The unnumbered

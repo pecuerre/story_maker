@@ -91,6 +91,28 @@ module HasManyTags
       end
   end
 
+  # The slug of one tag from this record's tag collection, chosen
+  # deterministically, for the composite slug `Relation` and `Ownership` build.
+  #
+  # Those two records' slugs embed a single tag segment, so which tag is picked
+  # decides the address. Reading `tags.first` off an unordered HABTM collection
+  # makes that a function of row order: two records created with the same tags
+  # supplied in a different order get different slugs, which breaks a symbolic
+  # `db/data` reference and a class-level lookup. Ordering by the tag's own slug
+  # makes the answer a property of *which* tags are assigned rather than of the
+  # order they were assigned in.
+  #
+  # It reads the collection in Ruby rather than asking the database to order it,
+  # because the record being slugged is new and its tags were assigned by the
+  # attribute writer: the join rows do not exist yet, so a query would find
+  # nothing. Reading the association returns the assigned target for a new record
+  # and queries for a persisted one, and `min_by` gives the same answer either
+  # way. An empty collection returns nil, which is how the segment is allowed to
+  # be missing: tags are optional on every content model.
+  def first_tag_slug(association)
+    public_send(association).min_by(&:slug)&.slug
+  end
+
   # The records carrying this tag, for the tag's own details page. It is the
   # scoped inverse association, so it can never disclose a record from another
   # universe or story. A content model has no inverse side and returns none.

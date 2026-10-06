@@ -78,6 +78,95 @@ are linked rather than repeated, so there is one place to keep them current.
   `app/javascript` changed), `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no
   dependency, importmap pin, or vendored asset changed). No container build or Kamal validation.
 
+- **[fixed]** **The smoke script can no longer pass a rejected login, and no longer leaves anything
+  behind.** Findings 39 and 62 were two halves of one script's honesty, and both are fixed together.
+
+  **The login check asserted almost nothing.** It compared the response code to `302`, and
+  `SessionsController#create` answers `302` in both branches: a success redirects to
+  `after_authentication_url`, a rejection back to `new_session_path` with the `sessions.failed`
+  alert. A wrong password, a rate-limited attempt, and an expired CSRF token all satisfied it. The run
+  did still fail overall — the later checks were reading content that was never behind a session — but
+  the one line standing between a bad credential and nine pages of meaningless output reported success.
+
+  **Both halves of the answer are now asserted.** The redirect **target** (a rejection's is the
+  sign-in page itself, which now exits 1 with an explanation instead of continuing) and the presence of
+  the signed `session_id` cookie — the cookie `Authentication#start_new_session_for` writes and the
+  one the next request is authorized by, which turned out to be `session_id` rather than a Rails
+  default, so the check names what the application actually sets.
+
+  **Verified against a live development server, both ways.** With the real password the whole run
+  passes and reports the target it reached; with a deliberately wrong password it stops at the login
+  line with exit 1, which is the case the old code reported as `ok - login succeeds`.
+
+  **The filesystem handling leaked in three ways.** Fixed `/tmp` filenames meant two concurrent runs
+  overwrote each other's cookie jar and captured HTML; there was no cleanup trap, so an early `exit 1`
+  or a Ctrl-C left the created story in the development database with no trace of who made it; and
+  `bin/rails runner` was invoked without `RAILS_ENV`, so a development-only task could be pointed at
+  another environment's data by whatever the ambient variable said. The script now owns one
+  `mktemp -d` directory removed by an `EXIT INT TERM` trap, `cleanup` destroys the story — with the id
+  recorded the moment it is known, before the assertion that can exit early — and `RAILS_ENV=development`
+  is exported. Confirmed after the change: no `/tmp/smoke_test.*` directory survives a run, and
+  `Story.where(name: "Smoke Test Story").count` is 0.
+
+  **What did not change, deliberately.** The script is still not in GitHub CI, so it is a manual smoke
+  test and not a substitute for the request or browser suites. Adding it to CI would mean standing up a
+  server inside the job, which is a different piece of work with its own failure modes; `docs/development.md`
+  now says this rather than leaving it to be discovered.
+
+- **[fixed]** **The two documentation claims in finding 37 are fixed; the fixture gap behind them is
+  not, and is now recorded as the gap it is.** `docs/development.md` said fixtures load "all content +
+  tag fixtures" while `test/fixtures/` has no file for `relations`, `ownerships`, `relation_tags`,
+  `ownership_tags`, or `universe_memberships`, and `docs/README.md` advertised an absent
+  `docs/images-to-ai/` directory. Both now say what is true: the development guide names the four
+  content models and four taxonomies that do have fixtures and lists the five that do not, and the
+  README row is gone.
+
+  **The fixtures themselves were attempted and reverted, and that is the useful finding.** Five files
+  were written — plus a Character in universe two, which no fixture had, so a cross-scope assertion
+  had nothing on the far side to point at. The suite then failed **nine tests**, and every failure was a
+  test reading the *absence* of records rather than their content: `RelationTagsControllerTest` asserts
+  an empty taxonomy state, `HasManyTagsTest` asserts a tag carrying nothing, and three
+  `MembershipsControllerTest` cases create the very row a fixture would already hold (the last failing
+  with `User has already been taken`, the membership unique index working correctly). One further
+  collision was structural rather than incidental: `relation_tags` and `ownership_tags` have `taggable`
+  but **not** `show_in_menu`, because only the four menu taxonomies carry that column.
+
+  **Why that was reverted rather than pushed through.** Closing the gap means reworking nine tests that
+  assume those tables are empty, which changes what they assert and therefore what they prove. That is
+  a larger piece of work than a Low documentation finding has earned, and it is a judgement about test
+  intent rather than a defect. `known_quirks.md` keeps finding 37 open and now says all of this, so the
+  next reader inherits the reasoning rather than re-deriving nine test failures.
+
+  Verification: `bin/rails test` — 2,031 runs, 12,953 assertions, 0 failures, 0 errors, 10 skips, run
+  after the revert; the nine-failure run is the evidence for the decision. The smoke script was run
+  against a live development server on :3000, both with the real password (whole run passes) and with
+  a deliberately wrong one (stops at the login line, exit 1).
+
+- **[docs]** **Every remaining open finding was re-verified against the tree, and the stale ones were
+  corrected instead of acted on.** The file's findings date from a 2026-09-24 audit against commit
+  `8fcf4d4`, and re-reading them rather than re-running them showed three had gone stale — 58 claimed
+  a failing browser test that passes, 23 claimed missing database constraints a migration had already
+  added eight days earlier, and 37 claimed a statement `docs/development.md` no longer made. None of
+  the three was a code defect, so acting on any of them would have been work on the wrong thing.
+
+  Two more needed narrowing. **36** claimed there was "no coverage measurement or threshold", which
+  stopped being true when `test/coverage_helper.rb` gained its `CI`-gated floors; its rewrite now
+  separates the three closed gaps from the one still open — Solid Cache/Queue/Cable is exercised by
+  neither a job nor a test, which is the half a real deployment actually depends on. **56** said the
+  search jobs "hand a document to the engine and return", which is true but reads as total silence;
+  both jobs `rescue Meilisearch::Error` and log, and the entry now says why that does not cover this
+  case — a synchronous error is raised before the task exists, while a task the engine later marks
+  `failed` never raises at all. **22** was left substantively unchanged but now carries the measured
+  reproduction that backs it, and **37** keeps only the two claims that survive.
+
+  `known_quirks.md` gained a **Sweep of 2026-10-06** section recording that these entries were written
+  before the work that contradicted them landed, so "open" had come to mean "not yet re-read" for some
+  of them. The lesson it states is the one this project keeps paying for: a finding has to be
+  re-verified before it is acted on.
+
+  Verification: `bin/rails test test/docs_test.rb` (5 runs, 10 assertions, 0 failures) and
+  `bin/rubocop` (464 files, no offenses). No application, test, configuration, or schema change.
+
 - **[docs]** **Two more stale findings were checked and corrected rather than acted on.** Finding 23
   claimed the seven legacy tag join tables have no database integrity constraints; migration
   `20260928120000` gave them all foreign keys and a unique-pair index three days after the finding was

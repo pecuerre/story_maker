@@ -53,9 +53,20 @@ Labels used below, in the order their groups appear:
   address whatever order their tags were supplied in.
 - **Sign-out is covered in the browser by the control a reader clicks,** rather than by a scripted DOM
   click that worked around a test failure which does not occur.
+- **The smoke script stops at a failed login and says why.** It asserted a `302`, which
+  `SessionsController#create` returns on rejection as well as on success; it now asserts the redirect
+  target and the signed session cookie.
+- **The smoke script owns one temporary directory and removes the story it creates on every exit
+  path**, and forces `RAILS_ENV=development` — no fixed `/tmp` names for two runs to collide on, no
+  `Ctrl-C` that strands a story in the development database.
 
 ### docs
 
+- **`docs/development.md` names the fixtures that exist and the five that do not,** and
+  `docs/README.md` no longer advertises an absent directory.
+- **Every open known-quirk was re-verified against the tree, and four needed correcting.** Two claimed
+  defects that were already fixed or never existed, one claimed no coverage gate where one exists, and
+  one overstated how silent the search index jobs are.
 - **Two stale quirks entries were checked against the tree and corrected.** Finding 23 claimed the legacy
   tag join tables lack database integrity constraints, which a migration had already fixed eight days
   earlier; the framework-routes footgun called Active Storage unused when it serves every record photo.

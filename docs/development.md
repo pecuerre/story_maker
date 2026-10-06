@@ -182,8 +182,15 @@ Layout:
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
   (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements and
-  scene characters (both belong to `story_one`'s first Scene), all content +
-  tag fixtures.
+  scene characters (both belong to `story_one`'s first Scene), plus content and tag fixtures for
+  **characters, locations, items, events**, and their four taxonomies.
+  **Not every table has a fixture file.** Relations, Ownerships, Relation Tags, Ownership Tags, and
+  Universe Memberships have none, so the tests that need those records create them inline. That is a
+  deliberate current state rather than an oversight, and the reason is recorded in
+  [`known_quirks.md`](known_quirks.md) as finding 37: adding the files is not a mechanical change,
+  because nine existing tests read the *absence* of those records — an empty taxonomy list, a tag
+  whose carrying records must be empty, a cross-universe lookup with nothing on the far side, and
+  three membership tests that create the very row a fixture would already hold.
 - Sign in with `sign_in_as(users(:user_one))` /
   `sign_out` from `test/test_helpers/session_test_helper.rb`.
 - Route helpers in tests must be fully qualified:
@@ -796,6 +803,19 @@ It has no default credential. `PASSWORD` (or `UNIVERSE_MAKER_DEV_PASSWORD`) must
 development password, and the script fails with that instruction when neither is set; it never
 prints or stores the value. `BASE` and `EMAIL` still default to `http://localhost:3000` and
 `lotr@lotr`.
+
+**A failed login stops the run, and says so.** `SessionsController#create` redirects on both success
+and rejection, so the script asserts the redirect **target** and the presence of the signed
+`session_id` cookie rather than the status code — a wrong password, a rate-limited attempt, or an
+expired CSRF token now stops at the login line with an explanation, instead of passing that check and
+then failing every later one over content that was never behind a session.
+
+**Everything it writes is temporary, and the story it creates is removed on every exit path.** The
+script owns one `mktemp -d` directory — no fixed filenames, so two runs cannot collide — removed by an
+`EXIT INT TERM` trap, and the story it creates is destroyed by the same trap even when a check exits
+early or the run is interrupted. `RAILS_ENV=development` is exported, so no `bin/rails runner` call
+can be pointed at another environment's data. It is still not part of GitHub CI, so it is a manual
+smoke test and not a substitute for the request or browser suites.
 
 It was moved from `/tmp/opencode/` into `docs/` so it is tracked by git. Note: it creates a real
 story in the development DB and deletes it again at the end.

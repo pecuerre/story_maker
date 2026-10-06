@@ -62,31 +62,30 @@ See [`delivery_history.md`](delivery_history.md).
 
 ## Mutation, route, and data-contract observations
 
-
-
 22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
-    maintenance.** The `PositionedResourceOrder` service now transactionally
-    handles create, move, reparent, and destroy for current positioned controllers, and the
-    `Hierarchical` callback closes gaps after direct hierarchical destroys. Two flat sequences were
-    added with the Scene deliveries — the Story-owned `Scene` order and the Scene-owned
-    `SceneElement`
-    order — which are normalized only when a mutation goes through `ScenesController` or
-    `SceneElementsController`; unlike `Hierarchical`, neither `Scene` nor `SceneElement` has a model
-    callback that repairs positions after a direct destroy. Direct SQL, association manipulation,
-    and direct-model writes therefore
-    still bypass the service for both hierarchies and flat sequences, and SQLite has no
-    portable row-lock/unique-position guarantee. Do not treat those paths as normalized without an
-    explicit import/console workflow; see ADR 0009 and [`delivery_history.md`](delivery_history.md).
-    One caller was added on 2026-10-03 that is not a controller: `DraftApplier` writes a draft's
-    remembered changes through the same service, so applying a draft in a draft-based universe does
-    normalize. It decides *which* models are ordered by reading their own columns rather than by
-    asking a controller, and `test/services/draft_applier_test.rb` holds that derivation against every
-    routed controller in both directions — so this finding's list of bypassing paths is unchanged, and
-    the applier is a maintained caller rather than a new hole.
+    maintenance.** Re-verified by reproduction on 2026-10-06: the two halves of this entry still
+    behave exactly as described, and the gap between them is the finding.
+    `PositionedResourceOrder` transactionally handles create, move, reparent, and destroy for the
+    positioned controllers, and `Hierarchical`'s `after_destroy` callback closes gaps after a **direct**
+    hierarchical destroy — three Sections created through the service and then destroyed directly went
+    `[0, 1, 2]` → `[0, 1]`. Two flat sequences were added with the Scene deliveries — the Story-owned
+    `Scene` order and the Scene-owned `SceneElement` order — and neither has an equivalent callback:
+    the same three-Scenes-then-direct-destroy went `[0, 1, 2]` → `[0, 2]`, a gap. So a mutation that
+    reaches `Scene` or `SceneElement` outside `ScenesController` or `SceneElementsController` leaves a
+    hole in the sequence, while the same mistake on a hierarchy repairs itself.
 
-
-
-
+    Direct SQL, association manipulation, and direct-model writes therefore still bypass the service
+    for both hierarchies and flat sequences, and SQLite has no portable row-lock/unique-position
+    guarantee. Do not treat those paths as normalized without an explicit import/console workflow; see
+    ADR 0009 and [`delivery_history.md`](delivery_history.md). One caller that is not a controller was
+    added on 2026-10-03: `DraftApplier` writes a draft's remembered changes through the same service,
+    so applying a draft in a draft-based universe does normalize. It decides *which* models are ordered
+    by reading their own columns rather than by asking a controller, and
+    `test/services/draft_applier_test.rb` holds that derivation against every routed controller in
+    both directions — `assert_equal 15, controllers.size` is the guard on the derivation's own input,
+    so a new positioned controller fails the suite rather than silently escaping it. This finding's
+    list of bypassing paths is therefore unchanged, and the applier is a maintained caller rather than
+    a new hole.
 
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`
@@ -162,70 +161,95 @@ See [`delivery_history.md`](delivery_history.md).
 
 ## Performance, test, and tooling observations
 
-36. **Medium — CI proves a production image boots, but not a deployment.** The test job runs
-    `db:test:prepare test` against the checked-in schema (`.github/workflows/ci.yml:125-131`), so it
-    was never a from-zero migration run, a Docker build, a production asset boot, or a Solid
-    Cache/Queue/Cable setup; there was no coverage measurement or threshold either. A green test job
-    was therefore not evidence that a clean production image or the full runtime could boot.
-    Two of those halves are now closed. `migrations-from-zero` runs the migration files from zero
-    (below), and `production-boot` builds the production image, inspects it, runs it with throwaway
-    environment variables, and requires `GET /up` to answer `200` — which also exercises
-    `db:prepare`, the four production SQLite databases, and the precompiled assets.
-    That job **was failing on every run**: `assets:precompile` boots the production environment, which
-    raises without `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`, so `docker build` never finished.
-    Verified through the GitHub Actions API on 2026-10-02 and reproduced locally; those three names
-    are now build arguments in the Dockerfile with `.invalid` defaults. `config/deploy.yml` is
-    validated on every test run through Kamal's own loader by
+36. **Medium — CI proves a production image boots, but not a deployment.** Re-verified against
+    `.github/workflows/ci.yml` on 2026-10-06: of the four gaps this entry opened with, **three are
+    closed and one was never accurate.**
+    - **Coverage is measured and gated**, which this entry used to say it was not.
+      `test/coverage_helper.rb` sets `MINIMUM_LINE_COVERAGE = 90` and `MINIMUM_BRANCH_COVERAGE = 75`
+      against a measured baseline, and gates them only when `ENV["CI"]` is set — so a single-file run
+      measures a fraction of the application by design and is not failed for it. The `test` job sets
+      `CI: "1"` deliberately, with a comment saying a run that silently lost the gate would otherwise
+      still be green.
+    - **`migrations-from-zero` runs the migration files from zero.** It used not to: it ran `db:drop`,
+      `db:create`, and `db:migrate` as three processes — which is required, because one process
+      migrates the inode `db:drop` unlinked — but on the freshly created database `db:migrate`
+      **loaded `db/schema.rb` rather than executing the migration files** (see
+      [development.md](development.md#amending-a-shipped-migration-does-not-work-here)), so
+      `db:migrate:status` reported every migration `up` and `git diff --exit-code db/schema.rb`
+      compared the dump against itself. Verified on 2026-10-01, then fixed the same day: the job
+      creates `schema_migrations` before migrating so the migration files execute, and a guard step
+      aborts if a `schema_sha1` was recorded in `ar_internal_metadata` (`ci.yml:228`) — a row only
+      `DatabaseTasks.load_schema` writes. Verified then by amending a shipped migration to add a
+      column: the old sequence reported all 36 migrations `up` with the column absent, the new one
+      runs the migration and fails on the schema diff. (36 is what that experiment reported then; the
+      tree now carries 47 migration files.) The local reset path is covered separately by
+      `test/services/development/database_reset_test.rb`.
+    - **`production-boot` builds the production image, inspects it, and requires `GET /up` to answer
+      `200`.** That job **was failing on every run**: `assets:precompile` boots the production
+      environment, which raises without `APP_HOST`, `MAILER_FROM`, and `SMTP_ADDRESS`, so
+      `docker build` never finished. Verified through the GitHub Actions API on 2026-10-02 and
+      reproduced locally; those three names are now build arguments in the Dockerfile with `.invalid`
+      defaults. The job also checks that `node_modules` and `.git` are absent, that nine development
+      gems are not in the production bundle, and that the assets which can only resolve while
+      `node_modules` exists were digested — which would otherwise surface in production as a missing
+      stylesheet font. It exercises `db:prepare`, the four production SQLite databases, and the
+      precompiled assets.
+    - **Solid Cache/Queue/Cable setup is not exercised anywhere**, by any job or test. This is the
+      half still open, and it is the part a real deployment depends on: the boot check proves the
+      container answers `/up`, not that a queued job runs, a cache entry lands, or a broadcast
+      reaches a subscriber.
+
+    `config/deploy.yml` is validated on every test run through Kamal's own loader by
     `test/deployment/kamal_configuration_test.rb`, because `bin/kamal config` cannot be run in CI —
     it prints resolved secrets — but loading a configuration is not the same as deploying it. Neither
     the boot check nor that validation exercises production mailer URL/SMTP behavior, and no deploy
     has ever been performed.
-    The `migrations-from-zero` job closes the migration half. It used not to: it ran
-    `db:drop`, `db:create`, and `db:migrate` as three processes — which is required, because one
-    process migrates the inode `db:drop` unlinked — but on the freshly created database `db:migrate`
-    **loaded `db/schema.rb` rather than executing the migration files** (see
-    [development.md](development.md#amending-a-shipped-migration-does-not-work-here)), so
-    `db:migrate:status` reported every migration `up` and `git diff --exit-code db/schema.rb`
-    compared the dump against itself. Verified on 2026-10-01, then fixed the same day: the job
-    creates `schema_migrations` before migrating so the migration files execute, and a guard step
-    fails the job if a `schema_sha1` was recorded in `ar_internal_metadata` — a row only
-    `DatabaseTasks.load_schema` writes. Verified by amending a shipped migration to add a column: the
-    old sequence reported all 36 migrations `up` with the column absent from the database, and the
-    new one runs the migration and fails on the schema diff. The local reset path is covered
-    separately by `test/services/development/database_reset_test.rb`.
 
-37. **Low — development fixtures and documentation overstate baseline coverage.**
-    Re-verified against the tree on 2026-10-06, and one of this entry's three claims no longer
-    holds. Still true:
-    - `docs/development.md:186` says fixtures load "all content + tag fixtures", but
-      `test/fixtures/` has no `relations.yml`, `ownerships.yml`, `relation_tags.yml`,
-      `ownership_tags.yml`, or `universe_memberships.yml`. Tests create many of those records ad hoc.
-    - `docs/README.md:25` advertises `docs/images-to-ai/`, which does not exist.
-    No longer true: this entry reported that the development guide "calls `test/helpers` effectively
-    empty", and `docs/development.md` no longer says anything of the kind — it does not mention the
-    directory at all. `test/helpers/` in fact holds six test files, not the three this entry named.
-    The root README's destructive `db:restart` warning was clarified and the dead `schema.txt` links
-    removed on 2026-09-30; the fixture and `images-to-ai` issues are what remains open.
+37. **Low — `test/fixtures/` has no file for five tables, and the tests that need those records build
+    them inline.** `relations`, `ownerships`, `relation_tags`, `ownership_tags`, and
+    `universe_memberships` are the five; every other persisted model has a fixture file. The two
+    documentation claims this finding used to make are now **fixed**: `docs/development.md` names the
+    four content models and four taxonomies that do have fixtures and says plainly which five do not,
+    and `docs/README.md` no longer advertises the absent `docs/images-to-ai/` directory.
+
+    **What remains is the gap itself, and it was attempted on 2026-10-06 and deliberately reverted.**
+    Five fixture files were written and the suite run: **nine tests failed**, and every failure was a
+    test reading the *absence* of the records rather than their content — `RelationTagsControllerTest#test_should_get_index`
+    asserts an empty taxonomy state, `HasManyTagsTest#test_a_tag's_record_list_stays_inside_its_own_universe_and_story`
+    asserts a tag carrying nothing, and three `MembershipsControllerTest` cases create the exact row a
+    fixture would already hold (the last failing with `User has already been taken`, the membership
+    unique index doing its job). A Character was also needed in universe two, which is not a fixture
+    change at all: every character fixture currently belongs to universe one, so a cross-scope
+    assertion had nothing on the far side to point at.
+
+    So closing this is not "add five files" but "add five files and rework the nine tests that assume
+    the tables are empty" — which changes what those tests assert, and therefore what they prove.
+    That is a larger piece of work than this entry's severity has earned, and it is the owner's call
+    rather than a bug fix. It stays open as the gap it is.
 
 39. **Low — the smoke script is not environment-guarded or concurrency-safe.**
-    `docs/smoke_test_stories.sh:22-114` uses fixed `/tmp` filenames, has no cleanup trap, can leave
-    a created story behind after an extraction failure, and invokes `bin/rails runner` without
-    forcing the development environment. It is not part of GitHub CI and should not be treated as a
-    reliable cleanup boundary.
+    `docs/smoke_test_stories.sh` used fixed `${TMPDIR:-/tmp}/smoke_*.txt` filenames with no cleanup
+    trap, could leave a created story behind on an early exit or a Ctrl-C, and invoked `bin/rails runner`
+    without forcing the development environment. All three are **fixed on 2026-10-06**: the script now
+    owns one `mktemp -d` directory removed by an `EXIT INT TERM` trap, `cleanup` destroys the story it
+    created (the id is recorded the moment it is known, before the assertion that can exit early), and
+    `RAILS_ENV=development` is exported so no task can be pointed at another environment's data. Two
+    runs can no longer collide on the cookie jar or a captured page, and nothing is left in `/tmp`.
 
 62. **Low — the smoke script's login check cannot tell a success from a rejection.**
-    `docs/smoke_test_stories.sh:67` asserts `login succeeds` by comparing the response code to `302`,
-    and `SessionsController#create` answers `302` in both branches: a successful sign-in redirects to
+    The script asserted `login succeeds` by comparing the response code to `302`, and
+    `SessionsController#create` answers `302` in both branches: a successful sign-in redirects to
     `after_authentication_url`, while a rejected one redirects back to `new_session_path` with the
-    `sessions.failed` alert (`app/controllers/sessions_controller.rb:15-21`). The check therefore
-    also passes with a wrong password, a rate-limited sign-in, or an expired CSRF token. Observed on
+    `sessions.failed` alert (`app/controllers/sessions_controller.rb:15-21`). The check therefore also
+    passed with a wrong password, a rate-limited sign-in, or an expired CSRF token. Observed on
     2026-10-02 by running the script against a live server with a deliberately wrong password: it
-    printed `ok - login succeeds` and then failed the following checks, so the script as a whole
-    still fails and the run is not silently green — but that one line asserts far less than it
-    reads, and it is the only thing between a bad credential and nine pages of meaningless output.
-    Asserting the redirect *target*, or the presence of the signed-session cookie, would make it mean
-    something. Separate from quirk 39, which concerns the script's filesystem and environment
-    handling rather than its assertions.
+    printed `ok - login succeeds` and then failed the following checks, so the run was not silently
+    green — but that one line asserted far less than it read, and it was the only thing between a bad
+    credential and nine pages of meaningless output. **Fixed on 2026-10-06** by asserting both halves
+    of the answer: the redirect **target** (a rejection's is the sign-in page itself, which now exits
+    with an explanation rather than continuing) and the presence of the signed `session_id` cookie the
+    next request is authorized by. Verified against a live development server with a deliberately
+    wrong password — the run stops at the login line with exit 1, where it previously reported success.
 
 ## Contract-dependent and future-feature footguns
 
@@ -325,13 +349,14 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
 
-
-
 56. **Medium — an index write the engine refuses asynchronously is invisible to the job that queued
     it.** `Search::IndexRecordJob` and `Search::RemoveRecordJob` hand a document to the engine and
     return; the engine accepts the request and applies it later, so a *server-side* rejection — an
     unusable document id, a field it will not index, a batch that broke on one document — surfaces
-    only in the engine's own task log. `Search::Reindexer` therefore awaits every task **and** checks
+    only in the engine's own task log. Both jobs do `rescue Meilisearch::Error` and log a warning,
+    which covers a **transport-level** failure but not this one: a synchronous error is raised before
+    the task exists, while a task the engine later marks `failed` never raises at all. That
+    distinction is the finding. `Search::Reindexer` therefore awaits every task **and** checks
     it, and `test/models/searchable_test.rb` holds every declared model's document id to the engine's
     character rules; a job has neither. In practice this was the difference between a reindex
     reporting "indexed 214 documents" with an empty index and one that fails loudly. If index drift
@@ -370,6 +395,21 @@ used with a frozen install in CI and Docker.
     "One-command containerized onboarding" item in [`backlog.md`](backlog.md). The value-free
     `.env.example` template this entry used to list as missing now exists; the container onboarding
     it served is still absent.
+
+## Sweep of 2026-10-06
+
+Every entry above was re-verified against the tree on 2026-10-06, because this file's findings were
+written on 2026-09-24 against commit `8fcf4d4` and three of them had gone stale in ways that sent a
+reader looking for defects that did not exist. The file has held only open findings since 2026-09-30,
+but "open" had come to mean "not yet re-read" for some entries. Two were corrected in place (36, 56),
+one was narrowed (37), and one was removed as already fixed (23, recorded in
+[`delivery_history.md`](delivery_history.md)). Nothing was added.
+
+The lesson is recorded rather than left implicit: **a finding here has to be re-verified before it is
+acted on.** Three entries — 58, 23, and 37's `test/helpers` claim — asserted something the code
+contradicted, and each had been sitting since before the work that contradicted it landed. Two of
+those three were documentation failures, not code defects, which means the cost of acting on them
+unverified would have been wasted work on the wrong thing.
 
 ## Audit baseline and evidence
 

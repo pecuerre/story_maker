@@ -22,7 +22,6 @@ per-universe development-data convention, and the public/private universe access
 | [backlog.md](backlog.md) | Shared pending-work list for the owner and AI assistants, including ideas for the future |
 | [adr/](adr/) | Architecture Decision Records: the reasoning behind foundational domain and workflow decisions |
 | [smoke_test_stories.sh](smoke_test_stories.sh) | Curl-based end-to-end smoke test (login → stories → sections); moved here from `/tmp/opencode/` so it is tracked |
-| `images-to-ai/` | Screenshots/images used when prompting AI assistants |
 
 How to use these docs:
 

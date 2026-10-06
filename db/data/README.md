@@ -70,7 +70,8 @@ The value is never written to a manifest, a log, or any other tracked file, and 
 development only: `db/seeds/` and every deploy path are untouched.
 [`.env.example`](../.env.example) is the value-free template naming the variable. **The
 application does not read that file** — `bin/dev` starts foreman with `--env /dev/null`, so
-export the variable in your shell.
+export the variable in your shell, or let `script/demo` read it for you (see
+[`docs/development.md`](../docs/development.md#running-the-tasks-with-the-password-from-env)).
 
 ## Adding a universe
 

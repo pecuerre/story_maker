@@ -38,6 +38,18 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-06
+
+### docs
+
+- **`docs/known_quirks.md` no longer claims the Scene mutation guards are a finding.** The unnumbered
+  "Scenes are covered" paragraph was resolved-status prose already owned by `docs/features/scenes.md`
+  and `docs/conventions.md`, so the file keeps only open findings again.
+
+### added
+
+- **`script/demo` runs the development data tasks with the password from `.env`.** `script/demo reset dark lotr` resets one universe and create-only loads the next, so a reset reuses the configured `UNIVERSE_MAKER_DEV_PASSWORD` instead of generating a new one; the value is read from the file and never printed or passed on a command line.
+
 ## 2026-10-05
 
 ### added

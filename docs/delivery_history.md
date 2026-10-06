@@ -27,6 +27,57 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-06
+
+- **[added]** **`script/demo` runs the development data tasks with the configured password.** The owner has
+  a password in `.env` and kept getting a different one on every rebuild, and the cause was structural
+  rather than accidental: `Development::LocalPassword` reads `UNIVERSE_MAKER_DEV_PASSWORD` from the
+  process environment, the application has no `.env` loader by design, so a plain
+  `bin/rails db:demo:reset` fell through to a generated value every time. The script reads the
+  variable out of the ignored `.env` and exports it into the task's environment.
+
+  **Why a wrapper rather than a dotenv dependency.** Adding `dotenv-rails` would load the file at
+  boot, which is a change to the application's boot path for a problem that only a developer running
+  a local task has — and `bin/dev` deliberately runs foreman with `--env /dev/null` so that a stray
+  shell export cannot change what the development server sees. A task-scoped wrapper keeps the fix
+  where the problem is. It also had to stay out of the process's arguments: passing the value as
+  `UNIVERSE_MAKER_DEV_PASSWORD=… bin/rails db:demo:reset` would have put it in shell history and in
+  any agent's tool-call log, so the file is read inside the script and the value is exported by name.
+
+  **The file is read, not sourced.** `source .env` executes whatever the file contains, and a dotenv
+  file is not a program; the script scans for the one key it wants. It tolerates an `export` prefix,
+  one matching pair of quotes, and surrounding whitespace, because those are the shapes a developer
+  actually writes, and it strips quotes rather than passing them through as part of the password.
+
+  **Reset stays first-universe-only.** `script/demo reset dark lotr` performs the documented two-step
+  workflow: one reset, then the create-only loader for the rest, because a second reset would drop
+  what the first loaded. The script supplies `CONFIRM_DB_RESET=1` on the developer's behalf — the
+  explicit subcommand is the deliberate choice — while the task's own development-only guard is left
+  untouched. A missing or blank `.env` value is reported rather than passed over, so the loader's
+  generated fallback stays visible instead of becoming a surprise.
+
+  **Verification (2026-10-06)**
+
+  - `bin/rails test test/tasks/demo_script_test.rb` — 15 runs, 42 assertions, 0 failures, 0 errors,
+    0 skips. The cases run the script from a scratch copy with a stubbed `bin/rails` that reports the
+    environment it received, so no test can reach the real development database. Password comparisons
+    assert on a SHA-256 digest rather than the value, so a failing assertion cannot print the password
+    into the test log either.
+  - The tests were checked against two deliberate mutations: adding an `echo` of the value failed two
+    cases with "printed the development password", and removing the quotes from the `export` failed
+    the metacharacter case.
+  - `bin/rails test` — 2,021 runs, 12,913 assertions, 0 failures, 0 errors, 10 skips.
+  - `bin/rubocop` — 462 files, no offenses. `bin/brakeman --no-pager` — 0 errors, 0 security warnings.
+  - `script/demo check dark` and `script/demo check lotr` — both passed, and neither printed a value.
+  - `script/demo reset dark lotr` rebuilt the development database and loaded both universes, printing
+    no password. Queried afterwards: `dark@dark`, `collaborator@dark`, and `lotr@lotr` all authenticate
+    with the `.env` value, `lotr@lotr` rejects a wrong password, and the same check confirmed the
+    ambient shell did *not* have the variable exported — which is the gap this change closes.
+
+  Not run: `bin/rails test:system` (no UI or JavaScript changed), `bun run check:js` (no file under
+  `app/javascript` changed), `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no
+  dependency, importmap pin, or vendored asset changed). No container build or Kamal validation.
+
 ### 2026-10-05
 
 - **[docs]** **The two collaboration decisions that arrived without an ADR now have one.** The notification

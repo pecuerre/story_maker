@@ -452,6 +452,28 @@ password they got. No manifest states a password — the loader takes it from
 [`db/data/README.md`](../db/data/README.md#development-credentials) owns that contract; the
 `docs/smoke_test_stories.sh` section below is its only other consumer.
 
+### Running the tasks with the password from `.env`
+
+Because the application has no `.env` loader, `UNIVERSE_MAKER_DEV_PASSWORD` reaches a task only if
+something reads the file, so a plain `bin/rails db:demo:reset` falls back to a generated password
+even when one is configured. `script/demo` runs the same tasks with the value read from `.env`:
+
+```bash
+script/demo check dark                    # validate one or more universes
+script/demo reset dark lotr               # reset into dark, then create-only load lotr
+script/demo load lotr                     # add a universe without resetting
+```
+
+The value is exported into the task's environment and never printed or passed as an argument, so it
+stays out of terminals, logs, shell history, and the process list. The file is read rather than
+`source`d; an `export` prefix, one matching pair of quotes, and surrounding whitespace are
+tolerated. A missing or blank value is reported and left to the loader's documented fallback.
+
+`reset` reproduces the two-step workflow above: only the **first** universe is reset, and further
+ones are loaded onto it. The script supplies `CONFIRM_DB_RESET=1`, and the task's own
+development-only guard still applies. `test/tasks/demo_script_test.rb` covers this against a
+stubbed `bin/rails`, so running it never touches the development database.
+
 Both destructive tasks rebuild through `Development::DatabaseReset`, and the way it rebuilds is
 load-bearing rather than incidental:
 

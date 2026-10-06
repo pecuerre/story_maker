@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# Run the development data tasks with the password from `.env`.
+#
+# `Development::LocalPassword` reads `UNIVERSE_MAKER_DEV_PASSWORD` from the process
+# environment and generates a random password when it is absent, which is why a
+# bare `bin/rails db:demo:reset` never reuses the password you already chose. The
+# application deliberately has no `.env` loader — `bin/dev` runs foreman with
+# `--env /dev/null` — so the value only reaches a command if something reads the
+# file. This is that something.
+#
+# The value is read from the file, exported into the child process, and never
+# printed or passed as an argument, so it does not reach a terminal, a log, or the
+# process list.
+#
+#   script/demo check dark
+#   script/demo reset dark lotr        # reset into dark, then create-only load lotr
+#   script/demo load lotr
+#
+# `reset` is destructive: it drops, recreates, migrates, and loads the database.
+# `db:demo:reset` still requires CONFIRM_DB_RESET=1 and a development environment;
+# this script sets the confirmation for you because the subcommand is explicit.
+
+set -euo pipefail
+
+readonly REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly ENV_FILE="${REPO_ROOT}/.env"
+readonly PASSWORD_KEY="UNIVERSE_MAKER_DEV_PASSWORD"
+
+usage() {
+  cat <<'USAGE'
+Usage: script/demo <check|reset|load> <universe> [universe...]
+
+  check   validate one or more registered universes without writing records
+  reset   drop, recreate, migrate, then load the first universe (destructive)
+  load    create-only load an additional universe
+
+Runs the matching `bin/rails db:demo:*` task with UNIVERSE_MAKER_DEV_PASSWORD read
+from .env. The value is never printed. See .env.example for the variable name.
+USAGE
+}
+
+die() {
+  printf 'script/demo: %s\n' "$1" >&2
+  exit 2
+}
+
+# Reads KEY=value from the .env file and echoes the value with no surrounding
+# quotes. Deliberately not `source`: sourcing runs whatever is in the file, and a
+# dotenv file is not a program.
+read_env_value() {
+  local key="$1" line value
+
+  [[ -f "$ENV_FILE" ]] || return 1
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    # Tolerate `export KEY=...` and surrounding whitespace, ignore comments.
+    line="${line#"${line%%[![:space:]]*}"}"
+    [[ "$line" == "export "* ]] && line="${line#export }"
+    [[ "$line" == "$key"*"="* ]] || continue
+
+    value="${line#*=}"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    # Strip one matching pair of surrounding quotes so a quoted value works.
+    if [[ ${#value} -ge 2 && "${value:0:1}" == "${value: -1}" && "${value:0:1}" =~ [\'\"] ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    printf '%s' "$value"
+    return 0
+  done < "$ENV_FILE"
+
+  return 1
+}
+
+command="${1:-}"
+case "$command" in
+  -h|--help|help|"")
+    usage
+    exit 0
+    ;;
+  check|reset|load)
+    shift
+    ;;
+  *)
+    usage >&2
+    die "unknown command '${command}'. Expected check, reset, or load."
+    ;;
+esac
+
+universes=("$@")
+((${#universes[@]} > 0)) || { usage >&2; die "name at least one universe."; }
+
+for universe in "${universes[@]}"; do
+  [[ "$universe" =~ ^[a-z0-9_]+$ ]] || die "'${universe}' is not a valid universe slug."
+done
+
+# A configured value wins so every universe shares one login. When it is absent the
+# loader generates one for the load and prints it, which is the fallback this
+# script exists to avoid — so say so rather than letting it pass silently.
+if password="$(read_env_value "$PASSWORD_KEY")" && [[ -n "$password" ]]; then
+  export "${PASSWORD_KEY}=${password}"
+  unset password
+else
+  printf 'script/demo: no %s in .env; the load will generate a password and print it.\n' \
+    "$PASSWORD_KEY" >&2
+fi
+
+run_task() {
+  local task="$1" universe="$2"
+  printf 'script/demo: db:demo:%s %s\n' "$task" "$universe"
+
+  if [[ "$task" == "reset" ]]; then
+    ( cd "$REPO_ROOT" && CONFIRM_DB_RESET=1 UNIVERSE="$universe" bin/rails "db:demo:reset" )
+  else
+    ( cd "$REPO_ROOT" && UNIVERSE="$universe" bin/rails "db:demo:${task}" )
+  fi
+}
+
+first="${universes[0]}"
+for index in "${!universes[@]}"; do
+  universe="${universes[$index]}"
+
+  if [[ "$index" -eq 0 ]]; then
+    run_task "$command" "$universe"
+  else
+    # A reset rebuilds the database, so only the first universe can be the one it
+    # loads. Any further universe is created on top of that by the create-only
+    # loader, which refuses an existing universe.
+    run_task load "$universe"
+  fi
+done
+
+printf 'script/demo: done (%s: %s).\n' "$command" "$first"

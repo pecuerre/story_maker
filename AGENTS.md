@@ -209,8 +209,11 @@ whatever only a browser can show; both are required before such a change is fini
 every check that was not run. The CSS build requires the JavaScript dependencies to be
 installed.
 
-Do not run `bin/rails db:restart` or `db:demo:reset` without approval: both are destructive. The
-owner has granted standing approval to reset the **local development database** with
+Do not run `bin/rails db:restart` or `db:demo:reset` without approval: both are destructive. Use
+`script/demo <check|reset|load> <universe> [universe...]` rather than calling `bin/rails db:demo:*`
+directly: it reads `UNIVERSE_MAKER_DEV_PASSWORD` from `.env` so a reset reuses the developer's
+configured password instead of generating a new one, and it never prints that value. The owner has
+granted standing approval to reset the **local development database** with
 `CONFIRM_DB_RESET=1 UNIVERSE=<slug> bin/rails db:demo:reset` when needed to apply a change under
 `db/data/**/*.yml`; that approval never extends to production, test, or any real database. The
 former task resets schema only; `db:demo:reset` drops, recreates, migrates, and loads one explicitly
@@ -271,8 +274,8 @@ named development universe.
   Never tell the owner that a data change is available in the app until the rebuilt database has
   been queried or otherwise verified.
 - When both registered universes should remain available locally, reset one and then create-only
-  load the other, for example:
-  `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` followed by
+  load the other. `script/demo reset dark lotr` does both in one step; the equivalent explicit pair
+  is `CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset` followed by
   `UNIVERSE=lotr bin/rails db:demo:load`. A second `db:demo:load` fails if that universe already
   exists; there is no update/merge mode.
 - When adding or changing a model, table, association, or persisted field, update every relevant

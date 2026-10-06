@@ -9,69 +9,35 @@ This re-audit was performed on 2026-09-24 against commit `8fcf4d4`. It is an obs
 only: no application, test, configuration, dependency, or generated-asset fixes were made in this
 pass. The separate DataFactor follow-up section below was checked against the current tree on
 2026-09-25; it is not a full replacement for the original audit. Severity labels distinguish
-reachable security/data-loss issues from lower-priority hardening and contract decisions. Entries
-numbered **63 and above** were added on 2026-10-03, **68 and above** on 2026-10-04, and **70** on
-2026-10-05, while the
-collaboration draft system was being
-built, verified the same way, and listed here rather than left in [`backlog.md`](backlog.md) because
-each one is reachable now rather than only pending. Entries **71 and above** were added on 2026-10-05
-when the collaboration backlog item's *deliberately deferred* paragraph was converted: each is a
-behaviour a reader can reach today and be surprised by, where the backlog item had recorded a decision
-nobody had made yet, so the two files were answering different questions and the item could be deleted. Finding 64 left this file on 2026-10-04, when the
-apply's outcome became stored rather than reported once, and the unnumbered finding that read "the applier
-raises rather than reporting a change it cannot interpret" left it the same day, when the apply and a
-reviewer's approval started refusing such a draft in words. Finding 68 left this file on 2026-10-05,
-when a pending row the apply may refuse was settled as badged exactly as it is and never withheld, which
-is a decision rather than a change and left no code behind it, and finding 66 left it the same day, when
-`DraftChanges::Reader` read a draft's records and tag names once per class instead of once per row;
-the right sidebar's **Review requests** figure it also described stays, and is a deliberate uncached
-`COUNT` rather than an oversight. The unnumbered finding "implicit owner access is missing from
-association APIs" left it on 2026-10-05 as well, when `User#universes` and `Universe#members` became
-owner-aware readers instead of membership-only associations.
+reachable security/data-loss issues from lower-priority hardening and contract decisions.
+
+Entries numbered **63 and above** were added on 2026-10-03, **68 and above** on 2026-10-04,
+and **70** on 2026-10-05, while the collaboration draft system was being built, verified the same way,
+and listed here rather than left in [`backlog.md`](backlog.md) because each one is reachable now rather
+than only pending.
+
+Entries **71 and above** were added on 2026-10-05 when the collaboration backlog item's
+*deliberately deferred* paragraph was converted: each is a behaviour a reader can reach today and be
+surprised by, where the backlog item had recorded a decision nobody had made yet, so the two files
+were answering different questions and the item could be deleted.
+
+Finding 64 left this file on 2026-10-04, when the apply's outcome became stored rather than reported once,
+and the unnumbered finding that read "the applier raises rather than reporting a change it cannot
+interpret" left it the same day, when the apply and a reviewer's approval started refusing such a draft
+in words. Finding 68 left this file on 2026-10-05, when a pending row the apply may refuse was settled
+as badged exactly as it is and never withheld, which is a decision rather than a change and left no code
+behind it, and finding 66 left it the same day, when `DraftChanges::Reader` read a draft's records and
+tag names once per class instead of once per row; the right sidebar's **Review requests** figure it
+also described stays, and is a deliberate uncached `COUNT` rather than an oversight. The unnumbered
+finding "implicit owner access is missing from association APIs" left it on 2026-10-05 as well,
+when `User#universes` and `Universe#members` became owner-aware readers instead of membership-only
+associations. The unnumbered "Scenes are covered" finding left it on 2026-10-06, when the entry was
+confirmed to describe no open defect and to restate what `scenes.md` and `conventions.md` already own,
+so the resolved status note went instead of a numbered entry.
+
 See [`delivery_history.md`](delivery_history.md).
 
-## Critical security observations
-
-5. **Critical — the exposed Kamal master key still requires owner rotation and history cleanup.**
-   The current tree now ignores and untracks `.kamal/secrets`, keeps the local copy mode `0600`,
-   and CI rejects a tracked secrets path. Those containment changes do not invalidate prior
-   repository/history copies or rotate `RAILS_MASTER_KEY`; the owner must rotate the key, the
-   affected `secret_key_base`/signed artifacts, and any credentials it protects before deployment.
-   No secret value is reproduced in this document.
-   See [`delivery_history.md`](delivery_history.md) for the repository-containment change and
-   [`config/deploy.yml`](../config/deploy.yml) for the local secret contract.
-
-6. **Low — a personal access token pasted into a backlog paragraph stays in Git history.** A
-   GitHub fine-grained personal access token was pasted into the "Keep the demo reset isolated to
-   the development database" paragraph of `docs/backlog.md` by mistake and committed in `af2fcde`.
-   The working-tree text was redacted, and that backlog item has since been delivered and deleted.
-   The string itself is still in `git log` permanently. The owner reports the token as read-only
-   against a **public** repository, which bounds the exposure: those contents were already readable
-   by anyone, so this was a hygiene failure rather than a disclosure. Revoking it is still worth
-   doing — it costs nothing — but note that a fine-grained token's real grants live on GitHub's
-   side and are not recorded in this repository, so "read-only" is the owner's account of it rather
-   than something the tree can verify. Only rotation settles it.
-   See [`delivery_history.md`](delivery_history.md) for the same incident as it was recorded when
-   the backlog item was still open. No secret value is reproduced in this document.
-
 ## Mutation, route, and data-contract observations
-
-    **Scenes are covered** (see [ADR 0007](adr/0007-story-owned-scenes-and-elements.md)):
-    `Scene` validates `optional_references_exist`,
-    `section_belongs_to_story`, and `event_belongs_to_story_universe`, and
-    `datetime_is_a_valid_point` rejects an unparseable in-world time that Active Record would
-    otherwise cast to `nil` and silently discard, so those values render `422` field errors with the
-    submitted input preserved. The `#group` action instead resolves the Section through
-    `@story.sections.find`, making a foreign or unknown target a `404`. Scene/Scene Tag
-    assignment also has
-    collection-id guards, so unknown, duplicate, and cross-story tag
-    ids become ordinary validation errors before the constrained join can raise. The Scene-owned
-    presence links are covered the same way: an unknown or foreign
-    `character_id`, `item_id`, or `location_id` is a `404` because the record is resolved through
-    `Current.universe`, and a duplicate pair is a `422` field error before the unique index can raise.
-    The hierarchical `parent_id` and the Event temporal references are covered the same way, by
-    `Hierarchical#parent_reference_exists` and `Event#temporal_references_exist`; see
-    [conventions.md](conventions.md#models).
 
 20. **Medium — generated routes advertise unsupported actions and templates.** `config/routes.rb:2-25`
     uses broad session, password, and content resources even though the documented action surface is

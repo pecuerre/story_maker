@@ -20,30 +20,28 @@ being written down, so **re-read a finding against the code before acting on it*
 
 ## Mutation, route, and data-contract observations
 
-22. **Medium — raw SQL/import and flat direct-model paths can still bypass ordered-position
-    maintenance.** Re-verified by reproduction on 2026-10-06: the two halves of this entry still
-    behave exactly as described, and the gap between them is the finding.
-    `PositionedResourceOrder` transactionally handles create, move, reparent, and destroy for the
-    positioned controllers, and `Hierarchical`'s `after_destroy` callback closes gaps after a **direct**
-    hierarchical destroy — three Sections created through the service and then destroyed directly went
-    `[0, 1, 2]` → `[0, 1]`. Two flat sequences were added with the Scene deliveries — the Story-owned
-    `Scene` order and the Scene-owned `SceneElement` order — and neither has an equivalent callback:
-    the same three-Scenes-then-direct-destroy went `[0, 1, 2]` → `[0, 2]`, a gap. So a mutation that
-    reaches `Scene` or `SceneElement` outside `ScenesController` or `SceneElementsController` leaves a
-    hole in the sequence, while the same mistake on a hierarchy repairs itself.
+22. **Medium — repairing a positioned sequence is three separate things, and only the first two are
+    automatic.** A write that reaches the model repairs its own sequence: `OrderedSequence` renumbers
+    the whole sibling group on `after_destroy`, `after_soft_delete`, and `after_restore`, for the
+    thirteen hierarchies and the two flat sequences alike, and `test/models/ordered_sequence_test.rb`
+    holds the model list and each flat model's owner declaration against the routed controllers.
+    A write that skips the model — `update_column`, `delete_all`, raw SQL, an import, or a `create!`
+    naming its own `position` — is repaired by **running** `bin/rails positions:normalize`, which walks
+    every positioned model, renumbers each group, and prints every record it moves;
+    `test/services/sequence_normalizer_test.rb` holds it, and its model list is held against the same
+    fifteen controllers.
 
-    Direct SQL, association manipulation, and direct-model writes therefore still bypass the service
-    for both hierarchies and flat sequences, and SQLite has no portable row-lock/unique-position
-    guarantee. Do not treat those paths as normalized without an explicit import/console workflow; see
-    ADR 0009 and [`delivery_history.md`](delivery_history.md). One caller that is not a controller was
-    added on 2026-10-03: `DraftApplier` writes a draft's remembered changes through the same service,
-    so applying a draft in a draft-based universe does normalize. It decides *which* models are ordered
-    by reading their own columns rather than by asking a controller, and
-    `test/services/draft_applier_test.rb` holds that derivation against every routed controller in
-    both directions — `assert_equal 15, controllers.size` is the guard on the derivation's own input,
-    so a new positioned controller fails the suite rather than silently escaping it. This finding's
-    list of bypassing paths is therefore unchanged, and the applier is a maintained caller rather than
-    a new hole.
+    **What remains is the gap between those two, and it is a concurrency gap rather than a repair
+    gap.** Nothing runs automatically for a statement that skips the model, so a person who pastes SQL
+    into a console and does not then run the command is left with a hole — the command is a step, not a
+    guarantee, and nothing detects that the step was missed. And the repair is not the service's
+    guarantee: it runs in whatever transaction the caller's write runs in, often none, and SQLite has
+    no portable row lock or unique-position constraint, so two out-of-band writes are made
+    self-consistent one after another rather than serialized. `PositionedResourceOrder` remains the
+    only place that locks a scope owner, and `DraftApplier` the only non-controller caller that routes
+    through it; its derivation is held against every routed controller in both directions by
+    `test/services/draft_applier_test.rb`. See ADR 0009 and
+    [`delivery_history.md`](delivery_history.md) for the reasoning behind each part.
 
 69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
     submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`

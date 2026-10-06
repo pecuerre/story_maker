@@ -7,6 +7,7 @@ class Scene < ApplicationRecord
   include HasSlug
   include HasPhoto
   include SoftDeletable
+  include OrderedSequence
   include InvalidatesMenuCounts
   include Searchable
   include HasDiscussion
@@ -14,6 +15,10 @@ class Scene < ApplicationRecord
   searchable kind: "scene", title: :name, body: :description, route: "scene", scope: :story
   soft_deletes :scene_elements, :scene_characters, :scene_items, :scene_locations
   invalidates_menu_counts_for :story, cache_scope: Story::SCENE_MENU_COUNT_SCOPE
+  # The Story's one flat sequence. `ScenesController` maintains it through
+  # `PositionedResourceOrder`; this is what keeps a direct destroy, soft delete, or
+  # restore from leaving a hole in it.
+  ordered_sequence_within :story
 
   belongs_to :story
   has_many_tags :scene_tag, scope: :story_id

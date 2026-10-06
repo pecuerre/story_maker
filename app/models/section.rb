@@ -21,6 +21,8 @@ class Section < ApplicationRecord
   validates :name, presence: true
 
   # Sections are scoped to their story instead of directly to the universe.
+  hierarchy_scoped_by :story_id
+
   private
 
   # A soft-deleted Section leaves its scenes in place but ungrouped, exactly
@@ -34,11 +36,7 @@ class Section < ApplicationRecord
     story
   end
 
-  def hierarchy_scope_attribute
-    :story_id
-  end
-
-  def hierarchy_scope_error_key
-    "shared.errors.same_scope.story"
-  end
+    def hierarchy_scope_error_key
+      "shared.errors.same_scope.story"
+    end
 end

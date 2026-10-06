@@ -44,7 +44,8 @@ the same change, or `db:demo:check` fails.
   `Story`, `Universe`, `User`, `Session` don't either.
 - `Hierarchical` compares parents within their owning scope through the overridable
   `hierarchy_scope` / `hierarchy_scope_attribute` / `hierarchy_scope_error_key` methods
-  (universe by default; `Section`, `SectionTag`, and `SceneTag` override them to compare `story_id`).
+  (universe by default; `Section`, `SectionTag`, and `SceneTag` declare `hierarchy_scoped_by :story_id`,
+  which is what `hierarchy_scope_attribute` now reads, and override only `hierarchy_scope`).
   `hierarchy_scope_error_key` returns an **I18n key** rather than a sentence, so a model narrowing the
   scope names `shared.errors.same_scope.story` instead of writing its own English; see
   [`features/i18n.md`](features/i18n.md#the-models-own-validation-messages). It also validates that
@@ -85,9 +86,9 @@ the same change, or `db:demo:check` fails.
   `test/controllers/unknown_reference_ids_test.rb` asserts this for every endpoint that accepts a
   `parent_id`.
 - **A concern lives in `app/models/concerns/`**, beside `HasSlug`, `HasManyTags`, `Hierarchical`,
-  `HasColor`, `InvalidatesMenuCounts`, `SoftDeletable`, and `TemporalInterval`. A model that needs
-  behaviour declares it with `include` and, where the behaviour is configurable, a class-level DSL on
-  itself — as `app/models/concerns/searchable.rb` does.
+  `HasColor`, `InvalidatesMenuCounts`, `OrderedSequence`, `SoftDeletable`, and `TemporalInterval`. A
+  model that needs behaviour declares it with `include` and, where the behaviour is configurable, a
+  class-level DSL on itself — as `app/models/concerns/searchable.rb` does.
 - **An interval that cannot run backwards** is `TemporalInterval`, declared with
   `has_temporal_interval from: …, to: …`: `Event` on its two datetimes, `Relation` and `Ownership` on
   `from_date`/`to_date`. A range with both ends whose end precedes its start is refused on the **end**
@@ -155,6 +156,16 @@ the same change, or `db:demo:check` fails.
   Scenes use `@story` as owner). Use `maintains_flat_positions_for` for a parentless sequence; the
   concern then omits the ordering parent entirely, so a flat resource does not need a `parent_id`
   column. Do not infer flat ordering from `section_id` or another organizational association.
+- **A positioned model also repairs its own sequence, so the service is not the only thing keeping
+  positions contiguous.** The controller concern owns an *application* mutation; `OrderedSequence`
+  owns what happens when a write reaches the model instead — `destroy!`, `soft_delete`, `restore`
+  from a console, an import, or a cascade — and renumbers the whole group on each of those three
+  moments. A hierarchical model gets it from `Hierarchical`; a flat one declares
+  `ordered_sequence_within :owner`. Read the three moments, the restore-inclusion rule, and the
+  `positions:normalize` command that repairs what neither can reach, in
+  [data_model.md](data_model.md#hierarchies--positions). It is deliberately *not* a
+  second write path for creates and moves: those still go through `PositionedResourceOrder`, which is
+  the only place that locks the scope owner.
 - A JSON-only mutation controller includes `RequiresJsonMutationFormat` and calls
   `before_action :require_json_mutation_format, only: %i[ create update destroy ]` after its record
   lookup, so a request that does not ask for JSON is refused with `406` **before** anything is

@@ -14,6 +14,29 @@ require "tmpdir"
 class KamalConfigurationTest < ActiveSupport::TestCase
   CONFIG_PATH = Rails.root.join("config/deploy.yml")
 
+  # `Kamal::Secrets` — reached from every `Kamal::Configuration.create_from` — does
+  # `require "dotenv"`, and `dotenv` registers a Railtie that loads the repository's real `.env`
+  # into the **test process**, once per worker, the first time a configuration is built here.
+  # That is the developer's own `.env`, so `bin/rails test` was reading their
+  # `UNIVERSE_MAKER_DEV_PASSWORD` and every other value they keep in it.
+  #
+  # It surfaced as a flake rather than as this: `UniverseDataLoaderTest` asserts that the loader
+  # *generates* a password when the environment configures none, and it failed roughly one run in
+  # three — on whichever run put that test in a worker that had already touched Kamal. Nothing
+  # about the loader had changed; the answer depended on how the suite was distributed.
+  #
+  # It is undone inside the load rather than only in the teardown, because a test must not observe
+  # the leak it caused: a teardown alone would leave whichever Kamal test ran first in a worker
+  # asserting against a polluted environment, which is the flake again in a different place. The
+  # teardown stays as a backstop for a call path added later without the wrapper.
+  setup do
+    @environment_before_kamal = ENV.to_hash
+  end
+
+  teardown do
+    ENV.replace(@environment_before_kamal)
+  end
+
   test "the deployment config loads and validates" do
     config = with_destination { kamal_config }
 
@@ -45,12 +68,25 @@ class KamalConfigurationTest < ActiveSupport::TestCase
     with_config_file("bogus: true") do |path|
       error = with_destination do
         assert_raises Kamal::ConfigurationError do
-          Kamal::Configuration.create_from(config_file: path)
+          # Guarded like `kamal_config`: this is the call that reaches `Kamal::Secrets`, and so
+          # the one that can pull a `.env` into this process.
+          without_leaking_dotenv { Kamal::Configuration.create_from(config_file: path) }
         end
       end
 
       assert_match(/bogus/, error.message)
     end
+  end
+
+  # The loader this file uses has a side effect nothing in its API mentions — see `setup`. This is
+  # the assertion that keeps it contained: a leak would otherwise be invisible here and surface as
+  # a random failure somewhere else entirely.
+  test "building a configuration does not leave the developer's .env in this process" do
+    with_destination { kamal_config }
+
+    assert_equal @environment_before_kamal, ENV.to_hash,
+      "loading a Kamal configuration pulled a .env into the test process. Every later test that " \
+      "reads ENV would then depend on which worker happened to touch Kamal first."
   end
 
   private
@@ -71,8 +107,20 @@ class KamalConfigurationTest < ActiveSupport::TestCase
       end
     end
 
+    # Every call that reaches `Kamal::Secrets` goes through this, because that is the call that
+    # can pull a `.env` into this process.
     def kamal_config
-      Kamal::Configuration.create_from(config_file: CONFIG_PATH)
+      without_leaking_dotenv { Kamal::Configuration.create_from(config_file: CONFIG_PATH) }
+    end
+
+    # Restores the whole environment rather than the one variable, because what the load writes is
+    # whatever the developer's `.env` happens to hold and this file cannot know the names in
+    # advance.
+    def without_leaking_dotenv
+      environment = ENV.to_hash
+      yield
+    ensure
+      ENV.replace(environment)
     end
 
     # `create_from` writes ENV["KAMAL_DESTINATION"], which would otherwise leak into later tests.

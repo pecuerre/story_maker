@@ -17,17 +17,14 @@ class SectionTag < ApplicationRecord
   validates :name, presence: true
 
   # Section tags are scoped to their story instead of to the universe.
+  hierarchy_scoped_by :story_id
+
   private
+    def hierarchy_scope
+      story
+    end
 
-  def hierarchy_scope
-    story
-  end
-
-  def hierarchy_scope_attribute
-    :story_id
-  end
-
-  def hierarchy_scope_error_key
-    "shared.errors.same_scope.story"
-  end
+    def hierarchy_scope_error_key
+      "shared.errors.same_scope.story"
+    end
 end

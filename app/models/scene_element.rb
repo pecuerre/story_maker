@@ -14,12 +14,17 @@ class SceneElement < ApplicationRecord
   KINDS = [ NARRATION, DIALOGUE ].freeze
 
   include SoftDeletable
+  include OrderedSequence
   include Searchable
   include HasDiscussion
 
   # A Scene Element has no page of its own — the editor lives under Scene
   # Details — so it declares no route and points a hit at the Scene that owns it.
   searchable kind: "scene_element", title: :name, body: :body, scope: :story
+  # The Scene's one flat sequence, maintained by `SceneElementsController` through
+  # `PositionedResourceOrder` and repaired here for a write that reaches the model
+  # directly.
+  ordered_sequence_within :scene
 
   belongs_to :scene
   # An Element belongs to a Scene, which belongs to a Story. Delegating the step

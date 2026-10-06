@@ -40,8 +40,23 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-06
 
+### added
+
+- **`bin/rails positions:normalize` renumbers ordered sequences by hand.** It is the repair path for a
+  write that skipped the model — raw SQL, `update_column`, an import — and reports every record it
+  moves; `Hierarchical` now declares its scope column at class level so the command and the model
+  agree on what a sequence is.
+
 ### fixed
 
+- **`bin/rails test` no longer reads the developer's `.env`.** Loading a Kamal configuration in a
+  test pulled the ignored file into the test process through Kamal's `dotenv` dependency, which made
+  the data-loader test fail on roughly one run in three; the Kamal test now restores the environment
+  and asserts it.
+- **A positioned record that is destroyed, soft-deleted, or restored outside `PositionedResourceOrder`
+  renumbers its own sequence.** The new `OrderedSequence` concern repairs every positioned model on
+  those three moments, including the flat Scene and Scene Element sequences that had no callback at
+  all; `SoftDeletable` grew the `soft_delete` and `restore` callbacks it never had.
 - **No route advertises an action its controller lacks or a page it cannot render.** Sessions and
   passwords are restricted to their flows' actions, and the four modal-edited content models lost the
   template-less `new`/`edit` pages they advertised.

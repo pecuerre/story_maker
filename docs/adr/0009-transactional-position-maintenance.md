@@ -1,6 +1,17 @@
 # ADR 0009: Maintain ordered collections transactionally with an explicit flat mode
 
-- **Status:** Accepted
+- **Status:** Accepted — **annotated 2026-10-06.** What this ADR decided is untouched and still holds:
+  the service is the application path for an ordered mutation, and the transaction that locks the
+  scope owner is the only place that does. One cost below has since narrowed: *model-dependent
+  destroy paths* no longer bypass the service by leaving a gap. `OrderedSequence` renumbers a whole
+  sibling group on `after_destroy`, `after_soft_delete`, and `after_restore` for all fifteen
+  positioned models, so a direct write that runs the model repairs itself. The other half of that
+  cost — raw SQL, `update_column`, and an import naming its own `position` — is repaired by running
+  a command rather than by a callback, because no callback fires for a statement that skips the
+  model: `bin/rails positions:normalize` walks every positioned model and renumbers each sibling
+  group, reporting every move. What remains of the cost is that two such writes racing each other
+  are still not serialized, which is the SQLite row-lock limitation this ADR already accepted. See
+  [`../data_model.md`](../data_model.md#hierarchies--positions) for the rule as it stands.
 - **Date:** 2026-09-25
 - **Related:** [`0002`](0002-json-crud-with-stimulus-editors.md), [`0007`](0007-story-owned-scenes-and-elements.md), [`../architecture.md`](../architecture.md), [`../data_model.md`](../data_model.md), [`../conventions.md`](../conventions.md)
 

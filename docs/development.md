@@ -193,6 +193,15 @@ Layout:
   three membership tests that create the very row a fixture would already hold.
 - Sign in with `sign_in_as(users(:user_one))` /
   `sign_out` from `test/test_helpers/session_test_helper.rb`.
+- **A test must not leave the process environment changed.** `ENV` is process-wide and
+  `parallelize` forks one process per worker, so a value one test writes is invisible to the next
+  test in the same worker and visible to the rest of the run — which is how a leak becomes a
+  failure that appears on one run in three with nothing changed to cause it. Snapshot and restore
+  what a test writes, and remember that reading a library can write: `Kamal::Configuration.create_from`
+  reaches `Kamal::Secrets`, which requires `dotenv`, whose Railtie loads the developer's real `.env`
+  into the test process. `test/deployment/kamal_configuration_test.rb` contains that one and asserts
+  the environment is unchanged, so the developer's `UNIVERSE_MAKER_DEV_PASSWORD` cannot reach a test
+  that expects the loader to generate one.
 - Route helpers in tests must be fully qualified:
   `universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)`.
 - `test/routing/universe_route_helper_arguments_test.rb` parses Ruby and ERB call sites and fails
@@ -458,6 +467,24 @@ password they got. No manifest states a password — the loader takes it from
 `UNIVERSE_MAKER_DEV_PASSWORD` or generates one for the load and prints the export command.
 [`db/data/README.md`](../db/data/README.md#development-credentials) owns that contract; the
 `docs/smoke_test_stories.sh` section below is its only other consumer.
+
+### Repairing an ordered sequence by hand
+
+An ordering list is normally maintained by the application, but a write that skips the model —
+raw SQL from a console, `update_column`, `delete_all`, or a `create!` that named its own `position`
+— leaves a gap nothing can repair on its own. Renumber the sequences with:
+
+```bash
+bin/rails positions:normalize                          # every positioned sequence
+bin/rails positions:normalize_universe[netflix-dark]  # one universe only
+```
+
+It prints every record it moves, with the sequence it was in and both positions, and says
+`every sequence is already contiguous` when it had nothing to do. Unlike `db:demo:*` it is not
+restricted to development — it repairs data the application derives, and is the step to run after a
+production import — but it is not a write path: it takes no scope-owner lock, so it belongs between
+writes rather than during them. What a sequence is and which records share one are in
+[data_model.md](data_model.md#hierarchies--positions).
 
 ### Running the tasks with the password from `.env`
 

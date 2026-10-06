@@ -1,6 +1,11 @@
 module Hierarchical
   extend ActiveSupport::Concern
 
+  # The destroy-time position repair lives in `OrderedSequence`, which every flat
+  # sequence shares. Including it here is what gives a hierarchy the `soft_delete` and
+  # `restore` halves as well — see the override of `ordered_sequence_scope` below.
+  include OrderedSequence
+
   included do
     belongs_to :parent, class_name: name, optional: true
     has_many :children, -> { order(:position, :id) },
@@ -13,16 +18,37 @@ module Hierarchical
     validate :parent_cannot_be_self
     validate :parent_cannot_be_descendant
     validate :scope_change_does_not_orphan_children
+  end
 
-    after_destroy :normalize_sibling_positions_after_destroy
+  class_methods do
+    # The column whose value scopes this model's hierarchy: `:universe_id` for most
+    # models, `:story_id` for Section and the two story-scoped taxonomies.
+    #
+    # **Declared at class level because a caller that holds no record needs it too.**
+    # `SequenceNormalizer` walks whole tables and has to group them without asking an
+    # instance, and three models writing the same private method returning the same
+    # symbol was the alternative — three places to keep in step instead of one.
+    def hierarchy_scoped_by(attribute)
+      @hierarchy_scope_column = attribute.to_sym
+    end
+
+    # The scope column as declared, defaulting to the universe every other model uses.
+    def hierarchy_scope_column
+      @hierarchy_scope_column || :universe_id
+    end
+
+    # A hierarchical group is the records sharing a `parent_id` inside one owning
+    # scope, so it takes two columns where the flat case takes one. Overriding the
+    # class method rather than the instance `ordered_sequence_scope` is what keeps the
+    # two answers — the one a record gives and the one a whole-table walk gives — the
+    # same derivation.
+    def ordered_sequence_group_columns
+      [ hierarchy_scope_column, :parent_id ]
+    end
   end
 
   def root?
     parent_id.nil?
-  end
-
-  def sibling_scope
-    hierarchy_scope.public_send(self.class.table_name).where(parent_id: parent_id).where.not(id: id).order(:position, :id)
   end
 
   def ancestor_chain
@@ -52,8 +78,10 @@ module Hierarchical
     universe
   end
 
+  # Read from the class declaration rather than written per model, so the answer a
+  # validation gives and the answer a whole-table walk gives cannot drift.
   def hierarchy_scope_attribute
-    :universe_id
+    self.class.hierarchy_scope_column
   end
 
   # The *key* of the scope sentence, not the sentence: a model that narrows the
@@ -113,18 +141,18 @@ module Hierarchical
     errors.add(:parent, I18n.t("shared.errors.hierarchy.cannot_be_descendant")) if parent.ancestor_chain.include?(self)
   end
 
-  def normalize_sibling_positions_after_destroy
+  # A hierarchical sequence is the records sharing this record's `parent_id` inside its
+  # owning scope — a smaller group than the flat case, which is everything the owner
+  # holds. This is the only difference between the two, so it is the only thing
+  # overridden: the read, the ordering, and the repair itself are `OrderedSequence`'s.
+  #
+  # The record itself stays in the group, unlike the pre-`OrderedSequence` version of
+  # this callback, because `OrderedSequence` also repairs on `restore` and a returning
+  # record has to be renumbered with the sequence rather than excluded from it.
+  def ordered_sequence_scope
     scope = hierarchy_scope
-    return unless scope&.persisted?
+    return if scope.nil? || !scope.persisted?
 
-    siblings = scope.public_send(self.class.table_name)
-      .where(parent_id: parent_id)
-      .where.not(id: id)
-      .reorder(:position, :id)
-      .lock
-
-    siblings.each_with_index do |sibling, index|
-      sibling.update_columns(position: index) unless sibling.position == index
-    end
+    scope.public_send(self.class.table_name).where(parent_id: parent_id)
   end
 end

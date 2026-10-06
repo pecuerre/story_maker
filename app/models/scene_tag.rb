@@ -10,6 +10,8 @@ class SceneTag < ApplicationRecord
 
   searchable kind: "tag", title: :name, body: :description, route: "scene_tag", taxonomy: "Scene", scope: :story
   soft_deletes :children
+  # Scene tags are scoped to their story instead of directly to the universe.
+  hierarchy_scoped_by :story_id
 
   belongs_to :story
   has_many_tagged :scene, scope: :story_id
@@ -42,9 +44,7 @@ class SceneTag < ApplicationRecord
     self.scenes = Scene.where(id: scoped_ids).to_a
   end
 
-  # Scene tags are scoped to their story instead of directly to the universe.
   private
-
     def scene_assignments_are_valid
       Array(@scene_assignment_errors).each do |message|
         errors.add(:scenes, message)
@@ -55,11 +55,7 @@ class SceneTag < ApplicationRecord
     story
   end
 
-  def hierarchy_scope_attribute
-    :story_id
-  end
-
-  def hierarchy_scope_error_key
-    "shared.errors.same_scope.story"
-  end
+    def hierarchy_scope_error_key
+      "shared.errors.same_scope.story"
+    end
 end

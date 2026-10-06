@@ -309,6 +309,9 @@ It is asymmetric, and the asymmetry is deliberate:
 
 A soft delete follows the shared rules in [data_model.md](../data_model.md#soft-delete): a deleted
 Scene is hidden from every ordinary query, its Elements and presence links are soft-deleted with it,
-and the positioned controller normalizes the remaining siblings in the same transaction. The exact
+and the positioned controller normalizes the remaining siblings in the same transaction. A Scene or
+Element deleted **outside** that controller — a console, an import, a cascade — is normalized by the
+model instead, on the same three moments every positioned record uses; the rule for which is in
+[data_model.md](../data_model.md#hierarchies--positions). The exact
 confirmation copy is in [ADR 0007](../adr/0007-story-owned-scenes-and-elements.md) and must not be
 replaced with only "Delete {record}?" merely to save space.

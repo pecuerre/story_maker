@@ -60,9 +60,16 @@ Every content table that has a user-facing delete action carries a nullable `del
 can be restored. The `SoftDeletable` concern (`app/models/concerns/soft_deletable.rb`) provides:
 
 - a `default_scope` that hides soft-deleted records from every ordinary query;
-- `soft_delete` / `restore` to mark and unmark a record;
+- `soft_delete` / `restore` to mark and unmark a record, each in its own transaction;
 - `deleted?`, and the `with_deleted` / `only_deleted` scopes to opt back in;
-- a `soft_deletes :assoc` declaration for the associations that cascade.
+- a `soft_deletes :assoc` declaration for the associations that cascade;
+- the `soft_delete` and `restore` **model callbacks**, which run inside that transaction
+  immediately after the write that set or cleared `deleted_at`. `after_destroy` never fires
+  for a soft delete, because nothing is destroyed, so a model that has to react to *this*
+  application's delete — `OrderedSequence` closing the gap its own deletion left in an
+  ordered collection — needs these and not only `after_destroy`. A callback that raises
+  rolls the delete back rather than leaving a deleted record beside a sequence nothing
+  repaired.
 
 Soft-deleting a parent cascades to its declared children (a Universe soft-deletes its stories,
 characters, tags, and memberships; a Story soft-deletes its sections and scenes; a Scene
@@ -341,9 +348,35 @@ Ordering: `position` defaults to 0; `MaintainsSiblingPositions` delegates create
 and destroy normalization to `PositionedResourceOrder`. The service runs each operation in a
 transaction while locking the persisted scope owner, supports explicit hierarchical and flat
 modes, and maintains contiguous 0..n-1 positions ordered by `(position, id)`. Drag/drop and the
-accessible Move controls send the same `{ parent_id, position }` contract. Direct SQL/import and
-some model-dependent destroy paths remain outside the controller service and require separate
-maintenance if they become supported workflows.
+accessible Move controls send the same `{ parent_id, position }` contract.
+
+**Every positioned model also repairs its own sequence.** `OrderedSequence`
+(`app/models/concerns/ordered_sequence.rb`) renumbers the whole sibling group on `after_destroy`,
+`after_soft_delete`, and `after_restore`, so a write that reaches the model directly — a console
+`destroy!`, a direct `soft_delete`, a `restore` — closes the gap it made instead of leaving
+`[0, 1, 3]` behind. It is repair, not the service's guarantee: it runs in whatever transaction the
+caller's write runs in, often none, and SQLite has no portable row lock. A hierarchical model gets
+it by including `Hierarchical`; a flat one declares `ordered_sequence_within :story` (Scene) or
+`:scene` (SceneElement), naming the owner whose collection *is* the sequence. On `restore` the
+record is renumbered **with** the group rather than excluded from it: its own `position` is a stale
+slot that a later arrival may now hold, and `(position, id)` puts it back where it was rather than
+always appending it. Raw SQL, `update_column`, and `delete_all` still bypass it — no callback runs
+for a write that skips the model.
+
+**A write that skips the model is repaired by running the command.** `SequenceNormalizer`
+(`app/services/sequence_normalizer.rb`) walks every positioned model, groups its records by
+`Model.ordered_sequence_group_columns` — the same declaration the repair above reads on an instance
+— and renumbers each group to `0..n-1`, printing every record it moves with its sequence and both
+positions. Run it after raw SQL, an import, or any `create!` that named its own `position`:
+
+    bin/rails positions:normalize                          # everything
+    bin/rails positions:normalize_universe[netflix-dark]  # one universe
+
+It runs in any environment, like `search:reindex`, because it repairs data the application already
+derives, and it reports every move rather than refusing outright — a reader's narrative order is
+their work, so a surprising line in the output has to be visible enough to undo by hand. It is
+**not** a second writer: it takes no scope-owner lock, so `PositionedResourceOrder` remains what
+maintains a sequence while the application is writing to it.
 
 Not hierarchical: **Relation**, **Ownership** (link records), **Scene** and **SceneElement** (flat
 story- and scene-owned sequences), **SceneCharacter**, **SceneItem**, **SceneLocation** (link

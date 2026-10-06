@@ -29,6 +29,173 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-06
 
+- **[added]** **`bin/rails positions:normalize` repairs the writes no callback can reach.** The second
+  half of finding 22 in [known_quirks.md](known_quirks.md). `PositionedResourceOrder` maintains a
+  sequence for an application mutation and `OrderedSequence` repairs one for a write that reached a
+  model directly, but **no callback fires for a statement that skips Active Record**: raw SQL from a
+  console, `update_column`, `delete_all`, or a `create!` naming its own `position`. Those leave a gap
+  that stayed open until something walked the sequence and renumbered it, which is what the finding
+  said closing the raw paths would need.
+
+  **The shape is deliberately the one already used for the other derived-data repair.**
+  `SequenceNormalizer` takes an `output:`, returns a `Summary`, and exposes `call` /
+  `call_for_universe` — the same contract as `Search::Reindexer`, which is why the tasks are
+  `positions:normalize` and `positions:normalize_universe[slug]` rather than something new. It runs in
+  any environment for the same reason `search:reindex` does: it repairs data the application already
+  derives, and the owner chose that over a development-only guard, which would have made the command
+  unusable after a production import and required a second command later.
+
+  **Every move is reported, rather than the command refusing to run.** The counter-argument is that a
+  reader's narrative order is their work rather than derived data, so silently renumbering a sequence
+  nobody had broken would be worse than doing nothing. The answer is that the report *is* the
+  safeguard: each line names the model, the record, the sequence it was in, and both positions, so a
+  surprising line can be checked and undone by hand. A command that refused to run would not have
+  been run at all after the one SQL statement that needed it. The report is tested for what it does
+  *not* say too — a record already in place is not a move, because reporting those would bury the
+  ones that are.
+
+  **Which records share a sequence is asked of the model, not decided in the service.** Every model
+  already declared its group for the instance-level repair; `SequenceNormalizer` holds no record, so it
+  reads the same declaration as data — `Model.ordered_sequence_group_columns`, which `Hierarchical`
+  narrows to `[scope, parent_id]` and a flat model gets as `[owner_id]`. That required one new
+  declaration in `Hierarchical`: `hierarchy_scoped_by :story_id`, replacing three models each writing
+  the same private `hierarchy_scope_attribute` method. Three copies of one symbol became one
+  declaration, and the validation's answer and the command's answer are now the same line of code.
+
+  **Two derivations are guarded, because a silent omission here is invisible.** The model list is
+  `Rails.application.eager_load!` then `ApplicationRecord.descendants` filtered on a `position` column —
+  and the eager load is load-bearing, because `descendants` holds only loaded classes, so in a task or
+  a console a model nothing had referenced would be missing from the run while the command reported
+  success over an incomplete set. An abstract class is rejected first, which is how `TaggedRecordsByTag`
+  gets into that list at all. `test/services/sequence_normalizer_test.rb` holds the resulting list
+  against the routed controllers in both directions, the same pair `draft_applier_test.rb` holds.
+
+  **Two refusals were chosen over two conveniences.** A model scoped some way the command cannot
+  restrict to a universe raises rather than falling back to the whole table, because the fallback
+  would normalize every universe while the caller believed it had scoped the run. And one transaction
+  per model rather than one for the run, so a failure half way through leaves the models it finished
+  consistent and holds a SQLite write lock for as short a time as possible.
+
+  **What this does not claim.** It is not a second writer and takes no scope-owner lock, so
+  `PositionedResourceOrder` remains what maintains a sequence while the application is writing to it.
+  And it is a step a person runs, not a guarantee: nothing detects that they did not. Both halves stay
+  in finding 22, which is why it is still open rather than closed.
+
+  Verification: `test/services/sequence_normalizer_test.rb` — 13 runs, 51 assertions. Run against the
+  test database, whose fixtures are deliberately inconsistent (two Sections share position 0), the
+  command reported `moved 11 record(s) across 32 sequence(s) holding 48 record(s)`; a second run
+  reported `every sequence is already contiguous`. `bin/rails test` — 2,059 runs, 13,079 assertions, 0
+  failures, 0 errors, 10 skips. `bin/rubocop` clean.
+
+- **[fixed]** **`bin/rails test` was reading the developer's `.env`, and it made the suite
+  non-deterministic.** Found while verifying finding 22, not by it: the ordered-sequence work made
+  `bin/rails test` fail roughly one run in three on
+  `UniverseDataLoaderTest#test_the_loader_gives_every_user_in_the_universe_the_password_it_resolved`
+  (`Expected false to be truthy` on `assert loader.password.generated?`). Stashing the change and
+  running the clean tree reproduced it, so it was pre-existing and unrelated — but it was real, and
+  the cause was not where the failure pointed.
+
+  **The symptom was one test; the cause was the whole test process.** `LocalPassword.resolve` reads
+  `UNIVERSE_MAKER_DEV_PASSWORD` and generates a value only when it is absent, so the failing
+  assertion was really saying *this process has a configured password* — and the repository's
+  `.env` sets exactly that variable. Instrumenting `LocalPassword.resolve` showed the value arriving
+  with `boot=nil`: the process started clean and acquired the developer's value **during** the run.
+  Tracing `ENV` writes (a TracePoint on `:c_call` missed it, because `ENV`'s `[]=` is a singleton
+  method rather than a class-level one, so the trap had to be a prepended module) named the writer:
+  `test/deployment/kamal_configuration_test.rb` → `Kamal::Configuration.create_from` →
+  `kamal/secrets.rb:1` → `require "dotenv"` → `Dotenv::Rails`, whose Railtie loads
+  `.env.{test}.local`, `.env.{test}`, and `.env` into `ENV`.
+
+  **Why this produced a one-in-three flake rather than a straight failure.** `parallelize` forks one
+  process per worker, and the `require` happens once per process. A worker therefore acquires the
+  value the first time any of its tests touches Kamal, and every later test in that same worker sees
+  it. The failing test exists in one process only, so it failed exactly when the run's distribution
+  put it in a worker that had already loaded Kamal — which is random per run. That is the whole
+  defect in one sentence: **a test whose answer depends on which worker it landed in is not testing
+  the thing it names.**
+
+  **The fix contains the leak at the call that causes it.** `KamalConfigurationTest` snapshots
+  `ENV.to_hash` in `setup`, restores it in `teardown`, and — the part that actually matters — restores
+  it around each `Kamal::Configuration.create_from` through `without_leaking_dotenv`. Restoring only
+  in the teardown would have been a different bug: whichever Kamal test ran *first* in a worker
+  would still be asserting against a polluted environment, so the flake would have moved rather than
+  gone. The whole environment is snapshotted rather than the one variable because what the load
+  writes is whatever the developer's `.env` holds, and the test cannot know those names in advance.
+
+  **A test asserts the containment, so this cannot come back quietly.** `building a configuration does
+  not leave the developer's .env in this process` compares `ENV.to_hash` before and after. The
+  failure this fixes would otherwise have been visible only as a random red elsewhere, and the
+  obvious response — re-running until green — is the one response guaranteed to hide it.
+
+  **The second-order cost was the reason to do it now rather than record it.** Beyond the flake, a
+  test process was holding the developer's real secrets, and `UniverseDataLoaderTest` calls the
+  loader with `environment: :development`, so the accounts it created were being given the
+  developer's actual configured password. That is a local-only value, but "the test suite reads your
+  ignored secrets file" is not a property a project should have quietly grown.
+
+  Verification: `bin/rails test` run six consecutive times after the fix — 2,046 runs, 13,024
+  assertions, 0 failures, 0 errors, 10 skips on every run, against roughly one failure in three
+  before it. `bin/rubocop` clean.
+
+- **[fixed]** **A positioned record that leaves or rejoins its sequence outside
+  `PositionedResourceOrder` now closes its own gap.** Finding 22 in
+  [known_quirks.md](known_quirks.md) had two halves that had drifted apart: `Hierarchical` closed the
+  gap after a **direct hard destroy**, while the two flat sequences added with the Scene deliveries —
+  the Story's `Scene` order and the Scene's `SceneElement` order — had no equivalent callback at all.
+  The asymmetry was visible in one line of reproduction: three Sections through the service and then
+  `destroy!` went `[0, 1, 2]` → `[0, 1]`, and the same three Scenes went `[0, 1, 2]` → `[0, 2]`.
+
+  **Reproducing it first turned up a third path, and it is the one the application itself uses.**
+  `SoftDeletable#soft_delete` writes `deleted_at` through `save!`, so `after_destroy` never fires for
+  it — and every controller in the application soft-deletes rather than destroys. A direct
+  `section.soft_delete` left `[0, 1, 2]` → `[0, 2]` on a **hierarchy**, which had always been described
+  as the self-repairing case. The finding's own framing was therefore narrower than the defect: the
+  repair was not "hierarchies have it and flat sequences do not", it was "the one hard-destroy path
+  nobody uses has it, and the other two have nothing".
+
+  **The fix is one concern, `OrderedSequence`, on three moments.** `after_destroy`,
+  `after_soft_delete`, and `after_restore` each renumber the whole sibling group. `Hierarchical`
+  includes it and overrides only `ordered_sequence_scope` — the group a `parent_id` names — which
+  deletes the copy of the algorithm the concern had been carrying, so there is now one implementation
+  of "what is a sibling group" rather than two that agreed by hand. The two flat models declare
+  `ordered_sequence_within :story` / `:scene`, naming the owner whose collection *is* the sequence.
+
+  **`SoftDeletable` grew the two callbacks it was missing.** `define_model_callbacks :soft_delete,
+  :restore`, run inside the transaction that wrote `deleted_at`, immediately after the `save!` that
+  wrote or cleared it. Inside the transaction is the load-bearing part: a repair that fails must roll
+  the delete back rather than leave a deleted record beside a sequence nothing fixed, which is what
+  `PositionedResourceOrder` already guarantees for a controller destroy. `restore` was not in a
+  transaction at all and now is.
+
+  **Restore renumbers the record *with* the group, which is the one place this could have gone wrong
+  quietly.** The pre-existing callback excluded the record by id, correctly, because a destroyed row
+  needs its siblings numbered around the hole it left. A returning record is in the opposite
+  situation: its own `position` is a stale slot that a record created while it was away may now hold,
+  and renumbering by `(position, id)` puts it back where it was — its older id wins the tie — instead
+  of appending it to the end and silently reordering a story every time a draft was undone. The test
+  asserts that case directly (`a restore renumbers the sequence when the slot it left was taken`), and
+  the exclusion is gone from both paths because it would have been redundant on delete and wrong on
+  restore.
+
+  **`SoftDeletable` is a declared dependency of the concern, not an include-order assumption.** Most
+  positioned models write `include Hierarchical` above `include SoftDeletable`, which made
+  `after_soft_delete` an undefined method at class-definition time. `OrderedSequence` declares
+  `include SoftDeletable` the way `Hierarchical` declares this one; every positioned model already
+  soft-deletes, so the dependency grants nothing it did not have.
+
+  **What is deliberately still true.** The service is unchanged and remains the only path that locks a
+  scope owner — this is repair, not a second write path, and creates and moves still go through
+  `PositionedResourceOrder` unchanged. A controller destroy therefore normalizes twice, the second
+  time as a no-op; the duplicate SELECT was judged cheaper than a mechanism to suppress it. Raw SQL,
+  `update_column`, `delete_all`, and a `create!` that names its own `position` still bypass all of it,
+  because no callback runs for a write that skips the model, and there is still no import or console
+  workflow that renormalizes a sequence on demand. Finding 22 stays open, rewritten to those four
+  paths rather than to the model paths that are now closed.
+
+  Verification: `bin/rails test` — 2,045 runs, 13,023 assertions, 0 failures, 0 errors, 10 skips
+  (line coverage 95.77%, branch 83.76%); `bin/rubocop` — 466 files, no offenses. `test:system` and
+  `bin/brakeman` were not run: no view, JavaScript, or route changed.
+
 - **[docs]** **`known_quirks.md` was cleaned of its own departure log, and two already-fixed findings
   left it.** The file had grown a 55-line preamble narrating which findings had left it and when — a
   hand-maintained changelog sitting in the one document whose stated rule is that it holds open

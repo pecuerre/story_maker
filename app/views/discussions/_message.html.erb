@@ -5,9 +5,9 @@
     fragment would be a formatting decision this page has not made. %>
 <li class="discussion-message">
   <%# The author falls back to the shared blank copy rather than rendering an
-      empty name. `users.name` is `NOT NULL` but carries no presence validation
-      (known quirk 27), so an author created by a seed or import caller can have a
-      blank name; a message with no visible author is the anonymous block this
+      empty name. `users.name` is `NOT NULL` and `User` validates its presence, but
+      `NOT NULL` rejects only `NULL`, so a direct write or an import can still leave
+      an empty string; a message with no visible author is the anonymous block this
       partial exists to avoid. `shared.detail_fact.blank` is the application's
       one answer to "this value is not set", so it is reused instead of a second
       wording invented here.

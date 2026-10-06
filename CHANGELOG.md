@@ -56,6 +56,9 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Two stale quirks entries were checked against the tree and corrected.** Finding 23 claimed the legacy
+  tag join tables lack database integrity constraints, which a migration had already fixed eight days
+  earlier; the framework-routes footgun called Active Storage unused when it serves every record photo.
 - **`docs/known_quirks.md` no longer claims the Scene mutation guards are a finding.** The unnumbered
   "Scenes are covered" paragraph was resolved-status prose already owned by `docs/features/scenes.md`
   and `docs/conventions.md`, so the file keeps only open findings again.

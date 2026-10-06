@@ -162,10 +162,13 @@ Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `sce
 `characters_character_tags`, `locations_location_tags`, `items_item_tags`,
 `sections_section_tags`, `scenes_scene_tags`, `events_event_tags`, `relations_relation_tags`,
 `ownerships_ownership_tags` — pattern `"<content table>_<tag table>"`, declared by
-`has_many_tags` and reused by `has_many_tagged`. The legacy join tables have no database integrity
-constraints; the new `scenes_scene_tags` table adds real foreign keys and a unique
-`[scene_id, scene_tag_id]` index, as do the Scene-owned tables `scene_element_speakers`,
-`scene_characters`, `scene_items`, and `scene_locations`. Every declaration supplies an explicit
+`has_many_tags` and reused by `has_many_tagged`. **Every one of these eight carries two foreign keys
+and a unique index on its column pair** — the seven legacy tables by
+`db/migrate/20260928120000_add_integrity_constraints_to_legacy_join_tables.rb`, `scenes_scene_tags`
+from its own create migration — so an orphan or duplicate join row is refused by the database rather
+than only by the scoped association reads. The Scene-owned tables `scene_element_speakers`,
+`scene_characters`, `scene_items`, and `scene_locations` do the same, their unique index being partial
+(`WHERE deleted_at IS NULL`) because those four soft-delete. Every declaration supplies an explicit
 shared scope
 (`:universe_id`, or `:story_id` for Section/Scene tags), and both sides of each association validate
 every assigned member against that scope. Association reads also apply the scope, hiding foreign

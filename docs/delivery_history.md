@@ -78,6 +78,23 @@ are linked rather than repeated, so there is one place to keep them current.
   `app/javascript` changed), `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no
   dependency, importmap pin, or vendored asset changed). No container build or Kamal validation.
 
+- **[docs]** **Two more stale findings were checked and corrected rather than acted on.** Finding 23
+  claimed the seven legacy tag join tables have no database integrity constraints; migration
+  `20260928120000` gave them all foreign keys and a unique-pair index three days after the finding was
+  written, and this file was never closed. Its resolution is in **Resolved quirks and tech debt**
+  below rather than here, because nothing was built to fix it. Finding 37 was re-verified: its fixture
+  and `images-to-ai` claims hold, but the "development guide calls `test/helpers` effectively empty"
+  claim stopped being true and the file list it named was three of six. The **framework-routes**
+  bullet was rewritten after probing each family rather than re-reading the sentence: Active Storage
+  is **load-bearing** (it serves every record photo), the Action Mailbox ingress endpoints 404 because
+  `ActionMailbox.ingress` is `nil`, and the `rails/conductor` endpoints 403 outside development. The
+  old wording called all three "unused", which is the framing that leads a reader to delete the photo
+  routes. `docs/data_model.md` carried the same wrong claim about the legacy join tables and was
+  corrected in the same change.
+
+  Verification: `bin/rails test test/docs_test.rb` (5 runs, 10 assertions, 0 failures). No application,
+  test, configuration, or schema change, so the full suite was not re-run.
+
 - **[fixed]** **Five open quirks from the 2026-09-24 audit are closed.** The route table advertised
   actions no controller has and pages no template renders; `User` validated nothing its `NOT NULL`
   columns imply; a reversed interval saved; a composite slug depended on tag assignment order; and the
@@ -4550,6 +4567,39 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk 23: legacy HABTM join tables have no integrity constraints (already fixed — the finding outlived the migration)
+
+**Then:** the seven pre-Scene tag join tables were created with bare `create_join_table`, so they carried
+two integer columns and no indexes, no foreign keys, and no uniqueness constraint. The Scene-era tables
+had all three. Direct SQL, an import, a failed association replacement, or duplicate ids could therefore
+create orphan or duplicate rows in the legacy tables, which the scoped association reads could not
+detect.
+
+**This finding was never a live defect by the time it was read.** It was written on 2026-09-25;
+`db/migrate/20260928120000_add_integrity_constraints_to_legacy_join_tables.rb` landed three days later
+and gave all seven tables both foreign keys and a unique-pair index, with a dated `CHANGELOG.md` entry
+under `security` describing exactly that. `known_quirks.md` was never closed, so it went on asserting
+that the database had no constraints to reject a bad join row — for eight days after the database had
+been rejecting them.
+
+**How it was confirmed.** The migration was not taken on trust; the constraints were exercised against
+the running test database. Each of `characters_character_tags`, `events_event_tags`, `items_item_tags`,
+`locations_location_tags`, `ownerships_ownership_tags`, `relations_relation_tags`, and
+`sections_section_tags` reports two foreign keys and a unique index on its pair. An insert naming a
+nonexistent character and tag raises `ActiveRecord::InvalidForeignKey`; a second insert of an existing
+pair raises `ActiveRecord::RecordNotUnique`. `scene_elements` still carries its
+`check_constraint` on `kind`.
+
+**Why this is recorded rather than just deleted.** A stale finding is worse than a missing one: it
+sends a reader to look for a defect that does not exist, and it inflates the count of open work the
+file is supposed to report. The same pattern appeared twice more in this pass — finding 58 claimed a
+failing test that passes, and finding 37's claims about `docs/README.md` and `docs/development.md` are
+still true while the rest of that entry is out of date. A finding here has to be re-verified against the
+tree before it is acted on, which is the discipline the file's own header already claims.
+
+Verification: no application, test, configuration, or schema change. `bin/rails test test/docs_test.rb`
+(5 runs, 10 assertions, 0 failures) after the edit.
 
 ### Former browser-suite saturation finding: parallel SQLite tests exhausted the busy timeout (fixed)
 

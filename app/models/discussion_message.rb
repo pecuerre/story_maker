@@ -31,7 +31,8 @@ class DiscussionMessage < ApplicationRecord
   # writer has nothing to interpolate: `Notification.discussion_replied!` stores the
   # actor's name and the bell falls back to `notifications.someone` when it is
   # missing, so a reply from an account without a name is announced rather than
-  # refused. `users.name` carries no presence validation (known quirk 27).
+  # refused. `User` validates `name`'s presence, so an account without one arrives
+  # from a direct write or an import rather than from an ordinary create.
   def post!
     posted = false
 

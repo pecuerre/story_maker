@@ -40,8 +40,23 @@ resources were restricted to the actions their flows have, the four modal-edited
 their template-less `new` actions, `User` gained the presence validations its `NOT NULL` columns
 imply, a reversed interval became a validation error on all three models that record one, a composite
 slug began reading its tag segment in a defined order, and the fixed-navbar click finding turned out to
-describe a test that does not fail — see `delivery_history.md` for the verification each one went
-through.
+describe a test that does not fail — see `delivery_history.md` for the verification each one went through.
+
+The **framework-routes** bullet in "Contract-dependent and future-feature footguns" was rewritten the
+same day after being probed rather than re-read. It had described Active Storage, Action Mailbox, and
+Action Text as one undifferentiated set of "unused" routes, which is the framing that leads a reader to
+delete something load-bearing: Active Storage serves every record photo, while the two families that
+genuinely are unused are inert — the Action Mailbox ingress endpoints 404 because
+`ActionMailbox.ingress` is `nil`, and the `rails/conductor` endpoints 403 outside development.
+
+Finding **23** left this file on 2026-10-06 without any code changing. It was written on 2026-09-25,
+`db/migrate/20260928120000_add_integrity_constraints_to_legacy_join_tables.rb` landed three days later
+and gave all seven legacy tag join tables the foreign keys and unique-pair index the finding said they
+lacked, and the 2026-09-28 changelog entry recorded it — but the finding was never closed, so this file
+went on asserting a defect the database had been rejecting for eight days. Verified against the running
+test database rather than the migration: every legacy table has both foreign keys and its unique index,
+an orphan insert raises `ActiveRecord::InvalidForeignKey`, and a duplicate raises
+`ActiveRecord::RecordNotUnique`.
 
 See [`delivery_history.md`](delivery_history.md).
 
@@ -69,20 +84,7 @@ See [`delivery_history.md`](delivery_history.md).
     routed controller in both directions — so this finding's list of bypassing paths is unchanged, and
     the applier is a maintained caller rather than a new hole.
 
-23. **Medium — legacy HABTM join tables have no database integrity constraints.** The seven
-    pre-Scene join tables contain only two integer columns and no indexes, foreign keys, or
-    uniqueness constraints (for example `db/schema.rb:42-45,84-87,117-120,150-153,186-189,224-227`;
-    the migrations use bare `create_join_table`, e.g.
-    `db/migrate/20260923130012_create_characters.rb:14`). The Scene-owned and Scene-tag tables are
-    the exception: `scenes_scene_tags`, `scene_element_speakers`, `scene_characters`, `scene_items`,
-    and `scene_locations` all have
-    real foreign keys and a unique pair index, and `scene_elements` adds a `check_constraint` on
-    `kind`. Direct SQL,
-    imports, failed association replacement, or duplicate IDs can still create orphan/duplicate rows
-    in the legacy tables. Scoped association reads prevent foreign tags from being disclosed through
-    ordinary model/view paths, and controller saves roll back rejected ID replacements. A direct
-    HABTM collection writer can still write a join row before a later validation failure in a
-    legacy table, however, because the database has no constraints to reject it.
+
 
 
 
@@ -193,14 +195,17 @@ See [`delivery_history.md`](delivery_history.md).
     separately by `test/services/development/database_reset_test.rb`.
 
 37. **Low — development fixtures and documentation overstate baseline coverage.**
-    `docs/development.md` says all content and tag fixtures are present, but relation,
-    ownership, relation-tag, ownership-tag, and membership fixture files are absent; tests create
-    many of those records ad hoc. `docs/README.md` advertises an absent `docs/images-to-ai/`
-    directory. The development guide also calls `test/helpers` effectively empty even though
-    `test/helpers/application_helper_test.rb`, `record_details_link_test.rb`, and
-    `scenes_helper_test.rb` are present. The root README's destructive `db:restart` warning has
-    been clarified, and the dead `schema.txt` links this finding used to report were removed on
-    2026-09-30; the fixture, `images-to-ai`, and `test/helpers` issues in this finding remain open.
+    Re-verified against the tree on 2026-10-06, and one of this entry's three claims no longer
+    holds. Still true:
+    - `docs/development.md:186` says fixtures load "all content + tag fixtures", but
+      `test/fixtures/` has no `relations.yml`, `ownerships.yml`, `relation_tags.yml`,
+      `ownership_tags.yml`, or `universe_memberships.yml`. Tests create many of those records ad hoc.
+    - `docs/README.md:25` advertises `docs/images-to-ai/`, which does not exist.
+    No longer true: this entry reported that the development guide "calls `test/helpers` effectively
+    empty", and `docs/development.md` no longer says anything of the kind — it does not mention the
+    directory at all. `test/helpers/` in fact holds six test files, not the three this entry named.
+    The root README's destructive `db:restart` warning was clarified and the dead `schema.txt` links
+    removed on 2026-09-30; the fixture and `images-to-ai` issues are what remains open.
 
 39. **Low — the smoke script is not environment-guarded or concurrency-safe.**
     `docs/smoke_test_stories.sh:22-114` uses fixed `/tmp` filenames, has no cleanup trap, can leave
@@ -275,10 +280,26 @@ through the current normal UI. They are recorded so they are not mistaken for se
   (`app/models/concerns/has_color.rb:4-7`), so an author can choose a combination that fails
   WCAG contrast. The badge shape still identifies the tag, and color is never the only signal, so
   this is a legibility review item rather than a security finding.
-- **Framework routes are broader than the current domain.** `config/application.rb:3` loads
-  `rails/all`, exposing unused Active Storage/Action Mailbox/Action Text routes. Their default
-  protections reduce immediate risk, but the application has no route allowlist or production
-  route-surface check.
+- **Framework routes are broader than the current domain, and two of the three families are inert
+  while the third is in use.** `config/application.rb:3` loads `rails/all`, which mounts 25 routes no
+  view links to. They are not interchangeable, and reading them as one undifferentiated list is how a
+  reader ends up deleting something load-bearing:
+  - **Action Mailbox ingress** — nine `POST`/`GET` endpoints under `/rails/action_mailbox`. Inert
+    today because `ActionMailbox::BaseController#ensure_configured` answers **404** unless
+    `ActionMailbox.ingress` names the ingress, and that setting is `nil`. This is the one family with
+    real residual risk: it is **one configuration line away** from exposing nine write endpoints, and
+    nothing asserts it stays `nil`. A test that fails when `config.action_mailbox.ingress` becomes
+    truthy would close that.
+  - **`rails/conductor/action_mailbox`** — eight endpoints, guarded by
+    `Rails::Conductor::BaseController#ensure_development_env`, which answers **403** outside
+    development. Verified in production, not just assumed.
+  - **Active Storage** — the blob/proxy/disk/direct-upload set. **These are load-bearing, not unused:**
+    `HasPhoto` stores through `ActiveStorage::Blob.service` (`DiskService`), so these routes serve every
+    record photo and the cropper. They must not be treated as dead weight.
+  Action Text mounts no routes in this application. The application has no route allowlist and no
+  production route-surface check, and `test/routing/route_action_contract_test.rb` deliberately
+  **excludes** framework controllers rather than asserting anything about them — it decides membership
+  by where a controller's own file lives, so a framework route is outside its scope by construction.
 
 ## Additional UI and interaction observations
 

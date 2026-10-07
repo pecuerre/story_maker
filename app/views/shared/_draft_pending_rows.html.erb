@@ -26,7 +26,7 @@
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <span class="entity-title text-break"><%= draft_pending_record_label(record) %></span>
       <%= entity_tag_badge(record) %>
-      <%= render "shared/draft_pending_badge", state: draft_pending_state(record) %>
+      <%= render "shared/draft_pending_badge", record: record %>
     </div>
     <% if record.description.present? %>
       <div class="entity-description"><%= record.description %></div>

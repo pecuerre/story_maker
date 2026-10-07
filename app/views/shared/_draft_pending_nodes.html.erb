@@ -26,7 +26,7 @@
       <span class="taxonomy-name-text text-break">
         <span class="entity-title"><%= draft_pending_record_label(record) %></span>
         <%= entity_tag_badge(record) %>
-        <%= render "shared/draft_pending_badge", state: draft_pending_state(record) %>
+        <%= render "shared/draft_pending_badge", record: record %>
         <% if record.description.present? %>
           <span class="entity-description d-block"><%= record.description %></span>
         <% end %>

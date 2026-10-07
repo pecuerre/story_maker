@@ -39,7 +39,7 @@
               <div class="d-flex align-items-center gap-2 flex-wrap">
                 <span class="entity-title"><%= event.display_label %></span>
                 <%= entity_tag_badge(event) %>
-                <%= render "shared/draft_pending_badge", state: draft_pending_state(event) %>
+                <%= render "shared/draft_pending_badge", record: event %>
               </div>
               <% if event.description.present? %>
                 <div class="entity-description"><%= event.description %></div>

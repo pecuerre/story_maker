@@ -60,7 +60,7 @@
                 <%= entity_tag_badge(relation) %>
                 <i class="bi bi-arrow-right text-body-secondary" aria-hidden="true"></i>
                 <span class="entity-title"><%= relation.character2.name %></span>
-                <%= render "shared/draft_pending_badge", state: draft_pending_state(relation) %>
+                <%= render "shared/draft_pending_badge", record: relation %>
               </div>
               <% if relation.description.present? %>
                 <div class="entity-description"><%= relation.description %></div>

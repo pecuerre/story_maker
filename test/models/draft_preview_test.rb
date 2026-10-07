@@ -119,6 +119,107 @@ class DraftPreviewTest < ActiveSupport::TestCase
     assert_nil preview_for(@author).state_for(nil)
   end
 
+  # What a badge may say beyond the state
+
+  test "a remembered edit reports the fields it would write" do
+    # The badge's tooltip is what makes "Pending edit" a checkable claim rather
+    # than one the reader has to take on trust, and the fields are the half of it
+    # that says *what*. The keys are the payload's own, not words: naming them is
+    # the view layer's job, and this class holds records rather than labels for the
+    # same reason `DraftChanges::Reader` does.
+    character = characters(:character_one)
+    remember_update(character, "name" => "Ariadne", "description" => "The thread puller")
+
+    pending = preview_for(@author).pending_for(character)
+
+    assert_equal :edit, pending.state
+    assert_equal 1, pending.count
+    assert_equal [ "name", "description" ], pending.attribute_names
+  end
+
+  test "several remembered edits on one record report one set of fields" do
+    # The case the badge could not previously express at all: a record with three
+    # edits on three different fields carried one badge and nothing else, so a
+    # reader could not tell which fields their draft would write. The keys are
+    # **deduplicated and in the order the author first submitted them**, because a
+    # reader asking "which fields" wants the answer once, in the order they wrote.
+    character = characters(:character_one)
+    remember_update(character, "name" => "Ariadne")
+    remember_update(character, "description" => "The thread puller",
+      "character_tag_ids" => [ character_tags(:character_tag_one).id ])
+    remember_update(character, "name" => "Ariadne II")
+
+    pending = preview_for(@author).pending_for(character)
+
+    assert_equal 3, pending.count
+    assert_equal [ "name", "description", "character_tag_ids" ], pending.attribute_names
+  end
+
+  test "the column that places a record in its scope is not one of its fields" do
+    # It says *where* the record goes rather than *what would change about it*, and
+    # a bare `story_id` is a number a reader cannot name — which is why the drafts
+    # page drops it too. `DraftChange#scope_attribute` is asked rather than
+    # re-derived here, so the two cannot disagree about which column that is.
+    section = sections(:section_one)
+    remember_update(section, "name" => "Act one", "story_id" => stories(:story_one).id)
+
+    assert_equal [ "name" ], preview_for(@author).pending_for(section).attribute_names
+  end
+
+  test "a remembered delete reports a count and no fields" do
+    # A delete carries no payload at all — `DraftMutation` remembers nothing about a
+    # record beyond its identity and version — so a deletion can say how many
+    # changes are waiting and never what they would write. Remembering two of them
+    # is possible, and the count is the whole answer.
+    character = characters(:character_one)
+    remember_delete(character)
+    remember_delete(character)
+
+    pending = preview_for(@author).pending_for(character)
+
+    assert_equal :deletion, pending.state
+    assert_equal 2, pending.count
+    assert_empty pending.attribute_names
+  end
+
+  test "a deletion still reports the fields an edit on the same record carried" do
+    # The state is the deletion's, but the count and the fields are facts about the
+    # draft rather than about the badge: a record with an edit and a delete has two
+    # remembered changes on it, and only one of them wrote anything. Keeping the
+    # fields is what lets a tooltip be honest about both.
+    character = characters(:character_one)
+    remember_update(character, "name" => "Ariadne")
+    remember_delete(character)
+
+    pending = preview_for(@author).pending_for(character)
+
+    assert_equal :deletion, pending.state
+    assert_equal 2, pending.count
+    assert_equal [ "name" ], pending.attribute_names
+  end
+
+  test "the whole per-row answer costs one pass over the draft" do
+    # The property that made this affordable. `changes` already holds every
+    # payload, so naming the fields is arithmetic over data the request has, and a
+    # second pass — or a scan per row, which is what the state hash was written to
+    # avoid — would buy nothing. Forty rows asking about forty records is the shape
+    # this exists for.
+    character = characters(:character_one)
+    remember_update(character, "name" => "Ariadne")
+    preview = preview_for(@author)
+    # Warmed first: the first ask loads the draft's changes, which is one query the
+    # page pays anyway and has nothing to do with what a second one costs.
+    preview.pending_for(character)
+
+    count = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") { count += 1 }
+    10.times { preview.pending_for(character) }
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+
+    assert_equal 0, count,
+      "the fields and the count come out of the changes already loaded, so asking again asks nothing"
+  end
+
   # What the draft would have created
 
   test "a remembered create is the record a list would have shown" do

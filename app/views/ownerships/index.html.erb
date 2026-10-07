@@ -63,7 +63,7 @@
                 <%= entity_tag_badge(ownership) %>
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 <span class="entity-title"><%= ownership.character.name %></span>
-                <%= render "shared/draft_pending_badge", state: draft_pending_state(ownership) %>
+                <%= render "shared/draft_pending_badge", record: ownership %>
               </div>
               <% if ownership.description.present? %>
                 <div class="entity-description"><%= ownership.description %></div>

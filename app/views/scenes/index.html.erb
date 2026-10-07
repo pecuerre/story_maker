@@ -86,7 +86,7 @@ end %>
                 <%= @participant_counts.fetch(scene.id, 0) %>
               </span>
               <%= entity_tag_badge(scene) %>
-              <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
+              <%= render "shared/draft_pending_badge", record: scene %>
             </div>
             <% if scene.description.present? %>
               <div class="entity-description"><%= scene.description %></div>

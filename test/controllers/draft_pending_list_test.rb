@@ -302,6 +302,167 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
       "a change is matched by the record it names, so the badge has to land on that record's row"
   end
 
+  # What the badge says beyond its state
+
+  test "a single remembered edit says its state and nothing more" do
+    # **One edit is already fully described by the state sentence**, so a count of
+    # one repeats it and a lone field name answers a question nobody asked. This is
+    # the case that keeps the tooltip from becoming noise on every badged row of an
+    # ordinary editing session.
+    remember_edit(characters(:character_one), "name" => "Ariadne")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    title = badge_title_for("Character one")
+    assert_equal I18n.t("drafts.pending.states.edit_title"), title
+  end
+
+  test "a badge names the fields a remembered edit would write" do
+    # **The claim a badge makes is checkable only if it says what would change.**
+    # The row underneath still shows the stored values — a row is never rewritten to
+    # match its badge — so "Pending edit" on its own asks the reader to trust it.
+    # Naming the fields is what they can act on, and the names go through the same
+    # derivation the drafts page uses, so a badge says "Character tags" where the
+    # draft's own page does rather than printing `character_tag_ids`.
+    character = characters(:character_one)
+    remember_edit(character, "name" => "Ariadne",
+      "character_tag_ids" => [ character_tags(:character_tag_one).id ])
+    remember_edit(character, "name" => "Ariadne II")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    title = badge_title_for(character.name)
+    assert_includes title, I18n.t("drafts.pending.states.edit_title")
+    assert_includes title, I18n.t("drafts.pending.fields",
+      fields: [ Character.human_attribute_name(:name),
+                Character.human_attribute_name("character_tags") ].to_sentence)
+  end
+
+  test "a badge says how many remembered changes are waiting" do
+    # **The other half, and the one a field list alone cannot give**: three edits on
+    # one record used to carry a single badge with no way to tell whether the draft
+    # held one change or three.
+    character = characters(:character_one)
+    remember_edit(character, "name" => "Ariadne")
+    remember_edit(character, "description" => "The thread puller")
+    remember_edit(character, "character_tag_ids" => [ character_tags(:character_tag_one).id ])
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    title = badge_title_for(character.name)
+    assert_includes title, I18n.t("drafts.pending.changes", count: 3)
+    assert_includes title, Character.human_attribute_name(:description)
+  end
+
+  test "a badge names the fields the author first submitted them in, once each" do
+    # Two remembered edits to one column are **one field**, and a reader asking
+    # "which fields would this write" wants the answer once rather than twice.
+    character = characters(:character_one)
+    remember_edit(character, "name" => "Ariadne", "description" => "The thread puller")
+    remember_edit(character, "name" => "Ariadne II")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    title = badge_title_for(character.name)
+    assert_equal 1, title.scan(Character.human_attribute_name(:name)).size
+    assert_includes title, Character.human_attribute_name(:description)
+  end
+
+  test "a badge names at most four fields and counts the rest" do
+    # **A badge is rendered on every row of every list workspace in the universe**,
+    # so its reading has to be bounded for the same reason the sidebar panel's is.
+    # The overflow is counted rather than dropped, so a bounded list stays a
+    # complete answer.
+    character = characters(:character_one)
+    remember_edit(character, "name" => "Ariadne")
+    remember_edit(character, "description" => "The thread puller")
+    remember_edit(character, "notes" => "A note")
+    remember_edit(character, "age" => "31")
+    remember_edit(character, "gender" => "woman")
+    remember_edit(character, "pronouns" => "she/her")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    title = badge_title_for(character.name)
+    assert_includes title, I18n.t("drafts.pending.fields_more", count: 2)
+    assert_includes title, Character.human_attribute_name(:notes),
+      "the fields are listed in the order the author first submitted them"
+    assert_not_includes title, Character.human_attribute_name(:pronouns),
+      "the fifth field and up are counted rather than named"
+  end
+
+  test "a badge never names a field for a remembered delete" do
+    # **A remembered delete carries no payload at all** — it says which record and
+    # which version, nothing about the contents — so there is nothing the draft
+    # would write and a field sentence beside "applying the draft removes it" would
+    # be inventing one. The count is still true and is still said.
+    character = characters(:character_one)
+    remember_edit(character, "name" => "Ariadne")
+    remember_delete(character)
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    title = badge_title_for(character.name)
+    assert_includes title, I18n.t("drafts.pending.states.deletion_title")
+    assert_includes title, I18n.t("drafts.pending.changes", count: 2),
+      "two changes really are waiting on this record, whatever the badge's state says"
+    assert_not_includes title, I18n.t("drafts.pending.fields", fields: Character.human_attribute_name(:name))
+  end
+
+  test "a badge never names a field for a remembered create" do
+    # A pending **create** row already shows every value the author submitted — it
+    # is built from the payload and rendered through the same label ladder a live
+    # row uses — so the fields would be a list of what is on the row directly above
+    # the badge. The state sentence is the whole answer there.
+    remember_create("Character", "name" => "Ariadne")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    title = css_select(".draft-pending-row .draft-pending-badge").first["title"]
+    assert_equal I18n.t("drafts.pending.states.draft_title"), title
+  end
+
+  test "a badge on a record's own details page says the same thing as the list's" do
+    # The badge is read on all eighteen details pages and in every list workspace,
+    # so the two are the same question asked twice. The details page passes the
+    # **record** down rather than the badge's state, which is what makes this hold
+    # by construction rather than by two call sites agreeing.
+    character = characters(:character_one)
+    remember_edit(character, "name" => "Ariadne")
+    remember_edit(character, "description" => "The thread puller")
+
+    get universe_character_path(universe_slug: @universe.slug, id: character)
+    details_title = css_select(".draft-pending-badge").first["title"]
+    assert_response :success
+    assert_includes details_title, I18n.t("drafts.pending.changes", count: 2)
+
+    get universe_characters_path(universe_slug: @universe.slug)
+    assert_equal details_title, badge_title_for(character.name)
+  end
+
+  test "a badge on a tag's list of tagged records names the fields too" do
+    # The third surface. It is a list workspace like any other, and it is where a
+    # reader asks which records carry a tag — so it inherits the same tooltip
+    # rather than being the one place the answer is thin.
+    character = characters(:character_one)
+    tag = character_tags(:character_tag_one)
+    remember_edit(character, "name" => "Ariadne")
+    remember_edit(character, "description" => "The thread puller")
+
+    get universe_character_tag_path(universe_slug: @universe.slug, id: tag)
+
+    assert_response :success
+    assert_includes css_select(".draft-pending-badge").first["title"],
+      I18n.t("drafts.pending.changes", count: 2)
+  end
+
   # The empty states
 
   test "a list of nothing but a remembered create does not say there is nothing there" do
@@ -480,5 +641,18 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     def remember_delete(record)
       @draft.draft_changes.create!(action: "delete", record_type: record.class.name,
         record_id: record.id, base_version: DraftChange.capture_base_version(record))
+    end
+
+    # The tooltip on the badge of the row showing `name`, which is how the tooltip
+    # assertions find **their own** badge: several badged rows can share a page, and
+    # "the first badge in the document" would be a badge about somebody else's record
+    # the moment the sweep stops being one character.
+    def badge_title_for(name)
+      row = Nokogiri::HTML(response.body).css(".entity-row")
+        .find { |candidate| candidate.at_css(".entity-title")&.text&.strip == name }
+
+      assert row.present?, "expected a row titled #{name} to be on the page"
+
+      row.at_css(".draft-pending-badge")["title"]
     end
 end

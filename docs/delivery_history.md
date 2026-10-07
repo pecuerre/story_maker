@@ -29,6 +29,47 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-07
 
+- **[changed]** **A pending badge now says what the draft would write.** A record carrying more than
+  one remembered change badges a tooltip naming the fields an edit would write and how many changes
+  are waiting, so "Pending edit" is a claim the reader can check rather than one they have to trust.
+  This was **backlog item 26**, which the conflict phase raised and left open; the contract lives in
+  [`conventions.md`](conventions.md#what-a-badge-says-beyond-its-state).
+
+  - **The item priced the wrong cost.** It recorded that naming the fields "costs a per-row read of
+    each change's `payload`, which `DraftChanges::Reader` makes a scan rather than a query but not a
+    free one". That is not what the code does. `DraftPreview` already walks every remembered change in
+    one pass to build its `[record_type, record_id] => state` hash, `changes` loads whole rows
+    including `payload`, and the payload is a column — so the keys were already in memory on every
+    list page. The state, the count, and the keys now come out of the **same** pass, and the naming
+    itself is arithmetic over that hash. The cheap reading of the item is what made this a decision
+    rather than a cost question, and `test/controllers/draft_changes_query_count_test.rb` now holds it
+    as a difference between one remembered edit and six.
+  - **Three options, and the two that were not taken.** The item offered the fields, a bare count, or
+    the status quo. **A count with no subject** was rejected as a number that tells a reader they have
+    three changes and not what they touch. **The fields printed on the row** — `Pending edit ·
+    Description, Tags` — was rejected because a badge is drawn on every row of every list workspace in
+    the universe, and spending that horizontal space on the most common badge in the application is a
+    worse trade than requiring a hover; it would also have put tag-id and photo keys into row markup
+    that has to be worded per model.
+  - **A single remembered change adds nothing, and that is a decision rather than an omission.** One
+    edit is already fully described by the state sentence, so the tooltip stays exactly as it was for
+    it. The alternative — naming the single field too — was rejected because the badge is the ordinary
+    case in an editing session and a sentence restating what the word already says is noise on every
+    page. It is also the reason the tests below assert an *equality*, not an inclusion: the tooltip
+    for one change is unchanged, byte for byte.
+  - **Three states, three different answers, from one rule.** A **delete** carries no payload, so it
+    names no field however many changes are waiting and says only the count. A **create** already
+    renders every submitted value on the row directly above its badge, so it names no field either. An
+    **edit** with two or more changes names the fields, bounded at four with the overflow counted, for
+    the same reason the sidebar panel is bounded at five: a per-row reading has to be bounded because
+    the page draws the row whatever the reader's draft contains.
+  - **The partial now takes a record instead of a state.** Fifteen call sites passed
+    `state: draft_pending_state(record)`, which is a badge's word with nowhere to put its explanation.
+    The badge derives both from one local now, and the details page hands the **record** down through
+    `shared/_record_details_identity` rather than the state it had already computed — so a caller
+    cannot pass a word without its sentence, and the three surfaces cannot drift apart. A test asserts
+    the details page and the list produce the identical tooltip for the same record.
+
 - **[changed]** **A pending row now shows the tags and the photo its author submitted.** A remembered
   create resolves its tag list onto the record's own association and draws its photo, so it no longer
   appears in a list with less than was typed into it. A record's details page carries the pending badge

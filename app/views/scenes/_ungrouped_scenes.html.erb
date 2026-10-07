@@ -119,7 +119,7 @@
               <span class="badge rounded-pill text-bg-light border"
                 aria-label="<%= t("shared.scene_position_aria_short", position: scene.position + 1) %>"><%= scene.position + 1 %></span>
               <%= link_to scene.name, universe_story_scene_path(story_id: story, id: scene), class: "text-break" %>
-              <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
+              <%= render "shared/draft_pending_badge", record: scene %>
             </li>
           <% end %>
           <% pending.each do |scene| %>
@@ -131,7 +131,7 @@
                 photo_data: draft_pending_photo(scene), name: draft_pending_record_label(scene) %>
               <span class="text-break"><%= draft_pending_record_label(scene) %></span>
               <%= entity_tag_badge(scene) %>
-              <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
+              <%= render "shared/draft_pending_badge", record: scene %>
             </li>
           <% end %>
         </ul>

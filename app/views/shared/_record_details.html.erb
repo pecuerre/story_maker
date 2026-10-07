@@ -65,8 +65,9 @@
     have remembered work on it" is the same question on all eighteen of them and a
     caller that had to remember to ask would be a caller that forgets. It answers
     nothing for a `direct` universe or a guest, so the page pays no query it did
-    not already pay for the sidebar panel. %>
-<% pending_state = draft_pending_state(record) %>
+    not already pay for the sidebar panel. The record is handed down rather than
+    the badge's state, so the identity block's badge derives its own word and its
+    own tooltip from one source. %>
 
 <div class="surface-card p-4">
   <% if photo %>
@@ -78,7 +79,7 @@
         <%= render "shared/record_details_identity",
           title: title,
           label: local_assigns[:label],
-          pending_state: pending_state,
+          pending_record: record,
           facts: facts %>
       </div>
     </div>
@@ -86,7 +87,7 @@
     <%= render "shared/record_details_identity",
       title: title,
       label: local_assigns[:label],
-      pending_state: pending_state,
+      pending_record: record,
       facts: facts %>
   <% end %>
 

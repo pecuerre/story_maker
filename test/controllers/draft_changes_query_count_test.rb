@@ -90,6 +90,34 @@ class DraftChangesQueryCountTest < ActionDispatch::IntegrationTest
       "three more pending rows and three more queries is the per-row tag read finding 66 records"
   end
 
+  test "naming a badged row's pending fields costs no query" do
+    # **The guard on what a badge's tooltip may say.** Naming the fields a pending
+    # edit would write means reading each change's payload, which the backlog item
+    # that asked for it priced as "a per-row read". It is not: `DraftPreview` builds
+    # the state, the count, and the payload keys in the **same single pass** over
+    # `draft.draft_changes`, and those rows are already loaded with their payloads,
+    # so the naming is arithmetic over data the request has. The shape here is the
+    # expensive one — one record, many remembered edits, each naming a different
+    # column plus a tag list — so a per-row payload read would show up here rather
+    # than on a convenient single change.
+    path = universe_characters_path(universe_slug: @universe.slug)
+    character = characters(:character_one)
+
+    remember_edits(character, 1)
+    get path
+    assert_equal 1, css_select(".draft-pending-badge").size
+    with_one = count_queries { get path }
+
+    remember_edits(character, 5)
+    get path
+    assert_equal 1, css_select(".draft-pending-badge").size
+    with_six = count_queries { get path }
+
+    assert_response :success
+    assert_equal with_one, with_six,
+      "five more remembered edits and five more queries is the per-row payload read the tooltip must not pay"
+  end
+
   test "a pending row carrying no tags adds no query either" do
     # The other shape, and a different path through `DraftPreview`: a payload with no
     # tag key at all never assigns an association, so the badge reads an untouched
@@ -318,6 +346,19 @@ class DraftChangesQueryCountTest < ActionDispatch::IntegrationTest
     def remember_untagged_pending_create
       @draft.draft_changes.create!(action: "create", record_type: "Character",
         payload: { "universe_id" => @universe.id, "name" => "Untagged pending" })
+      @draft.reload
+    end
+
+    # Remembered edits **to one record**, each naming a different column and a tag
+    # list, so the badge on a single row has the most to say and the least to ask.
+    def remember_edits(character, count)
+      count.times do |index|
+        tag = @universe.character_tags.create!(name: "Edited tag #{index}",
+          position: @universe.character_tags.count + 1)
+        @draft.draft_changes.create!(action: "update", record_type: "Character", record_id: character.id,
+          base_version: DraftChange.capture_base_version(character),
+          payload: { "name" => "Renamed #{index}", "character_tag_ids" => [ tag.id ] })
+      end
       @draft.reload
     end
 

@@ -1022,6 +1022,44 @@ stopped being true; the badge is the only new thing on the row. The three states
 `drafts.pending.states`, and a **deletion wins an edit** on the same record rather than badging one
 row twice.
 
+### What a badge says beyond its state
+
+The badge **word** never changes and never grows: `Pending edit` is still `Pending edit`. What a
+badge may add is a **tooltip**, and the rule is one sentence — **`DraftsHelper#draft_pending_title`
+is the only reading of it, and every badge goes through it**, because the question is asked in every
+list workspace, on a tag's list of tagged records, and on all eighteen details pages, and a badge is
+drawn on every row of every page of the universe.
+
+For **more than one** remembered change on a stored record the tooltip adds the **fields an edit
+would write** and **how many changes are waiting**. It names **fields, never values**, because the row
+underneath still shows the stored ones and printing both beside each other would leave a reader
+guessing which is the universe; the names go through the same `draft_change_label` derivation the
+draft's page uses, so a badge says "Character tags" where the draft's page does.
+
+Four answers are deliberate rather than incidental:
+
+- **A single remembered change adds nothing.** One edit is already fully described by the state
+  sentence, so a count of one repeats it and one field name would be a sentence about the most
+  ordinary badge on the page. This is the case the state sentence already covers.
+- **A remembered delete names no field, whatever its count.** A delete carries no payload, so there
+  is nothing the draft would write; the count is still true and is still said.
+- **A remembered create names no field either.** A pending create row already renders every value the
+  author submitted, so the fields would list what is on the row directly above the badge.
+- **The field list is bounded at `DraftsHelper::FIELD_LIMIT`** and counts the overflow, for the reason
+  `DraftPreview::PANEL_LIMIT` bounds the panel rather than a reason about taste. Bounding the list
+  does not make it a partial answer.
+
+The fields come out of `DraftPreview::Pending`, which carries the state, the count, and the union of
+the payload keys in the order the author first submitted them — **deduplicated by key and by name**,
+because two remembered edits to one column are one field and the two photo writers share one label.
+They are **not** filtered to what the model can answer: a key the payload names and the model does not
+have is still something the draft would try to write, and the applier is what refuses it.
+
+**This costs no query.** `DraftPreview` builds the state, the count, and the keys in the **same single
+pass** over `draft.draft_changes`, and those rows are already loaded with their payloads, so naming a
+badge's fields is arithmetic over data the request has. `test/controllers/draft_changes_query_count_test.rb`
+holds that as a difference between one remembered edit and six.
+
 **Pending rows are appended after the real rows**, in the order they were remembered, never sorted
 into the list: a record with no id has no place in a sequence the controller computed from real rows,
 and re-sorting would mean re-deriving each controller's ordering in Ruby. Two places refuse them

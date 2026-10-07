@@ -139,23 +139,6 @@ it has a useful destination and clear empty/loading/error states.
    production container, mount real data, or duplicate the existing entrypoint blindly. A
    devcontainer is optional and should follow the same boundary.
 
-26. **What a pending badge has to say beyond its state**
-
-    A list row carrying a remembered edit says **Pending edit** and nothing else. That is accurate — the
-    row is the stored record, and the change is not in it — and thin: a record with three remembered edits
-    on three different fields carries one badge, and a reader cannot tell which fields their draft would
-    write, in what order, or whether two of the three changes touch the same attribute. The values are
-    available (each change's `payload`), and the rules a pending row follows say what is missing is not
-    the data but a rule for how much of it a row may read
-    ([`conventions.md`](conventions.md#pending-changes-in-a-list)). Decide what the badge carries: the fields a remembered edit touched,
-    a count of the changes on that record, or the draft's own page as the only place any of it is said. The
-    last is the status quo and costs nothing; the first costs a per-row read of each change's payload,
-    which `DraftChanges::Reader` makes a scan rather than a query but not a free one, and the second is a
-    number without a subject. This is the fifth question the conflict
-    phase raised; its resolution page asks per record and never reaches a list row, so the phase
-    delivered without settling it and the decision stands here: it should be made once, not once per
-    surface.
-
 28. **A draft-based development universe**
 
     Every `db/data/<universe_slug>/universes.yml` sets no `collaboration_mode`, so both registered demo

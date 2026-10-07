@@ -620,6 +620,24 @@ en:
         zero: "No pending changes yet"
         one: "1 pending change"
         other: "%{count} pending changes"
+      # What a badge's tooltip adds to the state it already names. **Both of these
+      # are answers to more than one remembered change on the same record**: one
+      # edit is already fully described by the state sentence, so a count of one
+      # would repeat it and a lone field name would answer a question nobody asked.
+      # A record with three remembered edits on three fields is the case they exist
+      # for — one badge that used to say nothing beyond "Pending edit".
+      #
+      # `fields` names what the draft would write, **not the values**: the row under
+      # the badge still shows the stored ones, and printing both beside each other
+      # would leave a reader guessing which is the universe. A remembered delete
+      # carries no payload at all, so a deletion says `changes` and never `fields`.
+      fields: "Your draft would write %{fields}."
+      fields_more:
+        one: "and 1 more field"
+        other: "and %{count} more fields"
+      changes:
+        one: "%{count} remembered change is waiting on this record."
+        other: "%{count} remembered changes are waiting on this record."
       states:
         draft: "Draft"
         draft_title: "This record is only in your draft. Nothing about it has been checked yet: it becomes real when you apply the draft, and the universe decides then whether it can be written."

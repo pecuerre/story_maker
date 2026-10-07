@@ -500,6 +500,26 @@ es:
         zero: "Aún no hay cambios pendientes"
         one: "1 cambio pendiente"
         other: "%{count} cambios pendientes"
+      # Lo que el tooltip de una insignia añade al estado que ya nombra. **Ambos
+      # son respuestas a más de un cambio recordado sobre el mismo registro**: una
+      # sola edición ya la describe entera la frase del estado, así que un recuento
+      # de uno la repetiría y un único nombre de campo respondería a una pregunta
+      # que nadie ha hecho. Un registro con tres ediciones recordadas sobre tres
+      # campos es el caso para el que existen: una insignia que antes no decía nada
+      # más que "Edición pendiente".
+      #
+      # `fields` nombra lo que el borrador escribiría, **no los valores**: la fila
+      # bajo la insignia sigue mostrando los guardados, y poner unos junto a otros
+      # dejaría al lector sin saber cuál es el universo. Un borrado recordado no
+      # lleva carga útil alguna, así que un borrado dice `changes` y nunca
+      # `fields`.
+      fields: "Tu borrador escribiría %{fields}."
+      fields_more:
+        one: "y 1 campo más"
+        other: "y %{count} campos más"
+      changes:
+        one: "%{count} cambio recordado espera en este registro."
+        other: "%{count} cambios recordados esperan en este registro."
       states:
         draft: "Borrador"
         draft_title: "Este registro solo está en tu borrador. Todavía no se ha comprobado nada: se hace real cuando aplicas el borrador, y el universo decide entonces si se puede escribir."

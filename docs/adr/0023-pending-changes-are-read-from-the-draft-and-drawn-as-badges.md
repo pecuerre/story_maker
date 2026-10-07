@@ -16,6 +16,11 @@
   open. The decision this ADR records is unchanged, and the body below is left as it was written; the
   contract now lives in [`../conventions.md`](../conventions.md#pending-changes-in-a-list), the same
   way the header above already points the per-row cost there.
+- **Superseded in part (2026-10-07):** what a badge says **beyond its state** has been decided, which
+  the body below leaves open — the "a badge is a claim the reader has to trust" cost is answered by a
+  tooltip that names the fields an edit would write and how many changes are waiting, and not by
+  rewriting the row. The decision this ADR records is unchanged; the contract lives in
+  [`../conventions.md`](../conventions.md#what-a-badge-says-beyond-its-state).
 - **Related:** [`../conventions.md`](../conventions.md),
   [`../architecture.md`](../architecture.md),
   [`../features/navigation.md`](../features/navigation.md),
@@ -182,7 +187,9 @@ a fact goes stale in one place.
   correct — they are two views of the same story — but it is two places to look for it.
 - **A badge is a claim the reader has to trust**, because the row underneath it is unchanged. That is
   the deliberate trade for "a pending edit shows stored values", and it is why every badge carries a
-  `title` saying which state it is.
+  `title` saying which state it is — and, when more than one change is waiting, which fields an edit
+  would write; see the header above and
+  [`../conventions.md`](../conventions.md#what-a-badge-says-beyond-its-state).
 
 ### Rejected: joining the draft into the list's own query
 

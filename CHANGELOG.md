@@ -42,6 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **A pending badge says what the draft would write.** A badge on a record carrying more than one
+  remembered change now names the fields an edit would write and how many changes are waiting, read
+  once by `DraftPreview` beside the state it already showed; this was backlog item 26.
+
 - **A pending row shows the tags and the photo its author submitted.** A remembered create resolves
   its tag list onto the record's own association and draws its photo, so it no longer appears in a
   list with less than was typed into it; this was quirk 69.

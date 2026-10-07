@@ -6,18 +6,19 @@
     are all prose passes none here and gives them the card's full width through
     `shared/_record_details`'s `wide_facts` instead.
 
-    `pending_state` is the badge this record's own page carries beside its title.
-    It is passed rather than read here because the identity block is also handed a
-    label and a title for records that are not the page's subject in some future
-    caller; the page's own record is what `shared/_record_details` asks about. It
-    renders nothing at all when the reader's draft holds nothing on this record. %>
+    `pending_record` is the record the badge is about, passed rather than read here
+    because the identity block is also handed a label and a title for records that
+    are not the page's subject in some future caller; the page's own record is what
+    `shared/_record_details` asks about. The badge reads its own state and tooltip
+    from it, so a caller cannot pass a word without its explanation. It renders
+    nothing at all when the reader's draft holds nothing on this record. %>
 <% facts = local_assigns[:facts] || [] %>
 
 <% if local_assigns[:label].present? %>
   <div class="page-eyebrow"><%= local_assigns.fetch(:label) %></div>
   <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
     <h2 class="h4 text-break mb-0"><%= local_assigns.fetch(:title) %></h2>
-    <%= render "shared/draft_pending_badge", state: local_assigns[:pending_state] %>
+    <%= render "shared/draft_pending_badge", record: local_assigns[:pending_record] %>
   </div>
 <% end %>
 

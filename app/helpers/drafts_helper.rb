@@ -64,6 +64,15 @@ module DraftsHelper
     "position" => "drafts.attributes.position"
   }.freeze
 
+  # How many fields a pending badge's tooltip names before it counts the rest.
+  #
+  # **A badge is rendered on every row of every list workspace in the universe**,
+  # which is the same reason `DraftPreview::PANEL_LIMIT` bounds the sidebar panel:
+  # a row's own reading has to be bounded, because the page draws the row whatever
+  # the reader's draft happens to contain. The count beyond the limit is stated
+  # rather than dropped, so bounding the list does not make it a partial answer.
+  FIELD_LIMIT = 4
+
   # The key one payload key is named by when the name is not a model's own
   # attribute, or nil when it is. Read by `draft_change_label` to render, and by
   # `TranslationsTest`, which requires a name in **both** locale files for every key
@@ -221,12 +230,43 @@ module DraftsHelper
   #
   # **An unsaved record is `:draft` by construction.** Nothing else puts one in a
   # list: `DraftPreview#creates_for` is the only source of them, and it builds them
-  # for exactly this purpose. The badge partial therefore takes the state rather
-  # than the record, so a row and a pending row read it the same way.
+  # for exactly this purpose. The badge partial therefore derives its own state from
+  # the record, so a stored row and a pending one are answered by one call.
   def draft_pending_state(record)
     return :draft if record.present? && record.new_record?
 
     draft_preview.state_for(record)
+  end
+
+  # The badge's tooltip: the state sentence, plus **what the draft would write**
+  # and **how many remembered changes** are waiting on this record.
+  #
+  # **This is the one reading of the pending fields, and every badge goes through
+  # it** — a list row, a tag's list of tagged records, and a record's own details
+  # page are the same question asked in three places, which is why the answer
+  # belongs here rather than in a partial each of them could vary. The alternative
+  # the conflict phase left open — the drafts page being the only place any of it
+  # is said — is what this replaces: a row badged "Pending edit" with no way to
+  # see which fields were touched is a claim the reader can do nothing with.
+  #
+  # **It says fields, not values.** The row underneath the badge still shows the
+  # stored values, and a badge that printed what the draft would write would put
+  # two versions of one record side by side and leave the reader guessing which
+  # one is the universe. The names are what make the claim checkable: a reader who
+  # sees "Name, Character tags" knows which columns to open the draft for.
+  #
+  # **A remembered delete carries no payload at all** — `DraftMutation` remembers
+  # nothing about a record beyond its identity and version — so a deletion says
+  # how many changes are waiting and never names a field, which is the truth
+  # rather than a gap.
+  #
+  # nil when the record has nothing pending on it, which is the same answer
+  # `draft_pending_state` gives and is what keeps the badge from rendering.
+  def draft_pending_title(record)
+    state = draft_pending_state(record)
+    return if state.blank?
+
+    [ t("drafts.pending.states.#{state}_title"), *draft_pending_detail(record, state) ].join(" ")
   end
 
   # The records this draft would have added to `model`'s list, as unsaved
@@ -453,6 +493,74 @@ module DraftsHelper
   end
 
   private
+    # The rest of a pending badge's tooltip, after the state sentence: which fields
+    # an edit would write, how many remembered changes are waiting, and — when there
+    # are more fields than the badge will name — how many it left out.
+    #
+    # **A single remembered change adds nothing at all.** One edit is already fully
+    # described by "Your draft holds an edit to this record": a count of one repeats
+    # it, and one field name on its own would be a sentence about the most ordinary
+    # badge on the page. Both are therefore answers to **more than one** remembered
+    # change on the same record, which is exactly the case the badge could not
+    # previously express — three edits on three fields carried one badge and nothing
+    # else. A badge is drawn on every row of every list workspace in the universe, so
+    # what it says when there is nothing surprising to say is as much a part of its
+    # design as what it says when there is.
+    #
+    # A **deletion names no field at all**, whatever its count, because a remembered
+    # delete carries no payload: there is nothing the draft would write, and a
+    # sentence listing fields beside "applying the draft removes it" would be
+    # inventing them. A **create** names none either, because its row already renders
+    # every value the author submitted.
+    #
+    # These three are private on purpose: the tooltip is one contract, and a public
+    # helper is an invitation for a view to compose its own half of it.
+    def draft_pending_detail(record, state)
+      return [] if state == :draft
+
+      pending = draft_preview.pending_for(record)
+      return [] if pending.nil? || pending.count < 2
+
+      sentences = []
+      sentences.concat(draft_pending_field_sentences(record, pending)) if pending.edit?
+      sentences << t("drafts.pending.changes", count: pending.count)
+      sentences
+    end
+
+    # The field sentence, and the tail that keeps it bounded.
+    #
+    # **The list is bounded at `FIELD_LIMIT`**, for the reason `PANEL_LIMIT` bounds
+    # the panel rather than a reason about taste: this renders on every list row of
+    # every page of the universe, and an author who has edited twenty columns of one
+    # record twenty times should not get a tooltip nobody can read. The overflow is
+    # counted rather than dropped, so a bounded list is still a complete one.
+    def draft_pending_field_sentences(record, pending)
+      names = draft_pending_field_names(record, pending)
+      return [] if names.empty?
+
+      sentences = [ t("drafts.pending.fields", fields: names.first(FIELD_LIMIT).to_sentence) ]
+      overflow = names.size - FIELD_LIMIT
+      sentences << t("drafts.pending.fields_more", count: overflow) if overflow.positive?
+      sentences
+    end
+
+    # The names a pending edit's payload keys resolve to, **through the same
+    # derivation the drafts page and the conflict page use**, so a badge calls a
+    # column "Character tags" where the draft's own page does rather than printing
+    # `character_tag_ids` into a tooltip. The model's own class is read off the row's
+    # record, because the payload's keys mean nothing without it.
+    #
+    # Deduplicated by name as well as by key: the two photo writers share one label,
+    # and a tooltip listing "Photo, Photo" is a rendering bug rather than a fact
+    # about the draft.
+    def draft_pending_field_names(record, pending)
+      model = record.class
+
+      pending.attribute_names.filter_map do |name|
+        draft_change_label(model, name, id_list_association(model, name))
+      end.uniq
+    end
+
     # When this draft stopped being actionable, as a sentence named by its own
     # status: `Applied …` and `Discarded …` are different facts and `status` is
     # what tells them apart, so the keys are the statuses rather than two more
@@ -514,8 +622,7 @@ module DraftsHelper
     # to a humanized English name, which is the documented behaviour of
     # `human_attribute_name` — and on this page that fallback is a defect, because
     # a Spanish reader then sees English beside the page's Spanish chrome.
-    def draft_change_label(model, name, association)
-      shared = DraftsHelper.shared_label_key(name)
+    def draft_change_label(model, name, association)      shared = DraftsHelper.shared_label_key(name)
       return t(shared) if shared.present?
 
       field = DraftsHelper.label_field(model, name, association)

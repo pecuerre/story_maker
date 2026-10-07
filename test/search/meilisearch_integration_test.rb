@@ -91,6 +91,34 @@ class MeilisearchIntegrationTest < ActiveSupport::TestCase
     assert task.failed?
   end
 
+  test "the reading both writers depend on names a real refusal rather than losing it" do
+    # The claim the whole fix rests on is that a refusal the engine applied later is
+    # readable as a sentence, not only as a status flag — so this is asserted against
+    # the engine rather than against the double the unit test uses.
+    task = @backend.upsert([ { "id" => "not:valid", "kind" => "character" } ])
+
+    refusal = Search::TaskWaiter.call(task)
+
+    assert_not_nil refusal, "the real engine's refusal was not readable"
+    assert_includes refusal, "failed"
+    assert_includes refusal, "not:valid",
+      "the refusal did not carry the engine's reason"
+  end
+
+  test "a task the engine applied is read as no refusal at all" do
+    @backend.upsert(@character.search_document).await
+
+    assert_nil Search::TaskWaiter.call(@backend.upsert(@character.search_document))
+  end
+
+  # The removal path reads a task the same way, and the engine answers a deletion
+  # with its own task type — so the type in the log line is the deletion one.
+  test "a removal the engine applied is read as no refusal at all" do
+    @backend.upsert(@character.search_document).await
+
+    assert_nil Search::TaskWaiter.call(@backend.remove(@character.search_id))
+  end
+
   test "a search finds a record by its own words and not by its context's names" do
     @character.update!(description: "A traveller with a grey hat")
     @universe.update!(name: "Zebulon")

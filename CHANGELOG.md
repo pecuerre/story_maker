@@ -38,6 +38,15 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-07
+
+### fixed
+
+- **A search write the engine refuses after accepting it is no longer silent.** `Search::IndexRecordJob`
+  and `Search::RemoveRecordJob` read the task a write answers with through the new
+  `Search::TaskWaiter`, so a refused document logs its id and the engine's reason instead of only
+  existing in the engine's own task log.
+
 ## 2026-10-06
 
 ### added

@@ -41,6 +41,7 @@ guard exists to forbid.
 | What one record contributes | the model's own `searchable` declaration (`Searchable`) |
 | Rebuilding the index | `Search::Reindexer`, `bin/rails search:reindex` |
 | When a save or destroy reaches the index | `Search::IndexRecordJob`, `Search::RemoveRecordJob` |
+| Reading what the engine did with a write | `Search::TaskWaiter` |
 
 ## Rules that must not drift
 
@@ -72,9 +73,15 @@ guard exists to forbid.
    `Search::Registry::MODELS` in the same change, and if it is story-scoped without its own
    `story_id` (a Scene Element is the only one), give it its own `search_scope`. The test that walks
    the registry and builds every document is what keeps that list true.
-8. **The reindex must check its tasks.** `Search::Reindexer` awaits each one and raises
-   `Search::ReindexFailed` on a failure, because the engine refuses a whole batch over one document
-   it dislikes and otherwise reports success while storing nothing.
+8. **Every write reads its task.** Meilisearch acknowledges a write and applies it later, so a
+   refusal — the engine rejecting a whole batch over one document it dislikes — arrives after the
+   call that made it returned and raises nothing. `Search::TaskWaiter` is the one place that reads a
+   task, and the two consequences are deliberately different: `Search::Reindexer` raises
+   `Search::ReindexFailed`, because a command must not report a document count it never wrote, while
+   `Search::IndexRecordJob` and `Search::RemoveRecordJob` log the document's id and the engine's
+   reason, because a queue of index writes is not worth retrying indefinitely and `bin/rails
+   search:reindex` is the repair. A write that is not read leaves a missing document with nothing to
+   show for it, which is how a reindex once reported "indexed 214 documents" against an empty index.
 9. **A label a reader sees is translated at read time; a value they act on is not.** A scope's
    `value` and a command's `id` travel in a URL and into the dropdown, so they are English in every
    locale; the label beside each is a key. That is why `Search::Scope::Option` holds no string at all —

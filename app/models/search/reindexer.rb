@@ -86,27 +86,15 @@ module Search
         end
       end
 
-      # Meilisearch acknowledges a write with a task and applies it later, so a
-      # reindex has to wait for each one and then check it. A task that *fails* is
-      # the important half: the engine refuses a whole batch over one document it
-      # dislikes — an unusable id, a field it will not index — and answers with a
-      # task that looks exactly like a successful one until it is read. An
-      # unavailable backend has no task to wait for, and the test backend has none
-      # either, so a missing task is simply nothing to wait for.
+      # A task that *fails* is the important half: the engine refuses a whole
+      # batch over one document it dislikes — an unusable id, a field it will not
+      # index — and answers with a task that looks exactly like a successful one
+      # until it is read. Here a refusal raises, because a command must not report
+      # a document count it never wrote; `Search::TaskWaiter` owns the reading, and
+      # the two write jobs use it too.
       def await(task)
-        return unless task.respond_to?(:await)
-
-        task.await
-        return unless task.respond_to?(:failed?) && task.failed?
-
-        raise ReindexFailed, "#{task.type} failed: #{failure_message(task)}"
-      end
-
-      def failure_message(task)
-        error = task.error
-        return error.to_s unless error.respond_to?(:[])
-
-        error["message"] || error.to_s
+        refusal = TaskWaiter.call(task)
+        raise ReindexFailed, refusal if refusal
       end
 
       def report(message)

@@ -1,6 +1,13 @@
 # ADR 0014: Answer the top-bar search with Meilisearch, filtered by what the reader may read
 
-- **Status:** Accepted
+- **Status:** Accepted — **annotated 2026-10-07.** What this ADR decided is untouched and still holds:
+  writes are queued, the index is derived data, and a reindex is the repair. One consequence below is
+  no longer paid: *a write the engine refuses asynchronously is invisible to the job that queued it*.
+  `Search::TaskWaiter` now reads the task every write answers with, so both queued jobs log the
+  document's id and the engine's reason where a refusal used to be silent. The decision the body
+  records is unchanged — a save still never blocks on a search service, and a refusal is still logged
+  rather than retried — and the body below is left as it was written. The reading contract now lives in
+  [`../features/search.md`](../features/search.md).
 - **Date:** 2026-09-27
 - **Related:** [`../architecture.md`](../architecture.md),
   [`../conventions.md`](../conventions.md),

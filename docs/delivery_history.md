@@ -27,6 +27,13 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-07
+
+- **[fixed]** **A search write the engine refuses after accepting it is no longer silent.** Both queued
+  search jobs now read the task the engine answers a write with, so a document the engine refused to
+  apply produces a log line naming the document and the engine's reason. This was **Former quirk 56**;
+  the long form of it is below, under Resolved quirks and tech debt.
+
 ### 2026-10-06
 
 - **[docs]** **`known_quirks.md` was reduced to the findings that are actually open findings.** The file's
@@ -7130,3 +7137,62 @@ deciding membership, a soft-deleted membership leaving the collaborators while t
 `test/docs_test.rb`, and `bin/brakeman --no-pager` (0 warnings). Not run, and not applicable:
 `bun run check:js` (no JavaScript changed), `bin/rails test:system`, `bin/bundler-audit`,
 `bin/importmap audit`.
+
+### Former quirk 56: a search write the engine refused asynchronously was invisible (fixed)
+
+**Then:** `Search::IndexRecordJob` and `Search::RemoveRecordJob` handed a document to the engine and
+returned whatever it answered with. Meilisearch acknowledges a write with a task and applies it later,
+so the refusal arrives *after* the method has already returned — and arrives as nothing at all. A
+synchronous error is raised before the task exists; a task the engine later marks `failed` raises
+nothing and only exists in the engine's own task log. Both jobs already did `rescue Meilisearch::Error`
+and logged a warning, which covers the first kind and structurally cannot cover the second: a job
+reading no task cannot tell a written document from a refused one.
+
+The asymmetry with the reindex is what made it a finding rather than a design choice. `Search::Reindexer`
+awaited every task **and** checked it, precisely because the engine refuses a whole batch over one
+document it dislikes, which is how a reindex once reported "indexed 214 documents" against an empty
+index. The reindex had learned that lesson from being burned by it; the queued writes never had,
+because nothing in a save path fails loudly enough to teach it. `test/models/searchable_test.rb`
+held every declared model's document id to the engine's character rules, which prevents the known way
+of causing this — a `:` in an id — but cannot report a refusal for any other reason.
+
+**Fix:** the reading moved into `Search::TaskWaiter`, one place that awaits a task and turns a failure
+into a sentence naming the task type and the engine's reason, and all three writers now go through it.
+`Search::Reindexer` keeps raising `Search::ReindexFailed`, because a command a person is watching must
+not report a document count it never wrote; the two jobs log the document's id alongside the reason,
+because a queue of index writes is not worth retrying indefinitely and `bin/rails search:reindex` is
+the honest repair. Extracting the reader rather than copying the reindexer's private one is the point:
+the two callers now differ only in what they *do* about a refusal, which is the part that was never
+the same and never should have been.
+
+**What deliberately did not change.** A save still never blocks on a search service — the job does,
+and it is already a background job, but nothing in the request waits on it. A refusal is still logged
+rather than retried: a document the engine refuses on a malformed field would be refused identically
+on every retry, and `Meilisearch::TimeoutError` from a slow `await` is a `Meilisearch::Error`, so a
+timeout is logged by the same rescue rather than escaping into the queue's retry path. A missing task
+is still nothing to wait for, so an unconfigured backend and the test backend are unaffected.
+
+**Per-record verification still does not exist.** This makes a refusal *visible*; it does not verify
+that the index holds what the database holds. `bin/rails search:status` reports a document count and
+`bin/rails search:reindex` is the repair, which is unchanged, and a document quietly missing for a
+reason nobody logged is still possible.
+
+**Verification.** `bin/rails test` — 2084 runs, 13155 assertions, 0 failures, 0 errors, 13 skips (the
+pre-existing skips). New `test/models/search/task_waiter_test.rb` (5 cases: an applied task, a refused
+task's sentence, an error that is not a message hash, no task at all, and that the reading itself raises
+nothing so a caller picks its own consequence) and `test/jobs/search_jobs_test.rb` (rewritten, 10
+cases): the two synchronous refusals the file already covered, the two asynchronous ones that were
+invisible, the two success cases that must stay silent or a line per save would bury the refusals, and
+an unconfigured backend that must log nothing. `test/models/search/reindexer_test.rb` needed no change
+— its `RecordingBackend` task double satisfies `TaskWaiter` unchanged, which is the check that the
+extraction did not alter the reindex's behaviour. Three cases added to
+`test/search/meilisearch_integration_test.rb` (12 total), run deliberately against a real engine
+(`SEARCH_INTEGRATION=1 bin/rails test test/search`) — 10 runs, 24 assertions, 0 failures — because the
+claim the whole fix rests on is that a *real* engine's refusal is readable as a sentence, and a double
+cannot establish that. Also verified by hand against a running engine: an index write with a `:` in
+its document id now logs `could not index character:not:valid: documentAdditionOrUpdate failed:
+Document identifier ... is invalid`, and a removal against an index that does not exist logs
+`could not remove character-1: documentDeletion failed: Index ... not found`. Neither line existed
+before this change. `bin/rubocop` (472 files, no offenses) and `bin/brakeman --no-pager` (0 warnings).
+Not run, and not applicable: `bun run check:js` (no JavaScript changed), `bin/rails test:system` (no
+browser-visible behaviour changed), `bin/bundler-audit`, `bin/importmap audit`.

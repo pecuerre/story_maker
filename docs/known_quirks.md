@@ -155,21 +155,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
     `red` value that does not match the documented theme. These are low-priority cleanup/style
     inconsistencies.
 
-56. **Medium — an index write the engine refuses asynchronously is invisible to the job that queued
-    it.** `Search::IndexRecordJob` and `Search::RemoveRecordJob` hand a document to the engine and
-    return; the engine accepts the request and applies it later, so a *server-side* rejection — an
-    unusable document id, a field it will not index, a batch that broke on one document — surfaces
-    only in the engine's own task log. Both jobs do `rescue Meilisearch::Error` and log a warning,
-    which covers a **transport-level** failure but not this one: a synchronous error is raised before
-    the task exists, while a task the engine later marks `failed` never raises at all. That
-    distinction is the finding. `Search::Reindexer` therefore awaits every task **and** checks
-    it, and `test/models/searchable_test.rb` holds every declared model's document id to the engine's
-    character rules; a job has neither. In practice this was the difference between a reindex
-    reporting "indexed 214 documents" with an empty index and one that fails loudly. If index drift
-    is ever suspected, `bin/rails search:status` reports the document count and
-    `bin/rails search:reindex` is the repair; there is no per-record verification. See
-    [ADR 0014](adr/0014-global-search-with-meilisearch.md).
-
 57. **Low — a rename changes a slug, so a universe rename invalidates every path stored below
     it.** `HasSlug` regenerates a slug when a name changes, and each search document stores its own
     `url`, which embeds its record's slug and its universe's. A universe rename is therefore repaired

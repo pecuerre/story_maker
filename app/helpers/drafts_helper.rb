@@ -31,9 +31,73 @@
 #   the row can print what the change is actually about. It is labelled by that
 #   association as well, because "Character tags" is the word the editor sees
 #   everywhere else and `character_tag_ids` is a name nobody uses.
+# * **A single submitted id** — a Section's parent, a Scene's event, an Event's
+#   temporal references — is labelled the same way, one hop from the column to the
+#   association (`before_event_id` → `before_event`), so the row says the word the
+#   editor's own control is labelled with rather than a humanized column name.
 # * **A photo** is stored as a `data:` URL and removed by a boolean. Printing
-#   either would put a base64 blob or a bare `0` on the page, so both are stated.
+#   either would put a base64 blob or a bare `0` on the page, so both are stated,
+#   and both are labelled by the one shared word rather than by a column no model
+#   has.
 module DraftsHelper
+  # The payload keys this page names for itself rather than through a model's own
+  # attribute name — three keys, resolved to two words, shared by every model in
+  # the registry.
+  #
+  # **The photo writers are not columns.** `HasPhoto` keeps `photo_data` and
+  # `remove_photo` in instance variables, so no model has either in `column_names`,
+  # `human_attribute_name` cannot be asked about them, and an
+  # `activerecord.attributes` entry cannot exist for them on any of the eighteen
+  # models that include the concern. Their *values* were already stated here — a new
+  # photo or a removed one, because the raw payload is a `data:` URL and a boolean —
+  # so one shared label is what was missing, and eighteen copies of one word would
+  # be a vocabulary kept in step by hand for no gain.
+  #
+  # **`position` is a column, but nothing else labels it.** A record's order changes
+  # only through the Move controls and a taxonomy tree's insert-at field, which
+  # carry their own translated names, so this page is the only reader of the
+  # attribute and the drafts block is the only place that needs a word for it. The
+  # number beside it is real: a remembered move is "what would move, and to where".
+  SHARED_LABEL_KEYS = {
+    "photo_data" => "drafts.attributes.photo_label",
+    "remove_photo" => "drafts.attributes.photo_label",
+    "position" => "drafts.attributes.position"
+  }.freeze
+
+  # The key one payload key is named by when the name is not a model's own
+  # attribute, or nil when it is. Read by `draft_change_label` to render, and by
+  # `TranslationsTest`, which requires a name in **both** locale files for every key
+  # a remembered change can carry — the assertion that keeps this page from printing
+  # a humanized English column name beside Spanish chrome again.
+  def self.shared_label_key(name)
+    SHARED_LABEL_KEYS[name.to_s]
+  end
+
+  # The `human_attribute_name` argument for one payload key, or nil when the key is
+  # one of `SHARED_LABEL_KEYS`.
+  #
+  # **A submitted id list is labelled by the collection it fills** rather than by
+  # the writer that submitted it: the editor sees "Character tags" everywhere else
+  # and has no idea what a `character_tag_ids` is.
+  #
+  # **A submitted foreign key is labelled by the association it points at**, for
+  # the same reason and by the same hop. A form submits `before_event_id` and labels
+  # its control from `before_event`, so the page prints the word the editor already
+  # knows instead of humanizing the column — which is how an Event's temporal
+  # reference read "Before event" on a Spanish page beside the translated
+  # `errors.add(:before_event, …)` that names the same thing "Ocurre antes". The
+  # association is used only when the model actually declares one, so a key that is
+  # not a reference keeps the column-name path it was already on.
+  def self.label_field(model, name, association = nil)
+    return association.name if association
+    return if shared_label_key(name)
+
+    key = name.to_s
+    return key unless key.end_with?("_id")
+
+    model&.reflect_on_association(key.delete_suffix("_id"))&.name || key
+  end
+
   # This request's reading of one draft's changes, built once and shared by every row
   # that draws one.
   #
@@ -240,12 +304,23 @@ module DraftsHelper
 
   # The word for a record type, derived once from the content registry and the
   # search declarations rather than listed per workspace.
+  #
+  # **Asked as a capability, not called.** `searchable?` is defined by the
+  # `Searchable` concern, and a Scene's three presence links deliberately do not
+  # include it — they are a statement inside a Scene rather than a document an
+  # index can hold — so calling it raised `NoMethodError` and took the whole page
+  # with it, the sidebar's pending panel included. `draft_identifiable?` already
+  # asks the same question of a model for the same reason; the answer for a model
+  # that cannot search is `drafts.kinds.<param_key>`, which is exactly why those
+  # three keys exist beside every other one. That branch also asked
+  # `model_name.param`, which is not a method `ActiveModel::Name` has, so it had
+  # never actually been reached — the crash above stood in front of it.
   def draft_record_kind(record_type)
     model = RecordTarget.model_for(record_type)
     return t("drafts.kinds.unknown") if model.nil?
 
-    declaration = model.searchable? ? model.search_declaration : nil
-    return t("drafts.kinds.#{model.model_name.param}") if declaration.nil?
+    declaration = model.respond_to?(:searchable?) && model.searchable? ? model.search_declaration : nil
+    return t("drafts.kinds.#{model.model_name.param_key}") if declaration.nil?
 
     Search::Kinds.label_for(declaration.kind, declaration.taxonomy)
   end
@@ -375,17 +450,17 @@ module DraftsHelper
     end
 
     # The attribute's own name, resolved the way every form label and every
-    # `errors.format` sentence in this application resolves it. A column the
-    # locale has not named falls back to a humanized English name, which is the
-    # documented behaviour of `human_attribute_name` rather than a second
-    # vocabulary kept here.
-    #
-    # A submitted id list is labelled by the collection it fills rather than by the
-    # writer that submitted it: the editor sees "Character tags" everywhere else
-    # and has no idea what a `character_tag_ids` is, and the association is the
-    # same word the field's own name already is minus the `_ids`.
+    # `errors.format` sentence in this application resolves it: one key per model
+    # per attribute, so a form, an error message, and this page cannot disagree
+    # about what a column is called. A column the locale has not named falls back
+    # to a humanized English name, which is the documented behaviour of
+    # `human_attribute_name` — and on this page that fallback is a defect, because
+    # a Spanish reader then sees English beside the page's Spanish chrome.
     def draft_change_label(model, name, association)
-      field = association ? association.name : name
+      shared = DraftsHelper.shared_label_key(name)
+      return t(shared) if shared.present?
+
+      field = DraftsHelper.label_field(model, name, association)
 
       model&.human_attribute_name(field) || field.humanize
     end

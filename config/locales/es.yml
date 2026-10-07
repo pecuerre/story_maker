@@ -432,6 +432,11 @@ es:
     attributes:
       photo: "una foto nueva"
       photo_removed: "la foto eliminada"
+      # Las dos **etiquetas** bajo las que se imprimen esos dos valores, y la de una
+      # posición. `DraftsHelper::SHARED_LABEL_KEYS` resuelve estas tres, así que un
+      # cambio recordado rotula su foto y su posición igual sea cual sea el modelo.
+      photo_label: "Foto"
+      position: "Posición"
     flash:
       # La única frase que dicen los espacios de trabajo HTML cuando un universo
       # recuerda un cambio en lugar de escribirlo. Dice que el cambio fue
@@ -1891,6 +1896,10 @@ es:
         description: "Descripción"
         start_datetime: "Fecha/hora de inicio"
         end_datetime: "Fecha/hora de fin"
+        # Un Suceso es jerárquico como los demás modelos de la Biblia del
+        # universo, así que también tiene padre. Lo envía el árbol del editor de
+        # sucesos y lo imprime la página de un borrador.
+        parent: "Suceso padre"
         # Las tres referencias temporales se nombran con las etiquetas del propio
         # formulario, y un `errors.add(:before_event, …)` se anuncia con este
         # nombre.
@@ -1932,10 +1941,69 @@ es:
         event: "Suceso"
         datetime: "Tiempo en el mundo"
         scene_tags: "Etiquetas de escena"
+      # Los modelos de ámbito de historia que posee el espacio de trabajo de
+      # Escenas. Una Sección y las dos taxonomías de ámbito de historia van con
+      # `scene` y no con los modelos de la Biblia del universo de arriba, porque
+      # los nombra el mismo espacio de trabajo y los leen los mismos editores.
+      #
+      # **Una Sección no tiene formulario propio aquí**, así que nada en este
+      # espacio de trabajo la rotula — y la página de un borrador imprime sus
+      # valores recordados con `human_attribute_name`, que es la razón de que
+      # estas entradas existan.
+      section:
+        name: "Nombre"
+        description: "Descripción"
+        # `DraftsHelper.label_field` lo resuelve desde `parent_id`, así que la
+        # fila dice lo que el propio selector de padre del árbol llama a esto.
+        parent: "Sección padre"
+        section_tags: "Etiquetas de secciones"
+      # El `name` de un elemento es su título y su `body` su contenido, que es lo
+      # que llaman las propias etiquetas de su editor, y `characters` es la
+      # colección que rellena el selector de hablantes de un diálogo.
+      scene_element:
+        kind: "Tipo de elemento"
+        name: "Título"
+        body: "Contenido"
+        characters: "Hablantes"
+      # Los tres enlaces de presencia. Cada uno es una afirmación dentro de una
+      # Escena y no un registro con página propia, así que cada uno tiene
+      # exactamente dos atributos que vale la pena nombrar: el registro al que
+      # apunta y el rol libre que escribió la persona autora. Las tres pestañas
+      # escriben sus etiquetas en `scenes.<pestaña>.form.*` porque sus
+      # formularios se renderizan allí, y estas son las copias con las que se
+      # espera que esas etiquetas coincidan.
+      scene_character:
+        character: "Personaje"
+        role: "Rol"
+      scene_item:
+        item: "Objeto"
+        role: "Rol"
+      scene_location:
+        location: "Lugar"
+        role: "Rol"
       # Las ocho taxonomías comparten una preocupación para el par de colores y
       # otra para el padre, así que un modelo se nombra una vez aquí y las
       # etiquetas de campo del editor de etiquetas vienen de `modal_fields.*` y no
       # de aquí.
+      #
+      # `section_tag` y `scene_tag` son las dos miembros de ámbito de historia de
+      # esas ocho, y son las dos que faltaban hasta que la página de un borrador
+      # hizo visible su ausencia: sus editores se rotulan mediante `modal_fields.*`,
+      # así que nada más en la aplicación llegó a pedir un nombre.
+      section_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
+      scene_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
       character_tag:
         name: "Nombre"
         description: "Descripción"

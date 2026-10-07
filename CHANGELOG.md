@@ -42,6 +42,15 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **A Spanish drafts page prints no English attribute names.** The seven models the Scenes workspace
+  owns, and the two photo writers, `position`, and every single submitted id the page prints, now have
+  a label in both locale files; a foreign key is labelled by the association it points at. This was
+  quirk 67.
+
+- **A remembered presence link no longer crashes the drafts page.** `DraftsHelper#draft_record_kind`
+  asked a model for `searchable?`, which the three Scene presence links deliberately do not define, so
+  the draft's page and the sidebar pending panel raised on **every page of the universe**.
+
 - **A search write the engine refuses after accepting it is no longer silent.** `Search::IndexRecordJob`
   and `Search::RemoveRecordJob` read the task a write answers with through the new
   `Search::TaskWaiter`, so a refused document logs its id and the engine's reason instead of only

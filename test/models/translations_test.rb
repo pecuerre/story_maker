@@ -157,6 +157,44 @@ class TranslationsTest < ActiveSupport::TestCase
     end
   end
 
+  # The drafts page prints one label per remembered value, resolved through
+  # `human_attribute_name`. A key the locale files have not named falls back to a
+  # humanized English column name, which is the documented behaviour of
+  # `human_attribute_name` — and on that page it is a Spanish reader seeing English
+  # beside the page's own Spanish chrome.
+  #
+  # The three ways a label resolves are `DraftsHelper`'s: a shared key for the two
+  # photo writers and `position`, an id list through the collection it fills, and
+  # everything else through the attribute itself (a single id having already been
+  # resolved to the association it points at). Each one therefore has to name its
+  # label in **both** files, and nothing above could catch it when it did not:
+  # `TranslationsTest` compares the two files against each other, so a key in
+  # neither is invisible to it.
+  #
+  # The payload keys are read out of the controllers rather than listed here, so
+  # this cannot go stale the way a list would — a new permitted attribute on any
+  # editor fails the suite until it is named. `DraftsHelper.label_field` does the
+  # resolving rather than this file repeating it, so the assertion cannot pass
+  # against a helper that resolves differently.
+  test "every attribute a remembered change can print has a name in both locales" do
+    unnamed = permitted_payload_keys.filter_map do |model, key, association|
+      key = key.to_s
+      next if stripped_before_remembering.include?([ model.name, key ])
+
+      missing = missing_locales(model, key, association)
+      [ model.name, key, missing ] if missing.any?
+    end
+
+    assert_empty unnamed, <<~MESSAGE
+      These payload keys have no label in one or both locale files, so the drafts page
+      prints a humanized English column name for them. Name each one where its label
+      belongs — activerecord.attributes.<model>.<attribute> for a model's own
+      attribute, or drafts.attributes for the two photo writers and position:
+
+        #{unnamed.map { |model, key, missing| "#{model} #{key}: #{missing.join(", ")}" }.join("\n        ")}
+    MESSAGE
+  end
+
   test "every taxonomy the tree can render has a name for its empty state" do
     # The tree resolves its empty-state title from the `model_param` a caller
     # passes (`t("taxonomies.#{model_param}.none_yet")`), so a new taxonomy is a
@@ -179,6 +217,74 @@ class TranslationsTest < ActiveSupport::TestCase
   end
 
   private
+    # The `[model, payload_key, id_list_association]` triples one mutation
+    # controller can remember, read out of the twenty controllers that include
+    # `DraftMutation` rather than repeated here.
+    #
+    # The permitted list is `params.expect(model: [ … ])`, so the source is
+    # scanned for that call and its symbols are read. `*photo_params` stands for
+    # the two virtual photo writers, which are named by `SHARED_LABEL_KEYS` rather
+    # than by an attribute, and are expanded here so they are still visited.
+    def permitted_payload_keys
+      @permitted_payload_keys ||= Dir.glob(Rails.root.join("app/controllers/**/*_controller.rb"))
+        .flat_map { |path| permitted_in(path) }
+    end
+
+    def permitted_in(path)
+      source = File.read(path)
+      return [] unless source.include?("include DraftMutation")
+
+      # The call is `params.expect(model: [ … ])`, so the bracket is matched to
+      # its own close rather than to the first `]` in the body, which is the one
+      # inside a `{ x_ids: [] }` entry.
+      source.scan(/params\.expect\(\s*(\w+):\s*\[(.*?)\]\s*\)/m).flat_map do |param, body|
+        # The parameter is a model param, so the class is the underscored singular
+        # of it rather than the param itself.
+        model = param.singularize.camelize.constantize
+        # `*photo_params` stands for the two virtual photo writers. They have no
+        # attribute name because they are not columns, so they are expanded to
+        # reach `SHARED_LABEL_KEYS` and skipped there.
+        keys = body.include?("photo_params") ? [ *PhotoParams::PHOTO_PARAMS.map(&:to_s) ] : []
+        keys += body.scan(/:(\w+)|\{\s*(\w+):/).map { |scalar, list| scalar || list }
+
+        keys.filter_map { |key| [ model, key, id_list_association(model, key) ] if key.present? }
+      end
+    end
+
+    # The collection a submitted id list fills, derived the way
+    # `DraftsHelper#id_list_association` derives it, so a key whose collection is
+    # named is visited as the association rather than as the raw `_ids` column.
+    def id_list_association(model, key)
+      return unless key.end_with?("_ids")
+
+      model.reflect_on_association(key.delete_suffix("_ids").pluralize)
+    end
+
+    # The locales in which one payload key has no label, resolved the way
+    # `DraftsHelper#draft_change_label` resolves it rather than re-deriving the
+    # three shapes here. The shared keys are checked by key and the rest by
+    # attribute name, so a passing assertion means the page itself can render.
+    def missing_locales(model, key, association)
+      shared = DraftsHelper.shared_label_key(key)
+      return %i[en es].reject { |locale| I18n.exists?(shared, locale) } if shared.present?
+
+      field = DraftsHelper.label_field(model, key, association)
+      return [] if field.blank?
+
+      attribute = "activerecord.attributes.#{model.model_name.i18n_key}.#{field}"
+
+      %i[en es].reject { |locale| I18n.exists?(attribute, locale) }
+    end
+
+    # A permitted attribute that never reaches a payload, so naming it would be a
+    # key nothing renders. `SceneElementsController#scene_element_attributes`
+    # drops `remove_speakers` before the attributes are assigned *and* before they
+    # are remembered: it is the confirmation that a Narration keeps no speakers,
+    # not a value about the record.
+    def stripped_before_remembering
+      [ [ "SceneElement", "remove_speakers" ] ]
+    end
+
     def load_locale(name)
       YAML.load_file(Rails.root.join("config", "locales", "#{name}.yml"))
     end

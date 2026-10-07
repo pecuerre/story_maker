@@ -402,17 +402,33 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
   end
 
   test "the drafts workspace and its two pages are Spanish" do
+    scene = scenes(:scene_one)
     @universe.update!(collaboration_mode: "wikipedia")
     draft = Draft.create!(user: users(:user_one), universe: @universe)
     draft.draft_changes.create!(action: "create", record_type: "Character",
       payload: { "name" => "Personaje recordado", "universe_id" => @universe.id, "character_tag_ids" => [ character_tags(:character_tag_one).id ] })
+    # The three payload shapes that are not a plain column, on the models the
+    # Scenes workspace owns: a **single submitted id**, a **submitted id list**,
+    # and the two **virtual photo writers** with the **position** beside them.
+    # These are the labels a Spanish reader used to see in English — "Parent",
+    # "Scene tag ids", "Photo data" — because the page resolves each of them
+    # through `human_attribute_name` rather than through a key.
+    draft.draft_changes.create!(action: "create", record_type: "Section",
+      payload: { "name" => "Sección recordada", "story_id" => @story.id, "parent_id" => sections(:section_one).id,
+        "section_tag_ids" => [ section_tags(:section_tag_one).id ], "position" => "2",
+        "photo_data" => "data:image/png;base64,iVBORw0KGgo=" })
+    draft.draft_changes.create!(action: "create", record_type: "SceneElement",
+      payload: { "name" => "Elemento recordado", "scene_id" => scene.id, "kind" => "narration", "body" => "Texto",
+        "character_ids" => [ characters(:character_one).id ] })
+    draft.draft_changes.create!(action: "create", record_type: "SceneCharacter",
+      payload: { "scene_id" => scene.id, "character_id" => characters(:character_two).id, "role" => "entra" })
 
     get universe_drafts_url(universe_slug: @universe.slug)
 
     assert_response :success
     assert_equal "es", rendered_lang
     assert_select "h1", text: "Cambios pendientes"
-    assert_select ".entity-title", text: "1 cambio recordado"
+    assert_select ".entity-title", text: "4 cambios recordados"
     assert_select ".entity-row .badge", text: "Borrador"
     assert_select ".entity-row-actions a", text: "Revisar"
     assert_select ".entity-row-actions button", text: "Aplicar"
@@ -434,18 +450,76 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     # `character_tag_ids` a form submits.
     assert_select ".draft-change .entity-description", text: /Nombre: Personaje recordado/
     assert_select ".draft-change .entity-description", text: /Etiquetas de personajes: #{character_tags(:character_tag_one).name}/
+
+    # A **Section's** own attributes, on a model whose editors label themselves
+    # through `scenes.form.*` and therefore never asked `human_attribute_name` for
+    # a name. `parent_id` is labelled by the association it points at, so the row
+    # says "Sección padre" rather than the humanized "Parent id".
+    section_row = row_for("Sección recordada")
+    assert_match(/Nombre: Sección recordada/, section_row)
+    # The label is asserted, not the value: a **single submitted id** is printed as
+    # the id it is, because resolving it to the record's name would cost a query
+    # per row and the page already resolves an id *list* for the same reason. That
+    # is a separate question about what a value may show, and this test is about
+    # what the page calls it.
+    assert_match(/Sección padre: \d+/, section_row)
+    assert_match(/Etiquetas de secciones: #{section_tags(:section_tag_one).name}/, section_row)
+    # The two photo writers and the position are named once for every model, by
+    # `DraftsHelper::SHARED_LABEL_KEYS`, because no model has them as columns.
+    assert_match(/Posición: 2/, section_row)
+    assert_match(/Foto: una foto nueva/, section_row)
+
+    # A **Scene Element's** own attributes, including the speakers it names by the
+    # collection they fill rather than by the `character_ids` a form submits.
+    element_row = row_for("Elemento recordado")
+    assert_match(/Tipo de elemento: narration/, element_row)
+    assert_match(/Título: Elemento recordado/, element_row)
+    assert_match(/Contenido: Texto/, element_row)
+    assert_match(/Hablantes: #{characters(:character_one).name}/, element_row)
+
+    # A **presence link's** own two attributes.
+    link_row = row_for("entra")
+    assert_match(/Personaje: \d+/, link_row)
+    assert_match(/Rol: entra/, link_row)
+
     assert_select ".page-actions button", text: "Aplicar cambios"
 
-    post apply_universe_draft_url(universe_slug: @universe.slug, id: draft)
-
-    assert_equal "1 cambio recordado ya es visible.", flash[:notice]
-
-    post discard_universe_draft_url(universe_slug: @universe.slug, id: Universe.find(@universe.id).drafts.create!(user: users(:user_one), universe: @universe))
+    # One open draft per author per universe (ADR 0022), so the draft that carried
+    # the payload shapes is discarded before the apply, and the apply gets a draft
+    # of its own holding only the Character. What the two assert is the **flash
+    # after a run**, and the three changes above were chosen for the shape of their
+    # payload rather than for whether they can be applied, so folding them in here
+    # would make this case assert the applier's conflict reporting instead.
+    post discard_universe_draft_url(universe_slug: @universe.slug, id: draft)
 
     assert_equal "El borrador se ha descartado. No se escribió nada.", flash[:notice]
+
+    applied = Draft.create!(user: users(:user_one), universe: Universe.find(@universe.id))
+    applied.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Personaje aplicado", "universe_id" => @universe.id })
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: applied)
+
+    assert_equal "1 cambio recordado ya es visible.", flash[:notice]
   end
 
   private
+    # The rendered text of the one remembered change that remembers `remembered`,
+    # so a multi-change page can assert each row's own labels rather than matching
+    # against the whole body, where one row's "Nombre" would satisfy another's.
+    #
+    # It is matched on the author's own words rather than on the row's kind badge,
+    # because a kind is named by `Search::Kinds` for a searchable model and by
+    # `drafts.kinds` for the three that are not — a distinction this test has no
+    # reason to restate.
+    def row_for(remembered)
+      rows = css_select(".draft-change").select { |row| row.text.include?(remembered) }
+
+      assert_equal 1, rows.size, "expected exactly one remembered change carrying #{remembered.inspect}"
+
+      rows.first.text
+    end
+
     def rendered_lang
       Nokogiri::HTML(response.body).at_css("html")["lang"]
     end

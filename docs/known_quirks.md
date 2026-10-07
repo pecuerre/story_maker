@@ -133,22 +133,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
 
 ## Additional UI and interaction observations
 
-67. **Low — a draft's page prints English attribute names for the models the Scenes workspace never
-    translated.** A remembered value is labelled with `Model.human_attribute_name`, and
-    `config/locales/*.yml` names the attributes only for the models whose forms are rendered there, so a
-    Spanish reader looking at a remembered **Section** or **Scene Element** create sees "Name" and
-    "Description" beside Spanish chrome — the documented humanized-English fallback, not a missing key.
-    The six collection names the page prints most often (the eight taxonomies' tag assignments) are named
-    in both files now, and the Scene-owned models are the rest. Naming those models is the Scenes
-    workspace's translation work; this entry exists so it is a known gap rather than a surprise.
-
-49. **Low/conditional — Turbo page snapshots may retain private views after session invalidation.**
-    The layout does not disable Turbo caching and defines no `turbo-cache-control`
-    (`app/views/layouts/application.html.erb:1-20`, `app/controllers/application_controller.rb:6-7`).
-    A private page could be restored from a browser snapshot after a session is invalidated in
-    another tab or by expiry, without a fresh authorization request. This depends on Turbo/runtime
-    cache behavior and needs a multi-tab browser test before being treated as a confirmed leak.
-
 50. **Low — dead PWA/UI assets still drift from the conventions.** The dynamic taxonomy modal now uses
     consistent heading/required-field semantics, but `app/views/pwa/manifest.json.erb` and
     `app/views/pwa/service-worker.js` have no route or layout link, and the PWA palette contains a

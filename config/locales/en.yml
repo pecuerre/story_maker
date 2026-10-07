@@ -468,6 +468,12 @@ en:
     attributes:
       photo: "a new photo"
       photo_removed: "the photo removed"
+      # The two **labels** those two values are printed under, and the one for a
+      # position. `DraftsHelper::SHARED_LABEL_KEYS` resolves these three, so a
+      # remembered change labels its photo and its position the same way whatever
+      # model it is about.
+      photo_label: "Photo"
+      position: "Position"
     flash:
       # The one sentence the HTML workspaces say when a universe remembers a
       # change instead of writing it. It says the change was *remembered*, never
@@ -2227,6 +2233,9 @@ en:
         description: "Description"
         start_datetime: "Start date/time"
         end_datetime: "End date/time"
+        # An Event is hierarchical like the other Universe Bible models, so it has
+        # a parent too. Its tree submits it and the drafts page prints it.
+        parent: "Parent event"
         # The three temporal references are named by the form's own labels, and
         # an `errors.add(:before_event, …)` is announced as this name.
         before_event: "Happens before"
@@ -2266,9 +2275,66 @@ en:
         event: "Event"
         datetime: "In-world time"
         scene_tags: "Scene tags"
+      # The story-scoped models the Scenes workspace owns. A Section and the two
+      # story-scoped taxonomies are grouped with `scene` rather than with the
+      # Universe Bible models above, because they are named by the same workspace
+      # and read by the same editors.
+      #
+      # **A Section has no form of its own here**, so nothing in this workspace
+      # labels it — and the drafts page prints its remembered values through
+      # `human_attribute_name`, which is why these entries exist at all.
+      section:
+        name: "Name"
+        description: "Description"
+        # Resolved from `parent_id` by `DraftsHelper.label_field`, so the row says
+        # what the tree's own parent selector is called.
+        parent: "Parent section"
+        section_tags: "Section tags"
+      # An Element's `name` is its title and its `body` its content, which is what
+      # the Element editor's own labels call them, and `characters` is the
+      # collection the Dialogue speaker picker fills.
+      scene_element:
+        kind: "Element type"
+        name: "Title"
+        body: "Content"
+        characters: "Speakers"
+      # The three presence links. Each one is a statement inside a Scene rather
+      # than a record with a page of its own, so each has exactly two attributes
+      # worth naming: the record it points at, and the author's own free-text role.
+      # The three tabs spell their labels out in `scenes.<tab>.form.*` because their
+      # forms are rendered there, and these are the copies those labels are expected
+      # to agree with.
+      scene_character:
+        character: "Character"
+        role: "Role"
+      scene_item:
+        item: "Item"
+        role: "Role"
+      scene_location:
+        location: "Location"
+        role: "Role"
       # The eight taxonomies share one concern for the colour pair and one for
       # the parent, so a model is named once here and the tag editor's field
       # labels come from `modal_fields.*` rather than from here.
+      #
+      # `section_tag` and `scene_tag` are the two story-scoped members of that
+      # eight, and they were the two missing until the drafts page made their
+      # absence visible: their editors label themselves through `modal_fields.*`,
+      # so nothing else in the application ever asked for a name.
+      section_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
+      scene_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
       character_tag:
         name: "Name"
         description: "Description"

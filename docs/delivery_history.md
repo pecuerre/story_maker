@@ -29,6 +29,11 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-07
 
+- **[fixed]** **A Spanish drafts page no longer prints English attribute names.** Every payload key a
+  remembered change can carry now has a name in both locale files, and a single submitted id is
+  labelled by the association it points at rather than by its column. This was **Former quirk 67**;
+  the long form of it is below, under Resolved quirks and tech debt.
+
 - **[fixed]** **A search write the engine refuses after accepting it is no longer silent.** Both queued
   search jobs now read the task the engine answers a write with, so a document the engine refused to
   apply produces a log line naming the document and the engine's reason. This was **Former quirk 56**;
@@ -4944,6 +4949,68 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk 67: a draft's page printed English attribute names (fixed)
+
+**Then:** a remembered value is labelled with `Model.human_attribute_name`, and `config/locales/*.yml`
+named attributes only for the models whose forms are rendered in a translated workspace. A Spanish
+reader looking at a remembered **Section** or **Scene Element** create saw "Name" and "Description"
+beside Spanish chrome. The finding named the seven Scene-owned models as the gap and called the rest
+of the work "the Scenes workspace's translation work", so it was left open.
+
+**Reading the finding against the code widened it, in three ways that mattered.** The first is the
+obvious one: the seven models were named, in `en.yml` and `es.yml`, with the attributes their editors
+and their `errors.add` messages actually reach. But the same page printed English for **models that
+were already translated**, and the finding did not mention it, because it never checked one. A
+foreign key resolved by its `_id` key, so an Event's `before_event_id` read **"Before event"** beside
+the translated `errors.add(:before_event, …)` that calls the same thing "Ocurre antes"; the same held
+for `parent_id`, `section_id`, `event_id`, `character1_id`, `item_id`, and `character_id`. The two
+**virtual photo writers** printed **"Photo data"** and **"Remove photo"**, because
+`draft_change_value` translated the *value* ("a new photo") while the *label* came from
+`human_attribute_name` on an attribute no model has. And **`position`** — submitted by every tree
+editor and by both Move actions — printed "Position".
+
+**The single-id label is now resolved through the association, not named per model.** A form submits
+`before_event_id` and labels its control from `before_event`, so `DraftsHelper.label_field` takes the
+one hop the id-*list* case already took (`character_tag_ids` → `character_tags`) and asks for the
+association's name. The alternative was an `activerecord.attributes.event.before_event_id` entry, which
+would have been a second key for a word the model already has under its own name, and would have had
+to be added again for every foreign key on every model. The association is used only when the model
+declares one, so a key that is not a reference keeps the column-name path it was already on.
+
+**The photo writers and `position` get one shared label each, in `drafts.attributes`.** They cannot
+have per-model ones: `HasPhoto` keeps both photo writers in instance variables, so no model has either
+in `column_names` and `human_attribute_name` cannot be asked about them at all. Eighteen copies of one
+word across eighteen models is a vocabulary kept in step by hand for no gain — the same trade the
+root record-type nouns already make, and the reason `SHARED_LABEL_KEYS` resolves them once.
+
+**What holds the line is a test that reads the controllers rather than a list.** `TranslationsTest`
+compares the two locale files against each other, so a key in **neither** file is invisible to it —
+which is exactly how seven models went unnamed. The new case scans the twenty controllers that include
+`DraftMutation` for their `params.expect(model: [ … ])` lists, resolves each key through
+`DraftsHelper` (not through a second derivation of its own rules), and requires a name in both
+locales. A new permitted attribute on any editor now fails the suite. `remove_speakers` is the one
+documented exclusion: `SceneElementsController#scene_element_attributes` drops that confirmation
+before the attributes are assigned *and* before they are remembered, so naming it would be a key
+nothing renders.
+
+**A pre-existing crash was found on the same page and fixed with it.** Writing the request test for a
+presence link raised `NoMethodError` — verified at `HEAD` with this change stashed, so it was not
+introduced here. `draft_record_kind` called `model.searchable?`, which only the `Searchable` concern
+defines, and a Scene's three presence links deliberately do not include it because they are a
+statement inside a Scene rather than an indexable document. So **any** remembered presence-link change
+crashed the draft's page and the sidebar's pending panel, which renders on **every page of the
+universe**. `draft_identifiable?` already asked the same question as a capability for the same reason;
+the fix asks it the same way. That exposed a second defect standing behind the first: the branch the
+crash had been guarding asked `model.model_name.param`, which is not a method `ActiveModel::Name` has,
+so it had never been reached. It is `param_key`.
+
+Verification: `bin/rails test test/models/translations_test.rb` (13 runs, 163 assertions),
+`test/controllers/workspace_locale_test.rb` (27 runs, 368 assertions, the drafts case extended to a
+Section, a Scene Element and a presence link so each payload shape is asserted on a **rendered** page),
+and `bin/rails test` in full (2085 runs, 13182 assertions, 13 skips, 0 failures). Each assertion was
+verified to fail when its own change is reverted: removing one locale entry, removing the `_id` hop,
+removing the shared-key branch, and removing the `respond_to?` guard each fail the suite by name.
 
 ### Quirk 23: legacy HABTM join tables have no integrity constraints (already fixed — the finding outlived the migration)
 

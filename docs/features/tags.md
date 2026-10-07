@@ -145,6 +145,12 @@ deliberate split between **information** and **settings**:
 The scope is derived from the record — a `story_id` means story-scoped — rather than passed in, so a
 taxonomy cannot disagree with its own model about who owns it.
 
+The card also carries a **pending-change badge**, because `shared/_record_details` reads one for every
+model it renders rather than being asked for by each of the eighteen pages. That is one of the
+[three surfaces that are not list workspaces](../conventions.md#the-three-surfaces-that-are-not-list-workspaces),
+and so is a tag's list of the records carrying it — which now includes a remembered create carrying
+that tag, since a pending row carries its tags. Both follow the rules stated there.
+
 ## Ordering
 
 A tag tree is a `Hierarchical` tree with a `position`, and the positioned-controller rules in

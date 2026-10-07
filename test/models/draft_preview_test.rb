@@ -173,25 +173,63 @@ class DraftPreviewTest < ActiveSupport::TestCase
     assert_equal @universe, UniverseScopeResolver.universe_for(pending.first)
   end
 
-  test "a payload value no column holds is dropped rather than assigned" do
+  test "a payload value no column holds is read rather than assigned" do
     # Tag lists and the two virtual photo writers are what the payload is *for* —
-    # they are the values `record.changes` would have dropped — but none of them is
-    # a column. Slicing to the model's own columns is what keeps them out, so a
-    # payload describing a column that has since been renamed is dropped here too
-    # rather than raising on a page the reader did not ask for.
+    # they are the values `record.changes` would have dropped — and none of them is
+    # a column. The two are read by different routes, which is the point of this
+    # case: the tag list is **assigned onto the association** so a pending row can
+    # print the same badges a live row prints, while the photo is **held beside the
+    # record** because assigning it would mark it submitted and set an image
+    # pipeline running for a record that is never saved.
     remember_create("Character", "name" => "Ariadne",
       "character_tag_ids" => [ character_tags(:character_tag_one).id ],
       "photo_data" => "data:image/png;base64,AAAA", "remove_photo" => "0",
       "column_that_went_away" => "x")
 
-    record = preview_for(@author).creates_for(Character).first
-    change = preview_for(@author).changes.first
+    preview = preview_for(@author)
+    record = preview.creates_for(Character).first
 
     assert_equal "Ariadne", record.name
-    assert_empty record.character_tag_ids,
-      "a tag id list is a collection writer, and assigning it would build an association the row throws away"
-    assert_equal "data:image/png;base64,AAAA", change.payload["photo_data"],
-      "the values a column does not hold are the reason the payload exists, and the drafts page is where they are read"
+    assert_equal [ character_tags(:character_tag_one) ], record.character_tags.to_a,
+      "the tags a pending row prints are the author's own, resolved onto the association " \
+      "rather than dropped because the payload has no column for them"
+    assert_equal "data:image/png;base64,AAAA", preview.photo_for(record),
+      "the photo is readable beside the record, which is the only surface a pending row has for it"
+    assert_nil preview.photo_for(Character.new),
+      "a record this preview did not build carries no photo, rather than inheriting one"
+  end
+
+  test "a payload naming a column that no longer exists is dropped rather than assigned" do
+    # The reason the slice to `column_names` exists, and the reason it still holds
+    # now that tag lists are assigned: a payload written before a rename names a
+    # column nobody has, and assigning it would raise on every page of the universe
+    # rather than on the one page that would apply it.
+    remember_create("Character", "name" => "Ariadne", "column_that_went_away" => "x")
+
+    assert_equal "Ariadne", preview_for(@author).creates_for(Character).first.name
+  end
+
+  test "a pending row's tags are read as a batch rather than one query per row" do
+    # The whole reason the resolved records are assigned instead of the ids: an id
+    # writer leaves the association unloaded, so every pending row in a list would
+    # ask the tag table for itself when its badges render. One query for the whole
+    # draft is the property worth holding.
+    3.times do |index|
+      remember_create("Character", "name" => "Character #{index}",
+        "character_tag_ids" => [ character_tags(:character_tag_one).id ])
+    end
+
+    preview = preview_for(@author)
+    records = preview.creates_for(Character)
+    assert_equal 3, records.size
+
+    count = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") { count += 1 }
+    records.each { |record| record.character_tags.to_a }
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+
+    assert_equal 0, count,
+      "the tags were assigned as records, so reading them back off a new record asks nothing"
   end
 
   # The panel's slice

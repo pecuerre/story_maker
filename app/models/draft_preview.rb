@@ -15,10 +15,21 @@
 # built from the columns the payload carries. That is what lets a list row render
 # a remembered create with the same partials it renders a live record with, and it
 # is why a pending row has no Details link, no editor, and no position: there is
-# nothing to link to, and its position is the applier's to decide. Only columns
-# are assigned — a submitted tag list or photo is a value the payload holds and
-# the row does not, for the same reason the drafts page has to read it rather
-# than print it.
+# nothing to link to, and its position is the applier's to decide.
+#
+# **Its tags are resolved and assigned; its photo is held beside it.** Both are
+# values no column carries, and both used to be dropped here — which made a
+# remembered create show *less* than the author submitted, on the one surface that
+# exists to tell them their create is waiting. The tag list is the case that
+# matters most, because a live row in the same list does print its tag badges:
+# assigning the resolved `CharacterTag` records onto the unsaved record's
+# association is free (`DraftChanges::Reader` reads them in one query per tag
+# class for the whole draft, and reading an assigned association back off a new
+# record asks the database nothing), and it means a pending row goes through the
+# same `entity_tag_badge` ladder a live row does rather than a second rendering
+# path. The photo cannot be assigned — `photo_data=` marks the value as submitted,
+# so a record that was ever validated would try to decode and store an image for a
+# row that will never be saved — so it is read through `#photo_for` instead.
 #
 # **Every answer is the reader's own.** The draft is looked up through
 # `Draft.open_for(user, universe)`, the same lookup the remembering path and the
@@ -95,6 +106,27 @@ class DraftPreview
     end
   end
 
+  # The photo a remembered create carries, as a `data:` URL, or nil when the
+  # payload submitted none.
+  #
+  # **Read through the change rather than assigned to the record**, because
+  # `HasPhoto#photo_data=` also marks the value as *submitted*, and the work that
+  # flag turns on — decoding the data URL, re-encoding it to a square, writing a
+  # `Photo` row — belongs to a save. A pending row is never saved, so assigning it
+  # would buy a thumbnail and risk an image pipeline running for a record that does
+  # not exist. The tag list has no such flag, which is why `#build` can assign that
+  # one and not this.
+  #
+  # **The value is not an image until it is checked, and this does not check it.**
+  # `photo_data` is whatever reached the controller, stored verbatim; a payload
+  # naming a renamed column is dropped and harmless, and a payload whose photo is
+  # not a decodable image is refused by the applier when the change runs. A view
+  # that wants to put this in an `img src` gates it on `PhotoProcessing::DATA_URL`
+  # first — see `DraftsHelper#draft_pending_photo`.
+  def photo_for(record)
+    submitted_photos[record]
+  end
+
   # The panel's slice of the changes. The full list is the drafts page; this is
   # the glance that answers "do I have something waiting?" without reading it.
   def panel_changes
@@ -129,20 +161,74 @@ class DraftPreview
     def build(change, model)
       record = model.new
       record.assign_attributes(payload_columns(change, model))
+      assign_submitted_tags(change, model, record)
+      remember_submitted_photo(change, record)
       record
     end
 
     # **Only the model's own columns are assigned**, and the slice is what decides
     # it. Everything else in a payload is a collection writer (`character_tag_ids`)
-    # or a virtual attribute (`photo_data`, `remove_photo`), and assigning those to
-    # a record that will never be saved would build an association this object then
-    # throws away. The same slice is what makes a payload describing a column that
-    # has since been renamed harmless: it is dropped here rather than raising on
-    # every page of the universe, and it is still readable on the draft's own page,
-    # which reports what the change *says* rather than what it would make.
+    # or a virtual attribute (`photo_data`, `remove_photo`). The slice is what
+    # makes a payload describing a column that has since been renamed harmless: it
+    # is dropped here rather than raising on every page of the universe, and it is
+    # still readable on the draft's own page, which reports what the change *says*
+    # rather than what it would make.
     def payload_columns(change, model)
       return {} if change.payload.blank?
 
       change.payload.slice(*model.column_names)
+    end
+
+    # The tags the author submitted, assigned onto the record's own association so
+    # `entity_tag_badge` reads them exactly as it reads a stored row's.
+    #
+    # **Assigning resolved records rather than ids is what makes this free.** An id
+    # writer on a new record leaves the association unloaded, so the badge that reads
+    # it would issue one query per pending row — the per-row read this class exists
+    # to avoid. Assigning the records themselves loads the association outright, and
+    # no join row is written because a pending record is never saved. The ids are
+    # read through `DraftChanges::Reader`, which resolves a whole draft's payloads in
+    # one query per tag class, so a list of pending rows costs one query for the
+    # draft rather than one per row.
+    #
+    # A tag the author named that has since been deleted is dropped rather than
+    # printed, which is the reader's own rule for a remembered tag list.
+    def assign_submitted_tags(change, model, record)
+      submitted_tags_for(change, model).each do |association, tags|
+        record.public_send(:"#{association.name}=", tags)
+      end
+    end
+
+    # The id-list keys in this payload that the model actually has a collection for,
+    # each with the tags that key named — already resolved, and keyed by the payload
+    # key the reader answers by, so this is the same derivation and the same lookup
+    # rather than a second one.
+    def submitted_tags_for(change, model)
+      return [] if change.payload.blank?
+
+      change.payload.filter_map do |name, _ids|
+        association = DraftChanges::Reader.tag_association(model, name)
+        next if association.blank?
+
+        [ association, reader.entry_for(change).tags_for(name) ]
+      end
+    end
+
+    def reader
+      @reader ||= DraftChanges::Reader.new(changes)
+    end
+
+    # The photo a pending record was given, held beside the record rather than on it.
+    # Keyed by object identity because a pending record is an unsaved instance and
+    # two of them for different changes compare equal by class alone.
+    def remember_submitted_photo(change, record)
+      data_url = change.payload&.[]("photo_data")
+      submitted_photos[record] = data_url if data_url.present?
+
+      record
+    end
+
+    def submitted_photos
+      @submitted_photos ||= {}.compare_by_identity
     end
 end

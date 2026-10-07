@@ -4,12 +4,21 @@
 
     An empty list renders nothing rather than an empty `<dl>`: a page whose facts
     are all prose passes none here and gives them the card's full width through
-    `shared/_record_details`'s `wide_facts` instead. %>
+    `shared/_record_details`'s `wide_facts` instead.
+
+    `pending_state` is the badge this record's own page carries beside its title.
+    It is passed rather than read here because the identity block is also handed a
+    label and a title for records that are not the page's subject in some future
+    caller; the page's own record is what `shared/_record_details` asks about. It
+    renders nothing at all when the reader's draft holds nothing on this record. %>
 <% facts = local_assigns[:facts] || [] %>
 
 <% if local_assigns[:label].present? %>
   <div class="page-eyebrow"><%= local_assigns.fetch(:label) %></div>
-  <h2 class="h4 text-break mb-3"><%= local_assigns.fetch(:title) %></h2>
+  <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+    <h2 class="h4 text-break mb-0"><%= local_assigns.fetch(:title) %></h2>
+    <%= render "shared/draft_pending_badge", state: local_assigns[:pending_state] %>
+  </div>
 <% end %>
 
 <% if facts.present? %>

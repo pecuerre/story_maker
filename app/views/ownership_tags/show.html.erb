@@ -14,11 +14,13 @@
 <%= render "shared/detail_section",
   title: t("tags.types.ownership.records_title"),
   count: @tagged_records.size,
+  pending_count: draft_pending_records_for_tag(@ownership_tag, include_descendants: @include_descendants).size,
   count_label: "ownership",
   icon: "person-check",
   empty_title: t("shared.detail_section.empty_title", determiner: t("shared.detail_section.determiners.none_masculine"), label: t("ownership", count: 1)),
   empty_description: t("tags.types.ownership.unused_description") do %>
   <%= render "shared/tagged_record_list",
     records: @tagged_records,
+      pending: draft_pending_records_for_tag(@ownership_tag, include_descendants: @include_descendants),
     path: ->(record) { universe_ownership_path(id: record) } %>
 <% end %>

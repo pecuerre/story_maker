@@ -66,6 +66,52 @@ class DraftChangesQueryCountTest < ActionDispatch::IntegrationTest
     assert_equal with_two, with_ten
   end
 
+  test "a list page costs the same for one pending row and for four" do
+    # **The guard on resolving a pending row's tags.** Assigning the submitted tag
+    # *records* rather than their ids is what keeps this flat: an id writer leaves
+    # the association unloaded, so four pending rows would ask the tag table once
+    # each when their badges rendered — which is finding 66's per-row read, back on
+    # a surface that had stopped paying it. Every remembered create here names tags,
+    # so the rows are the expensive shape rather than a convenient one.
+    path = universe_characters_path(universe_slug: @universe.slug)
+
+    remember_pending_creates(1)
+    get path
+    assert_equal 1, css_select(".draft-pending-row").size
+    with_one = count_queries { get path }
+
+    remember_pending_creates(3)
+    get path
+    assert_equal 4, css_select(".draft-pending-row").size
+    with_four = count_queries { get path }
+
+    assert_response :success
+    assert_equal with_one, with_four,
+      "three more pending rows and three more queries is the per-row tag read finding 66 records"
+  end
+
+  test "a pending row carrying no tags adds no query either" do
+    # The other shape, and a different path through `DraftPreview`: a payload with no
+    # tag key at all never assigns an association, so the badge reads an untouched
+    # one. The tagged case above cannot see that path, and a new record whose
+    # association is read for the first time is exactly where a per-row query would
+    # hide.
+    path = universe_characters_path(universe_slug: @universe.slug)
+
+    1.times { remember_untagged_pending_create }
+    get path
+    assert_equal 1, css_select(".draft-pending-row").size
+    with_one = count_queries { get path }
+
+    3.times { remember_untagged_pending_create }
+    get path
+    assert_equal 4, css_select(".draft-pending-row").size
+    with_four = count_queries { get path }
+
+    assert_response :success
+    assert_equal with_one, with_four
+  end
+
   test "a reviewer's page costs the same for a short submission and a long one" do
     @universe.update!(collaboration_mode: "github")
     sign_out
@@ -252,6 +298,27 @@ class DraftChangesQueryCountTest < ActionDispatch::IntegrationTest
         record = change.resolved_record
         record.update!(name: "#{record.name} moved")
       end
+    end
+
+    # Remembered creates that each name a tag, which is the shape a pending row with
+    # badges costs the most to render.
+    def remember_pending_creates(count)
+      count.times do |index|
+        tag = @universe.character_tags.create!(name: "Pending tag #{index}",
+          position: @universe.character_tags.count + 1)
+        @draft.draft_changes.create!(action: "create", record_type: "Character",
+          payload: { "universe_id" => @universe.id, "name" => "Pending #{index}",
+                     "character_tag_ids" => [ tag.id ] })
+      end
+      @draft.reload
+    end
+
+    # A remembered create naming no tag list, so the row's badge reads an
+    # association nothing was ever assigned to.
+    def remember_untagged_pending_create
+      @draft.draft_changes.create!(action: "create", record_type: "Character",
+        payload: { "universe_id" => @universe.id, "name" => "Untagged pending" })
+      @draft.reload
     end
 
     def remember_changes(count, draft = @draft)

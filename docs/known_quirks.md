@@ -20,19 +20,6 @@ being written down, so **re-read a finding against the code before acting on it*
 
 ## Mutation, route, and data-contract observations
 
-69. **Low — a pending row carries no tags and no photo, so a remembered create shows less than the author
-    submitted.** `DraftPreview#creates_for` assigns the payload sliced to `model.column_names`
-    (`app/models/draft_preview.rb`), which is what keeps the collection writers (`character_tag_ids`) and
-    the two virtual photo attributes off a record that will never be saved — and is also why a payload
-    naming a renamed column is harmless. The cost is visible: a new Character the author tagged
-    *Protagonist* and gave a portrait appears in the Characters list with a **Draft** badge and no tag
-    badge and no picture, while the same change on the draft's own page shows both, because that page is
-    where the payload's values are read rather than printed. Resolving a tag list per pending row is now a
-    scan rather than a query, because `DraftChanges::Reader` resolves a collection of changes in one
-    query per class — but a pending row is on the **list's** side, not the draft's page's, and a list
-    resolves no payload at all; deciding whether the row should pay that read is recorded as **What a
-    pending record shows outside the list workspaces** in [`backlog.md`](backlog.md).
-
 72. **Low — a draft is a linear set of changes, so branching, forking, and merging are refused rather
     than absent.** One open draft per author per universe is a partial unique index
     ([ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)), so an

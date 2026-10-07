@@ -40,6 +40,16 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-07
 
+### changed
+
+- **A pending row shows the tags and the photo its author submitted.** A remembered create resolves
+  its tag list onto the record's own association and draws its photo, so it no longer appears in a
+  list with less than was typed into it; this was quirk 69.
+
+- **The three surfaces outside the list workspaces are decided.** A record's own details page carries
+  the pending badge, a tag's list of the records carrying it includes the pending rows that carry that
+  tag, and the search dropdown is left clean on purpose; this was backlog item 27.
+
 ### fixed
 
 - **A Spanish drafts page prints no English attribute names.** The seven models the Scenes workspace

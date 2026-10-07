@@ -17,11 +17,13 @@
 <%= render "shared/detail_section",
   title: t("tags.types.section.records_title"),
   count: @tagged_records.size,
+  pending_count: draft_pending_records_for_tag(@section_tag, include_descendants: @include_descendants).size,
   count_label: "section",
   icon: "list-nested",
   empty_title: t("shared.detail_section.empty_title", determiner: t("shared.detail_section.determiners.none_feminine"), label: t("section", count: 1)),
   empty_description: t("tags.types.section.unused_description") do %>
   <%= render "shared/tagged_record_list",
     records: @tagged_records,
+      pending: draft_pending_records_for_tag(@section_tag, include_descendants: @include_descendants),
     path: ->(record) { universe_story_section_path(story_id: @story, id: record) } %>
 <% end %>

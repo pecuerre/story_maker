@@ -973,11 +973,31 @@ Ownerships), the Sections tree, the eight taxonomy trees, and the Scenes list.
 **A pending record is an unsaved instance of the model**, built from the payload sliced to
 `model.column_names`, so a pending row renders through the same `record_label` ladder a live row uses
 and no model gains a second way of naming itself — with the one exception below, for a record the
-ladder has nothing to name. Slicing is what keeps the collection writers
-(`character_tag_ids`) and the virtual photo attributes out: assigning them would build an association
-the row throws away, and not assigning them is what makes a payload naming a renamed column harmless.
-What a pending row cannot have is a **Details link, an editor, a delete menu, or a position** — all four
-need an id — so `shared/_row_actions` and `shared/_taxonomy_node` are never handed one.
+ladder has nothing to name. What a pending row cannot have is a **Details link, an editor, a delete
+menu, or a position** — all four need an id — so `shared/_row_actions` and `shared/_taxonomy_node` are
+never handed one.
+
+**A pending row shows the tags and the photo the author gave it, and reads the two by different
+routes.** Neither is a column, so the slice above does not carry them, and dropping both is what made
+a remembered create show *less* than had been submitted: a character the author had just tagged
+*Protagonist* and given a portrait appeared to have lost both. The two are read differently because
+they are different things. The **tag list is assigned onto the record's own association**, from records
+rather than ids, so `entity_tag_badge` reads a pending row through the same ladder it reads a live row
+through — one rendering path, and no second one for pending rows. Assigning the resolved records is
+also what makes it free: an id writer leaves the association unloaded and every pending row in a list
+would ask the tag table for itself when its badges rendered, which is finding 66's per-row read back
+on a surface that had stopped paying it; the ids come from `DraftChanges::Reader`, which resolves a
+whole draft's payloads in one query per tag class. The **photo cannot be assigned**, because
+`HasPhoto#photo_data=` also marks the value as *submitted*, and that flag turns on decoding the data
+URL, re-encoding it to a square, and writing a `Photo` row — an image pipeline for a record that is
+never saved. It is held beside the record instead and read through
+`DraftsHelper#draft_pending_photo`, which **gates it on `PhotoProcessing::DATA_URL`** so that a
+payload naming something that is not a submitted image cannot become an `img src`. The gate is
+deliberately the cheap half: whether the bytes decode is the applier's answer to give, and a row that
+draws a crop the apply later refuses is the truthful one, because the change is still remembered and
+nothing about it has been written. This is the one surface a photo appears on outside a details page —
+a live list row has nowhere to put one, since `record_photo_url` needs a `Photo` row and a pending
+record has no id for it to hang from.
 
 **A pending row with nothing to be called by is titled by the type it would create.** A remembered
 create is not validated when it is remembered ([ADR
@@ -1018,6 +1038,36 @@ In a taxonomy tree the pending row is **`.taxonomy-pending`, never `.taxonomy-no
 controller counts `.taxonomy-node` children to place separators and compute positions, so a row in that
 list would be draggable and renameable before it exists. `restoreEmptyState` checks for it, so the
 client does not put the empty state back on a tree the server rendered a pending row into.
+
+### The three surfaces that are not list workspaces
+
+The badges live in the list workspaces and nowhere else, and a reader reasonably looks in three other
+places. Each was a separate question, and each is answered rather than left to be discovered.
+
+**A record's own details page carries the badge**, read by `shared/_record_details` rather than passed
+in, because "does this page's record have remembered work on it" is the same question on all eighteen
+models and a caller that had to remember to ask would be a caller that forgets. The alternative — that
+"Details" is deliberately a clean record of what is stored — was rejected for the reason the badge
+exists at all: the badge makes no claim about the values. The page still shows what is stored, exactly
+as **a row is never rewritten to match its badge** requires, so the reader finds the same page plus one
+fact they would otherwise have to remember. A remembered **create** has no page to carry the badge,
+because there is nothing to link to.
+
+**A tag's list of the records carrying it lists pending rows too**, which follows from a pending row
+carrying its tags: the tag page is a list workspace like any other, and it is where a reader asks which
+records carry a tag. `DraftsHelper#draft_pending_records_for_tag` reads the element class off the tag's
+own association rather than a list of taxonomies, so it cannot disagree with `tagged_records` about
+which records a taxonomy is for, and it takes the **descendants toggle** as an argument so a pending
+row carrying a child tag appears under the parent exactly when a stored one carrying it would. A
+**grouping tag** asks per child tag, so a pending row is filed under the one tag it carries rather than
+under the parent or under all of them. `shared/_detail_section` therefore reads a `pending_count`
+separately from its `count`: the badge stays a fact about stored records, while the section refuses to
+say it is empty when a pending row is the only thing in it.
+
+**The global search dropdown is left clean, deliberately.** It indexes stored documents, and a
+remembered create has none, so a pending row there would be a result with nothing to open. See
+[`features/search.md`](features/search.md#a-search-does-not-answer-with-pending-records) — the
+decision is recorded on the surface it belongs to rather than left as an omission here.
 
 ## Reading a draft's changes
 

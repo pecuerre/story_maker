@@ -156,19 +156,6 @@ it has a useful destination and clear empty/loading/error states.
     delivered without settling it and the decision stands here: it should be made once, not once per
     surface.
 
-27. **What a pending record shows outside the list workspaces**
-
-    The pending badges live in the nine list workspaces and nowhere else. Three places a reader would
-    reasonably look carry no sign of pending work: a **record's own details page** (read-only by design, so
-    the question is whether a badge belongs there at all or whether "Details" is deliberately a clean
-    record of what is stored), the **global search dropdown** (which indexes stored documents, so a
-    remembered create cannot appear in it), and a **tag's list of the records carrying it**
-    (`shared/_tagged_record_list`, which renders stored rows only). Separately, a pending row itself shows
-    **no tags and no photo** even though the payload carries both, because resolving them costs a query per
-    row — finding 69 has the verified behaviour. Decide, per surface: badge it, leave it clean, or resolve
-    the values. Start from the details page: it is the one a reader reaches from a pending row's name, and
-    today that link is absent for a create because there is nothing yet to link to.
-
 28. **A draft-based development universe**
 
     Every `db/data/<universe_slug>/universes.yml` sets no `collaboration_mode`, so both registered demo

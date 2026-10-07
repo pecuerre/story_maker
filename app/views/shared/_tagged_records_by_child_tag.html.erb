@@ -12,10 +12,17 @@
     icon: local_assigns.fetch(:icon) %>
 <% else %>
   <% child_tags.each do |child_tag| %>
+    <%# A remembered create carrying this child tag belongs in this section and no
+        other, so it is asked per child tag: one section is one tag's records, and
+        a pending row filed under the wrong child would be a second answer to which
+        tag a record carries. Descendants are not included, because this page lists
+        one section per **direct** child and does not descend further. %>
+    <% child_pending = draft_pending_records_for_tag(child_tag) %>
     <% child_records = records_by_child_tag.fetch(child_tag.id, []) %>
     <%= render "shared/detail_section",
       title: child_tag.name,
       count: child_records.size,
+      pending_count: child_pending.size,
       count_label: local_assigns.fetch(:count_label),
       icon: local_assigns.fetch(:icon),
       empty_title: t("shared.detail_section.empty_title",
@@ -24,6 +31,7 @@
       empty_description: t("shared.child_tags.unused_description") do %>
       <%= render "shared/tagged_record_list",
         records: child_records,
+        pending: child_pending,
         tags_by_record: local_assigns.fetch(:tags_by_record),
         path: local_assigns.fetch(:path) %>
     <% end %>

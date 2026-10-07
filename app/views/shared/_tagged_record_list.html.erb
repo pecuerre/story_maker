@@ -1,8 +1,21 @@
 <%# The list of records carrying one tag, on that tag's details page. `path`
-     resolves each record to its own details page, so a tag is a way into the
-     records it labels. Every tag the record carries is shown beside it, not
-     just the one filtering this list. %>
+    resolves each record to its own details page, so a tag is a way into the
+    records it labels. Every tag the record carries is shown beside it, not
+    just the one filtering this list.
+
+    A remembered create appears here too, when its payload carries this tag or —
+    with `include_descendants` — one of this tag's descendants. **This is a list
+    workspace like any other**: the tag page is where a reader goes to ask which
+    records carry a tag, and an author who has just tagged a new character would
+    otherwise not find it there. Its row is read rather than linked, because a
+    remembered create has no id to build a path from, and it prints the tag badges
+    the payload carries rather than a lookup that does not exist yet.
+
+    `pending` is passed rather than resolved here so that the caller decides the
+    scope: `shared/_tagged_records_by_child_tag` asks per child tag, and a tag page
+    with the descendants toggle on or off asks a different question each way. %>
 <% tags_by_record = local_assigns[:tags_by_record] || record_tags_for(local_assigns.fetch(:records)) %>
+<% pending = local_assigns[:pending] || [] %>
 <div class="list-group list-group-flush">
   <% local_assigns.fetch(:records).each do |record| %>
     <div class="list-group-item entity-row d-flex align-items-center gap-3">
@@ -15,6 +28,7 @@
           <% tags_by_record.fetch(record.id, []).each do |tag| %>
             <%= tag_badge(tag) %>
           <% end %>
+          <%= render "shared/draft_pending_badge", state: draft_pending_state(record) %>
         </div>
         <% if record.description.present? %>
           <div class="entity-description"><%= record.description %></div>
@@ -22,4 +36,6 @@
       </div>
     </div>
   <% end %>
+
+  <%= render partial: "shared/draft_pending_rows", collection: pending, as: :record %>
 </div>

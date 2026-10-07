@@ -1,0 +1,25 @@
+<%# The photo a remembered create carried, on its pending row.
+    #
+    # **This is the one place a photo appears outside a details page**, and it is
+    # here rather than on a stored row because a stored row has nowhere to put one:
+    # `record_photo_url` needs a `Photo` row, and a pending record has no id for one
+    # to hang from. A live list row prints a name, its tag badges, and its
+    # description and no picture, so a pending row that drew one would be richer than
+    # the rows beside it — which is the point. The author submitted a portrait, the
+    # row is the only place it can be seen before the draft is applied, and the
+    # drafts page states the fact in words rather than showing it.
+    #
+    # The value is gated by `DraftsHelper#draft_pending_photo` against
+    # `PhotoProcessing::DATA_URL`, so what reaches this `src` is a submitted image
+    # URL and never anything else a payload might name. The `alt` names the record
+    # the way the details page's does, from the same shared key, so a screen reader
+    # says what the picture is rather than announcing a file.
+    #
+    # Nothing renders when the payload carried no photo, which is most changes. %>
+<% photo_data = local_assigns.fetch(:photo_data) %>
+<% if photo_data.present? %>
+  <%= image_tag photo_data,
+    alt: t("shared.record_photo.alt", name: local_assigns.fetch(:name)),
+    class: "draft-pending-photo",
+    loading: "lazy" %>
+<% end %>

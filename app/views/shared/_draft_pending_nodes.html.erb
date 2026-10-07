@@ -19,9 +19,13 @@
     # on. It is titled by the type it would create instead. %>
 <li class="taxonomy-pending">
   <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom">
+    <%= render "shared/draft_pending_photo",
+      photo_data: draft_pending_photo(record), name: draft_pending_record_label(record) %>
+
     <span class="taxonomy-name-area d-flex align-items-center gap-2 flex-wrap">
       <span class="taxonomy-name-text text-break">
         <span class="entity-title"><%= draft_pending_record_label(record) %></span>
+        <%= entity_tag_badge(record) %>
         <%= render "shared/draft_pending_badge", state: draft_pending_state(record) %>
         <% if record.description.present? %>
           <span class="entity-description d-block"><%= record.description %></span>

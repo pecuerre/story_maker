@@ -22,12 +22,14 @@
   <%= render "shared/detail_section",
     title: t("tags.types.event.records_title"),
     count: @tagged_records.size,
+    pending_count: draft_pending_records_for_tag(@event_tag, include_descendants: @include_descendants).size,
     count_label: "event",
     icon: "calendar-event",
     empty_title: empty_title,
     empty_description: t("tags.types.event.unused_description") do %>
     <%= render "shared/tagged_record_list",
       records: @tagged_records,
+      pending: draft_pending_records_for_tag(@event_tag, include_descendants: @include_descendants),
       path: ->(record) { universe_event_path(id: record) } %>
   <% end %>
 <% else %>

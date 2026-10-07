@@ -172,6 +172,78 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     assert_nil Character.find_by(name: "Pending character")
   end
 
+  # What a pending row shows of the payload beyond its columns
+
+  test "a pending row prints the tags the author gave it" do
+    # The gap finding 69 recorded: a live row in this list prints its tag badges, and
+    # a pending row used to print none, so a character the author had just tagged
+    # *Protagonist* appeared to have lost its tags. It goes through the same
+    # `entity_tag_badge` a live row does, which is why there is one rendering path
+    # rather than a second one for pending rows.
+    remember_create("Character", "name" => "Pending character",
+      "character_tag_ids" => [ character_tags(:character_tag_one).id ])
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".draft-pending-row .taxonomy-tag", text: character_tags(:character_tag_one).name
+  end
+
+  test "a pending row in a taxonomy tree prints its tags too" do
+    # Locations are a tree rather than a flat list, and the tree's pending row is a
+    # different partial — so the sweep has to hold on both, or the tree quietly
+    # keeps the old behaviour.
+    location_tag = location_tags(:location_tag_one)
+    remember_create("Location", "name" => "Pending place", "location_tag_ids" => [ location_tag.id ])
+
+    get universe_locations_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".taxonomy-pending .taxonomy-tag", text: location_tag.name
+  end
+
+  test "a pending row draws the photo the author submitted" do
+    # The second half of finding 69. A photo is never on a list row, but this is the
+    # one surface a submitted portrait can be seen on before the draft is applied,
+    # and the drafts page states the fact in words rather than showing it.
+    remember_create("Character", "name" => "Pending character",
+      "photo_data" => "data:image/png;base64,#{Base64.strict_encode64("\x89PNG\r\n\x1A\n".b)}")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".draft-pending-row img.draft-pending-photo" do |images|
+      assert_match %r{\Adata:image/png;base64,}, images.first["src"]
+    end
+  end
+
+  test "a pending photo that is not an image URL never reaches the page" do
+    # `photo_data` is whatever reached the controller, so a value that is not a
+    # `data:` image URL must not become an `img src` — a hand-edited payload is
+    # enough to try it, and the applier refusing it later is no protection at all
+    # against the row that already rendered it.
+    remember_create("Character", "name" => "Pending character",
+      "photo_data" => "javascript:alert(1)")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".draft-pending-row img.draft-pending-photo", count: 0
+    assert_select "img[src^='javascript']", count: 0
+  end
+
+  test "a pending row with no photo renders no image" do
+    # The common case, and the one that must not leave a gap where the picture was:
+    # the row is laid out the same either way rather than reserving an empty box.
+    remember_create("Character", "name" => "Pending character")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".draft-pending-row img.draft-pending-photo", count: 0
+    assert_select ".draft-pending-row .entity-title", text: "Pending character"
+  end
+
   # The rows themselves
 
   test "a pending edit shows the stored values, not the remembered ones" do

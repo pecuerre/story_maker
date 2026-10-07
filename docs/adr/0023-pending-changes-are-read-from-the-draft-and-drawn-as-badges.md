@@ -9,6 +9,13 @@
   lives in [`../conventions.md`](../conventions.md#reading-a-drafts-changes), the same way [ADR
   0021](0021-applying-a-draft-through-the-live-mutation-path.md) points its superseded costs at [ADR
   0024](0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md).
+- **Superseded in part (2026-10-07):** the "a pending row carries no tags and no photo" cost below is
+  no longer paid. A pending row now resolves its tag list onto the record's own association and draws
+  the submitted photo, and the three surfaces outside the list workspaces — a record's details page, a
+  tag's list of the records carrying it, and the search dropdown — have been decided rather than left
+  open. The decision this ADR records is unchanged, and the body below is left as it was written; the
+  contract now lives in [`../conventions.md`](../conventions.md#pending-changes-in-a-list), the same
+  way the header above already points the per-row cost there.
 - **Related:** [`../conventions.md`](../conventions.md),
   [`../architecture.md`](../architecture.md),
   [`../features/navigation.md`](../features/navigation.md),

@@ -155,4 +155,44 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
       assert_no_selector ".draft-pending-panel"
     end
   end
+
+  test "a remembered create shows the photo the author gave it" do
+    # The one fact here that only a browser has: the pending row's photo is an
+    # `<img>` whose `src` is the submitted data URL, so whether it actually
+    # *renders* — the browser decoding the crop the author picked — is not
+    # something a request test or an assertion on markup can answer. The tag badge
+    # beside it needs no browser and is proved in `draft_pending_list_test.rb`, so
+    # it is not re-proved here through a third-party widget's own dropdown.
+    sign_in_via_form(@user)
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    click_button "Add character"
+    within ".modal.show" do
+      fill_in "Name", with: "Remembered with a portrait"
+      # The real file input, so the browser produces a real data URL the way it
+      # does for a stored photo.
+      find(".photo-field input[type=file]").set(photo_fixture.to_s)
+      assert_selector ".photo-crop-stage", wait: 5
+      click_button "Use this photo"
+      click_button "Save character"
+    end
+
+    visit universe_characters_path(universe_slug: @universe.slug)
+
+    within ".draft-pending-row", text: "Remembered with a portrait" do
+      assert_selector "img.draft-pending-photo"
+      # Rendered, not merely present: a data URL the browser refused to decode
+      # would leave an image with no intrinsic size.
+      assert_operator find("img.draft-pending-photo").evaluate_script("this.naturalWidth"), :>, 0
+    end
+
+    # And the character itself still does not exist, so nothing was written by
+    # drawing a picture of it.
+    assert_nil Character.find_by(name: "Remembered with a portrait")
+  end
+
+  private
+    def photo_fixture
+      Rails.root.join("test/fixtures/files/photo_one.jpg")
+    end
 end

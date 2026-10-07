@@ -5,9 +5,18 @@
     either.
 
     A `count` of zero always renders the empty state, so a caller does not have
-    to decide twice whether it has records. %>
+    to decide twice whether it has records.
+
+    **`pending_count` is not added to the badge — it decides whether the section
+    says it is empty.** The number in the badge is a fact about stored records, and
+    adding a remembered create to it would make the page claim a record exists that
+    does not. But a section holding only pending rows must not print "nothing here"
+    above them, which is the same rule every list workspace follows: a list whose
+    only content is a pending create does not say it is empty. So the two numbers
+    are read separately, and the badge keeps the honest one. %>
 <section class="detail-section">
   <% count = local_assigns[:count] %>
+  <% pending_count = local_assigns[:pending_count].to_i %>
   <div class="d-flex align-items-center gap-2 mb-3">
     <h2 class="h5 mb-0"><%= local_assigns.fetch(:title) %></h2>
     <% unless count.nil? %>
@@ -17,7 +26,7 @@
     <% end %>
   </div>
 
-  <% if block_given? && count.to_i.positive? %>
+  <% if block_given? && (count.to_i.positive? || pending_count.positive?) %>
     <div class="content-surface"><%= yield %></div>
   <% else %>
     <%= render "shared/empty_state",

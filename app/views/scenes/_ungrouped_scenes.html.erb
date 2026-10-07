@@ -127,7 +127,10 @@
               <%# A remembered Scene create that carries no name is titled by the
                   type it would create, the same answer every other pending row
                   gives and the one a Scene with no title cannot give itself. %>
+              <%= render "shared/draft_pending_photo",
+                photo_data: draft_pending_photo(scene), name: draft_pending_record_label(scene) %>
               <span class="text-break"><%= draft_pending_record_label(scene) %></span>
+              <%= entity_tag_badge(scene) %>
               <%= render "shared/draft_pending_badge", state: draft_pending_state(scene) %>
             </li>
           <% end %>

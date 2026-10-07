@@ -29,6 +29,13 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-07
 
+- **[changed]** **A pending row now shows the tags and the photo its author submitted.** A remembered
+  create resolves its tag list onto the record's own association and draws its photo, so it no longer
+  appears in a list with less than was typed into it. A record's details page carries the pending badge
+  and a tag's record list includes the pending rows carrying that tag; the search dropdown is left
+  clean on purpose. This was **Former quirk 69** plus **backlog item 27**; the long form is below,
+  under Resolved quirks and tech debt.
+
 - **[fixed]** **A Spanish drafts page no longer prints English attribute names.** Every payload key a
   remembered change can carry now has a name in both locale files, and a single submitted id is
   labelled by the association it points at rather than by its column. This was **Former quirk 67**;
@@ -4949,6 +4956,74 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk 69: a pending row carried no tags and no photo (fixed)
+
+**Then:** `DraftPreview#creates_for` built an unsaved record and assigned the payload sliced to
+`model.column_names`. That slice was load-bearing twice over: it kept the collection writers
+(`character_tag_ids`) and the two virtual photo writers off a record that would never be saved, and it
+was what made a payload naming a since-renamed column harmless rather than an exception on every page
+of the universe. The cost was that a remembered create appeared in the list **with less than the author
+had submitted** — a character just tagged *Protagonist* and given a portrait showed a Draft badge, no
+tag badge, and no picture, while the same change on the draft's own page showed both. The finding was
+right that the tags were the sharp half: a live row in that very list prints its tag badges, so the
+pending row was not merely thinner than the drafts page, it was thinner than the rows beside it.
+
+**The slice stayed; what it dropped stopped being dropped.** The two values are read by different
+routes because they are different things, and the reason is a flag rather than a rendering preference.
+`HasPhoto#photo_data=` sets `@photo_data_submitted`, and that flag is what turns on
+`prepare_photo_submission`: decode the data URL, re-encode it to a 300×300 square, write a `Photo` row.
+Assigning a photo to a pending record would therefore have started an image pipeline for a record that
+is never saved. So the **photo is held beside the record**, read through `DraftPreview#photo_for`, and
+a view asks `DraftsHelper#draft_pending_photo`, which gates the value on
+`PhotoProcessing::DATA_URL` before it can become an `img src`. The gate is deliberately only the cheap
+half: whether the bytes decode is the applier's answer to give, and a row that draws a crop the apply
+later refuses is the truthful one, because the change is still remembered and nothing has been written.
+
+The **tag list is assigned onto the record's own association**, which the slice could not do because
+the writer takes ids. Assigning the *resolved records* rather than the ids is what makes it free, and
+that detail is the whole difference between this fix and finding 66 returning: an id writer leaves the
+association unloaded, so every pending row in a list would ask the tag table for itself when its badges
+rendered. `DraftChanges::Reader` already resolves a whole draft's payloads in one query per tag class,
+so the assignment is free on read-back — verified against the database, not assumed — and the tags come
+back through the same `entity_tag_badge` a live row uses. One rendering path, and no second one for
+pending rows. `tag_association` was promoted to a class method on the reader so `DraftPreview` derives
+the id-list keys by the same rule the reader reads them by, rather than a third copy of it.
+
+**The photo is a genuinely new surface, and it is said so rather than dressed as parity.** No list row
+shows a photo in this application — `record_photo_url` needs a `Photo` row, and photos belong to
+details pages. A pending row that drew one is therefore *richer* than the stored rows beside it. That is
+the point rather than a defect: the pending row is the only place a submitted portrait can be seen
+before the draft is applied, and the drafts page states the fact in words rather than showing it.
+
+**Backlog item 27 asked for the three surfaces outside the list workspaces, and each is a different
+answer.** A record's **details page now carries the badge**, read by `shared/_record_details` for
+itself rather than passed in by eighteen callers that would each have to remember to ask. The rejected
+alternative was the attractive one — "Details" as a deliberately clean record of what is stored — and
+it lost for the reason the badge exists at all: the badge makes no claim about the values, so the page
+still shows what is stored and the reader finds the same page plus one fact. A **tag's list of the
+records carrying it now lists pending rows**, which follows from a pending row carrying its tags: the
+tag page is a list workspace like any other. That one needed a second rule, because `detail_section`
+uses its count both as the badge and as the empty-state decision. The badge stays a fact about stored
+records, so a pending count is read **separately** and only decides whether the section claims to be
+empty — otherwise a page would say "no characters here" directly above a row carrying a name. The
+**search dropdown is left clean on purpose**: it indexes stored documents and a remembered create has
+none, so a pending row there would be a result with nothing to open. That decision is recorded on
+[`features/search.md`](features/search.md) rather than left as an omission.
+
+**Verification.** The query-count guard is the load-bearing part, because this change touches the one
+read path finding 66 was about: `draft_changes_query_count_test.rb` now renders a list page with one
+pending row and with four, and requires the totals to be equal. The `draft_preview_test.rb` case that
+asserted the old dropping behaviour was rewritten rather than deleted, because it was asserting a real
+property — a payload naming a column nobody has is still dropped — and that property is what the slice
+exists for. Two cases were added for what could only be got wrong silently: a `photo_data` that is not
+an image URL must not reach the page, and a pending row with no photo must leave no empty box where the
+picture was. The one fact no request test can answer — that the browser actually decodes the submitted
+crop — is a system case that asserts `naturalWidth` rather than the presence of an `img`, because a
+data URL the browser refused to decode would leave an element and still show nothing.
+
+Backlog item 27 is gone with this; item 26, which asks what a pending badge should say beyond its
+state, is untouched and still open.
 
 ### Quirk 67: a draft's page printed English attribute names (fixed)
 

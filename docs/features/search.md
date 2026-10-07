@@ -112,6 +112,22 @@ The stored half of the contract is `Model#display_string`, and the read half is 
 change to the default locale's `ownerships.display_label` is therefore an index-content change, and
 `bin/rails search:reindex` is what makes an existing index agree with it.
 
+## A search does not answer with pending records
+
+Neither surface lists a record the reader's own draft holds a change on. A **remembered create** is
+the easy half: it has no id, no document, and no path, so it cannot be a result row — a result the
+reader cannot open is a dead affordance, and there is no details page for it to open. A **remembered
+edit** is a stored record, so it is indexed by the values that are stored today, which is exactly what
+its list row shows: the badge says the change is pending, it never rewrites the row to match. The
+reader who follows a result therefore lands on the record's own page, which carries the same badge the
+list did.
+
+This is a decision rather than an omission, and it is the one surface that keeps pending work out on
+purpose. The alternative — indexing unsaved records — means a search over documents that no query can
+join to, a result row whose link depends on whether the draft has been applied since, and a reindex
+that would have to read every reader's private draft to stay correct. Search is shared; a draft is
+per-author. Where pending work *is* shown is [`conventions.md`](../conventions.md#the-three-surfaces-that-are-not-list-workspaces).
+
 ## Both surfaces, one read
 
 `searches/_scope_field` is one partial for both search surfaces, and the caller's optional `class`

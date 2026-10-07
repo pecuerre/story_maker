@@ -236,6 +236,54 @@ module DraftsHelper
     draft_preview.creates_for(model)
   end
 
+  # The photo a pending row should draw, as a `data:` URL an `<img>` can use, or
+  # nothing.
+  #
+  # **A payload's photo is not an image until it is checked, so it is checked here.**
+  # `DraftPreview` holds whatever reached the controller and the applier is what
+  # decodes and re-encodes it; this gate is the cheap half of that — a value that is
+  # not a `data:` image URL never reaches the page, so a hand-edited payload or a
+  # `javascript:` value cannot become an `img src`. The expensive half stays where
+  # it is, because the honest answer to "would this become a stored photo" is the
+  # apply's, and a row that draws a crop the apply will later refuse is the truthful
+  # one: the change is still remembered and nothing about it has been written.
+  def draft_pending_photo(record)
+    data_url = draft_preview.photo_for(record)
+    return if data_url.blank?
+    return unless PhotoProcessing::DATA_URL.match?(data_url)
+
+    data_url
+  end
+
+  # The records a pending row carries under a tag, and the tag ids it carries them
+  # under. Read off the association the tags were assigned to, so it is the record's
+  # own tags rather than a second derivation from the payload.
+  def draft_pending_record_tag_ids(record, model)
+    association = model.tagged_records_join_association
+    return [] if association.blank?
+
+    Array(record.public_send(association)).map(&:id)
+  end
+
+  # The remembered creates that would carry one tag, in the order they were
+  # remembered: what a tag's own details page lists that does not exist yet.
+  #
+  # **The tag's element class comes from the tag's own association**, not from a
+  # list of taxonomies — a `CharacterTag` names `Character` and a `SceneTag` names
+  # `Scene`, which is the same fact `tagged_records` reads, so a tag page and this
+  # cannot disagree about which records a taxonomy is for. `include_descendants`
+  # follows the toggle already on that page, so a remembered create carrying a child
+  # tag appears under the parent exactly when a stored record carrying it would.
+  def draft_pending_records_for_tag(tag, include_descendants: false)
+    model = tagged_records_class_for(tag)
+    return [] if model.blank?
+
+    ids = [ tag.id, *(include_descendants ? tag.descendant_ids : []) ]
+    draft_pending_creates_for(model).select do |record|
+      (draft_pending_record_tag_ids(record, model) & ids).any?
+    end
+  end
+
   # The records a taxonomy tree's remembered creates would have added, resolved
   # from the tree's own `model_param` (`"character_tag"` → `CharacterTag`).
   #
@@ -439,6 +487,16 @@ module DraftsHelper
       sentences << t("drafts.history.nothing_written") if sentences.empty?
 
       sentences
+    end
+
+    # The record class one taxonomy's tags are for, or nil when the class does not
+    # declare an inverse side. Read off the tag's own association so this answers
+    # the same question as `HasManyTags#tagged_records` and cannot drift from it.
+    def tagged_records_class_for(tag)
+      association = tag.class.tagged_records_association
+      return if association.blank?
+
+      tag.class.reflect_on_association(association)&.klass
     end
 
     # Whether the model can name this record at all. A model that has its own rule

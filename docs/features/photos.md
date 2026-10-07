@@ -74,6 +74,12 @@ that square to a canvas and hands the result to the form as a `data:` URL.
 - A record's photo shows in the **left** part of its details-page surface card. A record without one
   renders exactly what it rendered before photos existed — see
   [conventions.md](../conventions.md#record-details-pages).
+- A **remembered create's** submitted photo shows as a small square on its pending row, which is the
+  only surface a submitted photo can be seen on before the draft is applied; the drafts page states it
+  in words rather than showing it. The value is gated on `PhotoProcessing::DATA_URL` before it reaches
+  an `img src`, and it is held beside the pending record rather than assigned to it, because
+  `photo_data=` also marks the value as submitted and that turns on the image pipeline below. See
+  [conventions.md](../conventions.md#pending-changes-in-a-list).
 - `PhotoParams` (`app/controllers/concerns/photo_params.rb`) is
   `PHOTO_PARAMS = [ :photo_data, :remove_photo ]`. Every photo-capable controller
   `include PhotoParams` and splats `*photo_params` into its `params.expect`, so the two virtual

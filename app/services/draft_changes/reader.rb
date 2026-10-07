@@ -156,11 +156,17 @@ class DraftChanges::Reader
       end.transform_values(&:uniq)
     end
 
-    # The collection an id-list payload key fills, or nil when the key is not one. The
-    # key has to end in `_ids` and the model has to have the matching collection, which
-    # is what keeps the two virtual photo writers (`photo_data`, `remove_photo`) and
-    # every ordinary column out of this lookup.
+    # The collection an id-list payload key fills, or nil when the key is not one,
+    # delegating to the class method so the rule has one home.
     def tag_association(model, name)
+      self.class.tag_association(model, name)
+    end
+
+    # **The one derivation of "which collection does this payload key fill",** so
+    # `DraftPreview` can resolve a pending row's tags from the same rule this class
+    # reads them by rather than a second copy that could disagree about which keys
+    # are id lists at all.
+    def self.tag_association(model, name)
       return unless name.to_s.end_with?("_ids")
 
       model.reflect_on_association(name.to_s.delete_suffix("_ids").pluralize)

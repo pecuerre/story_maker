@@ -16,7 +16,7 @@
 # anything, so an ARG beside it would be ignored silently. `test/deployment/pin_consistency_test.rb`
 # asserts this version is the one in `mise.toml`, because a Ruby bump has to move the version and the
 # digest together. Dependabot's `docker` ecosystem updates both.
-FROM docker.io/library/ruby:3.4.10-slim@sha256:b573616eed67613e1d380ebb777d87aa094fad7505bdbc2d1b45dca9dd9116b9 AS base
+FROM docker.io/library/ruby:4.0.6-slim@sha256:58479f164d5947f852da27a4436c89bb986a811f959c40552bc7f6ccaabcc9c9 AS base
 
 # Rails app lives here
 WORKDIR /rails

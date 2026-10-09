@@ -65,6 +65,9 @@ Labels used below, in the order their groups appear:
   product decision that finding 72 recorded without one: there is no branch, fork, or merge, and a second
   line of work is bought by closing the first.
 
+- **The editing-session test pointed at a system test that does not exist.** It now names the browser
+  journey that actually covers the control.
+
 ## 2026-10-07
 
 ### changed

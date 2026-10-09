@@ -6,9 +6,10 @@ require "test_helper"
 # session, and per reader: the two ways a naive boolean-in-the-session would be
 # wrong are a second universe inheriting the first one's session, and one reader's
 # flag surviving a sign-out. `test/controllers/draft_editing_controller_test.rb`
-# owns the request side — the control, the redirect, the authorization — and
-# `test/system/draft_editing_session_test.rb` owns what an author sees in a
-# browser.
+# owns the request side — the control, the redirect, the authorization, and which
+# of the two things a start did — and `test/system/draft_workflow_test.rb` owns
+# what an author sees in a browser, because that journey is the only place a
+# claim stored in a session hash becomes a control on a page.
 class DraftEditingSessionTest < ActiveSupport::TestCase
   setup do
     @session = {}

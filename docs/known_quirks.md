@@ -18,19 +18,6 @@ with the DataFactor follow-ups checked against the tree on 2026-09-25. Entries a
 being written down, so **re-read a finding against the code before acting on it** — see
 [Audit baseline and evidence](#audit-baseline-and-evidence) for what that pass actually ran.
 
-## Mutation, route, and data-contract observations
-
-72. **Low — a draft is a linear set of changes, so branching, forking, and merging are refused rather
-    than absent.** One open draft per author per universe is a partial unique index
-    ([ADR 0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)), so an
-    author who wants to pursue two directions for one record cannot, and the second attempt is a
-    refused write rather than a second line of work. Merging two drafts has no path at all: `apply`
-    closes its draft on the first run, and `DraftApplier` takes one draft's changes. No ADR states what
-    a branch is, so this is the only place that cost is written down; it is a refused write a reader
-    will hit rather than a defect, and the product decision behind it has not been made.
-
-
-
 ## Performance, test, and tooling observations
 
 36. **Medium — CI proves a production image boots, but not a deployment, and the job setup is not

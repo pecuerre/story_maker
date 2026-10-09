@@ -38,6 +38,33 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-10
+
+### changed
+
+- **A start that finds an open draft says so.** Pressing **Start editing** where this author already has a
+  draft open now reports the resume and how many remembered changes are waiting, rather than printing the
+  same sentence a first start prints.
+
+- **Both drafts pages say a draft is one draft at a time.** The workflow guide states that everything
+  remembered goes onto one draft and that a second direction means applying or discarding what is waiting.
+
+### fixed
+
+- **A rendered discussion message carries no block whitespace.** `DiscussionMessage#rendered_body` strips
+  the newline Redcarpet leaves with the paragraph tags it adds, which had been failing the thread's own
+  text assertion since markdown arrived; the method now has model-level coverage of its markdown, its
+  paragraph breaks, and its HTML filtering.
+
+- **One dead link in the delivery history.** The finding about discussion markdown pointed at ADR 0019 by
+  a path that resolved to nothing, which is what `DocsTest` reports.
+
+### docs
+
+- **A draft is one line of work.** [ADR 0027](docs/adr/0027-a-draft-is-one-line-of-work.md) settles the
+  product decision that finding 72 recorded without one: there is no branch, fork, or merge, and a second
+  line of work is bought by closing the first.
+
 ## 2026-10-07
 
 ### changed

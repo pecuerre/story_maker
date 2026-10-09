@@ -42,15 +42,22 @@ class DraftEditingSession
     # changes into.
     #
     # The draft is opened *before* the flag is written, because a reader whose
-    # draft cannot be opened has not started editing — and because
-    # `Draft.open_for!` resumes an existing draft rather than replacing it, so a
-    # second visit to **Start editing** cannot strand the changes already waiting
-    # in one. Returns the draft the reader is now editing.
+    # draft cannot be opened has not started editing.
+    #
+    # **It returns the `Draft::Opening` rather than the draft**, because entering a
+    # session is two different things and the caller says so out loud: a draft was
+    # opened, or the one this author already had open here was picked back up. A
+    # draft is one line of work per author per universe (ADR 0027), so the second
+    # is not a quieter version of the first — it is the reader being put back into
+    # the middle of work they may have meant to begin something else beside.
+    # Answering it here means one derivation: the caller does not have to ask
+    # whether a draft existed a moment earlier and risk answering about a different
+    # request than the one that resolved it.
     def start!(session:, user:, universe:)
-      draft = Draft.open_for!(user, universe)
+      opening = Draft.open_or_start_for!(user, universe)
 
       session[KEY] = editing_universe_ids(session).merge(universe.id.to_s => true)
-      draft
+      opening
     end
 
     # Stop editing: release the claim, and **keep the draft**.

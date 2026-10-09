@@ -91,7 +91,9 @@ class DraftEditingSessionTest < ActiveSupport::TestCase
     draft = nil
 
     assert_difference -> { Draft.count }, 1 do
-      draft = DraftEditingSession.start!(session: @session, user: @user, universe: @universe)
+      opening = DraftEditingSession.start!(session: @session, user: @user, universe: @universe)
+      assert_not opening.resumed?, "there was no open draft here, so this start opened one"
+      draft = opening.draft
     end
 
     assert_predicate draft, :open?
@@ -101,14 +103,18 @@ class DraftEditingSessionTest < ActiveSupport::TestCase
 
     # A second **Start editing** must not open a second draft. The reader's pending
     # work lives in the first one, and the partial unique index would refuse the
-    # insert anyway — this says the flow looks for the open draft instead.
+    # insert anyway — this says the flow looks for the open draft instead, and says
+    # so, because the difference is the one a reader is shown.
     assert_no_difference -> { Draft.count } do
-      assert_equal draft, DraftEditingSession.start!(session: @session, user: @user, universe: @universe)
+      resumed = DraftEditingSession.start!(session: @session, user: @user, universe: @universe)
+
+      assert_predicate resumed, :resumed?, "a second start picks the open draft back up rather than opening another"
+      assert_equal draft, resumed.draft
     end
   end
 
   test "stopping keeps the draft and every change in it" do
-    draft = DraftEditingSession.start!(session: @session, user: @user, universe: @universe)
+    draft = DraftEditingSession.start!(session: @session, user: @user, universe: @universe).draft
     draft.draft_changes.create!(action: "create", record_type: "Character",
       payload: { "name" => "Ariadne", "universe_id" => @universe.id })
 

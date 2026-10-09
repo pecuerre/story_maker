@@ -644,7 +644,12 @@ guide describing an apply in a universe whose page has no apply would describe a
 there. The list says the same thing once above its rows, in `drafts.index.review_note` or
 `drafts.index.apply_note`, because "which control will my rows carry" is the question an author has when
 they arrive from a remembered-change flash — and it is a property of the universe, so one sentence above
-the list rather than one per row.
+the list rather than one per row. **One sentence under the steps says what the steps do not**:
+`drafts.guide.one_draft`, which is that a draft is one line of work per author per universe ([ADR
+0027](adr/0027-a-draft-is-one-line-of-work.md)) and that a second direction therefore means applying or
+discarding what is waiting. The three steps answer "how does a change become live" and are silent on
+"what if I want to start something else", and this is the page an author reads before deciding — the
+flash that follows **Start editing** reports the same rule after they have already pressed it.
 
 **The page has to be reachable.** The right utility sidebar's **Collaboration** group carries a
 **Pending changes** entry with a panel of what is waiting above it, rendered only where a draft can
@@ -951,9 +956,23 @@ never begins an editing session. A toggle posted from a stale page in a universe
 
 **One open draft per author per universe is a partial unique index** on `[user_id, universe_id]` over the
 open statuses, so two tabs cannot each open one. History is outside the index, which is what lets a
-second editing session have a row of its own. `Draft.open_for!` resolves the race the index leaves by
+second editing session have a row of its own. `Draft.open_or_start_for!` resolves the race the index leaves by
 re-reading the winner's row rather than raising, and re-raises if that row is gone — the index's status
 list is compared against `Draft::OPEN_STATUSES` by `test/models/draft_test.rb` so the two cannot drift.
+`open_for!` is that method without the answer attached, so the race has one implementation whatever a
+caller asks of it.
+
+**A start says which of the two things it did.** A draft is **one line of work** per author per universe
+([ADR 0027](adr/0027-a-draft-is-one-line-of-work.md)), so entering an editing session either opens a draft
+or puts the reader back into the one they already had open here — and those are different sentences. The
+flash is `drafts.flash.editing_started` when this author had no open draft and
+`drafts.flash.editing_resumed`, with how many remembered changes are waiting on it, when they did. The
+count is the one the stop's own flash names, because it is the same question asked at the other end of
+the same session, and it is read off the draft `start!` returned rather than counted again. `start!`
+returns the `Draft::Opening` for that reason: the caller does not ask whether a draft existed a moment
+earlier and risk an answer about a different request. A second line of work is bought by **closing** the
+first — apply, discard, or (in a `github` universe) submit it and let a reviewer close it — and stopping
+is not one of them, because stopping releases the browser's claim and leaves the draft open.
 
 ## Pending changes in a list
 

@@ -27,6 +27,127 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-10
+
+- **[docs]** **Finding 72 became [ADR 0027](adr/0027-a-draft-is-one-line-of-work.md): a draft is one line
+  of work.** The finding recorded a cost no document owned — an author cannot pursue two directions for one
+  record, because one open draft per author per universe is a partial unique index ([ADR
+  0022](adr/0022-an-editing-session-claims-the-browser-and-one-draft-stays-open.md)), `apply` closes its
+  draft on the first run, and `DraftApplier` reads one draft's changes. It stayed in
+  [`known_quirks.md`](known_quirks.md) precisely because nothing else owned it: the word "branch" had never
+  been defined here, so there was no decision for a live document to state and an ADR to record. It is now
+  decided, the reasoning moved here, and the finding left that file the way a fixed one does.
+
+  - **The unit is the author and the universe, not the record.** A draft holding changes to forty records is
+    still one line of work, because what makes two drafts the same draft is who is holding them and where,
+    not what they touch. This is why branching is not a missing switch: it is a different answer to what a
+    draft *is*, and the answer was already fixed by the index, the applier's precondition, and the
+    append-only change ([ADR 0019](adr/0019-collaboration-foundations.md)).
+  - **A second direction is bought by closing the first, never by parking it.** Apply, discard, or — in a
+    `github` universe — submit and let a reviewer close it. There is no fourth state between open and
+    closed, which is what keeps "a closed draft cannot be applied twice" ([ADR
+    0021](adr/0021-applying-a-draft-through-the-live-mutation-path.md)) true. **Stop editing** is not one of
+    them: stopping releases the browser's claim and leaves the draft open, because the work is still there.
+  - **Three alternatives were rejected on the read side rather than the write side.** More than one open
+    draft breaks every surface that reads *one* of them by name — `DraftPreview`, `Draft.pending_changes_count`,
+    `DraftsController#index`, the sidebar panel — and a parked draft is still applicable, so it moves the
+    double-write hazard ADR 0022 closed rather than removing it. A fork answers "two directions" with "two
+    histories" and loses the guarantee that a conflict shown to an author covers what the other line did. A
+    merge has nothing to merge after the fact, because an apply closes its draft: the one merge with content
+    is the resumed start that already happens. One draft per *record* is worse than either — a remembered
+    change touching two records would have to name its draft, and a draft remembering three records could
+    not exist.
+  - **What deliberately did not change.** Remembering stays unconditional ([ADR
+    0020](adr/0020-remembering-mutations-instead-of-writing-them.md)), so refusing a change was never an
+    available answer, and `Draft.open_or_start_for!` keeps ADR 0022's rescue — re-reading the winner's row
+    rather than raising, and re-raising if that row is gone.
+
+- **[changed]** **A start says which of the two things it did.** Entering an editing session either opens a
+  draft or puts the reader back into the one they already had open, and both used to say
+  `drafts.flash.editing_started` — so an author pressing the control to begin something else was silently
+  returned to their earlier work, which is the reader-facing half of the finding above.
+
+  - **The model answers it once, and the controller reads that answer.** `Draft.open_or_start_for!` is
+    `open_for!` with the answer attached — the draft and whether it was already open, as `Draft::Opening` —
+    and `open_for!` is now defined in terms of it, so the race rescue has one implementation whatever a
+    caller asks of it. `DraftEditingSession.start!` returns that value rather than the draft alone. The
+    alternative the change rejected was asking the controller whether a draft existed *before* starting,
+    which is a second derivation of the same fact and one that can answer about a different request than
+    the one that resolved it.
+  - **The flash is two sentences, and the resumed one carries the count.** `drafts.flash.editing_started`
+    when this author had no open draft, `drafts.flash.editing_resumed` — with how many remembered changes
+    are waiting on it — when they did. It is the count `editing_stopped` already names, because it is the
+    same question at the other end of the same session, read off the draft `start!` returned rather than
+    counted again. **An empty draft still counts as a resume**: the author who started, remembered nothing,
+    and came back is returning to a line of work, and a flash that read as a fresh start would be the same
+    silent join.
+  - **The rule is also stated where an author decides, not only where they are told.** `drafts/_workflow_guide`
+    carries `drafts.guide.one_draft` on both drafts pages: one draft at a time, everything remembered goes
+    onto it in the order it was remembered, and a second direction means applying or discarding what is
+    waiting. The three steps answer "how does a change become live" and are silent on "what if I want to
+    start something else"; the flash reports the rule after the reader has pressed the control and the
+    guide states it on the page they read before deciding.
+  - **`drafts.flash.remembered` is deliberately unchanged.** It is printed on every mutation in a
+    draft-based universe, and a clause about which draft the change joined would be noise on every one of
+    them. The pending count and its link into the drafts page are where an author goes to see which draft
+    holds their work.
+
+  Verification: `bin/rails test` — 2,126 runs, 13,334 assertions, 2 failures, 0 errors, 13 skips, and
+  **both failures pre-date this change**: `DiscussionsControllerTest` fails because
+  `DiscussionMessage#rendered_body` leaves the newline Redcarpet puts after its `<p>`, and `DocsTest`
+  finds one broken relative link in a frozen history entry. Both were reproduced against a pristine
+  copy of `HEAD` in `/tmp` with none of this change's files, and RuboCop's 5 offences are the same
+  pre-existing ones in `app/models/discussion_message.rb` — none in a file this change touched.
+  The owner took both as **NOW**, and the entries below fix them; the suite is re-run at the end of
+  this date.
+  `bin/rails test test/system/draft_workflow_test.rb` — 5 runs, 91 assertions, 0 failures, 0 errors,
+  0 skips, which is the browser half: the resume flash is something only a page shows, and the same
+  change was walked through `draft_wikipedia_journey_test.rb`, `draft_pending_changes_test.rb`, and
+  `review_workflow_test.rb` — 16 runs, 280 assertions, 0 failures — because the guide partial is
+  drawn on all three of their pages. Not run: `bun run check:js` (no file under `app/javascript`
+  changed), `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit`, and `bun audit` (no
+  dependency or importmap pin changed), and `bun run build:css` (the change adds a Bootstrap class in
+  an existing partial rather than a Sass rule; the suite builds the CSS itself on every run). No
+  schema migration, so no `db:migrate` was needed and `db/data/**` was untouched.
+
+- **[fixed]** **A rendered message no longer carries Redcarpet's block whitespace.** `rendered_body`
+  stripped the `<p>` tags Redcarpet adds and left the newline that comes with them, so every rendered body
+  was `"She was here.\n"` — which is what had been failing `DiscussionsControllerTest`'s exact-text
+  assertion. One `gsub` for both tags and one `strip` are the whole fix.
+
+  - **The fix belongs in the model, not in the test.** The thread's assertion is right and the newline is
+    wrong: the newline is Redcarpet's block formatting, not anything the author wrote, and the same value
+    reaches every surface that prints a body — including the notification sentence that quotes a
+    reviewer's note. Relaxing the assertion would have left a space inside that sentence for good.
+  - **`.strip` trims the ends, not the gaps**, which is why the blank line between two paragraphs of one
+    message survives: `test/models/discussion_message_test.rb` asserts that case beside the markdown and
+    the HTML filtering.
+  - **How it got here, because the record says otherwise.** Commit `25e7a3f0` added Redcarpet 3.6.1,
+    `rendered_body`, and the view together, and did not touch
+    `test/controllers/discussions_controller_test.rb` (last changed in `8f1a5263`); the entry above claims
+    `bin/rails test` — 2,085 runs, 0 failures — for that change. The frozen record is left as it is: this
+    entry is what says what the tree does.
+  - **The method had no coverage of its own**, which is why the one thing it promises was only reachable
+    through a single body on a single page. Four cases now hold it: markdown is rendered without the
+    wrapper the view adds, a blank line between paragraphs survives, raw HTML is not rendered as markup,
+    and the thread's own test still holds the whole rendered text.
+
+- **[fixed]** **One dead link in this file.** The discussion-markdown finding pointed at
+  `0019-collaboration-foundations.md`, which resolves to nothing from `docs/` and is what `DocsTest`
+  reported. It is corrected to `adr/0019-collaboration-foundations.md`, and no wording is touched — a path
+  that reaches nothing is a broken reference, not a claim about the past.
+
+  Verification for both: `bin/rails test test/models/discussion_message_test.rb test/controllers/discussions_controller_test.rb
+  test/docs_test.rb` — 35 runs, 127 assertions, 0 failures, 0 errors, 0 skips; `bin/rubocop` — 473 files,
+  no offenses. `bin/rails test test/system/discussion_test.rb test/system/draft_workflow_test.rb` —
+  8 runs, 122 assertions, 0 failures, 0 errors, 0 skips, which is where a rendered body is read in a
+  browser rather than compared as a string.
+
+  **The whole suite, re-run after both.** `bin/rails test` — 2,129 runs, 13,340 assertions,
+  **0 failures, 0 errors, 13 skips**; `bin/rubocop` — 473 files, no offenses. Those two failures and
+  those 5 offences were the only red in the tree, and this is the first run of this suite that is
+  clean.
+
 ### 2026-10-07
 
 - **[changed]** **A pending badge now says what the draft would write.** A record carrying more than
@@ -5133,7 +5254,7 @@ removing the shared-key branch, and removing the `respond_to?` guard each fail t
 **Then:** `discussion_messages.body` was plain text and the thread rendered it as such, with no
 sanitizing step because there was no formatting step to sanitize: `**bold**`, `# heading`, and
 `- item` all appeared verbatim in the message. This was reachable now and visible to any writer
-accustomed to a markdown editor elsewhere. [ADR 0019](0019-collaboration-foundations.md) deferred
+accustomed to a markdown editor elsewhere. [ADR 0019](adr/0019-collaboration-foundations.md) deferred
 it and no ADR had settled it, so this entry was where the cost lived. Formatting was not only a
 render change: it made the stored body untrusted input on every surface that prints it — the thread,
 a notification sentence carrying a reviewer's note, and any future export — so it needed a decision

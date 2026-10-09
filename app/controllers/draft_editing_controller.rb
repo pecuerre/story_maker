@@ -28,11 +28,19 @@ class DraftEditingController < ApplicationController
   #
   # Claims the session and opens (or resumes) the one open draft this author has
   # here. A POST, so the redirect is the default 302 the HTML flow uses.
+  #
+  # **The flash says which of the two things happened.** One draft is one line of
+  # work per author per universe (ADR 0027), so pressing this control a second
+  # time does not open a second line — it puts the reader back into the work they
+  # already had open. That is the same question the stop's flash answers when it
+  # names what is still waiting: an author who meant to start something else has
+  # to be told that the draft they are back in is the one holding their earlier
+  # changes, and how much of it is waiting.
   def create
-    DraftEditingSession.start!(session: session, user: Current.user, universe: Current.universe)
+    opening = DraftEditingSession.start!(session: session, user: Current.user, universe: Current.universe)
 
     redirect_to universe_path(universe_slug: Current.universe.slug),
-      notice: t("drafts.flash.editing_started")
+      notice: editing_started_notice(opening)
   end
 
   # DELETE /u/:universe_slug/editing
@@ -50,6 +58,19 @@ class DraftEditingController < ApplicationController
   end
 
   private
+    # What this start did, in the one sentence a reader can act on.
+    #
+    # **The count is the same one the stop reports**, because it is the same
+    # question: how much is waiting on this author's draft right now. It is read
+    # off the draft the start returned rather than re-counted through
+    # `Draft.pending_changes_count`, so the sentence and the row that opened it
+    # cannot disagree about how many changes there are.
+    def editing_started_notice(opening)
+      return t("drafts.flash.editing_started") unless opening.resumed?
+
+      t("drafts.flash.editing_resumed", count: opening.draft.draft_changes.size)
+    end
+
     # A universe is always resolved by the time this runs: both routes are inside
     # the `u/:universe_slug` scope, so `set_current_universe` has already raised for
     # a slug that names nothing, and the authorization callback has already answered

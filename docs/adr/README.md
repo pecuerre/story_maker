@@ -51,6 +51,7 @@ reasoning as of its date.
 | [0024](0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md) | Accepted | Store an apply's outcome per change and on the draft, and keep a closed draft inspectable |
 | [0025](0025-a-notification-is-a-stored-sentence.md) | Accepted | Make a notification a stored sentence with no foreign key, and give each kind its own recipient rule |
 | [0026](0026-a-live-update-is-a-refresh-and-never-a-page.md) | Accepted | Publish a live update as a signed refresh to three streams, and apply it only when the page holds nothing unsent |
+| [0027](0027-a-draft-is-one-line-of-work.md) | Accepted | Say that a draft is one line of work, and name a resume rather than a new line when a start picks a draft up |
 
 ## Format
 

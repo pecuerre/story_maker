@@ -102,6 +102,26 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "both drafts pages say a draft is one draft at a time" do
+    # A draft is one line of work per author per universe (ADR 0027), so an author
+    # who wants a second direction has to close the first one. The page that explains
+    # the workflow is where that is said, because it is where an author decides what
+    # to do, and both pages carry it — the list is where they find out something is
+    # waiting and the draft is where they decide about it.
+    @universe.update!(collaboration_mode: "wikipedia")
+    draft = draft_with(remember_create_payload)
+
+    get universe_drafts_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".draft-workflow-guide", text: /One draft at a time in this universe/
+
+    get universe_draft_url(universe_slug: @universe.slug, id: draft)
+
+    assert_response :success
+    assert_select ".draft-workflow-guide", text: /One draft at a time in this universe/
+  end
+
   test "an author with no drafts is told the list is empty" do
     get universe_drafts_url(universe_slug: @universe.slug)
 

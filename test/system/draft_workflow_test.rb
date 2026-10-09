@@ -223,6 +223,16 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     # Stopping released the session, not the work, and the flash says where it went.
     assert_selector ".flash-stack .flash-toast", text: "1 remembered change is still waiting on your draft"
     assert_equal 1, Draft.open_for(@user, @universe).draft_changes.count
+
+    # **Starting again is a return to that work, not a second line of it.** A draft
+    # is one line of work per author per universe, so this press opens nothing, and
+    # the flash is the only place the reader is told which of the two happened —
+    # without it, pressing the control to begin something else looks exactly like
+    # pressing it to begin.
+    click_button "Start editing"
+
+    assert_selector ".flash-stack .flash-toast", text: "You already had a draft open here with 1 remembered change on it"
+    assert_equal 1, Draft.count, "a second line of work must not be a second draft"
   end
 
   test "a change made without pressing start editing is still remembered" do

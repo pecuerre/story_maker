@@ -2,13 +2,16 @@ require "test_helper"
 
 # The **Start editing** / **Stop editing** control on the universe page.
 #
-# Three things are worth asserting here and nowhere else:
+# Four things are worth asserting here and nowhere else:
 #
 # - **the control's visibility**, which is the same rule the controller enforces —
 #   a draft-based universe and `write` access, or neither renders it and neither
 #   accepts the request;
 # - **that starting opens the draft before the first change**, which is the whole
 #   reason the control exists rather than a label;
+# - **that a start says which of the two things it did**, because a draft is one
+#   line of work per author per universe (ADR 0027) and a reader pressing the
+#   control a second time is going back into the one they had, not opening another;
 # - **that the flag is not a gate.** A mutation in a draft-based universe is
 #   remembered whether the reader pressed anything or not, and that is the property
 #   a reader who forgot to press the button would depend on.
@@ -136,10 +139,44 @@ class DraftEditingControllerTest < ActionDispatch::IntegrationTest
       post universe_editing_url(universe_slug: @universe.slug)
     end
 
+    # A draft is one line of work per author per universe (ADR 0027), so this start
+    # did not open a second line: it put the reader back into the one they had, and
+    # the flash is what says so rather than leaving the reader to find out from the
+    # changes waiting on it.
+    assert_equal I18n.t("drafts.flash.editing_resumed", count: 1), flash[:notice]
+
     get universe_url(@universe)
 
     assert_includes page_actions_text, I18n.t("drafts.pending.count", count: 1),
       "a second start must not strand the change already waiting in the reader's draft"
+  end
+
+  test "a start that picks an empty draft back up still says it picked one up" do
+    # The count is not what makes this a resume. An author who started, remembered
+    # nothing, stopped, and came back is still returning to the draft that is open,
+    # and a flash that read as a fresh start would be the same silent join the
+    # reader already cannot see.
+    post universe_editing_url(universe_slug: @universe.slug)
+    delete universe_editing_url(universe_slug: @universe.slug)
+
+    assert_no_difference -> { Draft.count } do
+      post universe_editing_url(universe_slug: @universe.slug)
+    end
+
+    assert_equal I18n.t("drafts.flash.editing_resumed", count: 0), flash[:notice]
+  end
+
+  test "a start is a resume only because this reader had a draft open, not because anyone did" do
+    # The draft this start picks up is **this reader's**. Somebody else's open draft
+    # in the same universe is a different line of work and does not turn a first
+    # start into a return to one.
+    Draft.create!(user: users(:user_two), universe: @universe)
+
+    assert_difference -> { Draft.count }, 1 do
+      post universe_editing_url(universe_slug: @universe.slug)
+    end
+
+    assert_equal I18n.t("drafts.flash.editing_started"), flash[:notice]
   end
 
   # The flag is a claim, not a gate

@@ -515,6 +515,16 @@ en:
       # guessing. Stopping names what is still waiting, so a release is never read
       # as a loss.
       editing_started: "You are editing this universe. Changes you make are remembered until you apply them."
+      # **What a start found.** Entering an editing session either opens a draft or
+      # picks up the one this author already has open here, and the reader is told
+      # which: a draft is one line of work per author per universe (ADR 0027), so a
+      # second start is a return to the earlier work rather than a second line of
+      # it. It is the same question the stop's sentence answers, so it carries the
+      # same count.
+      editing_resumed:
+        zero: "You already had a draft open here. It is still yours, and this session picked it back up."
+        one: "You already had a draft open here with 1 remembered change on it. This session picked that same draft back up rather than starting another."
+        other: "You already had a draft open here with %{count} remembered changes on it. This session picked that same draft back up rather than starting another."
       editing_stopped:
         zero: "Editing stopped. Nothing was waiting on your draft."
         one: "Editing stopped. 1 remembered change is still waiting on your draft."
@@ -552,6 +562,11 @@ en:
         # author's work — it comes back to be edited — because that is the part of
         # handing something over that is not obvious from the word "review".
         submit: "Hand the draft to a reviewer, who approves it or sends it back with a reason. Nothing is written until they approve it."
+      # The rule the three steps do not say, said once beside them: a draft is one
+      # line of work. Everything remembered goes onto it, in the order it was
+      # remembered, so trying a different direction means closing the first — and
+      # the third step is the only thing that closes it.
+      one_draft: "One draft at a time in this universe: everything you remember goes onto it, in the order you remembered it. To try a different direction first, apply or discard what is waiting."
     # What one change's apply did to it, as the badge its row carries and the
     # sentence that says why it is not live. `DraftApplier::SKIP_REASONS` and
     # `DraftChangeOutcome::STATES` are the same words; `kept` is the one key that

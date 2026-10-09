@@ -25,7 +25,7 @@ class DiscussionMessage < ApplicationRecord
     superscript: false,
     strikethrough: false,
     lax_html_blocks: false,
-    space_headers: true,
+    space_headers: true
   }.freeze
 
   # Renders the markdown body as sanitized HTML.
@@ -38,6 +38,10 @@ class DiscussionMessage < ApplicationRecord
   #
   # Redcarpet adds <p> tags by default; we strip them here since the view
   # already wraps the output in a <p class="discussion-message-body"> tag.
+  # **The newline that comes with them goes too**, because it is Redcarpet's
+  # block formatting rather than anything the author wrote: leaving it turned every
+  # rendered body into `"She was here.\n"` and put a space inside a notification
+  # sentence that quotes one.
   def rendered_body
     renderer = Redcarpet::Render::HTML.new(
       filter_html: true,
@@ -45,8 +49,9 @@ class DiscussionMessage < ApplicationRecord
     )
     markdown = Redcarpet::Markdown.new(renderer, MARKDOWN_OPTIONS)
     rendered = markdown.render(body)
-    # Strip Redcarpet's default <p> tags since the view wraps in <p>.
-    rendered.gsub('<p>', '').gsub('</p>', '').html_safe
+    # Strip Redcarpet's default <p> tags since the view wraps in <p>, and the
+    # block whitespace that came with them.
+    rendered.gsub(%r{</?p>}, "").strip.html_safe
   end
 
   # Post a reply and tell the conversation it was posted in, in one transaction.

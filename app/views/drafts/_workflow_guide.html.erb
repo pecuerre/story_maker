@@ -29,7 +29,21 @@
     # when a reviewer approves it. The first two steps are the same either way, which
     # is why only the last one branches — and a guide describing an apply in a
     # universe whose page has no apply would be describing a control that is not
-    # there. %>
+    # there.
+    #
+    # **One sentence under the steps says what the steps do not: a draft is one
+    # line of work.** The three steps answer "how does a change become live" and are
+    # silent on "what happens if I want to start something else", which is the
+    # question an author who wants a second direction is actually asking (ADR
+    # 0027). Everything remembered goes onto one draft, so trying a different
+    # direction means closing the first — and the third step is the only thing that
+    # closes it. It is stated here rather than only in the flash that follows
+    # **Start editing**, because this is the page an author reads before deciding
+    # what to do, and the flash is what they read after they have pressed it.
+    #
+    # It is a paragraph of its own in the same `page-description` the lead uses,
+    # rather than a fourth `<li>`: the list is the workflow in order, and this is
+    # not a step of it. %>
 <% if draft_preview.available? %>
   <div class="content-surface draft-workflow-guide mb-3">
     <div class="p-3">
@@ -40,6 +54,7 @@
         <li><%= t("drafts.guide.steps.review") %></li>
         <li><%= t(Current.universe.github? ? "drafts.guide.steps.submit" : "drafts.guide.steps.apply") %></li>
       </ol>
+      <p class="page-description mt-2 mb-0"><%= t("drafts.guide.one_draft") %></p>
     </div>
   </div>
 <% end %>

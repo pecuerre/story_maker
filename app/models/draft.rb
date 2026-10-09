@@ -92,20 +92,43 @@ class Draft < ApplicationRecord
     open.find_by(user: user, universe: universe)
   end
 
-  # `open_for`, opening one when there is none. This is what the interception path
-  # and the editing session ask, so "which draft does this change join" and "which
-  # draft did this author start editing" have one answer.
+  # `open_for`, opening one when there is none, **and which of the two happened**.
+  #
+  # A draft is one line of work per author per universe (ADR 0027), so "started
+  # editing" is two different things wearing one button: opening a line, and going
+  # back into one that is already open. The reader is told which, and only the
+  # caller that says so out loud asks for the answer rather than inferring it from
+  # a draft it happens to hold.
+  Opening = Data.define(:draft, :resumed) do
+    def resumed?
+      resumed
+    end
+  end
+
+  # `open_for!`, discarding the answer. This is what the interception path asks,
+  # so "which draft does this change join" and "which draft did this author start
+  # editing" have one implementation rather than two that can disagree.
+  def self.open_for!(user, universe)
+    open_or_start_for!(user, universe).draft
+  end
+
+  # `open_for!` with `resumed?` attached, and the only implementation of it.
   #
   # Two requests that arrive together can both read "no open draft" before either
   # has inserted. The index decides between them, and the loser re-reads the
   # winner's row instead of raising: both requests' changes belong to one author
   # working in one universe, so they belong on one draft that one apply closes.
   # Without this, the second draft would sit there waiting to be applied over
-  # whatever the first one left.
-  def self.open_for!(user, universe)
-    open_for(user, universe) || create!(user: user, universe: universe)
+  # whatever the first one left. The loser is a **resume** rather than a refusal,
+  # because from the losing request's side that is exactly what happened — and
+  # from the reader's side it is the sentence they are about to be shown.
+  def self.open_or_start_for!(user, universe)
+    existing = open_for(user, universe)
+    return Opening.new(draft: existing, resumed: true) if existing
+
+    Opening.new(draft: create!(user: user, universe: universe), resumed: false)
   rescue ActiveRecord::RecordNotUnique
-    open_for(user, universe) || raise
+    Opening.new(draft: open_for(user, universe) || raise, resumed: true)
   end
 
   # How many changes this author has waiting in this universe, which is what the

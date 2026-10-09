@@ -29,15 +29,7 @@ being written down, so **re-read a finding against the code before acting on it*
     a branch is, so this is the only place that cost is written down; it is a refused write a reader
     will hit rather than a defect, and the product decision behind it has not been made.
 
-74. **Low — a discussion message is plain text, so a reader who types markdown gets their own
-    punctuation.** `discussion_messages.body` is plain text and the thread renders it as such, with no
-    sanitizing step because there is no formatting step to sanitize: `**bold**`, `# heading`, and
-    `- item` all appear verbatim in the message. This is reachable now and visible to any writer
-    accustomed to a markdown editor elsewhere. [ADR 0019](adr/0019-collaboration-foundations.md) deferred
-    it and no ADR has settled it, so this entry is where the cost lives. Formatting is not only a
-    render change: it makes the stored body untrusted input on every surface that prints it — the
-    thread, a notification sentence carrying a reviewer's note, and any future export — so it needs a
-    decision about which dialect is allowed and where escaping happens, not just a template.
+
 
 ## Performance, test, and tooling observations
 

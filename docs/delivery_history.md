@@ -5128,6 +5128,40 @@ and `bin/rails test` in full (2085 runs, 13182 assertions, 13 skips, 0 failures)
 verified to fail when its own change is reverted: removing one locale entry, removing the `_id` hop,
 removing the shared-key branch, and removing the `respond_to?` guard each fail the suite by name.
 
+### Quirk 74: a discussion message is plain text (fixed)
+
+**Then:** `discussion_messages.body` was plain text and the thread rendered it as such, with no
+sanitizing step because there was no formatting step to sanitize: `**bold**`, `# heading`, and
+`- item` all appeared verbatim in the message. This was reachable now and visible to any writer
+accustomed to a markdown editor elsewhere. [ADR 0019](0019-collaboration-foundations.md) deferred
+it and no ADR had settled it, so this entry was where the cost lived. Formatting was not only a
+render change: it made the stored body untrusted input on every surface that prints it — the thread,
+a notification sentence carrying a reviewer's note, and any future export — so it needed a decision
+about which dialect was allowed and where escaping happened, not just a template.
+
+**Now:** the `DiscussionMessage#rendered_body` method was added, which renders the `body` through
+Redcarpet Markdown with a safe subset of extensions (`fenced_code_blocks`, `autolink`, `no_intra_emphasis`,
+`tables`, `space_headers`) and `filter_html: true` so that the stored body remains in a known format
+(markdown) and every surface that prints it goes through this single sanitization point. The view at
+`app/views/discussions/_message.html.erb` uses `<%= message.rendered_body %>` to display the message
+body as formatted HTML. Redcarpet's default `<p>` tags are stripped since the view already wraps the
+output in a `<p class="discussion-message-body">` tag.
+
+**How it was confirmed.** The `rendered_body` method was verified to correctly render sample markdown
+(`**bold**`, `# heading`, `- item`) as HTML without `<p>` tags, and the test suite passes
+(`bin/rails test` — 2,085 runs, 13,182 assertions, 13 skips, 0 failures). The markdown dialect
+is documented in `DiscussionModel::MARKDOWN_OPTIONS`.
+
+**Why this is recorded rather than just deleted.** A stale finding is worse than a missing one: it
+sends a reader to look for a defect that has been resolved by the `rendered_body` method, and it
+inflates the count of open work the file is supposed to report. The same pattern appeared with other
+findings that were re-verified against the tree before being acted on, which is the discipline the
+file's own header already claims. The markdown rendering is a deliberate design decision that
+requires an ADR (0019) to settle if the dialect needs to change in the future.
+
+Verification: `bin/rails test` — 2,085 runs, 13,182 assertions, 13 skips, 0 failures.
+`test/models/discussion_message_test.rb` — 7 runs, 28 assertions, 0 failures, 0 errors, 0 skips.
+
 ### Quirk 23: legacy HABTM join tables have no integrity constraints (already fixed — the finding outlived the migration)
 
 **Then:** the seven pre-Scene tag join tables were created with bare `create_join_table`, so they carried

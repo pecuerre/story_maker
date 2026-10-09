@@ -70,6 +70,14 @@ Labels used below, in the order their groups appear:
   `Search::TaskWaiter`, so a refused document logs its id and the engine's reason instead of only
   existing in the engine's own task log.
 
+## 2026-10-10
+
+### fixed
+
+- **Discussion messages now render markdown.** The `DiscussionMessage#rendered_body` method now renders
+  message body as sanitized HTML via Redcarpet, so markdown syntax like `**bold**`, `# heading`, and
+  `- item` is rendered rather than appearing verbatim. This was quirk 74.
+
 ## 2026-10-06
 
 ### added

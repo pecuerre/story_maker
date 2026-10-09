@@ -87,3 +87,7 @@ gem "meilisearch", "~> 0.33.0"
 # application code is counted too. The client-side code has its own runner and its
 # own gate (`bun run test:js`); see docs/development.md.
 gem "simplecov", "~> 1.3", group: :test
+
+gem "redcarpet", "~> 3.6"
+
+gem "html-pipeline", "~> 3.2"

@@ -14,6 +14,41 @@ class DiscussionMessage < ApplicationRecord
 
   validates :body, presence: true
 
+  # These constants define the markdown dialect allowed in discussions.
+  # Redcarpet with `fenced_code_blocks` and `autolink` enables code blocks
+  # and URL auto-linking while staying within a safe subset.
+  MARKDOWN_OPTIONS = {
+    fenced_code_blocks: true,
+    autolink: true,
+    no_intra_emphasis: true,
+    tables: true,
+    superscript: false,
+    strikethrough: false,
+    lax_html_blocks: false,
+    space_headers: true,
+  }.freeze
+
+  # Renders the markdown body as sanitized HTML.
+  #
+  # This is the single point where markdown is parsed and HTML is sanitized,
+  # so that the stored body remains in a known format (markdown) and every
+  # surface that prints it goes through this method. Without this central point,
+  # storing markdown would make the body untrusted input on every surface
+  # (the thread, notifications, future exports).
+  #
+  # Redcarpet adds <p> tags by default; we strip them here since the view
+  # already wraps the output in a <p class="discussion-message-body"> tag.
+  def rendered_body
+    renderer = Redcarpet::Render::HTML.new(
+      filter_html: true,
+      link_attributes: { rel: "noopener noreferrer" }
+    )
+    markdown = Redcarpet::Markdown.new(renderer, MARKDOWN_OPTIONS)
+    rendered = markdown.render(body)
+    # Strip Redcarpet's default <p> tags since the view wraps in <p>.
+    rendered.gsub('<p>', '').gsub('</p>', '').html_safe
+  end
+
   # Post a reply and tell the conversation it was posted in, in one transaction.
   #
   # **It answers `true`/`false` rather than raising**, because an empty composer is

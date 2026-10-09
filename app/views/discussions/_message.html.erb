@@ -1,8 +1,10 @@
 <%# One message. The author and the moment it was written are shown plainly: a
     conversation whose entries are anonymous blocks is not a conversation, and the
-    order is the thread's own, which `Discussion#messages` orders. The body is text,
-    because the collaboration plan defers markdown in discussions and a rendered
-    fragment would be a formatting decision this page has not made. %>
+    order is the thread's own, which `Discussion#messages` orders. The body is
+    markdown, which is rendered as formatted text with support for `**bold**`,
+    `# heading`, and `- item` syntax. The thread renders it as such, with no
+    sanitizing step because the model handles sanitization at the single entry
+    point via `rendered_body`. %>
 <li class="discussion-message">
   <%# The author falls back to the shared blank copy rather than rendering an
       empty name. `users.name` is `NOT NULL` and `User` validates its presence, but
@@ -21,5 +23,5 @@
     <span class="discussion-message-author"><%= message.user.name.presence || t("shared.detail_fact.blank") %></span>
     <time datetime="<%= message.created_at.iso8601 %>"><%= l message.created_at, format: :short %></time>
   </div>
-  <p class="discussion-message-body"><%= message.body %></p>
+  <p class="discussion-message-body"><%= message.rendered_body %></p>
 </li>

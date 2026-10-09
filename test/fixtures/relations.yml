@@ -1,0 +1,10 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+# No name, so the row renders and is stored under the endpoints fallback that
+# `Relation#display_string` and its composite slug both prefer to guess at.
+relation_one:
+  universe: universe_one
+  character1: character_one
+  character2: character_two
+  slug: "relation-one"
+  relation_tags: relation_tag_one

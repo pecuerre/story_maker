@@ -29,6 +29,57 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-10
 
+- **[docs]** **Finding 37 is one table now, and `docs/development.md` had stopped naming the taxonomies
+  a change ago.** The finding had been divided narrowest-first and renumbered once already; with the
+  records landing too, the memberships slice is renumbered to 37.1 rather than left standing at 37.2,
+  for the reason that renumbering gave: a live document must not record that a slice existed once.
+
+  **The development guide's fixture list had gone stale in the very change that made it stale.** It
+  still said Relations, Ownerships, Relation Tags, and Ownership Tags have no fixture file, and it
+  counted four taxonomies — which stopped being true when `relation_tags.yml` and
+  `ownership_tags.yml` landed and this slice was not asked to notice. The list is now what the
+  directory holds, and it names the fact the records needed most: every content set carries a record
+  in universe two, so a cross-scope assertion has something on the far side instead of building one.
+
+  **The finding's count of affected membership tests was one too high, and is corrected rather than
+  carried forward.** Nine cases in `MembershipsControllerTest` create `universe_one` with `user_two`;
+  `UniverseMembershipTest` has one such case, not two.
+
+- **[chore]** **`relations.yml` and `ownerships.yml` join the fixtures — the second of finding 37's
+  slices.** One row per table, plus the `Character` in universe two that `characters.yml` had never
+  carried. The suite failed **two** tests, and the finding's prediction that "the search, photo,
+  soft-delete, and list-workspace tests read the absence of a record as well" was **wrong**: none of
+  them did. Those tests either build the record they need inline or read the newest one through
+  `Relation.order(:id).last`, so a fixture row lands beside them without displacing anything. The
+  prediction is the kind that costs a reader time when it is carried forward as fact, so what the run
+  actually showed is recorded here instead.
+
+  - **Both failures were the two the finding named, and both assertions were reworked rather than
+    deleted.** `MenuCountCacheTest` pinned `relations: 0` and `ownerships: 0` as literals; they are
+    now 1 and 1. The literals are the point of that test — it pins the fixture set as well as the
+    cache — so the fixture was brought to the assertion rather than the assertion relaxed.
+    `HasManyTagsTest`'s "a tag's record list stays inside its own universe and story" caught a corrupt
+    cross-universe join row by asserting the tag's list was **empty**. `character_tag_three` now
+    carries the fixture character from its own universe, so emptiness is no longer what the corrupt
+    row has to be caught by: the assertion names the exact list the tag must show, which makes the
+    foreign record staying out of it visible rather than inferred. This is the same call the taxonomy
+    slice made about the tree's empty state — an empty state is coverage only while something can
+    still be empty.
+  - **Neither record carries a name**, so both render and store under the endpoints fallback that
+    `display_string` and the composite slug prefer to a guess. That is the path the tests building
+    these records inline already take, so the fixture exercises it rather than a named variant.
+  - **The far-side character earned its place instead of sitting unused.** It exists because `Relation`
+    and `Ownership` validate their endpoints against their universe, and nothing tested that:
+    `Relation`'s `associated_records_belong_to_universe` had no case at all, and `OwnershipTest`'s
+    "rejects associated records from another universe" reached the rule only through
+    `ownership_tags`. Both models now assert the endpoint refusal by attribute name, and the ownership
+    case also asserts that the endpoint which did *not* cross is not an error — so the check cannot
+    pass by failing everything.
+
+  Verification: `bin/rails test` — 2132 runs, 13,389 assertions, 0 failures, 0 errors, 13 skips, and
+  `bin/rubocop` — no offenses. Fixtures, three test files, and documentation only; no application,
+  schema, or configuration change, so `test:system`, Brakeman, and `bun run check:js` were not re-run.
+
 - **[chore]** **`relation_tags.yml` and `ownership_tags.yml` join the fixtures — the first of finding 37's
   three slices.** The finding had been divided narrowest-first precisely so the taxonomies could go before the
   records and the memberships, and the prediction was that one assertion would break. It did, and only one:

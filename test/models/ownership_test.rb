@@ -117,6 +117,22 @@ class OwnershipTest < ActiveSupport::TestCase
     assert_includes ownership.errors[:ownership_tags], "must belong to the same universe"
   end
 
+  # The endpoints are checked in their own right, not only through the tag they
+  # arrive with: an Ownership is a link inside one universe, and a character (or
+  # an item) from another one would render as a link the reader cannot open.
+  test "refuses an endpoint from another universe" do
+    foreign_character = Ownership.new(
+      universe: @universe,
+      item: items(:item_one),
+      character: characters(:character_other_universe)
+    )
+
+    assert_not foreign_character.valid?
+    assert_includes foreign_character.errors[:character], "must belong to the ownership's universe"
+    assert_empty foreign_character.errors[:item],
+      "only the endpoint that crossed the boundary is the error"
+  end
+
   test "allows repeated ownerships" do
     attributes = {
       universe: @universe,

@@ -15,3 +15,14 @@ character_three:
   slug: "character-three"
   character_tags: character_tag_child
   name: Character three
+
+# The far side of a cross-scope assertion. Every other content fixture file
+# carries a record in universe two; characters were the exception, so a test
+# that needed a character outside its own universe built one inline. `Relation`
+# and `Ownership` validate their endpoints against their universe, so their
+# fixtures need one of these to point at.
+character_other_universe:
+  universe: universe_two
+  slug: "character-other-universe"
+  character_tags: character_tag_three
+  name: Character other universe

@@ -61,6 +61,9 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **The missing-fixture finding is one table now.** `docs/development.md` lists the fixture set as the
+  directory actually holds it, and finding 37 and its backlog item describe memberships alone.
+
 - **The missing-fixture finding names three tables, not five.** The two taxonomies have their fixture files
   now, so finding 37 and its backlog item describe the records and memberships slices that remain.
 
@@ -76,6 +79,10 @@ Labels used below, in the order their groups appear:
   journey that actually covers the control.
 
 ### chore
+
+- **`relations.yml` and `ownerships.yml` join the fixtures.** Each takes the shape the other content
+  fixtures have, and `characters.yml` gains the universe-two record they point at across a scope
+  boundary; it was the second slice of quirk 37.
 
 - **`relation_tags.yml` and `ownership_tags.yml` join the fixtures.** Each takes the three-row shape the
   other universe-level taxonomies already have, and the relation tags index now arranges the empty taxonomy

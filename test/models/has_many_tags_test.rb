@@ -139,9 +139,13 @@ class HasManyTagsTest < ActiveSupport::TestCase
 
   test "a tag's record list stays inside its own universe and story" do
     character_tag = character_tags(:character_tag_one)
+    own_character = characters(:character_other_universe)
     insert_join_row(:characters_character_tags, characters(:character_one), character_tags(:character_tag_three))
 
-    assert_empty character_tags(:character_tag_three).tagged_records
+    # `character_tag_three` carries a character of its own, so an empty list is
+    # no longer what the corrupt join row has to be caught by: the row is caught
+    # by the foreign record staying out of a list that is not empty.
+    assert_equal [ own_character.id ], character_tags(:character_tag_three).tagged_records.pluck(:id)
     assert_equal [ characters(:character_one).id ], character_tag.tagged_records.pluck(:id)
 
     section_tag = section_tags(:section_tag_one)

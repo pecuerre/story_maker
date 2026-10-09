@@ -15,13 +15,16 @@ class MenuCountCacheTest < ActiveSupport::TestCase
   end
 
   test "caches all universe menu counts together" do
+    # Every figure is a fixture row rather than an empty table, so this pins the
+    # fixture set as well as the cache: the relation and the ownership used to
+    # read as zero here because `test/fixtures/` had no file for either table.
     expected_counts = {
       characters: 3,
-      relations: 0,
+      relations: 1,
       locations: 2,
       events: 2,
       items: 2,
-      ownerships: 0
+      ownerships: 1
     }
 
     assert_equal expected_counts, @universe.menu_counts

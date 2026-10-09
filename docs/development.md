@@ -183,14 +183,16 @@ Layout:
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
   (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements and
   scene characters (both belong to `story_one`'s first Scene), plus content and tag fixtures for
-  **characters, locations, items, events**, and their four taxonomies.
-  **Not every table has a fixture file.** Relations, Ownerships, Relation Tags, Ownership Tags, and
-  Universe Memberships have none, so the tests that need those records create them inline. That is a
-  deliberate current state rather than an oversight, and the reason is recorded in
-  [`known_quirks.md`](known_quirks.md) as finding 37: adding the files is not a mechanical change,
-  because nine existing tests read the *absence* of those records — an empty taxonomy list, a tag
-  whose carrying records must be empty, a cross-universe lookup with nothing on the far side, and
-  three membership tests that create the very row a fixture would already hold.
+  **characters, locations, items, events, relations, and ownerships**, and their six taxonomies.
+  Every content set carries a record in universe two — `event_other_universe`, `location_three`,
+  `character_other_universe`, and the universe-two taxonomy tags — so a test that has to look across a
+  scope boundary has something on the far side.
+  **Not every table has a fixture file.** Universe Memberships have none, so the tests that need
+  those records create them inline. That is a deliberate current state rather than an oversight, and
+  the reason is recorded in [`known_quirks.md`](known_quirks.md) as finding 37: adding the file is
+  not a mechanical change, because ten membership tests pair `universe_one` with `user_two` — the very
+  row a fixture would already hold — so a fixture for that pair fails on the uniqueness validation
+  working correctly rather than on anything wrong with the fixture.
 - Sign in with `sign_in_as(users(:user_one))` /
   `sign_out` from `test/test_helpers/session_test_helper.rb`.
 - **A test must not leave the process environment changed.** `ENV` is process-wide and

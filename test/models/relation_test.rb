@@ -94,6 +94,30 @@ class RelationTest < ActiveSupport::TestCase
     assert Relation.create!(attributes)
   end
 
+  # A Relation is a link inside one universe, so an endpoint from another one is
+  # refused rather than rendered as a link to somebody the reader cannot open.
+  # This is the model rule behind the controller's cross-scope refusals, and it is
+  # asserted per endpoint because the two attributes are validated in turn.
+  test "refuses an endpoint from another universe" do
+    relation = Relation.new(
+      universe: @universe,
+      character1: @character,
+      character2: characters(:character_other_universe)
+    )
+
+    assert_not relation.valid?
+    assert_includes relation.errors[:character2], "must belong to the relation's universe"
+
+    swapped = Relation.new(
+      universe: @universe,
+      character1: characters(:character_other_universe),
+      character2: characters(:character_two)
+    )
+
+    assert_not swapped.valid?
+    assert_includes swapped.errors[:character1], "must belong to the relation's universe"
+  end
+
   test "display_string falls back to its two endpoints because the name is optional" do
     other = characters(:character_two)
     relation = Relation.create!(universe: @universe, character1: @character, character2: other)

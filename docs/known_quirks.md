@@ -33,23 +33,16 @@ being written down, so **re-read a finding against the code before acting on it*
       because `bin/kamal config` cannot be used in CI — it prints resolved secrets — but loading a
       configuration is not the same as deploying it.
 
-37. **Low — `test/fixtures/` has no file for three tables, and the tests that need those records build
-    them inline.** `relations`, `ownerships`, and `universe_memberships` are the three; every other
-    persisted model has a fixture file. Each fixture hands its table a row the suite currently assumes
-    is empty, so closing this is not "add three files": the tests that read that absence have to change
-    what they assert and therefore what they prove. The work divides into two slices, narrowest first.
+37. **Low — `test/fixtures/` has no file for `universe_memberships`, and the tests that need those
+    records build them inline.** Every other persisted model has a fixture file. A fixture hands its
+    table a row the suite currently assumes is empty, so closing this is not "add one file": the
+    tests that read that absence have to change what they assert and therefore what they prove.
 
-    - slice 37.1. **The two records, and the `Character` in `universe_two` that no fixture has.** `relations.yml`
-      and `ownerships.yml` need a counterpart on the far side for a cross-scope assertion, which is why
-      that `Character` belongs to this slice rather than a later one. This is the widest of the two:
-      `test/models/menu_count_cache_test.rb` pins `relations: 0`, `ownerships: 0`, and `characters: 3`
-      as literals, and the search, photo, soft-delete, and list-workspace tests read the absence of a
-      record as well.
-    - slice 37.2. **Memberships.** `universe_memberships.yml` is the narrowest file and the widest rework, because
-      the membership tests build the row a fixture would already hold: nine cases in
-      `test/controllers/memberships_controller_test.rb` and two in `test/models/universe_membership_test.rb`
-      all pair `universe_one` with `user_two`, so a fixture for that pair fails on the uniqueness
-      validation working correctly rather than on anything wrong with the fixture.
+    - slice 37.1. **Memberships.** The membership tests build the row a fixture would already hold:
+      nine cases in `test/controllers/memberships_controller_test.rb` and one in
+      `test/models/universe_membership_test.rb` all pair `universe_one` with `user_two`, so a fixture
+      for that pair fails on the uniqueness validation working correctly rather than on anything wrong
+      with the fixture. This is the narrowest file and the widest rework, which is why it was last.
 
     The reasoning, including the attempt that was written and reverted, is in
     [`delivery_history.md`](delivery_history.md); the pending work is in [`backlog.md`](backlog.md).

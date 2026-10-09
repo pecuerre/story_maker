@@ -166,15 +166,15 @@ it has a useful destination and clear empty/loading/error states.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-30. **Three fixture files and the tests that assume the tables are empty**
+30. **A `universe_memberships.yml` fixture and the tests that assume the table is empty**
 
-    `relations`, `ownerships`, and `universe_memberships` have no file in `test/fixtures/`, so the tests
-    needing those records build them inline. Adding a file hands its table a row that several tests read
-    the *absence* of, so closing this changes what those tests assert and therefore what they prove; it is
-    a Low-severity finding that has earned a deliberate scheduling decision rather than a drive-by fix.
-    The two slices it divides into, in the order they should be closed, and the tests each one has to
-    rework are in finding 37 of [`known_quirks.md`](known_quirks.md); the attempt that was written and
-    reverted, and why, is in [`delivery_history.md`](delivery_history.md).
+    `universe_memberships` has no file in `test/fixtures/`, so the tests needing those records build
+    them inline. Adding a file hands its table a row that those tests read the *absence* of, so
+    closing this changes what they assert and therefore what they prove; it is a Low-severity finding
+    that has earned a deliberate scheduling decision rather than a drive-by fix. The slice it now is,
+    the pair the tests already hold, and the tests it has to rework are in finding 37 of
+    [`known_quirks.md`](known_quirks.md); the attempt that was written and reverted, and why, is in
+    [`delivery_history.md`](delivery_history.md).
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

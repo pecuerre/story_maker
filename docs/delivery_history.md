@@ -29,6 +29,38 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-10
 
+- **[chore]** **`relation_tags.yml` and `ownership_tags.yml` join the fixtures — the first of finding 37's
+  three slices.** The finding had been divided narrowest-first precisely so the taxonomies could go before the
+  records and the memberships, and the prediction was that one assertion would break. It did, and only one:
+  `test/controllers/relation_tags_controller_test.rb:16` asserted the taxonomy tree's empty state, which held
+  only because `relation_tags` was empty everywhere rather than because anything in the test arranged it.
+
+  - **The empty state was real coverage, so it was made explicit instead of deleted.** The assertion was the
+    suite's only exercise of the `nodes.empty? && pending_creates.empty?` branch in
+    `app/views/shared/_taxonomy_tree.html.erb` — a partial all eight taxonomies share — so dropping it with the
+    fixture would have quietly retired a branch no other test reached. With a row in the table, a taxonomy that
+    holds nothing is now a condition a test has to produce, so the index test asserts the fixture's rendered row
+    and a second test creates a universe with no relation tags to reach the branch honestly.
+  - **The three-row shape is what the other universe-level taxonomies already have**, so the fixtures were
+    written to match rather than to prove anything new: one taggable row and one grouping row in
+    `universe_one`, one taggable row in `universe_two`. `show_in_menu` is deliberately absent — only the four
+    menu taxonomies have that column, and a fixture setting it would fail on a column that does not exist.
+    `relation_tag_three` sets `symmetric: false` with an `inverse`, because a non-symmetric relation tag without
+    one is exactly what `RelationTag`'s validation refuses, and a fixture that failed on it would say nothing
+    about the fixture.
+  - **The ownership sibling needed no rework**, as the finding predicted: `ownership_tags_controller_test.rb`
+    asserts only a successful response, so nothing it proves depended on the table being empty. It was left
+    alone rather than strengthened here, because a fixture landing is not the same change as a test that never
+    looked at one.
+  - **The finding's remaining slices were renumbered rather than left with a gap.** Finding 37 and backlog item
+    30 now name three tables instead of five, and the two surviving slices are 37.1 and 37.2. Leaving the list
+    starting at 37.2 would have recorded in a live document that a slice had existed once, which is exactly the
+    history [`known_quirks.md`](known_quirks.md) refuses to hold.
+
+  Verification: `bin/rails test` — 2130 runs, 13361 assertions, 0 failures, 0 errors, 13 skips, and
+  `bin/rubocop` — 473 files, no offenses. Fixtures, one controller test, and documentation only; no
+  application, schema, or configuration change, so `test:system` and Brakeman were not re-run for it.
+
 - **[docs]** **Finding 72 became [ADR 0027](adr/0027-a-draft-is-one-line-of-work.md): a draft is one line
   of work.** The finding recorded a cost no document owned — an author cannot pursue two directions for one
   record, because one open draft per author per universe is a partial unique index ([ADR

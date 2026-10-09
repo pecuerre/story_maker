@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+relation_tag_one:
+  universe: universe_one
+  slug: "relation-tag-one"
+  name: Relation tag one
+  taggable: true
+  symmetric: true
+
+relation_tag_two:
+  universe: universe_one
+  slug: "relation-tag-two"
+  name: Relation tag two
+  taggable: false
+  symmetric: true
+
+relation_tag_three:
+  universe: universe_two
+  slug: "relation-tag-three"
+  name: Relation tag three
+  taggable: true
+  symmetric: false
+  inverse: Known by relation tag three

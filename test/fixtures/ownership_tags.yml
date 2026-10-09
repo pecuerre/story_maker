@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+ownership_tag_one:
+  universe: universe_one
+  slug: "ownership-tag-one"
+  name: Ownership tag one
+  taggable: true
+
+ownership_tag_two:
+  universe: universe_one
+  slug: "ownership-tag-two"
+  name: Ownership tag two
+  taggable: false
+
+ownership_tag_three:
+  universe: universe_two
+  slug: "ownership-tag-three"
+  name: Ownership tag three
+  taggable: true

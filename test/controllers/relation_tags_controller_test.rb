@@ -3,6 +3,7 @@ require "test_helper"
 class RelationTagsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @universe = universes(:universe_one)
+    @relation_tag = relation_tags(:relation_tag_one)
     sign_in_as(users(:user_one))
   end
 
@@ -13,6 +14,20 @@ class RelationTagsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".page-header h1", text: "Relation tags"
     assert_select ".page-description", text: /relationship types/
     assert_select ".page-actions button", text: "Add relation tag"
+    assert_includes response.body, @relation_tag.name
+  end
+
+  # The tree's empty state used to be asserted by the index test above, which only
+  # held because the whole table was empty. A taxonomy that holds nothing is now a
+  # condition the test has to arrange rather than one it inherits, so it gets its
+  # own case: the shared tree partial still draws the empty state for every one of
+  # the eight taxonomies, and only a deliberately bare universe exercises that.
+  test "a taxonomy with no relation tags shows the empty state" do
+    bare = Universe.create!(owner: users(:user_one), name: "Bare relations", slug: "bare-relations")
+
+    get universe_relation_tags_url(universe_slug: bare.slug)
+
+    assert_response :success
     assert_select ".empty-state", text: /No relation tags yet/
   end
 

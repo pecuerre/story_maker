@@ -61,12 +61,25 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **The missing-fixture finding names three tables, not five.** The two taxonomies have their fixture files
+  now, so finding 37 and its backlog item describe the records and memberships slices that remain.
+
+- **Finding 37 now carries its three slices.** The missing-fixture finding is split into the two
+  taxonomies, the two records plus the `Character` in `universe_two`, and memberships, in the order
+  they should be closed; the backlog item points at that order instead of restating it.
+
 - **A draft is one line of work.** [ADR 0027](docs/adr/0027-a-draft-is-one-line-of-work.md) settles the
   product decision that finding 72 recorded without one: there is no branch, fork, or merge, and a second
   line of work is bought by closing the first.
 
 - **The editing-session test pointed at a system test that does not exist.** It now names the browser
   journey that actually covers the control.
+
+### chore
+
+- **`relation_tags.yml` and `ownership_tags.yml` join the fixtures.** Each takes the three-row shape the
+  other universe-level taxonomies already have, and the relation tags index now arranges the empty taxonomy
+  it asserts rather than inheriting one; it was the first slice of quirk 37.
 
 ## 2026-10-07
 

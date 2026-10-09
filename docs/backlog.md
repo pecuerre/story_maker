@@ -166,18 +166,15 @@ it has a useful destination and clear empty/loading/error states.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-30. **Five fixture files and the tests that assume the tables are empty**
+30. **Three fixture files and the tests that assume the tables are empty**
 
-    `relations`, `ownerships`, `relation_tags`, `ownership_tags`, and `universe_memberships` have no
-    file in `test/fixtures/`, so the tests needing those records build them inline. Adding the files is
-    the easy half: a fixture would then hold the row nine tests currently assert the *absence* of — an
-    empty taxonomy tree, a tag carrying nothing, a membership that a test creates itself (one already
-    failing on the membership unique index with `User has already been taken`). Closing this is therefore
-    "add five files **and** rework those nine tests", which changes what they assert and so what they
-    prove; it is a Low-severity finding that has earned a deliberate scheduling decision rather than a
-    drive-by fix. A cross-scope assertion also needs a Character in universe two, which no fixture
-    change alone supplies. The reverted attempt and why it was reverted is in
-    [`delivery_history.md`](delivery_history.md).
+    `relations`, `ownerships`, and `universe_memberships` have no file in `test/fixtures/`, so the tests
+    needing those records build them inline. Adding a file hands its table a row that several tests read
+    the *absence* of, so closing this changes what those tests assert and therefore what they prove; it is
+    a Low-severity finding that has earned a deliberate scheduling decision rather than a drive-by fix.
+    The two slices it divides into, in the order they should be closed, and the tests each one has to
+    rework are in finding 37 of [`known_quirks.md`](known_quirks.md); the attempt that was written and
+    reverted, and why, is in [`delivery_history.md`](delivery_history.md).
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

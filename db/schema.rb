@@ -12,24 +12,24 @@
 
 ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.bigint "record_id", null: false
-    t.string "record_type", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
   create_table "active_storage_blobs", force: :cascade do |t|
-    t.bigint "byte_size", null: false
-    t.string "checksum"
-    t.string "content_type"
-    t.datetime "created_at", null: false
-    t.string "filename", null: false
     t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
     t.text "metadata"
     t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
@@ -40,36 +40,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "character_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
+    t.integer "universe_id", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
-    t.boolean "show_in_menu", default: false, null: false
+    t.text "description"
     t.string "slug", null: false
-    t.boolean "taggable", default: true, null: false
-    t.integer "universe_id", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.boolean "show_in_menu", default: false, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_character_tags_on_parent_id"
     t.index ["photo_id"], name: "index_character_tags_on_photo_id"
     t.index ["universe_id"], name: "index_character_tags_on_universe_id"
   end
 
   create_table "characters", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
-    t.integer "position", default: 0, null: false
-    t.string "slug", null: false
     t.integer "universe_id", null: false
+    t.integer "position", default: 0, null: false
+    t.text "description"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_characters_on_parent_id"
     t.index ["photo_id"], name: "index_characters_on_photo_id"
     t.index ["universe_id"], name: "index_characters_on_universe_id"
@@ -82,59 +82,59 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "discussion_messages", force: :cascade do |t|
+    t.integer "discussion_id", null: false
+    t.integer "user_id", null: false
     t.text "body", null: false
     t.datetime "created_at", null: false
-    t.integer "discussion_id", null: false
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
     t.index ["discussion_id", "created_at", "id"], name: "idx_on_discussion_id_created_at_id_7366ff0c27"
     t.index ["discussion_id"], name: "index_discussion_messages_on_discussion_id"
     t.index ["user_id"], name: "index_discussion_messages_on_user_id"
   end
 
   create_table "discussions", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "record_id", null: false
-    t.string "record_type", null: false
-    t.string "title"
     t.integer "universe_id", null: false
+    t.string "record_type", null: false
+    t.integer "record_id", null: false
+    t.string "title"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["record_type", "record_id"], name: "index_discussions_on_record_type_and_record_id", unique: true
     t.index ["universe_id"], name: "index_discussions_on_universe_id"
   end
 
   create_table "draft_change_outcomes", force: :cascade do |t|
+    t.integer "draft_id", null: false
+    t.integer "draft_change_id", null: false
+    t.string "state", null: false
     t.string "answer"
     t.datetime "created_at", null: false
-    t.integer "draft_change_id", null: false
-    t.integer "draft_id", null: false
-    t.string "state", null: false
     t.index ["draft_change_id"], name: "index_draft_change_outcomes_on_draft_change_id", unique: true
     t.index ["draft_id"], name: "index_draft_change_outcomes_on_draft_id"
   end
 
   create_table "draft_changes", force: :cascade do |t|
+    t.integer "draft_id", null: false
+    t.string "record_type", null: false
+    t.integer "record_id"
     t.string "action", null: false
+    t.json "payload"
     t.string "base_version"
     t.datetime "created_at", null: false
-    t.integer "draft_id", null: false
-    t.json "payload"
-    t.integer "record_id"
-    t.string "record_type", null: false
     t.index ["draft_id", "created_at", "id"], name: "index_draft_changes_on_draft_id_and_created_at_and_id"
     t.index ["draft_id"], name: "index_draft_changes_on_draft_id"
   end
 
   create_table "drafts", force: :cascade do |t|
-    t.integer "applied_count", default: 0, null: false
-    t.datetime "closed_at"
-    t.datetime "created_at", null: false
-    t.integer "kept_count", default: 0, null: false
-    t.integer "skipped_count", default: 0, null: false
-    t.string "status", default: "draft", null: false
-    t.integer "universe_id", null: false
-    t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.integer "universe_id", null: false
+    t.string "status", default: "draft", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "closed_at"
+    t.integer "applied_count", default: 0, null: false
+    t.integer "skipped_count", default: 0, null: false
+    t.integer "kept_count", default: 0, null: false
     t.index ["universe_id"], name: "index_drafts_on_universe_id"
     t.index ["user_id", "universe_id"], name: "index_drafts_on_user_and_universe_while_open", unique: true, where: "status IN ('draft', 'submitted')"
     t.index ["user_id", "universe_id"], name: "index_drafts_on_user_id_and_universe_id"
@@ -142,42 +142,42 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "event_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
-    t.boolean "show_in_menu", default: false, null: false
+    t.text "description"
     t.string "slug", null: false
-    t.boolean "taggable", default: true, null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
     t.integer "universe_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.boolean "show_in_menu", default: false, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_event_tags_on_parent_id"
     t.index ["photo_id"], name: "index_event_tags_on_photo_id"
     t.index ["universe_id"], name: "index_event_tags_on_universe_id"
   end
 
   create_table "events", force: :cascade do |t|
-    t.integer "after_event_id"
-    t.integer "before_event_id"
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.datetime "end_datetime"
-    t.string "name"
-    t.integer "parent_id"
-    t.integer "photo_id"
-    t.integer "position", default: 0, null: false
-    t.integer "simultaneous_event_id"
-    t.string "slug", null: false
-    t.datetime "start_datetime"
     t.string "title"
+    t.string "name"
+    t.datetime "start_datetime"
+    t.datetime "end_datetime"
+    t.integer "before_event_id"
+    t.integer "after_event_id"
+    t.integer "simultaneous_event_id"
+    t.integer "parent_id"
     t.integer "universe_id", null: false
+    t.integer "position", default: 0, null: false
+    t.text "description"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["after_event_id"], name: "index_events_on_after_event_id"
     t.index ["before_event_id"], name: "index_events_on_before_event_id"
     t.index ["parent_id"], name: "index_events_on_parent_id"
@@ -196,36 +196,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "item_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
+    t.integer "universe_id", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
-    t.boolean "show_in_menu", default: false, null: false
+    t.text "description"
     t.string "slug", null: false
-    t.boolean "taggable", default: true, null: false
-    t.integer "universe_id", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.boolean "show_in_menu", default: false, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_item_tags_on_parent_id"
     t.index ["photo_id"], name: "index_item_tags_on_photo_id"
     t.index ["universe_id"], name: "index_item_tags_on_universe_id"
   end
 
   create_table "items", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
-    t.integer "position", default: 0, null: false
-    t.string "slug", null: false
     t.integer "universe_id", null: false
+    t.integer "position", default: 0, null: false
+    t.text "description"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_items_on_parent_id"
     t.index ["photo_id"], name: "index_items_on_photo_id"
     t.index ["universe_id"], name: "index_items_on_universe_id"
@@ -238,36 +238,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "location_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
-    t.boolean "show_in_menu", default: false, null: false
-    t.string "slug", null: false
-    t.boolean "taggable", default: true, null: false
+    t.text "description"
     t.integer "universe_id", null: false
+    t.string "slug", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.boolean "show_in_menu", default: false, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_location_tags_on_parent_id"
     t.index ["photo_id"], name: "index_location_tags_on_photo_id"
     t.index ["universe_id"], name: "index_location_tags_on_universe_id"
   end
 
   create_table "locations", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
+    t.text "description"
+    t.integer "universe_id", null: false
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
-    t.integer "universe_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_locations_on_parent_id"
     t.index ["photo_id"], name: "index_locations_on_photo_id"
     t.index ["universe_id"], name: "index_locations_on_universe_id"
@@ -280,48 +280,48 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "notifications", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "kind", null: false
-    t.json "payload"
-    t.boolean "read", default: false, null: false
     t.integer "user_id", null: false
+    t.string "kind", null: false
+    t.boolean "read", default: false, null: false
+    t.json "payload"
+    t.datetime "created_at", null: false
     t.index ["user_id", "created_at", "id"], name: "index_notifications_on_user_id_and_created_at_and_id"
     t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "ownership_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
+    t.integer "universe_id", null: false
     t.string "name"
+    t.text "description"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
-    t.boolean "taggable", default: true, null: false
-    t.integer "universe_id", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_ownership_tags_on_parent_id"
     t.index ["photo_id"], name: "index_ownership_tags_on_photo_id"
     t.index ["universe_id"], name: "index_ownership_tags_on_universe_id"
   end
 
   create_table "ownerships", force: :cascade do |t|
-    t.integer "character_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.datetime "from_date"
-    t.integer "item_id", null: false
-    t.string "name"
-    t.integer "photo_id"
-    t.string "slug", null: false
-    t.datetime "to_date"
     t.integer "universe_id", null: false
+    t.integer "item_id", null: false
+    t.integer "character_id", null: false
+    t.text "description"
+    t.string "name"
+    t.datetime "from_date"
+    t.datetime "to_date"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["character_id"], name: "index_ownerships_on_character_id"
     t.index ["item_id"], name: "index_ownerships_on_item_id"
     t.index ["photo_id"], name: "index_ownerships_on_photo_id"
@@ -335,48 +335,48 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "photos", force: :cascade do |t|
-    t.datetime "created_at", null: false
+    t.integer "universe_id", null: false
     t.string "name"
     t.string "slug", null: false
-    t.integer "universe_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["universe_id"], name: "index_photos_on_universe_id"
   end
 
   create_table "relation_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
-    t.string "inverse"
+    t.integer "universe_id", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
-    t.string "slug", null: false
+    t.text "description"
     t.boolean "symmetric", default: true, null: false
-    t.boolean "taggable", default: true, null: false
-    t.integer "universe_id", null: false
+    t.string "inverse"
+    t.string "slug", null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_relation_tags_on_parent_id"
     t.index ["photo_id"], name: "index_relation_tags_on_photo_id"
     t.index ["universe_id"], name: "index_relation_tags_on_universe_id"
   end
 
   create_table "relations", force: :cascade do |t|
+    t.integer "universe_id", null: false
     t.integer "character1_id", null: false
     t.integer "character2_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
+    t.string "name"
     t.text "description"
     t.datetime "from_date"
-    t.string "name"
-    t.integer "photo_id"
-    t.string "slug", null: false
     t.datetime "to_date"
-    t.integer "universe_id", null: false
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["character1_id"], name: "index_relations_on_character1_id"
     t.index ["character2_id"], name: "index_relations_on_character2_id"
     t.index ["photo_id"], name: "index_relations_on_photo_id"
@@ -390,15 +390,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "review_requests", force: :cascade do |t|
-    t.datetime "created_at", null: false
     t.integer "draft_id", null: false
-    t.text "review_notes"
-    t.integer "reviewed_by_id"
-    t.string "status", default: "pending", null: false
-    t.text "submission_message"
-    t.integer "submitted_by_id", null: false
     t.integer "universe_id", null: false
+    t.integer "submitted_by_id", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "reviewed_by_id"
+    t.text "review_notes"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "submission_message"
     t.index ["draft_id"], name: "index_review_requests_on_draft_id"
     t.index ["draft_id"], name: "index_review_requests_on_draft_while_pending", unique: true, where: "status = 'pending'"
     t.index ["reviewed_by_id"], name: "index_review_requests_on_reviewed_by_id"
@@ -407,95 +407,95 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "scene_characters", force: :cascade do |t|
-    t.integer "character_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.string "role"
     t.integer "scene_id", null: false
+    t.integer "character_id", null: false
+    t.string "role"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
     t.index ["character_id"], name: "index_scene_characters_on_character_id"
     t.index ["scene_id", "character_id"], name: "index_scene_characters_on_scene_id_and_character_id", unique: true, where: "deleted_at IS NULL"
     t.index ["scene_id"], name: "index_scene_characters_on_scene_id"
   end
 
   create_table "scene_element_speakers", id: false, force: :cascade do |t|
-    t.integer "character_id", null: false
     t.integer "scene_element_id", null: false
+    t.integer "character_id", null: false
     t.index ["character_id"], name: "index_scene_element_speakers_on_character_id"
     t.index ["scene_element_id", "character_id"], name: "index_scene_element_speakers_on_element_and_character", unique: true
     t.index ["scene_element_id"], name: "index_scene_element_speakers_on_scene_element_id"
   end
 
   create_table "scene_elements", force: :cascade do |t|
-    t.text "body"
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
+    t.integer "scene_id", null: false
     t.string "kind", default: "narration", null: false
     t.string "name"
+    t.text "body"
     t.integer "position", default: 0, null: false
-    t.integer "scene_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
     t.index ["scene_id", "position"], name: "index_scene_elements_on_scene_id_and_position"
     t.index ["scene_id"], name: "index_scene_elements_on_scene_id"
     t.check_constraint "kind IN ('narration', 'dialogue')", name: "scene_elements_kind_is_known"
   end
 
   create_table "scene_items", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
+    t.integer "scene_id", null: false
     t.integer "item_id", null: false
     t.string "role"
-    t.integer "scene_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
     t.index ["item_id"], name: "index_scene_items_on_item_id"
     t.index ["scene_id", "item_id"], name: "index_scene_items_on_scene_id_and_item_id", unique: true, where: "deleted_at IS NULL"
     t.index ["scene_id"], name: "index_scene_items_on_scene_id"
   end
 
   create_table "scene_locations", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
+    t.integer "scene_id", null: false
     t.integer "location_id", null: false
     t.string "role"
-    t.integer "scene_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
     t.index ["location_id"], name: "index_scene_locations_on_location_id"
     t.index ["scene_id", "location_id"], name: "index_scene_locations_on_scene_id_and_location_id", unique: true, where: "deleted_at IS NULL"
     t.index ["scene_id"], name: "index_scene_locations_on_scene_id"
   end
 
   create_table "scene_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
+    t.integer "story_id", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
+    t.text "description"
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
     t.string "slug", null: false
-    t.integer "story_id", null: false
-    t.boolean "taggable", default: true, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_scene_tags_on_parent_id"
     t.index ["photo_id"], name: "index_scene_tags_on_photo_id"
     t.index ["story_id"], name: "index_scene_tags_on_story_id"
   end
 
   create_table "scenes", force: :cascade do |t|
+    t.integer "story_id", null: false
+    t.string "name"
+    t.text "description"
+    t.integer "position", default: 0, null: false
+    t.string "slug", null: false
     t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "section_id"
+    t.integer "event_id"
     t.datetime "datetime"
     t.datetime "deleted_at"
-    t.text "description"
-    t.integer "event_id"
-    t.string "name"
     t.integer "photo_id"
-    t.integer "position", default: 0, null: false
-    t.integer "section_id"
-    t.string "slug", null: false
-    t.integer "story_id", null: false
-    t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_scenes_on_event_id"
     t.index ["photo_id"], name: "index_scenes_on_photo_id"
     t.index ["section_id"], name: "index_scenes_on_section_id"
@@ -513,35 +513,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "section_tags", force: :cascade do |t|
-    t.string "bgcolor", default: "#d3d3d3", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "fgcolor", default: "#000000", null: false
+    t.integer "story_id", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
+    t.text "description"
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
     t.string "slug", null: false
-    t.integer "story_id", null: false
-    t.boolean "taggable", default: true, null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "taggable", default: true, null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_section_tags_on_parent_id"
     t.index ["photo_id"], name: "index_section_tags_on_photo_id"
     t.index ["story_id"], name: "index_section_tags_on_story_id"
   end
 
   create_table "sections", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
+    t.integer "story_id", null: false
     t.string "name"
     t.integer "parent_id"
-    t.integer "photo_id"
     t.integer "position", default: 0, null: false
+    t.text "description"
     t.string "slug", null: false
-    t.integer "story_id", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["parent_id"], name: "index_sections_on_parent_id"
     t.index ["photo_id"], name: "index_sections_on_photo_id"
     t.index ["story_id"], name: "index_sections_on_story_id"
@@ -554,64 +554,64 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
   end
 
   create_table "sessions", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "expires_at"
-    t.string "ip_address"
-    t.datetime "last_used_at"
-    t.datetime "updated_at", null: false
-    t.string "user_agent"
     t.integer "user_id", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "expires_at"
+    t.datetime "last_used_at"
     t.index ["expires_at"], name: "index_sessions_on_expires_at"
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
   create_table "stories", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.text "description"
-    t.string "name"
-    t.integer "photo_id"
-    t.string "slug", null: false
     t.integer "universe_id", null: false
+    t.string "name"
+    t.text "description"
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
     t.index ["photo_id"], name: "index_stories_on_photo_id"
     t.index ["universe_id", "slug"], name: "index_stories_on_universe_id_and_slug", unique: true, where: "deleted_at IS NULL"
     t.index ["universe_id"], name: "index_stories_on_universe_id"
   end
 
   create_table "universe_memberships", force: :cascade do |t|
+    t.integer "universe_id", null: false
+    t.integer "user_id", null: false
     t.integer "access_level", default: 1, null: false
     t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.integer "universe_id", null: false
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.datetime "deleted_at"
     t.index ["universe_id", "user_id"], name: "index_universe_memberships_on_universe_id_and_user_id", unique: true, where: "deleted_at IS NULL"
     t.index ["universe_id"], name: "index_universe_memberships_on_universe_id"
     t.index ["user_id"], name: "index_universe_memberships_on_user_id"
   end
 
   create_table "universes", force: :cascade do |t|
-    t.string "collaboration_mode", default: "direct", null: false
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
     t.string "name"
     t.integer "owner_id", null: false
-    t.integer "photo_id"
     t.boolean "private", default: false, null: false
     t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.integer "photo_id"
+    t.string "collaboration_mode", default: "direct", null: false
     t.index ["owner_id"], name: "index_universes_on_owner_id"
     t.index ["photo_id"], name: "index_universes_on_photo_id"
     t.index ["slug"], name: "index_universes_on_slug", unique: true, where: "deleted_at IS NULL"
   end
 
   create_table "users", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "email_address", null: false
     t.string "name", null: false
+    t.string "email_address", null: false
     t.string "password_digest", null: false
     t.string "slug", null: false
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true

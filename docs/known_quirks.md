@@ -33,20 +33,6 @@ being written down, so **re-read a finding against the code before acting on it*
       because `bin/kamal config` cannot be used in CI — it prints resolved secrets — but loading a
       configuration is not the same as deploying it.
 
-37. **Low — `test/fixtures/` has no file for `universe_memberships`, and the tests that need those
-    records build them inline.** Every other persisted model has a fixture file. A fixture hands its
-    table a row the suite currently assumes is empty, so closing this is not "add one file": the
-    tests that read that absence have to change what they assert and therefore what they prove.
-
-    - slice 37.1. **Memberships.** The membership tests build the row a fixture would already hold:
-      nine cases in `test/controllers/memberships_controller_test.rb` and one in
-      `test/models/universe_membership_test.rb` all pair `universe_one` with `user_two`, so a fixture
-      for that pair fails on the uniqueness validation working correctly rather than on anything wrong
-      with the fixture. This is the narrowest file and the widest rework, which is why it was last.
-
-    The reasoning, including the attempt that was written and reverted, is in
-    [`delivery_history.md`](delivery_history.md); the pending work is in [`backlog.md`](backlog.md).
-
 ## Contract-dependent and future-feature footguns
 
 These observations are code-proven but depend on a product/deployment decision or are not reachable

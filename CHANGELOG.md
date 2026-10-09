@@ -80,6 +80,15 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **`UniverseTest`'s owner-has-no-row assertion is no longer vacuous.** With the fixture giving
+  `user_one` a read membership in universe two, the test now proves the owner holds that row *there*
+  before asserting they hold none in their own universe.
+
+- **`universe_memberships.yml` joins the fixtures, which closes quirk 37.** The row is `user_one`
+  holding a read membership in universe two, and the cross-scope membership case now reads it instead
+  of building the row it refuses to reach; the guide states why it is deliberately not the pair the
+  membership tests arrange.
+
 - **`relations.yml` and `ownerships.yml` join the fixtures.** Each takes the shape the other content
   fixtures have, and `characters.yml` gains the universe-two record they point at across a scope
   boundary; it was the second slice of quirk 37.

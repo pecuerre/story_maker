@@ -29,6 +29,48 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-10
 
+- **[chore]** **`universe_memberships.yml` joins the fixtures, which closes finding 37.** One row:
+  `user_one` holding a read membership in `universe_two`. The suite failed **one** test, the
+  cross-scope case in `MembershipsControllerTest`, and it now reads the fixture instead of building
+  the row it was refusing to reach.
+
+  - **The fixture holds the other pair, and choosing it is what made this a one-test change.** The
+    finding assumed the file would hold `universe_one` with `user_two`, because that is the pair the
+    membership tests build. That was **measured, not argued**: with the file holding that pair the
+    suite failed **twenty** tests — the nine membership cases, plus `SessionsControllerTest`,
+    `WorkspaceLocaleTest`, `UniversesControllerTest`, and two `UniverseTest` cases that all arrange a
+    member of universe one for a different reason. Each of those twenty proves something about a
+    universe-one membership, so each would have had to change what it proves. Holding
+    `universe_two`/`user_one` puts the row on the far side, where nothing arranges one, and collides
+    with exactly the case that wanted a far-side row. `docs/development.md` already owned the rule
+    that settles it — a membership fixture must not stand in for a private collaboration scenario a
+    test has to arrange itself — so the file gives the table a row without handing any test the
+    access it was meant to prove.
+  - **The collision made that case stronger rather than merely different.** "Membership ids cannot
+    cross universe boundaries" patches an id through the other universe's URL and asserts the row is
+    unchanged. Its far side used to be a row the test had just created, so the scope the id crosses
+    existed only because the test put it there; it now asserts which universe the fixture's row
+    belongs to before patching it, which makes the boundary visible in the test.
+  - **The other nine membership cases were left alone on purpose.** Each builds the row at the level
+    the case is about — admin, write, read — and one fixture level in one universe cannot stand in
+    for all three without either weakening a case or making the file carry nine rows. The finding's
+    prediction that closing this "changes what nine tests assert" held for the pair it assumed and
+    not for the pair the file holds, so the measurement is recorded here rather than the prediction.
+
+  - **One assertion the fixture made non-vacuous now proves it instead of claiming it.** `UniverseTest`'s
+    "members are the owner plus everybody with a membership row" asserts that the owner holds no
+    membership row in their own universe, which held before only because no fixture row existed for
+    anybody. `membership_one` gives that same user a read row in `universe_two`, so the test now
+    asserts where that row is before asserting the universe-one list is empty of it: the empty result
+    is scope isolation rather than a table with nothing to leak, and the test says so rather than a
+    comment promising it.
+
+  Verification: `bin/rails test` — 2,132 runs, 13,391 assertions, 0 failures, 0 errors, 13 skips, and
+  `bin/rubocop` — 473 files, no offenses. The twenty-failure run above is the evidence for the pair,
+  taken with the same fixture file otherwise identical and the cross-scope case still building its own
+  row. Fixtures, two test files, and documentation only; no application, schema, or configuration
+  change, so `test:system`, Brakeman, and `bun run check:js` were not re-run.
+
 - **[docs]** **Finding 37 is one table now, and `docs/development.md` had stopped naming the taxonomies
   a change ago.** The finding had been divided narrowest-first and renumbered once already; with the
   records landing too, the memberships slice is renumbered to 37.1 rather than left standing at 37.2,
@@ -5201,6 +5243,48 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk 37: five tables had no fixture file (fixed)
+
+**Then:** `test/fixtures/` had no file for `relations`, `ownerships`, `relation_tags`,
+`ownership_tags`, or `universe_memberships`, so every test needing those records built them inline.
+That was a Low documentation-level finding rather than a defect, and the first attempt at closing it
+was written and then reverted: all five files were attempted together, and the suite then failed nine
+tests, every one of them a test reading the *absence* of records rather than their content. The
+finding stayed open on the reasoning that closing it would mean reworking tests that assume those
+tables are empty, which changes what they assert and therefore what they prove.
+
+**Now:** all five tables carry a fixture, delivered as three slices — the two taxonomies, then the
+records plus the universe-two `Character` they needed for a cross-scope assertion, then the
+membership. The gap is closed not by relaxing those tests but by giving each one something real to
+hold: the taxonomy tree asserts its fixture's rendered row and a second case produces an empty
+taxonomy to reach that branch; `HasManyTagsTest` names the exact list a tag must show instead of
+asserting emptiness; `MenuCountCacheTest` counts the fixture rows. `docs/development.md` owns the
+list of what the directory holds.
+
+**The hard half was the membership, and the finding's own assumption was what made it hard.** It
+predicted that `universe_memberships.yml` would have to hold `universe_one` with `user_two`, the pair
+nine tests build, and that the file's contents were therefore forced. That was measured rather than
+argued: with the file holding that pair the suite failed **twenty** tests, not nine, because every
+test that arranges write access in universe one collides with it — including `SessionsControllerTest`
+and `WorkspaceLocaleTest`, which the finding never counted. The file instead holds `user_one` in
+`universe_two`, where nothing arranged a membership, and exactly one test collided. The general
+lesson is the one this repository keeps paying for: a finding is a hypothesis written down on a
+given day, and re-reading the code before acting on it is cheaper than acting on it.
+
+**Why the far-side pair is the right one rather than merely the passing one.** A membership fixture
+for `universe_one`/`user_two` would put a standing grant in the table that twenty tests read as
+absent, and the development guide already requires authorization tests to create explicit
+`UniverseMembership` records for read/write/admin cases rather than rely on a fixture to stand in for
+a private collaboration scenario. A fixture holding that pair would violate the rule the suite is
+written to enforce; a fixture on the far side gives the table a row and gives a cross-scope assertion
+something to point at, and leaves every collaboration scenario to the test that arranges it.
+
+**Why this is recorded rather than just deleted.** The finding was corrected twice, divided into
+slices, and renumbered as each slice landed before it closed; a reader who finds only a deleted entry
+cannot tell whether the gap was ever real or how the eventual fixture avoided the trap the finding
+described. The live document now states only the present arrangement; the reasoning, including the
+reverted attempt and the twenty-failure measurement, stays here.
 
 ### Quirk 69: a pending row carried no tags and no photo (fixed)
 

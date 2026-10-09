@@ -183,16 +183,17 @@ Layout:
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
   (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements and
   scene characters (both belong to `story_one`'s first Scene), plus content and tag fixtures for
-  **characters, locations, items, events, relations, and ownerships**, and their six taxonomies.
-  Every content set carries a record in universe two — `event_other_universe`, `location_three`,
-  `character_other_universe`, and the universe-two taxonomy tags — so a test that has to look across a
-  scope boundary has something on the far side.
-  **Not every table has a fixture file.** Universe Memberships have none, so the tests that need
-  those records create them inline. That is a deliberate current state rather than an oversight, and
-  the reason is recorded in [`known_quirks.md`](known_quirks.md) as finding 37: adding the file is
-  not a mechanical change, because ten membership tests pair `universe_one` with `user_two` — the very
-  row a fixture would already hold — so a fixture for that pair fails on the uniqueness validation
-  working correctly rather than on anything wrong with the fixture.
+  **characters, locations, items, events, relations, and ownerships**, their six taxonomies, and one
+  universe membership. Every content set carries a record in universe two — `event_other_universe`,
+  `location_three`, `character_other_universe`, `ownership_tag_three`, `membership_one`, and the
+  universe-two taxonomy tags — so a test that has to look across a scope boundary has something on the
+  far side instead of building one.
+  **The membership fixture is deliberately not the pair the membership tests arrange.** It is
+  `user_one` holding a read row in `universe_two`, while `universe_one`/`user_two` is what those tests
+  build, because that pair means "a member of universe one at this level" and a fixture holding it
+  would stand in for the collaboration scenario a test has to arrange itself. So the file gives the
+  table a row without handing any test the authorization it is meant to prove; a test that needs a
+  read, write, or admin membership in a universe still creates the record.
 - Sign in with `sign_in_as(users(:user_one))` /
   `sign_out` from `test/test_helpers/session_test_helper.rb`.
 - **A test must not leave the process environment changed.** `ENV` is process-wide and

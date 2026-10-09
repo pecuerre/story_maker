@@ -204,11 +204,18 @@ class UniverseTest < ActiveSupport::TestCase
   test "members are the owner plus everybody with a membership row" do
     writer = User.create!(name: "Writer", email_address: "writer-members@example.com", password: "password")
     UniverseMembership.create!(universe: @universe, user: writer, access_level: :write)
+    owner = users(:user_one)
 
     # The owner is an admin with no membership row at all, so an association built from
     # memberships alone would leave out the one person every universe has.
-    assert_empty @universe.memberships.where(user_id: users(:user_one))
-    assert_equal [ users(:user_one), writer ].sort_by(&:id), @universe.members.sort_by(&:id)
+    assert_empty @universe.memberships.where(user_id: owner)
+
+    # That is only worth asserting because the owner *does* hold a row — the fixture's read
+    # row in the other universe, named here so the empty result above is the row staying in
+    # its own universe rather than a table with nothing in it to leak.
+    assert_equal [ universes(:universe_two) ], owner.universe_memberships.map(&:universe)
+
+    assert_equal [ owner, writer ].sort_by(&:id), @universe.members.sort_by(&:id)
   end
 
   test "a member's level does not decide who is a member, and the owner is always an administrator" do

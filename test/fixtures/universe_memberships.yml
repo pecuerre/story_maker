@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+# The one membership row, and it sits on the far side: `user_one` owns
+# `universe_one` and holds a read row in `universe_two`, so a test that has to
+# look across a universe boundary has a membership to point at instead of
+# building one.
+#
+# It is deliberately **not** the `universe_one`/`user_two` pair that the
+# membership tests arrange. That pair means "a member of universe one at this
+# level", and a fixture holding it would stand in for a collaboration scenario
+# the suite has to arrange honestly; see `docs/development.md`.
+membership_one:
+  universe: universe_two
+  user: user_one
+  access_level: read

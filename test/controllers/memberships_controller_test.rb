@@ -99,8 +99,13 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  # The fixture row is the one membership that is *not* in this universe, so the
+  # id being patched here is a real row that exists rather than one this test
+  # made: a cross-scope refusal is only worth asserting when the far side holds
+  # something the near side could have reached.
   test "membership ids cannot cross universe boundaries" do
-    membership = UniverseMembership.create!(universe: universes(:universe_two), user: users(:user_one), access_level: :read)
+    membership = universe_memberships(:membership_one)
+    assert_equal universes(:universe_two), membership.universe
 
     patch universe_membership_url(universe_slug: @universe.slug, id: membership),
       params: { membership: { access_level: "admin" } }

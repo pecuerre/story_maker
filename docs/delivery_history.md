@@ -29,6 +29,66 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-10
 
+- **[fixed]** **A renamed story or scene no longer leaves every document below it pointing at a 404,
+  which closes finding 57.** `HasSlug` regenerates a slug from a changed name, a search document
+  stores its own `url`, and three slugs are embedded in that path: the universe's, the story's, and
+  the scene's. Only the universe's had a queued repair.
+
+  - **Re-read before acting, and the finding named one of the three levels.** Finding 57 said a
+    universe rename invalidates every path stored below it and that `Search::ReindexUniverseJob`
+    repairs it, which was true, and was not the whole of it. `Searchable#search_url` builds
+    `universe_story_<route>_path(universe_slug:, story_id:, id:)` for every story-scoped model, and a
+    Scene Element's own `search_url` names its story and its scene. `Story` and `Scene` both include
+    `HasSlug`, and both are renamed by an ordinary edit. So a story rename left its Sections, Section
+    Tags, Scenes, Scene Tags and Scene Elements pointing at a slug that no longer existed with
+    nothing queued to rewrite them, and a scene rename did the same to its Elements. The entry's
+    "bounded but not instant" described the one level that had a repair; the other two had none, and
+    no test asserted anything about either.
+
+  - **Why a queued repair rather than paths rebuilt at read time.** The alternative is to stop
+    storing `url`, keep the ids a document already holds, and have `Search::Catalog` — which already
+    batch-loads each hit's universe and story in two queries — build the path when a hit renders.
+    That ends the class rather than enumerating it, including the queue-latency window a universe
+    rename still has. It was not chosen because ADR 0014 decided that a document carries its own
+    path, for the reason that a hit is a link and the engine returns no id worth routing: moving route
+    knowledge into the render path overturns that ADR, and belongs in an ADR of its own rather than
+    beside a bug fix. The owner chose the bounded repair; the structural change is still available.
+
+  - **What was built.** `Search::Reindexer#call_for_story` and `#call_for_scene` join
+    `call_for_universe` in one private `rewrite(relations)`, which is what all three now share — and
+    which is why a partial reindex reports the models it actually read instead of the size of the
+    whole registry, a log line that was previously honest only for a full rebuild.
+    `Search::Registry#relations_for_story` asks the story-scoped models, which is exactly the set of
+    documents whose stored path carries the story's slug; anything else answers `none` and is never
+    read. `relations_for_scene` asks `SCENE_NESTED`, an explicit list holding Scene Element alone,
+    because a model left out of a registry is the silent omission that `Search::Registry` already
+    exists to prevent. Scene Element declares both joins itself, for the reason it already declared
+    `search_scope`: it stores its Scene, not its Story. `Story` and `Scene` each queue their job from
+    `after_update_commit … if: :saved_change_to_slug?`, the rule `Universe` already used; the renamed
+    record's own document is still the save's business, through `Search::IndexRecordJob`.
+
+  - **Verification.** `bin/rails test` — 2144 tests, 13,430 assertions, 0 failures, 0 errors, 13
+    skips. The new coverage is `test/models/searchable_test.rb` (a story rename queues
+    `Search::ReindexStoryJob` with its id, a scene rename queues `Search::ReindexSceneJob`, an edit
+    that leaves the slug alone queues neither, and a model with nothing under a story answers the
+    story repair with nothing), `test/models/search/reindexer_test.rb` (a story reindex writes that
+    story's documents and reaches the Elements that store no `story_id` of their own, a scene reindex
+    writes only that scene's Elements, an unconfigured engine still stops the story repair with an
+    explanation), and `test/jobs/search_jobs_test.rb` (both jobs do nothing for a record that no
+    longer exists, and both log what they wrote for one that does). `bin/rubocop` — 475 files, no
+    offenses. `bin/rails test:system`, `bin/brakeman`, `bin/bundler-audit`, `bin/importmap audit` and
+    `bun run check:js` were not run: nothing in this change touches a rendered surface, a route, a
+    dependency, or client-side code, and the browser suite's own load sensitivity is recorded as
+    finding 58.
+
+  - **Documentation.** `docs/features/search.md` owns the rule now — which rename invalidates which
+    stored paths, and which job rewrites them. ADR 0014 is annotated rather than rewritten: its body
+    still says a universe's slug change is *the one case* that invalidates paths below it, which was
+    true when it was written and is now narrower than the code, so the annotation records what the
+    bullet's list of owners gained. `docs/development.md` needed nothing: its rake task list is about
+    the commands, and `search:reindex_universe[<slug>]` remains true as written — it is simply the
+    wider of the two owners, and repairs a story or scene rename too.
+
 - **[chore]** **The unused PWA scaffold is gone, which closes finding 50.** `app/views/pwa/` held
   `manifest.json.erb` and `service-worker.js`, two Rails generator leftovers with no route, no layout
   link, and no service-worker registration; both are deleted, along with the `pwa.description` key in

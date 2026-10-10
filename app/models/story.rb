@@ -12,6 +12,10 @@ class Story < ApplicationRecord
   soft_deletes :sections, :section_tags, :scene_tags, :scenes
 
   after_destroy_commit :expire_story_menu_counts
+  # A rename changes this story's slug, and every document below it stores a path
+  # carrying that slug. This story's own document is rewritten by the save itself,
+  # so the repair is for the records underneath it.
+  after_update_commit :queue_search_reindex, if: :saved_change_to_slug?
   belongs_to :universe
   has_many :sections, dependent: :destroy
   has_many :section_tags, dependent: :destroy
@@ -40,5 +44,9 @@ class Story < ApplicationRecord
       [ SECTION_MENU_COUNT_SCOPE, SCENE_MENU_COUNT_SCOPE ].each do |scope|
         MenuCountCache.expire(scope, id)
       end
+    end
+
+    def queue_search_reindex
+      Search::ReindexStoryJob.perform_later(id)
     end
 end

@@ -51,6 +51,10 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **A renamed story or scene no longer leaves its documents pointing at nothing.** The three levels
+  a stored search path embeds a slug at — universe, story, scene — each queue their own bounded
+  reindex now; this was quirk 57.
+
 - **A rendered discussion message carries no block whitespace.** `DiscussionMessage#rendered_body` strips
   the newline Redcarpet leaves with the paragraph tags it adds, which had been failing the thread's own
   text assertion since markdown arrived; the method now has model-level coverage of its markdown, its

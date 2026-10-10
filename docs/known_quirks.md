@@ -89,16 +89,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
   load-bearing, and why Active Storage must not be treated as dead weight — is in
   [architecture.md](architecture.md#routing--url-generation-the-sharp-edges).
 
-## Additional UI and interaction observations
-
-57. **Low — a rename changes a slug, so a universe rename invalidates every path stored below
-    it.** `HasSlug` regenerates a slug when a name changes, and each search document stores its own
-    `url`, which embeds its record's slug and its universe's. A universe rename is therefore repaired
-    by `Search::ReindexUniverseJob` (queued on `saved_change_to_slug?`), which is bounded but not
-    instant: between the rename and the job, results in that universe link to a 404. Records that
-    merely *mention* the universe are unaffected, because a document stores ids rather than names
-    and the displayed context is resolved per request.
-
 ## DataFactor report follow-up observations (2026-09-25)
 
 The 2026-09-25 DataFactor report identified several maintenance and onboarding gaps. They are

@@ -125,6 +125,42 @@ class SearchableTest < ActiveSupport::TestCase
     end
   end
 
+  # A rename regenerates a slug, and every document *below* the renamed record
+  # stores a path carrying it. The save rewrites the record's own document; the
+  # repair is for the ones underneath, and only a rename queues it.
+  test "renaming a story queues the repair for the documents stored below it" do
+    story = stories(:story_one)
+
+    assert_enqueued_with job: Search::ReindexStoryJob, args: [ story.id ] do
+      story.update!(name: "Story One, renamed")
+    end
+  end
+
+  test "renaming a scene queues the repair for its elements" do
+    scene = scenes(:scene_one)
+
+    assert_enqueued_with job: Search::ReindexSceneJob, args: [ scene.id ] do
+      scene.update!(name: "Scene one, renamed")
+    end
+  end
+
+  test "an edit that leaves the slug alone queues no rename repair" do
+    assert_no_enqueued_jobs only: Search::ReindexStoryJob do
+      stories(:story_one).update!(description: "The same path it had")
+    end
+    assert_no_enqueued_jobs only: Search::ReindexSceneJob do
+      scenes(:scene_one).update!(description: "The same path it had")
+    end
+  end
+
+  # A story-scoped model is the only kind of model with records under a story, and
+  # a Scene Element is the only one of those that cannot say so from a column.
+  test "a model with nothing under a story answers the story repair with nothing" do
+    assert_empty Character.search_scope_for_story(stories(:story_one))
+    assert_equal stories(:story_one).sections.pluck(:id).sort,
+      Section.search_scope_for_story(stories(:story_one)).pluck(:id).sort
+  end
+
   test "a declaration without a route must build its own path" do
     assert_nil SceneElement.search_declaration.route
     assert_raises(ArgumentError) { SceneElement.search_declaration.route! }

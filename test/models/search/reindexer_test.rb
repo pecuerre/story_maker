@@ -136,4 +136,59 @@ class Search::ReindexerTest < ActiveSupport::TestCase
 
     assert_equal Search::UnavailableBackend::REASON, summary.unavailable
   end
+
+  # The levels below a universe. A story rename invalidates every stored path
+  # beneath it, and the repair has to be bounded to that story: a second story in
+  # the same universe keeps its own paths.
+  test "a story reindex writes that story's records and not another story's" do
+    story = stories(:story_one)
+
+    summary = Search::Reindexer.new(backend: @backend).call_for_story(story)
+
+    written = written_documents
+    assert_equal story.id, written.pluck(:story_id).uniq.sole
+    assert_not_includes written.map { |document| document[:id] }, "story-#{story.id}"
+    assert_operator summary.documents, :>, 0
+  end
+
+  test "a story reindex reaches its elements, which store no story of their own" do
+    story = stories(:story_one)
+
+    Search::Reindexer.new(backend: @backend).call_for_story(story)
+
+    ids = written_documents.map { |document| document[:id] }
+    assert_equal elements_of(story).pluck(:id).sort,
+      ids.grep(/\Ascene_element-/).map { |id| id.delete_prefix("scene_element-").to_i }.sort
+  end
+
+  # A scene stores nothing but its own Elements, and an Element's hit opens its
+  # Scene — so a scene rename is exactly an Element repair.
+  test "a scene reindex writes only the elements stored below that scene" do
+    scene = scenes(:scene_one)
+
+    summary = Search::Reindexer.new(backend: @backend).call_for_scene(scene)
+
+    ids = written_documents.map { |document| document[:id] }
+    assert_equal scene.scene_elements.count, ids.size
+    assert ids.all? { |id| id.start_with?("scene_element-") }
+    assert_equal scene.scene_elements.count, summary.documents
+  end
+
+  test "an unconfigured engine stops a story reindex with an explanation" do
+    summary = Search::Reindexer.new(backend: Search::UnavailableBackend.new)
+      .call_for_story(stories(:story_one))
+
+    assert_equal Search::UnavailableBackend::REASON, summary.unavailable
+  end
+
+  private
+    def written_documents
+      @backend.calls.select { |type, _| type == :upsert }.flat_map { |_, list| list }
+    end
+
+    # An Element stores its Scene, not its Story, so a story reaches its Elements
+    # through the scenes it owns.
+    def elements_of(story)
+      SceneElement.where(scene_id: story.scenes.select(:id))
+    end
 end

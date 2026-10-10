@@ -181,6 +181,43 @@ class SearchJobsTest < ActiveSupport::TestCase
     refute_includes log, "search is not available"
   end
 
+  # The same two cases for the two levels below a universe. A story destroyed
+  # after its rename queued this work leaves nothing to rewrite, exactly as a
+  # destroyed universe does, and must answer the same way.
+  test "a reindex for a story that no longer exists does nothing" do
+    log = capture_log { Search::ReindexStoryJob.perform_now(ActiveRecord::FixtureSet.identify(:gone)) }
+
+    assert_empty log
+  end
+
+  test "a reindex for a live story reports what it wrote" do
+    story = stories(:story_one)
+    Search.backend = SearchTestBackend.new
+
+    log = capture_log { Search::ReindexStoryJob.perform_now(story.id) }
+
+    assert_includes log, story.name
+    assert_match(/indexed \d+ document/, log)
+    refute_includes log, "search is not available"
+  end
+
+  test "a reindex for a scene that no longer exists does nothing" do
+    log = capture_log { Search::ReindexSceneJob.perform_now(ActiveRecord::FixtureSet.identify(:gone)) }
+
+    assert_empty log
+  end
+
+  test "a reindex for a live scene reports what it wrote" do
+    scene = scenes(:scene_one)
+    Search.backend = SearchTestBackend.new
+
+    log = capture_log { Search::ReindexSceneJob.perform_now(scene.id) }
+
+    assert_includes log, scene.name
+    assert_match(/indexed \d+ document/, log)
+    refute_includes log, "search is not available"
+  end
+
   private
     def capture_log
       output = StringIO.new

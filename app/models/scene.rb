@@ -19,6 +19,10 @@ class Scene < ApplicationRecord
   # `PositionedResourceOrder`; this is what keeps a direct destroy, soft delete, or
   # restore from leaving a hole in it.
   ordered_sequence_within :story
+  # A rename changes this scene's slug. Its own document is rewritten by the save
+  # itself, but an Element's hit opens its Scene, so every Element below it stores
+  # that slug too and needs the repair.
+  after_update_commit :queue_search_reindex, if: :saved_change_to_slug?
 
   belongs_to :story
   has_many_tags :scene_tag, scope: :story_id
@@ -123,5 +127,9 @@ class Scene < ApplicationRecord
       return if submitted.blank? || datetime.present?
 
       errors.add(:datetime, I18n.t("scenes.errors.invalid_datetime"))
+    end
+
+    def queue_search_reindex
+      Search::ReindexSceneJob.perform_later(id)
     end
 end

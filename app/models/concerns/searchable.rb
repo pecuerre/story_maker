@@ -128,6 +128,20 @@ module Searchable
           "#{name} is story-scoped but stores no story_id, so it must declare its own search_scope"
       end
     end
+
+    # The records of one story that a story rename must rewrite. Everything stored
+    # below a story, and nothing else: a Character has no records under a story, so
+    # it answers `none` and the repair never reads it.
+    def search_scope_for_story(story)
+      return none unless search_declaration.story?
+
+      if column_names.include?("story_id")
+        where(story_id: story.id)
+      else
+        raise NotImplementedError,
+          "#{name} is story-scoped but stores no story_id, so it must declare its own search_scope_for_story"
+      end
+    end
   end
 
   # The index's primary key. See `ID_SEPARATOR` for why this names the model and

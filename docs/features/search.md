@@ -40,6 +40,7 @@ guard exists to forbid.
 | Which models are indexed | `Search::Registry` |
 | What one record contributes | the model's own `searchable` declaration (`Searchable`) |
 | Rebuilding the index | `Search::Reindexer`, `bin/rails search:reindex` |
+| What a rename has to rewrite | `Search::ReindexUniverseJob`, `Search::ReindexStoryJob`, `Search::ReindexSceneJob` |
 | When a save or destroy reaches the index | `Search::IndexRecordJob`, `Search::RemoveRecordJob` |
 | Reading what the engine did with a write | `Search::TaskWaiter` |
 
@@ -87,6 +88,33 @@ guard exists to forbid.
    locale; the label beside each is a key. That is why `Search::Scope::Option` holds no string at all —
    its label key *is* its value — and why a command's `title` is resolved per request and is also what
    the typed text is matched against, so the thing on screen is the thing searched.
+
+## A rename rewrites the paths stored below it
+
+A document stores its own `url`, and `HasSlug` regenerates a slug whenever a name changes, so a
+rename makes every stored path embedding that slug a dead link. Rule 6 is about the *names* a hit
+displays, which are resolved per request and cannot go stale; the path is stored, and three slugs
+are embedded in it:
+
+| Renamed | Stored paths below it | Queued repair |
+|---|---|---|
+| Universe | every document in the universe | `Search::ReindexUniverseJob` |
+| Story | Sections, Section Tags, Scenes, Scene Tags, Scene Elements | `Search::ReindexStoryJob` |
+| Scene | its Scene Elements | `Search::ReindexSceneJob` |
+
+Each job is queued by the same `after_update_commit … if: :saved_change_to_slug?` rule on the
+renamed record. The record's **own** document is already rewritten by the save itself, through
+`Search::IndexRecordJob`; the job is for the documents underneath it, which nothing else touches.
+`Search::Reindexer#call_for_story` and `#call_for_scene` are the same bounded rewrite as
+`call_for_universe`, over `Search::Registry`'s answer to which models sit below that owner. A model
+with nothing under a story answers with nothing to read, and a Scene Element — which stores its
+Scene rather than its Story — declares both joins itself.
+
+The repair is queued, so it is eventual rather than instant: a result in a renamed universe can 404
+between the save and the job, and a queue that was not running leaves the paths stale until someone
+runs the commands in [`development.md`](../development.md#search-engine).
+`bin/rails search:reindex_universe[<slug>]` is the wider of the two owners and repairs a story or
+scene rename as well as a universe one.
 
 ## A result row shows the stored document title
 

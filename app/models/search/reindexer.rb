@@ -52,23 +52,43 @@ module Search
     # A single universe, used after its slug changes: every document under a
     # universe carries that universe's slug in its stored path.
     def call_for_universe(universe)
-      unless backend.available?
-        return Summary.new(documents: 0, models: 0, unavailable: Search::UnavailableBackend::REASON)
-      end
+      rewrite(Search::Registry.relations_for(universe))
+    end
 
-      await backend.apply_settings
-      documents = 0
-      Search::Registry.relations_for(universe).each do |relation|
-        relation.find_in_batches(batch_size: BATCH_SIZE) do |batch|
-          await backend.upsert(batch.map(&:search_document))
-          documents += batch.size
-        end
-      end
-      Summary.new(documents: documents, models: Search::Registry::MODELS.size, unavailable: nil)
+    # A single story, used after its slug changes: a Section, a Scene, and their
+    # tags and Elements all carry that story's slug in their stored path, so they
+    # are the records a rename leaves pointing at nothing.
+    def call_for_story(story)
+      rewrite(Search::Registry.relations_for_story(story))
+    end
+
+    # A single scene, used after its slug changes: only its Elements store its
+    # path, because an Element's hit opens the scene that owns it.
+    def call_for_scene(scene)
+      rewrite(Search::Registry.relations_for_scene(scene))
     end
 
     private
       attr_reader :backend, :output
+
+      # One owner, not the whole index. The relations it holds are written in
+      # batches, and the settings are applied first because a repair may be the
+      # first write this engine has ever seen.
+      def rewrite(relations)
+        unless backend.available?
+          return Summary.new(documents: 0, models: 0, unavailable: Search::UnavailableBackend::REASON)
+        end
+
+        await backend.apply_settings
+        documents = 0
+        relations.each do |relation|
+          relation.find_in_batches(batch_size: BATCH_SIZE) do |batch|
+            await backend.upsert(batch.map(&:search_document))
+            documents += batch.size
+          end
+        end
+        Summary.new(documents: documents, models: relations.size, unavailable: nil)
+      end
 
       def create_index
         backend.create_index

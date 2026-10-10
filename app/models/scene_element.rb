@@ -84,6 +84,16 @@ class SceneElement < ApplicationRecord
     where(scene_id: Scene.where(story_id: story_ids).select(:id))
   end
 
+  # The same two joins, asked one level down: a story rename reaches its Elements
+  # through their Scenes, and a scene rename reaches them directly.
+  def self.search_scope_for_story(story)
+    where(scene_id: Scene.where(story_id: story.id).select(:id))
+  end
+
+  def self.search_scope_for_scene(scene)
+    where(scene_id: scene.id)
+  end
+
   # The stored path of a hit is the page a reader lands on, so an Element's hit
   # opens its Scene. `search_document` still carries the Element's own id, so a
   # reindex replaces the document rather than adding a second one.

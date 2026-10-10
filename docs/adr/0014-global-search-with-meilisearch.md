@@ -1,13 +1,21 @@
 # ADR 0014: Answer the top-bar search with Meilisearch, filtered by what the reader may read
 
-- **Status:** Accepted — **annotated 2026-10-07.** What this ADR decided is untouched and still holds:
-  writes are queued, the index is derived data, and a reindex is the repair. One consequence below is
-  no longer paid: *a write the engine refuses asynchronously is invisible to the job that queued it*.
-  `Search::TaskWaiter` now reads the task every write answers with, so both queued jobs log the
-  document's id and the engine's reason where a refusal used to be silent. The decision the body
-  records is unchanged — a save still never blocks on a search service, and a refusal is still logged
-  rather than retried — and the body below is left as it was written. The reading contract now lives in
-  [`../features/search.md`](../features/search.md).
+- **Status:** Accepted — **annotated 2026-10-07, again 2026-10-10.** What this ADR decided is
+  untouched and still holds: writes are queued, the index is derived data, and a reindex is the
+  repair. One consequence below is no longer paid: *a write the engine refuses asynchronously is
+  invisible to the job that queued it*. `Search::TaskWaiter` now reads the task every write answers
+  with, so both queued jobs log the document's id and the engine's reason where a refusal used to be
+  silent. The decision the body records is unchanged — a save still never blocks on a search service,
+  and a refusal is still logged rather than retried — and the body below is left as it was written.
+  The reading contract now lives in [`../features/search.md`](../features/search.md).
+
+  The 2026-10-10 annotation is narrower: the bullet below calls a universe's slug change *the one
+  case* that invalidates paths beneath it, and that is no longer the whole of it. A Story and a Scene
+  also have their slugs embedded in the documents stored below them — a Scene Element's hit opens its
+  Scene — so their renames are now repaired too, by `Search::ReindexStoryJob` and
+  `Search::ReindexSceneJob`. The decision the bullet records, that a document carries its own path,
+  did not change; the list of owners whose slug a path embeds did. The current rule is in
+  [`../features/search.md`](../features/search.md#a-rename-rewrites-the-paths-stored-below-it).
 - **Date:** 2026-09-27
 - **Related:** [`../architecture.md`](../architecture.md),
   [`../conventions.md`](../conventions.md),

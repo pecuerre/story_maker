@@ -65,6 +65,19 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **The DataFactor guidance points at findings that have already left.** Its two passes over
+  `known_quirks.md` named five fixed security findings; they now name the open list and the documents
+  that own the standing rules, with the residual owner actions left where they are still owed.
+
+- **The open-quirks list is numbered from 1 and every footgun is a named finding.** The two audit
+  findings and the eight contract-dependent footguns are now ten entries in one list, each labelled
+  Medium or Footgun, and a number is a position that is reused when an entry leaves rather than an
+  identity another document may cite.
+
+- **Two open findings pointed at code that had moved.** The `HasColor` contrast footgun and the two
+  `Ability` citations now name the lines holding the validation, the content-class registry, and the
+  instance blocks.
+
 - **The missing-fixture finding is one table now.** `docs/development.md` lists the fixture set as the
   directory actually holds it, and finding 37 and its backlog item describe memberships alone.
 

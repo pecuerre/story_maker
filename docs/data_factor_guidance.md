@@ -55,9 +55,8 @@ Several observations in the report are already stale or have changed in this rep
   percentage does not prove.
 
 The report also does not replace the more urgent project findings in
-[`known_quirks.md`](known_quirks.md). In particular, the tracked Kamal secret, taxonomy DOM XSS,
-password-reset token logging, transport-security, seed-boundary, and other security/data-integrity
-findings take priority over score-oriented changes. No secret value belongs in this document.
+[`known_quirks.md`](known_quirks.md), the one place that holds the verified open findings and is
+kept short. They take priority over score-oriented changes. No secret value belongs in this document.
 
 ## Principles for future work
 
@@ -287,14 +286,22 @@ with real release history.
 ## Security and correctness prerequisites
 
 The DataFactor score must never cause an agent to weaken or skip a project invariant. Before
-starting a quality task, check the relevant entries in [`known_quirks.md`](known_quirks.md), especially:
+starting a quality task, read the open findings in [`known_quirks.md`](known_quirks.md) whose
+subjects touch the area you are changing; each one is named there, and its number is a position in
+that list rather than an identity to cite. The standing rules that are not findings live with their
+subjects: [`architecture.md`](architecture.md) owns the request lifecycle, authorization, the
+production boundary, and caching, and [`../AGENTS.md`](../AGENTS.md) owns universe/story scope, the
+JSON/HTML response contracts, environment-guarded demo loading, and the destructive-reset
+confirmation.
 
-- the tracked Kamal secret and rotation/remove process;
-- taxonomy modal `innerHTML` XSS and stale serialized state;
-- password-reset tokens in request logs;
-- production TLS/cookie assumptions and mailer URL/SMTP configuration;
-- environment-guarded demo loading and destructive database reset confirmation;
-- JSON/HTML response contracts and cross-universe/cross-story authorization.
+This section once listed the tracked Kamal secret, the taxonomy modal `innerHTML` sink, password-reset
+tokens in request logs, transport security, and the seed boundary as things to check in
+`known_quirks.md`. All five were fixed and are recorded in
+[`delivery_history.md`](delivery_history.md) with their dated
+[`../CHANGELOG.md`](../CHANGELOG.md) entries; the parts that stayed with the owner are written down
+where they are still owed — untracking a secret file does not rotate it
+([`development.md`](development.md)), and a configured mailer or TLS setting is not a delivered
+message.
 
 The report's credential warning is narrower than these issues. A higher automated score is not an
 acceptable reason to leave a known critical/high finding open, and Brakeman's clean result does not

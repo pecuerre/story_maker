@@ -29,6 +29,41 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-10
 
+- **[chore]** **The unused PWA scaffold is gone, which closes finding 50.** `app/views/pwa/` held
+  `manifest.json.erb` and `service-worker.js`, two Rails generator leftovers with no route, no layout
+  link, and no service-worker registration; both are deleted, along with the `pwa.description` key in
+  both locale files that only the manifest read.
+
+  - **Re-read before acting, and the finding's second clause was the sharp half.** The entry had been
+    corrected once already: it once also charged the dynamic taxonomy modal with inconsistent heading
+    and required-field semantics, and that part was fixed before this pass, so what remained was two
+    dead files. It described them as "low-priority cleanup/style inconsistencies" and pointed at a
+    `red` palette that does not match the documented theme, which reads like a styling problem. It is
+    not: nothing ever served or linked either file, so there was no page whose colors were wrong.
+
+  - **Deleting rather than wiring up was the owner's decision, and the code agreed with it.** The
+    alternatives were to route `/manifest.json` and `/service-worker.js` and link the manifest from the
+    layout, or to leave the files and repaint them from the documented palette. Both would have made an
+    installable application out of a cleanup finding — a product decision nobody has made — and the
+    evidence that this application declined it is in the resolved entry below. The palette fix in
+    particular was the trap: it would have turned dead scaffolding into a new deliverable that had to be
+    kept correct, tested, and re-reviewed, for readers who see nothing of it.
+
+  - **The locale key went with the file.** `pwa.description` existed in `config/locales/en.yml` and
+    `config/locales/es.yml` and was read by the manifest alone; leaving it would have left two
+    translated strings in both files that nothing renders, which is the same dead weight one file down.
+    The `en.yml` comment explaining that `theme_color` and `background_color` are colours and so are
+    not translated went with them, since there are no longer two colour fields to explain. The pair had
+    to leave together for a second reason as well: the key-set parity test in
+    `test/models/translations_test.rb` fails when a key is in one locale file and not the other.
+
+  Verification: `bin/rails test` — 2,132 runs, 13,389 assertions, 0 failures, 0 errors, 13 skips, and
+  `bin/rubocop` — 473 files, no offenses. Re-adding the `pwa` key to both locale files and re-running
+  `TranslationsTest` produced the identical 163 assertions, so removing a translated key cost that test
+  no coverage of its own; the change deletes two view files and two locale entries and adds no route,
+  controller, or asset, so `test:system`, Brakeman, `bun run check:js`, and the audit tasks were not
+  re-run.
+
 - **[chore]** **`universe_memberships.yml` joins the fixtures, which closes finding 37.** One row:
   `user_one` holding a read membership in `universe_two`. The suite failed **one** test, the
   cross-scope case in `MembershipsControllerTest`, and it now reads the fixture instead of building
@@ -5243,6 +5278,50 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk 50: dead PWA assets drifted from the conventions (fixed)
+
+**Then:** `app/views/pwa/` held `manifest.json.erb` and `service-worker.js`. Neither was reachable:
+`config/routes.rb` declared no route that renders either, and `app/views/layouts/application.html.erb`
+linked no manifest and registered no service worker. The manifest also declared `"theme_color": "red"`
+and `"background_color": "red"`, and no token in the documented palette takes that value — the nearest
+entry is danger `#c92a2a`, which [`visual_design.md`](visual_design.md) reserves for destructive
+actions and errors. The finding graded itself Low and described the residue as "low-priority
+cleanup/style inconsistencies".
+
+**Now:** both files are deleted, and the `pwa.description` key that only the manifest read is removed
+from `config/locales/en.yml` and `config/locales/es.yml`. Nothing referenced them, so no route, no
+request, and no view changed shape.
+
+**The finding's first clause was already stale, and that is the part worth remembering.** The entry
+also charged the dynamic taxonomy modal with inconsistent heading and required-field semantics; that
+had been fixed before this pass, and the surviving entry kept the clause as context for the two files
+that remained. Re-reading it against the tree is what turned a two-part finding into a one-part one —
+the same lesson as finding 37, whose prediction about which fixture a table should hold was also
+measured against the tree before it was acted on.
+
+**The palette was a symptom of the real problem rather than a separate one.** The tempting reading is
+that `"red"` is a small styling mistake worth a small styling fix, which would have produced a web app
+manifest that no browser had ever requested. Closing it that way would have manufactured a new
+deliverable — a served manifest, a linked `<link rel="manifest">`, a service worker served from a route
+— out of a cleanup finding, and made an installable application a decision nobody had made.
+
+**Why deletion is the honest answer here.** The application delivers its real-time behavior over Turbo
+Streams on Solid Cable. `LiveUpdates` names three audiences — the reader's own bell, the universe they
+are standing in, and a thread's conversation — and `layouts/_live_updates` subscribes the first two on
+every page a signed-in reader opens, with `discussions/show` adding the third. Notifications are
+database rows shown by the navbar bell and read through `NotificationsController`, not Web Push. There
+is no `PushSubscription` model, no push subscription endpoint, no `navigator.serviceWorker`
+registration, and no permission request in `app/javascript/` or `test/javascript/`; the commented-out
+`push` and `notificationclick` handlers were the only Web Push code in the repository, and they were
+commented out when the generator wrote them. A service worker whose entire body is a comment is not a
+half-finished feature to complete — it is the generator's invitation, and the application declined it.
+
+**What deliberately stayed.** The `<link rel="icon">`, `<link rel="icon" type="image/svg+xml">`, and
+`<link rel="apple-touch-icon">` tags in the layout are untouched. They are ordinary browser chrome that
+need no manifest, which is precisely why the manifest's absence was invisible to a reader; deleting the
+scaffold did not remove an icon, because `public/icon.png` and `public/icon.svg` are served as static
+files rather than rendered by either deleted view.
 
 ### Quirk 37: five tables had no fixture file (fixed)
 

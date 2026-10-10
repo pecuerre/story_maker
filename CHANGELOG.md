@@ -80,6 +80,10 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **The unused PWA scaffold is gone.** `app/views/pwa/manifest.json.erb` and `service-worker.js` had no
+  route, no layout link, and no service-worker registration, so nothing ever served them; this was
+  quirk 50.
+
 - **`UniverseTest`'s owner-has-no-row assertion is no longer vacuous.** With the fixture giving
   `user_one` a read membership in universe two, the test now proves the owner holds that row *there*
   before asserting they hold none in their own universe.

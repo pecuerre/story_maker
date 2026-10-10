@@ -91,12 +91,6 @@ through the current normal UI. They are recorded so they are not mistaken for se
 
 ## Additional UI and interaction observations
 
-50. **Low — dead PWA/UI assets still drift from the conventions.** The dynamic taxonomy modal now uses
-    consistent heading/required-field semantics, but `app/views/pwa/manifest.json.erb` and
-    `app/views/pwa/service-worker.js` have no route or layout link, and the PWA palette contains a
-    `red` value that does not match the documented theme. These are low-priority cleanup/style
-    inconsistencies.
-
 57. **Low — a rename changes a slug, so a universe rename invalidates every path stored below
     it.** `HasSlug` regenerates a slug when a name changes, and each search document stores its own
     `url`, which embeds its record's slug and its universe's. A universe rename is therefore repaired

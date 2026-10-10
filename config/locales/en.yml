@@ -2214,11 +2214,6 @@ en:
       label: "Dark"
       description: "A dark page with light text."
 
-  # The web app manifest. The `theme_color` and `background_color` values are
-  # not translated: they are colours.
-  pwa:
-    description: "Build and maintain consistent story universes."
-
   # The attribute names this slice's own forms and error messages read.
   #
   # Rails resolves a form label and the `%{attribute}` in `errors.format` from

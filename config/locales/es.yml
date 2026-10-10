@@ -2332,9 +2332,6 @@ es:
       label: "Oscuro"
       description: "Una página oscura con texto claro."
 
-  pwa:
-    description: "Construye y mantén universos narrativos coherentes."
-
   # Los nombres de los tipos de registro viven en la raíz de la Locale a
   # propósito. Cada espacio de trabajo ya pasa uno de ellos como una palabra
   # suelta (`count_label: "character"`), y los ayudantes compartidos resuelven

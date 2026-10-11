@@ -136,10 +136,45 @@ class DraftPreview
   # instances of `model`, in the order they were remembered. Keyed by model name
   # so a page asking about six lists asks the draft six times and not once per
   # record.
-  def creates_for(model)
+  #
+  # **`within:` narrows the answer to one Story's list**, and a workspace already
+  # inside a Story passes it. See `#records_in` for why it has to.
+  def creates_for(model, within: nil)
     creates.fetch(model.name) do
       creates[model.name] = changes.filter_map { |change| build(change, model) if creates?(change, model) }
-    end
+    end.then { |records| within ? records_in(records, within) : records }
+  end
+
+  # **A draft belongs to a Universe, not to a Story**, so one author's draft can
+  # hold a remembered Scene for every story in it. A list that is already inside a
+  # Story has to answer "what this list would hold", and a Scene remembered under
+  # a *different* story is not part of that answer: it would be written beside this
+  # story's scenes and nowhere near the story it belongs to. Without this a pending
+  # Scene for one story appears in every other story's Scenes list, with nothing on
+  # the row to say so.
+  #
+  # **The comparison is on the record's own scope column**, which is the same one
+  # `DraftChange#scope_attribute` names and the same one `DraftMutation` stored, so
+  # there is no fourth derivation of "where does this record go". A create whose
+  # payload names no story is excluded rather than shown: a Scene with no story is
+  # one the applier cannot place, and a list that cannot say where a record would
+  # land should not offer it.
+  #
+  # **Universe-scoped models are unaffected.** Their scope column is `universe_id`,
+  # which no story narrows, so every character a draft remembers belongs on the
+  # Characters list whatever Story that list is reached from.
+  def records_in(records, story)
+    records.select { |record| story_scope_id(record) == story.id }
+  end
+
+  # The Story id a pending create would be written under, or nil for a
+  # universe-scoped model and for a create whose payload named no story.
+  #
+  # Asked of the built record rather than of the model class, because a Scene
+  # carries `story_id` and a Character does not, and a column a class does not
+  # have is not something this method may assume.
+  def story_scope_id(record)
+    record.respond_to?(:story_id) ? record.story_id : nil
   end
 
   # The photo a remembered create carries, as a `data:` URL, or nil when the

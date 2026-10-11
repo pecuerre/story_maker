@@ -42,6 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **A remembered create no longer appears in a story's lists when it belongs to another story.**
+  Every story-scoped workspace now lists only the creates naming its own story, and the drafts page
+  prints the story or scene a create would be written under, which closes that footgun.
+
 - **A class-level check and a record check now come from one rule.** `Ability#define_rule` declares
   each access level once and derives both answers from it, which closes the recorded footgun where
   CanCan allowed any class its instance blocks were declared on.
@@ -59,6 +63,14 @@ Labels used below, in the order their groups appear:
   universe the answer is `false`.
 
 ### docs
+
+- **The remembered-create footgun has moved to the delivery history and `known_quirks.md` is
+  renumbered.** The rule a pending row follows now lives in `conventions.md`.
+
+- **The content-class registry is no longer an open footgun.** Registering a new model in
+  `Ability::CONTENT_CLASS_NAMES` is a step ADR 0019 decided and the new-model checklist already
+  requires, and the inverted registry test fails the build over a model nobody registered, so the
+  finding moved to the delivery history and `known_quirks.md` is renumbered.
 
 - **The registry and `RecordTarget` no longer describe a convention as the only guard.** The
   class-level check rule has one owner in `conventions.md`, the closed finding has moved to the

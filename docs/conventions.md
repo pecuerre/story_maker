@@ -609,8 +609,11 @@ every version it writes, so a comparison cannot distinguish "written by this dra
 somebody else" — but it is a fact the apply **stored**, so a closed draft says it (below). Three stored
 values need reading rather than printing, and `DraftsHelper` owns all three: a submitted id list (a
 tag assignment, a Dialogue's speakers) is printed as the names its own association resolves, the scope
-column is dropped because a bare `story_id` is nothing a reader can name, and the two virtual photo
-writers are stated as a new photo or a removed one rather than as a `data:` URL and a boolean.
+column is printed as the **name** of the story or scene it places the record under — a bare `story_id`
+is nothing a reader can name, and the reader does not otherwise know which of a universe's stories a
+change belongs to — and the two virtual photo writers are stated as a new photo or a removed one rather
+than as a `data:` URL and a boolean. A `universe_id` scope prints nothing, because the page is already
+inside the universe that column names; see [Reading a draft's changes](#reading-a-drafts-changes).
 
 **A closed draft says when it was closed and what its run did.** An applied or discarded draft is
 still served by its own page and still lists every change it remembered — that is what
@@ -1116,10 +1119,37 @@ outright, for the same reason — a record that does not exist cannot answer a q
 does. A **filtered** Scenes list stays filtered, and a remembered Scene that names a `section_id` is
 not listed among the ungrouped ones.
 
+**A story-scoped workspace lists only the creates that name its own story.** A draft belongs to a
+universe, not to a story, so one author's draft can hold a remembered Scene under every story in it —
+and a Scenes list has to answer "what this list would hold". `DraftPreview#creates_for` takes a
+`within:` for exactly this, and the caller passes `story:` from `DraftsHelper#draft_pending_creates_for`;
+it is a keyword rather than a second method so a caller cannot quietly ask the unscoped question from
+a page that has a story of its own. The comparison is on the record's own `story_id` — the same column
+`DraftChange#scope_attribute` names and `DraftMutation` stored, so there is no second derivation of
+"where does this record go". A create whose payload names no story is **excluded rather than shown**,
+because a Scene with no story is one the applier cannot place.
+
+Three kinds of workspace pass it, and **the other kinds must not**. The Scenes list, the Scenes
+grouping partial, the Sections tree, and the two story-scoped tag pages are inside a story. The six
+universe-level flat lists and the seven universe-level taxonomies are not, and omitting the keyword is
+correct there rather than an oversight: **a universe-scoped model's scope column is `universe_id`,
+which no story narrows**, so every pending character a draft remembers belongs on the Characters list
+whatever story that list is reached from.
+
+**A pending row says nothing about where it would land, and that is deliberate.** It has no id, so it
+has no position and no parent, and the applier — not the reader — decides both. The two questions the
+row *can* answer are answered instead: the drafts page prints the **story or scene a create would be
+written under**, resolved through `DraftChanges::Reader` once per owner class (see
+[Reading a draft's changes](#reading-a-drafts-changes)), and the list workspaces above narrow so the
+page a row appears on is itself the answer to which story it belongs to. What remains unsaid is the
+ordering, which is the applier's and could not be printed truthfully before it runs.
+
 **A list whose only content is a pending create does not say it is empty.** The empty-state guard on
 every list reads `@records.any? || pending.any?`, and `shared/_taxonomy_tree` does the same for the
 tree, because telling a writer they have no characters while a row with a name sits under the message
-is two answers to one question.
+is two answers to one question. **That guard reads the same narrowed collection the rows do**, so a
+story with no scenes of its own says so even when a sibling story has a remembered scene waiting: the
+row would be the wrong one, and showing it would be two answers to one question.
 
 In a taxonomy tree the pending row is **`.taxonomy-pending`, never `.taxonomy-node`**: the tree
 controller counts `.taxonomy-node` children to place separators and compute positions, so a row in that
@@ -1160,9 +1190,10 @@ decision is recorded on the surface it belongs to rather than left as an omissio
 
 A draft's changes are read through **`DraftChanges::Reader`**, which resolves a whole collection in a
 fixed number of queries: one per record class the changes name, one per tag class their payloads
-carry. Every other list in the application preloads through a grouped query, and these pages are the
-contract for the ones that read a draft — a draft's own page, a reviewer's page, the conflict page, and
-the sidebar's pending panel, which is on **every page of the universe**.
+carry, and one per **owner class** the scope columns they carry name. Every other list in the
+application preloads through a grouped query, and these pages are the contract for the ones that read
+a draft — a draft's own page, a reviewer's page, the conflict page, and the sidebar's pending panel,
+which is on **every page of the universe**.
 
 **The collection is passed, not inferred.** A `DraftChange` does not know its siblings, so a surface
 renders `drafts/_change` with `collection:` **and** passes the same array as a `changes` local; a
@@ -1179,6 +1210,25 @@ record without a query** — it names none, and asking was a `WHERE id IS NULL` 
 than printed as the query returned them, and an id that no longer resolves is dropped, because the
 change is the author's statement about the ids that are still there.
 
+**A scope column resolves to the record it names, keyed by the change and by the owner's class.**
+`Entry#scope` is the story or scene a change would be written under — the answer the drafts page prints
+instead of a bare id. Three rules make it general rather than a story special case:
+
+- **The key is the change, not the record type.** A draft routinely holds several changes of one type
+  under different stories, which is the case the drafts page exists to let a reader compare. Keyed by
+  type, every one of them would read the last answer and the page would name one story for all of
+  them. The records are still fetched in one query per owner class; only the keying is per change.
+- **The class is the owner's, not the changed type.** A `Scene`'s `story_id` names a `Story` and a
+  `SceneElement`'s `scene_id` names a `Scene`, so an answer keyed by the changed type would look a
+  scene up among the scene elements. The owner class is read from
+  `UniverseScopeResolver.owner_association_for`, the same derivation `DraftChange#scope_attribute`
+  already made.
+- **A `universe_id` scope resolves nothing.** The page is already inside the universe that column
+  names, so loading it would cost a query on every draft page to print what the reader can see from
+  the address bar. This is the one case where the drafts page prints no scope row at all; every
+  narrower owner is named, and one that no longer resolves says so in the shared blank cell rather
+  than printing a number that resolves to nothing.
+
 **Labels stay in the view layer.** The reader holds records; `record_label` turns them into words. A
 service that re-derived the ladder would be the second copy ADR 0023 refused to write.
 
@@ -1193,9 +1243,9 @@ the association it has just loaded rather than re-fetching the ids, and it canno
 associations carry an instance-dependent scope and cannot be eager loaded. Only the "yours" half reads a
 payload, and that half is batched.
 
-`test/controllers/draft_changes_query_count_test.rb` holds the three page-level surfaces, and
-`test/services/draft_changes/reader_test.rb` holds the answers — that a batched read returns the same
-set the per-row read did, refusal by refusal.
+`test/controllers/draft_changes_query_count_test.rb` holds the page-level surfaces, including the
+one that names a scope, and `test/services/draft_changes/reader_test.rb` holds the answers — that a
+batched read returns the same set the per-row read did, refusal by refusal.
 
 ## Record details pages
 

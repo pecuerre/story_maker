@@ -37,6 +37,15 @@
 class DraftChange < ApplicationRecord
   ACTIONS = %w[create update delete].freeze
 
+  # The scope column of a record that reaches its universe directly, as opposed to
+  # one hanging below a Story, a Scene, or a Section.
+  #
+  # It is the string `scope_attribute` returns for such a model and `universe_scoped?`
+  # compares against, so naming it once here is what keeps those two answers from
+  # being a literal here and a literal there. A caller that needs to ask "is this
+  # the universe?" asks `universe_scoped?` rather than comparing columns.
+  UNIVERSE_SCOPE_ATTRIBUTE = "universe_id".freeze
+
   belongs_to :draft
 
   # What the apply that closed this change's draft decided about it, or nil while
@@ -130,17 +139,31 @@ class DraftChange < ApplicationRecord
   #
   # `DraftMutation` merged that column in because a payload of submitted values
   # alone cannot say where the record goes, and it named the same way
-  # `UniverseScopeResolver` names every model's scope. A draft's page needs the
-  # answer too, for the opposite reason: it is the one value in a payload a reader
-  # cannot use, so it must be recognised as plumbing rather than printed as a bare
-  # id.
+  # `UniverseScopeResolver` names every model's scope.
+  #
+  # **A reader's page no longer treats it as plumbing.** The reason it was dropped
+  # — that a bare `story_id` is a number nobody can name — was a reason not to
+  # print the *id*, not a reason to print nothing: the story is a stored record
+  # with a name, so the page resolves it and prints the name. `universe_scoped?`
+  # is the case where there is genuinely nothing to add, because the page is
+  # already inside that universe.
   def scope_attribute
     return if payload.blank?
 
     model = RecordTarget.model_for(record_type)
     association = model && UniverseScopeResolver.owner_association_for(model)
 
-    association ? "#{association}_id" : "universe_id"
+    association ? "#{association}_id" : UNIVERSE_SCOPE_ATTRIBUTE
+  end
+
+  # Whether this change's scope is the universe itself, which every page reading a
+  # draft is already inside.
+  #
+  # Asked here rather than compared against a column name at the call site, because
+  # this is the same question `scope_attribute` answers when it returns
+  # `universe_id`, and two places asking it is how one of them would drift.
+  def universe_scoped?
+    scope_attribute == UNIVERSE_SCOPE_ATTRIBUTE
   end
 
   private

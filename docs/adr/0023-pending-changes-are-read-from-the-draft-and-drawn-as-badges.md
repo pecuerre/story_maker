@@ -21,6 +21,13 @@
   tooltip that names the fields an edit would write and how many changes are waiting, and not by
   rewriting the row. The decision this ADR records is unchanged; the contract lives in
   [`../conventions.md`](../conventions.md#what-a-badge-says-beyond-its-state).
+- **Superseded in part (2026-10-11):** the "the same accepted limit the drafts page already had for a
+  create's story or scene" is no longer a limit on both surfaces. The drafts page now resolves and
+  names the story or scene a create would be written under, and a story-scoped workspace lists only
+  the creates naming its own story. The paragraph below is left as it was written — a pending row in a
+  tree still has no parent to hang under, and a pending row still has no position — but the drafts page
+  is no longer a second instance of it. The rule now lives in
+  [`../conventions.md`](../conventions.md#pending-changes-in-a-list).
 - **Related:** [`../conventions.md`](../conventions.md),
   [`../architecture.md`](../architecture.md),
   [`../features/navigation.md`](../features/navigation.md),

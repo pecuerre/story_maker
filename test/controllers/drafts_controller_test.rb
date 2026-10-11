@@ -216,7 +216,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, tag.id.to_s
   end
 
-  test "the scope column a create carries is plumbing the page does not print" do
+  test "the universe a universe-scoped create carries is not printed as a row" do
     target = draft_with(remember_create_payload)
 
     get universe_draft_url(universe_slug: @universe.slug, id: target)
@@ -227,6 +227,53 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     # nothing; what it does say is the value they actually submitted.
     assert_select ".draft-change .entity-description", text: /Name/
     refute_match(/Universe/, response.body[/<div class="entity-description">.*?<\/div>/m])
+  end
+
+  test "a story-scoped create names the story it would be written under" do
+    # The other half of the rule above, and the reason it was worth splitting. A
+    # bare `story_id` is a number the reader cannot name, so the column used to be
+    # dropped — but "cannot name as a number" is not "cannot say": the story is a
+    # stored record with a name, and a reader reviewing twenty remembered scenes
+    # cannot otherwise tell which story any of them belongs to.
+    target = draft_with(
+      remember_create_payload("Arrival", "Scene", { "story_id" => stories(:story_one).id })
+    )
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select ".draft-change .entity-description", text: /#{Regexp.escape(stories(:story_one).name)}/
+    refute_includes response.body, stories(:story_one).id.to_s
+  end
+
+  test "a scene-scoped create names the scene it would be written under" do
+    # The same answer one level down, which is what makes the rule general rather
+    # than a story special case: `scene_id` is dropped for the same reason
+    # `story_id` was, and is resolved for the same reason.
+    target = draft_with(
+      remember_create_payload("They came", "SceneElement",
+        { "scene_id" => scenes(:scene_one).id }, extra: { "kind" => "narration" })
+    )
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select ".draft-change .entity-description", text: /#{Regexp.escape(scenes(:scene_one).name)}/
+  end
+
+  test "a create whose scope record has since been deleted says it has nothing to name" do
+    # A change whose story is gone is still the author's statement, and it still
+    # lists its own values. What it cannot do is name a story, so the scope row
+    # says so rather than printing a number that resolves to nothing.
+    story = stories(:story_one)
+    target = draft_with(remember_create_payload("Arrival", "Scene", { "story_id" => story.id }))
+    story.destroy!
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select ".draft-change .entity-description", text: /Arrival/
+    assert_select ".draft-change .entity-description", text: /#{Regexp.escape(I18n.t("shared.detail_fact.blank"))}/
   end
 
   test "a change whose record has since been deleted is still listed, without a link" do

@@ -24,8 +24,13 @@
 <%# A remembered create belongs in the taxonomy that would have held it, and this
     partial is the only place that knows which taxonomy it is drawing. The answer
     is resolved once here because the same one is needed twice below: to decide
-    whether the tree is empty, and to render the rows. %>
-<% pending_creates = draft_pending_taxonomy_creates(model_param) %>
+    whether the tree is empty, and to render the rows.
+    #
+    # `pending_story` is passed by the Sections tree and by nothing else, because
+    # Sections are the one taxonomy drawn inside a Story: the draft belongs to the
+    # universe, so a remembered Section from a sibling story is not an answer to
+    # "what this tree would hold". The seven universe-level trees omit it. %>
+<% pending_creates = draft_pending_taxonomy_creates(model_param, story: local_assigns[:pending_story]) %>
 <% empty_description = if editable
   local_assigns[:empty_description] || t("shared.taxonomy_tree.empty_description")
 else

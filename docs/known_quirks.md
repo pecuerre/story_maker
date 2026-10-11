@@ -26,7 +26,7 @@ separate the kinds, and the label says how far the finding is from being a reach
 
 **A number is a position in this list, not an identity.** Findings leave when they are fixed and the
 list is renumbered from 1, so a number is reused: `4` today is not the finding `4` was yesterday, and
-the list was renumbered on 2026-10-10. **Never cite one from another document** — reference a finding
+the list was last renumbered on 2026-10-11. **Never cite one from another document** — reference a finding
 by its name, and cite the change that closed one through [`../CHANGELOG.md`](../CHANGELOG.md) or
 [delivery_history.md](delivery_history.md). Entries in those two historical files keep the number a
 finding had at the time and are not rewritten.
@@ -62,43 +62,23 @@ for what that pass actually ran.
    in [`data_factor_guidance.md`](data_factor_guidance.md)), and the compose path must not run
    development data in production.
 
-3. **Footgun — a new content model has to be added to the hard-coded content-class registry.**
-   `Ability::CONTENT_CLASS_NAMES` (`app/models/ability.rb:28-51`) is load-bearing twice over:
-   `RecordTarget` gates polymorphic record references through the same list, and
-   `test/models/ability_test.rb` requires every persisted model to be content, authorized by another
-   rule group, or listed there with a reason. An unregistered model is a failing test rather than a
-   silent omission, so both halves of what a new model must declare are already guarded.
-
-4. **Footgun — a remembered create says nothing about which story, scene, or section it would belong
-   to.** The payload's scope column (`DraftChange#scope_attribute`) is dropped as plumbing on the
-   drafts page, because the page is already inside the universe it would place the record in and a
-   bare `story_id` is a number a reader cannot name. The list workspaces now show remembered creates
-   too, and they drop it for the same reason — and additionally because a pending row is an unsaved
-   record whose position and parent are the applier's to decide, so it is appended after the real
-   rows and placed under no parent. An author reviewing twenty remembered scenes therefore sees twenty
-   rows that say what each scene is called and nothing about where each one would land, and has to go
-   to the record's own workspace to find out. The rules for what a pending row may read are in
-   [`conventions.md`](conventions.md#pending-changes-in-a-list) and the reasoning for reading a
-   create as an unsaved model rather than a row is in [ADR
-   0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
-
-5. **Footgun — nothing throttles content mutations.** No mutation rate limits exist beyond
+3. **Footgun — nothing throttles content mutations.** No mutation rate limits exist beyond
    sign-in/password-reset. Public universes intentionally allow every signed-in contributor to write,
    so throttling content/story/tag/membership mutations is a product decision rather than a confirmed
    defect.
 
-6. **Footgun — universe and story authorization objects are looked up more than once.** The current
+4. **Footgun — universe and story authorization objects are looked up more than once.** The current
    request path is internally consistent, but a concurrent slug rename or scope mutation could create
    a TOCTOU mismatch between the object authorized and the object acted on; no deterministic exploit
    was demonstrated.
 
-7. **Footgun — tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
+5. **Footgun — tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
    `#rrggbb` pair for a taxonomy tag's background and foreground
    (`app/models/concerns/has_color.rb:17-20`), so an author can choose a combination that fails WCAG
    contrast. The badge shape still identifies the tag, and color is never the only signal, so this is
    a legibility review item rather than a security finding.
 
-8. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
+6. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
     nothing asserts they stay closed.** `config.action_mailbox.ingress` is `nil`, which is the only
     reason the nine `POST`/`GET` endpoints under `/rails/action_mailbox` answer **404**:
     `ActionMailbox::BaseController#ensure_configured` refuses unless the setting names an ingress.

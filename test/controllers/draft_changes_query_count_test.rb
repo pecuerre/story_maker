@@ -140,6 +140,31 @@ class DraftChangesQueryCountTest < ActionDispatch::IntegrationTest
     assert_equal with_one, with_four
   end
 
+  test "naming the scope a create would be written under costs no query per row" do
+    # **The guard on resolving a scope column.** The drafts page prints the story or
+    # scene a remembered create would be written under, which is a lookup by id — the
+    # same shape as the tag read above, and the same place a per-row query would
+    # hide. The changes here are story-scoped rather than universe-scoped precisely
+    # because that is the case that has an owner to resolve: a Character's
+    # `universe_id` names nothing the reader cannot already see, so a universe-scoped
+    # draft would pass this test without ever asking.
+    path = universe_draft_path(universe_slug: @universe.slug, id: @draft)
+
+    remember_scene_creates(1)
+    get path
+    assert_equal 1, css_select(".draft-change .entity-description").text.scan("Story One").size
+    with_one = count_queries { get path }
+
+    remember_scene_creates(4)
+    get path
+    assert_equal 5, css_select(".draft-change .entity-description").text.scan("Story One").size
+    with_five = count_queries { get path }
+
+    assert_response :success
+    assert_equal with_one, with_five,
+      "four more story-scoped changes and four more story queries is the per-row scope read this must not pay"
+  end
+
   test "a reviewer's page costs the same for a short submission and a long one" do
     @universe.update!(collaboration_mode: "github")
     sign_out
@@ -337,6 +362,19 @@ class DraftChangesQueryCountTest < ActionDispatch::IntegrationTest
         @draft.draft_changes.create!(action: "create", record_type: "Character",
           payload: { "universe_id" => @universe.id, "name" => "Pending #{index}",
                      "character_tag_ids" => [ tag.id ] })
+      end
+      @draft.reload
+    end
+
+    # **Scene creates rather than Character creates**, because a Scene's scope column
+    # names a story that has to be resolved while a Character's names the universe
+    # the page is already inside. Every one of them names the same story, so a single
+    # owner class covers the lot and the count is a difference rather than a total:
+    # five rows must not cost five story lookups.
+    def remember_scene_creates(count)
+      count.times do |index|
+        @draft.draft_changes.create!(action: "create", record_type: "Scene",
+          payload: { "story_id" => stories(:story_one).id, "name" => "Pending scene #{index}" })
       end
       @draft.reload
     end

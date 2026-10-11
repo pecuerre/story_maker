@@ -20,6 +20,7 @@
   create_url: universe_story_sections_path(story_id: @story),
   update_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
   model_param: "section",
+  pending_story: @story,
   taxonomy_field: "section_tag_ids",
   details_url: ->(section) { universe_story_section_path(story_id: @story, id: section) },
   details_count: ->(section) { @scene_counts.fetch(section.id, 0) },

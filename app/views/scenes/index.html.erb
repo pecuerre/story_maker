@@ -43,8 +43,11 @@ end %>
     that does not exist cannot match a section, a tag, or a date range. Offering
     a pending row beside a "nothing matched these filters" message would be
     answering a question the reader did not ask, so a narrowed list stays narrowed
-    and the pending rows are the unfiltered list's own. %>
-<% pending_creates = filtered ? [] : draft_pending_creates_for(Scene) %>
+    and the pending rows are the unfiltered list's own. It is also narrowed to
+    **this** story, because the draft belongs to the universe rather than to the
+    story: a Scene remembered under a sibling story would otherwise be listed here
+    with nothing on the row to say it belongs elsewhere. %>
+<% pending_creates = filtered ? [] : draft_pending_creates_for(Scene, story: @story) %>
 <% if @scenes.any? || pending_creates.any? %>
   <div class="content-surface entity-list">
     <div class="list-group list-group-flush">

@@ -159,6 +159,89 @@ class DraftChanges::ReaderTest < ActiveSupport::TestCase
     assert_equal 0, count_tag_queries { reader_for(@draft).entries }
   end
 
+  # The scope a change would be written under
+
+  test "a story-scoped change resolves the story it names, and one query covers them all" do
+    # The scope column used to be dropped from the page as an unnameable number. It is
+    # now resolved, so the reader answers it — once per **owner class**, the same bound
+    # as the records and the tags, rather than once per change.
+    change = @draft.draft_changes.create!(action: "create", record_type: "Scene",
+      payload: { "story_id" => stories(:story_one).id, "name" => "Arrival" })
+
+    reader = reader_for(@draft)
+
+    assert_equal stories(:story_one), reader.entry_for(change).scope
+    # A **fresh** reader inside the block: `entries` memoizes, so a reader that had
+    # already answered would report zero and make the assertion mean nothing.
+    assert_equal 1, count_scope_queries { reader_for(@draft).entries }
+  end
+
+  test "a universe-scoped change resolves no scope and is asked about no owner class" do
+    # A Character's scope column is `universe_id`, and the page is already inside the
+    # universe that names. Resolving it would load the universe on every draft page to
+    # print the one thing the reader can see from the address bar.
+    change = @draft.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "universe_id" => @universe.id, "name" => "Ariadne" })
+
+    reader = reader_for(@draft)
+
+    assert_nil reader.entry_for(change).scope
+    assert_equal 0, count_scope_queries { reader_for(@draft).entries }
+  end
+
+  test "two changes of one type under different stories each resolve their own" do
+    # The case a per-`record_type` key silently gets wrong, and the ordinary shape of
+    # a real draft: two Scenes remembered under two stories. Keyed by type, the
+    # second one's answer would be read for both and the drafts page would name one
+    # story for every change on it — which is the exact confusion the scope row
+    # exists to remove, reintroduced one level up.
+    one = @draft.draft_changes.create!(action: "create", record_type: "Scene",
+      payload: { "story_id" => stories(:story_one).id, "name" => "Arrival" })
+    two = @draft.draft_changes.create!(action: "create", record_type: "Scene",
+      payload: { "story_id" => stories(:story_alt).id, "name" => "Departure" })
+
+    reader = reader_for(@draft)
+
+    assert_equal stories(:story_one), reader.entry_for(one).scope
+    assert_equal stories(:story_alt), reader.entry_for(two).scope
+  end
+
+  test "a scene-scoped change resolves the scene it names, not a scene of its own type" do
+    # The key is the **owner's** class rather than `record_type`: a `SceneElement`'s
+    # `scene_id` names a `Scene`, so an answer keyed by the changed type would look a
+    # scene up among the scene elements and find nothing.
+    scene = scenes(:scene_one)
+    change = @draft.draft_changes.create!(action: "create", record_type: "SceneElement",
+      payload: { "scene_id" => scene.id, "kind" => "narration", "content" => "They came" })
+
+    assert_equal scene, reader_for(@draft).entry_for(change).scope
+  end
+
+  test "a scope record that has since been deleted resolves to nothing" do
+    # A change whose story is gone is still the author's statement; what it cannot do
+    # is name a story, so the answer is nil and the page says so in its own words.
+    change = @draft.draft_changes.create!(action: "create", record_type: "Scene",
+      payload: { "story_id" => stories(:story_one).id, "name" => "Arrival" })
+    stories(:story_one).destroy!
+
+    assert_nil reader_for(@draft).entry_for(change).scope
+  end
+
+  test "a payload naming no scope id resolves to nothing rather than raising" do
+    change = @draft.draft_changes.create!(action: "create", record_type: "Scene",
+      payload: { "name" => "Arrival" })
+
+    assert_nil reader_for(@draft).entry_for(change).scope
+  end
+
+  test "a change the reader was not built with resolves no scope" do
+    reader = reader_for(@draft)
+    stranger = DraftChange.new(action: "create", record_type: "Scene",
+      payload: { "story_id" => stories(:story_one).id })
+
+    assert_nil reader.entry_for(stranger).scope
+  end
+
   # Shape
 
   test "a change the reader was not built with resolves to nothing rather than raising" do
@@ -217,5 +300,11 @@ class DraftChanges::ReaderTest < ActiveSupport::TestCase
 
     def count_tag_queries(&block)
       count_queries(/FROM "character_tags"/, &block)
+    end
+
+    # Only the owner classes a scope column can name, and never `universes`: the point
+    # of the universe-scoped test is that the reader never asks.
+    def count_scope_queries(&block)
+      count_queries(/FROM "(stories|scenes|sections)"/, &block)
     end
 end

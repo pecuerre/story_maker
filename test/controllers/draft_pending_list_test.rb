@@ -501,6 +501,105 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
 
   # Where the rows do not go
 
+  test "a remembered scene is listed only under the story it names" do
+    # A draft belongs to a Universe, not to a Story, so one author's draft can hold
+    # a Scene remembered under every story in it. A Scenes list is inside one
+    # story and has to answer "what this list would hold" — and a Scene belonging
+    # to a sibling story is not part of that answer. Before this, the row appeared
+    # in *every* story's Scenes list with nothing on it to say where it belonged,
+    # which is a list claiming a record it does not hold.
+    remember_create("Scene", "name" => "Story one pending scene", "story_id" => stories(:story_one).id)
+
+    get universe_story_scenes_path(universe_slug: @universe.slug, story_id: stories(:story_one).id)
+
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: "Story one pending scene", count: 1
+
+    get universe_story_scenes_path(universe_slug: @universe.slug, story_id: stories(:story_alt).id)
+
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: "Story one pending scene", count: 0
+  end
+
+  test "a story's empty scene list does not claim a sibling story's pending scene" do
+    # The other half of the same claim. `story_alt` has a scene of its own, so it
+    # is emptied here to reach the question: telling a writer this story has no
+    # scenes while a sibling story's remembered scene sat under the message would
+    # be two answers to one question, and the row would be the wrong one.
+    remember_create("Scene", "name" => "Story one pending scene", "story_id" => stories(:story_one).id)
+    stories(:story_alt).scenes.update_all(deleted_at: Time.current)
+
+    get universe_story_scenes_path(universe_slug: @universe.slug, story_id: stories(:story_alt).id)
+
+    assert_response :success
+    assert_select ".empty-state", count: 1
+    assert_select ".draft-pending-row", count: 0
+  end
+
+  test "a remembered section is listed only under the story it names" do
+    # The Sections tree is the one taxonomy drawn inside a Story, so it has to
+    # narrow for the same reason the Scenes list does. `story_alt` has a section
+    # of its own, so it is emptied to reach the question the empty state answers.
+    remember_create("Section", "name" => "Pending section", "story_id" => stories(:story_one).id)
+
+    get universe_story_sections_path(universe_slug: @universe.slug, story_id: stories(:story_one).id)
+
+    assert_response :success
+    assert_select ".taxonomy-pending .entity-title", text: "Pending section", count: 1
+
+    stories(:story_alt).sections.update_all(deleted_at: Time.current)
+
+    get universe_story_sections_path(universe_slug: @universe.slug, story_id: stories(:story_alt).id)
+
+    assert_response :success
+    assert_select ".taxonomy-pending", count: 0
+    assert_select "[data-taxonomy-tree-empty]", count: 1
+  end
+
+  test "a scene tag page lists only the pending scenes its own story holds" do
+    # The two story-scoped tag pages ask "which records carry this tag", and the
+    # stored records they list are one story's. The leak runs this way: the tag
+    # belongs to `story_alt`, and the pending scene carrying it was remembered
+    # under `story_one`, so the alt page was listing a record its own story does
+    # not hold.
+    #
+    # The alt tag is created rather than taken from the fixtures, because a
+    # `SceneTag` belongs to one story and no fixture gives `story_alt` one.
+    other_tag = SceneTag.create!(story: stories(:story_alt), name: "Alt scene tag", taggable: true)
+    remember_create("Scene", "name" => "Story one pending scene",
+      "story_id" => stories(:story_one).id, "scene_tag_ids" => [ other_tag.id ])
+
+    get universe_story_scene_tag_path(universe_slug: @universe.slug,
+      story_id: stories(:story_alt).id, id: other_tag)
+
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: "Story one pending scene", count: 0
+  end
+
+  test "a pending scene still reaches its own story's scene tag page" do
+    # The other half: narrowing the tag pages must not drop the row they are for.
+    tag = scene_tags(:scene_tag_one)
+    remember_create("Scene", "name" => "Tagged pending scene",
+      "story_id" => stories(:story_one).id, "scene_tag_ids" => [ tag.id ])
+
+    get universe_story_scene_tag_path(universe_slug: @universe.slug, story_id: stories(:story_one).id, id: tag)
+
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: "Tagged pending scene", count: 1
+  end
+
+  test "a universe-scoped pending row is unaffected by which story the list is under" do
+    # The other half of the rule. A Character's scope column is `universe_id`, which
+    # no story narrows, so narrowing by story must not quietly drop a pending
+    # character from a page that happens to sit inside one.
+    remember_create("Character", "name" => "Pending character")
+
+    get universe_characters_path(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".draft-pending-row .entity-title", text: "Pending character", count: 1
+  end
+
   test "a filtered scene list stays filtered" do
     # `SceneFilter` narrows the story's real scenes. A record that does not exist
     # cannot match a section, a tag, or a date range, so offering a pending row

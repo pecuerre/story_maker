@@ -29,6 +29,77 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-11
 
+- **[fixed]** **A remembered create is no longer offered to a story it does not belong to, and the
+  drafts page now says where it would go, which closes that footgun.**
+
+  - **What the finding recorded, and what checking it first turned up.** The entry said a remembered
+    create "says nothing about which story, scene, or section it would belong to", and gave its
+    reasoning as a dropped scope column plus a pending row with no parent. Reading that against the
+    code before changing it found a sharper defect underneath: `DraftPreview#creates_for` filtered
+    remembered creates by `record_type` alone, so a Scene remembered under one story was rendered in
+    **every other story's** Scenes list, and on the Sections and Scene-tag pages too, with nothing on
+    the row to say it belonged elsewhere. That is not a labelling gap — a list was claiming a record
+    it does not hold. A probe confirmed it before any edit: a pending Scene for "Story One" appeared
+    unlabelled on "Spin-off"'s scenes page.
+
+  - **A draft belongs to a universe, and a list belongs to a story.** Those were different questions
+    and the code was answering the first one on a page that asked the second. `creates_for` now takes
+    a `within:` and narrows on the record's own `story_id` — the same column
+    `DraftChange#scope_attribute` names and `DraftMutation` stored, so this is no new derivation of
+    "where does this record go". It is a **keyword rather than a second method** so a caller cannot
+    quietly ask the unscoped question from a page that has a story of its own, which is exactly the
+    mistake being fixed. A create whose payload names no story is excluded rather than shown: a Scene
+    with no story is one the applier cannot place.
+
+  - **Universe-scoped workspaces deliberately omit the keyword.** The six universe-level flat lists
+    and seven universe-level taxonomies are not inside a story, and for a universe-scoped model the
+    scope column is `universe_id`, which no story narrows. Omitting it there is correct rather than an
+    oversight, and a test says so — narrowing must not quietly drop a pending character from a page
+    that happens to sit inside a story.
+
+  - **The drafts page prints the scope, which is the half of the finding that was about wording.** The
+    original reason for dropping the column — "a bare `story_id` is a number the reader cannot name" —
+    was a reason not to print the *id*, not a reason to print nothing: the story is a stored record
+    with a name. `DraftChanges::Reader` gained `Entry#scope`, resolved in **one query per owner
+    class** across the whole draft, the same bound the record and tag answers already hold. Two rules
+    make it general rather than a story special case: the answer is keyed by the **owner's** class,
+    because a `SceneElement`'s `scene_id` names a `Scene` and keying by the changed type would look a
+    scene up among the scene elements; and a `universe_id` scope resolves nothing, because the page is
+    already inside the universe that column names and loading it would cost a query on every draft
+    page to print what the reader can see from the address bar. That last case is the one the old
+    reasoning was right about, and an existing test asserting it still passes unchanged.
+
+  - **A deleted scope record says so rather than printing a number.** The three situations — no scope
+    id, a scope record that no longer resolves, and a universe scope — are deliberately not three
+    different sentences. The first two read "this change does not currently say where it would go" and
+    share `shared.detail_fact.blank`, the one honest answer to a missing value this application
+    already has.
+
+  - **The tests were checked for vacuousness.** The seven reader cases and the four list cases were
+    run against the pre-change code and all eleven fail; the scene-tag case was rewritten once because
+    its first version passed either way, having asserted in the wrong direction. The query-count guard
+    was sabotaged two ways: a doubled query per owner class did **not** fail it, which is the point of
+    a difference rather than a total, and a per-row query did.
+
+  - **A browser-shaped check caught a bug the unit tests had missed.** Rendering the drafts page with
+    two Scene changes under two different stories showed **both rows naming the same story**: the
+  memo was keyed by `record_type`, so the second change's answer was read for both. That is the
+  ordinary shape of a real draft and the exact confusion the scope row exists to remove, reintroduced
+  one level up. The key is now the change itself — the records are still fetched in one query per
+  owner class — and a reader test holds two Scenes under two stories as a case. It is worth recording
+  that every unit test passed while this was wrong: they each used one story.
+
+  - **What was deliberately left alone.** A pending row still has no position and no parent, and the
+  list ordering rule is untouched. Those are the applier's to decide and could not be printed
+  truthfully before it runs; narrowing the lists and naming the scope on the drafts page answer the
+  two questions the row *can* answer.
+
+  - **Verification.** `bin/rails test` — 2,173 tests, 13,624 assertions, 0 failures, 0 errors, 13
+  skips. `bin/rails test:system` — 174 tests, 2,351 assertions, 0 failures. `bin/rubocop` — 475
+  files, no offenses. `bin/brakeman --no-pager` — 0 security warnings. `bun run check:js` — 219 pass,
+  0 fail (no client-side files changed). Not run: `bin/bundler-audit`, `bin/importmap audit`, and
+  `bun audit`; no dependency, pinned asset, or package changed.
+
 - **[security]** **A model nested below a story, scene, or section can no longer lose its checks and
   its controls silently, which closes that footgun.** The finding was recorded because
   `UniverseScopeResolver` walks a bounded list — `story`, `scene`, `section` — and stops, so a model
@@ -143,6 +214,43 @@ are linked rather than repeated, so there is one place to keep them current.
     name into `where`, which Brakeman flagged as a weak SQL injection, and the association name is
     used instead. `test:system` was not run: the change has no browser-visible surface, as no request
     in the application performs a class-level check.
+
+- **[docs]** **The content-class registry finding left the open list, because a decided, documented,
+  and guarded process step is not an open oddity.**
+
+  - **What the finding recorded.** A new content model has to be added to
+    `Ability::CONTENT_CLASS_NAMES`, and a model missing from it has no CanCan rule at all, so every
+    check against it is denied and nothing raises: a control simply never renders. That failure mode
+    is real, and it is why the finding was written down.
+
+  - **Why it was not open any more.** All three halves of it are settled rather than pending. The
+    registry gate was decided in ADR 0019; the new-model checklist in `development.md` asks for the
+    registration and says why it is not optional bookkeeping; and the registry is inverted in
+    `test/models/ability_test.rb`, so a model that is neither registered nor excused with a reason
+    fails the suite rather than reaching production. The list holds findings that wait on a decision
+    or on an unproven claim, and this one waited on neither.
+
+  - **What re-reading it against the code added.** The registry turns out to be load-bearing in more
+    places than the finding claimed: it is the CanCan rule source as well as the `RecordTarget` gate,
+    it gates demo-manifest references in the development loader, and registration commits a model to
+    `HasDiscussionTest`'s discussible list, `UniverseScopeResolverTest`'s per-row walk, and the
+    applier and conflict-detector registries. A careless registration therefore fails four suites
+    rather than one, which strengthens the case for closing the finding rather than for keeping it.
+
+  - **The one caveat, recorded here rather than in a live document.** The inverted guard reads
+    `ApplicationRecord.descendants`, and `config/environments/test.rb` sets
+    `config.eager_load = ENV["CI"].present?`, so a brand-new model that nothing else references is
+    absent from that list in a plain local run and the guard passes by not seeing it. This was
+    verified rather than inferred: a throwaway `ApplicationRecord` subclass was added and the test
+    run both ways — green under `bin/rails test`, failing under `CI=1` with the model named as
+    unjustified, and removed again. CI sets `CI: "1"` explicitly in the `test` job, so the gate is
+    enforced where it counts; the owner declined both making the guard load-independent and
+    documenting the caveat in `development.md`, so the finding is closed rather than reworded.
+
+  - **Verification.** `bin/rails test test/models/ability_test.rb` — 16 runs, 205 assertions, 0
+    failures; the same file under `CI=1` with the probe model present, as described above.
+    `bin/rails test test/docs_test.rb`. No application, test, or configuration file changed: this is
+    the open list, this history, and the changelog.
 
 ### 2026-10-10
 
@@ -5455,6 +5563,60 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk: a remembered create said nothing about which story it would belong to (fixed)
+
+**Then:** the open list recorded that "a remembered create says nothing about which story, scene, or
+section it would belong to", and gave its reasoning as two facts: the payload's scope column was
+dropped as plumbing on the drafts page, and a pending row is an unsaved record whose position and
+parent are the applier's to decide. Both were true. Reading the finding against the code before acting
+on it found a third thing the entry had not recorded, and it was the sharper of the three:
+`DraftPreview#creates_for` filtered remembered creates by `record_type` alone, so **a draft — which
+belongs to a universe — put its Scenes into every story's Scenes list in that universe**, with nothing
+on the row to say which story each one belonged to. A probe confirmed it against `story_one` and
+`story_alt` before anything was edited: a Scene remembered under Story One rendered, unlabelled, on
+Spin-off's scenes page.
+
+**Now:** a story-scoped workspace lists only the creates naming its own story, and the drafts page
+prints the story or scene a create would be written under.
+
+**A list claiming a record it does not hold is a different defect from a row that does not explain
+itself,** and only one of them was a labelling problem. The finding described the second; the first
+was a correctness bug underneath it, reached by the same question — *which story does this row belong
+to?* — asked of `creates_for` and answered by record type. Narrowing the lists and naming the scope are
+two halves of one fix rather than two improvements.
+
+**The recorded reasoning was right about a rendering problem and wrong about the conclusion.** The
+column was dropped because "a bare `story_id` is a number the reader cannot name", which is a reason
+not to print the *id*. The story is a stored record with a name, so `DraftChanges::Reader` now resolves
+it — in one query per owner class across the whole draft, the same bound its record and tag answers
+already held — and the page prints the name. The `universe_id` case is the one the old reasoning was
+right about: the page is already inside the universe that column names, so it prints no scope row at
+all, and the existing test asserting that still passes unchanged.
+
+**Two rules keep the scope answer general rather than a story special case.** The reader keys the
+answer by the **owner's** class, because a `SceneElement`'s `scene_id` names a `Scene` and keying by
+the changed type would look a scene up among the scene elements. And the narrowing keyword is passed by
+the three kinds of workspace that are inside a story and omitted by the rest, because a universe-scoped
+model's scope column is `universe_id`, which no story narrows — omitting it there is correct rather
+than an oversight.
+
+**What deliberately stayed.** A pending row still has no position and no parent, and the append-after-
+the-real-rows rule is untouched. Those are the applier's to decide and could not be printed truthfully
+before it runs; the fix answers the two questions the row *can* answer.
+
+**The tests were checked for vacuousness rather than assumed.** All six reader cases and all four list
+cases fail against the pre-change code. One list case was rewritten because its first version passed
+either way — it asserted the narrowing in the direction that was already true. The query-count guard
+was sabotaged twice: doubling the query per owner class did **not** fail it, which is exactly what a
+difference rather than a total is for, and a per-row query did.
+
+**A rendered-page check then caught what the unit tests had missed.** With two Scene changes under two
+different stories — the ordinary shape of a real draft — the drafts page named the *same* story on
+both rows, because the reader's memo was keyed by `record_type` and the second change's answer was
+read for both. Every unit test had passed while this was wrong, because each of them used one story.
+The key is the change itself, the records are still fetched in one query per owner class, and a test
+now holds two Scenes under two stories.
 
 ### Quirk 50: dead PWA assets drifted from the conventions (fixed)
 

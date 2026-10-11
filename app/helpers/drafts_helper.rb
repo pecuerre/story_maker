@@ -272,8 +272,17 @@ module DraftsHelper
   # The records this draft would have added to `model`'s list, as unsaved
   # instances. Empty in a `direct` universe, for a guest, and for a model nobody
   # has remembered a create of, so a workspace can call it unconditionally.
-  def draft_pending_creates_for(model)
-    draft_preview.creates_for(model)
+  #
+  # **`story:` narrows the answer to one Story's list**, and a workspace inside a
+  # Story passes it. It is a keyword rather than a second method so a caller
+  # cannot silently ask the unscoped question from a page that has a story, which
+  # is the mistake `DraftPreview#records_in` describes: a draft belongs to a
+  # universe, so the unscoped answer for a story-scoped model carries creates that
+  # belong to the story's siblings. A workspace with no story of its own — the six
+  # universe-level lists and the taxonomy trees — omits it and keeps the unscoped
+  # answer, which is the whole answer for a universe-scoped model.
+  def draft_pending_creates_for(model, story: nil)
+    draft_preview.creates_for(model, within: story)
   end
 
   # The photo a pending row should draw, as a `data:` URL an `<img>` can use, or
@@ -314,12 +323,18 @@ module DraftsHelper
   # cannot disagree about which records a taxonomy is for. `include_descendants`
   # follows the toggle already on that page, so a remembered create carrying a child
   # tag appears under the parent exactly when a stored record carrying it would.
-  def draft_pending_records_for_tag(tag, include_descendants: false)
+  #
+  # **`story:` is passed by the two tag pages that live inside a Story** — Sections
+  # and Scenes — for the reason `DraftPreview#creates_for` gives: this tag page's
+  # stored records are that story's, so a remembered create belonging to another
+  # story is not an answer to "which records carry this tag" here. The six
+  # universe-level tag pages omit it, which is the whole answer for them.
+  def draft_pending_records_for_tag(tag, include_descendants: false, story: nil)
     model = tagged_records_class_for(tag)
     return [] if model.blank?
 
     ids = [ tag.id, *(include_descendants ? tag.descendant_ids : []) ]
-    draft_pending_creates_for(model).select do |record|
+    draft_pending_creates_for(model, story: story).select do |record|
       (draft_pending_record_tag_ids(record, model) & ids).any?
     end
   end
@@ -330,10 +345,14 @@ module DraftsHelper
   # `RecordTarget.model_for` is the gate, so a `model_param` names a content class
   # or nothing — the tree is rendered from a fixed set of workspaces, and a param
   # that named something else would find no pending rows rather than a constant.
-  def draft_pending_taxonomy_creates(model_param)
+  #
+  # **`story:` is passed by the Sections tree**, which is the one taxonomy drawn
+  # inside a Story; the seven universe-level trees omit it. See
+  # `DraftPreview#creates_for` for why a story-scoped tree has to narrow.
+  def draft_pending_taxonomy_creates(model_param, story: nil)
     model = RecordTarget.model_for(model_param.to_s.camelize)
 
-    model ? draft_pending_creates_for(model) : []
+    model ? draft_pending_creates_for(model, story: story) : []
   end
 
   # What a change's row calls itself: the record's own label when the change names
@@ -416,11 +435,17 @@ module DraftsHelper
   # The remembered attributes, as `[ label, value ]` pairs, in the order the
   # payload stores them.
   #
-  # The scope column is dropped: it is the column that placed the record in its
-  # universe, story, or scene, and this page is already inside that universe — a
-  # bare `story_id` is a number the reader cannot name. Everything else is kept,
-  # including the values a column does not hold, because a tag list or a photo is
-  # the part of the change that `record.changes` would have dropped.
+  # **The scope column is resolved rather than dropped.** It used to be skipped
+  # because the page is already inside the universe it would place the record in and a
+  # bare `story_id` is a number the reader cannot name — but "cannot name as a number"
+  # is not the same as "cannot say", and the answer was available as a name. It is now
+  # printed through the reader's `scope`, resolved once per owner class for the whole
+  # draft, so the row says *where* the record would go rather than only what it would
+  # be called. A change whose scope is the universe still prints nothing for it, which
+  # is the one case the original reasoning was right about.
+  #
+  # Everything else is kept, including the values a column does not hold, because a tag
+  # list or a photo is the part of the change that `record.changes` would have dropped.
   #
   # `changes` is the collection this change belongs to, and it is how the id lists are
   # resolved in one pass rather than one id at a time — see `draft_changes_reader`. It
@@ -433,12 +458,39 @@ module DraftsHelper
     entry = draft_changes_reader(changes || [ change ]).entry_for(change)
 
     change.payload.filter_map do |name, value|
-      next if name == change.scope_attribute
+      if name == change.scope_attribute
+        scope = draft_change_scope_value(entry)
+        next if scope.nil?
+        next [ draft_change_label(model, name, nil), scope ]
+      end
 
       association = id_list_association(model, name)
       [ draft_change_label(model, name, association),
         draft_change_value(model, name, value, association, entry: entry, key: name) ]
     end
+  end
+
+  # The scope a change would be written under, as the reader's word for it — the
+  # Story's own name rather than the `story_id` the payload carries.
+  #
+  # **nil means "this page has no scope row at all", which is the universe's case
+  # and only the universe's.** The page is already inside the universe a
+  # `universe_id` names, so a row saying so would repeat the address bar. Every
+  # narrower owner is named, including one that no longer resolves: a change whose
+  # story has been deleted still has to say *something* about where it would go,
+  # and `shared.detail_fact.blank` is this application's one honest way to say
+  # "nothing" — the same cell a missing value gets everywhere else.
+  #
+  # **The record goes through `record_label`**, the same ladder a live row uses, so a
+  # Story is called by its name here exactly as it is in a list. The reader resolves
+  # the row and this turns it into a word; a Reader that printed names itself would
+  # need a second copy of that ladder, which ADR 0023 rejected.
+  def draft_change_scope_value(entry)
+    return if entry.change.universe_scoped?
+
+    record = entry.scope
+
+    record.present? ? record_label(record) : t("shared.detail_fact.blank")
   end
 
   # The record's side of one conflict, as the same `[ label, value ]` pairs the
@@ -470,6 +522,14 @@ module DraftsHelper
     record = report.record
 
     change.payload.filter_map do |name, _value|
+      # The scope column is dropped here, and the drafts page above now prints it.
+      # **The two are consistent by construction rather than by luck**: a conflict is
+      # never a create (`DraftConflictDetector` answers one `:writable`), an update's
+      # payload is `record.changes` and carries no column the author did not change,
+      # and a delete carries no payload at all — so a scope column cannot reach this
+      # half, and the branch above it cannot fire for it either. Naming the stored
+      # scope here would be a per-row association read on a page whose cost is
+      # deliberately bounded, in service of a branch nothing reaches.
       next if name == change.scope_attribute
       next if model.blank? || !record.respond_to?(name)
       next unless model.column_names.include?(name) || id_list_association(model, name)

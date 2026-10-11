@@ -17,13 +17,13 @@
 <%= render "shared/detail_section",
   title: t("tags.types.scene.records_title"),
   count: @tagged_records.size,
-  pending_count: draft_pending_records_for_tag(@scene_tag, include_descendants: @include_descendants).size,
+  pending_count: draft_pending_records_for_tag(@scene_tag, include_descendants: @include_descendants, story: @story).size,
   count_label: "scene",
   icon: "film",
   empty_title: t("shared.detail_section.empty_title", determiner: t("shared.detail_section.determiners.none_feminine"), label: t("scene", count: 1)),
   empty_description: t("tags.types.scene.unused_description") do %>
   <%= render "shared/tagged_record_list",
     records: @tagged_records,
-      pending: draft_pending_records_for_tag(@scene_tag, include_descendants: @include_descendants),
+      pending: draft_pending_records_for_tag(@scene_tag, include_descendants: @include_descendants, story: @story),
     path: ->(record) { universe_story_scene_path(story_id: @story, id: record) } %>
 <% end %>

@@ -1,12 +1,13 @@
 # Reads one draft's remembered changes in a fixed number of queries.
 #
 # **This is the read side of finding 66.** A draft's page, a reviewer's page, and the
-# sidebar's pending panel all print the same two facts about each change — which record
-# it names, and what the ids in its payload call — and both facts used to be a query per
-# change: `DraftChange#resolved_record` asks `RecordTarget` one row at a time, and
-# `DraftsHelper#association_names` asked the tag table one id at a time. A draft assembled
-# from a long editing session therefore cost a query per row, and the sidebar panel pays
-# it on **every page** of the universe.
+# sidebar's pending panel all print the same three facts about each change — which record
+# it names, what the ids in its payload call, and which story or section it would be
+# written under — and all three used to be a query per change: `DraftChange#resolved_record`
+# asks `RecordTarget` one row at a time, `DraftsHelper#association_names` asked the tag table one
+# id at a time, and the scope column was dropped from the page rather than resolved. A draft
+# assembled from a long editing session therefore cost a query per row, and the sidebar panel
+# pays it on **every page** of the universe.
 #
 # **Grouped by class, not by row.** Both answers are "these ids, of this class", so this
 # object asks once per class rather than once per id: one query for every `Character` a
@@ -37,19 +38,32 @@
 # database, and the panel's `change.creating?` guard becomes redundant rather than
 # load-bearing.
 class DraftChanges::Reader
-  # One change's resolved answers, as the two things a row about it has to print.
+  # One change's resolved answers, as the three things a row about it has to print.
   #
-  # `tag_records` holds the **records**, not their names: this class answers which rows
-  # the payload's ids name, and turning a row into a word is the view layer's job
-  # (`record_label`). A Reader that printed labels itself would need a label ladder of
-  # its own, and ADR 0023 rejected exactly that second copy.
-  Entry = Data.define(:change, :record, :tag_records) do
+  # `tag_records` and `scope_record` hold the **records**, not their names: this class
+  # answers which rows the payload's ids name, and turning a row into a word is the
+  # view layer's job (`record_label`). A Reader that printed labels itself would need a
+  # label ladder of its own, and ADR 0023 rejected exactly that second copy.
+  Entry = Data.define(:change, :record, :tag_records, :scope_record) do
     # The tags one payload key named, or nil when the key was not an id list — which is
     # how the caller tells "no tags" from "nothing to name". An id that no longer resolves
     # is absent from the answer rather than nil-valued, because a change the author made
     # about a tag that has since been deleted is still a change they made.
     def tags_for(name)
       tag_records&.[](name)
+    end
+
+    # The stored record this change's scope column names — the Story a Scene would be
+    # written under, the Section a Scene Element hangs from.
+    #
+    # **Nil covers two situations the caller deliberately cannot tell apart**: a
+    # change whose payload named no scope id, and one whose scope record has since
+    # been deleted. Both read the same way — this change does not currently say where
+    # it would go — so the page states that once rather than twice. A **universe**
+    # scope is not one of them: it never resolves at all, and the page prints no scope
+    # row for it, which is the one case where the page is already inside the answer.
+    def scope
+      scope_record
     end
   end
 
@@ -83,7 +97,8 @@ class DraftChanges::Reader
     end
 
     def build_entry(change)
-      Entry.new(change: change, record: record_for(change), tag_records: tags_for(change))
+      Entry.new(change: change, record: record_for(change), tag_records: tags_for(change),
+        scope_record: scope_for(change))
     end
 
     # Every record this draft's changes name, in one query per class. A `create` is
@@ -191,5 +206,80 @@ class DraftChanges::Reader
 
         memo[name] = Array(value).filter_map { |id| tag_records[id] }
       end
+    end
+
+    # The record one change's scope column names, or nil.
+    #
+    # **The column is asked of the change rather than re-derived from the model**,
+    # because `DraftChange#scope_attribute` is already the one place that names it —
+    # the same answer `DraftMutation` used to store it and the same one
+    # `DraftPreview#creates_for` compares against. Deriving it a third time here
+    # would be a third copy that could disagree about which column places a record.
+    #
+    # **A `universe_id` scope resolves to nothing.** The page is already inside the
+    # universe that column names, so the record it would return is the one thing the
+    # reader can see from the address bar. Every other owner — a Story, a Scene, a
+    # Section — is a record the reader cannot name from where they are, which is the
+    # whole reason the column used to be dropped and the reason it is now resolved.
+    def scope_for(change)
+      requested = requested_scopes[change]
+      return if requested.nil?
+
+      scope_records[requested]
+    end
+
+    # `{ change => [ owner class name, scope id ] }` for every change whose payload
+    # carries a scope id, gathered in one pass over payloads that are already loaded
+    # with the changes.
+    #
+    # **Keyed by the change, not by `record_type`.** A draft routinely holds several
+    # changes of the same type pointing at different stories — two Scenes under
+    # different stories is the ordinary case, and it is the case the drafts page
+    # exists to let a reader compare — so a per-type key has every one of them read
+    # the last one's answer and name one story for all of them. The records are still
+    # fetched in one query per owner class; only the keying is per change.
+    #
+    # **A `universe_id` scope is gathered as nothing.** The page is already inside the
+    # universe that column names, so the record it would return is the one thing the
+    # reader can already see from the address bar. Every other owner — a Story, a
+    # Scene, a Section — is a record the reader cannot name from where they are, which
+    # is the whole reason the column used to be dropped and the reason it is now
+    # resolved.
+    #
+    # **The owner class is read from the model's own association**, which is the same
+    # derivation `scope_attribute` already made, so the answer is keyed by what the
+    # column names rather than by `record_type`: a `Scene`'s `story_id` names a
+    # `Story`, so keying by `record_type` would look a Scene up among the Scenes.
+    # A column with no association behind it is gathered as nothing rather than
+    # raising, because `owner_association_for` answers from `column_names` and a
+    # model can carry a scope column it never declared an owner for.
+    def requested_scopes
+      @requested_scopes ||= @changes.each_with_object({}) do |change, memo|
+        model = RecordTarget.model_for(change.record_type)
+        next if model.nil?
+
+        association = UniverseScopeResolver.owner_association_for(model)
+        owner = association && model.reflect_on_association(association)
+        next if owner.nil?
+
+        id = change.payload&.[](change.scope_attribute)
+        next if id.blank?
+
+        memo[change] = [ owner.klass.name, id ]
+      end
+    end
+
+    # Every scope record this draft's changes name, in **one query per owner class**
+    # across the whole draft — the same bound as the record and tag answers above, and
+    # the reason a draft naming a hundred changes across five stories still costs five
+    # scope queries rather than a hundred.
+    def scope_records
+      @scope_records ||= requested_scopes.values.uniq
+                                           .flat_map { |(owner_name, id)| load_scope_records(owner_name, id) }
+                                           .index_by { |record| [ record.class.name, record.id ] }
+    end
+
+    def load_scope_records(owner_name, id)
+      owner_name.constantize.where(id: id).to_a
     end
 end

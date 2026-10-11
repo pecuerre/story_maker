@@ -154,9 +154,14 @@ between two different universes are all refused by the model, not by a second op
   which record it is about; the version stamp it could compare against has moved by the apply itself,
   so inferring an outcome from it would be a second answer about the same record. The outcome is
   reported once, in the flash that follows the apply.
-- **The scope column is hidden from a draft's page.** A remembered create's `story_id` is a number the
+- **The scope column was hidden from a draft's page.** A remembered create's `story_id` is a number the
   reader cannot name, and the page is already inside the universe it would place the record in;
   resolving it to a name would mean a lookup per change to say something the author already knows.
+  **This cost is no longer paid**: the lookup is one query per owner class for the whole draft rather
+  than one per change, and what it now says is something the author does *not* already know — which of
+  a universe's stories a change belongs to. A `universe_id` scope is still not printed, because that
+  one really is what the page is already inside. The contract is in
+  [`../conventions.md`](../conventions.md#reading-a-drafts-changes).
 - **The applier still raises on a payload it cannot describe.** That is deliberate — an unknown
   attribute is a defect rather than something an author typed — and the transaction is what makes
   raising safe.

@@ -153,6 +153,78 @@ class AbilityTest < ActiveSupport::TestCase
     end
   end
 
+  test "a class-level check is answered for the request's universe, never past it" do
+    # The universe passed to the ability is the one the request already
+    # authorized, so the answer is "at least one record of this class in *that*
+    # universe", and nothing else. The private universe holds a story and nothing
+    # else, which is what makes the section check the one with no record to find.
+    Story.create!(universe: @private_universe, name: "Private story")
+
+    non_member = Ability.new(@read_user, @private_universe)
+    assert_not non_member.can?(:read, Story)
+    assert_not non_member.can?(:read, Section)
+
+    UniverseMembership.create!(universe: @private_universe, user: @read_user, access_level: :read)
+    reader = Ability.new(@read_user, @private_universe)
+    assert reader.can?(:read, Story)
+    assert_not reader.can?(:read, Section)
+    assert_not reader.can?(:write, Story)
+    assert_not reader.can?(:admin, Story)
+
+    UniverseMembership.find_by!(universe: @private_universe, user: @read_user).update!(access_level: :write)
+    writer = Ability.new(@read_user, @private_universe)
+    assert writer.can?(:write, Story)
+    assert_not writer.can?(:admin, Story)
+
+    # The public universe has characters in it and the private one has none, so
+    # neither check may be answered with the other universe's rows.
+    assert Ability.new(@read_user, @public_universe).can?(:read, Character)
+    assert_not Ability.new(@read_user, @private_universe).can?(:read, Character)
+  end
+
+  test "a class-level check without an authorized universe is refused" do
+    # There is nowhere to look, so nothing is permitted. This is the case that
+    # used to answer `true` for anybody who reached it.
+    assert_not Ability.new(@read_user).can?(:read, Character)
+    assert_not Ability.new(@read_user).can?(:write, Character)
+    assert_not Ability.new(@read_user).can?(:admin, Character)
+    assert_not Ability.new(users(:user_one)).can?(:admin, Character)
+  end
+
+  test "a Universe class check answers for the authorized universe itself" do
+    assert Ability.new(@read_user, @public_universe).can?(:read, Universe)
+    assert_not Ability.new(@read_user, @private_universe).can?(:read, Universe)
+    assert_not Ability.new(@read_user).can?(:read, Universe)
+    assert Ability.new(users(:user_one), @private_universe).can?(:admin, Universe)
+  end
+
+  test "creating a universe is still a plain class rule" do
+    # There is no record and no universe to scope to, so `create` is the one
+    # question CanCan still answers: it is about the person, not a place.
+    assert Ability.new(@read_user).can?(:create, Universe)
+    assert Ability.new(users(:user_one)).can?(:create, Universe)
+    assert_not Ability.new(nil).can?(:create, Universe)
+  end
+
+  test "a membership class check is admin-level, as its record rule is" do
+    UniverseMembership.create!(universe: @private_universe, user: @read_user, access_level: :read)
+
+    # One membership exists and the reader cannot read it, because the universe
+    # rule requires administering the universe rather than reading it.
+    assert_not Ability.new(@read_user, @private_universe).can?(:read, UniverseMembership)
+    assert Ability.new(users(:user_one), @private_universe).can?(:read, UniverseMembership)
+  end
+
+  test "an unregistered class is still refused as a forbidden action" do
+    # No rule matches it, so this is a permission answer rather than the
+    # narrow existential one above, and the two must stay distinguishable.
+    ability = Ability.new(@read_user, @public_universe)
+
+    assert_raises CanCan::AccessDenied do
+      ability.authorize!(:read, Session)
+    end
+  end
+
   test "every persisted model is content, or is authorized elsewhere, or is on the list" do
     # `CONTENT_CLASS_NAMES` is the registry CanCan builds its content rules from,
     # and a model missing from it has no rule at all, so every authorization check

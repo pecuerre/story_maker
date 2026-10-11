@@ -83,8 +83,12 @@ class ApplicationController < ActionController::Base
     @post_sign_in_destination = session.delete(:post_sign_in_destination).present?
   end
 
+  # The universe is the one this request already authorized, and it is what a
+  # class-level check is answered against, so it is passed in rather than read
+  # from `Current` inside the ability: the ability stays a policy object, and the
+  # scope it answers for is the one this controller resolved.
   def current_ability
-    @current_ability ||= Ability.new(Current.user)
+    @current_ability ||= Ability.new(Current.user, Current.universe)
   end
 
   def set_current_universe

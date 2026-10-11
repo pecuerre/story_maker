@@ -27,6 +27,71 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-11
+
+- **[security]** **A class-level authorization check is answered from the database, which closes the
+  recorded footgun about CanCan's class subjects.**
+
+  - **The problem as recorded.** Every content rule in `Ability` is a CanCan **instance block**, and
+    CanCan answers a block rule with `true` when it is handed the class the rule was declared on:
+    the block never runs. So `authorize! :read, Character` returned `true` for anybody who reached
+    it, having consulted no universe at all. Nothing in the application was reachable that way —
+    `UniverseAuthorization` and the two controllers that call `authorize!` all pass concrete objects,
+    and `RecordTarget` hands back instances rather than classes — but the guard was a convention
+    rather than a rule, so the finding stayed open and was recorded so that the change which tripped
+    it would be made on purpose.
+
+  - **Three ways to close it, and why the third was chosen.** *Refuse* meant raising a named error
+    the moment a class subject arrived, which is the loudest and the cheapest, and it leaves the
+    question unanswered rather than answered. *Fail closed* meant answering `false`, so the mistake
+    would read as a 403 in production and a programmer error would hide behind a permission denial.
+    *Make the check correct* was chosen: a caller who writes `authorize! :read, Character` wants a
+    real answer, and a refusal is only correct if the refusal is the policy. This is the wider surface
+    of the three, and it was chosen deliberately rather than because nothing better was visible.
+
+  - **What a class-level check now means.** The question has no record to stand on, so it is
+    answered as: *does this user hold this action on at least one record of this class inside the
+    universe the request has already authorized?* The existential reading was chosen over the
+    universal one, which would be `false` for almost every class in almost every universe and so
+    would make the check vacuous rather than correct. Scoping it to the request's universe, rather
+    than to every universe the user can reach, is what keeps a class check from being a scope: a
+    route that authorizes a class and then loads rows unfiltered still has to load them from the
+    universe it authorized, exactly as it does today. With no authorized universe there is nowhere
+    to look and the answer is `false`.
+
+  - **The universe is injected, not looked up.** The ability is constructed as
+    `Ability.new(Current.user, Current.universe)` in `ApplicationController#current_ability`. It
+    could have read `Current.universe` itself, which is what the finding's phrasing suggested; passing
+    it keeps the ability a policy object with no dependency on request context, and makes the scope
+    it answers for visible at the one place that resolves it.
+
+  - **One declaration, two answers.** Each access level is declared once, through
+    `Ability#define_rule`, which registers both the CanCan instance block and the class-level entry.
+    Both answers run the record's universe through the same `universe_permits?`, so a class check and
+    a record check cannot come to different conclusions about the same user and the same universe.
+    `UniverseMembership` is the case that makes this worth doing: its rules are *all* blocks, and it
+    is deliberately outside `CONTENT_CLASS_NAMES`, so a check keyed on the content registry would
+    have missed it while looking as though it covered everything.
+
+  - **The rows a class check looks in.** `UniverseScopeResolver.records_in` is `universe_for` walked
+    in SQL instead of in memory — the same `owner_association_for` answer, one association hop per
+    level, so a Scene reaches its universe through its Story exactly as the record walk does. Every
+    registered content class is checked against `universe_for` row by row, which is what keeps the
+    SQL answer and the object answer selecting the same rows.
+
+  - **What deliberately did not change.** `can :create, Universe` is still a plain CanCan rule and
+    still the one class check CanCan answers: there is no record and no universe to scope to, so it
+    is a question about the person rather than about a place they have been given. An unregistered
+    class is still refused as an unauthorized action rather than as the narrow existential answer,
+    so the two refusals stay distinguishable.
+
+  - **Verification.** `bin/rails test` — 2,151 tests, 13,520 assertions, 0 failures, 0 errors, 13
+    skips (the skips are the deployment ones that were already skipping). `bin/rubocop` — 475 files,
+    no offenses. `bin/brakeman --no-pager` — 0 security warnings; the first cut interpolated a column
+    name into `where`, which Brakeman flagged as a weak SQL injection, and the association name is
+    used instead. `test:system` was not run: the change has no browser-visible surface, as no request
+    in the application performs a class-level check.
+
 ### 2026-10-10
 
 - **[fixed]** **A renamed story or scene no longer leaves every document below it pointing at a 404,

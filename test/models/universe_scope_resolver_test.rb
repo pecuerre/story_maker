@@ -102,4 +102,23 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
         "same universe, or a remembered change would be placed in a scope the record is not in"
     end
   end
+
+  test "records_in selects exactly the rows whose record resolves to that universe" do
+    # A class-level authorization check asks this question before there is a
+    # record to walk from, so the relation it filters on and the walk it mirrors
+    # have to select the same rows. A model that disagreed here would answer a
+    # class check about rows the record check would not have allowed.
+    other_universe = Universe.create!(owner: users(:user_one), name: "Elsewhere", slug: "elsewhere")
+
+    Ability::CONTENT_CLASS_NAMES.each do |name|
+      model = name.constantize
+      expected = model.all.select { |record| UniverseScopeResolver.universe_for(record) == @universe }
+      actual = UniverseScopeResolver.records_in(model, @universe).to_a
+
+      assert_equal expected.map(&:id).sort, actual.map(&:id).sort,
+        "#{name}: records_in must select the rows that resolve to the universe, no more and no fewer"
+      assert_empty UniverseScopeResolver.records_in(model, other_universe).to_a,
+        "#{name}: a universe with nothing in it selects nothing"
+    end
+  end
 end

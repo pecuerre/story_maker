@@ -19,11 +19,11 @@
 #   forbidden action. An unknown *type* is not a permission decision, though, it
 #   is a missing record, so it is refused as not-found. That keeps a stored
 #   `record_type` from being usable as an oracle for what exists.
-# * A registered class is only ever handed back as an **instance**. The content
-#   rules are instance blocks, and CanCan answers a block rule with `true` when
-#   it is given the class instead, so a caller that authorized a class rather
-#   than a record would be allowed everything it asked about. Returning instances
-#   removes the option.
+# * A registered class is only ever handed back as an **instance**. A class-level
+#   check cannot be answered from a registry the way a record's can, so callers
+#   are handed the record itself. `Ability` is what keeps the option closed rather
+#   than merely unused: it answers a class-level check from the database, and
+#   refuses it when the rules behind it are instance blocks.
 class RecordTarget
   # Every refusal is the same sentence and the same exception, so an unknown type,
   # an unknown id, and a record in another universe are indistinguishable from

@@ -38,6 +38,27 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-11
+
+### fixed
+
+- **A class-level check and a record check now come from one rule.** `Ability#define_rule` declares
+  each access level once and derives both answers from it, which closes the recorded footgun where
+  CanCan allowed any class its instance blocks were declared on.
+
+### security
+
+- **A class-level authorization check is now answered from the database.** `Ability#can?` intercepts
+  a class subject rather than letting CanCan match an instance block against it, and answers whether
+  the request's authorized universe holds at least one record the user may act on; with no such
+  universe the answer is `false`.
+
+### docs
+
+- **The registry and `RecordTarget` no longer describe a convention as the only guard.** The
+  class-level check rule has one owner in `conventions.md`, the closed finding has moved to the
+  delivery history, and `known_quirks.md` is renumbered.
+
 ## 2026-10-10
 
 ### changed

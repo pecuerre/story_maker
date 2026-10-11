@@ -117,11 +117,26 @@ the same change, or `db:demo:check` fails.
   environment). An unknown type is a missing record rather than a permission decision, so refusing
   it as forbidden would let a stored `record_type` be used as an oracle. `RecordTarget` returns
   instances only, which is deliberate: the content rules are instance blocks, and CanCan answers a
-  block rule with `true` when given the class, so a class-level `authorize!` on a content model is
-  a silent allow. `Discussion` is its first live caller, and it is why a row storing both a
+  block rule with `true` when given the class, so a caller that holds a class has nothing to
+  authorize. `Discussion` is its first live caller, and it is why a row storing both a
   polymorphic record **and** its own `universe_id` must validate the two against each other in the
   model: neither half is a foreign key, so nothing below the application would notice them
   disagreeing. See [ADR 0019](adr/0019-collaboration-foundations.md).
+- **A class-level check is answered by `Ability`, never by CanCan.** `Ability#can?` intercepts any
+  subject that is a class and answers the question the object-based policy otherwise cannot: *does
+  this user hold this action on at least one record of this class inside the universe the request
+  has already authorized?* CanCan would otherwise answer `true` for any subject its instance blocks
+  were declared on, having consulted no universe at all. Each rule is declared once, through
+  `define_rule`, and yields both answers from the same access level, so a class check and a record
+  check cannot disagree about the same user and the same universe. The universe is passed into the
+  constructor by `ApplicationController#current_ability` — the ability stays a policy object and
+  never reads `Current` itself — so the answer is scoped to one universe and cannot reach beyond it;
+  with no such universe there is nowhere to look and the answer is `false`. A class with no rule of
+  its own (`Universe#create`, which has no record and no universe to scope to, and every
+  non-content model) still falls through to CanCan, which refuses it as an unauthorized action. The
+  rows a class check looks in are the model's own path to its universe, walked in SQL by
+  `UniverseScopeResolver.records_in` — the same `owner_association_for` answer, one hop at a time,
+  that `universe_for` walks in memory for a record.
 - **A remembered change's version is a `VersionStamp`, never a bare `updated_at`.** `VersionStamp.capture`
   normalizes a record's version to a fixed-format UTC string and `VersionStamp.changed?` compares
   stamps as strings. Comparing a `Time` to the string it was serialized from is never equal, so the

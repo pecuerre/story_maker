@@ -36,6 +36,28 @@ module UniverseScopeResolver
     end
   end
 
+  # The rows of `model` that belong to `universe`, for a question asked before
+  # there is a record: an authorization check against the class rather than
+  # against a row. It is `universe_for` walked in SQL instead of in memory, the
+  # same `owner_association_for` answer one hop at a time, so a class-level check
+  # and a record-level one reach the universe by the same route and cannot
+  # disagree about which rows are in scope.
+  #
+  # The walk is bounded the way `universe_for`'s is. Each hop moves up — a Scene
+  # to its Story, a Story to its `universe_id` — and a model that reaches its
+  # universe directly has no owner association to take.
+  #
+  # It is asked of a model that *is* its own universe — `Universe` — as nothing:
+  # that record is the universe, so there is no column to filter on and the caller
+  # answers from the universe it already holds.
+  def records_in(model, universe)
+    owner = owner_association_for(model)
+
+    return model.where(universe_id: universe.id) if owner.nil?
+
+    model.where(owner => records_in(model.reflect_on_association(owner).klass, universe).select(:id))
+  end
+
   def universe_for(record, visited = [])
     return if record.nil?
     return record.universe if record.respond_to?(:universe)

@@ -137,6 +137,21 @@ the same change, or `db:demo:check` fails.
   rows a class check looks in are the model's own path to its universe, walked in SQL by
   `UniverseScopeResolver.records_in` — the same `owner_association_for` answer, one hop at a time,
   that `universe_for` walks in memory for a record.
+- **A record's universe is resolved by `UniverseScopeResolver`, and a model deeper than one hop
+  declares its own `#universe`.** Record-level authorization (`Ability#universe_for`) and the rendered
+  mutation controls (`ApplicationHelper#universe_for_record`) both ask this one resolver, so they
+  cannot drift into disagreeing about which universe owns a row. The walk is bounded to `story`,
+  `scene`, and `section` — deliberately, so a record can never reach the wrong universe by accident —
+  and a model one level below those, such as a speaker link under a Scene Element, defines
+  `#universe` to delegate through its owner; the walk finds it on the first step and no entry is
+  added. A model that does not is caught two ways, and the two are not the same repair:
+  `universe_for` resolves to `nil`, which reads as a denial to `Ability` and as no controls to the
+  views and raises nothing anywhere, so a test requires every persisted row of every model in
+  `Ability::CONTENT_CLASS_NAMES` to resolve; and `records_in`, which filters in SQL and so cannot
+  follow a Ruby delegation, raises `UniverseScopeResolver::UnresolvableModel` naming the model.
+  Defining `#universe` clears the first and not the second — the class path additionally needs a
+  `universe_id` column, or the model stays out of the content registry so no class-level check is
+  asked of it.
 - **A remembered change's version is a `VersionStamp`, never a bare `updated_at`.** `VersionStamp.capture`
   normalizes a record's version to a fixed-format UTC string and `VersionStamp.changed?` compares
   stamps as strings. Comparing a `Time` to the string it was serialized from is never equal, so the

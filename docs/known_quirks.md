@@ -62,22 +62,14 @@ for what that pass actually ran.
    in [`data_factor_guidance.md`](data_factor_guidance.md)), and the compose path must not run
    development data in production.
 
-3. **Footgun — a model nested below a story, scene, or section has to declare its own universe.**
-   `UniverseScopeResolver` answers which universe owns a record for both `Ability#universe_for` and
-   `ApplicationHelper#universe_for_record`, so record-level authorization and rendered mutation
-   controls cannot drift; the adapter itself is in [`conventions.md`](conventions.md). A model one
-   nested deeper than the `story`, `scene`, and `section` associations must define its own
-   `#universe` or the walk resolves to nothing, and it silently loses both its checks and its
-   controls.
-
-4. **Footgun — a new content model has to be added to the hard-coded content-class registry.**
+3. **Footgun — a new content model has to be added to the hard-coded content-class registry.**
    `Ability::CONTENT_CLASS_NAMES` (`app/models/ability.rb:28-51`) is load-bearing twice over:
    `RecordTarget` gates polymorphic record references through the same list, and
    `test/models/ability_test.rb` requires every persisted model to be content, authorized by another
    rule group, or listed there with a reason. An unregistered model is a failing test rather than a
    silent omission, so both halves of what a new model must declare are already guarded.
 
-5. **Footgun — a remembered create says nothing about which story, scene, or section it would belong
+4. **Footgun — a remembered create says nothing about which story, scene, or section it would belong
    to.** The payload's scope column (`DraftChange#scope_attribute`) is dropped as plumbing on the
    drafts page, because the page is already inside the universe it would place the record in and a
    bare `story_id` is a number a reader cannot name. The list workspaces now show remembered creates
@@ -90,23 +82,23 @@ for what that pass actually ran.
    create as an unsaved model rather than a row is in [ADR
    0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md).
 
-6. **Footgun — nothing throttles content mutations.** No mutation rate limits exist beyond
+5. **Footgun — nothing throttles content mutations.** No mutation rate limits exist beyond
    sign-in/password-reset. Public universes intentionally allow every signed-in contributor to write,
    so throttling content/story/tag/membership mutations is a product decision rather than a confirmed
    defect.
 
-7. **Footgun — universe and story authorization objects are looked up more than once.** The current
+6. **Footgun — universe and story authorization objects are looked up more than once.** The current
    request path is internally consistent, but a concurrent slug rename or scope mutation could create
    a TOCTOU mismatch between the object authorized and the object acted on; no deterministic exploit
    was demonstrated.
 
-8. **Footgun — tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
+7. **Footgun — tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
    `#rrggbb` pair for a taxonomy tag's background and foreground
    (`app/models/concerns/has_color.rb:17-20`), so an author can choose a combination that fails WCAG
    contrast. The badge shape still identifies the tag, and color is never the only signal, so this is
    a legibility review item rather than a security finding.
 
-9. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
+8. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
     nothing asserts they stay closed.** `config.action_mailbox.ingress` is `nil`, which is the only
     reason the nine `POST`/`GET` endpoints under `/rails/action_mailbox` answer **404**:
     `ActionMailbox::BaseController#ensure_configured` refuses unless the setting names an ingress.

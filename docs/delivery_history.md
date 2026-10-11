@@ -29,6 +29,58 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-11
 
+- **[security]** **A model nested below a story, scene, or section can no longer lose its checks and
+  its controls silently, which closes that footgun.** The finding was recorded because
+  `UniverseScopeResolver` walks a bounded list — `story`, `scene`, `section` — and stops, so a model
+  one level deeper than those resolves to nothing, and a resolved-to-nothing universe is not an error
+  anywhere: `Ability` treats it as a denial, and the view helpers treat it as a record with no
+  mutation controls.
+
+  - **The walk was left alone.** The bounded walk is deliberate — the module comment says a generic
+  association crawl is avoided "so a record can never resolve to the wrong universe by accident" —
+  and a generic crawl would be a much larger change with a worse failure mode, trading a loud,
+  bounded, cheap mistake for a quiet one. The fix belongs at the model boundary, which is where the
+  module header already told a new model to answer.
+
+  - **The silent half is now a failing test.** `universe_for` cannot raise, because it is also asked
+    of unsaved records and of records whose owner row is gone, where `nil` is the correct answer. So
+    the guard is a test over the whole of `Ability::CONTENT_CLASS_NAMES` rather than over the models
+    that happen to have fixtures: every persisted row of every registered content class must resolve.
+    Soft-deleted rows are included, since a row an owner still points at has to resolve whatever its
+    owner's state. The test was checked for vacuousness rather than assumed: run against the shape
+    the footgun describes it flags the model, and it stops flagging once `#universe` is defined.
+
+  - **The loud half now says what is wrong.** `records_in` was already raising, but by reaching the
+    database with `universe_id` and being refused for a column that does not exist — which reads as
+    an absent migration rather than as a model that never declared where it lives. It now raises
+    `UniverseScopeResolver::UnresolvableModel`, naming the model and the two columns it checked.
+    `Universe` itself is asked of this path in neither direction: `Ability#class_answer`
+    short-circuits it before the call, which is what the old doc comment described and the raise now
+    makes explicit.
+
+  - **The finding was wrong about one half of itself, and the correction changed the fix.** It
+    recorded the failure as uniformly silent. The record-level path is; the class-level path raises.
+    Checking that before writing anything is what surfaced the boundary the error message had to be
+    honest about: a model that defines `#universe` clears the record walk, because `universe_for`
+    walks in Ruby, but it still cannot be filtered, because `records_in` filters in SQL and a
+    delegation is not a column. Those are two different mistakes reaching one raise, and they are not
+    fixed the same way — the first needs `#universe`, the second needs a column or needs the model to
+    stay out of the content registry so no class-level check is asked of it. The message branches on
+    `model.method_defined?(:universe)` and says which one this is.
+
+  - **The test doubles are plain classes, on purpose.** Modelling the nested shape as an
+    `ApplicationRecord` subclass put it in `ApplicationRecord.descendants` and failed
+    `ability_test.rb`'s inverted content registry, which is a guard against a model nobody registered
+    rather than against a fixture that registered nothing on purpose. `records_in` asks a class only
+    what a class can answer about itself, so a plain class answers the same questions faithfully and
+    stays out of a guard it has no business touching.
+
+  - **Verification.** `bin/rails test` — 2,156 tests, 13,579 assertions, 0 failures, 0 errors, 13
+    skips (the skips are the deployment ones that were already skipping). `bin/rubocop` — 475 files,
+    no offenses. `bin/brakeman --no-pager` — 0 security warnings. `test:system` was not run: the
+    change has no browser-visible surface, and every caller of the raised path is a class-level
+    authorization check.
+
 - **[security]** **A class-level authorization check is answered from the database, which closes the
   recorded footgun about CanCan's class subjects.**
 

@@ -19,6 +19,19 @@
 module UniverseScopeResolver
   OWNER_ASSOCIATIONS = %i[ story scene section ].freeze
 
+  # Raised when a model is asked which of its rows belong to a universe and there
+  # is no column to ask with: the model has neither a `universe_id` of its own nor
+  # one of the owner associations above. A model in that position is nested below
+  # something the walk does not name — a speaker link under a Scene Element, for
+  # instance — and it has to say so by defining its own `#universe` to delegate
+  # through its owner.
+  #
+  # The walk itself cannot raise this, because `universe_for` is also asked of
+  # unsaved records and of records whose owner row is gone, where `nil` is the
+  # correct answer. `records_in` is asked of a *class*, before any record exists,
+  # so a model it cannot place is a model that never declared where it lives.
+  class UnresolvableModel < StandardError; end
+
   module_function
 
   # The owner association a model reaches its universe through, or nil when it
@@ -49,13 +62,43 @@ module UniverseScopeResolver
   #
   # It is asked of a model that *is* its own universe — `Universe` — as nothing:
   # that record is the universe, so there is no column to filter on and the caller
-  # answers from the universe it already holds.
+  # answers from the universe it already holds. Asking anyway raises
+  # `UnresolvableModel` rather than reaching the database, which is what the
+  # short-circuit in `Ability#class_answer` exists to avoid.
+  #
+  # A model that is neither its own universe nor one hop from one cannot be
+  # filtered at all, and says so by name rather than by reaching the database and
+  # being refused for a column that does not exist.
   def records_in(model, universe)
     owner = owner_association_for(model)
 
-    return model.where(universe_id: universe.id) if owner.nil?
+    if owner
+      model.where(owner => records_in(model.reflect_on_association(owner).klass, universe).select(:id))
+    elsif model.column_names.include?("universe_id")
+      model.where(universe_id: universe.id)
+    else
+      raise UnresolvableModel, unplaceable_model_message(model)
+    end
+  end
 
-    model.where(owner => records_in(model.reflect_on_association(owner).klass, universe).select(:id))
+  # Two different mistakes reach the same raise, and they are not fixed the same
+  # way. A model that never declared its scope needs `#universe`. A model that did
+  # declare it still cannot be filtered here, because this walks in SQL and a
+  # delegation is Ruby — that model needs a column, or it needs to stay out of the
+  # content registry so no class-level check is ever asked of it.
+  def unplaceable_model_message(model)
+    name = model.name || model.table_name
+    through = "reaches its universe through neither a universe_id column nor a " \
+      "#{OWNER_ASSOCIATIONS.join('/')} association, so there is no column to filter it by."
+
+    if model.method_defined?(:universe)
+      "#{name} #{through} It declares #universe, which answers the record-level walk, but this filters in " \
+        "SQL and a delegation cannot be filtered: give it a column, or keep it out of the content registry " \
+        "so no class-level check is asked of it."
+    else
+      "#{name} #{through} It is nested below a model the walk does not name: define #universe on it to " \
+        "delegate through its owner, and record-level checks and rendered controls will both find it."
+    end
   end
 
   def universe_for(record, visited = [])

@@ -48,6 +48,11 @@ Labels used below, in the order their groups appear:
 
 ### security
 
+- **A model nested below a story, scene, or section can no longer lose its authorization checks and
+  its mutation controls silently.** Every registered content model is now tested to resolve its
+  universe for every persisted row, and `UniverseScopeResolver.records_in` raises a named
+  `UnresolvableModel` for a model it cannot filter rather than querying a column that is not there.
+
 - **A class-level authorization check is now answered from the database.** `Ability#can?` intercepts
   a class subject rather than letting CanCan match an instance block against it, and answers whether
   the request's authorized universe holds at least one record the user may act on; with no such

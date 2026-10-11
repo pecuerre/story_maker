@@ -4,6 +4,47 @@ require "test_helper"
 # same way, or a writer sees missing controls while a record-level check denies
 # an allowed mutation. Both paths are covered here.
 class UniverseScopeResolverTest < ActiveSupport::TestCase
+  # Stand-ins for a model nested below everything the walk names, borrowing the
+  # shape of the speaker join table: a `scene_element_id` and nothing the resolver
+  # can walk from or filter by. The application has no model class for that join,
+  # so these supply one.
+  #
+  # They are deliberately not `ApplicationRecord` subclasses. A test-defined
+  # persisted model would appear in `ApplicationRecord.descendants` and fail
+  # `ability_test.rb`'s inverted content registry, which exists to catch a model
+  # nobody registered — not a test fixture that registered nothing on purpose.
+  # `records_in` asks only what a class can answer about itself, so a plain class
+  # answers the same questions faithfully.
+  class NestedRecord
+    COLUMNS = %w[id scene_element_id character_id].freeze
+
+    attr_reader :scene_element_id
+
+    def initialize(scene_element_id: nil)
+      @scene_element_id = scene_element_id
+    end
+
+    def self.name = "NestedRecord"
+    def self.table_name = "scene_element_speakers"
+    def self.column_names = COLUMNS
+  end
+
+  # The same shape after taking the advice: it declares its scope and delegates to
+  # the owner it holds. That clears the record-level walk and still does not make
+  # the class filterable, which is the boundary the two halves of the fix sit on —
+  # `universe_for` walks in Ruby and accepts a delegation, `records_in` filters in
+  # SQL and cannot.
+  class DeclaredNestedRecord < NestedRecord
+    def self.name = "DeclaredNestedRecord"
+
+    def initialize(owner:, scene_element_id: nil)
+      super(scene_element_id: scene_element_id)
+      @owner = owner
+    end
+
+    def universe = @owner&.universe
+  end
+
   setup do
     @universe = universes(:universe_one)
   end
@@ -100,6 +141,76 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
       assert_equal UniverseScopeResolver.universe_for(record), walked,
         "#{model.name}: the column the derivation reads and the walk the resolver performs must reach the " \
         "same universe, or a remembered change would be placed in a scope the record is not in"
+    end
+  end
+
+  test "records_in names a model the walk cannot place instead of querying a column that is not there" do
+    # A speaker link belongs to a Scene Element, which is below anything the walk
+    # names. Asked of the class there is no column to filter it by, and reaching
+    # the database with `universe_id` produces a missing-column error that reads
+    # like an absent migration rather than a model that never declared its scope.
+    error = assert_raises(UniverseScopeResolver::UnresolvableModel) do
+      UniverseScopeResolver.records_in(NestedRecord, @universe)
+    end
+
+    assert_match(/NestedRecord/, error.message)
+    assert_match(/universe_id/, error.message)
+    assert_match(/define #universe/, error.message)
+  end
+
+  test "declaring its own universe is what clears the record-level walk" do
+    undeclared = NestedRecord.new(scene_element_id: scene_elements(:narration_one).id)
+    declared = DeclaredNestedRecord.new(owner: scene_elements(:narration_one))
+
+    assert_nil UniverseScopeResolver.universe_for(undeclared),
+      "without the declaration the walk resolves to nothing, which is the whole footgun"
+    assert_equal @universe, UniverseScopeResolver.universe_for(declared),
+      "defining #universe to delegate through the owner must be enough to clear the walk"
+  end
+
+  test "a model that declared its universe is told it still needs a column" do
+    # The delegation the resolver finds in Ruby is not something SQL can filter on,
+    # so a class-level check about this model cannot be answered by the delegation
+    # alone. Saying so is the point: the alternative is a missing-column error that
+    # reads like an absent migration.
+    error = assert_raises(UniverseScopeResolver::UnresolvableModel) do
+      UniverseScopeResolver.records_in(DeclaredNestedRecord, @universe)
+    end
+
+    assert_match(/DeclaredNestedRecord/, error.message)
+    assert_match(/content registry/, error.message)
+  end
+
+  test "every content model resolves a universe for every persisted row" do
+    # A model the walk cannot place resolves nothing, which is not an error the
+    # walk can raise: it loses both its authorization checks and its mutation
+    # controls and nothing else complains. So the whole content registry is
+    # checked here rather than the models that happen to have fixtures.
+    #
+    # Soft-deleted rows are included, because a row that an owner still points at
+    # has to resolve whatever its owner's state, and a soft-deleted owner is still
+    # an owner.
+    Ability::CONTENT_CLASS_NAMES.each do |name|
+      model = name.constantize
+      rows = model.respond_to?(:with_deleted) ? model.with_deleted : model.all
+
+      unresolved = rows.reject { |record| UniverseScopeResolver.universe_for(record) }
+
+      assert_empty unresolved.map(&:id),
+        "#{name} must resolve its universe for every row. A model nested below a story, scene, or section " \
+        "has to define its own #universe, or the walk resolves to nothing and the record silently loses " \
+        "both its authorization checks and its rendered controls."
+    end
+  end
+
+  test "every content model can be filtered by universe without the walk failing" do
+    # The class-level half of the same contract: `records_in` is what
+    # `Ability#class_answer` asks when there is no record to walk from, so a model
+    # it cannot place is a model whose class checks raise instead of answering.
+    assert_nothing_raised do
+      Ability::CONTENT_CLASS_NAMES.each do |name|
+        UniverseScopeResolver.records_in(name.constantize, @universe)
+      end
     end
   end
 

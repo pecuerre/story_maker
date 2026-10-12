@@ -48,6 +48,30 @@
     </div>
   </div>
 
+  <div class="mb-3">
+    <%# The value is bound explicitly, because Rails' own binding is not the one
+        this field needs. `Tags::Base#value_before_type_cast` asks the model for
+        `mutation_limit_before_type_cast` only when the value *came from the user*
+        in this request; a record read from the database falls back to the public
+        reader, and `mutation_limit` answers `DEFAULT_MUTATION_LIMIT` for a row
+        that stores nothing. So the default field would print 60 in a universe
+        whose admin deliberately had no limit, and submitting it would impose 60.
+
+        The predicate is asked first because `NULL` is the admin's answer "no limit
+        at all", and it is the same column the model stores `nil` for. An omitted
+        parameter leaves the column alone, and a cleared field reaches
+        `universe_params` as `nil` rather than as `""`. The `min` states the
+        model's own rule, which validation still enforces for a caller that
+        bypasses the browser. %>
+    <%= form.label :mutation_limit, t("universes.form.mutation_limit"), class: "form-label" %>
+    <%= form.number_field :mutation_limit,
+      value: (universe.mutations_unlimited? ? nil : universe.mutation_limit),
+      min: 1, step: 1, class: "form-control" %>
+    <div class="form-text">
+      <%= t("universes.form.mutation_limit_hint", limit: Universe::DEFAULT_MUTATION_LIMIT) %>
+    </div>
+  </div>
+
   <div class="form-actions">
     <%# The default submit label comes from Rails' English-only
         `helpers.submit.*`, so the label is named here. %>

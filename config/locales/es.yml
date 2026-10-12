@@ -331,7 +331,7 @@ es:
     new_description: "Crea un mundo que contendrá sus propias historias y sus registros de construcción del mundo compartidos."
     edit: "Editar universo"
     edit_document_title: "Editar %{name}"
-    edit_description: "Actualiza el nombre, la visibilidad y el modo de colaboración de este universo."
+    edit_description: "Actualiza el nombre, la visibilidad, el modo de colaboración y el límite de cambios de este universo."
     open: "Abrir universo"
     manage_members: "Gestionar miembros"
     delete: "Eliminar universo"
@@ -360,6 +360,8 @@ es:
         direct: "Directo — un cambio se guarda inmediatamente"
         wikipedia: "Wikipedia — un cambio se recuerda hasta que su autor lo aplica"
         github: "GitHub — un cambio se recuerda hasta que un propietario o administrador lo revisa"
+      mutation_limit: "Cambios por minuto"
+      mutation_limit_hint: "Cuántos cambios puede hacer una cuenta por minuto aquí, en todos los espacios de trabajo de este universo. Déjalo en blanco para no poner ningún límite; un universo nuevo empieza en %{limit}."
       submit_create: "Crear universo"
       submit_update: "Actualizar universo"
     show:

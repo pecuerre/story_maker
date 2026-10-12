@@ -94,9 +94,20 @@ class UniversesController < ApplicationController
   # accept is a field error rather than a silent fallback, and `update` is already
   # an admin-level action, so this parameter cannot change how a universe writes
   # for anyone but its owner or an administrator.
+  #
+  # `mutation_limit` is that same kind of parameter — universe governance an admin
+  # owns, behind the same `admin` authorization — and its blank value is the one
+  # that needs a rule, because blank means something here. "No limit at all" is
+  # stored as `NULL`, and the form's number field submits `""` when the admin
+  # clears it, so the blank value is forwarded as `nil`: the opposite of the slug
+  # above, where a forwarded `""` would let `HasSlug` republish the universe. An
+  # **omitted** parameter is not an answer and leaves the column alone, so a caller
+  # that never mentions the limit cannot clear one by accident.
   def universe_params
-    permitted = params.expect(universe: [ *photo_params, :name, :private, :slug, :collaboration_mode ])
+    permitted = params.expect(universe: [ *photo_params, :name, :private, :slug, :collaboration_mode, :mutation_limit ])
     permitted.delete(:slug) if permitted[:slug].blank?
+    permitted[:mutation_limit] = nil if permitted.key?(:mutation_limit) && permitted[:mutation_limit].blank?
+
     permitted
   end
 end

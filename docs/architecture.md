@@ -53,8 +53,11 @@ UI patterns and the Timeline algorithm. Conventions are in
    universe creation) have no universe and are not counted here; sign-in and password reset carry
    their own `rate_limit`. A refusal answers a JSON-only controller with a bare `429` and the HTML
    flow with a redirect and an alert, and the counter lives in `Rails.cache`. The budget is a column
-   on `universes` (`DEFAULT_MUTATION_LIMIT`, `NULL` meaning unlimited) and the reasoning is in
-   [ADR 0028](adr/0028-per-universe-mutation-budget.md).
+   on `universes` (`DEFAULT_MUTATION_LIMIT`, `NULL` meaning unlimited), which an admin raises,
+   lowers, or removes from the universe settings form — a form `edit`/`update` already guard with
+   `admin`; that save is a universe-scoped write like any other, so an admin who sets a budget of 1
+   spends it on their own settings save and waits out the window before raising it again. The
+   reasoning is in [ADR 0028](adr/0028-per-universe-mutation-budget.md).
 6. **`set_current_story`** — when a universe is present, resolves `Current.story`:
    - explicit `params[:story_id]` (sections) or `params[:id]` on the `stories` controller wins and
      is remembered in the session (`session[:current_story_ids]` keyed by universe id);

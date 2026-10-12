@@ -166,18 +166,6 @@ it has a useful destination and clear empty/loading/error states.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-31. **Universe admins configure their universe's mutation limits (slice 2 of 3)**
-
-   The enforcement slice has shipped a limit nobody can change: `universes.mutation_limit` defaults to
-   60 per minute, and `NULL` means unlimited. This slice makes the universe form the admin's surface for
-   it: `universes#edit` and `#update` already ask for `admin` on the universe, so the fields belong on the
-   existing full-page form rather than in a new page pattern. Admins raise, lower, or remove the limit for
-   their own universe, within whatever bounds the enforcement slice recorded.
-
-   Carries the validations, the translatable strings, the documented rule for what the
-   fields mean, and the verification path — which universe's development data exercises it and what to set
-   it to, since nothing else in the demo data needs to change.
-
 32. **Per-endpoint throttle groups (slice 3 of 3)**
 
    One bucket for every mutation is a blunt instrument: a burst of photo uploads and a burst of scene edits

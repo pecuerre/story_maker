@@ -450,6 +450,21 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   would show an address the form is not going to use. See
   [the delivery history](delivery_history.md).
 
+- **The mutation budget on that form is the one field whose empty value is an answer.**
+  `universes#edit` and `#update` ask for `admin` on the universe, so
+  `universes.mutation_limit` is a governance setting like `collaboration_mode` and lives on this
+  form rather than on a page of its own ([ADR 0028](adr/0028-per-universe-mutation-budget.md) is
+  the decision). It binds its value **explicitly** —
+  `universe.mutations_unlimited? ? nil : universe.mutation_limit` — because Rails' own binding is
+  not the one this field needs: `Tags::Base#value_before_type_cast` asks the model for the
+  before-cast value only when that value **came from the user** in this request, and a record read
+  from the database falls back to the public reader. `NULL` is how an admin says "no limit at all",
+  and `Universe#mutation_limit` answers `DEFAULT_MUTATION_LIMIT` for such a row, so the default
+  field would print 60 where the admin chose none and would impose 60 on the next save. Clearing
+  the field is how a limit is removed: the blank value is forwarded as `nil` and stored, the
+  **inverse** of the slug rule above, where a blank value is dropped. An **omitted** parameter is
+  not an answer in either case, so a caller that never mentions the budget cannot clear one.
+
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
 

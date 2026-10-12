@@ -756,6 +756,31 @@ and the flat-versus-hierarchical modes).
   changing ordering behavior.
 - Do not reintroduce hover-only controls, or `innerHTML` for a user-controlled value.
 
+## Mutation budget
+
+The per-universe change budget is a **universe setting, not a manifest field**: no
+`db/data/<universe_slug>/universes.yml` names `mutation_limit`, so both registered demo universes
+keep the column default of 60 and neither needs a data change to exercise it. The decision is
+[ADR 0028](adr/0028-per-universe-mutation-budget.md); the field's own rules are in
+[conventions.md](conventions.md), and the guard's position in the request is in
+[architecture.md](architecture.md#request-lifecycle).
+
+To verify by hand:
+
+```bash
+CONFIRM_DB_RESET=1 UNIVERSE=dark bin/rails db:demo:reset   # loads db/data/dark
+UNIVERSE=lotr bin/rails db:demo:load                       # optional second universe
+bin/rails server
+```
+
+Sign in as the Dark universe's owner (`dark@dark`, with the development password
+`db:demo:reset` prints), open `/u/dark/edit`, and set **Changes per minute** to `1`. That
+save is itself a mutation, so the **next** change anywhere in that universe is refused — in a
+modal workspace with "You are making changes too quickly for this universe", and in the HTML
+flow with the translated alert after the form post — and the universe is writable again about a
+minute later. Clear the field instead to remove the limit, and check the refusals stop. Set the
+field back to `60` when you are done: a budget of 1 makes ordinary manual work in Dark impossible.
+
 ## Testing record photos
 
 The photo **contract** is in [features/photos.md](features/photos.md). This section is only the

@@ -109,6 +109,11 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".form-text", text: /Déjalo en blanco para construir la dirección/
     assert_select ".form-check-label", text: "Universo privado"
     assert_select ".form-text", text: /Los universos públicos/
+    # The budget is a number whose empty value means "sin límite", so its label and
+    # its hint are the reader's only account of both.
+    assert_select "label[for=universe_mutation_limit]", text: "Cambios por minuto"
+    assert_select ".form-text", text: /Déjalo en blanco para no poner ningún límite/
+    assert_select ".form-text", text: /un universo nuevo empieza en 60/
     assert_select "input[type=submit][value=?]", "Crear universo"
     assert_select "a.btn-link", text: "Cancelar"
 

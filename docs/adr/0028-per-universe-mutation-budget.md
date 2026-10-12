@@ -113,6 +113,11 @@ tests in one process, so tests that care about a counter clear it through
 - Every new universe-scoped mutation controller inherits the guard automatically, and every test in
   this application now shares one cache whose entries outlive a single test.
 - The budget is per account, so a shared account is one budget however many people are behind it.
+- **The settings save spends the budget it sets.** `universes#update` is a universe-scoped write
+  like any other, so an admin who configures a budget of 1 spends it on that save and waits out the
+  window before raising it again. That is the same rule as every other mutation and it is not
+  exempted deliberately: a guard that ignored the request controlling it could not be refused by
+  the person it protects, and the wait is one window long rather than a lockout.
 
 ## Alternatives considered
 

@@ -115,6 +115,23 @@ class MutationThrottleTest < ActionDispatch::IntegrationTest
     assert_response :see_other
   end
 
+  test "the settings form is a universe-scoped write, so changing the limit spends the budget" do
+    # The form is how an admin raises, lowers, or removes a budget (ADR 0028), and
+    # `universes#update` is a `PATCH` inside a universe, so the guard counts it like
+    # any other mutation. The consequence is worth pinning rather than leaving to be
+    # discovered: an admin who sets a budget of 1 spends it on their own settings
+    # save, and the save that would raise it again is refused until the window
+    # passes. That is the ADR's rule — the guard runs after authorization on every
+    # universe-scoped write — and the window is a minute, so nobody is locked out.
+    @universe.update!(mutation_limit: 1)
+    exhaust_mutation_budget(@universe, @user, count: 1)
+
+    patch universe_url(@universe), params: { universe: { mutation_limit: "30" } }, as: :json
+
+    assert_response :too_many_requests
+    assert_equal 1, @universe.reload.mutation_limit
+  end
+
   test "the budget counts every mutating verb, on member and collection routes alike" do
     character = characters(:character_one)
     @universe.update!(mutation_limit: 1)

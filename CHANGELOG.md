@@ -42,6 +42,10 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **A universe's mutation limit is now the admin's to set from the universe form.** The field shows
+  the stored budget rather than the number in force, and clearing it stores "no limit" instead of
+  zero.
+
 - **Every universe now has a mutation budget, and a new one is limited from creation.** An account
   gets 60 content mutations per minute in each universe, counted in the cache and refused past the
   budget; the limit is a column an admin sets, and `NULL` means unlimited.

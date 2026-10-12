@@ -29,6 +29,61 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-12
 
+- **[added]** **A universe's admins can now set their own mutation budget, from the universe form.**
+
+  - **The slice before it shipped a limit nobody could change.** `universes#edit` and `#update`
+    already asked for `admin` on the universe, so the field belongs on the existing full-page form
+    rather than on a page of its own: no fourth page pattern, no navigation entry, and no new
+    authorization — the same `admin` rule that has always guarded this form guards the budget.
+
+  - **The field shows the *stored* setting, and the trap was in Rails' own binding.** `NULL` is how
+    an admin says "no limit at all", and `Universe#mutation_limit` answers `DEFAULT_MUTATION_LIMIT`
+    for exactly that row. The field therefore binds its value explicitly,
+    `universe.mutations_unlimited? ? nil : universe.mutation_limit`. The first attempt left the
+    default binding alone, on the reasonable reading that `number_field` reads
+    `*_before_type_cast` and so never asks the reader — and a test caught it rendering `value="60"`
+    in a universe with no limit. It does not: `Tags::Base#value_before_type_cast` asks the model
+    for the before-cast value only when that value **came from the user** in this request, and a
+    record read from the database falls back to the public reader. A model test pins that the two
+    readers disagree on the row that means unlimited, so the reason the raw value is the right
+    binding is written down rather than remembered.
+
+  - **Blank means "no limit", which is the exact inverse of the address slug above it.** The number
+    field submits `""` when the admin clears it and "no limit" is stored as `NULL`, so
+    `universe_params` forwards the blank value as `nil`. The slug is the other case: a blank value
+    is *dropped*, so `HasSlug` cannot republish the universe on an unrelated save. An **omitted**
+    parameter is not an answer in either case, which is why the conversion is guarded on
+    `permitted.key?`: without that guard a JSON update that never mentions the limit would clear it,
+    because `permitted[:mutation_limit]` is `nil` for an absent key exactly as it is for a cleared
+    one.
+
+  - **The settings save spends the budget it sets, and that was decided rather than noticed.** ADR
+    0028 exempts the platform-level writes because they have no universe; `universes#update` has
+    one, so the guard counts it like any other mutation. An admin who configures a budget of 1
+    spends it on that save and waits out the minute before raising it again. Exempting the request
+    that controls the throttle would have given the budget an escape hatch no other write has, so
+    the wait stays; it is pinned by a request test and recorded as a cost in ADR 0028 instead of
+    being left for an admin to discover as a lockout that never opens.
+
+  - **No development data changed.** No `db/data/<universe_slug>/universes.yml` names
+    `mutation_limit`, so both demo universes already sit at the column default of 60 and
+    `db:demo:check` had nothing new to read. The verification path is by hand and now has a recipe
+    in [`development.md`](development.md#mutation-budget): set it to 1 as the Dark owner, watch the
+    next change in that universe be refused, clear the field, put 60 back.
+
+  - **Verified by** `bin/rails test` (2210 runs, 13748 assertions, 0 failures, 13 skips — the
+    pre-existing deployment-secret and Meilisearch ones), `bin/rails test test/system/
+    universe_settings_test.rb test/system/mutation_throttle_test.rb`, `bin/rubocop` (482 files, no
+    offenses), `bin/brakeman --no-pager` (0 warnings), `test/docs_test.rb`, and `UNIVERSE=dark
+    bin/rails db:demo:check` / `UNIVERSE=lotr bin/rails db:demo:check`. New coverage: ten cases in
+    `test/controllers/universes_controller_test.rb` (raise, lower, remove, a refused save keeping
+    what was typed, an unrelated save that must not clear it, `0` and a non-number refused in the
+    HTML and JSON contracts, a public contributor refused, a delegated admin allowed, and what the
+    field renders in each state), six in `test/models/universe_test.rb`, one in
+    `test/controllers/mutation_throttle_test.rb`, two browser cases, and the new field's Spanish
+    copy added to the universe form's case in `test/controllers/workspace_locale_test.rb`. Not run:
+    `bun run check:js` (no JavaScript changed) and the whole `test:system` suite.
+
 - **[added]** **Content mutations are counted against a budget that belongs to the universe, which
   closes the open finding that nothing throttled them.**
 

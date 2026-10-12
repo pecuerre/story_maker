@@ -197,6 +197,61 @@ class UniverseTest < ActiveSupport::TestCase
     assert_not universe.direct?
   end
 
+  # The mutation budget, which an admin now sets from the universe form. What the
+  # field can submit is what these hold: a positive number, a cleared field
+  # (stored `NULL`, meaning no limit), and nothing else. The enforcement those
+  # values drive is in `test/controllers/mutation_throttle_test.rb`.
+
+  test "a universe is limited from creation, not from a settings visit" do
+    universe = Universe.create!(owner: users(:user_one), name: "Default budget")
+
+    assert_equal Universe::DEFAULT_MUTATION_LIMIT, universe.reload[:mutation_limit]
+    assert_equal Universe::DEFAULT_MUTATION_LIMIT, universe.mutation_limit
+    assert_not universe.mutations_unlimited?
+  end
+
+  test "a cleared limit is no limit at all, which is stored as NULL rather than a sentinel" do
+    universe = universes(:universe_one).tap { |record| record.update!(mutation_limit: nil) }
+
+    assert_nil universe.reload[:mutation_limit]
+    assert universe.mutations_unlimited?
+  end
+
+  test "a configured limit is the number in force" do
+    universe = universes(:universe_one).tap { |record| record.update!(mutation_limit: 5) }
+
+    assert_equal 5, universe.reload.mutation_limit
+    assert_not universe.mutations_unlimited?
+  end
+
+  test "zero is refused, because a universe nobody may write to is private" do
+    universe = Universe.new(owner: users(:user_one), name: "Closed", mutation_limit: 0)
+
+    assert_not universe.valid?
+    assert_includes universe.errors[:mutation_limit], "must be greater than 0"
+  end
+
+  test "a limit that is not a whole number is refused" do
+    universe = Universe.new(owner: users(:user_one), name: "Fractional", mutation_limit: 1.5)
+
+    assert_not universe.valid?
+    assert_includes universe.errors[:mutation_limit], "must be an integer"
+  end
+
+  test "the two readers answer the same row differently, which is why the form binds its own" do
+    # `NULL` is the stored form of "no limit at all" and `mutations_unlimited?` says
+    # so, while the number reader falls back to the default so that an incomplete
+    # row is never the one unprotected state. They therefore disagree on exactly
+    # the row that means unlimited. `MutationThrottle` asks the predicate before it
+    # reads the number, and the universe form binds the stored value itself, because
+    # Rails' own `number_field` binding asks this reader for a record that was read
+    # rather than assigned.
+    unlimited = Universe.new(mutation_limit: nil)
+
+    assert unlimited.mutations_unlimited?
+    assert_equal Universe::DEFAULT_MUTATION_LIMIT, unlimited.mutation_limit
+  end
+
   # `members` is a method rather than `has_many :members, through: :memberships`
   # because the owner is not a membership row. These hold the union from this side, and
   # the two of them are what keeps `administrators` and `User#universes` honest about the

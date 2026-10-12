@@ -217,6 +217,105 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to universe_url(universe)
   end
 
+  # --- the mutation budget (ADR 0028), which an admin sets from this form ---
+
+  test "an admin can change the mutation limit" do
+    patch universe_url(@universe), params: { universe: { mutation_limit: "5" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert_equal 5, @universe.reload.mutation_limit
+  end
+
+  test "an admin can remove the limit, which is the blank field the form submits" do
+    patch universe_url(@universe), params: { universe: { mutation_limit: "" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert_nil @universe.reload[:mutation_limit]
+    assert @universe.reload.mutations_unlimited?
+  end
+
+  test "a limit the request never mentions is not an answer, so an unrelated save cannot clear one" do
+    @universe.update!(mutation_limit: 5)
+
+    patch universe_url(@universe), params: { universe: { name: @universe.name } }, as: :json
+
+    assert_response :ok
+    assert_equal 5, @universe.reload.mutation_limit
+  end
+
+  test "a limit of zero is refused as a field error" do
+    patch universe_url(@universe), params: { universe: { mutation_limit: "0" } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert] li", text: /Mutation limit must be greater than 0/
+    assert_equal Universe::DEFAULT_MUTATION_LIMIT, @universe.reload.mutation_limit
+  end
+
+  test "a limit that is not a number is refused in the JSON contract" do
+    patch universe_url(@universe), params: { universe: { mutation_limit: "many" } }, as: :json
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["mutation_limit"], "is not a number"
+    assert_equal Universe::DEFAULT_MUTATION_LIMIT, @universe.reload.mutation_limit
+  end
+
+  test "a refused update keeps the limit the admin typed" do
+    patch universe_url(@universe), params: { universe: { mutation_limit: "0" } }
+
+    assert_response :unprocessable_content
+    assert_select "input#universe_mutation_limit[value=?]", "0"
+    assert_equal Universe::DEFAULT_MUTATION_LIMIT, @universe.reload.mutation_limit
+  end
+
+  test "an ordinary public contributor cannot change the mutation limit" do
+    sign_in_as(users(:user_two))
+
+    patch universe_url(@universe), params: { universe: { mutation_limit: "1" } }
+
+    assert_response :forbidden
+    assert_equal Universe::DEFAULT_MUTATION_LIMIT, @universe.reload.mutation_limit
+  end
+
+  test "a universe admin can change the mutation limit" do
+    UniverseMembership.create!(universe: @universe, user: users(:user_two), access_level: :admin)
+    sign_in_as(users(:user_two))
+
+    patch universe_url(@universe), params: { universe: { mutation_limit: "2" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert_equal 2, @universe.reload.mutation_limit
+  end
+
+  test "the edit form shows the stored limit, and a blank field when there is none" do
+    # The field prints the *stored* setting rather than the number in force.
+    # Rails' own binding asks the public reader for a record it read rather than
+    # assigned, and that reader answers the default for an unlimited row — so the
+    # default field would offer 60 to a universe whose admin deliberately chose
+    # no limit, and submitting that form would impose it.
+    @universe.update!(mutation_limit: 5)
+
+    get edit_universe_url(@universe)
+
+    assert_response :success
+    assert_select "input#universe_mutation_limit[value=?]", "5"
+    assert_select "input#universe_mutation_limit[type=number][min=?]", "1"
+
+    @universe.update!(mutation_limit: nil)
+
+    get edit_universe_url(@universe)
+
+    # No `value` attribute at all, which is the empty field an admin clears and
+    # saves to mean "no limit".
+    assert_select "input#universe_mutation_limit:not([value])"
+  end
+
+  test "a new universe's form offers the default rather than a blank field" do
+    get new_universe_url
+
+    assert_response :success
+    assert_select "input#universe_mutation_limit[value=?]", Universe::DEFAULT_MUTATION_LIMIT.to_s
+  end
+
   test "any signed-in user can contribute to a public universe" do
     sign_in_as(users(:user_two))
 

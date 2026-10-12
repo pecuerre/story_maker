@@ -236,6 +236,7 @@ es:
       # la oración del propio editor para que quien lee sepa qué falló y por qué.
       forbidden: "Ya no tienes permiso para hacer eso; recarga la página e inicia sesión de nuevo."
       rejected: "El servidor rechazó el valor."
+      throttled: "Estás haciendo cambios demasiado rápido en este universo. Espera un momento e inténtalo de nuevo."
       server_error: "El servidor no pudo completar la petición. No se cambió nada; inténtalo de nuevo."
       http_status: "(HTTP %{status})"
     # La opción en blanco que limpia una referencia opcional. Tanto las tres
@@ -2550,6 +2551,7 @@ es:
   errors:
     unavailable_account: "Esa página no está disponible para esta cuenta. Aquí tienes los universos que puedes abrir."
     rate_limited: "Inténtalo de nuevo más tarde."
+    mutation_throttled: "Estás haciendo cambios demasiado rápido en este universo. Espera un momento e inténtalo de nuevo."
     format: "%{attribute} %{message}"
     messages:
       model_invalid: "La validación falló: %{errors}"

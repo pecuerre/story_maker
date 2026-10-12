@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_11_000000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -601,6 +601,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_160000) do
     t.datetime "deleted_at"
     t.integer "photo_id"
     t.string "collaboration_mode", default: "direct", null: false
+    t.integer "mutation_limit", default: 60
     t.index ["owner_id"], name: "index_universes_on_owner_id"
     t.index ["photo_id"], name: "index_universes_on_photo_id"
     t.index ["slug"], name: "index_universes_on_slug", unique: true, where: "deleted_at IS NULL"

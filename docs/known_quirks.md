@@ -26,7 +26,7 @@ separate the kinds, and the label says how far the finding is from being a reach
 
 **A number is a position in this list, not an identity.** Findings leave when they are fixed and the
 list is renumbered from 1, so a number is reused: `4` today is not the finding `4` was yesterday, and
-the list was last renumbered on 2026-10-11. **Never cite one from another document** — reference a finding
+the list was last renumbered on 2026-10-12. **Never cite one from another document** — reference a finding
 by its name, and cite the change that closed one through [`../CHANGELOG.md`](../CHANGELOG.md) or
 [delivery_history.md](delivery_history.md). Entries in those two historical files keep the number a
 finding had at the time and are not rewritten.
@@ -62,30 +62,25 @@ for what that pass actually ran.
    in [`data_factor_guidance.md`](data_factor_guidance.md)), and the compose path must not run
    development data in production.
 
-3. **Footgun — nothing throttles content mutations.** No mutation rate limits exist beyond
-   sign-in/password-reset. Public universes intentionally allow every signed-in contributor to write,
-   so throttling content/story/tag/membership mutations is a product decision rather than a confirmed
-   defect.
-
-4. **Footgun — universe and story authorization objects are looked up more than once.** The current
+3. **Footgun — universe and story authorization objects are looked up more than once.** The current
    request path is internally consistent, but a concurrent slug rename or scope mutation could create
    a TOCTOU mismatch between the object authorized and the object acted on; no deterministic exploit
    was demonstrated.
 
-5. **Footgun — tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
+4. **Footgun — tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
    `#rrggbb` pair for a taxonomy tag's background and foreground
    (`app/models/concerns/has_color.rb:17-20`), so an author can choose a combination that fails WCAG
    contrast. The badge shape still identifies the tag, and color is never the only signal, so this is
    a legibility review item rather than a security finding.
 
-6. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
-    nothing asserts they stay closed.** `config.action_mailbox.ingress` is `nil`, which is the only
-    reason the nine `POST`/`GET` endpoints under `/rails/action_mailbox` answer **404**:
-    `ActionMailbox::BaseController#ensure_configured` refuses unless the setting names an ingress.
-    Set it, and nine write endpoints are mounted. A test that fails when that setting becomes truthy
-    would close this. The rest of the framework route surface — which families are inert, which are
-    load-bearing, and why Active Storage must not be treated as dead weight — is in
-    [architecture.md](architecture.md#routing--url-generation-the-sharp-edges).
+5. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
+   nothing asserts they stay closed.** `config.action_mailbox.ingress` is `nil`, which is the only
+   reason the nine `POST`/`GET` endpoints under `/rails/action_mailbox` answer **404**:
+   `ActionMailbox::BaseController#ensure_configured` refuses unless the setting names an ingress.
+   Set it, and nine write endpoints are mounted. A test that fails when that setting becomes truthy
+   would close this. The rest of the framework route surface — which families are inert, which are
+   load-bearing, and why Active Storage must not be treated as dead weight — is in
+   [architecture.md](architecture.md#routing--url-generation-the-sharp-edges).
 
 ## Audit baseline and evidence
 

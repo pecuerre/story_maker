@@ -118,6 +118,7 @@ module ClientStrings
     shared.modal_form.fix_and_retry
     shared.modal_form.forbidden
     shared.modal_form.rejected
+    shared.modal_form.throttled
     shared.modal_form.server_error
     shared.modal_form.http_status
   ].freeze

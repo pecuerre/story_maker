@@ -9,6 +9,21 @@ class Universe < ApplicationRecord
   # saying what it is.
   COLLABORATION_MODES = %w[direct wikipedia github].freeze
 
+  # How many mutations one account may make in this universe per minute when the
+  # admin has not configured a number of their own.
+  #
+  # Sixty is one a second, sustained, and that is chosen against what this
+  # application actually does rather than against a guess: there is no bulk or
+  # batch path anywhere in it, so every mutation is one deliberate act (a modal
+  # submit, one taxonomy edit, one scene drag) and a person cannot reach this
+  # through ordinary work. A script can, in about a second.
+  DEFAULT_MUTATION_LIMIT = 60
+
+  # The window `mutation_limit` is counted in. It is a constant rather than a
+  # column because a window is not the thing an admin has an opinion about — the
+  # budget is. A per-universe rate is "N per minute" wherever N comes from.
+  MUTATION_LIMIT_WINDOW = 1.minute
+
   include HasSlug
   include HasPhoto
   include SoftDeletable
@@ -32,6 +47,15 @@ class Universe < ApplicationRecord
   # the application has no behaviour for is a field error an admin can answer,
   # rather than a universe whose writes quietly do the wrong thing.
   validates :collaboration_mode, inclusion: { in: COLLABORATION_MODES }
+  # The column's default is 60, which is also `DEFAULT_MUTATION_LIMIT`, so a
+  # universe is never left unprotected because nobody opened a settings page.
+  #
+  # `NULL` is the stored form of "no limit" — the one value an admin can choose
+  # that is not a number of requests — and zero is refused rather than stored,
+  # because zero mutations and no limit are different settings and only one of
+  # them is what anybody means by the field. A universe nobody may write to is
+  # private and read-only, which `private` and the membership levels already say.
+  validates :mutation_limit, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   # A universe slug is its public address (`/u/<slug>`) and is global, so
   # `HasSlug` deriving it from the name means two universes whose names slugify
   # alike collide. The partial unique index on `universes.slug` only sees live
@@ -123,6 +147,24 @@ class Universe < ApplicationRecord
   # writing it. A missed change is recoverable; a written one is not.
   def draft_based?
     !direct?
+  end
+
+  # How many mutations one account may make here per `MUTATION_LIMIT_WINDOW`.
+  # `nil` means no limit, which is the stored `NULL` rather than a number too
+  # large to reach — the reader of the column can tell "unlimited" from "a lot"
+  # without being told, and the third slice has a real value to compare a
+  # per-endpoint group against.
+  #
+  # A row that somehow carries neither (a default that was dropped, a fixture
+  # written before the column existed) answers the same as a configured one:
+  # the default. Falling back to *no* limit instead would make an incomplete row
+  # the one state that is unprotected.
+  def mutation_limit
+    self[:mutation_limit] || DEFAULT_MUTATION_LIMIT
+  end
+
+  def mutations_unlimited?
+    self[:mutation_limit].nil?
   end
 
   # Only an explicit false grants the public baseline. Treating any other

@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   include Authentication
   include UniverseAuthorization
+  include MutationThrottle
   helper ModalFields
 
   allow_browser versions: :modern
@@ -28,6 +29,13 @@ class ApplicationController < ActionController::Base
   # Authorization must run after the universe is resolved, but before story
   # selection or any controller loads scoped content.
   before_action :authorize_universe_access
+
+  # One mutation per universe per account, counted against that universe's
+  # configured budget. It runs here, after authorization has already answered
+  # and before the story is resolved, because it needs `Current.user` and
+  # `Current.universe` and must not be spendable by a request that was refused —
+  # see `MutationThrottle` for why that ordering is the whole design.
+  before_action :enforce_mutation_limit
 
   before_action :set_current_story
 

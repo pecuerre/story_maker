@@ -354,8 +354,25 @@ describe("modal form status reporting", () => {
 
     expect(controller.statusMessage({ status: 403 }, fallback)).toContain("no longer allowed")
     expect(controller.statusMessage({ status: 422 }, fallback)).toContain("rejected the value")
+    expect(controller.statusMessage({ status: 429 }, fallback)).toContain("too quickly")
     expect(controller.statusMessage({ status: 500 }, fallback)).toContain("Nothing was changed")
     expect(controller.statusMessage({ status: 406 }, fallback)).toBe(`${fallback} (HTTP 406)`)
+  })
+
+  test("a throttled mutation is told to wait rather than to fix something", () => {
+    const { controller } = build("<form></form>")
+    const fallback = "The change could not be saved."
+
+    // The universe's budget is not a validation failure and nothing about the
+    // record is wrong, so the message must not read like a rejected value: an
+    // author who retries correcting the form would be correcting nothing. It
+    // keeps the caller's own sentence too, so the reader is told both what failed
+    // and why.
+    const message = controller.statusMessage({ status: 429 }, fallback)
+
+    expect(message).toContain(fallback)
+    expect(message).toContain("Wait a moment")
+    expect(message).not.toContain("rejected the value")
   })
 
   test("a failed delete reports itself on the page, outside any modal", () => {

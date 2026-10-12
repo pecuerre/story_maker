@@ -38,6 +38,26 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-12
+
+### added
+
+- **Every universe now has a mutation budget, and a new one is limited from creation.** An account
+  gets 60 content mutations per minute in each universe, counted in the cache and refused past the
+  budget; the limit is a column an admin sets, and `NULL` means unlimited.
+
+### chore
+
+- **The test environment's cache now counts instead of doing nothing.** That is what makes a rate limit
+  observable in a request test, and it revealed that sign-in and password reset had been inert for the
+  whole suite; both are tested now.
+
+### docs
+
+- **The mutation-budget decision is recorded as an ADR, and the finding it closes has left the open
+  list.** The reasoning for counting by hand, for enforcing after authorization, and for the nullable
+  column lives in ADR 0028.
+
 ## 2026-10-11
 
 ### fixed
@@ -75,6 +95,12 @@ Labels used below, in the order their groups appear:
 - **The registry and `RecordTarget` no longer describe a convention as the only guard.** The
   class-level check rule has one owner in `conventions.md`, the closed finding has moved to the
   delivery history, and `known_quirks.md` is renumbered.
+
+### planned
+
+- **Mutation throttling is planned as three slices, per universe and set by that universe's admins.**
+  The open finding stays open until the first slice enforces a limit by default; see
+  [backlog](docs/backlog.md).
 
 ## 2026-10-10
 

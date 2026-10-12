@@ -628,6 +628,7 @@ export default class extends Controller {
   statusMessage(response, fallback) {
     if (response.status === 403) return `${fallback} ${t("shared.modal_form.forbidden")}`
     if (response.status === 422) return `${fallback} ${t("shared.modal_form.rejected")}`
+    if (response.status === 429) return `${fallback} ${t("shared.modal_form.throttled")}`
     if (response.status >= 500) return t("shared.modal_form.server_error")
     return `${fallback} ${t("shared.modal_form.http_status", { status: response.status })}`
   }

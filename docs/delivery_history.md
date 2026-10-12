@@ -27,6 +27,72 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-12
+
+- **[added]** **Content mutations are counted against a budget that belongs to the universe, which
+  closes the open finding that nothing throttled them.**
+
+  - **The finding recorded a product decision as unresolved.** `known_quirks.md` held *nothing
+    throttles content mutations* as a Footgun, reasoning that public universes deliberately let every
+    signed-in contributor write, so limiting writes was a product decision rather than a confirmed
+    defect — and noting that the only two limits in the application, sign-in and password reset, were
+    fixed literals with no test between them. The owner resolved the decision: the budget belongs to
+    the universe and is set by that universe's admins.
+
+  - **That decision cannot be expressed with `rate_limit`.** The macro evaluates `store: cache_store`
+    and captures `to:` and `within:` when the controller's class body is evaluated
+    (`actionpack/lib/action_controller/metal/rate_limiting.rb`), so it can only express a limit chosen
+    in source. A limit read from a column per request has to increment and compare itself, which is why
+    `MutationThrottle` reimplements the macro's contract and nothing else. The two existing limits kept
+    the macro: they are per-IP, fixed in source, and never will be per-universe.
+
+  - **The ordering was the design, and it cost a test to learn it.** The guard sits after
+    `authorize_universe_access` and before `set_current_story`, which is the only point where
+    `Current.user` and `Current.universe` both exist *and* the request is already known to be
+    permitted. Counting earlier would let a guest, or a signed-in stranger to a private universe,
+    spend an authorized account's budget with requests that were going to be refused anyway — a limit
+    that locks somebody out rather than braking their writes.
+
+  - **The store is captured at class load, which is why testing the two old limits changed the test
+    environment.** With `config.cache_store` set to `:null_store`, `increment` returns `nil`; the macro
+    reads that as "nothing was counted" and lets the request through, and the new guard does the same
+    on purpose. Swapping `Rails.cache` inside a test could not reach either, because the macro had
+    already captured its object — eleven sign-in attempts under a counting store produced no refusal at
+    all, which is how the capture was found. Making the suite's cache a counting `:memory_store` made
+    the sign-in and password-reset limits observable for the first time. It also surfaced the cost
+    immediately: a `:memory_store` outlives a single test, so the shared `127.0.0.1` counter refused
+    sign-ins in unrelated tests and a cached navbar count made one test find two nav items — 31 failures
+    before every test began by clearing the cache.
+
+  - **Two documented shapes, and no third.** A JSON-only controller answers a bare `429` with an empty
+    body, which is what the shared modal reads; the HTML flow redirects back with a translated alert,
+    the same split `refuse_request` already makes. The modal's own sentence for `429` says to wait
+    rather than to fix anything, because nothing about the record the author typed is wrong.
+
+  - **Verified by** `bin/rails test` (2193 runs, 0 failures), `bin/rails test test/system/
+    mutation_throttle_test.rb` for the browser refusal, `bun run check:js` for the `429` message,
+    `bin/rubocop`, `bin/brakeman --no-pager` (0 warnings), `test/docs_test.rb`, and
+    `UNIVERSE=dark bin/rails db:demo:check` / `UNIVERSE=lotr bin/rails db:demo:check` (the column's
+    default means no demo manifest changed). New coverage:
+    `test/controllers/mutation_throttle_test.rb` (the budget, both refusal contracts, translation, and
+    the premise that the suite's store counts at all),
+    `test/controllers/framework_rate_limit_test.rb` (the two limits that had none, including that the
+    attempt *on* the limit still works), `test/system/mutation_throttle_test.rb`, and two cases in
+    `test/javascript/modal_form_controller_test.js`.
+
+  - **One pre-existing system-test flake was hit while verifying, and is not from this change.**
+    `test/system/draft_pending_changes_test.rb` fails one of its two badge cases in roughly three runs
+    in four of a full `test:system` run — a remembered change that never lands, so the row carries no
+    badge. It reproduces with the same seed, lands on a different case each time, and reproduces with
+    `config.cache_store` set back to `:null_store`, which is the configuration this change did not
+    have. No `429` appears in the request log, so the budget is not refusing it. It is the documented
+    class of race this suite already guards against with `assert_stimulus_loaded`, in a modal menu
+    interaction that guard does not cover.
+
+  - **Deliberately deferred, not done.** One bucket covers every mutation, so per-endpoint groups are
+    left for a later decision taken against observed behavior; and the column has no form yet, so an
+    admin cannot change the budget from the application. Both are backlog items.
+
 ### 2026-10-11
 
 - **[fixed]** **A remembered create is no longer offered to a story it does not belong to, and the
@@ -5563,6 +5629,55 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk: nothing throttles content mutations (fixed)
+
+**Then:** the open list recorded that "no mutation rate limits exist beyond sign-in/password-reset",
+and gave its reasoning as a product decision rather than a confirmed defect — public universes
+deliberately let every signed-in contributor write, so whether to throttle content, story, tag, and
+membership mutations was the owner's call, not the audit's. The one fact underneath that it did record
+is the part that turned out to matter: the two limits that did exist, sign-in and password reset, were
+fixed literals with **no test between them**.
+
+**Now:** every universe has a mutation budget. A signed-in account gets 60 content mutations per
+minute in each universe, counted in `Rails.cache`, refused past the budget with a `429` in the shared
+editor or a translated alert in the HTML flow. The limit is `universes.mutation_limit`, an admin's to
+set, defaulting to 60 so a new universe is limited from creation; `NULL` is the stored form of "no
+limit". The decision and its reasoning are in [ADR
+0028](adr/0028-per-universe-mutation-budget.md).
+
+**The owner resolved the product question, and resolving it is what made the technical one.** A budget
+its universe's admins set is a column and a form, not a constant — and
+`ActionController::RateLimiting` evaluates `store: cache_store` and captures `to:`/`within:` when a
+controller's class body is evaluated, so it can only express a limit chosen in source. Hence
+`MutationThrottle`: the macro's contract, written out, because the number is not known until the
+request arrives.
+
+**The untested limits were the real defect, and they were worse than recorded.** Once the new budget's
+own tests forced the question, the two old limits turned out to have been **inert for the entire test
+suite**: `config.cache_store` named a `:null_store`, whose `increment` returns `nil`, which the macro
+reads as "nothing was counted" and answers by allowing the request. The finding said the two limits had
+no test. The sharper truth is that no test *could* have observed them — a passing test would have looked
+identical whether the limit counted or did nothing at all. Making the suite's cache a counting
+`:memory_store` closed both halves at once.
+
+**That change had a cost the finding never mentioned, and it was visible immediately.** A
+`:memory_store` outlives a single test, so the per-IP sign-in counter — every request test arrives from
+`127.0.0.1` — refused sign-ins in unrelated tests that happened to run later, and a cached navbar count
+made one test find two nav items: 31 failures across the suite. The fix is one line, every test now
+starts by clearing the cache, and it preserves what `:null_store` actually gave the suite (nothing
+cached across tests) while letting a limit count *within* one.
+
+**Where the guard sits is the design.** It runs after `authorize_universe_access` and before
+`set_current_story`, because that is the only point where the account and the universe are both known
+*and* the request is already permitted. Counting earlier would let a guest — or a signed-in stranger to
+a private universe — spend an authorized account's budget with requests that were going to be refused
+anyway, which makes the limit a lockout rather than a brake.
+
+**What deliberately stayed.** One bucket covers every mutation, so a burst of photo uploads spends the
+same budget as a burst of scene edits; per-endpoint groups are left for a later decision taken against
+observed behavior rather than a guess made now. And the column has no form yet — until it does, an
+admin can change the budget by hand but not from the application.
 
 ### Quirk: a remembered create said nothing about which story it would belong to (fixed)
 

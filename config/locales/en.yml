@@ -241,6 +241,11 @@ en:
       # caller's own sentence so the reader is told both what failed and why.
       forbidden: "You are no longer allowed to do that; reload the page and sign in again."
       rejected: "The server rejected the value."
+      # The universe's mutation budget (ADR 0028). The server answers a throttled
+      # JSON mutation with a bare 429 and no body, so this sentence is the only
+      # account of what happened; it says to wait rather than to fix anything,
+      # because nothing about the record the author typed is wrong.
+      throttled: "You are making changes too quickly for this universe. Wait a moment and try again."
       server_error: "The server could not complete the request. Nothing was changed; try again."
       http_status: "(HTTP %{status})"
     # The blank option that clears an optional reference. Both the Events form's
@@ -2417,6 +2422,11 @@ en:
   errors:
     unavailable_account: "That page is not available to this account. Here are the universes you can open."
     rate_limited: "Try again later."
+    # The per-universe mutation budget, which is a universe's own setting rather
+    # than one rate for the application (ADR 0028). It says the budget rather
+    # than the number, because the number is the universe's and this sentence is
+    # shared by every value of it.
+    mutation_throttled: "You are making changes too quickly for this universe. Wait a moment and try again."
 
   # The record-type nouns, at the root of the locale on purpose.
   #

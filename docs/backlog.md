@@ -166,6 +166,50 @@ it has a useful destination and clear empty/loading/error states.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
+31. **Universe admins configure their universe's mutation limits (slice 2 of 3)**
+
+   The enforcement slice has shipped a limit nobody can change: `universes.mutation_limit` defaults to
+   60 per minute, and `NULL` means unlimited. This slice makes the universe form the admin's surface for
+   it: `universes#edit` and `#update` already ask for `admin` on the universe, so the fields belong on the
+   existing full-page form rather than in a new page pattern. Admins raise, lower, or remove the limit for
+   their own universe, within whatever bounds the enforcement slice recorded.
+
+   Carries the validations, the translatable strings, the documented rule for what the
+   fields mean, and the verification path — which universe's development data exercises it and what to set
+   it to, since nothing else in the demo data needs to change.
+
+32. **Per-endpoint throttle groups (slice 3 of 3)**
+
+   One bucket for every mutation is a blunt instrument: a burst of photo uploads and a burst of scene edits
+   spend the same budget. This slice splits the costly and the privileged ones into their own groups with
+   their own windows — photo upload, which is where image processing costs CPU, universe creation,
+   membership grants, and discussion messages.
+
+   Deliberately last, and only after the single bucket has run long enough to show where it hurt. The
+   per-group numbers are a product decision each time, and the privileged groups have to be decided
+   against what an owner or admin is actually doing rather than against what a stranger could do.
+
+33. **A system-test case loses a remembered change and the row carries no badge**
+
+   `test/system/draft_pending_changes_test.rb` fails one of its two badge cases in roughly three full
+   `test:system` runs in four: a remembered edit or delete never lands, so the row renders without a
+   `.draft-pending-badge` and the sidebar says "No pending changes yet". It passes when the file is run
+   on its own.
+
+   Checked on 2026-10-12 while verifying the per-universe mutation budget, and **not caused by it**.
+   The failure reproduces on a fixed seed, lands on a different case each run, and reproduces with
+   `config.cache_store` set back to `:null_store` — the configuration that change did not have. No `429`
+   appears in the request log, so the universe's budget is not refusing the mutation either. It is the
+   class of race `ApplicationSystemTestCase` already guards against with `assert_stimulus_loaded`,
+   arriving through a surface that guard does not cover: a row-menu dropdown is opened and its
+   confirmation accepted before the mutation is issued, which is two more click round trips than the
+   guarded flows.
+
+   The fix is a readiness assertion for the menu interaction itself — wait for the menu to be open and
+   its delete control to be actionable before clicking, the way the suite already waits for
+   `stimulus-loading`. Carrying that means touching a shared system-test helper or the row-menu view, so
+   it is worth doing as its own change rather than folded into unrelated work.
+
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

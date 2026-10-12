@@ -20,7 +20,23 @@ Rails.application.configure do
 
   # Show full error reports.
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+
+  # A cache that counts, not one that quietly does nothing.
+  #
+  # `ActionController::RateLimiting` evaluates `store: cache_store` when a
+  # `rate_limit` macro is declared, so the store a limit uses is fixed at class
+  # load and cannot be swapped afterwards. Under `:null_store` its `increment`
+  # returns `nil`, which the macro reads as "nothing was counted" and lets the
+  # request through — the sign-in and password-reset limits were therefore inert
+  # under the whole request suite, and a test could not have told a working limit
+  # from no limit at all. `:memory_store` counts, so those limits are now
+  # exercisable, and it is the store development uses.
+  #
+  # The cost is that cached entries survive between tests in one process, so a
+  # test that cares about a counter's value clears it — see
+  # `test/test_helpers/throttle_test_helper.rb`, which is the helper for every
+  # limit in the application.
+  config.cache_store = :memory_store
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable

@@ -44,7 +44,18 @@ UI patterns and the Timeline algorithm. Conventions are in
    universe is hidden from every non-member, including guests, with the same 404 used for an
    unknown slug. Guests attempting a public-universe write are sent to sign in, while
    authenticated collaborators without the required level receive 403.
-5. **`set_current_story`** — when a universe is present, resolves `Current.story`:
+5. **`enforce_mutation_limit`** (from `MutationThrottle`) — spends one mutation from the current
+   universe's budget, for `POST`/`PATCH`/`PUT`/`DELETE` only, and only when a universe is resolved
+   and an account is signed in. It runs here because that is the only point where `Current.user` and
+   `Current.universe` both exist *and* the request is already known to be permitted: counting before
+   authorization would let a guest or an outsider spend an authorized account's budget with requests
+   that were refused anyway. Platform-level writes (sign-in, password reset, settings, notifications,
+   universe creation) have no universe and are not counted here; sign-in and password reset carry
+   their own `rate_limit`. A refusal answers a JSON-only controller with a bare `429` and the HTML
+   flow with a redirect and an alert, and the counter lives in `Rails.cache`. The budget is a column
+   on `universes` (`DEFAULT_MUTATION_LIMIT`, `NULL` meaning unlimited) and the reasoning is in
+   [ADR 0028](adr/0028-per-universe-mutation-budget.md).
+6. **`set_current_story`** — when a universe is present, resolves `Current.story`:
    - explicit `params[:story_id]` (sections) or `params[:id]` on the `stories` controller wins and
      is remembered in the session (`session[:current_story_ids]` keyed by universe id);
    - otherwise the remembered story, if it still exists;
@@ -109,6 +120,12 @@ Other global behavior: `allow_browser versions: :modern`,
   request test therefore does **not** mean a token was verified. A JSON mutation whose token is
   rejected answers **403**, so the shared editor can say "reload the page and sign in again" instead
   of reporting a validation error the server never produced.
+- `config.cache_store` is a counting `:memory_store`, **not** a `:null_store`. A `null_store`
+  returns `nil` from `increment`, which every limit in this application reads as "nothing was
+  counted" and answers by allowing the request — so under one, no rate limit is observable and a
+  test cannot tell a working limit from no limit at all. The cost is that cached entries outlive a
+  single test in one process; a test that cares about a counter's value clears it through
+  `test/test_helpers/throttle_test_helper.rb`.
 
 ## Authentication & sessions
 
@@ -446,6 +463,13 @@ and the fact that the Timeline is a tab of the Event workspace rather than a pag
 
 - `stale_when_importmap_changes` (HTTP caching keyed on the importmap).
 - `solid_cache` store in production; `nav_stories` is memoized per request.
+- The per-universe mutation budget is counted in `Rails.cache` too, under a `mutation-throttle:`
+  key prefix that is deliberately distinct from the framework's own `rate-limit:` prefix so two
+  counters cannot collide. Solid Cache implements `increment` under a row lock, so a multi-process
+  deployment counts into one place; the other two limits in the application (sign-in and password
+  reset) use `ActionController::RateLimiting`'s own `rate_limit` macro instead, which resolves and
+  captures its store when the controller class body is evaluated. See
+  [ADR 0028](adr/0028-per-universe-mutation-budget.md).
 - Sidebar count data is stored in `Rails.cache`: one grouped entry for the current universe, and
   one entry per scalar story metric. A story caches its section count and its scene count under
   two distinct keys (`Story::SECTION_MENU_COUNT_SCOPE` and `Story::SCENE_MENU_COUNT_SCOPE`) so a

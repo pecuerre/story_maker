@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_11_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_13_090200) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -343,6 +343,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_000000) do
     t.index ["universe_id"], name: "index_photos_on_universe_id"
   end
 
+  create_table "platform_settings", force: :cascade do |t|
+    t.integer "universe_creation_limit", default: 5
+  end
+
   create_table "relation_tags", force: :cascade do |t|
     t.integer "universe_id", null: false
     t.string "name"
@@ -602,6 +606,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_000000) do
     t.integer "photo_id"
     t.string "collaboration_mode", default: "direct", null: false
     t.integer "mutation_limit", default: 60
+    t.integer "photo_mutation_limit", default: 10
+    t.integer "membership_mutation_limit", default: 10
+    t.integer "discussion_mutation_limit", default: 30
     t.index ["owner_id"], name: "index_universes_on_owner_id"
     t.index ["photo_id"], name: "index_universes_on_photo_id"
     t.index ["slug"], name: "index_universes_on_slug", unique: true, where: "deleted_at IS NULL"
@@ -614,6 +621,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_000000) do
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "platform_admin", default: false, null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end

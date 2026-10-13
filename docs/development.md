@@ -759,9 +759,11 @@ and the flat-versus-hierarchical modes).
 ## Mutation budget
 
 The per-universe change budget is a **universe setting, not a manifest field**: no
-`db/data/<universe_slug>/universes.yml` names `mutation_limit`, so both registered demo universes
-keep the column default of 60 and neither needs a data change to exercise it. The decision is
-[ADR 0028](adr/0028-per-universe-mutation-budget.md); the field's own rules are in
+`db/data/<universe_slug>/universes.yml` names `mutation_limit` or any of the three
+`*_mutation_limit` group ceilings, so both registered demo universes keep the column defaults
+(60 overall; 10 uploads, 10 access changes, 30 replies) and neither needs a data change to
+exercise them. The decisions are [ADR 0028](adr/0028-per-universe-mutation-budget.md) and [ADR
+0029](adr/0029-per-endpoint-throttle-groups.md); the field's own rules are in
 [conventions.md](conventions.md), and the guard's position in the request is in
 [architecture.md](architecture.md#request-lifecycle).
 
@@ -780,6 +782,24 @@ modal workspace with "You are making changes too quickly for this universe", and
 flow with the translated alert after the form post — and the universe is writable again about a
 minute later. Clear the field instead to remove the limit, and check the refusals stop. Set the
 field back to `60` when you are done: a budget of 1 makes ordinary manual work in Dark impossible.
+
+**The per-group ceilings are on the same form.** `/u/dark/edit` carries **Photo uploads per
+minute**, **Access changes per minute**, and **Discussion replies per minute**. Set **Photo
+uploads per minute** to `1`, put **Changes per minute** back to `60`, and upload a second photo
+in a character or universe editor: it is refused on its own ceiling with the same sentence, and
+every other mutation in the universe still works — which is the whole point of a group being a
+ceiling *inside* the budget rather than a share of it. Clearing one group's field leaves the
+other two exactly as they were.
+
+**The universe-creation ceiling is the platform's, and it is the one budget with no universe
+behind it.** It lives in `platform_settings`, which no demo manifest creates: `PlatformSetting.current`
+answers the default (5 per hour) for a missing row and writes one only when an operator saves. The
+Dark universe's owner (`dark@dark`) is the demo account carrying `platform_admin`, so sign in as that
+account and open `/settings?section=limits` — a section that exists only for it; the same URL as
+`collaborator@dark` or a guest lands on Appearance, and the rest of the page is unchanged either way.
+Setting **New universes per hour** to `1` and then creating a second universe from `/u/new` is
+refused with "You are creating universes too quickly", which is the platform's own sentence rather
+than one about a universe that does not exist. Clear the field to remove the limit.
 
 ## Testing record photos
 

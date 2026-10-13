@@ -166,17 +166,6 @@ it has a useful destination and clear empty/loading/error states.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-32. **Per-endpoint throttle groups (slice 3 of 3)**
-
-   One bucket for every mutation is a blunt instrument: a burst of photo uploads and a burst of scene edits
-   spend the same budget. This slice splits the costly and the privileged ones into their own groups with
-   their own windows — photo upload, which is where image processing costs CPU, universe creation,
-   membership grants, and discussion messages.
-
-   Deliberately last, and only after the single bucket has run long enough to show where it hurt. The
-   per-group numbers are a product decision each time, and the privileged groups have to be decided
-   against what an owner or admin is actually doing rather than against what a stranger could do.
-
 33. **A system-test case loses a remembered change and the row carries no badge**
 
    `test/system/draft_pending_changes_test.rb` fails one of its two badge cases in roughly three full

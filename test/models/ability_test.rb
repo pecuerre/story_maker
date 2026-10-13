@@ -215,6 +215,33 @@ class AbilityTest < ActiveSupport::TestCase
     assert Ability.new(users(:user_one), @private_universe).can?(:read, UniverseMembership)
   end
 
+  test "the platform's configuration is answered by the operator flag, not by any universe" do
+    # The one privilege outside every universe. It holds the universe-creation limit,
+    # which is read before there is a universe, so the question is about the account
+    # and never about a place — and it is asked with no universe in scope at all,
+    # because that is how `SettingsController` reaches it.
+    assert Ability.new(users(:platform_operator)).can?(:manage, PlatformSetting)
+    assert Ability.new(users(:platform_operator), @public_universe).can?(:manage, PlatformSetting)
+
+    assert_not Ability.new(@read_user).can?(:manage, PlatformSetting)
+    assert_not Ability.new(users(:user_one)).can?(:manage, PlatformSetting),
+      "owning universes is not the same as configuring the platform"
+    assert_not Ability.new(users(:user_one), @public_universe).can?(:manage, PlatformSetting)
+    assert_not Ability.new(nil).can?(:manage, PlatformSetting)
+  end
+
+  test "administering a universe does not reach the platform's configuration" do
+    # The distinction the `:platform` level exists to keep: borrowing `admin` here
+    # would say that anybody who administers any universe configures the platform.
+    private_admin = users(:user_two)
+    UniverseMembership.create!(universe: @private_universe, user: private_admin, access_level: :admin)
+
+    ability = Ability.new(private_admin, @private_universe)
+
+    assert ability.can?(:admin, UniverseMembership)
+    assert_not ability.can?(:manage, PlatformSetting)
+  end
+
   test "an unregistered class is still refused as a forbidden action" do
     # No rule matches it, so this is a permission answer rather than the
     # narrow existential one above, and the two must stay distinguishable.
@@ -267,7 +294,13 @@ class AbilityTest < ActiveSupport::TestCase
       # these rows — the scope is `Current.user.notifications`, a query rather than a
       # rule. Registering it would give the content rules a `universe` to ask about,
       # and a notification belongs to a person rather than to a universe.
-      "Notification" => "one reader's own notices, authorized by who they were written to"
+      "Notification" => "one reader's own notices, authorized by who they were written to",
+      # The platform's own configuration, which is not inside any universe: it holds
+      # the universe-*creation* limit, and there is no universe to scope it to yet.
+      # Registering it as content would give the content rules a `universe` to ask
+      # about and hand every signed-in reader `write` on it. Its one rule is the
+      # `:platform` level, answered from `users.platform_admin`.
+      "PlatformSetting" => "the deployment's own configuration, authorized by the platform level rather than a universe"
     }
 
     # Zeitwerk loads a model the first time something names it, so a model this

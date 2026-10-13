@@ -11,3 +11,15 @@ user_two:
   name: User Two
   email_address: two@example.com
   password_digest: <%= password_digest %>
+
+# The one account with `platform_admin`, which is the whole of what that column
+# grants: the Limits section of the settings page. Nothing in the interface sets it,
+# so without this fixture the feature would have nothing to be tested against — and
+# a fixture is the honest way to arrange it, since the flag exists precisely because
+# there is no screen an ordinary person may set it from.
+platform_operator:
+  slug: "platform-operator"
+  name: Platform Operator
+  email_address: operator@example.com
+  password_digest: <%= password_digest %>
+  platform_admin: true

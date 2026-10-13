@@ -1,6 +1,16 @@
+# The Dark universe's two accounts, and the known development sign-in for both
+# (`dark@dark` and `collaborator@dark`, with the password `db:demo:reset` prints).
+#
+# `dark-admin` carries `platform_admin`, which is the one privilege in the
+# application that is not a level inside a universe: it opens the **Limits**
+# section of the platform settings page, where the universe-creation ceiling lives.
+# It is here so that ceiling can be verified by hand against a real login rather
+# than from a console — see `docs/development.md`. Nothing in the interface sets
+# the flag, which is why the manifest is the natural place for it.
 - slug: dark-admin
   name: Dark Admin User
   email_address: dark@dark
+  platform_admin: true
 - slug: dark-collaborator
   name: Dark Collaborator
   email_address: collaborator@dark

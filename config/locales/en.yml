@@ -388,6 +388,19 @@ en:
       # field is the answer "no limit", which is stored as NULL.
       mutation_limit: "Changes per minute"
       mutation_limit_hint: "How many changes one account may make here per minute, across every workspace in this universe. Leave blank for no limit; a new universe starts at %{limit}."
+      # The three per-group sub-limits, in the order `MUTATION_GROUP_COLUMNS` lists
+      # them and rendered by a loop over it — so each label and hint is named after
+      # its column, and a fourth group arrives with the other two strings beside it.
+      # Each ceiling answers a different question, so each says what its own group
+      # is for rather than repeating the overall budget's sentence: one is about the
+      # work an upload costs, one is about handing out reach, one is about a reply
+      # being more than a single row.
+      photo_mutation_limit: "Photo uploads per minute"
+      photo_mutation_limit_hint: "How many photos one account may upload here per minute. Uploading counts separately because cropping an image is real work; these changes also count towards Changes per minute. Leave blank for no limit; a new universe starts at %{limit}."
+      membership_mutation_limit: "Access changes per minute"
+      membership_mutation_limit_hint: "How many times one account may grant, change, or remove someone's access here per minute. These changes also count towards Changes per minute. Leave blank for no limit; a new universe starts at %{limit}."
+      discussion_mutation_limit: "Discussion replies per minute"
+      discussion_mutation_limit_hint: "How many discussion replies one account may post here per minute, because a reply also writes the notification its conversation receives. These changes also count towards Changes per minute. Leave blank for no limit; a new universe starts at %{limit}."
       # The default submit label comes from Rails' own `helpers.submit.*`, which
       # is English only, so the label is named here rather than inherited.
       submit_create: "Create Universe"
@@ -2171,6 +2184,7 @@ en:
       appearance: "Appearance"
       language: "Language"
       start_page: "Start page"
+      limits: "Limits"
     appearance:
       title: "Appearance"
       description: "How this browser renders Universe Maker. Every page follows the choice, and nothing else about the workspace changes with it."
@@ -2199,10 +2213,27 @@ en:
       legend: "After signing in"
       hint: "The choice is remembered in this browser. Returning to your last story still only happens when you picked that story yourself; Universe Maker never chooses a story for you."
       submit: "Save start page"
+    # The only section that is not a browser preference, and the only one a plain
+    # reader never sees: it configures the deployment rather than this browser, so
+    # it is here for an operator and absent for everyone else. The wording keeps
+    # saying *platform*, because the page it lives on is otherwise entirely about
+    # what this browser remembers.
+    limits:
+      title: "Limits"
+      description: "How much of this platform one account may create. This setting belongs to the whole installation rather than to this browser, so it is stored once and read by every account."
+      legend: "New universes"
+      hint: "A number, or leave the field blank for no limit at all. One account may create this many universes per hour; a new installation starts at %{limit}. A universe's own change budget is set by that universe's administrators, not here."
+      universe_creation_limit: "New universes per hour"
+      # What a cleared field is called when a save confirms it. The reader would
+      # substitute the default for a row storing `NULL`, and printing that number
+      # back as what was just chosen would misreport what was stored.
+      unlimited_value: "no limit"
+      submit: "Save limits"
     flash:
       theme_saved: "Theme set to %{theme}."
       locale_saved: "Language set to %{language}."
       start_page_saved: "After signing in, you will go to %{start_page}."
+      limit_saved: "New universes per account per hour set to %{limit}."
       theme_unknown: "Choose either the light or the dark theme."
       locale_unknown: "Choose a language this application offers."
       start_page_unknown: "Choose either your last story or the universes list."
@@ -2433,6 +2464,12 @@ en:
     # than the number, because the number is the universe's and this sentence is
     # shared by every value of it.
     mutation_throttled: "You are making changes too quickly for this universe. Wait a moment and try again."
+    # Its own sentence for the one group with no universe in it. Universe creation is
+    # refused on `POST /u`, before any universe exists, so borrowing a sentence about
+    # "this universe" would name something the author is not in and has never been in
+    # — and the wait is an hour's window rather than a minute's, so the same wording
+    # would misdescribe how long.
+    mutation_throttled_platform: "You are creating universes too quickly. Wait a moment and try again."
 
   # The record-type nouns, at the root of the locale on purpose.
   #

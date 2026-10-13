@@ -38,6 +38,30 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-13
+
+### added
+
+- **The costly and privileged mutations get their own ceilings.** A photo upload, a membership grant,
+  and a discussion reply each spend a separate per-minute limit an admin sets on the universe form,
+  inside the overall change budget rather than instead of it.
+
+- **Creating a universe is now counted, and the number is the platform's.** `platform_settings` holds
+  that ceiling and the platform settings page gains a Limits section, so the one mutation with no
+  universe behind it is no longer the one write nothing counts.
+
+### security
+
+- **A new `users.platform_admin` flag guards the one setting that is not inside a universe.** It
+  defaults to false, nothing in the interface sets it, and `Ability` answers it with a `:platform`
+  level rather than borrowing a universe's `admin`.
+
+### docs
+
+- **The per-endpoint throttle decision is recorded as ADR 0029, and ADR 0028's deferred cost is
+  marked resolved.** It fixes the sub-limit reading, the three universe groups, and why universe
+  creation needed an owner of its own.
+
 ## 2026-10-12
 
 ### added

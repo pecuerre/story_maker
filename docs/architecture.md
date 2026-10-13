@@ -49,14 +49,21 @@ UI patterns and the Timeline algorithm. Conventions are in
    and an account is signed in. It runs here because that is the only point where `Current.user` and
    `Current.universe` both exist *and* the request is already known to be permitted: counting before
    authorization would let a guest or an outsider spend an authorized account's budget with requests
-   that were refused anyway. Platform-level writes (sign-in, password reset, settings, notifications,
-   universe creation) have no universe and are not counted here; sign-in and password reset carry
-   their own `rate_limit`. A refusal answers a JSON-only controller with a bare `429` and the HTML
-   flow with a redirect and an alert, and the counter lives in `Rails.cache`. The budget is a column
-   on `universes` (`DEFAULT_MUTATION_LIMIT`, `NULL` meaning unlimited), which an admin raises,
-   lowers, or removes from the universe settings form — a form `edit`/`update` already guard with
-   `admin`; that save is a universe-scoped write like any other, so an admin who sets a budget of 1
-   spends it on their own settings save and waits out the window before raising it again. The
+   that were refused anyway. A mutation that also belongs to one of the **groups** spends a second,
+   tighter counter and is refused if either is over, so a group's ceiling is a bound *inside* the
+   universe's budget rather than a share of it. The groups are photo uploads (a mutating request
+   whose payload carries a present `photo_data`), every `MembershipsController` write, a
+   `MessagesController` reply, and universe creation; each one's own window and number are in [ADR
+   0029](adr/0029-per-endpoint-throttle-groups.md). Universe creation is the one group with no
+   universe — `Current.universe` is nil on `POST /u` — so it spends no universe budget and its number
+   comes from `platform_settings.universe_creation_limit`. Every other platform-level write (sign-in,
+   password reset, settings, notifications) is still not counted here, and sign-in and password reset
+   carry their own `rate_limit`. A refusal answers a JSON-only controller with a bare `429` and the
+   HTML flow with a redirect and an alert, and the counters live in `Rails.cache`. The universe budget
+   is a column on `universes` (`DEFAULT_MUTATION_LIMIT`, `NULL` meaning unlimited), which an admin
+   raises, lowers, or removes from the universe settings form — a form `edit`/`update` already guard
+   with `admin`; that save is a universe-scoped write like any other, so an admin who sets a budget of
+   1 spends it on their own settings save and waits out the window before raising it again. The
    reasoning is in [ADR 0028](adr/0028-per-universe-mutation-budget.md).
 6. **`set_current_story`** — when a universe is present, resolves `Current.story`:
    - explicit `params[:story_id]` (sections) or `params[:id]` on the `stories` controller wins and
@@ -473,6 +480,10 @@ and the fact that the Timeline is a tab of the Event workspace rather than a pag
   reset) use `ActionController::RateLimiting`'s own `rate_limit` macro instead, which resolves and
   captures its store when the controller class body is evaluated. See
   [ADR 0028](adr/0028-per-universe-mutation-budget.md).
+- The per-group sub-limits share that prefix under a `group:` segment
+  (`mutation-throttle:group:<group>:<universe id or "platform">:<user id>`), so a group counter can
+  never be read as the universe's own, and the universe budget keeps its original key shape. See
+  [ADR 0029](adr/0029-per-endpoint-throttle-groups.md).
 - Sidebar count data is stored in `Rails.cache`: one grouped entry for the current universe, and
   one entry per scalar story metric. A story caches its section count and its scene count under
   two distinct keys (`Story::SECTION_MENU_COUNT_SCOPE` and `Story::SCENE_MENU_COUNT_SCOPE`) so a

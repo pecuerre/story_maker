@@ -61,6 +61,48 @@
         </div>
       <% end %>
     </section>
+  <% elsif settings_section?("limits") %>
+    <%# The one panel that is not a browser preference. The others write a signed
+        cookie this browser sends back; this one writes a row the whole deployment
+        reads, because the number it holds bounds how many universes *any* account
+        may create. The page's own premise is that a preference belongs to this
+        browser, so the panel says in its own words that this one is the platform's
+        and not the reader's, rather than letting a reader assume otherwise.
+
+        It reaches here only for an operator: `settings_sections` omits it for
+        everyone else and `current_settings_section` treats a guessed
+        `?section=limits` as unrecognised, so the authorization is `Ability`'s and
+        is not merely a hidden control. %>
+    <section class="settings-panel" aria-labelledby="limits-title">
+      <h2 class="settings-panel-title" id="limits-title"><%= t("settings.limits.title") %></h2>
+      <p class="settings-panel-description"><%= t("settings.limits.description") %></p>
+
+      <%= form_with url: settings_path_for("limits"), method: :patch, class: "form-surface settings-form",
+        data: { turbo: false } do |form| %>
+        <fieldset class="settings-fieldset">
+          <legend class="form-label"><%= t("settings.limits.legend") %></legend>
+          <p class="settings-hint" id="limits-hint"><%= t("settings.limits.hint", limit: PlatformSetting::DEFAULT_UNIVERSE_CREATION_LIMIT) %></p>
+
+          <%# Bound explicitly, for the same reason the universe form binds its
+              budget: `universe_creation_limit` answers the *default* for a row
+              storing `NULL`, so letting Rails bind it would print 5 where an
+              operator deliberately stored "no limit" and submitting it would
+              impose 5. The predicate is asked first, and an omitted parameter
+              leaves the column alone. %>
+          <% limit_setting = PlatformSetting.current %>
+          <div class="mb-3">
+            <%= form.label limit_param, t("settings.limits.universe_creation_limit"), class: "form-label" %>
+            <%= form.number_field limit_param,
+              value: (limit_setting.universe_creations_unlimited? ? nil : limit_setting.universe_creation_limit),
+              min: 1, step: 1, class: "form-control", aria: { describedby: "limits-hint" } %>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <%= form.submit t("settings.limits.submit"), class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </section>
   <% elsif settings_section?("start_page") %>
     <%# This section is neither display nor language: it changes which page opens
         rather than how the page is drawn, which is why it has its own tab. %>

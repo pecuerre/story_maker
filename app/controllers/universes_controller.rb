@@ -95,18 +95,27 @@ class UniversesController < ApplicationController
   # an admin-level action, so this parameter cannot change how a universe writes
   # for anyone but its owner or an administrator.
   #
-  # `mutation_limit` is that same kind of parameter — universe governance an admin
-  # owns, behind the same `admin` authorization — and its blank value is the one
-  # that needs a rule, because blank means something here. "No limit at all" is
-  # stored as `NULL`, and the form's number field submits `""` when the admin
-  # clears it, so the blank value is forwarded as `nil`: the opposite of the slug
-  # above, where a forwarded `""` would let `HasSlug` republish the universe. An
+  # `mutation_limit` and the three per-group limits are that same kind of parameter —
+  # universe governance an admin owns, behind the same `admin` authorization — and
+  # their blank values are the ones that need a rule, because blank means something
+  # here. "No limit at all" is stored as `NULL`, and a number field submits `""` when
+  # the admin clears it, so a blank value is forwarded as `nil`: the opposite of the
+  # slug above, where a forwarded `""` would let `HasSlug` republish the universe. An
   # **omitted** parameter is not an answer and leaves the column alone, so a caller
-  # that never mentions the limit cannot clear one by accident.
+  # that never mentions a limit cannot clear one by accident.
+  #
+  # The four are named by `Universe::MUTATION_GROUP_COLUMNS` rather than spelled out,
+  # so the columns a group is stored in, the ones the throttle reads, and the ones
+  # this form accepts cannot come to disagree — a new group is one map entry and one
+  # column, and a rename reaches all three at once.
+  LIMIT_PARAMS = [ :mutation_limit, *Universe::MUTATION_GROUP_COLUMNS.values ].freeze
+
   def universe_params
-    permitted = params.expect(universe: [ *photo_params, :name, :private, :slug, :collaboration_mode, :mutation_limit ])
+    permitted = params.expect(universe: [ *photo_params, :name, :private, :slug, :collaboration_mode, *LIMIT_PARAMS ])
     permitted.delete(:slug) if permitted[:slug].blank?
-    permitted[:mutation_limit] = nil if permitted.key?(:mutation_limit) && permitted[:mutation_limit].blank?
+    LIMIT_PARAMS.each do |limit|
+      permitted[limit] = nil if permitted.key?(limit) && permitted[limit].blank?
+    end
 
     permitted
   end

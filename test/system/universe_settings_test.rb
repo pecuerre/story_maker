@@ -38,4 +38,31 @@ class UniverseSettingsTest < ApplicationSystemTestCase
     assert_selector ".alert-success"
     assert universe.reload.mutations_unlimited?
   end
+
+  test "the three per-group ceilings save from the same form and clear individually" do
+    # What only a browser shows is the group loop's own output: three fields whose
+    # labels are distinct sentences, and the empty field the admin submits to remove
+    # one ceiling while the two beside it keep theirs (ADR 0029).
+    universe = universes(:universe_one)
+    sign_in_via_form(users(:user_one))
+
+    visit edit_universe_path(universe)
+    assert_field "Photo uploads per minute", with: Universe::MUTATION_GROUP_LIMITS[:photo].to_s
+    assert_field "Access changes per minute", with: Universe::MUTATION_GROUP_LIMITS[:membership].to_s
+    assert_field "Discussion replies per minute", with: Universe::MUTATION_GROUP_LIMITS[:discussion].to_s
+
+    fill_in "Photo uploads per minute", with: "3"
+    fill_in "Discussion replies per minute", with: ""
+    click_button "Update Universe"
+
+    assert_selector ".alert-success"
+    assert_equal 3, universe.reload.photo_mutation_limit
+    assert universe.reload.mutation_group_unlimited?(:discussion)
+    assert_equal Universe::MUTATION_GROUP_LIMITS[:membership], universe.reload.membership_mutation_limit
+
+    # A cleared field reopens blank rather than printing the default the reader
+    # would substitute for it.
+    visit edit_universe_path(universe)
+    assert_field "Discussion replies per minute", with: ""
+  end
 end

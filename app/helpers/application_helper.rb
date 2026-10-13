@@ -47,13 +47,33 @@ module ApplicationHelper
   # needs its own state gets `?section=…`, which is that own state rather than a
   # second route for the same page.
   #
-  # Adding a section is one entry here, one in `SETTINGS_SECTIONS`, and one panel
+  # Adding a section is one entry here, one in `settings_sections`, and one panel
   # in the view — the sections are a list rather than a pair of booleans for
   # exactly that reason.
   SETTINGS_SECTIONS = %w[appearance language start_page].freeze
 
+  # The sections this particular reader may open. It is `SETTINGS_SECTIONS` plus
+  # whatever the reader is entitled to, rather than a filtered view of a list that
+  # names everything: `limits` is the platform's own configuration rather than a
+  # browser preference, so it exists for an operator and for nobody else, and the
+  # page a guest or a plain reader sees must be the page they have always seen.
+  #
+  # `current_settings_section` answers from this same list, so a section that is
+  # not available cannot be reached by guessing `?section=limits` either — it is the
+  # first section, exactly as an unrecognised parameter is.
+  def settings_sections
+    SETTINGS_SECTIONS + (platform_admin? ? %w[limits] : [])
+  end
+
+  # The one question this page asks that is not about a browser: may this account
+  # configure the platform? The answer is a column rather than a membership, because
+  # there is no universe to hold the membership — see `Ability`.
+  def platform_admin?
+    Current.user&.platform_admin? || false
+  end
+
   def settings_tabs
-    [
+    tabs = [
       { label: t("settings.tabs.appearance"), icon: "palette", path: settings_path,
         active: settings_section?("appearance") },
       { label: t("settings.tabs.language"), icon: "translate", path: settings_path(section: "language"),
@@ -61,6 +81,11 @@ module ApplicationHelper
       { label: t("settings.tabs.start_page"), icon: "box-arrow-in-right", path: settings_path(section: "start_page"),
         active: settings_section?("start_page") }
     ]
+
+    return tabs unless platform_admin?
+
+    tabs << { label: t("settings.tabs.limits"), icon: "shield-lock", path: settings_path(section: "limits"),
+      active: settings_section?("limits") }
   end
 
   # Which settings section this request is showing. The query parameter is the
@@ -69,9 +94,15 @@ module ApplicationHelper
   # parameter is the first section, which is the page's own address — so
   # `/settings` and `/settings?section=nonsense` are the same page rather than an
   # error.
+  #
+  # The answer is drawn from `settings_sections` rather than from the constant, so a
+  # section this reader is not entitled to is treated as unrecognised: a URL is not
+  # an authorization, and `?section=limits` typed by a plain reader has to land on
+  # the first section exactly as a typo would.
   def current_settings_section
     requested = params[:section].to_s
-    SETTINGS_SECTIONS.include?(requested) ? requested : SETTINGS_SECTIONS.first
+    sections = settings_sections
+    sections.include?(requested) ? requested : sections.first
   end
 
   def settings_section?(name)
@@ -79,7 +110,7 @@ module ApplicationHelper
   end
 
   def settings_path_for(section)
-    section == SETTINGS_SECTIONS.first ? settings_path : settings_path(section: section)
+    section == settings_sections.first ? settings_path : settings_path(section: section)
   end
 
   def icon(name)

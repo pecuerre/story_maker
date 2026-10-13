@@ -252,6 +252,61 @@ class UniverseTest < ActiveSupport::TestCase
     assert_equal Universe::DEFAULT_MUTATION_LIMIT, unlimited.mutation_limit
   end
 
+  # The three per-group sub-limits (ADR 0029). Same three rules as the overall budget
+  # and, unlike it, an answer per group: an admin can open the content budget and
+  # still cap uploads. The enforcement is in `test/controllers/mutation_throttle_test.rb`.
+  test "a universe is capped per group from creation, not from a settings visit" do
+    universe = Universe.create!(owner: users(:user_one), name: "Grouped budget")
+
+    Universe::MUTATION_GROUP_COLUMNS.each do |group, column|
+      assert_equal Universe::MUTATION_GROUP_LIMITS.fetch(group), universe.reload[column],
+        "#{column} must protect a new universe from the moment it exists"
+      assert_equal Universe::MUTATION_GROUP_LIMITS.fetch(group), universe.mutation_group_limit(group)
+      assert_not universe.mutation_group_unlimited?(group)
+    end
+  end
+
+  test "a cleared group limit is no limit for that group alone" do
+    universe = universes(:universe_one).tap { |record| record.update!(photo_mutation_limit: nil) }
+
+    assert universe.mutation_group_unlimited?(:photo)
+    assert_not universe.mutation_group_unlimited?(:discussion),
+      "clearing one ceiling must leave the others exactly as they were"
+    assert_not universe.mutations_unlimited?,
+      "and must not open the universe's overall budget, which is a separate setting"
+  end
+
+  test "a configured group limit is the number in force" do
+    universe = universes(:universe_one).tap { |record| record.update!(discussion_mutation_limit: 4) }
+
+    assert_equal 4, universe.reload.mutation_group_limit(:discussion)
+  end
+
+  test "zero is refused for every group, because no limit is what an admin means" do
+    Universe::MUTATION_GROUP_COLUMNS.each_value do |column|
+      universe = Universe.new(owner: users(:user_one), name: "Closed group", column => 0)
+
+      assert_not universe.valid?, "#{column} accepted a zero limit"
+      assert_includes universe.errors[column], "must be greater than 0"
+    end
+  end
+
+  test "a group limit that is not a whole number is refused" do
+    Universe::MUTATION_GROUP_COLUMNS.each_value do |column|
+      universe = Universe.new(owner: users(:user_one), name: "Fractional group", column => 1.5)
+
+      assert_not universe.valid?, "#{column} accepted a fractional limit"
+      assert_includes universe.errors[column], "must be an integer"
+    end
+  end
+
+  test "an unknown group is a raise rather than a silent default" do
+    universe = universes(:universe_one)
+
+    assert_raises(KeyError) { universe.mutation_group_limit(:comment) }
+    assert_raises(KeyError) { universe.mutation_group_unlimited?(:comment) }
+  end
+
   # `members` is a method rather than `has_many :members, through: :memberships`
   # because the owner is not a membership row. These hold the union from this side, and
   # the two of them are what keeps `administrators` and `User#universes` honest about the

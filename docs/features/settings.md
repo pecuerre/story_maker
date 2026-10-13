@@ -9,6 +9,10 @@ page exists, why it is reachable by a guest, and why it is deliberately absent f
 sidebar's **Configuration** section, which configures a universe. It lives in the top bar's
 **Settings** entry, inside the account menu.
 
+There is exactly one section that is not a browser preference — **Limits** — and it is described
+under [The one platform-owned setting](#the-one-platform-owned-setting) below. Everything else on the
+page, including the reason a guest can reach all of it, follows from the sentence above.
+
 ## The three independent preferences
 
 **Theme** ([ADR 0013](../adr/0013-platform-settings-and-browser-theme.md)), **language**
@@ -40,11 +44,12 @@ state and the flash are both rendered by one response rather than re-derived fro
 
 ## The page
 
-`app/views/settings/show.html.erb` posts a flat `theme`, `locale`, and/or `start_page` parameter to
-`PATCH /settings`, and the controller answers with a redirect (`see_other`) or a refusal. The
-controller declares the three as one `PREFERENCES` map from request parameter to the model that owns
-the cookie, so the "is this value known" and "write this preference" pairs cannot drift apart between
-sections.
+`app/views/settings/show.html.erb` posts a flat `theme`, `locale`, `start_page`, and/or
+`universe_creation_limit` parameter to `PATCH /settings`, and the controller answers with a redirect
+(`see_other`) or a refusal. The controller declares the three browser preferences as one
+`PREFERENCES` map from request parameter to the model that owns the cookie, so the "is this value
+known" and "write this preference" pairs cannot drift apart between sections; the limit is named
+separately because it writes a row rather than a cookie.
 
 It uses the plain full-page form shape with no record behind it, and its navigation is its own small
 page shape:
@@ -54,10 +59,12 @@ page shape:
   the panel. Each destination is a real request like every other tab strip, so the strip uses the
   active class plus `aria-current="page"` and **no** `data-bs-toggle`. `settings_tabs` in
   `ApplicationHelper` declares the sections and `shared/_settings_navigation` renders them; adding a
-  section is one entry in `settings_tabs`, one value in `SETTINGS_SECTIONS`, and one panel. The first
+  section is one entry in `settings_tabs`, one value in `settings_sections`, and one panel. The first
   section owns `/settings` and a later one gets a `?section=` query parameter, which
   `current_settings_section` is the single answer for. An absent or unrecognised `?section=` is the
-  first section, so a stale or mistyped query parameter cannot produce a blank page.
+  first section, so a stale or mistyped query parameter cannot produce a blank page — and a section
+  this reader is **not offered** is unrecognised in the same way, which is what makes the Limits
+  section an authorization rather than a hidden control.
 - **Appearance** is the first tab. Its only control is **Theme**: a radio group of two labelled cards,
   **Light** and **Dark**, each with a swatch of that theme's page color, and a **Save theme** button.
   The card is the option's `<label>`, so the chosen state is a border and background change on the
@@ -72,6 +79,31 @@ page shape:
   palette to preview. Choosing the universes list also forgets the stored destination, so the two
   cannot be left disagreeing; choosing the last story keeps it. The page says plainly that returning
   to a story only ever happens for a story the reader picked themselves.
+
+## The one platform-owned setting
+
+**Limits** is the fourth section, and the only part of this page that is not remembered by the
+browser. It holds `platform_settings.universe_creation_limit` — how many universes one account may
+create per hour — which belongs to the deployment rather than to any universe, because universe
+creation is the one mutation with no universe yet to own a budget. [ADR
+0029](../adr/0029-per-endpoint-throttle-groups.md) is the decision.
+
+Three things about it are worth stating rather than leaving to the code:
+
+- **It is a row, not a cookie,** so it is validated by `PlatformSetting` rather than by the
+  `PREFERENCES` map the three browser preferences share, and a blank field means "no limit" exactly
+  as a blank budget field does on the universe form. An **omitted** parameter is not an answer, which
+  is why the controller asks `params.key?` rather than whether the value is present — a save of
+  somebody's theme must not clear a number nobody mentioned.
+- **The one `PATCH` is still all-or-nothing.** A request that refuses a theme *and* carries a valid
+  limit stores neither: half of what an operator asked for, with a success message for the rest,
+  cannot be acted on.
+- **Only an account with `users.platform_admin` may open it,** and that is `Ability`'s `:platform`
+  level rather than a hidden control. `settings_sections` is what decides which sections exist for a
+  reader, so a section that is not offered is also a section a guessed `?section=limits` cannot
+  reach — it falls back to the first section exactly as a typo does. The flag defaults to `false` and
+  nothing in the interface sets it; a guest, a plain reader, and the owner of a universe all see the
+  same three sections they have always seen.
 
 The page remembers where it was opened from and offers a **Go back** action that returns there. The
 painted treatment is in [visual_design.md](../visual_design.md); the rules for writing a translatable

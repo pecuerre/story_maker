@@ -105,9 +105,12 @@ tests in one process, so tests that care about a counter clear it through
 
 ### Costs and constraints
 
-- One bucket covers every mutation, so a burst of photo uploads and a burst of scene edits share a
+- ~~One bucket covers every mutation, so a burst of photo uploads and a burst of scene edits share a
   budget. Per-endpoint groups are deliberately a later decision, taken once a single bucket has been
-  observed being wrong.
+  observed being wrong.~~ **Resolved on 2026-10-13** by [ADR
+  0029](0029-per-endpoint-throttle-groups.md), which splits the costly and the privileged mutations
+  into their own ceilings inside this budget. The rest of this ADR is unchanged and still stands: it
+  decided the budget, and those ceilings are sub-limits of it.
 - `MutationThrottle` reimplements a framework contract and must keep up with it. The module says so at
   the point of implementation.
 - Every new universe-scoped mutation controller inherits the guard automatically, and every test in
@@ -142,6 +145,10 @@ a limit that spends a writer's budget on their own page loads would be refused f
 Rejected as premature. A refusal that says when to come back is the whole of this decision; what the
 per-group numbers are, and which endpoints deserve their own budget, is a product decision to be taken
 against observed behavior rather than against a guess made now.
+
+**The per-endpoint group half was taken later**, on 2026-10-13, by [ADR
+0029](0029-per-endpoint-throttle-groups.md). A lockout and a backoff are still rejected, and still
+here: a refusal that says when to come back is the whole of the contract both decisions keep.
 
 ### Count before authorization, to refuse a flood earlier
 

@@ -24,6 +24,36 @@ class Universe < ApplicationRecord
   # budget is. A per-universe rate is "N per minute" wherever N comes from.
   MUTATION_LIMIT_WINDOW = 1.minute
 
+  # The per-group ceilings, as `group => the column that holds it`.
+  #
+  # One bucket for every mutation is a blunt instrument: a burst of photo uploads
+  # and a burst of scene edits spent the same budget, so either could starve the
+  # other without either being what the budget was for. Each group below is a
+  # **sub-limit inside** `mutation_limit` — a grouped mutation spends both, and is
+  # refused if either is over — so the admin's overall budget stays the bound on
+  # total writes and the group's number is what binds first inside it. ADR 0029 is
+  # the decision; `MutationThrottle` is the only reader.
+  #
+  # The map is here rather than in the controller because these are columns, and the
+  # model that owns a column is where its rules live: the defaults, the validation,
+  # the `NULL` reading, and the name each group is stored under are all answered
+  # from one place, so a fourth group is one entry here plus its column.
+  MUTATION_GROUP_COLUMNS = {
+    photo: :photo_mutation_limit,
+    membership: :membership_mutation_limit,
+    discussion: :discussion_mutation_limit
+  }.freeze
+
+  # What each group falls back to when its column stores neither a number nor a
+  # `NULL` — an incomplete row: a fixture written before the column existed, a
+  # default that was dropped. It is the same reasoning as `mutation_limit` below; a
+  # row carrying neither value must never be the one unprotected state.
+  MUTATION_GROUP_LIMITS = {
+    photo: 10,
+    membership: 10,
+    discussion: 30
+  }.freeze
+
   include HasSlug
   include HasPhoto
   include SoftDeletable
@@ -56,6 +86,12 @@ class Universe < ApplicationRecord
   # them is what anybody means by the field. A universe nobody may write to is
   # private and read-only, which `private` and the membership levels already say.
   validates :mutation_limit, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+  # The same rule, validation included, for every per-group ceiling: `NULL` is "no
+  # limit on this group", `0` is refused, and a fractional number is refused.
+  # `MUTATION_GROUP_COLUMNS` is the list, so a fourth group cannot arrive with a
+  # column and no rule.
+  validates(*MUTATION_GROUP_COLUMNS.values,
+    numericality: { only_integer: true, greater_than: 0 }, allow_nil: true)
   # A universe slug is its public address (`/u/<slug>`) and is global, so
   # `HasSlug` deriving it from the name means two universes whose names slugify
   # alike collide. The partial unique index on `universes.slug` only sees live
@@ -165,6 +201,21 @@ class Universe < ApplicationRecord
 
   def mutations_unlimited?
     self[:mutation_limit].nil?
+  end
+
+  # How many mutations of one group one account may make here per
+  # `MUTATION_LIMIT_WINDOW`. `nil` is not the answer to this question — it is
+  # `mutation_group_unlimited?`'s — so what a `NULL` column yields here is the
+  # default, and the throttle asks the other question first.
+  def mutation_group_limit(group)
+    self[MUTATION_GROUP_COLUMNS.fetch(group)] || MUTATION_GROUP_LIMITS.fetch(group)
+  end
+
+  # Whether this group alone has no limit, which is deliberately a different answer
+  # from `mutations_unlimited?`: an admin can leave a universe's content budget
+  # open while keeping a ceiling on what one account may upload or grant.
+  def mutation_group_unlimited?(group)
+    self[MUTATION_GROUP_COLUMNS.fetch(group)].nil?
   end
 
   # Only an explicit false grants the public baseline. Treating any other

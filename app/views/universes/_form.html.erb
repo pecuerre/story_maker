@@ -48,21 +48,30 @@
     </div>
   </div>
 
-  <div class="mb-3">
-    <%# The value is bound explicitly, because Rails' own binding is not the one
-        this field needs. `Tags::Base#value_before_type_cast` asks the model for
-        `mutation_limit_before_type_cast` only when the value *came from the user*
-        in this request; a record read from the database falls back to the public
-        reader, and `mutation_limit` answers `DEFAULT_MUTATION_LIMIT` for a row
-        that stores nothing. So the default field would print 60 in a universe
-        whose admin deliberately had no limit, and submitting it would impose 60.
+  <%# The overall budget, then the three per-group sub-limits. They are rendered
+      from `MUTATION_GROUP_COLUMNS` rather than written out three times because they
+      are one kind of field with the same three rules, and a fourth group arriving
+      later should arrive with its input rather than as a copy of the other three
+      that somebody has to remember. The rules, once, in the loop below:
 
-        The predicate is asked first because `NULL` is the admin's answer "no limit
-        at all", and it is the same column the model stores `nil` for. An omitted
-        parameter leaves the column alone, and a cleared field reaches
-        `universe_params` as `nil` rather than as `""`. The `min` states the
-        model's own rule, which validation still enforces for a caller that
-        bypasses the browser. %>
+      - bind the value explicitly, because Rails' own binding is not the one these
+        fields need. `Tags::Base#value_before_type_cast` asks the model for
+        `…_before_type_cast` only when the value *came from the user* in this
+        request; a record read from the database falls back to the public reader,
+        and a reader answers the **default** for a row storing `NULL`. So the field
+        would print 60 — or 10, or 30 — in a universe whose admin deliberately had
+        no limit, and submitting it would impose that number;
+      - ask the predicate first, because `NULL` is the admin's answer "no limit at
+        all", and it is the column the model stores `nil` for;
+      - let a cleared field reach `universe_params` as `nil` rather than as `""`,
+        while an **omitted** parameter leaves the column alone;
+      - state the model's own rule in `min`, which validation still enforces for a
+        caller that bypasses the browser.
+
+      The hint is per group because the ceilings answer different questions: one
+      is about the CPU an upload costs, one is about handing out reach, and one is
+      about a reply being more than a single row. %>
+  <div class="mb-3">
     <%= form.label :mutation_limit, t("universes.form.mutation_limit"), class: "form-label" %>
     <%= form.number_field :mutation_limit,
       value: (universe.mutations_unlimited? ? nil : universe.mutation_limit),
@@ -71,6 +80,18 @@
       <%= t("universes.form.mutation_limit_hint", limit: Universe::DEFAULT_MUTATION_LIMIT) %>
     </div>
   </div>
+
+  <% Universe::MUTATION_GROUP_COLUMNS.each do |group, column| %>
+    <div class="mb-3">
+      <%= form.label column, t("universes.form.#{column}"), class: "form-label" %>
+      <%= form.number_field column,
+        value: (universe.mutation_group_unlimited?(group) ? nil : universe.mutation_group_limit(group)),
+        min: 1, step: 1, class: "form-control" %>
+      <div class="form-text">
+        <%= t("universes.form.#{column}_hint", limit: Universe::MUTATION_GROUP_LIMITS.fetch(group)) %>
+      </div>
+    </div>
+  <% end %>
 
   <div class="form-actions">
     <%# The default submit label comes from Rails' English-only

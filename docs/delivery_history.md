@@ -27,6 +27,103 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-13
+
+- **[added]** **The mutation budget got the per-endpoint groups ADR 0028 deferred, and the one budget
+  with no universe behind it got an owner.**
+
+  - **The owner decided the numbers are settings, against ADR 0028's own reasoning.** The backlog
+    item said the per-group numbers "are a product decision each time"; the answer was that they
+    belong where ADR 0028 put the budget — with the admins who own the exposure — so the three
+    universe-scoped ceilings are columns on `universes` rather than constants in the controller.
+    That leaves four numbers an admin can set per universe, each with its own `NULL` meaning "no
+    limit on this group", which is the one form of the decision that scales to a fifth group.
+
+  - **The windows stayed constants, deliberately, and the ADR says why.** ADR 0028 already decided
+    that "a window is not the thing an admin has an opinion about"; making the windows columns too
+    would put a number nobody understands — a one-second window is a limit no human can work within
+    — one form field away from a human. Universe creation is the exception and gets an hour,
+    because creating a universe is an act an author performs once or twice rather than once a
+    minute.
+
+  - **A group is a ceiling inside the budget, not a share of it.** A grouped mutation spends both
+    counters and is refused when either is over. The rejected alternative — a grouped mutation
+    spending only its own group — is what the owner turned down, and the reason is worth keeping:
+    it redefines what the admin's own field means. "Changes per minute: 60" would become a
+    description of ordinary edits that a flood of uploads or grants could pass through without
+    counting, which is the one reading nobody would expect from the number they were given.
+
+  - **The photo group is detected in the payload, not by a route.** There is no photo endpoint: a
+    photo is a `photo_data` value inside an ordinary mutation on eighteen controllers. The two
+    details that made it correct rather than merely plausible are that the field is rendered on
+    every editor and submits **empty** when the author changed no picture — so only a *present*
+    value counts, or the ceiling would silently mean "edits", which the universe budget already
+    counts — and that `remove_photo` is deliberately excluded, because dropping a picture writes no
+    image and costs no processing.
+
+  - **A level change is a grant, so all three membership writes are one group.** `MembershipsController`
+    is `admin`-gated in its entirety, and changing an existing member's level hands out exactly as
+    much reach as creating the row did. Splitting `create` from `update` would have been the
+    tidier-looking map and the wrong one.
+
+  - **Universe creation had no budget at all, and could not have had a universe's.** ADR 0028 could
+    not count it because `Current.universe` is nil on `POST /u`: the request is refused before the
+    row exists. It is now the one group with its own counter, scoped to the account and to
+    `platform_settings.universe_creation_limit` (5 per hour), and it carries **its own refusal
+    sentence** — "You are creating universes too quickly" — because the existing sentence names a
+    universe the author is not in and has never been in, and the wait is an hour rather than a
+    minute. It is also the only group whose fallback redirect had to change: `universe_url(nil)` is
+    not an answer, so a universe-less refusal lands on the universes list.
+
+  - **A platform setting needed a platform owner, and the application had none.** Every privilege
+    here is a level inside a universe (ADR 0005). Two of the three obvious answers were traps:
+    *any signed-in account* would let any contributor raise the ceiling for everyone, and *an
+    account that owns a universe* is nobody in particular, since anybody may create a universe.
+    `users.platform_admin` is the first privilege in the application that is not a membership
+    level, it defaults to `false` so adding the column never hands it out, and nothing in the
+    interface sets it — which is precisely why it has to exist as a flag rather than as a screen.
+
+  - **`Ability` grew a level that is not about a universe, and the nil guard moved for it.**
+    `universe_permits?` returned `false` for a nil universe before it looked at the level, which is
+    correct for every other level and exactly wrong for this one: there is no universe to consult,
+    so a nil scope is the normal case. The `:platform` answer is read before that guard, and
+    `class_answer` short-circuits for `PlatformSetting` beside `Universe`, because routing it
+    through `UniverseScopeResolver` would ask a resolver that has no rule for it.
+
+  - **The section is decided by what the reader may open, not by what they may see.** Hiding a
+    control is not an authorization, and a URL is not one either — a guessed
+    `?section=limits` had to land on the first section exactly as a typo does. `settings_sections`
+    answers that, so the tab strip, the panel, `current_settings_section` and the save redirect all
+    read one list, and a guest's settings page is byte-for-byte the page it has always been.
+
+  - **The one `PATCH` stayed all-or-nothing across two kinds of write.** A request carrying a
+    refused theme *and* a valid limit stores neither. Half of what an operator asked for, with a
+    success message for the rest, is the one answer that cannot be acted on.
+
+- **[verified]** `bin/rails test` — 2,255 runs, 13,925 assertions, 0 failures, 0 errors, 13 skips
+  (the pre-existing deployment-secret skips). `test/controllers/mutation_throttle_test.rb` (37 runs)
+  covers both budgets, all three groups, the platform group, the `NULL` readings, the two sentences,
+  and the operator authorization; `test/models/platform_setting_test.rb` is new;
+  `test/models/universe_test.rb` and `test/models/ability_test.rb` carry the columns and the
+  `:platform` level; `test/controllers/universes_controller_test.rb` carries the new form parameters.
+  `bin/rubocop` (488 files), `bin/brakeman --no-pager` (0 warnings), `bun run check:js` (220 pass)
+  and `UNIVERSE=dark| lotr bin/rails db:demo:check` are all clean. `db:demo:reset` + `db:demo:load`
+  reloaded the development database and it was queried: the Dark owner is a `platform_admin`, the
+  three group ceilings are at their defaults, and `platform_settings` has no row until an operator
+  saves one.
+
+  **The browser suite is flaky in this environment, before and after this change.** A full
+  `bin/rails test:system` run came to 182 runs and 2 failures, both in the new
+  `test/system/settings_limits_test.rb`, and both from the same cause: a typed value intermittently
+  reverts to its HTML value before the click, so the form submits the number that was already there.
+  It is a browser-input race rather than a behaviour of this change — the request log for a failing
+  run shows the `PATCH /settings?section=limits` arriving with the right parameter and saving, and
+  an earlier run of the same tree had `membership_access_test.rb`, `universe_story_test.rb` and
+  `universe_settings_test.rb` failing on untouched code while the same file passed minutes later.
+  `tmp/screenshots/` holds failures from 2026-10-04 onward, well before this work. It is recorded
+  rather than worked around: the case asserts what the browser should do, and papering over a race
+  in the driver's input handling would hide it for the tests that already suffer from it.
+
 ### 2026-10-12
 
 - **[added]** **A universe's admins can now set their own mutation budget, from the universe form.**

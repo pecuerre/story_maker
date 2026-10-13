@@ -465,6 +465,16 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   **inverse** of the slug rule above, where a blank value is dropped. An **omitted** parameter is
   not an answer in either case, so a caller that never mentions the budget cannot clear one.
 
+  **The three per-group ceilings below it are that same field, rendered from a map.**
+  `Universe::MUTATION_GROUP_COLUMNS` is the list, so the form loops over it instead of writing three
+  copies, and every rule above applies to each: the explicit binding
+  (`mutation_group_unlimited?(group) ? nil : mutation_group_limit(group)`), the blank-means-`nil`
+  forwarding, the omitted-means-untouched rule, and the `min` that states the model's own rule. The
+  model, the controller's permitted list (`LIMIT_PARAMS`), and the labels — named after the column,
+  `universes.form.<column>` — all come from the same map, so a fourth group is one entry and one
+  column rather than four places to remember ([ADR
+  0029](adr/0029-per-endpoint-throttle-groups.md) is the decision).
+
 - Section/story pages pass URLs scoped by story — see `app/views/sections/index.html.erb`
   (the same applies to `app/views/section_tags/index.html.erb`).
 

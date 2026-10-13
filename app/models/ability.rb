@@ -64,6 +64,7 @@ class Ability
     define_universe_abilities
     define_content_abilities
     define_membership_abilities
+    define_platform_abilities
   end
 
   def access_level_for(universe)
@@ -122,16 +123,38 @@ class Ability
       define_rule(UniverseMembership, :admin, %i[admin manage create update destroy])
     end
 
-    # One rule, two answers. The CanCan block asks the access-level question of
-    # the record's universe; the entry recorded alongside it asks the same question
-    # of the request's universe, and `can?` answers that one from the database.
-    # Declaring them together is what keeps a class check and a record check from
-    # answering differently about the same user and the same universe.
-    #
-    # `universe_of` is how a model's universe is reached. It is a block because
-    # `universe_for` walks the owner associations, which is right for content and
-    # wrong for a `Universe`, whose universe is the record itself.
-    def define_rule(model, level, actions, &universe_of)
+  # One rule, two answers. The CanCan block asks the access-level question of
+  # the record's universe; the entry recorded alongside it asks the same question
+  # of the request's universe, and `can?` answers that one from the database.
+  # Declaring them together is what keeps a class check and a record check from
+  # answering differently about the same user and the same universe.
+  #
+  # `universe_of` is how a model's universe is reached. It is a block because
+  # `universe_for` walks the owner associations, which is right for content and
+  # wrong for a `Universe`, whose universe is the record itself.
+  # **The one privilege that is not about a universe.** Every other rule above is a
+  # level inside one: the universe's access level for this user, evaluated against
+  # the scope the request already authorized. `PlatformSetting` has no universe —
+  # it holds the universe-*creation* limit, which is read before there is a universe
+  # to read it from — so it is asked a different question: is this account an
+  # operator of the platform itself?
+  #
+  # That answer is `users.platform_admin`, an operator flag nothing in the interface
+  # sets, and it is deliberately not a universe level. There is no universe whose
+  # admins could own it, so borrowing `admin` here would say that anyone who
+  # administers any universe configures the platform.
+  #
+  # It is declared as a class rule rather than a CanCan `can` block for the same
+  # reason the others are: a block matched against a class returns `true` without the
+  # block running, which would hand the privilege to everyone. `class_answer` asks
+  # the database instead.
+  def define_platform_abilities
+    return unless @user&.platform_admin?
+
+    @class_rules << { model: PlatformSetting, action: :manage, level: :platform }
+  end
+
+  def define_rule(model, level, actions, &universe_of)
       universe_of ||= ->(record) { universe_for(record) }
 
       actions.each do |action|
@@ -147,6 +170,11 @@ class Ability
     # through here, so a level cannot mean one thing to a record and another to a
     # class.
     def universe_permits?(universe, level)
+      # The one level that is not a question about a universe, asked before the
+      # nil guard below: there is no universe to consult, so a nil scope is the
+      # normal case for it rather than a refusal.
+      return @user.present? && @user.platform_admin? if level == :platform
+
       return false if universe.nil?
 
       case level
@@ -166,8 +194,11 @@ class Ability
       return false unless universe_permits?(@universe, rule[:level])
 
       # The authorized universe *is* the `Universe` record, so for that one class
-      # the record always exists once the level above has been answered.
-      return true if subject == Universe
+      # the record always exists once the level above has been answered. A
+      # `PlatformSetting` is the other case of the same shape: it is not *inside* an
+      # authorized universe, so there is nothing to look for rows of — and routing it
+      # through `UniverseScopeResolver` would ask a resolver that has no rule for it.
+      return true if [ Universe, PlatformSetting ].include?(subject)
 
       UniverseScopeResolver.records_in(subject, @universe).exists?
     end

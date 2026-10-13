@@ -17,6 +17,32 @@ class MutationThrottleTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
   end
 
+  # A real cropped-square `data:` URL, because these cases submit an actual photo and
+  # a mutation that is refused before the action runs would not notice. The one
+  # pixel is the smallest thing `PhotoProcessing` accepts.
+  def square_data_url
+    @square_data_url ||= "data:image/png;base64,#{Base64.strict_encode64(one_pixel_png)}"
+  end
+
+  def one_pixel_png
+    Base64.decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
+  end
+
+  # The theme the last response rendered onto the root element, which is what a
+  # browser would paint. Asked of the document rather than of the cookie because an
+  # integration test's jar is not the signed jar `AppTheme.read` expects.
+  def rendered_theme
+    Nokogiri::HTML(response.body).at_css("html")["data-bs-theme"]
+  end
+
+  # `universe_one` is owned by `user_one`, so a grant can name anybody else. The
+  # second account has to be built rather than taken from the fixtures: the only
+  # membership fixture sits on the far side of a universe boundary on purpose.
+  def another_account
+    @another_account ||= User.create!(name: "Third Account", email_address: "three@example.com",
+      password: "password")
+  end
+
   test "the suite's cache counts, which is what makes every test below mean anything" do
     assert_equal 1, Rails.cache.increment("any-key", 1),
       "a store whose increment returns nil makes the guard allow everything; that is why " \
@@ -200,6 +226,317 @@ class MutationThrottleTest < ActionDispatch::IntegrationTest
 
     assert_response :too_many_requests
     assert_empty response.body
+  end
+
+  # --- the per-group sub-limits -----------------------------------------------
+
+  test "a photo over the photo ceiling is refused while the universe budget is untouched" do
+    # The point of the slice: a photo ceiling that bites at a number the universe's
+    # own budget is nowhere near. 60 mutations a minute is left in the universe
+    # budget and the second upload is still refused, because the group is a ceiling
+    # inside it rather than a share of it.
+    @universe.update!(photo_mutation_limit: 1)
+
+    patch universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+      params: { character: { photo_data: square_data_url } }, as: :json
+    assert_response :ok
+
+    patch universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+      params: { character: { photo_data: square_data_url } }, as: :json
+
+    assert_response :too_many_requests
+    assert_equal 2, mutation_group_count(@universe, @user, :photo)
+    assert_equal 2, mutation_budget_count(@universe, @user),
+      "a refused group still counts as a mutation of this universe, as ADR 0028 counts every attempt"
+  end
+
+  test "a grouped mutation spends the universe budget as well as its own" do
+    # The sub-limit reading of ADR 0029: the group's number is what binds first
+    # *inside* the universe's budget, not instead of it. A test that only refused on
+    # the group would pass under either reading, so this one counts both.
+    @universe.update!(photo_mutation_limit: 10)
+
+    patch universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+      params: { character: { photo_data: square_data_url } }, as: :json
+
+    assert_response :ok
+    assert_equal 1, mutation_budget_count(@universe, @user)
+    assert_equal 1, mutation_group_count(@universe, @user, :photo)
+  end
+
+  test "an ordinary mutation spends the universe budget and no group" do
+    @universe.update!(photo_mutation_limit: 1)
+
+    post universe_characters_path(universe_slug: @universe.slug),
+      params: { character: { name: "No photo here" } }, as: :json
+
+    assert_response :created
+    assert_equal 1, mutation_budget_count(@universe, @user)
+    assert_equal 0, mutation_group_count(@universe, @user, :photo),
+      "a rename with no photo is not an upload and must not spend the photo ceiling"
+  end
+
+  test "an empty photo field does not spend the photo ceiling" do
+    # Every editor renders the photo field, so every ordinary mutation submits it
+    # empty. Charging the photo ceiling for those would make the ceiling mean
+    # "edits", which is what the universe budget already counts.
+    @universe.update!(photo_mutation_limit: 1)
+
+    2.times do
+      patch universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+        params: { character: { name: "Renamed", photo_data: "" } }, as: :json
+      assert_response :ok
+    end
+
+    assert_equal 0, mutation_group_count(@universe, @user, :photo)
+  end
+
+  test "clearing a photo spends no photo ceiling, because dropping an image writes none" do
+    @universe.update!(photo_mutation_limit: 1)
+
+    patch universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+      params: { character: { remove_photo: "1" } }, as: :json
+
+    assert_response :ok
+    assert_equal 0, mutation_group_count(@universe, @user, :photo)
+  end
+
+  test "a membership grant over the access ceiling is refused" do
+    @universe.update!(membership_mutation_limit: 1)
+
+    # Two grants: the first is under the ceiling, the second is over it. Memberships
+    # is the HTML flow, so a refusal is the redirect and its alert.
+    post universe_memberships_path(universe_slug: @universe.slug),
+      params: { membership: { email_address: users(:user_two).email_address, access_level: "read" } }
+    assert_response :see_other
+
+    post universe_memberships_path(universe_slug: @universe.slug),
+      params: { membership: { email_address: another_account.email_address, access_level: "read" } }
+    assert_response :see_other
+    assert_equal I18n.t("errors.mutation_throttled"), flash[:alert]
+    assert_equal 0, @universe.memberships.where(user_id: another_account.id).count,
+      "a refused grant must not have written"
+  end
+
+  test "an access change and a removal both spend the access ceiling" do
+    # `MembershipsController` is admin-gated in its entirety, and a level change is as
+    # much a grant as the first row was, so all three of its writes are one group.
+    membership = @universe.memberships.create!(user: users(:user_two), access_level: "read")
+    @universe.update!(membership_mutation_limit: 1)
+
+    patch universe_membership_path(universe_slug: @universe.slug, id: membership),
+      params: { membership: { access_level: "admin" } }
+    assert_response :see_other
+    assert_equal 1, mutation_group_count(@universe, @user, :membership)
+
+    delete universe_membership_path(universe_slug: @universe.slug, id: membership)
+    assert_response :see_other
+    assert_equal I18n.t("errors.mutation_throttled"), flash[:alert]
+  end
+
+  test "a discussion reply over the reply ceiling is refused and writes nothing" do
+    @universe.update!(discussion_mutation_limit: 1)
+    discussion = characters(:character_one).find_or_create_discussion
+
+    2.times do
+      post universe_discussion_messages_path(universe_slug: @universe.slug, discussion_id: discussion),
+        params: { discussion_message: { body: "A reply from the throttled account" } }
+    end
+
+    assert_response :see_other
+    assert_equal I18n.t("errors.mutation_throttled"), flash[:alert]
+    assert_equal 1, discussion.messages.reload.count,
+      "only the first reply was written; the refused one saved nothing"
+  end
+
+  test "a group's null limit is no limit for that group alone" do
+    # The answers are deliberately independent: an admin can leave a universe's
+    # content budget open while keeping a ceiling on uploads, and a cleared upload
+    # ceiling says nothing about the reply ceiling beside it.
+    @universe.update!(mutation_limit: nil, photo_mutation_limit: nil, discussion_mutation_limit: 1)
+    discussion = characters(:character_one).find_or_create_discussion
+
+    3.times do
+      patch universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+        params: { character: { photo_data: square_data_url } }, as: :json
+      assert_response :ok, "an unlimited group must not refuse, whatever the other budgets say"
+    end
+
+    2.times do
+      post universe_discussion_messages_path(universe_slug: @universe.slug, discussion_id: discussion),
+        params: { discussion_message: { body: "Still bounded" } }
+    end
+
+    assert_response :see_other, "the reply ceiling is its own setting and still applies"
+  end
+
+  test "a zero group limit is a field error rather than a silent no-op" do
+    universe = Universe.new(owner: @user, name: "Zero", photo_mutation_limit: 0)
+
+    assert_not universe.valid?
+    assert_includes universe.errors[:photo_mutation_limit], "must be greater than 0"
+  end
+
+  # --- universe creation, the one group with no universe -----------------------
+
+  test "universe creation over the platform ceiling is refused with its own sentence" do
+    exhaust_mutation_group(nil, @user, :universe_creation, count: PlatformSetting::DEFAULT_UNIVERSE_CREATION_LIMIT)
+
+    assert_no_difference -> { Universe.count } do
+      post universes_path, params: { universe: { name: "Refused before it exists" } }
+    end
+
+    assert_response :see_other
+    assert_equal I18n.t("errors.mutation_throttled_platform"), flash[:alert]
+    # There is no universe to go back to, so the fallback is the list the form was
+    # opened from.
+    assert_redirected_to root_path
+  end
+
+  test "an operator's configured creation limit is the one that applies" do
+    setting = PlatformSetting.create!(universe_creation_limit: 1)
+
+    post universes_path, params: { universe: { name: "The first one" } }
+    assert_response :found
+    assert_equal 1, Universe.where(name: "The first one").count
+
+    post universes_path, params: { universe: { name: "The second one" } }
+    assert_response :see_other
+    assert_equal I18n.t("errors.mutation_throttled_platform"), flash[:alert]
+    assert_equal 0, Universe.where(name: "The second one").count
+    assert_equal 1, setting.reload.universe_creation_limit
+  end
+
+  test "a null creation limit is no limit" do
+    PlatformSetting.create!(universe_creation_limit: nil)
+    exhaust_mutation_group(nil, @user, :universe_creation, count: 500)
+
+    post universes_path, params: { universe: { name: "Written freely" } }
+
+    assert_response :found
+    assert_equal 1, Universe.where(name: "Written freely").count
+  end
+
+  test "creating a universe spends no universe budget, because there is no universe yet" do
+    post universes_path, params: { universe: { name: "Counted against nothing" } }
+
+    assert_response :found
+    assert_equal 1, mutation_group_count(nil, @user, :universe_creation)
+    assert_equal 0, mutation_budget_count(@universe, @user)
+  end
+
+  test "a guest cannot spend an account's creation budget" do
+    sign_out
+    exhaust_mutation_group(nil, @user, :universe_creation, count: PlatformSetting::DEFAULT_UNIVERSE_CREATION_LIMIT)
+
+    assert_no_difference -> { mutation_group_count(nil, @user, :universe_creation) } do
+      post universes_path, params: { universe: { name: "Not signed in" } }
+    end
+
+    # The refusal comes from the sign-in requirement, not from the throttle.
+    assert_response :found
+    assert_redirected_to new_session_path
+  end
+
+  # --- the platform limit is the operator's to set ---------------------------
+
+  test "an operator sets the creation limit and it is stored once" do
+    operator = users(:platform_operator)
+    sign_in_as(operator)
+
+    patch settings_path, params: { universe_creation_limit: "9" }
+
+    assert_response :see_other
+    assert_equal 9, PlatformSetting.current.universe_creation_limit
+    assert_equal 1, PlatformSetting.count, "the setting is one row, not one per save"
+  end
+
+  test "clearing the field stores no limit rather than nothing" do
+    operator = users(:platform_operator)
+    PlatformSetting.create!(universe_creation_limit: 3)
+    sign_in_as(operator)
+
+    patch settings_path, params: { universe_creation_limit: "" }
+
+    assert_response :see_other
+    assert PlatformSetting.current.universe_creations_unlimited?
+  end
+
+  test "a refused limit stores nothing and reports why" do
+    operator = users(:platform_operator)
+    PlatformSetting.create!(universe_creation_limit: 3)
+    sign_in_as(operator)
+
+    patch settings_path, params: { universe_creation_limit: "many" }
+
+    assert_response :see_other
+    assert_match(/number/, flash[:alert])
+    assert_equal 3, PlatformSetting.current.reload.universe_creation_limit
+  end
+
+  test "a request that refuses a preference does not apply the limit it also carried" do
+    # The all-or-nothing rule the three browser preferences already followed, now
+    # spanning the two halves of this action: half of what an operator asked for and
+    # a success message for the rest cannot be acted on.
+    operator = users(:platform_operator)
+    sign_in_as(operator)
+
+    patch settings_path, params: { theme: "chartreuse", universe_creation_limit: "7" }
+
+    assert_response :see_other
+    assert_equal I18n.t("settings.flash.theme_unknown"), flash[:alert]
+    assert_equal PlatformSetting::DEFAULT_UNIVERSE_CREATION_LIMIT,
+      PlatformSetting.current.universe_creation_limit
+
+    follow_redirect!
+    assert_equal "light", rendered_theme,
+      "the refused theme was not stored either, so the page still renders the default"
+  end
+
+  test "a plain reader has no limits section and cannot save the limit" do
+    sign_out
+    get settings_path(section: "limits")
+
+    assert_response :success
+    assert_select "nav.settings-navigation a", text: "Limits", count: 0
+    assert_select "input[name=universe_creation_limit]", count: 0
+
+    sign_in_as(users(:user_one))
+    get settings_path(section: "limits")
+
+    assert_response :success
+    assert_select "input[name=universe_creation_limit]", count: 0
+
+    patch settings_path, params: { universe_creation_limit: "7" }
+
+    assert_response :forbidden
+    assert_equal PlatformSetting::DEFAULT_UNIVERSE_CREATION_LIMIT,
+      PlatformSetting.current.universe_creation_limit
+  end
+
+  test "an operator sees the limits section" do
+    sign_in_as(users(:platform_operator))
+
+    get settings_path(section: "limits")
+
+    assert_response :success
+    assert_select "nav.settings-navigation a", text: "Limits"
+    assert_select "input[name=universe_creation_limit][value=?]",
+      PlatformSetting::DEFAULT_UNIVERSE_CREATION_LIMIT.to_s
+  end
+
+  test "an omitted limit parameter leaves the stored one alone" do
+    # The blank-means-no-limit rule needs `key?` rather than `present?`, and this is
+    # the case that would break if the two were confused: a save of another
+    # preference must not clear a number nobody mentioned.
+    operator = users(:platform_operator)
+    PlatformSetting.create!(universe_creation_limit: 4)
+    sign_in_as(operator)
+
+    patch settings_path, params: { theme: "dark" }
+
+    assert_response :see_other
+    assert_equal 4, PlatformSetting.current.reload.universe_creation_limit
   end
 
   test "the refusal is translated" do

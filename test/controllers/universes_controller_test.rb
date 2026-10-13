@@ -316,6 +316,70 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_select "input#universe_mutation_limit[value=?]", Universe::DEFAULT_MUTATION_LIMIT.to_s
   end
 
+  # --- the per-group sub-limits (ADR 0029), from the same form ----------------
+
+  test "an admin can change every per-group limit in one save" do
+    patch universe_url(@universe), params: { universe: { photo_mutation_limit: "4",
+      membership_mutation_limit: "6", discussion_mutation_limit: "8" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert_equal 4, @universe.reload.photo_mutation_limit
+    assert_equal 6, @universe.reload.membership_mutation_limit
+    assert_equal 8, @universe.reload.discussion_mutation_limit
+  end
+
+  test "a cleared group limit is that group alone being unlimited" do
+    patch universe_url(@universe), params: { universe: { photo_mutation_limit: "" } }
+
+    assert_redirected_to universe_url(@universe)
+    assert @universe.reload.mutation_group_unlimited?(:photo)
+    assert_equal Universe::MUTATION_GROUP_LIMITS[:discussion], @universe.reload.discussion_mutation_limit,
+      "clearing one ceiling must leave the others alone"
+    assert_not @universe.reload.mutations_unlimited?
+  end
+
+  test "a group limit the request never mentions is not an answer" do
+    @universe.update!(photo_mutation_limit: 5)
+
+    patch universe_url(@universe), params: { universe: { name: @universe.name } }, as: :json
+
+    assert_response :ok
+    assert_equal 5, @universe.reload.photo_mutation_limit
+  end
+
+  test "a group limit of zero is refused as a field error" do
+    patch universe_url(@universe), params: { universe: { discussion_mutation_limit: "0" } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert] li", text: /Discussion mutation limit must be greater than 0/
+    assert_equal Universe::MUTATION_GROUP_LIMITS[:discussion], @universe.reload.discussion_mutation_limit
+  end
+
+  test "an ordinary contributor cannot change a per-group limit" do
+    sign_in_as(users(:user_two))
+
+    patch universe_url(@universe), params: { universe: { photo_mutation_limit: "1" } }
+
+    assert_response :forbidden
+    assert_equal Universe::MUTATION_GROUP_LIMITS[:photo], @universe.reload.photo_mutation_limit
+  end
+
+  test "the form shows each stored group limit, and a blank field where there is none" do
+    # The same binding rule as the overall budget, for the same reason: the reader
+    # answers the default for an unlimited row, so letting Rails bind it would offer
+    # a number an admin deliberately refused and submitting would impose it.
+    @universe.update!(photo_mutation_limit: 5, membership_mutation_limit: nil)
+
+    get edit_universe_url(@universe)
+
+    assert_response :success
+    assert_select "input#universe_photo_mutation_limit[value=?]", "5"
+    assert_select "input#universe_photo_mutation_limit[type=number][min=?]", "1"
+    assert_select "input#universe_membership_mutation_limit:not([value])"
+    assert_select "input#universe_discussion_mutation_limit[value=?]",
+      Universe::MUTATION_GROUP_LIMITS[:discussion].to_s
+  end
+
   test "any signed-in user can contribute to a public universe" do
     sign_in_as(users(:user_two))
 

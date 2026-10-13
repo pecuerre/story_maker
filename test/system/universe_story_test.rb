@@ -58,8 +58,11 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_selector ".sidebar-story-name", text: first.name
 
     # Back to the picker for the second story. The one just left is marked, so
-    # the reader can see which of the two is current.
+    # the reader can see which of the two is current. The link home starts a Turbo
+    # navigation, and this universe's name is a link on the page it lands on as well
+    # as on the one it leaves, so the second click waits for the list to be there.
     click_link "Universe Maker"
+    assert_selector "h1", text: "Universes"
     click_link universe.name
     assert_selector ".badge", text: "Current"
     assert_text first.name

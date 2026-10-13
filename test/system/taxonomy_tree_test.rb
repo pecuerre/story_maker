@@ -30,10 +30,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     end
 
     other = character_tags(:character_tag_two)
-    within "li[data-node-id='#{other.id}'] > .taxonomy-row" do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action "li[data-node-id='#{other.id}'] > .taxonomy-row", "Edit"
     within ".modal.show" do
       assert_selector "option", text: hostile_name
       assert_no_selector "img[data-taxonomy-xss]"
@@ -60,10 +57,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     assert_selector "button.taxonomy-name-trigger", text: "Renamed browser tag"
     other = character_tags(:character_tag_two)
-    within "li[data-node-id='#{other.id}'] > .taxonomy-row" do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action "li[data-node-id='#{other.id}'] > .taxonomy-row", "Edit"
     within ".modal.show" do
       assert_selector "option", text: "Renamed browser tag"
       assert_no_selector "option", text: "Character tag one"
@@ -100,9 +94,8 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     within "li[data-node-id='#{root_a.id}'] > .taxonomy-row" do
       assert_selector "[data-taxonomy-action='move-up'][disabled]", visible: :all
       assert_selector "[data-taxonomy-action='move-down']:not([disabled])", visible: :all
-      find("button[aria-expanded='false']").click
-      click_button "Move down"
     end
+    click_row_menu_action "li[data-node-id='#{root_a.id}'] > .taxonomy-row", "Move down"
 
     assert_selector "li[data-name='Section one'] [data-taxonomy-action='move-up']:not([disabled])", visible: :all
     assert_equal [ "Boundary root", "Section one", "Root B" ], all("ul.taxonomy-list[data-drop-parent-id=''] > .taxonomy-node").map { |node| node[:"data-name"] }
@@ -146,10 +139,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     visit universe_character_tags_path(universe_slug: universe.slug)
     assert_stimulus_loaded
 
-    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("button[aria-expanded='false']").click
-      click_button "Add child"
-    end
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Add child"
 
     within ".taxonomy-new" do
       find("input[name='name']").set("Child from the menu")
@@ -187,10 +177,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
 
     # The modal editor sends the whole record, so a rename that only changes the
     # description must not clear the assignment either.
-    within "li[data-node-id='#{section.id}'] > .taxonomy-row" do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action "li[data-node-id='#{section.id}'] > .taxonomy-row", "Edit"
     within ".modal.show" do
       fill_in "Description", with: "Described from the modal"
       click_button "Save changes"
@@ -345,10 +332,7 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     # Scoped to the node's own row: `tag` has a child tag, and the child's `li`
     # is nested inside this one with a collapsed menu of its own, so the bare
     # node scope matches two toggles and the click is ambiguous.
-    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
 
     within ".modal.show" do
       # The editor's own `required` attribute is the only thing that keeps a blank

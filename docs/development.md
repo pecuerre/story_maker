@@ -238,10 +238,25 @@ Layout:
   the page's token is accepted, that a missing or forged token is refused with `403` and writes
   nothing, and that both `fetch` implementations really send it. Put a new mutation path in one of
   those two files rather than assuming the fast suite covers it.
-- `ApplicationSystemTestCase#visit` waits for the `stimulus-loading` readiness signal after every
-  navigation. A native click delivered before Stimulus and Turbo have connected is silently dropped
-  on some machines, so a case that forgot the wait failed for a reason that had nothing to do with the
-  flow under test. The wait lives in the base class, so a new case does not have to remember it.
+- `ApplicationSystemTestCase#visit` waits for the page to be **ready to be clicked** after every
+  navigation: Stimulus and Turbo started, and every controller a `data-controller` attribute on the
+  page names connected to its element. A native click delivered before that is silently dropped on
+  some machines, so a case that forgot the wait failed for a reason that had nothing to do with the
+  flow under test. The wait lives in the base class, so a new case does not have to remember it. The
+  signal is read from Stimulus itself rather than from a class on `<html>`, because the pinned
+  Stimulus sets none — a guard that waits for a class nothing ever adds is waiting for nothing. A
+  page that names no controller is ready by having nothing to wait for, which is what lets a case
+  visit the bare `403` an authorization refusal renders.
+- A row's own action menu is the one interaction that needs a second readiness check, because it
+  takes two clicks: `click_row_menu_action` opens the menu, waits for it to be open, and only then
+  clicks the entry in it. Every row-menu interaction in the browser suite goes through it, so a new
+  one should too. Its `confirm:` keyword takes the sentence the browser asks about, `true` for an
+  entry whose own copy is the answer, or nothing for an entry that asks nothing.
+- A click that starts a Turbo navigation returns before the new page is on screen, so the next command
+  can resolve against the page that is still on its way out. Assert something from the page being
+  navigated to — `assert_current_path`, or the heading that only it has — before the next click. A
+  case that reads the page after a navigation without doing this passes on a fast machine and fails
+  on a loaded one.
 
 ## Client-side tests and lint (Bun + Biome)
 

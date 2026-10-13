@@ -82,10 +82,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     event = events(:event_one)
     other = events(:event_two)
 
-    within_row(event.display_string) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action within_row(event.display_string), "Edit"
 
     within ".modal.show" do
       # `Event` refuses a self reference in the model and in three database
@@ -122,10 +119,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     first = events(:event_one)
     second = events(:event_two)
 
-    within_row(first.display_string) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action within_row(first.display_string), "Edit"
     within ".modal.show" do
       assert_no_selector self_option("event_before_event_id", first), visible: :all
       click_button "Cancel"
@@ -135,10 +129,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     # One modal form serves every row, so the editor the second row opens has to
     # offer the first row back: the option the first editor detached is put in
     # place before this form is filled.
-    within_row(second.display_string) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action within_row(second.display_string), "Edit"
     within ".modal.show" do
       assert_selector self_option("event_before_event_id", first), visible: :all
       assert_no_selector self_option("event_before_event_id", second), visible: :all
@@ -177,10 +168,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     character = characters(:character_two)
 
     break_fetch
-    within_row(character.name) do
-      find("button[aria-expanded='false']").click
-      accept_confirm { click_button "Delete" }
-    end
+    click_row_menu_action within_row(character.name), "Delete", confirm: true
 
     assert_selector ".mutation-status .alert-danger", text: "The record could not be deleted"
     assert_selector ".entity-row .entity-title", text: character.name
@@ -194,10 +182,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     character = characters(:character_two)
     before = @universe.characters.count
 
-    within_row(character.name) do
-      find("button[aria-expanded='false']").click
-      accept_confirm { click_button "Delete" }
-    end
+    click_row_menu_action within_row(character.name), "Delete", confirm: true
 
     assert_no_selector ".entity-row .entity-title", text: character.name
     within ".page-header" do
@@ -217,10 +202,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     character = characters(:character_one)
     assert_equal [ character_tags(:character_tag_one).id ], character.character_tag_ids
 
-    within_row(character.name) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action within_row(character.name), "Edit"
     within ".modal.show" do
       assert_selector "[data-ts-item]", text: character_tags(:character_tag_one).name
       find("[data-ts-item] [title='Remove']").click
@@ -317,9 +299,12 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
   private
     # A list row is matched by its own list-group item, never by the surrounding
     # `.entity-list`, which contains the same text and would silently widen the
-    # scope to every row on the page.
+    # scope to every row on the page. Without a block it hands the row back rather
+    # than entering it, so a shared helper that takes a row — `click_row_menu_action`
+    # — can be pointed at the same row this file scopes by name.
     def within_row(name, &block)
-      within first(".list-group-item", text: name), &block
+      row = first(".list-group-item", text: name)
+      block ? within(row, &block) : row
     end
 
     # One option in a temporal select, addressed by the record's id. Capybara has

@@ -120,11 +120,7 @@ class PhotoCropTest < ApplicationSystemTestCase
 
   private
     def open_character_editor
-      within first(".entity-row", text: @character.name) do
-        find("button[aria-expanded='false']").click
-        assert_selector ".dropdown-menu.show", visible: :visible, wait: 5
-        click_button "Edit"
-      end
+      click_row_menu_action first(".entity-row", text: @character.name), "Edit"
       assert_selector ".modal.show", wait: 10
     end
 

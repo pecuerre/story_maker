@@ -32,10 +32,7 @@ class SceneCharactersTest < ApplicationSystemTestCase
     assert_text "waits in the car"
     assert_equal 3, @scene.scene_characters.count
 
-    within ".entity-list" do
-      find(".entity-row", text: "Charlotte").find(".dropdown-toggle").click
-      click_button "Edit role"
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Charlotte"), "Edit role"
     within ".modal.show" do
       assert_field "Role", with: "waits in the car"
       assert_equal "Charlotte", selected_option_text("Character")
@@ -46,10 +43,8 @@ class SceneCharactersTest < ApplicationSystemTestCase
     assert_selector ".entity-row", text: "drives", wait: REFRESH_WAIT
     assert_equal "drives", @scene.scene_characters.joins(:character).find_by(characters: { name: "Charlotte" }).role
 
-    within ".entity-list" do
-      find(".entity-row", text: "Charlotte").find(".dropdown-toggle").click
-      accept_confirm("Remove Charlotte from Scene one?") { click_button "Remove" }
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Charlotte"), "Remove",
+      confirm: "Remove Charlotte from Scene one?"
 
     assert_no_selector ".entity-row", text: "Charlotte"
     assert_equal 2, @scene.scene_characters.count

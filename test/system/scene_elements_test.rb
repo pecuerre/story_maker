@@ -36,10 +36,7 @@ class SceneElementsTest < ApplicationSystemTestCase
     move_element "The rain starts", "up"
     assert_element_titles [ "The hollow tree", "Michael teaches the waltz", "The rain starts", "The adults argue", "Interlude" ]
 
-    within ".scene-elements" do
-      find(".entity-row", text: "The rain starts").find(".dropdown-toggle").click
-      click_button "Edit"
-    end
+    click_row_menu_action find(".scene-elements .entity-row", text: "The rain starts"), "Edit"
     within ".modal.show" do
       assert_selector ".modal-title", text: "Edit element"
       assert_field "Title", with: "The rain starts"
@@ -51,10 +48,8 @@ class SceneElementsTest < ApplicationSystemTestCase
     assert_text "Edited from the browser.", wait: REFRESH_WAIT
     assert_equal 5, @scene.scene_elements.count
 
-    within ".scene-elements" do
-      find(".entity-row", text: "The rain starts").find(".dropdown-toggle").click
-      accept_confirm("Delete “The rain starts”?") { click_button "Delete" }
-    end
+    click_row_menu_action find(".scene-elements .entity-row", text: "The rain starts"), "Delete",
+      confirm: "Delete “The rain starts”?"
 
     assert_element_titles [ "The hollow tree", "Michael teaches the waltz", "The adults argue", "Interlude" ]
     assert_selector ".scene-elements .badge[aria-label='4 elements']"
@@ -88,10 +83,7 @@ class SceneElementsTest < ApplicationSystemTestCase
 
     # Reopening the editor brings the stored kind and speakers back, which is the
     # part a request test cannot see.
-    within ".scene-elements" do
-      find(".entity-row", text: "A kitchen argument").find(".dropdown-toggle").click
-      click_button "Edit"
-    end
+    click_row_menu_action find(".scene-elements .entity-row", text: "A kitchen argument"), "Edit"
     within ".modal.show" do
       assert_field "Element type", with: "dialogue"
       assert_equal [ "Character one", "Character two" ], selected_speakers
@@ -126,10 +118,7 @@ class SceneElementsTest < ApplicationSystemTestCase
     sign_in_via_form(users(:user_one))
     visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
-    within ".scene-elements" do
-      find(".entity-row", text: element.name).find(".dropdown-toggle").click
-      click_button "Edit"
-    end
+    click_row_menu_action find(".scene-elements .entity-row", text: element.name), "Edit"
 
     within ".modal.show" do
       assert_selector "[data-scene-element-form-target='removeSpeakers']", visible: :all

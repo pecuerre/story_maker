@@ -56,9 +56,13 @@ class SceneFilterTest < ApplicationSystemTestCase
     assert_scene_titles [ "Scene one", "Scene two", "Scene three" ]
 
     # Reordering inside a narrowed list moves the scene in the real sequence and
-    # keeps the author in the same view.
+    # keeps the author in the same view. The filter submits as a Turbo navigation,
+    # so the move has to wait for the narrowed list to be the one on the page: sent
+    # to the list that is still on its way out, it carries no filter with it and
+    # the refresh that follows drops the filter the case is about.
     fill_in "scene_filter_q", with: "three"
     click_button "Filter scenes"
+    assert_current_path scenes_path(universe, story, q: "three"), wait: REFRESH_WAIT
     within ".entity-list" do
       find(".entity-row", text: "Scene three").find("button[data-scene-move='up']").click
     end

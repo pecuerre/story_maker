@@ -32,10 +32,7 @@ class SceneLocationsTest < ApplicationSystemTestCase
     assert_text "the search"
     assert_equal 3, @scene.scene_locations.count
 
-    within ".entity-list" do
-      find(".entity-row", text: "Winden Forest").find(".dropdown-toggle").click
-      click_button "Edit location"
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Winden Forest"), "Edit location"
     within ".modal.show" do
       assert_field "Role", with: "the search"
       assert_equal "Winden Forest", selected_option_text("Location")
@@ -47,10 +44,8 @@ class SceneLocationsTest < ApplicationSystemTestCase
     assert_equal "the hollow tree",
       @scene.scene_locations.joins(:location).find_by(locations: { name: "Winden Forest" }).role
 
-    within ".entity-list" do
-      find(".entity-row", text: "Winden Forest").find(".dropdown-toggle").click
-      accept_confirm("Remove Winden Forest from Scene one?") { click_button "Remove" }
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Winden Forest"), "Remove",
+      confirm: "Remove Winden Forest from Scene one?"
 
     assert_no_selector ".entity-row", text: "Winden Forest"
     assert_equal 2, @scene.scene_locations.count

@@ -76,10 +76,7 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     character = characters(:character_one)
     visit universe_characters_path(universe_slug: @universe.slug)
 
-    within first(".list-group-item", text: character.name) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action first(".list-group-item", text: character.name), "Edit"
     within ".modal.show" do
       fill_in "Name", with: "Renamed in the browser"
       click_button "Save character"
@@ -135,10 +132,7 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     sign_in_via_form(@user)
     visit universe_characters_path(universe_slug: @universe.slug)
 
-    within first(".list-group-item", text: character.name) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action first(".list-group-item", text: character.name), "Edit"
     within ".modal.show" do
       fill_in "Name", with: "Renamed in the browser"
       click_button "Save character"

@@ -46,10 +46,7 @@ class DraftWikipediaJourneyTest < ApplicationSystemTestCase
     # read from a fresh load rather than a node the previous refresh replaced.
     visit universe_characters_path(universe_slug: @universe.slug)
 
-    within first(".list-group-item", text: edited.name) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action first(".list-group-item", text: edited.name), "Edit"
     within ".modal.show" do
       fill_in "Name", with: "Renamed on the way in"
       click_button "Save character"
@@ -57,10 +54,7 @@ class DraftWikipediaJourneyTest < ApplicationSystemTestCase
 
     visit universe_characters_path(universe_slug: @universe.slug)
 
-    within first(".list-group-item", text: removed.name) do
-      find("button[aria-expanded='false']").click
-      accept_confirm { click_button "Delete" }
-    end
+    click_row_menu_action first(".list-group-item", text: removed.name), "Delete", confirm: true
 
     assert_nil Character.find_by(name: "Remembered on the way in")
     assert_equal edited.name, edited.reload.name

@@ -133,10 +133,7 @@ class TagImprovementsTest < ApplicationSystemTestCase
     # The row is scoped to the node's own row: a tag with children nests their
     # `li` inside this one, and each of those rows has a collapsed menu of its
     # own, so the bare node scope holds more than one toggle.
-    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
 
     within ".modal.show" do
       assert_field "Taggable"

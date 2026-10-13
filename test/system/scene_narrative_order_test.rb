@@ -35,10 +35,7 @@ class SceneNarrativeOrderTest < ApplicationSystemTestCase
     move_scene "Browser scene", "down"
     assert_scene_titles [ "Scene one", "Scene two", "Browser scene", "Scene three" ]
 
-    within ".entity-list" do
-      find(".entity-row", text: "Browser scene").find(".dropdown-toggle").click
-      click_link "Edit"
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Browser scene"), "Edit"
     assert_selector "h1", text: "Edit scene"
     fill_in "Short description", with: "Renamed summary from the browser."
     click_button "Update Scene"
@@ -47,12 +44,7 @@ class SceneNarrativeOrderTest < ApplicationSystemTestCase
     assert_text "Renamed summary from the browser."
 
     visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
-    within ".entity-list" do
-      find(".entity-row", text: "Browser scene").find(".dropdown-toggle").click
-      accept_confirm do
-        click_button "Delete"
-      end
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Browser scene"), "Delete", confirm: true
 
     assert_selector ".alert-success", text: "Scene was successfully destroyed."
     assert_scene_titles [ "Scene one", "Scene two", "Scene three" ]

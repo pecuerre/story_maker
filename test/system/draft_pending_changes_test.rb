@@ -45,7 +45,16 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
       click_on "Pending changes"
     end
 
+    # Both clicks here start a Turbo navigation, and the next command has to be
+    # answered by the page it lands on rather than by the one still on its way out.
+    # "Review" is on both of those pages: this universe's sidebar carries **Review
+    # requests** beside **Pending changes**, so an unwaited click resolves against
+    # the sidebar and walks into the review queue instead of into this author's
+    # draft. The draft's own page is named here rather than found by its heading,
+    # because the summary is what the list does not have.
+    assert_current_path universe_drafts_path(universe_slug: @universe.slug), wait: REFRESH_WAIT
     click_on "Review"
+    assert_selector ".draft-summary", wait: REFRESH_WAIT
     accept_confirm do
       click_on "Apply changes"
     end
@@ -70,10 +79,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
     character = characters(:character_one)
     visit universe_characters_path(universe_slug: @universe.slug)
 
-    within first(".list-group-item", text: character.name) do
-      find("button[aria-expanded='false']").click
-      click_button "Edit"
-    end
+    click_row_menu_action first(".list-group-item", text: character.name), "Edit"
     within ".modal.show" do
       fill_in "Name", with: "Renamed but not applied"
       click_button "Save character"
@@ -99,10 +105,7 @@ class DraftPendingChangesTest < ApplicationSystemTestCase
     character = characters(:character_one)
     visit universe_characters_path(universe_slug: @universe.slug)
 
-    within first(".list-group-item", text: character.name) do
-      find("button[aria-expanded='false']").click
-      accept_confirm { click_button "Delete" }
-    end
+    click_row_menu_action first(".list-group-item", text: character.name), "Delete", confirm: true
 
     visit universe_characters_path(universe_slug: @universe.slug)
 

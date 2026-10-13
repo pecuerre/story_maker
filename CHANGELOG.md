@@ -50,6 +50,18 @@ Labels used below, in the order their groups appear:
   that ceiling and the platform settings page gains a Limits section, so the one mutation with no
   universe behind it is no longer the one write nothing counts.
 
+### fixed
+
+- **The browser suite's readiness guard was waiting for a class nothing ever sets.** `visit` now waits
+  for Stimulus and Turbo to have started and every controller the page names to be connected.
+
+- **A row's action menu can now be opened and used through one helper.** Every row-menu interaction in
+  the browser suite goes through it, and it waits for the menu to be open before clicking the entry.
+
+- **A click that starts a Turbo navigation is now awaited before the next command.** Three system
+  cases read the page that was still on its way out, which is how **Review** could once land in the
+  review queue instead of in the author's own draft.
+
 ### security
 
 - **A new `users.platform_admin` flag guards the one setting that is not inside a universe.** It

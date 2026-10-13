@@ -100,6 +100,82 @@ are linked rather than repeated, so there is one place to keep them current.
     refused theme *and* a valid limit stores neither. Half of what an operator asked for, with a
     success message for the rest, is the one answer that cannot be acted on.
 
+- **[fixed]** **The browser suite's shared readiness guard asserted nothing, and a row's menu had no
+  readiness check of its own.**
+
+  - **The guard was waiting for a class the pinned Stimulus never sets.** `ApplicationSystemTestCase#visit`
+    asserted `html:not(.stimulus-loading)` after every navigation, on the stated belief that Stimulus
+    puts that class on `<html>` until it has connected the page. It does not: the class appears
+    nowhere in the pinned `stimulus.min.js` or in `stimulus-loading.js`, so the selector was satisfied
+    the moment the document was parsed and the guard was a no-op. `SearchTest` had already recorded
+    that blind spot in a comment and written its own connection wait for it; that local wait has now
+    been removed, because it was a duplicate of a guard that works rather than a second fact.
+
+  - **What replaced it is read from Stimulus, and asks the question that matters.** Stimulus resolves
+    each controller through a dynamic `import()` and connects it afterwards, so "registered" and
+    "connected" are two different moments and only the second one means a click will be answered.
+    `Application#getControllerForElementAndIdentifier` answers for the second, so the guard walks every
+    `data-controller` attribute in the document and waits until each named controller has an instance
+    on its element. It is polled rather than asserted with a selector for one reason: a failure here
+    has to name the controller that never connected, because "something was not ready" is the one
+    message that cannot be acted on.
+
+  - **A page that names no controller is ready by having nothing to wait for.** The first version of
+    the guard required Stimulus and Turbo on every page and failed `MembershipAccessTest`, which
+    visits `/u/<slug>/members` as a non-admin on purpose: that refusal is `head :forbidden`, a body
+    with no layout and therefore no JavaScript at all. The attributes are server-rendered, so their
+    absence is the server's answer rather than a sign that the JavaScript has not arrived, and the
+    guard now reads the count before it reads the listeners.
+
+  - **A row's menu needs a second readiness check, and the fix is one helper.** The backlog item
+    named the row-menu flow as the exposed one, and it is the one interaction that takes two clicks to
+    reach a mutation: the second lands on an element that is `display: none` until the first has been
+    acted on. `click_row_menu_action` opens the menu, waits for it to be open, and only then clicks the
+    entry. The alternatives — a wait written into one test file, or a `data-` hook on the row-menu view
+    — were rejected: the guard belongs to the base class because every case that opens a menu has this
+    shape, and a hook in the view would put test-only markup into production HTML for one call site.
+
+  - **Every row-menu interaction now goes through it, and the helper had to cover two row shapes.**
+    Twenty call sites in ten files opened a menu by hand, and the tree's rows are not the workspaces'
+    rows: the taxonomy tree wraps its menu in `.taxonomy-actions` where the shared row actions use
+    `.row-actions`, and the Scene row's editor is a `link_to` where a workspace editor is a button
+    that answers a `fetch`. So the toggle is found as the row's `.dropdown .dropdown-toggle` and the
+    entry as Bootstrap's `.dropdown-item`, which is the one thing both shapes agree on.
+
+  - **The real flake in this file turned out to be a second thing, and the owner put it in this change.**
+    A click that starts a Turbo navigation returns before the new page is on screen, so the next
+    command resolves against the page still on its way out. In `draft_pending_changes_test.rb` that is
+    the difference between **Review** on a draft row and **Review requests** in this universe's own
+    sidebar: the first case walked into the review queue and then failed looking for **Apply changes**.
+    `scene_filter_test.rb` had the same shape with a filter submitted and a reorder clicked in the list
+    that had not been replaced yet, so the reorder carried no filter and the refresh dropped the one
+    the case was about; `universe_story_test.rb` had two link clicks in a row where the second link
+    exists on both pages. Each is now one assertion on the page being navigated to, which is the
+    discipline the suite already follows after a mutation with `REFRESH_WAIT`.
+
+  - **The badge flake itself was not reproduced here.** Ten runs of the file under artificial CPU load
+    before the change, and six runs of the two badge cases after, all passed, so what this change can
+    honestly claim is that the two ways the suite knows to drop or misread an early click are gone —
+    not that a failure nobody has reproduced here has been seen to stop.
+
+  - **Verification.** `bin/rails test:system` — 182 runs, 3369 assertions, 0 failures, 1 error, where the
+    error is a `SQLite3::BusyException` on `POST /session` and not a behaviour of this change. The
+    twelve migrated files run on their own: 64 runs, 1291 assertions, 0 failures. `bin/rails test` —
+    2255 runs, 13925 assertions, 0 failures, 13 skips (the pre-existing skips), and
+    `test/system/draft_pending_changes_test.rb` on its own: 6 runs, 0 failures, with the two badge
+    cases repeated six times under CPU load. `test/docs_test.rb` (5 runs, 0 failures) and
+    `bin/rubocop` (233 files, no offenses). Not run: `bun run check:js` is not applicable (no
+    JavaScript changed), `bin/brakeman --no-pager`, `bin/bundler-audit`, `bin/importmap audit`.
+
+  - **One thing this change could not explain.** `test/system/modal_html_flow_test.rb` failed all
+    five of its cases twice in a row, with the same symptom every time — the create modal never
+    opened, on tests this change does not touch. It then passed seven consecutive runs, five of them
+    with different seeds and one immediately after a full parallel `bin/rails test`, so the cause is
+    not in the tree as it stands. It is the same symptom as the race this change removes, which is
+    why it is written down here rather than dismissed: a guard that waits for every controller to
+    connect makes a click *before* Stimulus is ready impossible, and this failure happened with that
+    guard in place, so whatever it was, it is not the thing the guard waits for.
+
 - **[verified]** `bin/rails test` — 2,255 runs, 13,925 assertions, 0 failures, 0 errors, 13 skips
   (the pre-existing deployment-secret skips). `test/controllers/mutation_throttle_test.rb` (37 runs)
   covers both budgets, all three groups, the platform group, the `NULL` readings, the two sentences,

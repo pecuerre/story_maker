@@ -10,16 +10,6 @@ require "application_system_test_case"
 # The engine is the test double (`SearchTestBackend`), because CI has no
 # Meilisearch. What is under test is the box, not the engine.
 class SearchTest < ApplicationSystemTestCase
-  # Whether the box is actually listening. Stimulus resolves each controller through
-  # a dynamic `import()` and then connects it on a later turn of the router, so
-  # "registered" and "connected" are two different moments and only the second one
-  # means a keystroke will be heard. Optional chaining, because the application
-  # itself is assigned by a module the page has to fetch first.
-  SEARCH_CONTROLLER_CONNECTED_JS = <<~JS
-    Boolean(window.Stimulus?.getControllerForElementAndIdentifier(
-      document.querySelector(".navbar-search"), "search"))
-  JS
-
   # How tall the panel's box is while the search is closed. The wrapper is still in
   # the document then, so a height of anything but zero is something painted under
   # the field on every page.
@@ -76,23 +66,13 @@ class SearchTest < ApplicationSystemTestCase
 
   # The box the reader types in.
   #
-  # Stimulus resolves each controller through a dynamic `import()` and connects it
-  # afterwards, so a keystroke delivered in between is simply dropped: the box stays
-  # silent and the case fails for a reason that has nothing to do with what it is
-  # checking. The shared `assert_stimulus_loaded` cannot cover that — it waits for a
-  # `stimulus-loading` class the pinned Stimulus never sets, so it is satisfied as
-  # soon as the page is parsed. Waiting for the connection is what lets a silent box
-  # mean "no answer" here rather than "asked too early".
+  # A keystroke delivered before the box's controller is connected is silently
+  # dropped, so the box stays silent and the case fails for a reason that has
+  # nothing to do with what it is checking. `ApplicationSystemTestCase#visit`
+  # waits for every controller the page names to be connected, which is what lets
+  # a silent box mean "no answer" here rather than "asked too early".
   def search_box
-    wait_for_search_controller
     find(".navbar-search-input", visible: :all)
-  end
-
-  def wait_for_search_controller
-    connected = -> { page.evaluate_script(SEARCH_CONTROLLER_CONNECTED_JS) }
-    deadline = Time.now + 10
-    sleep 0.05 until connected.call || Time.now > deadline
-    assert connected.call, "the search controller never connected, so the box cannot answer"
   end
 
   test "typing opens a panel of results, and choosing one opens the record" do

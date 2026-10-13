@@ -91,8 +91,7 @@ class ModalHtmlFlowTest < ApplicationSystemTestCase
     visit universe_relations_path(universe_slug: @universe.slug)
     assert_stimulus_loaded
 
-    find(".entity-row", text: "Martha").find(".dropdown-toggle").click
-    click_button "Edit"
+    click_row_menu_action find(".entity-row", text: "Martha"), "Edit"
 
     within ".modal.show" do
       # The name came back from the serialized record, not from a stale row.
@@ -125,8 +124,7 @@ class ModalHtmlFlowTest < ApplicationSystemTestCase
     visit universe_relations_path(universe_slug: @universe.slug)
     assert_stimulus_loaded
 
-    find(".entity-row", text: "Hannah").find(".dropdown-toggle").click
-    click_button "Edit"
+    click_row_menu_action find(".entity-row", text: "Hannah"), "Edit"
 
     within ".modal.show" do
       assert_field "Name", with: "Marriage of convenience"

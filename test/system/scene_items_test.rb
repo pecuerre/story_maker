@@ -31,10 +31,7 @@ class SceneItemsTest < ApplicationSystemTestCase
     assert_text "rings at midnight"
     assert_equal 3, @scene.scene_items.count
 
-    within ".entity-list" do
-      find(".entity-row", text: "Tannhaus Bell").find(".dropdown-toggle").click
-      click_button "Edit item"
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Tannhaus Bell"), "Edit item"
     within ".modal.show" do
       assert_field "Role", with: "rings at midnight"
       assert_equal "Tannhaus Bell", selected_option_text("Item")
@@ -45,10 +42,8 @@ class SceneItemsTest < ApplicationSystemTestCase
     assert_selector ".entity-row", text: "silence, finally", wait: REFRESH_WAIT
     assert_equal "silence, finally", @scene.scene_items.joins(:item).find_by(items: { name: "Tannhaus Bell" }).role
 
-    within ".entity-list" do
-      find(".entity-row", text: "Tannhaus Bell").find(".dropdown-toggle").click
-      accept_confirm("Remove Tannhaus Bell from Scene one?") { click_button "Remove" }
-    end
+    click_row_menu_action find(".entity-list .entity-row", text: "Tannhaus Bell"), "Remove",
+      confirm: "Remove Tannhaus Bell from Scene one?"
 
     assert_no_selector ".entity-row", text: "Tannhaus Bell"
     assert_equal 2, @scene.scene_items.count

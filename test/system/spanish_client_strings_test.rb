@@ -80,10 +80,7 @@ class SpanishClientStringsTest < ApplicationSystemTestCase
 
     # The details editor, which the controller builds in `document.body` and so
     # is not in the response at all.
-    within "li[data-node-id='#{tag.id}'] > .taxonomy-row" do
-      find("button[aria-expanded='false']").click
-      click_button "Editar"
-    end
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Editar"
     within ".modal.show" do
       assert_selector ".modal-title", text: "Editar #{tag.name}"
       assert_selector ".modal-footer button", text: "Cancelar"
@@ -97,10 +94,7 @@ class SpanishClientStringsTest < ApplicationSystemTestCase
 
     visit universe_characters_path(universe_slug: @universe.slug)
 
-    within first(".entity-row", text: character.name) do
-      find("button[aria-expanded='false']").click
-      click_button "Editar"
-    end
+    click_row_menu_action first(".entity-row", text: character.name), "Editar"
     within ".modal.show" do
       # A blank name is refused by the server, so the summary, its heading, and
       # the field message beside the input are all built by the controller rather

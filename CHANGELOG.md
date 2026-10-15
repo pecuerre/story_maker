@@ -40,6 +40,12 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-15
 
+### added
+
+- **A list filter is now one contract rather than a per-workspace decision.** `ListFilter` and
+  `FilteredListQuery` hold the narrowing, canonical-query, and reporting rules `SceneFilter` already
+  used, and `docs/features/list_filters.md` owns them.
+
 ### changed
 
 - **The nine story-scoped controllers no longer look their story up again.** One shared `set_story`
@@ -61,6 +67,9 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **The large-list filter backlog item is now five ordered slices.** Each names its workspaces, the
+  open questions it has to settle, and what it must not rebuild, and the pending-row rule is decided
+  once for all of them.
 - **The contrast rule and its warning each have one home.** `visual_design.md` keeps the rule and links
   to the tag editor, which now states what the warning is and that it does not block a save.
 - **"One resolution, one object" is written down in `architecture.md`,** with the controller rule in

@@ -1,6 +1,6 @@
 <% content_for :title, t("scenes.title") %>
 <% editable = can_write_universe? %>
-<% filtered = @scene_filter.active? %>
+<% filtered = @list_filter.active? %>
 <% empty_description = if editable
   t("scenes.index.empty_writable_description")
 else
@@ -30,14 +30,14 @@ end %>
 
 <%= render "scenes/filter",
   story: @story,
-  filter: @scene_filter,
+  filter: @list_filter,
   section_paths: @section_paths,
   scene_tags: @scene_tags,
   scene_tag_paths: @scene_tag_paths,
   total: @scene_total,
   shown: @scenes.size %>
 
-<% filter_params = @scene_filter.query_params %>
+<% filter_params = @list_filter.query_params %>
 <%# A remembered Scene create belongs to this story's list, but **not to a
     filtered one**: `SceneFilter` narrows the Story's real scenes, and a record
     that does not exist cannot match a section, a tag, or a date range. Offering
@@ -177,7 +177,7 @@ end %>
         story: @story.name, total: count_with_label(@scene_total, "scene")),
       icon: "filter" do %>
       <span class="d-block mb-3">
-        <% scene_filter_summaries(@scene_filter, @section_paths, @scene_tag_paths).each do |summary| %>
+        <% scene_filter_summaries(@list_filter, @section_paths, @scene_tag_paths).each do |summary| %>
           <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
         <% end %>
       </span>

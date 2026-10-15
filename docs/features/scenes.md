@@ -116,26 +116,31 @@ directly. The flash copy always states that the narrative position did not chang
 ## The list, the filter, and the ordering
 
 A Story can hold hundreds of Scenes, so the canonical list narrows with a GET search area instead of
-growing without limit. `SceneFilter` (`app/models/scene_filter.rb`) is the value object that owns the
-contract: `q` (title and short description), `section_id` (a Section of this Story or the literal
+growing without limit. `SceneFilter` (`app/models/scene_filter.rb`) is the value object that owns this
+list's keys: `q` (title and short description), `section_id` (a Section of this Story or the literal
 `ungrouped`), `scene_tag_id` (a Scene Tag of this Story), and inclusive in-world `from`/`to`
-**days**. Filters combine with `AND`. Rules that must not drift:
+**days**. Filters combine with `AND`. It is a `ListFilter`, so the contract it shares with every other
+workspace's filter — how a value is validated and dropped, what a canonical query is, how a filtered
+list treats pending rows, and what an empty result says — is in
+[`list_filters.md`](list_filters.md), not here. What is this list's alone:
 
-- The filter never reorders, regroups, or renumbers.
+- The filter never reorders, regroups, or renumbers. `Scene#position` is the only order there is, so
+  this list has no sort control; a workspace that offers one is making a different decision, in
+  [`list_filters.md`](list_filters.md#what-this-contract-does-not-decide).
 - A filter value is validated against the already-loaded story-scoped lists, so a foreign or unknown
-  id is dropped and reported (`flash.now[:alert]`) instead of reaching the query. The tag filter
-  narrows through the scoped inverse association (`SceneTag#tagged_records.select(:id)`), so it
-  cannot disclose another Story's scenes.
-- A scene without an in-world time is never inside a date range: a null is never inside a range.
+  id is dropped and reported instead of reaching the query. The tag filter narrows through the scoped
+  inverse association (`SceneTag#tagged_records.select(:id)`), so it cannot disclose another Story's
+  scenes.
 - The position badge, the story total, and the Move boundary state come from the whole sequence — one
   aggregate query (`COUNT(*)`, `MIN(position)`, `MAX(position)`) — never from the filtered rows, so a
   narrowed list cannot mistake its first visible row for the first scene of the Story.
-- `query_params` is the only source of the filter in a link or a redirect, which is why the index
-  redirects a form submission once (`302`) to the canonical query, and why the recognized keys of a
-  `move` or `destroy` are carried back to the same list.
-- Two empty states are kept apart: a Story without scenes says **No scenes yet** (and only a writer is
-  told to add one), while a filter matching nothing says **No scenes match these filters**, repeats the
-  active filters, and offers **Clear filters**.
+- The index redirects a form submission once (`302`) to the canonical query, and the recognized keys of
+  a `move` or `destroy` are carried back to the same list. Both come from `FilteredListQuery`; the one
+  thing it cannot know is where this list's own URL is, which is `ScenesController`'s
+  `#filtered_list_path_with`.
+- The two empty states are this list's own words: a Story without scenes says **No scenes yet** (and
+  only a writer is told to add one), while a filter matching nothing says **No scenes match these
+  filters**, repeats the active filters, and offers **Clear filters**.
 - Add a new key in `SceneFilter::PARAMS`, in the form, and in the helper that labels it — not in a
   controller condition.
 

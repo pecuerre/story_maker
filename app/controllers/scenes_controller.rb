@@ -2,18 +2,20 @@ class ScenesController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include DraftMutation
+  include FilteredListQuery
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_flat_positions_for :scene
 
   MOVE_DIRECTIONS = %w[ up down ].freeze
 
+  # The filter keys ride along with the index, and with the two mutations that
+  # are performed from inside a filtered list.
+  filters_list_with SceneFilter, only: %i[ index move destroy ]
+
   before_action :set_story
   before_action :set_scene, only: %i[ show edit update destroy move ]
   before_action :set_grouped_scene, only: %i[ group ]
-  # The filter keys ride along with the index, and with the two mutations that
-  # are performed from inside a filtered list.
-  before_action :set_filter_query, only: %i[ index move destroy ]
   # `create` and `update` re-render the same editor, so they need the same
   # descriptors as `new` and `edit`.
   before_action :set_section_paths, only: %i[ index show new edit create update group ]
@@ -29,13 +31,13 @@ class ScenesController < ApplicationController
   # renumbers a scene, and the totals and sequence boundaries below still come
   # from the whole sequence.
   def index
-    @scene_filter = SceneFilter.new(@filter_query, section_ids: @section_paths.ids, scene_tags: @scene_tags)
+    @list_filter = SceneFilter.new(@filter_query, section_ids: @section_paths.ids, scene_tags: @scene_tags)
     # A GET form submits every field, so the ones the author left alone arrive
     # blank. Redirecting once to the canonical query keeps the address bar, a
     # bookmark, and a shared link limited to the filters really in effect.
-    return redirect_to canonical_scenes_path, status: :found if blank_filter_values?
+    return redirect_to_canonical_filtered_list if blank_filter_values?
 
-    @scenes = @scene_filter.apply(@story.scenes).includes(:scene_tags).to_a
+    @scenes = @list_filter.apply(@story.scenes).includes(:scene_tags).to_a
     # One aggregate query answers the Story total shown by the position badges
     # and the real sequence boundaries, so a narrowed view never mistakes the
     # first visible row for the first scene of the Story.
@@ -43,10 +45,7 @@ class ScenesController < ApplicationController
       Arel.sql("COUNT(*)"), Arel.sql("MIN(position)"), Arel.sql("MAX(position)")
     )
     set_scene_listing_counts
-    # `SceneFilter` collects each discarded value as a translated sentence, so
-    # they are joined in the reader's language rather than in the language the
-    # filter was built in.
-    flash.now[:alert] = @scene_filter.discarded.to_sentence if @scene_filter.discarded.any?
+    flash_discarded_filter_values
   end
 
   # GET /u/:universe_slug/s/:story_id/scenes/:id
@@ -111,7 +110,7 @@ class ScenesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to filtered_scenes_path, **flash_message, status: :see_other
+        redirect_to filtered_list_path, **flash_message, status: :see_other
       end
     end
   end
@@ -144,7 +143,7 @@ class ScenesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to filtered_scenes_path,
+        redirect_to filtered_list_path,
           notice: t("scenes.flash.deleted"),
           status: :see_other
       end
@@ -153,38 +152,13 @@ class ScenesController < ApplicationController
 
   private
 
-  # The recognized filter keys only. `slice` keeps the route, controller, and
-  # action keys out, so permitting the rest cannot report anything the request
-  # legitimately carries.
-  def set_filter_query
-    @filter_query = params.slice(*SceneFilter::PARAMS).permit(*SceneFilter::PARAMS)
-  end
-
-  # True when the request carried a filter key with no value, which is what a
-  # plain form submission of the search area always looks like.
-  def blank_filter_values?
-    values = @filter_query.to_h
-    values.compact_blank.size < values.size
-  end
-
-  # The canonical index URL for a set of filter values: only the recognized keys
-  # that carry a value, so the address bar, a bookmark, and a shared link never
-  # depend on how the search area was filled in.
-  def scenes_path_with(query)
+  # The canonical index URL for a set of filter values. `FilteredListQuery` owns
+  # everything else about reading and carrying the filter, and this is the one
+  # thing it cannot know: where this list's own URL is.
+  def filtered_list_path_with(query)
     path = universe_story_scenes_path(story_id: @story)
 
     query.any? ? "#{path}?#{query.to_query}" : path
-  end
-
-  def canonical_scenes_path
-    scenes_path_with(@scene_filter.query_params)
-  end
-
-  # A list-embedded mutation returns to the same narrowed list when a filter is
-  # in the URL, so reordering or deleting inside a filtered view does not dump
-  # the author back on the full story. The index validates the values again.
-  def filtered_scenes_path
-    scenes_path_with(@filter_query.to_h.compact_blank)
   end
 
   def set_scene

@@ -60,23 +60,61 @@ The top-bar search is now implemented and answers across every model; see
 [`../CHANGELOG.md`](../CHANGELOG.md). What is still missing is the *in-list* half: a list a reader
 has already landed on should be able to narrow, sort, and show its filters in the URL.
 
-Add client- or server-backed search/filter/sort controls to Characters, Locations, Events, Items,
-Relations, Ownerships, and taxonomy trees. Preserve universe/story scope, make filters removable
-and visible in the URL where practical, and define behavior for empty results separately from an
-empty database. Start with the fields already exposed by each model. The story-owned Scenes list
-already has this shape (text, Section group, Scene Tag, inclusive in-world date range, canonical
-query in the URL); reuse its `SceneFilter` conventions here instead of inventing a second filter
-pattern, and reuse `Search::Scope` for the boundary rather than re-deciding what "this universe"
-means.
+**This ships as five ordered slices**, each finished by adding its dated
+[`../CHANGELOG.md`](../CHANGELOG.md) entry and deleting its own paragraph below; the number stays on
+the whole deliverable rather than moving to whichever slice is next. Slices 2 to 5 are blocked on the
+one before them.
 
-**A filter also has to say what happens to a pending row.** In a universe that remembers changes, a
-list appends the records the reader's own draft would create and badges the ones it would edit or
-delete ([ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)). A pending
-row has no id, so it cannot satisfy a filter on any column the author did not submit, and the Scenes
-list already answers this by staying filtered. Decide deliberately per workspace: hide pending rows
-when a filter is active (what Scenes does), keep them and show a count, or match them on the values
-the payload carries. The third is the only one that can ever put a pending row in a result set, and it
-is the one that needs the filter to read a payload rather than a record.
+**What already exists, so no slice rebuilds it.** The story-owned Scenes list is the one working
+in-list filter, and its rules are owned by [`features/scenes.md`](features/scenes.md) — read that
+rather than restating them here. Reuse its shape instead of inventing a second filter pattern, and
+reuse `Search::Scope` for the boundary rather than re-deciding what "this universe" means. Start with
+the fields already exposed by each model, preserve universe/story scope, make filters removable and
+visible in the URL where practical, and define behavior for empty results separately from an empty
+database, as Scenes does.
+
+**Decided 2026-10-15: a filtered list stays filtered and shows no pending rows.** A remembered create
+has no id, so it cannot satisfy a filter on any column the author did not submit, and offering one
+beside a "nothing matched" message answers a question the reader did not ask. This is what Scenes
+already does ([ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)),
+and it is settled once for every workspace rather than re-decided seven times. The other two answers
+stay rejected: keeping pending rows with a count puts a row outside the filter the reader just applied,
+and matching them on payload values is the only one that can put a pending row in a result set, which
+needs the filter to read a draft payload rather than a record.
+
+**Slice 1 is delivered.** The shared contract is `ListFilter` (`app/models/list_filter.rb`) and
+`FilteredListQuery` (`app/controllers/concerns/filtered_list_query.rb`), with its rules in
+[`features/list_filters.md`](features/list_filters.md) and a worked filter over a second model in
+`test/models/list_filter_test.rb`. The remaining four slices build on it.
+
+**Slice 2 — Characters.** The first vertical slice, and the proof the contract holds on a flat list
+with all three axes at once: text over name and description, a tag filter through the scoped inverse
+association, and **sort** — genuinely new ground, because `SceneFilter` never reorders, so this is
+where the rule that a sort is the reader's choice and never a silent renumbering gets written down. It
+brings the filter area, the two empty states, the pending-row rule above, its tests, and both locale
+files.
+
+**Slice 3 — Items and Events.** Items repeats slice 2's shape on an identical model. Events adds the
+inclusive date range over its own `start_datetime`/`end_datetime` and has to settle two things slice 2
+does not reach: `EventsController#index` orders by `id` where Characters and Items order by name and
+nothing states why, so the default a sort control offers is a decision rather than a default; and
+`@events_for_select` is the same relation as the list, so the modal's three temporal-reference pickers
+are narrowed by whatever the reader filtered to.
+
+**Slice 4 — Relations and Ownerships.** The hard text filter: both labels fall back to something
+composed rather than stored — `Relation` to `"A → B"`, `Ownership` to a *translated* sentence — so the
+query has to reach the two endpoint names rather than run a `LIKE` on the record's own `name`, and the
+Ownership fallback cannot be matched in SQL in any language at all, which is worth saying out loud
+rather than faking. Both controllers also re-render `index` from a rejected create or update, so an
+active filter has to survive the re-render along with the error summary beside it.
+
+**Slice 5 — Locations and the taxonomy trees.** Locations and all eight tag taxonomies are the tree
+pattern rather than the flat list, so the filter area goes into `shared/_taxonomy_tree` and the pending
+rows are `.taxonomy-pending` nodes, not rows. **Sorting is a product decision here, not a query:** the
+trees are drag-sortable on `position` and `HierarchyIndex` hard-codes `[position, id]`, so a
+reader-chosen sort would show an order the drag control contradicts. Settle whether a tree sorts at all
+before writing the query, and settle which count the header badge reads — the eight per-taxonomy views
+issue a fresh `.count` while `TagsController` uses `hierarchy.records.length`.
 
 5. **Richer relationship and entity rows**
 

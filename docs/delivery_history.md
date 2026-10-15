@@ -29,6 +29,45 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-15
 
+- **[added]** **A list filter is one contract instead of a per-workspace decision.**
+
+  - **The extraction was the point, not a refactor for its own sake.** The backlog item needs a filter
+    on Characters, Items, Events, Relations, Ownerships, Locations, and the taxonomy trees, and the
+    only one that existed was the Scenes list. Seven workspaces about to grow the same `LIKE`, the
+    same subquery through a scoped inverse association, and the same rescue around `Date.iso8601` is
+    how one contract becomes seven that drift. So `ListFilter` and `FilteredListQuery` were written
+    first and `SceneFilter` became a subclass, rather than the other way round — a base written
+    after the second workspace would already have been a base with two divergent assumptions in it.
+
+  - **The proof of an extraction is that the test file was not edited.** `SceneFilter`'s own eleven
+    tests were left byte-for-byte unchanged, which says more than adding tests beside them: if the
+    shared narrowing had changed what a tag filter, an inclusive day range, or a dropped value does,
+    that file would have failed. It caught one real difference on the way — a list of records is now
+    matched by an explicit `identifier:` rather than by `to_s`, because a Section is filtered by an
+    id while a tag is filtered by the record that id names, and the first version silently matched
+    nothing.
+
+  - **What was deliberately left out matters as much as what was shared.** Ordering is a workspace's
+    decision and the base never touches it, because a filter that renumbers a positioned sequence is
+    a different feature. Neither is the boundary: `Search::Scope` answers "what is this universe",
+    and a list filter is already inside the one its controller resolved. Nor pagination — nothing
+    here pages, and a filter that assumed a page size would be wrong the moment a workspace added
+    one. `docs/features/list_filters.md` states these, so they are owned by a live document rather
+    than only by this frozen record.
+
+  - **One fact, one home, enforced by the suite.** The shared rules moved out of `scenes.md` into
+    their own document and the Scene page was cut down to what is that list's alone — its keys, its
+    narrative-order rule, its totals from the whole sequence, and its two empty-state sentences.
+    `test/docs_test.rb` fails on a section heading owned by two documents, and it caught the first
+    draft of this work trying to reuse `search.md`'s heading for the new document's rule list.
+
+  - **Verification.** `bin/rails test` — 2,272 runs, 0 failures. `SE_CHROME_NO_SANDBOX=1 bin/rails
+    test:system` — 183 runs, 0 failures. `bin/rubocop` — 492 files, no offenses. `bin/brakeman
+    --no-pager` — 0 security warnings. The browser suite needs that environment variable here:
+    without it Chrome runs unsandboxed in this container and the suite fails randomly across
+    unrelated tests, which is how a first run reported sign-in and draft-badge failures that a
+    filter refactor cannot cause.
+
 - **[security]** **A request now acts on the object it authorized, and a universe's settings form
   cannot be turned into a cross-universe write.**
 

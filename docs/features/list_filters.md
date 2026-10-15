@@ -1,0 +1,126 @@
+# List filters
+
+One home for the contract **every** in-list filter shares. The Scenes list is the one filter that
+ships; the workspaces behind it are adding theirs from the backlog item *Search, filtering, and
+sorting for large lists*. A workspace's own keys and its own decisions stay with that workspace —
+the Scene filter's are in [`scenes.md`](scenes.md#the-list-the-filter-and-the-ordering).
+
+## What a list filter is
+
+`ListFilter` (`app/models/list_filter.rb`) is a **value object**. It reads only the query keys its
+subclass declares in `PARAMS` and never assigns them to a model, so a filtered list stays a plain
+HTML GET with no mutation path, no mass assignment, and nothing for a CSRF token to protect. It is
+the same kind of object as `Search::Query` and `Search::Scope`, and for the same reason: the request
+is already parsed into something whose unusable values can be collected and reported rather than
+guessed at.
+
+The request side is `FilteredListQuery`
+(`app/controllers/concerns/filtered_list_query.rb`). The split is the one the search query already
+uses ([`search.md`](search.md#where-each-decision-lives)): the filter is a value object, and the
+controller does the one thing a controller alone can, which is build a URL.
+
+## The two halves of a filter
+
+| Concern | Where |
+|---|---|
+| The recognized keys, what each means, and what it validates against | the subclass's `PARAMS` and `#resolve` |
+| What the narrowed list is | the subclass's `#apply` |
+| The canonical keys really in effect | the subclass's `#query_params` |
+| Free text, a tag, an inclusive day range, a value resolved from a loaded list | `ListFilter`, shared |
+| Slicing the query, the one-shot canonical redirect, carrying the filter through an in-list mutation, reporting a drop | `FilteredListQuery` |
+| What each value means to the reader | the workspace's own helper |
+
+A subclass declares its keys and writes three methods, and inherits the rest.
+`test/models/list_filter_test.rb` holds a complete worked filter — over `Character`, so it shares no
+table, scope, or fixture with the Scene filter — which is the shape a new workspace copies.
+
+## Rules a filter must not break
+
+1. **A value is validated against a list the index already loaded.** The controller already has the
+   story's Sections, the universe's tags, or the workspace's parent records in hand for the list and
+   the form. Resolving a filter value against those costs no query and means a foreign or unknown id
+   **cannot reach the query at all**, rather than reaching it and returning nothing.
+2. **A value that cannot be used is dropped and reported.** Never swallowed, and never left to empty
+   the list into looking like a reader's own mistake. It is dropped because guessing at an
+   unresolvable value would answer a question the reader did not ask. The report is an
+   `alert` flash joined with `to_sentence`.
+3. **A dropped value is not carried into the URL.** `query_params` is the only source of the filter in
+   a link or a redirect, and it holds what is really in effect. A request that asked for a value the
+   filter dropped is reported, not redirected with the value still in the address bar.
+4. **The report is translated where the value is dropped.** The filter is not a view and does not
+   include the view's `translate` helper, so it calls `I18n.t` against the request's locale — the same
+   call `Event`'s own `errors.add` messages make. The controller must join the reports **after**
+   translation, or a sentence would be assembled with one language's connectors around another's
+   words. See [`i18n.md`](i18n.md#a-value-object-that-is-not-a-view).
+5. **`active?` means something is really in effect.** It is derived from `query_params`, not from
+   whether the request carried a key, so a request whose only value was dropped renders an unfiltered
+   list and says the value was ignored.
+6. **A filter narrows; the workspace still decides the order.** `apply` ends by ordering the relation,
+   and what that order means belongs to the workspace. A positioned sequence keeps its own order and
+   a flat list may offer a sort — see the Scene filter's own rule in
+   [`scenes.md`](scenes.md#the-list-the-filter-and-the-ordering). A filter that renumbers positions is
+   a different feature.
+7. **A null is never inside a range.** A record with no value in the compared column is excluded
+   while a bound is set: it has nothing to compare.
+8. **A `LIKE` from a search box is literal text.** SQLite's `LIKE` ignores ASCII case, which is what
+   a search box needs, and `%` and `_` are escaped with an explicit `ESCAPE` character, so an
+   author's percent sign is a character to find rather than a pattern matching everything. The
+   columns are qualified with their table, because a narrowed relation may carry a join.
+
+## The empty result and the empty list are different sentences
+
+Every filtered list keeps these apart, and they are the single most common thing a new list gets
+wrong:
+
+- An **empty database** — a story with no scenes, a universe with no characters — says the workspace
+  has none, and offers the action that creates the first one. Only a writer is told to add one.
+- An **empty result** says which filters produced nothing, **repeats the active filters so the reader
+  can see which value emptied the list**, and offers **Clear filters**. It never offers "add one",
+  because the workspace is not empty and a create action beside that message is answering the wrong
+  question.
+
+The active filters are also repeated as text above a narrowed list that *did* match, for the same
+reason: a result set is otherwise ambiguous about what produced it.
+
+Every summary is **its own key** rather than one frame with the field name interpolated, because
+"Section: Chapter one" is a different sentence in each language than "In-world from 2026-09-11". The
+summaries live in a helper rather than on the filter because most of their values come from the
+workspace's own path objects — a Section's full ancestor path — which a filter has no business
+holding.
+
+## A filtered list stays filtered
+
+A universe that remembers changes appends the records the reader's own draft would create and badges
+the ones it would edit or delete
+([ADR 0023](../adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)). A
+remembered create has **no id**, so it cannot satisfy a filter on any column the author did not
+submit. A filtered list therefore shows no pending rows at all; they are the unfiltered list's own.
+
+Decided once for every workspace, and settled in
+[`backlog.md`](../backlog.md): the alternative of keeping them with a count puts a row outside the
+filter the reader just applied, and matching them on payload values is the only option that can put
+one in a result set, which needs the filter to read a draft payload rather than a record.
+
+## What adding a filter to a workspace takes
+
+1. A `ListFilter` subclass declaring its `PARAMS`, its `#resolve`, `#query_params`, and `#apply`.
+   Nothing else, unless the workspace needs a narrowing this contract does not have.
+2. `include FilteredListQuery` and `filters_list_with MyFilter, only: %i[ index …mutations… ]`.
+   The mutation actions are named deliberately: an in-list mutation carries the filter back, so
+   reordering or deleting inside a narrowed list does not dump the author on the full one.
+3. `#filtered_list_path_with`, the one thing the concern cannot know — where this list's own URL is.
+4. A search area over the canonical URL, a `flash_discarded_filter_values` call, the two empty
+   states, and a summaries helper.
+5. Keys in **both** locale files, in the workspace's own `*.filter.*` namespace.
+6. Tests, and the pending-row rule above in the index view.
+
+## What this contract does not decide
+
+- **Which fields to filter on.** That is the workspace's, from the fields its model already exposes.
+- **The boundary.** `Search::Scope` resolves what "this universe" means; a list filter is already
+  inside the boundary its controller resolved from `Current.universe` or `Current.story`, and never
+  widens or re-resolves it.
+- **Whether a workspace sorts.** Ordering is a presentation decision per workspace, and a filter is
+  not where it is made.
+- **Pagination.** Nothing here pages. A list narrows; whether it also pages is its own decision, and
+  a filter that assumed one would be wrong the moment a workspace adds it.

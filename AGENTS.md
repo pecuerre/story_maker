@@ -32,6 +32,7 @@ the subject and read its owner:
 | Code patterns: models, controllers, routes, the three page patterns, list rows, record details pages, helpers, Stimulus controllers | [`docs/conventions.md`](docs/conventions.md) |
 | Colors, tokens, light/dark, typography, shell, responsive behavior, accessibility, the painted treatment of a view | [`docs/visual_design.md`](docs/visual_design.md) |
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
+| The contract every in-list filter shares: narrowing, canonical queries, empty results, pending rows | [`docs/features/list_filters.md`](docs/features/list_filters.md) |
 | The tag DSL, taxonomies, the tree and its editor, tagged-record counts | [`docs/features/tags.md`](docs/features/tags.md) |
 | Global search and its dropdown | [`docs/features/search.md`](docs/features/search.md) |
 | The navbar and both workspace sidebars | [`docs/features/navigation.md`](docs/features/navigation.md) |

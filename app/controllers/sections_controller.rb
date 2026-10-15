@@ -84,10 +84,6 @@ class SectionsController < ApplicationController
 
   private
 
-  def set_story
-    @story = Current.universe.stories.find(params.expect(:story_id))
-  end
-
   def set_section
     @section = @story.sections.find(params.expect(:id))
   end

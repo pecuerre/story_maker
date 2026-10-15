@@ -27,6 +27,106 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-15
+
+- **[security]** **A request now acts on the object it authorized, and a universe's settings form
+  cannot be turned into a cross-universe write.**
+
+  - **The finding was filed as a footgun and was actually an escalation.** The open list recorded
+    that "universe and story authorization objects are looked up more than once" and said plainly
+    that "no deterministic exploit was demonstrated". Re-reading the finding against the code before
+    acting on it — which `known_quirks.md` requires of every entry — produced the demonstration the
+    entry said was missing. A number is a position in that list, so the entry cannot be cited by
+    number; what it called a footgun has to be described in full here.
+
+  - **What was duplicated.** `ApplicationController#set_current_universe` resolves
+    `Current.universe = Universe.find_by!(slug: params[:universe_slug])`, and
+    `authorize_universe_access` answers the access question about **that object**. Two callbacks
+    later — the mutation throttle, which reads a cache counter and the universe's own limit
+    columns, and `set_current_story` — `UniversesController#set_universe` ran
+    `Universe.find_by!(slug: params.expect(:universe_slug))` again and assigned the result to
+    `@universe`. Every universe settings page issued two byte-identical queries.
+
+  - **Why the second lookup is a boundary crossing and not a wasted query.** `set_universe` never
+    re-authorizes; it trusts that the callback already ran, which is true of the *object the callback
+    ran against* and not necessarily of the one it fetched. A universe slug is a mutable column, and
+    a rename frees the address: an admin renames `/u/one` away, somebody else creates a universe that
+    takes `one`, and the second lookup returns that other universe. The action then writes through it
+    — `@universe.update`, `@universe.soft_delete`, or an edit form bound to it — while the
+    authorization answer was about the first one, and it came from an account with no membership in
+    the second. No TOCTOU primitive was needed beyond two ordinary writes.
+
+  - **The exploit, made deterministic.** The regression test drives the window rather than
+    describing it: a subscriber on `sql.active_record` renames the universe away and hands its slug
+    to somebody else's, the instant the request's own slug lookup returns. Against the old code, an
+    owner of `/u/one` submitting `PATCH /u/one` with `universe[name]` left *their own* universe
+    untouched, renamed the **other** universe to the submitted name, and got **303 See Other** —
+    the success the HTML flow reports for a saved universe. The same test showed `DELETE /u/one`
+    soft-deleting the other universe, and `GET /u/one/edit` rendering its settings form, including
+    its photo and its per-group mutation ceilings.
+
+  - **The story half was the same defect without the escalation.** `set_current_story` resolves
+    `Current.story` from `params[:story_id]` — or `params[:id]` on the stories controller — and has
+    already answered a story belonging to another universe with the request's 404. Nine controllers
+    then re-found it (`Scenes`, `Sections`, `SectionTags`, `SceneTags`, `SceneElements`,
+    `SceneCharacters`, `SceneItems`, `SceneLocations`, `Stories`), so every story-scoped page issued
+    the identical `stories WHERE universe_id = ? AND id = ?` query twice. Both lookups were scoped to
+    the same authorized universe, so a moved story could only ever answer 404 — there was no boundary
+    to cross — but the acted-on row was a second object for the same story, and the one the sidebar,
+    the top bar, the session, and the remembered destination had been given was not the one the
+    action wrote through.
+
+  - **The fix is one sentence: resolve once, then read what you resolved.** `set_universe` assigns
+    `Current.universe`; `set_story` assigns `Current.story`. Both are defined **once** in
+    `ApplicationController` rather than privately in each controller, so the story-scoped contract has
+    a single definition instead of nine copies that can each drift back toward a lookup. The nine
+    private `set_story` methods are gone. Nothing was lost by dropping the second lookup: an unknown
+    slug and a cross-universe story are both already refused upstream, by the resolution itself.
+
+  - **Why the cross-scope 404 does not depend on the removed lookups.** This was the question worth
+    answering before deleting anything. `set_current_story` finds the story through
+    `Current.universe.stories`, so a `story_id` from another universe raises there and never reaches
+    the action. That answer is now pinned by its own test rather than left implicit, because the
+    second lookup used to look load-bearing and could have been reintroduced as a re-check.
+
+  - **The alternative that was rejected: re-authorize the fetched object.** The obvious-looking fix
+    is to let `set_universe` fetch and then run `authorize!` against what it fetched. That is strictly
+    worse. It would authorize twice per universe-scoped request, it would decide the question from a
+    row that may have changed *again* since it was fetched, and — the real objection — it accepts a
+    design in which the object acted on is chosen after the authorization answer, which is the shape
+    of the defect rather than a repair of it. The invariant has to be that there is only ever one
+    object to disagree about.
+
+  - **A second alternative, also rejected: a row lock.** Wrapping the resolution in
+    `with_lock`, or reading the universe `FOR UPDATE`, would close the window by serializing against
+    the rename. It was not taken. The window here is not a lost update on one row — both writes
+    commit cleanly and the loser is whichever resolves second — it is that the request acts on a row
+    the policy never saw, and no lock on that row makes the two objects the same object. It would
+    also have put a write lock on every universe-scoped request, including reads, to answer a problem
+    that "do not look it up twice" answers completely.
+
+  - **The cost, stated plainly, is the one thing this trades away.** The rule is now a constraint on
+    every controller rather than a convention: a controller that needs the universe or the story must
+    register a callback, and cannot quietly hold its own copy. A controller written against a slug it
+    has not been authorized for can no longer exist. That is the point, and it is also a real
+    narrowing of what a controller is free to do.
+
+  - **The invariant lives in `architecture.md`, not in an ADR.** It is a boundary rule about the
+    request lifecycle, and `architecture.md` already owns that subject, so it was written there as
+    **One resolution, one object**, with `conventions.md` carrying only the mechanical instruction a
+    new controller needs. No ADR was added: the decision clarifies what ADR 0005's read/write/admin
+    boundary means for object identity rather than changing a level, a model, or a workflow.
+
+  - **Verification.** `bin/rails test` — 2,261 tests, 13,946 assertions, 0 failures, 0 errors, 13
+    skips, which is the suite's normal skip count and not one introduced here.
+    `bin/rubocop` — 489 files, no offenses. `bin/brakeman --no-pager` — 0 security warnings (it does
+    not cover this path; the two-instance bug is invisible to it, which is the reason the
+    demonstration above is a test rather than a scanner result). `bin/rails test:system` was **not**
+    run — the change moves no view, no route, and no client-side behaviour, and the new coverage is
+    all request-level. Five of the six new tests were confirmed to fail against the old code by
+    stashing the controller changes and re-running them; the sixth is the cross-scope 404 that had
+    to keep passing.
+
 ### 2026-10-13
 
 - **[added]** **The mutation budget got the per-endpoint groups ADR 0028 deferred, and the one budget
@@ -5857,6 +5957,55 @@ are linked rather than repeated, so there is one place to keep them current.
 - **[changed]** Added story slugs, initial Dark/LOTR seed data, and the initial navigation shell.
 
 ## Resolved quirks and tech debt
+
+### Quirk: universe and story authorization objects were looked up more than once (fixed)
+
+**Then:** the open list recorded that the authorization objects were looked up twice, and classified
+it as a **Footgun** — "the current request path is internally consistent, but a concurrent slug
+rename or scope mutation could create a TOCTOU mismatch between the object authorized and the object
+acted on; no deterministic exploit was demonstrated". The classification and the closing clause were
+both wrong, in the same way, and the list's own rule is what caught it: findings are not verified by
+being written down, so one is re-read against the code before it is acted on. Doing that turned up an
+exploit.
+
+**Now:** the object a request authorizes is the object it acts on, and each is resolved exactly once.
+`UniversesController#set_universe` reads `Current.universe`; a single `set_story` in
+`ApplicationController` gives nine story-scoped controllers `Current.story` as `@story`, replacing
+nine private copies that re-queried the database. Both were invisible to Brakeman, invisible in the
+rendered HTML, and invisible to every existing test — the whole suite passed with the escalation in
+place, which is the sharpest thing the finding has to say about how it was recorded.
+
+**The universe half crossed a boundary; the story half did not.** They were filed as one finding
+because they are one defect, but they are not one severity, and the distinction is the reason a
+single fix could close both. For the story, both lookups went through `Current.universe.stories`, so a
+story moved to another universe between them could only ever answer the existing 404 — no escalation,
+just a duplicated query and a second object for one row. For the universe, the second lookup was
+scoped by **slug**, and a slug is mutable: a rename frees the address, and whoever takes it becomes
+the row a settings save, a delete, or an edit form is bound to. An account authorized as an admin of
+the first universe wrote to the second, which it had no membership in, and was told `303 See Other`.
+That is a cross-tenant write, which is why this entry is filed as a resolved *security* matter rather
+than as tech debt.
+
+**What made it demonstrable rather than merely argued.** A subscriber on `sql.active_record` that
+fires once, on the request's own slug lookup, and performs the rename and the takeover at that
+instant. It converts a race into a fixture, which is what turned "could create a mismatch" into a
+recorded result: the owner's universe untouched, a stranger's universe renamed, status 303. The same
+test covers the delete and the edit page, and the query counts that would show a lookup returning —
+one for the slug, one for the story — keep the rule honest if either is ever reintroduced by accident.
+
+**What deliberately stayed unchanged.** `set_current_universe` and `set_current_story` still raise
+`ActiveRecord::RecordNotFound` for an unknown slug and a cross-universe story, and those raise is
+still what turns into a 404; nothing was moved earlier or later in the callback chain. The
+universe-creation path is untouched: `POST /u` has no universe to resolve, and `authorize! :create,
+Universe` is a question about the person rather than about a place. `SearchesController`, which skips
+`set_current_story` so that typing in the search box cannot silently switch the current story, still
+resolves its own and still never registers `set_story`.
+
+**Where the rule is written down.** In `architecture.md` as **One resolution, one object**, because
+that document owns the request lifecycle; `conventions.md` carries the mechanical instruction a new
+controller needs and links to it rather than restating it. The reasoning, the two rejected
+alternatives — re-authorizing the fetched object, and locking the row — and the verification are in
+this file's dated entry for 2026-10-15.
 
 ### Quirk: nothing throttles content mutations (fixed)
 

@@ -176,6 +176,15 @@ the same change, or `db:demo:check` fails.
 - Universe scoping via `Current.universe` (set from the `:universe_slug` param in
   `ApplicationController#set_current_universe`); sections, section tags, and scenes add
   `Current.story`/`@story` scoping.
+- **A controller never looks up its own `@universe` or `@story`.** It registers
+  `before_action :set_universe` or `before_action :set_story` and reads the instance variable:
+  both callbacks are defined once in `ApplicationController` and assign `Current.universe` and
+  `Current.story`, which the request has already resolved and already scoped-checked. Adding a
+  private `set_story` that does `Current.universe.stories.find(params.expect(:story_id))` is the
+  shape that must not come back — the same row, found a second time, by an object nothing
+  authorized. The rule and the failure it prevents are in
+  [architecture.md](architecture.md#one-resolution-one-object); the guard is
+  `test/controllers/authorize_once_act_on_it_test.rb`.
 - `ApplicationController#authorize_universe_access` runs after universe resolution and before story
   selection. Universe-scoped controllers explicitly allow only public read actions at the
   authentication layer, then `Ability` enforces read/write/admin access. Do not add a

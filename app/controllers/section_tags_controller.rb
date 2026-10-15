@@ -73,11 +73,6 @@ class SectionTagsController < ApplicationController
 
   private
 
-  # Use callbacks to share common setup or constraints between actions.
-  def set_story
-    @story = Current.universe.stories.find(params.expect(:story_id))
-  end
-
   def set_section_tag
     @section_tag = @story.section_tags.find(params.expect(:id))
   end

@@ -69,10 +69,6 @@ class SceneTagsController < ApplicationController
   end
 
   private
-    def set_story
-      @story = Current.universe.stories.find(params.expect(:story_id))
-    end
-
     def set_scene_tag
       @scene_tag = @story.scene_tags.find(params.expect(:id))
     end

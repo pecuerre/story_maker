@@ -77,9 +77,19 @@ class UniversesController < ApplicationController
     Universe.visible_to(Current.user)
   end
 
-  # Use callbacks to share common setup or constraints between actions.
+  # The universe this request already resolved and `UniverseAuthorization` already
+  # answered, handed to the actions as `@universe`.
+  #
+  # It is **not** found again here. A second `find_by!(slug:)` is a second object
+  # for one universe, and it runs two callbacks *after* the authorization
+  # answer — the mutation throttle and the story resolution — so a slug renamed
+  # and taken over between the two lookups hands the action a universe nobody
+  # authorized: an admin of `/u/one` writing to whichever universe now answers to
+  # that slug. `set_current_universe` has already refused an unknown slug with the
+  # same 404, so nothing is lost by reading the object the request is holding
+  # rather than asking the database a second time.
   def set_universe
-    @universe = Universe.find_by!(slug: params.expect(:universe_slug))
+    @universe = Current.universe
   end
 
   # Only allow a list of trusted parameters through.

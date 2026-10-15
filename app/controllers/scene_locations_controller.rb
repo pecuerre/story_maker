@@ -98,10 +98,6 @@ class SceneLocationsController < ApplicationController
 
   private
 
-    def set_story
-      @story = Current.universe.stories.find(params.expect(:story_id))
-    end
-
     def set_scene
       @scene = @story.scenes.find(params.expect(:scene_id))
     end

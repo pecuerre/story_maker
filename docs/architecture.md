@@ -37,13 +37,18 @@ UI patterns and the Timeline algorithm. Conventions are in
 3. **`set_current_universe`** — if `params[:universe_slug]` is present:
    `Current.universe = Universe.find_by!(slug: …)` (404 via `RecordNotFound` when unknown).
    Skipped by `SessionsController`, `PasswordsController`, and by `UniversesController#index`;
-   those non-universe controllers also skip the authorization callback.
+   those non-universe controllers also skip the authorization callback. **This is the one and
+   only lookup of the request's universe.** A controller that goes back to the database for its
+   own `@universe` is asking the same question twice, and the two answers are allowed to
+   disagree — see [One resolution, one object](#one-resolution-one-object) below.
 4. **`authorize_universe_access`** (from `UniverseAuthorization`) — checks the resolved universe
    through `Ability`/`current_ability`: public universes grant read access to guests and write
    access to signed-in users; private universes require an owner or membership. A private
    universe is hidden from every non-member, including guests, with the same 404 used for an
    unknown slug. Guests attempting a public-universe write are sent to sign in, while
-   authenticated collaborators without the required level receive 403.
+   authenticated collaborators without the required level receive 403. It authorizes **the
+   object `Current.universe` holds**, which is why that object is the one every later step acts
+   on.
 5. **`enforce_mutation_limit`** (from `MutationThrottle`) — spends one mutation from the current
    universe's budget, for `POST`/`PATCH`/`PUT`/`DELETE` only, and only when a universe is resolved
    and an account is signed in. It runs here because that is the only point where `Current.user` and
@@ -79,6 +84,41 @@ UI patterns and the Timeline algorithm. Conventions are in
    browser's remembered destination (`RememberedDestination`), which is the cross-sign-in half of
    the same fact. The write is skipped when the destination has not changed, so ordinary browsing
    does not put a `Set-Cookie` on every response.
+
+Two callbacks hand those answers to controllers, and both are defined once in `ApplicationController`
+rather than per controller: **`set_universe`** (`UniversesController` only, which has no universe
+otherwise) assigns `Current.universe` to `@universe`, and **`set_story`** — registered by every
+story-scoped controller — assigns `Current.story` to `@story`. Neither queries the database, and
+neither is part of the chain above: they run after it, inside the controllers that need them.
+
+### One resolution, one object
+
+**The record a request authorizes is the record it acts on, and each is resolved exactly once.**
+
+Authorization answers a question about an *object*, so it is only as good as the agreement between
+that object and the one the action then writes through. `Ability` is handed `Current.universe` and
+`UniverseAuthorization` asks it about `Current.universe`; a controller that re-queried the universe
+by slug would hold a *second* instance, resolved two callbacks later, that nothing had
+authorized. The two are the same row only while nothing changes, and a universe slug is a mutable
+column — an admin can rename it, and a rename frees the address for somebody else to take.
+
+The window is not theoretical. With the rename and the takeover landing between the two lookups,
+an owner of `/u/one` who submitted the universe settings form wrote their rename into whichever
+universe had taken over that slug — a universe they held no membership in, across the boundary
+[ADR 0005](adr/0005-universe-access-levels.md) draws. The answer 303 said success.
+
+Two rules follow, and they are the same rule:
+
+- **Resolve once, then read the object you resolved.** `Current.universe` and `Current.story` are
+  the request's answers. `set_universe` and `set_story` hand them to controllers as `@universe`
+  and `@story`; a controller reads those rather than re-finding the row.
+- **Never carry a lookup across a write to re-validate it.** Re-reading a row after another
+  request may have moved it is how a scope check becomes a second, disagreeing answer. The
+  cross-scope guarantees are already answered upstream, by the resolution itself.
+
+`test/controllers/authorize_once_act_on_it_test.rb` drives the race deterministically — it renames
+the universe away and hands its slug to somebody else's, the instant the request's own lookup
+returns — and pins the query counts that would show a lookup coming back.
 
 Per-request state lives in **`Current`** (`ActiveSupport::CurrentAttributes`):
 `session`, `universe`, `story`, plus `delegate :user, to: :session`. It is reset between requests

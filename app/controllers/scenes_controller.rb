@@ -187,10 +187,6 @@ class ScenesController < ApplicationController
     scenes_path_with(@filter_query.to_h.compact_blank)
   end
 
-  def set_story
-    @story = Current.universe.stories.find(params.expect(:story_id))
-  end
-
   def set_scene
     @scene = @story.scenes.includes(:scene_tags).find(params.expect(:id))
   end

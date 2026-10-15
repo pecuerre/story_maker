@@ -59,10 +59,6 @@ class StoriesController < ApplicationController
 
   private
 
-  def set_story
-    @story = Current.universe.stories.find(params.expect(:id))
-  end
-
   def story_params
     params.expect(story: [ *photo_params, :name, :description ])
   end

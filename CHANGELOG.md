@@ -38,6 +38,34 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-15
+
+### security
+
+- **A request now acts on the object it authorized.** `UniversesController` had been finding its
+  universe a second time by slug, after the authorization answer, so a renamed slug that someone else
+  had taken over turned the universe settings form into a write to a universe the writer holds no
+  membership in.
+
+### changed
+
+- **The nine story-scoped controllers no longer look their story up again.** One shared `set_story`
+  callback assigns the story `set_current_story` already resolved, which also halves the story
+  queries on every story-scoped page.
+
+### docs
+
+- **"One resolution, one object" is written down in `architecture.md`,** with the controller rule in
+  `conventions.md` and the closed finding in `delivery_history.md`.
+
+## 2026-10-14
+
+### planned
+
+- **The external-tools API is now specified as four ordered slices in the backlog.** The credential,
+  the read surface, the HTML-only writes, and the per-token limits, with the JSON mutations,
+  authorization, and throttle already in place named as what they will reuse.
+
 ## 2026-10-13
 
 ### added

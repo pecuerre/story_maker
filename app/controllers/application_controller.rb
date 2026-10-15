@@ -129,6 +129,30 @@ class ApplicationController < ActionController::Base
     remember_start_page
   end
 
+  # The story every story-scoped controller works from, as its `@story`.
+  #
+  # `set_current_story` has already resolved it — from `params[:story_id]`, or
+  # from `params[:id]` on the stories controller — and has already answered a
+  # story that belongs to another universe with the request's 404. Finding it
+  # again here would be a second query for a row this request is holding, and
+  # two objects for one story: the one the sidebar, the top bar, the session
+  # and the remembered destination were given, and the one every query in the
+  # action is scoped through.
+  #
+  # It is one callback rather than a private method per controller so the
+  # story-scoped contract has a single definition: a controller that reached
+  # the database for its own `@story` would be reading a row the request had
+  # already resolved, and the only sign would be a second identical query.
+  #
+  # A nil here means the request named a story and this callback was not the
+  # path that resolved it, which is a refusal rather than a page without a
+  # record on it.
+  def set_story
+    raise ActiveRecord::RecordNotFound, "Story not found" if Current.story.nil?
+
+    @story = Current.story
+  end
+
   # Keep the browser's copy of "where this account was last working" current.
   #
   # Only an explicitly selected story is recorded, and only for a signed-in

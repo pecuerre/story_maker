@@ -297,6 +297,11 @@ en:
       required: " (required)"
       delete_confirm: "Delete %{name} and its children?"
       insert_at: "Insert item at position %{position}"
+      # The one sentence a tag's color pair is judged by, shown under the two
+      # color controls while the author picks them. It warns and does not block:
+      # the pair is the author's data, the badge shape still names the tag, and
+      # the save button works whatever this sentence says.
+      low_contrast_colors: "This text and background are hard to read: %{ratio}:1. Body text needs %{minimum}:1. You can still save the tag."
       # The subject of a record-level error, for a tree that edits eight
       # different taxonomies and therefore cannot name one of them. It is the
       # same generic word the tree's own status line already uses ("The item

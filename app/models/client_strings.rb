@@ -56,6 +56,7 @@ module ClientStrings
     shared.taxonomy_tree.required
     shared.taxonomy_tree.delete_confirm
     shared.taxonomy_tree.insert_at
+    shared.taxonomy_tree.low_contrast_colors
     shared.taxonomy_tree.record_subject
     shared.taxonomy_tree.create_failed
     shared.taxonomy_tree.rename_failed

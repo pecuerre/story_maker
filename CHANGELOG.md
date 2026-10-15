@@ -40,6 +40,18 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-15
 
+### changed
+
+- **The nine story-scoped controllers no longer look their story up again.** One shared `set_story`
+  callback assigns the story `set_current_story` already resolved, which also halves the story
+  queries on every story-scoped page.
+
+### fixed
+
+- **The tag editor warns about a color pair it cannot read.** A `#rrggbb` pair under the WCAG AA
+  4.5:1 that body text needs gets one sentence under the two color controls, naming the ratio and
+  saying the tag still saves; this was the open list's tag-contrast footgun.
+
 ### security
 
 - **A request now acts on the object it authorized.** `UniversesController` had been finding its
@@ -47,16 +59,22 @@ Labels used below, in the order their groups appear:
   had taken over turned the universe settings form into a write to a universe the writer holds no
   membership in.
 
-### changed
-
-- **The nine story-scoped controllers no longer look their story up again.** One shared `set_story`
-  callback assigns the story `set_current_story` already resolved, which also halves the story
-  queries on every story-scoped page.
-
 ### docs
 
+- **The contrast rule and its warning each have one home.** `visual_design.md` keeps the rule and links
+  to the tag editor, which now states what the warning is and that it does not block a save.
 - **"One resolution, one object" is written down in `architecture.md`,** with the controller rule in
   `conventions.md` and the closed finding in `delivery_history.md`.
+
+### chore
+
+- **The eleven demo tag records that failed contrast now carry a legible foreground.** Black became
+  white on the seven dark backgrounds and white became black on the one light background, in
+  `db/data/dark` and `db/data/lotr`, so the repository's own example data follows the rule
+  `visual_design.md` states.
+- **`SettingsLimitsTest` no longer races the toast it asserts on.** The limits save is a full page
+  load answering with a flash the toast controller removes after four seconds, so Capybara's
+  two-second wait could expire before the page carrying it had loaded.
 
 ## 2026-10-14
 

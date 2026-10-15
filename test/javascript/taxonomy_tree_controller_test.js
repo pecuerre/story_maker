@@ -272,6 +272,103 @@ describe("taxonomy checkbox fields", () => {
   })
 })
 
+describe("taxonomy color contrast", () => {
+  // A tag badge is small text on a background the author picked, so WCAG AA for
+  // body text — 4.5:1 — is the bar, and a pair under it is **warned about and
+  // saved**: the finding this replaces was that nothing said anything at all.
+  const colorFields = [
+    { name: "name", label: "Name", type: "text", required: true },
+    { name: "bgcolor", label: "Background color", type: "color" },
+    { name: "fgcolor", label: "Foreground color", type: "color" }
+  ]
+
+  function editor({ bgcolor = "#ffffff", fgcolor = "#000000", fields = colorFields } = {}) {
+    const { controller } = build({ modalFields: fields })
+    const node = document.createElement("li")
+    node.dataset.nodeId = "1"
+    node.dataset.name = "Factions"
+    node.dataset.taxonomyValues = JSON.stringify({ name: "Factions", bgcolor, fgcolor })
+    node.dataset.updateUrl = "/u/dark/character_tags/1"
+
+    const modal = controller.buildModal(node)
+    document.body.append(modal)
+    controller.populateModalFields(modal, node)
+
+    const input = (name) => modal.querySelector(`input[name='character_tag[${name}]']`)
+    return {
+      controller,
+      modal,
+      notice: () => modal.querySelector("[data-taxonomy-tree-contrast]"),
+      pick(name, value) {
+        input(name).value = value
+        input(name).dispatchEvent(new Event("input"))
+      }
+    }
+  }
+
+  test("a stored pair that cannot be read opens with the warning already there", () => {
+    const { notice } = editor({ bgcolor: "#0000ff", fgcolor: "#000000" })
+
+    expect(notice().textContent).toContain("2.4:1")
+    expect(notice().textContent).toContain("4.5:1")
+    // The sentence says the save is still allowed, because it is: a poor pair is
+    // the author's data and the badge shape still names the tag.
+    expect(notice().textContent).toContain("You can still save the tag.")
+  })
+
+  test("a pair that reaches the minimum says nothing at all", () => {
+    expect(editor().notice().textContent).toBe("")
+    // `#767676` on white is 4.54:1, the first gray above the AA boundary; one
+    // step darker is 4.48:1 and is warned about.
+    expect(editor({ bgcolor: "#ffffff", fgcolor: "#767676" }).notice().textContent).toBe("")
+    expect(editor({ bgcolor: "#ffffff", fgcolor: "#777777" }).notice().textContent).toContain("4.4:1")
+  })
+
+  test("the warning follows either control as the author changes the pair", () => {
+    const { notice, pick } = editor({ bgcolor: "#ffffff", fgcolor: "#000000" })
+    expect(notice().textContent).toBe("")
+
+    // Red on white is the pair a reader actually struggles with, and it is one
+    // the checked-in demo data ships.
+    pick("fgcolor", "#ff0000")
+    expect(notice().textContent).toContain("3.9:1")
+
+    // The foreground is the other half of the same judgement, so fixing either
+    // one is enough to clear it.
+    pick("fgcolor", "#000000")
+    expect(notice().textContent).toBe("")
+  })
+
+  test("the warning is a status region, and it never marks the controls invalid", () => {
+    const { modal, notice } = editor({ bgcolor: "#0000ff", fgcolor: "#000000" })
+
+    // A live region that arrives in the DOM together with its text is announced
+    // in some readers and dropped in others, so the region is built once and only
+    // its text changes.
+    expect(notice().getAttribute("role")).toBe("status")
+    expect(notice().getAttribute("aria-live")).toBe("polite")
+    expect(notice().hidden).toBe(false)
+
+    // Nothing was refused: no `aria-invalid`, no error frame, and the editor can
+    // still be submitted.
+    modal.querySelectorAll("input[type='color']").forEach((input) => {
+      expect(input.getAttribute("aria-invalid")).toBeNull()
+    })
+    expect(modal.querySelector("[data-taxonomy-tree-errors]").textContent).toBe("")
+    expect(modal.querySelector("button[type='submit']").textContent).toBe("Save changes")
+  })
+
+  test("a taxonomy with no color pair has no ratio to judge and no warning", () => {
+    // Sections and Locations are the two non-tag hierarchies this controller also
+    // serves, and they have neither a background nor a foreground.
+    const fields = [ { name: "name", label: "Name", type: "text", required: true } ]
+    const { controller, modal, notice } = editor({ fields })
+
+    expect(notice()).toBeNull()
+    expect(controller.currentContrast(modal)).toBeNull()
+  })
+})
+
 describe("taxonomy row building", () => {
   test("a color is only accepted in the documented format", () => {
     const { controller } = build()

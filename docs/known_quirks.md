@@ -62,13 +62,7 @@ for what that pass actually ran.
    in [`data_factor_guidance.md`](data_factor_guidance.md)), and the compose path must not run
    development data in production.
 
-3. **Footgun — tag colors are format-validated but not contrast-validated.** `HasColor` accepts any
-   `#rrggbb` pair for a taxonomy tag's background and foreground
-   (`app/models/concerns/has_color.rb:17-20`), so an author can choose a combination that fails WCAG
-   contrast. The badge shape still identifies the tag, and color is never the only signal, so this is
-   a legibility review item rather than a security finding.
-
-4. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
+3. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
    nothing asserts they stay closed.** `config.action_mailbox.ingress` is `nil`, which is the only
    reason the nine `POST`/`GET` endpoints under `/rails/action_mailbox` answer **404**:
    `ActionMailbox::BaseController#ensure_configured` refuses unless the setting names an ingress.

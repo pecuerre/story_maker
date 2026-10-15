@@ -73,7 +73,8 @@ Rules:
 - User-defined tag colors are data, not theme colors. They may be rendered as colored badges, but
   they must not be used for active navigation or buttons.
 - Check text/background contrast when adding a tag color. The badge shape and text must remain
-  legible even when the chosen colors are poor.
+  legible even when the chosen colors are poor; the tag editor says so when a pair cannot be read,
+  and lets the author save it anyway ([features/tags.md](features/tags.md#the-editor)).
 - Prefer Bootstrap semantic variables (`$primary`, `$body-color`, `$border-color`, etc.) over
   hard-coded colors in feature partials.
 - Keep the custom `--um-*` variables for shell/layout values that are not Bootstrap component

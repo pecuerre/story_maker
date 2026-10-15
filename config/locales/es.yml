@@ -288,6 +288,11 @@ es:
       required: " (obligatorio)"
       delete_confirm: "¿Eliminar %{name} y sus elementos hijos?"
       insert_at: "Insertar un elemento en la posición %{position}"
+      # La única frase con la que se juzga el par de colores de una etiqueta, que
+      # se muestra bajo los dos controles de color mientras el autor los elige.
+      # Avisa y no bloquea: el par es dato del autor, la forma de la chapa sigue
+      # nombrando la etiqueta y el botón de guardar funciona diga lo que diga.
+      low_contrast_colors: "Este texto y este fondo cuesta leerlos: %{ratio}:1. El texto normal necesita %{minimum}:1. Puedes guardar la etiqueta igualmente."
       # El sujeto de un error de registro, para un árbol que edita ocho
       # taxonomías distintas y por tanto no puede nombrar ninguna en concreto.
       # Es la misma palabra genérica que ya usa su propia línea de estado («The

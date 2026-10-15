@@ -24,7 +24,12 @@ class SettingsLimitsTest < ApplicationSystemTestCase
     fill_in "New universes per hour", with: "7"
     click_button "Save limits"
 
-    assert_selector ".alert-success", text: /7/
+    # `REFRESH_WAIT`, not Capybara's default. The save is a full page load (the
+    # form opts out of Turbo) and the confirmation it answers with is a **toast**,
+    # which `flash_toast_controller.js` removes four seconds after it connects. A
+    # two-second wait can therefore expire before the page that carries it has
+    # finished loading, and the assertion fails against a save that worked.
+    assert_selector ".alert-success", text: /7/, wait: REFRESH_WAIT
     assert_equal 7, PlatformSetting.current.universe_creation_limit
 
     # Stored rather than merely posted: a real page load reads it back.
@@ -41,8 +46,9 @@ class SettingsLimitsTest < ApplicationSystemTestCase
     click_button "Save limits"
 
     # The confirmation names "no limit" rather than the number the reader would
-    # substitute for a row storing `NULL`.
-    assert_selector ".alert-success", text: /no limit/
+    # substitute for a row storing `NULL`. Same wait as above: it is the same
+    # auto-dismissing toast answering the same full page load.
+    assert_selector ".alert-success", text: /no limit/, wait: REFRESH_WAIT
     assert PlatformSetting.current.universe_creations_unlimited?
 
     visit settings_path(section: "limits")

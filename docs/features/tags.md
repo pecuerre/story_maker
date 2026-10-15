@@ -87,6 +87,19 @@ children and is excluded from element tag editors, while staying in the tree and
 already carry it. A content tag with `show_in_menu: true` is pinned to its workspace tab strip and links
 to the tag's own details page.
 
+The two color controls are **judged as a pair, and warned about rather than refused.**
+`taxonomy_tree_controller.js` computes WCAG 2.1's contrast ratio for the pair the editor currently
+holds and, below the AA 4.5:1 that body text needs — a badge is small text, so the large-text 3:1 is
+not the bar — puts one sentence under the foreground control naming the ratio and saying the tag can
+still be saved. It is a `role="status"` region that is in the editor from the start and only changes
+its text, because a live region that arrives in the DOM together with its text is announced in some
+readers and dropped in others; the controls are never marked invalid, no error frame appears, and
+nothing in the request path changed. The same sentence is there when the editor *opens* on a tag whose
+stored pair is poor, which is how a pair saved before the warning existed is met. `HasColor` still
+validates the `#rrggbb` format and is still the only server-side rule: a badge keeps the colors the
+author chose, and the badge shape and its name still identify the tag, which is why this is a warning
+and not a rejection.
+
 `taxonomy_tree_controller.js` provides safe DOM-built modal fields and nodes, inline name editing,
 insertion boundaries, and the move/insert menu actions. HTML5 drag/drop is an optional enhancement. It
 never builds a whole row: only the rename button is created in JavaScript, because a create always

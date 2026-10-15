@@ -5958,6 +5958,82 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Resolved quirks and tech debt
 
+### Quirk: tag colors were format-validated but not contrast-validated (fixed)
+
+**Then:** the open list recorded that `HasColor` accepts any `#rrggbb` pair for a taxonomy tag's
+background and foreground, "so an author can choose a combination that fails WCAG contrast", and
+classified it as a **Footgun** with the reason it is not a security finding: "the badge shape still
+identifies the tag, and color is never the only signal, so this is a legibility review item". The rule
+itself was already written down — `visual_design.md` said to check text/background contrast when
+adding a tag color — and nothing carried it out. The editor that picks the pair is built in the
+browser by `taxonomy_tree_controller.js`, so nothing in the request path ever saw the two values
+together.
+
+**Now:** the editor judges the pair while the author is choosing, and says so in one sentence when it
+cannot be read. WCAG 2.1's own luminance and ratio definitions are written out in the controller, the
+bar is AA for **body text** (4.5:1 — a badge is small text, so the same level's 3:1 large-text
+allowance is not the bar), and the ratio below it is named under the foreground control, truncated to
+one decimal so a pair that is only just under the minimum is never printed as the minimum. The
+sentence also says the tag can still be saved. The pair is judged when the editor **opens** as well as
+when either control changes, so a pair stored before the warning existed is met by the same sentence.
+
+**The owner chose warn over refuse, and that decision decided the rest.** The three alternatives
+recorded here because they are the ones a reader will propose next. A **model validation** rejecting
+the pair is the obvious one and was not taken: eleven tag records across the two checked-in demo
+universes sit under 4.5:1, so it would have refused saves of records the repository itself ships,
+and — worse — a tag already stored with a poor pair would become unsaveable until the author fixed
+its colors, which blocks a rename over a decision about color. **Auto-correcting the foreground** to
+whichever of black and white reads better was rejected because it silently overwrites the author's
+own data. **Warning without blocking** keeps the badge exactly as `visual_design.md` says it is —
+the author's colors, with the badge shape still naming the tag — and puts the only word that was
+missing where the choice is made. The consequence is stated rather than hidden, and it was paid in
+the same change: those eleven demo records now carry a legible foreground (black became white on the
+seven dark backgrounds, white became black on `#6c8ebf`), because a warning is not a reason for the
+repository's own example data to break the rule `visual_design.md` states. The development database
+was rebuilt and queried rather than assumed: 91 tag rows across both universes, none under 4.5:1.
+
+**Why it is in the editor and not on the server.** A server-side rule would have needed the same
+formula in Ruby as well as in JavaScript, with nothing keeping the two in step, and the badge has
+rendered these values unchanged on three surfaces (the badge, the timeline node, the details card)
+since before the finding was filed. The warning only has to be right once, at the point of choice.
+
+**Why the region is a `status` that is never hidden.** It is a `status` rather than an `alert`
+because nothing failed and the save button works: an alert is a claim that something is wrong. And it
+is built once with empty content, because a live region that appears in the DOM together with its text
+is announced in some readers and dropped in others — the text has to change in a region that is
+already there. The controls are never marked `aria-invalid` and the editor's error frame stays empty,
+which is the browser case's assertion that the warning is not a rejection in disguise.
+
+**Verification.** Six Bun cases in `test/javascript/taxonomy_tree_controller_test.js` hold the ratios,
+the two sides of the boundary (`#767676` on white passes at 4.54:1, `#777777` fails at 4.48:1), the
+live update from either control, the `status` role with no `aria-invalid`, and the taxonomies that
+have no pair at all. `test/system/taxonomy_tree_test.rb` drives the editor in Chrome: the stored pair
+warns on open, a poor pair saves, and nothing is marked invalid.
+
+`bun run check:js` — 225 tests, 510 assertions, 0 failures, Biome clean over 28 files. `bin/rails test`
+— 2,261 tests, 13,946 assertions, 0 failures, 0 errors, 13 skips, which is the suite's normal skip
+count. `bin/rubocop` — 489 files, no offenses. `bin/brakeman --no-pager` — 0 security warnings, and
+it does not read client-side code, which is where every line of the change lives.
+
+**The browser suite is flaky under load, and that is what the full run shows.** Four full
+`bin/rails test:system` runs gave 14 failures and 8 errors, then 2 and 2, then 2 and 0, then 1 and 0
+— a different file each time (`SceneCharactersTest`, `SceneItemsTest`, `ReviewWorkflowTest`,
+`TaxonomyTreeTest#test_renaming_keeps_the_element's_tags`, `DraftPendingChangesTest`), each one a
+control that had not answered yet. Every file named passes when it is run on its own, including the
+taxonomy tree file this change edits (14 runs, 273 assertions, 0 failures).
+
+**One of them was not flakiness, and it is fixed.** `SettingsLimitsTest` failed two runs out of
+three *on its own*, and the cause was not load: the limits section saves with a full page load (the
+form opts out of Turbo) and answers with a **toast**, which `flash_toast_controller.js` removes four
+seconds after it connects. Capybara's default wait is two seconds, so the assertion could expire
+before the page carrying the toast had finished loading — a test failing against a save that worked.
+Both assertions now take `REFRESH_WAIT`, which is what the base class already provides for "the
+first assertion after a mutation". A probe settled the diagnosis rather than a guess: with a ten
+second wait the toast is found 153ms after the click and the row holds the submitted number, and
+four consecutive file runs are green, and it passed the final full run. The seven other files that
+assert on the same auto-dismissing toast with the default wait were left alone: they pass, and
+changing them is a separate decision.
+
 ### Quirk: universe and story authorization objects were looked up more than once (fixed)
 
 **Then:** the open list recorded that the authorization objects were looked up twice, and classified

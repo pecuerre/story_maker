@@ -5,6 +5,39 @@ import { t } from "i18n"
 
 const FOCUS_STORAGE_KEY = "universe-maker:taxonomy-tree-focus"
 
+// The contrast a tag badge's own text must reach against the background the
+// author picked for it: WCAG 2.1 AA for body text. A badge is small text, so the
+// 3:1 the same level allows for large text is not the bar here.
+//
+// A pair below it is **warned about, not refused**. A tag color is the
+// author's data and the badge shape still names the tag, so a poor pair is a
+// legibility review item rather than a rejected save — the editor says so while
+// the author is choosing, and lets them keep what they picked.
+const MINIMUM_TEXT_CONTRAST = 4.5
+
+// WCAG 2.1's own definition of relative luminance and of the ratio between two
+// colors, rather than an approximation of it: a warning computed by a different
+// formula would disagree with every contrast checker the reader might use to
+// check it. `null` for anything that is not `#rrggbb`, which is the format
+// `HasColor` validates and the one the browser's own color control produces.
+function relativeLuminance(color) {
+  const channels = color.match(/[0-9a-f]{2}/gi).map((channel) => parseInt(channel, 16) / 255)
+  const [ red, green, blue ] = channels.map((channel) =>
+    channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+}
+
+function contrastRatio(foreground, background) {
+  const hex = /^#[0-9a-f]{6}$/i
+  if (!hex.test(foreground) || !hex.test(background)) return null
+
+  const lighter = Math.max(relativeLuminance(foreground), relativeLuminance(background))
+  const darker = Math.min(relativeLuminance(foreground), relativeLuminance(background))
+
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
 // The taxonomy tree's editing surface.
 //
 // One controller serves all ten taxonomies and the two non-tag hierarchies, so
@@ -279,6 +312,10 @@ export default class extends Controller {
     const fragment = document.createDocumentFragment()
     const excludedParentIds = new Set([ node.dataset.nodeId, ...[ ...node.querySelectorAll("[data-node-id]") ].map((element) => element.dataset.nodeId) ])
     const fields = this.parseJson(this.modalFieldsValue, [])
+    // A taxonomy without a background has no pair to judge, and the two
+    // non-tag hierarchies this controller also serves have no color at all.
+    const colors = fields.filter((field) => field.type === "color").map((field) => field.name)
+    const judgesColors = colors.includes("bgcolor") && colors.includes("fgcolor")
 
     fields.forEach((field) => {
       const id = `taxonomy-edit-${field.name}-${node.dataset.nodeId}`
@@ -353,6 +390,10 @@ export default class extends Controller {
       input.required = Boolean(field.required)
       input.dataset.taxonomyField = field.name
       wrapper.append(label, input)
+      // The two controls are judged as a pair, so the warning rides the second
+      // one rather than being a field of its own: it is one sentence about both,
+      // and the author reads it while changing either.
+      if (field.name === "fgcolor" && judgesColors) wrapper.append(this.contrastNotice())
       fragment.append(wrapper)
     })
 
@@ -362,6 +403,61 @@ export default class extends Controller {
   photoUrlFor(node) {
     const values = this.parseJson(node?.dataset.taxonomyValues, {})
     return values.photo || ""
+  }
+
+  // The one sentence the color pair is judged by.
+  //
+  // It is a `status` region and it is never hidden: a live region that is added
+  // to the DOM together with its text is announced in some readers and dropped in
+  // others, so the region is in the editor from the start and only its text
+  // changes. It is a `status` rather than an `alert` because nothing failed and
+  // the save button still works — an alert is a claim that something is wrong.
+  contrastNotice() {
+    const notice = document.createElement("p")
+    notice.className = "small text-warning-emphasis mb-0 mt-1"
+    notice.dataset.taxonomyTreeContrast = ""
+    notice.setAttribute("role", "status")
+    notice.setAttribute("aria-live", "polite")
+    return notice
+  }
+
+  // The ratio the editor would paint right now. `null` when a control is missing
+  // or holds something the rule cannot judge: a browser's own color control only
+  // ever holds `#rrggbb`, so this is the guard rather than a state a reader can
+  // reach, and it keeps the ratio a number or nothing at all.
+  currentContrast(modal) {
+    const [ background, foreground ] = [ "bgcolor", "fgcolor" ]
+      .map((name) => this.findInput(modal, `${this.modelParamValue}[${name}]`, { type: "color" })?.value)
+
+    return contrastRatio(foreground, background)
+  }
+
+  // Attach the warning to both color controls, and read the pair once before the
+  // author touches anything. Bound from `populateModalFields` rather than from
+  // `buildModal`, because the first reading is the pair the stored tag already
+  // had, and `buildModal` runs before any value is in the form.
+  bindContrastNotice(modal) {
+    const notice = modal.querySelector("[data-taxonomy-tree-contrast]")
+    if (!notice) return
+
+    const update = () => {
+      const ratio = this.currentContrast(modal)
+      // Truncated rather than rounded, so a ratio that is only just under the
+      // minimum is never printed as the minimum itself.
+      notice.textContent = ratio === null || ratio >= MINIMUM_TEXT_CONTRAST
+        ? ""
+        : t("shared.taxonomy_tree.low_contrast_colors", {
+          ratio: Math.floor(ratio * 10) / 10,
+          minimum: MINIMUM_TEXT_CONTRAST.toFixed(1)
+        })
+    }
+
+    const inputs = [ "bgcolor", "fgcolor" ]
+      .map((name) => this.findInput(modal, `${this.modelParamValue}[${name}]`, { type: "color" }))
+    inputs.forEach((input) => { input?.addEventListener("input", update) })
+    // Once, so a tag that was saved with a poor pair opens with the warning
+    // already under the colors rather than only after the author touches one.
+    update()
   }
 
   fieldLabel(field, id, className = "form-label") {
@@ -421,6 +517,10 @@ export default class extends Controller {
       symmetric.addEventListener("change", updateInverseRequirement)
       updateInverseRequirement()
     }
+
+    // Bound after the values are in, because the first reading of the pair is the
+    // one the stored tag already had.
+    this.bindContrastNotice(modal)
   }
 
   findInput(modal, name, field) {

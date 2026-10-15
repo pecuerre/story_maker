@@ -7,7 +7,7 @@
   name: Mood
   slug: mood
   bgcolor: "#6c8ebf"
-  fgcolor: "#ffffff" # white
+  fgcolor: "#000000" # black
   position: 0
 
 - story: Story.netflix-dark

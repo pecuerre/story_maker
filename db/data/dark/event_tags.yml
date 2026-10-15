@@ -14,7 +14,7 @@
   slug: "social"
   name: "Social"
   bgcolor: "#3357FF"
-  fgcolor: "#000000" # black
+  fgcolor: "#ffffff" # white
   taggable: false
   show_in_menu: true
 
@@ -23,4 +23,4 @@
   name: "Party"
   parent: EventTag.social
   bgcolor: "#3357FF"
-  fgcolor: "#000000" # black
+  fgcolor: "#ffffff" # white

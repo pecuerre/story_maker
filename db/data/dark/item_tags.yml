@@ -24,4 +24,4 @@
   slug: "medal"
   parent: ItemTag.treasure
   bgcolor: "#A52A2A" # "brown"
-  fgcolor: "#000000" # black
+  fgcolor: "#ffffff" # white

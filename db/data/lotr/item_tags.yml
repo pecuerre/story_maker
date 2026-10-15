@@ -17,7 +17,7 @@
   name: "Weapon"
   slug: "weapon"
   bgcolor: "#A52A2A" # "brown"
-  fgcolor: "#000000" # black
+  fgcolor: "#ffffff" # white
   taggable: false
 
 - universe: Universe.lotr
@@ -32,4 +32,4 @@
   slug: "bow"
   parent: ItemTag.weapon
   bgcolor: "#8B4513" # "saddle brown"
-  fgcolor: "#000000" # black
+  fgcolor: "#ffffff" # white

@@ -365,4 +365,67 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     assert_selector "li[data-node-id='#{tag.id}'] .taxonomy-name-trigger", text: "Character tag one renamed"
     assert_equal "Character tag one renamed", tag.reload.name
   end
+
+  # The color pair is the author's data: the badge shape still names the tag and
+  # color is never the only signal, so a pair that cannot be read is **warned
+  # about and saved**, rather than refused. This is the case that only a browser
+  # can show, because the warning is computed and announced in the editor the
+  # controller builds after the page has loaded.
+  test "the editor warns about a color pair it cannot read, and still saves it" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    tag = character_tags(:character_tag_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    # The fixture pair is the schema's default, `#000000` on `#d3d3d3`, which is
+    # 14:1 — so the region is in the editor and says nothing at all.
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
+    within ".modal.show" do
+      # `visible: :all` throughout: the region is in the editor whether or not it
+      # has something to say, and an empty one has no size to be visible with.
+      assert_selector "[data-taxonomy-tree-contrast][role='status'][aria-live='polite']:empty", visible: :all
+
+      pick_color "character_tag[fgcolor]", "#ff0000"
+      assert_selector "[data-taxonomy-tree-contrast]", text: "This text and background are hard to read: 2.6:1."
+      assert_selector "[data-taxonomy-tree-contrast]", text: "You can still save the tag."
+      # Nothing was refused: the control is not marked invalid, and there is no
+      # error frame above the fields.
+      assert_no_selector "input[name='character_tag[fgcolor]'][aria-invalid]"
+      assert_selector "[data-taxonomy-tree-errors]:empty", visible: :all
+
+      click_button "Save changes"
+    end
+
+    # The save is a fetch followed by a same-URL refresh, so the editor closing is
+    # the signal that the request has been made — which is what "warned about and
+    # still saved" is claiming.
+    assert_no_selector ".modal.show"
+    assert_equal "#ff0000", tag.reload.fgcolor
+
+    # It is also how a pair stored before the warning existed is met, because the
+    # editor judges the pair it opens with and not only the one being changed.
+    click_row_menu_action "li[data-node-id='#{tag.id}'] > .taxonomy-row", "Edit"
+    within ".modal.show" do
+      assert_selector "[data-taxonomy-tree-contrast]", text: "2.6:1"
+      pick_color "character_tag[fgcolor]", "#000000"
+      assert_selector "[data-taxonomy-tree-contrast]:empty", visible: :all
+    end
+  end
+
+  private
+
+    # Capybara cannot open the browser's own color picker, so the control is set
+    # the way the picker sets it: the value, plus the `input` event every pick
+    # fires. The warning is bound to that event rather than to `change`, which is
+    # why the case sets one.
+    def pick_color(field, value)
+      execute_script(<<~JS)
+        const input = document.querySelector(".modal.show input[name='#{field}']")
+        input.value = "#{value}"
+        input.dispatchEvent(new Event("input", { bubbles: true }))
+      JS
+    end
 end

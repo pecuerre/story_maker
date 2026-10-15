@@ -55,7 +55,7 @@
   parent: CharacterTag.factions
   slug: erit_lux
   bgcolor: "#6600cc" # dark purple
-  fgcolor: "#000000" # black
+  fgcolor: "#ffffff" # white
 
 - universe: Universe.dark
   name: Job

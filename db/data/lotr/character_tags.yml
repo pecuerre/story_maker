@@ -53,4 +53,4 @@
   slug: rangers_of_the_north
   parent: CharacterTag.allegiance
   bgcolor: "#336699" # dark blue gray
-  fgcolor: "#000000" # black
+  fgcolor: "#ffffff" # white

@@ -8,6 +8,12 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
+  # The names in the order the list rendered them, so a filter or a sort
+  # assertion says which characters survived it without depending on row markup.
+  def listed_character_names
+    css_select(".entity-list .entity-title").map { |title| title.text.squish }
+  end
+
   test "should get index with character tag options" do
     get universe_characters_url(universe_slug: @universe.slug)
 
@@ -26,6 +32,136 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
       universe_characters_path(universe_slug: @universe.slug)
     assert_select "nav.content-tabs a[href=?]",
       universe_relations_path(universe_slug: @universe.slug), text: "Relations"
+  end
+
+  # The filter, the sort, and the three ways this list can be empty. The value
+  # object is covered in `CharacterFilterTest`; what a request can show and this
+  # cannot is the page around it — the canonical URL, the two empty states, and
+  # what a filter does to the reader's own pending rows.
+  test "index renders a search area that narrows, orders, and stays in the URL" do
+    @character.update!(description: "The keeper of the gate")
+    @universe.characters.create!(name: "A spare")
+
+    get universe_characters_url(universe_slug: @universe.slug, q: "keeper", sort: "created")
+
+    assert_response :success
+    assert_select "form[action=?][method=?]", universe_characters_path(universe_slug: @universe.slug), "get" do
+      assert_select "input[name=q][value=?]", "keeper"
+      assert_select "select[name=sort] option[selected][value=?]", "created"
+    end
+    assert_equal [ "Character one" ], listed_character_names
+    assert_select ".character-filter", text: /Showing 1 character of 4 characters/
+  end
+
+  test "index orders the whole list by the reader's choice" do
+    characters(:character_one).update!(created_at: Time.utc(2026, 1, 1))
+    characters(:character_two).update!(created_at: Time.utc(2026, 3, 1))
+    characters(:character_three).update!(created_at: Time.utc(2026, 2, 1))
+
+    get universe_characters_url(universe_slug: @universe.slug, sort: "created")
+
+    assert_response :success
+    assert_equal [ "Character two", "Character three", "Character one" ], listed_character_names
+  end
+
+  test "index filters by character tag, including a grouping tag the editor cannot assign" do
+    assert_not @character_tag.taggable?, "this is the case the editor's picker cannot reach"
+
+    get universe_characters_url(universe_slug: @universe.slug,
+      character_tag_id: @character_tag.id)
+
+    assert_response :success
+    assert_equal [ "Character two" ], listed_character_names,
+      "the grouping tag narrows to the one character that carries it"
+    assert_select "select[name=character_tag_id] option[selected][value=?]", @character_tag.id
+  end
+
+  test "index offers a nested tag by its full path rather than its leaf name" do
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_select "select[name=character_tag_id] option", text: "Character tag one / Character tag child"
+  end
+
+  test "index redirects a form submission to the canonical filter query" do
+    get universe_characters_url(universe_slug: @universe.slug, q: "keeper", character_tag_id: "", sort: "")
+
+    assert_redirected_to universe_characters_url(universe_slug: @universe.slug, q: "keeper")
+  end
+
+  test "index reports a filter value it could not use instead of showing an empty list" do
+    get universe_characters_url(universe_slug: @universe.slug,
+      character_tag_id: character_tags(:character_tag_three).id)
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /not a character tag of this universe/
+    assert_equal [ "Character one", "Character three", "Character two" ], listed_character_names
+  end
+
+  test "index reports an order this list does not offer and falls back to the default" do
+    get universe_characters_url(universe_slug: @universe.slug, sort: "password")
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /not one this list offers/
+    assert_select "select[name=sort] option[selected][value=?]", CharacterFilter::DEFAULT_SORT
+    assert_equal [ "Character one", "Character three", "Character two" ], listed_character_names
+  end
+
+  test "index does not redirect a filter value it had to drop" do
+    get universe_characters_url(universe_slug: @universe.slug,
+      character_tag_id: character_tags(:character_tag_three).id, q: "keeper")
+
+    assert_response :success
+  end
+
+  test "index separates a filtered empty result from a universe without characters" do
+    @universe.characters.create!(name: "A real character")
+
+    get universe_characters_url(universe_slug: @universe.slug, q: "no such character")
+
+    assert_response :success
+    assert_select ".empty-title", text: "No characters match these filters"
+    assert_select ".empty-description", text: /Universe one has 4 characters, but none of them match/
+    assert_select ".empty-state .badge", text: /Search: .no such character./
+    assert_select ".empty-state a", text: "Clear filters"
+    # The empty result is the only way back, so the search area does not repeat it.
+    assert_select ".character-filter a", text: "Clear filters", count: 0
+    # The universe is not empty, so the message must not offer to add the first
+    # character beside it. The page header's own Add action is a different thing
+    # and stays.
+    assert_select ".empty-state a", text: /Add character/, count: 0
+  end
+
+  test "index still offers to add the first character to an empty universe" do
+    @universe.characters.destroy_all
+
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".empty-title", text: "No characters yet"
+    assert_select ".page-actions button", text: "Add character"
+  end
+
+  test "a sort alone never empties the list and never changes the empty-database message" do
+    @universe.characters.destroy_all
+
+    get universe_characters_url(universe_slug: @universe.slug, sort: "created")
+
+    assert_response :success
+    assert_select ".empty-title", { text: "No characters yet" },
+      "an order cannot select a record, so it cannot produce an empty result"
+  end
+
+  test "a guest can filter and sees no mutation control" do
+    sign_out
+
+    get universe_characters_url(universe_slug: @universe.slug, q: "character one")
+
+    assert_response :success
+    assert_equal [ "Character one" ], listed_character_names
+    assert_select "form[data-controller=modal-form]", count: 0
+    assert_select "button[data-action='modal-form#open']", count: 0
+    # The search area is reading, so it renders for every access level.
+    assert_select ".character-filter input[name=q]", minimum: 1
   end
 
   # The row menu asks whether this reader may write the record once per row, and

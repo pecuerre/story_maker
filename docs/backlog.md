@@ -87,12 +87,12 @@ needs the filter to read a draft payload rather than a record.
 [`features/list_filters.md`](features/list_filters.md) and a worked filter over a second model in
 `test/models/list_filter_test.rb`. The remaining four slices build on it.
 
-**Slice 2 — Characters.** The first vertical slice, and the proof the contract holds on a flat list
-with all three axes at once: text over name and description, a tag filter through the scoped inverse
-association, and **sort** — genuinely new ground, because `SceneFilter` never reorders, so this is
-where the rule that a sort is the reader's choice and never a silent renumbering gets written down. It
-brings the filter area, the two empty states, the pending-row rule above, its tests, and both locale
-files.
+**Slice 2 is delivered.** The Characters list narrows by text and character tag and takes a reader's
+order through `CharacterFilter`, which is the first use of `SORTS` and the first list with three
+empty states to tell apart. `docs/features/list_filters.md` now owns the sort rules the later slices
+reuse. The grouping-tag case came out of it and is the rule to carry forward: the filter validates
+against **every** tag of the universe while the editor still offers only the assignable ones, so a
+record carrying a grouping tag is still filterable.
 
 **Slice 3 — Items and Events.** Items repeats slice 2's shape on an identical model. Events adds the
 inclusive date range over its own `start_datetime`/`end_datetime` and has to settle two things slice 2

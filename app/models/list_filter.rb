@@ -23,6 +23,11 @@ class ListFilter
   # the key, and the method that reads it cannot drift apart per workspace.
   TEXT_PARAM = :q
 
+  # A reader-chosen order travels in `sort` in every list that offers one. It is
+  # the one key that **orders** a list rather than selecting records from it,
+  # which is why it is named here rather than left to each workspace.
+  SORT_PARAM = :sort
+
   class << self
     # The query keys a subclass owns. A controller permits exactly these, so a
     # request cannot carry a key the filter does not understand into its query.
@@ -37,6 +42,39 @@ class ListFilter
 
       raise NotImplementedError, "#{name} must declare the PARAMS it owns"
     end
+
+    # Whether this filter lets a reader choose the order. A workspace that does
+    # not offer one answers false rather than leaving the check to a caller
+    # remembering which filters happen to have sorts.
+    def sortable?
+      const_defined?(:SORTS, false)
+    end
+
+    # The query values this list can be ordered by, in the order the control
+    # lists them. These are the keys of the `SORTS` allowlist, so the control a
+    # reader uses and the orders the query accepts are the same list.
+    def sort_values
+      return [] unless sortable?
+
+      sorts = const_get(:SORTS)
+      sorts.keys
+    end
+
+    # The order clause one choice means. `fetch` rather than a default: a value
+    # outside the allowlist cannot reach here, so a miss is a subclass that
+    # declared `SORTS` wrongly rather than a request to be answered leniently.
+    def sort_clause(value)
+      const_get(:SORTS).fetch(value)
+    end
+
+    # The order this list is in when the reader has not chosen one. It is also
+    # what an unreadable choice falls back to, so the list is never left in an
+    # order nobody asked for.
+    def default_sort
+      raise NotImplementedError, "#{name} declares SORTS but not DEFAULT_SORT" unless sortable?
+
+      const_get(:DEFAULT_SORT)
+    end
   end
 
   # Every filter reports the values it could not use, as sentences already
@@ -45,6 +83,10 @@ class ListFilter
 
   # The free-text value, resolved in `#resolve` by `resolve_text`.
   attr_reader :text
+
+  # The resolved order, resolved in `#resolve` by `resolve_sort`. A filter that
+  # does not sort answers nil.
+  attr_reader :sort
 
   def initialize(params)
     @params = params
@@ -57,6 +99,20 @@ class ListFilter
   # value was ignored rather than describing a narrowing that never happened.
   def active?
     query_params.any?
+  end
+
+  # Whether a filter that **selects** records is in effect, as opposed to a
+  # choice that only orders them.
+  #
+  # This is the question two behaviours actually ask. A filter matching nothing
+  # needs a message that is not the empty-database one, and a list stops showing
+  # the reader's own pending work ([ADR
+  # 0023](../adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)).
+  # Neither is about a sort, which cannot empty a list and cannot exclude a
+  # record, so a reader who only reordered the list still sees their own pending
+  # rows and never gets told nothing matched.
+  def narrowed?
+    query_params.except(SORT_PARAM).values.any?
   end
 
   # The narrowed list, in the order this workspace presents it.
@@ -123,6 +179,42 @@ class ListFilter
       return relation if tag.nil?
 
       relation.where(id: tag.tagged_records.select(:id))
+    end
+
+    # The reader's chosen order, or this list's own when they chose nothing.
+    #
+    # A sort is resolved against the subclass's `SORTS` **allowlist** rather than
+    # being handed to the query, because an order clause names columns and the
+    # request does not get to name them. An unknown choice is dropped and
+    # reported for the same reason an unknown filter value is: a hand-edited URL
+    # must not decide what the list is ordered by, and the page must say it could
+    # not rather than quietly falling back.
+    def resolve_sort(discard_key)
+      @sort = self.class.default_sort
+
+      raw = @params[SORT_PARAM].to_s.strip
+      return if raw.blank?
+      return @sort = raw if self.class.sort_values.include?(raw)
+
+      discard(discard_key)
+      @sort
+    end
+
+    # The relation in the reader's chosen order.
+    #
+    # Two rules hold here rather than in each workspace, because they are what
+    # makes a sort safe to offer at all:
+    #
+    # - **A sort is a read-time ordering choice and nothing else.** It is never
+    #   written, so it cannot renumber a maintained sequence or contradict the
+    #   order a drag control in the same workspace writes.
+    # - **Every order ends with the same tiebreaker.** Two records that tie on
+    #   the chosen column would otherwise be free to swap between two requests,
+    #   so the same shared link would show a different list each time it opened.
+    def sorted(relation)
+      raise NotImplementedError, "#{self.class} does not offer a sort" unless self.class.sortable?
+
+      relation.reorder(self.class.sort_clause(sort).merge(id: :asc))
     end
 
     # A `date` input submits an ISO day or nothing, so an unreadable value only

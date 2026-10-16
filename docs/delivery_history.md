@@ -29,6 +29,91 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-15
 
+### 2026-10-16
+
+- **[added]** **The Characters list is the first one a reader can narrow and reorder.**
+
+  - **A sort is the reader's choice and never a renumbering.** `SORTS` maps a query value to a column
+    order and nothing else: the request never names a column, and a value outside the allowlist is
+    dropped and reported like any other unusable filter value, because a hand-edited URL must not
+    decide what a list is ordered by. Three rules then hold wherever a sort appears, and they are in
+    the live contract rather than here — an order is never written, so it cannot renumber a
+    maintained sequence; every order ends with the same `id` tiebreaker, so two records that tie
+    cannot swap between requests and make one shared link show a different list each time it was
+    opened; and the default order is never spelled out in the URL, because it is what the link means
+    when `sort` is absent.
+
+  - **`position` is deliberately absent from the Characters sort allowlist.** A Character has a
+    `position` column, so it looks like an obvious fourth order — and it would be wrong. The flat list
+    is every character in the universe while `position` is a sibling order inside one branch of the
+    hierarchy, so sorting by it interleaves unrelated branches into an order that means nothing to a
+    reader. The hierarchy is read on the tree, and `maintains_sibling_positions_for :character` is the
+    only thing that writes that order.
+
+  - **`active?` and `narrowed?` are two questions, and only a sort separates them.** Two behaviours
+    asked the second question and got the first one wrong: the empty-result message, and whether a
+    list still shows the reader's own pending rows. A sort selects nothing, so it can neither empty a
+    list nor exclude a record — a reader who only reordered the list must not be told nothing matched,
+    and must not lose the pending rows they can still act on. Both are pinned in
+    `draft_pending_list_test.rb`, where the filtered case and the sorted-only case sit next to each
+    other because the difference between them is the whole point.
+
+  - **The tag filter validates against every tag, not the editor's assignable ones.** The index
+    already loaded `taggable: true` tags for the modal, and filtering against that list would have
+    been the path of least resistance: it was one line instead of two. It is wrong, because a
+    `taggable: false` grouping tag cannot be assigned in the editor yet is carried by real records, so
+    validating against the editor's list would drop a tag that is really in effect. The controller now
+    loads every tag once, selects the assignable subset from it for the modal, and hands the whole
+    list to the filter. `character_tags(:character_tag_two)` is not assignable and a Character does
+    carry it, which is what makes it the fixture that proves the rule.
+
+  - **A hierarchical tag is named by its path.** A filter that offers two "Winter" tags under
+    different parents and labels both "Winter" is unusable, so `CharacterTagPaths` builds the
+    root-first paths the selector and the summaries read. That is the **fourth** implementation of the
+    same value-object shape after `SectionPaths`, `SceneTagPaths`, and `LocationPaths`; consolidating
+    them is a separate change and was not made here.
+
+  - **Verification.** `bin/rails test` — 2,312 runs, 0 failures. `bin/rubocop` — 499 files, no
+    offenses. `bin/brakeman --no-pager` — 0 security warnings.
+
+- **[fixed]** **The Scene filter's reorder case no longer races the Turbo navigation behind it.**
+
+  - **The symptom.** `SceneFilterTest` failed at roughly three runs in six, always the same way: after
+    clicking **Clear filters**, waiting for the three scene titles to reappear, typing `three` and
+    submitting, the URL came back as the bare `/scenes` with an empty search box instead of
+    `?q=three`. The screenshot is the tell — it is the cleared page, not a filtered one.
+
+  - **The cause was in the test, and the proof was that it was in the test.** `assert_scene_titles`
+    polls the titles, and the titles can match a moment before Turbo's replacement for the clear has
+    landed. The `fill_in` then types into a form that re-render is about to discard, and the next
+    submit sends an empty filter, which the server quite correctly canonicalises to the bare path.
+    Nothing in the application was wrong: the request suite is green, and a byte-identical copy of the
+    test file under a different class name failed at the same rate, which rules out the change under
+    test. Waiting for the *new* document — an empty `scene_filter_q` field, which only the replaced
+    page has — takes it from three in six to eight in eight.
+
+  - **The new Character filter test had the same defect and was fixed the same way.** It typed and
+    pressed Enter and then selected an order and submitted again, so it raced its own first navigation
+    and was intermittent too. It is now two tests with one navigation each, and it restores the
+    browser window in a teardown because Capybara keeps one window per process and a test that
+    narrows it was changing the viewport for every test after it.
+
+  - **Verification.** `SE_CHROME_NO_SANDBOX=1 bin/rails test` over both filter files — 8 runs, 0
+    failures. The reorder case alone, eight consecutive runs — 8 passed, 0 failed.
+
+  - **What the browser suite cannot tell you in this container.** Run as
+    `SE_CHROME_NO_SANDBOX=1 PARALLEL_WORKERS=1 bin/rails test:system`, the suite was green at 188
+    runs early in the change. Over a long session the failure set became random — TaxonomyTree, then
+    Discussion, SettingsStartPage, SceneElements, DraftWikipediaJourney, 18 to 24 failures at a time —
+    and every affected file passes when run on its own immediately afterwards. That is accumulated
+    Chrome and WebDriver processes, not the code: each browser file is green in isolation and the
+    request suite never varied. **A full-suite browser run late in a session is not evidence about
+    this change**, and the two filter files were verified together and separately instead.
+
+- **[added]** **A list filter is one contract instead of a per-workspace decision.**
+
+### 2026-10-15
+
 - **[added]** **A list filter is one contract instead of a per-workspace decision.**
 
   - **The extraction was the point, not a refactor for its own sake.** The backlog item needs a filter

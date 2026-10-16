@@ -3,9 +3,19 @@
     to add the first character, and a guest or read-only member is only told what a
     character is. Both are chrome, so both are keys. A remembered create counts as
     something to show, or a writer who has added a character in a universe that
-    remembers changes would be told they have none. %>
+    remembers changes would be told they have none.
+
+    A *filtered* list that matched nothing is a third case and never says
+    "no characters yet": the universe has characters, the filters did not match
+    them, and offering "add the first one" beside that message would answer a
+    question nobody asked. %>
+<% narrowed = @list_filter.narrowed? %>
 <% empty_description = can_write_universe? ? t("characters.empty_writable_description") : t("characters.empty_read_only_description") %>
-<% pending_creates = draft_pending_creates_for(Character) %>
+<%# A remembered Character create belongs to this universe's list, but **not to a
+    filtered one**: it names no record, so it cannot match a text or tag filter.
+    A reader who only *sorted* the list still sees their own pending work,
+    because a sort selects nothing. %>
+<% pending_creates = narrowed ? [] : draft_pending_creates_for(Character) %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
@@ -34,6 +44,11 @@
     aria_label: t("characters.tabs_aria_label"),
     intro: t("characters.description"),
     tabs: content_workspace_tabs(:character) %>
+
+  <%= render "characters/filter",
+    filter: @list_filter,
+    total: @character_total,
+    shown: @characters.size %>
 
   <% if @characters.any? || pending_creates.any? %>
     <div class="content-surface entity-list">
@@ -70,6 +85,24 @@
         <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
       </div>
     </div>
+  <% elsif narrowed %>
+    <%# A filter that matched nothing is not a universe without characters, so it
+        says which filters produced nothing, repeats them, and offers the way
+        back. %>
+    <div class="content-surface p-3 p-md-4">
+      <%= render "shared/empty_state",
+        title: t("characters.no_match_title"),
+        description: t("characters.no_match_description",
+          universe: Current.universe.name, total: count_with_label(@character_total, "character")),
+        icon: "filter" do %>
+        <span class="d-block mb-3">
+          <% character_filter_summaries(@list_filter).each do |summary| %>
+            <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+          <% end %>
+        </span>
+        <%= link_to t("characters.filter.clear"), universe_characters_path, class: "btn btn-primary" %>
+      <% end %>
+    </div>
   <% else %>
     <%= render "shared/empty_state",
       title: t("characters.empty_title"),
@@ -101,7 +134,7 @@
             <%= render "shared/photo_field", param: "character" %>
             <div class="mb-3">
               <%= form.label :character_tag_ids, t("characters.form.tags_label"), class: "form-label" %>
-              <%= form.collection_select :character_tag_ids, @character_tags, :id, :name,
+              <%= form.collection_select :character_tag_ids, @assignable_character_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>

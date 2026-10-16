@@ -38,6 +38,21 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-16
+
+### added
+
+- **The Characters list can be narrowed and reordered.** Free text, a character tag, and a choice of
+  order all travel in the URL; an order this list does not offer is ignored and reported.
+- **A filtered list can be reordered without renumbering anything.** A chosen order is resolved against
+  an allowlist and always ends with the same tiebreaker, and a sort selects nothing, so it neither
+  empties a list nor hides the reader's pending rows.
+
+### fixed
+
+- **A scene filter case no longer races the Turbo navigation behind it.** Waiting for the titles was
+  not enough to know the clear had landed, so the next submit could arrive empty.
+
 ## 2026-10-15
 
 ### added

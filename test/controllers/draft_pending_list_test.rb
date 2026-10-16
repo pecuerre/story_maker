@@ -614,6 +614,32 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     assert_select ".draft-pending-row .entity-title", text: "Pending scene", count: 0
   end
 
+  test "a filtered character list stays filtered" do
+    # The same rule as the Scene list, and it is decided once for every workspace
+    # rather than re-decided per list: a remembered create has no id, so it cannot
+    # match the text or the tag the reader filtered by.
+    remember_create("Character", "name" => "Pending character")
+
+    get universe_characters_path(universe_slug: @universe.slug, q: "nothing matches this")
+
+    assert_response :success
+    assert_select ".empty-title", text: "No characters match these filters"
+    assert_select ".draft-pending-row .entity-title", text: "Pending character", count: 0
+  end
+
+  test "a character list that was only sorted still shows the reader's pending rows" do
+    # An order selects nothing, so it is not a narrowing: hiding pending work
+    # because a reader reordered the list would take away rows they can still act
+    # on, for a filter that excluded nothing.
+    remember_create("Character", "name" => "Pending character")
+
+    get universe_characters_path(universe_slug: @universe.slug, sort: "created")
+
+    assert_response :success
+    assert_select ".empty-title", text: "No characters match these filters", count: 0
+    assert_select ".draft-pending-row .entity-title", text: "Pending character", count: 1
+  end
+
   test "a remembered scene that names a section is not listed as ungrouped" do
     # The ungrouped list is the Ungrouped end of the workspace. A create that
     # remembers a parent belongs on that section's own page once it exists, and

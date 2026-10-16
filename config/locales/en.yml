@@ -1521,6 +1521,45 @@ en:
     # and a guest or read-only member is told the records belong to the universe.
     empty_writable_description: "Characters belong to the universe and are shared by all of its stories. Add the first one to begin."
     empty_read_only_description: "Characters belong to the universe and are shared by all of its stories."
+    # A filtered list that matched nothing is a third empty state, and it never
+    # says "No characters yet": the universe has characters, the filters did not
+    # match them. `universe` is the reader's own universe name and is
+    # interpolated, not translated.
+    no_match_title: "No characters match these filters"
+    no_match_description: "%{universe} has %{total}, but none of them match the filters above. Clear them to see the whole list."
+    filter:
+      title: "Find characters"
+      description: "A universe can hold hundreds of characters. Narrow the list by text or character tag, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
+      search_label: "Search"
+      search_placeholder: "Name or description"
+      tag_label: "Character tag"
+      all_tags: "All character tags"
+      sort_label: "Order"
+      # Every option here is a key in `CharacterFilter::SORTS`, so a label and an
+      # order clause cannot drift apart. A key with no order clause renders a
+      # blank option, so the two are expected to stay in step.
+      sort_options:
+        name: "Name (A to Z)"
+        created: "Newest first"
+        updated: "Recently edited first"
+      submit: "Filter characters"
+      clear: "Clear filters"
+      # The sentence a narrowed list opens with. Both counts are resolved with a
+      # `count:` before they are interpolated, so each chooses its own plural.
+      showing: "Showing %{shown} of %{total}."
+      filtered_by: "Filtered by"
+      # The active filters repeated as text, so an empty result set can always
+      # say which value produced it. The sort is included because a reader who
+      # reordered the list needs to know the order was applied.
+      summaries:
+        search: "Search: “%{value}”"
+        tag: "Character tag: %{value}"
+        sort: "Order: %{value}"
+      # A filter value the filter could not use. A sort is resolved against an
+      # allowlist, so a hand-edited URL cannot choose the order.
+      discarded:
+        tag: "The character tag filter was ignored because it is not a character tag of this universe."
+        sort: "That order is not one this list offers, so it was ignored."
     # A Character has dependents, so its row's delete states its own cascade. The
     # exact sentence is mandated by ADR 0007 and must not be weakened here;
     # `name` is the author's own record name, so it is interpolated rather than

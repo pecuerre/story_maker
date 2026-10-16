@@ -26,13 +26,28 @@ controller does the one thing a controller alone can, which is build a URL.
 | The recognized keys, what each means, and what it validates against | the subclass's `PARAMS` and `#resolve` |
 | What the narrowed list is | the subclass's `#apply` |
 | The canonical keys really in effect | the subclass's `#query_params` |
-| Free text, a tag, an inclusive day range, a value resolved from a loaded list | `ListFilter`, shared |
+| Which orders the list offers, and how one is validated and applied | the subclass's `SORTS` and `DEFAULT_SORT` |
+| Free text, a tag, an inclusive day range, a value resolved from a loaded list, the chosen order | `ListFilter`, shared |
 | Slicing the query, the one-shot canonical redirect, carrying the filter through an in-list mutation, reporting a drop | `FilteredListQuery` |
 | What each value means to the reader | the workspace's own helper |
 
 A subclass declares its keys and writes three methods, and inherits the rest.
 `test/models/list_filter_test.rb` holds a complete worked filter — over `Character`, so it shares no
 table, scope, or fixture with the Scene filter — which is the shape a new workspace copies.
+
+## Two questions a list asks, not one
+
+`active?` means **something is in effect**. `narrowed?` means **something that selects records** is in
+effect. Only a sort separates them, and it is worth the distinction because two behaviours ask the
+second question rather than the first:
+
+- An empty result needs the "nothing matched" message, not the empty-database one. A sort cannot make a
+  list empty, so a reader who only reordered it is never told nothing matched.
+- A filtered list stops showing the reader's own pending rows. A sort selects nothing, so a reader who
+  only reordered the list still sees the pending work they can act on.
+
+`narrowed?` is `query_params` with the sort key taken out, which is why a filter with no sort answers
+the same as `active?` and needs no special case.
 
 ## Rules a filter must not break
 
@@ -55,11 +70,24 @@ table, scope, or fixture with the Scene filter — which is the shape a new work
 5. **`active?` means something is really in effect.** It is derived from `query_params`, not from
    whether the request carried a key, so a request whose only value was dropped renders an unfiltered
    list and says the value was ignored.
-6. **A filter narrows; the workspace still decides the order.** `apply` ends by ordering the relation,
-   and what that order means belongs to the workspace. A positioned sequence keeps its own order and
-   a flat list may offer a sort — see the Scene filter's own rule in
-   [`scenes.md`](scenes.md#the-list-the-filter-and-the-ordering). A filter that renumbers positions is
-   a different feature.
+6. **A filter narrows; a sort orders.** A workspace decides its own order and may offer the reader a
+   choice, but the choice is resolved against an allowlist and is applied by
+   `ListFilter#sorted`. Three rules hold wherever it appears:
+   - **An order clause is never taken from the request.** `SORTS` maps a query value to a column
+     order, and a value outside it is dropped and reported like any other unusable value. A hand-edited
+     URL must not be able to name a column.
+   - **An order is a read-time choice and nothing else.** It is never written, so it cannot renumber a
+     maintained sequence or contradict the order a drag control in the same workspace writes. A
+     workspace whose list is a flat view of a hierarchy must not offer its `position` as a sort, because
+     that position is a sibling order inside one branch and interleaving branches by it means nothing.
+   - **Every order ends with the same tiebreaker.** Two records that tie on the chosen column would
+     otherwise swap between two requests, so one shared link would show a different list each time it
+     was opened.
+
+   The default order is never spelled out in the URL: it is what the link means when `sort` is absent,
+   so carrying it would put a reader's ordinary bookmark into every address bar. A positioned sequence
+   such as the Scene list keeps its own order and offers no sort at all — see
+   [`scenes.md`](scenes.md#the-list-the-filter-and-the-ordering).
 7. **A null is never inside a range.** A record with no value in the compared column is excluded
    while a bound is set: it has nothing to compare.
 8. **A `LIKE` from a search box is literal text.** SQLite's `LIKE` ignores ASCII case, which is what
@@ -88,13 +116,18 @@ summaries live in a helper rather than on the filter because most of their value
 workspace's own path objects — a Section's full ancestor path — which a filter has no business
 holding.
 
+A chosen order is summarized too, and for the same reason the empty result repeats its filters: a
+reader who reordered a list and got fewer rows back has to be able to see that the order was applied
+and was not the reason the list is short.
+
 ## A filtered list stays filtered
 
 A universe that remembers changes appends the records the reader's own draft would create and badges
 the ones it would edit or delete
 ([ADR 0023](../adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)). A
 remembered create has **no id**, so it cannot satisfy a filter on any column the author did not
-submit. A filtered list therefore shows no pending rows at all; they are the unfiltered list's own.
+submit. A filtered list therefore shows no pending rows at all; they are the unfiltered list's own —
+and a list the reader only **sorted** keeps them, because an order selects nothing.
 
 Decided once for every workspace, and settled in
 [`backlog.md`](../backlog.md): the alternative of keeping them with a count puts a row outside the
@@ -103,11 +136,14 @@ one in a result set, which needs the filter to read a draft payload rather than 
 
 ## What adding a filter to a workspace takes
 
-1. A `ListFilter` subclass declaring its `PARAMS`, its `#resolve`, `#query_params`, and `#apply`.
-   Nothing else, unless the workspace needs a narrowing this contract does not have.
+1. A `ListFilter` subclass declaring its `PARAMS`, its `#resolve`, `#query_params`, and `#apply`, plus
+   `SORTS` and `DEFAULT_SORT` when the workspace lets a reader choose an order. Nothing else, unless
+   the workspace needs a narrowing this contract does not have.
 2. `include FilteredListQuery` and `filters_list_with MyFilter, only: %i[ index …mutations… ]`.
    The mutation actions are named deliberately: an in-list mutation carries the filter back, so
-   reordering or deleting inside a narrowed list does not dump the author on the full one.
+   reordering or deleting inside a narrowed list does not dump the author on the full one. A
+   workspace whose mutations are JSON-only and answer with no redirect names only `index`, because
+   the browser refreshes the URL the reader is already on.
 3. `#filtered_list_path_with`, the one thing the concern cannot know — where this list's own URL is.
 4. A search area over the canonical URL, a `flash_discarded_filter_values` call, the two empty
    states, and a summaries helper.
@@ -117,10 +153,13 @@ one in a result set, which needs the filter to read a draft payload rather than 
 ## What this contract does not decide
 
 - **Which fields to filter on.** That is the workspace's, from the fields its model already exposes.
+- **Which orders to offer.** `SORTS` is the workspace's. The rules an order has to obey are the ones
+  above; the choices are the model's business.
 - **The boundary.** `Search::Scope` resolves what "this universe" means; a list filter is already
   inside the boundary its controller resolved from `Current.universe` or `Current.story`, and never
   widens or re-resolves it.
-- **Whether a workspace sorts.** Ordering is a presentation decision per workspace, and a filter is
-  not where it is made.
+- **Whether a workspace sorts.** A positioned sequence has one order that means something and offers
+  no sort; a flat list may offer one. That is a per-workspace decision, and `ListFilter` answers
+  `sortable?` so a caller does not have to remember which filters have sorts.
 - **Pagination.** Nothing here pages. A list narrows; whether it also pages is its own decision, and
   a filter that assumed one would be wrong the moment a workspace adds it.

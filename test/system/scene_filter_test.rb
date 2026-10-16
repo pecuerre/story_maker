@@ -53,6 +53,12 @@ class SceneFilterTest < ApplicationSystemTestCase
     within ".empty-state" do
       click_link "Clear filters"
     end
+    # Turbo replaces the whole page for the clear, and the titles can match a
+    # moment before that navigation has landed. Typing straight afterwards can
+    # then go into a form the re-render is about to throw away, so the next
+    # submit sends an empty filter and the list silently comes back unfiltered —
+    # which is why waiting only for the titles was not enough here.
+    assert_field "scene_filter_q", with: ""
     assert_scene_titles [ "Scene one", "Scene two", "Scene three" ]
 
     # Reordering inside a narrowed list moves the scene in the real sequence and

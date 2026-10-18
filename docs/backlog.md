@@ -53,58 +53,6 @@ group rather than a bare link, so a second live block has to earn its place the 
 bounded at five rows because it is rendered on every page of the universe. Candidate data includes
 selected-character relations/ownerships, relation-tag usage counts, and story outline progress.
 
-4. **Search, filtering, and sorting for large lists**
-
-The top-bar search is now implemented and answers across every model; see
-[ADR 0014](adr/0014-global-search-with-meilisearch.md) and the delivered work in
-[`../CHANGELOG.md`](../CHANGELOG.md). What is still missing is the *in-list* half: a list a reader
-has already landed on should be able to narrow, sort, and show its filters in the URL.
-
-**This ships as five ordered slices**, each finished by adding its dated
-[`../CHANGELOG.md`](../CHANGELOG.md) entry and deleting its own paragraph below; the number stays on
-the whole deliverable rather than moving to whichever slice is next. Slices 2 to 5 are blocked on the
-one before them.
-
-**What already exists, so no slice rebuilds it.** The story-owned Scenes list is the one working
-in-list filter, and its rules are owned by [`features/scenes.md`](features/scenes.md) — read that
-rather than restating them here. Reuse its shape instead of inventing a second filter pattern, and
-reuse `Search::Scope` for the boundary rather than re-deciding what "this universe" means. Start with
-the fields already exposed by each model, preserve universe/story scope, make filters removable and
-visible in the URL where practical, and define behavior for empty results separately from an empty
-database, as Scenes does.
-
-**Decided 2026-10-15: a filtered list stays filtered and shows no pending rows.** A remembered create
-has no id, so it cannot satisfy a filter on any column the author did not submit, and offering one
-beside a "nothing matched" message answers a question the reader did not ask. This is what Scenes
-already does ([ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md)),
-and it is settled once for every workspace rather than re-decided seven times. The other two answers
-stay rejected: keeping pending rows with a count puts a row outside the filter the reader just applied,
-and matching them on payload values is the only one that can put a pending row in a result set, which
-needs the filter to read a draft payload rather than a record.
-
-**Slice 1 is delivered.** The shared contract is `ListFilter` (`app/models/list_filter.rb`) and
-`FilteredListQuery` (`app/controllers/concerns/filtered_list_query.rb`), with its rules in
-[`features/list_filters.md`](features/list_filters.md) and a worked filter over a second model in
-`test/models/list_filter_test.rb`. The remaining slices build on it.
-
-**Slice 2 is delivered.** The Characters list narrows by text and character tag and takes a reader's
-order through `CharacterFilter`, which is the first use of `SORTS` and the first list with three
-empty states to tell apart. `docs/features/list_filters.md` now owns the sort rules the later slices
-reuse. The grouping-tag case came out of it and is the rule to carry forward: the filter validates
-against **every** tag of the universe while the editor still offers only the assignable ones, so a
-record carrying a grouping tag is still filterable.
-
-**Slice 3 is delivered.** The Items list narrows by text, item tag, and the reader's order, and the
-Events list adds an inclusive day range over its start datetime plus the same sort control. Both
-lists say what each active filter does, and the Events edit form's temporal-reference pickers are
-narrowed by the filter like the rest of the list.
-
-**Slice 4 is delivered.** The Relations and Ownerships lists narrow by text, their own tag, and the
-reader's order, and both keep an active filter through the re-render after a rejected create or
-update. The text reaches the two endpoint names rather than the record's own optional `name`, through
-the shared `narrowed_by_linked_text`; the Ownership label's translated sentence is deliberately not
-searchable, and `docs/features/list_filters.md` now owns that rule.
-
 5. **Richer relationship and entity rows**
 
 Make list rows more useful for scanning large universes. Relations should render as a readable

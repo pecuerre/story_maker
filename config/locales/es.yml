@@ -1575,6 +1575,59 @@ es:
     empty_title: "Todavía no hay sucesos"
     empty_writable_description: "Añade sucesos con fechas o relaciones entre ellos y abre después la Cronología para ver cómo se conectan."
     empty_read_only_description: "Los sucesos de este universo aparecerán aquí en cuanto se hayan añadido."
+    # Una lista filtrada que no ha coincidido con nada es un tercer estado vacío, y
+    # nunca dice «Todavía no hay sucesos»: el universo sí tiene sucesos, los
+    # filtros no han coincidido con ellos. `universe` es el nombre del propio
+    # universo del lector, así que se interpola en lugar de traducirse.
+    no_match_title: "Ningún suceso coincide con estos filtros"
+    no_match_description: "%{universe} tiene %{total}, pero ninguno coincide con los filtros de arriba. Quítalos para ver la lista completa."
+    # La lista se reduce como lo hace la lista de personajes, además del rango
+    # de fechas en el mundo que el propio alcance de un suceso compone. Las
+    # claves y su significado son de este espacio de trabajo.
+    filter:
+      title: "Buscar sucesos"
+      description: "Un universo puede tener cientos de sucesos. Reduce la lista por texto, por una etiqueta de suceso, o por los días en que empieza cada suceso, y elige el orden. Filtrar y ordenar solo cambian lo que muestra esta página; ninguno cambia ningún registro."
+      search_label: "Buscar"
+      search_placeholder: "Título o descripción"
+      tag_label: "Etiqueta de suceso"
+      all_tags: "Todas las etiquetas de sucesos"
+      from_label: "En el mundo desde"
+      to_label: "En el mundo hasta"
+      sort_label: "Orden"
+      # Cada opción aquí es una clave de `EventFilter::SORTS`, así que una
+      # etiqueta y una cláusula de orden no pueden separarse. Una clave sin
+      # cláusula renderaría una opción vacía, por lo que se espera que ambas se
+      # mantengan en sincronía.
+      sort_options:
+        name: "Nombre (de la A a la Z)"
+        created: "Más recientes primero"
+        updated: "Editados recientemente primero"
+      submit: "Filtrar sucesos"
+      clear: "Quitar filtros"
+      # La frase con la que se abre una lista reducida. Ambas cantidades se
+      # resuelven con un `count:` antes de interpolarse, así que cada uno elige su
+      # propio plural.
+      showing: "Mostrando %{shown} de %{total}."
+      filtered_by: "Filtrado por"
+      # Los filtros activos repetidos como texto, para que un conjunto de
+      # resultados vacío siempre pueda decir qué valor lo produjo. El orden se
+      # incluye porque quien reordenó la lista necesita saber que se aplicó.
+      summaries:
+        search: "Búsqueda: «%{value}»"
+        tag: "Etiqueta de suceso: %{value}"
+        from: "En el mundo desde %{value}"
+        to: "En el mundo hasta %{value}"
+        sort: "Orden: %{value}"
+      bound:
+        start: "inicio"
+        end: "fin"
+      # Un valor de filtro que el filtro no pudo usar. Los límites se leen con
+      # la misma palabra que usa la etiqueta del propio formulario, nunca el
+      # literal `from`/`to` con el que se construyó este objeto.
+      discarded:
+        tag: "Se ha ignorado el filtro de etiqueta de suceso porque no es una etiqueta de suceso de este universo."
+        date: "La fecha %{bound} en el mundo «%{value}» no se ha podido leer, así que se ha ignorado."
+        sort: "Ese orden no es uno de los que ofrece esta lista, así que se ha ignorado."
     # Un suceso tiene dependientes, así que su borrado declara su propia cascada con las
     # mismas palabras que impone el ADR 0007 para las listas de personajes, objetos y
     # lugares. `name` es `Event#display_label`, es decir la etiqueta del propio suceso
@@ -1647,6 +1700,51 @@ es:
     empty_title: "Todavía no hay objetos"
     empty_writable_description: "Los objetos pertenecen al universo y sirven para seguir objetos, recursos y propiedades a lo largo de todas las historias. Añade el primero para empezar."
     empty_read_only_description: "Los objetos pertenecen al universo y los comparten todas sus historias."
+    # Una lista filtrada que no ha coincidido con nada es un tercer estado vacío, y
+    # nunca dice «Todavía no hay objetos»: el universo sí tiene objetos, los
+    # filtros no han coincidido con ellos. `universe` es el nombre del propio
+    # universo del lector, así que se interpola en lugar de traducirse.
+    no_match_title: "Ningún objeto coincide con estos filtros"
+    no_match_description: "%{universe} tiene %{total}, pero ninguno coincide con los filtros de arriba. Quítalos para ver la lista completa."
+    # La lista se reduce como lo hace la lista de personajes: texto, una etiqueta
+    # de objeto y un orden elegido por el lector. Las claves y su significado son
+    # de este espacio de trabajo.
+    filter:
+      title: "Buscar objetos"
+      description: "Un universo puede tener cientos de objetos. Reduce la lista por texto o por una etiqueta de objeto, y elige el orden. Filtrar y ordenar solo cambian lo que muestra esta página; ninguno cambia ningún registro."
+      search_label: "Buscar"
+      search_placeholder: "Nombre o descripción"
+      tag_label: "Etiqueta de objeto"
+      all_tags: "Todas las etiquetas de objetos"
+      sort_label: "Orden"
+      # Cada opción aquí es una clave de `ItemFilter::SORTS`, así que una
+      # etiqueta y una cláusula de orden no pueden separarse. Una clave sin
+      # cláusula rendería una opción vacía, por lo que se espera que ambas se
+      # mantengan en sincronía.
+      sort_options:
+        name: "Nombre (de la A a la Z)"
+        created: "Más recientes primero"
+        updated: "Editados recientemente primero"
+      submit: "Filtrar objetos"
+      clear: "Quitar filtros"
+      # La frase con la que se abre una lista reducida. Ambas cantidades se
+      # resuelven con un `count:` antes de interpolarse, así que cada uno elige su
+      # propio plural.
+      showing: "Mostrando %{shown} de %{total}."
+      filtered_by: "Filtrado por"
+      # Los filtros activos repetidos como texto, para que un conjunto de
+      # resultados vacío siempre pueda decir qué valor lo produjo. El orden se
+      # incluye porque quien reordenó la lista necesita saber que se aplicó.
+      summaries:
+        search: "Búsqueda: «%{value}»"
+        tag: "Etiqueta de objeto: %{value}"
+        sort: "Orden: %{value}"
+      # Un valor de filtro que el filtro no pudo usar. El orden se resuelve
+      # contra una lista blanca, así que una URL editada a mano no puede elegir
+      # el orden.
+      discarded:
+        tag: "Se ha ignorado el filtro de etiqueta de objeto porque no es una etiqueta de objeto de este universo."
+        sort: "Ese orden no es uno de los que ofrece esta lista, así que se ha ignorado."
     # Un objeto tiene dependientes, así que su borrado declara su propia cascada, con las
     # mismas palabras que impone el ADR 0007 para la lista de personajes.
     delete_confirm: "¿Eliminar «%{name}»? Sus objetos descendientes, propiedades, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros registros del universo permanecerán."

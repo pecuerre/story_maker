@@ -41,7 +41,8 @@ not offered a choice the server will refuse.
 
 **The exclusion is client-side because it cannot be anything else.** One modal form serves every row of
 the Events list, so a single server render cannot know which row is about to be edited, and
-`@events_for_select` is every universe event. The server sends the whole list; the modal controller
+`@events_for_select` is the list's own rows — every universe event when no filter is active. The server
+sends the whole list; the modal controller
 removes exactly the one option that belongs to the row being opened, and puts it back before the next
 row opens.
 
@@ -58,6 +59,40 @@ row opens.
   for each option, and end to end by a browser case that dismisses one row's editor and opens the
   next row's: one modal form really does serve every row on the page, and the second editor's
   **Happens before** select has to hold the first row's option back.
+
+## The Events list, its filter, and its ordering
+
+The universe's Events list is where a reader comes to see every event at a glance, so it narrows with a
+GET search area like every other list
+([list_filters.md](list_filters.md)). `EventFilter`
+(`app/models/event_filter.rb`) owns this list's keys: `q` finds an event by its title and
+description, `event_tag_id` selects the Event Tags a reader filters by, and the inclusive days `from`
+and `to` bound the event's own start. The chosen order travels in `sort`, exactly as on every list that
+offers one.
+
+- The two day bounds are days, not instants, and both are inclusive. `from` alone runs from that day
+  onwards, `to` alone runs up to the end of that day, and both together cover the whole of both days.
+  An event is identified by when it begins — its `end_datetime` is an open or unknown end rather than a
+  second bound a reader would have to combine — so both bounds are applied to `start_datetime`, and a
+  record with no start datetime is excluded while either bound is set. The rules an inclusive day
+  range obeys are the shared ones in
+  [`list_filters.md`](list_filters.md#rules-a-filter-must-not-break), which this list fills in
+  with its own column.
+- The tag filter validates against **every** Event Tag of the universe, not only the assignable ones:
+  a grouping tag cannot be assigned in the editor yet is carried by real records, so validating
+  against the assignable subset would drop a tag that is really in effect. The index loads every tag
+  once and hands the assignable subset only to the editor's picker.
+- There is no `position` sort. The list is every event in the universe while `position` is a sibling
+  order inside one branch of the hierarchy, so sorting by it would interleave branches that mean
+  nothing beside each other, and the hierarchy is read on the tree.
+- The default order is **name**. Characters and Items keep the same default, because all three are the
+  same kind of flat universe list, and a default the code never explained would be a decision rather
+  than a default. It is never spelled out in the URL: it is what a link means when `sort` is absent,
+  so carrying it would put the reader's ordinary bookmark into every address bar. Alongside it a
+  reader may choose `created` (newest first) and `updated` (recently edited first).
+- The edit form's three temporal-reference pickers are narrowed by the filter: `@events_for_select`
+  is the same narrowed relation as the list, so a reader cannot be offered an event the filter has
+  excluded.
 
 ## The Timeline algorithm
 

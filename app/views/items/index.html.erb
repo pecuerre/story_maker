@@ -1,6 +1,22 @@
 <% content_for :title, t("items.title") %>
+<%# The list has two empty states because it has two audiences: a writer is told
+    to add the first item, and a guest or read-only member is only told what an
+    item is. Both are chrome, so both are keys. A remembered create counts as
+    something to show, or a writer who has added an item in a universe that
+    remembers changes would be told they have none.
+
+    A *filtered* list that matched nothing is a third case and never says
+    "no items yet": the universe has items, the filters did not match them, and
+    offering "add the first one" beside that message would answer the wrong
+    question. %>
+
+<% narrowed = @list_filter.narrowed? %>
 <% empty_description = can_write_universe? ? t("items.empty_writable_description") : t("items.empty_read_only_description") %>
-<% pending_creates = draft_pending_creates_for(Item) %>
+<%# A remembered Item create belongs to this universe's list, but **not to a
+    filtered one**: it names no record, so it cannot match a text or tag filter.
+    A reader who only *sorted* the list still sees their own pending work,
+    because a sort selects nothing. %>
+<% pending_creates = narrowed ? [] : draft_pending_creates_for(Item) %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
@@ -29,6 +45,11 @@
     aria_label: t("items.tabs_aria_label"),
     intro: t("items.description"),
     tabs: content_workspace_tabs(:item) %>
+
+  <%= render "items/filter",
+    filter: @list_filter,
+    total: @item_total,
+    shown: @items.size %>
 
   <% if @items.any? || pending_creates.any? %>
     <div class="content-surface entity-list">
@@ -63,6 +84,24 @@
         <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
       </div>
     </div>
+  <% elsif narrowed %>
+    <%# A filter that matched nothing is not an universe without items, so it
+        says which filters produced nothing, repeats them, and offers the way
+        back. %>
+    <div class="content-surface p-3 p-md-4">
+      <%= render "shared/empty_state",
+        title: t("items.no_match_title"),
+        description: t("items.no_match_description",
+          universe: Current.universe.name, total: count_with_label(@item_total, "item")),
+        icon: "filter" do %>
+        <span class="d-block mb-3">
+          <% item_filter_summaries(@list_filter).each do |summary| %>
+            <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+          <% end %>
+        </span>
+        <%= link_to t("items.filter.clear"), universe_items_path, class: "btn btn-primary" %>
+      <% end %>
+    </div>
   <% else %>
     <%= render "shared/empty_state",
       title: t("items.empty_title"),
@@ -92,7 +131,7 @@
             <%= render "shared/photo_field", param: "item" %>
             <div class="mb-3">
               <%= form.label :item_tag_ids, t("items.form.tags_label"), class: "form-label" %>
-              <%= form.collection_select :item_tag_ids, @item_tags, :id, :name,
+              <%= form.collection_select :item_tag_ids, @assignable_item_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>

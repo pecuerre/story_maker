@@ -1618,6 +1618,57 @@ en:
     empty_title: "No events yet"
     empty_writable_description: "Add events with dates or relationships to each other, then open the Timeline to see how they connect."
     empty_read_only_description: "Events in this universe will appear here once they have been added."
+    # A filtered list that matched nothing is a third empty state, and it never
+    # says "No events yet": the universe has events, the filters did not match
+    # them. `universe` is the reader's own universe name and is interpolated,
+    # not translated.
+    no_match_title: "No events match these filters"
+    no_match_description: "%{universe} has %{total}, but none of them match the filters above. Clear them to see the whole list."
+    # The list narrows like the Characters list does, plus the in-world date
+    # range an Event's own span is made of. The keys and their meaning are this
+    # workspace's.
+    filter:
+      title: "Find events"
+      description: "A universe can hold hundreds of events. Narrow the list by text, an event tag, or the days an event starts, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
+      search_label: "Search"
+      search_placeholder: "Title or description"
+      tag_label: "Event tag"
+      all_tags: "All event tags"
+      from_label: "In-world from"
+      to_label: "In-world to"
+      sort_label: "Order"
+      # Every option here is a key in `EventFilter::SORTS`, so a label and an
+      # order clause cannot drift apart. A key with no order clause renders a
+      # blank option, so the two are expected to stay in step.
+      sort_options:
+        name: "Name (A to Z)"
+        created: "Newest first"
+        updated: "Recently edited first"
+      submit: "Filter events"
+      clear: "Clear filters"
+      # The sentence a narrowed list opens with. Both counts are resolved with a
+      # `count:` before they are interpolated, so each chooses its own plural.
+      showing: "Showing %{shown} of %{total}."
+      filtered_by: "Filtered by"
+      # The active filters repeated as text, so an empty result set can always
+      # say which value produced it. The sort is included because a reader who
+      # reordered the list needs to know the order was applied.
+      summaries:
+        search: "Search: “%{value}”"
+        tag: "Event tag: %{value}"
+        from: "In-world from %{value}"
+        to: "In-world to %{value}"
+        sort: "Order: %{value}"
+      bound:
+        start: "start"
+        end: "end"
+      # A filter value the filter could not use. The bounds are read as the same
+      # words the form's own labels use, never the literal `from`/`to` this
+      # object was constructed with.
+      discarded:
+        tag: "The event tag filter was ignored because it is not an event tag of this universe."
+        date: "The in-world %{bound} date “%{value}” could not be read, so it was ignored."
+        sort: "That order is not one this list offers, so it was ignored."
     # An Event has dependents, so its row's delete states its own cascade in the
     # same ADR-mandated words as the Character, Item, and Location lists.
     # `name` is `Event#display_label`, so it is the event's own label, resolved
@@ -1689,6 +1740,47 @@ en:
     empty_title: "No items yet"
     empty_writable_description: "Items belong to the universe and can be used to track objects, resources, and ownership across every story. Add the first one to begin."
     empty_read_only_description: "Items belong to the universe and are shared by all of its stories."
+    # A filtered list that matched nothing is a third empty state, and it never
+    # says "No items yet": the universe has items, the filters did not match
+    # them. `universe` is the reader's own universe name and is interpolated,
+    # not translated.
+    no_match_title: "No items match these filters"
+    no_match_description: "%{universe} has %{total}, but none of them match the filters above. Clear them to see the whole list."
+    # The list narrows like the Characters list does: free text, an Item Tag, and
+    # a reader-chosen order. The keys and their meaning are this workspace's.
+    filter:
+      title: "Find items"
+      description: "A universe can hold hundreds of items. Narrow the list by text or an item tag, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
+      search_label: "Search"
+      search_placeholder: "Name or description"
+      tag_label: "Item tag"
+      all_tags: "All item tags"
+      sort_label: "Order"
+      # Every option here is a key in `ItemFilter::SORTS`, so a label and an
+      # order clause cannot drift apart. A key with no order clause renders a
+      # blank option, so the two are expected to stay in step.
+      sort_options:
+        name: "Name (A to Z)"
+        created: "Newest first"
+        updated: "Recently edited first"
+      submit: "Filter items"
+      clear: "Clear filters"
+      # The sentence a narrowed list opens with. Both counts are resolved with a
+      # `count:` before they are interpolated, so each chooses its own plural.
+      showing: "Showing %{shown} of %{total}."
+      filtered_by: "Filtered by"
+      # The active filters repeated as text, so an empty result set can always
+      # say which value produced it. The sort is included because a reader who
+      # reordered the list needs to know the order was applied.
+      summaries:
+        search: "Search: “%{value}”"
+        tag: "Item tag: %{value}"
+        sort: "Order: %{value}"
+      # A filter value the filter could not use. A sort is resolved against an
+      # allowlist, so a hand-edited URL cannot choose the order.
+      discarded:
+        tag: "The item tag filter was ignored because it is not an item tag of this universe."
+        sort: "That order is not one this list offers, so it was ignored."
     # An Item has dependents, so its row's delete states its own cascade, in the
     # same ADR-mandated words as the Characters list above.
     delete_confirm: "Delete “%{name}”? Its descendant items, ownerships, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain."

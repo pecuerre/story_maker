@@ -42,6 +42,9 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **The Items and Events lists can be filtered.** Free text, a tag, an inclusive day range, and a
+  chosen order narrow both lists, and the Events edit form's temporal-reference pickers follow the
+  filter.
 - **The Characters list can be narrowed and reordered.** Free text, a character tag, and a choice of
   order all travel in the URL; an order this list does not offer is ignored and reported.
 - **A filtered list can be reordered without renumbering anything.** A chosen order is resolved against
@@ -50,8 +53,15 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **The Events filter form renders again.** A stray quote after the sort select kept the template
+  from compiling.
 - **A scene filter case no longer races the Turbo navigation behind it.** Waiting for the titles was
   not enough to know the clear had landed, so the next submit could arrive empty.
+
+### docs
+
+- **The Events list documents its own filter.** The Events list's filter rules now live beside the
+  Timeline algorithm instead of only in the filter's code.
 
 ## 2026-10-15
 

@@ -94,12 +94,10 @@ reuse. The grouping-tag case came out of it and is the rule to carry forward: th
 against **every** tag of the universe while the editor still offers only the assignable ones, so a
 record carrying a grouping tag is still filterable.
 
-**Slice 3 — Items and Events.** Items repeats slice 2's shape on an identical model. Events adds the
-inclusive date range over its own `start_datetime`/`end_datetime` and has to settle two things slice 2
-does not reach: `EventsController#index` orders by `id` where Characters and Items order by name and
-nothing states why, so the default a sort control offers is a decision rather than a default; and
-`@events_for_select` is the same relation as the list, so the modal's three temporal-reference pickers
-are narrowed by whatever the reader filtered to.
+**Slice 3 is delivered.** The Items list narrows by text, item tag, and the reader's order, and the
+Events list adds an inclusive day range over its start datetime plus the same sort control. Both
+lists say what each active filter does, and the Events edit form's temporal-reference pickers are
+narrowed by the filter like the rest of the list.
 
 **Slice 4 — Relations and Ownerships.** The hard text filter: both labels fall back to something
 composed rather than stored — `Relation` to `"A → B"`, `Ownership` to a *translated* sentence — so the

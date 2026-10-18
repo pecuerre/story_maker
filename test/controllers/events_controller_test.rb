@@ -4,6 +4,13 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @universe = universes(:universe_one)
     @event = events(:event_one)
+    @event_one = events(:event_one)
+    @event_two = events(:event_two)
+    # `Event#set_name` fills the stored `name` from the title only when a record
+    # is saved, and the fixture loader inserts without callbacks, so both names
+    # are assigned here like a title a reader sees.
+    @event_one.update!(name: @event_one.title)
+    @event_two.update!(name: @event_two.title)
     sign_in_as(users(:user_one))
   end
 
@@ -20,6 +27,113 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   # over per row — the name, the delete confirmation, and the modal's three
   # reference pickers — and the references have to come with the list rather than
   # with each row.
+  # The names in the order the list rendered them, so a filter or a sort
+  # assertion says which events survived it without depending on row markup.
+  def listed_event_labels
+    css_select(".entity-list .entity-title").map { |title| title.text.squish }
+  end
+
+  # The filter, the sort, and the two empty states. The value object is covered
+  # in `EventFilterTest`; what a request can show and this cannot is the page
+  # around it — the canonical URL, and what a filter does to the list.
+  test "index renders a search area that narrows, orders, and stays in the URL" do
+    get universe_events_url(universe_slug: @universe.slug, q: "beginning", sort: "created")
+
+    assert_response :success
+    assert_select "form[action=?][method=?]",
+      universe_events_path(universe_slug: @universe.slug), "get" do
+      assert_select "input[name=q][value=?]", "beginning"
+      assert_select "select[name=sort] option[selected][value=?]", "created"
+    end
+    assert_select ".event-filter", text: /Showing 1 event of 2 events/
+  end
+
+  test "index orders the whole list by the reader's choice" do
+    events(:event_one).update!(created_at: Time.utc(2026, 1, 1))
+    events(:event_two).update!(created_at: Time.utc(2026, 3, 1))
+
+    get universe_events_url(universe_slug: @universe.slug, sort: "created")
+
+    assert_response :success
+    assert_equal [ @event_two.display_label, @event_one.display_label ], listed_event_labels
+  end
+
+  test "index narrows by the days an event starts" do
+    get universe_events_url(universe_slug: @universe.slug, from: "2026-09-11", to: "2026-09-11")
+
+    assert_response :success
+    assert_equal [ @event_one.display_label, @event_two.display_label ], listed_event_labels
+  end
+
+  test "index filters by an event tag" do
+    @event_one.update!(event_tag_ids: [ event_tags(:event_tag_one).id ])
+
+    get universe_events_url(universe_slug: @universe.slug,
+      event_tag_id: event_tags(:event_tag_one).id)
+
+    assert_response :success
+    assert_equal [ @event_one.display_label ], listed_event_labels
+    assert_select "select[name=event_tag_id] option[selected][value=?]",
+      event_tags(:event_tag_one).id
+  end
+
+  test "index redirects a form submission to the canonical filter query" do
+    get universe_events_url(universe_slug: @universe.slug, from: "2026-09-11", to: "", sort: "")
+
+    assert_redirected_to universe_events_url(universe_slug: @universe.slug, from: "2026-09-11")
+  end
+
+  test "index reports a filter value it could not use instead of showing an empty list" do
+    get universe_events_url(universe_slug: @universe.slug,
+      event_tag_id: event_tags(:event_tag_three).id)
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /not an event tag of this universe/
+    assert_equal [ @event_one.display_label, @event_two.display_label ], listed_event_labels
+  end
+
+  test "index reports a day it could not read" do
+    get universe_events_url(universe_slug: @universe.slug, from: "not-a-day")
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /could not be read/
+    assert_equal [ @event_one.display_label, @event_two.display_label ], listed_event_labels
+  end
+
+  test "index reports an order this list does not offer and falls back to the default" do
+    get universe_events_url(universe_slug: @universe.slug, sort: "password")
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /not one this list offers/
+    assert_select "select[name=sort] option[selected][value=?]", EventFilter::DEFAULT_SORT
+    assert_equal [ @event_one.display_label, @event_two.display_label ], listed_event_labels
+  end
+
+  test "index separates a filtered empty result from a universe without events" do
+    get universe_events_url(universe_slug: @universe.slug, q: "no such event")
+
+    assert_response :success
+    assert_select ".empty-title", text: "No events match these filters"
+    assert_select ".empty-description",
+      text: /Universe one has 2 events, but none of them match the filters above/
+    assert_select ".empty-state .badge", text: /Search: “no such event”/
+    assert_select ".empty-state a", text: "Clear filters"
+    assert_select ".event-filter a", text: "Clear filters", count: 0
+    assert_select ".empty-state a", text: /Add event/, count: 0
+  end
+
+  test "a guest can filter and sees no mutation control" do
+    sign_out
+
+    get universe_events_url(universe_slug: @universe.slug, q: "The end")
+
+    assert_response :success
+    assert_equal [ @event_two.display_label ], listed_event_labels
+    assert_select "form[data-controller=modal-form]", count: 0
+    assert_select "button[data-action='modal-form#open']", count: 0
+    assert_select ".event-filter input[name=q]", minimum: 1
+  end
+
   test "adding a reference-only event does not add a query for that event" do
     anchor = events(:event_one)
     @universe.events.create!(before_event: anchor)

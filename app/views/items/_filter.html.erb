@@ -1,0 +1,72 @@
+<%# The Items search area. It is a GET form over the same canonical index
+    URL, so a filter is visible in the address, shareable, and removable in one
+    click. It narrows what the list shows and it orders it; it never writes, so
+    it cannot renumber a position. Visible to every access level, because
+    filtering is reading. %>
+<% filter = local_assigns.fetch(:filter) %>
+<% total = local_assigns.fetch(:total) %>
+<% shown = local_assigns.fetch(:shown) %>
+<% filters_path = universe_items_path %>
+
+<div class="content-surface item-filter p-3 p-md-4 mb-4">
+  <h2 class="h6 mb-1"><%= t("items.filter.title") %></h2>
+  <p class="text-body-secondary">
+    <%= t("items.filter.description") %>
+  </p>
+
+  <%= form_with url: filters_path, method: :get, class: "row g-2 align-items-end" do %>
+    <div class="col-12 col-lg">
+      <label class="form-label" for="item_filter_q"><%= t("items.filter.search_label") %></label>
+      <input type="search" class="form-control" id="item_filter_q" name="q"
+        value="<%= filter.text %>" placeholder="<%= t("items.filter.search_placeholder") %>" autocomplete="off">
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="item_filter_item_tag_id"><%= t("items.filter.tag_label") %></label>
+      <select class="form-select" id="item_filter_item_tag_id" name="item_tag_id">
+        <option value=""><%= t("items.filter.all_tags") %></option>
+        <% item_filter_tag_choices.each do |label, value| %>
+          <option value="<%= value %>"<%= " selected" if filter.item_tag_id == value %>><%= label %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="item_filter_sort"><%= t("items.filter.sort_label") %></label>
+      <%# Every option is a key in `ItemFilter::SORTS`, so the control and
+          the query allowlist cannot drift apart. %>
+      <select class="form-select" id="item_filter_sort" name="sort">
+        <% ItemFilter.sort_values.each do |value| %>
+          <option value="<%= value %>"<%= " selected" if filter.sort == value %>><%= t("items.filter.sort_options.#{value}") %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+      <%= submit_tag t("items.filter.submit"), class: "btn btn-primary", name: nil %>
+      <%# With no result there is nothing to clear from here, so the empty state
+          below offers the only way back. %>
+      <% if filter.active? && shown.positive? %>
+        <%= link_to t("items.filter.clear"), filters_path, class: "btn btn-light border" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if filter.active? %>
+    <p class="text-body-secondary mb-0 mt-3">
+      <%# Both counts are resolved with a `count:` before they are interpolated, so
+          each chooses its own plural rather than the sentence building it. %>
+      <%= t("items.filter.showing",
+        shown: count_with_label(shown, "item"), total: count_with_label(total, "item")) %>
+      <%# The active filters are repeated as text so an empty result set can always
+          say which value produced it, and so a result set is never ambiguous
+          about what produced it. %>
+      <span class="d-block mt-1">
+        <%= t("items.filter.filtered_by") %>
+        <% item_filter_summaries(filter).each do |summary| %>
+          <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+        <% end %>
+      </span>
+    </p>
+  <% end %>
+</div>

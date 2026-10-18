@@ -1,6 +1,22 @@
 <% content_for :title, t("events.title") %>
+<%# The list has two empty states because it has two audiences: a writer is told
+    to add the first event, and a guest or read-only member is only told what an
+    event is. Both are chrome, so both are keys. A remembered create counts as
+    something to show, or a writer who has added an event in a universe that
+    remembers changes would be told they have none.
+
+    A *filtered* list that matched nothing is a third case and never says
+    "no events yet": the universe has events, the filters did not match them,
+    and offering "add the first one" beside that message would answer the wrong
+    question. %>
+
+<% narrowed = @list_filter.narrowed? %>
 <% empty_description = can_write_universe? ? t("events.empty_writable_description") : t("events.empty_read_only_description") %>
-<% pending_creates = draft_pending_creates_for(Event) %>
+<%# A remembered Event create belongs to this universe's list, but **not to a
+    filtered one**: it names no record, so it cannot match a text, a tag, or a
+    date range. A reader who only *sorted* the list still sees their own pending
+    work, because a sort selects nothing. %>
+<% pending_creates = narrowed ? [] : draft_pending_creates_for(Event) %>
 
 <div
   <% if can_write_universe? %>data-controller="modal-form"<% end %>
@@ -29,6 +45,11 @@
     aria_label: t("events.tabs_aria_label"),
     intro: t("events.description"),
     tabs: content_workspace_tabs(:event) %>
+
+  <%= render "events/filter",
+    filter: @list_filter,
+    total: @event_total,
+    shown: @events.size %>
 
   <% if @events.any? || pending_creates.any? %>
     <div class="content-surface entity-list">
@@ -62,6 +83,24 @@
 
         <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
       </div>
+    </div>
+  <% elsif narrowed %>
+    <%# A filter that matched nothing is not an universe without events, so it
+        says which filters produced nothing, repeats them, and offers the way
+        back. %>
+    <div class="content-surface p-3 p-md-4">
+      <%= render "shared/empty_state",
+        title: t("events.no_match_title"),
+        description: t("events.no_match_description",
+          universe: Current.universe.name, total: count_with_label(@event_total, "event")),
+        icon: "filter" do %>
+        <span class="d-block mb-3">
+          <% event_filter_summaries(@list_filter).each do |summary| %>
+            <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+          <% end %>
+        </span>
+        <%= link_to t("events.filter.clear"), universe_events_path, class: "btn btn-primary" %>
+      <% end %>
     </div>
   <% else %>
     <%= render "shared/empty_state",
@@ -115,7 +154,7 @@
             </div>
             <div class="mb-3">
               <%= form.label :event_tag_ids, t("events.form.tags_label"), class: "form-label" %>
-              <%= form.collection_select :event_tag_ids, @event_tags, :id, :name,
+              <%= form.collection_select :event_tag_ids, @assignable_event_tags, :id, :name,
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>

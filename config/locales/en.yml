@@ -316,6 +316,28 @@ en:
       network_failed: "The network request failed. Please try again."
       invalid_response: "The server returned an invalid response."
       saved_refresh: "Saved. Refreshing the taxonomy…"
+      # The search area the shared tree renders on every tree workspace. The
+      # workspaces pass their own tag choices and the selected tag's name when
+      # they have a tag filter; everything else here is shared, because the
+      # control means the same thing on every tree.
+      filter:
+        title: "Filter the list"
+        description: "Narrow the list by text or by a tag. Filtering only changes what this page shows; it does not change any record."
+        search_label: "Search"
+        search_placeholder: "Name or description"
+        tag_label: "Tag"
+        all_tags: "All tags"
+        submit: "Filter"
+        clear: "Clear filters"
+        showing: "Showing %{shown} of %{total}."
+        filtered_by: "Filtered by"
+        summaries:
+          search: "Search: “%{value}”"
+          tag: "Tag: %{value}"
+        # A list that matched nothing is not an empty taxonomy: say what the
+        # filters did, and offer the way back.
+        no_match_title: "Nothing matches these filters"
+        no_match_description: "%{count} in this universe, but none of them match the filters above."
     taxonomy_node:
       rename: "Rename %{name}"
       add_child: "Add child"
@@ -1592,6 +1614,11 @@ en:
     # `confirm_message` the shared taxonomy tree serializes. Same ADR-mandated
     # sentence as the Characters and Items lists.
     delete_confirm: "Delete “%{name}”? Its descendant locations, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain."
+    # A dropped filter value is translated where it is dropped, in the request's
+    # language — see `ListFilter` and `docs/features/list_filters.md`.
+    filter:
+      discarded:
+        tag: "The location tag filter was ignored because it is not a location tag of this universe."
     show:
       label: "Location"
       back_label: "All locations"
@@ -1828,6 +1855,48 @@ en:
     empty_title: "No relations yet"
     empty_writable_description: "Connect two characters to describe their relationship. Relation tags are optional but can make these connections easier to scan."
     empty_read_only_description: "Character relationships in this universe will appear here once they have been added."
+    # A filtered list that matched nothing is a third empty state, and it never
+    # says "No relations yet": the universe has relations, the filters did not
+    # match them. `universe` is the reader's own universe name and is
+    # interpolated, not translated.
+    no_match_title: "No relations match these filters"
+    no_match_description: "%{universe} has %{total}, but none of them match the filters above. Clear them to see the whole list."
+    filter:
+      title: "Find relations"
+      description: "A universe can hold hundreds of relations. Narrow the list by text, a character, or a relation tag, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
+      search_label: "Search"
+      # The search reaches the two endpoint names as well as the relation's own
+      # name and description, because the label a reader sees is the two
+      # characters, not the optional name.
+      search_placeholder: "Name, description, or a character"
+      tag_label: "Relation tag"
+      all_tags: "All relation tags"
+      sort_label: "Order"
+      # Every option here is a key in `RelationFilter::SORTS`, so a label and an
+      # order clause cannot drift apart. A key with no order clause renders a
+      # blank option, so the two are expected to stay in step.
+      sort_options:
+        name: "Name (A to Z)"
+        created: "Newest first"
+        updated: "Recently edited first"
+      submit: "Filter relations"
+      clear: "Clear filters"
+      # The sentence a narrowed list opens with. Both counts are resolved with a
+      # `count:` before they are interpolated, so each chooses its own plural.
+      showing: "Showing %{shown} of %{total}."
+      filtered_by: "Filtered by"
+      # The active filters repeated as text, so an empty result set can always
+      # say which value produced it. The sort is included because a reader who
+      # reordered the list needs to know the order was applied.
+      summaries:
+        search: "Search: “%{value}”"
+        tag: "Relation tag: %{value}"
+        sort: "Order: %{value}"
+      # A filter value the filter could not use. A sort is resolved against an
+      # allowlist, so a hand-edited URL cannot choose the order.
+      discarded:
+        tag: "The relation tag filter was ignored because it is not a relation tag of this universe."
+        sort: "That order is not one this list offers, so it was ignored."
     show:
       label: "Relation"
       back_label: "All relations"
@@ -1888,6 +1957,42 @@ en:
     empty_title: "No ownerships yet"
     empty_writable_description: "Connect a character to an item to record present or historical ownership."
     empty_read_only_description: "Ownership records in this universe will appear here once they have been added."
+    # See `relations.no_match_title`: the same third empty state for this list.
+    no_match_title: "No ownerships match these filters"
+    no_match_description: "%{universe} has %{total}, but none of them match the filters above. Clear them to see the whole list."
+    filter:
+      title: "Find ownerships"
+      description: "A universe can hold hundreds of ownerships. Narrow the list by text, a character, or an item, or by an ownership tag, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
+      search_label: "Search"
+      # The search reaches the character and the item names as well as the
+      # ownership's own name and description. The composed sentence
+      # (`display_label`) is translated chrome and is deliberately not
+      # searchable.
+      search_placeholder: "Name, description, a character, or an item"
+      tag_label: "Ownership tag"
+      all_tags: "All ownership tags"
+      sort_label: "Order"
+      # Every option here is a key in `OwnershipFilter::SORTS`, so a label and an
+      # order clause cannot drift apart. A key with no order clause renders a
+      # blank option, so the two are expected to stay in step.
+      sort_options:
+        name: "Name (A to Z)"
+        created: "Newest first"
+        updated: "Recently edited first"
+      submit: "Filter ownerships"
+      clear: "Clear filters"
+      # See `relations.filter.showing`: the same sentence, resolved the same way.
+      showing: "Showing %{shown} of %{total}."
+      filtered_by: "Filtered by"
+      # See `relations.filter.summaries`: the same reasons, per key.
+      summaries:
+        search: "Search: “%{value}”"
+        tag: "Ownership tag: %{value}"
+        sort: "Order: %{value}"
+      # See `relations.filter.discarded`: the same two reasons for a drop.
+      discarded:
+        tag: "The ownership tag filter was ignored because it is not an ownership tag of this universe."
+        sort: "That order is not one this list offers, so it was ignored."
     show:
       label: "Ownership"
       back_label: "All ownerships"

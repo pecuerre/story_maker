@@ -2,19 +2,35 @@ class RelationTagsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include DraftMutation
+  include FilteredListQuery
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :relation_tag
 
+  # The filter rides along with the index. A tree keeps its drag order and
+  # offers no reader sort, so `index` is the only action that reads the filter.
+  filters_list_with RelationTagFilter, only: %i[ index ]
+
   before_action :set_relation_tag, only: %i[ show update destroy ]
 
   def index
+    @list_filter = RelationTagFilter.new(@filter_query)
+    # A GET form submits every field, so the ones the author left alone arrive
+    # blank. Redirecting once to the canonical query keeps the address bar, a
+    # bookmark, and a shared link limited to the filters really in effect.
+    return redirect_to_canonical_filtered_list if blank_filter_values?
+
     # One query for the whole taxonomy, and the index the tree descends through.
     # `includes(:children)` used to reach the first level only, and the photo is
     # read for every node because the editor carries its stored image.
-    @hierarchy = HierarchyIndex.build(Current.universe.relation_tags.includes(:photo))
+    @hierarchy = HierarchyIndex.build(@list_filter.apply(
+      Current.universe.relation_tags.includes(:photo)))
     @relation_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.relation_tags)
+    # The total is read only when a filter is really in effect, so the ordinary
+    # unfiltered visit costs no extra query for it.
+    @relation_tag_total = Current.universe.relation_tags.count if @list_filter.narrowed?
+    flash_discarded_filter_values
   end
 
   # GET /relation_tags/:id — the tag's own details page: the records that carry it.
@@ -74,6 +90,15 @@ class RelationTagsController < ApplicationController
 
   def update_relation_tag(attributes)
     update_with_sibling_position(@relation_tag, attributes)
+  end
+
+  # The canonical index URL for a set of filter values. `FilteredListQuery` owns
+  # everything else about reading and carrying the filter, and this is the one
+  # thing it cannot know: where this list's own URL is.
+  def filtered_list_path_with(query)
+    path = universe_relation_tags_path
+
+    query.any? ? "#{path}?#{query.to_query}" : path
   end
 
   def relation_tag_json

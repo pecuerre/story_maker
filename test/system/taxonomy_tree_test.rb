@@ -415,6 +415,59 @@ class TaxonomyTreeTest < ApplicationSystemTestCase
     end
   end
 
+  test "the search area narrows a tree and clearing it comes back" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    assert_selector ".taxonomy-node", count: 3
+
+    within ".taxonomy-tree-filter" do
+      fill_in "q", with: "Character tag one"
+      click_button "Filter"
+    end
+
+    # The filtered render is the signal that Turbo's navigation has landed.
+    assert_selector ".taxonomy-node", count: 1
+    assert_current_path universe_character_tags_path(universe_slug: universe.slug, q: "Character tag one")
+    assert_selector ".taxonomy-tree-filter", text: /Showing 1 tag of 3 tags/
+    assert_selector ".taxonomy-tree-filter", text: /Filtered by/
+
+    click_link "Clear filters"
+
+    assert_selector ".taxonomy-node", count: 3
+    assert_current_path universe_character_tags_path(universe_slug: universe.slug)
+    assert_no_selector ".taxonomy-tree-filter", text: /Showing 1 tag of 3 tags/
+  end
+
+  test "a tree that matches nothing shows the no-match state" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+
+    sign_in_via_form(user)
+    visit universe_character_tags_path(universe_slug: universe.slug)
+    assert_stimulus_loaded
+
+    within ".taxonomy-tree-filter" do
+      fill_in "q", with: "no such tag"
+      click_button "Filter"
+    end
+
+    assert_selector ".empty-title", text: "Nothing matches these filters"
+    assert_selector ".empty-description",
+      text: /3 tags in this universe, but none of them match the filters above/
+    assert_selector ".empty-state .badge", text: /Search: “no such tag”/
+    assert_selector ".empty-state a", text: "Clear filters"
+
+    click_link "Clear filters"
+
+    assert_selector ".taxonomy-node", count: 3
+    assert_no_selector ".empty-title"
+  end
+
   private
 
     # Capybara cannot open the browser's own color picker, so the control is set

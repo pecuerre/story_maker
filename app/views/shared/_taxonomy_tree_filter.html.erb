@@ -1,0 +1,73 @@
+<%# The search area the shared taxonomy tree renders on every tree workspace.
+    It is a GET form over the same canonical index URL, so a filter is visible
+    in the address, shareable, and removable in one click. It narrows what the
+    tree shows and it never writes, so it cannot renumber a position. Visible to
+    every access level, because filtering is reading. %>
+<% filter = local_assigns.fetch(:filter) %>
+<% path = local_assigns.fetch(:filter_path) %>
+<% total = local_assigns[:filter_total] %>
+<% shown = local_assigns[:filter_shown] %>
+<% count_label = local_assigns[:filter_count_label] || "item" %>
+<% tag_param = local_assigns[:filter_tag_param] %>
+<% tag_selected = tag_param && filter.public_send(tag_param) %>
+
+<div class="content-surface taxonomy-tree-filter p-3 p-md-4 mb-4">
+  <h2 class="h6 mb-1"><%= t("shared.taxonomy_tree.filter.title") %></h2>
+  <p class="text-body-secondary">
+    <%= t("shared.taxonomy_tree.filter.description") %>
+  </p>
+
+  <%= form_with url: path, method: :get, class: "row g-2 align-items-end" do %>
+    <div class="col-12 col-lg">
+      <label class="form-label" for="taxonomy_tree_filter_q"><%= t("shared.taxonomy_tree.filter.search_label") %></label>
+      <input type="search" class="form-control" id="taxonomy_tree_filter_q" name="q"
+        value="<%= filter.text %>" placeholder="<%= t("shared.taxonomy_tree.filter.search_placeholder") %>" autocomplete="off">
+    </div>
+
+    <% if tag_param %>
+      <div class="col-12 col-sm-6 col-lg">
+        <label class="form-label" for="taxonomy_tree_filter_tag"><%= t("shared.taxonomy_tree.filter.tag_label") %></label>
+        <select class="form-select" id="taxonomy_tree_filter_tag" name="<%= tag_param %>">
+          <option value=""><%= t("shared.taxonomy_tree.filter.all_tags") %></option>
+          <% local_assigns.fetch(:filter_tag_choices, []).each do |label, value| %>
+            <option value="<%= value %>"<%= " selected" if value.to_s == tag_selected.to_s %>><%= label %></option>
+          <% end %>
+        </select>
+      </div>
+    <% end %>
+
+    <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+      <%= submit_tag t("shared.taxonomy_tree.filter.submit"), class: "btn btn-primary", name: nil %>
+      <%# With no result there is nothing to clear from here, so the empty state
+          below offers the only way back. %>
+      <% if filter.active? && shown.positive? %>
+        <%= link_to t("shared.taxonomy_tree.filter.clear"), path, class: "btn btn-light border" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if filter.active? %>
+    <p class="text-body-secondary mb-0 mt-3">
+      <%# Both counts are resolved with a `count:` before they are interpolated, so
+          each chooses its own plural rather than the sentence building it. %>
+      <%= t("shared.taxonomy_tree.filter.showing",
+        shown: count_with_label(shown, count_label), total: count_with_label(total, count_label)) %>
+      <%# The active filters are repeated as text so a result set is never
+          ambiguous, and so an author can see which value produced an empty
+          result. %>
+      <span class="d-block mt-1">
+        <%= t("shared.taxonomy_tree.filter.filtered_by") %>
+        <% if filter.text.present? %>
+          <span class="badge rounded-pill text-bg-light border me-1">
+            <%= t("shared.taxonomy_tree.filter.summaries.search", value: filter.text) %>
+          </span>
+        <% end %>
+        <% if local_assigns[:filter_tag_name].present? %>
+          <span class="badge rounded-pill text-bg-light border me-1">
+            <%= t("shared.taxonomy_tree.filter.summaries.tag", value: local_assigns[:filter_tag_name]) %>
+          </span>
+        <% end %>
+      </span>
+    </p>
+  <% end %>
+</div>

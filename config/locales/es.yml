@@ -307,6 +307,29 @@ es:
       network_failed: "La petición de red falló. Inténtalo de nuevo."
       invalid_response: "El servidor devolvió una respuesta no válida."
       saved_refresh: "Guardado. Actualizando la taxonomía…"
+      # El área de búsqueda que el árbol compartido renderiza en cada espacio
+      # de trabajo de árbol. Los espacios de trabajo pasan sus propias opciones
+      # de etiqueta y el nombre de la etiqueta seleccionada cuando tienen un
+      # filtro de etiqueta; todo lo demás está aquí, porque el control
+      # significa lo mismo en cada árbol.
+      filter:
+        title: "Filtrar la lista"
+        description: "Reduce la lista por texto o por etiqueta. Filtrar solo cambia lo que muestra esta página; no cambia ningún registro."
+        search_label: "Buscar"
+        search_placeholder: "Nombre o descripción"
+        tag_label: "Etiqueta"
+        all_tags: "Todas las etiquetas"
+        submit: "Filtrar"
+        clear: "Quitar filtros"
+        showing: "Mostrando %{shown} de %{total}."
+        filtered_by: "Filtrado por"
+        summaries:
+          search: "Búsqueda: «%{value}»"
+          tag: "Etiqueta: %{value}"
+        # Una lista que no ha coincidido con nada no es una taxonomía vacía:
+        # dice lo que hicieron los filtros y ofrece la vuelta atrás.
+        no_match_title: "Nada coincide con estos filtros"
+        no_match_description: "%{count} en este universo, pero ninguno coincide con los filtros de arriba."
     taxonomy_node:
       rename: "Renombrar %{name}"
       add_child: "Añadir hija"
@@ -1549,6 +1572,11 @@ es:
     # como el `confirm_message` que el árbol de taxonomías compartido serializa. La
     # misma frase que impone el ADR 0007 que usan las listas de personajes y objetos.
     delete_confirm: "¿Eliminar «%{name}»? Sus lugares descendientes, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros registros del universo permanecerán."
+    # Un valor de filtro descartado se traduce donde se descarta, en el idioma
+    # de la petición — véase `ListFilter` y `docs/features/list_filters.md`.
+    filter:
+      discarded:
+        tag: "Se ha ignorado el filtro de etiqueta de lugar porque no es una etiqueta de lugar de este universo."
     show:
       label: "Lugar"
       back_label: "Todos los lugares"
@@ -1794,6 +1822,50 @@ es:
     empty_title: "Todavía no hay relaciones"
     empty_writable_description: "Conecta a dos personajes para describir su relación. Las etiquetas de relaciones son opcionales, pero pueden hacer estas conexiones más fáciles de leer."
     empty_read_only_description: "Las relaciones entre personajes de este universo aparecerán aquí en cuanto se hayan añadido."
+    # Una lista filtrada que no ha coincidido con nada es un tercer estado vacío, y
+    # nunca dice «Todavía no hay relaciones»: el universo sí tiene relaciones, los
+    # filtros no han coincidido con ellas. `universe` es el nombre del propio
+    # universo del lector, así que se interpola en lugar de traducirse.
+    no_match_title: "Ninguna relación coincide con estos filtros"
+    no_match_description: "%{universe} tiene %{total}, pero ninguna coincide con los filtros de arriba. Quítalos para ver la lista completa."
+    filter:
+      title: "Buscar relaciones"
+      description: "Un universo puede tener cientos de relaciones. Reduce la lista por texto, personaje o etiqueta de relación, y elige el orden. Filtrar y ordenar solo cambian lo que muestra esta página; ninguno cambia ningún registro."
+      search_label: "Buscar"
+      # La búsqueda alcanza los nombres de los dos personajes además del nombre y
+      # la descripción de la propia relación, porque la etiqueta que ve quien lee
+      # son los dos personajes, no el nombre opcional.
+      search_placeholder: "Nombre, descripción o un personaje"
+      tag_label: "Etiqueta de relación"
+      all_tags: "Todas las etiquetas de relaciones"
+      sort_label: "Orden"
+      # Cada opción aquí es una clave de `RelationFilter::SORTS`, así que una
+      # etiqueta y una cláusula de orden no pueden separarse. Una clave sin
+      # cláusula de orden rendería una opción vacía, por lo que se espera que
+      # ambas se mantengan en sincronía.
+      sort_options:
+        name: "Nombre (de la A a la Z)"
+        created: "Más recientes primero"
+        updated: "Editadas recientemente primero"
+      submit: "Filtrar relaciones"
+      clear: "Quitar filtros"
+      # La frase con la que se abre una lista reducida. Ambas cantidades se
+      # resuelven con un `count:` antes de interpolarse, así que cada una elige su
+      # propio plural.
+      showing: "Mostrando %{shown} de %{total}."
+      filtered_by: "Filtrado por"
+      # Los filtros activos repetidos como texto, para que un conjunto de
+      # resultados vacío siempre pueda decir qué valor lo produjo. El orden se
+      # incluye porque quien reordenó la lista necesita saber que se aplicó.
+      summaries:
+        search: "Búsqueda: «%{value}»"
+        tag: "Etiqueta de relación: %{value}"
+        sort: "Orden: %{value}"
+      # Un valor de filtro que el filtro no pudo usar. El orden se resuelve contra
+      # una lista blanca, así que una URL editada a mano no puede elegir el orden.
+      discarded:
+        tag: "Se ha ignorado el filtro de etiqueta de relación porque no es una etiqueta de relación de este universo."
+        sort: "Ese orden no es uno de los que ofrece esta lista, así que se ha ignorado."
     show:
       label: "Relación"
       back_label: "Todas las relaciones"
@@ -1856,6 +1928,42 @@ es:
     empty_title: "Todavía no hay propiedades"
     empty_writable_description: "Conecta a un personaje con un objeto para registrar una propiedad presente o histórica."
     empty_read_only_description: "Los registros de propiedad de este universo aparecerán aquí en cuanto se hayan añadido."
+    # Ver `relations.no_match_title`: el mismo tercer estado vacío para esta lista.
+    no_match_title: "Ninguna propiedad coincide con estos filtros"
+    no_match_description: "%{universe} tiene %{total}, pero ninguna coincide con los filtros de arriba. Quítalos para ver la lista completa."
+    filter:
+      title: "Buscar propiedades"
+      description: "Un universo puede tener cientos de propiedades. Reduce la lista por texto, personaje u objeto, o por etiqueta de propiedad, y elige el orden. Filtrar y ordenar solo cambian lo que muestra esta página; ninguno cambia ningún registro."
+      search_label: "Buscar"
+      # La búsqueda alcanza los nombres del personaje y del objeto además del
+      # nombre y la descripción de la propia propiedad. La frase compuesta
+      # (`display_label`) es chrome traducido y deliberadamente no es buscable.
+      search_placeholder: "Nombre, descripción, un personaje o un objeto"
+      tag_label: "Etiqueta de propiedad"
+      all_tags: "Todas las etiquetas de propiedades"
+      sort_label: "Orden"
+      # Cada opción aquí es una clave de `OwnershipFilter::SORTS`, así que una
+      # etiqueta y una cláusula de orden no pueden separarse. Una clave sin
+      # cláusula de orden rendería una opción vacía, por lo que se espera que
+      # ambas se mantengan en sincronía.
+      sort_options:
+        name: "Nombre (de la A a la Z)"
+        created: "Más recientes primero"
+        updated: "Editadas recientemente primero"
+      submit: "Filtrar propiedades"
+      clear: "Quitar filtros"
+      # Ver `relations.filter.showing`: la misma frase, resuelta igual.
+      showing: "Mostrando %{shown} de %{total}."
+      filtered_by: "Filtrado por"
+      # Ver `relations.filter.summaries`: las mismas razones, por clave.
+      summaries:
+        search: "Búsqueda: «%{value}»"
+        tag: "Etiqueta de propiedad: %{value}"
+        sort: "Orden: %{value}"
+      # Ver `relations.filter.discarded`: las mismas dos razones para descartar.
+      discarded:
+        tag: "Se ha ignorado el filtro de etiqueta de propiedad porque no es una etiqueta de propiedad de este universo."
+        sort: "Ese orden no es uno de los que ofrece esta lista, así que se ha ignorado."
     show:
       label: "Propiedad"
       back_label: "Todas las propiedades"

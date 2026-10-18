@@ -27,6 +27,43 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-18
+
+- **[added]** **The Relations and Ownerships lists narrow by text, tag, and order.**
+
+  - **The text reaches the record's endpoints, not just its own columns.** A `Relation`'s label is
+    `"A → B"` and an `Ownership`'s is a translated sentence, and neither is stored, so a `LIKE` on
+    the record's own `name` would miss a reader who types a character's name — the common case. The
+    new shared `ListFilter#narrowed_by_linked_text` searches the record's own columns and the named
+    columns of each `belongs_to` endpoint. It reaches them by **subquery rather than by joining**
+    their tables: a join would put a second `id` and `name` into the statement and make the
+    unqualified `ORDER BY id` every sort ends with ambiguous, so the subquery is what keeps the new
+    narrowing composable with `#sorted` unchanged.
+
+  - **The composed sentence is deliberately not searchable.** `Ownership#display_label` is
+    translated chrome — `"X owns Y"` in English, `"X posee Y"` in Spanish — so matching its words
+    would be a search that quietly means something only in the language it was written in. The two
+    endpoint names are what a reader types; the sentence is not faked into a third, unindexable
+    column. `docs/features/list_filters.md` now owns this rule.
+
+  - **A filter survives the re-render.** Both controllers re-render `index` from a rejected create or
+    update, so `create` and `update` were named on `filters_list_with` and the failure branch builds
+    the filter and the narrowed list before rendering, exactly as `index` does. `destroy` was named
+    too and returns to `filtered_list_path`, so deleting from a narrowed list stays on it. The
+    **success** redirects still go to the unfiltered list: a record a reader just created or edited
+    may not match the active filter, and hiding it would be worse than dropping the filter.
+
+  - **Tag selectors are paths, so `RelationTagPaths` and `OwnershipTagPaths` were added** — the same
+    value-object shape as the existing four. That grows the duplication the delivery history already
+    recorded as deferred; consolidating the six path classes is still a separate change and was not
+    made here.
+
+  - **Verified** with `test/models/relation_filter_test.rb`,
+    `test/models/ownership_filter_test.rb`, and the extended
+    `test/controllers/relations_controller_test.rb` and
+    `test/controllers/ownerships_controller_test.rb`, plus `test/models/translations_test.rb` for
+    the new keys in both locales.
+
 ### 2026-10-15
 
 ### 2026-10-16
@@ -111,6 +148,28 @@ are linked rather than repeated, so there is one place to keep them current.
     this change**, and the two filter files were verified together and separately instead.
 
 - **[added]** **A list filter is one contract instead of a per-workspace decision.**
+
+- **[added]** **Locations and all eight tag taxonomies narrow by text and tag.**
+
+  - **No sort on a tree.** The trees are drag-sorted on `position`, and `HierarchyIndex` hard-codes
+    `[position, id]`, so a reader-chosen order would show a sequence the drag control contradicts.
+    `ListFilter#sortable?` answers false for every tree workspace, the URL never carries a `sort`
+    key, and narrowing never reorders the tree. `docs/features/list_filters.md` now states the rule,
+    and the Scene list was already the precedent: it keeps its own order and offers no sort at all.
+
+  - **One count on the badge.** The per-taxonomy views issued a fresh `.count` while
+    `TagsController` read `hierarchy.records.length`, so the two disagreed. With filtering, the badge
+    reads the narrowed count — how many records the filters show — matching the flat lists, and the
+    filter area says "Showing X of Y" while a filter is in effect.
+
+  - **One filter area for every tree.** `shared/_taxonomy_tree` now draws the search area, an
+    optional tag select for Locations, the active-filter summaries, and the no-match state. Pending
+    creates render as `.taxonomy-pending` nodes and disappear while a filter narrows the tree,
+    because a remembered create names no record and cannot match a text or tag filter.
+
+  - **Verification.** `bin/rails test` over the nine new filter models, the Locations and tag
+    controller suites, and `test/docs_test.rb` is green. The filter is an ordinary GET form, so no
+    JavaScript changed and `taxonomy_tree_controller.js` is untouched.
 
 ### 2026-10-15
 

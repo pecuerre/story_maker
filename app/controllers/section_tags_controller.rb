@@ -2,9 +2,14 @@ class SectionTagsController < ApplicationController
   include PhotoParams
   include MaintainsSiblingPositions
   include DraftMutation
+  include FilteredListQuery
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :section_tag
+
+  # The filter rides along with the index. A tree keeps its drag order and
+  # offers no reader sort, so `index` is the only action that reads the filter.
+  filters_list_with SectionTagFilter, only: %i[ index ]
 
   before_action :set_story
   before_action :set_section_tag,
@@ -12,12 +17,23 @@ class SectionTagsController < ApplicationController
 
   # GET /section_tags or /section_tags.json
   def index
+    @list_filter = SectionTagFilter.new(@filter_query)
+    # A GET form submits every field, so the ones the author left alone arrive
+    # blank. Redirecting once to the canonical query keeps the address bar, a
+    # bookmark, and a shared link limited to the filters really in effect.
+    return redirect_to_canonical_filtered_list if blank_filter_values?
+
     # One query for the whole taxonomy, and the index the tree descends through.
     # `includes(:children)` used to reach the first level only, and the photo is
     # read for every node because the editor carries its stored image.
-    @hierarchy = HierarchyIndex.build(@story.section_tags.includes(:photo))
+    @hierarchy = HierarchyIndex.build(@list_filter.apply(
+      @story.section_tags.includes(:photo)))
     @section_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(@story.section_tags)
+    # The total is read only when a filter is really in effect, so the ordinary
+    # unfiltered visit costs no extra query for it.
+    @section_tag_total = @story.section_tags.count if @list_filter.narrowed?
+    flash_discarded_filter_values
   end
 
   # POST /section_tags or /section_tags.json
@@ -84,6 +100,15 @@ class SectionTagsController < ApplicationController
 
   def sibling_position_scope_owner
     @story
+  end
+
+  # The canonical index URL for a set of filter values. `FilteredListQuery` owns
+  # everything else about reading and carrying the filter, and this is the one
+  # thing it cannot know: where this list's own URL is.
+  def filtered_list_path_with(query)
+    path = universe_story_section_tags_path(story_id: @story)
+
+    query.any? ? "#{path}?#{query.to_query}" : path
   end
 
   def section_tag_json

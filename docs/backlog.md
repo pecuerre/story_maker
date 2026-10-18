@@ -85,7 +85,7 @@ needs the filter to read a draft payload rather than a record.
 **Slice 1 is delivered.** The shared contract is `ListFilter` (`app/models/list_filter.rb`) and
 `FilteredListQuery` (`app/controllers/concerns/filtered_list_query.rb`), with its rules in
 [`features/list_filters.md`](features/list_filters.md) and a worked filter over a second model in
-`test/models/list_filter_test.rb`. The remaining four slices build on it.
+`test/models/list_filter_test.rb`. The remaining slices build on it.
 
 **Slice 2 is delivered.** The Characters list narrows by text and character tag and takes a reader's
 order through `CharacterFilter`, which is the first use of `SORTS` and the first list with three
@@ -99,20 +99,11 @@ Events list adds an inclusive day range over its start datetime plus the same so
 lists say what each active filter does, and the Events edit form's temporal-reference pickers are
 narrowed by the filter like the rest of the list.
 
-**Slice 4 — Relations and Ownerships.** The hard text filter: both labels fall back to something
-composed rather than stored — `Relation` to `"A → B"`, `Ownership` to a *translated* sentence — so the
-query has to reach the two endpoint names rather than run a `LIKE` on the record's own `name`, and the
-Ownership fallback cannot be matched in SQL in any language at all, which is worth saying out loud
-rather than faking. Both controllers also re-render `index` from a rejected create or update, so an
-active filter has to survive the re-render along with the error summary beside it.
-
-**Slice 5 — Locations and the taxonomy trees.** Locations and all eight tag taxonomies are the tree
-pattern rather than the flat list, so the filter area goes into `shared/_taxonomy_tree` and the pending
-rows are `.taxonomy-pending` nodes, not rows. **Sorting is a product decision here, not a query:** the
-trees are drag-sortable on `position` and `HierarchyIndex` hard-codes `[position, id]`, so a
-reader-chosen sort would show an order the drag control contradicts. Settle whether a tree sorts at all
-before writing the query, and settle which count the header badge reads — the eight per-taxonomy views
-issue a fresh `.count` while `TagsController` uses `hierarchy.records.length`.
+**Slice 4 is delivered.** The Relations and Ownerships lists narrow by text, their own tag, and the
+reader's order, and both keep an active filter through the re-render after a rejected create or
+update. The text reaches the two endpoint names rather than the record's own optional `name`, through
+the shared `narrowed_by_linked_text`; the Ownership label's translated sentence is deliberately not
+searchable, and `docs/features/list_filters.md` now owns that rule.
 
 5. **Richer relationship and entity rows**
 

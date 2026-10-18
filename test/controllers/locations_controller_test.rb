@@ -101,4 +101,70 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     @location.reload
     assert_equal [ "Renamed", "Updated", [ @location_tag.id ] ], [ @location.name, @location.description, @location.location_tag_ids ]
   end
+
+  # The filter, and the three empty states. `LocationFilterTest` covers the
+  # value object; what only a request can show is the page around it — the
+  # canonical URL, what the filter does to rows, and that a tag the editor
+  # cannot assign still narrows to the records that carry it.
+  test "index renders a search area that narrows and stays in the URL" do
+    Location.create!(universe: @universe, name: "Ravenscar", description: "A keep on the coast")
+
+    get universe_locations_url(universe_slug: @universe.slug, q: "Raven")
+
+    assert_response :success
+    assert_select "form[action=?][method=?]", universe_locations_path(universe_slug: @universe.slug), "get" do
+      assert_select "input[name=q][value=?]", "Raven"
+    end
+    assert_select ".taxonomy-tree-filter", text: /Showing 1 location of 3 locations/
+    assert_select ".taxonomy-node", count: 1
+  end
+
+  test "index filters by a location tag, including a grouping tag the editor cannot assign" do
+    # `location_tag_two` is `taggable: false`, so the modal omits it, and
+    # `location_two` already carries one. Validating the filter against the
+    # editor's list would drop a tag that is really in effect.
+    assert_not location_tags(:location_tag_two).taggable?
+
+    get universe_locations_url(universe_slug: @universe.slug, location_tag_id: location_tags(:location_tag_two).id)
+
+    assert_response :success
+    assert_select ".taxonomy-node", count: 1
+    assert_select "select[name=location_tag_id] option[selected][value=?]", location_tags(:location_tag_two).id
+  end
+
+  test "index redirects a form submission to the canonical filter query" do
+    get universe_locations_url(universe_slug: @universe.slug, q: "Mist", location_tag_id: "", sort: "")
+
+    assert_redirected_to universe_locations_url(universe_slug: @universe.slug, q: "Mist")
+  end
+
+  test "index reports a location tag it could not use instead of showing an empty list" do
+    get universe_locations_url(universe_slug: @universe.slug, location_tag_id: location_tags(:location_tag_three).id)
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /not a location tag of this universe/
+    assert_select ".taxonomy-node", count: 2
+  end
+
+  test "index separates a filtered empty result from a universe without locations" do
+    get universe_locations_url(universe_slug: @universe.slug, q: "no such location")
+
+    assert_response :success
+    assert_select ".empty-title", text: "Nothing matches these filters"
+    assert_select ".empty-description",
+      text: /2 locations in this universe, but none of them match the filters above/
+    assert_select ".empty-state .badge", text: /Search: “no such location”/
+    assert_select ".empty-state a", text: "Clear filters"
+  end
+
+  test "a guest can filter and sees no mutation control" do
+    sign_out
+
+    get universe_locations_url(universe_slug: @universe.slug, q: "Location one")
+
+    assert_response :success
+    assert_select ".taxonomy-node", count: 1
+    assert_select "[data-controller='taxonomy-tree']", count: 0
+    assert_select ".taxonomy-tree-filter input[name=q]", minimum: 1
+  end
 end

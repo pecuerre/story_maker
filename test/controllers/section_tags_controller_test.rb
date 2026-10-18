@@ -114,4 +114,12 @@ class SectionTagsControllerTest < ActionDispatch::IntegrationTest
     assert_equal false, response.parsed_body["taggable"]
     assert_not created.taggable
   end
+
+  test "index narrows story tags by text" do
+    get universe_story_section_tags_url(universe_slug: @universe.slug, story_id: @story, q: "Section tag one")
+
+    assert_response :success
+    assert_select ".taxonomy-node", count: 1
+    assert_select ".taxonomy-tree-filter input[name=q][value=?]", "Section tag one"
+  end
 end

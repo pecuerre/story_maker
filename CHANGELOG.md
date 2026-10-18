@@ -38,6 +38,21 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-18
+
+### added
+
+- **Locations and all eight tag taxonomies can be filtered.** The filter area lives in the shared
+  taxonomy tree, trees keep the order they were dragged in and offer no reader sort, and the header
+  badge reads the narrowed count instead of the taxonomy total.
+- **The Relations and Ownerships lists can be filtered.** Free text, the list's own tag, and a chosen
+  order narrow both; the text reaches the names of the two records each one links rather than only
+  the optional own name, and the Ownerships label's translated sentence is deliberately not
+  searchable.
+- **A Relations or Ownerships filter survives a re-render and a delete.** A rejected create or update
+  re-renders the same narrowed list beside the error summary, and deleting from a narrowed list
+  returns to it.
+
 ## 2026-10-16
 
 ### added

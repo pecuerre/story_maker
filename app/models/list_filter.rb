@@ -153,6 +153,44 @@ class ListFilter
       relation.where(conditions.join(" OR "), pattern: pattern)
     end
 
+    # Free text that has to reach **across** the record rather than search its own
+    # columns: `Relation`'s label is `"A → B"` and `Ownership`'s is a sentence,
+    # and neither is stored, so the words a reader types are on the two records
+    # this one links.
+    #
+    # `columns` are this record's own searchable columns, `endpoints` are the
+    # `belongs_to` associations that name the linked records, and
+    # `endpoint_columns` are the columns searched on each of them. Only named
+    # columns are reached: a label the model composes in Ruby — `Ownership`'s own
+    # translated sentence — cannot be matched here in any language, and matching
+    # the words of one language's chrome would be a search that quietly means
+    # something only in that language.
+    #
+    # The endpoints are reached by **subquery** rather than by joining their
+    # table. A join would put a second `id` and `name` into the statement and make
+    # the unqualified `ORDER BY id` every sort in this contract ends with
+    # ambiguous; a subquery keeps the narrowed relation's own table the only one
+    # in the query, so this composes with `#sorted` unchanged.
+    def narrowed_by_linked_text(relation, table:, columns:, endpoints:, endpoint_columns:)
+      return relation if text.blank?
+
+      pattern = "%#{relation.klass.sanitize_sql_like(text)}%"
+      conditions = columns.map { |column| "#{table}.#{column} LIKE :pattern ESCAPE '\\'" }
+
+      endpoints.each do |association|
+        reflection = relation.klass.reflect_on_association(association)
+        endpoint = reflection.klass
+        endpoint_conditions = endpoint_columns.map do |column|
+          "#{endpoint.table_name}.#{column} LIKE :pattern ESCAPE '\\'"
+        end
+        endpoint_ids = endpoint.where(endpoint_conditions.join(" OR "), pattern: pattern).select(:id)
+
+        conditions << "#{table}.#{reflection.foreign_key} IN (#{endpoint_ids.to_sql})"
+      end
+
+      relation.where(conditions.join(" OR "), pattern: pattern)
+    end
+
     # A filter value is validated against the already-loaded, already-scoped list
     # the index needed anyway, so a foreign id never reaches the query and costs
     # no query of its own. A value that is not in the list is dropped and

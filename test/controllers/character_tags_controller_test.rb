@@ -172,6 +172,15 @@ class CharacterTagsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Character three"
   end
 
+  test "index narrows tags by text" do
+    get universe_character_tags_url(universe_slug: @universe.slug, q: "Character tag one")
+
+    assert_response :success
+    assert_select ".taxonomy-node", count: 1
+    assert_select ".taxonomy-tree-filter input[name=q][value=?]", "Character tag one"
+    assert_select ".taxonomy-tree-filter", text: /Showing 1 tag of 3 tags/
+  end
+
   private
 
     # The tag page's own blocks in the order a reader meets them. The tab strip

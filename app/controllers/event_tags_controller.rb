@@ -3,20 +3,36 @@ class EventTagsController < ApplicationController
   include TagDetails
   include MaintainsSiblingPositions
   include DraftMutation
+  include FilteredListQuery
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :event_tag
+
+  # The filter rides along with the index. A tree keeps its drag order and
+  # offers no reader sort, so `index` is the only action that reads the filter.
+  filters_list_with EventTagFilter, only: %i[ index ]
 
   before_action :set_event_tag, only: %i[ show update destroy ]
 
   # GET /event_tags or /event_tags.json
   def index
+    @list_filter = EventTagFilter.new(@filter_query)
+    # A GET form submits every field, so the ones the author left alone arrive
+    # blank. Redirecting once to the canonical query keeps the address bar, a
+    # bookmark, and a shared link limited to the filters really in effect.
+    return redirect_to_canonical_filtered_list if blank_filter_values?
+
     # One query for the whole taxonomy, and the index the tree descends through.
     # `includes(:children)` used to reach the first level only, and the photo is
     # read for every node because the editor carries its stored image.
-    @hierarchy = HierarchyIndex.build(Current.universe.event_tags.includes(:photo))
+    @hierarchy = HierarchyIndex.build(@list_filter.apply(
+      Current.universe.event_tags.includes(:photo)))
     @event_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(Current.universe.event_tags)
+    # The total is read only when a filter is really in effect, so the ordinary
+    # unfiltered visit costs no extra query for it.
+    @event_tag_total = Current.universe.event_tags.count if @list_filter.narrowed?
+    flash_discarded_filter_values
   end
 
   # POST /event_tags or /event_tags.json
@@ -70,6 +86,15 @@ class EventTagsController < ApplicationController
   # Use callbacks to share common setup or constraints between actions.
   def set_event_tag
     @event_tag = Current.universe.event_tags.find(params.expect(:id))
+  end
+
+  # The canonical index URL for a set of filter values. `FilteredListQuery` owns
+  # everything else about reading and carrying the filter, and this is the one
+  # thing it cannot know: where this list's own URL is.
+  def filtered_list_path_with(query)
+    path = universe_event_tags_path
+
+    query.any? ? "#{path}?#{query.to_query}" : path
   end
 
   def event_tag_json

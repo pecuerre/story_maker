@@ -1,9 +1,10 @@
 # List filters
 
-One home for the contract **every** in-list filter shares. The Scenes list is the one filter that
-ships; the workspaces behind it are adding theirs from the backlog item *Search, filtering, and
-sorting for large lists*. A workspace's own keys and its own decisions stay with that workspace —
-the Scene filter's are in [`scenes.md`](scenes.md#the-list-the-filter-and-the-ordering).
+One home for the contract **every** in-list filter shares. Every in-list filter in the application
+follows it; the Scenes, Characters, Items, Events, Relations, and Ownerships lists each carry their
+own keys, and so do Locations and all eight tag taxonomies, and each workspace makes its own
+decisions about them. The Scene filter's are in
+[`scenes.md`](scenes.md#the-list-the-filter-and-the-ordering).
 
 ## What a list filter is
 
@@ -27,7 +28,7 @@ controller does the one thing a controller alone can, which is build a URL.
 | What the narrowed list is | the subclass's `#apply` |
 | The canonical keys really in effect | the subclass's `#query_params` |
 | Which orders the list offers, and how one is validated and applied | the subclass's `SORTS` and `DEFAULT_SORT` |
-| Free text, a tag, an inclusive day range, a value resolved from a loaded list, the chosen order | `ListFilter`, shared |
+| Free text, free text across a record's linked endpoints, a tag, an inclusive day range, a value resolved from a loaded list, the chosen order | `ListFilter`, shared |
 | Slicing the query, the one-shot canonical redirect, carrying the filter through an in-list mutation, reporting a drop | `FilteredListQuery` |
 | What each value means to the reader | the workspace's own helper |
 
@@ -94,6 +95,13 @@ the same as `active?` and needs no special case.
    a search box needs, and `%` and `_` are escaped with an explicit `ESCAPE` character, so an
    author's percent sign is a character to find rather than a pattern matching everything. The
    columns are qualified with their table, because a narrowed relation may carry a join.
+9. **Text that names what the record links is reached through the link, not the record.** A
+   `Relation`'s label is `"A → B"` and an `Ownership`'s is a sentence; neither is stored, so the
+   words a reader types for them are on the endpoint records. `ListFilter#narrowed_by_linked_text`
+   searches the record's own columns and the named columns of each `belongs_to` endpoint, **by
+   subquery rather than by a join**, so `#sorted`'s unqualified `ORDER BY id` stays unambiguous. A
+   label the model composes in Ruby — `Ownership`'s translated sentence — cannot be matched in any
+   language and is deliberately not faked.
 
 ## The empty result and the empty list are different sentences
 
@@ -133,6 +141,26 @@ Decided once for every workspace, and settled in
 [`backlog.md`](../backlog.md): the alternative of keeping them with a count puts a row outside the
 filter the reader just applied, and matching them on payload values is the only option that can put
 one in a result set, which needs the filter to read a draft payload rather than a record.
+
+## Trees keep the order they were dragged in
+
+Locations and every tag taxonomy are trees rather than flat lists: their rows are positioned by
+dragging, and `HierarchyIndex` hard-codes `[position, id]`. A reader-chosen sort would show an order
+the drag control contradicts, so **a tree offers no sort**: `ListFilter#sortable?` answers false,
+`sort` is nil, and a tree's URL never carries a `sort` key. A tree's filter narrows by text and, for
+Locations, by its own tag; it never reorders the tree.
+
+The filter area of a tree lives in `shared/_taxonomy_tree` rather than in a workspace partial: one
+search area, an optional tag select (tags carry no tags of their own), and no order control. The
+pending rows a draft would create render as `.taxonomy-pending` nodes after the real roots, not as
+rows, and a filtered tree shows none of them — a remembered create names no record, so it cannot
+match a text or tag filter.
+
+The header badge of a tree reads the **narrowed count**: how many records the filters show, not how
+many the taxonomy holds. That is one count instead of two — the per-taxonomy views used to issue a
+fresh `.count` while `TagsController` read `hierarchy.records.length` — and it matches the flat
+lists, which show what the reader is looking at. A filtered tree that matched nothing shows the
+no-match state: which filters produced nothing, repeated as text, and a way to clear them.
 
 ## What adding a filter to a workspace takes
 

@@ -3,21 +3,37 @@ class SceneTagsController < ApplicationController
   include MaintainsSiblingPositions
   include RequiresJsonMutationFormat
   include DraftMutation
+  include FilteredListQuery
 
   allow_unauthenticated_access only: %i[ index show ]
   maintains_sibling_positions_for :scene_tag
+
+  # The filter rides along with the index. A tree keeps its drag order and
+  # offers no reader sort, so `index` is the only action that reads the filter.
+  filters_list_with SceneTagFilter, only: %i[ index ]
 
   before_action :set_story
   before_action :set_scene_tag, only: %i[ show update destroy ]
   before_action :require_json_mutation_format, only: %i[ create update destroy ]
 
   def index
+    @list_filter = SceneTagFilter.new(@filter_query)
+    # A GET form submits every field, so the ones the author left alone arrive
+    # blank. Redirecting once to the canonical query keeps the address bar, a
+    # bookmark, and a shared link limited to the filters really in effect.
+    return redirect_to_canonical_filtered_list if blank_filter_values?
+
     # One query for the whole taxonomy, and the index the tree descends through.
     # `includes(:children)` used to reach the first level only, and the photo is
     # read for every node because the editor carries its stored image.
-    @hierarchy = HierarchyIndex.build(@story.scene_tags.includes(:photo))
+    @hierarchy = HierarchyIndex.build(@list_filter.apply(
+      @story.scene_tags.includes(:photo)))
     @scene_tags = @hierarchy.roots
     @tagged_counts = TaggedRecordCounts.for(@story.scene_tags)
+    # The total is read only when a filter is really in effect, so the ordinary
+    # unfiltered visit costs no extra query for it.
+    @scene_tag_total = @story.scene_tags.count if @list_filter.narrowed?
+    flash_discarded_filter_values
   end
 
   # GET /scene_tags/:id — the tag's own details page: the records that carry it.
@@ -89,6 +105,15 @@ class SceneTagsController < ApplicationController
 
     def update_scene_tag(attributes)
       update_with_sibling_position(@scene_tag, attributes)
+    end
+
+    # The canonical index URL for a set of filter values. `FilteredListQuery` owns
+    # everything else about reading and carrying the filter, and this is the one
+    # thing it cannot know: where this list's own URL is.
+    def filtered_list_path_with(query)
+      path = universe_story_scene_tags_path(story_id: @story)
+
+      query.any? ? "#{path}?#{query.to_query}" : path
     end
 
     def scene_tag_json

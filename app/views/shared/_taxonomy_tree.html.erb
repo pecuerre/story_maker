@@ -30,7 +30,12 @@
     # Sections are the one taxonomy drawn inside a Story: the draft belongs to the
     # universe, so a remembered Section from a sibling story is not an answer to
     # "what this tree would hold". The seven universe-level trees omit it. %>
-<% pending_creates = draft_pending_taxonomy_creates(model_param, story: local_assigns[:pending_story]) %>
+<% filter = local_assigns[:filter] %>
+<% tag_name = local_assigns[:filter_tag_name] %>
+<%# A filtered tree shows no remembered creates: a remembered create names no
+    record, so it cannot match a text or tag filter. A reader who only *sorted*
+    would still see them — but trees offer no sort, they keep the drag order. %>
+<% pending_creates = filter.nil? || !filter.narrowed? ? draft_pending_taxonomy_creates(model_param, story: local_assigns[:pending_story]) : [] %>
 <% empty_description = if editable
   local_assigns[:empty_description] || t("shared.taxonomy_tree.empty_description")
 else
@@ -84,6 +89,18 @@ end %>
 
   <%= render "shared/content_intro", intro: local_assigns[:description] %>
 
+  <% if local_assigns[:filter].present? %>
+    <%= render "shared/taxonomy_tree_filter",
+      filter: local_assigns[:filter],
+      filter_path: local_assigns[:filter_path],
+      filter_total: local_assigns[:filter_total],
+      filter_shown: local_assigns[:filter_shown],
+      filter_count_label: local_assigns[:filter_count_label] || count_label,
+      filter_tag_param: local_assigns[:filter_tag_param],
+      filter_tag_choices: local_assigns[:filter_tag_choices],
+      filter_tag_name: local_assigns[:filter_tag_name] %>
+  <% end %>
+
   <div class="taxonomy-surface">
     <% if editable %>
       <p class="taxonomy-hint">
@@ -94,10 +111,31 @@ end %>
 
     <% if nodes.empty? && pending_creates.empty? %>
       <div class="p-3 p-md-4" data-taxonomy-tree-empty>
-        <%= render "shared/empty_state",
-          title: t("taxonomies.#{model_param}.none_yet"),
-          description: empty_description,
-          icon: "diagram-3" %>
+        <% if filter&.narrowed? %>
+          <%= render "shared/empty_state",
+            title: t("shared.taxonomy_tree.filter.no_match_title"),
+            description: t("shared.taxonomy_tree.filter.no_match_description",
+              count: count_with_label(filter_total || 0, filter_count_label || count_label)) do %>
+            <span class="d-block mb-3">
+              <% if filter.text.present? %>
+                <span class="badge rounded-pill text-bg-light border me-1">
+                  <%= t("shared.taxonomy_tree.filter.summaries.search", value: filter.text) %>
+                </span>
+              <% end %>
+              <% if tag_name.present? %>
+                <span class="badge rounded-pill text-bg-light border me-1">
+                  <%= t("shared.taxonomy_tree.filter.summaries.tag", value: tag_name) %>
+                </span>
+              <% end %>
+            </span>
+            <%= link_to t("shared.taxonomy_tree.filter.clear"), filter_path, class: "btn btn-primary" %>
+          <% end %>
+        <% else %>
+          <%= render "shared/empty_state",
+            title: t("taxonomies.#{model_param}.none_yet"),
+            description: empty_description,
+            icon: "diagram-3" %>
+        <% end %>
       </div>
     <% end %>
 

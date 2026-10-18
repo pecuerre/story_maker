@@ -155,4 +155,127 @@ class OwnershipsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",
       universe_ownerships_path(universe_slug: @universe.slug), "Kept for another try"
   end
+
+  # The filter, the sort, and the three empty states. `OwnershipFilterTest` covers
+  # the value object; what only a request can show is the page around it — the
+  # canonical URL, what the filter does to rows, and that it survives a re-render.
+  test "index renders a search area that narrows, orders, and stays in the URL" do
+    Ownership.create!(universe: @universe, character: characters(:character_three), item: items(:item_two),
+      description: "Kept in the vault")
+
+    get universe_ownerships_url(universe_slug: @universe.slug, q: "vault", sort: "created")
+
+    assert_response :success
+    assert_select "form[action=?][method=?]", universe_ownerships_path(universe_slug: @universe.slug), "get" do
+      assert_select "input[name=q][value=?]", "vault"
+      assert_select "select[name=sort] option[selected][value=?]", "created"
+    end
+    assert_select ".ownership-filter", text: /Showing 1 ownership of 2 ownerships/
+    assert_select ".entity-list .entity-row", count: 1
+  end
+
+  test "index finds an ownership by the name of its item or its character" do
+    # The label is composed from the two names and is translated chrome, so the
+    # names are what a reader types.
+    Ownership.create!(universe: @universe, character: characters(:character_three), item: items(:item_two))
+
+    get universe_ownerships_url(universe_slug: @universe.slug, q: "Item two")
+
+    assert_response :success
+    assert_select ".entity-list .entity-row", count: 1
+    assert_select ".ownership-filter", text: /Search: “Item two”/
+  end
+
+  test "index filters by an ownership tag" do
+    Ownership.create!(universe: @universe, character: characters(:character_three), item: items(:item_two),
+      ownership_tags: [ @ownership_tag ])
+
+    get universe_ownerships_url(universe_slug: @universe.slug, ownership_tag_id: @ownership_tag.id)
+
+    assert_response :success
+    assert_select ".entity-list .entity-row", count: 1
+    assert_select "select[name=ownership_tag_id] option[selected][value=?]", @ownership_tag.id
+  end
+
+  test "index redirects a form submission to the canonical filter query" do
+    get universe_ownerships_url(universe_slug: @universe.slug, q: "vault", ownership_tag_id: "", sort: "")
+
+    assert_redirected_to universe_ownerships_url(universe_slug: @universe.slug, q: "vault")
+  end
+
+  test "index reports an ownership tag it could not use instead of showing an empty list" do
+    get universe_ownerships_url(universe_slug: @universe.slug, ownership_tag_id: ownership_tags(:ownership_tag_three).id)
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /not an ownership tag of this universe/
+    assert_select ".entity-list .entity-row", count: 1
+  end
+
+  test "index reports an order this list does not offer and falls back to the default" do
+    get universe_ownerships_url(universe_slug: @universe.slug, sort: "password")
+
+    assert_response :success
+    assert_select ".flash-alert, .alert", text: /not one this list offers/
+    assert_select "select[name=sort] option[selected][value=?]", OwnershipFilter::DEFAULT_SORT
+  end
+
+  test "index separates a filtered empty result from a universe without ownerships" do
+    get universe_ownerships_url(universe_slug: @universe.slug, q: "no such ownership")
+
+    assert_response :success
+    assert_select ".empty-title", text: "No ownerships match these filters"
+    assert_select ".empty-description",
+      text: /Universe one has 1 ownership, but none of them match the filters above/
+    assert_select ".empty-state .badge", text: /Search: “no such ownership”/
+    assert_select ".empty-state a", text: "Clear filters"
+    assert_select ".ownership-filter a", text: "Clear filters", count: 0
+    assert_select ".empty-state a", text: /Add ownership/, count: 0
+  end
+
+  test "a guest can filter and sees no mutation control" do
+    sign_out
+
+    get universe_ownerships_url(universe_slug: @universe.slug, q: "Item one")
+
+    assert_response :success
+    assert_select ".entity-list .entity-row", count: 1
+    assert_select "form[data-controller=modal-form]", count: 0
+    assert_select "button[data-action='modal-form#open']", count: 0
+    assert_select ".ownership-filter input[name=q]", minimum: 1
+  end
+
+  test "a filter survives a rejected create and comes back on the editor" do
+    post universe_ownerships_url(universe_slug: @universe.slug, q: "Item one"), params: {
+      ownership: { item_id: @item.id, character_id: "", description: "Kept for another try" }
+    }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger[role=alert]", text: /prevented this ownership from being saved/
+    assert_select ".ownership-filter input[name=q][value=?]", "Item one"
+    assert_select ".ownership-filter", text: /Showing 1 ownership of 1 ownership/
+    assert_select "button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",
+      universe_ownerships_path(universe_slug: @universe.slug, q: "Item one"), "Kept for another try"
+  end
+
+  test "a filter survives a rejected update and comes back on the edited row" do
+    ownership = Ownership.create!(universe: @universe, character: characters(:character_three),
+      item: items(:item_two), description: "Kept in the vault")
+
+    patch universe_ownership_url(universe_slug: @universe.slug, id: ownership, q: "vault"), params: {
+      ownership: { character_id: "", description: "Rejected text" }
+    }
+
+    assert_response :unprocessable_content
+    assert_select ".ownership-filter input[name=q][value=?]", "vault"
+    assert_select ".entity-list .entity-row", count: 1
+    assert_select ".row-actions button[data-action='modal-form#open'][data-modal-form-url=?][data-modal-form-values-value*=?]",
+      universe_ownership_path(universe_slug: @universe.slug, id: ownership, q: "vault"), "Rejected text"
+  end
+
+  test "deleting from a filtered list returns to the same narrowed list" do
+    delete universe_ownership_url(universe_slug: @universe.slug, id: ownerships(:ownership_one), q: "Item one")
+
+    assert_response :see_other
+    assert_redirected_to universe_ownerships_path(universe_slug: @universe.slug, q: "Item one")
+  end
 end

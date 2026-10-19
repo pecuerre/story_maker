@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_13_090200) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_000001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,6 +37,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_090200) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "api_token_universes", id: false, force: :cascade do |t|
+    t.integer "api_token_id", null: false
+    t.integer "universe_id", null: false
+    t.index ["api_token_id", "universe_id"], name: "index_api_token_universes_on_api_token_id_and_universe_id", unique: true
+    t.index ["api_token_id"], name: "index_api_token_universes_on_api_token_id"
+    t.index ["universe_id"], name: "index_api_token_universes_on_universe_id"
+  end
+
+  create_table "api_tokens", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name", null: false
+    t.string "token_digest", null: false
+    t.string "token_prefix", null: false
+    t.datetime "last_used_at"
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["revoked_at"], name: "index_api_tokens_on_revoked_at"
+    t.index ["token_prefix"], name: "index_api_tokens_on_token_prefix", unique: true
+    t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
   create_table "character_tags", force: :cascade do |t|
@@ -628,6 +650,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_13_090200) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "api_token_universes", "api_tokens"
+  add_foreign_key "api_token_universes", "universes"
+  add_foreign_key "api_tokens", "users"
   add_foreign_key "character_tags", "character_tags", column: "parent_id"
   add_foreign_key "character_tags", "photos", on_delete: :nullify
   add_foreign_key "character_tags", "universes"

@@ -134,6 +134,9 @@ class Universe < ApplicationRecord
 
   belongs_to :owner, class_name: "User"
   has_many :memberships, class_name: "UniverseMembership", dependent: :destroy
+  # A token grant names this universe, so it goes with the universe. `delete_all`
+  # because the join table has no primary key of its own.
+  has_many :api_token_universes, dependent: :delete_all
   # A thread belongs to one record and one universe. The record's own destroy
   # already takes its thread, so this is what covers the universe cascade: a
   # thread that outlived the record it was about would be an orphan row nothing

@@ -264,6 +264,13 @@ class AbilityTest < ActiveSupport::TestCase
     not_content = {
       "Session" => "one signed-in browser, never universe-scoped content",
       "User" => "the person, not something a universe contains",
+      # A bearer credential bound to a person and to an explicit set of universes.
+      # It is authenticated by `TokenAuthentication` rather than CanCan, and its
+      # reachable universes are answered by its join table, not by content rules.
+      "ApiToken" => "a bearer credential bound to a person, authenticated by `TokenAuthentication`",
+      # A grant narrowing a token to a universe, not universe content: reach is
+      # answered by the join row itself, never by a CanCan rule.
+      "ApiTokenUniverse" => "a token's grant to a universe, authorized through the token",
       # A thread is authorized through the record it is about: the controller
       # resolves the record through `RecordTarget` inside the authorized universe
       # and asks `Ability` about *that*. Registering the thread itself would give

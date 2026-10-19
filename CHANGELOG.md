@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **API tokens and the JSON-only API surface.** A bearer-token credential (`api_tokens`, `api_token_universes`) resolves `Authorization: Bearer …` into `Current.user` and `Current.api_token`, narrows a request to the token's universes, and backs `Api::BaseController`; slice 1 proves it with characters index, show, and create/update/destroy as JSON.
 - **A contextual inspector on the right utility sidebar.** It replaces the Analytics and AI placeholders with up to five rows of page-relevant details — a selected story's sections and scenes, and a selected record's relations and ownerships — and stays hidden when there is nothing useful to show.
 
 ## 2026-10-18

@@ -152,6 +152,14 @@ Rails.application.routes.draw do
     resource :editing, controller: "draft_editing", only: %i[ create destroy ], path: "editing"
   end
 
+  # The external-tool surface. It is JSON-only, authenticated by a bearer token
+  # rather than a session, and every route stays inside a universe scope.
+  namespace :api do
+    scope "u/:universe_slug", as: :universe do
+      resources :characters, only: %i[ index show create update destroy ]
+    end
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
   root "universes#index"
 end

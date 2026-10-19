@@ -56,6 +56,11 @@ class RouteActionContractTest < ActiveSupport::TestCase
   test "every page route has a template" do
     offenses = application_routes.filter_map do |route|
       next unless page_request?(route)
+      # The API surface (`api/*`) is JSON-only: its reads render JSON and
+      # intentionally have no HTML templates, so it is excluded here. Its actions
+      # are still held by the test above that every route names an implemented
+      # action.
+      next if route.defaults[:controller].to_s.start_with?("api/")
 
       controller = route.defaults[:controller]
       action = route.defaults[:action]

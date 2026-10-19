@@ -1,0 +1,7 @@
+token_one_universe_one:
+  api_token: token_one
+  universe: universe_one
+
+token_two_universe_two:
+  api_token: token_two
+  universe: universe_two

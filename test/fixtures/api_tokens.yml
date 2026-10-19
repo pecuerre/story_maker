@@ -1,0 +1,16 @@
+<% token_one_digest = BCrypt::Password.create("alpha-api-token-one") %>
+<% token_two_digest = BCrypt::Password.create("beta-api-token-two") %>
+
+# Bound to universe one only: a request against any other universe is refused.
+token_one:
+  user: user_one
+  name: Token one
+  token_digest: <%= token_one_digest %>
+  token_prefix: alpha-ap
+
+# Bound to universe two only.
+token_two:
+  user: user_two
+  name: Token two
+  token_digest: <%= token_two_digest %>
+  token_prefix: beta-ap

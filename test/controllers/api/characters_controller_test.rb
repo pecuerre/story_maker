@@ -1,0 +1,128 @@
+require "test_helper"
+
+# The API surface is authenticated by a bearer token rather than a session, so no
+# `sign_in_as` is used here: every request carries `Authorization: Bearer …`.
+class Api::CharactersControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @universe = universes(:universe_one)
+    @other_universe = universes(:universe_two)
+    @token = api_tokens(:token_one)   # issued for universe one only
+    @bearer = "alpha-api-token-one"
+  end
+
+  def headers
+    { "Authorization" => "Bearer #{@bearer}" }
+  end
+
+  test "index lists the universe's characters as json" do
+    get api_universe_characters_url(universe_slug: @universe.slug), headers: headers, as: :json
+
+    assert_response :success
+    assert_equal [ "Character one", "Character three", "Character two" ],
+      response.parsed_body.map { |character| character["name"] }.sort
+  end
+
+  test "index is empty for a universe without characters" do
+    @universe.characters.destroy_all
+
+    get api_universe_characters_url(universe_slug: @universe.slug), headers: headers, as: :json
+
+    assert_response :success
+    assert_empty response.parsed_body
+  end
+
+  test "show returns one character as json" do
+    get api_universe_character_url(universe_slug: @universe.slug, id: characters(:character_one)),
+      headers: headers, as: :json
+
+    assert_response :success
+    body = response.parsed_body
+    assert_equal characters(:character_one).id, body["id"]
+    assert_equal characters(:character_one).name, body["name"]
+    assert_nil body["description"]
+  end
+
+  test "create creates a character as json" do
+    assert_difference("Character.count") do
+      post api_universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "Api character", description: "Via the API" } },
+        headers: headers, as: :json
+    end
+
+    assert_response :created
+    body = response.parsed_body
+    assert_equal "Api character", body["name"]
+    assert_equal "Via the API", body["description"]
+    assert_equal [], body["character_tag_ids"]
+    character = Character.find(body["id"])
+    assert_equal @universe.id, character.universe_id
+  end
+
+  test "create rejects a tag from another universe" do
+    foreign_tag = character_tags(:character_tag_three)
+
+    assert_no_difference("Character.count") do
+      post api_universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "Mis-scoped", character_tag_ids: [ foreign_tag.id ] } },
+        headers: headers, as: :json
+    end
+
+    assert_response :unprocessable_content
+  end
+
+  test "update updates a character as json" do
+    patch api_universe_character_url(universe_slug: @universe.slug, id: characters(:character_one)),
+      params: { character: { name: "Renamed via api" } },
+      headers: headers, as: :json
+
+    assert_response :success
+    assert_equal "Renamed via api", characters(:character_one).reload.name
+  end
+
+  test "destroy deletes a character as json" do
+    assert_difference("Character.count", -1) do
+      delete api_universe_character_url(universe_slug: @universe.slug, id: characters(:character_two)),
+        headers: headers, as: :json
+    end
+
+    assert_response :no_content
+  end
+
+  test "a token issued for one universe is refused on another" do
+    get api_universe_characters_url(universe_slug: @other_universe.slug), headers: headers, as: :json
+
+    assert_response :not_found
+  end
+
+  test "a request without a bearer token is refused" do
+    get api_universe_characters_url(universe_slug: @universe.slug), as: :json
+
+    assert_response :unauthorized
+  end
+
+  test "an unknown bearer token is refused" do
+    get api_universe_characters_url(universe_slug: @universe.slug),
+      headers: { "Authorization" => "Bearer does-not-exist" }, as: :json
+
+    assert_response :unauthorized
+  end
+
+  test "a revoked bearer token is refused" do
+    api_tokens(:token_one).revoke!
+
+    get api_universe_characters_url(universe_slug: @universe.slug),
+      headers: headers, as: :json
+
+    assert_response :unauthorized
+  end
+
+  test "a non-json mutation is refused before it writes" do
+    assert_no_difference("Character.count") do
+      post api_universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "No json" } },
+        headers: headers
+    end
+
+    assert_response :not_acceptable
+  end
+end

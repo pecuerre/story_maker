@@ -157,6 +157,28 @@ Rails.application.routes.draw do
   namespace :api do
     scope "u/:universe_slug", as: :universe do
       resources :characters, only: %i[ index show create update destroy ]
+      # Story-scoped read surface. Sections, scenes, and their tags live inside a
+      # story; elements live inside a scene.
+      resources :stories, only: %i[ index show ] do
+        resources :sections, only: %i[ index show ]
+        resources :scenes, only: %i[ index show ] do
+          resources :scene_elements, path: "elements", only: %i[ index ]
+        end
+        resources :section_tags, only: %i[ index show ]
+        resources :scene_tags, only: %i[ index show ]
+      end
+      # Universe-scoped read surface.
+      resources :locations, only: %i[ index show ]
+      resources :items, only: %i[ index show ]
+      resources :events, only: %i[ index show ]
+      resources :relations, only: %i[ index show ]
+      resources :ownerships, only: %i[ index show ]
+      resources :character_tags, only: %i[ index show ]
+      resources :location_tags, only: %i[ index show ]
+      resources :item_tags, only: %i[ index show ]
+      resources :event_tags, only: %i[ index show ]
+      resources :relation_tags, only: %i[ index show ]
+      resources :ownership_tags, only: %i[ index show ]
     end
   end
 

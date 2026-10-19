@@ -145,24 +145,6 @@ it has a useful destination and clear empty/loading/error states.
    [ADR 0029](adr/0029-per-endpoint-throttle-groups.md)), so a credential bound to a person inherits
    the intended boundaries rather than needing new machinery.
 
-   **Slice 1 — the credential.** `api_tokens` (`user_id`, `name`, `token_digest`, `last_used_at`,
-   `revoked_at`) and `api_token_universes` (`api_token_id`, `universe_id`); the token is shown once
-   and only its digest is stored, the same discipline as `password_digest`. A `TokenAuthentication`
-   concern beside `Authentication` resolves `Authorization: Bearer …` into `Current.user` and
-   `Current.api_token` and narrows the reachable universes to the join table. `Api::BaseController`
-   drops `allow_browser versions: :modern` and forgery protection for that surface only, and keeps
-   `Ability` and `MutationThrottle` untouched. Prove it with one vertical slice — characters index,
-   show, and the three mutations — plus the case where a token issued for one universe is refused on
-   another. This slice needs its own ADR: a new credential type and a new request surface are both
-   foundational rather than extensions of an existing decision.
-
-   **Slice 2 — the read surface.** Stories, sections, scenes, locations, items, events, relations,
-   ownerships, and tags answer `index` and `show` as JSON. Each already answers those two actions as
-   HTML against a tested and authorized query, so this is a projection of existing scoping rather
-   than new policy. One read is genuinely new: `SceneElementsController` has no read action at all
-   today — Elements are read on Scene Details
-   ([features/scenes.md](features/scenes.md)) — so the API needs a `scene_id`-scoped index for them.
-
    **Slice 3 — the write surface for the HTML-only records.** Scenes (create, update, destroy, move,
    group), plus stories, relations, and ownerships. These are the controllers with no `format.json`
    branch, which is the actual reason an agent cannot create a Scene today. Reusing

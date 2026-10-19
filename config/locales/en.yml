@@ -57,7 +57,7 @@ en:
     tools:
       navigation_label: "Universe configuration and tools"
       eyebrow: "Universe tools"
-      intro: "Additional collaboration, analytics, and AI tools will live here."
+      intro: "The inspector below shows what the page in front of you is about: a story's sections and scenes, and a record's relations and ownerships."
       configuration: "Configuration"
       tags: "Tags"
       members: "Members"
@@ -80,11 +80,20 @@ en:
       # `admin` and on `draft_based?` like the history beside it: it names every author
       # who has closed a draft, and a `direct` universe has none.
       collaborators: "Collaborators"
-      analytics: "Analytics"
-      insights: "Insights"
-      reports: "Reports"
-      ai: "AI"
-      assistant: "Assistant"
+      # The inspector shows page-relevant details beside Configuration and
+      # Collaboration — the selected story's sections and scenes, and a selected
+      # record's relations and ownerships — at most five rows and nothing at all
+      # when the page has nothing useful to say. It replaces the Analytics and AI
+      # placeholders, which had no model or route behind them.
+      inspector: "Inspector"
+
+  # Page-relevant details the right utility sidebar shows beside Configuration
+  # and Collaboration. Each label names what its value counts.
+  inspector:
+    sections: "Sections"
+    scenes: "Scenes"
+    relations: "Relations"
+    ownerships: "Ownerships"
 
   # The access level a reader has in a universe, as a details page states it.
   universe_access:

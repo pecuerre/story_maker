@@ -159,7 +159,7 @@ then the sections that follow it:
   decision has to be able to lower it on the page it redirects to, which a `MenuCountCache` entry could
   not promise for up to its TTL. It costs one `COUNT` over `review_requests.universe_id`, asked only by
   the readers who may see the queue.
-- **Analytics** and **AI**: placeholder groups; no model or route exists for those entries yet.
+- **Inspector**: page-relevant details beside Configuration and Collaboration — the selected story's section and scene counts, and a selected record's relations and ownerships. It renders at most five rows and nothing at all when the page has nothing useful to say, so it stays hidden rather than rendering an empty box. It replaced the Analytics and AI placeholder groups, which had no model or route behind them.
 
 Configuration is about **the universe**: Tags and Members only. A platform preference belongs in the
 top bar's **Settings** entry instead, because a theme is not universe state.

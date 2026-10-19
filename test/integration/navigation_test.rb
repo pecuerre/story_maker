@@ -116,8 +116,6 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "button[data-bs-target='#workspace-tools-navigation']", text: /Tools/
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Configuration"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Collaboration"
-    assert_select "aside.right-sidebar .sidebar-section-title", text: "Analytics"
-    assert_select "aside.right-sidebar .sidebar-section-title", text: "AI"
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Settings", count: 0
     assert_select "aside.right-sidebar .sidebar-context--tools .sidebar-eyebrow", text: "Universe tools"
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
@@ -201,6 +199,15 @@ class NavigationTest < ActionDispatch::IntegrationTest
       universe_tags_path(universe_slug: @universe.slug), count: 0
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
+
+    # The inspector shows page-relevant details beside Configuration and
+    # Collaboration: a selected story's section and scene counts.
+    assert_select "aside.right-sidebar .sidebar-section-title", text: "Inspector"
+    assert_select "aside.right-sidebar #inspector-title", 1
+    assert_select "aside.right-sidebar section[aria-labelledby='inspector-title'] .inspector-row", 2
+    assert_select "aside.right-sidebar .inspector-row-label", text: "Sections"
+    assert_select "aside.right-sidebar .inspector-row-value", text: "2"
+    assert_select "aside.right-sidebar .inspector-row-value", text: "3"
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0
     assert_select "aside.workspace-sidebar a[href=?]",

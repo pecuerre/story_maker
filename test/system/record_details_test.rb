@@ -78,7 +78,7 @@ class RecordDetailsTest < ApplicationSystemTestCase
     # followed by Configuration with the shared taxonomy entry and Members.
     within "aside.right-sidebar" do
       assert_selector ".sidebar-context--tools .sidebar-eyebrow", text: "UNIVERSE TOOLS"
-      assert_equal [ "CONFIGURATION", "COLLABORATION", "ANALYTICS", "AI" ],
+      assert_equal [ "CONFIGURATION", "COLLABORATION", "INSPECTOR" ],
         all(".sidebar-section-title").map { |title| title.text.strip }
       within "section[aria-labelledby='configuration-title']" do
         assert_selector "a.sidebar-link[href='#{universe_tags_path(universe_slug: universe.slug)}']", text: "Tags"
@@ -88,27 +88,22 @@ class RecordDetailsTest < ApplicationSystemTestCase
     end
   end
 
-  test "placeholder navigation is greyed out and never looks like a live link" do
+  test "no placeholder navigation remains in the tools sidebar" do
     universe = universes(:universe_one)
 
     sign_in_via_form(users(:user_one))
     visit universe_path(universe)
 
     within "aside.right-sidebar" do
-      assert_selector "a.sidebar-placeholder-link[aria-disabled='true']", minimum: 1
-    end
-
-    # **Where the remaining placeholders are, not merely that some exist.** The
-    # Collaboration group's Conflicts, Branches, and Forks entries were removed as
-    # noise with no model behind them, so the placeholders that are left belong to
-    # the Analytics and AI groups. Asserting only a count would let the
-    # Collaboration group quietly regain one.
-    within "aside.right-sidebar section[aria-labelledby='analytics-tools-title']" do
-      assert_selector "a.sidebar-placeholder-link[aria-disabled='true']", minimum: 1
-    end
-
-    within "aside.right-sidebar section[aria-labelledby='collaboration-tools-title']" do
+      # No disabled, routeless links survive: Analytics and AI's placeholders
+      # were replaced by the inspector, and Collaboration's were removed earlier.
       assert_no_selector "a.sidebar-placeholder-link"
+      assert_no_selector "a[href='#'][aria-disabled=true]"
+
+      # A universe page without a selected story has no story or record details
+      # for the inspector to show, so only Configuration and Collaboration render.
+      assert_equal [ "CONFIGURATION", "COLLABORATION" ],
+        all(".sidebar-section-title").map { |title| title.text.strip }
     end
   end
 end

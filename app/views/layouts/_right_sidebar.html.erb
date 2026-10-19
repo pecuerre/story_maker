@@ -107,33 +107,16 @@
     </ul>
   </section>
 
-  <section class="sidebar-section sidebar-section--tools" aria-labelledby="analytics-tools-title">
-    <h3 class="sidebar-section-title" id="analytics-tools-title"><%= t("sidebar.tools.analytics") %></h3>
-    <ul class="sidebar-list">
-      <li>
-        <%= link_to icon_text_count("bar-chart-line", t("sidebar.tools.insights")), "#",
-          class: "sidebar-link sidebar-placeholder-link",
-          aria: { disabled: true },
-          data: { placeholder_link: true } %>
-      </li>
-      <li>
-        <%= link_to icon_text_count("file-earmark-bar-graph", t("sidebar.tools.reports")), "#",
-          class: "sidebar-link sidebar-placeholder-link",
-          aria: { disabled: true },
-          data: { placeholder_link: true } %>
-      </li>
-    </ul>
-  </section>
-
-  <section class="sidebar-section sidebar-section--tools" aria-labelledby="ai-tools-title">
-    <h3 class="sidebar-section-title" id="ai-tools-title"><%= t("sidebar.tools.ai") %></h3>
-    <ul class="sidebar-list">
-      <li>
-        <%= link_to icon_text_count("stars", t("sidebar.tools.assistant")), "#",
-          class: "sidebar-link sidebar-placeholder-link",
-          aria: { disabled: true },
-          data: { placeholder_link: true } %>
-      </li>
-    </ul>
-  </section>
+  <%# The inspector shows what the page in front of the reader is about: the
+      # selected story's section and scene counts, and the selected record's
+      # relations and ownerships. At most five rows, and nothing at all when
+      # the page has neither — a reading surface, so it stays hidden rather
+      # than rendering an empty box. %>
+  <% rows = contextual_inspector_rows %>
+  <% if rows.any? %>
+    <section class="sidebar-section sidebar-section--tools" aria-labelledby="inspector-title">
+      <h3 class="sidebar-section-title" id="inspector-title"><%= t("sidebar.tools.inspector") %></h3>
+      <%= render "layouts/contextual_inspector", rows: rows %>
+    </section>
+  <% end %>
 </nav>

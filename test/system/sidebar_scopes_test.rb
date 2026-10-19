@@ -49,7 +49,7 @@ class SidebarScopesTest < ApplicationSystemTestCase
 
     within "aside.right-sidebar" do
       assert_selector ".sidebar-context--tools"
-      assert_equal [ "CONFIGURATION", "COLLABORATION", "ANALYTICS", "AI" ],
+      assert_equal [ "CONFIGURATION", "COLLABORATION" ],
         all(".sidebar-section-title").map { |title| title.text.strip }
 
       within "section[aria-labelledby='configuration-title']" do

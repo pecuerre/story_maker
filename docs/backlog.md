@@ -39,20 +39,6 @@ Because a number disappears from this file when its item is completed, **do not 
 number from another document**. Reference a pending idea by its heading text, and cite delivered
 work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
-3. **Contextual inspector / right-side utility panel**
-
-The right utility sidebar now holds one live block — the reader's pending-changes panel and the
-**Pending changes** entry above it — and reserves the rest of its space for future collaboration,
-analytics, and AI tools. The Collaboration group's temporary `aria-disabled` links were removed on
-2026-10-05 rather than replaced, and the remaining placeholders are in the Analytics and AI groups.
-Replace those with a real contextual inspector as the underlying product areas become concrete. The inspector should show information
-relevant to the current page: selected entity details, related records, taxonomy usage, filters, or
-quick actions. It remains a Bootstrap `offcanvas-end` below `xl` and can be hidden when there is
-nothing useful to show. Two constraints the panel sets: it is the first thing in the Collaboration
-group rather than a bare link, so a second live block has to earn its place the same way, and it is
-bounded at five rows because it is rendered on every page of the universe. Candidate data includes
-selected-character relations/ownerships, relation-tag usage counts, and story outline progress.
-
 5. **Richer relationship and entity rows**
 
 Make list rows more useful for scanning large universes. Relations should render as a readable

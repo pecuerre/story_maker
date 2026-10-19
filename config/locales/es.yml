@@ -52,7 +52,7 @@ es:
     tools:
       navigation_label: "Configuración y herramientas del universo"
       eyebrow: "Herramientas del universo"
-      intro: "Aquí vivirán las herramientas adicionales de colaboración, análisis e inteligencia artificial."
+      intro: "El inspector que aparece más abajo muestra de qué trata la página que tienes delante: las secciones y escenas de una historia, y las relaciones y propiedades de un registro."
       configuration: "Configuración"
       tags: "Etiquetas"
       members: "Miembros"
@@ -76,11 +76,21 @@ es:
       # al lado: nombra a cada autor que ha cerrado un borrador, y un universo
       # `direct` no tiene ninguno.
       collaborators: "Colaboradores"
-      analytics: "Análisis"
-      insights: "Descubrimientos"
-      reports: "Informes"
-      ai: "IA"
-      assistant: "Asistente"
+      # El inspector muestra detalles relevantes de la página junto a Configuración
+      # y Colaboración: las secciones y escenas de la historia seleccionada, y las
+      # relaciones y propiedades del registro seleccionado. Como máximo cinco filas,
+      # y nada cuando la página no tiene nada útil que decir. Sustituye a los
+      # marcadores de posición de Análisis e IA, que no tenían modelo ni ruta.
+      inspector: "Inspector"
+
+  # Detalles relevantes de la página que muestra la barra lateral derecha de
+  # herramientas junto a Configuración y Colaboración. Cada etiqueta nombra lo
+  # que cuenta su valor.
+  inspector:
+    sections: "Secciones"
+    scenes: "Escenas"
+    relations: "Relaciones"
+    ownerships: "Propiedades"
 
   universe_access:
     admin: "Administración"

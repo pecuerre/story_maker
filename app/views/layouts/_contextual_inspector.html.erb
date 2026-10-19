@@ -1,0 +1,14 @@
+<%# The inspector: page-relevant details in at most five rows, beside
+    # Configuration and Collaboration. A row is a label and a value — nothing
+    # here is a link, so it carries no hover state and no affordance beyond
+    # what it says. It renders only when there is at least one row; the caller
+    # decides whether the page has anything useful to show. %>
+<% rows = local_assigns.fetch(:rows) %>
+<ul class="sidebar-list inspector-list">
+  <% rows.each do |label, value| %>
+    <li class="inspector-row">
+      <span class="inspector-row-label"><%= label %></span>
+      <span class="inspector-row-value"><%= value %></span>
+    </li>
+  <% end %>
+</ul>

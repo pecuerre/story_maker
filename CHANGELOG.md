@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-19
+
+### added
+
+- **A contextual inspector on the right utility sidebar.** It replaces the Analytics and AI placeholders with up to five rows of page-relevant details — a selected story's sections and scenes, and a selected record's relations and ownerships — and stays hidden when there is nothing useful to show.
+
 ## 2026-10-18
 
 ### added

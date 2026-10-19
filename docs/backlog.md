@@ -145,12 +145,6 @@ it has a useful destination and clear empty/loading/error states.
    [ADR 0029](adr/0029-per-endpoint-throttle-groups.md)), so a credential bound to a person inherits
    the intended boundaries rather than needing new machinery.
 
-   **Slice 3 — the write surface for the HTML-only records.** Scenes (create, update, destroy, move,
-   group), plus stories, relations, and ownerships. These are the controllers with no `format.json`
-   branch, which is the actual reason an agent cannot create a Scene today. Reusing
-   `MaintainsSiblingPositions` keeps [ADR 0009](adr/0009-transactional-position-maintenance.md)'s
-   transactional positioning and its clamp-past-the-end no-op.
-
    **Slice 4 — limits and boundaries.** A per-token budget layered inside the universe budget, so
    one agent cannot spend its owner's, reusing `MutationThrottle`'s cache-counter contract with the
    token in the key. A read-side throttle, which does not exist because

@@ -70,4 +70,48 @@ class Api::StoriesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unauthorized
   end
+
+  test "create creates a story as json" do
+    assert_difference("Story.count") do
+      post api_universe_stories_url(universe_slug: @universe.slug),
+        params: { story: { name: "Api story", description: "Via the API" } },
+        headers: headers, as: :json
+    end
+
+    assert_response :created
+    body = response.parsed_body
+    assert_equal "Api story", body["name"]
+    assert_equal "Via the API", body["description"]
+    assert_equal "api-story", body["slug"]
+    story = Story.find(body["id"])
+    assert_equal @universe.id, story.universe_id
+  end
+
+  test "update updates a story as json" do
+    patch api_universe_story_url(universe_slug: @universe.slug, id: stories(:story_alt)),
+      params: { story: { name: "Renamed via api" } },
+      headers: headers, as: :json
+
+    assert_response :success
+    assert_equal "Renamed via api", stories(:story_alt).reload.name
+  end
+
+  test "destroy deletes a story as json" do
+    assert_difference("Story.count", -1) do
+      delete api_universe_story_url(universe_slug: @universe.slug, id: stories(:story_alt)),
+        headers: headers, as: :json
+    end
+
+    assert_response :no_content
+  end
+
+  test "a non-json story mutation is refused before it writes" do
+    assert_no_difference("Story.count") do
+      post api_universe_stories_url(universe_slug: @universe.slug),
+        params: { story: { name: "No json" } },
+        headers: headers
+    end
+
+    assert_response :not_acceptable
+  end
 end

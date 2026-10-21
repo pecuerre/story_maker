@@ -411,6 +411,29 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "revoking an API token is refused without a token and revokes nothing" do
+    with_forgery_protection do
+      get universe_api_tokens_path(universe_slug: @universe.slug)
+      assert_response :success
+      page_token = csrf_token_from(response.body)
+      assert page_token.present?, "the token management page must publish a CSRF token"
+
+      assert_no_difference -> { ApiToken.where(revoked_at: nil).count } do
+        delete universe_api_token_url(universe_slug: @universe.slug, id: api_tokens(:token_one))
+      end
+
+      assert_includes 406..422, response.status
+      refute api_tokens(:token_one).reload.revoked?, "a refused revoke must leave the token active"
+
+      delete universe_api_token_url(universe_slug: @universe.slug, id: api_tokens(:token_one)),
+        headers: { "X-CSRF-Token" => page_token }
+
+      assert_response :see_other
+      assert_redirected_to universe_api_tokens_url(universe_slug: @universe.slug)
+      assert_predicate api_tokens(:token_one).reload, :revoked?
+    end
+  end
+
   private
     # Loads a page so the session holds a CSRF token, and returns the value the
     # page published for its own JavaScript.

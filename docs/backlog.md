@@ -127,50 +127,6 @@ it has a useful destination and clear empty/loading/error states.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-30. **An API for external tools, apps, and agents to read and write universes and stories**
-
-   Deliver this as four ordered slices. Each ships on its own, and each is finished by adding its
-   dated [`../CHANGELOG.md`](../CHANGELOG.md) entry and deleting its own paragraph here; the number
-   stays on the whole deliverable rather than moving to whichever slice is next. Slices 2 to 4 are
-   blocked on the one before them.
-
-   **What already exists, so no slice rebuilds it.** The write half is largely delivered:
-   characters, locations, items, events, sections, every `*_tags` controller, `scene_elements` —
-   which is what a dialogue is — and the four scene-presence links all answer `format.json` for
-   create, update, and destroy, refusing a non-JSON mutation with `406` before anything is written
-   ([ADR 0011](adr/0011-modal-json-mutation-contract.md)). Authorization is already the right model:
-   universe read/write/admin in `Ability` and `UniverseAuthorization`
-   ([ADR 0005](adr/0005-universe-access-levels.md)). Limits are already per account, per universe,
-   and set by that universe's admins ([ADR 0028](adr/0028-per-universe-mutation-budget.md),
-   [ADR 0029](adr/0029-per-endpoint-throttle-groups.md)), so a credential bound to a person inherits
-   the intended boundaries rather than needing new machinery.
-
-   **Slice 4 — limits and boundaries.** A per-token budget layered inside the universe budget, so
-   one agent cannot spend its owner's, reusing `MutationThrottle`'s cache-counter contract with the
-   token in the key. A read-side throttle, which does not exist because
-   `MutationThrottle::MUTATING_METHODS` deliberately excludes `GET`. And token management — listing
-   and revoking — because a credential an operator cannot see or kill is not shippable.
-
-   **Decided 2026-10-14: the credential is bound to a User and an explicit set of universes**, not
-   to universes with no user behind them, so notifications, drafts, and the collaborators history all
-   keep an author.
-
-   **To settle when slice 1 starts: whether the surface is `namespace :api` with parallel `Api::*`
-   controllers or token auth allowed through to the existing ones.** The recommendation is `Api::*`.
-   The existing controllers carry HTML-only setup an API has no use for — `set_section_paths`,
-   `set_event_options`, `remember_start_page`, the remembered-story session state — so sharing them
-   means either running that setup on every call or branching the callback chain, with the
-   `allow_browser` and CSRF bypass living inside the browser controllers. The cost is similar
-   controller code; policy, validation, and the position services stay single-sourced either way.
-
-   **Decided with slice 1's contract: a mutation in a draft-based universe answers `202` with the
-   remembered change instead of writing.** That is correct for an agent but is not a failure, and
-   must not be treated as one. Both registered demo universes are `direct`, so it is invisible
-   locally and only appears in production.
-
-   An OpenAPI document and an MCP server are **out of scope** unless the owner asks for them: both
-   are clients of this API rather than part of it.
-
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

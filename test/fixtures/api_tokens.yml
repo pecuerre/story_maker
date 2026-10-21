@@ -14,3 +14,18 @@ token_two:
   name: Token two
   token_digest: <%= token_two_digest %>
   token_prefix: beta-ap
+
+# A second token user one holds for universe one: the management page lists it
+# beside token one, and user two's tokens never appear on it.
+token_three:
+  user: user_one
+  name: Token three
+  token_digest: <%= token_three_digest = BCrypt::Password.create("gamma-api-token-three") %>
+  token_prefix: gamma-ap
+
+# User two's token for universe one: user one must not see or revoke it.
+token_four:
+  user: user_two
+  name: Token four
+  token_digest: <%= token_four_digest = BCrypt::Password.create("delta-api-token-four") %>
+  token_prefix: delta-ap

@@ -8,6 +8,28 @@
 # placeholder the English key uses, which is what lets Spanish put "Desde" in
 # front of a date instead of after it.
 es:
+  # Las credenciales de API propias de una lectura para un universo: listarlas
+  # y revocar cualquiera de ellas. El valor del portador se muestra una vez al
+  # crearse y nunca se almacena de nuevo.
+  api_tokens:
+    index:
+      title: "Tokens de API"
+      description: "Los tokens de portador que esta cuenta tiene para este universo. Revocar un token lo retira para siempre: su valor se mostró una vez y nunca se almacena de nuevo."
+      back: "Volver al universo"
+      columns:
+        name: "Nombre"
+        prefix: "Prefijo"
+        status: "Estado"
+        last_used: "Último uso"
+        actions: "Acciones"
+      status:
+        active: "Activo"
+        revoked: "Revocado"
+      revoke: "Revocar token"
+      revoke_confirm: '¿Revocar "%{name}"? Ya no podrá llamar a la API.'
+      empty: "Esta cuenta no tiene tokens de API para este universo."
+    flash:
+      revoked: "Token de API revocado."
   app:
     name: "Universe Maker"
 

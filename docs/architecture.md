@@ -70,6 +70,14 @@ UI patterns and the Timeline algorithm. Conventions are in
    with `admin`; that save is a universe-scoped write like any other, so an admin who sets a budget of
    1 spends it on their own settings save and waits out the window before raising it again. The
    reasoning is in [ADR 0028](adr/0028-per-universe-mutation-budget.md).
+   Two more counters share the same store and prefix. A mutation that arrives on the bearer-token
+   surface spends one counter keyed on the token itself (`mutation-throttle:token:<token id>`), inside
+   the universe's budget: one agent cannot spend its owner's, because the token's ceiling is checked
+   separately and either refusal wins. And because `GET` is deliberately absent from `MUTATING_METHODS`,
+   every `GET` on that surface spends one counter under `read-throttle:token:<token id>:<universe id>`;
+   a token past its read ceiling answers `429` too. Both are limited by the token's own
+   `api_tokens.mutation_limit`. `ReadThrottle` runs only where `Current.api_token` exists, so the
+   browser surface and its guests are never counted.
 6. **`set_current_story`** — when a universe is present, resolves `Current.story`:
    - explicit `params[:story_id]` (sections) or `params[:id]` on the `stories` controller wins and
      is remembered in the session (`session[:current_story_ids]` keyed by universe id);

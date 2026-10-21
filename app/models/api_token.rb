@@ -8,18 +8,57 @@
 #
 # A token is refused once `revoked_at` is set, and `last_used_at` is touched on
 # every successful authentication.
+#
+# `mutation_limit` is how many mutations one account may make with this token
+# per `Universe::MUTATION_LIMIT_WINDOW`, counted in its own cache counter inside
+# the universe's budget. The column default protects a token from creation,
+# `NULL` is "no limit at all" for a token an operator has opened up, and `0` is
+# refused because zero mutations and no limit are different settings. Reads are
+# counted in a separate counter against the same ceiling, so a read flood never
+# spends the mutation budget and vice versa.
 class ApiToken < ApplicationRecord
   # How many leading characters of the bearer token are stored (unhashed) so a
-  # presented token can be located before its digest is verified.
+  # presented token can be located before its digest is checked.
   TOKEN_PREFIX_LENGTH = 8
+
+  # How many mutations one account may make with this token per minute before
+  # the per-token throttle refuses it. The same order as the universe's default
+  # budget; a token is never unlimited just because nobody chose a number.
+  DEFAULT_MUTATION_LIMIT = 60
 
   belongs_to :user
   has_many :api_token_universes, dependent: :delete_all
   has_many :universes, through: :api_token_universes
 
+  # The tokens one account holds for one universe: what the management page
+  # lists and what revoking acts on. `distinct` because the join could
+  # otherwise repeat a token once per grant row.
+  scope :for_universe, ->(universe) {
+    joins(:api_token_universes)
+      .where(api_token_universes: { universe: universe })
+      .distinct
+  }
+
   validates :name, presence: true
   validates :token_digest, presence: true
   validates :token_prefix, presence: true, uniqueness: true
+  # The same rule the universe's budget carries: `NULL` means unlimited, `0`
+  # means closed and is refused, and anything fractional is refused too.
+  validates :mutation_limit,
+    numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
+
+  # How many mutations this token may still make this window, falling back to
+  # the default when the column stores nothing. A token an administrator has
+  # deliberately opened up stores `NULL`.
+  def mutation_limit
+    self[:mutation_limit] || DEFAULT_MUTATION_LIMIT
+  end
+
+  # Whether this token has no mutation ceiling at all — deliberately different
+  # from a high number, because `NULL` is the stored form of "no limit".
+  def mutations_unlimited?
+    self[:mutation_limit].nil?
+  end
 
   # The bearer credential, shown once at creation and never written to the table.
   attr_accessor :token
@@ -46,6 +85,10 @@ class ApiToken < ApplicationRecord
 
   def active?
     revoked_at.blank?
+  end
+
+  def revoked?
+    revoked_at.present?
   end
 
   # Verifies a bearer value against the stored digest, the same way

@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-20
+
+### added
+
+- **Per-token limits and token management on the API surface.** A token now carries its own mutation budget inside the universe's, `GET`s on the bearer-token surface are counted against the same per-token ceiling, and the new API Tokens page lists a reader's own tokens and revokes them (slice 4).
+
 ## 2026-10-19
 
 ### added

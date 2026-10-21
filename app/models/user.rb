@@ -13,6 +13,9 @@ class User < ApplicationRecord
   # their drafts and their sessions. Nothing deletes a user today; the association is
   # here so a row addressed to somebody who no longer exists cannot outlive them.
   has_many :notifications, dependent: :destroy
+  # A person's API credentials: they die with their account, and each one is the
+  # only thing that authenticates a bearer-token request as that person.
+  has_many :api_tokens, dependent: :destroy
 
   # The schema declares both columns `null: false`, so without these a model caller
   # can see `valid? == true` and then receive `ActiveRecord::NotNullViolation` from

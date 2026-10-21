@@ -7,6 +7,27 @@
 # descriptions, tag names, and universe or story names are data, and a
 # translation layer that rewrote them would be corrupting the author's work.
 en:
+  # A reader's own API credentials for one universe: list them and revoke any
+  # one of them. The bearer value is shown once at creation and never stored.
+  api_tokens:
+    index:
+      title: "API tokens"
+      description: "The bearer tokens this account holds for this universe. Revoking a token retires it forever: its bearer value was shown once and is never stored again."
+      back: "Back to the universe"
+      columns:
+        name: "Name"
+        prefix: "Prefix"
+        status: "Status"
+        last_used: "Last used"
+        actions: "Actions"
+      status:
+        active: "Active"
+        revoked: "Revoked"
+      revoke: "Revoke token"
+      revoke_confirm: 'Revoke "%{name}"? It can no longer call the API.'
+      empty: "This account has no API tokens for this universe."
+    flash:
+      revoked: "API token revoked."
   app:
     name: "Universe Maker"
 

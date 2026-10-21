@@ -150,6 +150,10 @@ Rails.application.routes.draw do
     # one. Neither action decides whether a mutation is remembered; `DraftMutation`
     # does that, in a draft-based universe, on every request (ADR 0022).
     resource :editing, controller: "draft_editing", only: %i[ create destroy ], path: "editing"
+    # The token-management page is HTML — list and revoke only; a token's bearer
+    # value is shown once at creation and never re-issued. JSON-only mutations
+    # live under `namespace :api` above.
+    resources :api_tokens, only: %i[ index destroy ]
   end
 
   # The external-tool surface. It is JSON-only, authenticated by a bearer token

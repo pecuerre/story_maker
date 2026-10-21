@@ -1,0 +1,63 @@
+<% content_for :title, t("api_tokens.index.title") %>
+
+<%= render "shared/page_header",
+  title: t("api_tokens.index.title"),
+  eyebrow: Current.universe.name,
+  description: t("api_tokens.index.description") do %>
+  <%= link_to t("api_tokens.index.back"), universe_path(Current.universe), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<div class="content-surface">
+  <% if @api_tokens.any? %>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col"><%= t("api_tokens.index.columns.name") %></th>
+            <th scope="col"><%= t("api_tokens.index.columns.prefix") %></th>
+            <th scope="col"><%= t("api_tokens.index.columns.status") %></th>
+            <th scope="col"><%= t("api_tokens.index.columns.last_used") %></th>
+            <th scope="col" class="text-end"><%= t("api_tokens.index.columns.actions") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @api_tokens.each do |token| %>
+            <tr>
+              <td>
+                <div class="fw-semibold"><%= token.name %></div>
+              </td>
+              <td>
+                <div class="small text-body-secondary"><%= token.token_prefix %></div>
+              </td>
+              <td>
+                <% if token.revoked? %>
+                  <span class="badge text-bg-secondary"><%= t("api_tokens.index.status.revoked") %></span>
+                <% else %>
+                  <span class="badge text-bg-primary"><%= t("api_tokens.index.status.active") %></span>
+                <% end %>
+              </td>
+              <td>
+                <div class="small text-body-secondary"><%= l(token.last_used_at) if token.last_used_at %></div>
+              </td>
+              <td class="text-end">
+                <% if token.revoked? %>
+                  <span class="small text-body-secondary"><%= t("api_tokens.index.status.revoked") %></span>
+                <% else %>
+                  <%= button_to t("api_tokens.index.revoke"),
+                    universe_api_token_path(universe_slug: Current.universe.slug, id: token),
+                    method: :delete,
+                    class: "btn btn-sm btn-outline-danger",
+                    data: { turbo_confirm: t("api_tokens.index.revoke_confirm", name: token.name) } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p><%= t("api_tokens.index.empty") %></p>
+    </div>
+  <% end %>
+</div>

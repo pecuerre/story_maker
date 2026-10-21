@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   include Authentication
   include UniverseAuthorization
   include MutationThrottle
+  include ReadThrottle
   helper ModalFields
 
   allow_browser versions: :modern
@@ -36,6 +37,11 @@ class ApplicationController < ActionController::Base
   # `Current.universe` and must not be spendable by a request that was refused —
   # see `MutationThrottle` for why that ordering is the whole design.
   before_action :enforce_mutation_limit
+
+  # One read per token per universe, counted against the token's own ceiling.
+  # It runs only on the bearer-token surface (`ReadThrottle#read_throttle_applies?`
+  # is false for the browser surface), after authorization and for `GET` only.
+  before_action :enforce_read_limit, if: :read_throttle_applies?
 
   before_action :set_current_story
 

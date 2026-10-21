@@ -5,3 +5,11 @@ token_one_universe_one:
 token_two_universe_two:
   api_token: token_two
   universe: universe_two
+
+token_three_universe_one:
+  api_token: token_three
+  universe: universe_one
+
+token_four_universe_one:
+  api_token: token_four
+  universe: universe_one

@@ -125,4 +125,43 @@ class Api::CharactersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_acceptable
   end
+
+  test "a token's mutations stop at its own budget inside the universe's" do
+    # The universe's budget (60) is untouched here: the token's own ceiling of 2
+    # is what refuses the third mutation.
+    api_tokens(:token_one).update!(mutation_limit: 2)
+
+    2.times do |n|
+      post api_universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "Token budget #{n}" } },
+        headers: headers, as: :json
+
+      assert_response :created
+    end
+
+    assert_no_difference("Character.count") do
+      post api_universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "Over the token budget" } },
+        headers: headers, as: :json
+    end
+
+    assert_response :too_many_requests
+    assert_equal 3, Rails.cache.read("#{MutationThrottle::KEY_PREFIX}:token:#{api_tokens(:token_one).id}").to_i
+  end
+
+  test "a token's reads stop at the read ceiling" do
+    api_tokens(:token_one).update!(mutation_limit: 2)
+
+    2.times do
+      get api_universe_characters_url(universe_slug: @universe.slug),
+        headers: headers, as: :json
+
+      assert_response :success
+    end
+
+    get api_universe_characters_url(universe_slug: @universe.slug),
+      headers: headers, as: :json
+
+    assert_response :too_many_requests
+  end
 end

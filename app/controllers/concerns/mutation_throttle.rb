@@ -93,10 +93,20 @@
 # cost of one shared store whose entries outlive a single test, so a test that
 # cares about a counter clears it through `test/test_helpers/throttle_test_helper.rb`,
 # and the suite asserts the store counts rather than trusting it.
+#
+# ## The per-token layer
+#
+# A mutation that arrives through the bearer-token surface spends one more
+# counter, keyed on the token itself (`mutation-throttle:token:<token id>`),
+# inside the universe's budget. One agent therefore cannot spend its owner's:
+# the token's ceiling is checked separately, and a request is refused when
+# either is over. A browser request carries no token, so the layer is a no-op
+# off the API surface.
 module MutationThrottle
   extend ActiveSupport::Concern
 
-  # The methods that write. A `GET` is absent on purpose; see the module comment.
+  # The methods that write. A `GET` is absent on purpose; see the module comment,
+  # and `ReadThrottle` for the read-side half.
   MUTATING_METHODS = %w[POST PATCH PUT DELETE].freeze
 
   # Namespaced away from every other cache key, and namespaced from the
@@ -134,11 +144,13 @@ module MutationThrottle
 
       group = mutation_group
 
-      # Both spends run before either can refuse the request, and the first refusal
-      # wins: a request over the universe budget never reaches the group's counter,
-      # and a request inside it spends both. Spending a group only for a request the
-      # universe budget already refused would count a write that never happened.
+      # Every spend runs before any refusal can answer, and the first refusal wins:
+      # a request over the universe budget never reaches the token's counter, a
+      # request over the token's never reaches the group's, and a request inside
+      # all of them spends all three. Spending a counter for a request an earlier
+      # budget already refused would count a write that never happened.
       return unless spend_universe_budget
+      return unless spend_token_budget
       nil unless spend_group_budget(group)
     end
 
@@ -189,6 +201,23 @@ module MutationThrottle
       false
     end
 
+    # The second layer inside the universe's budget: one counter per token, so
+    # one agent cannot spend its owner's. Reuses exactly this module's
+    # cache-counter contract, with the token in the key instead of the universe
+    # and the account. A browser request carries no token, so this is a no-op
+    # off the bearer-token surface.
+    def spend_token_budget
+      return true if Current.api_token.nil?
+      return true if Current.api_token.mutations_unlimited?
+
+      count = mutation_counter.increment(token_cache_key, 1,
+        expires_in: Universe::MUTATION_LIMIT_WINDOW)
+      return true if count.nil? || count <= Current.api_token.mutation_limit
+
+      refuse_mutation_limit
+      false
+    end
+
     # `nil` for the mutations that belong to no group, and for a group whose admin
     # stored `NULL` — the group ceiling is the admin's to remove on its own, which is
     # a different answer from the universe budget being open.
@@ -233,6 +262,10 @@ module MutationThrottle
 
     def universe_cache_key
       "#{KEY_PREFIX}:#{Current.universe.id}:#{Current.user.id}"
+    end
+
+    def token_cache_key
+      "#{KEY_PREFIX}:token:#{Current.api_token.id}"
     end
 
     # The universe's own budget keeps its historical key shape: it is the counter

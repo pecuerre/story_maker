@@ -145,6 +145,45 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
       '"to_date":"2027-01-02T03:04:06"'
   end
 
+  test "index row renders the relation as a sentence with the tag as the verb" do
+    Relation.create!(universe: @universe, character1: @character_one, character2: @character_two,
+      relation_tags: [ @relation_tag ])
+
+    get universe_relations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # `relation_one` fixture is on the page too, so two rows render.
+    assert_select ".entity-list .entity-row", count: 2
+    assert_select ".entity-list .entity-title",
+      text: "#{@character_one.name} — #{@relation_tag.name} → #{@character_two.name}"
+  end
+
+  test "index row renders the in-world date range as metadata" do
+    relation = Relation.create!(universe: @universe, character1: @character_one, character2: @character_two,
+      from_date: Time.utc(2026, 1, 2, 3, 4, 5), to_date: Time.utc(2027, 1, 2, 3, 4, 6))
+
+    get universe_relations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # `relation_one` fixture is on the page too, so two rows render.
+    assert_select ".entity-list .entity-row", count: 2
+    assert_select ".entity-list .entity-description",
+      text: "2026-01-02 03:04 – 2027-01-02 03:04"
+  end
+
+  test "index row falls back to the endpoints when no tag is set" do
+    Relation.create!(universe: @universe, character1: @character_one, character2: @character_two)
+
+    get universe_relations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # `relation_one` fixture is on the page too, so two rows render.
+    assert_select ".entity-list .entity-row", count: 2
+    assert_select ".entity-list .entity-title",
+      text: "#{@character_one.name} → #{@character_two.name}"
+    assert_select ".entity-list .entity-description", count: 0
+  end
+
   test "a rejected create states the reason and keeps the entered values in the editor" do
     assert_no_difference("Relation.count") do
       post universe_relations_url(universe_slug: @universe.slug), params: {
@@ -209,7 +248,10 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".entity-list .entity-row", count: 1
-    assert_select ".entity-list .entity-title", text: "Character three"
+    # The row now renders the two endpoints as one sentence rather than two
+    # separate titles, so the title carries both names.
+    assert_select ".entity-list .entity-title",
+      text: "#{characters(:character_three).name} → #{@character_two.name}"
     assert_select ".relation-filter", text: /Search: “Character three”/
   end
 

@@ -27,4 +27,19 @@ module RelationsHelper
   def relation_filter_tag_choices
     @relation_tag_paths.choices
   end
+
+  # The readable sentence a relation list row renders: the two characters as
+  # subjects and the relation tag as the verb, with the arrow as direction.
+  # `Character one — Relation tag one → Character two`. Tags are optional, so a
+  # relation without one falls back to the neutral endpoints form
+  # `Character one → Character two`. No new source fields: the tag name and the
+  # endpoints already exist, only the presentation changes.
+  def relation_row_sentence(relation)
+    verb = relation.relation_tags.first&.name
+    if verb.present?
+      "#{relation.character1.name} — #{verb} → #{relation.character2.name}"
+    else
+      "#{relation.character1.name} → #{relation.character2.name}"
+    end
+  end
 end

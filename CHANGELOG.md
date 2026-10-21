@@ -38,6 +38,17 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-21
+
+### changed
+
+- **Character list rows show relation and ownership counts.** Each row renders derived relation and ownership count badges next to the name and tags, eager-loaded so the list does not issue one query per row.
+- **Relation list rows render as a readable sentence.** A row now shows `Character one — Relation tag one → Character two` (the tag as the verb) with the in-world date range as metadata; relations without a tag fall back to `Character one → Character two`.
+
+### docs
+
+- **Backlog item 5 sliced into five independently schedulable items.** Richer relationship and entity rows is now slices 30–34: relations sentence + date range, character relation/ownership counts, event date range + related events, item current/historical owners, and location parent/child context.
+
 ## 2026-10-20
 
 ### added

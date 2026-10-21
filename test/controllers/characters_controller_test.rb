@@ -200,6 +200,37 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, foreign_tag.name
   end
 
+  test "index rows show relation and ownership counts" do
+    # character_one has relation_one (as character1) and ownership_one
+    # character_two has relation_one (as character2)
+    # character_three has neither
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # Two characters have exactly one relation each
+    assert_select ".record-count", text: "(1 relation)", count: 2
+    # One character has exactly one ownership
+    assert_select ".record-count", text: "(1 ownership)", count: 1
+  end
+
+  test "index does not issue per-row queries for relation and ownership counts" do
+    3.times { |index| @universe.characters.create!(name: "Listed #{index}") }
+
+    with_fewer = count_queries(/FROM "(relations|ownerships)"/) do
+      get universe_characters_url(universe_slug: @universe.slug)
+    end
+
+    3.times { |index| @universe.characters.create!(name: "More #{index}") }
+
+    with_more = count_queries(/FROM "(relations|ownerships)"/) do
+      get universe_characters_url(universe_slug: @universe.slug)
+    end
+
+    assert_response :success
+    # Eager loading keeps the relations/ownerships query count flat as rows grow.
+    assert_equal with_fewer, with_more
+  end
+
   test "should create character as json" do
     assert_difference("Character.count") do
       post universe_characters_url(universe_slug: @universe.slug),

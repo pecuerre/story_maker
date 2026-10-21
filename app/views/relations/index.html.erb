@@ -66,12 +66,12 @@
           <div class="list-group-item entity-row d-flex align-items-center gap-3">
             <div class="entity-copy flex-grow-1">
               <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="entity-title"><%= relation.character1.name %></span>
-                <%= entity_tag_badge(relation) %>
-                <i class="bi bi-arrow-right text-body-secondary" aria-hidden="true"></i>
-                <span class="entity-title"><%= relation.character2.name %></span>
+                <span class="entity-title"><%= relation_row_sentence(relation) %></span>
                 <%= render "shared/draft_pending_badge", record: relation %>
               </div>
+              <% if relation.from_date.present? || relation.to_date.present? %>
+                <div class="entity-description"><%= in_world_range(relation.from_date, relation.to_date) %></div>
+              <% end %>
               <% if relation.description.present? %>
                 <div class="entity-description"><%= relation.description %></div>
               <% end %>

@@ -60,6 +60,10 @@
                 <span class="entity-title"><%= character.name %></span>
                 <%= entity_tag_badge(character) %>
                 <%= render "shared/draft_pending_badge", record: character %>
+                <% relation_count = character.relations_as_character1.size + character.relations_as_character2.size %>
+                <%= record_count_badge(relation_count, "relation") if relation_count.positive? %>
+                <% ownership_count = character.ownerships.size %>
+                <%= record_count_badge(ownership_count, "ownership") if ownership_count.positive? %>
               </div>
               <% if character.description.present? %>
                 <div class="entity-description"><%= character.description %></div>

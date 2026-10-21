@@ -12,6 +12,10 @@ class StoriesController < ApplicationController
 
   # GET /u/:universe_slug/s/:id
   def show
+    # One query for the section hierarchy, loaded once and reused for both the
+    # tree preview and the recently-edited list below.
+    @sections = @story.sections.order(:position, :id).to_a
+    @recent_sections = @sections.sort_by { |section| section.updated_at || Time.zone.at(0) }.reverse.first(5)
   end
 
   # GET /u/:universe_slug/s/new

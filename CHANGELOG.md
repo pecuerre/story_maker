@@ -40,6 +40,10 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-21
 
+### added
+
+- **Story overview dashboard.** The Story show page becomes a compact working dashboard: story description, section count, section-tree preview, recently edited sections, quick "Add section" action, and Universe Bible links; backlog item 6 leaves the backlog.
+
 ### changed
 
 - **Location tree nodes show parent context.** Each node shows `in %{parent}` beside its name so a reader can see where a location sits in the hierarchy at a glance; the parent is read from the hierarchy already in memory, with no extra query per row.

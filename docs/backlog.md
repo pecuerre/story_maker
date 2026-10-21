@@ -39,13 +39,6 @@ Because a number disappears from this file when its item is completed, **do not 
 number from another document**. Reference a pending idea by its heading text, and cite delivered
 work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
-6. **Story overview dashboard**
-
-Turn the current Story overview into a compact working dashboard: story description, section
-count, section-tree preview, recently edited sections, quick “Add section” action, and links into
-the relevant Universe Bible records. This should remain lightweight until the underlying section
-and appearance/usage data are available.
-
 7. **Universe summary cards**
 
 Make the Universes index useful for choosing a workspace. Add story and entity counts, visibility,

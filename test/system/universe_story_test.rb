@@ -144,4 +144,43 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_selector "h1", text: "One"
     assert_match %r{/u/one-in-another-timeline\z}, current_path
   end
+
+  # The Story overview is a dashboard: description, section count, section-tree
+  # preview, recently edited sections, quick "Add section" action, and Universe
+  # Bible links.
+  test "the story overview renders as a working dashboard" do
+    universe = universes(:universe_one)
+    story = stories(:story_one)
+
+    sign_in_via_form(users(:user_one))
+    visit universe_path(universe_slug: universe.slug)
+
+    click_link story.name
+
+    assert_selector "h1", text: story.name
+    assert_text story.description
+
+    # Section count badge in the page header.
+    assert_selector ".badge[aria-label='2 sections']"
+
+    # Quick actions.
+    assert_link I18n.t("stories.show.open_sections"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    assert_link I18n.t("stories.show.open_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
+    assert_link I18n.t("stories.show.add_section"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+
+    # Section-tree preview: root section with its child indented beneath it.
+    root = sections(:section_one)
+    child = sections(:section_two)
+    assert_link root.name, href: universe_story_section_path(universe_slug: universe.slug, story_id: story, id: root)
+    assert_link child.name, href: universe_story_section_path(universe_slug: universe.slug, story_id: story, id: child)
+
+    # Recently edited sections link to their own pages.
+    assert_link root.name, href: universe_story_section_path(universe_slug: universe.slug, story_id: story, id: root)
+
+    # Universe Bible links into the shared records.
+    assert_link I18n.t("sidebar.characters"), href: universe_characters_path(universe_slug: universe.slug)
+    assert_link I18n.t("sidebar.locations"), href: universe_locations_path(universe_slug: universe.slug)
+    assert_link I18n.t("sidebar.events"), href: universe_events_path(universe_slug: universe.slug)
+    assert_link I18n.t("sidebar.timeline"), href: universe_timeline_path(universe_slug: universe.slug)
+  end
 end

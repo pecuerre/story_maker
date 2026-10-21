@@ -3,10 +3,13 @@
 <%= render "shared/page_header",
   title: @story.name,
   eyebrow: t("sidebar.story_workspace"),
-  description: @story.description.presence || t("stories.show.default_description") do %>
+  description: @story.description.presence || t("stories.show.default_description"),
+  count: @sections.size,
+  count_label: "section" do %>
   <%= link_to t("stories.show.open_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
   <%= link_to t("stories.show.open_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
   <% if can_write_universe? %>
+    <%= link_to t("stories.show.add_section"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-secondary" %>
     <%= link_to t("stories.edit"), edit_universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
 
     <%= discussion_control(@story) %>
@@ -31,39 +34,87 @@
 <% end %>
 
 <div class="row g-3">
-  <div class="col-md-5">
-    <%# The photo occupies the card's own row when there is one, with the
-        structure summary beside it. With no photo the summary takes the whole
-        card, which is how this page looked before. %>
+  <div class="col-md-6">
     <div class="surface-card h-100 p-4">
-      <% if @story.photo %>
-        <div class="row g-4 align-items-start">
-          <div class="col-12 col-sm-5 col-lg-4">
-            <%= render "shared/record_photo", photo: @story.photo, name: @story.name %>
-          </div>
-          <div class="col-12 col-sm-7 col-lg-8">
-            <div class="page-eyebrow"><%= t("stories.show.structure_eyebrow") %></div>
-            <h2 class="h3"><%= count_with_label(@story.sections.size, "section") %>, <%= count_with_label(@story.menu_scene_count, "scene") %></h2>
-            <p class="text-body-secondary"><%= t("stories.show.structure_description") %></p>
-            <div class="d-flex flex-wrap gap-2">
-              <%= link_to can_write_universe? ? t("stories.show.manage_sections") : t("stories.show.view_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
-              <%= link_to can_write_universe? ? t("stories.show.manage_scenes") : t("stories.show.view_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
-            </div>
-          </div>
+      <div class="page-eyebrow"><%= t("stories.show.structure_eyebrow") %></div>
+      <h2 class="h4"><%= t("stories.show.structure_heading") %></h2>
+      <p class="text-body-secondary"><%= t("stories.show.structure_description") %></p>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <%= link_to can_write_universe? ? t("stories.show.manage_sections") : t("stories.show.view_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
+        <%= link_to can_write_universe? ? t("stories.show.manage_scenes") : t("stories.show.view_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
+      </div>
+      <div class="d-flex flex-column gap-2">
+        <div class="d-flex justify-content-between">
+          <span class="text-body-secondary"><%= t("stories.show.sections") %></span>
+          <span><%= count_with_label(@sections.size, "section") %></span>
         </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-body-secondary"><%= t("stories.show.scenes") %></span>
+          <span><%= count_with_label(@story.menu_scene_count, "scene") %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="surface-card h-100 p-4">
+      <div class="page-eyebrow"><%= t("stories.show.sections_eyebrow") %></div>
+      <h2 class="h4"><%= t("stories.show.sections_heading") %></h2>
+      <% if @sections.any? %>
+        <ul class="list-unstyled">
+          <% roots = @sections.select { |section| section.parent_id.nil? } %>
+          <% roots.each do |section| %>
+            <li class="mb-2">
+              <%= link_to section.name, universe_story_section_path(story_id: @story, id: section), class: "text-decoration-none" %>
+              <% children = @sections.select { |child| child.parent_id == section.id } %>
+              <% if children.any? %>
+                <ul class="list-unstyled ms-4 ps-3 mt-1">
+                  <% children.each do |child| %>
+                    <li>
+                      <%= link_to child.name, universe_story_section_path(story_id: @story, id: child), class: "text-decoration-none text-body-secondary" %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
       <% else %>
-        <div class="page-eyebrow"><%= t("stories.show.structure_eyebrow") %></div>
-        <h2 class="h3"><%= count_with_label(@story.sections.size, "section") %>, <%= count_with_label(@story.menu_scene_count, "scene") %></h2>
-        <p class="text-body-secondary"><%= t("stories.show.structure_description") %></p>
-        <div class="d-flex flex-wrap gap-2">
-          <%= link_to can_write_universe? ? t("stories.show.manage_sections") : t("stories.show.view_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
-          <%= link_to can_write_universe? ? t("stories.show.manage_scenes") : t("stories.show.view_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
-        </div>
+        <%= render "shared/empty_state",
+          title: t("stories.show.sections_none_title"),
+          description: t("stories.show.sections_none_description"),
+          icon: "diagram-3" do %>
+          <% if can_write_universe? %>
+            <%= link_to t("stories.show.add_section"), universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
+          <% end %>
+        <% end %>
       <% end %>
     </div>
   </div>
 
-  <div class="col-md-7">
+  <div class="col-md-6">
+    <div class="surface-card h-100 p-4">
+      <div class="page-eyebrow"><%= t("stories.show.recent_eyebrow") %></div>
+      <h2 class="h4"><%= t("stories.show.recent_heading") %></h2>
+      <% if @recent_sections.any? %>
+        <ul class="list-group list-group-flush">
+          <% @recent_sections.each do |section| %>
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <%= link_to section.name, universe_story_section_path(story_id: @story, id: section), class: "text-break flex-grow-1 text-decoration-none" %>
+              <span class="badge rounded-pill text-bg-light border"><%= section.position + 1 %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <%= render "shared/empty_state",
+          title: t("stories.show.recent_none_title"),
+          description: t("stories.show.recent_none_description"),
+          icon: "clock-history" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="col-md-6">
     <div class="surface-card h-100 p-4">
       <div class="page-eyebrow"><%= t("stories.show.bible_eyebrow") %></div>
       <h2 class="h4"><%= t("stories.show.bible_heading") %></h2>

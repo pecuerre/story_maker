@@ -62,6 +62,12 @@
                 <%= entity_tag_badge(item) %>
                 <%= render "shared/draft_pending_badge", record: item %>
               </div>
+              <% if item_current_owners(item).present? %>
+                <div class="entity-description"><%= t("items.facts.current_owner", owners: item_current_owners(item)) %></div>
+              <% end %>
+              <% if item_historical_owners(item).present? %>
+                <div class="entity-description"><%= t("items.facts.historical_owners", owners: item_historical_owners(item)) %></div>
+              <% end %>
               <% if item.description.present? %>
                 <div class="entity-description"><%= item.description %></div>
               <% end %>

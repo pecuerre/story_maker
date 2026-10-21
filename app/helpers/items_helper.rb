@@ -26,4 +26,20 @@ module ItemsHelper
   def item_filter_tag_choices
     @item_tag_paths.choices
   end
+
+  # The characters who currently own this item: ownerships with an open `to_date`
+  # (still holding it), named as a sentence. An ownership with no `to_date` is an
+  # open interval, so the character still holds the item.
+  def item_current_owners(item)
+    current = item.ownerships.select { |o| o.to_date.nil? }.map(&:character).compact
+    current.map(&:name).to_sentence
+  end
+
+  # The characters who historically owned this item: ownerships with a `to_date`,
+  # named as a sentence. An ownership with both dates is a closed interval, so
+  # the character no longer holds the item.
+  def item_historical_owners(item)
+    historical = item.ownerships.select { |o| o.to_date.present? }.map(&:character).compact
+    historical.map(&:name).to_sentence
+  end
 end

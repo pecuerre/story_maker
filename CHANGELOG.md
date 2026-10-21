@@ -42,10 +42,15 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Location tree nodes show parent context.** Each node shows `in %{parent}` beside its name so a reader can see where a location sits in the hierarchy at a glance; the parent is read from the hierarchy already in memory, with no extra query per row.
+- **Item list rows show current and historical owners.** Each row renders who now holds the item and who held it before, derived from ownerships' open/closed `from_date`/`to_date` intervals; eager-loaded so the list does not issue one query per row.
+- **Event list rows show the in-world date range and related events.** Each row renders the `start_datetime`–`end_datetime` window plus the before/after/simultaneous references as metadata, reusing `in_world_range` and `display_label`; no new source fields.
 - **Character list rows show relation and ownership counts.** Each row renders derived relation and ownership count badges next to the name and tags, eager-loaded so the list does not issue one query per row.
 - **Relation list rows render as a readable sentence.** A row now shows `Character one — Relation tag one → Character two` (the tag as the verb) with the in-world date range as metadata; relations without a tag fall back to `Character one → Character two`.
 
 ### docs
+
+- **Backlog item 5 leaves the backlog.** All five slices shipped on 2026-10-21: relations sentence (30), character counts (31), event dates and related events (32), item owners (33), and location parent/child context (34).
 
 - **Backlog item 5 sliced into five independently schedulable items.** Richer relationship and entity rows is now slices 30–34: relations sentence + date range, character relation/ownership counts, event date range + related events, item current/historical owners, and location parent/child context.
 

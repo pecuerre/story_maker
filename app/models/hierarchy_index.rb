@@ -39,6 +39,15 @@ class HierarchyIndex
     @by_parent.fetch(id, NO_CHILDREN)
   end
 
+  # A record's parent, looked up from the records already in memory rather than
+  # issuing a query per row. Returns nil for a root.
+  def parent_of(record_or_id)
+    id = record_or_id.respond_to?(:parent_id) ? record_or_id.parent_id : record_or_id
+    return nil if id.nil?
+
+    @records.find { |r| r.id == id }
+  end
+
   # Every row this index knows, ordered. A parent selector or an editor descriptor
   # that needs the whole hierarchy reads it from here instead of issuing its own
   # query for a list this page has already loaded.

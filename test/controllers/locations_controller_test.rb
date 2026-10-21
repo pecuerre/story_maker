@@ -167,4 +167,24 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller='taxonomy-tree']", count: 0
     assert_select ".taxonomy-tree-filter input[name=q]", minimum: 1
   end
+
+  test "tree node shows parent context" do
+    child = @universe.locations.create!(name: "Child location", parent: locations(:location_one))
+
+    get universe_locations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".taxonomy-node[data-node-id=?]", child.id do
+      assert_select ".entity-description", text: "in Location one"
+    end
+  end
+
+  test "tree root node shows no parent context" do
+    get universe_locations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".taxonomy-node[data-node-id=?]", locations(:location_one).id do
+      assert_select ".entity-description", text: /^in /, count: 0
+    end
+  end
 end

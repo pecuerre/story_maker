@@ -39,16 +39,6 @@ Because a number disappears from this file when its item is completed, **do not 
 number from another document**. Reference a pending idea by its heading text, and cite delivered
 work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
-5. **Richer relationship and entity rows** (split into slices 30–34)
-
-Make list rows more useful for scanning large universes. Relations should render as a readable
-sentence such as `Ariadne — is friend to → Lysander`, with direction and dates as metadata.
-Characters could show relation/ownership counts, locations could show parent/child context, events
-could show date range and related events, and items could show current/historical owners. Add
-these as derived presentation data where possible; avoid duplicating source fields in the UI.
-This item is superseded by its slices: relations sentence (30), character counts (31), event dates
-and related events (32), item owners (33), location parent/child context (34).
-
 6. **Story overview dashboard**
 
 Turn the current Story overview into a compact working dashboard: story description, section
@@ -128,24 +118,6 @@ it has a useful destination and clear empty/loading/error states.
    conflicts: a way to drop one remembered change and apply the rest. Decided on 2026-10-05: not now. It
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
-
-32. **Events — date range and related events on list rows**
-
-Event rows show the `start_datetime`–`end_datetime` date range plus the related events
-(before/after/simultaneous) as metadata, reusing `formatted_datetime` and the existing temporal
-reference associations. Cuts across backlog item 5.
-
-33. **Items — current and historical owners on list rows**
-
-Item rows show the current owner and historical owners derived from `ownerships.from_date`/`to_date`,
-so a reader can see who holds an item now and who held it before, without new source fields. Cuts
-across backlog item 5.
-
-34. **Locations — parent/child context in the taxonomy tree**
-
-Location tree nodes show parent/child context (the taxonomy-tree UI pattern, not a flat entity-row
-list), so a reader can see where a location sits in the hierarchy at a glance. Cuts across backlog
-item 5.
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

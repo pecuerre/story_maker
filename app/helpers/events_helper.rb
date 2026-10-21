@@ -28,4 +28,18 @@ module EventsHelper
   def event_filter_tag_choices
     @event_tag_paths.choices
   end
+
+  # The events this event stands in time with, as a sentence for a list row:
+  # `before The beginning, after The end` or `same time as The middle`. Reuses
+  # `display_label` for each referenced event and the existing
+  # `events.display_label.before/after/simultaneous` phrases. No new source
+  # fields: the three temporal references already exist, only the presentation
+  # changes.
+  def event_related_events(event)
+    related = []
+    related << t("events.display_label.before", event: event.before_event.display_label) if event.before_event.present?
+    related << t("events.display_label.after", event: event.after_event.display_label) if event.after_event.present?
+    related << t("events.display_label.simultaneous", event: event.simultaneous_event.display_label) if event.simultaneous_event.present?
+    related.to_sentence
+  end
 end

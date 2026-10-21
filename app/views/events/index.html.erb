@@ -62,6 +62,12 @@
                 <%= entity_tag_badge(event) %>
                 <%= render "shared/draft_pending_badge", record: event %>
               </div>
+              <% if event.start_datetime.present? || event.end_datetime.present? %>
+                <div class="entity-description"><%= in_world_range(event.start_datetime, event.end_datetime) %></div>
+              <% end %>
+              <% if event.before_event.present? || event.after_event.present? || event.simultaneous_event.present? %>
+                <div class="entity-description"><%= event_related_events(event) %></div>
+              <% end %>
               <% if event.description.present? %>
                 <div class="entity-description"><%= event.description %></div>
               <% end %>

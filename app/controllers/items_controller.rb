@@ -25,7 +25,9 @@ class ItemsController < ApplicationController
     # bookmark, and a shared link limited to the filters really in effect.
     return redirect_to_canonical_filtered_list if blank_filter_values?
 
-    @items = @list_filter.apply(Current.universe.items.includes(:item_tags))
+    @items = @list_filter.apply(
+      Current.universe.items.includes(:item_tags, ownerships: :character)
+    )
     # The universe total is read only to say what the reader is looking at out
     # of, so an ordinary unfiltered visit costs no extra query for it. One
     # aggregate is enough: a narrowed list must not mistake its own size for

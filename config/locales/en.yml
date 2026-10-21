@@ -375,6 +375,9 @@ en:
       insert_after: "Insert after"
       move_up: "Move up"
       move_down: "Move down"
+      # The parent a node sits under, shown beside the node's name so a reader
+      # can see where a record sits in the hierarchy at a glance.
+      parent: "in %{name}"
     row_actions:
       actions_for: "Actions for %{name}"
       edit: "Edit"
@@ -1850,6 +1853,10 @@ en:
         tags_blank: "No tags assigned. Tags are optional."
         description: "Description"
         description_blank: "No description yet."
+    # List-row metadata: who currently holds the item and who held it before.
+    facts:
+      current_owner: "Now with %{owners}"
+      historical_owners: "Previously with %{owners}"
     tabs:
       items: "Items"
       ownerships: "Ownerships"

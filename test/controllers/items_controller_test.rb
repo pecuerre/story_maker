@@ -110,6 +110,74 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".empty-state a", text: /Add item/, count: 0
   end
 
+  test "index rows show current owner when an ownership has no end date" do
+    item = @universe.items.create!(name: "A fresh item")
+    @universe.ownerships.create!(
+      item: item,
+      character: characters(:character_two),
+      from_date: Time.utc(2026, 1, 1)
+    )
+
+    get universe_items_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".entity-description", text: "Now with Character two"
+  end
+
+  test "index rows show historical owners when an ownership has an end date" do
+    item = @universe.items.create!(name: "A fresh item")
+    @universe.ownerships.create!(
+      item: item,
+      character: characters(:character_two),
+      from_date: Time.utc(2026, 1, 1),
+      to_date: Time.utc(2026, 6, 1)
+    )
+
+    get universe_items_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".entity-description", text: "Previously with Character two"
+  end
+
+  test "index rows show both current and historical owners" do
+    item = @universe.items.create!(name: "A fresh item")
+    @universe.ownerships.create!(
+      item: item,
+      character: characters(:character_two),
+      from_date: Time.utc(2026, 1, 1),
+      to_date: Time.utc(2026, 6, 1)
+    )
+    @universe.ownerships.create!(
+      item: item,
+      character: characters(:character_three),
+      from_date: Time.utc(2026, 7, 1)
+    )
+
+    get universe_items_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".entity-description", text: "Previously with Character two"
+    assert_select ".entity-description", text: "Now with Character three"
+  end
+
+  test "index does not issue per-row queries for ownerships" do
+    3.times { |index| @universe.items.create!(name: "Listed #{index}") }
+
+    with_fewer = count_queries(/FROM "ownerships"/) do
+      get universe_items_url(universe_slug: @universe.slug)
+    end
+
+    3.times { |index| @universe.items.create!(name: "More #{index}") }
+
+    with_more = count_queries(/FROM "ownerships"/) do
+      get universe_items_url(universe_slug: @universe.slug)
+    end
+
+    assert_response :success
+    # Eager loading keeps the ownerships query count flat as rows grow.
+    assert_equal with_fewer, with_more
+  end
+
   test "a guest can filter and sees no mutation control" do
     sign_out
 

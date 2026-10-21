@@ -56,8 +56,10 @@
             <%= entity_tag_badge(node) %>
           <% end %>
           <%= render "shared/draft_pending_badge", record: node %>
-          <%# The count is a fact about this record, so it sits with the name and
-              the tags on the left instead of inside the Details link. %>
+          <% parent = hierarchy.parent_of(node) %>
+          <% if parent %>
+            <span class="entity-description d-block text-break"><%= t("shared.taxonomy_node.parent", name: parent.name) %></span>
+          <% end %>
           <%= record_count_badge(record_count, details_count_label) %>
           <% if node.description.present? %>
             <span class="entity-description d-block"><%= node.description %></span>
@@ -72,6 +74,10 @@
             <%= entity_tag_badge(node) %>
           <% end %>
           <%= render "shared/draft_pending_badge", record: node %>
+          <% parent = hierarchy.parent_of(node) %>
+          <% if parent %>
+            <span class="entity-description d-block text-break"><%= t("shared.taxonomy_node.parent", name: parent.name) %></span>
+          <% end %>
           <%= record_count_badge(record_count, details_count_label) %>
           <% if node.description.present? %>
             <span class="entity-description d-block"><%= node.description %></span>

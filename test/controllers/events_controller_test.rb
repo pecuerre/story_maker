@@ -289,6 +289,51 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       '"start_datetime":"2026-03-01T09:00:30"'
   end
 
+  test "index row renders the in-world date range as metadata" do
+    event = @universe.events.create!(
+      title: "The middle",
+      start_datetime: Time.utc(2026, 9, 11, 9, 0),
+      end_datetime: Time.utc(2026, 9, 11, 10, 0)
+    )
+
+    get universe_events_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".entity-list .entity-description",
+      text: "2026-09-11 09:00 – 2026-09-11 10:00"
+  end
+
+  test "index row renders related events as metadata" do
+    anchor = events(:event_one)
+    @universe.events.create!(title: "The middle", before_event: anchor)
+
+    get universe_events_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    # `event_one`'s label is its title plus its start datetime.
+    assert_select ".entity-list .entity-description",
+      text: "before The beginning - 2026-09-11 09:00"
+  end
+
+  test "index does not issue per-row queries for temporal references" do
+    anchor = events(:event_one)
+    3.times { @universe.events.create!(title: "Referrer #{_1}", before_event: anchor) }
+
+    with_fewer = count_queries(/FROM "events"/) do
+      get universe_events_url(universe_slug: @universe.slug)
+    end
+
+    3.times { @universe.events.create!(title: "More #{_1}", before_event: anchor) }
+
+    with_more = count_queries(/FROM "events"/) do
+      get universe_events_url(universe_slug: @universe.slug)
+    end
+
+    assert_response :success
+    # Eager loading keeps the events query count flat as rows grow.
+    assert_equal with_fewer, with_more
+  end
+
   test "the event delete confirmation states that scenes remain" do
     get universe_events_url(universe_slug: @universe.slug)
 

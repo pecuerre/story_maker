@@ -75,6 +75,15 @@
     <div class="form-text"><%= t("scenes.show.facts.in_world_time_hint") %></div>
   </div>
   <div class="col-12">
+    <div class="page-eyebrow"><%= t("scenes.show.facts.point_of_view") %></div>
+    <% if scene.pov_character.present? %>
+      <p class="mb-0"><%= link_to scene.pov_character.name, universe_character_path(universe_slug: story.universe.slug, id: scene.pov_character), class: "text-break" %></p>
+      <div class="form-text"><%= t("scenes.show.facts.point_of_view_hint") %></div>
+    <% else %>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.point_of_view_blank") %></p>
+    <% end %>
+  </div>
+  <div class="col-12">
     <div class="page-eyebrow"><%= t("scenes.show.facts.story") %></div>
     <p class="mb-0"><%= link_to story.name, universe_story_path(id: story) %></p>
   </div>

@@ -1346,6 +1346,9 @@ en:
         in_world_time: "In-world time"
         in_world_time_blank: "No in-world time set yet."
         in_world_time_hint: "This is the order in world time, kept separate from the narrative position above. The event and the in-world time are independent values; neither one is derived from the other and a disagreement between them is not detected here."
+        point_of_view: "Point of view"
+        point_of_view_blank: "No point of view recorded yet."
+        point_of_view_hint: "The character whose perspective presents this scene. It is separate from the scene's participants and its speakers: choosing one does not make them take part, and it does not say which lines belong to whom."
         story: "Story"
       tabs:
         # The four workspace tabs, which are real URLs rather than in-document
@@ -1372,6 +1375,9 @@ en:
       # repeated here.
       datetime: "In-world time"
       datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the event above: choosing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
+      point_of_view_legend: "Point of view"
+      pov_character: "Point of view"
+      pov_hint: "Optional. The character whose perspective presents this scene. It is separate from who takes part and who speaks: choosing one does not make them a participant, and it does not say which lines belong to whom."
       # `%{move_up}`/`%{move_down}` are the list's own translated control names, so
       # this sentence names the controls the reader will actually find.
       position_note_html: "This scene's narrative position is set only by the %{move_up}/%{move_down} controls on the %{scenes_list}. It is the order the story is told in, not in-world chronology."
@@ -2638,6 +2644,7 @@ en:
         section: "Section"
         event: "Event"
         datetime: "In-world time"
+        pov_character: "Point of view"
         scene_tags: "Scene tags"
       # The story-scoped models the Scenes workspace owns. A Section and the two
       # story-scoped taxonomies are grouped with `scene` rather than with the

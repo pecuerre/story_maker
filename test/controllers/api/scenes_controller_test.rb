@@ -44,6 +44,7 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_equal scenes(:scene_one).name, body["name"]
     assert_equal scenes(:scene_one).section_id, body["section_id"]
     assert_equal scenes(:scene_one).event_id, body["event_id"]
+    assert_nil body["pov_character_id"]
     assert_equal scenes(:scene_one).position, body["position"]
     assert_equal [ scene_tags(:scene_tag_one).id, scene_tags(:scene_tag_two).id ],
       body["scene_tag_ids"].sort
@@ -83,6 +84,7 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
       post api_universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story.id),
         params: { scene: { name: "Api scene", description: "Via the API",
           section_id: sections(:section_one).id, event_id: events(:event_one).id,
+          pov_character_id: characters(:character_two).id,
           datetime: "2026-09-12 09:00:00" } },
         headers: headers, as: :json
     end
@@ -93,10 +95,23 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Via the API", body["description"]
     assert_equal sections(:section_one).id, body["section_id"]
     assert_equal events(:event_one).id, body["event_id"]
+    assert_equal characters(:character_two).id, body["pov_character_id"]
     assert_equal "api-scene", body["slug"]
     scene = Scene.find(body["id"])
     assert_equal @story.id, scene.story_id
+    assert_equal characters(:character_two), scene.pov_character
     assert_equal scene.position, body["position"]
+  end
+
+  test "create rejects a point-of-view character from another universe" do
+    assert_no_difference("Scene.count") do
+      post api_universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story.id),
+        params: { scene: { name: "Cross-universe pov",
+          pov_character_id: characters(:character_other_universe).id } },
+        headers: headers, as: :json
+    end
+
+    assert_response :unprocessable_content
   end
 
   test "create rejects a section from another story" do

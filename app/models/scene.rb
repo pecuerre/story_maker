@@ -39,9 +39,13 @@ class Scene < ApplicationRecord
   # The Event is an optional shared in-world fact, not the Scene's identity.
   # Several Scenes may reference the same Event.
   belongs_to :event, optional: true
+  # The one character whose perspective presents this scene, separate from who
+  # takes part in it and from its linked event. Same universe as the story only.
+  belongs_to :pov_character, class_name: "Character", optional: true
 
   validates :name, presence: true
   validate :optional_references_exist
+  validate :pov_character_belongs_to_scene_universe
   validate :section_belongs_to_story
   validate :event_belongs_to_story_universe
   validate :datetime_is_a_valid_point
@@ -115,6 +119,14 @@ class Scene < ApplicationRecord
     def optional_references_exist
       errors.add(:section, I18n.t("scenes.errors.must_exist")) if section_id.present? && section.nil?
       errors.add(:event, I18n.t("scenes.errors.must_exist")) if event_id.present? && event.nil?
+      errors.add(:pov_character, I18n.t("scenes.errors.must_exist")) if pov_character_id.present? && pov_character.nil?
+    end
+
+    def pov_character_belongs_to_scene_universe
+      return if pov_character.nil? || story.nil?
+      return if pov_character.universe_id == story.universe_id
+
+      errors.add(:pov_character, I18n.t("scenes.errors.must_belong_to_universe"))
     end
 
     # Active Record casts an unparseable datetime to nil, which would silently

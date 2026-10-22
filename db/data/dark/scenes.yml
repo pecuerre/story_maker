@@ -12,6 +12,7 @@
   description: "Jonas Kahnwald arrives in Winden and meets the Nielsen family."
   section: Section.s1e1
   event: Event.jonas_meets_bartosz
+  pov_character: Character.jonas
   scene_tags: [ SceneTag.mood, SceneTag.mystery ]
   datetime: "1986-09-01T10:00"
   position: 0
@@ -32,6 +33,7 @@
   section: Section.s1e1
   # A second scene on the same event: several scenes may depict one event.
   event: Event.jonas_meets_bartosz
+  pov_character: Character.martha
   scene_tags: [ SceneTag.mood ]
   datetime: "1986-09-01T20:00"
   position: 2
@@ -69,6 +71,7 @@
   description: "Jonas and Martha find the second Noah alive in the cave beneath the Sic Mundus ruins."
   section: Section.s1e5
   event: Event.time_travel
+  pov_character: Character.martha
   scene_tags: [ SceneTag.revelation ]
   datetime: "2019-11-07T18:00"
   position: 6

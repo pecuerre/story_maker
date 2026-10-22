@@ -4,6 +4,7 @@
   description: "Bilbo's birthday party brings Gandalf and the Ring to the Shire."
   section: Section.the-fellowship-of-the-ring
   event: Event.ring_given_to_frodo
+  pov_character: Character.frodo_baggins
   scene_tags: [ SceneTag.adventure, SceneTag.fellowship ]
   datetime: "3018-09-29T00:00"
   position: 0
@@ -14,6 +15,7 @@
   description: "Gandalf's warning sends Frodo away from the Shire."
   section: Section.the-fellowship-of-the-ring
   event: Event.ring_given_to_frodo
+  pov_character: Character.gandalf_the_grey
   position: 1
 
 - story: Story.the-lord-of-the-rings
@@ -22,6 +24,7 @@
   description: "Frodo, Sam, and Merry set out for Bree with help from the pony cart."
   section: Section.the-fellowship-of-the-ring
   event: Event.fellowship_is_formed
+  pov_character: Character.frodo_baggins
   scene_tags: [ SceneTag.fellowship ]
   datetime: "3018-10-02T00:00"
   position: 2
@@ -37,5 +40,6 @@
   description: "The Fellowship of the Ring is formed at Rivendell."
   section: Section.the-return-of-the-king
   event: Event.breaking_of_the_fellowship
+  pov_character: Character.aragorn
   scene_tags: [ SceneTag.loss, SceneTag.homecoming ]
   position: 4

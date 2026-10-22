@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -523,8 +523,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_000000) do
     t.datetime "datetime"
     t.datetime "deleted_at"
     t.integer "photo_id"
+    t.integer "pov_character_id"
     t.index ["event_id"], name: "index_scenes_on_event_id"
     t.index ["photo_id"], name: "index_scenes_on_photo_id"
+    t.index ["pov_character_id"], name: "index_scenes_on_pov_character_id"
     t.index ["section_id"], name: "index_scenes_on_section_id"
     t.index ["story_id", "position"], name: "index_scenes_on_story_id_and_position"
     t.index ["story_id", "section_id"], name: "index_scenes_on_story_id_and_section_id"
@@ -733,6 +735,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_000000) do
   add_foreign_key "scene_tags", "photos", on_delete: :nullify
   add_foreign_key "scene_tags", "scene_tags", column: "parent_id"
   add_foreign_key "scene_tags", "stories"
+  add_foreign_key "scenes", "characters", column: "pov_character_id"
   add_foreign_key "scenes", "events"
   add_foreign_key "scenes", "photos", on_delete: :nullify
   add_foreign_key "scenes", "sections"

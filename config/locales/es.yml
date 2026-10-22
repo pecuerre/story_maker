@@ -1285,6 +1285,9 @@ es:
         in_world_time: "Tiempo en el mundo"
         in_world_time_blank: "Todavía no hay tiempo en el mundo definido."
         in_world_time_hint: "Este es el orden en el tiempo del mundo, que se mantiene separado de la posición narrativa de arriba. El suceso y el tiempo en el mundo son valores independientes; ninguno se deduce del otro y aquí no se detecta ninguna discrepancia entre ellos."
+        point_of_view: "Punto de vista"
+        point_of_view_blank: "Todavía no se registra un punto de vista."
+        point_of_view_hint: "El personaje cuya perspectiva presenta la escena. Está separado de los participantes y de los hablantes de la escena: elegirlo no hace que participen, ni dice qué líneas les pertenecen."
         story: "Historia"
       tabs:
         # Las cuatro pestañas del espacio de trabajo, que son URL reales y no paneles
@@ -1312,6 +1315,9 @@ es:
       # repite aquí.
       datetime: "Tiempo en el mundo"
       datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente del suceso de arriba: elegir o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
+      point_of_view_legend: "Punto de vista"
+      pov_character: "Punto de vista"
+      pov_hint: "Opcional. El personaje cuya perspectiva presenta la escena. Está separado de quien participa y de quien habla: elegirlo no lo convierte en participante, ni dice qué líneas le pertenecen."
       # `%{move_up}`/`%{move_down}` son los nombres traducidos de los controles de la
       # lista, así que esta frase nombra los controles que el lector encontrará de
       # verdad.
@@ -2291,6 +2297,7 @@ es:
         section: "Sección"
         event: "Suceso"
         datetime: "Tiempo en el mundo"
+        pov_character: "Punto de vista"
         scene_tags: "Etiquetas de escena"
       # Los modelos de ámbito de historia que posee el espacio de trabajo de
       # Escenas. Una Sección y las dos taxonomías de ámbito de historia van con

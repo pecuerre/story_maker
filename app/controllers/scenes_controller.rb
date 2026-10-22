@@ -20,6 +20,7 @@ class ScenesController < ApplicationController
   # descriptors as `new` and `edit`.
   before_action :set_section_paths, only: %i[ index show new edit create update group ]
   before_action :set_event_options, only: %i[ show new edit create update ]
+  before_action :set_character_options, only: %i[ new edit create update ]
   before_action :set_scene_tag_data, only: %i[ index show new edit create update ]
   # Scene Details hosts the ordered Element list and its speaker picker.
   before_action :set_element_data, only: %i[ show ]
@@ -162,7 +163,7 @@ class ScenesController < ApplicationController
   end
 
   def set_scene
-    @scene = @story.scenes.includes(:scene_tags).find(params.expect(:id))
+    @scene = @story.scenes.includes(:scene_tags, :pov_character).find(params.expect(:id))
   end
 
   # The grouping form posts the chosen scene next to the chosen group, so the
@@ -184,6 +185,13 @@ class ScenesController < ApplicationController
       .includes(:before_event, :after_event, :simultaneous_event)
       .reorder(:name, :id)
       .to_a
+  end
+
+  # Every universe character can present a scene, so the selector offers them
+  # all, exactly as the event selector offers every universe event. A blank
+  # choice records no point of view.
+  def set_character_options
+    @character_options = Current.universe.characters.reorder(:name, :id).to_a
   end
 
   # Scene Tag definitions and their paths are story-scoped. One ordered tag
@@ -225,7 +233,7 @@ class ScenesController < ApplicationController
   end
 
   def scene_params
-    params.expect(scene: [ *photo_params, :name, :description, :section_id, :event_id, :datetime, { scene_tag_ids: [] } ])
+    params.expect(scene: [ *photo_params, :name, :description, :section_id, :event_id, :datetime, :pov_character_id, { scene_tag_ids: [] } ])
   end
 
   def move_direction

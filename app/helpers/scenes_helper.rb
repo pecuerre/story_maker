@@ -65,6 +65,15 @@ module ScenesHelper
     [ [ t("shared.none"), "" ] ] + events.map { |event| [ event.display_label, event.id ] }
   end
 
+  # [ label, value ] pairs for the optional point-of-view selector: the
+  # universe's characters. The blank **None** option comes from the form's own
+  # `include_blank`, so the select carries it exactly once. Any character of the
+  # universe may present any of its stories' scenes; the same-Universe rule is
+  # enforced by the model, and a blank value records no point of view.
+  def scene_pov_character_choices(characters)
+    characters.map { |character| [ character.name, character.id ] }
+  end
+
   # The Scene's own in-world time point, formatted with the same minute
   # precision as the event datetimes. It is deliberately not derived from the
   # linked Event.

@@ -383,6 +383,27 @@ Request tests read each confirmation from the rendered attribute in
 `test/controllers/characters_controller_test.rb`, `items_controller_test.rb`,
 `locations_controller_test.rb`, and `universe_bible_locale_test.rb` (English and Spanish).
 
+## Dated execution note (2026-10-22, Scene point of view)
+
+A Scene may optionally name one same-Universe Character whose perspective presents it — **POV
+structure** from backlog item 9's unsettled list. `scenes` gains a nullable `pov_character_id`
+foreign key to `characters`, and `Scene` gains `belongs_to :pov_character, class_name:
+"Character", optional: true` with a same-universe validation (`pov_character_belongs_to_scene_universe`)
+and an unknown-id field error, mirroring the `section` and `event` references. Blank records no
+point of view; nothing cascades, and the referenced Character always survives Scene deletion.
+
+There is no new route: POV is read on Scene Details and chosen on the Scene edit form through a
+native selector (the universe's characters plus **None**), with copy stating what it does *not*
+do — it does not make the character a participant or a speaker, and it says nothing about which
+lines belong to whom. POV is deliberately not part of `SceneAppearances` (presence, speaker, event
+reference): a dedicated POV analyzer stays a later item, and continuity checking remains the
+analyzer's job, as item 9 states. POV structure leaves item 9's list; Plot, Tropes, Routes, Map,
+Distances, Meetings, and turn-level dialogue remain unsettled there.
+
+Coverage: model validation tests, controller tests for the editor and the 422 guard cases, and a
+system test for the write and read-only journeys; connected Dark and LOTR data name POV characters
+on several scenes while leaving others blank so both states are reachable by hand.
+
 ## Consequences
 
 ### Benefits

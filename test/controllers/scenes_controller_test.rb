@@ -886,6 +886,71 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_position, @scene.position
   end
 
+  test "the editor exposes a point-of-view selector for this story's universe" do
+    get new_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_select "select[name='scene[pov_character_id]'] option[value='']", text: "None"
+    assert_select "select[name='scene[pov_character_id]'] option[value=?]", characters(:character_one).id,
+      text: "Character one"
+    # Characters of another universe are not on offer.
+    assert_select "select[name='scene[pov_character_id]'] option[value=?]", characters(:character_other_universe).id, count: 0
+
+    @scene.update!(pov_character: characters(:character_one))
+
+    get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_select "select[name='scene[pov_character_id]'] option[selected=selected][value=?]",
+      characters(:character_one).id
+  end
+
+  test "creates a scene with a point-of-view character" do
+    assert_difference("Scene.count") do
+      post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+        params: { scene: { name: "Pov scene", pov_character_id: characters(:character_two).id } }
+    end
+
+    created = @story.scenes.find_by!(name: "Pov scene")
+    assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: created)
+    assert_equal characters(:character_two), created.pov_character
+  end
+
+  test "updates and clears the point-of-view character without changing narrative position" do
+    original_position = @scene.position
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { name: @scene.name, pov_character_id: characters(:character_two).id } }
+
+    assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+    assert_equal characters(:character_two), @scene.reload.pov_character
+    assert_equal original_position, @scene.position
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { pov_character_id: "" } }
+
+    assert_nil @scene.reload.pov_character
+    assert_equal original_position, @scene.position
+  end
+
+  test "rejects a point-of-view character from another universe" do
+    assert_no_difference("Scene.count") do
+      post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+        params: { scene: { name: "Wrong pov", pov_character_id: characters(:character_other_universe).id } }
+    end
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger", text: /Point of view must belong to the story's universe/
+  end
+
+  test "rejects an unknown point-of-view character instead of raising a foreign key error" do
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { pov_character_id: 0 } }
+
+    assert_response :unprocessable_content
+    assert_select ".alert-danger", text: /Point of view must exist/
+    assert_equal "Scene one", @scene.reload.name
+    assert_nil @scene.reload.pov_character
+  end
+
   test "update can move a scene between sections and back to ungrouped" do
     patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
       params: { scene: { name: @scene.name, section_id: sections(:section_two).id } }

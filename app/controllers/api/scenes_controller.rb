@@ -118,6 +118,7 @@ class Api::ScenesController < Api::BaseController
         description: scene.description,
         section_id: scene.section_id,
         event_id: scene.event_id,
+        pov_character_id: scene.pov_character_id,
         datetime: scene.datetime,
         position: scene.position,
         scene_tag_ids: scene.scene_tag_ids,
@@ -136,7 +137,7 @@ class Api::ScenesController < Api::BaseController
     end
 
     def scene_params
-      params.expect(scene: [ :name, :description, :section_id, :event_id, :datetime, { scene_tag_ids: [] } ])
+      params.expect(scene: [ :name, :description, :section_id, :event_id, :datetime, :pov_character_id, { scene_tag_ids: [] } ])
     end
 
     def move_direction

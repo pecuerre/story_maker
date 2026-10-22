@@ -40,6 +40,10 @@ Labels used below, in the order their groups appear:
 
 ## 2026-10-22
 
+### added
+
+- **Scene point of view.** A Scene may optionally name one same-Universe Character whose perspective presents it, shown on Scene Details and chosen on the edit form; blank means none. Adds the `pov_character_id` foreign key and same-Universe validation, the editor and details UI in both locales, tests, and connected Dark/LOTR data; POV structure leaves backlog item 9's unsettled list.
+
 ### changed
 
 - **Universes index shows what each universe holds.** Each row now renders story and entity counts plus recent activity beside visibility, cached per universe so the list does not recount on every render; backlog item 7 leaves the backlog.

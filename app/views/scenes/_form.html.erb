@@ -79,6 +79,16 @@
     </div>
   </fieldset>
 
+  <fieldset class="mb-3">
+    <legend class="h6"><%= t("scenes.form.point_of_view_legend") %></legend>
+    <div class="mb-3">
+      <%= form.label :pov_character_id, t("scenes.form.pov_character"), class: "form-label" %>
+      <%= form.select :pov_character_id, scene_pov_character_choices(@character_options),
+        { include_blank: t("shared.none") }, class: "form-select" %>
+      <div class="form-text"><%= t("scenes.form.pov_hint") %></div>
+    </div>
+  </fieldset>
+
   <%# One sentence with a link in it, so it is an `_html` key. The two control
       names are interpolated from the Scenes list's own keys rather than written
       out here, so the sentence names the controls the reader will actually find. %>

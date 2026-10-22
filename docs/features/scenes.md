@@ -13,8 +13,11 @@ reuse are in [conventions.md](../conventions.md#views---three-patterns).
 `parent_id`. A required `name` is labelled **Title**; `description` is optional and a title-only Scene
 is valid. `belongs_to :section, optional: true` and `belongs_to :event, optional: true` carry the
 organizational group and the in-world fact, and the single optional `datetime` carries the in-world
-time point. The event reference and the datetime are **independent**: neither writes, clears, nor
-validates against the other, and a disagreement between them is not detected. `has_many_tags
+time point. `belongs_to :pov_character, class_name: "Character", optional: true` names the single
+character whose perspective presents the scene; it must belong to the scene's universe and is
+independent of both the event link and the in-world time. The event reference and the datetime are
+**independent**: neither writes, clears, nor validates against the other, and a disagreement between
+them is not detected. Blank means no point of view is recorded. `has_many_tags
 :scene_tag, scope: :story_id` supplies optional Story Tag assignments. `Scene#universe` resolves
 through `story.universe`.
 
@@ -268,9 +271,9 @@ drag records.
 ## The editor and its tabs
 
 Scene Details (`/scenes/:id`) is the canonical, inspectable page: it renders the Title, narrative
-position, short description, Section group, Scene Tags, linked Event, formatted in-world time, and
-story context for writers, read-only members, and guests, and gives only writers an **Edit scene**
-action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so there is no
+position, short description, Section group, Scene Tags, linked Event, formatted in-world time, point
+of view, and story context for writers, read-only members, and guests, and gives only writers an
+**Edit scene** action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so there is no
 second edit surface and no second form for the same fields. The editor's workspace tabs go through
 `shared/_content_tabs`: **Scene Details**, **Characters**, **Items**, and **Locations** are all live
 links, each its own canonical page. A tab is never a link to a route that does not exist and never an
@@ -284,6 +287,11 @@ Each field has copy stating what it does *not* do.
 `Story#menu_scene_count` uses its own cache scope (`Story::SCENE_MENU_COUNT_SCOPE`, referenced by
 `Scene` itself) so it never overwrites `menu_section_count`; `Scene` declares
 `invalidates_menu_counts_for :story, cache_scope: Story::SCENE_MENU_COUNT_SCOPE`.
+
+The editor's **Point of view** fieldset holds the optional selector — the universe's characters plus
+**None** — and names the character whose perspective presents this scene. It is separate from who
+takes part and who speaks: choosing one does not make them a participant, and it does not say which
+lines belong to whom. Clearing it records no point of view rather than choosing nobody.
 
 ## Counts on the list
 

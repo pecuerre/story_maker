@@ -120,6 +120,40 @@ class SceneTest < ActiveSupport::TestCase
     assert_includes scene.errors[:datetime], "is not a valid date and time"
   end
 
+  test "names an optional same-universe point-of-view character" do
+    scene = @story.scenes.create!(name: "Pov scene", pov_character: characters(:character_one))
+
+    assert_equal characters(:character_one), scene.reload.pov_character
+  end
+
+  test "a scene with no point of view is still valid" do
+    scene = @story.scenes.create!(name: "No pov")
+
+    assert_nil scene.pov_character
+  end
+
+  test "clears the point-of-view character with a blank id" do
+    scene = @story.scenes.create!(name: "Pov scene", pov_character: characters(:character_one))
+
+    scene.update!(pov_character_id: "")
+
+    assert_nil scene.reload.pov_character
+  end
+
+  test "rejects a point-of-view character from another universe" do
+    scene = @story.scenes.build(name: "Wrong pov", pov_character: characters(:character_other_universe))
+
+    assert_not scene.valid?
+    assert_includes scene.errors[:pov_character], "must belong to the story's universe"
+  end
+
+  test "rejects an unknown point-of-view character instead of raising a foreign key error" do
+    scene = @story.scenes.build(name: "Broken pov", pov_character_id: 0)
+
+    assert_not scene.valid?
+    assert_includes scene.errors[:pov_character], "must exist"
+  end
+
   test "accepts a minute-precision datetime-local string" do
     scene = Scene.create!(story: @story, name: "Local time", datetime: "2019-11-05T21:00")
 

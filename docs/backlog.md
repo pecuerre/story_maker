@@ -43,15 +43,18 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
 Story-owned scene planning is now implemented; see
 [ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and the dated entries in
-[`../CHANGELOG.md`](../CHANGELOG.md). Revisit the adjacent ideas that decision did not settle — Plot,
-Tropes, Routes, Map, Distances, Meetings, POV structure, and turn-level dialogue — only with a
-concrete domain decision: define what each record means, which scope owns it, how it appears in the
-current page patterns, and whether it is worth adding to the data model. Replace a reserved link
-only when the feature has a real destination and useful empty, loading, and error states. The MVP's
-own limits stay visible rather than implied away: a Scene's `datetime` and its Event reference are
-independent and may contradict each other, free-text roles are annotations the application does not
-interpret, and one Dialogue block cannot say which line a speaker said. Continuity *checking* is
-still the analyzer's job, and nothing here performs it.
+[`../CHANGELOG.md`](../CHANGELOG.md). POV structure — one same-Universe Character whose perspective
+presents a Scene — has a concrete decision (2026-10-22) and is implemented: see ADR 0007's dated
+execution note and the entry in [`../CHANGELOG.md`](../CHANGELOG.md), so it leaves this list.
+Revisit the remaining adjacent ideas that decision did not settle — Plot, Tropes, Routes, Map,
+Distances, Meetings, and turn-level dialogue — only with a concrete domain decision: define what
+each record means, which scope owns it, how it appears in the current page patterns, and whether it
+is worth adding to the data model. Replace a reserved link only when the feature has a real
+destination and useful empty, loading, and error states. The MVP's own limits stay visible rather
+than implied away: a Scene's `datetime` and its Event reference are independent and may contradict
+each other, free-text roles are annotations the application does not interpret, and one Dialogue
+block cannot say which line a speaker said. Continuity *checking* is still the analyzer's job, and
+nothing here performs it.
 
 10. **Collaboration and universe analysis**
 

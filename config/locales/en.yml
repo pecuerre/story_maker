@@ -415,8 +415,12 @@ en:
     delete_confirm: "Delete %{name} and all of its content?"
     columns:
       universe: "Universe"
+      contents: "Contents"
+      activity: "Activity"
       visibility: "Visibility"
       actions: "Actions"
+    activity:
+      ago: "%{time} ago"
     visibility:
       private: "Private"
       public: "Public"
@@ -2772,6 +2776,9 @@ en:
   entry:
     one: "entry"
     other: "entries"
+  entity:
+    one: "entity"
+    other: "entities"
   element:
     one: "element"
     other: "elements"

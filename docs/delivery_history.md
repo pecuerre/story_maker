@@ -27,6 +27,20 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-22
+
+- **[changed]** **The Universes index shows story and entity counts and recent activity.**
+
+  - **The problem.** The landing page listed each universe's name and visibility, so choosing a workspace meant opening each one to see whether it held anything useful. Backlog item 7 asked for story and entity counts, recent activity, and a clear "Open universe" action — visibility and the open action already existed, so the change was the two new columns.
+  
+  - **The counts.** `Universe#summary_counts` returns stories, entities (characters, locations, events, items, relations, and ownerships — stories stay separate), and `activity_at`, the newest `updated_at` among everything counted. Every figure reads live rows through the default scope, so soft-deleted records never appear, and `public?` never enters it: authorization is handled upstream, by `visible_universes`, so a row is rendered only for a universe this request's user may already read.
+  
+  - **The cache.** The hash is held by `MenuCountCache` under `menu-counts:1:universe_summary:<id>` for an hour, the same store and TTL as the sidebar menu counts. Rendering the index touches each universe's entry once: a cold render fills it (seven counts and seven maximums per universe, once), and a warm render issues none. The alternative — eager-loading every counted association — loads all of every universe's records into memory on every render, so the cache is the cheaper bound.
+  
+  - **Invalidation.** New concern `InvalidatesUniverseSummary` is mixed into Story, Character, Location, Event, Item, Relation, and Ownership, and expires both universes' entries whenever a counted record is created, destroyed, saved, or moved between universes — soft deletes and restores expire through the save, and a move expires the previous universe too (tracked in `before_update`, deleted in `after_commit`, exactly as `InvalidatesMenuCounts` does). No schema, model, or demo-data change was needed: no new columns, no new `db/data` files.
+  
+  - **Verification.** `test/controllers/universes_controller_test.rb` covers the rendered counts, the activity cell, an empty universe (zero counts, no activity), the guest boundary (public universes only), and that a second render issues no new count queries against the counted tables. `test/models/menu_count_cache_test.rb` covers the fill, the warm-cache no-query read, and invalidation on create, destroy, touch, move, and soft delete. `test/system/universes_test.rb` covers the browser view.
+
 ### 2026-10-18
 
 - **[added]** **The Relations and Ownerships lists narrow by text, tag, and order.**

@@ -5,6 +5,7 @@ class Story < ApplicationRecord
   include HasSlug
   include HasPhoto
   include SoftDeletable
+  include InvalidatesUniverseSummary
   include Searchable
   include HasDiscussion
 

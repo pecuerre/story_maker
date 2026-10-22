@@ -5,6 +5,7 @@ class Relation < ApplicationRecord
   include OptionalName
   include SoftDeletable
   include InvalidatesMenuCounts
+  include InvalidatesUniverseSummary
   include Searchable
   include HasDiscussion
   include TemporalInterval

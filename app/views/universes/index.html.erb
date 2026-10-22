@@ -24,15 +24,34 @@
         <thead>
           <tr>
             <th scope="col"><%= t("universes.columns.universe") %></th>
+            <th scope="col"><%= t("universes.columns.contents") %></th>
+            <th scope="col"><%= t("universes.columns.activity") %></th>
             <th scope="col"><%= t("universes.columns.visibility") %></th>
             <th scope="col" class="text-end"><%= t("universes.columns.actions") %></th>
           </tr>
         </thead>
         <tbody>
           <% @universes.each do |universe| %>
+            <% summary = universe.summary_counts %>
             <tr>
               <td>
                 <%= link_to universe.name, universe_path(universe), class: "fw-semibold" %>
+              </td>
+              <td class="text-end">
+                <%= count_with_label(summary[:stories], "story") %>
+                <% if summary[:entities] > 0 %>
+                  <span class="mx-1" aria-hidden="true">·</span>
+                  <%= count_with_label(summary[:entities], "entity") %>
+                <% end %>
+              </td>
+              <td class="text-end">
+                <% if summary[:activity_at] %>
+                  <time datetime="<%= summary[:activity_at].iso8601 %>">
+                    <%= t("universes.activity.ago", time: time_ago_in_words(summary[:activity_at])) %>
+                  </time>
+                <% else %>
+                  <span class="text-body-secondary" aria-hidden="true">—</span>
+                <% end %>
               </td>
               <td>
                 <% if universe.private? %>

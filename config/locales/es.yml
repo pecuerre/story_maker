@@ -398,8 +398,12 @@ es:
     delete_confirm: "¿Eliminar %{name} y todo su contenido?"
     columns:
       universe: "Universo"
+      contents: "Contenido"
+      activity: "Actividad"
       visibility: "Visibilidad"
       actions: "Acciones"
+    activity:
+      ago: "Hace %{time}"
     visibility:
       private: "Privado"
       public: "Público"
@@ -2670,6 +2674,9 @@ es:
   entry:
     one: "entrada"
     other: "entradas"
+  entity:
+    one: "entidad"
+    other: "entidades"
   element:
     one: "elemento"
     other: "elementos"

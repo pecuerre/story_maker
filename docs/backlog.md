@@ -39,13 +39,6 @@ Because a number disappears from this file when its item is completed, **do not 
 number from another document**. Reference a pending idea by its heading text, and cite delivered
 work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
-7. **Universe summary cards**
-
-Make the Universes index useful for choosing a workspace. Add story and entity counts, visibility,
-recent activity, and a clear “Open universe” action. Consider eager-loading/caching the summary
-counts so the index does not issue one count query per universe. Keep the existing authorization
-and visibility rules in mind before exposing any summary data.
-
 9. **Story-planning and world-building tools**
 
 Story-owned scene planning is now implemented; see

@@ -38,6 +38,12 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-22
+
+### changed
+
+- **Universes index shows what each universe holds.** Each row now renders story and entity counts plus recent activity beside visibility, cached per universe so the list does not recount on every render; backlog item 7 leaves the backlog.
+
 ## 2026-10-21
 
 ### added

@@ -11,6 +11,52 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "index shows each visible universe's contents and recent activity" do
+    get universes_url
+    assert_response :success
+
+    assert_select "td", text: /2 stories/
+    assert_select "td", text: /11 entities/
+    assert_select "td", text: /1 story/
+    assert_select "td", text: /3 entities/
+    assert_select "time", count: 2
+  end
+
+  test "an empty universe shows zero counts and no activity" do
+    Universe.create!(owner: users(:user_one), name: "Empty", slug: "empty")
+
+    get universes_url
+
+    assert_select "td", text: "0 stories", count: 1
+    assert_select "span.text-body-secondary", text: "—", count: 1
+  end
+
+  test "guests see public universes only on the index" do
+    Universe.create!(owner: users(:user_one), name: "Private", slug: "private", private: true)
+    sign_out
+
+    get universes_url
+    assert_response :success
+
+    assert_select "a", text: "Universe one"
+    assert_select "a", text: "Private", count: 0
+  end
+
+  test "the index does not recount every universe on every render" do
+    sign_in_as(users(:user_one))
+
+    counted = -> {
+      count_queries(/FROM "(characters|locations|events|items|relations|ownerships|stories)"/) do
+        get universes_url
+      end
+    }
+
+    first = counted.call
+    second = counted.call
+
+    assert_equal first, second
+  end
+
   test "should get new" do
     get new_universe_url
     assert_response :success

@@ -11,6 +11,7 @@ class Event < ApplicationRecord
   include HasPhoto
   include SoftDeletable
   include InvalidatesMenuCounts
+  include InvalidatesUniverseSummary
   include Searchable
   include HasDiscussion
   include TemporalInterval

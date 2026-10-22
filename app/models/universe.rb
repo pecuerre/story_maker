@@ -309,6 +309,28 @@ class Universe < ApplicationRecord
     end
   end
 
+  # What the Universes index shows beside each universe: how much it holds and
+  # when it was last touched. Cached like `menu_counts` so the list fills each
+  # universe's figures once instead of once per row per render. `activity_at`
+  # is the newest `updated_at` among everything counted, so recent activity
+  # means a record was created, edited, or restored — not merely viewed.
+  SUMMARY_COUNT_ASSOCIATIONS = %i[stories characters locations events items relations ownerships].freeze
+
+  def summary_counts
+    MenuCountCache.fetch(MenuCountCache.key(:universe_summary, id), connection: self.class.connection) do
+      counts = SUMMARY_COUNT_ASSOCIATIONS.index_with { |association| public_send(association).count }
+
+      activity_at = SUMMARY_COUNT_ASSOCIATIONS.map do |association|
+        public_send(association).maximum(:updated_at)
+      end.compact.max
+
+      counts.merge(
+        entities: counts.except(:stories).values.sum,
+        activity_at: activity_at
+      )
+    end
+  end
+
   def to_param
     slug
   end

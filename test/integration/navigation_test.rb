@@ -75,6 +75,8 @@ class NavigationTest < ActionDispatch::IntegrationTest
     assert_select "aside.workspace-sidebar a", text: "New story", count: 0
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#'][aria-disabled=true][data-placeholder-link=true]",
       text: /Scenes/
+    assert_select "aside.workspace-sidebar a.sidebar-link[href='#'][aria-disabled=true][data-placeholder-link=true]",
+      text: /Plots/
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story),
       count: 0
@@ -194,19 +196,27 @@ class NavigationTest < ActionDispatch::IntegrationTest
       assert_select ".sidebar-link-label", text: "Scenes"
       assert_select ".sidebar-count", text: "3"
     end
+    assert_select "aside.workspace-sidebar a.sidebar-link[href=?]",
+      universe_story_plots_path(universe_slug: @universe.slug, story_id: @story) do
+      assert_select ".sidebar-link-label", text: "Plots"
+      assert_select ".sidebar-count", text: "1"
+    end
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/, count: 0
+    assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Plots/, count: 0
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_tags_path(universe_slug: @universe.slug), count: 0
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Members"
 
     # The inspector shows page-relevant details beside Configuration and
-    # Collaboration: a selected story's section and scene counts.
+    # Collaboration: a selected story's section, Plot, and scene counts.
     assert_select "aside.right-sidebar .sidebar-section-title", text: "Inspector"
     assert_select "aside.right-sidebar #inspector-title", 1
-    assert_select "aside.right-sidebar section[aria-labelledby='inspector-title'] .inspector-row", 2
+    assert_select "aside.right-sidebar section[aria-labelledby='inspector-title'] .inspector-row", 3
     assert_select "aside.right-sidebar .inspector-row-label", text: "Sections"
     assert_select "aside.right-sidebar .inspector-row-value", text: "2"
+    assert_select "aside.right-sidebar .inspector-row-label", text: "Plots"
+    assert_select "aside.right-sidebar .inspector-row-value", text: "1"
     assert_select "aside.right-sidebar .inspector-row-value", text: "3"
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_section_tags_path(universe_slug: @universe.slug, story_id: @story), count: 0

@@ -19,7 +19,7 @@ class SceneCharactersTest < ApplicationSystemTestCase
     visit universe_story_scene_scene_characters_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene)
 
     assert_selector "h1", text: "Characters"
-    assert_character_names [ "Character one", "Character two" ]
+    assert_character_names [ "Character one", "Character three", "Character two" ]
 
     click_button "Add character"
     within ".modal.show" do
@@ -92,9 +92,9 @@ class SceneCharactersTest < ApplicationSystemTestCase
     sign_in_via_form(users(:user_one))
     visit universe_story_scene_scene_characters_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene)
 
-    # Both stored participants also speak in `dialogue_one`, and the union is two
-    # rows rather than four.
-    assert_character_names [ "Character one", "Character two" ]
+    # Both stored participants speak in `dialogue_one`, and Character three speaks
+    # without a presence link. The union is three rows, not five contributions.
+    assert_character_names [ "Character one", "Character three", "Character two" ]
     within find(".entity-row", text: "Character one") do
       assert_text "Participant"
       assert_text "Speaks in 1 element"

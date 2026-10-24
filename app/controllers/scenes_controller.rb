@@ -22,6 +22,7 @@ class ScenesController < ApplicationController
   before_action :set_event_options, only: %i[ show new edit create update ]
   before_action :set_character_options, only: %i[ new edit create update ]
   before_action :set_scene_tag_data, only: %i[ index show new edit create update ]
+  before_action :set_plot_options, only: %i[ show new edit create update ]
   # Scene Details hosts the ordered Element list and its speaker picker.
   before_action :set_element_data, only: %i[ show ]
 
@@ -57,6 +58,7 @@ class ScenesController < ApplicationController
   # GET /u/:universe_slug/s/:story_id/scenes/new
   def new
     @scene = @story.scenes.new
+    @scene.build_trope_assignments
   end
 
   # POST /u/:universe_slug/s/:story_id/scenes
@@ -72,6 +74,7 @@ class ScenesController < ApplicationController
             notice: t("scenes.flash.created")
         end
       else
+        @scene.build_trope_assignments
         format.html { render :new, status: :unprocessable_content }
       end
     end
@@ -80,6 +83,7 @@ class ScenesController < ApplicationController
   # GET /u/:universe_slug/s/:story_id/scenes/:id/edit
   def edit
     @scene_tab = "details"
+    @scene.build_trope_assignments
   end
 
   # PATCH/PUT /u/:universe_slug/s/:story_id/scenes/:id
@@ -95,6 +99,7 @@ class ScenesController < ApplicationController
             status: :see_other
         end
       else
+        @scene.build_trope_assignments
         format.html { render :edit, status: :unprocessable_content }
       end
     end
@@ -204,11 +209,16 @@ class ScenesController < ApplicationController
     @scene_tag_paths = SceneTagPaths.build(@scene_tags)
   end
 
+  def set_plot_options
+    @plot_options = @story.plots.order(:name, :id).to_a
+  end
+
   # The ordered Element list and the speaker picker that fills a Dialogue. Both
   # are preloaded here: every row shows its Element's speakers, so a page that
   # queried per Element would be a query per row.
   def set_element_data
-    @scene_elements = @scene.scene_elements.includes(:characters).reorder(:position, :id).to_a
+    @scene_elements = @scene.scene_elements.includes(:characters, scene_dialogue_turns: :speaker)
+      .reorder(:position, :id).to_a
     @element_total = @scene_elements.size
     @character_options = Current.universe.characters.reorder(:name, :id).to_a
   end
@@ -233,7 +243,9 @@ class ScenesController < ApplicationController
   end
 
   def scene_params
-    params.expect(scene: [ *photo_params, :name, :description, :section_id, :event_id, :datetime, :pov_character_id, { scene_tag_ids: [] } ])
+    params.expect(scene: [ *photo_params, :name, :description, :section_id, :event_id, :datetime, :pov_character_id,
+      { scene_tag_ids: [], plot_ids: [],
+        scene_tropes_attributes: [ [ :id, :trope_slug, :selected, :context_note, :_destroy ] ] } ])
   end
 
   def move_direction

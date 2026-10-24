@@ -25,6 +25,7 @@ end %>
   aria_label: t("sidebar.story_workspace"),
   tabs: [
     { label: t("sidebar.sections"), path: universe_story_sections_path(story_id: @story), controller: :sections },
+    { label: t("sidebar.plots"), path: universe_story_plots_path(story_id: @story), controller: :plots },
     { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: @story), controller: :scenes }
   ] %>
 

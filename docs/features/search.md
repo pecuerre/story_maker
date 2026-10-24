@@ -99,7 +99,7 @@ are embedded in it:
 | Renamed | Stored paths below it | Queued repair |
 |---|---|---|
 | Universe | every document in the universe | `Search::ReindexUniverseJob` |
-| Story | Sections, Section Tags, Scenes, Scene Tags, Scene Elements | `Search::ReindexStoryJob` |
+| Story | Sections, Plots, Section Tags, Scenes, Scene Tags, Scene Elements | `Search::ReindexStoryJob` |
 | Scene | its Scene Elements | `Search::ReindexSceneJob` |
 
 Each job is queued by the same `after_update_commit … if: :saved_change_to_slug?` rule on the

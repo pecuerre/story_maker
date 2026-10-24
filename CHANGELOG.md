@@ -38,6 +38,24 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-24
+
+### added
+
+- **Contextual trope references.** Adds ten curated, sourced examples with original descriptions and manual Story/Scene annotations; Story changes now follow draft mode, and context notes avoid universal good/bad labels.
+- **Story-owned Plot arcs.** Adds named through-lines assignable across Scenes and Sections, with a searchable workspace, details page, draft-aware mutations, and Dark/LOTR examples.
+- **Turn-level dialogue editor.** Adds ordered turn display and add/edit/speaker/move controls to the Scene Elements modal, with direct and draft-aware refresh behavior, localized copy, and browser coverage (item 9, Slice A3).
+- **Turn-level dialogue endpoints.** Adds scoped JSON create, edit, delete, and move mutations for Scene Dialogue Turns, with authorization, validation, format, and CSRF coverage (item 9, Slice A2).
+- **Turn-level dialogue foundation.** Adds per-Element turns with scoped speakers, ordering, Dark/LOTR sample data, derived participation, and draft/position-repair support; block-level speaker rosters remain independent (item 9, Slice A1).
+
+### docs
+
+- **Tropes leave the story-planning backlog.** ADR 0032 records the curated shared catalogue and contextual annotation decision; `docs/features/tropes.md` owns the live behavior.
+- **Plot arcs leave the story-planning backlog.** ADR 0031 records the same-Story many-to-many decision; `docs/features/plots.md` owns its current behavior.
+- **Turn-level dialogue leaves the story-planning backlog.** Slice A is complete; item 9 now lists only its pending Plot, Tropes, Routes, Map, Distances, and Meetings slices.
+- **Unrelated full-suite failures are deferred for later triage.** The backlog records story/photo, localization, modal-contract, and client-string failures found while verifying A1.
+- **Turn-level dialogue is split into three ordered subslices.** The backlog separates the data foundation, JSON mutations, and modal/browser workflow, and records existing workspace changes for later review.
+
 ## 2026-10-22
 
 ### added

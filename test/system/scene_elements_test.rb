@@ -67,6 +67,8 @@ class SceneElementsTest < ApplicationSystemTestCase
       select "Dialogue", from: "Element type"
       assert_selector "[data-scene-element-form-target='speakers']", visible: :visible
       assert_text "A spoken block. Name everyone who speaks in it."
+      assert_selector "[data-scene-turns-target='saveFirst']", visible: :visible
+      assert_no_button "Add turn"
 
       fill_in "Title", with: "A kitchen argument"
       fill_in "Content", with: "You knew. I knew nothing."
@@ -87,6 +89,70 @@ class SceneElementsTest < ApplicationSystemTestCase
     within ".modal.show" do
       assert_field "Element type", with: "dialogue"
       assert_equal [ "Character one", "Character two" ], selected_speakers
+    end
+  end
+
+  test "a saved dialogue supports ordered turns, editing, and move controls in its element modal" do
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    click_button "Add element"
+    within ".modal.show" do
+      select "Dialogue", from: "Element type"
+      fill_in "Title", with: "A two-line exchange"
+      select "Character one", from: "Speakers"
+      click_button "Save element"
+    end
+
+    row = find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT)
+    click_row_menu_action row, "Edit"
+    within ".modal.show" do
+      assert_selector "[data-scene-turns-target='emptyState']", visible: :visible
+      assert_selector "[data-scene-turns-target='saveFirst']", visible: :hidden
+      assert_field "Speaker", with: ""
+
+      select "Character one", from: "Speaker"
+      fill_in "Line", with: "First line."
+      fill_in "Delivery note", with: "quietly"
+      click_button "Add turn"
+    end
+    assert_no_selector ".modal.show", wait: REFRESH_WAIT
+
+    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
+    within ".modal.show" do
+      assert_selector ".turn-row", count: 1
+      assert_equal [ "First line." ], turn_lines
+      select "Character two", from: "Speaker"
+      fill_in "Line", with: "Second line."
+      click_button "Add turn"
+    end
+    assert_no_selector ".modal.show", wait: REFRESH_WAIT
+
+    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
+    within ".modal.show" do
+      assert_selector ".turn-row", count: 2
+      assert_equal [ "First line.", "Second line." ], turn_lines
+
+      first_row = find(".turn-row", text: "First line.")
+      first_row.find("button[data-action='scene-turns#edit']").click
+      first_row.find("select[name='speaker_id']").select("Character two")
+      first_row.find("textarea[name='body']").set("Edited first line.")
+      first_row.find("input[name='parenthetical']").set("firmly")
+      first_row.find("button[data-action='scene-turns#save']").click
+    end
+    assert_no_selector ".modal.show", wait: REFRESH_WAIT
+
+    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
+    within ".modal.show" do
+      assert_selector ".turn-row", text: /Character two\s+Edited first line\.\s+\(firmly\)/
+      find(".turn-row", text: "Second line.").find("button[data-modal-form-direction='up']").click
+    end
+    assert_no_selector ".modal.show", wait: REFRESH_WAIT
+
+    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
+    within ".modal.show" do
+      assert_equal [ "Second line.", "Edited first line." ], turn_lines
+      assert_selector ".turn-row", text: /Character two\s+Edited first line\.\s+\(firmly\)/
     end
   end
 
@@ -112,7 +178,7 @@ class SceneElementsTest < ApplicationSystemTestCase
     assert_equal 4, @scene.scene_elements.count
   end
 
-  test "narration with speakers needs the explicit confirmation before it saves" do
+  test "narration stays dialogue until its turns are removed and speakers are confirmed" do
     element = scene_elements(:dialogue_one)
 
     sign_in_via_form(users(:user_one))
@@ -124,6 +190,21 @@ class SceneElementsTest < ApplicationSystemTestCase
       assert_selector "[data-scene-element-form-target='removeSpeakers']", visible: :all
       select "Narration", from: "Element type"
       assert_selector "[data-scene-element-form-target='removeSpeakers']", visible: :visible
+      check "Remove the speakers and make this narration"
+      click_button "Save element"
+      assert_selector "[data-modal-form-target='errors'] li",
+        text: "Element type cannot be Narration while dialogue turns remain"
+      assert_selector ".turn-row", count: 2
+    end
+
+    # The server refuses to discard turns through a kind change. Once those
+    # child rows are removed, the existing speaker-removal confirmation remains
+    # the explicit second half of the transition.
+    element.scene_dialogue_turns.destroy_all
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+    click_row_menu_action find(".scene-elements .entity-row", text: element.name), "Edit"
+    within ".modal.show" do
+      select "Narration", from: "Element type"
       check "Remove the speakers and make this narration"
       click_button "Save element"
     end
@@ -186,6 +267,12 @@ class SceneElementsTest < ApplicationSystemTestCase
       page.evaluate_script(
         "Array.from(document.querySelectorAll('#scene_element_character_ids option:checked'))" \
         ".map(option => option.textContent.trim())"
+      )
+    end
+
+    def turn_lines
+      page.evaluate_script(
+        "Array.from(document.querySelectorAll('.turn-row .turn-line')).map(node => node.textContent.trim())"
       )
     end
 

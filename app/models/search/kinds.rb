@@ -25,6 +25,7 @@ module Search
       "universe" => "searches.kinds.universe",
       "story" => "searches.kinds.story",
       "section" => "searches.kinds.section",
+      "plot" => "searches.kinds.plot",
       "scene" => "searches.kinds.scene",
       "scene_element" => "searches.kinds.scene_element",
       "character" => "searches.kinds.character",

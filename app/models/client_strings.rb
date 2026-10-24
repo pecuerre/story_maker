@@ -142,9 +142,27 @@ module ClientStrings
     searches.bar.result_label
   ].freeze
 
+  # The keys the dialogue-turns editor inside the Scene Details Elements modal
+  # reads. `shared.form.cancel` is already covered by the flat-list modal, so it
+  # is not repeated here.
+  SCENE_TURNS = %w[
+    scenes.elements.dialogue_turns.choose_speaker
+    scenes.elements.dialogue_turns.delete_confirm
+    scenes.elements.dialogue_turns.edit
+    scenes.elements.dialogue_turns.form.body
+    scenes.elements.dialogue_turns.form.parenthetical
+    scenes.elements.dialogue_turns.form.save
+    scenes.elements.dialogue_turns.form.speaker
+    scenes.elements.dialogue_turns.save_failed
+    scenes.elements.dialogue_turns.speaker_required
+    scenes.move.down
+    scenes.move.up
+    shared.row_actions.delete
+  ].freeze
+
   # Every key any shipped controller reads, deduplicated and sorted so a diff is
   # a diff of the set rather than of the order four lists happen to be in.
-  KEYS = (TAXONOMY_TREE + PHOTO_CROP + MODAL_FORM + SEARCH).uniq.sort.freeze
+  KEYS = (TAXONOMY_TREE + PHOTO_CROP + MODAL_FORM + SEARCH + SCENE_TURNS).uniq.sort.freeze
 
   # The record types whose `base` error the flat-list modal reads as a sentence.
   #
@@ -168,6 +186,7 @@ module ClientStrings
     event
     item
     ownership
+    plot
     relation
     scene_character
     scene_element

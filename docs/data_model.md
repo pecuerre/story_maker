@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_02_130100`) and the models in `app/models/`.
+`2026_10_24_120000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -11,14 +11,16 @@ User (owner)
  └── Universe  (1..n stories; everything below is scoped to exactly one universe)
       ├── UniverseMembership ──> User (read/write/admin)
       ├── Photo (Active Storage attachment, one 300x300 square, optional on every record below)
-      ├── Story ── Section ──> Section's parent Section (tree)
+       ├── Story ── Section ──> Section's parent Section (tree)
+       │   ├── Plot ── HABTM Scene (story-owned narrative through-lines)
       │   │                     └── HABTM SectionTag ──┐
       │   ├── SceneTag (tree, story-scoped) ── HABTM SceneTag assignment
       │   └── Scene (contiguous narrative position) ──> Section / Event
-      │       ├── SceneElement (contiguous flat position) ── HABTM Character (dialogue speakers)
-      │       ├── SceneCharacter (explicit presence, optional free-text role) ──> Character
-      │       ├── SceneItem (explicit presence, optional free-text role) ─────> Item
-      │       └── SceneLocation (explicit presence, optional free-text role) > Location
+       │       ├── SceneElement (contiguous flat position) ── HABTM Character (block speakers)
+       │       │   └── SceneDialogueTurn (contiguous flat position) ──> Character (line speaker)
+       │       ├── SceneCharacter (explicit presence, optional free-text role) ──> Character
+       │       ├── SceneItem (explicit presence, optional free-text role) ─────> Item
+       │       └── SceneLocation (explicit presence, optional free-text role) > Location
       ├── Discussion (one per record, polymorphic) ──> DiscussionMessage ──> User
       ├── Character ──> parent Character   ── HABTM CharacterTag (tree)
       ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
@@ -33,8 +35,9 @@ User (owner)
 ownerships **and every `_tag` model except SectionTag and SceneTag**) belongs to the **universe** and
 is shared by all of its stories. Only **sections** (the script: books → chapters → scenes …),
 **scenes**, and their **section/scene tags** (chapter/book/episode or scene-beat labels) belong to a
-**story** — each story owns its own structure taxonomy. A Scene's own components (Elements and
-presence links) are narrower still: they belong to one **Scene** and reach the Universe through it.
+**story** — each story owns its own structure taxonomy and Plot arcs. A Scene's own components (Elements and
+presence links) belong to one **Scene**; a Dialogue turn is nested under its Element. They resolve
+their Universe through those owners.
 
 ### Universe access
 
@@ -72,15 +75,19 @@ can be restored. The `SoftDeletable` concern (`app/models/concerns/soft_deletabl
   repaired.
 
 Soft-deleting a parent cascades to its declared children (a Universe soft-deletes its stories,
-characters, tags, and memberships; a Story soft-deletes its sections and scenes; a Scene
-soft-deletes its elements and presence links; a Character soft-deletes its relations, ownerships,
-and presence links). Two associations are cleared rather than cascaded, matching the existing
-hard-delete contract: a Section's scenes are ungrouped (`section_id` nullified) and an Event's
-temporal references are cleared, so a referrer that was only identifiable through the deleted Event
+characters, tags, and memberships; a Story soft-deletes its sections, plots, and scenes; a Scene
+soft-deletes its elements and presence links; a SceneElement soft-deletes its dialogue turns; a
+Character soft-deletes its relations, ownerships, and presence links). Plot-to-Scene join rows are
+retained when a Plot is soft-deleted, so restoring it restores its assignments. Dialogue-turn speaker rows
+are retained when a Character is soft-deleted, like the Element-level speaker join, so restoring
+the Character restores its attributed lines. Two associations are cleared rather than cascaded,
+matching the existing hard-delete contract: a Section's scenes are ungrouped (`section_id` nullified)
+and an Event's temporal references are cleared, so a referrer that was only identifiable through the deleted Event
 keeps its row and reports the missing identifier the next time it is saved.
 
 The unique indexes that would otherwise block re-creating a record with the same key after a soft
 delete are partial (`WHERE deleted_at IS NULL`): `universes.slug`, `stories.[universe_id, slug]`,
+`plots.[story_id, name]`, `plots.[story_id, slug]`,
 `universe_memberships.[universe_id, user_id]`, and the `scene_characters` / `scene_items` /
 `scene_locations` presence-link pairs. The matching model validations carry the same condition.
 
@@ -129,10 +136,15 @@ method. Each rule is stated in full in [features/photos.md](features/photos.md).
 |---|---|---|
 | `stories` | `universe_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL) | unique index on `[universe_id, slug]`; `has_many :scenes, dependent: :destroy` |
 | `sections` | `story_id` FK (NOT NULL), `name`, `description`, `slug`, `parent_id` self-FK, `position` (default 0) | sections belong directly to a story; `has_many :scenes, dependent: :nullify` (deleting a section only ungroups scenes) |
+| `plots` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `deleted_at` (nullable) | named story-owned through-line; unique live `[story_id, name]` and `[story_id, slug]`; flat and unordered |
+| `plots_scenes` | `plot_id` FK, `scene_id` FK | HABTM link; unique `[plot_id, scene_id]`; both ends must belong to the same Story (application validation) |
+| `story_tropes` | `story_id` FK (NOT NULL), `trope_slug`, `context_note` (nullable) | one contextual annotation per catalogue slug and Story; unique `[story_id, trope_slug]`; rows survive soft deletion for restore |
+| `scene_tropes` | `scene_id` FK (NOT NULL), `trope_slug`, `context_note` (nullable) | one contextual annotation per catalogue slug and Scene; unique `[scene_id, trope_slug]`; rows survive soft deletion for restore |
 | `section_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its chapter/book/episode labels |
 | `scene_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its scene-beat/mood labels; parent and position are story-local |
 | `scenes` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `position` (default 0, NOT NULL), `section_id` FK (nullable), `event_id` FK (nullable), `datetime` (nullable), `pov_character_id` FK (nullable) | narrative order is `position`; indexes on `[story_id, position]`, `[story_id, section_id]`, `section_id`, `event_id`, `pov_character_id`; no `parent_id` |
 | `scene_elements` | `scene_id` FK (NOT NULL), `kind` (NOT NULL, default `narration`), `name`, `body`, `position` (default 0, NOT NULL) | one flat ordered block of a Scene's prose; index on `[scene_id, position]`; `check_constraint` on `kind`; no `parent_id` |
+| `scene_dialogue_turns` | `scene_element_id` FK (NOT NULL), `speaker_id` FK to `characters` (NOT NULL), `body`, `parenthetical`, `position` (default 0, NOT NULL), `deleted_at` (nullable) | one attributed line inside a Dialogue Element; same-Universe speaker; index on `[scene_element_id, position]` and `deleted_at`; no `parent_id`, public slug, or `universe_id` |
 | `scene_element_speakers` | `scene_element_id` FK (NOT NULL), `character_id` FK (NOT NULL) | no PK; unique `[scene_element_id, character_id]`; a plain many-to-many link with no data of its own |
 | `scene_characters` | `scene_id` FK (NOT NULL), `character_id` FK (NOT NULL), `role` (nullable) | explicit presence; unique `[scene_id, character_id]`; `role` is free text and blank means no role |
 | `scene_items` | `scene_id` FK (NOT NULL), `item_id` FK (NOT NULL), `role` (nullable) | explicit presence; unique `[scene_id, item_id]`; `role` is free text and blank means no role |
@@ -185,6 +197,15 @@ instance-dependent lambdas, Active Record refuses to eager load or group through
 associations; `TaggedRecordCounts` exists for the grouped read, and `tagged_records` for the
 per-record read.
 
+`plots_scenes` is the separate story-scoped Plot↔Scene HABTM join. It also has two foreign keys and
+a unique pair index; its application-level association writers and the development-data loader prove
+that both records belong to the same Story.
+
+`trope_slug` references the curated, app-wide `TropeCatalog` in code rather than another database
+record. The models validate it against that list, while the owner foreign key and unique index keep
+each persisted annotation attached to exactly one Story or Scene. Trope catalog and source details
+are owned by [features/tropes.md](features/tropes.md).
+
 ### Conversations
 | Table | Columns | Notes |
 |---|---|---|
@@ -207,8 +228,8 @@ thread's `record` reference may name any of them. A manifest names that record w
 cannot hang a thread off a `User` or a `Session`. A thread is identified in a manifest by its
 **title**, declared as the definition's `identifier_field` rather than inferred from the model's
 columns: the loader's preflight runs before the schema exists, so an identifier that asked the
-database would not resolve during a reset. A `SceneElement` has no stable identifier and so cannot
-be named by a manifest, although the application can carry a thread about one.
+database would not resolve during a reset. A `SceneElement` has no public slug, but a manifest may
+name one with its YAML-only `manifest_key`; the key is not persisted.
 
 ### Remembered changes
 | Table | Columns | Notes |
@@ -309,7 +330,8 @@ nullable buys. See [conventions.md](conventions.md#notifications), which owns wh
 ### Photo columns, per table
 `universes`, `stories`, `sections`, `scenes`, `characters`, `locations`, `items`, `events`,
 `relations`, `ownerships`, and all eight `*_tags` tables each carry one nullable, indexed
-`photo_id`. `users`, `sessions`, `scene_elements`, and the Scene presence-link tables do not. See
+`photo_id`. `users`, `sessions`, `scene_elements`, `scene_dialogue_turns`, and the Scene
+presence-link tables do not. See
 [Photos](#photos) for the rules those references obey.
 
 ## Tag taxonomy matrix
@@ -390,8 +412,8 @@ their work, so a surprising line in the output has to be visible enough to undo 
 **not** a second writer: it takes no scope-owner lock, so `PositionedResourceOrder` remains what
 maintains a sequence while the application is writing to it.
 
-Not hierarchical: **Relation**, **Ownership** (link records), **Scene** and **SceneElement** (flat
-story- and scene-owned sequences), **SceneCharacter**, **SceneItem**, **SceneLocation** (link
+Not hierarchical: **Relation**, **Ownership** (link records), **Plot**, **Scene**, **SceneElement**, and
+**SceneDialogueTurn** (flat story-/scene-/element-owned sequences), **SceneCharacter**, **SceneItem**, **SceneLocation** (link
 records), **Story**, **Universe**, **User**, **Session**, **Draft** and **DraftChange**. A draft
 change *is* ordered — by `created_at`, then `id`, which is the order it was remembered in — but it
 is an append-only log rather than a sequence an author rearranges, so it carries no `position` and
@@ -412,9 +434,11 @@ no `parent_id`.
 | `Notification` | `user` presence; `kind` inclusion in `KINDS` (`review_submitted`/`review_approved`/`review_rejected`/`discussion_reply`), so a kind with no sentence behind it is a field error rather than a badge nothing can read. `read` is a boolean with a default and nothing validates it — a notice is written once and marked, never edited | no authorization check: a notification has exactly one reader, so the scope is `Current.user.notifications` rather than a rule ([ADR 0025](adr/0025-a-notification-is-a-stored-sentence.md)) |
 | `Story` | `name` presence + unique per universe; `slug` unique per universe |
 | `Section` | `name` presence; `story` required; parent rules scoped to the story; `section_tags` optional, but when present they must all belong to the section's story through the shared HABTM scope; `has_many :scenes, dependent: :nullify` |
-| `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `pov_character` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id`/`pov_character_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |
+| `Plot` | `name` presence and unique among live Plots in its Story; `story` required; `scenes` optional and, when present, all must belong to the same Story; unknown, duplicate, or cross-Story scene assignments are ordinary validation errors; no `parent_id` or `position` |
+| `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `pov_character` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; `plots` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id`/`pov_character_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |
 | `SceneTag` | `name` presence; `story` required; parent rules scoped to the story; `scenes` optional and, when present, all belong to the story; `HasColor`, `Hierarchical`, and slug behavior |
-| `SceneElement` | `name` presence; `scene` required; `kind` presence and `inclusion` in `narration`/`dialogue` (plus a database check constraint); a Dialogue needs at least one speaker ("Speakers is required for a dialogue element"); Narration may not keep speakers ("Element type cannot be Narration while speakers are still assigned") unless the request explicitly confirms it; an unknown, duplicated, or cross-universe `character_ids` entry is an ordinary field error; speakers must belong to the scene's universe; no `parent_id` |
+| `SceneElement` | `name` presence; `scene` required; `kind` presence and `inclusion` in `narration`/`dialogue` (plus a database check constraint); a Dialogue needs at least one same-Universe Character in its block-level speaker roster ("Speakers is required for a dialogue element"); Narration may not keep roster speakers or any turn rows, including soft-deleted turns (unless roster removal is explicitly confirmed); an unknown, duplicated, or cross-universe `character_ids` entry is an ordinary field error; no `parent_id` |
+| `SceneDialogueTurn` | `scene_element` and `speaker` required; the Element must be Dialogue; the speaker must belong to the Scene's Universe; `body` and `parenthetical` optional; position is flat and contiguous inside the Element; no `parent_id` or `universe_id` |
 | `SceneCharacter` | `scene` and `character` required; `character_id` unique per scene ("is already in this scene"); `character` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |
 | `SceneItem` | `scene` and `item` required; `item_id` unique per scene ("is already in this scene"); `item` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |
 | `SceneLocation` | `scene` and `location` required; `location_id` unique per scene ("is already in this scene"); `location` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |
@@ -518,6 +542,11 @@ attributes, and universe/story scope before writing; it normalizes hierarchical 
 from file order, or requires complete unique explicit positions for a sibling group. Which command to
 run, and when, is in
 [development.md](development.md#required-workflow-after-editing-demo-yaml).
+
+`SceneElement` has no public slug, so a manifest may give a referenced Element a YAML-only
+`manifest_key`; the loader uses it for child references and never writes it to the table. A
+`SceneDialogueTurn` names its `scene_element` by that key and its `speaker` by `Character.slug`, and
+its flat positions are grouped within each Element rather than across the whole Scene.
 
 Photo data follows the same convention with one extra rule: a `photos.yml` entry names a file under
 `db/photos/<universe_slug>/` through the virtual `source_file` attribute rather than carrying bytes,

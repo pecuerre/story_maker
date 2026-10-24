@@ -19,7 +19,7 @@ class DraftApplierTest < ActiveSupport::TestCase
 
   test "every controller that maintains sibling positions is a model the applier orders" do
     controllers = positioned_controllers
-    assert_equal 15, controllers.size,
+    assert_equal 17, controllers.size,
       "the number of ordered controllers is what the derivation is checked against; a new one changes it"
 
     controllers.each do |controller|
@@ -38,7 +38,7 @@ class DraftApplierTest < ActiveSupport::TestCase
     # column nobody maintains is a sequence the applier would normalize and no
     # controller would.
     ordered_by_applier = Ability::CONTENT_CLASS_NAMES.select { |name| DraftApplier.ordered?(name.constantize) }.sort
-    ordered_by_controller = positioned_controllers.filter_map { |controller| ordered_model(controller).name }.sort
+    ordered_by_controller = positioned_controllers.filter_map { |controller| ordered_model(controller).name }.uniq.sort
 
     assert_equal ordered_by_applier, ordered_by_controller
   end
@@ -50,6 +50,43 @@ class DraftApplierTest < ActiveSupport::TestCase
 
     assert_not DraftApplier.ordered?(Relation), "a Relation has no position column and no controller that claims one"
     assert_not DraftApplier.ordered?(SceneCharacter), "a presence link is a statement, not an ordered row"
+  end
+
+  test "a remembered Dialogue turn resolves its nested Element scope when applied" do
+    element = scene_elements(:dialogue_one)
+    draft = draft_with(change(action: "create", type: "SceneDialogueTurn", payload: {
+      "scene_element_id" => element.id,
+      "speaker_id" => characters(:character_one).id,
+      "body" => "A remembered line"
+    }))
+
+    result = DraftApplier.new(draft).apply
+    turn = element.scene_dialogue_turns.find_by!(body: "A remembered line")
+
+    assert_predicate result, :complete?
+    assert_equal element, turn.scene_element
+    assert_equal characters(:character_one), turn.speaker
+    assert_equal [ 0, 1, 2 ], element.scene_dialogue_turns.order(:position, :id).pluck(:position)
+  end
+
+  test "a remembered Dialogue turn cannot be placed under another universe's Element" do
+    outsider = universes(:universe_two)
+    outsider_story = outsider.stories.create!(name: "Other universe story")
+    outsider_scene = outsider_story.scenes.create!(name: "Other universe scene")
+    outsider_speaker = outsider.characters.create!(name: "Other universe speaker")
+    outsider_element = outsider_scene.scene_elements.create!(name: "Other exchange", kind: "dialogue",
+      characters: [ outsider_speaker ])
+    draft = draft_with(change(action: "create", type: "SceneDialogueTurn", payload: {
+      "scene_element_id" => outsider_element.id,
+      "speaker_id" => outsider_speaker.id,
+      "body" => "Must not cross universes"
+    }))
+
+    result = DraftApplier.new(draft).apply
+
+    assert_equal :unplaceable, result.skipped.first.reason
+    assert_nil outsider_element.scene_dialogue_turns.find_by(body: "Must not cross universes")
+    assert_nil scene_elements(:dialogue_one).scene_dialogue_turns.find_by(body: "Must not cross universes")
   end
 
   # Applying, without a request around it.

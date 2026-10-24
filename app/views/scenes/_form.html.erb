@@ -46,6 +46,24 @@
     </div>
   </fieldset>
 
+  <%= render "shared/trope_assignments", form: form, association: :scene_tropes %>
+
+  <fieldset class="mb-3">
+    <legend class="h6"><%= t("scenes.form.plots_legend") %></legend>
+    <div class="mb-3">
+      <%= form.label :plot_ids, t("scenes.form.plots_label"), class: "form-label" %>
+      <% if @plot_options.any? %>
+        <%= form.select :plot_ids, @plot_options.map { |plot| [ plot.name, plot.id ] },
+          { include_hidden: true },
+          { multiple: true, class: "form-select", size: [ @plot_options.size, 6 ].min } %>
+        <div class="form-text"><%= t("scenes.form.plots_hint") %></div>
+      <% else %>
+        <p class="text-body-secondary mb-2"><%= t("scenes.form.plots_empty") %></p>
+        <%= link_to t("scenes.form.manage_plots"), universe_story_plots_path(story_id: scene.story), class: "btn btn-sm btn-outline-secondary" %>
+      <% end %>
+    </div>
+  </fieldset>
+
   <fieldset class="mb-3">
     <legend class="h6"><%= t("scenes.form.organization_legend") %></legend>
     <div class="mb-3">

@@ -78,6 +78,8 @@ class AbilityTest < ActiveSupport::TestCase
       scene_tags(:scene_tag_one),
       scene_elements(:narration_one),
       scene_elements(:dialogue_one),
+      scene_dialogue_turns(:turn_one),
+      scene_dialogue_turns(:turn_two),
       scene_characters(:scene_character_one),
       scene_characters(:scene_character_two),
       scene_items(:scene_item_one),
@@ -130,6 +132,9 @@ class AbilityTest < ActiveSupport::TestCase
       scene.scene_items.create!(item: @private_universe.items.create!(name: "A prop")),
       scene.scene_locations.create!(location: @private_universe.locations.create!(name: "A place"))
     ]
+    dialogue = scene.scene_elements.create!(name: "A private exchange", kind: "dialogue",
+      characters: [ @private_universe.characters.create!(name: "A speaker") ])
+    records << dialogue.scene_dialogue_turns.create!(speaker: dialogue.characters.first, body: "A private line")
 
     non_member = Ability.new(@read_user)
     records.each do |record|
@@ -180,6 +185,8 @@ class AbilityTest < ActiveSupport::TestCase
     # neither check may be answered with the other universe's rows.
     assert Ability.new(@read_user, @public_universe).can?(:read, Character)
     assert_not Ability.new(@read_user, @private_universe).can?(:read, Character)
+    assert Ability.new(@read_user, @public_universe).can?(:read, SceneDialogueTurn)
+    assert_not Ability.new(@read_user, @private_universe).can?(:read, SceneDialogueTurn)
   end
 
   test "a class-level check without an authorized universe is refused" do
@@ -278,6 +285,8 @@ class AbilityTest < ActiveSupport::TestCase
       # polymorphic rule is exactly the class-level hole `RecordTarget` closes.
       "Discussion" => "authorized through the record it is about, never on its own",
       "DiscussionMessage" => "reachable only through its discussion's record scope",
+      "StoryTrope" => "a nested annotation written only through its authorized Story",
+      "SceneTrope" => "a nested annotation written only through its authorized Scene",
       # A draft is one author's pending changes, not something the universe
       # publishes. Registering it as content would let the content rules answer
       # `read` for a guest in a public universe — exactly the wrong answer for

@@ -71,9 +71,10 @@ en:
     timeline: "Timeline"
     items: "Items"
     sections: "Sections"
+    plots: "Plots"
     scenes: "Scenes"
     all_stories: "All stories"
-    select_story_hint: "Select a story to work on its sections and story-specific structure."
+    select_story_hint: "Select a story to work on its sections, plot arcs, and scenes."
     # The right column: universe configuration and the reserved tool areas.
     tools:
       navigation_label: "Universe configuration and tools"
@@ -112,6 +113,7 @@ en:
   # and Collaboration. Each label names what its value counts.
   inspector:
     sections: "Sections"
+    plots: "Plots"
     scenes: "Scenes"
     relations: "Relations"
     ownerships: "Ownerships"
@@ -562,6 +564,7 @@ en:
       # model it is about.
       photo_label: "Photo"
       position: "Position"
+      tropes_none: "No tropes selected"
     flash:
       # The one sentence the HTML workspaces say when a universe remembers a
       # change instead of writing it. It says the change was *remembered*, never
@@ -1077,14 +1080,14 @@ en:
     new_description: "Create a story with its own plot and section structure inside this universe."
     edit: "Edit story"
     edit_document_title: "Edit %{name}"
-    edit_description: "Update the name and description used for this story."
+    edit_description: "Update this story's name, description, and trope annotations."
     open: "Open story"
     delete: "Delete story"
-    delete_confirm: "Delete “%{name}”? Its sections, section tags, scene tags, scenes, scene elements, and story-owned links will be permanently deleted. Shared universe records will not be deleted."
+    delete_confirm: "Delete “%{name}”? Its sections, plots, section tags, scene tags, trope annotations, scenes, scene elements, and story-owned links will be permanently deleted. Shared universe records will not be deleted."
     current_badge: "Current"
     no_description: "No description yet."
     empty_title: "No stories yet"
-    empty_writable_description: "A story holds the plot and sections of this universe, while its world-building records remain shared across stories."
+    empty_writable_description: "A story owns its Plot arcs, Sections, and Scenes, while world-building records are shared across stories."
     empty_read_only_description: "Stories in this universe will appear here once they have been added."
     form:
       name: "Name"
@@ -1094,6 +1097,7 @@ en:
     show:
       default_description: "Plan the plot and structure for this story."
       open_sections: "Open sections"
+      open_plots: "Open plots"
       open_scenes: "Open scenes"
       add_section: "Add section"
       actions_aria: "Story actions"
@@ -1102,9 +1106,12 @@ en:
       structure_description: "Organize this story into a hierarchy such as acts, chapters, books, or seasons, and write it as an ordered sequence of scenes."
       manage_sections: "Manage sections"
       view_sections: "View sections"
+      manage_plots: "Manage plots"
+      view_plots: "View plots"
       manage_scenes: "Manage scenes"
       view_scenes: "View scenes"
       sections: "Sections"
+      plots: "Plots"
       scenes: "Scenes"
       sections_eyebrow: "Section tree"
       sections_heading: "Section tree preview"
@@ -1124,6 +1131,50 @@ en:
       created: "Story was successfully created."
       updated: "Story was successfully updated."
       deleted: "Story was successfully deleted."
+
+  tropes:
+    source_license: "CC BY-NC-SA 3.0"
+    assignments:
+      legend: "Trope references"
+      hint: "Select references that apply at this level. These examples are not universal good/bad labels; use the note to record how this story or scene handles a trope."
+      context_note: "Context note"
+      none: "No tropes recorded."
+      story_eyebrow: "Story planning"
+      story_heading: "Trope references"
+      scene_heading: "Trope detections in this scene"
+      edit_story: "Edit story tropes"
+      source_html: "Reference: %{source} · source terms: %{license}. The summary and craft note here are original Universe Maker copy."
+    catalog:
+      damsel_in_distress:
+        description: "A character is placed in danger so another character can rescue them."
+        craft_note: "Keep the endangered character's own goals, choices, and consequences in view; peril need not erase agency."
+      women_in_refrigerators:
+        description: "A character's harm or death is used chiefly to motivate another character's story."
+        craft_note: "Give the affected character narrative agency; avoid using their suffering as a shortcut for someone else's development."
+      magical_negro:
+        description: "A marginalized character is framed mainly as a guide or catalyst for a more privileged protagonist."
+        craft_note: "Give the character independent aims and relationships, rather than reducing them to a helper or stereotype."
+      manic_pixie_dream_girl:
+        description: "A quirky love interest exists chiefly to change a dissatisfied protagonist's outlook."
+        craft_note: "Give them motivations and change of their own, beyond catalyzing someone else's growth."
+      bury_your_gays:
+        description: "Queer characters are repeatedly killed or denied lasting futures as an emotional device."
+        craft_note: "Consider the pattern across the work; queer characters deserve varied, full lives rather than a single tragic function."
+      chekhovs_gun:
+        description: "A detail introduced earlier later becomes consequential to the plot."
+        craft_note: "A payoff feels earned when the setup is noticeable without making every detail a promise."
+      red_herring:
+        description: "A clue plausibly points toward a wrong explanation or suspect."
+        craft_note: "Plant it fairly and resolve it; misdirection should reward attention rather than invalidate it."
+      found_family:
+        description: "People form a lasting, family-like bond outside biological or legal ties."
+        craft_note: "Let trust grow through choices and care instead of using the label to skip relationship development."
+      character_foil:
+        description: "Contrast between characters makes traits or choices in each more visible."
+        craft_note: "Keep each character fully motivated; contrast is strongest when neither exists only as a measuring stick."
+      fish_out_of_water:
+        description: "An outsider's unfamiliarity with a setting reveals its rules and assumptions."
+        craft_note: "Let the outsider learn and affect the setting; avoid making them only a source of jokes."
 
   # Granting and changing a universe's access.
   memberships:
@@ -1215,6 +1266,37 @@ en:
         empty_title: "Nothing related yet"
         empty_description: "Anything else worth knowing about this section will be listed here later."
 
+  # Plot arcs are story-owned through-lines that may cross Sections. They are
+  # neither the Section hierarchy nor Scene Tag classifications.
+  plots:
+    title: "Plots"
+    singular: "plot"
+    description: "Track named story arcs across the scenes of %{story}. A plot can cross sections, and a scene can belong to several plots."
+    add: "Add plot"
+    save: "Save plot"
+    new_title: "New plot"
+    empty_title: "No plots yet"
+    empty_writable_description: "Add a plot arc to follow a through-line across scenes and sections."
+    empty_read_only_description: "Plot arcs for this story will appear here once they have been added."
+    delete_confirm: "Delete “%{name}”? It will leave the Plot workspace; its Scene assignments stay available if it is restored, and no Scene or narrative order changes."
+    form:
+      name: "Name"
+      description: "Description"
+    show:
+      back_label: "All plots"
+      facts:
+        story: "Story"
+        description: "Description"
+        description_blank: "No description yet."
+      scenes:
+        title: "Scenes in %{name}"
+        empty_title: "No scenes assigned"
+        empty_description: "Assign scenes to this plot from a scene's editor."
+    errors:
+      scene_must_exist: "must exist"
+      scene_must_belong_to_story: "must belong to the same story"
+      scene_must_be_unique: "must be unique"
+
   # The Scenes workspace and the three Scene-owned tabs. This block owns the
   # story-scoped list and its filter, Scene Details with its Element list, the one
   # editor both `new` and `edit` share, and the Characters, Items, and Locations
@@ -1238,7 +1320,7 @@ en:
     # carries that same title.
     edit_title: "Edit scene"
     edit_document_title: "Edit %{name}"
-    edit_description: "Update the title, short description, Section group, event link, and in-world time of this scene. Its narrative position changes only through the Move up/Move down controls on the scenes list."
+    edit_description: "Update the title, short description, trope annotations, Section group, event link, and in-world time of this scene. Its narrative position changes only through the Move up/Move down controls on the scenes list."
     back_to_details: "Scene details"
     # The move controls the Scenes list and the Element list both show, and the
     # titles that say why one is disabled at a sequence boundary. The Element
@@ -1269,7 +1351,7 @@ en:
       # presence links, so the cascade is stated here rather than falling back to
       # the short `shared.row_actions.delete_confirm`; `name` is the author's own
       # record name and is interpolated rather than translated.
-      delete_confirm: "Delete “%{name}”? Its elements, tag assignments, and links to story and universe records will be permanently removed. Linked records will not be deleted."
+      delete_confirm: "Delete “%{name}”? Its elements, tag assignments, trope annotations, and links to story and universe records will be permanently removed. Linked records will not be deleted."
       # The two row badges that are not counts, and the two titles that explain
       # what a grouping badge means.
       grouped_title: "Grouped under %{grouping}. Grouping does not change the narrative order."
@@ -1347,6 +1429,8 @@ en:
         in_world_time_blank: "No in-world time set yet."
         in_world_time_hint: "This is the order in world time, kept separate from the narrative position above. The event and the in-world time are independent values; neither one is derived from the other and a disagreement between them is not detected here."
         point_of_view: "Point of view"
+        plots: "Plot arcs"
+        plots_blank: "No plot arcs assigned. Plots are optional."
         point_of_view_blank: "No point of view recorded yet."
         point_of_view_hint: "The character whose perspective presents this scene. It is separate from the scene's participants and its speakers: choosing one does not make them take part, and it does not say which lines belong to whom."
         story: "Story"
@@ -1376,6 +1460,11 @@ en:
       datetime: "In-world time"
       datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the event above: choosing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
       point_of_view_legend: "Point of view"
+      plots_legend: "Plot arcs"
+      plots_label: "Plots"
+      plots_hint: "Optional. A scene may belong to several story-level plots that can cross sections. This does not change narrative order or section grouping."
+      plots_empty: "This story has no plot arcs yet."
+      manage_plots: "Manage plots"
       pov_character: "Point of view"
       pov_hint: "Optional. The character whose perspective presents this scene. It is separate from who takes part and who speaks: choosing one does not make them a participant, and it does not say which lines belong to whom."
       # `%{move_up}`/`%{move_down}` are the list's own translated control names, so
@@ -1421,6 +1510,30 @@ en:
         remove_speakers: "Remove the speakers and make this narration"
         remove_speakers_hint: "Narration cannot keep speakers. This is the confirmation that removes them, and it happens in the same save."
         save: "Save element"
+      # The spoken turns inside a Dialogue element. A turn names one speaker, the
+      # line they speak, and an optional delivery note, in order inside the block.
+      dialogue_turns:
+        title: "Turns"
+        add: "Add turn"
+        edit: "Edit turn"
+        choose_speaker: "Choose a speaker"
+        speaker_required: "Choose a speaker for this turn."
+        save_element_first: "Save this Dialogue element first, then reopen it to add turns."
+        empty_title: "No turns yet"
+        empty_description: "A dialogue turn is one spoken line: who speaks, what they say, and an optional delivery note. Add the first turn below."
+        delete_confirm: "Delete this turn? The line will be removed from the dialogue."
+        save_failed: "The turn could not be saved."
+        speaker: "Speaker"
+        speaker_hint: "The character who speaks this line. A turn's speaker is not a scene presence link — speaking does not add the character to the scene's cast."
+        body: "Line"
+        body_hint: "The words the character speaks in this turn."
+        parenthetical: "Delivery note"
+        parenthetical_hint: "An optional direction such as “whispering” or “through gritted teeth.”"
+        form:
+          speaker: "Speaker"
+          body: "Line"
+          parenthetical: "Delivery note"
+          save: "Save turn"
     # The three presence-link tabs. Their pages and their editors are one shape, so
     # the copy that is genuinely shared (the role field, the "linked" badge, the
     # sentences a derived speaker states) sits in `participation` and each tab's
@@ -1548,6 +1661,7 @@ en:
       subject: "scene"
       must_exist: "must exist"
       must_belong_to_story: "must belong to the same story"
+      plot_must_belong_to_story: "must belong to the same story"
       must_belong_to_universe: "must belong to the story's universe"
       must_be_unique: "must be unique"
       invalid_datetime: "is not a valid date and time"
@@ -1559,13 +1673,15 @@ en:
     participation_errors:
       already_in_scene: "is already in this scene"
       must_belong_to_scene_universe: "must belong to the scene's universe"
-    # The two rules a Dialogue's own kind has to satisfy. `narration` is the
-    # kind's `label`, not its `kind` value, so it is interpolated: the sentence
-    # names the type the reader picked in the select, and a locale that does not
-    # call it "Narration" still gets a sentence about the type they chose.
+    # Element-kind validation messages. `narration` is the kind's `label`, not
+    # its `kind` value, so the speaker message interpolates it: the sentence names
+    # the type the reader picked in the select.
     element_errors:
       speakers_required: "is required for a dialogue element"
       narration_with_speakers: "cannot be %{narration} while speakers are still assigned"
+      narration_with_turns: "cannot be Narration while dialogue turns remain"
+    dialogue_turns:
+      element_must_be_dialogue: "a narration element cannot carry a turn"
 
   # The Universe Bible workspaces: Characters, Locations, Events, Items,
   # Relations, and Ownerships. Each block owns its list page, the modal editor
@@ -2397,6 +2513,7 @@ en:
       universe: "Universe"
       story: "Story"
       section: "Section"
+      plot: "Plot"
       scene: "Scene"
       scene_element: "Scene element"
       character: "Character"
@@ -2432,6 +2549,7 @@ en:
       tags: "Tags"
       story: "Story: %{name}"
       sections: "Sections"
+      plots: "Plots"
       scenes: "Scenes"
       universe: "Universe: %{name}"
       open_universe: "Open universe"
@@ -2576,6 +2694,12 @@ en:
       story:
         name: "Name"
         description: "Description"
+        story_tropes_attributes: "Trope annotations"
+        id: "Assignment ID"
+        trope_slug: "Trope"
+        selected: "Included"
+        context_note: "Context note"
+        _destroy: "Remove assignment"
       universe_membership:
         email_address: "Email address"
         access_level: "Access level"
@@ -2646,6 +2770,12 @@ en:
         datetime: "In-world time"
         pov_character: "Point of view"
         scene_tags: "Scene tags"
+        scene_tropes_attributes: "Trope detections"
+        id: "Assignment ID"
+        trope_slug: "Trope"
+        selected: "Included"
+        context_note: "Context note"
+        _destroy: "Remove assignment"
       # The story-scoped models the Scenes workspace owns. A Section and the two
       # story-scoped taxonomies are grouped with `scene` rather than with the
       # Universe Bible models above, because they are named by the same workspace
@@ -2661,6 +2791,9 @@ en:
         # what the tree's own parent selector is called.
         parent: "Parent section"
         section_tags: "Section tags"
+      plot:
+        name: "Name"
+        description: "Description"
       # An Element's `name` is its title and its `body` its content, which is what
       # the Element editor's own labels call them, and `characters` is the
       # collection the Dialogue speaker picker fills.
@@ -2669,6 +2802,10 @@ en:
         name: "Title"
         body: "Content"
         characters: "Speakers"
+      scene_dialogue_turn:
+        speaker: "Speaker"
+        body: "Line"
+        parenthetical: "Delivery note"
       # The three presence links. Each one is a statement inside a Scene rather
       # than a record with a page of its own, so each has exactly two attributes
       # worth naming: the record it points at, and the author's own free-text role.
@@ -2810,6 +2947,9 @@ en:
   section:
     one: "section"
     other: "sections"
+  plot:
+    one: "plot"
+    other: "plots"
   scene:
     one: "scene"
     other: "scenes"
@@ -2872,6 +3012,7 @@ en:
     event: "the event"
     item: "the item"
     ownership: "the ownership"
+    plot: "the plot"
     relation: "the relation"
     scene_character: "the scene character"
     scene_element: "the scene element"

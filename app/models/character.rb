@@ -21,6 +21,11 @@ class Character < ApplicationRecord
   # The speaker side of the Scene Element link. Deleting a Character removes its
   # speaker links and presence links; it never removes a Scene.
   has_and_belongs_to_many :scene_elements, join_table: :scene_element_speakers, foreign_key: :character_id
+  # Turn rows remain when the Character is soft-deleted, just like the plain
+  # speaker join above, so restoring the Character restores its attributed lines.
+  # A hard destroy removes those rows rather than leaving a dangling speaker FK.
+  has_many :scene_dialogue_turns_as_speaker, -> { with_deleted }, class_name: "SceneDialogueTurn",
+    foreign_key: :speaker_id, inverse_of: :speaker, dependent: :destroy
   # `:destroy` rather than `:delete_all`, because a presence link is a record in
   # its own right: it carries a discussion, and `delete_all` skips callbacks, so
   # it would remove the link row and leave the thread behind pointing at nothing.

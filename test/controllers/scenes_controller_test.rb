@@ -459,6 +459,15 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "No scene tags assigned yet."
   end
 
+  test "scene details shows its contextual trope detection and source attribution" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select "h3 a[href=?]", TropeCatalog.find("red-herring").source_url, text: "Red Herring"
+    assert_includes response.body, "This scene plants the misleading clue."
+    assert_includes response.body, "CC BY-NC-SA 3.0"
+  end
+
   test "scene details links a grouped scene to its section and marks an ungrouped scene" do
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_two))
 
@@ -566,11 +575,11 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_response :success
-    # Scene one has four elements and two participants, even though both
-    # characters are stored participants who also speak in a dialogue. The other
+    # Scene one has four elements and three participants: two are both linked and
+    # roster speakers, while a third is attributed by a turn. The other
     # two scenes have neither, and still say so on their own row.
     assert_select ".entity-row .badge[aria-label=?]", "4 elements", count: 1
-    assert_select ".entity-row .badge[aria-label=?]", "2 characters taking part", count: 1
+    assert_select ".entity-row .badge[aria-label=?]", "3 characters taking part", count: 1
     assert_select ".entity-row .badge[aria-label=?]", "0 elements", count: 2
     assert_select ".entity-row .badge[aria-label=?]", "0 characters taking part", count: 2
   end
@@ -581,9 +590,9 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_response :success
-    # Only Character one is linked now, and Character two is still a participant
-    # because she speaks, so the union is still two.
-    assert_select ".entity-row .badge[aria-label=?]", "2 characters taking part", count: 1
+    # Removing Character one's stored link does not remove either speaker source;
+    # the roster still names characters one and two, and the turn names character three.
+    assert_select ".entity-row .badge[aria-label=?]", "3 characters taking part", count: 1
   end
 
   test "the scene editor also renders the workspace tab shell" do
@@ -614,6 +623,47 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "New scene"
     assert_select "form[action=?]", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story)
+    assert_select "input[type=checkbox][name*='scene_tropes_attributes']", 10
+  end
+
+  test "scene editor saves a contextual trope detection" do
+    scene = scenes(:scene_two)
+
+    assert_difference("SceneTrope.count") do
+      patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scene), params: {
+        scene: {
+          scene_tropes_attributes: {
+            "0" => { trope_slug: "chekhovs-gun", selected: "1", context_note: "The detail pays off later." }
+          }
+        }
+      }
+    end
+
+    assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scene)
+    assert_equal "The detail pays off later.", scene.scene_tropes.find_by!(trope_slug: "chekhovs-gun").context_note
+  end
+
+  test "a Scene trope annotation is remembered and applied in draft mode" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    scene = scenes(:scene_two)
+
+    assert_difference("DraftChange.count") do
+      patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scene), params: {
+        scene: {
+          scene_tropes_attributes: {
+            "0" => { trope_slug: "chekhovs-gun", selected: "1", context_note: "Drafted payoff note." }
+          }
+        }
+      }
+    end
+
+    change = DraftChange.order(:id).last
+    assert_equal "Scene", change.record_type
+    assert change.payload.key?("scene_tropes_attributes")
+
+    DraftApplier.new(change.draft).apply
+
+    assert_equal "Drafted payoff note.", scene.scene_tropes.find_by!(trope_slug: "chekhovs-gun").context_note
   end
 
   test "should create scene and redirect to the canonical destination" do

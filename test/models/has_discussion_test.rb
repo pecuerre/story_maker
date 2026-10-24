@@ -2,10 +2,11 @@ require "test_helper"
 
 class HasDiscussionTest < ActiveSupport::TestCase
   DISCUSSIBLE = %w[
-    Story Section SectionTag Scene SceneTag SceneElement SceneCharacter SceneItem SceneLocation
+    Story Section Plot SectionTag Scene SceneTag SceneElement SceneCharacter SceneItem SceneLocation
     Character CharacterTag Location LocationTag Item ItemTag Event EventTag Relation RelationTag
     Ownership OwnershipTag
   ].freeze
+  NOT_DISCUSSIBLE_CONTENT = %w[ SceneDialogueTurn ].freeze
 
   test "every content and tag model carries exactly one thread, destroyed with its record" do
     DISCUSSIBLE.each do |name|
@@ -17,10 +18,11 @@ class HasDiscussionTest < ActiveSupport::TestCase
     end
   end
 
-  test "the list is every registered content class except Photo, which has no page of its own" do
-    assert_equal Ability::CONTENT_CLASS_NAMES.sort, (DISCUSSIBLE + [ "Photo" ]).sort,
+  test "the list excludes Photo and nested components that have no page of their own" do
+    assert_equal (Ability::CONTENT_CLASS_NAMES - NOT_DISCUSSIBLE_CONTENT).sort, (DISCUSSIBLE + [ "Photo" ]).sort,
       "a newly registered content class must be decided here, not inherit the list"
     assert_nil Photo.reflect_on_association(:discussion)
+    assert_nil SceneDialogueTurn.reflect_on_association(:discussion)
   end
 
   test "find_or_create_discussion is the same thread every time" do

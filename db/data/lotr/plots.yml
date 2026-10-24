@@ -1,0 +1,9 @@
+- story: Story.the-lord-of-the-rings
+  name: The Ring's Journey
+  slug: the-rings-journey
+  description: The Ring's passage from the Shire toward Mordor.
+
+- story: Story.the-lord-of-the-rings
+  name: The Fellowship
+  slug: the-fellowship
+  description: The Fellowship's changing fortunes across the story.

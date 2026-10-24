@@ -12,8 +12,8 @@
 # the controllers from drifting apart:
 #
 # * **Which collection a record's siblings live in.** The owner association
-#   `UniverseScopeResolver` walks — `story`, `scene`, `section` — or the universe
-#   itself, read from the record's own columns. That is exactly what every
+#   `UniverseScopeResolver` walks — `story`, `scene`, `section`, or
+#   `scene_element` — or the universe itself, read from the record's own columns. That is exactly what every
 #   positioned controller's `sibling_collection` and
 #   `sibling_position_scope_owner` return: `@story.sections` for a Section,
 #   `@scene.scene_elements` for an Element, `Current.universe.characters` for a
@@ -445,7 +445,8 @@ class DraftApplier
       id = change.payload["#{association}_id"]
       return if id.blank?
 
-      @draft.universe.public_send(association.to_s.pluralize).find_by(id: id)
+      owner_model = model.reflect_on_association(association).klass
+      UniverseScopeResolver.records_in(owner_model, @draft.universe).find_by(id: id)
     end
 
     # A universe-scoped record's scope *is* the draft's universe, so the payload's

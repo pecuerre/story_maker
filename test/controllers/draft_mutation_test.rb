@@ -8,8 +8,8 @@ require "test_helper"
 # through and nothing else would notice.
 #
 # So this file is that something else. It walks **every** mutation controller in
-# both modes — twenty of them, across the JSON-only flow, the HTML flow, and both
-# scopes — and asserts the single thing that differs between them: in `direct` a
+# both modes — twenty-two of them, across the JSON-only flow, the HTML flow, and
+# both scopes — and asserts the single thing that differs between them: in `direct` a
 # mutation writes, and in a draft-based universe it does not. The table is the
 # contract; the tests below it are the details that the table cannot express,
 # because one row cannot also say what a remembered payload contains.
@@ -133,6 +133,15 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       destroy: -> { universe_story_section_url(universe_slug: @universe.slug, story_id: @story.id, id: @section.id) }
     },
     {
+      name: "plots", model: Plot, json: true, label: :name,
+      scope: -> { [ "story_id", @story.id ] },
+      record: -> { @plot },
+      create: -> { [ universe_story_plots_url(universe_slug: @universe.slug, story_id: @story.id), { plot: { name: NEW } } ] },
+      update: -> { [ universe_story_plot_url(universe_slug: @universe.slug, story_id: @story.id, id: @plot.id),
+        { plot: { name: RENAMED } } ] },
+      destroy: -> { universe_story_plot_url(universe_slug: @universe.slug, story_id: @story.id, id: @plot.id) }
+    },
+    {
       name: "section_tags", model: SectionTag, json: true, label: :name,
       scope: -> { [ "story_id", @story.id ] },
       record: -> { @section_tag },
@@ -162,6 +171,19 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
         scene_id: @scene.id, id: @scene_element.id), { scene_element: { name: RENAMED } } ] },
       destroy: -> { universe_story_scene_scene_element_url(universe_slug: @universe.slug, story_id: @story.id,
         scene_id: @scene.id, id: @scene_element.id) }
+    },
+    {
+      name: "scene_dialogue_turns", model: SceneDialogueTurn, json: true, label: :body,
+      scope: -> { [ "scene_element_id", scene_elements(:dialogue_one).id ] },
+      record: -> { scene_dialogue_turns(:turn_one) },
+      create: -> { [ universe_story_scene_scene_element_scene_dialogue_turns_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id, scene_element_id: scene_elements(:dialogue_one).id),
+        { scene_dialogue_turn: { speaker_id: characters(:character_one).id, body: NEW } } ] },
+      update: -> { [ universe_story_scene_scene_element_scene_dialogue_turn_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id, scene_element_id: scene_elements(:dialogue_one).id, id: scene_dialogue_turns(:turn_one).id),
+        { scene_dialogue_turn: { body: RENAMED } } ] },
+      destroy: -> { universe_story_scene_scene_element_scene_dialogue_turn_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id, scene_element_id: scene_elements(:dialogue_one).id, id: scene_dialogue_turns(:turn_one).id) }
     },
     {
       name: "scene_characters", model: SceneCharacter, json: true, label: :role,
@@ -217,6 +239,14 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       destroy: -> { universe_ownership_url(universe_slug: @universe.slug, id: @ownership.id) }
     },
     {
+      name: "stories", model: Story, json: false, label: :name,
+      scope: -> { [ "universe_id", @universe.id ] },
+      record: -> { @story },
+      create: -> { [ universe_stories_url(universe_slug: @universe.slug), { story: { name: NEW } } ] },
+      update: -> { [ universe_story_url(universe_slug: @universe.slug, id: @story.id), { story: { name: RENAMED } } ] },
+      destroy: -> { universe_story_url(universe_slug: @universe.slug, id: @story.id) }
+    },
+    {
       name: "scenes", model: Scene, json: false, label: :name,
       scope: -> { [ "story_id", @story.id ] },
       record: -> { @scene },
@@ -239,6 +269,7 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     @item = items(:item_one)
     @event = events(:event_one)
     @section = sections(:section_one)
+    @plot = plots(:plot_one)
     @scene_element = scene_elements(:narration_one)
     @scene_character = scene_characters(:scene_character_one)
     @scene_item = scene_items(:scene_item_one)

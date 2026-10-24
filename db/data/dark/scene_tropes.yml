@@ -1,0 +1,7 @@
+- scene: Scene.the-search-in-the-woods
+  trope_slug: red-herring
+  context_note: "Example detection at scene level; review the clue and its payoff in context."
+
+- scene: Scene.bethesda-wardens-bridge
+  trope_slug: fish-out-of-water
+  context_note: "Example detection at scene level; note what the outsider learns and changes."

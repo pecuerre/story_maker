@@ -255,9 +255,11 @@ class TranslationsTest < ActiveSupport::TestCase
     # `DraftsHelper#id_list_association` derives it, so a key whose collection is
     # named is visited as the association rather than as the raw `_ids` column.
     def id_list_association(model, key)
-      return unless key.end_with?("_ids")
-
-      model.reflect_on_association(key.delete_suffix("_ids").pluralize)
+      if key.end_with?("_ids")
+        model.reflect_on_association(key.delete_suffix("_ids").pluralize)
+      elsif key.end_with?("_id")
+        model.reflect_on_association(key.delete_suffix("_id"))
+      end
     end
 
     # The locales in which one payload key has no label, resolved the way

@@ -7,6 +7,7 @@
   count: @sections.size,
   count_label: "section" do %>
   <%= link_to t("stories.show.open_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-primary" %>
+  <%= link_to t("stories.show.open_plots"), universe_story_plots_path(story_id: @story), class: "btn btn-outline-primary" %>
   <%= link_to t("stories.show.open_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
   <% if can_write_universe? %>
     <%= link_to t("stories.show.add_section"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-secondary" %>
@@ -41,6 +42,7 @@
       <p class="text-body-secondary"><%= t("stories.show.structure_description") %></p>
       <div class="d-flex flex-wrap gap-2 mb-3">
         <%= link_to can_write_universe? ? t("stories.show.manage_sections") : t("stories.show.view_sections"), universe_story_sections_path(story_id: @story), class: "btn btn-outline-primary" %>
+        <%= link_to can_write_universe? ? t("stories.show.manage_plots") : t("stories.show.view_plots"), universe_story_plots_path(story_id: @story), class: "btn btn-outline-primary" %>
         <%= link_to can_write_universe? ? t("stories.show.manage_scenes") : t("stories.show.view_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-outline-primary" %>
       </div>
       <div class="d-flex flex-column gap-2">
@@ -49,10 +51,25 @@
           <span><%= count_with_label(@sections.size, "section") %></span>
         </div>
         <div class="d-flex justify-content-between">
+          <span class="text-body-secondary"><%= t("stories.show.plots") %></span>
+          <span><%= count_with_label(@story.menu_plot_count, "plot") %></span>
+        </div>
+        <div class="d-flex justify-content-between">
           <span class="text-body-secondary"><%= t("stories.show.scenes") %></span>
           <span><%= count_with_label(@story.menu_scene_count, "scene") %></span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="surface-card h-100 p-4">
+      <div class="page-eyebrow"><%= t("tropes.assignments.story_eyebrow") %></div>
+      <h2 class="h4"><%= t("tropes.assignments.story_heading") %></h2>
+      <%= render "shared/trope_assignments_summary", assignments: @story_tropes %>
+      <% if can_write_universe? %>
+        <%= link_to t("tropes.assignments.edit_story"), edit_universe_story_path(id: @story), class: "btn btn-sm btn-outline-secondary mt-3" %>
+      <% end %>
     </div>
   </div>
 

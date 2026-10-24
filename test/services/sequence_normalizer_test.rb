@@ -201,6 +201,24 @@ class SequenceNormalizerTest < ActiveSupport::TestCase
     assert_equal [ second, first ], ordered(@scene.scene_elements) & [ first, second ]
   end
 
+  test "it renumbers turns per Element when that universe is normalized" do
+    element = scene_elements(:dialogue_one)
+    last = element.scene_dialogue_turns.create!(speaker: characters(:character_one), body: "Last", position: 8)
+    other_element = @scene.scene_elements.create!(name: "Another dialogue", kind: "dialogue",
+      characters: [ characters(:character_two) ])
+    other_turn = other_element.scene_dialogue_turns.create!(speaker: characters(:character_two),
+      body: "First here", position: 5)
+    output = StringIO.new
+
+    SequenceNormalizer.new(output: output).call_for_universe(@universe)
+
+    assert_equal [ 0, 1, 2 ], element.scene_dialogue_turns.order(:position, :id).pluck(:position)
+    assert_equal [ 0 ], other_element.scene_dialogue_turns.pluck(:position)
+    assert_includes output.string, "in Element"
+    assert_equal 2, last.reload.position
+    assert_equal 0, other_turn.reload.position
+  end
+
   test "a soft-deleted record stays out of its sequence" do
     append_scene("First")
     second = append_scene("Second")
@@ -217,7 +235,7 @@ class SequenceNormalizerTest < ActiveSupport::TestCase
   # the routed controllers in both directions — the same pair `draft_applier_test.rb`
   # holds for the applier's own derivation.
   test "it walks exactly the models whose controllers maintain an ordered sequence" do
-    assert_equal 15, positioned_models.size,
+    assert_equal 16, positioned_models.size,
       "the number of ordered controllers is what this walk is checked against; a new one changes it"
 
     assert_equal positioned_models, SequenceNormalizer.positioned_models

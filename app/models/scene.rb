@@ -32,6 +32,17 @@ class Scene < ApplicationRecord
   has_many :scene_characters, dependent: :destroy
   has_many :scene_items, dependent: :destroy
   has_many :scene_locations, dependent: :destroy
+  has_many :scene_tropes, dependent: :destroy
+  accepts_nested_attributes_for :scene_tropes, allow_destroy: true,
+    reject_if: ->(attributes) { attributes["id"].blank? && !ActiveModel::Type::Boolean.new.cast(attributes["selected"]) }
+  before_validation :mark_unselected_scene_tropes_for_destruction
+  # A Scene can contribute to several story-level through-lines. These are an
+  # independent grouping axis from its optional Section and narrative position.
+  has_and_belongs_to_many :plots,
+    ->(scene) { where(story_id: scene.story_id) },
+    join_table: :plots_scenes,
+    foreign_key: :scene_id,
+    association_foreign_key: :plot_id
   # Section is optional organizational grouping only. A nested Section also
   # places the Scene inside that Section's ancestor path; it is not a second
   # stored membership, and it never changes the narrative position.
@@ -50,6 +61,14 @@ class Scene < ApplicationRecord
   validate :event_belongs_to_story_universe
   validate :datetime_is_a_valid_point
   validate :scene_tag_assignments_are_valid
+  validate :plot_assignments_are_valid
+
+  def build_trope_assignments
+    assigned_slugs = scene_tropes.map(&:trope_slug)
+    TropeCatalog.entries.each do |entry|
+      scene_tropes.build(trope_slug: entry.slug, selected: false) unless assigned_slugs.include?(entry.slug)
+    end
+  end
 
   # Active Record's generated collection-id writer raises when an optional tag id
   # is unknown. Scene Details accepts optional tag assignments, so turn that
@@ -80,15 +99,50 @@ class Scene < ApplicationRecord
     self.scene_tags = SceneTag.where(id: scoped_ids).to_a
   end
 
+  # Model boundary for Scene form and development-manifest assignments. Unknown,
+  # cross-story, and duplicate values are ordinary field errors rather than
+  # foreign-key or unique-index exceptions.
+  def plot_ids=(ids)
+    requested_ids = Array(ids).filter_map { |id| id.respond_to?(:id) ? id.id : id }
+      .compact_blank.map(&:to_s)
+    unique_ids = requested_ids.uniq
+    existing = Plot.where(id: requested_ids).to_a
+    existing_ids = existing.map { |plot| plot.id.to_s }
+    scope_story_id = story_id || story&.id
+    scoped = scope_story_id.present? ? existing.select { |plot| plot.story_id == scope_story_id } : []
+    scoped_ids = scoped.map { |plot| plot.id.to_s }
+
+    @plot_assignment_errors = []
+    @plot_assignment_errors << I18n.t("scenes.errors.must_exist") if (requested_ids - existing_ids).any?
+    @plot_assignment_errors << I18n.t("scenes.errors.plot_must_belong_to_story") if (existing_ids - scoped_ids).any?
+    @plot_assignment_errors << I18n.t("scenes.errors.must_be_unique") if unique_ids.length != requested_ids.length
+
+    association(:plots).writer(scoped)
+  end
+
+  def plots=(records)
+    self.plot_ids = Array(records).map(&:id)
+  end
+
   def universe
     story&.universe
   end
 
   private
+    def mark_unselected_scene_tropes_for_destruction
+      scene_tropes.each do |assignment|
+        assignment.mark_for_destruction if assignment.persisted? && !assignment.selected
+      end
+    end
+
     def scene_tag_assignments_are_valid
       Array(@scene_tag_assignment_errors).each do |message|
         errors.add(:scene_tags, message)
       end
+    end
+
+    def plot_assignments_are_valid
+      Array(@plot_assignment_errors).each { |message| errors.add(:plots, message) }
     end
 
     # Shared scopes are application-level rules: a real foreign key cannot prove

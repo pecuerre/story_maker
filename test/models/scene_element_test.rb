@@ -90,17 +90,35 @@ class SceneElementTest < ActiveSupport::TestCase
   end
 
   test "narration cannot keep speakers" do
-    @dialogue.kind = SceneElement::NARRATION
+    dialogue_without_turns = scene_elements(:dialogue_alt)
+    dialogue_without_turns.kind = SceneElement::NARRATION
 
-    assert_not @dialogue.valid?
-    assert_includes @dialogue.errors[:kind], "cannot be Narration while speakers are still assigned"
+    assert_not dialogue_without_turns.valid?
+    assert_includes dialogue_without_turns.errors[:kind], "cannot be Narration while speakers are still assigned"
 
     # The explicit confirmation clears them in the same atomic update.
+    dialogue_without_turns.character_ids = []
+
+    assert_predicate dialogue_without_turns, :valid?
+    assert dialogue_without_turns.save
+    assert_empty dialogue_without_turns.reload.characters
+  end
+
+  test "a Dialogue with turns cannot become Narration after its roster is cleared" do
+    @dialogue.kind = SceneElement::NARRATION
     @dialogue.character_ids = []
 
-    assert_predicate @dialogue, :valid?
-    assert @dialogue.save
-    assert_empty @dialogue.reload.characters
+    assert_not @dialogue.valid?
+    assert_includes @dialogue.errors[:kind], "cannot be Narration while dialogue turns remain"
+  end
+
+  test "a soft-deleted turn still prevents changing its Element to Narration" do
+    scene_dialogue_turns(:turn_one).soft_delete
+    @dialogue.kind = SceneElement::NARRATION
+    @dialogue.character_ids = []
+
+    assert_not @dialogue.valid?
+    assert_includes @dialogue.errors[:kind], "cannot be Narration while dialogue turns remain"
   end
 
   test "narration with an empty submitted speaker list is accepted" do

@@ -1,0 +1,27 @@
+# Turns for the Dark universe. `SceneElement` has no public slug, so its
+# `manifest_key` identifies this component for development-data references only.
+- scene_element: SceneElement.dark-secrets-dialogue
+  speaker: Character.katharina
+  body: "You found the map, didn't you?"
+  position: 0
+
+- scene_element: SceneElement.dark-secrets-dialogue
+  speaker: Character.martha
+  body: "I found a map. In a drawer that was empty last Tuesday."
+  position: 1
+
+- scene_element: SceneElement.dark-secrets-interruption
+  speaker: Character.martha
+  body: "I should get that."
+  position: 0
+
+- scene_element: SceneElement.dark-waltz-dialogue
+  speaker: Character.jonas
+  body: "You are not dancing with a chair."
+  position: 0
+
+- scene_element: SceneElement.dark-waltz-dialogue
+  speaker: Character.jonas
+  body: "I am dancing with the count."
+  parenthetical: "counting under his breath"
+  position: 1

@@ -209,6 +209,9 @@ class SequenceNormalizer
         when :universe_id then Universe.find_by(id: record.universe_id)&.name || "universe ##{record.universe_id}"
         when :story_id then Story.find_by(id: record.story_id)&.name || "story ##{record.story_id}"
         when :scene_id then Scene.find_by(id: record.scene_id)&.name || "scene ##{record.scene_id}"
+        when :scene_element_id
+          element = SceneElement.find_by(id: record.scene_element_id)
+          element ? "Element #{element.name.inspect}" : "scene element ##{record.scene_element_id}"
         else "#{column}=#{record.public_send(column)}"
         end
       end.join(" / ")
@@ -228,6 +231,8 @@ class SequenceNormalizer
       when :universe_id then model.where(universe_id: universe.id)
       when :story_id then model.where(story_id: universe.stories.select(:id))
       when :scene_id then model.where(scene_id: universe.scenes.select(:id))
+      when :scene_element_id
+        model.joins(scene_element: { scene: :story }).where(stories: { universe_id: universe.id })
       else
         raise ArgumentError,
           "#{model.name} scopes its sequences by #{model.ordered_sequence_group_columns.first.inspect}, " \

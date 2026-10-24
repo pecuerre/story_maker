@@ -157,6 +157,12 @@ export default class extends Controller {
     // above from the same values.
     this.loadRowState(values)
 
+    // A nested editor (dialogue turns inside an Element) reads the same payload
+    // to render its own list inside the modal.
+    this.formTarget.dispatchEvent(
+      new CustomEvent("modal-form:values", { bubbles: true, detail: values })
+    )
+
     this.modal.show()
   }
 

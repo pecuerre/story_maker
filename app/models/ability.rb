@@ -31,8 +31,10 @@ class Ability
     Section
     SectionTag
     Scene
+    Plot
     SceneTag
     SceneElement
+    SceneDialogueTurn
     SceneCharacter
     SceneItem
     SceneLocation

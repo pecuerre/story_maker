@@ -45,9 +45,10 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
       universe_event_tag_path(universe_slug: @universe.slug, id: event_tags(:event_tag_one), from: "workspace")
   end
 
-  test "story workspace keeps sections and scenes together" do
+  test "story workspace keeps sections, Plots, and scenes together" do
     assert_workspace_tabs [
       [ "Sections", universe_story_sections_path(universe_slug: @universe.slug, story_id: @story), "Sections" ],
+      [ "Plots", universe_story_plots_path(universe_slug: @universe.slug, story_id: @story), "Plots" ],
       [ "Scenes", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story), "Scenes" ]
     ]
   end

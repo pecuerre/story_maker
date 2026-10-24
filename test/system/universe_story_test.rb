@@ -145,7 +145,7 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_match %r{/u/one-in-another-timeline\z}, current_path
   end
 
-  # The Story overview is a dashboard: description, section count, section-tree
+  # The Story overview is a dashboard: description, structure counts, section-tree
   # preview, recently edited sections, quick "Add section" action, and Universe
   # Bible links.
   test "the story overview renders as a working dashboard" do
@@ -165,6 +165,7 @@ class UniverseStoryTest < ApplicationSystemTestCase
 
     # Quick actions.
     assert_link I18n.t("stories.show.open_sections"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
+    assert_link I18n.t("stories.show.open_plots"), href: universe_story_plots_path(universe_slug: universe.slug, story_id: story)
     assert_link I18n.t("stories.show.open_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
     assert_link I18n.t("stories.show.add_section"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
 

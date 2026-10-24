@@ -207,7 +207,7 @@ module DraftMutation
 
     # The column that places a record in its scope, read the same way
     # `UniverseScopeResolver` walks to the same answer: the owner association it
-    # walks through (`story`, `scene`, `section`), or `universe_id` for a record
+    # walks through (`story`, `scene`, `section`, `scene_element`), or `universe_id` for a record
     # that reaches its universe directly. Nothing else is copied out of the record,
     # because a column the author never submitted — a nil `position`, a not-yet-
     # generated `slug` — would be remembered as a value to write rather than as a

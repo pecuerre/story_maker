@@ -17,6 +17,7 @@ module ContextualInspectorHelper
 
     if (story = Current.story)
       rows << [ t("inspector.sections"), story.sections.count ]
+      rows << [ t("inspector.plots"), story.plots.count ]
       rows << [ t("inspector.scenes"), story.scenes.count ]
     end
 

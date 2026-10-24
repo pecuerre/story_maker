@@ -1,0 +1,10 @@
+plot_one:
+  story: story_one
+  name: Plot one
+  description: A story-level through-line.
+  slug: plot-one
+
+plot_alt:
+  story: story_alt
+  name: Other story plot
+  slug: other-story-plot

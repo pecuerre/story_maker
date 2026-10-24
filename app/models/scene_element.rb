@@ -3,11 +3,10 @@
 # never required. `kind` is constrained rather than named `type`, because Active
 # Record reserves `type` for single-table inheritance.
 #
-# A Dialogue Element names one or more speaking Characters through the
-# `scene_element_speakers` join. The link is a plain many-to-many association
-# because it carries no data of its own and records no turn order: it says who
-# speaks in the block, not which line belongs to whom. Narration cannot keep
-# speakers at all.
+# A Dialogue Element keeps a block-level roster of speaking Characters through
+# the `scene_element_speakers` join. `SceneDialogueTurn` separately attributes
+# individual lines; the two sources are not synchronized. Narration can have
+# neither roster speakers nor turns.
 class SceneElement < ApplicationRecord
   NARRATION = "narration"
   DIALOGUE = "dialogue"
@@ -17,6 +16,10 @@ class SceneElement < ApplicationRecord
   include OrderedSequence
   include Searchable
   include HasDiscussion
+
+  # An Element's turns cascade with it: soft-deleting the Element soft-deletes
+  # its turns, and restoring the Element restores them.
+  soft_deletes :scene_dialogue_turns
 
   # A Scene Element has no page of its own — the editor lives under Scene
   # Details — so it declares no route and points a hit at the Scene that owns it.
@@ -35,10 +38,14 @@ class SceneElement < ApplicationRecord
   # the join rows itself when the owner is destroyed, which is what stops a
   # Dialogue's speakers from outliving it.
   has_and_belongs_to_many :characters, join_table: :scene_element_speakers
+  # A turn belongs to its Element and never outlives it: deleting an Element
+  # soft-deletes its turns, and a shared Character it named always survives.
+  has_many :scene_dialogue_turns, class_name: "SceneDialogueTurn", dependent: :destroy, inverse_of: :scene_element
 
   validates :name, presence: true
   validates :kind, presence: true, inclusion: { in: KINDS }
   validate :speakers_match_kind
+  validate :turns_match_kind
   validate :speaker_assignments_are_valid
   validate :speakers_belong_to_the_scene_universe
 
@@ -144,6 +151,12 @@ class SceneElement < ApplicationRecord
         errors.add(:kind, I18n.t("scenes.element_errors.narration_with_speakers",
           narration: I18n.t("scenes.elements.kinds.narration")))
       end
+    end
+
+    def turns_match_kind
+      return unless narration? && scene_dialogue_turns.with_deleted.exists?
+
+      errors.add(:kind, I18n.t("scenes.element_errors.narration_with_turns"))
     end
 
     # A speaker is a Character of the Scene's own Universe, checked here as well

@@ -7,17 +7,16 @@
 #
 # A record reaches its Universe either directly (`Universe#universe` or
 # `Scene#universe`), or through one of the declared owner associations below:
-# `story` for story-scoped records, `scene` for Scene components, and `section`
-# for anything a Section owns. The walk is explicit and bounded rather than a
-# generic association crawl, so a record can never resolve to the wrong universe
-# by accident.
+# `story` for story-scoped records, `scene` for Scene components, `section` for
+# Section-owned records, and `scene_element` for components nested under an
+# Element. The walk is explicit and bounded rather than a generic association
+# crawl, so a record can never resolve to the wrong universe by accident.
 #
-# A model that owns something deeper than one of those associations — a speaker
-# link belonging to a Scene Element, for example — should define its own
-# `universe` method that delegates through its owner. The first line of the walk
-# then finds it, and no new entry is needed here.
+# A nested model should define its own `universe` method when the record-level walk
+# needs another hop. Its owner association also belongs in this list when the
+# class-level SQL walk must filter records through that owner.
 module UniverseScopeResolver
-  OWNER_ASSOCIATIONS = %i[ story scene section ].freeze
+  OWNER_ASSOCIATIONS = %i[ story scene section scene_element ].freeze
 
   # Raised when a model is asked which of its rows belong to a universe and there
   # is no column to ask with: the model has neither a `universe_id` of its own nor

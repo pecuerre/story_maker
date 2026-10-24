@@ -14,6 +14,7 @@
 
 - scene: Scene.a-long-expected-party
   name: "A ring on the table"
+  manifest_key: lotr-party-dialogue
   kind: dialogue
   body: "It is hot. It is. I wish it were not. All the things I wish, and it is hot."
   characters: [ Character.gandalf_the_grey, Character.frodo_baggins ]

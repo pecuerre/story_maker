@@ -18,7 +18,7 @@ class ContextualInspectorHelperTest < ActionView::TestCase
     assert_empty contextual_inspector_rows
   end
 
-  test "a story page yields sections and scenes counts" do
+  test "a story page yields sections, Plot, and scenes counts" do
     Current.story = stories(:story_one)
     @story = stories(:story_one)
 
@@ -26,6 +26,7 @@ class ContextualInspectorHelperTest < ActionView::TestCase
 
     assert_equal [
       [ t("inspector.sections"), 2 ],
+      [ t("inspector.plots"), 1 ],
       [ t("inspector.scenes"), 3 ]
     ], rows
   end

@@ -97,13 +97,49 @@ module SceneElementsHelper
     end
   end
 
-  # The values the modal needs to reopen an existing Element.
+  # The values the modal needs to reopen an existing Element. A Dialogue's turns
+  # travel with it so the editor can show the ordered turn list in the same modal.
   def scene_element_fields_json(element)
     {
       kind: element.kind,
       name: element.name,
       body: element.body,
-      character_ids: element.character_ids
+      character_ids: element.character_ids,
+      turns: element.scene_dialogue_turns.reorder(:position, :id).map do |turn|
+        scene_dialogue_turn_fields(turn)
+      end,
+      turns_create_url: universe_story_scene_scene_element_scene_dialogue_turns_path(
+        universe_slug: element.story.universe.to_param,
+        story_id: element.story,
+        scene_id: element.scene,
+        scene_element_id: element
+      )
     }.to_json
+  end
+
+  # The browser editor needs the same scoped mutation URLs for a turn that the
+  # server uses to resolve it. Keeping them beside the serialized fields avoids
+  # constructing nested routes from ids in JavaScript.
+  def scene_dialogue_turn_fields(turn)
+    route_keys = {
+      universe_slug: turn.universe.to_param,
+      story_id: turn.story,
+      scene_id: turn.scene,
+      scene_element_id: turn.scene_element,
+      id: turn
+    }
+
+    {
+      id: turn.id,
+      speaker_id: turn.speaker_id,
+      speaker_name: turn.speaker.name,
+      body: turn.body,
+      parenthetical: turn.parenthetical,
+      position: turn.position,
+      update_url: universe_story_scene_scene_element_scene_dialogue_turn_path(**route_keys),
+      move_up_url: move_universe_story_scene_scene_element_scene_dialogue_turn_path(**route_keys, direction: "up"),
+      move_down_url: move_universe_story_scene_scene_element_scene_dialogue_turn_path(**route_keys, direction: "down"),
+      destroy_url: universe_story_scene_scene_element_scene_dialogue_turn_path(**route_keys)
+    }
   end
 end

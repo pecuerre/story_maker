@@ -219,6 +219,16 @@ module Development
 
         attributes.each_key do |attribute|
           attribute = attribute.to_s
+
+          if attribute == definition.manifest_identifier_field
+            value = attributes[attribute]
+            unless value.is_a?(String) && value.present? && value.parameterize.present?
+              raise ValidationError, "#{path}:#{source_index + 1} #{attribute} must be a nonblank identifier string"
+            end
+
+            next
+          end
+
           if %w[id created_at updated_at].include?(attribute)
             raise ValidationError, "#{path}:#{source_index + 1} must not set #{attribute}"
           end
@@ -238,6 +248,7 @@ module Development
 
         allowed_attributes = model.column_names + model.reflect_on_all_associations.map { |association| association.name.to_s } + VIRTUAL_ATTRIBUTES.fetch(definition.model_name, [])
         attributes.each_key do |attribute|
+          next if attribute.to_s == definition.manifest_identifier_field
           next if allowed_attributes.include?(attribute.to_s)
 
           raise ValidationError, "#{path}:#{source_index + 1} has unknown #{model.name} attribute '#{attribute}'"
@@ -247,8 +258,9 @@ module Development
       # A record's stable identifier comes from its slug, or from the field its
       # registry definition names as the one that plays slug's role for it — an
       # Event is titled rather than named, and a discussion thread is titled
-      # because the record it is about is its subject — or from its name. A model
-      # with none of the three has no identifier, and no manifest can reference it.
+      # because the record it is about is its subject — or from a manifest-only
+      # identifier for a component that has no public slug or usable name key.
+      # The latter is metadata and is dropped before attributes are assigned.
       #
       # The fallback field is declared in the registry rather than inferred from the
       # model's columns, because `check!` also runs as a schema-independent preflight
@@ -257,16 +269,22 @@ module Development
       def identifier_for(definition, attributes)
         value = attributes["slug"]
         value = attributes[definition.identifier_field] if value.blank? && definition.identifier_field
-        value = attributes["name"] if value.blank?
+        if value.blank? && definition.manifest_identifier_field
+          value = attributes[definition.manifest_identifier_field]
+        elsif value.blank? && !definition.manifest_identifier_field
+          value = attributes["name"]
+        end
         return if value.blank?
 
         normalized_identifier(definition, value)
       end
 
       def normalized_identifier(definition, value)
-        return unless definition.model.respond_to?(:slugify)
+        model = definition.model
+        return model.slugify(value) if model.respond_to?(:slugify)
+        return value.to_s.parameterize if definition.manifest_identifier_field.present?
 
-        definition.model.slugify(value)
+        nil
       end
 
       def validate_target_universe!
@@ -306,6 +324,8 @@ module Development
 
       def resolve_attributes(attributes, record)
         attributes.each_with_object({}) do |(field, value), resolved|
+          next if field.to_s == record.definition.manifest_identifier_field
+
           resolved[field] = resolve_value(value, record, field.to_s)
         end
       end
@@ -436,8 +456,9 @@ module Development
       # Universe, and reaches both through it. The scope key is the Scene because
       # a Scene is the narrowest owner any persisted record has.
       def validate_scene_scoped_record!(record)
-        unless record.attributes.key?("scene")
-          raise ValidationError, "#{record_label(record)} must declare its scene"
+        owner = record.definition.scope_owner.to_s
+        unless record.attributes.key?(owner)
+          raise ValidationError, "#{record_label(record)} must declare its #{owner}"
         end
 
         actual_universe = universe_for(record)
@@ -514,12 +535,14 @@ module Development
           next if %w[ story parent ].include?(field)
           next if field.end_with?("_tags")
 
-          referenced = value.is_a?(Array) ? value.first : value
-          next unless referenced.is_a?(Record)
-          next unless story_scoped_model?(referenced.definition.model_name)
-          next if story_for(referenced) == story_for(record)
+          references = value.is_a?(Array) ? value : [ value ]
+          references.each do |referenced|
+            next unless referenced.is_a?(Record)
+            next unless story_scoped_model?(referenced.definition.model_name)
+            next if story_for(referenced) == story_for(record)
 
-          raise ValidationError, "#{record_label(record)} #{field} must belong to the same story"
+            raise ValidationError, "#{record_label(record)} #{field} must belong to the same story"
+          end
         end
       end
 
@@ -535,7 +558,9 @@ module Development
         return if record.nil?
         return record.identifier if record.definition.model_name == "Universe"
         return if record.definition.model_name == "User"
-        return universe_for(record.resolved_attributes["scene"]) if scene_scoped_model?(record.definition.model_name)
+        if scene_scoped_model?(record.definition.model_name)
+          return universe_for(record.resolved_attributes[record.definition.scope_owner.to_s])
+        end
         return universe_for(record.resolved_attributes["story"]) if story_scoped_model?(record.definition.model_name)
 
         universe_for(record.resolved_attributes["universe"])
@@ -545,20 +570,17 @@ module Development
         return if record.nil?
         return record.resolved_attributes["story"] if story_scoped_model?(record.definition.model_name)
 
-        story_for(record.resolved_attributes["scene"]) if scene_scoped_model?(record.definition.model_name)
+        if scene_scoped_model?(record.definition.model_name)
+          story_for(record.resolved_attributes[record.definition.scope_owner.to_s])
+        end
       end
 
       # The owner whose siblings a positioned record shares, as a scope key and
       # the owner's stable identifier. A hierarchical group also carries the
       # parent, because siblings are one parent's children.
       def position_owner(record)
-        if story_scoped_model?(record.definition.model_name)
-          [ :story, reference_identifier(record.resolved_attributes["story"]) ]
-        elsif scene_scoped_model?(record.definition.model_name)
-          [ :scene, reference_identifier(record.resolved_attributes["scene"]) ]
-        else
-          [ :universe, reference_identifier(record.resolved_attributes["universe"]) ]
-        end
+        owner = record.definition.scope_owner
+        [ owner, reference_identifier(record.resolved_attributes[owner.to_s]) ]
       end
 
       def create_record(record)
@@ -660,13 +682,9 @@ module Development
       end
 
       def position_group_key(record, definition)
-        scope = if story_scoped_model?(record.class.name)
-          [ record.story_id, definition.hierarchical_position? ? record.parent_id : nil ]
-        elsif scene_scoped_model?(record.class.name)
-          [ record.scene_id, nil ]
-        else
-          [ record.universe_id, definition.hierarchical_position? ? record.parent_id : nil ]
-        end
+        owner = definition.scope_owner
+        owner_id = record.public_send("#{owner}_id")
+        scope = [ owner_id, definition.hierarchical_position? ? record.parent_id : nil ]
 
         [ record.class.name, *scope ]
       end

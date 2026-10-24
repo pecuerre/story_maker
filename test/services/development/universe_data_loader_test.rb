@@ -30,10 +30,13 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal "netflix-dark", story.slug
     assert_equal 15, story.sections.count
     assert_equal 4, story.scene_tags.count
+    assert_equal 2, story.plots.count
     assert_equal 0, Universe.where(slug: "lotr").count
     assert_equal [ 0, 1, 2 ], story.sections.where(parent_id: nil).order(:position, :id).pluck(:position)
     assert_equal [ 0, 1, 2 ], story.section_tags.order(:position, :id).pluck(:position)
     assert_equal [ 0, 1 ], story.scene_tags.where(parent_id: nil).order(:position, :id).pluck(:position)
+    assert_equal [ "Secrets", "Truths", "Sic Mundus Creatus Est", "The Journey", "The Golden Beast" ],
+      story.plots.find_by!(slug: "time-travel-mystery").scenes.order(:position, :id).pluck(:name)
   end
 
   # The manifests used to carry a literal password, so a credential-shaped string
@@ -385,7 +388,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
       # A thread is the same: this one is about a Scene, so it goes too — and its
       # messages with it, because a reply to a thread that is not there is the same
       # dangling reference.
-      %w[scene_elements scene_characters scene_items scene_locations discussions discussion_messages].each do |file|
+      %w[scene_tropes scene_elements scene_dialogue_turns scene_characters scene_items scene_locations discussions discussion_messages].each do |file|
         File.write(File.join(directory, "db/data/dark/#{file}.yml"), "[]\n")
       end
 
@@ -394,6 +397,22 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
       end
 
       assert_match(/section must belong to the same story/, error.message)
+    end
+  end
+
+  test "rejects a Plot from a sibling Story in a Scene's Plot list" do
+    with_data_copy do |directory|
+      scenes_path = File.join(directory, "db/data/dark/scenes.yml")
+      contents = File.read(scenes_path)
+      File.write(scenes_path,
+        contents.sub("Plot.time-travel-mystery, Plot.jonas-and-martha",
+          "Plot.time-travel-mystery, Plot.darker-empty-grave"))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/plots must belong to the same story/, error.message)
     end
   end
 
@@ -415,9 +434,11 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     with_data_copy do |directory|
       scenes_path = File.join(directory, "db/data/dark/scenes.yml")
       File.write(scenes_path, "[]\n")
+      File.write(File.join(directory, "db/data/dark/scene_tropes.yml"), "[]\n")
 
       elements_path = File.join(directory, "db/data/dark/scene_elements.yml")
       File.write(elements_path, "- name: Orphan\n  kind: narration\n")
+      File.write(File.join(directory, "db/data/dark/scene_dialogue_turns.yml"), "[]\n")
 
       error = assert_raises(Development::UniverseDataLoader::ValidationError) do
         Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
@@ -473,12 +494,28 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     with_data_copy do |directory|
       elements_path = File.join(directory, "db/data/dark/scene_elements.yml")
       File.write(elements_path, "- name: Orphan\n  kind: narration\n")
+      File.write(File.join(directory, "db/data/dark/scene_dialogue_turns.yml"), "[]\n")
 
       error = assert_raises(Development::UniverseDataLoader::ValidationError) do
         Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
       end
 
       assert_match(/scene_elements\.yml:1 must declare its scene/, error.message)
+    end
+  end
+
+  test "a child component resolves its owner through a SceneElement manifest key" do
+    with_data_copy do |directory|
+      turns_path = File.join(directory, "db/data/dark/scene_dialogue_turns.yml")
+      File.write(turns_path, File.read(turns_path).sub(
+        "SceneElement.dark-secrets-dialogue", "SceneElement.missing-dialogue"
+      ))
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
+      end
+
+      assert_match(/references missing SceneElement\.missing-dialogue/, error.message)
     end
   end
 
@@ -492,13 +529,21 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
     # Element positions are contiguous inside their own Scene, and a Scene with
     # no elements is valid.
-    assert_equal [ 0, 1, 2 ], secrets.scene_elements.reorder(:position, :id).pluck(:position)
+    assert_equal [ 0, 1, 2, 3 ], secrets.scene_elements.reorder(:position, :id).pluck(:position)
     assert_equal [ 0, 1, 2 ], waltz.scene_elements.reorder(:position, :id).pluck(:position)
     assert_empty grotto.scene_elements
 
     dialogue = secrets.scene_elements.find_by!(kind: "dialogue")
     assert_equal [ "Katharina", "Martha" ], dialogue.characters.order(:name).pluck(:name)
     assert_predicate dialogue.body, :present?
+    assert_equal [ 0, 1 ], dialogue.scene_dialogue_turns.reorder(:position, :id).pluck(:position)
+    assert_equal [ "Katharina", "Martha" ], dialogue.scene_dialogue_turns.includes(:speaker)
+      .reorder(:position, :id).map { |turn| turn.speaker.name }
+    assert_not_includes SceneElement.column_names, "manifest_key",
+      "the reference key is YAML metadata and is not stored on the model"
+    interruption = secrets.scene_elements.find_by!(name: "An interruption")
+    assert_equal [ 0 ], interruption.scene_dialogue_turns.pluck(:position),
+      "turn positions restart inside each Element, even when Elements share a Scene"
 
     # A title-only narration loads with no content, which is a valid element.
     assert_nil secrets.scene_elements.find_by!(name: "The photograph").body
@@ -519,7 +564,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal 3, participants.count
   end
 
-  test "the Lord of the Rings manifest loads four speakers into one dialogue" do
+  test "the Lord of the Rings manifest loads block speakers and line-level turns" do
     Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
 
     story = Universe.find_by!(slug: "lotr").stories.first
@@ -528,6 +573,10 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal [ 0, 1, 2 ], council.scene_elements.reorder(:position, :id).pluck(:position)
     dialogue = council.scene_elements.find_by!(kind: "dialogue")
     assert_equal [ "Aragorn", "Gandalf the Grey", "Gimli", "Legolas" ], dialogue.characters.order(:name).pluck(:name)
+    party = story.scenes.find_by!(slug: "a-long-expected-party")
+    turn_dialogue = party.scene_elements.find_by!(kind: "dialogue")
+    assert_equal [ "Gandalf the Grey", "Frodo Baggins" ], turn_dialogue.scene_dialogue_turns.includes(:speaker)
+      .reorder(:position, :id).map { |turn| turn.speaker.name }
     # Legolas and Gimli speak here without ever being stored as participants.
     assert_equal [ "Aragorn", "Frodo Baggins" ], council.scene_characters.includes(:character)
       .map { |link| link.character.name }.sort

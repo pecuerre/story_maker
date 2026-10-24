@@ -181,8 +181,8 @@ Layout:
   `test/system` — browser-level smoke coverage for the primary workspace journeys.
 - `test/fixtures/*.yml` — loaded for **all** tests (`fixtures :all`): users, universes,
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
-  (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements and
-  scene characters (both belong to `story_one`'s first Scene), plus content and tag fixtures for
+  (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements,
+  dialogue turns, and scene characters (all belong to `story_one`'s first Scene), plus content and tag fixtures for
   **characters, locations, items, events, relations, and ownerships**, their six taxonomies, and one
   universe membership. Every content set carries a record in universe two — `event_other_universe`,
   `location_three`, `character_other_universe`, `ownership_tag_three`, `membership_one`, and the
@@ -424,7 +424,7 @@ asset. The checked-in images are deliberately **not** square, so a stored square
 happened rather than passing through unchanged.
 
 Each directory contains all data used to exercise that universe: its user/universe record, stories,
-sections, section tags, world-building records, taxonomies, and relationships. A universe
+sections, Plots, section tags, world-building records, taxonomies, and relationships. A universe
 directory is not a feature directory. For example, a future `Dialog` model belongs in
 `db/data/dark/dialogs.yml` (and in `db/data/lotr/dialogs.yml` when that universe should exercise
 it), not in `db/data/dialog/`.
@@ -432,7 +432,7 @@ it), not in `db/data/dialog/`.
 `dark` holds **three stories in one universe** — `netflix-dark`, `netflix-darker`, and
 `bethesda-dark` — so the login → universe → story flow and a universe that is not a single story are
 both exercisable by hand. The three share the universe's Characters, Locations, Items, and Events and
-differ in everything story-scoped: each declares its own sections, section tags, scene tags, and scene
+  differ in everything story-scoped: each declares its own sections, Plots, section tags, scene tags, and scene
 sequence, and each scene's `position` starts again at `0` rather than continuing a universe-wide
 numbering. `netflix-dark` is first in `stories.yml` so it stays the Story a reader is offered first,
 and its slug-prefixed manifest entries (`s1`, `s1e1`, `secrets`, …) are the ones the rest of the
@@ -441,7 +441,7 @@ state is visible without inventing a record.
 
 The shared development loader is `Development::UniverseDataLoader`, configured by
 `app/services/development/universe_data_registry.rb`. It walks one registry order for every
-universe (User → Universe → UniverseMembership → Story → SectionTag → Section → … → Event),
+universe (User → Universe → UniverseMembership → Story → SectionTag → Section → … → Event → Plot → Scene),
 requires every registered YAML file, resolves `Model.slug` references in memory, validates model
 order and universe/story scope before writing, and normalizes hierarchical sibling positions from
 file order (or validates explicit positions when every sibling supplies one). The Dark and LOTR
@@ -455,13 +455,14 @@ Add the model to the shared registry and provide its file in every registered un
 using `[]` where the model is intentionally not exercised.
 
 Two rules apply when a model is not keyed by a slug of its own. Its registry definition declares
-`identifier_field:`, naming the field a manifest reference is keyed on instead — that is how `Event`
+`identifier_field:`, naming a model field that serves as the manifest reference — that is how `Event`
 is referenced by title, and how a `Discussion` is, since the record it is about is its subject.
 Do not infer that field from the model's columns: the loader resolves references in a preflight
 that runs before the schema exists, so an identifier read from the database would silently fail
-during `db:demo:reset` while passing every `db:demo:check`. A model with no slug and no
-`identifier_field` has no stable identifier, and no manifest can reference it — a `SceneElement` is
-the current example, so development data cannot name one.
+during `db:demo:reset` while passing every `db:demo:check`. A nested component with no public slug
+may instead declare a `manifest_identifier_field:`; the YAML-only field identifies it for child
+references and is removed before attributes are written. `SceneElement` uses `manifest_key` this
+way, so `SceneDialogueTurn` can reference its Element without giving it a public slug or URL.
 
 ### Explicit development data tasks
 
@@ -569,8 +570,9 @@ The Scene domain, its confirmed defaults (Title labelling, a single-point `datet
 Dialogue needing a speaker, the mandatory deletion confirmations), its workspace tabs, and its
 deletion contract are in [features/scenes.md](features/scenes.md). The Scene-owned tables shipped as
 their own create migrations (`CreateSceneElements`, which also creates the `scene_element_speakers`
-join, `CreateSceneCharacters`, `CreateSceneItems`, and `CreateSceneLocations`), which matters for the
-reason given below.
+join, `CreateSceneCharacters`, `CreateSceneItems`, and `CreateSceneLocations`). Turn-level dialogue
+adds `CreateSceneDialogueTurns` and its soft-delete column migration, described with the Scene model
+in [data_model.md](data_model.md).
 
 The delivery history — what each slice added, in order — is in
 [`delivery_history.md`](delivery_history.md), which is the durable record of it. A planned slice
@@ -599,26 +601,29 @@ which is why the rule above still applies to them. See
 
 ### Scene data and manual verification
 
-When data is added, put it in the relevant `db/data/<universe_slug>/` files (`scenes.yml`,
-`scene_tags.yml`, `scene_elements.yml`, `scene_characters.yml`, `scene_items.yml`, and
-`scene_locations.yml`), not in a
+When data is added, put it in the relevant `db/data/<universe_slug>/` files (`plots.yml`, `scenes.yml`,
+`scene_tags.yml`, `scene_elements.yml`, `scene_dialogue_turns.yml`, `scene_characters.yml`,
+`scene_items.yml`, and `scene_locations.yml`), not in a
 feature directory. Records must use stable symbolic references and demonstrate title-only,
 Ungrouped, Section-assigned, independent Event/datetime, shared-Event, tagged/untagged Scene,
 Narration, Dialogue, multi-speaker, multi-Location, multi-Item, and blank/populated-role cases.
 `scenes.yml` records reference their story and may reference `section:`, `event:`, and
-`scene_tags:` with `Model.slug` references and an independent `datetime:`, and use
+`scene_tags:` and `plots:` with `Model.slug` references and an independent `datetime:`, and use
 explicit `position` values so the narrative order is visible in the file. The Dark file is the worked
 example: three scenes share Season 1 / Episode 1, three scenes are ungrouped (one of them told last
 but set in 1953), and each remaining Section keeps a single scene. `SceneTag` is loaded before
-`Scene`, and `Scene` is loaded **after** `Event` in `Development::UniverseDataRegistry` because a
-symbolic reference may not point at a later model file. The loader proves the Section and every
-assigned Scene Tag belong to the Scene's story before writing anything.
+`Scene`, and `Plot` is loaded after `Event` but before `Scene` in `Development::UniverseDataRegistry`
+because symbolic references may not point at a later model file. The loader proves the Section,
+every assigned Scene Tag, and every assigned Plot belong to the Scene's Story before writing anything.
 
 `scene_elements.yml`, `scene_characters.yml`, `scene_items.yml`, and `scene_locations.yml` are
-**scene-scoped** registry entries: every record
-declares its `scene:` with a `Scene.slug` reference, the loader resolves its Universe through that
-Scene, and Element `position` values are flat and contiguous **inside their own Scene**. A Dialogue
-names its speakers with `characters: [ Character.slug, ... ]`, the same join the app uses. A
+**scene-scoped** registry entries: every record declares its `scene:` with a `Scene.slug` reference.
+`scene_dialogue_turns.yml` is nested one level further and declares `scene_element:`; the loader
+resolves its Universe through that Element. Element positions are flat and contiguous inside their
+Scene, while turn positions are flat and contiguous inside their Element. `SceneElement` uses a
+YAML-only `manifest_key` when turns need to reference an Element that has no public slug. A Dialogue
+names its block-level roster with `characters: [ Character.slug, ... ]`; turns independently
+attribute lines with their own speaker references. Both contribute to derived speaker participation. A
 `SceneCharacter` declares `character:`, a `SceneItem` declares `item:`, and a `SceneLocation` declares
 `location:` — each with an optional `role:`; leave `role:` empty to record the appearance without
 one. The Dark manifests deliberately include a Scene with no elements at all, a
@@ -647,7 +652,8 @@ Sign in with the Dark development user and the password the load reported (see
 [`db/data/README.md`](../db/data/README.md#development-credentials)), open `/u/dark`, and check
 that all three stories are listed with **Open** actions, that **None selected** is the sidebar's
 story state until one is opened, and that switching between them changes the Sections and Scenes
-under the Story while Characters, Locations, Items, and Events stay the same records.
+under the Story while Plots remain story-owned and Characters, Locations, Items, and Events stay the
+same shared records.
 
 Then open `/u/dark/s/<story_id>/scenes` and check:
 the sidebar **Scenes** entry links to the selected story and shows the scene count; the list is in
@@ -657,6 +663,11 @@ states the full ADR 0007 consequences; and a guest or read-only member sees the 
 with no mutation controls. The Dark data has several Scenes in Season 1 / Episode 1, several
 ungrouped Scenes, and one Scene per remaining Section, so grouping and narrative order are visibly
 different things.
+
+Open `/u/dark/s/<story_id>/plots` and check that each Plot lists only its own Story's Scenes in
+narrative order, including arcs that cross Section boundaries. Open a Plot's Details page, edit the
+assignment on a Scene's editor, then return and verify the linked Scene list changed without moving
+the Scene or changing its Section.
 
 On the same page check the **Find scenes** area: it narrows the list by title/description text, by
 Section (including **Ungrouped**), by Scene Tag, and by an inclusive in-world date range; the active
@@ -1182,7 +1193,7 @@ SHAs the jobs are pinned to — so a PR from either has to be read as a change t
    `maintains_flat_positions_for` in its controller and must not include `Hierarchical`.
    A record narrower than those — anything a Scene or a Section owns — must resolve its Universe
    through `UniverseScopeResolver`: give it its own `#universe` that delegates to its owner, or give
-   it an owner association named `story`, `scene`, or `section`. Register it in
+    it an owner association named `story`, `scene`, `section`, or `scene_element`. Register it in
    `Ability::CONTENT_CLASS_NAMES` as well, and validate any shared scope in the model rather than
    trusting a foreign key. Registration is not optional bookkeeping: `test/models/ability_test.rb`
    requires every persisted model to be content, authorized by another rule group, or listed there

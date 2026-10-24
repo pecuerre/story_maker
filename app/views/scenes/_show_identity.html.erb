@@ -49,6 +49,22 @@
     <% end %>
   </div>
   <div class="col-12">
+    <div class="page-eyebrow"><%= t("scenes.show.facts.plots") %></div>
+    <% if scene.plots.any? %>
+      <p class="mb-0">
+        <% scene.plots.each do |plot| %>
+          <%= link_to plot.name, universe_story_plot_path(story_id: story, id: plot), class: "badge rounded-pill text-bg-light border text-decoration-none me-1" %>
+        <% end %>
+      </p>
+    <% else %>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.plots_blank") %></p>
+    <% end %>
+  </div>
+  <div class="col-12">
+    <div class="page-eyebrow"><%= t("tropes.assignments.scene_heading") %></div>
+    <%= render "shared/trope_assignments_summary", assignments: scene.scene_tropes %>
+  </div>
+  <div class="col-12">
     <div class="page-eyebrow"><%= t("scenes.show.facts.event") %></div>
     <% if scene.event.present? %>
       <%# The Event's own label is chrome plus the author's own title, so it is

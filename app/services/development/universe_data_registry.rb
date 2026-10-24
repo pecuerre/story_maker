@@ -6,9 +6,11 @@ module Development
       :model_name,
       :file_name,
       :scope,
+      :scope_owner,
       :positioned,
       :position_mode,
       :identifier_field,
+      :manifest_identifier_field,
       keyword_init: true
     ) do
       def model
@@ -30,6 +32,18 @@ module Development
       # references in a preflight that deliberately runs before the schema exists.
       def identifier_field
         self[:identifier_field]&.to_s
+      end
+
+      # A manifest-only key for a component without a public slug. It identifies
+      # the row for references in other YAML files but is never written to a table.
+      def manifest_identifier_field
+        self[:manifest_identifier_field]&.to_s
+      end
+
+      # The immediate owner is normally implied by the scope. A component nested
+      # below another Scene-owned component can name its narrower owner here.
+      def scope_owner
+        self[:scope_owner]&.to_sym || { universe: :universe, story: :story, scene: :scene }[scope]
       end
     end
 
@@ -60,13 +74,23 @@ module Development
       ModelDefinition.new(model_name: "EventTag", file_name: "event_tags", scope: :universe, positioned: true),
       ModelDefinition.new(model_name: "Event", file_name: "events", scope: :universe, positioned: true,
         identifier_field: "title"),
-      # Loaded after Event because a Scene may reference a shared universe
-      # event; a symbolic reference may not point at a later model file.
+      # Plot precedes Scene because a Scene may be assigned to multiple story-level
+      # through-lines; symbolic references may not point at a later model file.
+      # Event is also loaded first because it is a shared in-world reference.
+      ModelDefinition.new(model_name: "Plot", file_name: "plots", scope: :story),
+      ModelDefinition.new(model_name: "StoryTrope", file_name: "story_tropes", scope: :story),
       ModelDefinition.new(model_name: "Scene", file_name: "scenes", scope: :story, positioned: true, position_mode: :flat),
+      ModelDefinition.new(model_name: "SceneTrope", file_name: "scene_tropes", scope: :scene),
       # A Scene's own components. They belong to a Scene rather than to the Story
       # or the Universe, so they load after Scene and reach the Universe through
       # it. Element positions are flat and contiguous inside their own Scene.
-      ModelDefinition.new(model_name: "SceneElement", file_name: "scene_elements", scope: :scene, positioned: true, position_mode: :flat),
+      ModelDefinition.new(model_name: "SceneElement", file_name: "scene_elements", scope: :scene, positioned: true,
+        position_mode: :flat, manifest_identifier_field: "manifest_key"),
+      # A Dialogue's turns cascade with their Element: they reach the Universe
+      # through `scene_element -> scene -> story -> universe`, declare no
+      # universe of their own, and are positioned within that Element.
+      ModelDefinition.new(model_name: "SceneDialogueTurn", file_name: "scene_dialogue_turns", scope: :scene,
+        scope_owner: :scene_element, positioned: true, position_mode: :flat),
       ModelDefinition.new(model_name: "SceneCharacter", file_name: "scene_characters", scope: :scene),
       # The remaining two world-presence links. Same shape as SceneCharacter: a
       # Scene owns them and they reach the Universe through it.

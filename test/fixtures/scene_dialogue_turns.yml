@@ -1,0 +1,19 @@
+# Dialogue turns: the spoken lines inside a Dialogue Element, in order.
+# `turn_one` and `turn_two` belong to `dialogue_one` of scene one, and their
+# speakers are universe Characters rather than stored participants of the Scene.
+# `turn_one` uses `character_three`, which is not in the block-level roster;
+# `turn_two` overlaps `character_one` in the roster. These prove both speaker
+# sources participate independently and collapse to a union in reads.
+
+turn_one:
+  scene_element: dialogue_one
+  speaker: character_three
+  body: "Count with me."
+  position: 0
+
+turn_two:
+  scene_element: dialogue_one
+  speaker: character_one
+  body: "One, two, three. Again, and slower this time."
+  parenthetical: "grinning"
+  position: 1

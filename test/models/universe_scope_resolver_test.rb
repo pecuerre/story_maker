@@ -16,12 +16,12 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
   # `records_in` asks only what a class can answer about itself, so a plain class
   # answers the same questions faithfully.
   class NestedRecord
-    COLUMNS = %w[id scene_element_id character_id].freeze
+    COLUMNS = %w[id widget_id character_id].freeze
 
-    attr_reader :scene_element_id
+    attr_reader :widget_id
 
-    def initialize(scene_element_id: nil)
-      @scene_element_id = scene_element_id
+    def initialize(widget_id: nil)
+      @widget_id = widget_id
     end
 
     def self.name = "NestedRecord"
@@ -37,8 +37,8 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
   class DeclaredNestedRecord < NestedRecord
     def self.name = "DeclaredNestedRecord"
 
-    def initialize(owner:, scene_element_id: nil)
-      super(scene_element_id: scene_element_id)
+    def initialize(owner:, widget_id: nil)
+      super(widget_id: widget_id)
       @owner = owner
     end
 
@@ -56,6 +56,7 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
 
   test "resolves a story-scoped record through its story" do
     assert_equal @universe, UniverseScopeResolver.universe_for(sections(:section_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(plots(:plot_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(section_tags(:section_tag_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_tags(:scene_tag_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scenes(:scene_one))
@@ -71,12 +72,14 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
   test "resolves the real scene-owned models through their scene" do
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_elements(:narration_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_elements(:dialogue_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_dialogue_turns(:turn_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_two))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_items(:scene_item_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_locations(:scene_location_one))
     # Unsaved records own nothing yet, so there is no universe to resolve.
     assert_nil UniverseScopeResolver.universe_for(SceneElement.new(name: "Unsaved"))
+    assert_nil UniverseScopeResolver.universe_for(SceneDialogueTurn.new)
     assert_nil UniverseScopeResolver.universe_for(SceneCharacter.new)
     assert_nil UniverseScopeResolver.universe_for(SceneItem.new)
     assert_nil UniverseScopeResolver.universe_for(SceneLocation.new)
@@ -123,15 +126,17 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
 
   test "names the owner association a model reaches its universe through" do
     assert_equal :story, UniverseScopeResolver.owner_association_for(Section)
+    assert_equal :story, UniverseScopeResolver.owner_association_for(Plot)
     assert_equal :story, UniverseScopeResolver.owner_association_for(Scene)
     assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneElement)
+    assert_equal :scene_element, UniverseScopeResolver.owner_association_for(SceneDialogueTurn)
     assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneCharacter)
     # A record with a `universe_id` of its own has no owner association to walk.
     assert_nil UniverseScopeResolver.owner_association_for(Character)
   end
 
   test "the answer agrees with the walk, for every model it is asked about" do
-    [ Section, Scene, SceneElement, SceneCharacter, Character ].each do |model|
+    [ Section, Plot, Scene, SceneElement, SceneDialogueTurn, SceneCharacter, Character ].each do |model|
       record = model.first
       next if record.nil?
 
@@ -145,10 +150,10 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
   end
 
   test "records_in names a model the walk cannot place instead of querying a column that is not there" do
-    # A speaker link belongs to a Scene Element, which is below anything the walk
-    # names. Asked of the class there is no column to filter it by, and reaching
-    # the database with `universe_id` produces a missing-column error that reads
-    # like an absent migration rather than a model that never declared its scope.
+    # A join record whose foreign key names nothing the walk can follow has no
+    # column to filter it by. Asked of the class, reaching the database with
+    # `universe_id` produces a missing-column error that reads like an absent
+    # migration rather than a model that never declared its scope.
     error = assert_raises(UniverseScopeResolver::UnresolvableModel) do
       UniverseScopeResolver.records_in(NestedRecord, @universe)
     end
@@ -159,7 +164,7 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
   end
 
   test "declaring its own universe is what clears the record-level walk" do
-    undeclared = NestedRecord.new(scene_element_id: scene_elements(:narration_one).id)
+    undeclared = NestedRecord.new(widget_id: scene_elements(:narration_one).id)
     declared = DeclaredNestedRecord.new(owner: scene_elements(:narration_one))
 
     assert_nil UniverseScopeResolver.universe_for(undeclared),

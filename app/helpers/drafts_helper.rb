@@ -40,6 +40,10 @@
 #   and both are labelled by the one shared word rather than by a column no model
 #   has.
 module DraftsHelper
+  TROPE_ASSIGNMENT_ASSOCIATIONS = {
+    "story_tropes_attributes" => :story_tropes,
+    "scene_tropes_attributes" => :scene_tropes
+  }.freeze
   # The payload keys this page names for itself rather than through a model's own
   # attribute name — three keys, resolved to two words, shared by every model in
   # the registry.
@@ -532,10 +536,17 @@ module DraftsHelper
       # deliberately bounded, in service of a branch nothing reaches.
       next if name == change.scope_attribute
       next if model.blank? || !record.respond_to?(name)
-      next unless model.column_names.include?(name) || id_list_association(model, name)
+      trope_association = trope_assignment_association(model, name)
+      next unless model.column_names.include?(name) || id_list_association(model, name) || trope_association
 
       association = id_list_association(model, name)
-      value = association.present? ? record.public_send(association.name) : record.public_send(name)
+      value = if trope_association
+        record.public_send(trope_association).map do |assignment|
+          { "trope_slug" => assignment.trope_slug, "selected" => "1", "context_note" => assignment.context_note }
+        end
+      else
+        association.present? ? record.public_send(association.name) : record.public_send(name)
+      end
       [ draft_change_label(model, name, association),
         draft_change_value(model, name, value, association, resolved: association.present?) ]
     end
@@ -682,7 +693,8 @@ module DraftsHelper
     # to a humanized English name, which is the documented behaviour of
     # `human_attribute_name` — and on this page that fallback is a defect, because
     # a Spanish reader then sees English beside the page's Spanish chrome.
-    def draft_change_label(model, name, association)      shared = DraftsHelper.shared_label_key(name)
+    def draft_change_label(model, name, association)
+      shared = DraftsHelper.shared_label_key(name)
       return t(shared) if shared.present?
 
       field = DraftsHelper.label_field(model, name, association)
@@ -699,6 +711,8 @@ module DraftsHelper
     # and is handed the **records** the loaded association already holds, so nothing is
     # fetched again. `resolved` says which of the two the value already is.
     def draft_change_value(model, name, value, association, entry: nil, key: nil, resolved: false)
+      return trope_assignment_summary(value) if trope_assignment_association(model, name)
+
       if association.present?
         return association_names(association, value, entry: entry&.tags_for(key), resolved: resolved)
       end
@@ -708,6 +722,32 @@ module DraftsHelper
       return value.to_sentence if value.is_a?(Array)
 
       value.presence || t("shared.detail_fact.blank")
+    end
+
+    # Nested trope forms are one atomic Story/Scene mutation, but their payload is
+    # structured input rather than a printable column value. Render the selected
+    # references and use-specific notes instead of exposing the nested params hash.
+    def trope_assignment_summary(value)
+      assignments = value.is_a?(Hash) ? value.values : Array(value)
+      descriptions = assignments.filter_map do |attributes|
+        values = attributes.respond_to?(:to_h) ? attributes.to_h.stringify_keys : {}
+        next if ActiveModel::Type::Boolean.new.cast(values["_destroy"])
+        next if values.key?("selected") && !ActiveModel::Type::Boolean.new.cast(values["selected"])
+
+        entry = TropeCatalog.find(values["trope_slug"])
+        next unless entry
+
+        values["context_note"].present? ? "#{entry.name}: #{values["context_note"]}" : entry.name
+      end
+
+      descriptions.to_sentence.presence || t("drafts.attributes.tropes_none")
+    end
+
+    def trope_assignment_association(model, name)
+      return unless model.present?
+
+      association = TROPE_ASSIGNMENT_ASSOCIATIONS[name.to_s]
+      association if association && model.reflect_on_association(association)
     end
 
     # A submitted id list the model has a collection for: a tag assignment, or a

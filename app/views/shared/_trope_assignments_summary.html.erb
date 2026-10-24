@@ -1,0 +1,23 @@
+<% if assignments.any? %>
+  <ul class="list-unstyled mb-0">
+    <% assignments.each do |assignment| %>
+      <% entry = assignment.trope %>
+      <% next unless entry %>
+      <li class="surface-card p-3 mb-2">
+        <h3 class="h6 mb-1"><%= link_to entry.name, entry.source_url, target: "_blank", rel: "noopener noreferrer" %></h3>
+        <p class="small mb-1"><%= t(entry.description_key) %></p>
+        <p class="small text-body-secondary mb-2"><%= t(entry.craft_note_key) %></p>
+        <% if assignment.context_note.present? %>
+          <p class="small mb-2"><strong><%= t("tropes.assignments.context_note") %>:</strong> <%= assignment.context_note %></p>
+        <% end %>
+        <div class="form-text">
+          <%= t("tropes.assignments.source_html",
+            source: link_to(TropeCatalog::SOURCE_NAME, entry.source_url, target: "_blank", rel: "noopener noreferrer"),
+            license: link_to(t("tropes.source_license"), TropeCatalog::SOURCE_LICENSE_URL, target: "_blank", rel: "noopener noreferrer")) %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="mb-0 text-body-secondary"><%= t("tropes.assignments.none") %></p>
+<% end %>

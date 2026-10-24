@@ -34,9 +34,9 @@ class SceneCharactersControllerTest < ActionDispatch::IntegrationTest
     get @path
 
     assert_response :success
-    # Both characters are stored participants of this scene and both speak in
-    # `dialogue_one`; the union is still two rows, not four.
-    assert_equal [ "Character one", "Character two" ], listed_names
+    # The two stored participants also appear in the block roster; the turn-only
+    # speaker is a third Character, and the union still lists each one once.
+    assert_equal [ "Character one", "Character three", "Character two" ], listed_names
     assert_select ".entity-list .badge", text: "Participant"
     assert_select ".entity-list .badge", text: "Speaks in 1 element"
   end
@@ -242,7 +242,7 @@ class SceneCharactersControllerTest < ActionDispatch::IntegrationTest
     # Removing a presence link does not touch who speaks: the Dialogue still
     # names both characters, so the removed one is now only a speaker.
     assert_equal scene_elements(:dialogue_one).reload.character_ids.sort, [ characters(:character_one).id, characters(:character_two).id ].sort
-    assert_equal 2, SceneParticipants.for(@scene).count
+    assert_equal 3, SceneParticipants.for(@scene).count
   end
 
   test "an html mutation is refused before anything is written" do
@@ -271,7 +271,7 @@ class SceneCharactersControllerTest < ActionDispatch::IntegrationTest
     get @path
 
     assert_response :success
-    assert_equal [ "Character one", "Character two" ], listed_names
+    assert_equal [ "Character one", "Character three", "Character two" ], listed_names
     assert_select "button[data-action='modal-form#open']", count: 0
     assert_select "button[data-action='modal-form#destroy']", count: 0
     assert_select "[data-modal-form-target='errors']", count: 0

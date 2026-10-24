@@ -78,13 +78,13 @@ always knows which scope a link belongs to:
   its own and that one link stays current across both tabs. Locations and Sections remain
   single-record workspaces.
 - **Current story** context: the story name — or an explicit **None selected** state with a prompt
-  when no story is current. The section/scene counts and the description stay out of this block and
+  when no story is current. The section/plot/scene counts and the description stay out of this block and
   live on the story's own pages.
-- **Story workspace**: Story overview + Sections + Scenes when a story is selected; otherwise All
+- **Story workspace**: Story overview + Sections + Plots + Scenes when a story is selected; otherwise All
   stories plus a prompt to select one. Creating a story belongs to the universe page (and the
-  stories index), never to the sidebar. **Scenes** is a real story-scoped link with its own cached
-  count once a story is selected, and an `aria-disabled` `#` placeholder while no story is current —
-  it never falls back to the universe's first story.
+  stories index), never to the sidebar. **Plots** and **Scenes** are real story-scoped links with
+  their own cached counts once a story is selected, and `aria-disabled` `#` placeholders while no
+  story is current — neither falls back to the universe's first story.
 
 Configuration is **not** in this column: this one stays about universe and story content only.
 

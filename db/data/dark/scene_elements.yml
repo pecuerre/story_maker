@@ -11,7 +11,7 @@
 # through it, so the second and third stories in this directory have their own
 # elements while the speakers are still the same universe Characters.
 
-# A Scene with three elements, including a Dialogue whose two speakers are not
+# A Scene with four elements, including a Dialogue whose two speakers are not
 # stored participants: they are derived from the dialogue alone.
 - scene: Scene.secrets
   name: The arrival
@@ -21,6 +21,7 @@
 
 - scene: Scene.secrets
   name: "At the kitchen door"
+  manifest_key: dark-secrets-dialogue
   kind: dialogue
   body: "You found the map, didn't you. I found a map. In a drawer that was empty last Tuesday."
   characters: [ Character.katharina, Character.martha ]
@@ -32,6 +33,14 @@
   kind: narration
   position: 2
 
+- scene: Scene.secrets
+  name: "An interruption"
+  manifest_key: dark-secrets-interruption
+  kind: dialogue
+  body: "The phone rings before either of them can answer."
+  characters: [ Character.martha ]
+  position: 3
+
 # A one-speaker dialogue beside a narration, and a title-only closing beat.
 - scene: Scene.michaels-waltz
   name: "The kitchen, after dark"
@@ -41,6 +50,7 @@
 
 - scene: Scene.michaels-waltz
   name: "One, two, three"
+  manifest_key: dark-waltz-dialogue
   kind: dialogue
   body: "You are not dancing with a chair. I am dancing with the count."
   characters: [ Character.jonas ]

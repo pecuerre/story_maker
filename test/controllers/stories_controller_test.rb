@@ -40,6 +40,10 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".page-eyebrow", text: I18n.t("sidebar.story_workspace")
     assert_select "a[href=?]", universe_story_sections_path(universe_slug: @universe.slug, story_id: story),
       text: I18n.t("stories.show.open_sections")
+    assert_select "a[href=?]", universe_story_plots_path(universe_slug: @universe.slug, story_id: story),
+      text: I18n.t("stories.show.open_plots")
+    assert_select "a[href=?]", TropeCatalog.find("red-herring").source_url, text: "Red Herring"
+    assert_includes response.body, "The clue is introduced fairly and resolved later."
   end
 
   test "should get new story" do
@@ -77,6 +81,126 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_content
+  end
+
+  test "story editor saves a contextual trope annotation" do
+    story = stories(:story_alt)
+
+    assert_difference("StoryTrope.count") do
+      patch universe_story_url(universe_slug: @universe.slug, id: story), params: {
+        story: {
+          story_tropes_attributes: {
+            "0" => { trope_slug: "red-herring", selected: "1", context_note: "The false lead is resolved fairly." }
+          }
+        }
+      }
+    end
+
+    assert_redirected_to universe_story_url(universe_slug: @universe.slug, id: story)
+    assert_equal "The false lead is resolved fairly.", story.story_tropes.find_by!(trope_slug: "red-herring").context_note
+  end
+
+  test "story editor refuses a trope outside the curated catalogue" do
+    story = stories(:story_alt)
+
+    assert_no_difference("StoryTrope.count") do
+      patch universe_story_url(universe_slug: @universe.slug, id: story), params: {
+        story: {
+          story_tropes_attributes: {
+            "0" => { trope_slug: "unknown", selected: "1", context_note: "No such reference." }
+          }
+        }
+      }
+    end
+
+    assert_response :unprocessable_content
+  end
+
+  test "unchecking a Story trope removes only that Story annotation" do
+    story = stories(:story_one)
+    assignment = story_tropes(:story_one_red_herring)
+
+    assert_difference("StoryTrope.count", -1) do
+      patch universe_story_url(universe_slug: @universe.slug, id: story), params: {
+        story: {
+          story_tropes_attributes: {
+            "0" => { id: assignment.id, trope_slug: "red-herring", selected: "0", context_note: "" }
+          }
+        }
+      }
+    end
+
+    assert_redirected_to universe_story_url(universe_slug: @universe.slug, id: story)
+  end
+
+  test "a trope annotation in draft mode is remembered and applied with its context" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    story = stories(:story_alt)
+
+    assert_difference("DraftChange.count") do
+      patch universe_story_url(universe_slug: @universe.slug, id: story), params: {
+        story: {
+          story_tropes_attributes: {
+            "0" => { trope_slug: "red-herring", selected: "1", context_note: "Remembered context." }
+          }
+        }
+      }
+    end
+
+    change = DraftChange.order(:id).last
+    assert_equal "Story", change.record_type
+    assert change.payload.key?("story_tropes_attributes")
+
+    get universe_draft_path(universe_slug: @universe.slug, id: change.draft)
+    assert_response :success
+    assert_includes response.body, "Trope annotations"
+    assert_includes response.body, "Red Herring: Remembered context."
+    assert_not_includes response.body, "story_tropes_attributes"
+
+    DraftApplier.new(change.draft).apply
+
+    assert_equal "Remembered context.", story.story_tropes.find_by!(trope_slug: "red-herring").context_note
+  end
+
+  test "Story creation in draft mode is not visible until the draft is applied" do
+    @universe.update!(collaboration_mode: "wikipedia")
+
+    assert_no_difference("Story.count") do
+      assert_difference("DraftChange.count") do
+        post universe_stories_url(universe_slug: @universe.slug), params: {
+          story: {
+            name: "Remembered story",
+            story_tropes_attributes: {
+              "0" => { trope_slug: "found-family", selected: "1", context_note: "A draft annotation." }
+            }
+          }
+        }
+      end
+    end
+
+    change = DraftChange.order(:id).last
+    assert_equal "create", change.action
+    DraftApplier.new(change.draft).apply
+
+    story = @universe.stories.find_by!(name: "Remembered story")
+    assert_equal "A draft annotation.", story.story_tropes.find_by!(trope_slug: "found-family").context_note
+  end
+
+  test "Story deletion in draft mode leaves the Story live until the draft is applied" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    story = stories(:story_alt)
+
+    assert_no_difference("Story.count") do
+      assert_difference("DraftChange.count") do
+        delete universe_story_url(universe_slug: @universe.slug, id: story)
+      end
+    end
+
+    change = DraftChange.order(:id).last
+    assert_equal "delete", change.action
+    assert_nil Story.unscoped.find(story.id).deleted_at
+    DraftApplier.new(change.draft).apply
+    assert Story.unscoped.find(story.id).deleted_at.present?
   end
 
   test "should update story" do

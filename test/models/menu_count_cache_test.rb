@@ -36,6 +36,23 @@ class MenuCountCacheTest < ActiveSupport::TestCase
     assert_no_queries { assert_equal 2, @story.menu_section_count }
   end
 
+  test "a story's Plot count has an independent cache entry and invalidates on writes" do
+    @story.menu_section_count
+    assert_equal 1, @story.menu_plot_count
+    assert_no_queries { assert_equal 1, @story.menu_plot_count }
+
+    section_key = MenuCountCache.key(Story::SECTION_MENU_COUNT_SCOPE, @story.id)
+    plot_key = MenuCountCache.key(Story::PLOT_MENU_COUNT_SCOPE, @story.id)
+    assert_not_equal section_key, plot_key
+    assert Rails.cache.exist?(section_key)
+    assert Rails.cache.exist?(plot_key)
+
+    plot = @story.plots.create!(name: "Cached Plot")
+    assert_equal 2, @story.menu_plot_count
+    plot.soft_delete
+    assert_equal 1, @story.menu_plot_count
+  end
+
   test "a story's scene count uses its own cache entry" do
     @story.menu_section_count
 

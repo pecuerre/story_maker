@@ -52,7 +52,7 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".entity-row .badge[aria-label=?]", "Posición narrativa 1 de 3"
     # Both counts are announced with their record type resolved from the locale.
     assert_select ".entity-row .badge[aria-label=?]", "4 elementos"
-    assert_select ".entity-row .badge[aria-label=?]", "2 personajes participando"
+    assert_select ".entity-row .badge[aria-label=?]", "3 personajes participando"
     # The grouping badge names the Section path, which is author data, and reads
     # "Sin agrupar" for the scene that has none.
     assert_select ".entity-row .badge", text: "Sin agrupar"
@@ -77,7 +77,7 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     # and its presence links, so the cascade is stated rather than assumed.
     assert_select "form[action=?] button[data-turbo-confirm=?]",
       universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene),
-      "¿Eliminar «Scene one»? Sus elementos, las asignaciones de etiquetas y los enlaces con " \
+       "¿Eliminar «Scene one»? Sus elementos, las asignaciones de etiquetas, las anotaciones de tropos y los enlaces con " \
       "registros de la historia y del universo se eliminarán de forma permanente. Los registros " \
       "vinculados no se eliminarán."
   end
@@ -224,6 +224,12 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "label[for=scene_element_name]", text: "Título"
     assert_select "label[for=scene_element_body]", text: "Contenido"
     assert_select "label[for=scene_element_character_ids]", text: "Hablantes"
+    assert_select "h3[data-scene-turns-target=turnsHeading]", text: "Turnos"
+    assert_select "[data-scene-turns-target=saveFirst]", text: "Guarda primero este elemento de diálogo y vuelve a abrirlo para añadir turnos."
+    assert_select "label[for=scene_dialogue_turn_speaker]", text: "Hablante"
+    assert_select "label[for=scene_dialogue_turn_body]", text: "Línea"
+    assert_select "label[for=scene_dialogue_turn_parenthetical]", text: "Nota de entrega"
+    assert_select "[data-scene-turns-target=addButton]", text: "Añadir turno"
     assert_select "input[type=submit][value=?]", "Guardar elemento"
     assert_select ".modal-footer button[data-bs-dismiss=modal]", text: "Cancelar"
     assert_select ".modal-header button.btn-close[aria-label=?]", "Cerrar"
@@ -377,7 +383,7 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_equal "Personajes en Scene one", rendered_title
     assert_select "h1", text: "Personajes"
     assert_select ".page-eyebrow", text: "Escena: Scene one"
-    assert_select ".page-header .badge[aria-label=?]", "2 personajes"
+    assert_select ".page-header .badge[aria-label=?]", "3 personajes"
     assert_select ".page-actions a", text: "Detalles de la escena"
     assert_select "button[data-action='modal-form#open']", text: "Añadir personaje"
     assert_select ".modal-title", text: "Añadir personaje"

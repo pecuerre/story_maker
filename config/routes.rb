@@ -47,6 +47,7 @@ Rails.application.routes.draw do
       # workspace, so it has the same five actions as the other content models and
       # no `new`/`edit` page — see the Characters resource below.
       resources :sections, only: %i[ index show create update destroy ]
+      resources :plots, only: %i[ index show create update destroy ]
       resources :section_tags, only: %i[ index show create update destroy ]
       resources :scene_tags, only: %i[ index show create update destroy ]
       resources :scenes do
@@ -59,6 +60,11 @@ Rails.application.routes.draw do
         # same payload; there is no separate speaker route.
         resources :scene_elements, path: "elements", only: %i[ create update destroy ] do
           patch :move, on: :member
+          # A turn is a component of its Element, never addressed on its own URL,
+          # so it is nested one level deeper than the Element itself.
+          resources :scene_dialogue_turns, path: "dialogue_turns", only: %i[ create update destroy ] do
+            patch :move, on: :member
+          end
         end
         # The Characters tab is its own canonical page. Only the role is editable
         # afterwards: a link is added, given a role, or removed.

@@ -100,6 +100,8 @@ module Search
             universe_story_path(universe_slug: universe.slug, id: story.id), name: story.name),
           command("sections", "searches.commands.sections", story.name,
             universe_story_sections_path(universe_slug: universe.slug, story_id: story.id)),
+          command("plots", "searches.commands.plots", story.name,
+            universe_story_plots_path(universe_slug: universe.slug, story_id: story.id)),
           command("scenes", "searches.commands.scenes", story.name,
             universe_story_scenes_path(universe_slug: universe.slug, story_id: story.id))
         ]

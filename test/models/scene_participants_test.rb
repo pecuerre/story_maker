@@ -1,8 +1,7 @@
 require "test_helper"
 
-# Participation in a Scene is read from two independent sources and is never
-# their sum: a Character who both participates explicitly and speaks in a
-# Dialogue is one participant.
+# Participation in a Scene is read from the explicit-presence source and the
+# dialogue-speaking sources; it is a union, not a sum.
 class SceneParticipantsTest < ActiveSupport::TestCase
   setup do
     @scene = scenes(:scene_one)
@@ -14,7 +13,9 @@ class SceneParticipantsTest < ActiveSupport::TestCase
 
     # `character_one` is explicitly linked with a role and also speaks in
     # `dialogue_one`; `character_two` is linked without a role and also speaks.
-    assert_equal 2, participants.count
+    # Turn speakers add a second route to speaking, and `character_three` is
+    # attributed only by a turn.
+    assert_equal 3, participants.count
     assert_predicate participants, :any?
   end
 
@@ -39,6 +40,16 @@ class SceneParticipantsTest < ActiveSupport::TestCase
     assert_equal [ element ], entry.speaking_elements
   end
 
+  test "a turn-only speaker is included and a roster-and-turn speaker appears once per Element" do
+    entries = SceneParticipants.for(@scene).entries
+    turn_only = entries.find { |item| item.character == characters(:character_three) }
+    roster_and_turn = entries.find { |item| item.character == characters(:character_one) }
+
+    assert_not_predicate turn_only, :explicitly_linked?
+    assert_equal [ "Michael teaches the waltz" ], turn_only.speaking_elements.map(&:name)
+    assert_equal [ "Michael teaches the waltz" ], roster_and_turn.speaking_elements.map(&:name)
+  end
+
   test "a character with neither source is not a participant" do
     offstage = @scene.universe.characters.create!(name: "Off stage")
 
@@ -56,7 +67,7 @@ class SceneParticipantsTest < ActiveSupport::TestCase
   test "counts per scene come from one union, not from added sources" do
     counts = SceneParticipants.counts_by_scene([ @scene, @alt_scene ])
 
-    assert_equal 2, counts[@scene.id]
+    assert_equal 3, counts[@scene.id]
     # `dialogue_alt` names `character_one` with no presence link at all.
     assert_equal 1, counts[@alt_scene.id]
     # A Scene nobody takes part in is absent rather than mapped to zero, so a
@@ -73,7 +84,8 @@ class SceneParticipantsTest < ActiveSupport::TestCase
     ids = SceneParticipants.character_ids_by_scene([ @scene ])[@scene.id]
 
     assert_equal ids.uniq, ids
-    assert_equal [ characters(:character_one).id, characters(:character_two).id ].sort, ids.sort
+    assert_equal [ characters(:character_one).id, characters(:character_two).id,
+      characters(:character_three).id ].sort, ids.sort
   end
 
   test "only explicit links are offered to the add, remove, and role controls" do

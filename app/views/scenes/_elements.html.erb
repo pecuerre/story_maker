@@ -18,10 +18,11 @@
 <% editable = can_write_universe? %>
 <div
   <% if editable %>
-    data-controller="modal-form"
+    data-controller="modal-form scene-turns"
     data-modal-form-model-param-value="scene_element"
     data-modal-form-response-value="json"
     data-modal-form-create-title-value="<%= t("scenes.elements.add") %>"
+    data-scene-turns-speaker-choices-value="<%= scene_element_speaker_choices(@character_options).to_json %>"
   <% end %>
   >
   <section class="detail-section scene-elements">
@@ -176,7 +177,11 @@
                 <%= form.label :kind, t("scenes.elements.form.kind"), class: "form-label" %>
                 <%= form.select :kind, scene_element_kind_options, {},
                   class: "form-select",
-                  data: { scene_element_form_target: "kind", action: "change->scene-element-form#sync" } %>
+                  data: {
+                    scene_element_form_target: "kind",
+                    scene_turns_target: "kindSelect",
+                    action: "change->scene-element-form#sync"
+                  } %>
                 <div class="form-text" data-scene-element-form-target="kindDescription">
                   <%= scene_element_kind_description(SceneElement::NARRATION) %>
                 </div>
@@ -211,6 +216,35 @@
                   t("scenes.elements.form.remove_speakers"), class: "form-check-label" %>
                 <div class="form-text"><%= t("scenes.elements.form.remove_speakers_hint") %></div>
               </div>
+
+              <h3 class="h6" data-scene-turns-target="turnsHeading" hidden>
+                <%= t("scenes.elements.dialogue_turns.title") %>
+              </h3>
+              <div data-scene-turns-target="turns" class="list-group list-group-flush mb-3"></div>
+              <div data-scene-turns-target="emptyState" class="text-body-secondary small mb-3" hidden>
+                <p class="mb-1"><%= t("scenes.elements.dialogue_turns.empty_title") %></p>
+                <p class="mb-0"><%= t("scenes.elements.dialogue_turns.empty_description") %></p>
+              </div>
+              <p data-scene-turns-target="saveFirst" class="text-body-secondary small mb-3" hidden>
+                <%= t("scenes.elements.dialogue_turns.save_element_first") %>
+              </p>
+              <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                  <label for="scene_dialogue_turn_speaker" class="form-label"><%= t("scenes.elements.dialogue_turns.form.speaker") %></label>
+                  <select id="scene_dialogue_turn_speaker" data-scene-turns-target="speakerSelect" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                  <label for="scene_dialogue_turn_body" class="form-label"><%= t("scenes.elements.dialogue_turns.form.body") %></label>
+                  <textarea id="scene_dialogue_turn_body" data-scene-turns-target="bodyField" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-md-2">
+                  <label for="scene_dialogue_turn_parenthetical" class="form-label"><%= t("scenes.elements.dialogue_turns.form.parenthetical") %></label>
+                  <input id="scene_dialogue_turn_parenthetical" data-scene-turns-target="parentheticalField" class="form-control">
+                </div>
+              </div>
+              <button data-scene-turns-target="addButton" type="button" class="btn btn-outline-secondary btn-sm" hidden>
+                <%= t("scenes.elements.dialogue_turns.add") %>
+              </button>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>

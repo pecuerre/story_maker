@@ -161,7 +161,8 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "narration cannot keep speakers and the explicit confirmation clears them" do
-    element = scene_elements(:dialogue_one)
+    element = @scene.scene_elements.create!(name: "Dialogue without turns", kind: "dialogue",
+      characters: [ characters(:character_one) ])
 
     patch element_url(element), params: { scene_element: { kind: "narration" } }, as: :json
 
@@ -177,6 +178,21 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
     element.reload
     assert_equal SceneElement::NARRATION, element.kind
     assert_empty element.characters
+  end
+
+  test "clearing block speakers cannot turn an Element with lines into Narration" do
+    element = scene_elements(:dialogue_one)
+    original_speakers = element.character_ids.sort
+
+    patch element_url(element), params: {
+      scene_element: { kind: "narration", remove_speakers: "1" }
+    }, as: :json
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["kind"], "cannot be Narration while dialogue turns remain"
+    assert_equal SceneElement::DIALOGUE, element.reload.kind
+    assert_equal original_speakers, element.character_ids.sort
+    assert_equal 2, element.scene_dialogue_turns.count
   end
 
   test "moves an element up and down in its own sequence" do

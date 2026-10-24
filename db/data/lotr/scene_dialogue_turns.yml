@@ -1,0 +1,13 @@
+# Turns for the Lord of the Rings universe. `SceneElement` has no public slug,
+# so its `manifest_key` identifies this component for development-data references
+# only.
+- scene_element: SceneElement.lotr-party-dialogue
+  speaker: Character.gandalf_the_grey
+  body: "It is hot. It is."
+  position: 0
+
+- scene_element: SceneElement.lotr-party-dialogue
+  speaker: Character.frodo_baggins
+  body: "I wish it were not."
+  parenthetical: "quietly"
+  position: 1

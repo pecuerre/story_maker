@@ -22,8 +22,8 @@ db/data/
 ```
 
 A universe directory contains all data used to exercise that universe: its user/universe record,
-memberships when explicit private or delegated-admin access is needed, stories, sections, section
-tags, scenes, scene tags, world-building records, taxonomies, and relationships. Every registered
+memberships when explicit private or delegated-admin access is needed, stories, sections, Plots,
+Story/Scene trope annotations, section tags, scenes, scene tags, world-building records, taxonomies, and relationships. Every registered
 universe directory must contain one YAML file for every model in the shared registry; use `[]` for a
 model that the universe intentionally does not exercise.
 
@@ -77,7 +77,8 @@ export the variable in your shell, or let `script/demo` read it for you (see
 
 1. Create `db/data/<universe_slug>/`.
 2. Add every registered model file to that directory, using `[]` for intentionally unused models.
-3. Use stable slugs and symbolic `Model.slug` references rather than database numeric ids.
+3. Use stable slugs and symbolic `Model.slug` references rather than database numeric ids. A nested
+   component without a public slug may use its registered YAML-only manifest key for child records.
 4. Register the universe in `app/services/development/universe_data_registry.rb`.
 5. Validate it before loading it:
 
@@ -108,11 +109,13 @@ Do not create `db/data/dialog/` merely because the model is named `Dialog`. Upda
 loader rejects missing files, unknown files, duplicate identifiers, forward references, malformed
 references, cross-scope associations, raw foreign-key IDs, and unknown attributes before it writes
 records. Hierarchical positions use file order unless every sibling supplies a unique non-negative
-integer position. Flat position groups — currently the story-owned `scenes` sequence — are declared
-in the registry with `position_mode: :flat` and are grouped per story, never per parent; supply
-explicit `position` values when the file should state the order directly. Story-scoped Scene Tag
-files are hierarchical and may be referenced from `scenes.yml` through `SceneTag.<slug>` entries;
-the loader proves every assignment shares the Scene's Story.
+integer position. Flat position groups are declared in the registry with `position_mode: :flat` and
+use their declared owner: Scenes within a Story, Elements within a Scene, and Dialogue turns within
+an Element. Supply explicit `position` values when the file should state the order directly.
+Story-scoped Scene Tag files are hierarchical and may be referenced from `scenes.yml` through
+`SceneTag.<slug>` entries; the loader proves every assignment shares the Scene's Story. Contextual
+trope annotations are separate records in `story_tropes.yml` and `scene_tropes.yml`; their
+`trope_slug` must name an entry in the curated `TropeCatalog`.
 
 `universe_memberships.yml` is used when a sample universe should exercise private read/write/admin
 access; owner access is implicit and does not need a membership row.

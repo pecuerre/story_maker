@@ -1,0 +1,24 @@
+<fieldset class="mb-3">
+  <legend class="h6"><%= t("tropes.assignments.legend") %></legend>
+  <p class="form-text"><%= t("tropes.assignments.hint") %></p>
+  <%= form.fields_for association do |assignment_form| %>
+    <% entry = assignment_form.object.trope %>
+    <% next unless entry %>
+    <div class="surface-card trope-assignment p-3 mb-2" data-trope-slug="<%= entry.slug %>">
+      <div class="form-check">
+        <%= assignment_form.check_box :selected, class: "form-check-input" %>
+        <%= assignment_form.label :selected, entry.name, class: "form-check-label fw-semibold" %>
+        <%= assignment_form.hidden_field :trope_slug %>
+      </div>
+      <p class="small mb-1 mt-2"><%= t(entry.description_key) %></p>
+      <p class="small text-body-secondary mb-2"><%= t(entry.craft_note_key) %></p>
+      <%= assignment_form.label :context_note, t("tropes.assignments.context_note"), class: "form-label small" %>
+      <%= assignment_form.text_area :context_note, class: "form-control form-control-sm", rows: 2, maxlength: 2000 %>
+      <div class="form-text">
+        <%= t("tropes.assignments.source_html",
+          source: link_to(TropeCatalog::SOURCE_NAME, entry.source_url, target: "_blank", rel: "noopener noreferrer"),
+          license: link_to(t("tropes.source_license"), TropeCatalog::SOURCE_LICENSE_URL, target: "_blank", rel: "noopener noreferrer")) %>
+      </div>
+    </div>
+  <% end %>
+</fieldset>

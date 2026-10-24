@@ -9,15 +9,18 @@
 ## Core Patterns
 
 ### Database Schema
-- Content records are scoped to a **universe**; the story-scoped exceptions are `Section`, `Scene`,
-  `SectionTag`, and `SceneTag` (`Section belongs_to :story`, `Scene belongs_to :story`,
+- Content records are scoped to a **universe**; the story-scoped exceptions include `Section`, `Plot`,
+  `Scene`, `SectionTag`, and `SceneTag` (`Section belongs_to :story`, `Plot belongs_to :story`,
+  `Scene belongs_to :story`,
   `SectionTag belongs_to :story`, `SceneTag belongs_to :story`, and `Story belongs_to :universe`). A
   Scene's own components are narrower still: `SceneElement`, `SceneCharacter`, `SceneItem`, and
-  `SceneLocation` belong to a Scene and reach the Universe through it. A
+  `SceneLocation` belong to a Scene and reach the Universe through it; `SceneDialogueTurn` belongs to
+  a `SceneElement` and delegates through that owner. A
   universe holds many
   stories (e.g. universe *A Song of Ice and Fire* → stories *Game of Thrones*, *House of the Dragon*),
-  which share the universe's characters/locations/events/items but each own their sections (the script/plot)
-  and their ordered scenes.
+  which share the universe's characters/locations/events/items but each own their script structure,
+  Plot arcs, and ordered scenes. The distinct Plot domain is in
+  [features/plots.md](features/plots.md).
 - Every content model and every `_tag` taxonomy model has its own `slug` (see `HasSlug`).
 - Typical content columns: `name`, `description`, `universe_id` (FK), `parent_id` (self FK),
   `position` (default 0), `slug`, timestamps. Exceptions (Relation, Ownership, Event, Story) are
@@ -237,9 +240,10 @@ the same change, or `db:demo:check` fails.
   untouched. The call is **inside the action, not a `before_action`**: only there does the controller hold
   both the record it would have written and the attributes it was going to write with it, and a callback
   would have to answer "what would this action write?" a second time — two answers that drift. It is also
-  deliberately a call a controller can forget, so `test/controllers/draft_mutation_test.rb` walks all
-  twenty mutation controllers in both modes rather than testing the concern alone: a controller that omitted
-  it would write straight through and nothing else would notice. `move` and `group` are mutations too, and
+   deliberately a call a controller can forget, so `test/controllers/draft_mutation_test.rb` walks all
+   twenty-one mutation controllers in both modes rather than testing the concern alone: a controller that omitted
+   it would write straight through and nothing else would notice. This includes Story create/update/delete;
+   `move` and `group` are mutations too, and
   remember the position or the section they asked for. A remembered change is **not validated when it is
   remembered** — it is the author's statement of intent, and the applier re-runs the live mutation path, where
   the model's own validations are authoritative; a second answer here would be a second opinion about the
@@ -290,25 +294,26 @@ the same change, or `db:demo:check` fails.
   proxy/access-log retention remains an external deployment responsibility.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
-    Characters, Locations, Items, Events, Sections, and the Scene-owned `SceneElementsController`,
-    `SceneCharactersController`, `SceneItemsController`, and `SceneLocationsController`. The page
+    Characters, Locations, Items, Events, Sections, Plots, and the Scene-owned `SceneElementsController`,
+    `SceneDialogueTurnsController`, `SceneCharactersController`, `SceneItemsController`, and
+    `SceneLocationsController`. The page
     renders HTML; create/update/destroy are called by Stimulus with `Accept: application/json`.
     `SceneTagsController`, `CharactersController`, `ItemsController`, `EventsController`,
-    `SceneElementsController`, `SceneCharactersController`, `SceneItemsController`, and
-    `SceneLocationsController` also
+    `SceneElementsController`, `SceneDialogueTurnsController`, `SceneCharactersController`,
+    `SceneItemsController`, and `SceneLocationsController` also
     include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
   - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Universe
     memberships, Sessions, Passwords, Drafts, Review Requests.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
   memberships. `show/edit` exist for Universes, Stories, and Scenes; `show` also exists for every
-  content model (Character, Location, Item, Event, Relation, Ownership, Section) and every tag
+  content model (Character, Location, Item, Event, Relation, Ownership, Section, Plot) and every tag
   model, because each record has exactly one details page. `ScenesController#move` (narrative
   order) and `#group` (Section grouping) are the two member and collection actions beyond that set.
 - **A route may only advertise an action the controller has, and a GET may only name an action with a
   template.** A `resources` line names seven verbs whether or not they exist, and the two ways of
   being wrong look different from the outside: a missing action answers `ActionNotFound` (**404**),
   while an action with no template answers `ActionController::MissingExactTemplate` (**500**). The
-  modal-edited content models — Characters, Locations, Items, Events, Sections — therefore carry
+  modal-edited content models — Characters, Locations, Items, Events, Sections, Plots — therefore carry
   `only: %i[index show create update destroy]` and **no `new`/`edit` page at all**: the modal holds
   the form, and the `parent_id` the old `new` action read is still accepted by `create`. Sessions and
   passwords are the other two narrow surfaces, at `new`/`create`/`destroy` and `new`/`create`/`edit`/
@@ -322,11 +327,11 @@ the same change, or `db:demo:check` fails.
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
   `universe_*` and URLs look like `/u/<universe-slug>/...` (see `config/routes.rb`).
-- Stories are a full resource in that scope with sections, section tags, Scene Tags, and scenes nested
+- Stories are a full resource in that scope with sections, plots, section tags, Scene Tags, and scenes nested
   underneath:
-  `resources :stories, path: "s" do resources :sections; resources :section_tags; resources :scene_tags; resources :scenes end`
+  `resources :stories, path: "s" do resources :sections; resources :plots; resources :section_tags; resources :scene_tags; resources :scenes end`
   → `/u/:universe_slug/s/:story_id/sections`, helpers `universe_story_*`,
-  `universe_story_section(s)`, `universe_story_section_tag(s)`, `universe_story_scene_tag(s)`,
+  `universe_story_section(s)`, `universe_story_plot(s)`, `universe_story_section_tag(s)`, `universe_story_scene_tag(s)`,
   `universe_story_scene(s)`, `move_universe_story_scene_path` for the narrative-order move, and
   `group_universe_story_scenes_path` for the Section grouping form. Scene-owned resources are nested
   inside `resources :scenes` and mounted at readable paths:
@@ -1596,4 +1601,3 @@ the two-step universe-then-story selection — are one feature with one home, in
 Event's three special properties (`Hierarchical` plus self-referencing temporal relations, optional
 tags, title-driven identity, `must_be_identifiable`) and the Timeline's layering algorithm have one
 home, in [features/events.md](features/events.md).
-

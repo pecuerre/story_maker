@@ -1,0 +1,40 @@
+<% content_for :title, @plot.name %>
+
+<%= render "shared/record_details",
+  record: @plot,
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
+  label: t("plots.singular"),
+  facts: [
+    detail_fact(t("plots.show.facts.story"), link_to(@story.name, universe_story_path(id: @story))),
+    detail_fact(t("plots.show.facts.description"), @plot.description, blank: t("plots.show.facts.description_blank"))
+  ],
+  back_url: universe_story_plots_path(story_id: @story),
+  back_label: t("plots.show.back_label"),
+  actions: discussion_control(@plot) %>
+
+<%= render "shared/detail_section",
+  title: t("plots.show.scenes.title", name: @plot.name),
+  count: @scenes.size,
+  count_label: "scene",
+  icon: "film",
+  empty_title: t("plots.show.scenes.empty_title"),
+  empty_description: t("plots.show.scenes.empty_description") do %>
+  <div class="list-group list-group-flush">
+    <% @scenes.each do |scene| %>
+      <div class="list-group-item entity-row d-flex align-items-center gap-3">
+        <span class="badge rounded-pill text-bg-light border"
+          aria-label="<%= t("shared.scene_position_aria", position: scene.position + 1, total: @scene_total) %>">
+          <%= scene.position + 1 %>
+        </span>
+        <div class="entity-copy flex-grow-1">
+          <span class="entity-title"><%= link_to scene.name,
+            universe_story_scene_path(story_id: @story, id: scene), class: "text-break" %></span>
+          <% if scene.section %>
+            <div class="entity-description"><%= @section_paths.label_for(scene.section) %></div>
+          <% end %>
+          <% if scene.description.present? %><div class="entity-description"><%= scene.description %></div><% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

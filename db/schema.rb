@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_150001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -370,6 +370,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
     t.integer "universe_creation_limit", default: 5
   end
 
+  create_table "plots", force: :cascade do |t|
+    t.integer "story_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.string "slug", null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_plots_on_deleted_at"
+    t.index ["story_id", "name"], name: "index_plots_on_live_story_and_name", unique: true, where: "deleted_at IS NULL"
+    t.index ["story_id", "slug"], name: "index_plots_on_live_story_and_slug", unique: true, where: "deleted_at IS NULL"
+    t.index ["story_id"], name: "index_plots_on_story_id"
+  end
+
+  create_table "plots_scenes", id: false, force: :cascade do |t|
+    t.integer "plot_id", null: false
+    t.integer "scene_id", null: false
+    t.index ["plot_id", "scene_id"], name: "index_plots_scenes_on_plot_id_and_scene_id", unique: true
+    t.index ["plot_id"], name: "index_plots_scenes_on_plot_id"
+    t.index ["scene_id"], name: "index_plots_scenes_on_scene_id"
+  end
+
   create_table "relation_tags", force: :cascade do |t|
     t.integer "universe_id", null: false
     t.string "name"
@@ -445,6 +467,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
     t.index ["scene_id"], name: "index_scene_characters_on_scene_id"
   end
 
+  create_table "scene_dialogue_turns", force: :cascade do |t|
+    t.integer "scene_element_id", null: false
+    t.integer "speaker_id", null: false
+    t.text "body"
+    t.text "parenthetical"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_scene_dialogue_turns_on_deleted_at"
+    t.index ["scene_element_id", "position"], name: "index_scene_dialogue_turns_on_scene_element_id_and_position"
+    t.index ["scene_element_id"], name: "index_scene_dialogue_turns_on_scene_element_id"
+    t.index ["speaker_id"], name: "index_scene_dialogue_turns_on_speaker_id"
+  end
+
   create_table "scene_element_speakers", id: false, force: :cascade do |t|
     t.integer "scene_element_id", null: false
     t.integer "character_id", null: false
@@ -508,6 +545,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
     t.index ["parent_id"], name: "index_scene_tags_on_parent_id"
     t.index ["photo_id"], name: "index_scene_tags_on_photo_id"
     t.index ["story_id"], name: "index_scene_tags_on_story_id"
+  end
+
+  create_table "scene_tropes", force: :cascade do |t|
+    t.integer "scene_id", null: false
+    t.string "trope_slug", null: false
+    t.text "context_note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scene_id", "trope_slug"], name: "index_scene_tropes_on_scene_id_and_trope_slug", unique: true
+    t.index ["scene_id"], name: "index_scene_tropes_on_scene_id"
   end
 
   create_table "scenes", force: :cascade do |t|
@@ -606,6 +653,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
     t.index ["photo_id"], name: "index_stories_on_photo_id"
     t.index ["universe_id", "slug"], name: "index_stories_on_universe_id_and_slug", unique: true, where: "deleted_at IS NULL"
     t.index ["universe_id"], name: "index_stories_on_universe_id"
+  end
+
+  create_table "story_tropes", force: :cascade do |t|
+    t.integer "story_id", null: false
+    t.string "trope_slug", null: false
+    t.text "context_note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["story_id", "trope_slug"], name: "index_story_tropes_on_story_id_and_trope_slug", unique: true
+    t.index ["story_id"], name: "index_story_tropes_on_story_id"
   end
 
   create_table "universe_memberships", force: :cascade do |t|
@@ -710,6 +767,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
   add_foreign_key "ownerships_ownership_tags", "ownership_tags"
   add_foreign_key "ownerships_ownership_tags", "ownerships"
   add_foreign_key "photos", "universes"
+  add_foreign_key "plots", "stories"
+  add_foreign_key "plots_scenes", "plots"
+  add_foreign_key "plots_scenes", "scenes"
   add_foreign_key "relation_tags", "photos", on_delete: :nullify
   add_foreign_key "relation_tags", "relation_tags", column: "parent_id"
   add_foreign_key "relation_tags", "universes"
@@ -725,6 +785,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
   add_foreign_key "review_requests", "users", column: "submitted_by_id"
   add_foreign_key "scene_characters", "characters"
   add_foreign_key "scene_characters", "scenes"
+  add_foreign_key "scene_dialogue_turns", "characters", column: "speaker_id"
+  add_foreign_key "scene_dialogue_turns", "scene_elements"
   add_foreign_key "scene_element_speakers", "characters"
   add_foreign_key "scene_element_speakers", "scene_elements"
   add_foreign_key "scene_elements", "scenes"
@@ -735,6 +797,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
   add_foreign_key "scene_tags", "photos", on_delete: :nullify
   add_foreign_key "scene_tags", "scene_tags", column: "parent_id"
   add_foreign_key "scene_tags", "stories"
+  add_foreign_key "scene_tropes", "scenes"
   add_foreign_key "scenes", "characters", column: "pov_character_id"
   add_foreign_key "scenes", "events"
   add_foreign_key "scenes", "photos", on_delete: :nullify
@@ -753,6 +816,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_090000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "photos", on_delete: :nullify
   add_foreign_key "stories", "universes"
+  add_foreign_key "story_tropes", "stories"
   add_foreign_key "universe_memberships", "universes"
   add_foreign_key "universe_memberships", "users"
   add_foreign_key "universes", "photos", on_delete: :nullify

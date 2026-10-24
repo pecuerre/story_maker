@@ -10,8 +10,8 @@ The current architecture and conventions are documented in:
 - [`../data_model.md`](../data_model.md) — schema, constraints, validations, slugs, positions
 - [`../conventions.md`](../conventions.md) — cross-cutting code patterns and page shapes
 - [`../features/`](../features/) — one document per feature, each the single home of that
-  feature's rules: [scenes](../features/scenes.md), [tags](../features/tags.md),
-  [search](../features/search.md), [navigation](../features/navigation.md),
+  feature's rules: [scenes](../features/scenes.md), [plots](../features/plots.md), [tags](../features/tags.md),
+  [tropes](../features/tropes.md), [search](../features/search.md), [navigation](../features/navigation.md),
   [photos](../features/photos.md), [events](../features/events.md), [i18n](../features/i18n.md),
   [settings](../features/settings.md)
 - [`../known_quirks.md`](../known_quirks.md) — verified open findings
@@ -53,6 +53,8 @@ reasoning as of its date.
 | [0026](0026-a-live-update-is-a-refresh-and-never-a-page.md) | Accepted | Publish a live update as a signed refresh to three streams, and apply it only when the page holds nothing unsent |
 | [0027](0027-a-draft-is-one-line-of-work.md) | Accepted | Say that a draft is one line of work, and name a resume rather than a new line when a start picks a draft up |
 | [0028](0028-per-universe-mutation-budget.md) | Accepted | Make the mutation budget a per-universe setting enforced after authorization, counted by hand because the framework macro captures its arguments at class load |
+| [0031](0031-story-owned-plot-arcs.md) | Accepted | Model named Plot arcs as story-owned through-lines assignable across Scenes and Sections |
+| [0032](0032-curated-tropes-are-contextual-annotations.md) | Accepted | Curate a shared reference list and record contextual Story- and Scene-level annotations |
 
 ## Format
 

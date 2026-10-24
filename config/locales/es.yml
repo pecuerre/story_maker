@@ -68,9 +68,10 @@ es:
     timeline: "Cronología"
     items: "Objetos"
     sections: "Secciones"
+    plots: "Tramas"
     scenes: "Escenas"
     all_stories: "Todas las historias"
-    select_story_hint: "Selecciona una historia para trabajar en sus secciones y su estructura propia."
+    select_story_hint: "Selecciona una historia para trabajar en sus secciones, tramas y escenas."
     tools:
       navigation_label: "Configuración y herramientas del universo"
       eyebrow: "Herramientas del universo"
@@ -110,6 +111,7 @@ es:
   # que cuenta su valor.
   inspector:
     sections: "Secciones"
+    plots: "Tramas"
     scenes: "Escenas"
     relations: "Relaciones"
     ownerships: "Propiedades"
@@ -517,6 +519,7 @@ es:
       # cambio recordado rotula su foto y su posición igual sea cual sea el modelo.
       photo_label: "Foto"
       position: "Posición"
+      tropes_none: "No hay tropos seleccionados"
     flash:
       # La única frase que dicen los espacios de trabajo HTML cuando un universo
       # recuerda un cambio en lugar de escribirlo. Dice que el cambio fue
@@ -1021,14 +1024,14 @@ es:
     new_description: "Crea una historia con su propia trama y su propia estructura de secciones dentro de este universo."
     edit: "Editar historia"
     edit_document_title: "Editar %{name}"
-    edit_description: "Actualiza el nombre y la descripción que se usan para esta historia."
+    edit_description: "Actualiza el nombre, la descripción y las anotaciones de tropos de esta historia."
     open: "Abrir historia"
     delete: "Eliminar historia"
-    delete_confirm: "¿Eliminar «%{name}»? Sus secciones, etiquetas de sección, etiquetas de escena, escenas, elementos de escena y enlaces propiedad de la historia se eliminarán de forma permanente. Los registros compartidos del universo no se eliminarán."
+    delete_confirm: "¿Eliminar «%{name}»? Sus secciones, tramas, etiquetas de sección, etiquetas de escena, anotaciones de tropos, escenas, elementos de escena y enlaces propiedad de la historia se eliminarán de forma permanente. Los registros compartidos del universo no se eliminarán."
     current_badge: "Actual"
     no_description: "Todavía no hay descripción."
     empty_title: "Todavía no hay historias"
-    empty_writable_description: "Una historia contiene la trama y las secciones de este universo, mientras que sus registros de construcción del mundo siguen siendo compartidos entre las historias."
+    empty_writable_description: "Una historia posee sus tramas, secciones y escenas, mientras que los registros de construcción del mundo se comparten entre historias."
     empty_read_only_description: "Las historias de este universo aparecerán aquí en cuanto se hayan añadido."
     form:
       name: "Nombre"
@@ -1038,6 +1041,7 @@ es:
     show:
       default_description: "Planifica la trama y la estructura de esta historia."
       open_sections: "Abrir las secciones"
+      open_plots: "Abrir las tramas"
       open_scenes: "Abrir las escenas"
       add_section: "Añadir sección"
       actions_aria: "Acciones de la historia"
@@ -1046,9 +1050,12 @@ es:
       structure_description: "Organiza esta historia en una jerarquía de actos, capítulos, libros o temporadas, y escríbela como una secuencia ordenada de escenas."
       manage_sections: "Gestionar las secciones"
       view_sections: "Ver las secciones"
+      manage_plots: "Gestionar las tramas"
+      view_plots: "Ver las tramas"
       manage_scenes: "Gestionar las escenas"
       view_scenes: "Ver las escenas"
       sections: "Secciones"
+      plots: "Tramas"
       scenes: "Escenas"
       sections_eyebrow: "Árbol de secciones"
       sections_heading: "Vista previa del árbol de secciones"
@@ -1065,6 +1072,50 @@ es:
       created: "La historia se ha creado correctamente."
       updated: "La historia se ha actualizado correctamente."
       deleted: "La historia se ha eliminado correctamente."
+
+  tropes:
+    source_license: "CC BY-NC-SA 3.0"
+    assignments:
+      legend: "Referencias a tropos"
+      hint: "Selecciona las referencias que correspondan a este nivel. Estos ejemplos no son etiquetas universales de bueno o malo; usa la nota para registrar cómo trata este tropo la historia o la escena."
+      context_note: "Nota de contexto"
+      none: "No hay tropos registrados."
+      story_eyebrow: "Planificación de la historia"
+      story_heading: "Referencias a tropos"
+      scene_heading: "Tropos detectados en esta escena"
+      edit_story: "Editar tropos de la historia"
+      source_html: "Referencia: %{source} · términos de la fuente: %{license}. El resumen y la nota de escritura son texto original de Universe Maker."
+    catalog:
+      damsel_in_distress:
+        description: "Un personaje queda en peligro para que otro personaje pueda rescatarlo."
+        craft_note: "Ten presentes los objetivos, las decisiones y las consecuencias propias del personaje en peligro; el peligro no tiene por qué quitarle agencia."
+      women_in_refrigerators:
+        description: "El daño o la muerte de un personaje se usa principalmente para motivar la historia de otro."
+        craft_note: "Dale agencia narrativa al personaje afectado; evita usar su sufrimiento como atajo para el desarrollo de otra persona."
+      magical_negro:
+        description: "Un personaje marginado aparece sobre todo como guía o catalizador de un protagonista con más privilegios."
+        craft_note: "Dale objetivos y relaciones propios, en lugar de reducirlo a ayudante o estereotipo."
+      manic_pixie_dream_girl:
+        description: "Un interés romántico peculiar existe principalmente para cambiar la perspectiva de un protagonista insatisfecho."
+        craft_note: "Dale motivaciones y una evolución propias, más allá de impulsar el crecimiento de otra persona."
+      bury_your_gays:
+        description: "Los personajes queer mueren repetidamente o se les niega un futuro duradero como recurso emocional."
+        craft_note: "Considera el patrón en toda la obra; los personajes queer merecen vidas plenas y diversas, no una única función trágica."
+      chekhovs_gun:
+        description: "Un detalle presentado antes adquiere consecuencias para la trama más adelante."
+        craft_note: "El desenlace resulta convincente cuando la preparación se nota sin convertir cada detalle en una promesa."
+      red_herring:
+        description: "Una pista apunta de forma convincente hacia una explicación o sospechoso equivocados."
+        craft_note: "Plántala con justicia y resuélvela; la distracción debería premiar la atención, no invalidarla."
+      found_family:
+        description: "Varias personas forman un vínculo duradero, parecido al familiar, fuera de los lazos biológicos o legales."
+        craft_note: "Deja que la confianza crezca mediante decisiones y cuidados, en vez de usar la etiqueta para saltarte el desarrollo de la relación."
+      character_foil:
+        description: "El contraste entre personajes hace más visibles los rasgos o las decisiones de cada uno."
+        craft_note: "Mantén motivaciones propias para cada personaje; el contraste funciona mejor cuando ninguno existe solo para medir al otro."
+      fish_out_of_water:
+        description: "La falta de familiaridad de alguien con un entorno revela sus reglas y supuestos."
+        craft_note: "Deja que esa persona aprenda e influya en el entorno; evita convertirla solo en una fuente de chistes."
 
   memberships:
     index:
@@ -1149,6 +1200,37 @@ es:
         empty_title: "Todavía no hay nada relacionado"
         empty_description: "Todo lo demás que merezca la pena saber sobre esta sección se mostrará aquí más adelante."
 
+  # Las tramas son hilos narrativos propios de la historia que pueden cruzar
+  # secciones; no son la jerarquía ni una clasificación de etiquetas.
+  plots:
+    title: "Tramas"
+    singular: "trama"
+    description: "Sigue arcos narrativos con nombre a través de las escenas de %{story}. Una trama puede cruzar secciones y una escena puede pertenecer a varias tramas."
+    add: "Añadir trama"
+    save: "Guardar trama"
+    new_title: "Nueva trama"
+    empty_title: "Todavía no hay tramas"
+    empty_writable_description: "Añade una trama para seguir un hilo narrativo a través de escenas y secciones."
+    empty_read_only_description: "Las tramas de esta historia aparecerán aquí cuando se añadan."
+    delete_confirm: "¿Eliminar «%{name}»? Desaparecerá del espacio de Tramas; sus asignaciones a escenas se conservarán si se restaura, y ninguna escena ni orden narrativo cambiará."
+    form:
+      name: "Nombre"
+      description: "Descripción"
+    show:
+      back_label: "Todas las tramas"
+      facts:
+        story: "Historia"
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+      scenes:
+        title: "Escenas de %{name}"
+        empty_title: "No hay escenas asignadas"
+        empty_description: "Asigna escenas a esta trama desde el editor de una escena."
+    errors:
+      scene_must_exist: "debe existir"
+      scene_must_belong_to_story: "debe pertenecer a la misma historia"
+      scene_must_be_unique: "no puede estar repetida"
+
   # El espacio de trabajo de Escenas y las tres pestañas que la Escena posee. Este
   # bloque es dueño de la lista con ámbito de historia y su filtro, de los
   # detalles de la Escena con su lista de elementos, del único editor que
@@ -1173,7 +1255,7 @@ es:
     # la página de detalles de la escena lleva ese mismo título.
     edit_title: "Editar escena"
     edit_document_title: "Editar %{name}"
-    edit_description: "Actualiza el título, la descripción breve, el grupo de sección, el enlace al suceso y el tiempo en el mundo de esta escena. Su posición narrativa solo cambia mediante los controles Subir/Bajar de la lista de escenas."
+    edit_description: "Actualiza el título, la descripción breve, las anotaciones de tropos, el grupo de sección, el enlace al suceso y el tiempo en el mundo de esta escena. Su posición narrativa solo cambia mediante los controles Subir/Bajar de la lista de escenas."
     back_to_details: "Detalles de la escena"
     # Los controles de movimiento que muestran tanto la lista de Escenas como la
     # de elementos, y los títulos que dicen por qué uno está desactivado en un
@@ -1206,7 +1288,7 @@ es:
       # sus enlaces de presencia, así que aquí se declara la cascada en lugar de
       # recurrir a la confirmación corta `shared.row_actions.delete_confirm`; `name`
       # es el nombre propio del registro y se interpola en lugar de traducirse.
-      delete_confirm: "¿Eliminar «%{name}»? Sus elementos, las asignaciones de etiquetas y los enlaces con registros de la historia y del universo se eliminarán de forma permanente. Los registros vinculados no se eliminarán."
+      delete_confirm: "¿Eliminar «%{name}»? Sus elementos, las asignaciones de etiquetas, las anotaciones de tropos y los enlaces con registros de la historia y del universo se eliminarán de forma permanente. Los registros vinculados no se eliminarán."
       # Las dos píldoras de la fila que no son recuentos, y los dos títulos que
       # explican qué significa una píldora de agrupación.
       grouped_title: "Agrupada bajo %{grouping}. La agrupación no cambia el orden narrativo."
@@ -1286,6 +1368,8 @@ es:
         in_world_time_blank: "Todavía no hay tiempo en el mundo definido."
         in_world_time_hint: "Este es el orden en el tiempo del mundo, que se mantiene separado de la posición narrativa de arriba. El suceso y el tiempo en el mundo son valores independientes; ninguno se deduce del otro y aquí no se detecta ninguna discrepancia entre ellos."
         point_of_view: "Punto de vista"
+        plots: "Arcos argumentales"
+        plots_blank: "No hay tramas asignadas. Las tramas son opcionales."
         point_of_view_blank: "Todavía no se registra un punto de vista."
         point_of_view_hint: "El personaje cuya perspectiva presenta la escena. Está separado de los participantes y de los hablantes de la escena: elegirlo no hace que participen, ni dice qué líneas les pertenecen."
         story: "Historia"
@@ -1316,6 +1400,11 @@ es:
       datetime: "Tiempo en el mundo"
       datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente del suceso de arriba: elegir o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
       point_of_view_legend: "Punto de vista"
+      plots_legend: "Arcos argumentales"
+      plots_label: "Tramas"
+      plots_hint: "Opcional. Una escena puede pertenecer a varias tramas de la historia que crucen secciones. Esto no cambia el orden narrativo ni la agrupación por sección."
+      plots_empty: "Esta historia todavía no tiene tramas."
+      manage_plots: "Gestionar tramas"
       pov_character: "Punto de vista"
       pov_hint: "Opcional. El personaje cuya perspectiva presenta la escena. Está separado de quien participa y de quien habla: elegirlo no lo convierte en participante, ni dice qué líneas le pertenecen."
       # `%{move_up}`/`%{move_down}` son los nombres traducidos de los controles de la
@@ -1364,6 +1453,31 @@ es:
         remove_speakers: "Quitar los hablantes y convertir esto en narración"
         remove_speakers_hint: "La narración no puede conservar hablantes. Esta es la confirmación que los quita, y ocurre en el mismo guardado."
         save: "Guardar elemento"
+      # Los turnos hablados dentro de un elemento de diálogo. Un turno nombra a un
+      # hablante, la línea que dice y una nota de entrega opcional, en orden dentro
+      # del bloque.
+      dialogue_turns:
+        title: "Turnos"
+        add: "Añadir turno"
+        edit: "Editar turno"
+        choose_speaker: "Elige un hablante"
+        speaker_required: "Elige un hablante para este turno."
+        save_element_first: "Guarda primero este elemento de diálogo y vuelve a abrirlo para añadir turnos."
+        empty_title: "Todavía no hay turnos"
+        empty_description: "Un turno de diálogo es una línea hablada: quién habla, qué dice y una nota de entrega opcional. Añade el primer turno a continuación."
+        delete_confirm: "¿Eliminar este turno? La línea se eliminará del diálogo."
+        save_failed: "No se pudo guardar el turno."
+        speaker: "Hablante"
+        speaker_hint: "El personaje que dice esta línea. El hablante de un turno no es un enlace de presencia en la escena: hablar no añade al personaje al reparto de la escena."
+        body: "Línea"
+        body_hint: "Las palabras que el personaje dice en este turno."
+        parenthetical: "Nota de entrega"
+        parenthetical_hint: "Una nota opcional, como «susurrando» o «entre dientes»."
+        form:
+          speaker: "Hablante"
+          body: "Línea"
+          parenthetical: "Nota de entrega"
+          save: "Guardar turno"
     # Las tres pestañas de enlaces de presencia. Sus páginas y sus editores tienen la
     # misma forma, así que la copia que es realmente compartida (el campo de rol, la
     # píldora «enlazado», las frases que declara un hablante derivado) vive en
@@ -1499,6 +1613,7 @@ es:
       subject: "esta escena"
       must_exist: "no puede existir"
       must_belong_to_story: "debe pertenecer a la misma historia"
+      plot_must_belong_to_story: "debe pertenecer a la misma historia"
       must_belong_to_universe: "debe pertenecer al universo de la historia"
       must_be_unique: "no puede estar repetido"
       invalid_datetime: "no es una fecha y una hora válidas"
@@ -1510,14 +1625,15 @@ es:
     participation_errors:
       already_in_scene: "ya está en esta escena"
       must_belong_to_scene_universe: "debe pertenecer al universo de la escena"
-    # Las dos reglas que el propio `kind` de un diálogo tiene que cumplir.
-    # `narration` es la `label` del tipo, no su valor `kind`, así que se
-    # interpola: la oración nombra el tipo que el lector eligió en el selector, y
-    # un idioma que no lo llame «Narración» recibe igualmente una oración sobre el
-    # tipo que eligió.
+    # Mensajes de validación del tipo de elemento. `narration` es la `label` del
+    # tipo, no su valor `kind`, así que el mensaje de hablantes lo interpola y
+    # nombra el tipo que el lector eligió en el selector.
     element_errors:
       speakers_required: "es obligatorio para un elemento de diálogo"
       narration_with_speakers: "no puede ser %{narration} mientras todavía haya hablantes asignados"
+      narration_with_turns: "no puede ser Narración mientras queden turnos de diálogo"
+    dialogue_turns:
+      element_must_be_dialogue: "un elemento de narración no puede llevar un turno"
 
   # Los espacios de trabajo de la Biblia del universo: Personajes, Lugares,
   # Sucesos, Objetos, Relaciones y Propiedades. Cada bloque es dueño de su
@@ -2224,6 +2340,12 @@ es:
       story:
         name: "Nombre"
         description: "Descripción"
+        story_tropes_attributes: "Anotaciones de tropos"
+        id: "Identificador de la asignación"
+        trope_slug: "Tropo"
+        selected: "Incluido"
+        context_note: "Nota de contexto"
+        _destroy: "Quitar asignación"
       universe_membership:
         email_address: "Dirección de correo"
         access_level: "Nivel de acceso"
@@ -2299,6 +2421,12 @@ es:
         datetime: "Tiempo en el mundo"
         pov_character: "Punto de vista"
         scene_tags: "Etiquetas de escena"
+        scene_tropes_attributes: "Tropos detectados"
+        id: "Identificador de la asignación"
+        trope_slug: "Tropo"
+        selected: "Incluido"
+        context_note: "Nota de contexto"
+        _destroy: "Quitar asignación"
       # Los modelos de ámbito de historia que posee el espacio de trabajo de
       # Escenas. Una Sección y las dos taxonomías de ámbito de historia van con
       # `scene` y no con los modelos de la Biblia del universo de arriba, porque
@@ -2315,6 +2443,9 @@ es:
         # fila dice lo que el propio selector de padre del árbol llama a esto.
         parent: "Sección padre"
         section_tags: "Etiquetas de secciones"
+      plot:
+        name: "Nombre"
+        description: "Descripción"
       # El `name` de un elemento es su título y su `body` su contenido, que es lo
       # que llaman las propias etiquetas de su editor, y `characters` es la
       # colección que rellena el selector de hablantes de un diálogo.
@@ -2323,6 +2454,10 @@ es:
         name: "Título"
         body: "Contenido"
         characters: "Hablantes"
+      scene_dialogue_turn:
+        speaker: "Hablante"
+        body: "Línea"
+        parenthetical: "Nota de interpretación"
       # Los tres enlaces de presencia. Cada uno es una afirmación dentro de una
       # Escena y no un registro con página propia, así que cada uno tiene
       # exactamente dos atributos que vale la pena nombrar: el registro al que
@@ -2524,6 +2659,7 @@ es:
       universe: "Universo"
       story: "Historia"
       section: "Sección"
+      plot: "Trama"
       scene: "Escena"
       scene_element: "Elemento de escena"
       character: "Personaje"
@@ -2555,6 +2691,7 @@ es:
       tags: "Etiquetas"
       story: "Historia: %{name}"
       sections: "Secciones"
+      plots: "Tramas"
       scenes: "Escenas"
       universe: "Universo: %{name}"
       open_universe: "Abrir el universo"
@@ -2708,6 +2845,9 @@ es:
   section:
     one: "sección"
     other: "secciones"
+  plot:
+    one: "trama"
+    other: "tramas"
   scene:
     one: "escena"
     other: "escenas"
@@ -2775,6 +2915,7 @@ es:
     event: "este suceso"
     item: "este elemento"
     ownership: "esta propiedad"
+    plot: "esta trama"
     relation: "esta relación"
     scene_character: "este personaje de la escena"
     scene_element: "este elemento de la escena"

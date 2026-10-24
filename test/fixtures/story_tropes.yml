@@ -1,0 +1,4 @@
+story_one_red_herring:
+  story: story_one
+  trope_slug: red-herring
+  context_note: "The clue is introduced fairly and resolved later."

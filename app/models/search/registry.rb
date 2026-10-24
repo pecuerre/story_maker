@@ -11,6 +11,7 @@ module Search
       Universe,
       Story,
       Section,
+      Plot,
       Scene,
       SceneElement,
       Character,

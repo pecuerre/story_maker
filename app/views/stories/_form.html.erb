@@ -17,6 +17,8 @@
     <%= form.text_area :description, class: "form-control", rows: 5 %>
   </div>
 
+  <%= render "shared/trope_assignments", form: form, association: :story_tropes %>
+
   <div class="form-actions">
     <%# The default submit label comes from Rails' English-only
         `helpers.submit.*`, so the label is named here. %>

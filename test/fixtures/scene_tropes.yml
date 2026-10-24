@@ -1,0 +1,4 @@
+scene_one_red_herring:
+  scene: scene_one
+  trope_slug: red-herring
+  context_note: "This scene plants the misleading clue."

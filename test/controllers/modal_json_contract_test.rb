@@ -65,7 +65,7 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
   end
 
   def assert_json_modal(name, model_param:)
-    assert_select "[data-controller='modal-form'][data-modal-form-response-value='json']", 1,
+    assert_select "[data-controller~='modal-form'][data-modal-form-response-value='json']", 1,
       "#{name} must declare the JSON mutation contract"
     assert_select "[data-modal-form-target='modal'] [data-modal-form-target='errors'][role='alert']", 1,
       "#{name} must render the shared modal error region"
@@ -137,7 +137,7 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
       get public_send(index_helper, universe_slug: @universe.slug)
 
       assert_response :success
-      assert_select "[data-controller='modal-form'][data-modal-form-response-value='html']", 1,
+      assert_select "[data-controller~='modal-form'][data-modal-form-response-value='html']", 1,
         "#{name} must declare the HTML mutation contract"
       assert_select "form[data-modal-form-target='form'][data-action]", 0,
         "#{name} must not hand its submission to the modal controller"

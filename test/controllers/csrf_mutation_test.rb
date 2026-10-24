@@ -93,6 +93,23 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a Plot mutation is refused without a token and accepted with one" do
+    with_forgery_protection do
+      story = stories(:story_one)
+      path = universe_story_plots_url(universe_slug: @universe.slug, story_id: story)
+      token = fetch_page_token(path)
+      payload = { plot: { name: "CSRF verified" } }
+
+      assert_no_difference("Plot.count") { post path, params: payload, as: :json }
+      assert_response :forbidden
+
+      assert_difference("Plot.count", 1) do
+        post path, params: payload, headers: { "X-CSRF-Token" => token }, as: :json
+      end
+      assert_response :created
+    end
+  end
+
   test "a scene element mutation without a token is refused and saves nothing" do
     with_forgery_protection do
       scene = scenes(:scene_one)
@@ -108,6 +125,30 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
 
       assert_response :forbidden
       assert_nil SceneElement.find_by(name: "Never saved")
+    end
+  end
+
+  test "a scene dialogue turn mutation is refused without a token and accepted with one" do
+    with_forgery_protection do
+      scene = scenes(:scene_one)
+      element = scene_elements(:dialogue_one)
+      path = universe_story_scene_scene_element_scene_dialogue_turns_url(
+        universe_slug: @universe.slug, story_id: scene.story, scene_id: scene, scene_element_id: element
+      )
+      payload = { scene_dialogue_turn: { speaker_id: characters(:character_one).id, body: "Token verified" } }
+      token = fetch_page_token(universe_story_scene_path(universe_slug: @universe.slug,
+        story_id: scene.story, id: scene))
+
+      assert_no_difference("SceneDialogueTurn.count") do
+        post path, params: payload, as: :json
+      end
+      assert_response :forbidden
+
+      assert_difference("SceneDialogueTurn.count", 1) do
+        post path, params: payload, headers: { "X-CSRF-Token" => token }, as: :json
+      end
+      assert_response :created
+      assert_equal "Token verified", SceneDialogueTurn.order(:id).last.body
     end
   end
 

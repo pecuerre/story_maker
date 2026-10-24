@@ -1,0 +1,7 @@
+- story: Story.netflix-dark
+  trope_slug: red-herring
+  context_note: "Proof-of-concept note: assess whether the misleading clue is fair and meaningfully resolved."
+
+- story: Story.bethesda-dark
+  trope_slug: women-in-refrigerators
+  context_note: "Caution example: check that harm to a character is not only serving another character's motivation."

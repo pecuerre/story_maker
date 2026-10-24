@@ -1,6 +1,7 @@
 <% menu_counts = Current.universe.menu_counts %>
 <% section_count = Current.story&.menu_section_count %>
 <% scene_count = Current.story&.menu_scene_count %>
+<% plot_count = Current.story&.menu_plot_count %>
 
 <%# The sidebar reads as two scoped blocks — universe and story — and each
     context block is followed by the section it introduces. The hue is the only
@@ -69,6 +70,14 @@
     <ul class="sidebar-list">
       <% if Current.story.present? %>
         <%= render "shared/sidebar_link",
+          icon: "diagram-3",
+          label: t("sidebar.plots"),
+          count_label: "plot",
+          count: plot_count,
+          path: universe_story_plots_path(story_id: Current.story),
+          controllers: %i[ plots ] %>
+
+        <%= render "shared/sidebar_link",
           icon: "house",
           label: t("sidebar.story_overview"),
           path: universe_story_path(id: Current.story),
@@ -95,6 +104,13 @@
           label: t("sidebar.all_stories"),
           path: universe_stories_path,
           controllers: %i[ stories ] %>
+
+        <%= render "shared/sidebar_link",
+          icon: "diagram-3",
+          label: t("sidebar.plots"),
+          path: "#",
+          controllers: [],
+          placeholder: true %>
 
         <%# Scenes are story-scoped: stay a placeholder until a story is selected,
             and never fall back to the universe's first story. %>

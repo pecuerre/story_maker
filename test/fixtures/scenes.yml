@@ -7,6 +7,7 @@ scene_one:
   description: "The first scene of the story"
   section: section_one
   event: event_one
+  plots: [ plot_one ]
   scene_tags: [ scene_tag_one, scene_tag_two ]
   datetime: 2026-09-11 09:00:00
   position: 0
@@ -18,6 +19,7 @@ scene_two:
   description: "The second scene of the story"
   section: section_two
   event: event_two
+  plots: [ plot_one ]
   position: 1
 
 scene_three:

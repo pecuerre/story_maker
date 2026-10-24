@@ -16,6 +16,7 @@ module Search
       SceneElement,
       Character,
       Location,
+      Route,
       Item,
       Event,
       Relation,

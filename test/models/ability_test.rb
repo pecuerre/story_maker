@@ -67,6 +67,7 @@ class AbilityTest < ActiveSupport::TestCase
 
   test "read and write checks cover every universe and story component" do
     relation = Relation.create!(universe: @public_universe, character1: characters(:character_one), character2: characters(:character_two))
+    route = routes(:route_one)
     ownership = Ownership.create!(universe: @public_universe, character: characters(:character_one), item: items(:item_one))
     relation_tag = RelationTag.create!(universe: @public_universe, name: "Relation type")
     ownership_tag = OwnershipTag.create!(universe: @public_universe, name: "Ownership type")
@@ -88,6 +89,7 @@ class AbilityTest < ActiveSupport::TestCase
       character_tags(:character_tag_one),
       locations(:location_one),
       location_tags(:location_tag_one),
+      route,
       items(:item_one),
       item_tags(:item_tag_one),
       events(:event_one),

@@ -188,6 +188,7 @@ module ClientStrings
     ownership
     plot
     relation
+    route
     scene_character
     scene_element
     scene_item

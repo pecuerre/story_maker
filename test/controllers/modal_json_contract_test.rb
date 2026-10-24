@@ -31,7 +31,8 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
 
   HTML_PAGES = {
     "relations" => [ :universe_relations_path, :universe_relation_path, :relation ],
-    "ownerships" => [ :universe_ownerships_path, :universe_ownership_path, :ownership ]
+    "ownerships" => [ :universe_ownerships_path, :universe_ownership_path, :ownership ],
+    "routes" => [ :universe_routes_path, :universe_route_path, :route ]
   }.freeze
 
   # Every flat-list editor, with the form scope whose field names its serializer
@@ -43,7 +44,8 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     "items" => [ :universe_items_path, "item" ],
     "events" => [ :universe_events_path, "event" ],
     "relations" => [ :universe_relations_path, "relation" ],
-    "ownerships" => [ :universe_ownerships_path, "ownership" ]
+    "ownerships" => [ :universe_ownerships_path, "ownership" ],
+    "routes" => [ :universe_routes_path, "route" ]
   }.freeze
 
   setup do
@@ -131,7 +133,7 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
   test "an html-flow modal workspace keeps the redirect flow" do
     relation = Relation.create!(universe: @universe, character1: characters(:character_one), character2: characters(:character_two))
     ownership = Ownership.create!(universe: @universe, character: characters(:character_one), item: items(:item_one))
-    records = { "relations" => relation, "ownerships" => ownership }
+    records = { "relations" => relation, "ownerships" => ownership, "routes" => routes(:route_one) }
 
     HTML_PAGES.each do |name, (index_helper, member_helper, _)|
       get public_send(index_helper, universe_slug: @universe.slug)

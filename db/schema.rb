@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_24_150001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_170000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -455,6 +455,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_150001) do
     t.index ["universe_id"], name: "index_review_requests_on_universe_id"
   end
 
+  create_table "routes", force: :cascade do |t|
+    t.integer "universe_id", null: false
+    t.integer "from_location_id", null: false
+    t.integer "to_location_id", null: false
+    t.integer "photo_id"
+    t.string "name"
+    t.text "description"
+    t.string "distance"
+    t.string "duration"
+    t.string "slug", null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_routes_on_deleted_at"
+    t.index ["from_location_id", "deleted_at"], name: "index_routes_on_from_location_id_and_deleted_at"
+    t.index ["from_location_id"], name: "index_routes_on_from_location_id"
+    t.index ["photo_id"], name: "index_routes_on_photo_id"
+    t.index ["to_location_id", "deleted_at"], name: "index_routes_on_to_location_id_and_deleted_at"
+    t.index ["to_location_id"], name: "index_routes_on_to_location_id"
+    t.index ["universe_id", "id"], name: "index_routes_on_universe_id_and_id"
+    t.index ["universe_id"], name: "index_routes_on_universe_id"
+  end
+
   create_table "scene_characters", force: :cascade do |t|
     t.integer "scene_id", null: false
     t.integer "character_id", null: false
@@ -783,6 +806,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_150001) do
   add_foreign_key "review_requests", "universes"
   add_foreign_key "review_requests", "users", column: "reviewed_by_id"
   add_foreign_key "review_requests", "users", column: "submitted_by_id"
+  add_foreign_key "routes", "locations", column: "from_location_id"
+  add_foreign_key "routes", "locations", column: "to_location_id"
+  add_foreign_key "routes", "photos"
+  add_foreign_key "routes", "universes"
   add_foreign_key "scene_characters", "characters"
   add_foreign_key "scene_characters", "scenes"
   add_foreign_key "scene_dialogue_turns", "characters", column: "speaker_id"

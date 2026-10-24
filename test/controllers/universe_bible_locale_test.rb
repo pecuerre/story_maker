@@ -1,7 +1,7 @@
 require "test_helper"
 
 # The Universe Bible workspaces rendered in Spanish: Characters, Locations,
-# Events, Items, Relations, Ownerships, and the six universe-level tag
+# Routes, Map, Events, Items, Relations, Ownerships, and the six universe-level tag
 # taxonomies with their record pages.
 #
 # These are request tests rather than assertions on `I18n.locale`, for the reason
@@ -48,6 +48,20 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     # Author data is never translated: the character's own name still reads as its
     # author typed it.
     assert_select ".entity-title", text: "Character one"
+  end
+
+  test "the Map page and its Location and Route labels are Spanish" do
+    get universe_map_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_equal "Mapa", rendered_title
+    assert_select "h1", text: "Mapa"
+    assert_select ".page-description", text: /cómo se anidan los lugares/
+    assert_select "#map-diagram-heading", text: "Distribución derivada"
+    assert_select ".map-diagram-caption", text: /se genera automáticamente/
+    assert_select "#map-locations-heading", text: "Lugares"
+    assert_select "#map-routes-heading", text: "Rutas"
+    assert_select ".map-route-row .visually-hidden", text: "hasta"
   end
 
   test "an empty Characters list tells a writer and a read-only member different things" do
@@ -319,6 +333,21 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] button[data-turbo-confirm=?]",
       universe_relation_path(universe_slug: @universe.slug, id: relation),
       "¿Eliminar Character one y Character two?"
+  end
+
+  test "the Routes workspace and its editor are Spanish" do
+    get universe_routes_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_equal "Rutas", rendered_title
+    assert_select "h1", text: "Rutas"
+    assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir ruta"
+    assert_select "label[for=route_name]", text: "Nombre"
+    assert_select "label[for=route_from_location_id]", text: "Lugar de origen"
+    assert_select "label[for=route_to_location_id]", text: "Lugar de destino"
+    assert_select "label[for=route_distance]", text: "Distancia"
+    assert_select "label[for=route_duration]", text: "Tiempo de viaje"
+    assert_select "input[type=submit][value=?]", "Guardar ruta"
   end
 
   test "a rejected Relation create is explained in Spanish, with its own record type" do

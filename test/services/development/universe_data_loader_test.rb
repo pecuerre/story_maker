@@ -225,6 +225,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
     assert_equal 7, universe.characters.count
     assert_equal 12, universe.locations.count
+    assert_equal 1, universe.routes.count
     assert_equal 5, universe.items.count
     assert_equal 6, universe.relations.count
     assert_equal 5, universe.ownerships.count

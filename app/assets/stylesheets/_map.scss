@@ -1,0 +1,110 @@
+.map-diagram {
+  padding: 0;
+  margin: 0;
+}
+
+.map-diagram-scroll {
+  max-width: 100%;
+  overflow: auto;
+  padding: 1rem;
+  overscroll-behavior-inline: contain;
+}
+
+.map-diagram-scroll:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.map-diagram-svg {
+  display: block;
+  max-width: none;
+}
+
+.map-hierarchy-edge,
+.map-route-edge {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map-hierarchy-edge {
+  stroke: var(--bs-border-color);
+  stroke-width: 2;
+}
+
+.map-route-edge {
+  stroke: var(--bs-primary);
+  stroke-dasharray: 7 4;
+  stroke-width: 2.5;
+}
+
+.map-route-arrow-head {
+  fill: var(--bs-primary);
+}
+
+.map-diagram-node {
+  color: var(--bs-body-color);
+  text-decoration: none;
+}
+
+.map-diagram-node rect {
+  fill: var(--bs-body-bg);
+  stroke: var(--bs-border-color);
+  stroke-width: 1.5;
+}
+
+.map-diagram-node text {
+  fill: var(--bs-body-color);
+  font-family: var(--bs-body-font-family);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.map-diagram-node:hover rect,
+.map-diagram-node:focus-visible rect {
+  stroke: var(--bs-primary);
+  stroke-width: 3;
+}
+
+.map-diagram-node:focus-visible {
+  outline: none;
+}
+
+.map-diagram-caption {
+  border-top: 1px solid var(--bs-border-color);
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+  padding: .75rem 1rem;
+}
+
+.map-diagram-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1rem;
+}
+
+.map-legend-swatch {
+  display: inline-block;
+  width: 1.5rem;
+  margin-inline-end: .25rem;
+  vertical-align: middle;
+}
+
+.map-legend-hierarchy {
+  border-top: 2px solid var(--bs-border-color);
+}
+
+.map-legend-route {
+  position: relative;
+  border-top: 2px dashed var(--bs-primary);
+}
+
+.map-legend-route::after {
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--bs-primary);
+  border-top: 4px solid transparent;
+  content: "";
+  inset-inline-end: -.1rem;
+  position: absolute;
+  top: -.3rem;
+}

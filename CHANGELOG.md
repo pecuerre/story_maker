@@ -38,6 +38,23 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-25
+
+### added
+
+- **Universe Map diagram.** Adds a responsive, keyboard-accessible SVG of the Location hierarchy and directional Routes, laid out from live records without storing coordinates.
+- **Universe Map foundation.** Adds a read-only, universe-scoped page for the Location hierarchy and directional Routes, with localized empty states and links to record details.
+- **Universe Routes.** Adds directional paths between same-Universe Locations with optional free-form distance and travel time, plus list/details pages, draft-aware HTML and API mutations, search, sample data, and soft-delete cascades.
+
+### docs
+
+- **Meetings use Events and Scene presence.** A gathering is represented by an Event and its linked Scenes; attendee and Location records stay on Scenes, with no separate Meeting model or page.
+- **Map leaves the story-planning backlog.** The text foundation and derived SVG layout are complete; the Map feature document owns their current behavior.
+- **Map E1 leaves the backlog.** The scoped text-and-list page is documented; the automatically derived graphical layout remains pending as E2.
+- **Map work is split into two pending slices.** The derived, read-only view over Locations and Routes is decided; the backlog separates its scoped page foundation from the graphical layout.
+- **A Brakeman ListFilter warning is deferred.** The weak-confidence SQL warning is recorded for separate verification, not changed as part of Routes.
+- **Routes leave the story-planning backlog.** The feature spec records the combined path-and-measurement model; Map and Meetings remain pending.
+
 ## 2026-10-24
 
 ### added

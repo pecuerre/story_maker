@@ -63,6 +63,7 @@ module Development
       ModelDefinition.new(model_name: "Section", file_name: "sections", scope: :story, positioned: true),
       ModelDefinition.new(model_name: "LocationTag", file_name: "location_tags", scope: :universe, positioned: true),
       ModelDefinition.new(model_name: "Location", file_name: "locations", scope: :universe, positioned: true),
+      ModelDefinition.new(model_name: "Route", file_name: "routes", scope: :universe),
       ModelDefinition.new(model_name: "CharacterTag", file_name: "character_tags", scope: :universe, positioned: true),
       ModelDefinition.new(model_name: "Character", file_name: "characters", scope: :universe, positioned: true),
       ModelDefinition.new(model_name: "RelationTag", file_name: "relation_tags", scope: :universe, positioned: true),

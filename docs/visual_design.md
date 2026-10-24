@@ -497,6 +497,20 @@ The painted shape:
 - A long Section name wraps instead of pushing the layout, and the action group wraps below the title
   at narrow widths instead of hiding it or relying on hover.
 
+### Map diagram
+
+The Map's domain rules and text alternative are in [features/map.md](features/map.md); the painted
+surface is a scrollable SVG inside the shared content surface:
+
+- Location cards use the page's body surface and border tokens. Their SVG links retain a visible
+  primary-color focus ring and a touch-sized card target.
+- Parent/child connectors use the neutral border color; directional Routes use a dashed primary-color
+  path and arrow, so the distinction is not carried by color alone. The legend repeats both meanings.
+- The SVG keeps its derived dimensions and scrolls horizontally when those exceed the available width.
+  The accessible Location and Route lists remain on the page as an equivalent text-and-link view.
+- Every painted value comes from Bootstrap theme variables, so cards, hierarchy lines, Route arrows,
+  and focus states remain legible in Light and Dark.
+
 ## Accessibility and interaction
 
 - Every icon-only control has an accessible label or visually hidden text.

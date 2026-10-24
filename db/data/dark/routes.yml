@@ -1,0 +1,8 @@
+- universe: Universe.dark
+  name: Forest path
+  slug: forest_path
+  from_location: Location.winden
+  to_location: Location.winden_forest
+  distance: "2 km"
+  duration: "25 minutes on foot"
+  description: "A narrow track through the woods outside town."

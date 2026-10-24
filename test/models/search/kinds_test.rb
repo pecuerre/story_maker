@@ -12,11 +12,13 @@ class Search::KindsTest < ActiveSupport::TestCase
   test "a kind is named by its own word in both locales" do
     assert_equal "Character", Search::Kinds.label_for("character")
     assert_equal "Scene element", Search::Kinds.label_for("scene_element")
+    assert_equal "Route", Search::Kinds.label_for("route")
     assert_equal "Tag", Search::Kinds.label_for("tag")
 
     I18n.with_locale(:es) do
       assert_equal "Personaje", Search::Kinds.label_for("character")
       assert_equal "Elemento de escena", Search::Kinds.label_for("scene_element")
+      assert_equal "Ruta", Search::Kinds.label_for("route")
       assert_equal "Etiqueta", Search::Kinds.label_for("tag")
     end
   end

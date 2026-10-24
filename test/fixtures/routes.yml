@@ -1,0 +1,8 @@
+route_one:
+  universe: universe_one
+  from_location: location_one
+  to_location: location_two
+  name: Road one
+  distance: "12 miles"
+  duration: "2 hours"
+  slug: road-one

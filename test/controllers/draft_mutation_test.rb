@@ -8,7 +8,7 @@ require "test_helper"
 # through and nothing else would notice.
 #
 # So this file is that something else. It walks **every** mutation controller in
-# both modes — twenty-two of them, across the JSON-only flow, the HTML flow, and
+# both modes — twenty-three of them, across the JSON-only flow, the HTML flow, and
 # both scopes — and asserts the single thing that differs between them: in `direct` a
 # mutation writes, and in a draft-based universe it does not. The table is the
 # contract; the tests below it are the details that the table cannot express,
@@ -229,6 +229,16 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       destroy: -> { universe_relation_url(universe_slug: @universe.slug, id: @relation.id) }
     },
     {
+      name: "routes", model: Route, json: false, label: :name,
+      scope: -> { [ "universe_id", @universe.id ] },
+      record: -> { @route },
+      create: -> { [ universe_routes_url(universe_slug: @universe.slug),
+        { route: { name: NEW, from_location_id: @location.id, to_location_id: @unlinked_location.id } } ] },
+      update: -> { [ universe_route_url(universe_slug: @universe.slug, id: @route.id),
+        { route: { name: RENAMED } } ] },
+      destroy: -> { universe_route_url(universe_slug: @universe.slug, id: @route.id) }
+    },
+    {
       name: "ownerships", model: Ownership, json: false, label: :name,
       scope: -> { [ "universe_id", @universe.id ] },
       record: -> { @ownership },
@@ -285,6 +295,8 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     # Relations and Ownerships have no fixtures, and a presence link can only be
     # added for a record the scene does not already carry.
     @relation = Relation.create!(universe: @universe, character1: @character, character2: @other_character)
+    @route = Route.create!(universe: @universe, from_location: @location,
+      to_location: locations(:location_two), name: "Existing route")
     @ownership = Ownership.create!(universe: @universe, character: @character, item: @item)
     @unlinked_item = @universe.items.create!(name: "Unlinked item")
     @unlinked_location = @universe.locations.create!(name: "Unlinked location")

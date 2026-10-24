@@ -33,6 +33,22 @@
         path: universe_locations_path,
         controllers: %i[ locations ] %>
 
+      <%= render "shared/sidebar_link",
+        icon: "signpost-2",
+        label: t("sidebar.routes"),
+        count_label: "route",
+        count: menu_counts[:routes],
+        path: universe_routes_path,
+        controllers: %i[ routes ] %>
+
+      <%= render "shared/sidebar_link",
+        icon: "map",
+        label: t("sidebar.map"),
+        count_label: "location",
+        count: menu_counts[:locations],
+        path: universe_map_path,
+        controllers: %i[ maps ] %>
+
       <%# The Timeline is the second tab of the Event workspace, so the sidebar has
           one Event entry rather than two, and it stays current on both tabs. %>
       <%= render "shared/sidebar_link",

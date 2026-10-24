@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_24_120000`) and the models in `app/models/`.
+`2026_10_24_170000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -22,8 +22,9 @@ User (owner)
        │       ├── SceneItem (explicit presence, optional free-text role) ─────> Item
        │       └── SceneLocation (explicit presence, optional free-text role) > Location
       ├── Discussion (one per record, polymorphic) ──> DiscussionMessage ──> User
-      ├── Character ──> parent Character   ── HABTM CharacterTag (tree)
-      ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
+       ├── Character ──> parent Character   ── HABTM CharacterTag (tree)
+       ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
+       ├── Route (from Location → to Location, measured path)
       ├── Item      ──> parent Item        ── HABTM ItemTag      (tree)
       ├── Event     ──> parent Event, before/after/simultaneous Event ── HABTM EventTag (tree, optional)
       ├── Relation  (character1 × character2) ── HABTM RelationTag (tree)
@@ -31,7 +32,7 @@ User (owner)
       └── (Session belongs to User, unrelated to universes)
 ```
 
-**The one rule to remember:** world building (characters, locations, items, events, relations,
+**The one rule to remember:** world building (characters, locations, routes, items, events, relations,
 ownerships **and every `_tag` model except SectionTag and SceneTag**) belongs to the **universe** and
 is shared by all of its stories. Only **sections** (the script: books → chapters → scenes …),
 **scenes**, and their **section/scene tags** (chapter/book/episode or scene-beat labels) belong to a
@@ -75,9 +76,10 @@ can be restored. The `SoftDeletable` concern (`app/models/concerns/soft_deletabl
   repaired.
 
 Soft-deleting a parent cascades to its declared children (a Universe soft-deletes its stories,
-characters, tags, and memberships; a Story soft-deletes its sections, plots, and scenes; a Scene
+characters, tags, routes, and memberships; a Story soft-deletes its sections, plots, and scenes; a Scene
 soft-deletes its elements and presence links; a SceneElement soft-deletes its dialogue turns; a
-Character soft-deletes its relations, ownerships, and presence links). Plot-to-Scene join rows are
+Character soft-deletes its relations, ownerships, and presence links; a Location soft-deletes Routes
+using it as either endpoint). Plot-to-Scene join rows are
 retained when a Plot is soft-deleted, so restoring it restores its assignments. Dialogue-turn speaker rows
 are retained when a Character is soft-deleted, like the Element-level speaker join, so restoring
 the Character restores its attributed lines. Two associations are cleared rather than cascaded,
@@ -100,8 +102,8 @@ Schema only. The photo **contract** — the optional writers, the same-universe 
 authority on the stored file, and the one control that serves all three page patterns — is in
 [features/photos.md](features/photos.md).
 
-A record may carry one photo, and the photo is always optional. Eighteen models include
-`HasPhoto`: `Universe`, `Story`, `Section`, `Scene`, `Character`, `Location`, `Item`, `Event`,
+A record may carry one photo, and the photo is always optional. Nineteen models include
+`HasPhoto`: `Universe`, `Story`, `Section`, `Scene`, `Character`, `Location`, `Route`, `Item`, `Event`,
 `Relation`, `Ownership`, and the eight `*_tag` models. Each of those tables gained a nullable
 `photo_id` with an index; none of them requires it, and no view, form, or list assumes a photo
 exists.
@@ -173,6 +175,7 @@ Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `sce
 |---|---|---|
 | `characters` | `name`, `description`, `slug`, `parent_id`, `position`, `universe_id` | |
 | `locations` | same shape | |
+| `routes` | `universe_id`, `from_location_id`, `to_location_id`, optional `name`, `description`, optional free-form `distance` and `duration`, `slug`, `photo_id`, `deleted_at` | directional path between two Locations; both endpoints must belong to the same Universe; not hierarchical or positioned |
 | `items` | same shape | |
 | `events` | `title`, `name`, `description`, `slug`, `start_datetime`, `end_datetime`, `before_event_id`, `after_event_id`, `simultaneous_event_id` (all self-FKs), `parent_id`, `position`, `universe_id` | identity is title-driven; `has_many :scenes, dependent: :nullify`; the datetimes are a `TemporalInterval` |
 | `relations` | `character1_id`, `character2_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |
@@ -328,7 +331,7 @@ nullable buys. See [conventions.md](conventions.md#notifications), which owns wh
 (`db/cache_schema.rb`, `db/cable_schema.rb`, `db/queue_schema.rb`).
 
 ### Photo columns, per table
-`universes`, `stories`, `sections`, `scenes`, `characters`, `locations`, `items`, `events`,
+`universes`, `stories`, `sections`, `scenes`, `characters`, `locations`, `routes`, `items`, `events`,
 `relations`, `ownerships`, and all eight `*_tags` tables each carry one nullable, indexed
 `photo_id`. `users`, `sessions`, `scene_elements`, `scene_dialogue_turns`, and the Scene
 presence-link tables do not. See
@@ -447,6 +450,7 @@ no `parent_id`.
 | `Event` | `must_be_identifiable` (title **or** start/end datetime **or** a before/after/simultaneous relation); referenced events must be in the same universe; model validation and three DB check constraints reject self references (including unsaved/future IDs); `Hierarchical` rules; *no* name-presence rule. Destroying an event nullifies all incoming temporal references; a relation-only referrer that would become unidentifiable is destroyed first |
 | `Relation` | `character1`/`character2` required; both characters and all `relation_tags` must be in the same universe |
 | `Ownership` | `character`/`item` required; both records and all `ownership_tags` must be in the same universe |
+| `Route` | `from_location` and `to_location` required; both Locations must belong to the Route's Universe; name, distance, and duration are optional |
 | `Photo` | `universe` required; an attachment must be present (`file must be attached`) or the row is not a useful record; `HasSlug` |
 | `User` | `has_secure_password` (password confirmation on create); unique normalized email (DB unique index) |
 | `Session` | `user` required |

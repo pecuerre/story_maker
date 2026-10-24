@@ -1,0 +1,8 @@
+- universe: Universe.lotr
+  name: Eastward road
+  slug: eastward_road
+  from_location: Location.hobbiton
+  to_location: Location.rivendell
+  distance: "about 458 miles"
+  duration: "several weeks on foot"
+  description: "The long road from the Shire toward Rivendell."

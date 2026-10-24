@@ -42,6 +42,7 @@ class Ability
     CharacterTag
     Location
     LocationTag
+    Route
     Item
     ItemTag
     Event

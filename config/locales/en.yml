@@ -67,6 +67,8 @@ en:
     story_overview: "Story overview"
     characters: "Characters"
     locations: "Locations"
+    routes: "Routes"
+    map: "Map"
     events: "Events"
     timeline: "Timeline"
     items: "Items"
@@ -1806,6 +1808,28 @@ en:
     tabs:
       locations: "Locations"
 
+  maps:
+    title: "Map"
+    description: "See how locations nest and how routes connect them in this universe."
+    diagram_heading: "Derived layout"
+    diagram_scroll_label: "Scrollable Location and Route diagram"
+    diagram_aria_label: "Diagram of %{locations} places and %{routes} route connections"
+    diagram_caption: "Location placement is automatic. The lists below provide the same hierarchy and route directions with links to each record."
+    legend_hierarchy: "Location hierarchy"
+    legend_route: "Directional Route"
+    locations_heading: "Locations"
+    routes_heading: "Routes"
+    location_details: "Details for %{name}"
+    route_direction: "to"
+    locations_empty_title: "No locations to map yet"
+    locations_empty_writable_description: "Add locations to this universe to start building its map."
+    locations_empty_read_only_description: "Locations in this universe will appear here once they have been added."
+    routes_empty_title: "No routes yet"
+    routes_empty_writable_description: "Add routes between locations to see how travel connects them."
+    routes_empty_read_only_description: "Routes between locations will appear here once they have been recorded."
+    browse_locations: "Browse locations"
+    browse_routes: "Browse routes"
+
   events:
     title: "Events"
     description: "Record moments that shape the universe and provide the structure for its timeline."
@@ -1923,6 +1947,43 @@ en:
       # own, so the strip names it here the way the Character and Item strips name
       # their second tab.
       timeline: "Timeline"
+
+  routes:
+    title: "Routes"
+    eyebrow: "Universe Bible"
+    description: "Record named paths between locations, including how far they are and how long travel takes."
+    new_title: "New route"
+    add: "Add route"
+    save: "Save route"
+    empty_title: "No routes yet"
+    empty_writable_description: "Connect two locations to record a travel path. Distance and duration are optional notes in the units that fit your world."
+    empty_read_only_description: "Travel routes in this universe will appear here once they have been added."
+    form:
+      name: "Name"
+      name_hint: "Optional. Used as the route's label instead of its endpoints."
+      from_location: "From location"
+      to_location: "To location"
+      select_location: "Select a location"
+      distance: "Distance"
+      duration: "Travel time"
+      description: "Description"
+    show:
+      label: "Route"
+      back_label: "All routes"
+      facts:
+        from_location: "From location"
+        to_location: "To location"
+        distance: "Distance"
+        duration: "Travel time"
+        description: "Description"
+        description_blank: "No description yet."
+    errors:
+      subject: "route"
+      must_belong_to_universe: "must belong to the route's universe"
+    flash:
+      created: "Route created."
+      updated: "Route updated."
+      deleted: "Route deleted."
 
   items:
     title: "Items"
@@ -2442,7 +2503,7 @@ en:
     too_short_title: "Keep typing"
     too_short_description: "A search needs at least %{minimum} characters, because one character matches nearly everything."
     idle_title: "Search this universe"
-    idle_description: "Type at least %{minimum} characters to look through characters, locations, events, items, relations, ownerships, tags, and — inside a story — sections, scenes, and their text. Narrow it with the scope above."
+    idle_description: "Type at least %{minimum} characters to look through characters, locations, routes, events, items, relations, ownerships, tags, and — inside a story — sections, scenes, and their text. Narrow it with the scope above."
     commands_title: "Go to"
 
     # The result count. `count` is the engine's own total, not the page's, which
@@ -2485,6 +2546,7 @@ en:
       stories: "Only stories"
       characters: "Only characters"
       locations: "Only locations"
+      routes: "Only routes"
       items: "Only items"
       events: "Only events"
       relations: "Only relations"
@@ -2518,6 +2580,7 @@ en:
       scene_element: "Scene element"
       character: "Character"
       location: "Location"
+      route: "Route"
       item: "Item"
       event: "Event"
       relation: "Relation"
@@ -2541,6 +2604,7 @@ en:
       stories: "All stories"
       characters: "Characters"
       locations: "Locations"
+      routes: "Routes"
       events: "Events"
       items: "Items"
       relations: "Relations"
@@ -2721,6 +2785,15 @@ en:
         description: "Description"
         parent: "Parent location"
         location_tags: "Location tags"
+      route:
+        name: "Name"
+        description: "Description"
+        from_location: "From location"
+        to_location: "To location"
+        from_location_id: "From location"
+        to_location_id: "To location"
+        distance: "Distance"
+        duration: "Travel time"
       event:
         name: "Name"
         title: "Title"
@@ -2941,6 +3014,9 @@ en:
   location:
     one: "location"
     other: "locations"
+  route:
+    one: "route"
+    other: "routes"
   event:
     one: "event"
     other: "events"
@@ -3014,6 +3090,7 @@ en:
     ownership: "the ownership"
     plot: "the plot"
     relation: "the relation"
+    route: "the route"
     scene_character: "the scene character"
     scene_element: "the scene element"
     scene_item: "the scene item"

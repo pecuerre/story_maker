@@ -1,0 +1,15 @@
+<li class="map-location-node">
+  <div class="map-location-entry py-2">
+    <%= link_to location.name, universe_location_path(id: location), class: "map-location-link",
+      aria: { label: t("maps.location_details", name: location.name) } %>
+  </div>
+
+  <% children = hierarchy.children_of(location) %>
+  <% if children.any? %>
+    <ul class="map-location-children list-unstyled ms-4 mb-0">
+      <% children.each do |child| %>
+        <%= render "location", location: child, hierarchy: hierarchy %>
+      <% end %>
+    </ul>
+  <% end %>
+</li>

@@ -39,87 +39,6 @@ Because a number disappears from this file when its item is completed, **do not 
 number from another document**. Reference a pending idea by its heading text, and cite delivered
 work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
-9. **Story-planning and world-building tools**
-
-Story-owned scene planning is now implemented; see
-[ADR 0007](adr/0007-story-owned-scenes-and-elements.md) and the dated entries in
-[`../CHANGELOG.md`](../CHANGELOG.md). POV structure — one same-Universe Character whose perspective
-presents a Scene — has a concrete decision (2026-10-22) and is implemented: see ADR 0007's dated
-execution note and the entry in [`../CHANGELOG.md`](../CHANGELOG.md), so it leaves this list.
-
-The remaining adjacent ideas are split into slices below. Slices D–G need a concrete domain decision
-before code: what each record means, which scope owns it, how it appears in the current page patterns,
-and whether it is worth adding to the data model. Replace a reserved link only when the feature has a
-real destination and useful empty, loading, and error states.
-The MVP's other limits stay visible rather than implied away: a Scene's `datetime` and its Event reference
-are independent and may contradict each other, and free-text roles are annotations the application
-does not interpret. Continuity *checking* is still the analyzer's job, and nothing here performs it.
-
-**Slice D — Routes**
-- What each record means: a Route is a named travel path between two in-world locations
-  (e.g. "the King's Road", "the river route from A to B"), possibly with duration/direction. A link
-  record between two locations, like `Relation`/`Ownership` link two entities without hierarchy.
-- Scope: universe-scoped (`Route belongs_to :universe`), linking `from_location` and
-  `to_location` (both same universe). No `Hierarchical`; optional name.
-- Page pattern: undecided — flat list with modal under the universe workspace (like
-  Relations/Ownerships: HTML index, JSON mutations) or a subsection of Locations.
-- Data model: tentative yes — a genuine link record distinct from `Location` (hierarchical place
-  data) and from `Distance` (see Slice F). Needs decision on whether Route and Distance are one
-  record.
-- Delivery: deferred pending domain decision (Route vs Distance unification; fields such as
-  from/to location, distance, duration, direction, name; then migration, model with same-universe
-  validation on both locations, controller, flat-list-with-modal views, tests, dev data, registry,
-  docs, changelog).
-- Open question: is a Route just a Distance with a name, or are they separate concepts?
-
-**Slice E — Map**
-- What each record means: Map is visual placement of locations in space. Could mean coordinates on
-  `Location` (lat/lng or x/y on a universe canvas), a separate `Map` record with placed markers, or
-  a read-only visualization of the Location hierarchy + Routes/Distances.
-- Scope: universe-scoped if stored. Locations are already universe-scoped and hierarchical; adding
-  coordinates to `Location` is the simplest stored interpretation.
-- Page pattern: none of the three established patterns (taxonomy tree / flat list with modal /
-  plain full-page form) fits a canvas/map well — a custom UI surface needing a deliberate decision,
-  since conventions say add to an existing pattern rather than invent a parallel one.
-- Data model: tentative no — a map is likely a view over existing Location/Route/Distance data, not
-  a new model. Only add coordinates to `Location` if the decision calls for stored placement.
-- Delivery: deferred pending domain decision (stored coordinates vs derived visualization; if
-  stored: migration adding columns to `locations`, model fields, editor on the Location form,
-  tests, dev data, docs, changelog; UI: custom map page or reject as out of pattern).
-- Open question: does the map need its own record, or is it a visualization of Locations +
-  Routes/Distances?
-
-**Slice F — Distances**
-- What each record means: a Distance is the measured separation between two locations
-  (e.g. "3 days' ride", "200 miles"). A link record between two locations with a value/unit, like
-  `Relation`/`Ownership`.
-- Scope: universe-scoped, linking two locations (both same universe), with a `distance`/`duration`
-  value. No `Hierarchical`.
-- Page pattern: undecided — flat list with modal (link-record pattern like Relations/Ownerships)
-  or a subsection of Locations.
-- Data model: tentative yes — distinct from Route (see Slice D). Needs decision on whether Distance
-  and Route are one record.
-- Delivery: deferred pending domain decision (same as Slice D: unify or separate; fields; then
-  migration, model, controller, flat-list-with-modal views, tests, dev data, registry, docs,
-  changelog).
-- Open question: are Route and Distance one record (a route has a distance) or two?
-
-**Slice G — Meetings**
-- What each record means: a Meeting is a gathering where characters meet, tied to an Event and/or
-  Scene — potentially linking Characters + Event + location + datetime.
-- Scope: universe-scoped or Event-scoped. If Event-scoped, it is a join between Event and
-  Characters (like scene presence but at event level).
-- Page pattern: undecided — flat list with modal under Events, or a tab on Event Details.
-- Data model: tentative no — meetings may be expressible as Event + Scene presence + Scene Tags.
-  Only add a model if the decision shows a distinct need.
-- Delivery: deferred pending domain decision (what a Meeting means vs Event + Scene presence;
-  scope and page pattern; then migration, model, controller, views, tests, dev data, registry,
-  docs, changelog if justified).
-- Open question: is a Meeting just an Event with a set of attending characters?
-
-These slices are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
-before expanding any slice.
-
 10. **Collaboration and universe analysis**
 
 Universe-level access management is implemented: public/private visibility and read/write/admin
@@ -177,6 +96,10 @@ before expanding a feature task; the DataFactor report is directional evidence, 
 work order.
 
 ## FUTURE WORK
+- **Verify the weak-confidence Brakeman SQL warning in `ListFilter`.** Brakeman 8.1.0 reports
+  possible SQL injection at `app/models/list_filter.rb:191`; review the current interpolation and
+  sanitizer path in isolation before changing the shared filter implementation. Deferred LATER on
+  2026-10-24 while implementing Routes.
 - **One accepted ADR still points at something this change moved.** [ADR
   0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) cites finding
   63, which left [`known_quirks.md`](known_quirks.md) when the conflict page removed the cost of

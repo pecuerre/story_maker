@@ -1,0 +1,65 @@
+<% content_for :title, t("maps.title") %>
+
+<%= render "shared/page_header", title: t("maps.title"), description: t("maps.description"),
+  eyebrow: t("sidebar.universe_bible"), count: @hierarchy.records.size, count_label: "location" %>
+
+<% if @hierarchy.records.any? %>
+  <section class="mb-4" aria-labelledby="map-diagram-heading">
+    <h2 class="h5 mb-3" id="map-diagram-heading"><%= t("maps.diagram_heading") %></h2>
+    <%= render "diagram", layout: @map_layout %>
+  </section>
+
+  <section class="mb-4" aria-labelledby="map-locations-heading">
+    <h2 class="h5 mb-3" id="map-locations-heading"><%= t("maps.locations_heading") %></h2>
+    <div class="content-surface">
+      <ul class="map-location-tree list-unstyled mb-0" aria-label="<%= t("maps.locations_heading") %>">
+        <% @hierarchy.roots.each do |location| %>
+          <%= render "location", location: location, hierarchy: @hierarchy %>
+        <% end %>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="map-routes-heading">
+    <h2 class="h5 mb-3" id="map-routes-heading"><%= t("maps.routes_heading") %></h2>
+    <% if @routes.any? %>
+      <div class="content-surface entity-list">
+        <ol class="list-group list-group-flush map-route-list" aria-label="<%= t("maps.routes_heading") %>">
+          <% @routes.each do |route| %>
+            <li class="list-group-item entity-row map-route-row d-flex align-items-center gap-3">
+              <div class="entity-copy flex-grow-1">
+                <div class="entity-title"><%= route.display_string %></div>
+                <div class="entity-description">
+                  <%= link_to route.from_location.name,
+                    universe_location_path(id: route.from_location),
+                    aria: { label: t("maps.location_details", name: route.from_location.name) } %>
+                  <span aria-hidden="true">→</span>
+                  <span class="visually-hidden"><%= t("maps.route_direction") %></span>
+                  <%= link_to route.to_location.name,
+                    universe_location_path(id: route.to_location),
+                    aria: { label: t("maps.location_details", name: route.to_location.name) } %>
+                  <% if route.distance.present? || route.duration.present? %>
+                    <span> · <%= [ route.distance, route.duration ].compact_blank.join(" · ") %></span>
+                  <% end %>
+                </div>
+              </div>
+              <%= record_details_link universe_route_path(id: route), record: route %>
+            </li>
+          <% end %>
+        </ol>
+      </div>
+    <% else %>
+      <%= render "shared/empty_state", title: t("maps.routes_empty_title"),
+        description: can_write_universe? ? t("maps.routes_empty_writable_description") : t("maps.routes_empty_read_only_description"),
+        icon: "signpost-2" do %>
+        <%= link_to t("maps.browse_routes"), universe_routes_path, class: "btn btn-outline-primary" %>
+      <% end %>
+    <% end %>
+  </section>
+<% else %>
+  <%= render "shared/empty_state", title: t("maps.locations_empty_title"),
+    description: can_write_universe? ? t("maps.locations_empty_writable_description") : t("maps.locations_empty_read_only_description"),
+    icon: "geo-alt" do %>
+    <%= link_to t("maps.browse_locations"), universe_locations_path, class: "btn btn-outline-primary" %>
+  <% end %>
+<% end %>

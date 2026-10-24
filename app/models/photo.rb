@@ -30,6 +30,7 @@ class Photo < ApplicationRecord
     Scene
     Character
     Location
+    Route
     Item
     Event
     Relation

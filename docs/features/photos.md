@@ -4,8 +4,8 @@
 is in [data_model.md](../data_model.md#photos) and the test workflow is in
 [development.md](../development.md#testing-record-photos).
 
-A record may carry one photo, and a photo is always optional. Eighteen models include `HasPhoto`
-(`app/models/concerns/has_photo.rb`): `Universe`, `Story`, `Section`, `Scene`, the six content
+A record may carry one photo, and a photo is always optional. Nineteen models include `HasPhoto`
+(`app/models/concerns/has_photo.rb`): `Universe`, `Story`, `Section`, `Scene`, the seven content
 models, and all eight `_tag` models. A record with no photo is completely normal, and no controller
 force-creates one.
 

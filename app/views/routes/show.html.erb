@@ -1,0 +1,16 @@
+<% content_for :title, @route.display_string %>
+
+<%= render "shared/record_details",
+  record: @route,
+  eyebrow: t("sidebar.universe_bible"),
+  label: t("routes.show.label"),
+  facts: [
+    detail_fact(t("routes.show.facts.from_location"), link_to(@route.from_location.name, universe_location_path(id: @route.from_location))),
+    detail_fact(t("routes.show.facts.to_location"), link_to(@route.to_location.name, universe_location_path(id: @route.to_location))),
+    detail_fact(t("routes.show.facts.distance"), @route.distance),
+    detail_fact(t("routes.show.facts.duration"), @route.duration),
+    detail_fact(t("routes.show.facts.description"), @route.description, blank: t("routes.show.facts.description_blank"))
+  ],
+  back_url: universe_routes_path,
+  back_label: t("routes.show.back_label"),
+  actions: discussion_control(@route) %>

@@ -1,0 +1,62 @@
+<% layout = local_assigns.fetch(:layout) %>
+
+<figure class="map-diagram content-surface">
+  <div class="map-diagram-scroll" role="region" tabindex="0"
+    aria-label="<%= t("maps.diagram_scroll_label") %>">
+    <svg class="map-diagram-svg" width="<%= layout.width %>" height="<%= layout.height %>"
+      viewBox="0 0 <%= layout.width %> <%= layout.height %>" role="group"
+      aria-label="<%= t("maps.diagram_aria_label", locations: layout.nodes.length, routes: layout.route_edges.length) %>">
+      <defs>
+        <marker id="map-route-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" class="map-route-arrow-head"></path>
+        </marker>
+      </defs>
+
+      <g class="map-hierarchy-edges" aria-hidden="true">
+        <% layout.hierarchy_edges.each do |edge| %>
+          <path class="map-hierarchy-edge" data-parent-id="<%= edge.source.location.id %>"
+            data-child-id="<%= edge.target.location.id %>" d="<%= edge.path %>"></path>
+        <% end %>
+      </g>
+
+      <g class="map-route-edges" aria-hidden="true">
+        <% layout.route_edges.each do |edge| %>
+          <path class="map-route-edge" data-route-id="<%= edge.record.id %>"
+            data-from-location-id="<%= edge.source.location.id %>"
+            data-to-location-id="<%= edge.target.location.id %>"
+            marker-end="url(#map-route-arrow)" d="<%= edge.path %>"></path>
+        <% end %>
+      </g>
+
+      <g class="map-diagram-nodes">
+        <% layout.nodes.each do |node| %>
+          <%= link_to universe_location_path(id: node.location), class: "map-diagram-node",
+            id: "map-diagram-location-#{node.location.id}",
+            aria: { label: t("maps.location_details", name: node.location.name) } do %>
+            <rect x="<%= node.x %>" y="<%= node.y %>" width="<%= node.width %>" height="<%= node.height %>" rx="8"></rect>
+            <title><%= node.location.name %></title>
+            <text x="<%= node.x + 14 %>" y="<%= node.y + ((node.height - (node.label_lines.length * LocationMapLayout::LINE_HEIGHT)) / 2.0).round + 14 %>">
+              <% node.label_lines.each_with_index do |line, index| %>
+                <tspan x="<%= node.x + 14 %>" dy="<%= index.zero? ? 0 : LocationMapLayout::LINE_HEIGHT %>"><%= line %></tspan>
+              <% end %>
+            </text>
+          <% end %>
+        <% end %>
+      </g>
+    </svg>
+  </div>
+
+  <figcaption class="map-diagram-caption">
+    <p class="mb-2"><%= t("maps.diagram_caption") %></p>
+    <ul class="map-diagram-legend list-inline mb-0">
+      <li class="list-inline-item">
+        <span class="map-legend-swatch map-legend-hierarchy" aria-hidden="true"></span>
+        <%= t("maps.legend_hierarchy") %>
+      </li>
+      <li class="list-inline-item">
+        <span class="map-legend-swatch map-legend-route" aria-hidden="true"></span>
+        <%= t("maps.legend_route") %>
+      </li>
+    </ul>
+  </figcaption>
+</figure>

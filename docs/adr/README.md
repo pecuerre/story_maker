@@ -55,6 +55,7 @@ reasoning as of its date.
 | [0028](0028-per-universe-mutation-budget.md) | Accepted | Make the mutation budget a per-universe setting enforced after authorization, counted by hand because the framework macro captures its arguments at class load |
 | [0031](0031-story-owned-plot-arcs.md) | Accepted | Model named Plot arcs as story-owned through-lines assignable across Scenes and Sections |
 | [0032](0032-curated-tropes-are-contextual-annotations.md) | Accepted | Curate a shared reference list and record contextual Story- and Scene-level annotations |
+| [0033](0033-meetings-use-events-and-scene-presence.md) | Accepted | Represent gatherings through Events and Scene presence, without a separate Meeting model |
 
 ## Format
 

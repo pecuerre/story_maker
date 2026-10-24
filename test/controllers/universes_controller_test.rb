@@ -16,7 +16,7 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_select "td", text: /2 stories/
-    assert_select "td", text: /11 entities/
+    assert_select "td", text: /12 entities/
     assert_select "td", text: /1 story/
     assert_select "td", text: /3 entities/
     assert_select "time", count: 2
@@ -46,7 +46,7 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
 
     counted = -> {
-      count_queries(/FROM "(characters|locations|events|items|relations|ownerships|stories)"/) do
+      count_queries(/FROM "(characters|locations|routes|events|items|relations|ownerships|stories)"/) do
         get universes_url
       end
     }

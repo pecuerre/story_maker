@@ -41,6 +41,7 @@ module Search
       Option.new(value: "stories", kind: "story", boundary: :inherited, commands: false),
       Option.new(value: "characters", kind: "character", boundary: :inherited, commands: false),
       Option.new(value: "locations", kind: "location", boundary: :inherited, commands: false),
+      Option.new(value: "routes", kind: "route", boundary: :inherited, commands: false),
       Option.new(value: "items", kind: "item", boundary: :inherited, commands: false),
       Option.new(value: "events", kind: "event", boundary: :inherited, commands: false),
       Option.new(value: "relations", kind: "relation", boundary: :inherited, commands: false),

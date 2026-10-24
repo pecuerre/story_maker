@@ -18,6 +18,13 @@ class Search::CommandsTest < ActiveSupport::TestCase
     assert_equal universe_characters_path(universe_slug: @universe.slug), commands.first.url
   end
 
+  test "the Routes command opens the universe Routes workspace" do
+    commands = Search::Commands.new(text: "routes", universe: @universe, user: users(:user_one)).to_a
+
+    assert_equal [ "Routes" ], commands.map(&:title)
+    assert_equal universe_routes_path(universe_slug: @universe.slug), commands.first.url
+  end
+
   test "the story workspace is offered only when a story is selected" do
     without = Search::Commands.new(text: "scenes", universe: @universe, user: users(:user_one)).to_a
     with = Search::Commands.new(text: "scenes", universe: @universe, story: @story, user: users(:user_one)).to_a

@@ -23,7 +23,7 @@
   [features/plots.md](features/plots.md).
 - Every content model and every `_tag` taxonomy model has its own `slug` (see `HasSlug`).
 - Typical content columns: `name`, `description`, `universe_id` (FK), `parent_id` (self FK),
-  `position` (default 0), `slug`, timestamps. Exceptions (Relation, Ownership, Event, Story) are
+  `position` (default 0), `slug`, timestamps. Exceptions (Relation, Ownership, Route, Event, Story) are
   listed in [data_model.md](data_model.md).
 - `"_tag"` models are their own hierarchical tables (`parent_id` self-FK); there is no `tag_id`
   column on the content tables — the pairs are joined with HABTM join tables.
@@ -71,7 +71,7 @@ the same change, or `db:demo:check` fails.
   same address — which a symbolic `db/data` reference and a class-level lookup both depend on. It
   reads the association in Ruby rather than querying, because the record being slugged is new and its
   join rows do not exist yet.
-- `Relation`, `Ownership` and `Event` add custom validators that keep their non-tag associated
+- `Relation`, `Ownership`, `Route` and `Event` add custom validators that keep their non-tag associated
   records inside the same universe. `HasManyTags` independently enforces the shared universe or
   story scope in both directions for all eight content/tag pairs (see the taxonomy matrix in
   [data_model.md](data_model.md#tag-taxonomy-matrix)).
@@ -302,11 +302,11 @@ the same change, or `db:demo:check` fails.
     `SceneElementsController`, `SceneDialogueTurnsController`, `SceneCharactersController`,
     `SceneItemsController`, and `SceneLocationsController` also
     include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
-  - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Universe
+  - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Routes, Universe
     memberships, Sessions, Passwords, Drafts, Review Requests.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
   memberships. `show/edit` exist for Universes, Stories, and Scenes; `show` also exists for every
-  content model (Character, Location, Item, Event, Relation, Ownership, Section, Plot) and every tag
+  content model (Character, Location, Route, Item, Event, Relation, Ownership, Section, Plot) and every tag
   model, because each record has exactly one details page. `ScenesController#move` (narrative
   order) and `#group` (Section grouping) are the two member and collection actions beyond that set.
 - **A route may only advertise an action the controller has, and a GET may only name an action with a
@@ -348,11 +348,12 @@ the same change, or `db:demo:check` fails.
   universe-level `/u/:universe_slug/sections`,
   `/u/:universe_slug/section_tags`, `/u/:universe_slug/scene_tags`, and
   `/u/:universe_slug/scenes` paths are intentionally invalid.
-- Relations/Ownerships are limited to `index, show, create, update, destroy`; memberships are
+- Relations/Ownerships/Routes are limited to `index, show, create, update, destroy`; memberships are
   mounted at `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and
   are admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
   and `taxonomy=character|relation|location|event|item|ownership|section` query parameters;
-  timeline is `get "timeline", to: "timeline#index"`; `root` → `universes#index`; health check `/up`.
+  timeline and Map are single-page GETs (`timeline#index` and `maps#index`); the Map page's behavior is
+  in [features/map.md](features/map.md). `root` → `universes#index`; health check `/up`.
 - **Drafts are `index`/`show` plus two member POSTs**, mounted at `/u/:universe_slug/drafts`:
   `resources :drafts, only: %i[ index show ]` with `post :apply, on: :member` and `post :discard, on:
   :member`. The two are POSTs rather than `resources` verbs because each is a decision the author makes
@@ -404,7 +405,7 @@ routes, and a successful mutation performs a same-URL Turbo visit so serialized 
 descriptors, page counts, and sidebar counts come from one fresh server render. User-controlled names
 and descriptions are assigned with `textContent`/DOM properties, never interpolated into `innerHTML`.
 
-**2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships):
+**2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships, routes):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
   Each row also renders `record_details_link` before its actions, so the record's own page is one
   click away and visible to read-only viewers. The name is plain text; the Details link is the only
@@ -431,7 +432,7 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
     (`data-action="modal-form#move"`, direction in the URL) and a JSON-only **delete** are issued by
     the same controller for the same reason: a `204` destroy and a `PATCH` move both give Turbo no
     replacement to follow.
-  - **`html`** (relations, ownerships): the documented redirect/re-render flow is untouched. The
+  - **`html`** (relations, ownerships, routes): the documented redirect/re-render flow is untouched. The
     controller only opens the modal and pre-fills it; the browser submits, and `shared/_row_actions`
     keeps its Turbo `button_to` delete with `data-turbo-confirm`. A refused submission re-renders the
     whole index, so the workspace renders `shared/_error_summary` twice — once on the page the author

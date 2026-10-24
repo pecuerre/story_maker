@@ -87,6 +87,7 @@ Rails.application.routes.draw do
     resources :items, only: %i[ index show create update destroy ]
     resources :location_tags, only: %i[ index show create update destroy ]
     resources :locations, only: %i[ index show create update destroy ]
+    resources :routes, only: %i[ index show create update destroy ]
     resources :character_tags, only: %i[ index show create update destroy ]
     resources :characters, only: %i[ index show create update destroy ]
     resources :relation_tags, only: %i[ index show create update destroy ]
@@ -109,6 +110,8 @@ Rails.application.routes.draw do
     # `@events_for_select` collection that only its missing template read.
     resources :events, only: %i[ index show create update destroy ]
     get "timeline", to: "timeline#index", as: :timeline
+    # A read-only view of the universe's Location hierarchy and Routes.
+    get "map", to: "maps#index", as: :map
     # One author's remembered changes for this universe. `apply`, `submit`, and
     # `discard` are three POSTs rather than a `resources` verb list: each is a
     # decision the author makes about their own pending work, and none of them is
@@ -183,6 +186,7 @@ Rails.application.routes.draw do
       # Universe-scoped surface: read for the shared world records, and read plus
       # create/update/destroy for the link records an agent can originate today.
       resources :locations, only: %i[ index show ]
+      resources :routes, only: %i[ index show create update destroy ]
       resources :items, only: %i[ index show ]
       resources :events, only: %i[ index show ]
       resources :relations, only: %i[ index show create update destroy ]

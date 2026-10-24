@@ -83,6 +83,7 @@ module Search
         [
           command("characters", "searches.commands.characters", universe.name, universe_characters_path(universe_slug: universe.slug)),
           command("locations", "searches.commands.locations", universe.name, universe_locations_path(universe_slug: universe.slug)),
+          command("routes", "searches.commands.routes", universe.name, universe_routes_path(universe_slug: universe.slug)),
           command("events", "searches.commands.events", universe.name, universe_events_path(universe_slug: universe.slug)),
           command("items", "searches.commands.items", universe.name, universe_items_path(universe_slug: universe.slug)),
           command("relations", "searches.commands.relations", universe.name, universe_relations_path(universe_slug: universe.slug)),

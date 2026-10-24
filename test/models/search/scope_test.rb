@@ -32,6 +32,9 @@ class Search::ScopeTest < ActiveSupport::TestCase
     outside = Search::Scope.new("characters", universe: nil)
     assert_equal "platform", outside.boundary
     assert_equal "character", outside.kind
+
+    route_scope = Search::Scope.new("routes", universe: @universe)
+    assert_equal "route", route_scope.kind
   end
 
   test "asking for this story without a story widens the search and says so" do

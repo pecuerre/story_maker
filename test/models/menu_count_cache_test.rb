@@ -22,6 +22,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       characters: 3,
       relations: 1,
       locations: 2,
+      routes: 1,
       events: 2,
       items: 2,
       ownerships: 1
@@ -88,6 +89,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
         )
       },
       locations: -> { Location.create!(universe: @universe, name: "Cached location") },
+      routes: -> { Route.create!(universe: @universe, from_location: locations(:location_one), to_location: locations(:location_two)) },
       events: -> { Event.create!(universe: @universe, title: "Cached event") },
       items: -> { Item.create!(universe: @universe, name: "Cached item") },
       ownerships: -> {
@@ -117,11 +119,12 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       stories: 2,
       characters: 3,
       locations: 2,
+      routes: 1,
       events: 2,
       items: 2,
       relations: 1,
       ownerships: 1,
-      entities: 11
+      entities: 12
     }
 
     summary = @universe.summary_counts
@@ -142,6 +145,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       stories: -> { Story.create!(universe: @universe, name: "Cached story") },
       characters: -> { Character.create!(universe: @universe, name: "Cached character") },
       locations: -> { Location.create!(universe: @universe, name: "Cached location") },
+      routes: -> { Route.create!(universe: @universe, from_location: locations(:location_one), to_location: locations(:location_two)) },
       events: -> { Event.create!(universe: @universe, title: "Cached event") },
       items: -> { Item.create!(universe: @universe, name: "Cached item") },
       relations: -> {
@@ -190,7 +194,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
     stories(:story_one).soft_delete
 
     assert_equal 1, @universe.summary_counts.fetch(:stories)
-    assert_equal 11, @universe.summary_counts.fetch(:entities),
+    assert_equal 12, @universe.summary_counts.fetch(:entities),
       "entities exclude stories, so deleting one does not change them"
   end
 

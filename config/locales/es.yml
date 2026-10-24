@@ -64,6 +64,8 @@ es:
     story_overview: "Resumen de la historia"
     characters: "Personajes"
     locations: "Lugares"
+    routes: "Rutas"
+    map: "Mapa"
     events: "Sucesos"
     timeline: "Cronología"
     items: "Objetos"
@@ -1763,6 +1765,28 @@ es:
     tabs:
       locations: "Lugares"
 
+  maps:
+    title: "Mapa"
+    description: "Consulta cómo se anidan los lugares y cómo los conectan las rutas de este universo."
+    diagram_heading: "Distribución derivada"
+    diagram_scroll_label: "Diagrama desplazable de lugares y rutas"
+    diagram_aria_label: "Diagrama con %{locations} lugares y %{routes} conexiones de rutas"
+    diagram_caption: "La distribución de los lugares se genera automáticamente. Las listas siguientes ofrecen la misma jerarquía y las direcciones de las rutas, con enlaces a cada registro."
+    legend_hierarchy: "Jerarquía de lugares"
+    legend_route: "Ruta direccional"
+    locations_heading: "Lugares"
+    routes_heading: "Rutas"
+    location_details: "Detalles de %{name}"
+    route_direction: "hasta"
+    locations_empty_title: "Todavía no hay lugares que mostrar en el mapa"
+    locations_empty_writable_description: "Añade lugares a este universo para empezar a construir su mapa."
+    locations_empty_read_only_description: "Los lugares de este universo aparecerán aquí cuando se añadan."
+    routes_empty_title: "Todavía no hay rutas"
+    routes_empty_writable_description: "Añade rutas entre lugares para ver cómo se conectan al viajar."
+    routes_empty_read_only_description: "Las rutas entre lugares aparecerán aquí cuando se registren."
+    browse_locations: "Ver lugares"
+    browse_routes: "Ver rutas"
+
   events:
     title: "Sucesos"
     description: "Registra momentos que dan forma al universo y aportan la estructura de su cronología."
@@ -1883,6 +1907,43 @@ es:
       # página propia, así que la lista la nombra aquí igual que las listas de
       # Personajes y Objetos nombran su segunda pestaña.
       timeline: "Cronología"
+
+  routes:
+    title: "Rutas"
+    eyebrow: "Biblia del universo"
+    description: "Registra caminos con nombre entre lugares, su distancia y cuánto se tarda en recorrerlos."
+    new_title: "Nueva ruta"
+    add: "Añadir ruta"
+    save: "Guardar ruta"
+    empty_title: "Todavía no hay rutas"
+    empty_writable_description: "Conecta dos lugares para registrar un camino. La distancia y la duración son notas opcionales con las unidades de tu mundo."
+    empty_read_only_description: "Las rutas de este universo aparecerán aquí en cuanto se hayan añadido."
+    form:
+      name: "Nombre"
+      name_hint: "Opcional. Se usa como etiqueta de la ruta en lugar de sus extremos."
+      from_location: "Lugar de origen"
+      to_location: "Lugar de destino"
+      select_location: "Selecciona un lugar"
+      distance: "Distancia"
+      duration: "Tiempo de viaje"
+      description: "Descripción"
+    show:
+      label: "Ruta"
+      back_label: "Todas las rutas"
+      facts:
+        from_location: "Lugar de origen"
+        to_location: "Lugar de destino"
+        distance: "Distancia"
+        duration: "Tiempo de viaje"
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+    errors:
+      subject: "esta ruta"
+      must_belong_to_universe: "debe pertenecer al universo de la ruta"
+    flash:
+      created: "Ruta creada."
+      updated: "Ruta actualizada."
+      deleted: "Ruta eliminada."
 
   items:
     title: "Objetos"
@@ -2369,6 +2430,15 @@ es:
         description: "Descripción"
         parent: "Lugar padre"
         location_tags: "Etiquetas de lugares"
+      route:
+        name: "Nombre"
+        description: "Descripción"
+        from_location: "Lugar de origen"
+        to_location: "Lugar de destino"
+        from_location_id: "Lugar de origen"
+        to_location_id: "Lugar de destino"
+        distance: "Distancia"
+        duration: "Tiempo de viaje"
       event:
         name: "Nombre"
         title: "Título"
@@ -2605,7 +2675,7 @@ es:
     too_short_title: "Sigue escribiendo"
     too_short_description: "Una búsqueda necesita al menos %{minimum} caracteres, porque un solo carácter coincide casi con todo."
     idle_title: "Busca en este universo"
-    idle_description: "Escribe al menos %{minimum} caracteres para recorrer personajes, lugares, sucesos, objetos, relaciones, propiedades, etiquetas y —dentro de una historia— secciones, escenas y su texto. Acota la búsqueda con el alcance de arriba."
+    idle_description: "Escribe al menos %{minimum} caracteres para recorrer personajes, lugares, rutas, sucesos, objetos, relaciones, propiedades, etiquetas y —dentro de una historia— secciones, escenas y su texto. Acota la búsqueda con el alcance de arriba."
     commands_title: "Ir a"
 
     matches:
@@ -2637,6 +2707,7 @@ es:
       stories: "Solo historias"
       characters: "Solo personajes"
       locations: "Solo lugares"
+      routes: "Solo rutas"
       items: "Solo objetos"
       events: "Solo sucesos"
       relations: "Solo relaciones"
@@ -2664,6 +2735,7 @@ es:
       scene_element: "Elemento de escena"
       character: "Personaje"
       location: "Lugar"
+      route: "Ruta"
       item: "Objeto"
       event: "Suceso"
       relation: "Relación"
@@ -2683,6 +2755,7 @@ es:
       stories: "Todas las historias"
       characters: "Personajes"
       locations: "Lugares"
+      routes: "Rutas"
       events: "Sucesos"
       items: "Objetos"
       relations: "Relaciones"
@@ -2839,6 +2912,9 @@ es:
   location:
     one: "lugar"
     other: "lugares"
+  route:
+    one: "ruta"
+    other: "rutas"
   event:
     one: "suceso"
     other: "sucesos"
@@ -2917,6 +2993,7 @@ es:
     ownership: "esta propiedad"
     plot: "esta trama"
     relation: "esta relación"
+    route: "esta ruta"
     scene_character: "este personaje de la escena"
     scene_element: "este elemento de la escena"
     scene_item: "este elemento de la escena"

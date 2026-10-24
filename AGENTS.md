@@ -34,6 +34,8 @@ the subject and read its owner:
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
+| **Universe-scoped Routes** between Locations | [`docs/features/routes.md`](docs/features/routes.md) |
+| The read-only Map view of Locations and Routes | [`docs/features/map.md`](docs/features/map.md) |
 | The contract every in-list filter shares: narrowing, canonical queries, empty results, pending rows | [`docs/features/list_filters.md`](docs/features/list_filters.md) |
 | The tag DSL, taxonomies, the tree and its editor, tagged-record counts | [`docs/features/tags.md`](docs/features/tags.md) |
 | Global search and its dropdown | [`docs/features/search.md`](docs/features/search.md) |

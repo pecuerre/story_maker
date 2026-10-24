@@ -30,6 +30,7 @@ module Search
       "scene_element" => "searches.kinds.scene_element",
       "character" => "searches.kinds.character",
       "location" => "searches.kinds.location",
+      "route" => "searches.kinds.route",
       "item" => "searches.kinds.item",
       "event" => "searches.kinds.event",
       "relation" => "searches.kinds.relation",

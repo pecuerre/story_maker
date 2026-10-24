@@ -88,7 +88,7 @@ class RouteActionContractTest < ActiveSupport::TestCase
   end
 
   test "the modal-edited content models advertise no new or edit page" do
-    %w[ characters items locations events plots ].each do |model|
+    %w[ characters items locations routes events plots ].each do |model|
       verb_names = content_routes(model).map { |route| "#{verb(route)} #{route.path.spec}" }
 
       assert_empty verb_names.grep(/\/(new|\d+\/edit)/),

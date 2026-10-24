@@ -3,7 +3,7 @@ require "test_helper"
 class HasDiscussionTest < ActiveSupport::TestCase
   DISCUSSIBLE = %w[
     Story Section Plot SectionTag Scene SceneTag SceneElement SceneCharacter SceneItem SceneLocation
-    Character CharacterTag Location LocationTag Item ItemTag Event EventTag Relation RelationTag
+    Character CharacterTag Location LocationTag Route Item ItemTag Event EventTag Relation RelationTag
     Ownership OwnershipTag
   ].freeze
   NOT_DISCUSSIBLE_CONTENT = %w[ SceneDialogueTurn ].freeze

@@ -43,53 +43,133 @@ These items are deliberately **LATER** by default. Use the owner's **NOW / LATER
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
-## FUTURE WORK
-- **Verify the weak-confidence Brakeman SQL warning in `ListFilter`.** Brakeman 8.1.0 reports
-  possible SQL injection at `app/models/list_filter.rb:191`; review the current interpolation and
-  sanitizer path in isolation before changing the shared filter implementation. Deferred LATER on
-  2026-10-24 while implementing Routes.
-- **One accepted ADR still points at something this change moved.** [ADR
-  0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) cites finding
-  63, which left [`known_quirks.md`](known_quirks.md) when the conflict page removed the cost of
-  retyping an unapplied change. The decision stands and only the pointer is stale, so the fix is one
-  clause on its "pending create says nothing about where it would go" bullet — not a rewrite of the
-  body. ADR 0021's half of the same note was done on 2026-10-04 when the stored outcomes landed: its
-   Status line now says which costs
-   [ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)
-   superseded and which of its reasoning still holds. Deferred by owner decision on 2026-10-04.
-- **Story page/photo expectations from existing workspace changes.** The 2026-10-25 full suite still
-  finds stale expectations on the Story overview and photo details surfaces. Re-run and triage those
-  failures in their owning feature areas after the existing work is ready for review, rather than
-  expanding turn-level dialogue.
-- **change universes to subdomains**. replace the /u/universe_slug for universe_slug.<website>.com
-- **Scene point-of-view/focus Character.** Record whose perspective presents a Scene separately from
-  all Characters present, supporting same-Event/different-POV analysis without duplicating Event data.
-- **Composite Scene-to-Event links.** If a Scene often contains several Events, introduce a scoped
-  join model with roles/order rather than overloading the first version's optional single Event.
-- **Narrative-order versus chronology comparison.** Visualize a Story's Scene sequence beside the
-  Universe Timeline to expose flashbacks, parallel scenes, and unexplained order changes.
-- **Structured Scene roles.** Analyze recurring free-text Character/Item/Location annotations before
-  promoting useful values to controlled, analyzer-friendly role types.
-- **Scene character-presence analyzer.** Use explicit participants and derived speakers to answer
-  where a Character appears, with Story context and confidence/inference labels kept separate from
-  author-entered facts.
-- **Scene character-knowledge analyzer.** Track what a Character witnesses or is told in a Scene;
-  this needs explicit attribution rules and should not be inferred from mere presence.
-- **Scene causality and temporal analyzer.** Compare Scene order, linked Events, independent
-  Scene datetimes, and Element chronology to explain likely contradictions rather than silently
-  rewriting author data.
-- **Scene prose-contradiction analyzer.** Analyze Element text for claims that conflict with Universe
-  facts; this is a separate product from structured temporal/causal checks and should explain its
-  evidence and uncertainty.
-- **Timeline pan/zoom.** `architecture.md` and the conventions described a pan/zoom interaction for
-  `timeline_controller.js` from the feature's first commit, but it was never implemented — the
-  controller only draws edges between nodes. The docs were corrected on 2026-09-29 to describe the
-  Timeline as the static layered view it is; this item is the actual feature, deferred by decision.
-  Building it is a UI design question, not a defect fix: a draggable/zoomable viewport changes how
-  the layer markers and node circles read, needs a keyboard and touch path to be usable at all, and
-  the SVG edges must stay aligned under the transform. Worth doing only if a universe's event count
-  makes the current wrapped layout genuinely hard to read.
+The highest number this file has used is 34. The list below continues at 35 and never reuses a
+number. It was triaged on 2026-10-25: two Scene ideas had already been delivered and left the list,
+the rest became numbered items, and each item records what exists today and what its next step
+depends on. Loose notes still belong under FUTURE WORK until they are triaged into this list.
 
-## other ideas
-- export in book format
-- export in script format
+35. **Verify the weak-confidence Brakeman SQL warning in `ListFilter`.**
+
+   Brakeman 8.1.0 still reports a possible SQL injection at `app/models/list_filter.rb:191`
+   (rechecked 2026-10-25). The interpolated pieces are table, column, and foreign-key names read
+   from model reflections, not request values, and the reader's text travels through
+   `sanitize_sql_like` and a bind. It looks like a false positive, but "looks" is why the warning
+   is still open.
+
+   **Can be done now.** Add a focused test that proves the narrowed query keeps its bind, then
+   either restructure the statement so the analyzer can see it or add a commented ignore entry
+   naming the sanitized path. Do not change the filter's results while silencing it.
+
+36. **An accepted ADR still cites findings that have left `known_quirks.md`.**
+
+   [ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) names
+   finding 63 on its "pending create says nothing about where it would go" cost and finding 66 on
+   its per-row cost. Both findings are closed, and `known_quirks.md` reuses its numbers, so neither
+   number identifies anything now. The decisions stand.
+
+   **Can be done now, docs-only.** Replace each number with the behavior it named and link the
+   document that owns it, leaving the reasoning and the ADR's dated Status notes intact. This is the
+   same pointer fix the 2026-10-04 note made to ADR 0021.
+
+37. **The Story overview no longer matches its tests.**
+
+   The 2026-10-25 full suite (2,901 runs) has two failures, both on the Story overview:
+   `RecordPhotoDetailsTest#test_the_story_page_shows_its_photo` finds no `figure.record-photo`, and
+   `WorkspaceLocaleTest#test_a_story_page_states_its_structure_and_its_shared_world_in_Spanish`
+   asserts the old `.col-md-7` selector for a sentence that now renders in a `.col-md-6` card.
+
+   The locale failure is a stale selector. The photo failure is a regression, not a stale test:
+   `Story` still includes `HasPhoto`, the edit form still accepts a photo, and
+   [`features/photos.md`](features/photos.md) says a record's photo shows on its details page, but
+   the October dashboard redesign removed the rendering.
+
+   **Can be done now**, with one decision: restore the photo to the Story overview, or drop photo
+   support for Stories and update the test and photo rules together. Then update the locale selector.
+
+38. **Universe URLs as subdomains instead of `/u/<universe_slug>`.**
+
+   Serve a universe at `<universe_slug>.<host>` rather than under a path. **Needs an ADR before any
+   code**, because the blast radius is the whole request boundary: `config.hosts` and `APP_HOST`
+   name one host today, mailer `default_url_options` is static, the session cookie and the
+   remembered destination are host-sensitive, CSRF and cross-subdomain navigation must keep working,
+   and every route helper, test, and demo URL changes. Deployment also needs wildcard DNS and a
+   wildcard TLS certificate. Keep `/u/...` redirecting to the new host so existing links and the
+   smoke test survive, and keep the browser-owned start page working before a universe is chosen.
+
+39. **Composite Scene-to-Event links.**
+
+   A Scene has one optional `event_id` today, independent of its `datetime`. **Needs a product
+   decision** that a Scene commonly contains several Events before building the scoped join model
+   the idea asks for: roles and order, migration, editors, API, sample data, tests, and docs. Do not
+   overload the single `event_id` in the meantime.
+
+40. **Narrative-order versus chronology comparison.**
+
+   A Story's `Scene.position` sequence and the Universe Timeline are deliberately different readings
+   of the same events, and nothing compares them. **Ready for a design** of a read-only view that
+   puts the Scene sequence beside the Timeline and explains flashbacks, parallel scenes, and order
+   changes without rewriting author data. No new storage; define what counts as "conflicting" before
+   building it.
+
+41. **Structured Scene roles from free-text annotations.**
+
+   `SceneCharacter`, `SceneItem`, and `SceneLocation` carry a free-text `role` that is never checked
+   against a vocabulary. **Blocked on evidence:** analyze existing annotations first, then promote
+   only recurring values to controlled role types. That needs a scope (Universe or Story) and a
+   migration decision; until then the free text is correct behavior, not debt.
+
+42. **Scene character-knowledge analyzer.**
+
+   Character knowledge records exist and are entered by hand; a Scene is not attributed as the place
+   or occasion where something was learned. **Needs explicit attribution rules** — witnessed, told,
+   or inferred — before storing anything. Presence must not imply knowledge, so this is a design
+   decision before it is a query.
+
+43. **Scene causality and temporal analyzer.**
+
+   **Needs a design and a definition of evidence.** Compare Scene order, linked Events, independent
+   Scene datetimes, and Element chronology to explain likely contradictions rather than resolve
+   them. Related to the narrative/chronology comparison above, but it reports causes and uncertainty
+   and is a separate analysis; nothing should be rewritten silently.
+
+44. **Scene prose-contradiction analyzer.**
+
+   Analyze Element prose for claims that conflict with recorded Universe facts. **Largest and least
+   defined:** it needs a text-analysis layer (likely an external model), an evidence/citation
+   surface, and a privacy decision about sending story prose out. Keep it separate from the
+   structured checks above and do not start it before them.
+
+45. **Timeline pan/zoom.**
+
+   `timeline_controller.js` only draws edges between nodes; the pan/zoom the early docs described
+   was never built, and the docs were corrected on 2026-09-29 to say so. **Needs UI design, not a
+   defect fix:** a draggable/zoomable viewport changes how layer markers and node circles read,
+   needs a keyboard and touch path, and the SVG edges must stay aligned under the transform. Worth
+   doing only when a universe's event count makes the wrapped layout genuinely hard to read.
+
+46. **Export a Story in book format.**
+
+   Nothing exists. **Needs a format and scope decision:** manuscript output (Markdown, HTML, PDF, or
+   EPUB), assembled from Sections and Scenes in narrative order, naming which fields and Elements
+   are included, whether pending changes are excluded, and where the action lives. Build it on the
+   story-scoped read path and keep access rules identical to reading the Story.
+
+47. **Export a Story in script format.**
+
+   Nothing exists. **Needs a format and scope decision:** screenplay/Fountain or plain text, with
+   Scene headings from Sections and Scenes, Element roles, and Dialogue turns. It shares the
+   assembly step with book export but not the output contract, so decide the two separately even if
+   they ship together.
+
+48. **The deployment-secret permissions test can pass with no assertions.**
+
+   The 2026-10-25 suite reports "Test is missing assertions" for
+   `test/deployment/deployment_secrets_test.rb:52`: it skips each key file that is absent, so a
+   checkout with neither file runs no assertion at all. **Can be done now:** `skip` with a named
+   reason when there is nothing to inspect, or assert the expected presence/absence explicitly. This
+   was noticed during the triage, not carried from the old notes.
+
+## FUTURE WORK
+
+Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
+analyzed like the list above, given the next number, and moved under PENDING WORK.

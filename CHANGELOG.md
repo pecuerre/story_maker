@@ -101,6 +101,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **The pending backlog is triaged into numbered items.** Removes the delivered Scene point-of-view and character-presence ideas, records the two Story-overview failures and a no-assertion test from the full suite, and gives the remaining work stable numbers from 35.
 - **Tropes leave the story-planning backlog.** ADR 0032 records the curated shared catalogue and contextual annotation decision; `docs/features/tropes.md` owns the live behavior.
 - **Plot arcs leave the story-planning backlog.** ADR 0031 records the same-Story many-to-many decision; `docs/features/plots.md` owns its current behavior.
 - **Turn-level dialogue leaves the story-planning backlog.** Slice A is complete; item 9 now lists only its pending Plot, Tropes, Routes, Map, Distances, and Meetings slices.

@@ -47,9 +47,16 @@ Labels used below, in the order their groups appear:
 - **Universe Map foundation.** Adds a read-only, universe-scoped page for the Location hierarchy and directional Routes, with localized empty states and links to record details.
 - **Universe Routes.** Adds directional paths between same-Universe Locations with optional free-form distance and travel time, plus list/details pages, draft-aware HTML and API mutations, search, sample data, and soft-delete cascades.
 
+### changed
+
+- **Compose reloads application code and rebuilds CSS on edits.** The development container mounts `app/` and `lib/`, runs Rails with development reloading, and starts the CSS watcher alongside the server.
+- **Compose repeats the local demo sign-in on startup.** The generated password is stored with mode `0600` in the project volume and printed when the container starts, rather than being available only in first-load output.
+
 ### docs
 
 - **Container onboarding is verified.** The clean-storage Compose startup passed its image, CSS, migration, demo-data, persistence, and `/up` checks; the backlog item and matching finding are closed.
+- **Compose credential persistence is documented.** The generated development password is stored only in the private volume and printed on container startup.
+- **Container development guidance covers automatic source reloads.** Agents rebuild the image for changes outside the live-mounted paths, so ordinary app and CSS edits need no container rebuild.
 - **The stale Collaboration and universe analysis backlog entry is removed.** Existing collaboration work is documented in its feature guidance, while specific analyzer ideas remain separately listed as future work.
 - **Meetings use Events and Scene presence.** A gathering is represented by an Event and its linked Scenes; attendee and Location records stay on Scenes, with no separate Meeting model or page.
 - **Map leaves the story-planning backlog.** The text foundation and derived SVG layout are complete; the Map feature document owns their current behavior.

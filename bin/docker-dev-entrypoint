@@ -5,7 +5,20 @@ set -euo pipefail
 # Dark demo universe once into the Compose-managed storage volume. It never resets data.
 bin/rails db:prepare
 
-universe_state="$(bin/rails runner -e development 'puts Universe.exists? ? "present" : "missing"')"
+password_file=storage/.development-password
+umask 077
+if [ ! -s "$password_file" ]; then
+  bin/rails runner -e development 'print SecureRandom.hex(16)' > "$password_file"
+fi
+chmod 600 "$password_file"
+dev_password="$(cat "$password_file")"
+if [ -z "$dev_password" ]; then
+  printf 'The Compose development password file is empty: %s\n' "$password_file" >&2
+  exit 1
+fi
+export UNIVERSE_MAKER_DEV_PASSWORD="$dev_password"
+
+universe_state="$(bin/rails runner -e development 'puts Universe.exists?(slug: "dark") ? "present" : "missing"')"
 case "$universe_state" in
   present)
     ;;
@@ -18,4 +31,7 @@ case "$universe_state" in
     ;;
 esac
 
-exec bin/rails server -b 0.0.0.0 -p 3000
+printf '\nDevelopment sign-in for dark: dark@dark, collaborator@dark\n'
+printf 'Password (local only; saved in this Compose volume):\n  export UNIVERSE_MAKER_DEV_PASSWORD=%s\n' "$dev_password"
+
+exec bundle exec foreman start -f Procfile.container-dev

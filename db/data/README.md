@@ -66,8 +66,12 @@ the loader printed. Set `UNIVERSE_MAKER_DEV_PASSWORD` yourself to make it stable
 export UNIVERSE_MAKER_DEV_PASSWORD='choose-your-own-local-value'
 ```
 
-The value is never written to a manifest, a log, or any other tracked file, and it is used in
-development only: `db/seeds/` and every deploy path are untouched.
+The value is never written to a manifest or any tracked file, and it is used in development only:
+`db/seeds/` and every deploy path are untouched. The Compose development entrypoint is the one
+exception to the loader's generated-on-load behavior: it saves the local password in
+`storage/.development-password` inside that project's private Docker volume with mode `0600`, passes
+it to the development data loader, and prints it whenever the container starts. The volume is not
+mounted from the checkout; removing it also removes the saved password and the demo database.
 [`.env.example`](../.env.example) is the value-free template naming the variable. **The
 application does not read that file** — `bin/dev` starts foreman with `--env /dev/null`, so
 export the variable in your shell, or let `script/demo` read it for you (see

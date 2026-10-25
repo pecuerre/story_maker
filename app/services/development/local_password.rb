@@ -43,8 +43,8 @@ module Development
     end
 
     # The line that makes this value available to the rest of a shell, quoted so
-    # a configured value containing spaces still works. This is the only place
-    # the value is written outside the database's password digest.
+    # a configured value containing spaces still works. The loader only reports
+    # this command; it does not persist the value outside the database digest.
     def export_command
       "export #{ENV_KEY}=#{Shellwords.escape(value)}"
     end

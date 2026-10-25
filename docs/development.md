@@ -79,19 +79,28 @@ docker compose up --build
 
 The separate `Dockerfile.dev` is development-only; the production `Dockerfile` and
 `bin/docker-entrypoint` are not used. The development entrypoint runs `db:prepare`, then loads the
-Dark development universe only when the Compose database has no universe records, and starts Rails
-on `0.0.0.0:3000`. It never resets an existing database. The first demo load reports the local sign-in
-and generated password in the `docker compose up` output; keep that password as described in
+Dark development universe only when the Compose database has no Dark universe, and starts Rails plus
+the CSS watcher. It never resets an existing database. The local sign-in and generated password are
+printed on each container start. The password is stored in the private Compose volume with mode
+`0600`; see
 [`db/data/README.md`](../db/data/README.md#development-credentials).
+If `docker compose up` only attaches to an already-running container, it will not replay startup
+output; run `docker compose down` and then `docker compose up` to start it again and print the
+credential. `down` preserves the volume.
 
 Compose publishes Rails only on host loopback at `127.0.0.1:3000`. It persists
 `storage/development.sqlite3` and Active Storage uploads together in its own named volume. It does
 not bind-mount the host's `storage/` directory, so an existing local database or
 uploaded files cannot be overwritten or exposed to the container. `docker compose down` stops and
 removes the container but keeps this volume; `docker compose down -v` deletes that Compose project's
-database and uploads, so use it only when you intend to discard them. CSS is built into the image at
-build time; after changing application or CSS source, run `docker compose up --build` again. The
-health check requests `/up` after the schema and initial demo load finish.
+database and uploads, so use it only when you intend to discard them. The `app/` and `lib/` trees are
+mounted for development: Rails reloads application code and autoloadable library code, and the CSS
+watcher rebuilds stylesheets as they change. No image rebuild or container restart is needed for
+those edits; refresh the browser to see the new page styling or client-side code. Some `lib/` files
+loaded only by an initializer are not autoloaded. Changes to `config/`, dependencies, or container
+configuration still require `docker compose up --build`; development-data YAML still follows the
+explicit check-and-reset workflow below. The health check requests `/up` after the schema and initial
+demo load finish.
 
 The Compose path is not a production deployment workflow: it uses `RAILS_ENV=development`, checked-in
 disposable demo data, and no production credentials. `db:prepare` supplies the schema and

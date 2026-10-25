@@ -214,6 +214,23 @@ whatever only a browser can show; both are required before such a change is fini
 every check that was not run. The CSS build requires the JavaScript dependencies to be
 installed.
 
+## Compose development loop
+
+- The local container starts with `docker compose up`. Its `app/` and `lib/` source mounts, Rails
+  development reloader, and CSS watcher mean ordinary application and stylesheet edits need no image
+  rebuild or container restart; the owner may refresh the browser to see visible changes. See
+  [`docs/development.md`](docs/development.md#containerized-development) for the exact boundary.
+- When a requested change affects dependencies, Compose/Docker configuration, or files outside the
+  live-mounted source paths, rebuild and restart the running development service with
+  `docker compose up --build --detach`, then verify `/up` if Docker is available. Do this as part of
+  the task rather than asking the owner to perform a rebuild manually.
+- A change to a mounted `lib/` file that is loaded only by an initializer still needs a server
+  restart; use `docker compose restart web` and verify `/up` rather than treating the file sync as a
+  reload.
+- Never remove the Compose storage volume (`docker compose down -v`) without the owner's approval;
+  it contains the local database, uploads, and generated demo password. Plain `docker compose down`
+  preserves them.
+
 Do not run `bin/rails db:restart` or `db:demo:reset` without approval: both are destructive. Use
 `script/demo <check|reset|load> <universe> [universe...]` rather than calling `bin/rails db:demo:*`
 directly: it reads `UNIVERSE_MAKER_DEV_PASSWORD` from `.env` so a reset reuses the developer's

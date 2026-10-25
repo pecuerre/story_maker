@@ -34,15 +34,16 @@ you do not need the CSS watcher.
 
 ### Docker Compose quick start
 
-With Docker Compose installed, the development-only image can build the CSS, prepare its own SQLite
-database, load the Dark demo universe on first start, and serve the app at the same address:
+With Docker Compose installed, the development-only image can prepare its own SQLite database, load
+the Dark demo universe on first start, and serve the app with Rails source reloading and CSS watching:
 
 ```bash
 docker compose up --build
 ```
 
-The database and uploads live in a Compose-managed volume, not the host's `storage/` directory. On
-the first start, keep the generated local password printed by the demo loader; see
+The database, uploads, and local demo password live in a Compose-managed volume, not the host's
+`storage/` directory. App and reloadable `lib/` changes reload in place, and CSS changes rebuild
+automatically; refresh the browser to see the change. The password is printed on each container start; see
 [`db/data/README.md`](db/data/README.md#development-credentials). The app health check uses `/up`.
 See [containerized development](docs/development.md#containerized-development) for persistence,
 reset, and production-boundary details.

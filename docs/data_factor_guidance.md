@@ -110,20 +110,16 @@ For each completed slice, ask:
 - Is the matching documentation current?
 - Can a reviewer understand the change from the diff and changelog without private context?
 
-### 2. One-command containerized onboarding — priority: later/medium
+### 2. One-command containerized onboarding — priority: delivered
 
-Provide a reproducible `docker compose up` path that builds the existing image, prepares an
-isolated SQLite database, persists the correct local data/storage paths, exposes the application
-port, and passes a health check. Document it as an alternative to the `mise`/`bundle`/`bun` path in
-the root README.
+The acceptance criteria are a reproducible `docker compose up` path that prepares an isolated SQLite
+database, persists the correct local data/storage paths, exposes the application port, and passes a
+health check, documented as an alternative to the `mise`/`bundle`/`bun` path in the root README.
 
-The compose design must be development-safe: do not run development data in a production
-container, mount a developer's real production data, or claim a clean production boot. The current
-Dockerfile is production-oriented; its `db:prepare` path now loads only production-safe seeds, so
-use a development-specific service/command for demo universes and verify the exact startup sequence
-before documenting Compose. Test from a clean checkout, including CSS assets, migrations,
-and `/up`; report any Docker or browser limitation. A devcontainer is optional and should follow the
-same environment and data-boundary rules.
+Delivered on 2026-10-25. The command, development/production boundary, persistence, and reset behavior
+are owned by [`development.md`](development.md#containerized-development); a fresh image and
+Compose-managed storage startup passed build, CSS, migration, demo-data, and `/up` checks.
+A devcontainer remains optional and should follow the same environment and data-boundary rules.
 
 ### 3. Measured, enforced test coverage — priority: delivered
 

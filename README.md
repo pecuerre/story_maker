@@ -32,6 +32,21 @@ bin/dev
 The application is then available at <http://localhost:3000>. Run `bin/rails server` by itself when
 you do not need the CSS watcher.
 
+### Docker Compose quick start
+
+With Docker Compose installed, the development-only image can build the CSS, prepare its own SQLite
+database, load the Dark demo universe on first start, and serve the app at the same address:
+
+```bash
+docker compose up --build
+```
+
+The database and uploads live in a Compose-managed volume, not the host's `storage/` directory. On
+the first start, keep the generated local password printed by the demo loader; see
+[`db/data/README.md`](db/data/README.md#development-credentials). The app health check uses `/up`.
+See [containerized development](docs/development.md#containerized-development) for persistence,
+reset, and production-boundary details.
+
 ## Tests and quality checks
 
 ```bash

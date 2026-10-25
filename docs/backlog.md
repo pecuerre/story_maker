@@ -39,31 +39,6 @@ Because a number disappears from this file when its item is completed, **do not 
 number from another document**. Reference a pending idea by its heading text, and cite delivered
 work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
-10. **Collaboration and universe analysis**
-
-Universe-level access management is implemented: public/private visibility and read/write/admin
-memberships are available from the universe workspace. The right sidebar leads its Collaboration group
-with the reader's own **pending-changes panel** and the **Pending changes** entry beneath it, which is
-what a draft-based universe needs, and follows them with the admin-only **Review requests** queue. Its
-**Collaborators**, **Conflicts**, **Branches**, and **Forks** placeholders were removed on 2026-10-05
-rather than replaced; **Collaborators** and the History page beside it are specified in the separate
-item **Collaborators and universe change history in the Collaboration sidebar group**. What remains a
-future product area is Analytics and AI. Before replacing those with navigation, specify the underlying
-records and permissions: analytics and AI tools. A feature should appear as a live navigation item when
-it has a useful destination and clear empty/loading/error states.
-
-15. **One-command containerized onboarding (DataFactor follow-up)**
-
-   Add and verify a development-safe `docker compose up` path using a development-specific service
-   or command. It must prepare an isolated SQLite database, persist the correct local
-   database/storage paths, expose the app, pass `/up`, build CSS assets, and work from a clean
-   checkout. The existing Dockerfile is production-oriented and its server entrypoint calls
-   `db:prepare`, which now loads production-safe seeds only; do not present that production
-   entrypoint as a development data workflow. Document the verified development-specific command
-   as an alternative to the `mise`/`bundle`/`bun` setup. Do not run development data in a
-   production container, mount real data, or duplicate the existing entrypoint blindly. A
-   devcontainer is optional and should follow the same boundary.
-
 28. **A draft-based development universe**
 
     Every `db/data/<universe_slug>/universes.yml` sets no `collaboration_mode`, so both registered demo

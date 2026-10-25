@@ -68,6 +68,35 @@ line with its process name, and stops all three on `Ctrl-C`. Running `bin/rails 
 still works, but that path gets no CSS watcher and no engine, so a `.scss` change appears to do
 nothing and search reports itself unavailable until you start them.
 
+### Containerized development
+
+Docker Compose is an alternative to installing Ruby, Bundler, and Bun on the host. From a clean
+checkout with Docker Engine and the Compose plugin installed, run:
+
+```bash
+docker compose up --build
+```
+
+The separate `Dockerfile.dev` is development-only; the production `Dockerfile` and
+`bin/docker-entrypoint` are not used. The development entrypoint runs `db:prepare`, then loads the
+Dark development universe only when the Compose database has no universe records, and starts Rails
+on `0.0.0.0:3000`. It never resets an existing database. The first demo load reports the local sign-in
+and generated password in the `docker compose up` output; keep that password as described in
+[`db/data/README.md`](../db/data/README.md#development-credentials).
+
+Compose publishes Rails only on host loopback at `127.0.0.1:3000`. It persists
+`storage/development.sqlite3` and Active Storage uploads together in its own named volume. It does
+not bind-mount the host's `storage/` directory, so an existing local database or
+uploaded files cannot be overwritten or exposed to the container. `docker compose down` stops and
+removes the container but keeps this volume; `docker compose down -v` deletes that Compose project's
+database and uploads, so use it only when you intend to discard them. CSS is built into the image at
+build time; after changing application or CSS source, run `docker compose up --build` again. The
+health check requests `/up` after the schema and initial demo load finish.
+
+The Compose path is not a production deployment workflow: it uses `RAILS_ENV=development`, checked-in
+disposable demo data, and no production credentials. `db:prepare` supplies the schema and
+production-safe seeds; the development-only `db:demo:load` call is separate and guarded by Rails.
+
 - CSS pipeline: `app/assets/stylesheets/application.bootstrap.scss` → sass → postcss/autoprefixer
   → `app/assets/builds/application.css`. Development keeps Propshaft on a dynamic manifest under
   `tmp/assets`, so `bun run watch:css` is immediately visible and a stale `public/assets` manifest
@@ -357,8 +386,7 @@ and error logging is implemented and needs no CI job: it is a middleware and an 
 run in every environment, covered by `test/integration/request_log_middleware_test.rb` and
 `test/lib/error_tracking_test.rb`. Optional error **forwarding** is off unless
 `ERROR_TRACKING_DSN` is set, and no CI job exercises it against a real collector — do not claim it
-does. It does **not** provide a one-command Compose setup. That is follow-up work, not a current
-capability; do not claim it in release or onboarding copy until it is implemented and documented.
+does.
 
 When planning one of those improvements, preserve the development-only data boundary, the
 universe/story authorization model, and the no-secrets rules. A value-free `.env.example` may be

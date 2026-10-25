@@ -27,6 +27,10 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-25
+
+- **[added]** **A development-only Compose onboarding path was built and verified.** `Dockerfile.dev` installs the pinned Ruby/Bun toolchain and builds CSS without using the production image's runtime entrypoint. Its first `docker compose up --build` exposed that the locked `selma` gem needs `libclang` for bindgen; adding `libclang-dev` made the gem bundle complete. `compose.yaml` publishes port 3000 on loopback, stores `storage/` in a project-scoped named volume, and checks `/up`. `bin/docker-dev-entrypoint` prepares the development schema, loads the Dark demo universe only when none exists, and starts Rails; it never resets the persistent volume. A fresh image and volume passed CSS, migration, demo-data (Dark with three Stories), persistence-mount, and HTTP 200 `/up` checks. Structural Minitest coverage also passes, and the matching backlog item and known finding were closed.
+
 ### 2026-10-22
 
 - **[changed]** **The Universes index shows story and entity counts and recent activity.**

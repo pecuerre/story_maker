@@ -33,7 +33,7 @@ class PinConsistencyTest < ActiveSupport::TestCase
   end
 
   test "every FROM line naming the Ruby image carries a digest" do
-    lines = dockerfile.lines.grep(/^FROM .*ruby:/)
+    lines = [ dockerfile, Rails.root.join("Dockerfile.dev").read ].flat_map { |contents| contents.lines.grep(/^FROM .*ruby:/) }
 
     assert lines.any?, "the Dockerfile is expected to have a FROM line naming the Ruby base image"
 

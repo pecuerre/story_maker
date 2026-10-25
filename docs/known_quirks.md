@@ -33,7 +33,7 @@ finding had at the time and are not rewritten.
 
 The findings were first gathered by an audit on 2026-09-24 against commit `8fcf4d4`, with the
 DataFactor follow-ups checked against the tree on 2026-09-25; the list has been renumbered since
-without being re-gathered. Entries are not re-verified by being written down, so **re-read a finding
+without being re-gathered, most recently on 2026-10-25. Entries are not re-verified by being written down, so **re-read a finding
 against the code before acting on it** — see [Audit baseline and evidence](#audit-baseline-and-evidence)
 for what that pass actually ran.
 
@@ -52,17 +52,7 @@ for what that pass actually ran.
      because `bin/kamal config` cannot be used in CI — it prints resolved secrets — but loading a
      configuration is not the same as deploying it.
 
-2. **Medium — clean container onboarding is absent.** The repository has a production-oriented
-   `Dockerfile` and a server entrypoint that runs `db:prepare`, but no root `docker-compose.yml`
-   or devcontainer. A fresh clone therefore still depends on the documented host toolchain, and
-   there is no clean-checkout proof that the image, SQLite paths, CSS assets, and `/up` work
-   together. This is the **One-command containerized onboarding** item in
-   [`backlog.md`](backlog.md): it was one of the 2026-09-25 DataFactor follow-ups, recorded as
-   pending work rather than as a requirement to maximize an automated score (the distilled policy is
-   in [`data_factor_guidance.md`](data_factor_guidance.md)), and the compose path must not run
-   development data in production.
-
-3. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
+2. **Footgun — the Action Mailbox ingress routes are one configuration line from being live, and
    nothing asserts they stay closed.** `config.action_mailbox.ingress` is `nil`, which is the only
    reason the nine `POST`/`GET` endpoints under `/rails/action_mailbox` answer **404**:
    `ActionMailbox::BaseController#ensure_configured` refuses unless the setting names an ingress.

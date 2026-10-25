@@ -42,12 +42,15 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Development Compose onboarding.** Adds a separate development image and entrypoint, isolated persistent SQLite/upload storage, a loopback-only port, a CSS build, demo loading on first start, and an `/up` health check.
 - **Universe Map diagram.** Adds a responsive, keyboard-accessible SVG of the Location hierarchy and directional Routes, laid out from live records without storing coordinates.
 - **Universe Map foundation.** Adds a read-only, universe-scoped page for the Location hierarchy and directional Routes, with localized empty states and links to record details.
 - **Universe Routes.** Adds directional paths between same-Universe Locations with optional free-form distance and travel time, plus list/details pages, draft-aware HTML and API mutations, search, sample data, and soft-delete cascades.
 
 ### docs
 
+- **Container onboarding is verified.** The clean-storage Compose startup passed its image, CSS, migration, demo-data, persistence, and `/up` checks; the backlog item and matching finding are closed.
+- **The stale Collaboration and universe analysis backlog entry is removed.** Existing collaboration work is documented in its feature guidance, while specific analyzer ideas remain separately listed as future work.
 - **Meetings use Events and Scene presence.** A gathering is represented by an Event and its linked Scenes; attendee and Location records stay on Scenes, with no separate Meeting model or page.
 - **Map leaves the story-planning backlog.** The text foundation and derived SVG layout are complete; the Map feature document owns their current behavior.
 - **Map E1 leaves the backlog.** The scoped text-and-list page is documented; the automatically derived graphical layout remains pending as E2.

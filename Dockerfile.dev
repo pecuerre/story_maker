@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+# check=error=true
+
+# Development-only image. The production image and its entrypoint remain separate.
+FROM docker.io/library/ruby:3.4.10-slim@sha256:b573616eed67613e1d380ebb777d87aa094fad7505bdbc2d1b45dca9dd9116b9
+
+WORKDIR /rails
+
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle"
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential curl git libclang-dev libsqlite3-dev libvips libyaml-dev pkg-config sqlite3 unzip && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Install the pinned Bun release and verify it against its published SHA-256 manifest.
+ARG BUN_VERSION=1.4.2
+RUN case "$(uname -m)" in \
+      x86_64) bun_archive=bun-linux-x64.zip ;; \
+      aarch64|arm64) bun_archive=bun-linux-aarch64.zip ;; \
+      *) echo "unsupported architecture $(uname -m) for the pinned Bun build" >&2; exit 1 ;; \
+    esac && \
+    bun_release="https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}" && \
+    curl -fsSLo "/tmp/${bun_archive}" "${bun_release}/${bun_archive}" && \
+    curl -fsSLo /tmp/SHASUMS256.txt "${bun_release}/SHASUMS256.txt" && \
+    cd /tmp && \
+    grep " ${bun_archive}\$" SHASUMS256.txt | sha256sum --check --strict - && \
+    unzip -q "${bun_archive}" -d /tmp/bun && \
+    install -m 0755 "/tmp/bun/${bun_archive%.zip}/bun" /usr/local/bin/bun && \
+    rm -rf /tmp/bun "/tmp/${bun_archive}" /tmp/SHASUMS256.txt
+
+COPY vendor/* ./vendor/
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+COPY . .
+RUN bun run build:css
+
+EXPOSE 3000
+CMD ["bash", "bin/docker-dev-entrypoint"]

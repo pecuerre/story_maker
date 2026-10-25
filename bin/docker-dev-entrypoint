@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This development-only path prepares the isolated development schema and loads the
+# Dark demo universe once into the Compose-managed storage volume. It never resets data.
+bin/rails db:prepare
+
+universe_state="$(bin/rails runner -e development 'puts Universe.exists? ? "present" : "missing"')"
+case "$universe_state" in
+  present)
+    ;;
+  missing)
+    UNIVERSE=dark bin/rails db:demo:load
+    ;;
+  *)
+    printf 'Unexpected universe check result: %s\n' "$universe_state" >&2
+    exit 1
+    ;;
+esac
+
+exec bin/rails server -b 0.0.0.0 -p 3000

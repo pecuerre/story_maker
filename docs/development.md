@@ -36,7 +36,7 @@ first; NOW/LATER/NEVER applies to whatever extra turns up afterwards. The rules 
 
 ## Prerequisites & running
 
-- Ruby **3.4.10** via [mise](https://mise.jdx.dev) (`mise.toml`); `bundle install`. `bin/dev` needs
+- Ruby **3.4.12** via [mise](https://mise.jdx.dev) (`mise.toml`); `bundle install`. `bin/dev` needs
   that bundle: foreman is a development dependency in the `Gemfile`, not a gem the script installs.
 - **Google Chrome** (or a compatible browser) for `bin/rails test:system`.
 - **Bun** for CSS/JS assets: `bun install`; `bun.lock` is the committed source of truth. Use

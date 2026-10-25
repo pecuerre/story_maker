@@ -10,7 +10,7 @@ UI patterns and the Timeline algorithm. Conventions are in
 | Layer | Choice |
 |---|---|
 | Framework | Ruby on Rails **8.1.3** (`load_defaults 8.1`), app module `UniverseMaker` |
-| Ruby | **3.4.10** (pinned in `mise.toml`) |
+| Ruby | **3.4.12** (pinned in `mise.toml`) |
 | Database | **SQLite 3** (`sqlite3 >= 2.1`); separate `cache/cable/queue` schemas for solid_* |
 | Server | Puma + **Thruster** (in the Docker image) |
 | Front-end | Hotwire (**Turbo + Stimulus**), **importmap** (no bundler for JS), Bootstrap 5 + bootstrap-icons + tom-select via npm, CSS built with **sass → postcss/autoprefixer** (`cssbundling-rails`) |

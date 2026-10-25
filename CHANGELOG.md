@@ -59,6 +59,10 @@ Labels used below, in the order their groups appear:
 
 - **Spanish taxonomy and Item ownership copy.** Adds the missing taxonomy parent label and current/historical owner sentences so those locale pages render without missing-translation errors.
 
+### security
+
+- **October 2026 runtime and dependency security updates.** Moves the Rails runtime to Ruby 3.4.12 and the Bun build toolchain to 1.4.4, and updates `happy-dom` and `source-map-js` past their published advisories.
+
 ### docs
 
 - **A LOTR draft-based demo universe.** Adds a checked-in open draft with pending create, edit, and delete examples, while Dark remains direct; the backlog item is complete.

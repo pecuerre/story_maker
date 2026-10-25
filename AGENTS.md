@@ -12,7 +12,7 @@ manage continuity as a universe grows.
 
 Stack:
 
-- Ruby 3.4.10 and Rails 8.1
+- Ruby 3.4.12 and Rails 8.1
 - SQLite with database-backed Solid Cache, Solid Queue, and Solid Cable
 - Hotwire, Turbo, Stimulus, and import maps
 - Bun, Sass, PostCSS, Bootstrap, and Tom Select

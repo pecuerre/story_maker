@@ -2,7 +2,7 @@
 # check=error=true
 
 # Development-only image. The production image and its entrypoint remain separate.
-FROM docker.io/library/ruby:3.4.10-slim@sha256:b573616eed67613e1d380ebb777d87aa094fad7505bdbc2d1b45dca9dd9116b9
+FROM docker.io/library/ruby:3.4.12-slim@sha256:dd852d6dd55f5d283839e940aeb0394bb5f5a4f51295a4eee545f732c46d1b41
 
 WORKDIR /rails
 
@@ -14,7 +14,7 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install the pinned Bun release and verify it against its published SHA-256 manifest.
-ARG BUN_VERSION=1.4.2
+ARG BUN_VERSION=1.4.4
 RUN case "$(uname -m)" in \
       x86_64) bun_archive=bun-linux-x64.zip ;; \
       aarch64|arm64) bun_archive=bun-linux-aarch64.zip ;; \

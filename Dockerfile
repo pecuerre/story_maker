@@ -16,7 +16,7 @@
 # anything, so an ARG beside it would be ignored silently. `test/deployment/pin_consistency_test.rb`
 # asserts this version is the one in `mise.toml`, because a Ruby bump has to move the version and the
 # digest together. Dependabot's `docker` ecosystem updates both.
-FROM docker.io/library/ruby:3.4.10-slim@sha256:b573616eed67613e1d380ebb777d87aa094fad7505bdbc2d1b45dca9dd9116b9 AS base
+FROM docker.io/library/ruby:3.4.12-slim@sha256:dd852d6dd55f5d283839e940aeb0394bb5f5a4f51295a4eee545f732c46d1b41 AS base
 
 # Rails app lives here
 WORKDIR /rails
@@ -44,7 +44,7 @@ FROM base AS build
 # at build time so a local build on Apple silicon still gets an arm64 Bun, and the archive is stored
 # under the name the manifest uses so `sha256sum --check` can verify it. A truncated or mismatched
 # download fails here instead of part-way through a CSS build.
-ARG BUN_VERSION=1.4.2
+ARG BUN_VERSION=1.4.4
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libvips libyaml-dev pkg-config unzip && \
     case "$(uname -m)" in \

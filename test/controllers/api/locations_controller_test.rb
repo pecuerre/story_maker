@@ -42,6 +42,12 @@ class Api::LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ location_tags(:location_tag_one).id ], body["location_tag_ids"]
     assert_nil body["parent_id"]
     assert_equal locations(:location_one).position, body["position"]
+    # Every profile answer is part of the record's JSON, including the ones this
+    # fixture leaves blank, so an API consumer sees the same shape for every place.
+    assert_equal "Gray light through a high window", body["sensory_sight"]
+    assert_equal "The first place the story leaves", body["significance"]
+    assert_nil body["sensory_sound"]
+    assert_equal Location::PROFILE_FIELDS.map(&:to_s).sort, (body.keys & Location::PROFILE_FIELDS.map(&:to_s)).sort
   end
 
   test "a token issued for one universe is refused on another" do

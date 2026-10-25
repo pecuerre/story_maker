@@ -196,24 +196,40 @@ class ModalFieldsHelperTest < ActionView::TestCase
     end
   end
 
-  test "the two nested-record editors are the same five descriptors" do
+  test "the two nested-record editors share the same core descriptors" do
     # Location and Section are the two editors that carry a parent selector and a
     # tag selector, and they are hand-maintained separately. They must stay the
     # same editor apart from which taxonomy the selector reads: the two pages
-    # share one reader, one tree, and one photo widget.
+    # share one reader, one tree, and one photo widget. Location alone appends
+    # its profile textareas after the photo.
     locations = location_taxonomy_fields([])
     sections = section_taxonomy_fields([])
 
-    assert_equal %w[name description parent_id location_tag_ids photo], locations.map { |field| field[:name] }
-    assert_equal %w[name description parent_id section_tag_ids photo], sections.map { |field| field[:name] }
-    assert_equal locations.map { |field| field[:type] }, sections.map { |field| field[:type] }
-    assert_equal locations.map { |field| field[:required] }, sections.map { |field| field[:required] }
+    assert_equal %w[name description parent_id], locations.first(3).map { |field| field[:name] }
+    assert_equal locations.first(3), sections.first(3)
+    assert_equal "location_tag_ids", locations[3][:name]
+    assert_equal "section_tag_ids", sections[3][:name]
+    assert_equal locations[4], sections[4], "the photo widget is the same descriptor"
+    assert_equal Location::PROFILE_FIELDS.map(&:to_s), locations.drop(5).map { |field| field[:name] }
+    assert_nil sections[5], "Section has no profile fields"
 
     [ locations, sections ].each do |fields|
       selector = fields.find { |field| field[:type] == "select" && field[:multiple] }
 
       assert selector, "the tag selector is a multiple select in both editors"
     end
+  end
+
+  test "the Location editor appends one named textarea per profile field" do
+    # The order is `Location::PROFILE_FIELDS`, so the details page, the filter,
+    # the search body, and the API present the same answers in the same order.
+    fields = location_taxonomy_fields([]).drop(5)
+
+    assert_equal Location::PROFILE_FIELDS.map(&:to_s), fields.map { |field| field[:name] }
+    assert fields.all? { |field| field[:type] == "textarea" }
+    assert_equal I18n.t("locations.form.sensory_sight"), fields.first[:label]
+    assert_equal I18n.t("locations.form.access_restrictions"), fields.last[:label]
+    assert fields.none? { |field| field[:required] }, "every profile answer is optional"
   end
 
   test "the nested-record tag selector offers the tag's id and its own name" do

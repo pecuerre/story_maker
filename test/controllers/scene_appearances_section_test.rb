@@ -11,8 +11,17 @@ class SceneAppearancesSectionTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
+  # A Location's page has two detail sections now — its own "Who is here" and
+  # "Appears in scenes" — so the links are read from the appearances section
+  # rather than from every section on the page.
+  def appearances_section
+    css_select("section.detail-section").find do |section|
+      section.at_css("h2")&.text&.squish&.start_with?("Appears in scenes")
+    end
+  end
+
   def appearance_links
-    css_select(".detail-section a.details-link").map { |link| link["href"] }
+    appearances_section.css("a.details-link").map { |link| link["href"] }
   end
 
   def section_titles

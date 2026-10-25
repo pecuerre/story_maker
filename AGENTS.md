@@ -36,6 +36,7 @@ the subject and read its owner:
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
 | Character profiles, Faction membership, and Character knowledge changes | [`docs/features/characters.md`](docs/features/characters.md) |
 | Universe-scoped Faction profiles and tags | [`docs/features/factions.md`](docs/features/factions.md) |
+| Location profile answers, presence, and the Locations workspace | [`docs/features/locations.md`](docs/features/locations.md) |
 | **Universe-scoped Routes** between Locations | [`docs/features/routes.md`](docs/features/routes.md) |
 | The read-only Map view of Locations and Routes | [`docs/features/map.md`](docs/features/map.md) |
 | The contract every in-list filter shares: narrowing, canonical queries, empty results, pending rows | [`docs/features/list_filters.md`](docs/features/list_filters.md) |

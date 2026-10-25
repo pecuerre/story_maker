@@ -3,30 +3,52 @@
   slug: winden
   location_tags: [ LocationTag.town ]
   photo: Photo.winden
+  significance: "The town at the center of the knot, where every family's choices echo across cycles."
+  sensory_sound: "Church bells, rain on cobbles, and the low hum of the nuclear plant at night."
+  sensory_smell: "Wet asphalt, pine, and the faint metallic tang carried down from the plant."
 
 - universe: Universe.dark
   name: Jonas House
   slug: jonas_house
   location_tags: [ LocationTag.house ]
   parent: Location.winden
+  layout_structure: "A narrow two-storey family house with a steep roof and a converted attic."
+  layout_key_areas: "Kitchen, living room, hallway, Jonas's room, and the attic studio."
+  layout_pathways: "A central hallway connects the front door to the kitchen and the stairs."
+  layout_entrances_exits: "Front door under the porch, a back door into the garden, and the cellar hatch."
+  history_past_occupants: "The Kahnwald family across several versions of the cycle."
 
 - universe: Universe.dark
   slug: jonas_room
   name: Jonas Room
   location_tags: [ LocationTag.room ]
   parent: Location.jonas_house
+  sensory_sight: "Posters, a crowded desk, and gray light through a single window."
+  sensory_sound: "Muffled voices from the kitchen and rain against the glass."
+  layout_points_of_interest: "The desk drawer where Jonas keeps the letter."
+  significance: "A private place where Jonas first tries to make sense of the cycles."
 
 - universe: Universe.dark
   slug: winden_cave
   name: Winden Cave
   location_tags: [ LocationTag.cave ]
   parent: Location.winden
+  sensory_smell: "Damp stone, wet earth, and a cold mineral smell."
+  sensory_sound: "Water dripping out of sight and the cave's long echo."
+  history_significant_events: "The passage to 1986 is found and used here."
+  history_changes: "Equipment and markings appear in the cave across different years."
+  access_controlled_by: "The cave belongs to the forest, though only a few know the way in."
+  access_security: "A padlocked grate and a narrow entrance that is easy to miss."
+  access_restrictions: "The tunnels flood after heavy rain."
 
 - universe: Universe.dark
   slug: winden_forest
   name: Winden Forest
   location_tags: [ LocationTag.forest ]
   parent: Location.winden
+  sensory_sight: "Dense pines, paths of wet needles, and the cave mouth hidden in the rock."
+  sensory_smell: "Resin, moss, and leaf mold."
+  access_restrictions: "The forest paths close after dark."
 
 - universe: Universe.dark
   slug: nielsen_house

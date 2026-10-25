@@ -66,6 +66,67 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_empty Location.order(:id).last.location_tags
   end
 
+  test "should create and return a location's profile answers" do
+    assert_difference("Location.count") do
+      post universe_locations_url(universe_slug: @universe.slug),
+        params: { location: { name: "Winden Cave", sensory_smell: "Damp stone",
+          history_significant_events: "The passage is found", access_security: "A padlocked grate" } },
+        as: :json
+    end
+
+    assert_response :created
+    location = Location.order(:id).last
+    assert_equal [ "Damp stone", "The passage is found", "A padlocked grate" ],
+      [ location.sensory_smell, location.history_significant_events, location.access_security ]
+    assert_equal "Damp stone", response.parsed_body["sensory_smell"]
+    assert_equal "A padlocked grate", response.parsed_body["access_security"]
+  end
+
+  test "every declared profile field is permitted and persisted by an update" do
+    # `Location::PROFILE_FIELDS` drives the editor and the page, while strong
+    # parameters list the keys by hand so `TranslationsTest` can see them. This is
+    # the assertion that the two lists agree.
+    answers = Location::PROFILE_FIELDS.to_h { |field| [ field, "answer for #{field}" ] }
+
+    patch universe_location_url(universe_slug: @universe.slug, id: @location),
+      params: { location: answers }, as: :json
+
+    assert_response :success
+    @location.reload
+    Location::PROFILE_FIELDS.each do |field|
+      assert_equal "answer for #{field}", @location.public_send(field), "#{field} was not persisted"
+      assert_equal "answer for #{field}", response.parsed_body[field.to_s]
+    end
+  end
+
+  test "the tree serializes the profile fields the browser builds the editor from" do
+    get universe_locations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    fields = JSON.parse(Nokogiri::HTML(response.body)
+      .at_css("[data-taxonomy-tree-modal-fields-value]")["data-taxonomy-tree-modal-fields-value"])
+    profile_fields = fields.select { |field| Location::PROFILE_FIELDS.map(&:to_s).include?(field["name"]) }
+
+    assert_equal Location::PROFILE_FIELDS.map(&:to_s), profile_fields.map { |field| field["name"] }
+    assert profile_fields.all? { |field| field["type"] == "textarea" }
+    assert_equal "Sensory: sight", profile_fields.first["label"]
+    assert profile_fields.none? { |field| field.key?("label_key") }, "the tree receives resolved labels only"
+  end
+
+  test "the details page lists every profile answer with its group and a blank message" do
+    @location.update!(sensory_sight: "Gray light through a high window", significance: "The first place the story leaves")
+
+    get universe_location_url(universe_slug: @universe.slug, id: @location)
+
+    assert_response :success
+    assert_select "dt", text: "Sensory: sight"
+    assert_select "dt", text: "Why it matters"
+    assert_select "dt", text: "Control and access: restrictions"
+    assert_includes fact_values, [ "Sensory: sight", "Gray light through a high window" ]
+    assert_includes fact_values, [ "Why it matters", "The first place the story leaves" ]
+    assert_includes fact_values, [ "Sensory: sound", "Not recorded yet." ]
+  end
+
   test "should reject location tags from another universe" do
     foreign_tag = location_tags(:location_tag_three)
     join_count = -> { ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM locations_location_tags") }
@@ -187,4 +248,13 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
       assert_select ".entity-description", text: /^in /, count: 0
     end
   end
+
+  private
+    # The identity block's [label, value] pairs, so an assertion can tie a value
+    # to the label it belongs to.
+    def fact_values
+      Nokogiri::HTML(response.body).css(".detail-fact").map do |fact|
+        [ fact.at_css("dt").text.strip, fact.at_css("dd").text.strip ]
+      end
+    end
 end

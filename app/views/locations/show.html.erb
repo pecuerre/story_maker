@@ -9,10 +9,14 @@
     detail_fact(t("locations.show.facts.tags"), entity_tag_badge(@location), blank: t("locations.show.facts.tags_blank")),
     detail_fact(t("locations.show.facts.parent"), @location.parent && @location.parent.name, blank: t("locations.show.facts.parent_blank")),
     detail_fact(t("locations.show.facts.children"), count_with_label(@location.children.size, "location"), blank: t("locations.show.facts.children_blank")),
-    detail_fact(t("locations.show.facts.description"), @location.description, blank: t("locations.show.facts.description_blank"))
+    detail_fact(t("locations.show.facts.description"), @location.description, blank: t("locations.show.facts.description_blank")),
+    *Location::PROFILE_FIELDS.map { |field|
+      detail_fact(t("locations.show.facts.#{field}"), @location.public_send(field), blank: t("locations.show.facts.blank"))
+    }
   ],
   back_url: universe_locations_path,
   back_label: t("locations.show.back_label"),
   actions: discussion_control(@location) %>
 
+<%= render "locations/presence", location: @location %>
 <%= render "scene_appearances/section", record: @location %>

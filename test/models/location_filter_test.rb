@@ -27,12 +27,14 @@ class LocationFilterTest < ActiveSupport::TestCase
     assert_equal Set.new([ "Location one", "Location two" ]), Set.new(apply(filter).map(&:name))
   end
 
-  test "free text matches the name or the description, ignoring case" do
-    @location_one.update!(description: "A keep on the coast")
+  test "free text matches the name, the description, or a profile answer, ignoring case" do
+    @location_one.update!(description: "A keep on the coast", sensory_smell: "Pipeweed and rain")
 
     assert_equal [ "Location one" ], apply(filter_for(q: "keep")).map(&:name)
     assert_equal [ "Location one" ], apply(filter_for(q: "KEEP")).map(&:name),
       "a search box ignores case"
+    assert_equal [ "Location one" ], apply(filter_for(q: "pipeweed")).map(&:name),
+      "a reader may remember only what the place smelled like"
     assert_equal [ "Location two" ], apply(filter_for(q: "Location two")).map(&:name)
     assert_empty apply(filter_for(q: "Location tag one")).map(&:name),
       "a tag is not searchable text"

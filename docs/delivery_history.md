@@ -29,6 +29,65 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-25
 
+- **[added]** **A Location's details page now says who is there, derived from Scene presence rather than stored.**
+  - **The decision.** The earlier profile slice left "who is here" pending because it is not a
+    property of a Location: the same place holds different people at different moments. The owner
+    chose to derive it from the existing Scene links instead of adding a second presence model. No
+    table, column, route, or mutation was added; a place's presence is a read.
+  - **The unit is the Scene, not a snapshot.** `LocationPresence` lists the Scenes of the current
+    Story that link the Location, in narrative order, and each row is that moment: the author's
+    `SceneLocation.role` for how the place is used, the participants, and the factions they bring.
+    A Scene with the Location but nobody in it is still a row, because the Scene still happens
+    there; a Location with no Scene in the Story says so.
+  - **Individuals are the existing union.** Participants come from the same two sources the Scene
+    Characters tab already reconciles — a stored `SceneCharacter` link and a derived Dialogue
+    speaker — and one person is one row even when both apply. The link's free-text role is shown as
+    the reason for being there; a speaker with no link and a linked person with no role each say so.
+    The union's grouped speaker query was extracted as `SceneParticipants.speaking_pairs`, so both
+    forward and reverse reads use one definition instead of two copies.
+  - **Factions are members, not a second link.** There is no Scene-Faction record (ADR 0033), so a
+    faction is present because a present Character belongs to it. The page states the consequence
+    in the docs: membership is read as it is now, and a faction with no named individual cannot
+    appear. The membership read is a single joined query because the scoped HABTM association
+    cannot be joined or eager-loaded.
+  - **A multi-Location Scene repeats its people.** A `SceneCharacter` names the Scene, never one of
+    its places, so a Scene that links two Locations reports the same participants at both. This is
+    a real boundary of the current model, documented rather than hidden; an author who needs two
+    groups at two places writes two Scenes.
+  - **Story scope and cost.** The section follows `Current.story` and never falls back, exactly as
+    "Appears in scenes" does; without a Story it asks for one. A fixed handful of grouped queries
+    answer the page regardless of how many Scenes link the place, and a query-count test pins that.
+  - **Verification.** `LocationPresenceTest` covers ordering, the source union, faction derivation,
+    empty Scenes, the multi-Location boundary, Story scope, and the fixed query count;
+    `LocationPresenceSectionTest` covers the rendered rows, the empty states, and the guest view;
+    the Spanish locale test covers the section's untranslated-story prompt.
+- **[added]** **A Location now carries a prose profile, and "who is here" was deliberately left with Scenes.**
+  - **The split.** The backlog request held two unrelated shapes of data: eighteen prose profile
+    answers about the place itself, and a live answer to who is currently there and why. The second is not a property
+    of a Location — the same place holds different people at different moments — so it belongs to the
+    Scene presence links that already record Character, Item, and Location participation. The profile
+    half shipped now; the scene-derived half is still pending, and the backlog item was trimmed rather
+    than deleted so its number keeps its meaning.
+  - **The columns.** Eighteen optional `text` columns group as sensory (five), layout (five),
+    significance (one), history (three), and control and access (four). Every one may be blank, matching
+    the project's rule that profile-like content is never required; the only real field remains the
+    name. `Location::PROFILE_FIELDS` is the ordered list the editor descriptors, details facts, filter
+    columns, search body, and API all read, so the next column is added once.
+  - **Two lists, on purpose.** Strong parameters name the eighteen attributes individually instead of
+    splatting the constant, because `TranslationsTest` scans `params.expect` for payload keys and proves
+    each has a locale label. A controller test writes every field through one update, which is the
+    assertion that the hand-written list and the constant cannot drift.
+  - **The page.** The details page renders the answers as ordinary `detail_fact` rows in the identity
+    grid, following the Character profile precedent instead of inventing a grouped profile section. The
+    labels carry their group (`Sensory: sight`, `Control and access: restrictions`) because the grid is
+    flat; an untouched answer uses the shared blank copy rather than a bare row.
+  - **Search and the API.** `Location#search_description` joins the description and every profile answer,
+    the list filter narrows by the same columns, and both the workspace JSON and the bearer-token API
+    return every field, blank ones included, so consumers see a stable shape.
+  - **Verification.** Model, filter, request, API, modal-descriptor, and Spanish-locale tests cover the
+    new fields; `UNIVERSE=dark|lotr bin/rails db:demo:check` passed, and `script/demo reset dark lotr`
+    rebuilt both local universes with populated and blank profiles. A system test edits two answers
+    through the browser-built tree modal and reads them back from the details page.
 - **[added]** **A development-only Compose onboarding path was built and verified.** `Dockerfile.dev` installs the pinned Ruby/Bun toolchain and builds CSS without using the production image's runtime entrypoint. Its first `docker compose up --build` exposed that the locked `selma` gem needs `libclang` for bindgen; adding `libclang-dev` made the gem bundle complete. `compose.yaml` publishes port 3000 on loopback, stores `storage/` in a project-scoped named volume, and checks `/up`. `bin/docker-dev-entrypoint` prepares the development schema, loads the Dark demo universe only when none exists, and starts Rails; it never resets the persistent volume. A fresh image and volume passed CSS, migration, demo-data (Dark with three Stories), persistence-mount, and HTTP 200 `/up` checks. Structural Minitest coverage also passes, and the matching backlog item and known finding were closed.
 - **[changed]** **The Compose development password is available on every container start.** The database stores only a password digest, so a later start could not repeat the one-time generated value. The development entrypoint now saves it with mode `0600` in the Compose-only storage volume, supplies it to the guarded demo loader, and prints the local sign-in on startup. The existing volume's password was carried over from its first-load log before recreating the container, so the demo accounts kept their working credential; no password was added to the checkout.
 - **[changed]** **The running Compose app now follows source and CSS edits.** Only `app/` and `lib/` are mounted from the checkout, keeping `.env`, Rails keys, and host storage out of the container. Foreman runs the existing Rails development server and CSS watcher together: Rails reloads application and autoloadable library code, and the watcher rebuilds Sass output as stylesheets change. Gem/Bun dependency and container configuration changes still require an image rebuild, which agent instructions now handle as part of the task. The browser still needs a refresh; no live browser reload service was added.

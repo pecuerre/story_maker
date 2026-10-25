@@ -3,6 +3,8 @@ location_one:
   name: Location one
   location_tags: location_tag_one
   slug: "location-one"
+  sensory_sight: "Gray light through a high window"
+  significance: "The first place the story leaves"
 
 location_two:
   universe: universe_one

@@ -1,0 +1,87 @@
+<%# Who is at this Location in the current Story, read from Scene presence. Like
+    "Appears in scenes", this is read-only navigation and renders for every access
+    level: a reader who may see this Location may see the Scenes of the same Story
+    that place it, and the Characters and Factions it names.
+
+    A Scene is the moment, so one row per Scene is the honest shape. The same
+    place may hold different people in two Scenes, and a Location link with no
+    participants is still a row: it records that the Scene happens here, which is
+    different from no one being recorded at all.
+
+    Without a current Story there is nothing to report rather than another Story's
+    Scenes, so the section says so and offers the story list. %>
+<% presence = LocationPresence.for(location, story: Current.story) %>
+<% story_selected = Current.story.present? %>
+<% empty_action = link_to(t("sidebar.all_stories"), universe_stories_path, class: "btn btn-primary") unless story_selected %>
+<% if story_selected %>
+  <% section_title = t("locations.presence.title", story: Current.story.name) %>
+  <% section_empty_title = t("locations.presence.empty_title", story: Current.story.name) %>
+  <% section_empty_description = t("locations.presence.empty_description") %>
+<% else %>
+  <% section_title = t("locations.presence.title_without_story") %>
+  <% section_empty_title = t("locations.presence.empty_title_without_story") %>
+  <% section_empty_description = t("locations.presence.empty_description_without_story") %>
+<% end %>
+<%= render "shared/detail_section",
+  title: section_title,
+  icon: "people",
+  count: presence.count,
+  count_label: "scene",
+  empty_title: section_empty_title,
+  empty_description: section_empty_description,
+  empty_action: empty_action do %>
+  <%# Only reachable with a current Story, because an entry cannot exist without
+      one. The total is the Story's own Scene count, used for the position label. %>
+  <% scene_total = Current.story.scenes.count %>
+  <div class="list-group list-group-flush">
+    <% presence.entries.each do |entry| %>
+      <div class="list-group-item entity-row d-flex align-items-start gap-3">
+        <div class="entity-copy flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge rounded-pill text-bg-light border"
+              aria-label="<%= t("shared.scene_position_aria", position: entry.scene.position + 1, total: scene_total) %>">
+              <%= entry.scene.position + 1 %>
+            </span>
+            <span class="entity-title">
+              <%= link_to entry.scene.name, universe_story_scene_path(story_id: Current.story, id: entry.scene), class: "text-break" %>
+            </span>
+            <%# The author's note on how this Scene uses the place, not a reason for
+                a person being here; the two are separate facts. %>
+            <% if entry.location_role.present? %>
+              <span class="badge rounded-pill text-bg-light border">
+                <%= t("locations.presence.location_role", role: entry.location_role) %>
+              </span>
+            <% end %>
+          </div>
+
+          <div class="entity-description">
+            <span class="fw-semibold"><%= t("locations.presence.factions") %></span>
+            <% if entry.factions.any? %>
+              <%= safe_join(entry.factions.map { |faction|
+                link_to(faction.name, universe_faction_path(universe_slug: Current.universe.slug, id: faction))
+              }, ", ") %>
+            <% else %>
+              <%= t("locations.presence.factions_blank") %>
+            <% end %>
+          </div>
+
+          <div class="entity-description">
+            <span class="fw-semibold"><%= t("locations.presence.individuals") %></span>
+            <% if entry.participants.any? %>
+              <%= safe_join(entry.participants.map { |participant|
+                safe_join([ link_to(participant.character.name, universe_character_path(id: participant.character)),
+                  " — #{location_presence_reason(participant)}" ])
+              }, "; ") %>
+            <% else %>
+              <%= t("locations.presence.individuals_blank") %>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+          <%= record_details_link universe_story_scene_path(story_id: Current.story, id: entry.scene), record: entry.scene %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

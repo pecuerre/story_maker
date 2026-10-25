@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_190000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -387,6 +387,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.integer "photo_id"
+    t.text "sensory_sight"
+    t.text "sensory_sound"
+    t.text "sensory_smell"
+    t.text "sensory_taste"
+    t.text "sensory_touch"
+    t.text "layout_structure"
+    t.text "layout_key_areas"
+    t.text "layout_pathways"
+    t.text "layout_entrances_exits"
+    t.text "layout_points_of_interest"
+    t.text "significance"
+    t.text "history_significant_events"
+    t.text "history_past_occupants"
+    t.text "history_changes"
+    t.text "access_controlled_by"
+    t.text "access_granted_how"
+    t.text "access_security"
+    t.text "access_restrictions"
     t.index ["parent_id"], name: "index_locations_on_parent_id"
     t.index ["photo_id"], name: "index_locations_on_photo_id"
     t.index ["universe_id"], name: "index_locations_on_universe_id"

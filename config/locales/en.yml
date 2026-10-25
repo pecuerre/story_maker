@@ -1886,6 +1886,28 @@ en:
     # descriptions sit under that title, and the second is the read-only one.
     empty_description: "Add a location, then drag rows to create parent and child places."
     read_only_empty_description: "No locations have been added yet."
+    # The modal is built with `form_with scope:`, so it has no model to read
+    # `human_attribute_name` from. The profile answers are optional prose and
+    # each one is a textarea; their order comes from `Location::PROFILE_FIELDS`.
+    form:
+      sensory_sight: "Sensory: sight"
+      sensory_sound: "Sensory: sound"
+      sensory_smell: "Sensory: smell"
+      sensory_taste: "Sensory: taste"
+      sensory_touch: "Sensory: touch"
+      layout_structure: "Layout: overall structure"
+      layout_key_areas: "Layout: key areas"
+      layout_pathways: "Layout: pathways"
+      layout_entrances_exits: "Layout: entrances and exits"
+      layout_points_of_interest: "Layout: points of interest"
+      significance: "Why it matters"
+      history_significant_events: "History: significant events"
+      history_past_occupants: "History: past occupants"
+      history_changes: "History: changes over time"
+      access_controlled_by: "Control and access: who controls it"
+      access_granted_how: "Control and access: how access is granted"
+      access_security: "Control and access: security measures"
+      access_restrictions: "Control and access: restrictions"
     # A Location has dependents, so each tree node carries its own cascade as the
     # `confirm_message` the shared taxonomy tree serializes. Same ADR-mandated
     # sentence as the Characters and Items lists.
@@ -1908,6 +1930,47 @@ en:
         children_blank: "No nested places yet."
         description: "Description"
         description_blank: "No description yet."
+        # The profile facts carry their group in the label, because the details
+        # page renders every fact in one grid and a bare "Sight" would not say
+        # what it describes. The editor's labels under `form` say the same thing.
+        sensory_sight: "Sensory: sight"
+        sensory_sound: "Sensory: sound"
+        sensory_smell: "Sensory: smell"
+        sensory_taste: "Sensory: taste"
+        sensory_touch: "Sensory: touch"
+        layout_structure: "Layout: overall structure"
+        layout_key_areas: "Layout: key areas"
+        layout_pathways: "Layout: pathways"
+        layout_entrances_exits: "Layout: entrances and exits"
+        layout_points_of_interest: "Layout: points of interest"
+        significance: "Why it matters"
+        history_significant_events: "History: significant events"
+        history_past_occupants: "History: past occupants"
+        history_changes: "History: changes over time"
+        access_controlled_by: "Control and access: who controls it"
+        access_granted_how: "Control and access: how access is granted"
+        access_security: "Control and access: security measures"
+        access_restrictions: "Control and access: restrictions"
+        blank: "Not recorded yet."
+    # Who is at this Location in the current Story, derived from Scene presence.
+    # One row per Scene, because a Scene is the moment presence is recorded at.
+    presence:
+      title: "Who is here in %{story}"
+      title_without_story: "Who is here"
+      empty_title: "No one is recorded here in %{story}"
+      empty_title_without_story: "Select a story to see who is here"
+      empty_description: "Presence comes from the scenes of the current story: link a character to a scene set here, and they will be listed with their faction and role."
+      empty_description_without_story: "Scenes belong to a story, so a shared location can only say who is there once a story is the current one. Pick a story to see the people and factions its scenes place here."
+      # The author's note on how the Scene uses the place, not a reason for a
+      # person being there; that reason is the individual's own role.
+      location_role: "Location role: %{role}"
+      factions: "Factions present:"
+      factions_blank: "No faction recorded."
+      individuals: "Notable individuals and why they are here:"
+      individuals_blank: "No individual recorded."
+      reason:
+        speaks: "speaks in this scene"
+        no_role: "no role recorded"
     tabs:
       locations: "Locations"
 
@@ -2933,6 +2996,24 @@ en:
         description: "Description"
         parent: "Parent location"
         location_tags: "Location tags"
+        sensory_sight: "Sensory: sight"
+        sensory_sound: "Sensory: sound"
+        sensory_smell: "Sensory: smell"
+        sensory_taste: "Sensory: taste"
+        sensory_touch: "Sensory: touch"
+        layout_structure: "Layout: overall structure"
+        layout_key_areas: "Layout: key areas"
+        layout_pathways: "Layout: pathways"
+        layout_entrances_exits: "Layout: entrances and exits"
+        layout_points_of_interest: "Layout: points of interest"
+        significance: "Why it matters"
+        history_significant_events: "History: significant events"
+        history_past_occupants: "History: past occupants"
+        history_changes: "History: changes over time"
+        access_controlled_by: "Control and access: who controls it"
+        access_granted_how: "Control and access: how access is granted"
+        access_security: "Control and access: security measures"
+        access_restrictions: "Control and access: restrictions"
       route:
         name: "Name"
         description: "Description"

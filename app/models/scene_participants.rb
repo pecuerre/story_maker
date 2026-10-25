@@ -54,22 +54,33 @@ class SceneParticipants
       grouped[scene_id] << character_id
     end
 
-    # Element-level roster speakers are one source; turns add line-attributed
-    # speakers. Keep the queries separate so each association proves its own
-    # scope, then deduplicate below where the union is formed.
-    Character.joins(:scene_elements)
+    speaking_pairs(scenes).each { |character_id, scene_id| grouped[scene_id] << character_id }
+
+    grouped.transform_values(&:uniq)
+  end
+
+  # Every `[character_id, scene_id]` pair derived from Dialogue for several
+  # Scenes at once, so a page that reads presence backwards costs a fixed number
+  # of queries rather than four per Scene.
+  #
+  # Element-level roster speakers are one source; turns add line-attributed
+  # speakers. The queries stay separate so each association proves its own scope,
+  # and the pair list is deduplicated because a Character may be both.
+  def self.speaking_pairs(scenes)
+    scene_ids = scenes.map(&:id)
+    return [] if scene_ids.empty?
+
+    roster = Character.joins(:scene_elements)
       .where(scene_elements: { scene_id: scene_ids })
       .distinct
       .pluck(:id, "scene_elements.scene_id")
-      .each { |character_id, scene_id| grouped[scene_id] << character_id }
 
-    SceneDialogueTurn.joins(:speaker, scene_element: :scene)
+    turns = SceneDialogueTurn.joins(:speaker, scene_element: :scene)
       .where(scenes: { id: scene_ids })
       .distinct
       .pluck(:speaker_id, "scenes.id")
-      .each { |character_id, scene_id| grouped[scene_id] << character_id }
 
-    grouped.transform_values(&:uniq)
+    (roster + turns).uniq
   end
 
   # The participants of one Scene, ordered by Character name. Explicit links and

@@ -168,6 +168,14 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     # A count and its record type, resolved with a `count:` from the locale, in
     # the same fact row as its own label.
     assert_includes fact_values, [ "Lugares hijos", "1 lugar" ]
+    # The profile labels are chrome, so they are Spanish; the answers are the
+    # author's own words and stay as written.
+    assert_includes fact_values, [ "Sensorial: vista", "Gray light through a high window" ]
+    assert_includes fact_values, [ "Sensorial: oído", "Todavía no se ha registrado." ]
+    # Presence is derived from Scenes, so without a selected Story the section
+    # asks for one in Spanish rather than falling back to a Story.
+    assert_select ".detail-section h2", text: "Quién está aquí"
+    assert_select ".empty-title", text: "Selecciona una historia para ver quién está aquí"
     assert_select ".page-actions a", text: "Todos los lugares"
   end
 

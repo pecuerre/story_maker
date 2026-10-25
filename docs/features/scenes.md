@@ -298,6 +298,11 @@ The section is scoped to `Current.story`. With no Story selected there is nothin
 section says so and offers the story list — the same explicit selection the sidebar asks for, never a
 fallback to the Universe's first Story.
 
+A Location's details page adds one step to this: its **Who is here** section names the participants
+and factions of each Scene that happens there. That section is owned by
+[features/locations.md](locations.md); it reads the same participation union and adds no second way
+to record presence.
+
 ## The Sections workspace's ungrouped block
 
 The Sections workspace keeps its taxonomy tree and adds an **Ungrouped scenes** list below it: only

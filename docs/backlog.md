@@ -51,34 +51,6 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-32. for locations do these changes
-  - sensory
-    - sight
-    - sound
-    - smell
-    - taste
-    - touch
-  - layout
-    - overall structure
-    - key areas
-    - pathways
-    - entrances and exits
-    - points of interest
-  - why it matters (significance of the location)
-  - who is here (this should probably be updated by each scene, reflecting the current presence of factions and individuals in the location at that moment and specially the reason)
-    - factions present
-    - notable individuals
-    - reasons for being here
-  - history
-    - significant events
-    - past occupants
-    - changes over time
-  - control and access
-    - who controls it
-    - how access is granted
-    - security measures
-    - restrictions
-
 33. for items
   - what it is
   - what is does

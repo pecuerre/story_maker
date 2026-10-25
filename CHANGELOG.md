@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Location presence.** The details page now answers who is at a place in the current Story, one row per Scene, naming factions, participants, and each person's role as the reason, all derived from Scene links with no new storage.
+- **Location profiles.** Adds eighteen optional prose answers covering sensory detail, layout, significance, history, and control and access, editable in the tree modal and shown on the details page, searchable, filterable, and returned by the API.
 - **Character profiles and knowledge records.** Replaces the Character description with structured profile fields, optional multi-Faction membership, and knowledge changes that capture when and from whom something was learned and whether it changes the Character's plan.
 - **Faction-to-faction relationships.** Adds directed, universe-scoped Faction links with optional names, descriptions, dates, details pages, HTML edits, soft-delete cascades, searchable records, and connected Dark/LOTR examples.
 - **Faction profiles and taxonomy.** Adds universe-scoped Factions, a `FactionTag` tree, searchable profiles and draft-aware JSON edits, with connected Dark/LOTR examples; Character membership and Faction relationships remain separate pending slices.
@@ -65,6 +67,8 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Location presence is documented.** `docs/features/locations.md` owns the Who is here rules, including the multi-Location Scene boundary, and `docs/features/scenes.md` links to it; the presence backlog item is complete.
+- **Location profiles are documented.** Adds `docs/features/locations.md` as the owner of the profile answers and the Locations workspace.
 - **A LOTR draft-based demo universe.** Adds a checked-in open draft with pending create, edit, and delete examples, while Dark remains direct; the backlog item is complete.
 - **Container onboarding is verified.** The clean-storage Compose startup passed its image, CSS, migration, demo-data, persistence, and `/up` checks; the backlog item and matching finding are closed.
 - **Compose credential persistence is documented.** The generated development password is stored only in the private volume and printed on container startup.

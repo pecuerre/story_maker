@@ -15,6 +15,10 @@
   slug: the_shire
   location_tags: [ LocationTag.region ]
   parent: Location.eriador
+  significance: "A quiet land the wider world has largely forgotten, and the place the Ring leaves first."
+  sensory_sight: "Green hills, tidy gardens, and round doors set into the slopes."
+  sensory_smell: "Pipeweed, cut grass, and bread from the village ovens."
+  history_past_occupants: "Hobbit families have farmed these hills for generations."
 
 - universe: Universe.lotr
   name: Hobbiton
@@ -22,12 +26,21 @@
   description: "The Shire village of the Baggins family."
   location_tags: [ LocationTag.village ]
   parent: Location.the_shire
+  layout_structure: "A village of smials built into a low hillside above a mill and a pond."
+  layout_key_areas: "Bag End, the Party Tree, the mill, and the Green Dragon."
+  layout_entrances_exits: "The East Road runs through the village and over the Water."
+  layout_points_of_interest: "Bag End's round green door."
 
 - universe: Universe.lotr
   name: Rivendell
   slug: rivendell
   location_tags: [ LocationTag.stronghold ]
   parent: Location.eriador
+  sensory_sound: "Waterfalls, wind in the pines, and songs in the halls at evening."
+  layout_structure: "Elven halls and terraces built along a gorge beneath the mountain road."
+  significance: "A refuge where the council decides the fate of the Ring."
+  access_granted_how: "The hidden path is known to the Elves and to travellers they guide."
+  access_security: "The valley is hard to find and guarded by watchful scouts."
 
 - universe: Universe.lotr
   name: Moria
@@ -35,6 +48,14 @@
   description: "The ancient Dwarf city beneath the Misty Mountains."
   location_tags: [ LocationTag.stronghold ]
   parent: Location.eriador
+  sensory_smell: "Dust, old iron, and deep water."
+  sensory_touch: "Cold stone, slick stairs, and air that leaves the skin damp."
+  history_significant_events: "The Dwarves delve too deep and the Balrog drives them out."
+  history_past_occupants: "The Dwarves of Khazad-dûm, and later the Orcs that occupy the halls."
+  history_changes: "Mines and bridges collapse, and the upper halls become a tomb."
+  access_controlled_by: "No one holds Moria when the Fellowship passes; Orcs and the Balrog hold its depths."
+  access_security: "Doors of stone, a guarded bridge, and the long dark."
+  access_restrictions: "The mines are impassable without light and a guide who knows the upper ways."
 
 - universe: Universe.lotr
   name: Rohan

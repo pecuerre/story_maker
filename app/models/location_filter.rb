@@ -12,7 +12,7 @@
 #
 # Query contract for `GET /u/:universe_slug/locations`:
 #
-#   `q`                free text over the location name and description
+#   `q`                free text over the location name, description, and profile
 #   `location_tag_id`  a Location Tag of this universe: a tag a reader can pick
 #
 # `location_tags` is every tag of the universe, **not** the assignable subset the
@@ -48,7 +48,8 @@ class LocationFilter < ListFilter
   # drag order (`position, id`) and this filter never reorders it.
   def apply(relation)
     relation = narrowed_by_tag(relation, location_tag)
-    relation = narrowed_by_text(relation, table: "locations", columns: %w[ name description ])
+    relation = narrowed_by_text(relation, table: "locations",
+      columns: %w[ name description ] + Location::PROFILE_FIELDS.map(&:to_s))
     relation
   end
 

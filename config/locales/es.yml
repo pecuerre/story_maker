@@ -1844,6 +1844,28 @@ es:
     # dos descripciones van bajo ese título, y la segunda es la de solo lectura.
     empty_description: "Añade un lugar y luego arrastra las filas para crear lugares padres e hijos."
     read_only_empty_description: "Todavía no se ha añadido ningún lugar."
+    # El modal se construye con `form_with scope:`, así que no tiene un modelo del
+    # que leer `human_attribute_name`. Las respuestas del perfil son prosa
+    # opcional y cada una es un textarea; su orden lo da `Location::PROFILE_FIELDS`.
+    form:
+      sensory_sight: "Sensorial: vista"
+      sensory_sound: "Sensorial: oído"
+      sensory_smell: "Sensorial: olfato"
+      sensory_taste: "Sensorial: gusto"
+      sensory_touch: "Sensorial: tacto"
+      layout_structure: "Estructura: estructura general"
+      layout_key_areas: "Estructura: zonas clave"
+      layout_pathways: "Estructura: pasillos y caminos"
+      layout_entrances_exits: "Estructura: entradas y salidas"
+      layout_points_of_interest: "Estructura: puntos de interés"
+      significance: "Por qué importa"
+      history_significant_events: "Historia: acontecimientos importantes"
+      history_past_occupants: "Historia: ocupantes anteriores"
+      history_changes: "Historia: cambios con el tiempo"
+      access_controlled_by: "Control y acceso: quién lo controla"
+      access_granted_how: "Control y acceso: cómo se concede el acceso"
+      access_security: "Control y acceso: medidas de seguridad"
+      access_restrictions: "Control y acceso: restricciones"
     # Un lugar tiene dependientes, así que cada nodo del árbol lleva su propia cascada
     # como el `confirm_message` que el árbol de taxonomías compartido serializa. La
     # misma frase que impone el ADR 0007 que usan las listas de personajes y objetos.
@@ -1866,6 +1888,48 @@ es:
         children_blank: "Todavía no hay lugares anidados."
         description: "Descripción"
         description_blank: "Todavía no hay descripción."
+        # Las fichas del perfil llevan su grupo en la etiqueta, porque la página
+        # de detalles las muestra todas en una sola rejilla y un simple «Vista»
+        # no diría qué describe. Las etiquetas cortas del editor están en `form`.
+        sensory_sight: "Sensorial: vista"
+        sensory_sound: "Sensorial: oído"
+        sensory_smell: "Sensorial: olfato"
+        sensory_taste: "Sensorial: gusto"
+        sensory_touch: "Sensorial: tacto"
+        layout_structure: "Estructura: estructura general"
+        layout_key_areas: "Estructura: zonas clave"
+        layout_pathways: "Estructura: pasillos y caminos"
+        layout_entrances_exits: "Estructura: entradas y salidas"
+        layout_points_of_interest: "Estructura: puntos de interés"
+        significance: "Por qué importa"
+        history_significant_events: "Historia: acontecimientos importantes"
+        history_past_occupants: "Historia: ocupantes anteriores"
+        history_changes: "Historia: cambios con el tiempo"
+        access_controlled_by: "Control y acceso: quién lo controla"
+        access_granted_how: "Control y acceso: cómo se concede el acceso"
+        access_security: "Control y acceso: medidas de seguridad"
+        access_restrictions: "Control y acceso: restricciones"
+        blank: "Todavía no se ha registrado."
+    # Quién está en este lugar en la historia actual, derivado de la presencia
+    # en las escenas. Una fila por escena, porque la escena es el momento en el
+    # que se registra la presencia.
+    presence:
+      title: "Quién está aquí en %{story}"
+      title_without_story: "Quién está aquí"
+      empty_title: "No hay nadie registrado aquí en %{story}"
+      empty_title_without_story: "Selecciona una historia para ver quién está aquí"
+      empty_description: "La presencia procede de las escenas de la historia actual: vincula un personaje a una escena situada aquí y aparecerá con su facción y su rol."
+      empty_description_without_story: "Las escenas pertenecen a una historia, así que un lugar compartido solo puede decir quién está allí cuando una historia es la actual. Elige una historia para ver las personas y las facciones que sus escenas sitúan aquí."
+      # La nota del autor sobre cómo la escena usa el lugar, no el motivo por el
+      # que hay una persona allí; ese motivo es el rol del propio individuo.
+      location_role: "Rol del lugar: %{role}"
+      factions: "Facciones presentes:"
+      factions_blank: "No hay ninguna facción registrada."
+      individuals: "Individuos notables y por qué están aquí:"
+      individuals_blank: "No hay ningún individuo registrado."
+      reason:
+        speaks: "habla en esta escena"
+        no_role: "sin rol registrado"
     tabs:
       locations: "Lugares"
 
@@ -2578,6 +2642,24 @@ es:
         description: "Descripción"
         parent: "Lugar padre"
         location_tags: "Etiquetas de lugares"
+        sensory_sight: "Sensorial: vista"
+        sensory_sound: "Sensorial: oído"
+        sensory_smell: "Sensorial: olfato"
+        sensory_taste: "Sensorial: gusto"
+        sensory_touch: "Sensorial: tacto"
+        layout_structure: "Estructura: estructura general"
+        layout_key_areas: "Estructura: zonas clave"
+        layout_pathways: "Estructura: pasillos y caminos"
+        layout_entrances_exits: "Estructura: entradas y salidas"
+        layout_points_of_interest: "Estructura: puntos de interés"
+        significance: "Por qué importa"
+        history_significant_events: "Historia: acontecimientos importantes"
+        history_past_occupants: "Historia: ocupantes anteriores"
+        history_changes: "Historia: cambios con el tiempo"
+        access_controlled_by: "Control y acceso: quién lo controla"
+        access_granted_how: "Control y acceso: cómo se concede el acceso"
+        access_security: "Control y acceso: medidas de seguridad"
+        access_restrictions: "Control y acceso: restricciones"
       route:
         name: "Nombre"
         description: "Descripción"

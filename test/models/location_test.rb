@@ -34,4 +34,30 @@ class LocationTest < ActiveSupport::TestCase
     assert location.update(universe: universes(:universe_two))
     assert_equal universes(:universe_two).id, location.reload.universe_id
   end
+
+  test "the search body includes the description and every profile answer" do
+    # Search is the one reader that must not miss a profile field, and reading
+    # the constant rather than a written list is what keeps a new column in it.
+    location = Location.new(universe: universes(:universe_one), name: "The Keep",
+      description: "An old keep",
+      sensory_smell: "Pipeweed", access_controlled_by: "The Wardens")
+
+    Location::PROFILE_FIELDS.each_with_index do |field, index|
+      location.public_send("#{field}=", "answer #{index}")
+    end
+
+    body = location.search_description
+
+    assert_includes body, "An old keep"
+    Location::PROFILE_FIELDS.each_with_index do |_field, index|
+      assert_includes body, "answer #{index}"
+    end
+    assert_not_includes body, "nil"
+  end
+
+  test "a blank profile is left out of the search body rather than joined as empty words" do
+    location = Location.create!(universe: universes(:universe_one), name: "Empty Keep", description: "Only a summary")
+
+    assert_equal "Only a summary", location.search_description
+  end
 end

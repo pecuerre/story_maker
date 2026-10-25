@@ -218,7 +218,7 @@ module ModalFields
   # option *value* is an id in both selectors, and the option *text* is the
   # author's own record name, so neither is translated — only the blank parent's
   # label and the two selectors' own labels are chrome.
-  def nested_record_taxonomy_fields(tags, parents = [], tag_field:, tag_label_key:)
+  def nested_record_taxonomy_fields(tags, parents = [], tag_field:, tag_label_key:, extra_fields: [])
     [
       {
         name: "name",
@@ -244,14 +244,24 @@ module ModalFields
         multiple: true,
         options: tags.map { |tag| [ tag.id, tag.name ] }
       },
-      photo_field
+      photo_field,
+      *extra_fields
     ].map { |field| modal_field(field) }
   end
 
+  # The nested-record editor plus the Location profile. The profile answers are
+  # plain optional prose, so each is one textarea and the labels are the
+  # workspace's own keys rather than the shared taxonomy ones.
+  #
+  # The fields are read from `Location::PROFILE_FIELDS` in its declared order, so
+  # the editor, the details page, the search body, and the API cannot drift apart.
   def location_taxonomy_fields(location_tags, locations = [])
     nested_record_taxonomy_fields(location_tags, locations,
       tag_field: "location_tag_ids",
-      tag_label_key: "modal_fields.location_tags")
+      tag_label_key: "modal_fields.location_tags",
+      extra_fields: Location::PROFILE_FIELDS.map { |field|
+        { name: field.to_s, label_key: "locations.form.#{field}", type: "textarea" }
+      })
   end
 
   def ownership_tag_taxonomy_fields(nodes = [])

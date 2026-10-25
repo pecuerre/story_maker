@@ -24,6 +24,7 @@ class Api::LocationsController < Api::BaseController
         id: location.id,
         name: location.name,
         description: location.description,
+        **Location::PROFILE_FIELDS.to_h { |field| [ field, location.public_send(field) ] },
         location_tag_ids: location.location_tag_ids,
         parent_id: location.parent_id,
         position: location.position

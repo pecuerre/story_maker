@@ -89,7 +89,9 @@ Rails.application.routes.draw do
     resources :locations, only: %i[ index show create update destroy ]
     resources :routes, only: %i[ index show create update destroy ]
     resources :character_tags, only: %i[ index show create update destroy ]
-    resources :characters, only: %i[ index show create update destroy ]
+    resources :characters, only: %i[ index show create update destroy ] do
+      resources :character_knowledges, path: "knowledge", only: %i[ create update destroy ]
+    end
     resources :faction_tags, only: %i[ index show create update destroy ]
     resources :factions, only: %i[ index show create update destroy ]
     resources :faction_relationships, only: %i[ index show create update destroy ]

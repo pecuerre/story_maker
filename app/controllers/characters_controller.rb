@@ -31,7 +31,7 @@ class CharactersController < ApplicationController
     return redirect_to_canonical_filtered_list if blank_filter_values?
 
     @characters = @list_filter.apply(
-      Current.universe.characters.includes(:character_tags, :relations_as_character1, :relations_as_character2, :ownerships)
+      Current.universe.characters.includes(:character_tags, :factions, :relations_as_character1, :relations_as_character2, :ownerships)
     )
     # The universe total is read only to say what the reader is looking at out
     # of, so the ordinary unfiltered visit costs no extra query for it. One
@@ -41,10 +41,11 @@ class CharactersController < ApplicationController
     flash_discarded_filter_values
   end
 
-  # GET /characters/:id — the record's own read-only details page. It identifies the
-  # record and is the destination of every "Details" link; later slices add
-  # the related-records sections without changing this URL.
+  # GET /characters/:id — the record's own read-only details page, with its
+  # related knowledge records under the same universe-scoped URL.
   def show
+    @character_knowledges = @character.character_knowledges.includes(:source_character).order(:created_at, :id)
+    @knowledge = Current.universe.character_knowledges.new(character: @character)
   end
 
   def create
@@ -94,6 +95,7 @@ class CharactersController < ApplicationController
   def set_character_tag_data
     @character_tags = Current.universe.character_tags.reorder(:position, :id).to_a
     @assignable_character_tags = @character_tags.select(&:taggable)
+    @factions = Current.universe.factions.order(:name, :id)
     @character_tag_paths = CharacterTagPaths.build(@character_tags)
   end
 
@@ -111,15 +113,24 @@ class CharactersController < ApplicationController
   end
 
   def character_params
-    params.expect(character: [ *photo_params, :name, :description, { character_tag_ids: [] }, :parent_id, :position ])
+    params.expect(character: [ *photo_params, :name, :at_a_glance, :wants, :needs, :lies_to_self,
+      :contradictions, :under_pressure_they, :never, { character_tag_ids: [] }, { faction_ids: [] },
+      :parent_id, :position ])
   end
 
   def character_json
     {
       id: @character.id,
       name: @character.name,
-      description: @character.description,
+      at_a_glance: @character.at_a_glance,
+      wants: @character.wants,
+      needs: @character.needs,
+      lies_to_self: @character.lies_to_self,
+      contradictions: @character.contradictions,
+      under_pressure_they: @character.under_pressure_they,
+      never: @character[:never],
       character_tag_ids: @character.character_tag_ids,
+      faction_ids: @character.faction_ids,
       parent_id: @character.parent_id,
       position: @character.position,
       url: universe_character_path(id: @character)

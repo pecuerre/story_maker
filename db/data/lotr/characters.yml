@@ -1,42 +1,54 @@
 - universe: Universe.lotr
   name: Frodo Baggins
   slug: frodo_baggins
-  description: "Hobbit Ring-bearer of the Fellowship."
+  at_a_glance: "Hobbit Ring-bearer of the Fellowship."
+  wants: "To return to the Shire and be left in peace."
+  needs: "To accept help and carry the Ring to its destruction."
+  lies_to_self: "The Ring's burden is his to bear alone."
+  contradictions: "He longs for home while choosing a path away from it."
+  under_pressure_they: "Endures pain quietly and keeps moving."
+  never: "Use the Ring to dominate another."
   character_tags: [ CharacterTag.hobbit, CharacterTag.fellowship_of_the_ring ]
+  factions: [ Faction.fellowship_of_the_ring ]
   photo: Photo.the_shire
 
 - universe: Universe.lotr
   name: Samwise Gamgee
   slug: samwise_gamgee
-  description: "Frodo's gardener and closest companion."
+  at_a_glance: "Frodo's gardener and closest companion."
   character_tags: [ CharacterTag.hobbit, CharacterTag.fellowship_of_the_ring ]
+  factions: [ Faction.fellowship_of_the_ring ]
 
 - universe: Universe.lotr
   name: Gandalf the Grey
   slug: gandalf_the_grey
-  description: "Wizard who leads the Fellowship out of the Shire."
+  at_a_glance: "Wizard who leads the Fellowship out of the Shire."
   character_tags: [ CharacterTag.man, CharacterTag.fellowship_of_the_ring ]
+  factions: [ Faction.fellowship_of_the_ring, Faction.white_council ]
 
 - universe: Universe.lotr
   name: Aragorn
   slug: aragorn
-  description: "Ranger of the North and heir to the throne of Gondor."
+  at_a_glance: "Ranger of the North and heir to the throne of Gondor."
   character_tags: [ CharacterTag.man, CharacterTag.rangers_of_the_north, CharacterTag.fellowship_of_the_ring ]
+  factions: [ Faction.fellowship_of_the_ring ]
 
 - universe: Universe.lotr
   name: Legolas
   slug: legolas
-  description: "Prince of the Woodland Realm."
+  at_a_glance: "Prince of the Woodland Realm."
   character_tags: [ CharacterTag.elf, CharacterTag.fellowship_of_the_ring ]
+  factions: [ Faction.fellowship_of_the_ring ]
 
 - universe: Universe.lotr
   name: Gimli
   slug: gimli
-  description: "Dwarf of the Lonely Mountain."
+  at_a_glance: "Dwarf of the Lonely Mountain."
   character_tags: [ CharacterTag.dwarf, CharacterTag.fellowship_of_the_ring ]
+  factions: [ Faction.fellowship_of_the_ring ]
 
 - universe: Universe.lotr
   name: Gollum
   slug: gollum
-  description: "Former owner of the One Ring."
+  at_a_glance: "Former owner of the One Ring."
   character_tags: [ CharacterTag.hobbit ]

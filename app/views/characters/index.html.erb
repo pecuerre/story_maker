@@ -65,8 +65,8 @@
                 <% ownership_count = character.ownerships.size %>
                 <%= record_count_badge(ownership_count, "ownership") if ownership_count.positive? %>
               </div>
-              <% if character.description.present? %>
-                <div class="entity-description"><%= character.description %></div>
+              <% if character.at_a_glance.present? %>
+                <div class="entity-description"><%= character.at_a_glance %></div>
               <% end %>
             </div>
 
@@ -142,10 +142,7 @@
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
-            <div>
-              <%= form.label :description, t("characters.form.description"), class: "form-label" %>
-              <%= form.text_area :description, class: "form-control", rows: 4 %>
-            </div>
+            <%= render "profile_fields", form: form, factions: @factions %>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>

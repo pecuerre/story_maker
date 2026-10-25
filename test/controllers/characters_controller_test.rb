@@ -39,7 +39,7 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
   # cannot is the page around it — the canonical URL, the two empty states, and
   # what a filter does to the reader's own pending rows.
   test "index renders a search area that narrows, orders, and stays in the URL" do
-    @character.update!(description: "The keeper of the gate")
+    @character.update!(at_a_glance: "The keeper of the gate")
     @universe.characters.create!(name: "A spare")
 
     get universe_characters_url(universe_slug: @universe.slug, q: "keeper", sort: "created")
@@ -234,13 +234,14 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
   test "should create character as json" do
     assert_difference("Character.count") do
       post universe_characters_url(universe_slug: @universe.slug),
-        params: { character: { name: "New character", description: "A description", character_tag_ids: [ @character_tag.id ] } },
+        params: { character: { name: "New character", at_a_glance: "A description", character_tag_ids: [ @character_tag.id ], faction_ids: [ factions(:faction_two).id ] } },
         as: :json
     end
 
     assert_response :created
     assert_equal [ @character_tag.id ], response.parsed_body["character_tag_ids"]
-    assert_equal "A description", Character.order(:id).last.description
+    assert_equal "A description", Character.order(:id).last.at_a_glance
+    assert_equal [ factions(:faction_two).id ], response.parsed_body["faction_ids"]
   end
 
   test "should create a character without tags" do
@@ -271,12 +272,12 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
 
   test "should update character details as json" do
     patch universe_character_url(universe_slug: @universe.slug, id: @character),
-      params: { character: { name: "Renamed", description: "Updated", character_tag_ids: [ @character_tag.id ] } },
+      params: { character: { name: "Renamed", at_a_glance: "Updated", character_tag_ids: [ @character_tag.id ] } },
       as: :json
 
     assert_response :success
     @character.reload
-    assert_equal [ "Renamed", "Updated", [ @character_tag.id ] ], [ @character.name, @character.description, @character.character_tag_ids ]
+    assert_equal [ "Renamed", "Updated", [ @character_tag.id ] ], [ @character.name, @character.at_a_glance, @character.character_tag_ids ]
   end
 
   test "the character delete confirmation states that scenes and other records remain" do
@@ -288,9 +289,9 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     # copy is carried by that control and must not be weakened.
     assert_select "button[data-action='modal-form#destroy'][data-modal-form-url=?][data-modal-form-confirm=?]",
       universe_character_path(universe_slug: @universe.slug, id: @character),
-      "Delete “#{@character.name}”? Its descendant characters, relations, ownerships, tag " \
-      "assignments, and links to scenes will be permanently removed. Scenes and other universe " \
-      "records will remain."
+      "Delete “#{@character.name}”? Its descendant characters, relations, ownerships, knowledge " \
+      "records, tag assignments, and links to scenes will be permanently removed. Scenes, factions, " \
+      "and other universe records will remain."
   end
 
   test "the character editor dropdown offers taggable tags only" do
@@ -299,6 +300,37 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "select[name='character[character_tag_ids][]'] option", text: "Character tag one"
     assert_select "select[name='character[character_tag_ids][]'] option", text: "Character tag two", count: 0
+  end
+
+  test "the character editor offers optional universe factions" do
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "select[name='character[faction_ids][]'] option", text: "Faction one"
+    assert_select "select[name='character[faction_ids][]'] option", text: "Other universe faction", count: 0
+  end
+
+  test "a character cannot be assigned a faction from another universe" do
+    post universe_characters_url(universe_slug: @universe.slug),
+      params: { character: { name: "Mis-scoped faction", faction_ids: [ factions(:faction_other_universe).id ] } },
+      as: :json
+
+    assert_response :unprocessable_content
+    assert_equal [ "must belong to the same universe" ], response.parsed_body["factions"]
+  end
+
+  test "character details show profile, faction, and knowledge records" do
+    @character.update!(at_a_glance: "A quick summary", wants: "The key")
+    knowledge = character_knowledges(:knowledge_one)
+
+    get universe_character_url(universe_slug: @universe.slug, id: @character)
+
+    assert_response :success
+    assert_includes response.body, "A quick summary"
+    assert_includes response.body, "The key"
+    assert_includes response.body, "Faction one"
+    assert_select "#character-knowledge-heading", text: "What this character knows"
+    assert_select "article", text: /#{Regexp.escape(knowledge.what_learned)}/
   end
 
   test "a show_in_menu tag appears as a workspace tab linking to its details page" do

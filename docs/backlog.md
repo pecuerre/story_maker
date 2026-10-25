@@ -51,23 +51,6 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-31. add to characters
-   - factions (characters usually will have one faction, but in some cases it can be zero or more than one)
-   - replace the description for
-     - at a glance
-     - wants
-     - needs
-     - lies about (to themselves)
-     - contradictions
-     - under pressure they
-     - never
-    - add also to characters
-      - state of knowledge
-        - when
-        - what it lears
-        - from whom
-        - does it change their plan?
-
 32. for locations do these changes
   - sensory
     - sight
@@ -96,7 +79,7 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
     - security measures
     - restrictions
 
-- for items
+33. for items
   - what it is
   - what is does
   - how it is used

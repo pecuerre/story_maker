@@ -62,6 +62,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
 
+  create_table "character_knowledges", force: :cascade do |t|
+    t.integer "universe_id", null: false
+    t.integer "character_id", null: false
+    t.integer "source_character_id"
+    t.string "when_text"
+    t.text "what_learned"
+    t.boolean "changes_plan", default: false, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id", "created_at"], name: "index_character_knowledges_on_character_id_and_created_at"
+    t.index ["character_id"], name: "index_character_knowledges_on_character_id"
+    t.index ["deleted_at"], name: "index_character_knowledges_on_deleted_at"
+    t.index ["source_character_id"], name: "index_character_knowledges_on_source_character_id"
+    t.index ["universe_id"], name: "index_character_knowledges_on_universe_id"
+  end
+
   create_table "character_tags", force: :cascade do |t|
     t.integer "universe_id", null: false
     t.string "name"
@@ -87,12 +104,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
     t.integer "parent_id"
     t.integer "universe_id", null: false
     t.integer "position", default: 0, null: false
-    t.text "description"
+    t.text "at_a_glance"
     t.string "slug", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
     t.integer "photo_id"
+    t.text "wants"
+    t.text "needs"
+    t.text "lies_to_self"
+    t.text "contradictions"
+    t.text "under_pressure_they"
+    t.text "never"
     t.index ["parent_id"], name: "index_characters_on_parent_id"
     t.index ["photo_id"], name: "index_characters_on_photo_id"
     t.index ["universe_id"], name: "index_characters_on_universe_id"
@@ -102,6 +125,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
     t.integer "character_id", null: false
     t.integer "character_tag_id", null: false
     t.index ["character_id", "character_tag_id"], name: "index_characters_character_tags_unique", unique: true
+  end
+
+  create_table "characters_factions", id: false, force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.integer "faction_id", null: false
+    t.index ["character_id", "faction_id"], name: "index_characters_factions_unique", unique: true
   end
 
   create_table "discussion_messages", force: :cascade do |t|
@@ -803,6 +832,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
   add_foreign_key "api_token_universes", "api_tokens"
   add_foreign_key "api_token_universes", "universes"
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "character_knowledges", "characters"
+  add_foreign_key "character_knowledges", "characters", column: "source_character_id"
+  add_foreign_key "character_knowledges", "universes"
   add_foreign_key "character_tags", "character_tags", column: "parent_id"
   add_foreign_key "character_tags", "photos", on_delete: :nullify
   add_foreign_key "character_tags", "universes"
@@ -811,6 +843,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
   add_foreign_key "characters", "universes"
   add_foreign_key "characters_character_tags", "character_tags"
   add_foreign_key "characters_character_tags", "characters"
+  add_foreign_key "characters_factions", "characters"
+  add_foreign_key "characters_factions", "factions"
   add_foreign_key "discussion_messages", "discussions"
   add_foreign_key "discussion_messages", "users"
   add_foreign_key "discussions", "universes"

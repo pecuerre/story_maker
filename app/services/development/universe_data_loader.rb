@@ -26,8 +26,10 @@ module Development
       character2
       from_faction
       to_faction
-      item
+      factions
       character
+      source_character
+      item
       before_event
       after_event
       simultaneous_event
@@ -613,11 +615,13 @@ module Development
         return unless record.definition.scope == :universe
 
         UNIVERSE_ASSOCIATION_FIELDS.each do |field|
-          association = record.resolved_attributes[field]
-          next if association.nil?
-          next if universe_for(association) == universe_for(record)
+          associations = record.resolved_attributes[field]
+          associations = associations.is_a?(Array) ? associations : [ associations ]
+          associations.compact.each do |association|
+            next if universe_for(association) == universe_for(record)
 
-          raise ValidationError, "#{record_label(record)} #{field} must belong to the same universe"
+            raise ValidationError, "#{record_label(record)} #{field} must belong to the same universe"
+          end
         end
       end
 

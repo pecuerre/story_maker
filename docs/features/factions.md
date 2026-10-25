@@ -65,17 +65,18 @@ flow, and draft-based Universes remember those mutations. The ordinary Universe 
 Its search document uses the optional name or directed endpoints as the title and its description as
 searchable body text.
 
-## Deliberately separate work
+## Character membership
 
-This feature does not record Character membership in Factions. That remains pending under the backlog
-heading **“add to characters”**.
+Characters may belong to zero, one, or several Factions. Membership is edited on the Character form;
+the many-to-many membership rules and the Character profile are owned by
+[characters.md](characters.md).
 
 ## Dark and LOTR examples
 
 Each registered Universe manifest has `faction_tags.yml`, `factions.yml`, and
-`faction_relationships.yml`. Tag definitions load before Factions, and Factions before their
-relationships, so symbolic references resolve in order. Dark demonstrates the Sic Mundus–Erit Lux
-conflict; LOTR demonstrates the Fellowship's alliance with the White Council.
+`faction_relationships.yml`. Tag definitions load before Factions, which load before Character
+membership and faction relationships so symbolic references resolve in order. Dark demonstrates the
+Sic Mundus–Erit Lux conflict; LOTR demonstrates the Fellowship's alliance with the White Council.
 
 To check and reload both local demo Universes after changing these manifests:
 

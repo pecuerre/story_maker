@@ -3,7 +3,7 @@
 #
 #   class Character < ApplicationRecord
 #     include Searchable
-#     searchable kind: "character", title: :name, body: :description, route: "character"
+#     searchable kind: "character", title: :name, body: :search_description, route: "character"
 #   end
 #
 # Each declaration produces one document in the shared index. The `kind` is the

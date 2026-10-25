@@ -160,8 +160,15 @@ module ModalFields
   def character_fields_json(character)
     {
       name: character.name,
-      description: character.description,
+      at_a_glance: character.at_a_glance,
+      wants: character.wants,
+      needs: character.needs,
+      lies_to_self: character.lies_to_self,
+      contradictions: character.contradictions,
+      under_pressure_they: character.under_pressure_they,
+      never: character[:never],
       character_tag_ids: character.character_tag_ids,
+      faction_ids: character.faction_ids,
       photo_url: record_photo_url(character)
     }.to_json
   end

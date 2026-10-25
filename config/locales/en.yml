@@ -1709,7 +1709,14 @@ en:
     # message reads, and the two are expected to say the same thing.
     form:
       name: "Name"
-      description: "Description"
+      at_a_glance: "At a glance"
+      wants: "Wants"
+      needs: "Needs"
+      lies_to_self: "Lies about (to themselves)"
+      contradictions: "Contradictions"
+      under_pressure_they: "Under pressure, they"
+      never: "Never"
+      factions_label: "Factions"
       tags_label: "Character tags"
     empty_title: "No characters yet"
     # The list has two empty states because it has two audiences, exactly as the
@@ -1727,7 +1734,7 @@ en:
       title: "Find characters"
       description: "A universe can hold hundreds of characters. Narrow the list by text or character tag, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
       search_label: "Search"
-      search_placeholder: "Name or description"
+      search_placeholder: "Name or profile"
       tag_label: "Character tag"
       all_tags: "All character tags"
       sort_label: "Order"
@@ -1760,7 +1767,7 @@ en:
     # exact sentence is mandated by ADR 0007 and must not be weakened here;
     # `name` is the author's own record name, so it is interpolated rather than
     # translated.
-    delete_confirm: "Delete “%{name}”? Its descendant characters, relations, ownerships, tag assignments, and links to scenes will be permanently removed. Scenes and other universe records will remain."
+    delete_confirm: "Delete “%{name}”? Its descendant characters, relations, ownerships, knowledge records, tag assignments, and links to scenes will be permanently removed. Scenes, factions, and other universe records will remain."
     show:
       label: "Character"
       back_label: "All characters"
@@ -1768,8 +1775,33 @@ en:
         universe: "Universe"
         tags: "Character tags"
         tags_blank: "No tags assigned. Tags are optional."
-        description: "Description"
-        description_blank: "No description yet."
+        factions: "Factions"
+        factions_blank: "No faction assigned."
+        at_a_glance: "At a glance"
+        wants: "Wants"
+        needs: "Needs"
+        lies_to_self: "Lies about (to themselves)"
+        contradictions: "Contradictions"
+        under_pressure_they: "Under pressure, they"
+        never: "Never"
+        blank: "Not recorded."
+    knowledge:
+      title: "What this character knows"
+      empty: "No knowledge changes recorded yet."
+      add: "Record a change in knowledge"
+      when: "When"
+      what_learned: "What they learn"
+      from_whom: "From whom"
+      unknown_source: "Unknown or not recorded"
+      changes_plan: "Does this change their plan?"
+      "yes": "Yes"
+      "no": "No"
+      save: "Save knowledge record"
+      delete: "Delete record"
+      delete_confirm: "Delete this knowledge record?"
+      created: "Knowledge record added."
+      updated: "Knowledge record updated."
+      deleted: "Knowledge record deleted."
     tabs:
       characters: "Characters"
       relations: "Relations"
@@ -2860,12 +2892,25 @@ en:
       # workspaces actually reaches.
       character:
         name: "Name"
-        description: "Description"
+        at_a_glance: "At a glance"
+        wants: "Wants"
+        needs: "Needs"
+        lies_to_self: "Lies about (to themselves)"
+        contradictions: "Contradictions"
+        under_pressure_they: "Under pressure, they"
+        never: "Never"
         parent: "Parent character"
         # The collection a form's `character_tag_ids` fills, named here because a
         # draft's page prints the remembered assignment by its association: the
         # editor knows "Character tags" and has never seen the writer's name.
         character_tags: "Character tags"
+        factions: "Factions"
+      character_knowledge:
+        when_text: "When"
+        what_learned: "What they learn"
+        source_character: "From whom"
+        source_character_id: "From whom"
+        changes_plan: "Does this change their plan?"
       faction:
         name: "Name"
         mission: "Public mission"

@@ -49,7 +49,7 @@ class ModalFieldsHelperTest < ActionView::TestCase
   # names the record's stored image so the shared photo control can show what it
   # is about to replace.
   SERIALIZED_KEYS = {
-    "character" => %w[name description character_tag_ids photo_url],
+    "character" => %w[name at_a_glance wants needs lies_to_self contradictions under_pressure_they never character_tag_ids faction_ids photo_url],
     "item" => %w[name description item_tag_ids photo_url],
     "event" => %w[title start_datetime end_datetime before_event_id after_event_id
                   simultaneous_event_id description event_tag_ids photo_url],

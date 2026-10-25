@@ -1,0 +1,6 @@
+- universe: Universe.lotr
+  character: Character.frodo_baggins
+  when_text: "At Bag End, before the Fellowship leaves"
+  what_learned: "The Ring is the One Ring, and it must be destroyed in Mordor."
+  source_character: Character.gandalf_the_grey
+  changes_plan: true

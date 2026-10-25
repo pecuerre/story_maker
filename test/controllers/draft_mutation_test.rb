@@ -44,6 +44,18 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       destroy: -> { universe_character_url(universe_slug: @universe.slug, id: @character.id) }
     },
     {
+      name: "character_knowledges", model: CharacterKnowledge, json: false, label: :what_learned,
+      scope: -> { [ "universe_id", @universe.id ] },
+      record: -> { @knowledge },
+      create: -> { [ universe_character_character_knowledges_url(universe_slug: @universe.slug,
+        character_id: @character.id), { character_knowledge: { when_text: NEW, what_learned: NEW } } ] },
+      update: -> { [ universe_character_character_knowledge_url(universe_slug: @universe.slug,
+        character_id: @character.id, id: @knowledge.id),
+        { character_knowledge: { when_text: RENAMED, what_learned: RENAMED } } ] },
+      destroy: -> { universe_character_character_knowledge_url(universe_slug: @universe.slug,
+        character_id: @character.id, id: @knowledge.id) }
+    },
+    {
       name: "locations", model: Location, json: true, label: :name,
       scope: -> { [ "universe_id", @universe.id ] },
       record: -> { @location },
@@ -283,6 +295,7 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     @story = stories(:story_one)
     @scene = scenes(:scene_one)
     @character = characters(:character_one)
+    @knowledge = character_knowledges(:knowledge_one)
     @other_character = characters(:character_two)
     @unlinked_character = characters(:character_three)
     @location = locations(:location_one)

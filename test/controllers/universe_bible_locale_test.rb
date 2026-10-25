@@ -40,7 +40,7 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir personaje"
     assert_select "h2.modal-title", text: "Nuevo personaje"
     assert_select "label[for=character_name]", text: "Nombre"
-    assert_select "label[for=character_description]", text: "Descripción"
+    assert_select "label[for=character_at_a_glance]", text: "A primera vista"
     assert_select "label[for=character_character_tag_ids]", text: "Etiquetas de personajes"
     assert_select "input[type=submit][value=?]", "Guardar personaje"
     assert_select ".modal-footer button[data-bs-dismiss=modal]", text: "Cancelar"
@@ -112,14 +112,14 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
       "Editar personaje"
     assert_select ".row-actions button[data-action='modal-form#destroy']", text: "Eliminar"
     assert_select ".row-actions button[data-action='modal-form#destroy'][data-modal-form-confirm=?]",
-      "¿Eliminar «Character one»? Sus personajes descendientes, relaciones, propiedades, " \
-      "asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas " \
-      "y otros registros del universo permanecerán."
+      "¿Eliminar «Character one»? Sus personajes descendientes, relaciones, propiedades, registros " \
+      "de conocimiento, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. " \
+      "Las escenas, facciones y otros registros del universo permanecerán."
   end
 
   test "a Character's own page states its facts in Spanish" do
     character = characters(:character_one)
-    character.update_column(:description, nil)
+    character.update_column(:at_a_glance, nil)
 
     get universe_character_url(universe_slug: @universe.slug, id: character)
 
@@ -128,8 +128,8 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".page-eyebrow", text: "Personaje"
     assert_select "dt", text: "Universo"
     assert_select "dt", text: "Etiquetas de personajes"
-    assert_select "dt", text: "Descripción"
-    assert_select ".detail-facts dd", text: "Todavía no hay descripción."
+    assert_select "dt", text: "A primera vista"
+    assert_select ".detail-facts dd", text: "Sin registrar."
     assert_select ".page-actions a", text: "Todos los personajes"
   end
 

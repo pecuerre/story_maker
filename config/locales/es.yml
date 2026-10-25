@@ -1664,7 +1664,14 @@ es:
     # que lee un mensaje de error, y se espera que las dos digan lo mismo.
     form:
       name: "Nombre"
-      description: "Descripción"
+      at_a_glance: "A primera vista"
+      wants: "Quiere"
+      needs: "Necesita"
+      lies_to_self: "Se miente sobre (a sí mismo/a)"
+      contradictions: "Contradicciones"
+      under_pressure_they: "Bajo presión, esta persona"
+      never: "Nunca"
+      factions_label: "Facciones"
       tags_label: "Etiquetas de personajes"
     empty_title: "Todavía no hay personajes"
     # La lista tiene dos estados vacíos porque tiene dos audiencias, igual que
@@ -1683,7 +1690,7 @@ es:
       title: "Buscar personajes"
       description: "Un universo puede tener cientos de personajes. Reduce la lista por texto o etiqueta de personaje, y elige el orden. Filtrar y ordenar solo cambian lo que muestra esta página; ninguno cambia ningún registro."
       search_label: "Buscar"
-      search_placeholder: "Nombre o descripción"
+      search_placeholder: "Nombre o perfil"
       tag_label: "Etiqueta de personaje"
       all_tags: "Todas las etiquetas de personajes"
       sort_label: "Orden"
@@ -1718,7 +1725,7 @@ es:
     # La frase exacta la impone el ADR 0007 y no debe debilitarse aquí; `name` es el
     # nombre del propio registro de la persona autora, así que se interpola en lugar
     # de traducirse.
-    delete_confirm: "¿Eliminar «%{name}»? Sus personajes descendientes, relaciones, propiedades, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas y otros registros del universo permanecerán."
+    delete_confirm: "¿Eliminar «%{name}»? Sus personajes descendientes, relaciones, propiedades, registros de conocimiento, asignaciones de etiquetas y enlaces a escenas se eliminarán de forma permanente. Las escenas, facciones y otros registros del universo permanecerán."
     show:
       label: "Personaje"
       back_label: "Todos los personajes"
@@ -1726,8 +1733,33 @@ es:
         universe: "Universo"
         tags: "Etiquetas de personajes"
         tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
-        description: "Descripción"
-        description_blank: "Todavía no hay descripción."
+        factions: "Facciones"
+        factions_blank: "No pertenece a ninguna facción."
+        at_a_glance: "A primera vista"
+        wants: "Quiere"
+        needs: "Necesita"
+        lies_to_self: "Se miente sobre (a sí mismo/a)"
+        contradictions: "Contradicciones"
+        under_pressure_they: "Bajo presión, esta persona"
+        never: "Nunca"
+        blank: "Sin registrar."
+    knowledge:
+      title: "Lo que sabe este personaje"
+      empty: "Aún no hay cambios de conocimiento registrados."
+      add: "Registrar un cambio de conocimiento"
+      when: "Cuándo"
+      what_learned: "Qué aprende"
+      from_whom: "De quién"
+      unknown_source: "Se desconoce o no se ha registrado"
+      changes_plan: "¿Cambia esto su plan?"
+      "yes": "Sí"
+      "no": "No"
+      save: "Guardar registro de conocimiento"
+      delete: "Eliminar registro"
+      delete_confirm: "¿Eliminar este registro de conocimiento?"
+      created: "Se ha añadido el registro de conocimiento."
+      updated: "Se ha actualizado el registro de conocimiento."
+      deleted: "Se ha eliminado el registro de conocimiento."
     tabs:
       characters: "Personajes"
       relations: "Relaciones"
@@ -2504,13 +2536,26 @@ es:
       # de estos espacios de trabajo.
       character:
         name: "Nombre"
-        description: "Descripción"
+        at_a_glance: "A primera vista"
+        wants: "Quiere"
+        needs: "Necesita"
+        lies_to_self: "Se miente sobre (a sí mismo/a)"
+        contradictions: "Contradicciones"
+        under_pressure_they: "Bajo presión, esta persona"
+        never: "Nunca"
         parent: "Personaje padre"
         # La colección que rellena el `character_tag_ids` de un formulario, con
         # nombre aquí porque la página de un borrador imprime la asignación
         # recordada por su asociación: quien edita conoce "Etiquetas de
         # personajes" y nunca ha visto el nombre del escritor.
         character_tags: "Etiquetas de personajes"
+        factions: "Facciones"
+      character_knowledge:
+        when_text: "Cuándo"
+        what_learned: "Qué aprende"
+        source_character: "De quién"
+        source_character_id: "De quién"
+        changes_plan: "¿Cambia esto su plan?"
       faction:
         name: "Nombre"
         mission: "Misión pública"

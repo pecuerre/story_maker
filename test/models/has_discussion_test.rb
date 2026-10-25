@@ -6,7 +6,7 @@ class HasDiscussionTest < ActiveSupport::TestCase
     Character CharacterTag Faction FactionTag FactionRelationship Location LocationTag Route Item ItemTag Event EventTag Relation RelationTag
     Ownership OwnershipTag
   ].freeze
-  NOT_DISCUSSIBLE_CONTENT = %w[ SceneDialogueTurn ].freeze
+  NOT_DISCUSSIBLE_CONTENT = %w[ CharacterKnowledge SceneDialogueTurn ].freeze
 
   test "every content and tag model carries exactly one thread, destroyed with its record" do
     DISCUSSIBLE.each do |name|

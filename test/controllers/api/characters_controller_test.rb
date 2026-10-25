@@ -39,21 +39,24 @@ class Api::CharactersControllerTest < ActionDispatch::IntegrationTest
     body = response.parsed_body
     assert_equal characters(:character_one).id, body["id"]
     assert_equal characters(:character_one).name, body["name"]
-    assert_nil body["description"]
+    assert_nil body["at_a_glance"]
   end
 
   test "create creates a character as json" do
     assert_difference("Character.count") do
       post api_universe_characters_url(universe_slug: @universe.slug),
-        params: { character: { name: "Api character", description: "Via the API" } },
+        params: { character: { name: "Api character", at_a_glance: "Via the API", wants: "A safe road",
+          faction_ids: [ factions(:faction_two).id ] } },
         headers: headers, as: :json
     end
 
     assert_response :created
     body = response.parsed_body
     assert_equal "Api character", body["name"]
-    assert_equal "Via the API", body["description"]
+    assert_equal "Via the API", body["at_a_glance"]
+    assert_equal "A safe road", body["wants"]
     assert_equal [], body["character_tag_ids"]
+    assert_equal [ factions(:faction_two).id ], body["faction_ids"]
     character = Character.find(body["id"])
     assert_equal @universe.id, character.universe_id
   end
@@ -64,6 +67,16 @@ class Api::CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("Character.count") do
       post api_universe_characters_url(universe_slug: @universe.slug),
         params: { character: { name: "Mis-scoped", character_tag_ids: [ foreign_tag.id ] } },
+        headers: headers, as: :json
+    end
+
+    assert_response :unprocessable_content
+  end
+
+  test "create rejects a Faction from another universe" do
+    assert_no_difference("Character.count") do
+      post api_universe_characters_url(universe_slug: @universe.slug),
+        params: { character: { name: "Mis-scoped faction", faction_ids: [ factions(:faction_other_universe).id ] } },
         headers: headers, as: :json
     end
 

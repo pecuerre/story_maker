@@ -12,6 +12,61 @@ class CharacterTest < ActiveSupport::TestCase
     assert Character.create!(universe: universes(:universe_one), name: "Untagged")
   end
 
+  test "faction memberships are optional and can include more than one faction" do
+    character = characters(:character_one)
+
+    character.update!(factions: [ factions(:faction_one), factions(:faction_two) ])
+
+    assert_equal [ factions(:faction_one), factions(:faction_two) ].sort_by(&:id), character.factions.sort_by(&:id)
+  end
+
+  test "does not assign a faction from another universe" do
+    character = characters(:character_one)
+    character.factions = [ factions(:faction_other_universe) ]
+
+    assert_not character.valid?
+    assert_includes character.errors[:factions], I18n.t("shared.errors.same_scope.universe")
+  end
+
+  test "faction reads hide a corrupt cross-universe join" do
+    character = characters(:character_one)
+    foreign_faction = factions(:faction_other_universe)
+    ActiveRecord::Base.connection.execute(<<~SQL.squish)
+      INSERT INTO characters_factions (character_id, faction_id)
+      VALUES (#{character.id}, #{foreign_faction.id})
+    SQL
+
+    assert_not_includes character.factions, foreign_faction
+  end
+
+  test "soft-deleting a character also soft-deletes its knowledge records" do
+    character = characters(:character_one)
+    knowledge = character_knowledges(:knowledge_one)
+
+    character.soft_delete
+
+    assert knowledge.reload.deleted?
+  end
+
+  test "hard-destroying a Character cleans up knowledge records even if already soft-deleted" do
+    character = characters(:character_one)
+    knowledge = character_knowledges(:knowledge_one)
+    knowledge.soft_delete
+
+    character.destroy!
+
+    assert_not CharacterKnowledge.with_deleted.exists?(knowledge.id)
+  end
+
+  test "hard-destroying a source Character clears that optional attribution" do
+    source = characters(:character_two)
+    knowledge = character_knowledges(:knowledge_one)
+
+    source.destroy!
+
+    assert_nil knowledge.reload.source_character_id
+  end
+
   test "soft-deleting a turn speaker preserves its attributed lines for restore" do
     character = characters(:character_three)
     turn = scene_dialogue_turns(:turn_one)

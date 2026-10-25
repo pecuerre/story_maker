@@ -217,7 +217,7 @@ class DraftApplierTest < ActiveSupport::TestCase
       change(action: "create", type: "Character", payload: { "name" => "First", "universe_id" => @universe.id })
     )
     conflicting = draft.draft_changes.first
-    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+    @character.update!(name: "Renamed by somebody else", at_a_glance: "Also changed by somebody else")
 
     result = DraftApplier.new(draft, answers: { conflicting.id => "theirs" }).apply
 
@@ -239,7 +239,7 @@ class DraftApplierTest < ActiveSupport::TestCase
   test "an answer of mine is stored beside a written state, because it was written" do
     draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
     conflicting = draft.draft_changes.first
-    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+    @character.update!(name: "Renamed by somebody else", at_a_glance: "Also changed by somebody else")
 
     DraftApplier.new(draft, answers: { conflicting.id => "mine" }).apply
 
@@ -289,7 +289,7 @@ class DraftApplierTest < ActiveSupport::TestCase
   test "an update answered with mine is written over a record that moved" do
     draft = draft_with(change(action: "update", record: @character, payload: { "name" => "Renamed" }))
     change = draft.draft_changes.first
-    @character.update!(name: "Renamed by somebody else", description: "Also changed by somebody else")
+    @character.update!(name: "Renamed by somebody else", at_a_glance: "Also changed by somebody else")
 
     result = DraftApplier.new(draft, answers: { change.id => "mine" }).apply
 
@@ -297,7 +297,7 @@ class DraftApplierTest < ActiveSupport::TestCase
     # "Overwrite with my change" is the change's own payload. A conflict is per
     # record, not per field, and the applier writes what the author remembered —
     # a field they never submitted is still the other editor's.
-    assert_equal "Also changed by somebody else", @character.description
+    assert_equal "Also changed by somebody else", @character.at_a_glance
     assert_predicate result, :complete?
     assert_equal 1, result.applied_count
     assert_equal({ change.id => "mine" }, result.answered)

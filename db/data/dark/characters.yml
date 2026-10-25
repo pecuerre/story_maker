@@ -1,11 +1,20 @@
 - universe: Universe.dark
   name: Jonas
   character_tags: [ CharacterTag.family_kahnwald, CharacterTag.sic_mundus ]
+  factions: [ Faction.sic_mundus ]
+  at_a_glance: "A young man caught in the knot's repeating cycles."
+  wants: "To prevent his father's suicide and save Martha."
+  needs: "To accept that certainty can make him part of the cycle."
+  lies_to_self: "He can end the cycle without becoming what he opposes."
+  contradictions: "He seeks freedom while following a path laid by older selves."
+  under_pressure_they: "Withholds what he knows and acts alone."
+  never: "Deliberately abandon Martha to the cycle."
   photo: Photo.the_tannhaus
 
 - universe: Universe.dark
   name: Martha
   character_tags: [ CharacterTag.family_nielsen, CharacterTag.erit_lux ]
+  factions: [ Faction.erit_lux ]
 
 - universe: Universe.dark
   name: Ulrich
@@ -37,3 +46,4 @@
 - universe: Universe.dark
   name: Bartosz
   character_tags: [ CharacterTag.sic_mundus ]
+  factions: [ Faction.sic_mundus ]

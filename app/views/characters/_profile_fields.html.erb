@@ -1,0 +1,33 @@
+<div class="mb-3">
+  <%= form.label :at_a_glance, t("characters.form.at_a_glance"), class: "form-label" %>
+  <%= form.text_area :at_a_glance, class: "form-control", rows: 3 %>
+</div>
+<div class="mb-3">
+  <%= form.label :wants, t("characters.form.wants"), class: "form-label" %>
+  <%= form.text_area :wants, class: "form-control", rows: 2 %>
+</div>
+<div class="mb-3">
+  <%= form.label :needs, t("characters.form.needs"), class: "form-label" %>
+  <%= form.text_area :needs, class: "form-control", rows: 2 %>
+</div>
+<div class="mb-3">
+  <%= form.label :lies_to_self, t("characters.form.lies_to_self"), class: "form-label" %>
+  <%= form.text_area :lies_to_self, class: "form-control", rows: 2 %>
+</div>
+<div class="mb-3">
+  <%= form.label :contradictions, t("characters.form.contradictions"), class: "form-label" %>
+  <%= form.text_area :contradictions, class: "form-control", rows: 2 %>
+</div>
+<div class="mb-3">
+  <%= form.label :under_pressure_they, t("characters.form.under_pressure_they"), class: "form-label" %>
+  <%= form.text_area :under_pressure_they, class: "form-control", rows: 2 %>
+</div>
+<div class="mb-3">
+  <%= form.label :never, t("characters.form.never"), class: "form-label" %>
+  <%= form.text_area :never, class: "form-control", rows: 2 %>
+</div>
+<div class="mb-3">
+  <%= form.label :faction_ids, t("characters.form.factions_label"), class: "form-label" %>
+  <%= form.collection_select :faction_ids, factions, :id, :name, {},
+    { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
+</div>

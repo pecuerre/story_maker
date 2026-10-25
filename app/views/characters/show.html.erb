@@ -4,13 +4,24 @@
   record: @character,
   eyebrow: t("sidebar.universe_bible"),
   label: t("characters.show.label"),
+  description: @character.at_a_glance || "",
   facts: [
     detail_fact(t("characters.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
     detail_fact(t("characters.show.facts.tags"), entity_tag_badge(@character), blank: t("characters.show.facts.tags_blank")),
-    detail_fact(t("characters.show.facts.description"), @character.description, blank: t("characters.show.facts.description_blank"))
+    detail_fact(t("characters.show.facts.factions"), safe_join(@character.factions.order(:name).map { |faction|
+      link_to(faction.name, universe_faction_path(universe_slug: Current.universe.slug, id: faction))
+    }, ", "), blank: t("characters.show.facts.factions_blank")),
+    detail_fact(t("characters.show.facts.at_a_glance"), @character.at_a_glance, blank: t("characters.show.facts.blank")),
+    detail_fact(t("characters.show.facts.wants"), @character.wants, blank: t("characters.show.facts.blank")),
+    detail_fact(t("characters.show.facts.needs"), @character.needs, blank: t("characters.show.facts.blank")),
+    detail_fact(t("characters.show.facts.lies_to_self"), @character.lies_to_self, blank: t("characters.show.facts.blank")),
+    detail_fact(t("characters.show.facts.contradictions"), @character.contradictions, blank: t("characters.show.facts.blank")),
+    detail_fact(t("characters.show.facts.under_pressure_they"), @character.under_pressure_they, blank: t("characters.show.facts.blank")),
+    detail_fact(t("characters.show.facts.never"), @character[:never], blank: t("characters.show.facts.blank"))
   ],
   back_url: universe_characters_path,
   back_label: t("characters.show.back_label"),
   actions: discussion_control(@character) %>
 
 <%= render "scene_appearances/section", record: @character %>
+<%= render "characters/knowledge", character: @character, knowledges: @character_knowledges, knowledge: @knowledge %>

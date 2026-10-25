@@ -34,6 +34,7 @@ the subject and read its owner:
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
+| Character profiles, Faction membership, and Character knowledge changes | [`docs/features/characters.md`](docs/features/characters.md) |
 | Universe-scoped Faction profiles and tags | [`docs/features/factions.md`](docs/features/factions.md) |
 | **Universe-scoped Routes** between Locations | [`docs/features/routes.md`](docs/features/routes.md) |
 | The read-only Map view of Locations and Routes | [`docs/features/map.md`](docs/features/map.md) |

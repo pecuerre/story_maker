@@ -1,0 +1,29 @@
+<% url = if knowledge.persisted?
+  universe_character_character_knowledge_path(universe_slug: Current.universe.slug, character_id: character, id: knowledge)
+else
+  universe_character_character_knowledges_path(universe_slug: Current.universe.slug, character_id: character)
+end %>
+<% namespace = knowledge.persisted? ? dom_id(knowledge) : "new_character_knowledge" %>
+<%= form_with model: knowledge, url: url, namespace: namespace, class: "d-grid gap-2" do |form| %>
+  <% if knowledge.errors.any? %>
+    <div class="alert alert-danger" role="alert"><%= knowledge.errors.full_messages.to_sentence %></div>
+  <% end %>
+  <div>
+    <%= form.label :when_text, t("characters.knowledge.when"), class: "form-label" %>
+    <%= form.text_field :when_text, class: "form-control", required: true %>
+  </div>
+  <div>
+    <%= form.label :what_learned, t("characters.knowledge.what_learned"), class: "form-label" %>
+    <%= form.text_area :what_learned, class: "form-control", rows: 3, required: true %>
+  </div>
+  <div>
+    <%= form.label :source_character_id, t("characters.knowledge.from_whom"), class: "form-label" %>
+    <%= form.collection_select :source_character_id, Current.universe.characters.order(:name), :id, :name,
+      { include_blank: t("characters.knowledge.unknown_source") }, { class: "form-select" } %>
+  </div>
+  <div class="form-check">
+    <%= form.check_box :changes_plan, class: "form-check-input" %>
+    <%= form.label :changes_plan, t("characters.knowledge.changes_plan"), class: "form-check-label" %>
+  </div>
+  <%= form.submit t("characters.knowledge.save"), class: "btn btn-primary btn-sm justify-self-start" %>
+<% end %>

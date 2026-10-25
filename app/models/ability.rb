@@ -39,6 +39,7 @@ class Ability
     SceneItem
     SceneLocation
     Character
+    CharacterKnowledge
     CharacterTag
     Faction
     FactionTag

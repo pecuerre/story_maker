@@ -2,6 +2,7 @@ character_one:
   universe: universe_one
   slug: "character-one"
   character_tags: character_tag_one
+  factions: faction_one
   name: Character one
 
 character_two:

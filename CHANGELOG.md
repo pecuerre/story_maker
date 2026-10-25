@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Character profiles and knowledge records.** Replaces the Character description with structured profile fields, optional multi-Faction membership, and knowledge changes that capture when and from whom something was learned and whether it changes the Character's plan.
 - **Faction-to-faction relationships.** Adds directed, universe-scoped Faction links with optional names, descriptions, dates, details pages, HTML edits, soft-delete cascades, searchable records, and connected Dark/LOTR examples.
 - **Faction profiles and taxonomy.** Adds universe-scoped Factions, a `FactionTag` tree, searchable profiles and draft-aware JSON edits, with connected Dark/LOTR examples; Character membership and Faction relationships remain separate pending slices.
 - **Development Compose onboarding.** Adds a separate development image and entrypoint, isolated persistent SQLite/upload storage, a loopback-only port, a CSS build, demo loading on first start, and an `/up` health check.

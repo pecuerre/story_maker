@@ -120,7 +120,7 @@ class MeilisearchIntegrationTest < ActiveSupport::TestCase
   end
 
   test "a search finds a record by its own words and not by its context's names" do
-    @character.update!(description: "A traveller with a grey hat")
+    @character.update!(at_a_glance: "A traveller with a grey hat")
     @universe.update!(name: "Zebulon")
     @backend.upsert(@character.search_document).await
 

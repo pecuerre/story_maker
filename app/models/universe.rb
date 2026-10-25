@@ -161,6 +161,7 @@ class Universe < ApplicationRecord
   has_many :routes, dependent: :destroy
   has_many :character_tags, dependent: :destroy
   has_many :characters, dependent: :destroy
+  has_many :character_knowledges, dependent: :destroy
   has_many :faction_tags, dependent: :destroy
   has_many :factions, dependent: :destroy
   has_many :faction_relationships, dependent: :destroy

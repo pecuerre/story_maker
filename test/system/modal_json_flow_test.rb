@@ -22,7 +22,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     click_button "Add character"
     within ".modal.show" do
       fill_in "Name", with: "Modal character"
-      fill_in "Description", with: "Saved as JSON."
+      fill_in "At a glance", with: "Saved as JSON."
       click_button "Save character"
     end
 
@@ -204,9 +204,11 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
 
     click_row_menu_action within_row(character.name), "Edit"
     within ".modal.show" do
-      assert_selector "[data-ts-item]", text: character_tags(:character_tag_one).name
-      find("[data-ts-item] [title='Remove']").click
-      assert_no_selector "[data-ts-item]"
+      within all(".ts-wrapper").first do
+        assert_selector "[data-ts-item]", text: character_tags(:character_tag_one).name
+        find("[data-ts-item] [title='Remove']").click
+        assert_no_selector "[data-ts-item]"
+      end
       click_button "Save character"
     end
     # The save replaces the page, so wait for the refreshed render before looking

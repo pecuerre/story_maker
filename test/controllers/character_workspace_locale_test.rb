@@ -28,7 +28,7 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Personajes"
     assert_select ".character-filter h2", text: "Buscar personajes"
     assert_select ".character-filter label[for=character_filter_q]", text: "Buscar"
-    assert_select ".character-filter input[name=q][placeholder=?]", "Nombre o descripción"
+    assert_select ".character-filter input[name=q][placeholder=?]", "Nombre o perfil"
     assert_select ".character-filter label[for=character_filter_character_tag_id]", text: "Etiqueta de personaje"
     assert_select ".character-filter label[for=character_filter_sort]", text: "Orden"
     assert_select ".character-filter input[type=submit][value=?]", "Filtrar personajes"
@@ -74,6 +74,16 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".empty-title", text: "Todavía no hay personajes"
+  end
+
+  test "the Character details knowledge section is Spanish" do
+    get universe_character_url(universe_slug: @universe.slug, id: @character)
+
+    assert_response :success
+    assert_select "#character-knowledge-heading", text: "Lo que sabe este personaje"
+    assert_select "label", text: "Qué aprende"
+    assert_select "label", text: "De quién"
+    assert_select "label", text: "¿Cambia esto su plan?"
   end
 
   test "a discarded filter value is reported in Spanish" do

@@ -58,15 +58,23 @@ class Api::CharactersController < Api::BaseController
     end
 
     def character_params
-      params.expect(character: [ :name, :description, { character_tag_ids: [] }, :parent_id, :position ])
+      params.expect(character: [ :name, :at_a_glance, :wants, :needs, :lies_to_self, :contradictions,
+        :under_pressure_they, :never, { character_tag_ids: [] }, { faction_ids: [] }, :parent_id, :position ])
     end
 
     def character_json(character)
       {
         id: character.id,
         name: character.name,
-        description: character.description,
+        at_a_glance: character.at_a_glance,
+        wants: character.wants,
+        needs: character.needs,
+        lies_to_self: character.lies_to_self,
+        contradictions: character.contradictions,
+        under_pressure_they: character.under_pressure_they,
+        never: character[:never],
         character_tag_ids: character.character_tag_ids,
+        faction_ids: character.faction_ids,
         parent_id: character.parent_id,
         position: character.position
       }

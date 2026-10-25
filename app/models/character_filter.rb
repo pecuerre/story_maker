@@ -9,7 +9,7 @@
 #
 # Query contract for `GET /u/:universe_slug/characters`:
 #
-#   `q`                free text over the character name and description
+#   `q`                free text over the character name and profile fields
 #   `character_tag_id` a Character Tag of this universe: a tag a reader can pick
 #   `sort`             one of `SORTS`, which is an allowlist rather than an order
 #
@@ -68,7 +68,9 @@ class CharacterFilter < ListFilter
   # reader's choice. The order is the last thing applied and is never persisted.
   def apply(relation)
     relation = narrowed_by_tag(relation, character_tag)
-    relation = narrowed_by_text(relation, table: "characters", columns: %w[ name description ])
+    relation = narrowed_by_text(relation, table: "characters", columns: %w[
+      name at_a_glance wants needs lies_to_self contradictions under_pressure_they never
+    ])
     sorted(relation)
   end
 

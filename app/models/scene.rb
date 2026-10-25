@@ -33,6 +33,10 @@ class Scene < ApplicationRecord
   has_many :scene_items, dependent: :destroy
   has_many :scene_locations, dependent: :destroy
   has_many :scene_tropes, dependent: :destroy
+  # The Tropes tab edits one assignment per request. The nested writer remains
+  # only so a Scene change remembered before that tab existed can still be
+  # applied: an older draft carries `scene_tropes_attributes` in its payload, and
+  # the applier writes it through this same model validation.
   accepts_nested_attributes_for :scene_tropes, allow_destroy: true,
     reject_if: ->(attributes) { attributes["id"].blank? && !ActiveModel::Type::Boolean.new.cast(attributes["selected"]) }
   before_validation :mark_unselected_scene_tropes_for_destruction
@@ -62,13 +66,6 @@ class Scene < ApplicationRecord
   validate :datetime_is_a_valid_point
   validate :scene_tag_assignments_are_valid
   validate :plot_assignments_are_valid
-
-  def build_trope_assignments
-    assigned_slugs = scene_tropes.map(&:trope_slug)
-    TropeCatalog.entries.each do |entry|
-      scene_tropes.build(trope_slug: entry.slug, selected: false) unless assigned_slugs.include?(entry.slug)
-    end
-  end
 
   # Active Record's generated collection-id writer raises when an optional tag id
   # is unknown. Scene Details accepts optional tag assignments, so turn that

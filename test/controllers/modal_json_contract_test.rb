@@ -56,16 +56,17 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:user_one))
   end
 
-  # The four Scene workspaces are story-scoped rather than universe-scoped, so
+  # The five Scene workspaces are story-scoped rather than universe-scoped, so
   # they are pinned by their own routes. Scene Elements are read on Scene Details
-  # and mutated through the same modal; the Characters, Items, and Locations tabs
-  # are their own pages.
+  # and mutated through the same modal; the Characters, Items, Locations, and
+  # Tropes tabs are their own pages.
   def scene_pages(universe_slug:, story:, scene:)
     {
       "scene details elements" => [ universe_story_scene_path(universe_slug: universe_slug, story_id: story, id: scene), "scene_element" ],
       "scene characters" => [ universe_story_scene_scene_characters_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_character" ],
       "scene items" => [ universe_story_scene_scene_items_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_item" ],
-      "scene locations" => [ universe_story_scene_scene_locations_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_location" ]
+      "scene locations" => [ universe_story_scene_scene_locations_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_location" ],
+      "scene tropes" => [ universe_story_scene_scene_tropes_path(universe_slug: universe_slug, story_id: story, scene_id: scene), "scene_trope" ]
     }
   end
 
@@ -206,6 +207,12 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     assert_no_difference("SceneLocation.count") do
       post universe_story_scene_scene_locations_url(universe_slug: @universe.slug, story_id: story, scene_id: scene),
         params: { scene_location: { location_id: @universe.locations.first.id } }
+    end
+    assert_response :not_acceptable
+
+    assert_no_difference("SceneTrope.count") do
+      post universe_story_scene_scene_tropes_url(universe_slug: @universe.slug, story_id: story, scene_id: scene),
+        params: { scene_trope: { trope_slug: "chekhovs-gun" } }
     end
     assert_response :not_acceptable
   end

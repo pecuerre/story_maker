@@ -133,7 +133,11 @@ export default class extends Controller {
     // just been replaced, not to this one.
     this.dismissOnShow = false
     this.focusSummaryOnShow = false
-    this.formTarget.querySelectorAll("select[multiple]").forEach((select) => {
+    // A form reset does not reset Tom Select's own control, so every enhanced
+    // select is cleared for the next row: a multi-select would otherwise keep
+    // the previous row's pills, and a single select would keep its previous
+    // choice. The values below then refill whichever ones this row carries.
+    this.formTarget.querySelectorAll("select").forEach((select) => {
       select.tomselect?.clear(true)
     })
     this.excludeEditedRecord(trigger)
@@ -146,6 +150,8 @@ export default class extends Controller {
         const selected = value.map(String)
         if (field.tomselect) field.tomselect.setValue(selected, true)
         else Array.from(field.options).forEach((option) => { option.selected = selected.includes(option.value) })
+      } else if (field.tomselect) {
+        field.tomselect.setValue(value == null ? "" : String(value), true)
       } else {
         field.value = value
       }
@@ -466,7 +472,14 @@ export default class extends Controller {
 
   labelFor(attribute) {
     const field = this.fieldFor(attribute)
-    const label = field?.id ? [ ...this.formTarget.querySelectorAll("label[for]") ].find((element) => element.htmlFor === field.id) : null
+    // Tom Select retargets the field's `<label for>` to its own visible control,
+    // so searching only for the native select's id finds nothing and falls back
+    // to the attribute name. Both ids are tried; the native one covers a plain
+    // select and the control one covers an enhanced select.
+    const ids = [ field?.id, field?.tomselect?.control_input?.id ].filter(Boolean)
+    const label = ids.length > 0
+      ? [ ...this.formTarget.querySelectorAll("label[for]") ].find((element) => ids.includes(element.htmlFor))
+      : null
     return (label?.textContent || attribute).replace(/\s*\*\s*$/, "").trim()
   }
 

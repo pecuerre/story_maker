@@ -486,7 +486,7 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       assert_select "a.active[aria-current=page][href=?]",
         universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene),
         text: "Scene Details"
-      # All four workspace tabs have real destinations now, so none is an
+      # All five workspace tabs have real destinations now, so none is an
       # aria-disabled placeholder and none is a dead link.
       {
         "Characters" => universe_story_scene_scene_characters_path(
@@ -496,6 +496,9 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
           universe_slug: @universe.slug, story_id: @story, scene_id: @scene
         ),
         "Locations" => universe_story_scene_scene_locations_path(
+          universe_slug: @universe.slug, story_id: @story, scene_id: @scene
+        ),
+        "Tropes" => universe_story_scene_scene_tropes_path(
           universe_slug: @universe.slug, story_id: @story, scene_id: @scene
         )
       }.each do |label, path|
@@ -617,53 +620,16 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene), count: 0
   end
 
-  test "should get new" do
+  test "the scene editor no longer renders the trope catalogue" do
     get new_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_response :success
     assert_select "h1", text: "New scene"
     assert_select "form[action=?]", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story)
-    assert_select "input[type=checkbox][name*='scene_tropes_attributes']", 10
-  end
-
-  test "scene editor saves a contextual trope detection" do
-    scene = scenes(:scene_two)
-
-    assert_difference("SceneTrope.count") do
-      patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scene), params: {
-        scene: {
-          scene_tropes_attributes: {
-            "0" => { trope_slug: "chekhovs-gun", selected: "1", context_note: "The detail pays off later." }
-          }
-        }
-      }
-    end
-
-    assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scene)
-    assert_equal "The detail pays off later.", scene.scene_tropes.find_by!(trope_slug: "chekhovs-gun").context_note
-  end
-
-  test "a Scene trope annotation is remembered and applied in draft mode" do
-    @universe.update!(collaboration_mode: "wikipedia")
-    scene = scenes(:scene_two)
-
-    assert_difference("DraftChange.count") do
-      patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scene), params: {
-        scene: {
-          scene_tropes_attributes: {
-            "0" => { trope_slug: "chekhovs-gun", selected: "1", context_note: "Drafted payoff note." }
-          }
-        }
-      }
-    end
-
-    change = DraftChange.order(:id).last
-    assert_equal "Scene", change.record_type
-    assert change.payload.key?("scene_tropes_attributes")
-
-    DraftApplier.new(change.draft).apply
-
-    assert_equal "Drafted payoff note.", scene.scene_tropes.find_by!(trope_slug: "chekhovs-gun").context_note
+    # Trope references are recorded on the Scene's own Tropes tab, one saved
+    # assignment at a time, so the form carries no catalogue of checkboxes.
+    assert_select "input[type=checkbox][name*='scene_tropes_attributes']", 0
+    assert_select "legend", text: "Trope references", count: 0
   end
 
   test "should create scene and redirect to the canonical destination" do

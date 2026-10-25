@@ -13,9 +13,9 @@
   `Scene`, `SectionTag`, and `SceneTag` (`Section belongs_to :story`, `Plot belongs_to :story`,
   `Scene belongs_to :story`,
   `SectionTag belongs_to :story`, `SceneTag belongs_to :story`, and `Story belongs_to :universe`). A
-  Scene's own components are narrower still: `SceneElement`, `SceneCharacter`, `SceneItem`, and
-  `SceneLocation` belong to a Scene and reach the Universe through it; `SceneDialogueTurn` belongs to
-  a `SceneElement` and delegates through that owner. A
+  Scene's own components are narrower still: `SceneElement`, `SceneCharacter`, `SceneItem`,
+  `SceneLocation`, and `SceneTrope` belong to a Scene and reach the Universe through it;
+  `SceneDialogueTurn` belongs to a `SceneElement` and delegates through that owner. A
   universe holds many
   stories (e.g. universe *A Song of Ice and Fire* → stories *Game of Thrones*, *House of the Dragon*),
   which share the universe's characters/factions/locations/events/items but each own their script structure,
@@ -295,12 +295,12 @@ the same change, or `db:demo:check` fails.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
      Characters, Factions, Locations, Items, Events, Sections, Plots, and the Scene-owned `SceneElementsController`,
-    `SceneDialogueTurnsController`, `SceneCharactersController`, `SceneItemsController`, and
-    `SceneLocationsController`. The page
+    `SceneDialogueTurnsController`, `SceneCharactersController`, `SceneItemsController`,
+    `SceneLocationsController`, and `SceneTropesController`. The page
     renders HTML; create/update/destroy are called by Stimulus with `Accept: application/json`.
      `SceneTagsController`, `CharactersController`, `FactionsController`, `ItemsController`, `EventsController`,
     `SceneElementsController`, `SceneDialogueTurnsController`, `SceneCharactersController`,
-    `SceneItemsController`, and `SceneLocationsController` also
+    `SceneItemsController`, `SceneLocationsController`, and `SceneTropesController` also
     include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
   - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, FactionRelationships, Ownerships, Routes, Universe
     memberships, Sessions, Passwords, Drafts, Review Requests.
@@ -340,7 +340,8 @@ the same change, or `db:demo:check` fails.
   `group_universe_story_scenes_path` for the Section grouping form. Scene-owned resources are nested
   inside `resources :scenes` and mounted at readable paths:
   `resources :scene_elements, path: "elements"`, `resources :scene_characters, path: "characters"`,
-  `resources :scene_items, path: "items"`, and `resources :scene_locations, path: "locations"`.
+  `resources :scene_items, path: "items"`, `resources :scene_locations, path: "locations"`, and
+  `resources :scene_tropes, path: "tropes"`.
 - **Path helpers must receive their keys explicitly** (`universe_story_path(id: story)`,
   `universe_story_sections_path(story_id: story)`): a positional record is assigned to the first
   path segment (`universe_slug`) and breaks the URL. The `universe_slug` itself is then filled in
@@ -423,8 +424,9 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   taxonomy tree's Details link stays canonical and omits them. Tag management uses
   `shared/_tag_workspace_navigation` under Configuration → Tags; it provides the Universe/Story
   scope tabs and the scope-specific taxonomy selector.
-- Driven by `modal_form_controller.js`; multi-selects use `data-controller="tom-select"`. The
-  controller's mutation contract is the one decided in
+- Driven by `modal_form_controller.js`; a select that needs a searchable picker uses
+  `data-controller="tom-select"` (a multi-select gets the pillbox with remove controls, a
+  single-select gets one searchable choice). The controller's mutation contract is the one decided in
   [ADR 0011](adr/0011-modal-json-mutation-contract.md), and every modal page declares it with
   `data-modal-form-response-value`:
   - **`json`** (characters, factions, items, events, Scene Elements, Scene Characters): the form carries
@@ -1585,7 +1587,8 @@ subsystems it shares helpers and Stimulus controllers with.
   by the server rather than client-side literals, for the reason in
   [features/i18n.md](features/i18n.md#a-string-the-browser-has-to-have); its only job beyond that is
   constructing the instance and releasing it on disconnect.
-- `tom_select_controller.js` — enhanced multi-selects (tom-select) for tag pickers.
+- `tom_select_controller.js` — enhanced single- and multi-selects (tom-select) for searchable pickers; a
+  multi-select keeps the pillbox and remove controls, and the server renders the option order.
 - `live_update_controller.js` — decides what happens when another reader's write arrives as a
   Turbo Stream refresh: it cancels Turbo's own handling and applies the refresh only when the page holds
   nothing unsent, otherwise it reveals the floating notice. It is described in

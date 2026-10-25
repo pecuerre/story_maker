@@ -712,6 +712,7 @@ module DraftsHelper
     # fetched again. `resolved` says which of the two the value already is.
     def draft_change_value(model, name, value, association, entry: nil, key: nil, resolved: false)
       return trope_assignment_summary(value) if trope_assignment_association(model, name)
+      return trope_reference_name(value) if model == SceneTrope && name.to_s == "trope_slug"
 
       if association.present?
         return association_names(association, value, entry: entry&.tags_for(key), resolved: resolved)
@@ -722,6 +723,13 @@ module DraftsHelper
       return value.to_sentence if value.is_a?(Array)
 
       value.presence || t("shared.detail_fact.blank")
+    end
+
+    # One stored catalogue reference as the reader sees it. A remembered Scene
+    # trope create carries the stable slug, which is a value rather than a name;
+    # the drafts and conflict pages print the catalogue's own label instead.
+    def trope_reference_name(value)
+      TropeCatalog.find(value)&.name || value.presence || t("shared.detail_fact.blank")
     end
 
     # Nested trope forms are one atomic Story/Scene mutation, but their payload is

@@ -195,6 +195,7 @@ module ClientStrings
     scene_element
     scene_item
     scene_location
+    scene_trope
   ].freeze
 
   class << self

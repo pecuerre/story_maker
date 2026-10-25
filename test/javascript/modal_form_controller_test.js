@@ -329,6 +329,28 @@ describe("modal form error rendering", () => {
     expect(controller.labelFor("nickname")).toBe("nickname")
   })
 
+  test("finds the label Tom Select retargeted to its own control", () => {
+    const { controller, form } = build(`
+      <form>
+        <div class="mb-3">
+          <label for="scene_trope_trope_slug">Trope</label>
+          <select id="scene_trope_trope_slug" name="scene_trope[trope_slug]">
+            <option value="">Choose a trope</option>
+            <option value="red-herring">Red Herring</option>
+          </select>
+        </div>
+      </form>
+    `)
+    controller.modelParamValue = "scene_trope"
+    const select = form.querySelector("select")
+    const label = form.querySelector("label")
+    label.htmlFor = "scene_trope_trope_slug-ts-control"
+    select.tomselect = { control_input: { id: "scene_trope_trope_slug-ts-control" } }
+
+    expect(controller.labelFor("trope_slug")).toBe("Trope")
+    expect(controller.describe("trope_slug", "has already been taken")).toBe("Trope has already been taken")
+  })
+
   test("a page without an error region still reports the rejection", async () => {
     const { controller, host } = build(formHtml, { withSummary: false })
     captureFetch(new Response(JSON.stringify({ errors: { name: [ "can't be blank" ] } }), { status: 422 }))
@@ -564,6 +586,76 @@ describe("modal form open", () => {
     expect(select.dataset.selected).toBe("2")
     expect(form.querySelector("#character_name").value).toBe("Lisbeth")
     expect(controller.modalShown).toBe(true)
+  })
+
+  test("fills a single-select through Tom Select and syncs its stored value", () => {
+    const { controller, form } = build(`
+      <form>
+        <select id="scene_trope_trope_slug" name="scene_trope[trope_slug]">
+          <option value="">Choose a trope</option>
+          <option value="red-herring">Red Herring</option>
+          <option value="chekhovs-gun">Chekhov’s Gun</option>
+        </select>
+        <textarea id="scene_trope_context_note" name="scene_trope[context_note]"></textarea>
+      </form>
+    `)
+    const select = form.querySelector("select")
+    const cleared = []
+    select.tomselect = {
+      clear: (silent) => cleared.push(silent),
+      setValue: (value) => { select.dataset.selected = value }
+    }
+    controller.modelParamValue = "scene_trope"
+    controller.createTitleValue = "Add trope"
+    controller.titleTarget = document.createElement("h5")
+    controller.modal = { show: () => {} }
+
+    controller.open({
+      preventDefault() {},
+      currentTarget: {
+        dataset: {
+          modalFormTitle: "Edit trope",
+          modalFormUrl: "/u/dark/s/1/scenes/1/tropes/1",
+          modalFormMethod: "patch",
+          modalFormValuesValue: JSON.stringify({
+            trope_slug: "chekhovs-gun",
+            context_note: "The detail pays off later."
+          })
+        }
+      }
+    })
+
+    // The native select is what the form submits, so its value has to be the one
+    // Tom Select shows; setting only the Tom Select instance would send the
+    // previous row's choice.
+    expect(cleared).toEqual([ true ])
+    expect(select.dataset.selected).toBe("chekhovs-gun")
+    expect(form.querySelector("#scene_trope_context_note").value).toBe("The detail pays off later.")
+  })
+
+  test("clears a single-select through Tom Select when a row has no values", () => {
+    const { controller, form } = build(`
+      <form>
+        <select id="scene_trope_trope_slug" name="scene_trope[trope_slug]">
+          <option value="">Choose a trope</option>
+          <option value="red-herring">Red Herring</option>
+        </select>
+      </form>
+    `)
+    const select = form.querySelector("select")
+    const cleared = []
+    select.tomselect = { clear: (silent) => cleared.push(silent), setValue: () => {} }
+    controller.modelParamValue = "scene_trope"
+    controller.createTitleValue = "Add trope"
+    controller.titleTarget = document.createElement("h5")
+    controller.modal = { show: () => {} }
+
+    controller.open({
+      preventDefault() {},
+      currentTarget: { dataset: { modalFormUrl: "/u/dark/s/1/scenes/1/tropes", modalFormValuesValue: "{}" } }
+    })
+
+    expect(cleared).toEqual([ true ])
   })
 })
 

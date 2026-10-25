@@ -299,7 +299,7 @@ outside its scope by construction.
 
 | Flow | Controllers | Behavior |
 |---|---|---|
-| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, factions, locations, items, events, sections, **scene_elements**, **scene_dialogue_turns**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; mutations answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
+| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, factions, locations, items, events, sections, **scene_elements**, **scene_dialogue_turns**, **scene_characters**, **scene_items**, **scene_locations**, **scene_tropes** | `index/new/show` render HTML; mutations answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
 | HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, faction relationships, ownerships, universe memberships, **settings**, **drafts**, **draft_editing**, **review_requests**, **notifications** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 
 Every PATCH and DELETE in the HTML flow sends `status: :see_other`; a `create` is a POST, so its
@@ -400,9 +400,9 @@ claims the browser rather than deciding what is written.
 
 `scene_elements` and `scene_dialogue_turns` have no read action at all, because Elements and turns are
 read on Scene Details; every one of their actions is a mutation and therefore authenticated.
-`scene_characters`, `scene_items`, and `scene_locations` mix the two: each `index` is a real HTML read
-page and each one's mutations are JSON-only, the same hybrid the Scene record flow is. No action
-accepts an ambiguous HTML-and-JSON mutation merely to make a form work.
+`scene_characters`, `scene_items`, `scene_locations`, and `scene_tropes` mix the two: each `index` is a
+real HTML read page and each one's mutations are JSON-only, the same hybrid the Scene record flow is.
+No action accepts an ambiguous HTML-and-JSON mutation merely to make a form work.
 
 ## UI structure
 

@@ -1,9 +1,9 @@
 <%# The Scene editor's URL-backed workspace tabs. Every tab is its own canonical
-    request, never an in-document Bootstrap pane. All four workspace tabs now
-    have a real destination, so each is a link rather than an aria-disabled
-    placeholder, and no tab ever links to a route that does not exist yet.
+    request, never an in-document Bootstrap pane. All five workspace tabs have a
+    real destination, so each is a link rather than an aria-disabled placeholder,
+    and no tab ever links to a route that does not exist yet.
 
-    A tab label is the name of the workspace it opens, so the three sibling tabs
+    A tab label is the name of the workspace it opens, so the four sibling tabs
     read the sibling workspaces' own titles rather than a hand-written copy that
     could drift from them; only **Scene Details**, which has no sibling workspace,
     is named here. %>
@@ -18,5 +18,7 @@
     { label: t("items.title"), path: universe_story_scene_scene_items_path(story_id: @story, scene_id: @scene),
       active: @scene_tab == "items" },
     { label: t("locations.title"), path: universe_story_scene_scene_locations_path(story_id: @story, scene_id: @scene),
-      active: @scene_tab == "locations" }
+      active: @scene_tab == "locations" },
+    { label: t("tropes.title"), path: universe_story_scene_scene_tropes_path(story_id: @story, scene_id: @scene),
+      active: @scene_tab == "tropes" }
   ] %>

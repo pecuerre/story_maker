@@ -58,7 +58,6 @@ class ScenesController < ApplicationController
   # GET /u/:universe_slug/s/:story_id/scenes/new
   def new
     @scene = @story.scenes.new
-    @scene.build_trope_assignments
   end
 
   # POST /u/:universe_slug/s/:story_id/scenes
@@ -74,7 +73,6 @@ class ScenesController < ApplicationController
             notice: t("scenes.flash.created")
         end
       else
-        @scene.build_trope_assignments
         format.html { render :new, status: :unprocessable_content }
       end
     end
@@ -83,7 +81,6 @@ class ScenesController < ApplicationController
   # GET /u/:universe_slug/s/:story_id/scenes/:id/edit
   def edit
     @scene_tab = "details"
-    @scene.build_trope_assignments
   end
 
   # PATCH/PUT /u/:universe_slug/s/:story_id/scenes/:id
@@ -99,7 +96,6 @@ class ScenesController < ApplicationController
             status: :see_other
         end
       else
-        @scene.build_trope_assignments
         format.html { render :edit, status: :unprocessable_content }
       end
     end
@@ -168,7 +164,7 @@ class ScenesController < ApplicationController
   end
 
   def set_scene
-    @scene = @story.scenes.includes(:scene_tags, :pov_character).find(params.expect(:id))
+    @scene = @story.scenes.includes(:scene_tags, :scene_tropes, :pov_character).find(params.expect(:id))
   end
 
   # The grouping form posts the chosen scene next to the chosen group, so the
@@ -244,8 +240,7 @@ class ScenesController < ApplicationController
 
   def scene_params
     params.expect(scene: [ *photo_params, :name, :description, :section_id, :event_id, :datetime, :pov_character_id,
-      { scene_tag_ids: [], plot_ids: [],
-        scene_tropes_attributes: [ [ :id, :trope_slug, :selected, :context_note, :_destroy ] ] } ])
+      { scene_tag_ids: [], plot_ids: [] } ])
   end
 
   def move_direction

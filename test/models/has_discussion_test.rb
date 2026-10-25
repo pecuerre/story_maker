@@ -6,7 +6,7 @@ class HasDiscussionTest < ActiveSupport::TestCase
     Character CharacterTag Faction FactionTag FactionRelationship Location LocationTag Route Item ItemTag Event EventTag Relation RelationTag
     Ownership OwnershipTag
   ].freeze
-  NOT_DISCUSSIBLE_CONTENT = %w[ CharacterKnowledge SceneDialogueTurn ].freeze
+  NOT_DISCUSSIBLE_CONTENT = %w[ CharacterKnowledge SceneDialogueTurn SceneTrope ].freeze
 
   test "every content and tag model carries exactly one thread, destroyed with its record" do
     DISCUSSIBLE.each do |name|
@@ -23,6 +23,7 @@ class HasDiscussionTest < ActiveSupport::TestCase
       "a newly registered content class must be decided here, not inherit the list"
     assert_nil Photo.reflect_on_association(:discussion)
     assert_nil SceneDialogueTurn.reflect_on_association(:discussion)
+    assert_nil SceneTrope.reflect_on_association(:discussion)
   end
 
   test "find_or_create_discussion is the same thread every time" do

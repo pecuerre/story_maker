@@ -290,7 +290,6 @@ class AbilityTest < ActiveSupport::TestCase
       "Discussion" => "authorized through the record it is about, never on its own",
       "DiscussionMessage" => "reachable only through its discussion's record scope",
       "StoryTrope" => "a nested annotation written only through its authorized Story",
-      "SceneTrope" => "a nested annotation written only through its authorized Scene",
       # A draft is one author's pending changes, not something the universe
       # publishes. Registering it as content would let the content rules answer
       # `read` for a guest in a public universe — exactly the wrong answer for

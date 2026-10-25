@@ -260,6 +260,9 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "nav.content-tabs a[href=?]",
       universe_story_scene_scene_locations_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene),
       text: "Lugares"
+    assert_select "nav.content-tabs a[href=?]",
+      universe_story_scene_scene_tropes_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene),
+      text: "Tropos"
   end
 
   test "the Scene editor labels, hints, and submit buttons are Spanish" do
@@ -450,6 +453,39 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".row-actions button[data-modal-form-confirm=?]",
       "¿Quitar Location one de Scene one? El lugar sigue en el universo, con sus lugares anidados, y " \
       "en todas las demás escenas."
+  end
+
+  test "the Tropes tab and its editor are Spanish" do
+    get universe_story_scene_scene_tropes_url(universe_slug: @universe.slug, story_id: @story, scene_id: @scene)
+
+    assert_response :success
+    assert_equal "Tropos en Scene one", rendered_title
+    assert_select "h1", text: "Tropos"
+    assert_select ".page-eyebrow", text: "Escena: Scene one"
+    assert_select ".page-header .badge[aria-label=?]", "1 tropo"
+    assert_select "button[data-action='modal-form#open']", text: "Añadir tropo"
+    # The row names the catalogue's own reference and states the author's note.
+    assert_select ".entity-list .entity-title", text: "Red Herring"
+    assert_select ".entity-description", text: /Nota de contexto: This scene plants the misleading clue\./
+    # The reference's description and craft note are the catalogue's translated
+    # chrome, not the author's data.
+    assert_includes response.body, "Una pista apunta de forma convincente"
+    assert_select "label[for=scene_trope_trope_slug]", text: "Tropo"
+    assert_select "select[name='scene_trope[trope_slug]'] option[value='']", text: "Elige un tropo"
+    assert_select "label[for=scene_trope_context_note]", text: "Nota de contexto"
+    assert_select "input[type=submit][value=?]", "Guardar tropo"
+    assert_select ".row-actions button[data-modal-form-title=?]", "Editar tropo"
+    assert_select ".row-actions button[data-modal-form-confirm=?]",
+      "¿Quitar Red Herring de Scene one? La referencia compartida sigue en el catálogo y se puede volver a añadir."
+  end
+
+  test "an empty Tropes tab explains itself in Spanish" do
+    get universe_story_scene_scene_tropes_url(universe_slug: @universe.slug, story_id: @story,
+      scene_id: scenes(:scene_two))
+
+    assert_response :success
+    assert_select ".empty-title", text: "Todavía no hay tropos registrados en esta escena"
+    assert_select ".empty-description", text: /El catálogo es compartido por todas las historias y escenas/
   end
 
   test "an empty presence tab explains itself in Spanish" do

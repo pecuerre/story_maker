@@ -38,6 +38,7 @@ class Ability
     SceneCharacter
     SceneItem
     SceneLocation
+    SceneTrope
     Character
     CharacterKnowledge
     CharacterTag

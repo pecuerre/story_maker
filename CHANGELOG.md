@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Scene Tropes tab.** Scene tropes move out of the oversized editor stack into their own workspace tab, which lists only the references the scene carries and offers the catalogue through an add picker with context notes.
 - **Dropping one remembered change.** Each change on a draft's page now has a confirmed drop control that removes it from a working draft, so one unreadable change no longer forces **Discard** of the whole draft.
 - **Item profiles.** Adds nine optional prose answers covering function, use, side effects, origin, value, limits, constraints, history, and jargon, editable in the modal and shown on the details page with current and previous owners, searchable, filterable, and returned by the API.
 - **Location presence.** The details page now answers who is at a place in the current Story, one row per Scene, naming factions, participants, and each person's role as the reason, all derived from Scene links with no new storage.
@@ -56,6 +57,8 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Searchable alphabetical trope picker.** The Scene Tropes editor sorts the catalogue by name and turns the select into a Tom Select control with a search field, so a growing catalogue stays browsable.
+- **Scene trope assignments are independent draft records.** Adding, annotating, or removing one on the new tab is remembered as a `SceneTrope` change rather than a nested Scene payload; an older remembered nested payload still applies.
 - **Compose reloads application code and rebuilds CSS on edits.** The development container mounts `app/` and `lib/`, runs Rails with development reloading, and starts the CSS watcher alongside the server.
 - **Compose repeats the local demo sign-in on startup.** The generated password is stored with mode `0600` in the project volume and printed when the container starts, rather than being available only in first-load output.
 

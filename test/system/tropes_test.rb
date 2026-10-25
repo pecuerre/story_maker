@@ -19,14 +19,21 @@ class TropesTest < ApplicationSystemTestCase
     assert_link "Red Herring", href: TropeCatalog.find("red-herring").source_url
     assert_text "The Story's clue has a deliberate payoff."
 
-    visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
-    within "[data-trope-slug='chekhovs-gun']" do
-      check "Chekhov’s Gun"
+    visit universe_story_scene_scene_tropes_path(universe_slug: universe.slug, story_id: story, scene_id: scene)
+    click_button "Add trope"
+    within ".modal.show" do
+      find(".ts-control").click
+      find(".ts-control input").set("chek")
+      find(".ts-dropdown .option", text: "Chekhov’s Gun").click
       fill_in "Context note", with: "This scene plants a detail that matters later."
+      click_button "Save trope"
     end
-    click_button "Update Scene"
 
-    assert_selector "h1", text: scene.name
+    assert_selector ".entity-row", text: "Chekhov’s Gun", wait: REFRESH_WAIT
+    assert_link "Chekhov’s Gun", href: TropeCatalog.find("chekhovs-gun").source_url
+    assert_text "This scene plants a detail that matters later."
+
+    visit universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
     assert_link "Chekhov’s Gun", href: TropeCatalog.find("chekhovs-gun").source_url
     assert_text "This scene plants a detail that matters later."
   end

@@ -503,7 +503,7 @@ es:
       create: "Crear"
       update: "Actualizar"
       delete: "Eliminar"
-    # Los tres tipos de registro que un cambio puede nombrar y que no son
+    # Los cuatro tipos de registro que un cambio puede nombrar y que no son
     # documentos de búsqueda, así que `searches.kinds` deliberadamente no los
     # nombra. Van en minúsculas porque la frase que los lleva encima dice
     # "Nuevo/a %{kind}".
@@ -511,6 +511,7 @@ es:
       scene_character: "personaje de la escena"
       scene_item: "objeto de la escena"
       scene_location: "localización de la escena"
+      scene_trope: "anotación de tropo"
       unknown: "registro"
     # Los dos escritores virtuales de la foto tal y como los muestra una fila.
     # `photo_data` es una URL `data:` y `remove_photo` es un booleano, así que
@@ -1096,6 +1097,7 @@ es:
       deleted: "La historia se ha eliminado correctamente."
 
   tropes:
+    title: "Tropos"
     source_license: "CC BY-NC-SA 3.0"
     assignments:
       legend: "Referencias a tropos"
@@ -1106,6 +1108,21 @@ es:
       story_heading: "Referencias a tropos"
       scene_heading: "Tropos detectados en esta escena"
       edit_story: "Editar tropos de la historia"
+      document_title: "Tropos en %{scene}"
+      tab_description: "Las referencias que lleva esta escena, cada una con el motivo por el que se detectó. El catálogo completo está disponible en Añadir tropo; una referencia que no aparece aquí simplemente no está registrada para esta escena."
+      add: "Añadir tropo"
+      save: "Guardar tropo"
+      edit: "Editar tropo"
+      recorded: "Registrado"
+      no_context: "No hay nota de contexto registrada."
+      empty_title: "Todavía no hay tropos registrados en esta escena"
+      empty_description: "Añade una referencia para registrar que esta escena la usa y explica cómo se usa aquí. El catálogo es compartido por todas las historias y escenas, así que añadirla nunca cambia la referencia."
+      remove: "¿Quitar %{name} de %{scene}? La referencia compartida sigue en el catálogo y se puede volver a añadir."
+      form:
+        trope: "Tropo"
+        choose_trope: "Elige un tropo"
+        trope_hint: "La referencia que se registra. La misma referencia se puede registrar en cualquier número de escenas; una escena puede llevar cada referencia una sola vez."
+        context_note_hint: "Opcional, con tus propias palabras: cómo usa esta escena la referencia, incluido si el patrón funciona aquí o conviene evitarlo. Nada de esto se comprueba contra un vocabulario."
       source_html: "Referencia: %{source} · términos de la fuente: %{license}. El resumen y la nota de escritura son texto original de Universe Maker."
     catalog:
       damsel_in_distress:
@@ -1253,15 +1270,16 @@ es:
       scene_must_belong_to_story: "debe pertenecer a la misma historia"
       scene_must_be_unique: "no puede estar repetida"
 
-  # El espacio de trabajo de Escenas y las tres pestañas que la Escena posee. Este
+  # El espacio de trabajo de Escenas y las cuatro pestañas que la Escena posee. Este
   # bloque es dueño de la lista con ámbito de historia y su filtro, de los
   # detalles de la Escena con su lista de elementos, del único editor que
-  # comparten `new` y `edit`, y de las pestañas Personajes, Objetos y Lugares.
+  # comparten `new` y `edit`, y de las pestañas Personajes, Objetos, Lugares y
+  # Tropos.
   #
   # Tres de sus cadenas no se repiten aquí porque una sola casa ya las posee: la
   # tira de pestañas del espacio de trabajo nombra a sus hermanos con los títulos
   # de esos espacios de trabajo (`characters.title`, `items.title`,
-  # `locations.title`), las etiquetas de recuento resuelven los sustantivos de tipo
+  # `locations.title`, `tropes.title`), las etiquetas de recuento resuelven los sustantivos de tipo
   # de registro de la **raíz** con un `count:`, y «Cancelar»/«Cerrar» son el par
   # `shared.form`.
   scenes:
@@ -1277,7 +1295,7 @@ es:
     # la página de detalles de la escena lleva ese mismo título.
     edit_title: "Editar escena"
     edit_document_title: "Editar %{name}"
-    edit_description: "Actualiza el título, la descripción breve, las anotaciones de tropos, el grupo de sección, el enlace al suceso y el tiempo en el mundo de esta escena. Su posición narrativa solo cambia mediante los controles Subir/Bajar de la lista de escenas."
+    edit_description: "Actualiza el título, la descripción breve, el grupo de sección, el enlace al suceso y el tiempo en el mundo de esta escena. Su posición narrativa solo cambia mediante los controles Subir/Bajar de la lista de escenas, y sus referencias a tropos se registran en la pestaña Tropos."
     back_to_details: "Detalles de la escena"
     # Los controles de movimiento que muestran tanto la lista de Escenas como la
     # de elementos, y los títulos que dicen por qué uno está desactivado en un
@@ -1396,8 +1414,8 @@ es:
         point_of_view_hint: "El personaje cuya perspectiva presenta la escena. Está separado de los participantes y de los hablantes de la escena: elegirlo no hace que participen, ni dice qué líneas les pertenecen."
         story: "Historia"
       tabs:
-        # Las cuatro pestañas del espacio de trabajo, que son URL reales y no paneles
-        # dentro del mismo documento. Las otras tres son los títulos de los espacios
+        # Las cinco pestañas del espacio de trabajo, que son URL reales y no paneles
+        # dentro del mismo documento. Las otras cuatro son los títulos de los espacios
         # de trabajo hermanos.
         aria_label: "Espacio de trabajo de la escena"
         details: "Detalles de la escena"
@@ -2784,6 +2802,12 @@ es:
         selected: "Incluido"
         context_note: "Nota de contexto"
         _destroy: "Quitar asignación"
+      # Una asignación del catálogo en la pestaña Tropos de la escena. La página
+      # de un borrador imprime los valores recordados de la asignación con estos
+      # nombres.
+      scene_trope:
+        trope_slug: "Tropo"
+        context_note: "Nota de contexto"
       # Los modelos de ámbito de historia que posee el espacio de trabajo de
       # Escenas. Una Sección y las dos taxonomías de ámbito de historia van con
       # `scene` y no con los modelos de la Biblia del universo de arriba, porque
@@ -3206,6 +3230,9 @@ es:
   tag:
     one: "etiqueta"
     other: "etiquetas"
+  trope:
+    one: "tropo"
+    other: "tropos"
   character:
     one: "personaje"
     other: "personajes"
@@ -3306,6 +3333,7 @@ es:
     scene_element: "este elemento de la escena"
     scene_item: "este elemento de la escena"
     scene_location: "este lugar de la escena"
+    scene_trope: "esta anotación de tropo"
 
   taxonomies:
     character_tag:

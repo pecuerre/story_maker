@@ -32,18 +32,28 @@ is where a writer can explain how the trope is used in this particular Story or 
 whether the use is effective or a pattern to avoid. There is no global good/bad flag and no AI
 detection or source import in this version; assignments are manual author decisions.
 
-The Story editor and Scene editor each show the same ten references, their short descriptions, craft
-notes, and source links. The Story Details page and Scene Details page show only their saved
-assignments and context notes. These pages follow the existing HTML redirect/re-render contract and
-the containing Story/Scene's Universe authorization. In a draft-based Universe, the containing
-Story or Scene mutation is remembered and the annotation is not live until that draft is applied.
-The draft page summarizes the selected catalogue entries and their context notes instead of exposing
-the nested form payload. Guests and read-only members can read the references and assignments but do
-not see editing controls.
+The Story editor shows all ten references with their short descriptions, craft notes, and source
+links. The Scene editor does not: a Scene's references live on its own **Tropes** tab
+(`/scenes/:id/tropes`), which lists only the references that Scene carries, each with the catalogue's
+description, craft note, and source beside the author's context note. **Add trope** opens a modal
+picker of the whole catalogue, sorted alphabetically and searchable by name, plus an optional context
+note; a saved row can be re-annotated or withdrawn. The Story Details page and Scene Details page show
+only their saved assignments and context notes.
+
+The Story annotation stays on the Story form and follows the existing HTML redirect/re-render
+contract. The Scene Tropes tab follows the Scene-owned tabs' contract instead: its index is a real
+HTML read page, and its add, annotate, and remove actions are JSON-only through
+`modal_form_controller.js` (ADR 0011). Both surfaces pass through the containing Story or Scene's
+Universe authorization. In a draft-based Universe the annotation is remembered and is not live until
+that draft is applied; for a Scene the remembered change names the `SceneTrope` row itself, so the
+draft page prints its catalogue reference and context note rather than a nested form payload. Guests
+and read-only members can read the references and assignments but do not see editing controls.
 
 Assignments are retained when a Story or Scene is soft-deleted, so restoring the parent restores its
-annotations. Hard deletion removes the assignment rows with their owner. A duplicate catalogue slug
-cannot be assigned twice at one level; the model and unique database index enforce that rule.
+annotations. Removing a Scene assignment from the Tropes tab hard-deletes that row, so the same
+catalogue reference can be recorded for the Scene again. Hard deletion removes the remaining assignment
+rows with their owner. A duplicate catalogue slug cannot be assigned twice at one level; the model and
+unique database index enforce that rule.
 
 The tables and foreign keys are listed in [data_model.md](../data_model.md#stories--sections). The
 per-universe example assignments are in `db/data/<universe_slug>/story_tropes.yml` and

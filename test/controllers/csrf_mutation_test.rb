@@ -318,6 +318,28 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a scene trope mutation is refused without a token and accepted with one" do
+    with_forgery_protection do
+      scene = scenes(:scene_one)
+      payload = { scene_trope: { trope_slug: "chekhovs-gun", context_note: "Token verified" } }
+      token = fetch_page_token(universe_story_scene_scene_tropes_path(universe_slug: @universe.slug,
+        story_id: scene.story, scene_id: scene))
+
+      assert_no_difference("SceneTrope.count") do
+        post universe_story_scene_scene_tropes_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload, as: :json
+      end
+      assert_response :forbidden
+
+      assert_difference("SceneTrope.count", 1) do
+        post universe_story_scene_scene_tropes_url(universe_slug: @universe.slug,
+          story_id: scene.story, scene_id: scene), params: payload,
+          headers: { "X-CSRF-Token" => token }, as: :json
+      end
+      assert_response :created
+    end
+  end
+
   test "a refused token remembers nothing in a draft-based universe" do
     # The interception is a call inside the action rather than a callback, so the
     # only thing standing between a forged request and a remembered change is the

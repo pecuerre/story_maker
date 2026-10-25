@@ -1,0 +1,151 @@
+<% content_for :title, t("tropes.assignments.document_title", scene: @scene.name) %>
+<% editable = can_write_universe? %>
+
+<%# The editor's wrapper has to contain the modal *and* every control that opens
+    it, which is why the page header is inside it rather than beside it. %>
+<div
+  <% if editable %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="scene_trope"
+  data-modal-form-response-value="json"
+  data-modal-form-create-title-value="<%= t("tropes.assignments.add") %>">
+  <%= render "shared/page_header",
+    title: t("tropes.title"),
+    eyebrow: t("shared.eyebrow.scene", scene: @scene.name),
+    description: t("tropes.assignments.tab_description"),
+    count: @scene_tropes.size,
+    count_label: "trope" do %>
+    <%= link_to t("scenes.back_to_details"), universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-outline-secondary" %>
+    <% if editable %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_story_scene_scene_tropes_path(story_id: @story, scene_id: @scene) %>"
+        data-modal-form-method="post"
+        data-modal-form-title="<%= t("tropes.assignments.add") %>"
+        data-modal-form-values-value="{}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span><%= t("tropes.assignments.add") %></span>
+      </button>
+    <% end %>
+  <% end %>
+
+  <%= render "scenes/workspace_tabs" %>
+
+  <%# Only the saved assignments are listed. The rest of the code-owned catalogue
+      is offered through the editor's picker, so a Scene with one detection does
+      not read as a page of nine empty cards. %>
+  <% if @scene_tropes.any? %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @scene_tropes.each do |assignment| %>
+          <% entry = assignment.trope %>
+          <% next unless entry %>
+          <div class="list-group-item entity-row d-flex align-items-start gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= link_to entry.name, entry.source_url, target: "_blank", rel: "noopener noreferrer" %></span>
+                <span class="badge rounded-pill text-bg-light border"><%= t("tropes.assignments.recorded") %></span>
+              </div>
+              <p class="small mb-1 mt-2"><%= t(entry.description_key) %></p>
+              <p class="small text-body-secondary mb-2"><%= t(entry.craft_note_key) %></p>
+              <%# The note is the author's own words, so it is interpolated into
+                  the row's label rather than translated. %>
+              <div class="entity-description">
+                <strong><%= t("tropes.assignments.context_note") %>:</strong> <%= scene_trope_context_label(assignment) %>
+              </div>
+              <div class="form-text">
+                <%= t("tropes.assignments.source_html",
+                  source: link_to(TropeCatalog::SOURCE_NAME, entry.source_url, target: "_blank", rel: "noopener noreferrer"),
+                  license: link_to(t("tropes.source_license"), TropeCatalog::SOURCE_LICENSE_URL, target: "_blank", rel: "noopener noreferrer")) %>
+              </div>
+            </div>
+
+            <% if editable %>
+              <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                <div class="dropdown row-actions">
+                  <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                    id="<%= dom_id(assignment) %>-actions"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="<%= t("scenes.participation.actions_for", name: entry.name, scene: @scene.name) %>">
+                    <i class="bi bi-three-dots" aria-hidden="true"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(assignment) %>-actions">
+                    <li>
+                      <button type="button" class="dropdown-item"
+                        data-action="modal-form#open"
+                        data-modal-form-url="<%= universe_story_scene_scene_trope_path(story_id: @story, scene_id: @scene, id: assignment) %>"
+                        data-modal-form-method="patch"
+                        data-modal-form-title="<%= t("tropes.assignments.edit") %>"
+                        data-modal-form-values-value="<%= scene_trope_fields_json(assignment) %>">
+                        <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("tropes.assignments.edit") %>
+                      </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <button type="button" class="dropdown-item text-danger"
+                        data-action="modal-form#destroy"
+                        data-modal-form-url="<%= universe_story_scene_scene_trope_path(story_id: @story, scene_id: @scene, id: assignment) %>"
+                        data-modal-form-confirm="<%= t("tropes.assignments.remove", name: entry.name, scene: @scene.name) %>">
+                        <i class="bi bi-trash me-2" aria-hidden="true"></i><%= t("scenes.participation.remove_label") %>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: t("tropes.assignments.empty_title"),
+      description: t("tropes.assignments.empty_description"),
+      icon: "bookmarks" %>
+  <% end %>
+
+  <% if editable %>
+    <div class="modal fade" tabindex="-1"
+      aria-labelledby="scene-trope-modal-title"
+      aria-hidden="true"
+      data-modal-form-target="modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="scene-trope-modal-title" data-modal-form-target="title"><%= t("tropes.assignments.add") %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
+          </div>
+          <%= form_with scope: :scene_trope,
+            url: universe_story_scene_scene_tropes_path(story_id: @story, scene_id: @scene),
+            method: :post,
+            data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
+            <div class="modal-body">
+              <%= render "shared/modal_errors" %>
+
+              <div class="mb-3">
+                <%= form.label :trope_slug, t("tropes.assignments.form.trope"), class: "form-label" %>
+                <%# The blank option's value is the empty string the form stores, so
+                    it is not translated; the slugs beside the names are the
+                    catalogue's stable values and are not translated either. %>
+                <%= form.select :trope_slug, scene_trope_choices(@trope_options),
+                  { include_blank: t("tropes.assignments.form.choose_trope") },
+                  class: "form-select", data: { controller: "tom-select" } %>
+                <div class="form-text"><%= t("tropes.assignments.form.trope_hint") %></div>
+              </div>
+
+              <div>
+                <%= form.label :context_note, t("tropes.assignments.context_note"), class: "form-label" %>
+                <%= form.text_area :context_note, class: "form-control", rows: 3, maxlength: 2000 %>
+                <div class="form-text"><%= t("tropes.assignments.form.context_note_hint") %></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+              <%= form.submit t("tropes.assignments.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

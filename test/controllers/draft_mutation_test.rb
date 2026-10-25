@@ -8,7 +8,7 @@ require "test_helper"
 # through and nothing else would notice.
 #
 # So this file is that something else. It walks **every** mutation controller in
-# both modes — twenty-four of them, across the JSON-only flow, the HTML flow, and
+# both modes — twenty-seven of them, across the JSON-only flow, the HTML flow, and
 # both scopes — and asserts the single thing that differs between them: in `direct` a
 # mutation writes, and in a draft-based universe it does not. The table is the
 # contract; the tests below it are the details that the table cannot express,
@@ -231,6 +231,20 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
         scene_id: @scene.id, id: @scene_location.id) }
     },
     {
+      # A Scene's trope annotation is a hard-deleted row: removing it must free the
+      # catalogue slug for the same scene again, so it carries no `deleted_at`
+      # column and there is no soft-deleted row to find after the destroy.
+      name: "scene_tropes", model: SceneTrope, json: true, label: :context_note, hard_delete: true,
+      scope: -> { [ "scene_id", @scene.id ] },
+      record: -> { @scene_trope },
+      create: -> { [ universe_story_scene_scene_tropes_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id), { scene_trope: { trope_slug: "chekhovs-gun", context_note: NEW } } ] },
+      update: -> { [ universe_story_scene_scene_trope_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id, id: @scene_trope.id), { scene_trope: { context_note: RENAMED } } ] },
+      destroy: -> { universe_story_scene_scene_trope_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id, id: @scene_trope.id) }
+    },
+    {
       name: "relations", model: Relation, json: false, label: :name,
       scope: -> { [ "universe_id", @universe.id ] },
       record: -> { @relation },
@@ -307,6 +321,7 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     @scene_character = scene_characters(:scene_character_one)
     @scene_item = scene_items(:scene_item_one)
     @scene_location = scene_locations(:scene_location_one)
+    @scene_trope = scene_tropes(:scene_one_red_herring)
     @character_tag = character_tags(:character_tag_one)
     @location_tag = location_tags(:location_tag_one)
     @item_tag = item_tags(:item_tag_one)
@@ -348,8 +363,13 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
 
       mutate(:delete, [ instance_exec(&controller[:destroy]), {} ], controller[:json])
       assert_response(controller[:json] ? :no_content : :see_other)
-      assert_predicate controller[:model].with_deleted.find(record.id), :deleted?,
-        "#{controller[:name]} must write its destroy"
+      if controller[:hard_delete]
+        assert_nil controller[:model].find_by(id: record.id),
+          "#{controller[:name]} must hard-delete its destroy"
+      else
+        assert_predicate controller[:model].with_deleted.find(record.id), :deleted?,
+          "#{controller[:name]} must write its destroy"
+      end
 
       assert_empty Draft.all, "#{controller[:name]} must not open a draft in a direct universe"
     end
@@ -394,7 +414,11 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       assert_equal "delete", deleted.action
       assert_equal record.id, deleted.record_id
       assert_nil deleted.payload, "a remembered delete carries nothing about the record's contents"
-      assert_not record.reload.deleted?, "#{controller[:name]} must not write its destroy"
+      if controller[:hard_delete]
+        assert controller[:model].exists?(record.id), "#{controller[:name]} must not write its destroy"
+      else
+        assert_not record.reload.deleted?, "#{controller[:name]} must not write its destroy"
+      end
 
       assert_equal 1, Draft.count, "one author's changes in one universe share one draft"
       assert_equal 3, DraftChange.count

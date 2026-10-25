@@ -1,7 +1,7 @@
 # Scenes
 
 [ADR 0007](../adr/0007-story-owned-scenes-and-elements.md) accepts the first Scene contract, and the
-whole of it is implemented. This is the one home for the Scene domain, its four workspace tabs, its
+whole of it is implemented. This is the one home for the Scene domain, its five workspace tabs, its
 Elements, and the deletion and validation rules that make them safe.
 
 Story-level Plot assignments are a separate through-line grouping axis; their domain and editor are
@@ -91,6 +91,7 @@ rule is proved in the model *and* the database.
 | Scene Characters tab | `.../scenes/:scene_id/characters` | HTML index, JSON mutations |
 | Scene Items tab | `.../scenes/:scene_id/items` | HTML index, JSON mutations |
 | Scene Locations tab | `.../scenes/:scene_id/locations` | HTML index, JSON mutations |
+| Scene Tropes tab | `.../scenes/:scene_id/tropes` | HTML index, JSON mutations |
 
 Scenes have no Universe-level route. Every Scene and Scene Tag route includes its Story, and all
 route-helper keys are passed by name.
@@ -270,9 +271,18 @@ plural and hierarchical, so each row carries its full ancestor path from `Locati
 is depth-indented in root-first order. Both tabs offer every Universe Item/Location, because those
 records are shared by every Story in the Universe.
 
-Both tabs must wrap `data-controller="modal-form"` in a wrapper element that contains the modal **and**
-every control that opens it, because a Stimulus target outside the controller's element is not a
-target and the editor would silently never connect.
+The **Tropes** tab (`/scenes/:id/tropes`) has the same page shape and mutation contract, but its rows
+are catalogue assignments rather than shared universe records: it lists only the references this Scene
+carries, with each one's description, craft note, source, and context note. **Add trope** opens the
+shared editor with a picker of the whole code-owned catalogue (alphabetical and searchable) and an
+optional context note; a row can re-annotate or withdraw its assignment. A new Scene has no
+assignments to show, so the tab's empty state points at **Add trope** rather than at the Scene editor.
+The catalogue, the Story-level annotation that remains on the Story form, and the annotation rules are
+owned by [Tropes](tropes.md).
+
+Every one of these modal tabs must wrap `data-controller="modal-form"` in a wrapper element that
+contains the modal **and** every control that opens it, because a Stimulus target outside the
+controller's element is not a target and the editor would silently never connect.
 
 ## Path value objects
 
@@ -285,7 +295,7 @@ pages build the index once instead.
 ## "Appears in scenes" traces a record forward
 
 The Character, Item, Location, and Event details pages each end with an **Appears in scenes of
-&lt;Story&gt;** section, the reverse of the three tabs. It is deliberately not a new workspace: the same
+&lt;Story&gt;** section, the reverse of the three presence tabs. It is deliberately not a new workspace: the same
 links would be broken if it were. `SceneAppearances` reports the **union** of a stored presence link, a
 derived Dialogue speaker, and an Event reference — one row per Scene, never a sum — ordered by Scene
 `position`. A row is labelled with the reason(s) it appears, so **Linked**, **Speaks in N element(s)**,
@@ -322,16 +332,19 @@ drag records.
 Scene Details (`/scenes/:id`) is the canonical, inspectable page: it renders the Title, narrative
 position, short description, Section group, Scene Tags, linked Event, formatted in-world time, point
 of view, and story context for writers, read-only members, and guests, and gives only writers an
-**Edit scene** action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so there is no
-second edit surface and no second form for the same fields. The editor's workspace tabs go through
-`shared/_content_tabs`: **Scene Details**, **Characters**, **Items**, and **Locations** are all live
-links, each its own canonical page. A tab is never a link to a route that does not exist and never an
-in-document Bootstrap pane.
+**Edit scene** action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so
+there is no second edit surface and no second form for the same fields. The editor's workspace tabs go
+through `shared/_content_tabs`: **Scene Details**, **Characters**, **Items**, **Locations**, and
+**Tropes** are all live links, each its own canonical page. A tab is never a link to a route that does
+not exist and never an in-document Bootstrap pane.
 
 The Scene form groups its fields: **Scene tags** holds the optional native multi-select with root-first
 tag paths, **Organization** holds the Section selector (with **Ungrouped** and depth-indented Section
 names), and **In-world time** holds the Event selector (with **None**) and the `datetime-local` field.
-Each field has copy stating what it does *not* do.
+Each field has copy stating what it does *not* do. Trope references are deliberately **not** a field
+of this form: the full catalogue is too long to stack there, so the **Tropes** tab lists only the
+references the Scene carries and offers the rest through its editor's picker. A new Scene therefore
+records its tropes after it has been saved.
 
 `Story#menu_scene_count` uses its own cache scope (`Story::SCENE_MENU_COUNT_SCOPE`, referenced by
 `Scene` itself) so it never overwrites `menu_section_count`; `Scene` declares
@@ -357,6 +370,10 @@ It is asymmetric, and the asymmetry is deliberate:
 - Scene-owned **Elements** and **presence links** (characters, items, locations) cascade with Scene
   or Story deletion; an Element's dialogue turns cascade with it. Scene Tag *definitions* are removed
   with their Story.
+- A Scene's **trope assignments** survive a soft delete, so a restored Scene returns with them, and
+  are removed when the Scene is hard-destroyed. Removing one from the Tropes tab hard-deletes that
+  assignment and frees the same catalogue reference for that Scene again; the shared catalogue and
+  any other Scene's assignment are untouched.
 - **Join-table rows are deliberately retained**, not cascaded: a Scene's Scene Tag assignments and
   Dialogue speaker links, and a Character's tag assignments and speaker links, all survive a soft
   delete. That is what makes a **restore** complete — the record returns with its tags and speakers

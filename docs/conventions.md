@@ -358,12 +358,14 @@ the same change, or `db:demo:check` fails.
   and `taxonomy=character|faction|relation|location|event|item|ownership|section` query parameters;
   timeline and Map are single-page GETs (`timeline#index` and `maps#index`); the Map page's behavior is
   in [features/map.md](features/map.md). `root` → `universes#index`; health check `/up`.
-- **Drafts are `index`/`show` plus two member POSTs**, mounted at `/u/:universe_slug/drafts`:
-  `resources :drafts, only: %i[ index show ]` with `post :apply, on: :member` and `post :discard, on:
-  :member`. The two are POSTs rather than `resources` verbs because each is a decision the author makes
-  about their own pending work and neither is idempotent — an `apply` writes records, and a `discard`
-  closes the draft — and there is no `create` or `destroy` because a draft is opened by the remembering
-  path and is never deleted, only moved to another status.
+- **Drafts are `index`/`show` plus three member POSTs and one nested `DELETE`**, mounted at
+  `/u/:universe_slug/drafts`: `resources :drafts, only: %i[ index show ]` with `post :apply, on:
+  :member`, `post :submit, on: :member`, `post :discard, on: :member`, and `resources :changes, only:
+  :destroy`. The POSTs are decisions the author makes about their own pending work and none is
+  idempotent — an `apply` writes records, a `submit` hands the draft over, and a `discard` closes it.
+  The nested `DELETE` drops one remembered change and leaves the draft and its other changes alone.
+  There is no draft `create` or `destroy` because a draft is opened by the remembering path and is
+  never deleted, only moved to another status; a **change** is the only row this feature destroys.
 - **Review requests are the same shape**, mounted at `/u/:universe_slug/review_requests`:
   `resources :review_requests, only: %i[ index show ]` with `post :approve, on: :member` and `post
   :reject, on: :member`, for the same reason and one more — an `approve` writes every remembered change
@@ -580,7 +582,7 @@ row has nowhere to type one; the draft's own page is where it is written.
 
 **Nothing about a draft's changes is read to submit one**, for `reject`'s reason on the other side: a
 submission carrying a change the applier cannot read is still submittable and still rejectable, and
-refusing it would leave the author with a draft only **Discard** can clear. **Only a working draft can be
+refusing it would leave the author with a draft only **Discard** or a per-change drop can clear. **Only a working draft can be
 submitted**: a submitted one is already with a reviewer and the partial unique index would refuse the
 second row anyway, and it is refused with `drafts.flash.waiting_for_review` rather than the closed-draft
 sentence, because it is very much still open.
@@ -643,6 +645,21 @@ why an answer is an instruction to write over somebody else's record and neither
 the applier may skip its half of that check. A change answered `"theirs"` is dropped on purpose: it
 is reported in `Result#answered`, not in `skipped`, so the apply is not partial and the flash adds
 `drafts.flash.kept_theirs` as a sentence of its own rather than as a count in the progress one.
+
+**A remembered change can be dropped from a working draft, one at a time.** Each row of
+`drafts/_change` carries **Drop this change** when the author's own page passes it the `draft` local,
+and the control is a `DELETE` to `/u/:universe_slug/drafts/:draft_id/changes/:id`
+(`DraftChangesController#destroy`). The change row is **destroyed**, not marked: a remembered change's
+contents are never rewritten, but the author may withdraw the statement before any of it is a record.
+No `DraftChangeOutcome` is written, because an outcome belongs to an apply run and this change was in
+none. The drop is available only while `Draft#draft?`: a **submitted** draft refuses it
+(`drafts.flash.change_locked_for_review`) so the reviewer keeps reading exactly what was submitted,
+and an applied or discarded one refuses it with `drafts.flash.closed`. The draft is reached as its own
+author's and the change is looked up **through that draft**, so another author's change and a change
+from a different draft are both a 404. Dropping the last change leaves an empty open draft rather than
+closing it. This is the per-change way out of a draft `DraftIntegrity` refuses, and the notice in
+`shared/_draft_damaged` says to drop the changes it names and apply the rest;
+[ADR 0036](adr/0036-a-remembered-change-can-be-dropped-before-it-is-applied.md) owns that decision.
 
 **A row states what a change says, and never that it was written.** Each change names its action
 (create, update, delete), the record it is about, and the values it carries. A remembered create names
@@ -752,7 +769,8 @@ raises on both ([ADR
 what makes it safe), but a raise escaping a controller answers `404`, which reads as "this draft does not
 exist" for a draft the reader is looking at. So `DraftIntegrity` is asked first, `apply` refuses with a
 `422` that renders this page, and nothing is written: the draft stays open, its changes stay listed, and
-**Discard** — the author's only way out of a change the universe cannot describe — is untouched. The
+the author's way out — **Drop this change** on the row the universe cannot read, or **Discard** for the
+whole draft — is untouched. The
 notice is `shared/_draft_damaged` and the keys are `drafts.damaged.*`, one partial and one set of words
 for every surface that has to state it.
 

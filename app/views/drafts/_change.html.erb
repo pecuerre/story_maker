@@ -9,7 +9,11 @@
     are resolved once per class instead of once per row — the cost recorded as finding 66.
     It is nil when a caller renders a single change, and the per-row read is back for that
     row alone, so a new caller has to pass it. %>
+<%# `draft` is passed only by the draft's own page, and only while it can still be acted
+    on; the same row on the change history or a reviewer's page passes none, so those
+    surfaces cannot inherit a drop control the controller would refuse. %>
 <% changes = draft_changes(local_assigns) %>
+<% draft = local_assigns[:draft] %>
 <% record = draft_change_record(change, changes) %>
 <% attributes = draft_change_attributes(change, changes) %>
 <% outcome = change.outcome %>
@@ -37,6 +41,20 @@
     <time class="small text-body-secondary" datetime="<%= change.created_at.iso8601 %>">
       <%= l change.created_at, format: :short %>
     </time>
+    <%# **Dropping a change is the author's own control on a working draft.** The
+        local is passed only by the draft's own page, so the same row partial on the
+        change history, a reviewer's page, and the collaborators pages renders no
+        control at all — and `draft?` keeps a submitted or closed draft from offering
+        one the controller would refuse. The confirm matters because a drop is not
+        undoable: it removes the row rather than marking it, so there is nothing left
+        of it to re-apply. %>
+    <% if draft&.draft? %>
+      <%= button_to t("drafts.changes.drop"),
+        universe_draft_change_path(draft_id: draft, id: change),
+        method: :delete,
+        class: "btn btn-sm btn-outline-danger ms-auto",
+        data: { turbo_confirm: t("drafts.changes.drop_confirm") } %>
+    <% end %>
   </div>
 
   <% if attributes.any? %>

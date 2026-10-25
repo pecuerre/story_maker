@@ -1086,6 +1086,167 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate theirs.reload, :draft?
   end
 
+  # Dropping one remembered change
+  #
+  # The per-change way out of a draft. Before this, a draft holding one change the
+  # applier could not read was refused and the author's only control was Discard,
+  # which threw away every other change with it. What is asserted here is both halves:
+  # that a drop removes exactly one change and leaves the draft applicable, and that
+  # the draft's own state still decides who may do it.
+
+  test "dropping one change removes it and leaves the rest of the draft waiting" do
+    target = draft_with(remember_create_payload("Drop me"), remember_create_payload("Keep me"))
+    dropped = target.draft_changes.first
+
+    assert_no_difference -> { Character.count } do
+      delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: target, id: dropped)
+    end
+
+    assert_redirected_to universe_draft_url(universe_slug: @universe.slug, id: target)
+    assert_equal I18n.t("drafts.flash.change_dropped", count: 1), flash[:notice]
+    assert_predicate target.reload, :draft?, "dropping a change is not closing the draft"
+    assert_equal [ "Keep me" ], target.draft_changes.map { |change| change.payload["name"] }
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select ".draft-change", count: 1
+    assert_select ".draft-change", text: /Keep me/
+  end
+
+  test "dropping the change a draft cannot read lets the rest be applied" do
+    target = draft_with(
+      remember_create_payload("Readable create"),
+      remember_create_payload("Unreadable create", "Character",
+        { "universe_id" => @universe.id }, extra: { "wibble" => 1 })
+    )
+    damaged = target.draft_changes.last
+
+    delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: target, id: damaged)
+
+    # The notice the page showed for the damage is gone, because the damaged change
+    # is gone: the author is not left reading two answers about the same draft.
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+    assert_response :success
+    assert_select ".draft-damaged", count: 0
+
+    post apply_universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_equal I18n.t("drafts.flash.applied", count: 1), flash[:notice]
+    assert Character.find_by(name: "Readable create").present?
+    assert_nil Character.find_by(name: "Unreadable create")
+    assert_predicate target.reload, :applied?
+  end
+
+  test "dropping the last change leaves an empty working draft rather than closing it" do
+    target = draft_with(remember_create_payload)
+    change = target.draft_changes.sole
+
+    delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: target, id: change)
+
+    assert_equal I18n.t("drafts.flash.change_dropped", count: 0), flash[:notice]
+    assert_predicate target.reload, :draft?
+    assert_empty target.draft_changes
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+    assert_response :success
+    assert_select ".empty-state", text: /This draft remembers no changes/
+  end
+
+  test "a working draft offers each change its own drop control" do
+    target = draft_with(remember_create_payload)
+    change = target.draft_changes.sole
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select "form[action=?]",
+      universe_draft_change_path(universe_slug: @universe.slug, draft_id: target, id: change), count: 1
+    assert_select ".draft-change .btn-outline-danger", text: I18n.t("drafts.changes.drop"), count: 1
+  end
+
+  test "a closed draft offers no drop control and refuses one" do
+    target = draft_with(remember_create_payload, closed: "applied")
+    change = target.draft_changes.sole
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select "form[action=?]",
+      universe_draft_change_path(universe_slug: @universe.slug, draft_id: target, id: change), count: 0
+
+    assert_no_difference -> { DraftChange.count } do
+      delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: target, id: change)
+    end
+
+    assert_redirected_to universe_draft_url(universe_slug: @universe.slug, id: target)
+    assert_equal I18n.t("drafts.flash.closed"), flash[:alert]
+    assert_predicate target.reload, :applied?
+  end
+
+  test "a submitted draft keeps its changes under the reviewer" do
+    @universe.update!(collaboration_mode: "github")
+    target = draft_with(remember_create_payload)
+    target.submit!
+    change = target.draft_changes.sole
+
+    get universe_draft_url(universe_slug: @universe.slug, id: target)
+
+    assert_response :success
+    assert_select "form[action=?]",
+      universe_draft_change_path(universe_slug: @universe.slug, draft_id: target, id: change), count: 0
+
+    assert_no_difference -> { DraftChange.count } do
+      delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: target, id: change)
+    end
+
+    # Its own reason rather than the closed-draft one: the draft is still open and
+    # waiting, and withdrawing is the author's way out of this state.
+    assert_equal I18n.t("drafts.flash.change_locked_for_review"), flash[:alert]
+    assert_predicate target.reload, :submitted?
+  end
+
+  test "another author's change, and a change from another of this author's drafts, are both a 404" do
+    theirs = Draft.create!(user: users(:user_two), universe: @universe)
+    their_change = theirs.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Theirs", "universe_id" => @universe.id })
+
+    assert_no_difference -> { DraftChange.count } do
+      delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: theirs, id: their_change)
+    end
+    assert_response :not_found
+
+    # One change is reached only through the draft named in the request, so a change
+    # from a different draft cannot be dropped by mixing the two ids together.
+    open = draft_with(remember_create_payload("Open"))
+    closed = draft_with(remember_create_payload("Closed"), closed: "applied")
+    closed_change = closed.draft_changes.sole
+
+    assert_no_difference -> { DraftChange.count } do
+      delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: open, id: closed_change)
+    end
+    assert_response :not_found
+    assert DraftChange.exists?(closed_change.id)
+  end
+
+  test "a read-only member cannot drop a change from their own draft" do
+    private_universe = Universe.create!(owner: @user, name: "Private draft", slug: "private-draft", private: true)
+    UniverseMembership.create!(user: users(:user_two), universe: private_universe, access_level: "read")
+    theirs = Draft.create!(user: users(:user_two), universe: private_universe)
+    change = theirs.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Not droppable", "universe_id" => private_universe.id })
+
+    sign_out
+    sign_in_as(users(:user_two))
+
+    assert_no_difference -> { DraftChange.count } do
+      delete universe_draft_change_url(universe_slug: private_universe.slug, draft_id: theirs, id: change)
+    end
+
+    assert_response :forbidden
+    assert DraftChange.exists?(change.id)
+  end
+
   # The page has to be reachable. An editor who is told their change was
   # remembered and cannot then find it has no way to apply or throw it away, so
   # the right sidebar offers it wherever a draft can exist.

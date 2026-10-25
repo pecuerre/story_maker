@@ -87,7 +87,7 @@
           what every row is handed so they share one `DraftChanges::Reader`. See the
           controller and finding 66. %>
       <%= render partial: "drafts/change", collection: @changes, as: :change,
-        locals: { changes: @changes } %>
+        locals: { changes: @changes, draft: @draft } %>
     <% else %>
       <div class="list-group-item">
         <%= render "shared/empty_state",

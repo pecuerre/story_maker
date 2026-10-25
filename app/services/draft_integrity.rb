@@ -18,7 +18,8 @@
 # think a submission had vanished rather than that one remembered change is damaged. So
 # the controller asks this question first and answers in its own words, naming the change
 # it cannot read, and writes nothing at all: the run rolls back today, so the draft stays
-# open and the author's own way out (**Discard**) is untouched.
+# open and the author's own way out — drop that change from the draft's page, or discard
+# the whole draft — is untouched.
 #
 # **An answer per change, in the order the changes were remembered.** One damaged change
 # in nineteen is still a run that cannot happen, and a summary that said "19 of 20" would

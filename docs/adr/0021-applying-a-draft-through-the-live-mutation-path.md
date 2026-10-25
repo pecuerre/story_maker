@@ -13,6 +13,11 @@
   tally on the draft — and a closed draft is still inspectable and says what became of each change.
   The reasoning the storage did not overturn stands: an outcome is a new row rather than an attribute
   of a remembered change, and it is never inferred from a version stamp.
+- **Annotated 2026-10-25:** the per-change control this ADR deferred now exists for a working draft.
+  `DraftChangesController#destroy` drops one remembered change — including the change
+  `DraftIntegrity` cannot read — so a refused run's author can remove that change and apply the rest
+  rather than discarding the draft. The rest of this ADR is unchanged, and the decision now lives in
+  [0036](0036-a-remembered-change-can-be-dropped-before-it-is-applied.md).
 - **The "still raises on a payload it cannot describe" cost below still holds, and is now the last
   resort rather than the answer.** `DraftIntegrity` is asked before a run and refuses such a draft in
   words — naming the change the application cannot read — so the raise no longer escapes a controller

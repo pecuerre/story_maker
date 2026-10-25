@@ -524,6 +524,12 @@ es:
       photo_label: "Foto"
       position: "Posición"
       tropes_none: "No hay tropos seleccionados"
+    # El propio control de un cambio recordado en un borrador que no se ha aplicado.
+    # Elimina el cambio en lugar de marcarlo, así que la confirmación dice qué se
+    # pierde y qué no: el resto del borrador sigue aplicándose.
+    changes:
+      drop: "Quitar este cambio"
+      drop_confirm: "¿Quitar este cambio? No se escribirá y el resto de tu borrador se queda tal como está."
     flash:
       # La única frase que dicen los espacios de trabajo HTML cuando un universo
       # recuerda un cambio en lugar de escribirlo. Dice que el cambio fue
@@ -546,6 +552,18 @@ es:
       kept_theirs:
         one: "1 cambio se ha quedado exactamente como está, porque elegiste lo de ellos."
         other: "%{count} cambios se han quedado exactamente como están, porque elegiste lo de ellos."
+      # Lo que hizo descartar un cambio, y lo que no hizo: el resto del borrador
+      # sigue esperando, que es la frase que necesita un autor que llegó a este
+      # control para rescatar un borrador que creía atascado.
+      change_dropped:
+        zero: "El cambio se ha quitado. Tu borrador no tiene nada pendiente ahora."
+        one: "El cambio se ha quitado. Todavía espera 1 cambio recordado en tu borrador."
+        other: "El cambio se ha quitado. Todavía esperan %{count} cambios recordados en tu borrador."
+      # Un borrador enviado rechaza quitar un cambio, por la misma razón que rechaza
+      # un cambio nuevo: quien revisa está leyendo un conjunto que el autor no puede
+      # cambiar por debajo. Retirar el borrador entero es la salida, y un rechazo lo
+      # devuelve para editarlo.
+      change_locked_for_review: "Ese borrador está con quien lo revisa, así que este cambio no se ha quitado. Retira el borrador desde su página si quieres eliminarlo, o espera una decisión."
       discarded: "El borrador se ha descartado. No se escribió nada."
       closed: "Ese borrador ya se aplicó o se descartó, así que no queda nada que hacer con él."
       # La respuesta del otro modo, negada por la acción y no solo oculta por la
@@ -854,7 +872,7 @@ es:
     # ninguna columna ni ningún escritor de colección.
     damaged:
       heading: "Este borrador no se puede aplicar tal como está"
-      lead: "No se puede escribir nada de él mientras uno de estos cambios nombre algo que esta aplicación no puede leer, así que no se escribió ningún cambio y el borrador sigue abierto."
+      lead: "No se puede escribir nada de él mientras uno de estos cambios nombre algo que esta aplicación no puede leer, así que no se escribió ningún cambio y el borrador sigue abierto. Quita los cambios nombrados abajo y aplica el resto."
       reasons:
         unknown_record_type: "nombra un tipo de registro que esta aplicación no tiene: %{type}"
         unknown_attribute: "nombra un valor que ese tipo de registro no tiene en ningún campo: %{attribute}"

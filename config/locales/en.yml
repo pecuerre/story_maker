@@ -568,6 +568,12 @@ en:
       photo_label: "Photo"
       position: "Position"
       tropes_none: "No tropes selected"
+    # One remembered change's own control on a draft that has not been applied. It
+    # removes the change rather than marking it, so the confirmation says what is
+    # lost and what is not: the rest of the draft still applies.
+    changes:
+      drop: "Drop this change"
+      drop_confirm: "Drop this change? It will not be written, and the rest of your draft is left as it is."
     flash:
       # The one sentence the HTML workspaces say when a universe remembers a
       # change instead of writing it. It says the change was *remembered*, never
@@ -590,6 +596,18 @@ en:
       kept_theirs:
         one: "1 change was left exactly as it is now, because you chose theirs."
         other: "%{count} changes were left exactly as they are now, because you chose theirs."
+      # What dropping one change did, and what it did not do: the rest of the draft
+      # is still waiting, which is the sentence an author needs when they reached
+      # this control to rescue a draft they thought was stuck.
+      change_dropped:
+        zero: "The change was dropped. Nothing is waiting on this draft now."
+        one: "The change was dropped. 1 remembered change is still waiting on this draft."
+        other: "The change was dropped. %{count} remembered changes are still waiting on this draft."
+      # A submitted draft refuses the per-change drop, for the same reason it refuses
+      # a new change: the reviewer is reading a set that the author must not change
+      # underneath them. Withdrawing the whole draft is the way out, and a rejection
+      # hands it back to be edited.
+      change_locked_for_review: "That draft is with a reviewer, so this change was not dropped. Withdraw the draft from its page if you want to remove it, or wait for a decision."
       discarded: "The draft was discarded. Nothing was written."
       closed: "That draft has already been applied or discarded, so there is nothing left to do with it."
       # The other mode's answer, refused by the action rather than only hidden by
@@ -896,7 +914,7 @@ en:
     # says which key no column or collection writer answers.
     damaged:
       heading: "This draft cannot be applied as it stands"
-      lead: "Nothing in it can be written while one of these changes names something this application cannot read, so no change was written and this draft is still open."
+      lead: "Nothing in it can be written while one of these changes names something this application cannot read, so no change was written and this draft is still open. Drop the changes named below, then apply the rest."
       reasons:
         unknown_record_type: "names a record type this application does not have: %{type}"
         unknown_attribute: "names a value that kind of record has no field for: %{attribute}"

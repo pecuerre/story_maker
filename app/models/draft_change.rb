@@ -107,6 +107,13 @@ class DraftChange < ApplicationRecord
   # remembered edit changes the **draft's** status instead, and a draft's row
   # stays editable because that status is exactly what a reviewer moves.
   #
+  # **Destroying one is a different act, and it is allowed.** A working draft's
+  # author may withdraw a change (`DraftChangesController#destroy`); that removes
+  # the statement rather than rewriting it, so the `base_version` it carried is
+  # never compared against a payload it no longer describes. A submitted or closed
+  # draft refuses it at the controller, because there the set of changes is what a
+  # reviewer is reading or what a run already decided.
+  #
   # An update **raises** rather than being silently ignored, because a caller that
   # believed it had rewritten a remembered change would go on to apply the wrong
   # one. `readonly?` is not the tool: it also refuses `destroy`, which would leave

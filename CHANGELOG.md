@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Dropping one remembered change.** Each change on a draft's page now has a confirmed drop control that removes it from a working draft, so one unreadable change no longer forces **Discard** of the whole draft.
 - **Item profiles.** Adds nine optional prose answers covering function, use, side effects, origin, value, limits, constraints, history, and jargon, editable in the modal and shown on the details page with current and previous owners, searchable, filterable, and returned by the API.
 - **Location presence.** The details page now answers who is at a place in the current Story, one row per Scene, naming factions, participants, and each person's role as the reason, all derived from Scene links with no new storage.
 - **Location profiles.** Adds eighteen optional prose answers covering sensory detail, layout, significance, history, and control and access, editable in the tree modal and shown on the details page, searchable, filterable, and returned by the API.
@@ -68,6 +69,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Per-change draft dropping is documented.** ADR 0036 owns the decision, and conventions, architecture, and data model state the control's status and access rules.
 - **Location presence is documented.** `docs/features/locations.md` owns the Who is here rules, including the multi-Location Scene boundary, and `docs/features/scenes.md` links to it; the presence backlog item is complete.
 - **Location profiles are documented.** Adds `docs/features/locations.md` as the owner of the profile answers and the Locations workspace.
 - **A LOTR draft-based demo universe.** Adds a checked-in open draft with pending create, edit, and delete examples, while Dark remains direct; the backlog item is complete.

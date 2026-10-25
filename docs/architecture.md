@@ -334,6 +334,10 @@ conflict is reported rather than written. A closed draft is still served by `sho
 404 — and reports the run it recorded: the moment it closed and its tally on both pages, one stored
 outcome per change on its own page, all written by the applier inside the same transaction as the status
 change ([ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)).
+**One change can be dropped without touching the rest of the draft**: `DraftChangesController#destroy`
+serves the nested `DELETE` and removes the remembered change while the draft is a working draft, so a
+draft that `DraftIntegrity` refuses no longer forces **Discard**. A submitted draft refuses the drop,
+because what was reviewed is what was submitted, and an applied or discarded one is history.
 Discarding a draft that is with a reviewer withdraws the submission in the same transaction, so the
 queue never waits on work the author threw away.
 [conventions.md](conventions.md#the-drafts-page) owns that page, its history, and the

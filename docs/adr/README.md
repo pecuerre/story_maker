@@ -58,6 +58,7 @@ reasoning as of its date.
 | [0033](0033-meetings-use-events-and-scene-presence.md) | Accepted | Represent gatherings through Events and Scene presence, without a separate Meeting model |
 | [0034](0034-factions-are-universe-content.md) | Accepted | Model Factions as universe-scoped content with their own optional taxonomy |
 | [0035](0035-faction-relationships-are-directed.md) | Accepted | Store faction relationships as directed links; never infer their reverse |
+| [0036](0036-a-remembered-change-can-be-dropped-before-it-is-applied.md) | Accepted | Let a working draft's author drop one remembered change without discarding the rest |
 
 ## Format
 

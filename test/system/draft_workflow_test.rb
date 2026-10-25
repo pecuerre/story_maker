@@ -122,6 +122,36 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     assert_equal character.name, character.reload.name
   end
 
+  test "an editor drops one remembered change and keeps the rest of the draft" do
+    # Dropping is a confirming Turbo form, so the request suite sends neither its
+    # confirmation nor its CSRF token. What only a browser shows is that a drop
+    # removes the one row the author pointed at and leaves the draft open with the
+    # rest of the work — the difference between this control and Discard.
+    sign_in_via_form(@user)
+    draft = Draft.create!(user: @user, universe: @universe)
+    draft.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Drop me", "universe_id" => @universe.id })
+    draft.draft_changes.create!(action: "create", record_type: "Character",
+      payload: { "name" => "Keep me", "universe_id" => @universe.id })
+
+    visit universe_draft_path(universe_slug: @universe.slug, id: draft)
+
+    assert_selector ".draft-change", count: 2
+
+    within find(".draft-change", text: "Drop me") do
+      accept_confirm { click_on "Drop this change" }
+    end
+
+    assert_selector ".draft-change", count: 1, wait: REFRESH_WAIT
+    assert_selector ".draft-change", text: "Keep me"
+    assert_no_selector ".draft-change", text: "Drop me"
+    assert_selector ".flash-stack .flash-toast", text: "1 remembered change is still waiting"
+    assert_selector ".draft-summary .badge", text: "Draft"
+    assert_equal 1, draft.reload.draft_changes.count
+    assert_nil Character.find_by(name: "Drop me"),
+      "dropping a change must not write the record it remembered"
+  end
+
   test "an editor who runs into a conflict chooses between their change and what is there" do
     # The one part of conflict resolution a request test cannot show: the apply
     # button is a confirming Turbo form, and the answer is a second form on a

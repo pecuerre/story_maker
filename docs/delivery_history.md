@@ -29,6 +29,32 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ### 2026-10-25
 
+- **[added]** **A draft's author can drop one remembered change instead of discarding the whole draft.**
+  - **The gap.** `DraftIntegrity` refuses a run that holds a change the applier cannot read, and
+    before this the author's only way out was **Discard** — closing the draft and throwing away every
+    other change with it. A conflict already had a per-change answer on the resolution page
+    (**Apply theirs**), but a change the applier cannot interpret never reaches that page.
+  - **The control.** `DraftChangesController#destroy` serves
+    `DELETE /u/:universe_slug/drafts/:draft_id/changes/:id`, and every row of `drafts/_change` carries
+    a confirmed **Drop this change** while the author's own page passes it the draft local. The change
+    row is deleted, not marked; no outcome row is stored because no apply run happened. Only a
+    working draft (`Draft#draft?`) permits it: a submitted draft belongs to the reviewer, and an
+    applied or discarded one is history. The draft is read as its own author's and the change through
+    that draft, so a cross-author or cross-draft id is a 404. Dropping the last change leaves an empty
+    open draft rather than closing it. [ADR 0036](adr/0036-a-remembered-change-can-be-dropped-before-it-is-applied.md)
+    owns the decision and the rejected alternatives.
+  - **What the refusal says now.** `drafts.damaged.lead` names the way out: drop the changes the notice
+    names, then apply the rest. The applier still refuses to guess at an unreadable payload and still
+    writes nothing on that run.
+  - **Verification.** `bin/rails test test/controllers/drafts_controller_test.rb` (70 runs),
+    `test/controllers/csrf_mutation_test.rb` (26 runs, including the new tokenless `DELETE`),
+    `test/docs_test.rb` with the draft journey, pending-list, panel, and integrity suites (66 runs),
+    and the browser case in `test/system/draft_workflow_test.rb` (confirmation, drop, and the remaining
+    change) pass. `bin/rubocop` and `bun run check:js` pass. `bin/brakeman --no-pager` reports only the
+    already-recorded weak `ListFilter` SQL warning. The full `bin/rails test` run is
+    2,901 runs with the two known Story/photo expectation failures already recorded in the backlog,
+    and nothing in this change's suites.
+
 - **[added]** **A Location's details page now says who is there, derived from Scene presence rather than stored.**
   - **The decision.** The earlier profile slice left "who is here" pending because it is not a
     property of a Location: the same place holds different people at different moments. The owner

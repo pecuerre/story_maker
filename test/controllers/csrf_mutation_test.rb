@@ -386,6 +386,35 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "dropping a remembered change is refused without a token and removes nothing" do
+    # Dropping is a Turbo `button_to`, so it is an ordinary HTML `DELETE` with the
+    # form's own hidden token rather than a `fetch`. It is worth its own case because
+    # its effect is the opposite of a write: a forged request would remove a change
+    # from somebody's draft and there is nothing left of it to put back.
+    @universe.update!(collaboration_mode: "wikipedia")
+    draft = remembered_draft
+    change = draft.draft_changes.sole
+    token = nil
+
+    with_forgery_protection do
+      token = fetch_page_token(universe_draft_path(universe_slug: @universe.slug, id: draft))
+
+      assert_no_difference -> { DraftChange.count } do
+        delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: draft, id: change)
+      end
+
+      assert_includes 406..422, response.status
+      assert DraftChange.exists?(change.id), "a refused drop must leave the change in the draft"
+
+      delete universe_draft_change_url(universe_slug: @universe.slug, draft_id: draft, id: change),
+        headers: { "X-CSRF-Token" => token }
+
+      assert_response :see_other
+      refute DraftChange.exists?(change.id)
+      assert_predicate draft.reload, :draft?
+    end
+  end
+
   test "starting an editing session is refused without a token and claims nothing" do
     # The editing toggle is a Turbo `button_to` like every other HTML control here,
     # so its token comes from the form's hidden field rather than a `fetch`. What

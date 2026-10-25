@@ -148,8 +148,8 @@ class DraftsController < ApplicationController
   # **Nothing about the draft's changes is read here**, for `ReviewRequestsController#reject`'s
   # reason: a submission does not interpret a remembered change, so one the applier
   # could not read is still submittable and still rejectable. Refusing to submit it
-  # would leave the author with a damaged draft that only **Discard** can clear, and
-  # refusing to reject it would leave the reviewer with nothing they can do.
+  # would leave the author with a damaged draft that only **Discard** or a per-change
+  # drop can clear, and refusing to reject it would leave the reviewer with nothing they can do.
   #
   # **The message is optional and a blank one is stored as nothing**, in the model
   # rather than here: a `github` handover often needs no explanation, and an empty
@@ -271,8 +271,8 @@ class DraftsController < ApplicationController
 
     # The refusal, as this page: the changes are still listed, and the notice says which
     # of them cannot be read. Nothing was written and the draft is still open, so the
-    # author's own way out — Discard, which is the only control that can remove a change
-    # it cannot interpret — is untouched.
+    # author's own way out — **Drop this change** on the row it names, or **Discard** for
+    # the whole draft — is untouched.
     def show_damaged
       render :show, status: :unprocessable_content
     end

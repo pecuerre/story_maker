@@ -128,10 +128,17 @@ Rails.application.routes.draw do
     # control. The page has no `create` or `destroy` because a draft is opened by
     # the remembering path (`Draft.open_for!`) and is never deleted, only moved to
     # another status.
+    #
+    # **A remembered change has a `destroy` of its own**, nested under the draft it
+    # belongs to: dropping one change is the per-change way out of a draft, and it
+    # is the only `DELETE` here. It removes the change rather than changing the
+    # draft's status, and it is allowed only while the draft is a working draft —
+    # see `DraftChangesController` and ADR 0036.
     resources :drafts, only: %i[ index show ] do
       post :apply, on: :member
       post :submit, on: :member
       post :discard, on: :member
+      resources :changes, only: :destroy, controller: "draft_changes"
     end
     # What a reviewer answers: somebody else's submitted draft, and the one
     # decision that can be made about it. `approve` and `reject` are POSTs for

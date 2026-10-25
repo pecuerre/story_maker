@@ -26,6 +26,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     story = universe.stories.first
 
     assert_equal "Dark", universe.name
+    assert_predicate universe, :direct?
     assert_equal "Netflix Dark", story.name
     assert_equal "netflix-dark", story.slug
     assert_equal 15, story.sections.count
@@ -37,6 +38,72 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal [ 0, 1 ], story.scene_tags.where(parent_id: nil).order(:position, :id).pluck(:position)
     assert_equal [ "Secrets", "Truths", "Sic Mundus Creatus Est", "The Journey", "The Golden Beast" ],
       story.plots.find_by!(slug: "time-travel-mystery").scenes.order(:position, :id).pluck(:name)
+  end
+
+  test "loads the LOTR draft-based demo with pending create update and delete changes" do
+    Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
+
+    universe = Universe.find_by!(slug: "lotr")
+    author = User.find_by!(email_address: "lotr@lotr")
+    draft = Draft.find_by!(universe: universe, user: author)
+    changes = draft.draft_changes.to_a
+
+    assert_predicate universe, :wikipedia?
+    assert_equal "draft", draft.status
+    assert_equal %w[create update delete], changes.map(&:action)
+
+    create, update, delete = changes
+    assert_equal "Character", create.record_type
+    assert_equal "Éowyn", create.payload.fetch("name")
+    assert_equal universe.id, create.payload.fetch("universe_id")
+    assert_nil create.record_id
+    assert_nil create.base_version
+
+    aragorn = universe.characters.find_by!(slug: "aragorn")
+    assert_equal aragorn, update.resolved_record
+    assert_equal DraftChange.capture_base_version(aragorn), update.base_version
+    assert_equal "Gollum", delete.resolved_record.name
+    assert_equal DraftChange.capture_base_version(delete.resolved_record), delete.base_version
+    assert_not delete.resolved_record.deleted?
+  end
+
+  test "checks that a remembered create names its scope before loading" do
+    with_data_copy do |directory|
+      changes_path = File.join(directory, "db/data/lotr/draft_changes.yml")
+      File.write(changes_path, <<~YAML)
+        - draft: Draft.pending-edits
+          action: create
+          record_type: Character
+          payload:
+            name: A character without a scope
+      YAML
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "lotr", root: directory, environment: :test).check!
+      end
+
+      assert_match(/create payload must declare its scope/, error.message)
+    end
+  end
+
+  test "checks that a remembered change type matches its symbolic target" do
+    with_data_copy do |directory|
+      changes_path = File.join(directory, "db/data/lotr/draft_changes.yml")
+      File.write(changes_path, <<~YAML)
+        - draft: Draft.pending-edits
+          action: update
+          record_type: Item
+          record: Character.aragorn
+          payload:
+            description: This reference has the wrong type.
+      YAML
+
+      error = assert_raises(Development::UniverseDataLoader::ValidationError) do
+        Development::UniverseDataLoader.new(universe: "lotr", root: directory, environment: :test).check!
+      end
+
+      assert_match(/record_type must match its record reference/, error.message)
+    end
   end
 
   # The manifests used to carry a literal password, so a credential-shaped string

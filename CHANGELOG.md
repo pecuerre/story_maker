@@ -54,6 +54,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **A LOTR draft-based demo universe.** Adds a checked-in open draft with pending create, edit, and delete examples, while Dark remains direct; the backlog item is complete.
 - **Container onboarding is verified.** The clean-storage Compose startup passed its image, CSS, migration, demo-data, persistence, and `/up` checks; the backlog item and matching finding are closed.
 - **Compose credential persistence is documented.** The generated development password is stored only in the private volume and printed on container startup.
 - **Container development guidance covers automatic source reloads.** Agents rebuild the image for changes outside the live-mounted paths, so ordinary app and CSS edits need no container rebuild.
@@ -64,6 +65,10 @@ Labels used below, in the order their groups appear:
 - **Map work is split into two pending slices.** The derived, read-only view over Locations and Routes is decided; the backlog separates its scoped page foundation from the graphical layout.
 - **A Brakeman ListFilter warning is deferred.** The weak-confidence SQL warning is recorded for separate verification, not changed as part of Routes.
 - **Routes leave the story-planning backlog.** The feature spec records the combined path-and-measurement model; Map and Meetings remain pending.
+
+### chore
+
+- **Development manifests can load remembered changes.** Extends the checked-in data loader to resolve draft targets, create scopes, and version stamps without storing database ids.
 
 ## 2026-10-24
 

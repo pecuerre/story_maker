@@ -2,3 +2,4 @@
   owner: User.dark_admin
   slug: dark
   private: false
+  collaboration_mode: direct

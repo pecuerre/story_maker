@@ -484,6 +484,24 @@ order and universe/story scope before writing, and normalizes hierarchical sibli
 file order (or validates explicit positions when every sibling supplies one). The Dark and LOTR
 directories now use the same format; the old per-universe Ruby loaders have been removed.
 
+The registry includes `drafts.yml` and `draft_changes.yml` for stored collaboration examples. A Draft
+uses a manifest-only `manifest_key`, and changes resolve existing targets through `record:
+Model.slug`; the loader derives their IDs and version stamps at load time. For a remembered create,
+`record_type` names the content model and `payload.scope` names its `Universe`, `Story`, or `Scene`
+owner symbolically, so no database ids are checked in. Dark leaves both files empty and stays in
+`direct` mode. LOTR is the draft-based example: sign in as **lotr@lotr** using the password supplied
+to the load (from `.env`, or generated and shown when absent), visit `/u/lotr` to start or resume its
+editing session, and open `/u/lotr/drafts` to inspect the pending Character create, edit, and delete.
+Load both examples with:
+
+```bash
+script/demo reset dark lotr
+```
+
+The LOTR mode remembers every mutation, while Dark remains available to exercise direct writes. The
+command uses the password from `.env` when configured; otherwise the loader prints a generated local
+password for each load.
+
 New model data must use stable symbolic references and preserve the model's universe/story scope.
 If `Dialog` is story-scoped, its records use `story: Story.<slug>`; if it is universe-scoped, they
 use `universe: Universe.<slug>`. Include related characters, locations, items, events, sections,

@@ -2,3 +2,4 @@
   owner: User.lotr_user
   slug: lotr
   private: false
+  collaboration_mode: wikipedia

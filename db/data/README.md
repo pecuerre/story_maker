@@ -30,7 +30,9 @@ model that the universe intentionally does not exercise.
 The current examples are:
 
 - `dark/` — the more complete YAML-based Dark dataset;
-- `lotr/` — the smaller Lord of the Rings dataset, now expressed in the same YAML format.
+- `lotr/` — the smaller Lord of the Rings dataset, now expressed in the same YAML format and
+  configured for Wikipedia-style draft-based collaboration. Its open draft contains a pending
+  Character create, edit, and delete for `lotr@lotr` to inspect; Dark remains in direct mode.
 
 The Dark directory includes a delegated-admin example: after loading it with the explicit
 development task, sign in as the synthetic `collaborator@dark` account and open
@@ -120,6 +122,14 @@ Story-scoped Scene Tag files are hierarchical and may be referenced from `scenes
 `SceneTag.<slug>` entries; the loader proves every assignment shares the Scene's Story. Contextual
 trope annotations are separate records in `story_tropes.yml` and `scene_tropes.yml`; their
 `trope_slug` must name an entry in the curated `TropeCatalog`.
+
+The registry also includes `drafts.yml` and `draft_changes.yml` so a development universe can carry
+an open, inspectable collaboration example. A Draft uses a YAML-only `manifest_key`; changes refer to
+it with `Draft.<key>`. Existing-record changes name the content with `record: Model.slug`, and the
+loader derives its database id and version stamp. A remembered create instead supplies `record_type`
+and names its scope inside `payload` (`Universe.slug`, `Story.slug`, or `Scene.slug`); the loader
+resolves that scope and stores its id in the JSON payload. Keep these files empty (`[]`) in a universe
+that does not exercise drafts.
 
 `universe_memberships.yml` is used when a sample universe should exercise private read/write/admin
 access; owner access is implicit and does not need a membership row.

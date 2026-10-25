@@ -108,7 +108,12 @@ module Development
       # A message reaches its universe through its thread, which is the record it
       # was loaded with, so it declares no universe of its own — exactly as a User
       # declares none. `scope: :none` is what says so.
-      ModelDefinition.new(model_name: "DiscussionMessage", file_name: "discussion_messages", scope: :none)
+      ModelDefinition.new(model_name: "DiscussionMessage", file_name: "discussion_messages", scope: :none),
+      # Drafts and their changes are development data too. They follow every
+      # content model because a remembered change may point at any one of them.
+      ModelDefinition.new(model_name: "Draft", file_name: "drafts", scope: :none,
+        manifest_identifier_field: "manifest_key"),
+      ModelDefinition.new(model_name: "DraftChange", file_name: "draft_changes", scope: :none)
     ].freeze
     UNIVERSES = {
       "dark" => "dark",

@@ -1,0 +1,4 @@
+- manifest_key: pending-edits
+  user: User.lotr_user
+  universe: Universe.lotr
+  status: draft

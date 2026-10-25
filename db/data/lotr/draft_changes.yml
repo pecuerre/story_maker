@@ -1,0 +1,19 @@
+- draft: Draft.pending-edits
+  action: create
+  record_type: Character
+  payload:
+    name: Éowyn
+    description: Shieldmaiden of Rohan, awaiting the author's addition.
+    scope: Universe.lotr
+
+- draft: Draft.pending-edits
+  action: update
+  record_type: Character
+  record: Character.aragorn
+  payload:
+    description: Ranger of the North; his identity as Isildur's heir is awaiting review by the author.
+
+- draft: Draft.pending-edits
+  action: delete
+  record_type: Character
+  record: Character.gollum

@@ -39,21 +39,6 @@ Because a number disappears from this file when its item is completed, **do not 
 number from another document**. Reference a pending idea by its heading text, and cite delivered
 work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
 
-28. **A draft-based development universe**
-
-    Every `db/data/<universe_slug>/universes.yml` sets no `collaboration_mode`, so both registered demo
-    universes are `direct` and **none of the collaboration workflow is reachable by hand**. The remembering
-    path, the drafts pages, the editing-session control, and the pending badges in the lists all have to be
-    exercised by switching a universe to Wikipedia in its settings, which is also the only way to see what
-    the direct path feels like without. Add a third `db/data/` universe in a draft-based mode, or set one
-    of the existing two, with enough records to show a pending create, a pending edit, and a pending delete
-    at once, and record the known development login, the scoped URL, and the exact load command. Two
-    things to weigh first: a draft-based demo universe makes **every** mutation in it remembered, so the
-    ordinary manual verification of the direct path disappears for that universe; and drafts are
-    per-author, so the demo only shows pending work for the login that made it — a second author sees
-    nothing at all, which is correct and is not what a demo is for. Neither is a reason to skip it, but
-    both change what the demo is.
-
 29. **Dropping one change a draft cannot describe**
 
    A draft holding a remembered change the applier cannot read is refused in words rather than applied,
@@ -65,6 +50,78 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
    conflicts: a way to drop one remembered change and apply the rest. Decided on 2026-10-05: not now. It
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
+
+30. i want now factions to be its own thing. i have been using character tags to represent factions.
+    but i think factions deserver their own model.
+    - please add also a model FactionTag similar to other Tag models
+    - factions should have
+      - name, slug
+      - mission (what they say out loud)
+      - actually for (what they truly aim to achieve)
+      - structure
+      - internal split
+      - resources
+      - would never
+      - would absolutely
+      - relationships (with other factions)
+
+31. add to characters
+   - factions (characters usually will have one faction, but in some cases it can be zero or more than one)
+   - replace the description for
+     - at a glance
+     - wants
+     - needs
+     - lies about (to themselves)
+     - contradictions
+     - under pressure they
+     - never
+    - add also to characters
+      - state of knowledge
+        - when
+        - what it lears
+        - from whom
+        - does it change their plan?
+
+32. for locations do these changes
+  - sensory
+    - sight
+    - sound
+    - smell
+    - taste
+    - touch
+  - layout
+    - overall structure
+    - key areas
+    - pathways
+    - entrances and exits
+    - points of interest
+  - why it matters (significance of the location)
+  - who is here (this should probably be updated by each scene, reflecting the current presence of factions and individuals in the location at that moment and specially the reason)
+    - factions present
+    - notable individuals
+    - reasons for being here
+  - history
+    - significant events
+    - past occupants
+    - changes over time
+  - control and access
+    - who controls it
+    - how access is granted
+    - security measures
+    - restrictions
+
+- for items
+  - what it is
+  - what is does
+  - how it is used
+  - side effects
+  - origin (where it comes from)
+  - ownership (who owns it) (this should be updated as ownership changes)
+  - value (monetary or otherwise)
+  - cannot
+  - constraints (limitations or restrictions on its use)
+  - history (past uses or significant events involving the item)
+  - jargon
 
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic

@@ -242,6 +242,11 @@ module Development
           if attribute.end_with?("_id") && model.reflect_on_association(attribute.delete_suffix("_id"))
             raise ValidationError, "#{path}:#{source_index + 1} must use the association name instead of #{attribute}"
           end
+
+          if definition.model_name == "DraftChange" && %w[record_id base_version].include?(attribute)
+            raise ValidationError,
+              "#{path}:#{source_index + 1} must not set #{attribute}; the loader resolves the record and captures its version"
+          end
         end
 
         return unless validate_schema && model.table_exists?
@@ -326,8 +331,52 @@ module Development
         attributes.each_with_object({}) do |(field, value), resolved|
           next if field.to_s == record.definition.manifest_identifier_field
 
-          resolved[field] = resolve_value(value, record, field.to_s)
+          resolved[field] = if record.definition.model_name == "DraftChange" && field.to_s == "payload"
+            resolve_draft_payload(value, record)
+          else
+            resolve_value(value, record, field.to_s)
+          end
         end
+      end
+
+      # A remembered create has no record association to resolve. Its payload
+      # therefore names the one scope owner as a symbolic `scope` reference;
+      # `create_record` replaces that with the corresponding foreign key after
+      # the referenced owner has been loaded. For updates and deletes the payload
+      # is the submitted attributes, and the record association names the target.
+      def resolve_draft_payload(value, record)
+        unless value.nil? || value.is_a?(Hash)
+          raise ValidationError, "#{record_label(record)} field 'payload' must be a mapping"
+        end
+        return if value.nil?
+
+        payload = value.transform_keys(&:to_s)
+        return payload unless payload.key?("scope")
+
+        scope_reference = payload["scope"]
+
+        target_type = record.attributes["record_type"]
+        target_definition = UniverseDataRegistry.definition_for_model(target_type)
+        unless target_definition && Ability::CONTENT_CLASS_NAMES.include?(target_type)
+          raise ValidationError, "#{record_label(record)} field 'record_type' must name a content model"
+        end
+
+        expected_scope_model = { universe: "Universe", story: "Story", scene: "Scene" }[target_definition.scope]
+        unless expected_scope_model
+          raise ValidationError, "#{record_label(record)} cannot declare a create scope for #{target_type}"
+        end
+
+        unless scope_reference.is_a?(String) && scope_reference.match?(REFERENCE_PATTERN)
+          raise ValidationError, "#{record_label(record)} payload scope must use a Model.slug reference"
+        end
+
+        scope_record = resolve_reference(scope_reference, record)
+        unless scope_record.definition.model_name == expected_scope_model
+          raise ValidationError, "#{record_label(record)} payload scope must reference #{expected_scope_model}"
+        end
+
+        payload["scope"] = scope_record
+        payload
       end
 
       def records_with_identifiers
@@ -427,6 +476,59 @@ module Development
           validate_tag_scopes!(record)
           validate_association_scopes!(record)
           validate_story_reference_scopes!(record)
+          validate_draft_scopes!(record)
+        end
+      end
+
+      def validate_draft_scopes!(record)
+        case record.definition.model_name
+        when "Draft"
+          actual_universe = universe_for(record)
+          unless actual_universe == target_identifier
+            raise ValidationError, "#{record_label(record)} belongs to universe '#{actual_universe || "(none)"}', expected '#{target_identifier}'"
+          end
+        when "DraftChange"
+          draft = record.resolved_attributes["draft"]
+          unless draft && universe_for(draft) == target_identifier
+            raise ValidationError, "#{record_label(record)} draft must belong to universe '#{target_identifier}'"
+          end
+
+          action = record.attributes["action"]
+          unless DraftChange::ACTIONS.include?(action)
+            raise ValidationError, "#{record_label(record)} action must be one of #{DraftChange::ACTIONS.join(', ')}"
+          end
+
+          target_type = record.attributes["record_type"]
+          unless Ability::CONTENT_CLASS_NAMES.include?(target_type)
+            raise ValidationError, "#{record_label(record)} record_type must name a content model"
+          end
+
+          target = record.resolved_attributes["record"]
+          if target
+            if action == "create"
+              raise ValidationError, "#{record_label(record)} create changes must not reference a record"
+            end
+            unless target_type == target.definition.model_name
+              raise ValidationError, "#{record_label(record)} record_type must match its record reference"
+            end
+            unless universe_for(target) == target_identifier
+              raise ValidationError, "#{record_label(record)} record must belong to universe '#{target_identifier}'"
+            end
+          elsif action != "create"
+            raise ValidationError, "#{record_label(record)} must reference a record for update and delete actions"
+          end
+
+          payload_scope = record.resolved_attributes.dig("payload", "scope")
+          if action == "create"
+            unless payload_scope
+              raise ValidationError, "#{record_label(record)} create payload must declare its scope"
+            end
+            if universe_for(payload_scope) != target_identifier
+              raise ValidationError, "#{record_label(record)} create scope must belong to universe '#{target_identifier}'"
+            end
+          elsif payload_scope
+            raise ValidationError, "#{record_label(record)} only create payloads may declare a scope"
+          end
         end
       end
 
@@ -558,6 +660,8 @@ module Development
         return if record.nil?
         return record.identifier if record.definition.model_name == "Universe"
         return if record.definition.model_name == "User"
+        return universe_for(record.resolved_attributes["universe"]) if record.definition.model_name == "Draft"
+        return universe_for(record.resolved_attributes["draft"]) if record.definition.model_name == "DraftChange"
         if scene_scoped_model?(record.definition.model_name)
           return universe_for(record.resolved_attributes[record.definition.scope_owner.to_s])
         end
@@ -585,7 +689,11 @@ module Development
 
       def create_record(record)
         attributes = materialize(record.resolved_attributes)
-        attributes = attributes.merge(loader_attributes(record))
+        attributes = if record.definition.model_name == "DraftChange"
+          attributes.merge(draft_change_loader_attributes(record, attributes))
+        else
+          attributes.merge(loader_attributes(record))
+        end
         model = record.definition.model
         record.loaded_record = model.create!(attributes)
         puts "Created #{model.name}: #{record_label_for_output(record)}" if @verbose
@@ -602,6 +710,42 @@ module Development
         return {} unless record.definition.model_name == "User"
 
         { "password" => password.value, "password_confirmation" => password.value }
+      end
+
+      # Database ids and version stamps are products of the load, not stable
+      # manifest data. Existing-record changes name their target symbolically and
+      # capture its just-loaded version; a create names its scope symbolically and
+      # stores the resolved owner id inside the JSON payload.
+      def draft_change_loader_attributes(record, attributes)
+        attributes = attributes.dup
+        target = attributes.delete("record")
+        action = attributes["action"]
+
+        if action == "create"
+          payload = attributes["payload"]&.dup || {}
+          scope = payload.delete("scope")
+          target_type = attributes["record_type"]
+          target_definition = UniverseDataRegistry.definition_for_model(target_type)
+          scope_field = { universe: "universe_id", story: "story_id", scene: "scene_id" }[target_definition&.scope]
+          if scope.nil? || scope_field.nil?
+            raise ValidationError, "#{record_label(record)} create payload must declare its scope"
+          end
+
+          payload[scope_field] = scope.id
+          attributes["payload"] = payload
+          attributes["record_id"] = nil
+          attributes["base_version"] = nil
+        else
+          unless target&.persisted?
+            raise ValidationError, "#{record_label(record)} must reference a loaded record for #{action}"
+          end
+
+          attributes["record_type"] = target.class.name
+          attributes["record_id"] = target.id
+          attributes["base_version"] = DraftChange.capture_base_version(target)
+        end
+
+        attributes
       end
 
       # Where the local sign-in just written can be found. A generated value is

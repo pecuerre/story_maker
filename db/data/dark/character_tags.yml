@@ -36,28 +36,6 @@
   fgcolor: "#000000" # black
 
 - universe: Universe.dark
-  name: Factions
-  slug: factions
-  bgcolor: "#cc99cc" # light purple
-  fgcolor: "#000000" # black
-  taggable: false
-  show_in_menu: true
-
-- universe: Universe.dark
-  name: Sic Mundus
-  parent: CharacterTag.factions
-  slug: sic_mundus
-  bgcolor: "#9966cc" # medium purple
-  fgcolor: "#000000" # black
-
-- universe: Universe.dark
-  name: Erit Lux
-  parent: CharacterTag.factions
-  slug: erit_lux
-  bgcolor: "#6600cc" # dark purple
-  fgcolor: "#ffffff" # white
-
-- universe: Universe.dark
   name: Job
   slug: job
   bgcolor: "#ffcc99" # light orange

@@ -79,6 +79,7 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Dark Character tags no longer stand in for factions.** Removes the **Factions** Character tag and its **Sic Mundus** and **Erit Lux** children, so faction membership comes only from the Faction model.
 - **Development manifests can load remembered changes.** Extends the checked-in data loader to resolve draft targets, create scopes, and version stamps without storing database ids.
 
 ## 2026-10-24

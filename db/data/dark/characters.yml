@@ -1,6 +1,6 @@
 - universe: Universe.dark
   name: Jonas
-  character_tags: [ CharacterTag.family_kahnwald, CharacterTag.sic_mundus ]
+  character_tags: [ CharacterTag.family_kahnwald ]
   factions: [ Faction.sic_mundus ]
   at_a_glance: "A young man caught in the knot's repeating cycles."
   wants: "To prevent his father's suicide and save Martha."
@@ -13,7 +13,6 @@
 
 - universe: Universe.dark
   name: Martha
-  character_tags: [ CharacterTag.family_nielsen, CharacterTag.erit_lux ]
   factions: [ Faction.erit_lux ]
 
 - universe: Universe.dark
@@ -45,5 +44,4 @@
 # Universe, so every story may use him.
 - universe: Universe.dark
   name: Bartosz
-  character_tags: [ CharacterTag.sic_mundus ]
   factions: [ Faction.sic_mundus ]

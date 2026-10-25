@@ -795,18 +795,14 @@ hierarchy can be created, renamed, colored, nested, moved, inserted, and deleted
 keyboard/touch controls; a public guest or read-only member sees the tree without mutation controls;
 and the same tags appear as optional badges on the Scenes list and Details page.
 
-### Menu tags and grouping tags
+### Menu tags
 
 After loading the Dark demo universe, open **Characters** and check that the workspace tabs include
-**Characters**, **Relations**, **Factions**, and **Family Nielsen**. Opening **Factions** from that
-tab keeps the workspace tabs visible and shows characters grouped under **Sic Mundus** and
-**Erit Lux**, without an include-descendants checkbox. Opening **Family Nielsen** from its tab also
-keeps the tabs and retains the ordinary flat record list and checkbox. Open the same Family Nielsen
-tag through **Configuration → Tags → Character tags → Details** and confirm the workspace tabs are
-absent. The taxonomy Details URL does not infer navigation from the browser Referer.
-
-The **Factions** tab in this Character workspace is the existing Character-tag grouping; independent
-Faction profiles are listed at **Universe Bible → Factions**.
+**Characters**, **Relations**, and **Family Nielsen**. Opening **Family Nielsen** from that tab keeps
+the workspace tabs visible and retains the ordinary flat record list and checkbox. Open the same
+Family Nielsen tag through **Configuration → Tags → Character tags → Details** and confirm the
+workspace tabs are absent. The taxonomy Details URL does not infer navigation from the browser
+Referer.
 
 After changing the Dark YAML, validate and rebuild the local development data with:
 

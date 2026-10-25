@@ -410,7 +410,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     with_data_copy do |directory|
       characters_path = File.join(directory, "db/data/dark/characters.yml")
       contents = File.read(characters_path)
-      File.write(characters_path, contents.sub("character_tags: [ CharacterTag.family_kahnwald, CharacterTag.sic_mundus ]", "character_tags: CharacterTag.family_kahnwald"))
+      File.write(characters_path, contents.sub("character_tags: [ CharacterTag.family_kahnwald ]", "character_tags: CharacterTag.family_kahnwald"))
 
       error = assert_raises(Development::UniverseDataLoader::ValidationError) do
         Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!

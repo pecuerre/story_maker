@@ -50,9 +50,10 @@ all reads and writes are scoped through the authorized Universe and nested Chara
 ## Character sample records
 
 Character profile examples demonstrate populated and blank optional fields, multiple faction
-memberships, and a Character with no Faction. Each Universe also includes a connected knowledge
-record with a source Character. The manifests are `characters.yml` and `character_knowledges.yml`;
-the latter loads after the Character and Faction definitions.
+memberships, and a Character with no Faction. In Dark, family and job tags describe Characters while
+faction membership is the separate Faction association. Each Universe also includes a connected
+knowledge record with a source Character. The manifests are `characters.yml` and
+`character_knowledges.yml`; the latter loads after the Character and Faction definitions.
 
 After changing either Universe's manifests, validate and reload both development datasets using the
 workflow in [development.md](../development.md#required-workflow-after-editing-demo-yaml):

@@ -153,12 +153,31 @@ module ModalFields
     content_tag_taxonomy_fields(nodes)
   end
 
+  def faction_tag_taxonomy_fields(nodes = [])
+    content_tag_taxonomy_fields(nodes)
+  end
+
   def character_fields_json(character)
     {
       name: character.name,
       description: character.description,
       character_tag_ids: character.character_tag_ids,
       photo_url: record_photo_url(character)
+    }.to_json
+  end
+
+  def faction_fields_json(faction)
+    {
+      name: faction.name,
+      mission: faction.mission,
+      actual_aims: faction.actual_aims,
+      structure: faction.structure,
+      internal_divisions: faction.internal_divisions,
+      resources: faction.resources,
+      would_never: faction.would_never,
+      would_absolutely: faction.would_absolutely,
+      faction_tag_ids: faction.faction_tag_ids,
+      photo_url: record_photo_url(faction)
     }.to_json
   end
 

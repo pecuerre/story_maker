@@ -140,7 +140,7 @@ class DraftChanges::Reader
     # **Grouped by class, not by association name.** Eight taxonomies share one shape
     # here, and a draft that touches four of them is four queries either way; grouping by
     # the class is what makes the number "classes in this draft" rather than "keys in
-    # this draft", which is the same bound for the eight taxonomies and a real saving for
+    # this draft", which is the same bound for the nine taxonomies and a real saving for
     # a model's own collection writers.
     def tag_records
       @tag_records ||= requested_tag_ids.flat_map { |model, ids| load_tag_records(model, ids) }.index_by(&:id)

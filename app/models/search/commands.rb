@@ -82,6 +82,7 @@ module Search
       def universe_pages
         [
           command("characters", "searches.commands.characters", universe.name, universe_characters_path(universe_slug: universe.slug)),
+          command("factions", "searches.commands.factions", universe.name, universe_factions_path(universe_slug: universe.slug)),
           command("locations", "searches.commands.locations", universe.name, universe_locations_path(universe_slug: universe.slug)),
           command("routes", "searches.commands.routes", universe.name, universe_routes_path(universe_slug: universe.slug)),
           command("events", "searches.commands.events", universe.name, universe_events_path(universe_slug: universe.slug)),

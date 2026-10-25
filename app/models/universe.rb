@@ -1,5 +1,5 @@
 class Universe < ApplicationRecord
-  MENU_COUNT_ASSOCIATIONS = %i[characters relations locations routes events items ownerships].freeze
+  MENU_COUNT_ASSOCIATIONS = %i[characters factions faction_relationships relations locations routes events items ownerships].freeze
 
   # The one value that decides how a change reaches a record in this universe:
   # `direct` writes straight through, while the other two remember the change for
@@ -66,8 +66,8 @@ class Universe < ApplicationRecord
   searchable kind: "universe", title: :name, scope: :self
   after_update_commit :queue_search_reindex, if: :saved_change_to_slug?
 
-  soft_deletes :stories, :characters, :locations, :routes, :items, :events, :relations, :ownerships,
-    :character_tags, :location_tags, :item_tags, :event_tags, :relation_tags, :ownership_tags, :memberships
+  soft_deletes :stories, :characters, :factions, :faction_relationships, :locations, :routes, :items, :events, :relations, :ownerships,
+    :character_tags, :faction_tags, :location_tags, :item_tags, :event_tags, :relation_tags, :ownership_tags, :memberships
 
   after_destroy_commit :expire_menu_counts
   validates :name, presence: true
@@ -161,6 +161,9 @@ class Universe < ApplicationRecord
   has_many :routes, dependent: :destroy
   has_many :character_tags, dependent: :destroy
   has_many :characters, dependent: :destroy
+  has_many :faction_tags, dependent: :destroy
+  has_many :factions, dependent: :destroy
+  has_many :faction_relationships, dependent: :destroy
   has_many :relation_tags, dependent: :destroy
   has_many :relations, dependent: :destroy
   has_many :ownership_tags, dependent: :destroy
@@ -315,7 +318,7 @@ class Universe < ApplicationRecord
   # universe's figures once instead of once per row per render. `activity_at`
   # is the newest `updated_at` among everything counted, so recent activity
   # means a record was created, edited, or restored — not merely viewed.
-  SUMMARY_COUNT_ASSOCIATIONS = %i[stories characters locations routes events items relations ownerships].freeze
+  SUMMARY_COUNT_ASSOCIATIONS = %i[stories characters factions faction_relationships locations routes events items relations ownerships].freeze
 
   def summary_counts
     MenuCountCache.fetch(MenuCountCache.key(:universe_summary, id), connection: self.class.connection) do

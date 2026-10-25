@@ -1,0 +1,6 @@
+- universe: Universe.lotr
+  name: Uneasy alliance
+  slug: fellowship_to_white-council
+  from_faction: Faction.fellowship-of-the-ring
+  to_faction: Faction.white-council
+  description: The Fellowship carries out the quest while the White Council offers knowledge and support from afar.

@@ -75,6 +75,81 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "Faction create, update, and delete require the page token" do
+    with_forgery_protection do
+      index_path = universe_factions_path(universe_slug: @universe.slug)
+      token = fetch_page_token(index_path)
+      create_path = universe_factions_path(universe_slug: @universe.slug)
+
+      assert_no_difference("Faction.count") do
+        post create_path, params: { faction: { name: "Tokenless faction" } }, as: :json
+      end
+      assert_response :forbidden
+
+      post create_path, params: { faction: { name: "Token-verified faction" } },
+        headers: { "X-CSRF-Token" => token }, as: :json
+      assert_response :created
+      faction = Faction.find(response.parsed_body.fetch("id"))
+
+      patch universe_faction_path(universe_slug: @universe.slug, id: faction),
+        params: { faction: { mission: "Updated mission" } },
+        headers: { "X-CSRF-Token" => token }, as: :json
+      assert_response :success
+
+      delete universe_faction_path(universe_slug: @universe.slug, id: faction),
+        headers: { "X-CSRF-Token" => token }, as: :json
+      assert_response :no_content
+    end
+  end
+
+  test "Faction relationship HTML mutations require a page token" do
+    with_forgery_protection do
+      index_path = universe_faction_relationships_path(universe_slug: @universe.slug)
+      token = fetch_page_token(index_path)
+      from = factions(:faction_one)
+      to = factions(:faction_two)
+
+      assert_no_difference("FactionRelationship.count") do
+        post index_path, params: { faction_relationship: { from_faction_id: from.id, to_faction_id: to.id } }
+      end
+      assert_includes 406..422, response.status
+
+      assert_difference("FactionRelationship.count") do
+        post index_path,
+          params: { faction_relationship: { from_faction_id: from.id, to_faction_id: to.id } },
+          headers: { "X-CSRF-Token" => token }
+      end
+      assert_response :found
+    end
+  end
+
+  test "Faction Tag create, update, and delete require the page token" do
+    with_forgery_protection do
+      index_path = universe_faction_tags_path(universe_slug: @universe.slug)
+      token = fetch_page_token(index_path)
+      create_path = universe_faction_tags_path(universe_slug: @universe.slug)
+
+      assert_no_difference("FactionTag.count") do
+        post create_path, params: { faction_tag: { name: "Tokenless faction tag" } }, as: :json
+      end
+      assert_response :forbidden
+
+      post create_path, params: { faction_tag: { name: "Token-verified faction tag" } },
+        headers: { "X-CSRF-Token" => token }, as: :json
+      assert_response :created
+      tag = FactionTag.find(response.parsed_body.fetch("id"))
+
+      patch universe_faction_tag_path(universe_slug: @universe.slug, id: tag),
+        params: { faction_tag: { description: "Updated description" } },
+        headers: { "X-CSRF-Token" => token }, as: :json
+      assert_response :success
+
+      delete universe_faction_tag_path(universe_slug: @universe.slug, id: tag),
+        headers: { "X-CSRF-Token" => token }, as: :json
+      assert_response :no_content
+    end
+  end
+
   test "a scene element mutation is accepted with the page's own token" do
     with_forgery_protection do
       scene = scenes(:scene_one)

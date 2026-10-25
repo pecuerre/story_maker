@@ -4,9 +4,10 @@
 is in [data_model.md](../data_model.md#photos) and the test workflow is in
 [development.md](../development.md#testing-record-photos).
 
-A record may carry one photo, and a photo is always optional. Nineteen models include `HasPhoto`
-(`app/models/concerns/has_photo.rb`): `Universe`, `Story`, `Section`, `Scene`, the seven content
-models, and all eight `_tag` models. A record with no photo is completely normal, and no controller
+A record may carry one photo, and a photo is always optional. Twenty-two models include `HasPhoto`
+(`app/models/concerns/has_photo.rb`): `Universe`, `Story`, `Section`, `Scene`, `Character`, `Faction`,
+`FactionRelationship`, `Location`, `Route`, `Item`, `Event`, `Relation`, `Ownership`, and all nine
+`_tag` models. A record with no photo is completely normal, and no controller
 force-creates one.
 
 ## Model contract
@@ -83,7 +84,7 @@ that square to a canvas and hands the result to the form as a `data:` URL.
 - `PhotoParams` (`app/controllers/concerns/photo_params.rb`) is
   `PHOTO_PARAMS = [ :photo_data, :remove_photo ]`. Every photo-capable controller
   `include PhotoParams` and splats `*photo_params` into its `params.expect`, so the two virtual
-  field names are declared once instead of in eighteen controllers. They are never a `photo_id`,
+  field names are declared once instead of in twenty-two controllers. They are never a `photo_id`,
   which is what makes a cross-universe photo impossible to assign from a request.
 - Author-chosen photo content is data, not theme: a stored image is left alone in dark mode. See
   [visual_design.md](../visual_design.md).

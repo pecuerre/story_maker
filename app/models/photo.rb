@@ -29,6 +29,8 @@ class Photo < ApplicationRecord
     Section
     Scene
     Character
+    Faction
+    FactionRelationship
     Location
     Route
     Item
@@ -36,6 +38,7 @@ class Photo < ApplicationRecord
     Relation
     Ownership
     CharacterTag
+    FactionTag
     LocationTag
     ItemTag
     EventTag

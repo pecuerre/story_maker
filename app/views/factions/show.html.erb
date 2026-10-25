@@ -1,0 +1,27 @@
+<% content_for :title, @faction.name %>
+
+<%= render "shared/record_details",
+  record: @faction,
+  eyebrow: t("sidebar.universe_bible"),
+  label: t("factions.show.label"),
+  description: "",
+  facts: [
+    detail_fact(t("factions.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
+    detail_fact(t("factions.show.facts.tags"), entity_tag_badge(@faction), blank: t("factions.show.facts.tags_blank"))
+  ],
+  wide_facts: [
+    detail_fact(t("factions.form.mission"), @faction.mission, blank: t("factions.show.facts.blank")),
+    detail_fact(t("factions.form.actual_aims"), @faction.actual_aims, blank: t("factions.show.facts.blank")),
+    detail_fact(t("factions.form.structure"), @faction.structure, blank: t("factions.show.facts.blank")),
+    detail_fact(t("factions.form.internal_divisions"), @faction.internal_divisions, blank: t("factions.show.facts.blank")),
+    detail_fact(t("factions.form.resources"), @faction.resources, blank: t("factions.show.facts.blank")),
+    detail_fact(t("factions.form.would_never"), @faction.would_never, blank: t("factions.show.facts.blank")),
+    detail_fact(t("factions.form.would_absolutely"), @faction.would_absolutely, blank: t("factions.show.facts.blank"))
+  ],
+  back_url: universe_factions_path,
+  back_label: t("factions.show.back_label"),
+  actions: discussion_control(@faction) do %>
+  <%= render "shared/content_tabs",
+    aria_label: t("factions.tabs_aria_label"),
+    tabs: content_workspace_tabs(:faction) %>
+<% end %>

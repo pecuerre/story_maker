@@ -1,0 +1,23 @@
+- universe: Universe.dark
+  name: Sic Mundus
+  slug: sic-mundus
+  mission: Preserve the loop and guide humanity toward its promised future.
+  actual_aims: Break the knot and create a world without origin.
+  structure: A secret order led by Adam, with members placed across time.
+  internal_divisions: Members disagree about what the promised world will cost.
+  resources: Time travel, hidden facilities, and influence across generations.
+  would_never: Admit that its leader's certainty may be misplaced.
+  would_absolutely: Sacrifice the present to shape the origin.
+  faction_tags: [ FactionTag.secretive, FactionTag.ideological ]
+
+- universe: Universe.dark
+  name: Erit Lux
+  slug: erit-lux
+  mission: Preserve the origin world and free humanity from the knot.
+  actual_aims: Prevent Adam from erasing their world.
+  structure: A covert movement led by Eva and her trusted agents.
+  internal_divisions: Some members question Eva's willingness to repeat the cycle.
+  resources: A network across timelines and knowledge of the passage.
+  would_never: Accept Adam's single-world solution.
+  would_absolutely: Protect the world from which its members come.
+  faction_tags: [ FactionTag.secretive, FactionTag.ideological ]

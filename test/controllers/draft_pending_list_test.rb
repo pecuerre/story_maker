@@ -430,7 +430,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
   end
 
   test "a badge on a record's own details page says the same thing as the list's" do
-    # The badge is read on all eighteen details pages and in every list workspace,
+    # The badge is read on all twenty details pages and in every list workspace,
     # so the two are the same question asked twice. The details page passes the
     # **record** down rather than the badge's state, which is what makes this hold
     # by construction rather than by two call sites agreeing.

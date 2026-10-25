@@ -100,6 +100,22 @@ class PhotoMutationTest < ActionDispatch::IntegrationTest
     assert_equal @universe.id, tag.reload.photo.universe_id
   end
 
+  test "Faction and Faction Tag editors post crops through their JSON modals" do
+    post universe_factions_url(universe_slug: @universe.slug),
+      params: { faction: { name: "Photographed faction", photo_data: @crop } }, as: :json
+
+    assert_response :created
+    faction = Faction.find(response.parsed_body.fetch("id"))
+    assert_equal @universe.id, faction.photo.universe_id
+
+    post universe_faction_tags_url(universe_slug: @universe.slug),
+      params: { faction_tag: { name: "Photographed faction tag", photo_data: @crop } }, as: :json
+
+    assert_response :created
+    tag = FactionTag.find(response.parsed_body.fetch("id"))
+    assert_equal @universe.id, tag.photo.universe_id
+  end
+
   test "a location editor posts a crop through the tree modal" do
     location = @universe.locations.first
 

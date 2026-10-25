@@ -61,9 +61,10 @@ class Event < ApplicationRecord
   # A short label for this event, falling back to its known relations when it has no title or dates.
   #
   # This is the **stored** form. `Event` indexes `name` rather than this label, so
-  # nothing here reaches the index — but `Relation` and `Ownership` make the same
-  # kind of label their `searchable title:`, and one index serves every reader, so
-  # the rule is written once for all three: the stored form is resolved in the
+  # nothing here reaches the index — but `Relation`, `Ownership`, and
+  # `FactionRelationship` make the same kind of label their `searchable title:`,
+  # and one index serves every reader, so the rule is written once for all four:
+  # the stored form is resolved in the
   # application's default locale, whatever the request is in. A document written by
   # a Spanish request must not carry Spanish chrome for the next reader.
   #

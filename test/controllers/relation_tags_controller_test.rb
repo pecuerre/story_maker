@@ -21,7 +21,7 @@ class RelationTagsControllerTest < ActionDispatch::IntegrationTest
   # held because the whole table was empty. A taxonomy that holds nothing is now a
   # condition the test has to arrange rather than one it inherits, so it gets its
   # own case: the shared tree partial still draws the empty state for every one of
-  # the eight taxonomies, and only a deliberately bare universe exercises that.
+  # the nine taxonomies, and only a deliberately bare universe exercises that.
   test "a taxonomy with no relation tags shows the empty state" do
     bare = Universe.create!(owner: users(:user_one), name: "Bare relations", slug: "bare-relations")
 

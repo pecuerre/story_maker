@@ -40,6 +40,7 @@ module Search
       Option.new(value: "universes", kind: "universe", boundary: :inherited, commands: false),
       Option.new(value: "stories", kind: "story", boundary: :inherited, commands: false),
       Option.new(value: "characters", kind: "character", boundary: :inherited, commands: false),
+      Option.new(value: "factions", kind: "faction", boundary: :inherited, commands: false),
       Option.new(value: "locations", kind: "location", boundary: :inherited, commands: false),
       Option.new(value: "routes", kind: "route", boundary: :inherited, commands: false),
       Option.new(value: "items", kind: "item", boundary: :inherited, commands: false),

@@ -1,0 +1,23 @@
+- universe: Universe.lotr
+  name: Fellowship of the Ring
+  slug: fellowship-of-the-ring
+  mission: Carry the One Ring to Mount Doom and destroy it.
+  actual_aims: Prevent Sauron from ruling Middle-earth.
+  structure: A small company guided by its appointed leader and shared purpose.
+  internal_divisions: Members differ in experience, loyalties, and confidence.
+  resources: The Ring-bearer, companions, and aid from free peoples.
+  would_never: Use the Ring as a weapon against Sauron.
+  would_absolutely: Continue the quest despite overwhelming danger.
+  faction_tags: [ FactionTag.alliance ]
+
+- universe: Universe.lotr
+  name: White Council
+  slug: white-council
+  mission: Resist the return of the Shadow in Middle-earth.
+  actual_aims: Keep Sauron's influence from becoming an open threat.
+  structure: A council of powerful leaders with independent responsibilities.
+  internal_divisions: Its members disagree about when and how to confront Dol Guldur.
+  resources: Ancient knowledge, influence, and the power of its members.
+  would_never: Surrender its members' independent judgment.
+  would_absolutely: Act when the Shadow threatens the free peoples.
+  faction_tags: [ FactionTag.council ]

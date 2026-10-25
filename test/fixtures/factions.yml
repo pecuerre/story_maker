@@ -1,0 +1,26 @@
+faction_one:
+  universe: universe_one
+  slug: "faction-one"
+  name: Faction one
+  mission: A public promise
+  actual_aims: A private goal
+  structure: Council-led
+  internal_divisions: The elders disagree
+  resources: Access to a library
+  would_never: Betray an ally
+  would_absolutely: Protect its own
+
+faction_two:
+  universe: universe_one
+  slug: "faction-two"
+  name: Faction two
+
+faction_other_universe:
+  universe: universe_two
+  slug: "faction-other-universe"
+  name: Other universe faction
+
+faction_other_universe_two:
+  universe: universe_two
+  slug: "faction-other-universe-two"
+  name: Another other universe faction

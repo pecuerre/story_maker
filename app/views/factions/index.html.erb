@@ -1,0 +1,109 @@
+<% content_for :title, t("factions.title") %>
+<% empty_description = can_write_universe? ? t("factions.empty_writable_description") : t("factions.empty_read_only_description") %>
+<% pending_creates = draft_pending_creates_for(Faction) %>
+
+<div
+  <% if can_write_universe? %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="faction"
+  data-modal-form-response-value="json"
+  data-modal-form-create-title-value="<%= t("factions.new_title") %>">
+  <%= render "shared/page_header",
+    title: t("factions.title"),
+    eyebrow: t("sidebar.universe_bible"),
+    count: @factions.size,
+    count_label: "faction" do %>
+    <% if can_write_universe? %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_factions_path %>"
+        data-modal-form-method="post"
+        data-modal-form-title="<%= t("factions.new_title") %>"
+        data-modal-form-values-value="{}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span><%= t("factions.add") %></span>
+      </button>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/content_tabs",
+    aria_label: t("factions.tabs_aria_label"),
+    intro: t("factions.description"),
+    tabs: content_workspace_tabs(:faction) %>
+
+  <% if @factions.any? || pending_creates.any? %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @factions.each do |faction| %>
+          <div class="list-group-item entity-row d-flex align-items-center gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= faction.name %></span>
+                <%= entity_tag_badge(faction) %>
+                <%= render "shared/draft_pending_badge", record: faction %>
+              </div>
+              <% if faction.mission.present? %>
+                <div class="entity-description"><%= faction.mission %></div>
+              <% end %>
+            </div>
+            <%= record_details_link universe_faction_path(id: faction), record: faction %>
+            <%= render "shared/row_actions",
+              record: faction,
+              label: t("faction", count: 1),
+              record_name: faction.name,
+              confirm_text: t("factions.delete_confirm", name: faction.name),
+              edit_url: universe_faction_path(id: faction),
+              delete_url: universe_faction_path(id: faction),
+              delete_via: :json,
+              values: faction_fields_json(faction) %>
+          </div>
+        <% end %>
+        <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
+      </div>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: t("factions.empty_title"),
+      description: empty_description,
+      icon: "people-fill" %>
+  <% end %>
+
+  <% if can_write_universe? %>
+    <div class="modal fade" tabindex="-1" aria-labelledby="faction-modal-title" aria-hidden="true"
+      data-modal-form-target="modal">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="faction-modal-title" data-modal-form-target="title"><%= t("factions.new_title") %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
+          </div>
+          <%= form_with scope: :faction, url: universe_factions_path, method: :post,
+            data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
+            <div class="modal-body">
+              <%= render "shared/modal_errors" %>
+              <div class="mb-3">
+                <%= form.label :name, t("factions.form.name"), class: "form-label" %>
+                <%= form.text_field :name, class: "form-control", required: true %>
+              </div>
+              <%= render "shared/photo_field", param: "faction" %>
+              <div class="mb-3">
+                <%= form.label :faction_tag_ids, t("factions.form.tags_label"), class: "form-label" %>
+                <%= form.collection_select :faction_tag_ids, @assignable_faction_tags, :id, :name, {},
+                  { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
+              </div>
+              <% %i[mission actual_aims structure internal_divisions resources would_never would_absolutely].each do |field| %>
+                <div class="mb-3">
+                  <%= form.label field, t("factions.form.#{field}"), class: "form-label" %>
+                  <%= form.text_area field, class: "form-control", rows: 3 %>
+                </div>
+              <% end %>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+              <%= form.submit t("factions.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

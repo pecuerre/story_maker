@@ -51,20 +51,6 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-30. i want now factions to be its own thing. i have been using character tags to represent factions.
-    but i think factions deserver their own model.
-    - please add also a model FactionTag similar to other Tag models
-    - factions should have
-      - name, slug
-      - mission (what they say out loud)
-      - actually for (what they truly aim to achieve)
-      - structure
-      - internal split
-      - resources
-      - would never
-      - would absolutely
-      - relationships (with other factions)
-
 31. add to characters
    - factions (characters usually will have one faction, but in some cases it can be zero or more than one)
    - replace the description for
@@ -141,11 +127,10 @@ work order.
    Status line now says which costs
    [ADR 0024](adr/0024-an-applies-outcome-is-stored-and-a-closed-draft-stays-inspectable.md)
    superseded and which of its reasoning still holds. Deferred by owner decision on 2026-10-04.
-- **Unrelated full-suite failures from existing workspace changes.** The 2026-10-24 run also found
-  missing Spanish taxonomy/item-owner translations and Story photo/overview expectation failures.
-  The Elements modal contract and client-string assertions were addressed alongside Slice A3; re-run
-  and triage the remaining failures in their owning feature areas after the existing work is ready for
-  review, rather than expanding turn-level dialogue.
+- **Story page/photo expectations from existing workspace changes.** The 2026-10-25 full suite still
+  finds stale expectations on the Story overview and photo details surfaces. Re-run and triage those
+  failures in their owning feature areas after the existing work is ready for review, rather than
+  expanding turn-level dialogue.
 - **change universes to subdomains**. replace the /u/universe_slug for universe_slug.<website>.com
 - **Scene point-of-view/focus Character.** Record whose perspective presents a Scene separately from
   all Characters present, supporting same-Event/different-POV analysis without duplicating Event data.

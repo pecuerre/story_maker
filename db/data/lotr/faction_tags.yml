@@ -1,0 +1,11 @@
+- universe: Universe.lotr
+  name: Alliance
+  slug: alliance
+  bgcolor: "#198754"
+  fgcolor: "#ffffff"
+
+- universe: Universe.lotr
+  name: Council
+  slug: council
+  bgcolor: "#0d6efd"
+  fgcolor: "#ffffff"

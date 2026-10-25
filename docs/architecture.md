@@ -299,8 +299,8 @@ outside its scope by construction.
 
 | Flow | Controllers | Behavior |
 |---|---|---|
-| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, locations, items, events, sections, **scene_elements**, **scene_dialogue_turns**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; mutations answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
-| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, ownerships, universe memberships, **settings**, **drafts**, **draft_editing**, **review_requests**, **notifications** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
+| JSON-only mutations | all `*_tags` (including `scene_tags`), characters, factions, locations, items, events, sections, **scene_elements**, **scene_dialogue_turns**, **scene_characters**, **scene_items**, **scene_locations** | `index/new/show` render HTML; mutations answer `format.json` only, and a request that does not ask for JSON is refused with `406` **before** anything is written (`RequiresJsonMutationFormat`); errors → `unprocessable_content` + error hash |
+| HTML flow | universes, **stories**, **scenes** (including Scene Tag assignment), relations, faction relationships, ownerships, universe memberships, **settings**, **drafts**, **draft_editing**, **review_requests**, **notifications** | `show` renders the record's details page; `redirect_to` on success (`status: :see_other` for PATCH/DELETE), re-render with errors |
 
 Every PATCH and DELETE in the HTML flow sends `status: :see_other`; a `create` is a POST, so its
 default 302 is correct. A 302 after a non-GET verb asks the browser to repeat the mutation as a GET

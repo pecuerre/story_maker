@@ -4,7 +4,7 @@ module Search
   # badges, and the engine's `kind` filter cannot disagree about what a
   # "character" is.
   #
-  # A label is deliberately per *kind* and not per model. The eight taxonomies
+  # A label is deliberately per *kind* and not per model. The nine taxonomies
   # share the `tag` kind and are told apart by a document's `taxonomy`
   # attribute, so "Character tag" is named here rather than stored in the
   # index, where a wording change would otherwise need a reindex.
@@ -29,6 +29,8 @@ module Search
       "scene" => "searches.kinds.scene",
       "scene_element" => "searches.kinds.scene_element",
       "character" => "searches.kinds.character",
+      "faction" => "searches.kinds.faction",
+      "faction_relationship" => "searches.kinds.faction_relationship",
       "location" => "searches.kinds.location",
       "route" => "searches.kinds.route",
       "item" => "searches.kinds.item",
@@ -39,10 +41,11 @@ module Search
     }.freeze
 
     # Keyed by the pair the document carries, because that is what the engine
-    # stored: `kind` is shared by all eight taxonomies, so the taxonomy is the
+    # stored: `kind` is shared by all nine taxonomies, so the taxonomy is the
     # only thing that tells them apart.
     TAXONOMY_LABEL_KEYS = {
       [ "tag", "Character" ] => "searches.kinds.character_tag",
+      [ "tag", "Faction" ] => "searches.kinds.faction_tag",
       [ "tag", "Location" ] => "searches.kinds.location_tag",
       [ "tag", "Item" ] => "searches.kinds.item_tag",
       [ "tag", "Event" ] => "searches.kinds.event_tag",
@@ -57,7 +60,7 @@ module Search
     def label_for(kind, taxonomy = nil)
       kind = kind.to_s
       # The document's own pair, which is the only thing that can name a taxonomy
-      # badge: all eight taxonomies share the `tag` kind.
+      # badge: all nine taxonomies share the `tag` kind.
       pair = [ kind, taxonomy ]
       key = taxonomy.presence && TAXONOMY_LABEL_KEYS[pair]
       return I18n.t(key) if key

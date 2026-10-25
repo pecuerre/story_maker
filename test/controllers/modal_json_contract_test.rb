@@ -25,12 +25,14 @@ require "test_helper"
 class ModalJsonContractTest < ActionDispatch::IntegrationTest
   JSON_PAGES = {
     "characters" => :universe_characters_path,
+    "factions" => :universe_factions_path,
     "items" => :universe_items_path,
     "events" => :universe_events_path
   }.freeze
 
   HTML_PAGES = {
     "relations" => [ :universe_relations_path, :universe_relation_path, :relation ],
+    "faction_relationships" => [ :universe_faction_relationships_path, :universe_faction_relationship_path, :faction_relationship ],
     "ownerships" => [ :universe_ownerships_path, :universe_ownership_path, :ownership ],
     "routes" => [ :universe_routes_path, :universe_route_path, :route ]
   }.freeze
@@ -41,6 +43,7 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
   # to carry a serialized payload.
   EDITOR_SCOPES = {
     "characters" => [ :universe_characters_path, "character" ],
+    "factions" => [ :universe_factions_path, "faction" ],
     "items" => [ :universe_items_path, "item" ],
     "events" => [ :universe_events_path, "event" ],
     "relations" => [ :universe_relations_path, "relation" ],
@@ -132,8 +135,10 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
 
   test "an html-flow modal workspace keeps the redirect flow" do
     relation = Relation.create!(universe: @universe, character1: characters(:character_one), character2: characters(:character_two))
+    faction_relationship = faction_relationships(:faction_relationship_one)
     ownership = Ownership.create!(universe: @universe, character: characters(:character_one), item: items(:item_one))
-    records = { "relations" => relation, "ownerships" => ownership, "routes" => routes(:route_one) }
+    records = { "relations" => relation, "faction_relationships" => faction_relationship,
+      "ownerships" => ownership, "routes" => routes(:route_one) }
 
     HTML_PAGES.each do |name, (index_helper, member_helper, _)|
       get public_send(index_helper, universe_slug: @universe.slug)
@@ -162,6 +167,11 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
 
     assert_no_difference("Event.count") do
       post universe_events_url(universe_slug: @universe.slug), params: { event: { title: "Html submit" } }
+    end
+    assert_response :not_acceptable
+
+    assert_no_difference("Faction.count") do
+      post universe_factions_url(universe_slug: @universe.slug), params: { faction: { name: "Html submit" } }
     end
     assert_response :not_acceptable
   end
@@ -345,6 +355,7 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
 
       {
         "character tags" => universe_character_tags_path(universe_slug: universe),
+        "faction tags" => universe_faction_tags_path(universe_slug: universe),
         "relation tags" => universe_relation_tags_path(universe_slug: universe),
         "location tags" => universe_location_tags_path(universe_slug: universe),
         "event tags" => universe_event_tags_path(universe_slug: universe),

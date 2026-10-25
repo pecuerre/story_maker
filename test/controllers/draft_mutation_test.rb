@@ -8,7 +8,7 @@ require "test_helper"
 # through and nothing else would notice.
 #
 # So this file is that something else. It walks **every** mutation controller in
-# both modes — twenty-three of them, across the JSON-only flow, the HTML flow, and
+# both modes — twenty-four of them, across the JSON-only flow, the HTML flow, and
 # both scopes — and asserts the single thing that differs between them: in `direct` a
 # mutation writes, and in a draft-based universe it does not. The table is the
 # contract; the tests below it are the details that the table cannot express,
@@ -239,6 +239,16 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       destroy: -> { universe_route_url(universe_slug: @universe.slug, id: @route.id) }
     },
     {
+      name: "faction_relationships", model: FactionRelationship, json: false, label: :name,
+      scope: -> { [ "universe_id", @universe.id ] },
+      record: -> { @faction_relationship },
+      create: -> { [ universe_faction_relationships_url(universe_slug: @universe.slug),
+        { faction_relationship: { name: NEW, from_faction_id: @faction.id, to_faction_id: @other_faction.id } } ] },
+      update: -> { [ universe_faction_relationship_url(universe_slug: @universe.slug, id: @faction_relationship.id),
+        { faction_relationship: { name: RENAMED, from_faction_id: @faction.id, to_faction_id: @other_faction.id } } ] },
+      destroy: -> { universe_faction_relationship_url(universe_slug: @universe.slug, id: @faction_relationship.id) }
+    },
+    {
       name: "ownerships", model: Ownership, json: false, label: :name,
       scope: -> { [ "universe_id", @universe.id ] },
       record: -> { @ownership },
@@ -295,6 +305,10 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     # Relations and Ownerships have no fixtures, and a presence link can only be
     # added for a record the scene does not already carry.
     @relation = Relation.create!(universe: @universe, character1: @character, character2: @other_character)
+    @faction = factions(:faction_one)
+    @other_faction = factions(:faction_two)
+    @faction_relationship = FactionRelationship.create!(universe: @universe,
+      from_faction: @faction, to_faction: @other_faction, name: "Existing faction relationship")
     @route = Route.create!(universe: @universe, from_location: @location,
       to_location: locations(:location_two), name: "Existing route")
     @ownership = Ownership.create!(universe: @universe, character: @character, item: @item)

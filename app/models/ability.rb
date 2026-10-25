@@ -40,6 +40,9 @@ class Ability
     SceneLocation
     Character
     CharacterTag
+    Faction
+    FactionTag
+    FactionRelationship
     Location
     LocationTag
     Route

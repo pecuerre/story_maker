@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The word a result row's badge wears, and the eight taxonomies that share the
+# The word a result row's badge wears, and the nine taxonomies that share the
 # `tag` kind.
 #
 # The label is resolved per request rather than held in the map, because this
@@ -11,12 +11,14 @@ require "test_helper"
 class Search::KindsTest < ActiveSupport::TestCase
   test "a kind is named by its own word in both locales" do
     assert_equal "Character", Search::Kinds.label_for("character")
+    assert_equal "Faction", Search::Kinds.label_for("faction")
     assert_equal "Scene element", Search::Kinds.label_for("scene_element")
     assert_equal "Route", Search::Kinds.label_for("route")
     assert_equal "Tag", Search::Kinds.label_for("tag")
 
     I18n.with_locale(:es) do
       assert_equal "Personaje", Search::Kinds.label_for("character")
+      assert_equal "Facción", Search::Kinds.label_for("faction")
       assert_equal "Elemento de escena", Search::Kinds.label_for("scene_element")
       assert_equal "Ruta", Search::Kinds.label_for("route")
       assert_equal "Etiqueta", Search::Kinds.label_for("tag")
@@ -25,6 +27,7 @@ class Search::KindsTest < ActiveSupport::TestCase
 
   test "a taxonomy is named as a whole phrase, not composed from the kind" do
     assert_equal "Character tag", Search::Kinds.label_for("tag", "Character")
+    assert_equal "Faction tag", Search::Kinds.label_for("tag", "Faction")
     assert_equal "Scene tag", Search::Kinds.label_for("tag", "Scene")
 
     # The Spanish entry is not "Personaje etiqueta" with the noun moved: the
@@ -32,6 +35,7 @@ class Search::KindsTest < ActiveSupport::TestCase
     # the word order English happens to use.
     I18n.with_locale(:es) do
       assert_equal "Etiqueta de personaje", Search::Kinds.label_for("tag", "Character")
+      assert_equal "Etiqueta de facción", Search::Kinds.label_for("tag", "Faction")
       assert_equal "Etiqueta de escena", Search::Kinds.label_for("tag", "Scene")
     end
   end

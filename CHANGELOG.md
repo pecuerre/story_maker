@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Faction-to-faction relationships.** Adds directed, universe-scoped Faction links with optional names, descriptions, dates, details pages, HTML edits, soft-delete cascades, searchable records, and connected Dark/LOTR examples.
+- **Faction profiles and taxonomy.** Adds universe-scoped Factions, a `FactionTag` tree, searchable profiles and draft-aware JSON edits, with connected Dark/LOTR examples; Character membership and Faction relationships remain separate pending slices.
 - **Development Compose onboarding.** Adds a separate development image and entrypoint, isolated persistent SQLite/upload storage, a loopback-only port, a CSS build, demo loading on first start, and an `/up` health check.
 - **Universe Map diagram.** Adds a responsive, keyboard-accessible SVG of the Location hierarchy and directional Routes, laid out from live records without storing coordinates.
 - **Universe Map foundation.** Adds a read-only, universe-scoped page for the Location hierarchy and directional Routes, with localized empty states and links to record details.
@@ -51,6 +53,10 @@ Labels used below, in the order their groups appear:
 
 - **Compose reloads application code and rebuilds CSS on edits.** The development container mounts `app/` and `lib/`, runs Rails with development reloading, and starts the CSS watcher alongside the server.
 - **Compose repeats the local demo sign-in on startup.** The generated password is stored with mode `0600` in the project volume and printed when the container starts, rather than being available only in first-load output.
+
+### fixed
+
+- **Spanish taxonomy and Item ownership copy.** Adds the missing taxonomy parent label and current/historical owner sentences so those locale pages render without missing-translation errors.
 
 ### docs
 

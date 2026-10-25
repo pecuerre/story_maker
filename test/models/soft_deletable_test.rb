@@ -63,11 +63,15 @@ class SoftDeletableTest < ActiveSupport::TestCase
     universe = universes(:universe_one)
     story = stories(:story_one)
     scene = scenes(:scene_one)
+    faction = factions(:faction_one)
+    faction_tag = faction_tags(:faction_tag_one)
 
     universe.soft_delete
 
     assert story.reload.deleted?
     assert scene.reload.deleted?
+    assert faction.reload.deleted?
+    assert faction_tag.reload.deleted?
   end
 
   test "a soft-deleted parent hides its cascaded children from the default scope" do

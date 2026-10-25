@@ -10,6 +10,13 @@ class HasManyTagsTest < ActiveSupport::TestCase
     assert_equal character.universe_id, character.character_tags.build(name: "Built tag").universe_id
     assert_equal character_tag.universe_id, character_tag.characters.build(name: "Built character").universe_id
 
+    faction = factions(:faction_one)
+    faction_tag = faction_tags(:faction_tag_one)
+    faction.update!(faction_tag_ids: [ faction_tag.id ])
+    assert_equal [ faction_tag.id ], faction.reload.faction_tag_ids
+    assert_equal faction.universe_id, faction.faction_tags.build(name: "Built faction tag").universe_id
+    assert_equal faction_tag.universe_id, faction_tag.factions.build(name: "Built faction").universe_id
+
     section = sections(:section_one)
     section_tag = section_tags(:section_tag_two)
 
@@ -32,7 +39,8 @@ class HasManyTagsTest < ActiveSupport::TestCase
       [ characters(:character_one), :character_tag_ids, :character_tags, character_tags(:character_tag_three) ],
       [ locations(:location_one), :location_tag_ids, :location_tags, location_tags(:location_tag_three) ],
       [ items(:item_one), :item_tag_ids, :item_tags, item_tags(:item_tag_three) ],
-      [ events(:event_one), :event_tag_ids, :event_tags, event_tags(:event_tag_three) ]
+      [ events(:event_one), :event_tag_ids, :event_tags, event_tags(:event_tag_three) ],
+      [ factions(:faction_one), :faction_tag_ids, :faction_tags, faction_tags(:faction_tag_two) ]
     ]
 
     scoped_records.each do |record, id_writer, association, foreign_tag|
@@ -50,7 +58,8 @@ class HasManyTagsTest < ActiveSupport::TestCase
       [ :characters_character_tags, characters(:character_one), character_tags(:character_tag_three), :characters ],
       [ :locations_location_tags, locations(:location_one), location_tags(:location_tag_three), :locations ],
       [ :items_item_tags, items(:item_one), item_tags(:item_tag_three), :items ],
-      [ :events_event_tags, events(:event_one), event_tags(:event_tag_three), :events ]
+      [ :events_event_tags, events(:event_one), event_tags(:event_tag_three), :events ],
+      [ :factions_faction_tags, factions(:faction_one), faction_tags(:faction_tag_two), :factions ]
     ]
 
     scoped_records.each do |join_table, record, foreign_tag, inverse_association|

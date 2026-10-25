@@ -1,0 +1,23 @@
+<% content_for :title, @faction_relationship.display_string %>
+
+<%= render "shared/record_details",
+  record: @faction_relationship,
+  eyebrow: t("sidebar.universe_bible"),
+  label: t("faction_relationships.show.label"),
+  title: @faction_relationship.display_string,
+  facts: [
+    detail_fact(t("faction_relationships.show.facts.from_faction"), link_to(@faction_relationship.from_faction.name,
+      universe_faction_path(id: @faction_relationship.from_faction))),
+    detail_fact(t("faction_relationships.show.facts.to_faction"), link_to(@faction_relationship.to_faction.name,
+      universe_faction_path(id: @faction_relationship.to_faction))),
+    detail_fact(t("faction_relationships.show.facts.in_world_dates"), in_world_range(@faction_relationship.from_date, @faction_relationship.to_date)),
+    detail_fact(t("faction_relationships.show.facts.description"), @faction_relationship.description,
+      blank: t("faction_relationships.show.facts.description_blank"))
+  ],
+  back_url: universe_faction_relationships_path,
+  back_label: t("faction_relationships.show.back_label"),
+  actions: discussion_control(@faction_relationship) do %>
+  <%= render "shared/content_tabs",
+    aria_label: t("factions.tabs_aria_label"),
+    tabs: content_workspace_tabs(:faction) %>
+<% end %>

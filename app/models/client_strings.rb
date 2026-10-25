@@ -183,6 +183,8 @@ module ClientStrings
   # article the sentence's own wording cannot know.
   RECORD_SUBJECTS = %w[
     character
+    faction
+    faction_relationship
     event
     item
     ownership

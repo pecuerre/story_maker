@@ -90,6 +90,9 @@ Rails.application.routes.draw do
     resources :routes, only: %i[ index show create update destroy ]
     resources :character_tags, only: %i[ index show create update destroy ]
     resources :characters, only: %i[ index show create update destroy ]
+    resources :faction_tags, only: %i[ index show create update destroy ]
+    resources :factions, only: %i[ index show create update destroy ]
+    resources :faction_relationships, only: %i[ index show create update destroy ]
     resources :relation_tags, only: %i[ index show create update destroy ]
     # Relations and Ownerships are link records between two entities; they have a
     # read-only details page but no separate editor.

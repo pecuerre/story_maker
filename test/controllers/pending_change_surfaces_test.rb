@@ -72,7 +72,7 @@ class PendingChangeSurfacesTest < ActionDispatch::IntegrationTest
   end
 
   test "a tag's own details page badges a remembered edit on it" do
-    # The details partial is shared by all eighteen models, so this is the same code
+    # The details partial is shared by all twenty models, so this is the same code
     # path as the Character above — asserted on a tag because a taxonomy tag is the
     # record type a pending row also appears for.
     tag = character_tags(:character_tag_one)

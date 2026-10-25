@@ -392,7 +392,7 @@ and Relations; the Item workspace has Items and Ownerships; the Event workspace 
 **Timeline**. Locations and Sections each have one record tab. The Timeline is a tab rather than a
 sidebar entry of its own: the sidebar keeps one Event link, current across both tabs, and the two are
 reached through `content_workspace_tabs(:event)`. Use `shared/_tag_workspace_navigation` for
-Configuration → Tags: the outer Universe/Story selector is followed by the six universe taxonomy tabs
+Configuration → Tags: the outer Universe/Story selector is followed by the seven universe taxonomy tabs
 or the two story taxonomy (Section/Scene) tabs. Use `shared/_settings_navigation` for the platform
 Settings page, whose tab strip is the same pattern turned vertical (`nav nav-tabs flex-column`). All
 tabs are URL-backed Bootstrap `nav-tabs`: use the active class and `aria-current="page"`, but do not

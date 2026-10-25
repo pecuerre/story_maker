@@ -40,7 +40,7 @@ class SearchesLocaleTest < ActionDispatch::IntegrationTest
     assert_equal "Buscar", rendered_title
     assert_select "h1", text: "Buscar"
     assert_select ".page-eyebrow", text: "Encuentra cualquier cosa"
-    assert_select ".page-description", text: /Busca en todos los registros del alcance/
+    assert_select ".page-description", text: /Busca en los registros del alcance que elijas por su nombre y sus datos consultables/
     assert_select "label[for=search_page_q]", text: "Buscar"
     # `minimum` is `Search::Query::MINIMUM_LENGTH`, a number the code owns.
     assert_select "input#search_page_q[placeholder=?]", "Al menos 2 caracteres"

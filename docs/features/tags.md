@@ -128,7 +128,7 @@ The copy keys themselves are derived the same way, because every taxonomy's loca
 shape: `COPY_SUFFIXES` in `tags_helper.rb` is that shape written once, `EXTRA_COPY_SUFFIXES` holds
 the sentences a taxonomy needs beyond the shared five, and `UNIVERSE_TAG_METADATA` /
 `STORY_TAG_METADATA` are built from the type lists. So a shared sentence added to every taxonomy is
-one line rather than eight, and a taxonomy cannot be listed without all five keys — which the
+one line rather than nine, and a taxonomy cannot be listed without all five keys — which the
 hand-written blocks allowed, because `translated_metadata` merges only the keys a block happens to
 contain. `TagsHelper.tag_copy_metadata` is a module function rather than a view helper because it
 runs while those constants are being built.
@@ -139,7 +139,7 @@ navigation, while the taxonomy tree's Details link stays canonical and omits the
 
 ## The tag details card
 
-All eight tag pages share one identity card, built by
+All nine tag pages share one identity card, built by
 `TagsHelper#tag_identity_details` and rendered through `shared/_record_details`. Its shape is a
 deliberate split between **information** and **settings**:
 
@@ -159,7 +159,7 @@ The scope is derived from the record — a `story_id` means story-scoped — rat
 taxonomy cannot disagree with its own model about who owns it.
 
 The card also carries a **pending-change badge**, because `shared/_record_details` reads one for every
-model it renders rather than being asked for by each of the eighteen pages. That is one of the
+model it renders rather than being asked for by each of the twenty pages. That is one of the
 [three surfaces that are not list workspaces](../conventions.md#the-three-surfaces-that-are-not-list-workspaces),
 and so is a tag's list of the records carrying it — which now includes a remembered create carrying
 that tag, since a pending row carries its tags. Both follow the rules stated there.

@@ -120,6 +120,7 @@ class ClientStringsTest < ActiveSupport::TestCase
 
     I18n.with_locale(:es) do
       assert_equal "este suceso", ClientStrings.subject_for("event")
+      assert_equal "esta relación entre facciones", ClientStrings.subject_for("faction_relationship")
       assert_equal "esta trama", ClientStrings.subject_for("plot")
       assert_equal "esta ruta", ClientStrings.subject_for("route")
       assert_equal "esta relación", ClientStrings.subject_for("relation")

@@ -87,6 +87,8 @@ class AbilityTest < ActiveSupport::TestCase
       scene_locations(:scene_location_one),
       characters(:character_one),
       character_tags(:character_tag_one),
+      factions(:faction_one),
+      faction_tags(:faction_tag_one),
       locations(:location_one),
       location_tags(:location_tag_one),
       route,

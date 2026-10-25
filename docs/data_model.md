@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_24_170000`) and the models in `app/models/`.
+`2026_10_25_180000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -23,6 +23,8 @@ User (owner)
        │       └── SceneLocation (explicit presence, optional free-text role) > Location
       ├── Discussion (one per record, polymorphic) ──> DiscussionMessage ──> User
        ├── Character ──> parent Character   ── HABTM CharacterTag (tree)
+         ├── Faction    ── HABTM FactionTag (tree)
+         │   └── FactionRelationship (directed faction → faction)
        ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
        ├── Route (from Location → to Location, measured path)
       ├── Item      ──> parent Item        ── HABTM ItemTag      (tree)
@@ -32,7 +34,7 @@ User (owner)
       └── (Session belongs to User, unrelated to universes)
 ```
 
-**The one rule to remember:** world building (characters, locations, routes, items, events, relations,
+**The one rule to remember:** world building (characters, factions and faction relationships, locations, routes, items, events, relations,
 ownerships **and every `_tag` model except SectionTag and SceneTag**) belongs to the **universe** and
 is shared by all of its stories. Only **sections** (the script: books → chapters → scenes …),
 **scenes**, and their **section/scene tags** (chapter/book/episode or scene-beat labels) belong to a
@@ -76,7 +78,8 @@ can be restored. The `SoftDeletable` concern (`app/models/concerns/soft_deletabl
   repaired.
 
 Soft-deleting a parent cascades to its declared children (a Universe soft-deletes its stories,
-characters, tags, routes, and memberships; a Story soft-deletes its sections, plots, and scenes; a Scene
+characters, factions, faction relationships, tags, routes, and memberships; a Faction soft-deletes
+relationships on either endpoint; a Story soft-deletes its sections, plots, and scenes; a Scene
 soft-deletes its elements and presence links; a SceneElement soft-deletes its dialogue turns; a
 Character soft-deletes its relations, ownerships, and presence links; a Location soft-deletes Routes
 using it as either endpoint). Plot-to-Scene join rows are
@@ -102,9 +105,9 @@ Schema only. The photo **contract** — the optional writers, the same-universe 
 authority on the stored file, and the one control that serves all three page patterns — is in
 [features/photos.md](features/photos.md).
 
-A record may carry one photo, and the photo is always optional. Nineteen models include
-`HasPhoto`: `Universe`, `Story`, `Section`, `Scene`, `Character`, `Location`, `Route`, `Item`, `Event`,
-`Relation`, `Ownership`, and the eight `*_tag` models. Each of those tables gained a nullable
+A record may carry one photo, and the photo is always optional. Twenty-two models include
+`HasPhoto`: `Universe`, `Story`, `Section`, `Scene`, `Character`, `Faction`, `FactionRelationship`, `Location`, `Route`, `Item`, `Event`,
+`Relation`, `Ownership`, and the nine `*_tag` models. Each of those tables has a nullable
 `photo_id` with an index; none of them requires it, and no view, form, or list assumes a photo
 exists.
 
@@ -161,19 +164,21 @@ Every tag has `taggable` (bool, default `true`): a tag with `taggable: false` is
 children — it stays in the taxonomy tree and on records that already carry it, but it is not offered
 in an element's tag editor. Its details page shows records under each direct child tag instead of a
 flat descendant-inclusive list; the child sections have no include-descendants toggle. Taggable tags
-retain the flat list and toggle. `character_tags`, `location_tags`, `item_tags`, and `event_tags`
+retain the flat list and toggle. `character_tags`, `faction_tags`, `location_tags`, `item_tags`, and `event_tags`
 additionally have `show_in_menu` (bool, default `false`): a tag with `show_in_menu: true` appears as a
 tab on its workspace page and links to that tag's own details page. Workspace tab links carry
 `from=workspace`, preserving that navigation on the tag page; taxonomy Details links remain canonical
 and do not show workspace tabs.
 
-Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `scene_tags`,
+Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `section_tags`, `scene_tags`,
 `event_tags`, `relation_tags`, `ownership_tags`.
 
 ### Content tables
 | Table | Columns | Notes |
 |---|---|---|
 | `characters` | `name`, `description`, `slug`, `parent_id`, `position`, `universe_id` | |
+| `factions` | `name`, `slug`, `mission`, `actual_aims`, `structure`, `internal_divisions`, `resources`, `would_never`, `would_absolutely`, `universe_id`, `photo_id`, `deleted_at` | flat, universe-scoped profile |
+| `faction_relationships` | `universe_id`, `from_faction_id`, `to_faction_id`, optional `name`, `description`, `from_date`, `to_date`, `slug`, `photo_id`, `deleted_at` | directed Faction-to-Faction link; endpoints must be distinct and in the same Universe; a reverse link is a separate record; the dates are a `TemporalInterval` |
 | `locations` | same shape | |
 | `routes` | `universe_id`, `from_location_id`, `to_location_id`, optional `name`, `description`, optional free-form `distance` and `duration`, `slug`, `photo_id`, `deleted_at` | directional path between two Locations; both endpoints must belong to the same Universe; not hierarchical or positioned |
 | `items` | same shape | |
@@ -182,10 +187,10 @@ Tag models: `character_tags`, `location_tags`, `item_tags`, `section_tags`, `sce
 | `ownerships` | `character_id`, `item_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |
 
 ### HABTM join tables (no PK, two integer columns)
-`characters_character_tags`, `locations_location_tags`, `items_item_tags`,
+`characters_character_tags`, `factions_faction_tags`, `locations_location_tags`, `items_item_tags`,
 `sections_section_tags`, `scenes_scene_tags`, `events_event_tags`, `relations_relation_tags`,
 `ownerships_ownership_tags` — pattern `"<content table>_<tag table>"`, declared by
-`has_many_tags` and reused by `has_many_tagged`. **Every one of these eight carries two foreign keys
+`has_many_tags` and reused by `has_many_tagged`. **Every one of these nine carries two foreign keys
 and a unique index on its column pair** — the seven legacy tables by
 `db/migrate/20260928120000_add_integrity_constraints_to_legacy_join_tables.rb`, `scenes_scene_tags`
 from its own create migration — so an orphan or duplicate join row is refused by the database rather
@@ -331,8 +336,8 @@ nullable buys. See [conventions.md](conventions.md#notifications), which owns wh
 (`db/cache_schema.rb`, `db/cable_schema.rb`, `db/queue_schema.rb`).
 
 ### Photo columns, per table
-`universes`, `stories`, `sections`, `scenes`, `characters`, `locations`, `routes`, `items`, `events`,
-`relations`, `ownerships`, and all eight `*_tags` tables each carry one nullable, indexed
+`universes`, `stories`, `sections`, `scenes`, `characters`, `factions`, `faction_relationships`, `locations`, `routes`, `items`, `events`,
+`relations`, `ownerships`, and all nine `*_tags` tables each carry one nullable, indexed
 `photo_id`. `users`, `sessions`, `scene_elements`, `scene_dialogue_turns`, and the Scene
 presence-link tables do not. See
 [Photos](#photos) for the rules those references obey.
@@ -344,6 +349,7 @@ presence-link tables do not. See
 | Section | `:section_tag` | `sections_section_tags` | **no** |
 | Scene | `:scene_tag` | `scenes_scene_tags` | **no** |
 | Character | `:character_tag` | `characters_character_tags` | **no** |
+| Faction | `:faction_tag` | `factions_faction_tags` | **no** |
 | Location | `:location_tag` | `locations_location_tags` | **no** |
 | Item | `:item_tag` | `items_item_tags` | **no** |
 | **Event** | `:event_tag` | `events_event_tags` | **no** |
@@ -361,7 +367,7 @@ untagged; they stay valid.
 ## Hierarchies & positions
 
 Models including the `Hierarchical` concern (own `parent_id` self-FK + `children` +
-`position`): **Section, SectionTag, SceneTag, Character, CharacterTag, Location, LocationTag,
+`position`): **Section, SectionTag, SceneTag, Character, CharacterTag, FactionTag, Location, LocationTag,
 Item, ItemTag, Event, EventTag, RelationTag, OwnershipTag**.
 
 Validations added by the concern:
@@ -446,6 +452,8 @@ no `parent_id`.
 | `SceneItem` | `scene` and `item` required; `item_id` unique per scene ("is already in this scene"); `item` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |
 | `SceneLocation` | `scene` and `location` required; `location_id` unique per scene ("is already in this scene"); `location` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |
 | `Character` / `Location` / `Item` | `name` presence; `*_tags` optional and, when present, all belong to the content's universe; `Hierarchical` rules |
+| `Faction` | `name` presence; `faction_tags` optional and, when present, all belong to the faction's universe; profile text is optional |
+| `FactionRelationship` | `from_faction` and `to_faction` required and distinct; both endpoints must belong to the relationship's Universe; optional name and description; `from_date`/`to_date` follow `TemporalInterval` |
 | `_tag` models | `name` presence; `bgcolor`/`fgcolor` must be `#rrggbb` (`HasColor`); `Hierarchical` rules (for `SectionTag` the parent must share the **story**); `relation_tags` also requires `inverse` unless `symmetric` |
 | `Event` | `must_be_identifiable` (title **or** start/end datetime **or** a before/after/simultaneous relation); referenced events must be in the same universe; model validation and three DB check constraints reject self references (including unsaved/future IDs); `Hierarchical` rules; *no* name-presence rule. Destroying an event nullifies all incoming temporal references; a relation-only referrer that would become unidentifiable is destroyed first |
 | `Relation` | `character1`/`character2` required; both characters and all `relation_tags` must be in the same universe |

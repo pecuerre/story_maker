@@ -24,6 +24,8 @@ module Development
     UNIVERSE_ASSOCIATION_FIELDS = %w[
       character1
       character2
+      from_faction
+      to_faction
       item
       character
       before_event

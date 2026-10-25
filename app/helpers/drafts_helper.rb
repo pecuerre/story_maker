@@ -51,10 +51,10 @@ module DraftsHelper
   # **The photo writers are not columns.** `HasPhoto` keeps `photo_data` and
   # `remove_photo` in instance variables, so no model has either in `column_names`,
   # `human_attribute_name` cannot be asked about them, and an
-  # `activerecord.attributes` entry cannot exist for them on any of the eighteen
+  # `activerecord.attributes` entry cannot exist for them on any of the twenty
   # models that include the concern. Their *values* were already stated here — a new
   # photo or a removed one, because the raw payload is a `data:` URL and a boolean —
-  # so one shared label is what was missing, and eighteen copies of one word would
+  # so one shared label is what was missing, and twenty copies of one word would
   # be a vocabulary kept in step by hand for no gain.
   #
   # **`position` is a column, but nothing else labels it.** A record's order changes

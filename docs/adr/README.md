@@ -12,7 +12,7 @@ The current architecture and conventions are documented in:
 - [`../features/`](../features/) — one document per feature, each the single home of that
   feature's rules: [scenes](../features/scenes.md), [plots](../features/plots.md), [tags](../features/tags.md),
   [tropes](../features/tropes.md), [search](../features/search.md), [navigation](../features/navigation.md),
-  [photos](../features/photos.md), [events](../features/events.md), [i18n](../features/i18n.md),
+  [photos](../features/photos.md), [events](../features/events.md), [factions](../features/factions.md), [i18n](../features/i18n.md),
   [settings](../features/settings.md)
 - [`../known_quirks.md`](../known_quirks.md) — verified open findings
 - [`../visual_design.md`](../visual_design.md) — the visual system and painted treatment
@@ -56,6 +56,8 @@ reasoning as of its date.
 | [0031](0031-story-owned-plot-arcs.md) | Accepted | Model named Plot arcs as story-owned through-lines assignable across Scenes and Sections |
 | [0032](0032-curated-tropes-are-contextual-annotations.md) | Accepted | Curate a shared reference list and record contextual Story- and Scene-level annotations |
 | [0033](0033-meetings-use-events-and-scene-presence.md) | Accepted | Represent gatherings through Events and Scene presence, without a separate Meeting model |
+| [0034](0034-factions-are-universe-content.md) | Accepted | Model Factions as universe-scoped content with their own optional taxonomy |
+| [0035](0035-faction-relationships-are-directed.md) | Accepted | Store faction relationships as directed links; never infer their reverse |
 
 ## Format
 

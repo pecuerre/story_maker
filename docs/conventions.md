@@ -18,12 +18,12 @@
   a `SceneElement` and delegates through that owner. A
   universe holds many
   stories (e.g. universe *A Song of Ice and Fire* → stories *Game of Thrones*, *House of the Dragon*),
-  which share the universe's characters/locations/events/items but each own their script structure,
+  which share the universe's characters/factions/locations/events/items but each own their script structure,
   Plot arcs, and ordered scenes. The distinct Plot domain is in
   [features/plots.md](features/plots.md).
 - Every content model and every `_tag` taxonomy model has its own `slug` (see `HasSlug`).
 - Typical content columns: `name`, `description`, `universe_id` (FK), `parent_id` (self FK),
-  `position` (default 0), `slug`, timestamps. Exceptions (Relation, Ownership, Route, Event, Story) are
+  `position` (default 0), `slug`, timestamps. Exceptions (Faction, FactionRelationship, Relation, Ownership, Route, Event, Story) are
   listed in [data_model.md](data_model.md).
 - `"_tag"` models are their own hierarchical tables (`parent_id` self-FK); there is no `tag_id`
   column on the content tables — the pairs are joined with HABTM join tables.
@@ -59,7 +59,7 @@ the same change, or `db:demo:check` fails.
   be eager loaded, and the tree and its editor are all in [features/tags.md](features/tags.md).
 - `_tag` models include `HasColor` (validated `#rrggbb` `bgcolor`/`fgcolor`) and `HasSlug`.
   `SectionTag` and `SceneTag` additionally use the story-scoped `Hierarchical` scope.
-- Name presence is validated on: Universe, Character, Location, Item, Section, Story, User and all
+- Name presence is validated on: Universe, Character, Faction, Location, Item, Section, Story, User and all
   `_tag` models. Not on: Event (see [features/events.md](features/events.md)), Relation and
   Ownership (name optional). The two optional names are handled by the `OptionalName` concern
   (`app/models/concerns/optional_name.rb`), which stores a blank name as NULL and keeps the record's
@@ -71,9 +71,9 @@ the same change, or `db:demo:check` fails.
   same address — which a symbolic `db/data` reference and a class-level lookup both depend on. It
   reads the association in Ruby rather than querying, because the record being slugged is new and its
   join rows do not exist yet.
-- `Relation`, `Ownership`, `Route` and `Event` add custom validators that keep their non-tag associated
+- `FactionRelationship`, `Relation`, `Ownership`, `Route` and `Event` add custom validators that keep their non-tag associated
   records inside the same universe. `HasManyTags` independently enforces the shared universe or
-  story scope in both directions for all eight content/tag pairs (see the taxonomy matrix in
+  story scope in both directions for all nine content/tag pairs (see the taxonomy matrix in
   [data_model.md](data_model.md#tag-taxonomy-matrix)).
 - **An optional reference that names nothing is a field error, not a database failure.** Three
   validators own that sentence, one per shape of reference: `Hierarchical`'s
@@ -106,7 +106,7 @@ the same change, or `db:demo:check` fails.
   matching validations carry the same condition. Controllers call `soft_delete` instead of
   `destroy!`; the positioned controllers go through `PositionedResourceOrder`, which normalizes the
   remaining siblings in the same transaction. See [data_model.md](data_model.md#soft-delete).
-- **One optional photo** is `HasPhoto`, included by eighteen models, with the two virtual writers
+- **One optional photo** is `HasPhoto`, included by twenty-two models, with the two virtual writers
   `photo_data=` (the cropped square as a `data:` URL) and `remove_photo=` rather than a `photo_id`.
   The full contract, the stored-file rules, and the one control that serves all three page patterns
   are in [features/photos.md](features/photos.md).
@@ -216,7 +216,7 @@ the same change, or `db:demo:check` fails.
   guard an explicit `before_action` rather than a blanket filter so the callback order stays visible.
 - Strong params use Rails 8 `params.expect(model: [ ... ])`. A photo-capable controller `include
   PhotoParams` and splat `*photo_params` into its `params.expect`, so the two virtual photo fields
-  are declared once instead of in eighteen controllers; see
+  are declared once instead of in twenty-two controllers; see
   [features/photos.md](features/photos.md).
 - Never read top-level params with `params.permit`. A form posts keys beyond the ones an action
   needs — `authenticity_token` and `commit` on every Rails form — so permitting a bare list
@@ -241,7 +241,7 @@ the same change, or `db:demo:check` fails.
   both the record it would have written and the attributes it was going to write with it, and a callback
   would have to answer "what would this action write?" a second time — two answers that drift. It is also
    deliberately a call a controller can forget, so `test/controllers/draft_mutation_test.rb` walks all
-   twenty-one mutation controllers in both modes rather than testing the concern alone: a controller that omitted
+    twenty-four mutation controllers in both modes rather than testing the concern alone: a controller that omitted
    it would write straight through and nothing else would notice. This includes Story create/update/delete;
    `move` and `group` are mutations too, and
   remember the position or the section they asked for. A remembered change is **not validated when it is
@@ -294,26 +294,26 @@ the same change, or `db:demo:check` fails.
   proxy/access-log retention remains an external deployment responsibility.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
-    Characters, Locations, Items, Events, Sections, Plots, and the Scene-owned `SceneElementsController`,
+     Characters, Factions, Locations, Items, Events, Sections, Plots, and the Scene-owned `SceneElementsController`,
     `SceneDialogueTurnsController`, `SceneCharactersController`, `SceneItemsController`, and
     `SceneLocationsController`. The page
     renders HTML; create/update/destroy are called by Stimulus with `Accept: application/json`.
-    `SceneTagsController`, `CharactersController`, `ItemsController`, `EventsController`,
+     `SceneTagsController`, `CharactersController`, `FactionsController`, `ItemsController`, `EventsController`,
     `SceneElementsController`, `SceneDialogueTurnsController`, `SceneCharactersController`,
     `SceneItemsController`, and `SceneLocationsController` also
     include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
-  - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, Ownerships, Routes, Universe
+  - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, FactionRelationships, Ownerships, Routes, Universe
     memberships, Sessions, Passwords, Drafts, Review Requests.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
   memberships. `show/edit` exist for Universes, Stories, and Scenes; `show` also exists for every
-  content model (Character, Location, Route, Item, Event, Relation, Ownership, Section, Plot) and every tag
+  content model (Character, Faction, Location, Route, Item, Event, Relation, Ownership, Section, Plot) and every tag
   model, because each record has exactly one details page. `ScenesController#move` (narrative
   order) and `#group` (Section grouping) are the two member and collection actions beyond that set.
 - **A route may only advertise an action the controller has, and a GET may only name an action with a
   template.** A `resources` line names seven verbs whether or not they exist, and the two ways of
   being wrong look different from the outside: a missing action answers `ActionNotFound` (**404**),
   while an action with no template answers `ActionController::MissingExactTemplate` (**500**). The
-  modal-edited content models — Characters, Locations, Items, Events, Sections, Plots — therefore carry
+  modal-edited content models — Characters, Factions, Locations, Items, Events, Sections, Plots — therefore carry
   `only: %i[index show create update destroy]` and **no `new`/`edit` page at all**: the modal holds
   the form, and the `parent_id` the old `new` action read is still accepted by `create`. Sessions and
   passwords are the other two narrow surfaces, at `new`/`create`/`destroy` and `new`/`create`/`edit`/
@@ -327,6 +327,10 @@ the same change, or `db:demo:check` fails.
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
   `universe_*` and URLs look like `/u/<universe-slug>/...` (see `config/routes.rb`).
+- Factions and FactionTags are universe-scoped resources at `/u/:universe_slug/factions` and
+  `/u/:universe_slug/faction_tags`; both have `index`, `show`, and JSON-only create/update/destroy.
+  FactionRelationships live at `/u/:universe_slug/faction_relationships` and use the HTML flow for
+  `index`, `show`, `create`, `update`, and `destroy`.
 - Stories are a full resource in that scope with sections, plots, section tags, Scene Tags, and scenes nested
   underneath:
   `resources :stories, path: "s" do resources :sections; resources :plots; resources :section_tags; resources :scene_tags; resources :scenes end`
@@ -348,10 +352,10 @@ the same change, or `db:demo:check` fails.
   universe-level `/u/:universe_slug/sections`,
   `/u/:universe_slug/section_tags`, `/u/:universe_slug/scene_tags`, and
   `/u/:universe_slug/scenes` paths are intentionally invalid.
-- Relations/Ownerships/Routes are limited to `index, show, create, update, destroy`; memberships are
+- Factions, FactionTags, FactionRelationships, Relations, Ownerships, and Routes are limited to `index, show, create, update, destroy`; memberships are
   mounted at `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and
   are admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
-  and `taxonomy=character|relation|location|event|item|ownership|section` query parameters;
+  and `taxonomy=character|faction|relation|location|event|item|ownership|section` query parameters;
   timeline and Map are single-page GETs (`timeline#index` and `maps#index`); the Map page's behavior is
   in [features/map.md](features/map.md). `root` → `universes#index`; health check `/up`.
 - **Drafts are `index`/`show` plus two member POSTs**, mounted at `/u/:universe_slug/drafts`:
@@ -405,7 +409,7 @@ routes, and a successful mutation performs a same-URL Turbo visit so serialized 
 descriptors, page counts, and sidebar counts come from one fresh server render. User-controlled names
 and descriptions are assigned with `textContent`/DOM properties, never interpolated into `innerHTML`.
 
-**2. Flat list + Bootstrap modal** (characters, items, events, relations, ownerships, routes):
+**2. Flat list + Bootstrap modal** (characters, factions, items, events, relations, ownerships, routes):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
   Each row also renders `record_details_link` before its actions, so the record's own page is one
   click away and visible to read-only viewers. The name is plain text; the Details link is the only
@@ -421,7 +425,7 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   controller's mutation contract is the one decided in
   [ADR 0011](adr/0011-modal-json-mutation-contract.md), and every modal page declares it with
   `data-modal-form-response-value`:
-  - **`json`** (characters, items, events, Scene Elements, Scene Characters): the form carries
+  - **`json`** (characters, factions, items, events, Scene Elements, Scene Characters): the form carries
     `data-action="modal-form#save"`, the
     submit input carries `data-modal-form-target="submit"`, the modal body starts with
     `shared/_modal_errors`, and `shared/_row_actions` receives `delete_via: :json` (the Scene
@@ -1059,8 +1063,8 @@ record**, and what new records the draft would have created.
 no join that would produce one. A list therefore keeps its own ordering, `includes`, and count, and the
 preview is a parallel source beside it — see [ADR
 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md). Every list workspace
-carries it: the six universe-level flat lists (Characters, Locations, Items, Events, Relations,
-Ownerships), the Sections tree, the eight taxonomy trees, and the Scenes list.
+  carries it: the seven universe-level flat lists (Characters, Factions, Locations, Items, Events,
+  Relations, Ownerships), the Sections tree, the nine taxonomy trees, and the Scenes list.
 
 **A pending record is an unsaved instance of the model**, built from the payload sliced to
 `model.column_names`, so a pending row renders through the same `record_label` ladder a live row uses
@@ -1119,7 +1123,7 @@ row twice.
 The badge **word** never changes and never grows: `Pending edit` is still `Pending edit`. What a
 badge may add is a **tooltip**, and the rule is one sentence — **`DraftsHelper#draft_pending_title`
 is the only reading of it, and every badge goes through it**, because the question is asked in every
-list workspace, on a tag's list of tagged records, and on all eighteen details pages, and a badge is
+  list workspace, on a tag's list of tagged records, and on all twenty details pages, and a badge is
 drawn on every row of every page of the universe.
 
 For **more than one** remembered change on a stored record the tooltip adds the **fields an edit
@@ -1171,7 +1175,7 @@ because a Scene with no story is one the applier cannot place.
 
 Three kinds of workspace pass it, and **the other kinds must not**. The Scenes list, the Scenes
 grouping partial, the Sections tree, and the two story-scoped tag pages are inside a story. The six
-universe-level flat lists and the seven universe-level taxonomies are not, and omitting the keyword is
+  universe-level flat lists and the seven universe-level taxonomies are not, and omitting the keyword is
 correct there rather than an oversight: **a universe-scoped model's scope column is `universe_id`,
 which no story narrows**, so every pending character a draft remembers belongs on the Characters list
 whatever story that list is reached from.
@@ -1202,7 +1206,7 @@ The badges live in the list workspaces and nowhere else, and a reader reasonably
 places. Each was a separate question, and each is answered rather than left to be discovered.
 
 **A record's own details page carries the badge**, read by `shared/_record_details` rather than passed
-in, because "does this page's record have remembered work on it" is the same question on all eighteen
+  in, because "does this page's record have remembered work on it" is the same question on all twenty
 models and a caller that had to remember to ask would be a caller that forgets. The alternative — that
 "Details" is deliberately a clean record of what is stored — was rejected for the reason the badge
 exists at all: the badge makes no claim about the values. The page still shows what is stored, exactly
@@ -1338,7 +1342,7 @@ A **taxonomy tag** page is the one details page whose facts are split rather tha
 description is a `wide_fact` and its scope and colour are `footer` pairs, with the explanation of what
 a scope means behind the scope line's info button. That shape is specified in
 [features/tags.md](features/tags.md#the-tag-details-card) and is built by one helper,
-`TagsHelper#tag_identity_details`, so all eight tag pages cannot drift apart.
+  `TagsHelper#tag_identity_details`, so all nine tag pages cannot drift apart.
 
 A content page currently identifies the record and then states honestly that the related information
 will appear later. A Section additionally lists the scenes grouped under it, each still showing its
@@ -1434,7 +1438,7 @@ value objects, and the deletion contract are one feature with one home, in
     builds the whole editor from them and `shared/_taxonomy_node` serializes one prefill value per
     descriptor with `node.public_send`. So a descriptor naming a field its tag model cannot produce
     raises mid-render, and a `label_key` that survives into the serialized JSON publishes a key nobody
-    renders. Both are checked for all eight taxonomies, and each taxonomy's descriptors are held to
+    renders. Both are checked for all nine taxonomies, and each taxonomy's descriptors are held to
     its own table's columns, in `test/helpers/modal_fields_helper_test.rb`.
   - `PHOTO_FIELD` / `photo_field` — the one descriptor every photo-capable editor shares. `url: true`
     marks the descriptor as naming a stored image: `shared/_taxonomy_node` then serializes

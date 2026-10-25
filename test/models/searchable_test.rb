@@ -52,7 +52,7 @@ class SearchableTest < ActiveSupport::TestCase
   end
 
   test "a record's document id names the model, so two models cannot collide" do
-    # The eight taxonomies all search as "tag". A kind-based id would have made
+    # The nine taxonomies all search as "tag". A kind-based id would have made
     # Character Tag 1 and Location Tag 1 the same document.
     assert_equal "character_tag-#{character_tags(:character_tag_one).id}",
       character_tags(:character_tag_one).search_id

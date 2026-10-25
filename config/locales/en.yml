@@ -66,6 +66,7 @@ en:
     story_workspace: "Story workspace"
     story_overview: "Story overview"
     characters: "Characters"
+    factions: "Factions"
     locations: "Locations"
     routes: "Routes"
     map: "Map"
@@ -1773,6 +1774,76 @@ en:
       characters: "Characters"
       relations: "Relations"
 
+  factions:
+    title: "Factions"
+    description: "Organizations and groups with their own public mission, private aims, structure, and resources."
+    tabs_aria_label: "Faction workspace"
+    new_title: "New faction"
+    add: "Add faction"
+    save: "Save faction"
+    form:
+      name: "Name"
+      tags_label: "Faction tags"
+      mission: "Public mission — what they say out loud"
+      actual_aims: "What they truly aim to achieve"
+      structure: "Structure"
+      internal_divisions: "Internal divisions"
+      resources: "Resources"
+      would_never: "What they would never do"
+      would_absolutely: "What they would absolutely do"
+    empty_title: "No factions yet"
+    empty_writable_description: "Factions belong to the universe and are shared by its stories. Add the first one to give its organizations a place of their own."
+    empty_read_only_description: "Factions belong to the universe and are shared by its stories."
+    delete_confirm: "Delete “%{name}”? Its faction-tag assignments will be removed. The tags and other universe records will remain."
+    show:
+      label: "Faction"
+      back_label: "All factions"
+      facts:
+        universe: "Universe"
+        tags: "Faction tags"
+        tags_blank: "No tags assigned. Tags are optional."
+        blank: "Not specified."
+    tabs:
+      factions: "Factions"
+      relationships: "Relationships"
+
+  faction_relationships:
+    title: "Faction relationships"
+    description: "Record directional relationships between factions, with details and the in-world span they apply to."
+    new_title: "New faction relationship"
+    add: "Add relationship"
+    save: "Save relationship"
+    form:
+      name: "Name"
+      name_hint: "Optional. Used as a short label instead of the faction names."
+      from_faction: "From faction"
+      to_faction: "To faction"
+      select_faction: "Select a faction"
+      description: "Description"
+      from_date: "From"
+      to_date: "To"
+    empty_title: "No faction relationships yet"
+    empty_writable_description: "Record how one faction relates to another. The direction is explicit; add a separate record if the reverse relationship is different."
+    empty_read_only_description: "Directional relationships between this universe's factions will appear here once they have been added."
+    show:
+      label: "Faction relationship"
+      back_label: "All faction relationships"
+      facts:
+        from_faction: "From faction"
+        to_faction: "To faction"
+        in_world_dates: "In-world dates"
+        description: "Description"
+        description_blank: "No description yet."
+    errors:
+      subject: "faction relationship"
+      must_be_different: "must be different from the source faction"
+      must_belong_to_universe: "must belong to the relationship's universe"
+    endpoints: "%{from} and %{to}"
+    flash:
+      created: "Faction relationship created."
+      updated: "Faction relationship updated."
+      deleted: "Faction relationship deleted."
+
   locations:
     title: "Locations"
     description: "Build a hierarchy of places and regions shared by every story in this universe."
@@ -2337,6 +2408,16 @@ en:
         all_label: "All character tags"
         records_title: "Characters with this tag"
         unused_description: "Nothing uses this tag yet. Tags are optional, so characters can stay untagged."
+      faction:
+        title: "Faction tags"
+        description: "Define optional labels for the organizations and groups in this universe."
+        empty_description: "Tags are optional. Add one to organize factions, or create factions without tags."
+        read_only_empty_description: "No faction tags are defined yet."
+        new_label: "Add faction tag"
+        record_label: "Faction tag"
+        all_label: "All faction tags"
+        records_title: "Factions with this tag"
+        unused_description: "Nothing uses this tag yet. Tags are optional, so factions can stay untagged."
       relation:
         title: "Relation tags"
         description: "Define the relationship types used when connecting characters in this universe."
@@ -2475,7 +2556,7 @@ en:
     # is one sentence rather than a list assembled from the record-type nouns:
     # the list is this page's copy, and the nouns' plurals belong to the count
     # labels.
-    description: "Search every record in the scope you choose. Records carry their own name and description; a universe or story name is context, not something to match."
+    description: "Search records in the scope you choose by their name and searchable details; a universe or story name is context, not something to match."
     form:
       label: "Search"
       # `minimum` is `Search::Query::MINIMUM_LENGTH`, a number the code owns, so
@@ -2503,7 +2584,7 @@ en:
     too_short_title: "Keep typing"
     too_short_description: "A search needs at least %{minimum} characters, because one character matches nearly everything."
     idle_title: "Search this universe"
-    idle_description: "Type at least %{minimum} characters to look through characters, locations, routes, events, items, relations, ownerships, tags, and — inside a story — sections, scenes, and their text. Narrow it with the scope above."
+    idle_description: "Type at least %{minimum} characters to look through characters, factions, locations, routes, events, items, relations, ownerships, tags, and — inside a story — sections, scenes, and their text. Narrow it with the scope above."
     commands_title: "Go to"
 
     # The result count. `count` is the engine's own total, not the page's, which
@@ -2545,6 +2626,7 @@ en:
       universes: "Only universes"
       stories: "Only stories"
       characters: "Only characters"
+      factions: "Only factions"
       locations: "Only locations"
       routes: "Only routes"
       items: "Only items"
@@ -2579,14 +2661,17 @@ en:
       scene: "Scene"
       scene_element: "Scene element"
       character: "Character"
+      faction: "Faction"
       location: "Location"
       route: "Route"
       item: "Item"
       event: "Event"
       relation: "Relation"
+      faction_relationship: "Faction relationship"
       ownership: "Ownership"
       tag: "Tag"
       character_tag: "Character tag"
+      faction_tag: "Faction tag"
       location_tag: "Location tag"
       item_tag: "Item tag"
       event_tag: "Event tag"
@@ -2603,6 +2688,7 @@ en:
       universe_overview: "Universe overview"
       stories: "All stories"
       characters: "Characters"
+      factions: "Factions"
       locations: "Locations"
       routes: "Routes"
       events: "Events"
@@ -2780,6 +2866,23 @@ en:
         # draft's page prints the remembered assignment by its association: the
         # editor knows "Character tags" and has never seen the writer's name.
         character_tags: "Character tags"
+      faction:
+        name: "Name"
+        mission: "Public mission"
+        actual_aims: "Actual aims"
+        structure: "Structure"
+        internal_divisions: "Internal divisions"
+        resources: "Resources"
+        would_never: "Would never"
+        would_absolutely: "Would absolutely"
+        faction_tags: "Faction tags"
+      faction_relationship:
+        name: "Name"
+        description: "Description"
+        from_faction: "From faction"
+        to_faction: "To faction"
+        from_date: "From"
+        to_date: "To"
       location:
         name: "Name"
         description: "Description"
@@ -2924,6 +3027,14 @@ en:
         parent: "Parent tag"
         taggable: "Taggable"
         show_in_menu: "Show in menu"
+      faction_tag:
+        name: "Name"
+        description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
+        parent: "Parent tag"
+        taggable: "Taggable"
+        show_in_menu: "Show in menu"
       relation_tag:
         name: "Name"
         description: "Description"
@@ -3011,6 +3122,12 @@ en:
   character:
     one: "character"
     other: "characters"
+  faction:
+    one: "faction"
+    other: "factions"
+  faction_relationship:
+    one: "faction relationship"
+    other: "faction relationships"
   location:
     one: "location"
     other: "locations"
@@ -3085,6 +3202,8 @@ en:
   # the server-rendered summary.
   record_subject:
     character: "the character"
+    faction: "the faction"
+    faction_relationship: "the faction relationship"
     event: "the event"
     item: "the item"
     ownership: "the ownership"
@@ -3103,6 +3222,8 @@ en:
   taxonomies:
     character_tag:
       none_yet: "No character tags yet"
+    faction_tag:
+      none_yet: "No faction tags yet"
     relation_tag:
       none_yet: "No relation tags yet"
     location_tag:

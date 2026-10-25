@@ -32,7 +32,7 @@ module Searchable
   # The index's primary key, and the one thing that must never collide.
   #
   # It is built from the *model*, not from the kind, because a kind is not a
-  # model: the eight taxonomies all search as `tag`, so a kind-based id would
+  # model: the nine taxonomies all search as `tag`, so a kind-based id would
   # have Character Tag 1 and Location Tag 1 overwrite one another and a universe
   # would quietly lose seven eighths of its tags. The kind is what a scope
   # filters on; the id only has to be unique and addressable.

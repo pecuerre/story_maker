@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_24_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_180000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -216,6 +216,73 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_170000) do
     t.integer "event_id", null: false
     t.integer "event_tag_id", null: false
     t.index ["event_id", "event_tag_id"], name: "index_events_event_tags_unique", unique: true
+  end
+
+  create_table "faction_relationships", force: :cascade do |t|
+    t.integer "universe_id", null: false
+    t.integer "from_faction_id", null: false
+    t.integer "to_faction_id", null: false
+    t.string "name"
+    t.text "description"
+    t.datetime "from_date"
+    t.datetime "to_date"
+    t.string "slug", null: false
+    t.integer "photo_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_faction_relationships_on_deleted_at"
+    t.index ["from_faction_id"], name: "index_faction_relationships_on_from_faction_id"
+    t.index ["photo_id"], name: "index_faction_relationships_on_photo_id"
+    t.index ["to_faction_id"], name: "index_faction_relationships_on_to_faction_id"
+    t.index ["universe_id"], name: "index_faction_relationships_on_universe_id"
+  end
+
+  create_table "faction_tags", force: :cascade do |t|
+    t.integer "universe_id", null: false
+    t.string "name"
+    t.text "description"
+    t.string "slug", null: false
+    t.integer "parent_id"
+    t.integer "position", default: 0, null: false
+    t.string "bgcolor", default: "#d3d3d3", null: false
+    t.string "fgcolor", default: "#000000", null: false
+    t.boolean "taggable", default: true, null: false
+    t.boolean "show_in_menu", default: false, null: false
+    t.integer "photo_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_faction_tags_on_deleted_at"
+    t.index ["parent_id"], name: "index_faction_tags_on_parent_id"
+    t.index ["photo_id"], name: "index_faction_tags_on_photo_id"
+    t.index ["universe_id"], name: "index_faction_tags_on_universe_id"
+  end
+
+  create_table "factions", force: :cascade do |t|
+    t.integer "universe_id", null: false
+    t.string "name"
+    t.string "slug", null: false
+    t.text "mission"
+    t.text "actual_aims"
+    t.text "structure"
+    t.text "internal_divisions"
+    t.text "resources"
+    t.text "would_never"
+    t.text "would_absolutely"
+    t.integer "photo_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_factions_on_deleted_at"
+    t.index ["photo_id"], name: "index_factions_on_photo_id"
+    t.index ["universe_id"], name: "index_factions_on_universe_id"
+  end
+
+  create_table "factions_faction_tags", id: false, force: :cascade do |t|
+    t.integer "faction_id", null: false
+    t.integer "faction_tag_id", null: false
+    t.index ["faction_id", "faction_tag_id"], name: "index_factions_faction_tags_on_faction_id_and_faction_tag_id", unique: true
   end
 
   create_table "item_tags", force: :cascade do |t|
@@ -763,6 +830,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_24_170000) do
   add_foreign_key "events", "universes"
   add_foreign_key "events_event_tags", "event_tags"
   add_foreign_key "events_event_tags", "events"
+  add_foreign_key "faction_relationships", "factions", column: "from_faction_id"
+  add_foreign_key "faction_relationships", "factions", column: "to_faction_id"
+  add_foreign_key "faction_relationships", "photos", on_delete: :nullify
+  add_foreign_key "faction_relationships", "universes"
+  add_foreign_key "faction_tags", "faction_tags", column: "parent_id"
+  add_foreign_key "faction_tags", "photos", on_delete: :nullify
+  add_foreign_key "faction_tags", "universes"
+  add_foreign_key "factions", "photos", on_delete: :nullify
+  add_foreign_key "factions", "universes"
+  add_foreign_key "factions_faction_tags", "faction_tags"
+  add_foreign_key "factions_faction_tags", "factions"
   add_foreign_key "item_tags", "item_tags", column: "parent_id"
   add_foreign_key "item_tags", "photos", on_delete: :nullify
   add_foreign_key "item_tags", "universes"

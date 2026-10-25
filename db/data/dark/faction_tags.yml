@@ -1,0 +1,12 @@
+- universe: Universe.dark
+  name: Secretive
+  slug: secretive
+  bgcolor: "#6f42c1"
+  fgcolor: "#ffffff"
+  show_in_menu: true
+
+- universe: Universe.dark
+  name: Ideological
+  slug: ideological
+  bgcolor: "#0d6efd"
+  fgcolor: "#ffffff"

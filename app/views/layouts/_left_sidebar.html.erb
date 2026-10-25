@@ -26,6 +26,14 @@
         controllers: %i[ characters relations ] %>
 
       <%= render "shared/sidebar_link",
+        icon: "people-fill",
+        label: t("sidebar.factions"),
+        count_label: "faction",
+        count: menu_counts[:factions],
+        path: universe_factions_path,
+        controllers: %i[ factions faction_relationships ] %>
+
+      <%= render "shared/sidebar_link",
         icon: "geo-alt",
         label: t("sidebar.locations"),
         count_label: "location",

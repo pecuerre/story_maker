@@ -47,7 +47,7 @@ class TaggedRecordCountsTest < ActiveSupport::TestCase
   end
 
   test "agrees with the scoped association for every tag" do
-    [ @universe.character_tags, @universe.location_tags, @universe.item_tags,
+    [ @universe.character_tags, @universe.faction_tags, @universe.location_tags, @universe.item_tags,
       stories(:story_one).section_tags, stories(:story_one).scene_tags ].each do |records|
       counts = TaggedRecordCounts.for(records)
 

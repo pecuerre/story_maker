@@ -221,7 +221,7 @@ Layout:
   **stories** (`story_one`, `story_alt` in universe one, `story_two` in universe two), sections
   (both belong to `story_one`), scenes (three in `story_one`, one in `story_alt`), scene elements,
   dialogue turns, and scene characters (all belong to `story_one`'s first Scene), plus content and tag fixtures for
-  **characters, locations, items, events, relations, and ownerships**, their six taxonomies, and one
+  **characters, factions, faction relationships, locations, items, events, relations, and ownerships**, their nine taxonomies, and one
   universe membership. Every content set carries a record in universe two — `event_other_universe`,
   `location_three`, `character_other_universe`, `ownership_tag_three`, `membership_one`, and the
   universe-two taxonomy tags — so a test that has to look across a scope boundary has something on the
@@ -805,6 +805,9 @@ keeps the tabs and retains the ordinary flat record list and checkbox. Open the 
 tag through **Configuration → Tags → Character tags → Details** and confirm the workspace tabs are
 absent. The taxonomy Details URL does not infer navigation from the browser Referer.
 
+The **Factions** tab in this Character workspace is the existing Character-tag grouping; independent
+Faction profiles are listed at **Universe Bible → Factions**.
+
 After changing the Dark YAML, validate and rebuild the local development data with:
 
 ```bash
@@ -902,7 +905,7 @@ Coverage is split by what each layer can prove:
   same-universe rule, and that a rejected save never takes the existing photo away.
 - `test/services/photo_processing_test.rb` — the 300×300 square, metadata stripping, the
   content-signature allowlist, and the size bound.
-- `test/controllers/photo_mutation_test.rb` — that all eighteen controllers accept the fields.
+- `test/controllers/photo_mutation_test.rb` — JSON, taxonomy, and full-page forms carry representative cropped-photo mutations; `PhotoParams` is included by twenty-two controllers.
 - `test/controllers/record_photo_details_test.rb` — the details-page layout with and without a photo.
 - `test/controllers/photo_field_test.rb` — that the field is rendered where a mutation control
   belongs, and offered to no one else.

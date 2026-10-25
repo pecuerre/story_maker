@@ -1,0 +1,6 @@
+- universe: Universe.dark
+  name: War for the origin
+  slug: sic-mundus_to_erit-lux
+  from_faction: Faction.sic-mundus
+  to_faction: Faction.erit-lux
+  description: Sic Mundus and Erit Lux struggle over whether the knot should be preserved or destroyed.

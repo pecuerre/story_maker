@@ -1,0 +1,7 @@
+faction_one_tag_one:
+  faction_id: <%= ActiveRecord::FixtureSet.identify(:faction_one) %>
+  faction_tag_id: <%= ActiveRecord::FixtureSet.identify(:faction_tag_one) %>
+
+faction_other_universe_tag_two:
+  faction_id: <%= ActiveRecord::FixtureSet.identify(:faction_other_universe) %>
+  faction_tag_id: <%= ActiveRecord::FixtureSet.identify(:faction_tag_two) %>

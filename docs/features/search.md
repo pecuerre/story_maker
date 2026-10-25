@@ -33,7 +33,7 @@ guard exists to forbid.
 | Concern | Where |
 |---|---|
 | The request: text, scope, story boundary, and every value that could not be used | `Search::Query` (`PARAMS`, `discarded`, `query_params`) |
-| The scope dropdown: a boundary (platform / universe / story) or a kind ("only characters"), resolved rather than trusted | `Search::Scope` |
+| The scope dropdown: a boundary (platform / universe / story) or a kind ("only characters" or "only factions"), resolved rather than trusted | `Search::Scope` |
 | Authorization and display: the filter sent to the engine, and the context names of each hit | `Search::Catalog` |
 | Navigation destinations | `Search::Commands` |
 | The engine, and the one place that speaks to it | `Search::Client` / `Search::UnavailableBackend` |

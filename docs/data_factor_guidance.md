@@ -233,7 +233,7 @@ Three things stayed deliberately out, and the reasons still apply:
 
 Delivered on 2026-10-02, in two changes. The characterization came first and changed no application
 code: `test/helpers/modal_fields_helper_test.rb` pins each of the five `*_fields_json` key sets, all
-eight taxonomies' editor descriptors in order and against their own tables' columns, the shared photo
+nine taxonomies' editor descriptors in order and against their own tables' columns, the shared photo
 descriptor, the nested-record editors' agreement with each other, and the parent selector's blank
 option and depth indentation; `test/helpers/tags_helper_test.rb` pins the derivations — the two type
 lists against the two metadata tables, the copy keys every block must declare, every declared key's

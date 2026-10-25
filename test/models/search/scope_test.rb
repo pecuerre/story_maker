@@ -35,6 +35,9 @@ class Search::ScopeTest < ActiveSupport::TestCase
 
     route_scope = Search::Scope.new("routes", universe: @universe)
     assert_equal "route", route_scope.kind
+
+    faction_scope = Search::Scope.new("factions", universe: @universe)
+    assert_equal "faction", faction_scope.kind
   end
 
   test "asking for this story without a story widens the search and says so" do
@@ -126,6 +129,7 @@ class Search::ScopeTest < ActiveSupport::TestCase
     I18n.with_locale(:es) do
       assert_equal "Este universo", Search::Scope.new("universe", universe: @universe).label
       assert_equal "Solo personajes", Search::Scope.new("characters", universe: @universe).label
+      assert_equal "Solo facciones", Search::Scope.new("factions", universe: @universe).label
     end
   end
 

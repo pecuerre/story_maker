@@ -63,6 +63,7 @@ es:
     story_workspace: "Espacio de trabajo de la historia"
     story_overview: "Resumen de la historia"
     characters: "Personajes"
+    factions: "Facciones"
     locations: "Lugares"
     routes: "Rutas"
     map: "Mapa"
@@ -373,6 +374,7 @@ es:
       insert_after: "Insertar después"
       move_up: "Subir"
       move_down: "Bajar"
+      parent: "bajo %{name}"
     row_actions:
       actions_for: "Acciones para %{name}"
       edit: "Editar"
@@ -1730,6 +1732,76 @@ es:
       characters: "Personajes"
       relations: "Relaciones"
 
+  factions:
+    title: "Facciones"
+    description: "Organizaciones y grupos con una misión pública, objetivos privados, estructura y recursos propios."
+    tabs_aria_label: "Espacio de trabajo de facciones"
+    new_title: "Nueva facción"
+    add: "Añadir facción"
+    save: "Guardar facción"
+    form:
+      name: "Nombre"
+      tags_label: "Etiquetas de facciones"
+      mission: "Misión pública: lo que dicen en voz alta"
+      actual_aims: "Lo que realmente quieren conseguir"
+      structure: "Estructura"
+      internal_divisions: "Divisiones internas"
+      resources: "Recursos"
+      would_never: "Lo que nunca harían"
+      would_absolutely: "Lo que harían sin dudarlo"
+    empty_title: "Todavía no hay facciones"
+    empty_writable_description: "Las facciones pertenecen al universo y las comparten sus historias. Añade la primera para dar un espacio propio a sus organizaciones."
+    empty_read_only_description: "Las facciones pertenecen al universo y las comparten sus historias."
+    delete_confirm: "¿Eliminar «%{name}»? Se quitarán sus asignaciones de etiquetas de facción. Las etiquetas y los demás registros del universo permanecerán."
+    show:
+      label: "Facción"
+      back_label: "Todas las facciones"
+      facts:
+        universe: "Universo"
+        tags: "Etiquetas de facciones"
+        tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        blank: "Sin especificar."
+    tabs:
+      factions: "Facciones"
+      relationships: "Relaciones"
+
+  faction_relationships:
+    title: "Relaciones entre facciones"
+    description: "Registra relaciones direccionales entre facciones, con detalles y el intervalo del mundo en que se aplican."
+    new_title: "Nueva relación entre facciones"
+    add: "Añadir relación"
+    save: "Guardar relación"
+    form:
+      name: "Nombre"
+      name_hint: "Opcional. Se usa como etiqueta breve en lugar de los nombres de las facciones."
+      from_faction: "Facción de origen"
+      to_faction: "Facción de destino"
+      select_faction: "Selecciona una facción"
+      description: "Descripción"
+      from_date: "Desde"
+      to_date: "Hasta"
+    empty_title: "Todavía no hay relaciones entre facciones"
+    empty_writable_description: "Registra cómo se relaciona una facción con otra. La dirección es explícita; añade otro registro si la relación inversa es distinta."
+    empty_read_only_description: "Aquí aparecerán las relaciones direccionales entre las facciones de este universo cuando se añadan."
+    show:
+      label: "Relación entre facciones"
+      back_label: "Todas las relaciones entre facciones"
+      facts:
+        from_faction: "Facción de origen"
+        to_faction: "Facción de destino"
+        in_world_dates: "Fechas del mundo"
+        description: "Descripción"
+        description_blank: "Todavía no hay descripción."
+    errors:
+      subject: "relación entre facciones"
+      must_be_different: "debe ser distinta de la facción de origen"
+      must_belong_to_universe: "debe pertenecer al universo de la relación"
+    endpoints: "%{from} y %{to}"
+    flash:
+      created: "Se creó la relación entre facciones."
+      updated: "Se actualizó la relación entre facciones."
+      deleted: "Se eliminó la relación entre facciones."
+
   locations:
     title: "Lugares"
     description: "Construye una jerarquía de lugares y regiones que comparten todas las historias de este universo."
@@ -2016,6 +2088,10 @@ es:
         tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
         description: "Descripción"
         description_blank: "Todavía no hay descripción."
+    # Datos de las filas: quién tiene el objeto y quién lo tuvo antes.
+    facts:
+      current_owner: "Ahora con %{owners}"
+      historical_owners: "Antes con %{owners}"
     tabs:
       items: "Objetos"
       ownerships: "Propiedades"
@@ -2302,6 +2378,16 @@ es:
         all_label: "Todas las etiquetas de personajes"
         records_title: "Personajes con esta etiqueta"
         unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que los personajes pueden quedarse sin etiquetar."
+      faction:
+        title: "Etiquetas de facciones"
+        description: "Define etiquetas opcionales para las organizaciones y grupos de este universo."
+        empty_description: "Las etiquetas son opcionales. Añade una para organizar las facciones, o crea facciones sin etiquetas."
+        read_only_empty_description: "Todavía no se han definido etiquetas de facciones."
+        new_label: "Añadir etiqueta de facción"
+        record_label: "Etiqueta de facción"
+        all_label: "Todas las etiquetas de facciones"
+        records_title: "Facciones con esta etiqueta"
+        unused_description: "Todavía no se usa esta etiqueta. Las etiquetas son opcionales, así que las facciones pueden quedarse sin etiquetar."
       relation:
         title: "Etiquetas de relaciones"
         description: "Define los tipos de relación que se usan al conectar a los personajes de este universo."
@@ -2425,6 +2511,23 @@ es:
         # recordada por su asociación: quien edita conoce "Etiquetas de
         # personajes" y nunca ha visto el nombre del escritor.
         character_tags: "Etiquetas de personajes"
+      faction:
+        name: "Nombre"
+        mission: "Misión pública"
+        actual_aims: "Objetivos reales"
+        structure: "Estructura"
+        internal_divisions: "Divisiones internas"
+        resources: "Recursos"
+        would_never: "Nunca haría"
+        would_absolutely: "Haría sin dudarlo"
+        faction_tags: "Etiquetas de facciones"
+      faction_relationship:
+        name: "Nombre"
+        description: "Descripción"
+        from_faction: "Facción de origen"
+        to_faction: "Facción de destino"
+        from_date: "Desde"
+        to_date: "Hasta"
       location:
         name: "Nombre"
         description: "Descripción"
@@ -2575,6 +2678,14 @@ es:
         parent: "Etiqueta padre"
         taggable: "Etiquetable"
         show_in_menu: "Mostrar en el menú"
+      faction_tag:
+        name: "Nombre"
+        description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de texto"
+        parent: "Etiqueta padre"
+        taggable: "Etiquetable"
+        show_in_menu: "Mostrar en el menú"
       relation_tag:
         name: "Nombre"
         description: "Descripción"
@@ -2656,7 +2767,7 @@ es:
 
     title: "Buscar"
     eyebrow: "Encuentra cualquier cosa"
-    description: "Busca en todos los registros del alcance que elijas. Cada registro lleva su propio nombre y su propia descripción; el nombre de un universo o de una historia es contexto, no algo que se pueda buscar."
+    description: "Busca en los registros del alcance que elijas por su nombre y sus datos consultables; el nombre de un universo o de una historia es contexto, no algo que se pueda buscar."
     form:
       label: "Buscar"
       placeholder: "Al menos %{minimum} caracteres"
@@ -2675,7 +2786,7 @@ es:
     too_short_title: "Sigue escribiendo"
     too_short_description: "Una búsqueda necesita al menos %{minimum} caracteres, porque un solo carácter coincide casi con todo."
     idle_title: "Busca en este universo"
-    idle_description: "Escribe al menos %{minimum} caracteres para recorrer personajes, lugares, rutas, sucesos, objetos, relaciones, propiedades, etiquetas y —dentro de una historia— secciones, escenas y su texto. Acota la búsqueda con el alcance de arriba."
+    idle_description: "Escribe al menos %{minimum} caracteres para recorrer personajes, facciones, lugares, rutas, sucesos, objetos, relaciones, propiedades, etiquetas y —dentro de una historia— secciones, escenas y su texto. Acota la búsqueda con el alcance de arriba."
     commands_title: "Ir a"
 
     matches:
@@ -2706,6 +2817,7 @@ es:
       universes: "Solo universos"
       stories: "Solo historias"
       characters: "Solo personajes"
+      factions: "Solo facciones"
       locations: "Solo lugares"
       routes: "Solo rutas"
       items: "Solo objetos"
@@ -2734,14 +2846,17 @@ es:
       scene: "Escena"
       scene_element: "Elemento de escena"
       character: "Personaje"
+      faction: "Facción"
       location: "Lugar"
       route: "Ruta"
       item: "Objeto"
       event: "Suceso"
       relation: "Relación"
+      faction_relationship: "Relación entre facciones"
       ownership: "Propiedad"
       tag: "Etiqueta"
       character_tag: "Etiqueta de personaje"
+      faction_tag: "Etiqueta de facción"
       location_tag: "Etiqueta de lugar"
       item_tag: "Etiqueta de objeto"
       event_tag: "Etiqueta de suceso"
@@ -2754,6 +2869,7 @@ es:
       universe_overview: "Resumen del universo"
       stories: "Todas las historias"
       characters: "Personajes"
+      factions: "Facciones"
       locations: "Lugares"
       routes: "Rutas"
       events: "Sucesos"
@@ -2909,6 +3025,12 @@ es:
   character:
     one: "personaje"
     other: "personajes"
+  faction:
+    one: "facción"
+    other: "facciones"
+  faction_relationship:
+    one: "relación entre facciones"
+    other: "relaciones entre facciones"
   location:
     one: "lugar"
     other: "lugares"
@@ -2988,6 +3110,8 @@ es:
   # dibuja el servidor.
   record_subject:
     character: "este personaje"
+    faction: "esta facción"
+    faction_relationship: "esta relación entre facciones"
     event: "este suceso"
     item: "este elemento"
     ownership: "esta propiedad"
@@ -3002,6 +3126,8 @@ es:
   taxonomies:
     character_tag:
       none_yet: "Todavía no hay etiquetas de personajes"
+    faction_tag:
+      none_yet: "Todavía no hay etiquetas de facciones"
     relation_tag:
       none_yet: "Todavía no hay etiquetas de relaciones"
     location_tag:

@@ -7,7 +7,7 @@ do not duplicate or contradict it here.
 ## Project overview
 
 Universe Maker is a Rails application for building and maintaining consistent story universes.
-It tracks characters, locations, events, items, relationships, sections, and tags so writers can
+It tracks characters, factions, locations, events, items, relationships, sections, and tags so writers can
 manage continuity as a universe grows.
 
 Stack:
@@ -34,6 +34,7 @@ the subject and read its owner:
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
+| Universe-scoped Faction profiles and tags | [`docs/features/factions.md`](docs/features/factions.md) |
 | **Universe-scoped Routes** between Locations | [`docs/features/routes.md`](docs/features/routes.md) |
 | The read-only Map view of Locations and Routes | [`docs/features/map.md`](docs/features/map.md) |
 | The contract every in-list filter shares: narrowing, canonical queries, empty results, pending rows | [`docs/features/list_filters.md`](docs/features/list_filters.md) |

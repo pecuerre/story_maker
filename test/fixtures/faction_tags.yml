@@ -1,0 +1,13 @@
+faction_tag_one:
+  universe: universe_one
+  slug: "faction-tag-one"
+  name: Faction tag one
+  description: A tag for factions in universe one
+  taggable: true
+  show_in_menu: true
+
+faction_tag_two:
+  universe: universe_two
+  slug: "faction-tag-two"
+  name: Faction tag two
+  taggable: true

@@ -1,0 +1,13 @@
+faction_relationship_one:
+  universe: universe_one
+  from_faction: faction_one
+  to_faction: faction_two
+  name: Uneasy alliance
+  description: They cooperate when their interests overlap.
+  slug: uneasy-alliance
+
+faction_relationship_other_universe:
+  universe: universe_two
+  from_faction: faction_other_universe
+  to_faction: faction_other_universe_two
+  slug: foreign-relationship

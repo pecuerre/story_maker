@@ -1,6 +1,6 @@
 # An optional `name` for a record whose identity is something else.
 #
-# `Relation` and `Ownership` are links between two other records, so their
+# `Relation`, `Ownership`, and `FactionRelationship` are links between other records, so their
 # endpoints are the reliable label and the name is optional. Two consequences
 # follow from that optionality, and both belong here rather than in each model:
 #
@@ -11,7 +11,7 @@
 #   `HasSlug#set_slug` regenerates the slug on every name change, and resolves a
 #   blank or unslugifiable name to a random hex — so clearing a name, or renaming
 #   to "!!!", would replace a meaningful address with an arbitrary one and discard
-#   the composite slug these two models' endpoints and demo-data references depend
+#   the composite slug these link models' endpoints and demo-data references depend
 #   on. Renaming to a name that does slugify still renames; anything else leaves
 #   the slug alone.
 module OptionalName

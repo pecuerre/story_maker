@@ -1,0 +1,133 @@
+<% content_for :title, t("faction_relationships.title") %>
+<% pending_creates = draft_pending_creates_for(FactionRelationship) %>
+<% rejected = @rejected %>
+<% add_values = rejected&.new_record? ? faction_relationship_fields_json(rejected) : "{}" %>
+
+<div
+  <% if can_write_universe? %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="faction_relationship"
+  data-modal-form-response-value="html"
+  data-modal-form-create-title-value="<%= t("faction_relationships.new_title") %>">
+  <%= render "shared/page_header",
+    title: t("faction_relationships.title"),
+    eyebrow: t("sidebar.universe_bible"),
+    count: @faction_relationships.size,
+    count_label: "faction_relationship" do %>
+    <% if can_write_universe? %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_faction_relationships_path %>"
+        data-modal-form-method="post"
+        data-modal-form-title="<%= t("faction_relationships.new_title") %>"
+        data-modal-form-values-value="<%= add_values %>">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span><%= t("faction_relationships.add") %></span>
+      </button>
+    <% end %>
+  <% end %>
+
+  <% if rejected %>
+    <%= render "shared/error_summary", record: rejected, subject: t("faction_relationships.errors.subject") %>
+  <% end %>
+
+  <%= render "shared/content_tabs",
+    aria_label: t("factions.tabs_aria_label"),
+    intro: t("faction_relationships.description"),
+    tabs: content_workspace_tabs(:faction) %>
+
+  <% if @faction_relationships.any? || pending_creates.any? %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @faction_relationships.each do |relationship| %>
+          <div class="list-group-item entity-row d-flex align-items-center gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="entity-title"><%= relationship.display_string %></span>
+                <%= render "shared/draft_pending_badge", record: relationship %>
+              </div>
+              <% if relationship.from_date.present? || relationship.to_date.present? %>
+                <div class="entity-description"><%= in_world_range(relationship.from_date, relationship.to_date) %></div>
+              <% end %>
+              <% if relationship.description.present? %>
+                <div class="entity-description"><%= relationship.description %></div>
+              <% end %>
+            </div>
+
+            <%= record_details_link universe_faction_relationship_path(id: relationship), record: relationship %>
+            <%= render "shared/row_actions",
+              record: relationship,
+              label: t("faction_relationship", count: 1),
+              record_name: t("faction_relationships.endpoints", from: relationship.from_faction.name, to: relationship.to_faction.name),
+              edit_url: universe_faction_relationship_path(id: relationship),
+              delete_url: universe_faction_relationship_path(id: relationship),
+              values: (rejected&.persisted? && rejected.id == relationship.id) ? faction_relationship_fields_json(rejected) : faction_relationship_fields_json(relationship) %>
+          </div>
+        <% end %>
+        <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
+      </div>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: t("faction_relationships.empty_title"),
+      description: can_write_universe? ? t("faction_relationships.empty_writable_description") : t("faction_relationships.empty_read_only_description"),
+      icon: "diagram-3" %>
+  <% end %>
+
+  <% if can_write_universe? %>
+    <div class="modal fade" tabindex="-1" aria-labelledby="faction-relationship-modal-title" aria-hidden="true"
+      data-modal-form-target="modal">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="faction-relationship-modal-title" data-modal-form-target="title"><%= t("faction_relationships.new_title") %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
+          </div>
+          <%= form_with scope: :faction_relationship, url: universe_faction_relationships_path, method: :post,
+            data: { modal_form_target: "form" } do |form| %>
+            <div class="modal-body">
+              <% if rejected %>
+                <%= render "shared/error_summary", record: rejected, subject: t("faction_relationships.errors.subject") %>
+              <% end %>
+              <div class="mb-3">
+                <%= form.label :name, t("faction_relationships.form.name"), class: "form-label" %>
+                <%= form.text_field :name, class: "form-control" %>
+                <div class="form-text"><%= t("faction_relationships.form.name_hint") %></div>
+              </div>
+              <%= render "shared/photo_field", param: "faction_relationship" %>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <%= form.label :from_faction_id, t("faction_relationships.form.from_faction"), class: "form-label" %>
+                  <%= form.collection_select :from_faction_id, @factions, :id, :name,
+                    { prompt: t("faction_relationships.form.select_faction") }, { class: "form-select", required: true } %>
+                </div>
+                <div class="col-md-6">
+                  <%= form.label :to_faction_id, t("faction_relationships.form.to_faction"), class: "form-label" %>
+                  <%= form.collection_select :to_faction_id, @factions, :id, :name,
+                    { prompt: t("faction_relationships.form.select_faction") }, { class: "form-select", required: true } %>
+                </div>
+              </div>
+              <div class="mb-3">
+                <%= form.label :description, t("faction_relationships.form.description"), class: "form-label" %>
+                <%= form.text_area :description, class: "form-control", rows: 4 %>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <%= form.label :from_date, t("faction_relationships.form.from_date"), class: "form-label" %>
+                  <%= form.datetime_local_field :from_date, class: "form-control", step: 1 %>
+                </div>
+                <div class="col-md-6">
+                  <%= form.label :to_date, t("faction_relationships.form.to_date"), class: "form-label" %>
+                  <%= form.datetime_local_field :to_date, class: "form-control", step: 1 %>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+              <%= form.submit t("faction_relationships.save"), class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

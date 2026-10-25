@@ -1,7 +1,7 @@
 require "test_helper"
 
 # The Universe Bible workspaces rendered in Spanish: Characters, Locations,
-# Routes, Map, Events, Items, Relations, Ownerships, and the six universe-level tag
+# Factions and their relationships, Routes, Map, Events, Items, Relations, Ownerships, and the nine universe-level tag
 # taxonomies with their record pages.
 #
 # These are request tests rather than assertions on `I18n.locale`, for the reason
@@ -62,6 +62,28 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "#map-locations-heading", text: "Lugares"
     assert_select "#map-routes-heading", text: "Rutas"
     assert_select ".map-route-row .visually-hidden", text: "hasta"
+  end
+
+  test "Faction relationships and their details are Spanish" do
+    relationship = faction_relationships(:faction_relationship_one)
+
+    get universe_faction_relationships_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_equal "Relaciones entre facciones", rendered_title
+    assert_select "h1", text: "Relaciones entre facciones"
+    assert_select "nav.content-tabs a.active", text: "Relaciones"
+    assert_select "button[data-action='modal-form#open']", text: "Añadir relación"
+    assert_select "label[for=faction_relationship_from_faction_id]", text: "Facción de origen"
+    assert_select "label[for=faction_relationship_to_faction_id]", text: "Facción de destino"
+
+    get universe_faction_relationship_url(universe_slug: @universe.slug, id: relationship)
+
+    assert_response :success
+    assert_select ".page-eyebrow", text: "Relación entre facciones"
+    assert_select "dt", text: "Facción de origen"
+    assert_select "dt", text: "Facción de destino"
+    assert_select ".page-actions a", text: "Todas las relaciones entre facciones"
   end
 
   test "an empty Characters list tells a writer and a read-only member different things" do
@@ -458,11 +480,26 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".empty-description", text: /Conecta a un personaje con un objeto/
   end
 
-  # The six universe-level taxonomies read the same `tags.types.<type>` copy the
+  test "Faction workspace and profile fields use Spanish chrome" do
+    get universe_factions_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "h1", text: "Facciones"
+    assert_select ".page-actions button", text: "Añadir facción"
+    assert_select "label", text: "Lo que realmente quieren conseguir"
+
+    get universe_faction_url(universe_slug: @universe.slug, id: factions(:faction_one))
+    assert_response :success
+    assert_select "dt", text: "Misión pública: lo que dicen en voz alta"
+    assert_select "dt", text: "Lo que realmente quieren conseguir"
+  end
+
+  # The seven universe-level taxonomies read the same `tags.types.<type>` copy the
   # taxonomy workspace already uses, so a page and its translations are the same
   # strings in both places rather than two lists that can drift.
   UNIVERSAL_TAXONOMIES = {
     "character" => { title: "Etiquetas de personajes", new_label: "Añadir etiqueta de personaje" },
+    "faction" => { title: "Etiquetas de facciones", new_label: "Añadir etiqueta de facción" },
     "relation" => { title: "Etiquetas de relaciones", new_label: "Añadir etiqueta de relación" },
     "location" => { title: "Etiquetas de lugares", new_label: "Añadir etiqueta de lugar" },
     "event" => { title: "Etiquetas de sucesos", new_label: "Añadir etiqueta de suceso" },
@@ -470,7 +507,7 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     "ownership" => { title: "Etiquetas de propiedades", new_label: "Añadir etiqueta de propiedad" }
   }.freeze
 
-  test "the six universe taxonomies read the same Spanish copy as the taxonomy workspace" do
+  test "the seven universe taxonomies read the same Spanish copy as the taxonomy workspace" do
     UNIVERSAL_TAXONOMIES.each do |type, expected|
       get send(:"universe_#{type}_tags_url", universe_slug: @universe.slug)
 

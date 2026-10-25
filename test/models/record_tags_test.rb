@@ -34,4 +34,12 @@ class RecordTagsTest < ActiveSupport::TestCase
 
     assert_equal [ location_tags(:location_tag_one).id ], tags.fetch(location.id).map(&:id)
   end
+
+  test "reads faction tags through their own join table" do
+    faction = factions(:faction_one)
+
+    tags = RecordTags.for([ faction ])
+
+    assert_equal [ faction_tags(:faction_tag_one).id ], tags.fetch(faction.id).map(&:id)
+  end
 end

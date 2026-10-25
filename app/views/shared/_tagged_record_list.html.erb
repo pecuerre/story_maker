@@ -30,8 +30,9 @@
           <% end %>
           <%= render "shared/draft_pending_badge", record: record %>
         </div>
-        <% if record.description.present? %>
-          <div class="entity-description"><%= record.description %></div>
+        <% description = record.try(:description) %>
+        <% if description.present? %>
+          <div class="entity-description"><%= description %></div>
         <% end %>
       </div>
     </div>

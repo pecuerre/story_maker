@@ -1,5 +1,5 @@
 module TagsHelper
-  UNIVERSE_TAG_TYPES = %w[character relation location event item ownership].freeze
+  UNIVERSE_TAG_TYPES = %w[character faction relation location event item ownership].freeze
   STORY_TAG_TYPES = %w[section scene].freeze
 
   # The tab label for each taxonomy. The label is a property of the taxonomy
@@ -155,6 +155,13 @@ module TagsHelper
       tabs: [
         { name: "characters", path: :universe_characters_path, controller: :characters },
         { name: "relations", path: :universe_relations_path, controller: :relations }
+      ]
+    },
+    "faction" => {
+      key: "factions",
+      tabs: [
+        { name: "factions", path: :universe_factions_path, controller: :factions },
+        { name: "relationships", path: :universe_faction_relationships_path, controller: :faction_relationships }
       ]
     },
     "location" => {

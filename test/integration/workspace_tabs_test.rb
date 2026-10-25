@@ -60,9 +60,10 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
     assert_select "main h1", text: "Tags"
     assert_select "main nav[aria-label='Tag scope'] a", 2
     assert_select "main nav[aria-label='Tag scope'] a.active[aria-current='page']", text: "Universe Tags"
-    assert_select "main nav[aria-label='Universe tag workspace'] a", 6
+    assert_select "main nav[aria-label='Universe tag workspace'] a", 7
     assert_select "main nav[aria-label='Universe tag workspace'] a.active[aria-current='page']", text: "Character tags"
     assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Relation tags"
+    assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Faction tags"
     assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Location tags"
     assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Event tags"
     assert_select "main nav[aria-label='Universe tag workspace'] a", text: "Item tags"

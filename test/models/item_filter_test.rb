@@ -43,6 +43,19 @@ class ItemFilterTest < ActiveSupport::TestCase
     assert_empty apply(filter_for(q: "Item tag one")).map(&:name), "a tag is not searchable text"
   end
 
+  test "free text matches every profile answer, not only the name and description" do
+    # Reading `Item::PROFILE_FIELDS` rather than a written list is what keeps a
+    # new profile column findable; `item_one` already carries a full profile.
+    Item::PROFILE_FIELDS.each do |field|
+      @item_one.update_column(field, "hidden #{field} answer")
+    end
+
+    Item::PROFILE_FIELDS.each do |field|
+      assert_equal [ "Item one" ], apply(filter_for(q: "hidden #{field} answer")).map(&:name),
+        "#{field} is not part of the text filter"
+    end
+  end
+
   test "search text is matched literally, so a wildcard is not a wildcard" do
     @item_one.update!(name: "100% of the oath")
 

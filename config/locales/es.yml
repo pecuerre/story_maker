@@ -2123,6 +2123,19 @@ es:
     form:
       name: "Nombre"
       description: "Descripción"
+      # Las respuestas opcionales del perfil, en el orden de `Item::PROFILE_FIELDS`.
+      # Cada una es un área de texto, y las etiquetas agrupan las preguntas para que
+      # la única cuadrícula de la página de detalles siga diciendo qué describe cada
+      # respuesta.
+      what_it_does: "Qué hace"
+      how_it_is_used: "Cómo se usa"
+      side_effects: "Efectos secundarios"
+      origin: "Origen"
+      value: "Valor"
+      cannot: "No puede"
+      constraints: "Restricciones"
+      history: "Historia"
+      jargon: "Jerga"
       tags_label: "Etiquetas de objetos"
     empty_title: "Todavía no hay objetos"
     empty_writable_description: "Los objetos pertenecen al universo y sirven para seguir objetos, recursos y propiedades a lo largo de todas las historias. Añade el primero para empezar."
@@ -2182,8 +2195,25 @@ es:
         universe: "Universo"
         tags: "Etiquetas de objetos"
         tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
+        current_owners: "En propiedad actual de"
+        current_owners_blank: "No hay propietario actual registrado."
+        historical_owners: "En propiedad anterior de"
+        historical_owners_blank: "No hay propietario anterior registrado."
         description: "Descripción"
         description_blank: "Todavía no hay descripción."
+        # Los datos del perfil. Quién posee el objeto no es uno de ellos: la
+        # propiedad es un registro de Propiedad con fechas, así que se lee de las
+        # propiedades de arriba en lugar de escribirse en el objeto.
+        what_it_does: "Qué hace"
+        how_it_is_used: "Cómo se usa"
+        side_effects: "Efectos secundarios"
+        origin: "Origen"
+        value: "Valor"
+        cannot: "No puede"
+        constraints: "Restricciones"
+        history: "Historia"
+        jargon: "Jerga"
+        blank: "Todavía no se ha registrado."
     # Datos de las filas: quién tiene el objeto y quién lo tuvo antes.
     facts:
       current_owner: "Ahora con %{owners}"
@@ -2689,6 +2719,15 @@ es:
       item:
         name: "Nombre"
         description: "Descripción"
+        what_it_does: "Qué hace"
+        how_it_is_used: "Cómo se usa"
+        side_effects: "Efectos secundarios"
+        origin: "Origen"
+        value: "Valor"
+        cannot: "No puede"
+        constraints: "Restricciones"
+        history: "Historia"
+        jargon: "Jerga"
         parent: "Objeto padre"
         item_tags: "Etiquetas de objetos"
       relation:

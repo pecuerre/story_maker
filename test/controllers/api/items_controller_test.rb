@@ -42,6 +42,12 @@ class Api::ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ item_tags(:item_tag_one).id ], body["item_tag_ids"]
     assert_nil body["parent_id"]
     assert_equal items(:item_one).position, body["position"]
+    # Every profile answer is part of the record's JSON, including the ones this
+    # fixture leaves blank, so an API consumer sees the same shape for every item.
+    assert_equal "Opens the sealed gate", body["what_it_does"]
+    assert_equal "The northern forge", body["origin"]
+    assert_equal "Gate-key", body["jargon"]
+    assert_equal Item::PROFILE_FIELDS.map(&:to_s).sort, (body.keys & Item::PROFILE_FIELDS.map(&:to_s)).sort
   end
 
   test "a token issued for one universe is refused on another" do

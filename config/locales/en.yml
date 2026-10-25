@@ -2161,6 +2161,18 @@ en:
     form:
       name: "Name"
       description: "Description"
+      # The optional profile answers, in `Item::PROFILE_FIELDS` order. Each one
+      # is one textarea, and the labels group the questions so the details page's
+      # one grid still says what each answer describes.
+      what_it_does: "What it does"
+      how_it_is_used: "How it is used"
+      side_effects: "Side effects"
+      origin: "Origin"
+      value: "Value"
+      cannot: "Cannot"
+      constraints: "Constraints"
+      history: "History"
+      jargon: "Jargon"
       tags_label: "Item tags"
     empty_title: "No items yet"
     empty_writable_description: "Items belong to the universe and can be used to track objects, resources, and ownership across every story. Add the first one to begin."
@@ -2216,8 +2228,25 @@ en:
         universe: "Universe"
         tags: "Item tags"
         tags_blank: "No tags assigned. Tags are optional."
+        current_owners: "Currently owned by"
+        current_owners_blank: "No current owner is recorded."
+        historical_owners: "Previously owned by"
+        historical_owners_blank: "No previous owner is recorded."
         description: "Description"
         description_blank: "No description yet."
+        # The profile facts. Who owns the item is not one of them: ownership is a
+        # dated Ownership record, so it is read from the ownerships above rather
+        # than typed onto the item.
+        what_it_does: "What it does"
+        how_it_is_used: "How it is used"
+        side_effects: "Side effects"
+        origin: "Origin"
+        value: "Value"
+        cannot: "Cannot"
+        constraints: "Constraints"
+        history: "History"
+        jargon: "Jargon"
+        blank: "Not recorded yet."
     # List-row metadata: who currently holds the item and who held it before.
     facts:
       current_owner: "Now with %{owners}"
@@ -3041,6 +3070,15 @@ en:
       item:
         name: "Name"
         description: "Description"
+        what_it_does: "What it does"
+        how_it_is_used: "How it is used"
+        side_effects: "Side effects"
+        origin: "Origin"
+        value: "Value"
+        cannot: "Cannot"
+        constraints: "Constraints"
+        history: "History"
+        jargon: "Jargon"
         parent: "Parent item"
         item_tags: "Item tags"
       relation:

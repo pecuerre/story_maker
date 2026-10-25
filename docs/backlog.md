@@ -51,19 +51,6 @@ work through the matching document in `docs/` or its dated `CHANGELOG.md` entry.
    belongs with a later collaboration phase rather than as a fix to the refusal, and the refusal itself is
    settled — see the resolved finding in [`delivery_history.md`](delivery_history.md).
 
-33. for items
-  - what it is
-  - what is does
-  - how it is used
-  - side effects
-  - origin (where it comes from)
-  - ownership (who owns it) (this should be updated as ownership changes)
-  - value (monetary or otherwise)
-  - cannot
-  - constraints (limitations or restrictions on its use)
-  - history (past uses or significant events involving the item)
-  - jargon
-
 These items are deliberately **LATER** by default. Use the owner's **NOW / LATER / NEVER** decision
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.

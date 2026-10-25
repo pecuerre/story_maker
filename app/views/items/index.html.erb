@@ -141,10 +141,19 @@
                 {},
                 { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
             </div>
-            <div>
+            <div class="mb-3">
               <%= form.label :description, t("items.form.description"), class: "form-label" %>
               <%= form.text_area :description, class: "form-control", rows: 4 %>
             </div>
+            <%# The item profile. The answers are plain optional prose, and the
+                order is `Item::PROFILE_FIELDS`, so the editor, the details page,
+                the filter, the search body, and the API cannot drift apart. %>
+            <% Item::PROFILE_FIELDS.each do |field| %>
+              <div class="mb-3">
+                <%= form.label field, t("items.form.#{field}"), class: "form-label" %>
+                <%= form.text_area field, class: "form-control", rows: 3 %>
+              </div>
+            <% end %>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>

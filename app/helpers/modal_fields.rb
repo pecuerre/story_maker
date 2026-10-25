@@ -196,6 +196,7 @@ module ModalFields
     {
       name: item.name,
       description: item.description,
+      **Item::PROFILE_FIELDS.to_h { |field| [ field, item.public_send(field) ] },
       item_tag_ids: item.item_tag_ids,
       photo_url: record_photo_url(item)
     }.to_json

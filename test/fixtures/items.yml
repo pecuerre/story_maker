@@ -6,6 +6,15 @@ item_one:
   slug: "item-one"
   universe: universe_one
   item_tags: item_tag_one
+  what_it_does: "Opens the sealed gate"
+  how_it_is_used: "Turned once in the lock at dusk"
+  side_effects: "The bearer dreams of the gate"
+  origin: "The northern forge"
+  value: "Worth a season's wages"
+  cannot: "Open a gate that is already open"
+  constraints: "Only works while the moon is visible"
+  history: "Carried through the siege and returned"
+  jargon: "Gate-key"
 
 item_two:
   name: Item two

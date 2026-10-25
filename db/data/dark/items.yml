@@ -3,24 +3,57 @@
   name: "Jonas Key"
   item_tags: [ ItemTag.key ]
   slug: "jonas_key"
+  description: "The small key Jonas carries through the cave."
+  what_it_does: "Opens the padlocked grate at the cave mouth."
+  how_it_is_used: "Turned in the grate's lock, then kept out of sight."
+  origin: "Cut by the locksmith who fitted the grate."
+  constraints: "Fits the grate only, not the passage beyond it."
+  history: "Carried by Jonas in 2019 and again in 1986."
+  jargon: "The key."
 
 - universe: Universe.dark
   name: "Tannhaus Clockwork Device"
   item_tags: [ ItemTag.time_machine ]
   slug: "tannhaus_clockwork_device"
   photo: Photo.the_tannhaus
+  description: "A clockmaker's apparatus that runs a cycle of time."
+  what_it_does: "Carries a small area forward and back through the cycle."
+  how_it_is_used: "Wound and set to a date, then left to run."
+  side_effects: "Everyone inside the cycle loses the years they passed through."
+  origin: "Built by H. G. Tannhaus in the workshop above the shop."
+  value: "Beyond any price the town could pay."
+  cannot: "Choose which cycle it opens."
+  constraints: "Only works while its mechanism is intact."
+  jargon: "The apparatus."
 
 - universe: Universe.dark
   name: "St Christopher Medal"
   item_tags: [ ItemTag.medal ]
   slug: "st_christopher_medal"
+  description: "A traveller's medal passed between the families."
+  origin: "Brought to Winden by a family that left before the first cycle."
+  value: "Worth little, and kept for what it remembers."
+  history: "Changes hands between the Kahnwalds and the Nielsens."
+  jargon: "The medal."
 
 - universe: Universe.dark
   name: "Sphere Machine"
   item_tags: [ ItemTag.time_machine ]
   slug: "sphere_machine"
+  description: "A sphere-shaped machine built to move between cycles."
+  what_it_does: "Opens a passage between two points in the cycle."
+  how_it_is_used: "Charged in the bunker and entered from within."
+  side_effects: "The traveller arrives without the years they crossed."
+  origin: "Assembled from the Tannhaus apparatus and the bunker's equipment."
+  cannot: "Open a passage to a time it has not been tuned to."
+  constraints: "Needs the bunker's power to run."
+  jargon: "The sphere."
 
 - universe: Universe.dark
   name: "The God Particle"
   item_tags: [ ItemTag.time_machine ]
   slug: "the_god_particle"
+  description: "The unstable particle at the centre of the cycle."
+  origin: "Created by the accident at the nuclear plant."
+  cannot: "Be held or moved."
+  constraints: "Exists only inside the plant's containment."

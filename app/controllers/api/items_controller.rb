@@ -24,6 +24,7 @@ class Api::ItemsController < Api::BaseController
         id: item.id,
         name: item.name,
         description: item.description,
+        **Item::PROFILE_FIELDS.to_h { |field| [ field, item.public_send(field) ] },
         item_tag_ids: item.item_tag_ids,
         parent_id: item.parent_id,
         position: item.position

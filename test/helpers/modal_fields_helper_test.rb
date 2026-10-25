@@ -50,7 +50,7 @@ class ModalFieldsHelperTest < ActionView::TestCase
   # is about to replace.
   SERIALIZED_KEYS = {
     "character" => %w[name at_a_glance wants needs lies_to_self contradictions under_pressure_they never character_tag_ids faction_ids photo_url],
-    "item" => %w[name description item_tag_ids photo_url],
+    "item" => %w[name description what_it_does how_it_is_used side_effects origin value cannot constraints history jargon item_tag_ids photo_url],
     "event" => %w[title start_datetime end_datetime before_event_id after_event_id
                   simultaneous_event_id description event_tag_ids photo_url],
     "relation" => %w[name character1_id character2_id relation_tag_ids description
@@ -136,6 +136,16 @@ class ModalFieldsHelperTest < ActionView::TestCase
     character = characters(:character_one)
 
     assert_equal [ character_tags(:character_tag_one).id ], serialized(character)["character_tag_ids"]
+  end
+
+  test "an Item's profile answers are handed to the editor, in declared order" do
+    item = items(:item_one)
+    values = serialized(item)
+
+    assert_equal "Opens the sealed gate", values["what_it_does"]
+    assert_equal "Gate-key", values["jargon"]
+    assert_equal Item::PROFILE_FIELDS.map(&:to_s),
+      values.keys & Item::PROFILE_FIELDS.map(&:to_s)
   end
 
   test "every taxonomy's editor is the shared fields plus its own" do

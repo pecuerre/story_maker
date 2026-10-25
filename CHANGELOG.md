@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Item profiles.** Adds nine optional prose answers covering function, use, side effects, origin, value, limits, constraints, history, and jargon, editable in the modal and shown on the details page with current and previous owners, searchable, filterable, and returned by the API.
 - **Location presence.** The details page now answers who is at a place in the current Story, one row per Scene, naming factions, participants, and each person's role as the reason, all derived from Scene links with no new storage.
 - **Location profiles.** Adds eighteen optional prose answers covering sensory detail, layout, significance, history, and control and access, editable in the tree modal and shown on the details page, searchable, filterable, and returned by the API.
 - **Character profiles and knowledge records.** Replaces the Character description with structured profile fields, optional multi-Faction membership, and knowledge changes that capture when and from whom something was learned and whether it changes the Character's plan.

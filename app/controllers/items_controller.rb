@@ -105,8 +105,15 @@ class ItemsController < ApplicationController
     @item = Current.universe.items.find(params.expect(:id))
   end
 
+  # The profile answers are written out rather than splatted from
+  # `Item::PROFILE_FIELDS`: `TranslationsTest` reads this list to prove every
+  # permitted payload key has a label in both locales, and a splat hides those
+  # keys from it.
   def item_params
-    params.expect(item: [ *photo_params, :name, :description, { item_tag_ids: [] }, :parent_id, :position ])
+    params.expect(item: [ *photo_params, :name, :description,
+      :what_it_does, :how_it_is_used, :side_effects, :origin, :value,
+      :cannot, :constraints, :history, :jargon,
+      { item_tag_ids: [] }, :parent_id, :position ])
   end
 
   def update_item(attributes)
@@ -118,6 +125,7 @@ class ItemsController < ApplicationController
       id: @item.id,
       name: @item.name,
       description: @item.description,
+      **Item::PROFILE_FIELDS.to_h { |field| [ field, @item.public_send(field) ] },
       item_tag_ids: @item.item_tag_ids,
       parent_id: @item.parent_id,
       position: @item.position,

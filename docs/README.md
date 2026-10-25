@@ -14,7 +14,7 @@ per-universe development-data convention, and the public/private universe access
 | [conventions.md](conventions.md) | The cross-cutting code conventions: models, controllers, routes, the three page patterns, list rows, record details pages, helpers, Stimulus controllers |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, soft delete, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, production boundary, caching |
-| [features/](features/) | One document per feature, each the single home of that feature's rules: [scenes](features/scenes.md), [plots](features/plots.md), [tropes](features/tropes.md), [routes](features/routes.md), [map](features/map.md), [tags](features/tags.md), [search](features/search.md), [navigation](features/navigation.md), [photos](features/photos.md), [events](features/events.md), [characters](features/characters.md), [factions](features/factions.md), [locations](features/locations.md), [i18n](features/i18n.md), [settings](features/settings.md), [list filters](features/list_filters.md) |
+| [features/](features/) | One document per feature, each the single home of that feature's rules: [scenes](features/scenes.md), [plots](features/plots.md), [tropes](features/tropes.md), [routes](features/routes.md), [map](features/map.md), [tags](features/tags.md), [search](features/search.md), [navigation](features/navigation.md), [photos](features/photos.md), [events](features/events.md), [characters](features/characters.md), [factions](features/factions.md), [locations](features/locations.md), [items](features/items.md), [i18n](features/i18n.md), [settings](features/settings.md), [list filters](features/list_filters.md) |
 | [development.md](development.md) | Clarifying a request before coding, running the app, Minitest and client-side test suites, lint/security scans, per-universe development data (`db/data/<universe_slug>/`), CI, Kamal deployment, smoke test, and the full "adding a new model" workflow |
 | [data_factor_guidance.md](data_factor_guidance.md) | DataFactor report snapshot, verified/current status, sustainable maintenance guidance, and acceptance criteria for quality, security, CI, onboarding, and observability work |
 | [known_quirks.md](known_quirks.md) | Verified **open** oddities, dead code and tech debt — read before changing shared code |
@@ -47,6 +47,7 @@ How to use these docs:
    | Universe-scoped Faction profiles and tags | [features/factions.md](features/factions.md) |
    | Character profiles, Faction membership, and knowledge changes | [features/characters.md](features/characters.md) |
    | Location profile answers, presence, search, and the Locations workspace | [features/locations.md](features/locations.md) |
+   | Item profiles, ownership, search, and the Items workspace | [features/items.md](features/items.md) |
   | Translations and writing a translatable string | [features/i18n.md](features/i18n.md) |
   | The platform Settings page and its two preferences | [features/settings.md](features/settings.md) |
   | The contract every in-list filter shares | [features/list_filters.md](features/list_filters.md) |

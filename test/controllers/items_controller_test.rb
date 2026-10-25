@@ -214,6 +214,84 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_empty Item.order(:id).last.item_tags
   end
 
+  test "should create and return an item's profile answers" do
+    assert_difference("Item.count") do
+      post universe_items_url(universe_slug: @universe.slug),
+        params: { item: { name: "Gate Key", what_it_does: "Opens the sealed gate",
+          origin: "The northern forge", cannot: "Open a gate already open" } },
+        as: :json
+    end
+
+    assert_response :created
+    item = Item.order(:id).last
+    assert_equal [ "Opens the sealed gate", "The northern forge", "Open a gate already open" ],
+      [ item.what_it_does, item.origin, item.cannot ]
+    assert_equal "Opens the sealed gate", response.parsed_body["what_it_does"]
+    assert_equal "The northern forge", response.parsed_body["origin"]
+  end
+
+  test "every declared profile field is permitted and persisted by an update" do
+    # `Item::PROFILE_FIELDS` drives the editor and the page, while strong
+    # parameters list the keys by hand so `TranslationsTest` can see them. This is
+    # the assertion that the two lists agree.
+    answers = Item::PROFILE_FIELDS.to_h { |field| [ field, "answer for #{field}" ] }
+
+    patch universe_item_url(universe_slug: @universe.slug, id: @item),
+      params: { item: answers }, as: :json
+
+    assert_response :success
+    @item.reload
+    Item::PROFILE_FIELDS.each do |field|
+      assert_equal "answer for #{field}", @item.public_send(field), "#{field} was not persisted"
+      assert_equal "answer for #{field}", response.parsed_body[field.to_s]
+    end
+  end
+
+  test "the details page lists every profile answer with its group and a blank message" do
+    item = @universe.items.create!(name: "Gate Key", what_it_does: "Opens the sealed gate", jargon: "Gate-key")
+
+    get universe_item_url(universe_slug: @universe.slug, id: item)
+
+    assert_response :success
+    assert_select "dt", text: "What it does"
+    assert_select "dt", text: "Origin"
+    assert_select "dt", text: "Jargon"
+    assert_includes fact_values, [ "What it does", "Opens the sealed gate" ]
+    assert_includes fact_values, [ "Jargon", "Gate-key" ]
+    assert_includes fact_values, [ "Origin", "Not recorded yet." ]
+  end
+
+  test "the details page names the item's current and previous owners" do
+    item = @universe.items.create!(name: "A fresh item")
+    @universe.ownerships.create!(
+      item: item,
+      character: characters(:character_two),
+      from_date: Time.utc(2026, 1, 1),
+      to_date: Time.utc(2026, 6, 1)
+    )
+    @universe.ownerships.create!(
+      item: item,
+      character: characters(:character_three),
+      from_date: Time.utc(2026, 7, 1)
+    )
+
+    get universe_item_url(universe_slug: @universe.slug, id: item)
+
+    assert_response :success
+    assert_includes fact_values, [ "Currently owned by", "Character three" ]
+    assert_includes fact_values, [ "Previously owned by", "Character two" ]
+  end
+
+  test "the details page states when an item has no recorded owner" do
+    item = @universe.items.create!(name: "A fresh item")
+
+    get universe_item_url(universe_slug: @universe.slug, id: item)
+
+    assert_response :success
+    assert_includes fact_values, [ "Currently owned by", "No current owner is recorded." ]
+    assert_includes fact_values, [ "Previously owned by", "No previous owner is recorded." ]
+  end
+
   test "should reject item tags from another universe" do
     foreign_tag = item_tags(:item_tag_three)
     join_count = -> { ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM items_item_tags") }
@@ -250,4 +328,13 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     @item.reload
     assert_equal [ "Renamed", "Updated", [ @item_tag.id ] ], [ @item.name, @item.description, @item.item_tag_ids ]
   end
+
+  private
+    # The identity block's [label, value] pairs, so an assertion can tie a value
+    # to the label it belongs to.
+    def fact_values
+      Nokogiri::HTML(response.body).css(".detail-fact").map do |fact|
+        [ fact.at_css("dt").text.strip, fact.at_css("dd").text.strip ]
+      end
+    end
 end

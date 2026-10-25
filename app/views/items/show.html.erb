@@ -7,7 +7,14 @@
   facts: [
     detail_fact(t("items.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
     detail_fact(t("items.show.facts.tags"), entity_tag_badge(@item), blank: t("items.show.facts.tags_blank")),
-    detail_fact(t("items.show.facts.description"), @item.description, blank: t("items.show.facts.description_blank"))
+    detail_fact(t("items.show.facts.current_owners"), item_current_owners(@item),
+      blank: t("items.show.facts.current_owners_blank")),
+    detail_fact(t("items.show.facts.historical_owners"), item_historical_owners(@item),
+      blank: t("items.show.facts.historical_owners_blank")),
+    detail_fact(t("items.show.facts.description"), @item.description, blank: t("items.show.facts.description_blank")),
+    *Item::PROFILE_FIELDS.map { |field|
+      detail_fact(t("items.show.facts.#{field}"), @item.public_send(field), blank: t("items.show.facts.blank"))
+    }
   ],
   back_url: universe_items_path,
   back_label: t("items.show.back_label"),

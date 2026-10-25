@@ -3,27 +3,51 @@
   slug: "one_ring"
   description: "The master Ring of the Lord of the Rings."
   item_tags: [ ItemTag.ring ]
+  what_it_does: "Turns its bearer invisible and slowly into a servant of Sauron."
+  how_it_is_used: "Slipped on a finger, most often to escape being seen."
+  side_effects: "It lengthens the bearer's life while hollowing out their will."
+  origin: "Forged by Sauron in the fires of Mount Doom."
+  value: "The whole of Middle-earth is contested for it."
+  cannot: "Be unmade anywhere but the fire that made it."
+  constraints: "It answers to Sauron, and it wants to return to him."
+  history: "Cut from Sauron's hand, lost in the Gladden, found by Bilbo, and carried to Mordor by Frodo."
+  jargon: "The Ring."
 
 - universe: Universe.lotr
   name: "Sting"
   slug: "sting"
   description: "Frodo's Elvish blade."
   item_tags: [ ItemTag.sword ]
+  what_it_does: "Glows blue when orcs are near."
+  how_it_is_used: "Worn at the belt and drawn only when needed."
+  origin: "Forged in Gondolin in the First Age."
+  history: "Taken from a troll's hoard by Bilbo, who gave it to Frodo."
+  jargon: "The blade."
 
 - universe: Universe.lotr
   name: "Andúril"
   slug: "anduril"
   description: "Flame of the West, reforged for Aragorn."
   item_tags: [ ItemTag.sword ]
+  what_it_does: "Marks Aragorn as the heir of Isildur."
+  origin: "Reforged from the shards of Narsil in Rivendell."
+  value: "A royal heirloom rather than a traded good."
+  history: "Narsil broke beneath Isildur; the shards were kept in Rivendell for an age."
+  jargon: "The Flame of the West."
 
 - universe: Universe.lotr
   name: "Belthronding"
   slug: "belthronding"
   description: "Legolas's bow, strung with a single strand of his own hair."
   item_tags: [ ItemTag.bow ]
+  origin: "Made for Legolas in Mirkwood."
 
 - universe: Universe.lotr
   name: "Ring of Barahir"
   slug: "ring_of_barahir"
   description: "The heirloom Ring of Barahir passed down to Aragorn."
   item_tags: [ ItemTag.ring ]
+  origin: "Given to Barahir by Finrod Felagund."
+  value: "A token of an old oath rather than a price."
+  history: "Kept by the heirs of Isildur through the long years in the North."
+  jargon: "The heirloom."

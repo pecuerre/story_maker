@@ -283,6 +283,8 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Objetos"
     assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir objeto"
     assert_select "label[for=item_item_tag_ids]", text: "Etiquetas de objetos"
+    assert_select "label[for=item_what_it_does]", text: "Qué hace"
+    assert_select "label[for=item_jargon]", text: "Jerga"
     assert_select "input[type=submit][value=?]", "Guardar objeto"
     assert_select "nav.content-tabs a", text: "Propiedades"
 
@@ -292,6 +294,8 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".page-eyebrow", text: "Objeto"
     assert_select "dt", text: "Etiquetas de objetos"
+    assert_select "dt", text: "Jerga"
+    assert_select "dt", text: "En propiedad actual de"
     assert_select ".page-actions a", text: "Todos los objetos"
   end
 

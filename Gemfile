@@ -73,7 +73,7 @@ end
 gem "cssbundling-rails", "~> 1.4"
 
 # Added by PQR
-gem "cancancan", "~> 3.6"
+gem "cancancan", "~> 3.7"
 gem "colorize"
 
 # The search engine. The official client only: this application wraps it in

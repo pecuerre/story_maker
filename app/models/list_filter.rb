@@ -175,7 +175,8 @@ class ListFilter
       return relation if text.blank?
 
       pattern = "%#{relation.klass.sanitize_sql_like(text)}%"
-      conditions = columns.map { |column| "#{table}.#{column} LIKE :pattern ESCAPE '\\'" }
+      own_conditions = columns.map { |column| "#{table}.#{column} LIKE :pattern ESCAPE '\\'" }
+      narrowed = relation.where(own_conditions.join(" OR "), pattern: pattern)
 
       endpoints.each do |association|
         reflection = relation.klass.reflect_on_association(association)
@@ -185,10 +186,14 @@ class ListFilter
         end
         endpoint_ids = endpoint.where(endpoint_conditions.join(" OR "), pattern: pattern).select(:id)
 
-        conditions << "#{table}.#{reflection.foreign_key} IN (#{endpoint_ids.to_sql})"
+        # The endpoint subquery is a **value** of a hash condition, so its own
+        # `LIKE` and the reader's text stay binds instead of being pasted into
+        # this statement's SQL as text. Substituting `to_sql` here was
+        # equivalent at runtime but unreadable to a SQL-injection analyzer.
+        narrowed = narrowed.or(relation.where(reflection.foreign_key => endpoint_ids))
       end
 
-      relation.where(conditions.join(" OR "), pattern: pattern)
+      narrowed
     end
 
     # A filter value is validated against the already-loaded, already-scoped list

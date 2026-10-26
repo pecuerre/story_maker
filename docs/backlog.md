@@ -48,18 +48,6 @@ number. It was triaged on 2026-10-25: two Scene ideas had already been delivered
 the rest became numbered items, and each item records what exists today and what its next step
 depends on. Loose notes still belong under FUTURE WORK until they are triaged into this list.
 
-35. **Verify the weak-confidence Brakeman SQL warning in `ListFilter`.**
-
-   Brakeman 8.1.0 still reports a possible SQL injection at `app/models/list_filter.rb:191`
-   (rechecked 2026-10-25). The interpolated pieces are table, column, and foreign-key names read
-   from model reflections, not request values, and the reader's text travels through
-   `sanitize_sql_like` and a bind. It looks like a false positive, but "looks" is why the warning
-   is still open.
-
-   **Can be done now.** Add a focused test that proves the narrowed query keeps its bind, then
-   either restructure the statement so the analyzer can see it or add a commented ignore entry
-   naming the sanitized path. Do not change the filter's results while silencing it.
-
 36. **An accepted ADR still cites findings that have left `known_quirks.md`.**
 
    [ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) names

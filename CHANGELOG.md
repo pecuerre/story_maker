@@ -50,6 +50,10 @@ Labels used below, in the order their groups appear:
 - **Story overview photo.** The Story overview renders the Story photo beside its structure card again, restoring the details-page photo rule the October dashboard redesign had dropped there.
 - **Stale Story-page locale assertion.** The Spanish Story-page test now reads the shared-world sentence from the card the page actually renders instead of a removed `.col-md-7` selector.
 
+### security
+
+- **Linked-text query warning.** `ListFilter#narrowed_by_linked_text` passes each endpoint subquery as a query value, keeping the reader's text a bind in every branch, and an Ownership filter test proves the SQL contains none of it. Brakeman now reports no warnings.
+
 ### chore
 
 - **Stale character-modal system assertions.** The draft and navigation browser tests now fill in the renamed "At a glance" field instead of the removed "Description" one.

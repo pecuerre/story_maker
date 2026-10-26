@@ -41,6 +41,28 @@ class OwnershipFilterTest < ActiveSupport::TestCase
     assert_equal [ @ownership_two ], apply(filter_for(q: "Character three"))
   end
 
+  test "the reader's text stays a bind in the query that reaches the endpoints" do
+    payloads = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      payloads << payload unless payload[:name] == "SCHEMA"
+    end
+    begin
+      apply(filter_for(q: "Item one"))
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
+
+    statement = payloads.find { |payload| payload[:sql].include?("LIKE") }
+    assert statement, "the narrowed list searches the record and both of its endpoints"
+
+    assert_not_includes statement[:sql], "Item one",
+      "a value the reader typed is not SQL text, even when safely quoted"
+
+    binds = statement[:binds].map { |bind| bind.respond_to?(:value) ? bind.value : bind }
+    assert_equal [ "%Item one%" ] * 4, binds.grep(String),
+      "the record's two searchable columns and both endpoints each carry the pattern as a bind"
+  end
+
   test "the composed sentence is not searchable, in any language" do
     # `display_label` is translated chrome, and matching the words of one
     # language's sentence would be a search that silently means something only

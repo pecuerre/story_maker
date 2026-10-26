@@ -99,9 +99,10 @@ the same as `active?` and needs no special case.
    `Relation`'s label is `"A → B"` and an `Ownership`'s is a sentence; neither is stored, so the
    words a reader types for them are on the endpoint records. `ListFilter#narrowed_by_linked_text`
    searches the record's own columns and the named columns of each `belongs_to` endpoint, **by
-   subquery rather than by a join**, so `#sorted`'s unqualified `ORDER BY id` stays unambiguous. A
-   label the model composes in Ruby — `Ownership`'s translated sentence — cannot be matched in any
-   language and is deliberately not faked.
+   subquery rather than by a join**, so `#sorted`'s unqualified `ORDER BY id` stays unambiguous. Each
+   endpoint's subquery is passed as a query value rather than spliced in as SQL text, so the reader's
+   text stays a bind in every branch. A label the model composes in Ruby — `Ownership`'s translated
+   sentence — cannot be matched in any language and is deliberately not faked.
 
 ## The empty result and the empty list are different sentences
 

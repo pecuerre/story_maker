@@ -89,7 +89,8 @@ the same change, or `db:demo:check` fails.
   `test/controllers/unknown_reference_ids_test.rb` asserts this for every endpoint that accepts a
   `parent_id`.
 - **A concern lives in `app/models/concerns/`**, beside `HasSlug`, `HasManyTags`, `Hierarchical`,
-  `HasColor`, `InvalidatesMenuCounts`, `OrderedSequence`, `SoftDeletable`, and `TemporalInterval`. A
+  `HasColor`, `InvalidatesMenuCounts`, `OrderedSequence`, `SoftDeletable`, `WordCountable`, and
+  `TemporalInterval`. A
   model that needs behaviour declares it with `include` and, where the behaviour is configurable, a
   class-level DSL on itself — as `app/models/concerns/searchable.rb` does.
 - **An interval that cannot run backwards** is `TemporalInterval`, declared with

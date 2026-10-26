@@ -1135,6 +1135,7 @@ en:
       sections: "Sections"
       plots: "Plots"
       scenes: "Scenes"
+      words: "Words"
       sections_eyebrow: "Section tree"
       sections_heading: "Section tree preview"
       sections_none_title: "No sections yet"
@@ -1294,6 +1295,7 @@ en:
       facts:
         story: "Story"
         path: "Section path"
+        words: "Words"
         tags: "Section tags"
         tags_blank: "No tags assigned. Tags are optional."
         description: "Description"
@@ -3317,6 +3319,11 @@ en:
   element:
     one: "element"
     other: "elements"
+  # The unit a prose counter reports, resolved with `count:` like the record-type
+  # nouns above so "1 word" and "1,234 words" come from the locale.
+  word:
+    one: "word"
+    other: "words"
   item:
     one: "item"
     other: "items"

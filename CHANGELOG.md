@@ -38,6 +38,17 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-26
+
+### added
+
+- **Story and Section word counts.** Element Content and Dialogue turn lines now store a word count, and the Sections tree, a Section page, and the Story page state the total, with each Section rolling up its child Sections' prose.
+
+### fixed
+
+- **Story overview photo.** The Story overview renders the Story photo beside its structure card again, restoring the details-page photo rule the October dashboard redesign had dropped there.
+- **Stale Story-page locale assertion.** The Spanish Story-page test now reads the shared-world sentence from the card the page actually renders instead of a removed `.col-md-7` selector.
+
 ## 2026-10-25
 
 ### added

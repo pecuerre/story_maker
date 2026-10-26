@@ -12,6 +12,9 @@
 <% details_url = local_assigns[:details_url] %>
 <% details_count = local_assigns[:details_count] %>
 <% details_count_label = local_assigns.fetch(:details_count_label, "item") %>
+<%# A second, optional row count. Only the Sections tree passes one: its rows
+    carry the prose total of the Section and its descendants. %>
+<% details_word_count = local_assigns[:details_word_count] %>
 <%# A caller always passes `title`, `count_label`, and `new_label`; the
     fallbacks below are a guard for a new call site, and are English because a
     class name humanized is not a translatable string. Passing the three
@@ -154,6 +157,7 @@ end %>
           details_url: details_url,
           details_count: details_count,
           details_count_label: details_count_label,
+          details_word_count: details_word_count,
           editable: editable %>
       <% end %>
 

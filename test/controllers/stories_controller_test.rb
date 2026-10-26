@@ -231,4 +231,11 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "story show states the story's whole prose total" do
+    get universe_story_url(universe_slug: @universe.slug, id: stories(:story_one))
+
+    assert_response :success
+    assert_includes response.body, "38 words"
+  end
 end

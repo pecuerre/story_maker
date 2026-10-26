@@ -175,4 +175,18 @@ class SceneElementTest < ActiveSupport::TestCase
       @narration.update_column(:kind, "aside")
     end
   end
+
+  test "content stores its whitespace-delimited word count on every save" do
+    element = SceneElement.create!(
+      scene: @scene, name: "Counted", kind: SceneElement::NARRATION, body: "One two three."
+    )
+
+    assert_equal 3, element.word_count
+
+    element.update!(body: "One two")
+    assert_equal 2, element.word_count
+
+    element.update!(body: "")
+    assert_equal 0, element.word_count
+  end
 end

@@ -272,6 +272,27 @@ class SectionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "index states each section's prose total, rolled up to its parent" do
+    get universe_story_sections_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    # section_one has 38 words of prose in its own scene; section_two has none.
+    assert_select ".taxonomy-row-end .badge[aria-label=?]", "38 words", count: 1
+    assert_select ".taxonomy-row-end .badge[aria-label=?]", "0 words", count: 1
+  end
+
+  test "a section page states the prose total of it and its descendants" do
+    scenes(:scene_two).scene_elements.create!(
+      scene: scenes(:scene_two), name: "The next beat", kind: SceneElement::NARRATION,
+      body: "One two three"
+    )
+
+    get universe_story_section_url(universe_slug: @universe.slug, story_id: @story, id: @section)
+
+    assert_response :success
+    assert_includes response.body, "41 words"
+  end
+
   private
     # A read-only collaborator needs a private universe; a public universe grants
     # write access to every signed-in user.

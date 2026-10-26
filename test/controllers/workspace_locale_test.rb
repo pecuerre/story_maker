@@ -181,7 +181,7 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Registros de construcción del mundo"
     # The universe's name is interpolated into a translated sentence, so the
     # sentence reads in Spanish around data that is not translated.
-    assert_select ".col-md-7 p.text-body-secondary", text: /Todas las historias de Universe one comparten estos registros/
+    assert_select ".col-md-6 p.text-body-secondary", text: /Todas las historias de Universe one comparten estos registros/
     assert_select "a.quick-link", text: "Cronología"
   end
 

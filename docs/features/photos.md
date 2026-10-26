@@ -74,7 +74,9 @@ that square to a canvas and hands the result to the form as a `data:` URL.
   a mutation control already belongs.
 - A record's photo shows in the **left** part of its details-page surface card. A record without one
   renders exactly what it rendered before photos existed — see
-  [conventions.md](../conventions.md#record-details-pages).
+  [conventions.md](../conventions.md#record-details-pages). The Story overview has no single identity
+  card, so its photo takes that same left column in the structure card, exactly as the Universe page
+  places one beside its Universe Bible card.
 - A **remembered create's** submitted photo shows as a small square on its pending row, which is the
   only surface a submitted photo can be seen on before the draft is applied; the drafts page states it
   in words rather than showing it. The value is gated on `PhotoProcessing::DATA_URL` before it reaches

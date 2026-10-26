@@ -7,6 +7,7 @@
   facts: [
     detail_fact(t("sections.show.facts.story"), link_to(@story.name, universe_story_path(id: @story))),
     detail_fact(t("sections.show.facts.path"), @section_path || @section.name),
+    detail_fact(t("sections.show.facts.words"), count_with_label(@word_counts.for_section(@section), "word")),
     detail_fact(t("sections.show.facts.tags"), entity_tag_badge(@section), blank: t("sections.show.facts.tags_blank")),
     detail_fact(t("sections.show.facts.description"), @section.description, blank: t("sections.show.facts.description_blank"))
   ],

@@ -13,6 +13,11 @@
 # in the Scene, and it never stamps a SceneCharacter row.
 class SceneDialogueTurn < ApplicationRecord
   include OrderedSequence
+  include WordCountable
+
+  # A turn's line is prose like an Element's Content, so it contributes to the
+  # same Story and Section totals.
+  counts_words_from :body
 
   ordered_sequence_within :scene_element
 

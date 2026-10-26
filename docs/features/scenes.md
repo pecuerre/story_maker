@@ -363,6 +363,18 @@ links, block-level speakers, and turn speakers exactly as the Characters tab doe
 counts are deliberately absent: they would need one extra grouped query each per page, and the three
 workspace tabs are the place that detail belongs. Do not render placeholder counts for them.
 
+## Word counts
+
+A Story's prose is Element Content plus Dialogue turn lines. Each of those records stores its own
+`word_count` (`WordCountable`, recomputed on every save), so no page loads a body to draw a number.
+`WordCounts` sums those stored columns with four fixed queries per Story and answers two
+questions: the Story's whole total, including ungrouped Scenes, and each Section's total, which
+includes every descendant Section's Scenes because a parent Section is how a chapter groups its
+parts. The Sections tree shows a Section's total on its row, the Section page states it as a fact,
+and the Story page states the Story's total in the structure card. Element titles, turn
+parentheticals, Scene descriptions, and Section descriptions are **not** counted; only prose bodies
+are. `bin/rails word_counts:recount` fills the stored counts for records that predate the column.
+
 ## The deletion contract
 
 It is asymmetric, and the asymmetry is deliberate:

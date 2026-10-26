@@ -4,6 +4,7 @@
 <% details_url = local_assigns[:details_url] %>
 <% details_count = local_assigns[:details_count] %>
 <% details_count_label = local_assigns.fetch(:details_count_label, "item") %>
+<% details_word_count = local_assigns[:details_word_count] %>
 <% editable = local_assigns.fetch(:editable) { can_write_universe?(universe_for_record(node) || Current.universe) } %>
 <%# The formatted count is serialized on the node so the tree controller can
     rebuild the rename button exactly as the server rendered it when an inline
@@ -92,6 +93,18 @@
         viewport, and both are rendered for writers while Details is rendered
         for every access level. %>
     <span class="taxonomy-row-end ms-auto d-flex align-items-center gap-2">
+      <%# A row's prose total is outside the name trigger so a cancelled rename
+          restores the server-rendered row unchanged; the trigger rebuilds only
+          its own content. %>
+      <% word_count = details_word_count&.call(node) %>
+      <% if word_count %>
+        <span class="badge rounded-pill text-bg-light border"
+          aria-label="<%= count_with_label(word_count, "word") %>">
+          <i class="bi bi-file-text" aria-hidden="true"></i>
+          <%= number_with_delimiter(word_count) %>
+        </span>
+      <% end %>
+
       <% if details_url %>
         <%= record_details_link details_url.call(node), record: node %>
       <% end %>
@@ -174,6 +187,7 @@
           details_url: details_url,
           details_count: details_count,
           details_count_label: details_count_label,
+          details_word_count: details_word_count,
           editable: editable %>
       <% end %>
     </ul>

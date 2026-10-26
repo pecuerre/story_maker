@@ -1080,6 +1080,7 @@ es:
       sections: "Secciones"
       plots: "Tramas"
       scenes: "Escenas"
+      words: "Palabras"
       sections_eyebrow: "Árbol de secciones"
       sections_heading: "Vista previa del árbol de secciones"
       sections_none_title: "Todavía no hay secciones"
@@ -1226,6 +1227,7 @@ es:
       facts:
         story: "Historia"
         path: "Ruta de la sección"
+        words: "Palabras"
         tags: "Etiquetas de sección"
         tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
         description: "Descripción"
@@ -3221,6 +3223,12 @@ es:
   element:
     one: "elemento"
     other: "elementos"
+  # La unidad que informa un contador de prosa, resuelta con `count:` como los
+  # nombres de tipo de registro de arriba, para que «1 palabra» y «1.234 palabras»
+  # los elija la Locale.
+  word:
+    one: "palabra"
+    other: "palabras"
   item:
     one: "elemento"
     other: "elementos"

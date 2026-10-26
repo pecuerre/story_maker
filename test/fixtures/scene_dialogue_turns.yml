@@ -9,11 +9,13 @@ turn_one:
   scene_element: dialogue_one
   speaker: character_three
   body: "Count with me."
+  word_count: 3
   position: 0
 
 turn_two:
   scene_element: dialogue_one
   speaker: character_one
   body: "One, two, three. Again, and slower this time."
+  word_count: 8
   parenthetical: "grinning"
   position: 1

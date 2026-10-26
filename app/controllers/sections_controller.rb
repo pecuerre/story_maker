@@ -33,6 +33,9 @@ class SectionsController < ApplicationController
     # are grouped there, so the counts come from one grouped query instead of
     # one COUNT per row in the tree.
     @scene_counts = @story.scenes.group(:section_id).count
+    # The tree's word count is a rollup over the whole Story, so it is built once
+    # for the page rather than asked per row.
+    @word_counts = WordCounts.for_story(@story)
   end
 
   # GET /sections/:id — the Section's own details page. This is where "Details"
@@ -44,6 +47,8 @@ class SectionsController < ApplicationController
     @section_path = SectionPaths.build(@story.sections.reorder(:position, :id).to_a).label_for(@section)
     @scenes = @section.scenes.reorder(:position, :id).to_a
     @scene_total = @story.scenes.count
+    # One rollup answers this Section's prose total, descendants included.
+    @word_counts = WordCounts.for_story(@story)
   end
 
   def create

@@ -18,6 +18,8 @@ class StoriesController < ApplicationController
     @sections = @story.sections.order(:position, :id).to_a
     @recent_sections = @sections.sort_by { |section| section.updated_at || Time.zone.at(0) }.reverse.first(5)
     @story_tropes = @story.story_tropes.to_a
+    # The structure card states the Story's whole prose total, grouped or not.
+    @word_counts = WordCounts.for_story(@story)
   end
 
   # GET /u/:universe_slug/s/new

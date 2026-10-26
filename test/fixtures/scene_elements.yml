@@ -1,10 +1,16 @@
 # Scene Elements. `kind` is a plain column, not a `type` discriminator, and a
 # Dialogue names its speakers through the same many-to-many join the
 # development data uses.
+#
+# Fixtures insert rows without running callbacks, so `word_count` is written out
+# here. `WordCountsTest` holds each value to the body's own whitespace-delimited
+# count, because a hand-edited body that left its count behind would be a total
+# that quietly stopped matching the prose.
 narration_one:
   scene: scene_one
   name: "The hollow tree"
   body: "Jonas wedges the box into the hollow of the oak and keeps his hand on it."
+  word_count: 16
   kind: narration
   position: 0
 
@@ -12,6 +18,7 @@ dialogue_one:
   scene: scene_one
   name: "Michael teaches the waltz"
   body: "Count with me. One, two, three. Again, and slower this time."
+  word_count: 11
   kind: dialogue
   position: 1
   characters: [ character_one, character_two ]

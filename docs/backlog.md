@@ -71,21 +71,6 @@ depends on. Loose notes still belong under FUTURE WORK until they are triaged in
    document that owns it, leaving the reasoning and the ADR's dated Status notes intact. This is the
    same pointer fix the 2026-10-04 note made to ADR 0021.
 
-37. **The Story overview no longer matches its tests.**
-
-   The 2026-10-25 full suite (2,901 runs) has two failures, both on the Story overview:
-   `RecordPhotoDetailsTest#test_the_story_page_shows_its_photo` finds no `figure.record-photo`, and
-   `WorkspaceLocaleTest#test_a_story_page_states_its_structure_and_its_shared_world_in_Spanish`
-   asserts the old `.col-md-7` selector for a sentence that now renders in a `.col-md-6` card.
-
-   The locale failure is a stale selector. The photo failure is a regression, not a stale test:
-   `Story` still includes `HasPhoto`, the edit form still accepts a photo, and
-   [`features/photos.md`](features/photos.md) says a record's photo shows on its details page, but
-   the October dashboard redesign removed the rendering.
-
-   **Can be done now**, with one decision: restore the photo to the Story overview, or drop photo
-   support for Stories and update the test and photo rules together. Then update the locale selector.
-
 38. **Universe URLs as subdomains instead of `/u/<universe_slug>`.**
 
    Serve a universe at `<universe_slug>.<host>` rather than under a path. **Needs an ADR before any
@@ -173,3 +158,15 @@ depends on. Loose notes still belong under FUTURE WORK until they are triaged in
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
 analyzed like the list above, given the next number, and moved under PENDING WORK.
+
+- add pronouns to characters
+- add aliasses to characters
+- highlight things in text (locations, characters, items, etc.)
+- appearance heatmap
+- characters per scenes chart
+- import characters, factions, scenes, from tcs.git
+- define a new story structure zipfile with directories for scenes, plot, canon, characters, etc.
+- check novelcrafter.com
+- check plotlens.ai
+- check novilot.com
+- check sudowrite.com

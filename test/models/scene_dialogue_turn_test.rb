@@ -90,4 +90,14 @@ class SceneDialogueTurnTest < ActiveSupport::TestCase
     assert_equal speaker_ids.uniq.sort, Character.where(id: speaker_ids.uniq).pluck(:id).sort,
       "a shared character survives the turn it spoke in"
   end
+
+  test "a line stores its whitespace-delimited word count on every save" do
+    t = build_turn(body: "One two three")
+    t.save!
+
+    assert_equal 3, t.word_count
+
+    t.update!(body: "")
+    assert_equal 0, t.word_count
+  end
 end

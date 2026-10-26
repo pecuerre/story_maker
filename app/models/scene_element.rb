@@ -16,6 +16,11 @@ class SceneElement < ApplicationRecord
   include OrderedSequence
   include Searchable
   include HasDiscussion
+  include WordCountable
+
+  # `WordCounts` sums this stored column for a Story and its Sections, so the
+  # count follows Content on every save instead of being derived per page.
+  counts_words_from :body
 
   # An Element's turns cascade with it: soft-deleting the Element soft-deletes
   # its turns, and restoring the Element restores them.

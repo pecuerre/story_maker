@@ -95,8 +95,9 @@ would report the run as failed when the author simply decided.
 
 ### Benefits
 
-- A closed draft answers "when" and "what became of it" without an inference, which is what finding 64
-  said was impossible.
+- A closed draft answers "when" and "what became of it" without an inference, which an applied draft
+  could not say before the outcome was stored; the rule now lives in
+  [`../conventions.md`](../conventions.md#the-drafts-page).
 - The stored outcomes are the data Phase 5's review workflow needs: a reviewer approving or rejecting a
   submission reads a stored decision rather than a re-run detector.
 - The append-only rule survives intact, and the one attempt to infer an outcome (ADR 0021's rejected

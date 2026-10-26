@@ -72,8 +72,8 @@ would silently change back with no request from the reader.
 
 **4. What does the sidebar panel cost?** The panel is rendered in the layout, so it is rendered on
 every page of the universe. Each row names the record its change is about, and resolving that is a
-query — the unbounded-per-row read already recorded as finding 66, widened from one page to all of
-them.
+query — the unbounded per-row read a draft's page already paid, widened from one page to all of them
+(now recorded in [`../conventions.md`](../conventions.md#reading-a-drafts-changes)).
 
 ## Decision
 
@@ -183,12 +183,14 @@ a fact goes stale in one place.
   are read on the drafts page; a row that tried to render them would be resolving a collection per row
   for a record with no identity.
 - **A pending create says nothing about where it would go.** No parent, no story, no scene. This is the
-  limit finding 63 and the "contract-dependent footguns" list already recorded for the drafts page,
-  widened from one page to the lists; it is unchanged, not new.
+  limit the drafts page's contract already recorded, widened from one page to the lists; it is
+  unchanged, not new. The rule now lives in
+  [`../conventions.md`](../conventions.md#pending-changes-in-a-list).
 - **The panel costs a query per row on every page of the universe.** Bounded at five, but bounded is
   not free: a universe whose pages were previously draft-free now carries one draft lookup per page.
   A shared reader that resolves a draft's records in two queries would remove it, which is the same fix
-  finding 66 names for the drafts page.
+  the drafts page needed; [`../conventions.md`](../conventions.md#reading-a-drafts-changes) now records
+  that reader.
 - **A pending row is in every list it belongs to.** A Scene create shows on the Scenes list and, when
   it names no section, on the Sections page's ungrouped list. Two lists showing one future record is
   correct — they are two views of the same story — but it is two places to look for it.
@@ -223,7 +225,8 @@ to draw the line somewhere, and the line is between the record's own values and 
 
 ### Rejected: an unbounded panel
 
-It would be the drafts page again, and finding 66 says what that costs. The panel is on the layout, so
+It would be the drafts page again, and the per-row read that page paid is what that costs
+([`../conventions.md`](../conventions.md#reading-a-drafts-changes)). The panel is on the layout, so
 its cost is every page rather than one.
 
 ## Related documentation

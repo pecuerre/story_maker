@@ -48,17 +48,6 @@ number. It was triaged on 2026-10-25: two Scene ideas had already been delivered
 the rest became numbered items, and each item records what exists today and what its next step
 depends on. Loose notes still belong under FUTURE WORK until they are triaged into this list.
 
-36. **An accepted ADR still cites findings that have left `known_quirks.md`.**
-
-   [ADR 0023](adr/0023-pending-changes-are-read-from-the-draft-and-drawn-as-badges.md) names
-   finding 63 on its "pending create says nothing about where it would go" cost and finding 66 on
-   its per-row cost. Both findings are closed, and `known_quirks.md` reuses its numbers, so neither
-   number identifies anything now. The decisions stand.
-
-   **Can be done now, docs-only.** Replace each number with the behavior it named and link the
-   document that owns it, leaving the reasoning and the ADR's dated Status notes intact. This is the
-   same pointer fix the 2026-10-04 note made to ADR 0021.
-
 38. **Universe URLs as subdomains instead of `/u/<universe_slug>`.**
 
    Serve a universe at `<universe_slug>.<host>` rather than under a path. **Needs an ADR before any

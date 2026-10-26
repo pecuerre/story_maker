@@ -54,6 +54,10 @@ Labels used below, in the order their groups appear:
 
 - **Linked-text query warning.** `ListFilter#narrowed_by_linked_text` passes each endpoint subquery as a query value, keeping the reader's text a bind in every branch, and an Ownership filter test proves the SQL contains none of it. Brakeman now reports no warnings.
 
+### docs
+
+- **Two accepted ADRs no longer cite retired finding numbers.** The stale pointers in ADR 0023 and ADR 0024 now name the behavior they meant and link the document that owns it.
+
 ### chore
 
 - **Stale character-modal system assertions.** The draft and navigation browser tests now fill in the renamed "At a glance" field instead of the removed "Description" one.

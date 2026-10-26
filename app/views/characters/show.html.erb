@@ -11,6 +11,8 @@
     detail_fact(t("characters.show.facts.factions"), safe_join(@character.factions.order(:name).map { |faction|
       link_to(faction.name, universe_faction_path(universe_slug: Current.universe.slug, id: faction))
     }, ", "), blank: t("characters.show.facts.factions_blank")),
+    detail_fact(t("characters.show.facts.pronouns"), @character.pronouns, blank: t("characters.show.facts.blank")),
+    detail_fact(t("characters.show.facts.aliases"), @character.aliases, blank: t("characters.show.facts.blank")),
     detail_fact(t("characters.show.facts.at_a_glance"), @character.at_a_glance, blank: t("characters.show.facts.blank")),
     detail_fact(t("characters.show.facts.wants"), @character.wants, blank: t("characters.show.facts.blank")),
     detail_fact(t("characters.show.facts.needs"), @character.needs, blank: t("characters.show.facts.blank")),

@@ -10,6 +10,8 @@ The Character modal records a name and optional plain-text profile fields:
 
 | Field | What it records |
 |---|---|
+| `pronouns` | The pronouns the Character uses |
+| `aliases` | Other names the Character goes by, usually separated by commas |
 | `at_a_glance` | A short overview |
 | `wants` | What the Character wants |
 | `needs` | What the Character needs |
@@ -20,7 +22,9 @@ The Character modal records a name and optional plain-text profile fields:
 
 Every profile field is optional. The old `description` column was renamed to `at_a_glance`, preserving
 existing summaries. Character text search and the API use the structured profile fields; the API
-returns `at_a_glance` and the other profile values instead of `description`.
+returns `at_a_glance` and the other profile values instead of `description`. Aliases and pronouns are
+part of the searchable body, so a reader can find a Character by a name it is known by or by the
+pronouns recorded for it.
 
 ## Faction membership
 
@@ -49,10 +53,10 @@ all reads and writes are scoped through the authorized Universe and nested Chara
 
 ## Character sample records
 
-Character profile examples demonstrate populated and blank optional fields, multiple faction
-memberships, and a Character with no Faction. In Dark, family and job tags describe Characters while
-faction membership is the separate Faction association. Each Universe also includes a connected
-knowledge record with a source Character. The manifests are `characters.yml` and
+Character profile examples demonstrate populated and blank optional fields, including pronouns and
+aliases, multiple faction memberships, and a Character with no Faction. In Dark, family and job tags
+describe Characters while faction membership is the separate Faction association. Each Universe also
+includes a connected knowledge record with a source Character. The manifests are `characters.yml` and
 `character_knowledges.yml`; the latter loads after the Character and Faction definitions.
 
 After changing either Universe's manifests, validate and reload both development datasets using the

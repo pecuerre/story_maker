@@ -69,7 +69,7 @@ class CharacterFilter < ListFilter
   def apply(relation)
     relation = narrowed_by_tag(relation, character_tag)
     relation = narrowed_by_text(relation, table: "characters", columns: %w[
-      name at_a_glance wants needs lies_to_self contradictions under_pressure_they never
+      name at_a_glance pronouns aliases wants needs lies_to_self contradictions under_pressure_they never
     ])
     sorted(relation)
   end

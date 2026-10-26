@@ -12,6 +12,17 @@ class CharacterTest < ActiveSupport::TestCase
     assert Character.create!(universe: universes(:universe_one), name: "Untagged")
   end
 
+  test "pronouns and aliases are optional and join the searchable profile" do
+    character = Character.create!(universe: universes(:universe_one), name: "Ariadne",
+      at_a_glance: "Thread-puller", pronouns: "she/her", aliases: "The Gate, Ari")
+
+    assert_equal "Thread-puller she/her The Gate, Ari", character.search_description
+
+    blank = Character.create!(universe: universes(:universe_one), name: "Unnamed")
+    assert_nil blank.pronouns
+    assert_nil blank.aliases
+  end
+
   test "faction memberships are optional and can include more than one faction" do
     character = characters(:character_one)
 

@@ -1702,6 +1702,9 @@ es:
     # que lee un mensaje de error, y se espera que las dos digan lo mismo.
     form:
       name: "Nombre"
+      pronouns: "Pronombres"
+      aliases: "Alias"
+      aliases_hint: "Otros nombres por los que se conoce al personaje, separados por comas."
       at_a_glance: "A primera vista"
       wants: "Quiere"
       needs: "Necesita"
@@ -1773,6 +1776,8 @@ es:
         tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
         factions: "Facciones"
         factions_blank: "No pertenece a ninguna facción."
+        pronouns: "Pronombres"
+        aliases: "Alias"
         at_a_glance: "A primera vista"
         wants: "Quiere"
         needs: "Necesita"
@@ -2668,6 +2673,8 @@ es:
       # de estos espacios de trabajo.
       character:
         name: "Nombre"
+        pronouns: "Pronombres"
+        aliases: "Alias"
         at_a_glance: "A primera vista"
         wants: "Quiere"
         needs: "Necesita"

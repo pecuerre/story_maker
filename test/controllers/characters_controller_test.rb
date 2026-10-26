@@ -234,12 +234,15 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
   test "should create character as json" do
     assert_difference("Character.count") do
       post universe_characters_url(universe_slug: @universe.slug),
-        params: { character: { name: "New character", at_a_glance: "A description", character_tag_ids: [ @character_tag.id ], faction_ids: [ factions(:faction_two).id ] } },
+        params: { character: { name: "New character", pronouns: "she/her", aliases: "The Gate",
+          at_a_glance: "A description", character_tag_ids: [ @character_tag.id ], faction_ids: [ factions(:faction_two).id ] } },
         as: :json
     end
 
     assert_response :created
     assert_equal [ @character_tag.id ], response.parsed_body["character_tag_ids"]
+    assert_equal "she/her", response.parsed_body["pronouns"]
+    assert_equal "The Gate", response.parsed_body["aliases"]
     assert_equal "A description", Character.order(:id).last.at_a_glance
     assert_equal [ factions(:faction_two).id ], response.parsed_body["faction_ids"]
   end
@@ -272,12 +275,17 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
 
   test "should update character details as json" do
     patch universe_character_url(universe_slug: @universe.slug, id: @character),
-      params: { character: { name: "Renamed", at_a_glance: "Updated", character_tag_ids: [ @character_tag.id ] } },
+      params: { character: { name: "Renamed", at_a_glance: "Updated", pronouns: "they/them",
+        aliases: "The Gate", character_tag_ids: [ @character_tag.id ] } },
       as: :json
 
     assert_response :success
     @character.reload
-    assert_equal [ "Renamed", "Updated", [ @character_tag.id ] ], [ @character.name, @character.at_a_glance, @character.character_tag_ids ]
+    assert_equal [ "Renamed", "Updated", "they/them", "The Gate", [ @character_tag.id ] ],
+      [ @character.name, @character.at_a_glance, @character.pronouns, @character.aliases,
+        @character.character_tag_ids ]
+    assert_equal "they/them", response.parsed_body["pronouns"]
+    assert_equal "The Gate", response.parsed_body["aliases"]
   end
 
   test "the character delete confirmation states that scenes and other records remain" do
@@ -320,7 +328,8 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "character details show profile, faction, and knowledge records" do
-    @character.update!(at_a_glance: "A quick summary", wants: "The key")
+    @character.update!(at_a_glance: "A quick summary", wants: "The key", pronouns: "she/her",
+      aliases: "Ariadne, The Thread Puller")
     knowledge = character_knowledges(:knowledge_one)
 
     get universe_character_url(universe_slug: @universe.slug, id: @character)
@@ -328,6 +337,8 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "A quick summary"
     assert_includes response.body, "The key"
+    assert_includes response.body, "she/her"
+    assert_includes response.body, "Ariadne, The Thread Puller"
     assert_includes response.body, "Faction one"
     assert_select "#character-knowledge-heading", text: "What this character knows"
     assert_select "article", text: /#{Regexp.escape(knowledge.what_learned)}/

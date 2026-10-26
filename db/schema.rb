@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_26_100000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -116,6 +116,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_090000) do
     t.text "contradictions"
     t.text "under_pressure_they"
     t.text "never"
+    t.string "pronouns"
+    t.text "aliases"
     t.index ["parent_id"], name: "index_characters_on_parent_id"
     t.index ["photo_id"], name: "index_characters_on_photo_id"
     t.index ["universe_id"], name: "index_characters_on_universe_id"

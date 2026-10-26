@@ -1749,6 +1749,9 @@ en:
     # message reads, and the two are expected to say the same thing.
     form:
       name: "Name"
+      pronouns: "Pronouns"
+      aliases: "Aliases"
+      aliases_hint: "Other names the character goes by, separated by commas."
       at_a_glance: "At a glance"
       wants: "Wants"
       needs: "Needs"
@@ -1817,6 +1820,8 @@ en:
         tags_blank: "No tags assigned. Tags are optional."
         factions: "Factions"
         factions_blank: "No faction assigned."
+        pronouns: "Pronouns"
+        aliases: "Aliases"
         at_a_glance: "At a glance"
         wants: "Wants"
         needs: "Needs"
@@ -3024,6 +3029,8 @@ en:
       # workspaces actually reaches.
       character:
         name: "Name"
+        pronouns: "Pronouns"
+        aliases: "Aliases"
         at_a_glance: "At a glance"
         wants: "Wants"
         needs: "Needs"

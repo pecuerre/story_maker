@@ -177,7 +177,7 @@ Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `sec
 ### Content tables
 | Table | Columns | Notes |
 |---|---|---|
-| `characters` | `name`, `at_a_glance`, `wants`, `needs`, `lies_to_self`, `contradictions`, `under_pressure_they`, `never`, `slug`, `parent_id`, `position`, `universe_id` | profile text fields are optional; Faction membership is zero-to-many and universe-scoped |
+| `characters` | `name`, `pronouns`, `aliases`, `at_a_glance`, `wants`, `needs`, `lies_to_self`, `contradictions`, `under_pressure_they`, `never`, `slug`, `parent_id`, `position`, `universe_id` | profile text fields are optional; Faction membership is zero-to-many and universe-scoped |
 | `character_knowledges` | `universe_id`, `character_id`, optional `source_character_id`, `when_text`, `what_learned`, `changes_plan` (bool, default false), `deleted_at` | Character-owned knowledge change; both Character references must belong to the same Universe |
 | `factions` | `name`, `slug`, `mission`, `actual_aims`, `structure`, `internal_divisions`, `resources`, `would_never`, `would_absolutely`, `universe_id`, `photo_id`, `deleted_at` | flat, universe-scoped profile |
 | `faction_relationships` | `universe_id`, `from_faction_id`, `to_faction_id`, optional `name`, `description`, `from_date`, `to_date`, `slug`, `photo_id`, `deleted_at` | directed Faction-to-Faction link; endpoints must be distinct and in the same Universe; a reverse link is a separate record; the dates are a `TemporalInterval` |

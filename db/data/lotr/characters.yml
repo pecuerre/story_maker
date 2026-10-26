@@ -1,6 +1,8 @@
 - universe: Universe.lotr
   name: Frodo Baggins
   slug: frodo_baggins
+  pronouns: "he/him"
+  aliases: "Ring-bearer"
   at_a_glance: "Hobbit Ring-bearer of the Fellowship."
   wants: "To return to the Shire and be left in peace."
   needs: "To accept help and carry the Ring to its destruction."
@@ -22,6 +24,8 @@
 - universe: Universe.lotr
   name: Gandalf the Grey
   slug: gandalf_the_grey
+  pronouns: "he/him"
+  aliases: "Mithrandir, The Grey Pilgrim"
   at_a_glance: "Wizard who leads the Fellowship out of the Shire."
   character_tags: [ CharacterTag.man, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring, Faction.white_council ]
@@ -29,6 +33,8 @@
 - universe: Universe.lotr
   name: Aragorn
   slug: aragorn
+  pronouns: "he/him"
+  aliases: "Strider, Elessar"
   at_a_glance: "Ranger of the North and heir to the throne of Gondor."
   character_tags: [ CharacterTag.man, CharacterTag.rangers_of_the_north, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring ]
@@ -50,5 +56,7 @@
 - universe: Universe.lotr
   name: Gollum
   slug: gollum
+  pronouns: "he/him"
+  aliases: "Sméagol"
   at_a_glance: "Former owner of the One Ring."
   character_tags: [ CharacterTag.hobbit ]

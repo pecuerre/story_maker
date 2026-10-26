@@ -49,7 +49,7 @@ class ModalFieldsHelperTest < ActionView::TestCase
   # names the record's stored image so the shared photo control can show what it
   # is about to replace.
   SERIALIZED_KEYS = {
-    "character" => %w[name at_a_glance wants needs lies_to_self contradictions under_pressure_they never character_tag_ids faction_ids photo_url],
+    "character" => %w[name pronouns aliases at_a_glance wants needs lies_to_self contradictions under_pressure_they never character_tag_ids faction_ids photo_url],
     "item" => %w[name description what_it_does how_it_is_used side_effects origin value cannot constraints history jargon item_tag_ids photo_url],
     "event" => %w[title start_datetime end_datetime before_event_id after_event_id
                   simultaneous_event_id description event_tag_ids photo_url],
@@ -136,6 +136,16 @@ class ModalFieldsHelperTest < ActionView::TestCase
     character = characters(:character_one)
 
     assert_equal [ character_tags(:character_tag_one).id ], serialized(character)["character_tag_ids"]
+  end
+
+  test "a Character's pronouns and aliases are handed to the editor" do
+    character = characters(:character_one)
+    character.update!(pronouns: "they/them", aliases: "The Gate")
+
+    values = serialized(character)
+
+    assert_equal "they/them", values["pronouns"]
+    assert_equal "The Gate", values["aliases"]
   end
 
   test "an Item's profile answers are handed to the editor, in declared order" do

@@ -32,7 +32,7 @@ class WorkspaceNavigationTest < ApplicationSystemTestCase
     assert_selector ".modal.show"
     within ".modal.show" do
       fill_in "Name", with: "Browser Character"
-      fill_in "Description", with: "Created from a system test."
+      fill_in "At a glance", with: "Created from a system test."
       click_button "Save character"
     end
 

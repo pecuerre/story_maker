@@ -1,4 +1,13 @@
 <div class="mb-3">
+  <%= form.label :pronouns, t("characters.form.pronouns"), class: "form-label" %>
+  <%= form.text_field :pronouns, class: "form-control" %>
+</div>
+<div class="mb-3">
+  <%= form.label :aliases, t("characters.form.aliases"), class: "form-label" %>
+  <%= form.text_area :aliases, class: "form-control", rows: 2 %>
+  <div class="form-text"><%= t("characters.form.aliases_hint") %></div>
+</div>
+<div class="mb-3">
   <%= form.label :at_a_glance, t("characters.form.at_a_glance"), class: "form-label" %>
   <%= form.text_area :at_a_glance, class: "form-control", rows: 3 %>
 </div>

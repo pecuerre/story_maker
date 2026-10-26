@@ -40,12 +40,15 @@ class Api::CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_equal characters(:character_one).id, body["id"]
     assert_equal characters(:character_one).name, body["name"]
     assert_nil body["at_a_glance"]
+    assert_nil body["pronouns"]
+    assert_nil body["aliases"]
   end
 
   test "create creates a character as json" do
     assert_difference("Character.count") do
       post api_universe_characters_url(universe_slug: @universe.slug),
-        params: { character: { name: "Api character", at_a_glance: "Via the API", wants: "A safe road",
+        params: { character: { name: "Api character", pronouns: "they/them", aliases: "The Gate, Ari",
+          at_a_glance: "Via the API", wants: "A safe road",
           faction_ids: [ factions(:faction_two).id ] } },
         headers: headers, as: :json
     end
@@ -53,6 +56,8 @@ class Api::CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     body = response.parsed_body
     assert_equal "Api character", body["name"]
+    assert_equal "they/them", body["pronouns"]
+    assert_equal "The Gate, Ari", body["aliases"]
     assert_equal "Via the API", body["at_a_glance"]
     assert_equal "A safe road", body["wants"]
     assert_equal [], body["character_tag_ids"]

@@ -2,6 +2,7 @@
   name: Jonas
   character_tags: [ CharacterTag.family_kahnwald ]
   factions: [ Faction.sic_mundus ]
+  pronouns: "he/him"
   at_a_glance: "A young man caught in the knot's repeating cycles."
   wants: "To prevent his father's suicide and save Martha."
   needs: "To accept that certainty can make him part of the cycle."
@@ -14,10 +15,12 @@
 - universe: Universe.dark
   name: Martha
   factions: [ Faction.erit_lux ]
+  pronouns: "she/her"
 
 - universe: Universe.dark
   name: Ulrich
   character_tags: [ CharacterTag.family_nielsen, CharacterTag.police ]
+  pronouns: "he/him"
 
 - universe: Universe.dark
   name: Hannah
@@ -38,6 +41,7 @@
 - universe: Universe.dark
   name: Claudia
   character_tags: [ CharacterTag.family_tiedemann, CharacterTag.nuclear_plant ]
+  pronouns: "she/her"
 
 # Bartosz is named by the "Jonas meets Bartosz" Event but had no Character record
 # until the second and third stories needed him to speak. He belongs to the

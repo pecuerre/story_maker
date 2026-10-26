@@ -57,6 +57,14 @@ class CharacterFilterTest < ActiveSupport::TestCase
     end
   end
 
+  test "free text matches pronouns and aliases" do
+    @character_one.update!(pronouns: "she/her", aliases: "Ariadne, The Thread Puller")
+
+    assert_equal [ @character_one ], apply(filter_for(q: "she/her"))
+    assert_equal [ @character_one ], apply(filter_for(q: "Ariadne")),
+      "a reader who only knows the name others use can still find the character"
+  end
+
   test "search text is matched literally, so a wildcard is not a wildcard" do
     @character_one.update!(name: "100% of the oath")
 

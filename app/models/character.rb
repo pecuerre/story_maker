@@ -44,8 +44,8 @@ class Character < ApplicationRecord
   validate :factions_belong_to_same_universe
 
   def search_description
-    [ at_a_glance, wants, needs, lies_to_self, contradictions, under_pressure_they, self[:never] ]
-      .compact_blank.join(" ")
+    [ at_a_glance, pronouns, aliases, wants, needs, lies_to_self, contradictions, under_pressure_they,
+      self[:never] ].compact_blank.join(" ")
   end
 
   private

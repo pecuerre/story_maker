@@ -42,12 +42,17 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Character pronouns and aliases.** Characters record optional pronouns and aliases in the modal, show them on the details page and in the API, and match both in list search.
 - **Story and Section word counts.** Element Content and Dialogue turn lines now store a word count, and the Sections tree, a Section page, and the Story page state the total, with each Section rolling up its child Sections' prose.
 
 ### fixed
 
 - **Story overview photo.** The Story overview renders the Story photo beside its structure card again, restoring the details-page photo rule the October dashboard redesign had dropped there.
 - **Stale Story-page locale assertion.** The Spanish Story-page test now reads the shared-world sentence from the card the page actually renders instead of a removed `.col-md-7` selector.
+
+### chore
+
+- **Stale character-modal system assertions.** The draft and navigation browser tests now fill in the renamed "At a glance" field instead of the removed "Description" one.
 
 ## 2026-10-25
 

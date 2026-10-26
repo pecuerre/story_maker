@@ -159,8 +159,6 @@ depends on. Loose notes still belong under FUTURE WORK until they are triaged in
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
 analyzed like the list above, given the next number, and moved under PENDING WORK.
 
-- add pronouns to characters
-- add aliasses to characters
 - highlight things in text (locations, characters, items, etc.)
 - appearance heatmap
 - characters per scenes chart

@@ -160,6 +160,8 @@ module ModalFields
   def character_fields_json(character)
     {
       name: character.name,
+      pronouns: character.pronouns,
+      aliases: character.aliases,
       at_a_glance: character.at_a_glance,
       wants: character.wants,
       needs: character.needs,

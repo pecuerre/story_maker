@@ -195,6 +195,59 @@ class TimelineLayoutTest < ActiveSupport::TestCase
     assert_empty layout.edges
   end
 
+  test "reports an event's row and whether its group has recorded time" do
+    dated = @universe.events.create!(title: "Dated", start_datetime: "2026-01-01 09:00")
+    undated = @universe.events.create!(title: "Undated")
+
+    layout = TimelineLayout.new([ dated, undated ])
+
+    assert_equal 0, layout.layer_for(dated)
+    assert_equal 0, layout.layer_for(undated)
+    assert layout.placed?(dated)
+    refute layout.placed?(undated)
+    assert_nil layout.layer_for(999_999)
+    refute layout.placed?(nil)
+  end
+
+  test "a before_event or after_event relation places both groups without dates" do
+    first = @universe.events.create!(title: "First")
+    second = @universe.events.create!(title: "Second", before_event: first)
+
+    layout = TimelineLayout.new([ first, second ])
+
+    assert layout.placed?(first)
+    assert layout.placed?(second)
+    assert_equal 0, layout.layer_for(second)
+    assert_equal 1, layout.layer_for(first)
+  end
+
+  test "simultaneity places a dateless event only when its group has a date" do
+    dated = @universe.events.create!(title: "Dated", start_datetime: "2026-01-01 09:00")
+    twin = @universe.events.create!(title: "Twin", simultaneous_event: dated)
+    undated = @universe.events.create!(title: "Undated")
+    undated_twin = @universe.events.create!(title: "Undated twin", simultaneous_event: undated)
+
+    layout = TimelineLayout.new([ dated, twin, undated, undated_twin ])
+
+    assert layout.placed?(dated)
+    assert layout.placed?(twin)
+    refute layout.placed?(undated)
+    refute layout.placed?(undated_twin)
+  end
+
+  test "same_group reads simultaneity rather than a shared row" do
+    first = @universe.events.create!(title: "First", start_datetime: "2026-01-01 09:00")
+    same_time = @universe.events.create!(title: "Same time", simultaneous_event: first)
+    unsequenced = @universe.events.create!(title: "Unordered", start_datetime: "2026-01-01 09:00")
+
+    layout = TimelineLayout.new([ first, same_time, unsequenced ])
+
+    assert layout.same_group?(first, same_time)
+    assert_equal layout.layer_for(first), layout.layer_for(unsequenced)
+    refute layout.same_group?(first, unsequenced)
+    refute layout.same_group?(first, 999_999)
+  end
+
   private
 
   # The row an event was placed on, so a test can assert an arrow's direction

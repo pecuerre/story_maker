@@ -145,6 +145,28 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".page-actions a[href=?]", universe_url(universe), text: /Go back/
   end
 
+  test "saving a limit stores it and confirms the new value" do
+    sign_in_as users(:platform_operator)
+
+    patch settings_url(section: "limits"), params: { universe_creation_limit: "7" }
+
+    assert_response :see_other
+    assert_redirected_to settings_url(section: "limits")
+    assert_equal "New universes per account per hour set to 7.", flash[:notice]
+    assert_equal 7, PlatformSetting.current.universe_creation_limit
+  end
+
+  test "clearing a limit stores no limit and confirms it" do
+    PlatformSetting.create!(universe_creation_limit: 4)
+    sign_in_as users(:platform_operator)
+
+    patch settings_url(section: "limits"), params: { universe_creation_limit: "" }
+
+    assert_response :see_other
+    assert_equal "New universes per account per hour set to no limit.", flash[:notice]
+    assert PlatformSetting.current.universe_creations_unlimited?
+  end
+
   private
     # The theme the server rendered onto the root element of the last response,
     # which is what the browser paints and what the choice has to survive.

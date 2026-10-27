@@ -78,6 +78,11 @@ Rails.application.routes.draw do
         # assigns, annotates, or removes one catalogue reference.
         resources :scene_tropes, path: "tropes", only: %i[ index create update destroy ]
       end
+      # A read-only comparison of this Story's narrative order with the Universe
+      # Timeline. It has no record of its own, so it is a singular resource with
+      # only a `show`, and it is signed-in only (the controller deliberately does
+      # not opt out of `require_authentication`).
+      resource :narrative_order, only: :show
     end
     get "tags", to: "tags#index", as: :tags
     resources :item_tags, only: %i[ index show create update destroy ]

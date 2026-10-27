@@ -20,8 +20,12 @@
 # declaration the author wrote from contradicting the dates. `dates_speak_first?`
 # establishes when that refusal is *possible* at all, which is what keeps the build from
 # walking the graph once per candidate edge: see that method for the argument.
+#
+# `layer_for`, `placed?`, and `same_group?` expose the resolved grouping to the
+# read-only narrative comparison. They answer questions about the layout this build
+# already produced; they never build a second one.
 class TimelineLayout
-  attr_reader :layers, :edges
+  attr_reader :layers, :edges, :events
 
   def initialize(events)
     @events = events.to_a
@@ -29,7 +33,39 @@ class TimelineLayout
     build
   end
 
+  # The row this Event occupies in `layers`, or nil for an id this layout does
+  # not know. The Comparison reads this rather than rebuilding the layering.
+  def layer_for(event)
+    @layer_by_event_id[event_id_for(event)]
+  end
+
+  # Whether the Timeline has a reason for this Event's row. A title-only Event
+  # still gets a row — the layering has to put it somewhere — but that row is the
+  # arbitrary top row, not a claim about time. The group counts as placed when
+  # any member has a start or end datetime, or when a `before_event`/`after_event`
+  # relation connects it to another group. A group joined only by simultaneity to
+  # other dateless Events has no time evidence and is not placed.
+  def placed?(event)
+    root = @root_by_event_id[event_id_for(event)]
+
+    !root.nil? && @placed_roots.include?(root)
+  end
+
+  # Whether two Events are in one simultaneity group. This is deliberately not
+  # "they are on the same row": a row means only that the layout knows of no
+  # order between them, which is a different fact from happening together.
+  def same_group?(first, second)
+    first_root = @root_by_event_id[event_id_for(first)]
+    second_root = @root_by_event_id[event_id_for(second)]
+
+    !first_root.nil? && first_root == second_root
+  end
+
   private
+
+    def event_id_for(event)
+      event.respond_to?(:id) ? event.id : event
+    end
 
     def build
       union = build_union_find
@@ -39,6 +75,9 @@ class TimelineLayout
       roots = @events.to_h { |event| [ event.id, union.find(event.id) ] }
       groups = Hash.new { |hash, key| hash[key] = [] }
       @events.each { |event| groups[roots[event.id]] << event }
+
+      @root_by_event_id = roots
+      @placed_roots = placed_roots(groups, roots)
 
       # Sets rather than Arrays: `include?` runs once per candidate edge and again for
       # the `ordered` test below, and a timeline of disjoint events produces one edge
@@ -125,8 +164,38 @@ class TimelineLayout
         @layers[levels[root]].concat(group_events.sort_by(&:id))
       end
       @layers.each { |layer| layer.sort_by! { |event| event.id } }
+      @layer_by_event_id = {}
+      @layers.each_with_index do |layer, index|
+        layer.each { |event| @layer_by_event_id[event.id] = index }
+      end
 
       @edges = build_edges(union, levels)
+    end
+
+    # The group roots the Timeline can say something about. A group with a date
+    # anywhere in it is placed, and a before/after relation between two groups
+    # places both even when neither has a date. Simultaneity alone does not place
+    # a group: it only says the Events belong together.
+    def placed_roots(groups, roots)
+      placed = Set.new
+      groups.each do |root, group_events|
+        placed << root if group_events.any? { |event| event.start_datetime || event.end_datetime }
+      end
+
+      @events.each do |event|
+        [ event.before_event_id, event.after_event_id ].each do |target_id|
+          target = @by_id[target_id]
+          next if target.nil?
+
+          from_root = roots[event.id]
+          to_root = roots[target.id]
+          next if from_root == to_root
+
+          placed << from_root << to_root
+        end
+      end
+
+      placed
     end
 
     # Whether an edge from one of the three date passes can close a cycle, which is

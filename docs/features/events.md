@@ -137,6 +137,9 @@ can never contradict the rows they span.
 A Scene may reference one Event, and several Scenes may reference the same Event; the reference and
 the Scene's own in-world `datetime` are independent and neither writes or clears the other.
 
+How a Story's Scenes are compared with this ordering, including what the comparison treats as a
+conflict, is owned by [Scenes](scenes.md#narrative-order-beside-the-timeline).
+
 ## Timeline interaction
 
 - A node is a `<button>`, not a focusable `<div>`. It renders the record's id as its text, which a

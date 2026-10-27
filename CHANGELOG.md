@@ -38,6 +38,20 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-27
+
+### added
+
+- **Narrative order beside the Timeline.** Adds a signed-in, read-only Story tab that lists the Scene sequence beside the Timeline, labels each step, and reports a Scene whose own time falls outside its linked Event.
+
+### chore
+
+- **Settings limits test race.** Moves the save and flash assertions into request tests and keeps the browser case to the section's visibility and authorization, avoiding the auto-dismissing toast and parallel-suite click races.
+
+### planned
+
+- **Narrative order beside the Timeline.** Records a proposed signed-in, read-only story tab that compares the Scene sequence with the Timeline and defines a conflict as one Scene's own time falling outside its linked Event.
+
 ## 2026-10-26
 
 ### added

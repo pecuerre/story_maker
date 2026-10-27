@@ -8,11 +8,7 @@
   count_label: "section",
   new_label: t("sections.index.new_label"),
   tabs_aria_label: t("sidebar.story_workspace"),
-  tabs: [
-    { label: t("sidebar.sections"), path: universe_story_sections_path(story_id: @story), controller: :sections },
-    { label: t("sidebar.plots"), path: universe_story_plots_path(story_id: @story), controller: :plots },
-    { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: @story), controller: :scenes }
-  ],
+  tabs: story_workspace_tabs(@story),
   empty_description: t("sections.index.empty_description"),
   read_only_empty_description: t("sections.index.read_only_empty_description"),
   confirm_message: ->(section) { t("sections.index.delete_confirm", name: section.name) },

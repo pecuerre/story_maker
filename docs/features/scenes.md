@@ -181,6 +181,48 @@ JSON-only: there is no Turbo form to follow, so the visible Move buttons are iss
 `modal_form_controller.js#move`, which `PATCH`es the same `move` action and then performs the same-URL
 refresh a save performs.
 
+## Narrative order beside the Timeline
+
+The Story workspace's fourth tab, **Narrative order**
+(`GET /u/:universe_slug/s/:story_id/narrative_order`), is a signed-in, read-only comparison of the
+Story's `Scene.position` sequence with the Universe Timeline. `NarrativeOrdersController#show`
+resolves the Story through the request's `Current.story` and builds `TimelineLayout` over the
+universe's Events, so the page cannot disagree with the Timeline about Event order. It has no
+mutation route, no form, and no stored result. The design reasoning is in
+[ADR 0037](../adr/0037-compare-narrative-order-with-the-timeline-read-only.md).
+
+The tab is the one signed-in destination in the Story strip: a guest is sent to sign in and is not
+shown the tab. After authentication the ordinary universe read rule applies — any signed-in reader
+may open it on a public universe, and a private universe keeps its owner/membership rule. The strip
+is built by `StoryWorkspaceHelper#story_workspace_tabs`; every Story workspace page uses that one
+helper, so a fourth destination is added in one place rather than copied into five views.
+
+**A conflict is one Scene, not a disagreement between the two orders.** `Scene.position` orders
+telling and the Timeline orders happening, so a reversal is a flashback, a parallel thread, or a
+cold open, never an error. The page reports a conflict only when a Scene links an Event with a known
+start or end and the Scene's own `datetime` falls outside that interval — before the start or after
+the end. A `datetime` with no Event, and an Event with no dates, claim nothing to disagree with. The
+Event supplies the timeline place; the `datetime` is shown beside it and is never used to move it.
+Nothing is rewritten, normalized, or resolved.
+
+**A Scene is placed only by its Event, and only when the Timeline has a reason for the row.** A Scene
+with no Event is *unlinked*; a Scene whose Event's simultaneity group has no start/end date and no
+`before_event` or `after_event` relation is *unsequenced*. Both end the current *run*, so the next
+placed Scene starts a new run and is labelled **First in this run**; the comparison never reaches
+across a gap. Inside a
+run the step is **Later**, **Earlier**, **Same time** (the Events share a simultaneity group), or
+**No known order** (the same row, different groups). `TimelineLayout#layer_for`, `#placed?`, and
+`#same_group?` are the read-only authority for those facts; do not recompute them in the view or the
+controller.
+
+The page shows the whole Story and the whole Universe Timeline: no filter, sort, or pagination,
+because a narrowed sequence is not the telling order and a filtered Timeline is not the Timeline.
+The right column is the Timeline's own rows with the narrative positions of this Story's Scenes
+attached; Events this Story never depicts stay visible but secondary, and Events with no recorded
+time sit in a separate **No recorded time** group instead of an arbitrary numbered row. The left
+column is the whole narrative sequence with each Scene's own time and step. Pending draft changes
+are not projected: the page reads saved records, like the Timeline.
+
 ## Elements
 
 `SceneElement belongs_to :scene`; it is an ordered child component rather than a standalone navigable

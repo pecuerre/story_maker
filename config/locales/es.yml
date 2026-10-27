@@ -73,6 +73,7 @@ es:
     sections: "Secciones"
     plots: "Tramas"
     scenes: "Escenas"
+    narrative_order: "Orden narrativo"
     all_stories: "Todas las historias"
     select_story_hint: "Selecciona una historia para trabajar en sus secciones, tramas y escenas."
     tools:
@@ -2640,6 +2641,69 @@ es:
       dates: "Fechas:"
       tag: "Etiqueta:"
       related: "Relacionado:"
+
+  # La comparación de solo lectura entre la secuencia de escenas de una historia
+  # y la cronología del universo. La definición de conflicto es el centro de la
+  # página: un cambio entre el orden de narración y el de los hechos no es un
+  # error, y solo se informa de conflicto cuando la hora propia de una escena
+  # queda fuera del suceso al que enlaza.
+  narrative_orders:
+    title: "Orden narrativo"
+    description: "Compara el orden en que %{story} cuenta sus escenas con el momento en que el universo dice que ocurren."
+    intro: "La columna izquierda es el orden en que se cuenta la historia. La columna derecha es la cronología del universo. La hora propia de una escena se muestra, pero nunca mueve su suceso."
+    left_heading: "Cómo se cuenta la historia"
+    left_description: "Todas las escenas en orden narrativo. Una escena sin suceso, o cuyo suceso no tiene tiempo registrado, termina el tramo actual."
+    right_heading: "Cuándo ocurre"
+    right_description: "La cronología del universo en el mismo orden que dibuja la página Cronología. Los sucesos que esta historia nunca representa siguen visibles, pero en segundo plano."
+    guide:
+      title: "Cómo leer la comparación"
+      conflict: "Solo una cosa se llama conflicto: una escena cuya hora propia en el mundo queda fuera del intervalo del suceso al que enlaza. Un flashback, un hilo paralelo o una escena contada fuera de orden no son un conflicto."
+      steps_heading: "Pasos"
+      counts_heading: "Pasos en esta historia"
+      summary_heading: "Esta historia"
+    steps:
+      first:
+        label: "Primera de este tramo"
+        description: "Ninguna escena anterior de este tramo tiene un lugar, así que no hay nada que comparar. Una escena que no se puede situar empieza un tramo nuevo."
+      later:
+        label: "Más tarde"
+        description: "El suceso ocurre después del suceso de la escena anterior en el mismo tramo."
+      earlier:
+        label: "Antes"
+        description: "El suceso ocurre antes que el anterior. Es un flashback, un hilo paralelo o un orden que conviene revisar, no un conflicto."
+      same_time:
+        label: "Al mismo tiempo"
+        description: "Los dos sucesos comparten un grupo de simultaneidad."
+      unknown_order:
+        label: "Sin orden conocido"
+        description: "Los dos sucesos comparten una fila de la cronología, pero la cronología no registra pruebas en ningún sentido."
+    summary:
+      scenes: "Escenas"
+      on_timeline: "Escenas en la cronología"
+      no_event: "Escenas sin suceso"
+      event_without_time: "Escenas cuyo suceso no tiene tiempo registrado"
+      conflicts: "Conflictos"
+      events_on_timeline: "Sucesos en la cronología"
+      events_without_time: "Sucesos sin tiempo registrado"
+      runs: "Tramos comparados"
+    no_event: "Sin suceso vinculado"
+    own_time: "Hora propia: %{time}"
+    event_without_time: "El suceso vinculado no tiene tiempo registrado."
+    timeline_row: "Fila de la cronología %{number}"
+    compared_with: "Comparada con la escena %{position}"
+    conflict: "Hora en conflicto: la hora propia de esta escena (%{time}) queda fuera del intervalo de su suceso (%{range})."
+    scenes_here: "Escenas %{positions}"
+    no_scenes_here: "Ninguna escena representa este suceso"
+    unplaced_heading: "Sin tiempo registrado"
+    unplaced_event: "No hay ninguna fecha ni relación temporal registrada."
+    no_place_description: "Todavía ninguna escena enlaza un suceso con tiempo registrado, así que no hay nada que comparar aquí."
+    timeline_empty_title: "Este universo aún no tiene sucesos"
+    timeline_empty_writable_description: "Añade sucesos con fechas o relaciones y vuelve aquí para verlos junto a la historia."
+    timeline_empty_read_only_description: "Los sucesos de este universo aparecerán aquí en cuanto se hayan añadido."
+    timeline_no_time_description: "Este universo tiene sucesos, pero ninguno tiene un tiempo registrado todavía."
+    empty_title: "Aún no hay escenas"
+    empty_writable_description: "Añade la primera escena para empezar el orden narrativo."
+    empty_read_only_description: "Esta historia aún no tiene escenas que comparar."
 
   # Los nombres de los atributos que leen los formularios y los mensajes de
   # error de esta rebanada. Ver la explicación equivalente en `en.yml`.

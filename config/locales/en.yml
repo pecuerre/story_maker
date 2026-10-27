@@ -76,6 +76,7 @@ en:
     sections: "Sections"
     plots: "Plots"
     scenes: "Scenes"
+    narrative_order: "Narrative order"
     all_stories: "All stories"
     select_story_hint: "Select a story to work on its sections, plot arcs, and scenes."
     # The right column: universe configuration and the reserved tool areas.
@@ -2677,6 +2678,68 @@ en:
       dates: "Dates:"
       tag: "Tag:"
       related: "Related:"
+
+  # The read-only comparison of one Story's Scene sequence with the Universe
+  # Timeline. The conflict definition is the whole point of the page: a reversal
+  # between telling and happening is not an error, and only a Scene whose own
+  # time falls outside its linked Event is reported as conflicting.
+  narrative_orders:
+    title: "Narrative order"
+    description: "Compare the order %{story} tells its scenes with when the universe says they happen."
+    intro: "The left column is the order the story is told. The right column is the Universe Timeline. A scene's own time is shown but never moves its event."
+    left_heading: "How the story is told"
+    left_description: "Every scene in narrative order. A scene with no event, or whose event has no recorded time, ends the current run."
+    right_heading: "When it happens"
+    right_description: "The Universe Timeline in the same order the Timeline page draws. Events this story never depicts stay visible but secondary."
+    guide:
+      title: "Reading the comparison"
+      conflict: "Only one thing is called a conflict: a scene whose own in-world time falls outside the range of the event it links. A flashback, a parallel thread, or a scene told out of order is not a conflict."
+      steps_heading: "Steps"
+      counts_heading: "Steps in this story"
+      summary_heading: "This story"
+    steps:
+      first:
+        label: "First in this run"
+        description: "No earlier scene in this run has a place, so there is nothing to compare. A scene that cannot be placed starts a new run."
+      later:
+        label: "Later"
+        description: "The event happens after the previous scene's event in the same run."
+      earlier:
+        label: "Earlier"
+        description: "The event happens before the previous one. This is a flashback, a parallel thread, or an order worth checking, not a conflict."
+      same_time:
+        label: "Same time"
+        description: "The two events share a simultaneity group."
+      unknown_order:
+        label: "No known order"
+        description: "The two events share a timeline row, but the timeline records no evidence either way."
+    summary:
+      scenes: "Scenes"
+      on_timeline: "Scenes on the timeline"
+      no_event: "Scenes with no event"
+      event_without_time: "Scenes whose event has no recorded time"
+      conflicts: "Conflicts"
+      events_on_timeline: "Events on the timeline"
+      events_without_time: "Events without recorded time"
+      runs: "Runs compared"
+    no_event: "No event linked"
+    own_time: "Own time: %{time}"
+    event_without_time: "The linked event has no recorded time."
+    timeline_row: "Timeline row %{number}"
+    compared_with: "Compared with scene %{position}"
+    conflict: "Conflicting time: this scene's own time (%{time}) falls outside its event's range (%{range})."
+    scenes_here: "Scenes %{positions}"
+    no_scenes_here: "No scene depicts this event"
+    unplaced_heading: "No recorded time"
+    unplaced_event: "No date or temporal relationship is recorded."
+    no_place_description: "No scene links an event with a recorded time yet, so there is nothing to compare here."
+    timeline_empty_title: "No events in this universe yet"
+    timeline_empty_writable_description: "Add events with dates or relationships, then return here to see them beside the story."
+    timeline_empty_read_only_description: "Events in this universe will appear here once they have been added."
+    timeline_no_time_description: "This universe has events, but none has a recorded time yet."
+    empty_title: "No scenes yet"
+    empty_writable_description: "Add the first scene to start the narrative order."
+    empty_read_only_description: "This story has no scenes to compare yet."
 
   # The search box and the results page it opens. `bar.*` is the box in the top
   # bar; everything below it belongs to the results page, the scope dropdown, and

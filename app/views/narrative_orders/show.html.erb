@@ -1,0 +1,224 @@
+<% content_for :title, t("narrative_orders.title") %>
+<% summary = @comparison.summary %>
+
+<%= render "shared/page_header",
+  title: t("narrative_orders.title"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
+  description: t("narrative_orders.description", story: @story.name),
+  count: @comparison.rows.size,
+  count_label: "scene" %>
+
+<%= render "shared/content_tabs",
+  aria_label: t("sidebar.story_workspace"),
+  intro: t("narrative_orders.intro", story: @story.name),
+  tabs: story_workspace_tabs(@story) %>
+
+<% if @comparison.rows.empty? %>
+  <%= render "shared/empty_state",
+    title: t("narrative_orders.empty_title"),
+    description: can_write_universe? ? t("narrative_orders.empty_writable_description") : t("narrative_orders.empty_read_only_description"),
+    icon: "signpost-split" %>
+<% else %>
+  <section class="surface-card p-3 p-md-4 mb-4" aria-labelledby="narrative-order-guide-title">
+    <h2 class="h5" id="narrative-order-guide-title"><%= t("narrative_orders.guide.title") %></h2>
+    <p class="text-body-secondary"><%= t("narrative_orders.guide.conflict") %></p>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <h3 class="h6"><%= t("narrative_orders.guide.steps_heading") %></h3>
+        <dl class="row mb-0 small">
+          <% %i[first later earlier same_time unknown_order].each do |step| %>
+            <dt class="col-sm-4">
+              <span class="badge rounded-pill text-bg-light border <%= narrative_step_border_class(step) %>">
+                <%= t("narrative_orders.steps.#{step}.label") %>
+              </span>
+            </dt>
+            <dd class="col-sm-8 text-body-secondary"><%= t("narrative_orders.steps.#{step}.description") %></dd>
+          <% end %>
+        </dl>
+      </div>
+
+      <div class="col-lg-5">
+        <h3 class="h6"><%= t("narrative_orders.guide.summary_heading") %></h3>
+        <dl class="row mb-0 small">
+          <dt class="col-8"><%= t("narrative_orders.summary.scenes") %></dt>
+          <dd class="col-4 text-end"><%= summary.scenes %></dd>
+          <dt class="col-8"><%= t("narrative_orders.summary.on_timeline") %></dt>
+          <dd class="col-4 text-end"><%= summary.placed %></dd>
+          <dt class="col-8"><%= t("narrative_orders.summary.no_event") %></dt>
+          <dd class="col-4 text-end"><%= summary.unlinked %></dd>
+          <dt class="col-8"><%= t("narrative_orders.summary.event_without_time") %></dt>
+          <dd class="col-4 text-end"><%= summary.unsequenced %></dd>
+          <dt class="col-8"><%= t("narrative_orders.summary.conflicts") %></dt>
+          <dd class="col-4 text-end"><%= summary.conflicts %></dd>
+          <dt class="col-8"><%= t("narrative_orders.summary.events_on_timeline") %></dt>
+          <dd class="col-4 text-end"><%= @comparison.timeline_rows.sum { |row| row.events.size } %></dd>
+          <dt class="col-8"><%= t("narrative_orders.summary.events_without_time") %></dt>
+          <dd class="col-4 text-end"><%= @comparison.unplaced_events.size %></dd>
+          <dt class="col-8"><%= t("narrative_orders.summary.runs") %></dt>
+          <dd class="col-4 text-end"><%= summary.runs %></dd>
+        </dl>
+
+        <h3 class="h6 mt-3"><%= t("narrative_orders.guide.counts_heading") %></h3>
+        <dl class="row mb-0 small">
+          <% %i[later earlier same_time unknown_order].each do |step| %>
+            <dt class="col-8"><%= t("narrative_orders.steps.#{step}.label") %></dt>
+            <dd class="col-4 text-end"><%= summary.public_send(step) %></dd>
+          <% end %>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <% unless summary.placed.positive? %>
+    <div class="alert alert-info" role="status">
+      <%= t("narrative_orders.no_place_description") %>
+    </div>
+  <% end %>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <section class="surface-card p-3 p-md-4 h-100" aria-labelledby="narrative-order-left-title">
+        <h2 class="h5" id="narrative-order-left-title"><%= t("narrative_orders.left_heading") %></h2>
+        <p class="text-body-secondary small"><%= t("narrative_orders.left_description") %></p>
+
+        <ol class="list-group list-group-flush">
+          <% @comparison.rows.each do |row| %>
+            <li class="list-group-item px-0 py-3<%= " border-start border-danger border-3 ps-3" if row.conflict? %>">
+              <div class="d-flex align-items-start gap-3">
+                <span class="badge rounded-pill text-bg-light border"
+                  aria-label="<%= t("shared.scene_position_aria", position: row.position, total: summary.scenes) %>">
+                  <%= row.position %>
+                </span>
+
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <%= link_to row.scene.name, universe_story_scene_path(story_id: @story, id: row.scene), class: "entity-title" %>
+                    <% if row.placed? %>
+                      <span class="badge rounded-pill text-bg-light border">
+                        <%= t("narrative_orders.timeline_row", number: row.timeline_row) %>
+                      </span>
+                    <% end %>
+                    <% if row.scene.section.present? %>
+                      <span class="badge rounded-pill text-bg-light border">
+                        <i class="bi bi-folder2" aria-hidden="true"></i>
+                        <%= row.scene.section.name %>
+                      </span>
+                    <% end %>
+                  </div>
+
+                  <div class="small text-body-secondary mt-1">
+                    <% if row.event.present? %>
+                      <%= link_to narrative_event_label(row.event), universe_event_path(id: row.event) %>
+                      <%= " · " if row.scene.datetime.present? %>
+                    <% else %>
+                      <%= t("narrative_orders.no_event") %>
+                      <%= " · " if row.scene.datetime.present? %>
+                    <% end %>
+                    <% if row.scene.datetime.present? %>
+                      <%= t("narrative_orders.own_time", time: scene_in_world_time(row.scene)) %>
+                    <% end %>
+                  </div>
+
+                  <% if row.step.present? %>
+                    <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                      <span class="badge rounded-pill text-bg-light border <%= narrative_step_border_class(row.step) %>">
+                        <%= t("narrative_orders.steps.#{row.step}.label") %>
+                      </span>
+                      <% if row.compared_scene.present? %>
+                        <span class="small text-body-secondary">
+                          <%= t("narrative_orders.compared_with", position: row.compared_scene.position + 1) %>
+                        </span>
+                      <% end %>
+                    </div>
+                  <% end %>
+
+                  <% if row.unsequenced? %>
+                    <div class="small text-body-secondary mt-2"><%= t("narrative_orders.event_without_time") %></div>
+                  <% end %>
+
+                  <% if row.conflict? %>
+                    <p class="small text-danger mt-2 mb-0">
+                      <%= t("narrative_orders.conflict",
+                        time: scene_in_world_time(row.scene),
+                        range: in_world_range(row.event.start_datetime, row.event.end_datetime)) %>
+                    </p>
+                  <% end %>
+                </div>
+              </div>
+            </li>
+          <% end %>
+        </ol>
+      </section>
+    </div>
+
+    <div class="col-lg-6">
+      <section class="surface-card p-3 p-md-4 h-100" aria-labelledby="narrative-order-right-title">
+        <h2 class="h5" id="narrative-order-right-title"><%= t("narrative_orders.right_heading") %></h2>
+        <p class="text-body-secondary small"><%= t("narrative_orders.right_description") %></p>
+
+        <% if @comparison.timeline_rows.any? %>
+          <div class="timeline-track">
+            <% @comparison.timeline_rows.each do |timeline_row| %>
+              <div class="timeline-layer">
+                <div class="timeline-layer-marker">
+                  <span class="timeline-dot"></span>
+                </div>
+                <div class="timeline-layer-events flex-column align-items-stretch w-100">
+                  <h3 class="h6 text-body-secondary"><%= t("narrative_orders.timeline_row", number: timeline_row.number) %></h3>
+                  <% timeline_row.events.each do |event| %>
+                    <% positions = @comparison.positions_for(event) %>
+                    <div class="border rounded p-2<%= " opacity-75" if positions.empty? %>">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <%= link_to narrative_event_label(event), universe_event_path(id: event), class: "entity-title" %>
+                        <% if positions.any? %>
+                          <span class="badge rounded-pill text-bg-light border">
+                            <%= t("narrative_orders.scenes_here", positions: positions.join(", ")) %>
+                          </span>
+                        <% else %>
+                          <span class="small text-body-secondary"><%= t("narrative_orders.no_scenes_here") %></span>
+                        <% end %>
+                      </div>
+                      <div class="small text-body-secondary"><%= in_world_range(event.start_datetime, event.end_datetime) %></div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% elsif @comparison.unplaced_events.empty? %>
+          <%= render "shared/empty_state",
+            title: t("narrative_orders.timeline_empty_title"),
+            description: can_write_universe? ? t("narrative_orders.timeline_empty_writable_description") : t("narrative_orders.timeline_empty_read_only_description"),
+            icon: "calendar-range" %>
+        <% else %>
+          <p class="text-body-secondary"><%= t("narrative_orders.timeline_no_time_description") %></p>
+        <% end %>
+
+        <% if @comparison.unplaced_events.any? %>
+          <div class="mt-3">
+            <h3 class="h6"><%= t("narrative_orders.unplaced_heading") %></h3>
+            <ul class="list-unstyled mb-0">
+              <% @comparison.unplaced_events.each do |event| %>
+                <% positions = @comparison.positions_for(event) %>
+                <li class="border rounded p-2 mb-2">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <%= link_to narrative_event_label(event), universe_event_path(id: event), class: "entity-title" %>
+                    <% if positions.any? %>
+                      <span class="badge rounded-pill text-bg-light border">
+                        <%= t("narrative_orders.scenes_here", positions: positions.join(", ")) %>
+                      </span>
+                    <% else %>
+                      <span class="small text-body-secondary"><%= t("narrative_orders.no_scenes_here") %></span>
+                    <% end %>
+                  </div>
+                  <div class="small text-body-secondary"><%= t("narrative_orders.unplaced_event") %></div>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>

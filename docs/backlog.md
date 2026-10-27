@@ -65,14 +65,6 @@ depends on. Loose notes still belong under FUTURE WORK until they are triaged in
    the idea asks for: roles and order, migration, editors, API, sample data, tests, and docs. Do not
    overload the single `event_id` in the meantime.
 
-40. **Narrative-order versus chronology comparison.**
-
-   A Story's `Scene.position` sequence and the Universe Timeline are deliberately different readings
-   of the same events, and nothing compares them. **Ready for a design** of a read-only view that
-   puts the Scene sequence beside the Timeline and explains flashbacks, parallel scenes, and order
-   changes without rewriting author data. No new storage; define what counts as "conflicting" before
-   building it.
-
 41. **Structured Scene roles from free-text annotations.**
 
    `SceneCharacter`, `SceneItem`, and `SceneLocation` carry a free-text `role` that is never checked
@@ -91,8 +83,9 @@ depends on. Loose notes still belong under FUTURE WORK until they are triaged in
 
    **Needs a design and a definition of evidence.** Compare Scene order, linked Events, independent
    Scene datetimes, and Element chronology to explain likely contradictions rather than resolve
-   them. Related to the narrative/chronology comparison above, but it reports causes and uncertainty
-   and is a separate analysis; nothing should be rewritten silently.
+   them. Related to the delivered
+   [narrative/chronology comparison](features/scenes.md#narrative-order-beside-the-timeline), but it
+   reports causes and uncertainty and is a separate analysis; nothing should be rewritten silently.
 
 44. **Scene prose-contradiction analyzer.**
 

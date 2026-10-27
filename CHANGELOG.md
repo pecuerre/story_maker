@@ -58,6 +58,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Competitor feature survey.** Adds twelve numbered backlog items drawn from Novelcrafter, PlotLens, Novilot, and Sudowrite, and removes the four "check site" notes they replaced.
 - **Story book export documentation.** Adds the export feature document and records the sidebar entry, the three scopes, the assembly order, and the printable layout.
 - **Scene-to-Event decision and owners.** Records ADR 0038 and updates Scenes, Events, data model, i18n, and the backlog for ordered Scene-to-Event links.
 

@@ -504,7 +504,7 @@ es:
       create: "Crear"
       update: "Actualizar"
       delete: "Eliminar"
-    # Los cuatro tipos de registro que un cambio puede nombrar y que no son
+    # Los cinco tipos de registro que un cambio puede nombrar y que no son
     # documentos de búsqueda, así que `searches.kinds` deliberadamente no los
     # nombra. Van en minúsculas porque la frase que los lleva encima dice
     # "Nuevo/a %{kind}".
@@ -512,6 +512,7 @@ es:
       scene_character: "personaje de la escena"
       scene_item: "objeto de la escena"
       scene_location: "localización de la escena"
+      scene_event: "suceso de la escena"
       scene_trope: "anotación de tropo"
       unknown: "registro"
     # Los dos escritores virtuales de la foto tal y como los muestra una fila.
@@ -1400,16 +1401,16 @@ es:
         workspace_link: "espacio de trabajo de Etiquetas de escenas"
         section_group: "Grupo de sección"
         section_blank: "Sin agrupar. Una Sección es opcional y solo organiza esta escena; no cambia su posición narrativa."
-        event: "Suceso en el mundo"
-        # `%{event}` es `Event#display_label`, la etiqueta propia del registro en el
-        # idioma del lector. Su título y sus fechas son dato, así que se interpolan
-        # y nunca se traducen; una frase propia suya resuelve su clave.
-        event_html: "%{event}: consulta el %{workspace}. Varias escenas pueden representar el mismo suceso."
-        event_workspace: "espacio de trabajo de Sucesos"
-        event_blank: "Todavía no hay ningún suceso enlazado."
+        events: "Sucesos en el mundo"
+        # `%{workspace}` es la pestaña Sucesos de la propia escena. El texto del
+        # enlace sigue siendo su propia clave, porque quien traduce sigue
+        # necesitando saber cómo se llama el enlace al elegir dónde ponerlo.
+        events_hint_html: "Enlaza o desenlaza sucesos desde la %{workspace}."
+        events_workspace: "pestaña Sucesos"
+        events_blank: "Todavía no hay ningún suceso enlazado."
         in_world_time: "Tiempo en el mundo"
         in_world_time_blank: "Todavía no hay tiempo en el mundo definido."
-        in_world_time_hint: "Este es el orden en el tiempo del mundo, que se mantiene separado de la posición narrativa de arriba. El suceso y el tiempo en el mundo son valores independientes; ninguno se deduce del otro y aquí no se detecta ninguna discrepancia entre ellos."
+        in_world_time_hint: "Este es el orden en el tiempo del mundo, que se mantiene separado de la posición narrativa de arriba. Los sucesos enlazados y el tiempo en el mundo son valores independientes; ninguno se deduce del otro y aquí no se detecta ninguna discrepancia entre ellos."
         point_of_view: "Punto de vista"
         plots: "Arcos argumentales"
         plots_blank: "No hay tramas asignadas. Las tramas son opcionales."
@@ -1417,8 +1418,8 @@ es:
         point_of_view_hint: "El personaje cuya perspectiva presenta la escena. Está separado de los participantes y de los hablantes de la escena: elegirlo no hace que participen, ni dice qué líneas les pertenecen."
         story: "Historia"
       tabs:
-        # Las cinco pestañas del espacio de trabajo, que son URL reales y no paneles
-        # dentro del mismo documento. Las otras cuatro son los títulos de los espacios
+        # Las seis pestañas del espacio de trabajo, que son URL reales y no paneles
+        # dentro del mismo documento. Las otras cinco son los títulos de los espacios
         # de trabajo hermanos.
         aria_label: "Espacio de trabajo de la escena"
         details: "Detalles de la escena"
@@ -1436,12 +1437,11 @@ es:
       section: "Sección"
       section_hint: "Opcional. Una Sección agrupa esta escena, por ejemplo bajo un libro, un capítulo, una temporada o un episodio. La agrupación solo cambia la organización: nunca cambia la posición narrativa de esta escena, y una Sección anidada también sitúa la escena dentro de la ruta de sus ancestros."
       in_world_time_legend: "Tiempo en el mundo"
-      event: "Suceso"
-      event_hint: "Opcional. Enlaza esta escena con un suceso compartido del universo. Varias escenas pueden referirse al mismo suceso, y nada más en este formulario cambia cuando eliges uno."
-      # La opción de suceso en blanco lee el `shared.none` compartido, así que no se
-      # repite aquí.
       datetime: "Tiempo en el mundo"
-      datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente del suceso de arriba: elegir o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
+      datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente de los sucesos enlazados en la pestaña Sucesos: cambiar o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
+      events_note_html: "Los sucesos de esta escena se enlazan desde su %{events}, donde cada enlace tiene su propio orden y una función opcional."
+      events_note_new: "Guarda esta escena primero y enlaza después los sucesos que representa desde su pestaña Sucesos."
+      events_link: "pestaña Sucesos"
       point_of_view_legend: "Punto de vista"
       plots_legend: "Arcos argumentales"
       plots_label: "Tramas"
@@ -1555,6 +1555,27 @@ es:
         character: "¿Quitar a %{name} de %{scene}? El personaje sigue en el universo, y quien hable en un diálogo no se ve afectado."
         item: "¿Quitar %{name} de %{scene}? El objeto sigue en el universo y en todas las demás escenas."
         location: "¿Quitar %{name} de %{scene}? El lugar sigue en el universo, con sus lugares anidados, y en todas las demás escenas."
+        event: "¿Quitar %{name} de %{scene}? El suceso sigue en el universo y en todas las demás escenas que lo representen."
+    events:
+      document_title: "Sucesos en %{scene}"
+      description: "Los sucesos que representa esta escena, en el orden propio de la escena. Un suceso pertenece al universo y lo comparten todas sus historias, así que varias escenas pueden representar el mismo. Cada enlace puede llevar un rol opcional con tus propias palabras."
+      add: "Añadir suceso"
+      save: "Guardar suceso"
+      edit: "Editar suceso"
+      role_examples: "«empieza», «termina», «recordado», «contado»."
+      empty_title: "Todavía no hay sucesos en esta escena"
+      empty_description: "Enlaza un suceso para registrar que esta escena lo representa, con un rol opcional como «empieza» o «contado». Una escena puede representar cualquier número de sucesos."
+      already_linked: "ya está enlazado a esta escena"
+      move:
+        already_first: "Ya está el primero en esta escena"
+        already_last: "Ya está el último en esta escena"
+        up_aria: "Subir %{name} en esta escena"
+        down_aria: "Bajar %{name} en esta escena"
+      form:
+        event: "Suceso"
+        choose_event: "Elige un suceso"
+        event_hint: "Un suceso pertenece al universo y lo comparten todas sus historias. Una escena puede representar cada suceso una sola vez; elegir uno que ya representa se informa aquí, en esta ventana."
+        role: "Rol"
     characters:
       document_title: "Personajes en %{scene}"
       description: "Todos los que participan en esta escena. Un participante se almacena aquí con un rol opcional; un personaje que solo habla en un diálogo se deriva de ese diálogo, así que ambos se muestran uno al lado del otro y se cuentan una sola vez."
@@ -2657,7 +2678,7 @@ es:
     right_description: "La cronología del universo en el mismo orden que dibuja la página Cronología. Los sucesos que esta historia nunca representa siguen visibles, pero en segundo plano."
     guide:
       title: "Cómo leer la comparación"
-      conflict: "Solo una cosa se llama conflicto: una escena cuya hora propia en el mundo queda fuera del intervalo del suceso al que enlaza. Un flashback, un hilo paralelo o una escena contada fuera de orden no son un conflicto."
+      conflict: "Solo una cosa se llama conflicto: una escena cuya hora propia en el mundo queda fuera de todos los sucesos a los que enlaza. Un flashback, un hilo paralelo o una escena contada fuera de orden no son un conflicto."
       steps_heading: "Pasos"
       counts_heading: "Pasos en esta historia"
       summary_heading: "Esta historia"
@@ -2680,18 +2701,19 @@ es:
     summary:
       scenes: "Escenas"
       on_timeline: "Escenas en la cronología"
-      no_event: "Escenas sin suceso"
-      event_without_time: "Escenas cuyo suceso no tiene tiempo registrado"
+      no_event: "Escenas sin sucesos enlazados"
+      event_without_time: "Escenas cuyos sucesos no tienen tiempo registrado"
       conflicts: "Conflictos"
       events_on_timeline: "Sucesos en la cronología"
       events_without_time: "Sucesos sin tiempo registrado"
       runs: "Tramos comparados"
     no_event: "Sin suceso vinculado"
     own_time: "Hora propia: %{time}"
-    event_without_time: "El suceso vinculado no tiene tiempo registrado."
+    event_without_time: "Los sucesos enlazados no tienen tiempo registrado."
     timeline_row: "Fila de la cronología %{number}"
     compared_with: "Comparada con la escena %{position}"
     conflict: "Hora en conflicto: la hora propia de esta escena (%{time}) queda fuera del intervalo de su suceso (%{range})."
+    conflict_multiple: "Hora en conflicto: la hora propia de esta escena (%{time}) queda fuera de todos los sucesos a los que enlaza (%{events})."
     scenes_here: "Escenas %{positions}"
     no_scenes_here: "Ninguna escena representa este suceso"
     unplaced_heading: "Sin tiempo registrado"
@@ -2865,7 +2887,6 @@ es:
         name: "Título"
         description: "Descripción breve"
         section: "Sección"
-        event: "Suceso"
         datetime: "Tiempo en el mundo"
         pov_character: "Punto de vista"
         scene_tags: "Etiquetas de escena"
@@ -2875,6 +2896,14 @@ es:
         selected: "Incluido"
         context_note: "Nota de contexto"
         _destroy: "Quitar asignación"
+      # Un suceso que representa una escena, con el rol propio de quien escribe y su
+      # orden en la escena. La página de un borrador imprime los valores recordados
+      # del enlace con estos nombres, y el formulario de Sucesos rotula los mismos
+      # dos controles con ellos.
+      scene_event:
+        event: "Suceso"
+        event_id: "Suceso"
+        role: "Rol"
       # Una asignación del catálogo en la pestaña Tropos de la escena. La página
       # de un borrador imprime los valores recordados de la asignación con estos
       # nombres.
@@ -3410,6 +3439,7 @@ es:
     route: "esta ruta"
     scene_character: "este personaje de la escena"
     scene_element: "este elemento de la escena"
+    scene_event: "este suceso de la escena"
     scene_item: "este elemento de la escena"
     scene_location: "este lugar de la escena"
     scene_trope: "esta anotación de tropo"

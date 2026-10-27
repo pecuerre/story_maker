@@ -27,6 +27,41 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-27
+
+- **[added]** **A Scene depicts several Events through its own ordered link rows.**
+  - **The gap.** `scenes.event_id` could say that a Scene depicted one Event, but not that a
+    conversation, a remembered meeting, and the fallout of an earlier Event can all be staged in the
+    same narrative unit. It also had nowhere to record *how* the Scene used the Event, and no order
+    among several.
+  - **The decision.** `SceneEvent` is a scene-owned join row with a nullable free-text `role` and a
+    flat contiguous `position`; live `[scene_id, event_id]` is unique and the row soft-deletes with
+    its Scene. The column, the association, and the Scene form's single Event selector were removed.
+    The reasoning and the rejected alternatives are in
+    [ADR 0038](adr/0038-a-scene-depicts-events-through-ordered-links.md).
+  - **The surfaces.** A new **Events** tab (`/scenes/:id/events`) is the read page and the JSON modal
+    editor, with Move up/down maintaining the order; Scene Details lists every linked Event with its
+    role; Event details finds a Scene through the shared `SceneAppearances` union. The Scene API now
+    returns an ordered `events` array and no longer accepts `event_id`.
+  - **The comparison.** `NarrativeComparison` places a Scene by the earliest linked Event the
+    Timeline can place, with link order breaking a tie, and reports a conflict only when the Scene's
+    own `datetime` is outside **every** claiming Event. With one link this is exactly ADR 0037's
+    behaviour.
+  - **Verification.** New model, controller, system, draft-mutation, and CSRF coverage; the existing
+    Scene, appearance, loader, registry, ordered-sequence, and locale suites updated. `db:demo:check`
+    passes for both universes and the local development database was reset and queried to confirm the
+    multi-link rows, roles, and the dropped column.
+  - **Deliberate break.** A draft remembered before this change names `event_id` for a Scene. The
+    model has no such writer, so `DraftIntegrity` reports that change as unreadable and the author
+    drops it or discards the draft; nothing is silently reinterpreted. The schema-only migration by
+    [ADR 0003](adr/0003-disposable-schema-and-seed-data.md) re-sources the disposable links from
+    `db/data/` rather than backfilling a table.
+- **[chore]** **The Universes system test's entity counts.** Aligned the browser test with the counts
+  the factions fixtures and the controller test already expected (15 and 5 rather than 13 and 4); the
+  assertion had been stale since that fixture change.
+- **[docs]** **The Scene-to-Event decision and its owners.** Added ADR 0038, updated Scenes, Events,
+  `data_model`, `i18n`, and the ADR index, and removed the completed backlog item.
+
 ### 2026-10-25
 
 - **[added]** **A draft's author can drop one remembered change instead of discarding the whole draft.**

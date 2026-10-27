@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_26_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_27_120100) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -654,6 +654,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_100000) do
     t.check_constraint "kind IN ('narration', 'dialogue')", name: "scene_elements_kind_is_known"
   end
 
+  create_table "scene_events", force: :cascade do |t|
+    t.integer "scene_id", null: false
+    t.integer "event_id", null: false
+    t.string "role"
+    t.integer "position", default: 0, null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_scene_events_on_deleted_at"
+    t.index ["event_id"], name: "index_scene_events_on_event_id"
+    t.index ["scene_id", "event_id"], name: "index_scene_events_on_scene_id_and_event_id", unique: true, where: "deleted_at IS NULL"
+    t.index ["scene_id", "position"], name: "index_scene_events_on_scene_id_and_position"
+    t.index ["scene_id"], name: "index_scene_events_on_scene_id"
+  end
+
   create_table "scene_items", force: :cascade do |t|
     t.integer "scene_id", null: false
     t.integer "item_id", null: false
@@ -716,12 +731,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_100000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "section_id"
-    t.integer "event_id"
     t.datetime "datetime"
     t.datetime "deleted_at"
     t.integer "photo_id"
     t.integer "pov_character_id"
-    t.index ["event_id"], name: "index_scenes_on_event_id"
     t.index ["photo_id"], name: "index_scenes_on_photo_id"
     t.index ["pov_character_id"], name: "index_scenes_on_pov_character_id"
     t.index ["section_id"], name: "index_scenes_on_section_id"
@@ -960,6 +973,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_100000) do
   add_foreign_key "scene_element_speakers", "characters"
   add_foreign_key "scene_element_speakers", "scene_elements"
   add_foreign_key "scene_elements", "scenes"
+  add_foreign_key "scene_events", "events"
+  add_foreign_key "scene_events", "scenes"
   add_foreign_key "scene_items", "items"
   add_foreign_key "scene_items", "scenes"
   add_foreign_key "scene_locations", "locations"
@@ -969,7 +984,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_26_100000) do
   add_foreign_key "scene_tags", "stories"
   add_foreign_key "scene_tropes", "scenes"
   add_foreign_key "scenes", "characters", column: "pov_character_id"
-  add_foreign_key "scenes", "events"
   add_foreign_key "scenes", "photos", on_delete: :nullify
   add_foreign_key "scenes", "sections"
   add_foreign_key "scenes", "stories"

@@ -11,9 +11,9 @@ require "test_helper"
 # can arrive from a form, from the development-data loader, or from a console.
 #
 # The three implementations are `Hierarchical#parent_reference_exists`,
-# `Event#temporal_references_exist`, and `Scene#optional_references_exist`;
-# these tests pin all three so a fourth optional reference cannot be added
-# without the rule.
+# `Event#temporal_references_exist`, and `Scene#optional_references_exist`, plus
+# `SceneEvent`'s own event reference; these tests pin all four so a fifth optional
+# reference cannot be added without the rule.
 class UnknownReferenceTest < ActiveSupport::TestCase
   MISSING_ID = 999_999
 
@@ -26,6 +26,13 @@ class UnknownReferenceTest < ActiveSupport::TestCase
 
     assert_not character.valid?
     assert_equal [ I18n.t("shared.errors.hierarchy.must_exist") ], character.errors[:parent]
+  end
+
+  test "an unknown event on a scene link is rejected on the event attribute" do
+    link = SceneEvent.new(scene: scenes(:scene_one), event_id: MISSING_ID)
+
+    assert_not link.valid?
+    assert_equal [ I18n.t("scenes.errors.must_exist") ], link.errors[:event]
   end
 
   test "an unknown parent is rejected on every hierarchical model" do

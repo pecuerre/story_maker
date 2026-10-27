@@ -1,0 +1,19 @@
+# The Events each Scene depicts, one row per depicted Event. A Scene may depict
+# several, and the role is the author's own words; the loader orders each Scene's
+# rows by their order here, so no `position` is written.
+- scene: Scene.a-long-expected-party
+  event: Event.ring_given_to_frodo
+
+- scene: Scene.the-shadow-of-the-past
+  event: Event.ring_given_to_frodo
+
+- scene: Scene.three-is-company
+  event: Event.fellowship_is_formed
+
+# The council both forms the Fellowship and marks its breaking: two links, one
+# Scene, in the Scene's own order.
+- scene: Scene.the-council-of-elrond
+  event: Event.fellowship_is_formed
+  role: "recap"
+- scene: Scene.the-council-of-elrond
+  event: Event.breaking_of_the_fellowship

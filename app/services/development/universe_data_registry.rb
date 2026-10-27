@@ -96,6 +96,10 @@ module Development
       # universe of their own, and are positioned within that Element.
       ModelDefinition.new(model_name: "SceneDialogueTurn", file_name: "scene_dialogue_turns", scope: :scene,
         scope_owner: :scene_element, positioned: true, position_mode: :flat),
+      # The Events a Scene depicts. A link is scene-owned, reaches the Universe
+      # through its Scene, and its position orders only that Scene's own links.
+      ModelDefinition.new(model_name: "SceneEvent", file_name: "scene_events", scope: :scene,
+        positioned: true, position_mode: :flat),
       ModelDefinition.new(model_name: "SceneCharacter", file_name: "scene_characters", scope: :scene),
       # The remaining two world-presence links. Same shape as SceneCharacter: a
       # Scene owns them and they reach the Universe through it.

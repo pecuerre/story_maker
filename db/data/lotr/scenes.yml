@@ -3,7 +3,6 @@
   slug: a-long-expected-party
   description: "Bilbo's birthday party brings Gandalf and the Ring to the Shire."
   section: Section.the-fellowship-of-the-ring
-  event: Event.ring_given_to_frodo
   pov_character: Character.frodo_baggins
   scene_tags: [ SceneTag.adventure, SceneTag.fellowship ]
   plots: [ Plot.the-rings-journey, Plot.the-fellowship ]
@@ -15,7 +14,6 @@
   slug: the-shadow-of-the-past
   description: "Gandalf's warning sends Frodo away from the Shire."
   section: Section.the-fellowship-of-the-ring
-  event: Event.ring_given_to_frodo
   pov_character: Character.gandalf_the_grey
   plots: [ Plot.the-rings-journey ]
   position: 1
@@ -25,7 +23,6 @@
   slug: three-is-company
   description: "Frodo, Sam, and Merry set out for Bree with help from the pony cart."
   section: Section.the-fellowship-of-the-ring
-  event: Event.fellowship_is_formed
   pov_character: Character.frodo_baggins
   scene_tags: [ SceneTag.fellowship ]
   plots: [ Plot.the-rings-journey, Plot.the-fellowship ]
@@ -42,7 +39,6 @@
   slug: the-council-of-elrond
   description: "The Fellowship of the Ring is formed at Rivendell."
   section: Section.the-return-of-the-king
-  event: Event.breaking_of_the_fellowship
   pov_character: Character.aragorn
   scene_tags: [ SceneTag.loss, SceneTag.homecoming ]
   plots: [ Plot.the-rings-journey, Plot.the-fellowship ]

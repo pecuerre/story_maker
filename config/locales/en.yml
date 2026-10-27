@@ -548,13 +548,14 @@ en:
       create: "Create"
       update: "Update"
       delete: "Delete"
-    # The four record types a change can name that are not search documents, so
+    # The five record types a change can name that are not search documents, so
     # `searches.kinds` deliberately does not name them. They are lower-case nouns
     # because the sentence above them reads "New %{kind}".
     kinds:
       scene_character: "scene character"
       scene_item: "scene item"
       scene_location: "scene location"
+      scene_event: "scene event"
       scene_trope: "trope annotation"
       unknown: "record"
     # The two virtual photo writers as a row states them. `photo_data` is a `data:`
@@ -1462,16 +1463,16 @@ en:
         workspace_link: "Scene Tags workspace"
         section_group: "Section group"
         section_blank: "Ungrouped. A Section is optional and only organizes this scene; it does not change its narrative position."
-        event: "In-world event"
-        # `%{event}` is `Event#display_label`, the record's own label in the
-        # reader's language. Its own title and dates are data, so they are
-        # interpolated, never translated; a phrase of its own resolves the key.
-        event_html: "%{event} — see the %{workspace}. Several scenes can depict the same event."
-        event_workspace: "Events workspace"
-        event_blank: "No event linked yet."
+        events: "In-world events"
+        # `%{workspace}` is the Scene's own Events tab. The link's text is its own
+        # key, because a translator choosing where the link goes still needs to
+        # know what it is called.
+        events_hint_html: "Link or unlink events from the %{workspace}."
+        events_workspace: "Events tab"
+        events_blank: "No events linked yet."
         in_world_time: "In-world time"
         in_world_time_blank: "No in-world time set yet."
-        in_world_time_hint: "This is the order in world time, kept separate from the narrative position above. The event and the in-world time are independent values; neither one is derived from the other and a disagreement between them is not detected here."
+        in_world_time_hint: "This is the order in world time, kept separate from the narrative position above. The linked events and the in-world time are independent values; neither one is derived from the other and a disagreement between them is not detected here."
         point_of_view: "Point of view"
         plots: "Plot arcs"
         plots_blank: "No plot arcs assigned. Plots are optional."
@@ -1497,12 +1498,11 @@ en:
       section: "Section"
       section_hint: "Optional. A Section groups this scene, for example under a book, chapter, season, or episode. Grouping changes organization only: it never changes this scene's narrative position, and a nested Section also places the scene inside its ancestor path."
       in_world_time_legend: "In-world time"
-      event: "Event"
-      event_hint: "Optional. Links this scene to a shared universe event. Several scenes can reference the same event, and nothing else in this form changes when you pick one."
-      # The blank event option reads the shared `shared.none`, so it is not
-      # repeated here.
       datetime: "In-world time"
-      datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the event above: choosing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
+      datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the events linked on the Events tab: changing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
+      events_note_html: "This scene's events are linked from its %{events}, where each link carries its own order and an optional role."
+      events_note_new: "Save this scene first, then link the events it depicts from its Events tab."
+      events_link: "Events tab"
       point_of_view_legend: "Point of view"
       plots_legend: "Plot arcs"
       plots_label: "Plots"
@@ -1610,6 +1610,29 @@ en:
         character: "Remove %{name} from %{scene}? The character stays in the universe, and anyone who speaks in a dialogue is unaffected."
         item: "Remove %{name} from %{scene}? The item stays in the universe and in every other scene."
         location: "Remove %{name} from %{scene}? The location stays in the universe, with its nested places, and in every other scene."
+        event: "Remove %{name} from %{scene}? The event stays in the universe and in every other scene that depicts it."
+    events:
+      document_title: "Events in %{scene}"
+      description: "The events this scene depicts, in the scene's own order. An event belongs to the universe and is shared by every story in it, so several scenes can depict the same one. Each link can carry an optional role in your own words."
+      add: "Add event"
+      save: "Save event"
+      edit: "Edit event"
+      role_examples: "“begins,” “ends,” “remembered,” “reported.”"
+      empty_title: "No events in this scene yet"
+      empty_description: "Link an event to record that this scene depicts it, with an optional role such as “begins” or “reported.” A scene may depict any number of events."
+      # The model's uniqueness error, named in this workspace's own words. It is
+      # not a vocabulary: the role is the only thing this link annotates.
+      already_linked: "is already linked to this scene"
+      move:
+        already_first: "Already first in this scene"
+        already_last: "Already last in this scene"
+        up_aria: "Move %{name} up in this scene"
+        down_aria: "Move %{name} down in this scene"
+      form:
+        event: "Event"
+        choose_event: "Choose an event"
+        event_hint: "An event belongs to the universe and is shared by every story in it. A scene can depict each event once; choosing one it already depicts is reported here, in this window."
+        role: "Role"
     characters:
       document_title: "Characters in %{scene}"
       description: "Everyone who takes part in this scene. A participant is stored here with an optional role; a character who only speaks in a dialogue is derived from that dialogue, so the two are shown side by side and counted once."
@@ -2693,7 +2716,7 @@ en:
     right_description: "The Universe Timeline in the same order the Timeline page draws. Events this story never depicts stay visible but secondary."
     guide:
       title: "Reading the comparison"
-      conflict: "Only one thing is called a conflict: a scene whose own in-world time falls outside the range of the event it links. A flashback, a parallel thread, or a scene told out of order is not a conflict."
+      conflict: "Only one thing is called a conflict: a scene whose own in-world time falls outside every event it links. A flashback, a parallel thread, or a scene told out of order is not a conflict."
       steps_heading: "Steps"
       counts_heading: "Steps in this story"
       summary_heading: "This story"
@@ -2716,18 +2739,19 @@ en:
     summary:
       scenes: "Scenes"
       on_timeline: "Scenes on the timeline"
-      no_event: "Scenes with no event"
-      event_without_time: "Scenes whose event has no recorded time"
+      no_event: "Scenes with no event link"
+      event_without_time: "Scenes whose events have no recorded time"
       conflicts: "Conflicts"
       events_on_timeline: "Events on the timeline"
       events_without_time: "Events without recorded time"
       runs: "Runs compared"
     no_event: "No event linked"
     own_time: "Own time: %{time}"
-    event_without_time: "The linked event has no recorded time."
+    event_without_time: "The linked events have no recorded time."
     timeline_row: "Timeline row %{number}"
     compared_with: "Compared with scene %{position}"
     conflict: "Conflicting time: this scene's own time (%{time}) falls outside its event's range (%{range})."
+    conflict_multiple: "Conflicting time: this scene's own time (%{time}) falls outside every event it links (%{events})."
     scenes_here: "Scenes %{positions}"
     no_scenes_here: "No scene depicts this event"
     unplaced_heading: "No recorded time"
@@ -3216,7 +3240,6 @@ en:
         name: "Title"
         description: "Short description"
         section: "Section"
-        event: "Event"
         datetime: "In-world time"
         pov_character: "Point of view"
         scene_tags: "Scene tags"
@@ -3226,6 +3249,13 @@ en:
         selected: "Included"
         context_note: "Context note"
         _destroy: "Remove assignment"
+      # One Event a Scene depicts, with the author's own role and its order in the
+      # Scene. The drafts page prints a remembered link's values through these
+      # names, and the Events form labels the same two controls with them.
+      scene_event:
+        event: "Event"
+        event_id: "Event"
+        role: "Role"
       # One catalogue assignment on the Scene's Tropes tab. The drafts page prints
       # a remembered assignment's own values through these names.
       scene_trope:
@@ -3499,6 +3529,7 @@ en:
     route: "the route"
     scene_character: "the scene character"
     scene_element: "the scene element"
+    scene_event: "the scene event"
     scene_item: "the scene item"
     scene_location: "the scene location"
     scene_trope: "the trope annotation"

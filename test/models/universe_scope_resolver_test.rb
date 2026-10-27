@@ -73,6 +73,8 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_elements(:narration_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_elements(:dialogue_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_dialogue_turns(:turn_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_events(:scene_event_one))
+    assert_equal @universe, UniverseScopeResolver.universe_for(scene_events(:scene_event_two))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_one))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_characters(:scene_character_two))
     assert_equal @universe, UniverseScopeResolver.universe_for(scene_items(:scene_item_one))
@@ -80,6 +82,7 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
     # Unsaved records own nothing yet, so there is no universe to resolve.
     assert_nil UniverseScopeResolver.universe_for(SceneElement.new(name: "Unsaved"))
     assert_nil UniverseScopeResolver.universe_for(SceneDialogueTurn.new)
+    assert_nil UniverseScopeResolver.universe_for(SceneEvent.new)
     assert_nil UniverseScopeResolver.universe_for(SceneCharacter.new)
     assert_nil UniverseScopeResolver.universe_for(SceneItem.new)
     assert_nil UniverseScopeResolver.universe_for(SceneLocation.new)
@@ -130,13 +133,14 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
     assert_equal :story, UniverseScopeResolver.owner_association_for(Scene)
     assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneElement)
     assert_equal :scene_element, UniverseScopeResolver.owner_association_for(SceneDialogueTurn)
+    assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneEvent)
     assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneCharacter)
     # A record with a `universe_id` of its own has no owner association to walk.
     assert_nil UniverseScopeResolver.owner_association_for(Character)
   end
 
   test "the answer agrees with the walk, for every model it is asked about" do
-    [ Section, Plot, Scene, SceneElement, SceneDialogueTurn, SceneCharacter, Character ].each do |model|
+    [ Section, Plot, Scene, SceneElement, SceneDialogueTurn, SceneEvent, SceneCharacter, Character ].each do |model|
       record = model.first
       next if record.nil?
 

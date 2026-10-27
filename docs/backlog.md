@@ -58,13 +58,6 @@ depends on. Loose notes still belong under FUTURE WORK until they are triaged in
    wildcard TLS certificate. Keep `/u/...` redirecting to the new host so existing links and the
    smoke test survive, and keep the browser-owned start page working before a universe is chosen.
 
-39. **Composite Scene-to-Event links.**
-
-   A Scene has one optional `event_id` today, independent of its `datetime`. **Needs a product
-   decision** that a Scene commonly contains several Events before building the scoped join model
-   the idea asks for: roles and order, migration, editors, API, sample data, tests, and docs. Do not
-   overload the single `event_id` in the meantime.
-
 41. **Structured Scene roles from free-text annotations.**
 
    `SceneCharacter`, `SceneItem`, and `SceneLocation` carry a free-text `role` that is never checked

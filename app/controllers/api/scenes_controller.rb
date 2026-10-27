@@ -19,7 +19,7 @@ class Api::ScenesController < Api::BaseController
 
   # GET /api/u/:universe_slug/s/:story_id/scenes
   def index
-    @scenes = @story.scenes.reorder(:position, :id)
+    @scenes = @story.scenes.includes(:scene_events).reorder(:position, :id)
     render json: @scenes.map { |scene| scene_json(scene) }
   end
 
@@ -117,7 +117,9 @@ class Api::ScenesController < Api::BaseController
         name: scene.name,
         description: scene.description,
         section_id: scene.section_id,
-        event_id: scene.event_id,
+        events: scene.scene_events.sort_by { |link| [ link.position, link.id ] }.map do |link|
+          { event_id: link.event_id, role: link.role, position: link.position }
+        end,
         pov_character_id: scene.pov_character_id,
         datetime: scene.datetime,
         position: scene.position,
@@ -137,7 +139,7 @@ class Api::ScenesController < Api::BaseController
     end
 
     def scene_params
-      params.expect(scene: [ :name, :description, :section_id, :event_id, :datetime, :pov_character_id, { scene_tag_ids: [] } ])
+      params.expect(scene: [ :name, :description, :section_id, :datetime, :pov_character_id, { scene_tag_ids: [] } ])
     end
 
     def move_direction

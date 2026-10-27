@@ -19,7 +19,7 @@ class DraftApplierTest < ActiveSupport::TestCase
 
   test "every controller that maintains sibling positions is a model the applier orders" do
     controllers = positioned_controllers
-    assert_equal 18, controllers.size,
+    assert_equal 19, controllers.size,
       "the number of ordered controllers is what the derivation is checked against; a new one changes it"
 
     controllers.each do |controller|

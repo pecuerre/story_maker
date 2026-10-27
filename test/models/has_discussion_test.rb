@@ -3,6 +3,7 @@ require "test_helper"
 class HasDiscussionTest < ActiveSupport::TestCase
   DISCUSSIBLE = %w[
     Story Section Plot SectionTag Scene SceneTag SceneElement SceneCharacter SceneItem SceneLocation
+    SceneEvent
     Character CharacterTag Faction FactionTag FactionRelationship Location LocationTag Route Item ItemTag Event EventTag Relation RelationTag
     Ownership OwnershipTag
   ].freeze

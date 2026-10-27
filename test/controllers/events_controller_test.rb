@@ -232,7 +232,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy an event referenced by a scene without deleting the scene" do
     scene = scenes(:scene_one)
-    assert_equal @event, scene.event
+    assert_includes scene.events, @event
 
     assert_difference("Event.count", -1) do
       assert_no_difference("Scene.count") do
@@ -240,7 +240,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_nil scene.reload.event
+    assert_empty scene.reload.events
     assert_equal stories(:story_one), scene.story
   end
 

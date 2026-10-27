@@ -35,6 +35,7 @@ class Ability
     SceneTag
     SceneElement
     SceneDialogueTurn
+    SceneEvent
     SceneCharacter
     SceneItem
     SceneLocation

@@ -1,0 +1,13 @@
+# The Events each Scene depicts. A link is its own scene-owned row, so a Scene
+# can carry several in its own order, each with an optional free-text role.
+# `scene_one` and `scene_two` keep one link each here; the multi-link shape is
+# created by the tests that exercise it, so this fixture stays the common case.
+scene_event_one:
+  scene: scene_one
+  event: event_one
+  position: 0
+
+scene_event_two:
+  scene: scene_two
+  event: event_two
+  position: 0

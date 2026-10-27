@@ -19,15 +19,25 @@ class SceneContinuityQueriesTest < ActiveSupport::TestCase
     first = scenes(:scene_one)
     # A second Scene, told later, depicting the same in-world fact: this is the
     # shape that lets one event be retold from a different context.
-    second = @story.scenes.create!(name: "The same fact retold", position: 3, event: event)
+    second = @story.scenes.create!(name: "The same fact retold", position: 3)
+    second.scene_events.create!(event: event)
 
     assert_equal [ first, second ].sort_by { |scene| [ scene.position, scene.id ] }, event.scenes.reorder(:position, :id)
     assert_equal 2, event.scenes.count
     # Neither Scene was rewritten to point somewhere else, and neither gained the
     # other's position.
-    assert_equal event, first.reload.event
+    assert_equal [ event ], first.reload.events.to_a
     assert_equal 3, second.position
     assert_not_equal first.position, second.position
+  end
+
+  test "a scene may depict several events in its own order" do
+    scene = scenes(:scene_one)
+    scene.scene_events.create!(event: events(:event_two), position: 1, role: "ends")
+
+    assert_equal [ events(:event_one), events(:event_two) ],
+      scene.scene_events.reorder(:position, :id).map(&:event)
+    assert_equal %w[ ends ], scene.scene_events.where(event_id: events(:event_two).id).pluck(:role)
   end
 
   test "narrative order is scene position even when in-world times say otherwise" do
@@ -51,11 +61,11 @@ class SceneContinuityQueriesTest < ActiveSupport::TestCase
     both = scenes(:scene_one)
     datetime_only = scenes(:scene_three)
 
-    assert_predicate both.event, :present?
+    assert_predicate both.events, :any?
     assert_predicate both.datetime, :present?
-    assert_nil datetime_only.event
+    assert_empty datetime_only.events
     assert_predicate datetime_only.datetime, :present?
-    assert_nil @story.scenes.create!(name: "Neither", position: 4).event
+    assert_empty @story.scenes.create!(name: "Neither", position: 4).events
   end
 
   test "a world record can appear in many scenes of one story and in other stories" do

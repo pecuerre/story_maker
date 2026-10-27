@@ -186,15 +186,18 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".col-12 p.text-body-secondary", text: "Todavía no hay etiquetas de escena asignadas."
   end
 
-  test "a linked event is named inside a Spanish sentence" do
+  test "a linked event is named on a Spanish details page, with its Events tab link" do
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
     assert_response :success
-    # `Event#display_string` is the record's own label and is data, so it is
-    # interpolated into the translated sentence rather than translated with it.
-    assert_select ".col-12 p", text: /#{Regexp.escape(events(:event_one).display_string)}: consulta el/
-    assert_select ".col-12 p a[href=?]", universe_events_path(universe_slug: @universe.slug),
-      text: "espacio de trabajo de Sucesos"
+    # `Event#display_label` is the record's own label and is data, so it is not
+    # translated with the sentence around it. The hint and its link are chrome.
+    assert_select ".col-12 ul.list-unstyled li a", text: events(:event_one).display_label
+    assert_select ".col-12 ul.list-unstyled li a[href=?]",
+      universe_event_path(universe_slug: @universe.slug, id: events(:event_one))
+    assert_select ".col-12 .form-text a[href=?]",
+      universe_story_scene_scene_events_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene),
+      text: "pestaña Sucesos"
   end
 
   test "the Element list, its badges, and its speaker note are Spanish" do
@@ -249,8 +252,11 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "nav.content-tabs[aria-label=?]", "Espacio de trabajo de la escena"
     assert_select "nav.content-tabs a.active", text: "Detalles de la escena"
-    # The other three are the sibling workspaces' own titles rather than a second
+    # The other five are the sibling workspaces' own titles rather than a second
     # copy of the same three words.
+    assert_select "nav.content-tabs a[href=?]",
+      universe_story_scene_scene_events_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene),
+      text: "Sucesos"
     assert_select "nav.content-tabs a[href=?]",
       universe_story_scene_scene_characters_path(universe_slug: @universe.slug, story_id: @story, scene_id: @scene),
       text: "Personajes"
@@ -278,14 +284,14 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "label[for=scene_section_id]", text: "Sección"
     assert_select "legend", text: "Organización"
     assert_select "legend", text: "Tiempo en el mundo"
-    assert_select "label[for=scene_event_id]", text: "Suceso"
     assert_select "label[for=scene_datetime]", text: "Tiempo en el mundo"
-    # The blank event option clears the reference and the values are event ids, so
-    # neither is translated; only the label is.
+    assert_select "select[name='scene[event_id]']", count: 0
+    # A Scene that has not been saved yet has no Events tab to open, so the note
+    # says to save it first rather than linking to a route that does not exist.
+    assert_select "p.form-text", text: /Guarda esta escena primero/
+    # The blank section option's value is the empty string the form stores, so it
+    # is not translated; only the label is.
     assert_select "select[name='scene[section_id]'] option[value='']", text: "Sin agrupar"
-    assert_select "select[name='scene[event_id]'] option[value='']", text: "Ninguno"
-    assert_select "select[name='scene[event_id]'] option[value=?]", events(:event_one).id,
-      text: events(:event_one).display_string
     assert_select "input[type=submit][value=?]", "Crear escena"
     assert_select "a.btn-link", text: "Cancelar"
     # The closing sentence names the list's own translated controls rather than two
@@ -629,6 +635,23 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".empty-title", text: "Selecciona una historia para ver sus escenas"
     assert_select ".empty-state a[href=?]", universe_stories_path(universe_slug: @universe.slug),
       text: "Todas las historias"
+  end
+
+  test "the Events tab and its editor are Spanish" do
+    get universe_story_scene_scene_events_url(universe_slug: @universe.slug, story_id: @story, scene_id: @scene)
+
+    assert_response :success
+    assert_equal "Sucesos en Scene one", rendered_title
+    assert_select "h1", text: "Sucesos"
+    assert_select ".page-description", text: /Los sucesos que representa esta escena/
+    assert_select ".entity-title", text: events(:event_one).display_label
+    assert_select ".entity-description", text: "Rol: No hay rol registrado"
+    assert_select "button", text: "Añadir suceso"
+    assert_select ".modal-title", text: "Añadir suceso"
+    assert_select "label[for=scene_event_event_id]", text: "Suceso"
+    assert_select "select[name='scene_event[event_id]'] option[value='']", text: "Elige un suceso"
+    assert_select "label[for=scene_event_role]", text: "Rol"
+    assert_select "input[type=submit][value=?]", "Guardar suceso"
   end
 
   private

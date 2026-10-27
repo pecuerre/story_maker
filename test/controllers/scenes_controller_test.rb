@@ -431,9 +431,9 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".page-eyebrow", text: "Narrative position"
     assert_select ".page-eyebrow", text: "In-world time"
-    assert_select ".page-eyebrow", text: "In-world event"
+    assert_select ".page-eyebrow", text: "In-world events"
     assert_includes response.body, "2026-09-11 09:00"
-    assert_includes response.body, events(:event_one).display_string
+    assert_includes response.body, events(:event_one).display_label
     assert_includes response.body, "Narrative order is not in-world chronology"
     assert_includes response.body, "independent values"
   end
@@ -442,7 +442,7 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
 
     assert_response :success
-    assert_includes response.body, "No event linked yet."
+    assert_includes response.body, "No events linked yet."
     assert_select ".page-eyebrow", text: "In-world time"
   end
 
@@ -653,19 +653,18 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
     created = @story.scenes.find_by!(name: "Unfinished scene")
     assert_nil created.section
-    assert_nil created.event
+    assert_empty created.events
     assert_nil created.datetime
     assert_predicate created.description, :blank?
   end
 
-  test "should create a scene with a section, an event, and an in-world time" do
+  test "should create a scene with a section and an in-world time" do
     assert_difference("Scene.count") do
       post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
         params: {
           scene: {
             name: "Reference scene",
             section_id: sections(:section_two).id,
-            event_id: events(:event_two).id,
             datetime: "2019-11-05T21:00"
           }
         }
@@ -674,11 +673,11 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     created = @story.scenes.find_by!(name: "Reference scene")
     assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: created)
     assert_equal sections(:section_two), created.section
-    assert_equal events(:event_two), created.event
+    assert_empty created.events
     assert_equal Time.utc(2019, 11, 5, 21), created.datetime
   end
 
-  test "the new and edit forms expose scoped section and event selectors" do
+  test "the new and edit forms expose a scoped section selector" do
     get new_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_response :success
@@ -687,7 +686,7 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       text: "Section one"
     assert_select "select[name='scene[section_id]'] option[value=?]", sections(:section_two).id,
       text: "— Section two"
-    assert_select "select[name='scene[event_id]'] option[value='']", text: "None"
+    assert_select "select[name='scene[event_id]']", count: 0
     assert_select "input[type=datetime-local][name='scene[datetime]']"
 
     get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
@@ -810,15 +809,14 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".alert-danger", text: /Title can't be blank/
   end
 
-  test "a malformed optional section or event id is a 422 field error, not a 500" do
+  test "a malformed optional section id is a 422 field error, not a 500" do
     assert_no_difference("Scene.count") do
       post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
-        params: { scene: { name: "Broken references", section_id: "0", event_id: "0" } }
+        params: { scene: { name: "Broken references", section_id: "0" } }
     end
 
     assert_response :unprocessable_content
     assert_select ".alert-danger", text: /Section must exist/
-    assert_select ".alert-danger", text: /Event must exist/
   end
 
   test "a section from another story is a 422 field error" do
@@ -829,16 +827,6 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_content
     assert_select ".alert-danger", text: /Section must belong to the same story/
-  end
-
-  test "an event from another universe is a 422 field error" do
-    assert_no_difference("Scene.count") do
-      post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
-        params: { scene: { name: "Cross-universe event", event_id: events(:event_other_universe).id } }
-    end
-
-    assert_response :unprocessable_content
-    assert_select ".alert-danger", text: /Event must belong to the story's universe/
   end
 
   test "an unparseable in-world time is a 422 field error instead of being dropped" do
@@ -888,7 +876,6 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
         scene: {
           name: "Renamed scene",
           section_id: sections(:section_two).id,
-          event_id: events(:event_two).id,
           datetime: "2020-02-02T08:30"
         }
       }
@@ -897,7 +884,6 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     @scene.reload
     assert_equal "Renamed scene", @scene.name
     assert_equal sections(:section_two), @scene.section
-    assert_equal events(:event_two), @scene.event
     assert_equal Time.utc(2020, 2, 2, 8, 30), @scene.datetime
     assert_equal original_position, @scene.position
   end

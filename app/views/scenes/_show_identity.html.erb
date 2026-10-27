@@ -65,19 +65,34 @@
     <%= render "shared/trope_assignments_summary", assignments: scene.scene_tropes %>
   </div>
   <div class="col-12">
-    <div class="page-eyebrow"><%= t("scenes.show.facts.event") %></div>
-    <% if scene.event.present? %>
+    <div class="page-eyebrow"><%= t("scenes.show.facts.events") %></div>
+    <% if scene.scene_events.any? %>
       <%# The Event's own label is chrome plus the author's own title, so it is
           resolved in the reader's language and interpolated into the sentence
           rather than translated: translating it inside the model would put one
-          locale's chrome into the search index. %>
-      <p class="mb-0">
-        <%= t("scenes.show.facts.event_html",
-          event: scene.event.display_label,
-          workspace: link_to(t("scenes.show.facts.event_workspace"), universe_events_path)) %>
-      </p>
+          locale's chrome into the search index. The links are listed in the
+          Scene's own order, and a role is the author's own words. %>
+      <ul class="list-unstyled mb-0">
+        <% scene.scene_events.sort_by { |link| [ link.position, link.id ] }.each do |link| %>
+          <li class="mb-1">
+            <%= link_to link.event.display_label, universe_event_path(id: link.event), class: "text-break" %>
+            <% if link.role.present? %>
+              <span class="badge rounded-pill text-bg-light border"><%= link.role %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <%# Only a writer can change the links, so the instruction to do so is
+          hidden from a reader; the tab strip above still offers the page. %>
+      <% if can_write_universe? %>
+        <div class="form-text">
+          <%= t("scenes.show.facts.events_hint_html",
+            workspace: link_to(t("scenes.show.facts.events_workspace"),
+              universe_story_scene_scene_events_path(story_id: story, scene_id: scene))) %>
+        </div>
+      <% end %>
     <% else %>
-      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.event_blank") %></p>
+      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.events_blank") %></p>
     <% end %>
   </div>
   <div class="col-12">

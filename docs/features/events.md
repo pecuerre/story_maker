@@ -25,8 +25,11 @@ the Event list's page shape is in [conventions.md](../conventions.md#views---thr
 4. `must_be_identifiable`: an event needs a title, a start/end datetime, **or** a relation to another
    event. Related events must belong to the same universe. There is deliberately **no** name-presence
    rule.
-5. `Section` and `Event` both declare `has_many :scenes, dependent: :nullify`, so deleting a Section
-   only ungroups and deleting an Event only clears the reference. Neither removes a Scene.
+5. `Section` declares `has_many :scenes, dependent: :nullify`, so deleting a Section only ungroups.
+   An Event owns its `SceneEvent` links instead: a soft delete soft-deletes them, a hard destroy
+   removes them, and neither removes a Scene. A Scene may depict several Events, so the link is a
+   scene-owned row rather than a column on the Scene
+   ([ADR 0038](../adr/0038-a-scene-depicts-events-through-ordered-links.md)).
 
 `EventsController` uses the flat list + modal pattern, and includes `MaintainsSiblingPositions` and
 `RequiresJsonMutationFormat` like the other positioned, JSON-only controllers.
@@ -134,8 +137,9 @@ across rows that say the opposite is worse than no arrow, and reversing would in
 author never declared. A relation named from both sides yields one arrow, not two. So the drawn edges
 can never contradict the rows they span.
 
-A Scene may reference one Event, and several Scenes may reference the same Event; the reference and
-the Scene's own in-world `datetime` are independent and neither writes or clears the other.
+A Scene may depict several Events, and several Scenes may depict the same Event. Each link carries
+the author's optional free-text role and its own order inside the Scene; every link and the Scene's
+own in-world `datetime` are independent, and neither writes or clears the other.
 
 How a Story's Scenes are compared with this ordering, including what the comparison treats as a
 conflict, is owned by [Scenes](scenes.md#narrative-order-beside-the-timeline).

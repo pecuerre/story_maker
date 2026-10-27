@@ -1,8 +1,9 @@
 # Scenes
 
 [ADR 0007](../adr/0007-story-owned-scenes-and-elements.md) accepts the first Scene contract, and the
-whole of it is implemented. This is the one home for the Scene domain, its five workspace tabs, its
-Elements, and the deletion and validation rules that make them safe.
+whole of it is implemented. This is the one home for the Scene domain, its six workspace tabs, its
+Elements, and the deletion and validation rules that make them safe. The several Events a Scene may
+depict are organized by [ADR 0038](../adr/0038-a-scene-depicts-events-through-ordered-links.md).
 
 Story-level Plot assignments are a separate through-line grouping axis; their domain and editor are
 owned by [Plot arcs](plots.md), not duplicated here.
@@ -17,15 +18,16 @@ reuse are in [conventions.md](../conventions.md#views---three-patterns).
 
 `Scene belongs_to :story`, includes `HasSlug`, and is **flat rather than hierarchical** — no
 `parent_id`. A required `name` is labelled **Title**; `description` is optional and a title-only Scene
-is valid. `belongs_to :section, optional: true` and `belongs_to :event, optional: true` carry the
-organizational group and the in-world fact, and the single optional `datetime` carries the in-world
-time point. `belongs_to :pov_character, class_name: "Character", optional: true` names the single
-character whose perspective presents the scene; it must belong to the scene's universe and is
-independent of both the event link and the in-world time. The event reference and the datetime are
-**independent**: neither writes, clears, nor validates against the other, and a disagreement between
-them is not detected. Blank means no point of view is recorded. `has_many_tags
-:scene_tag, scope: :story_id` supplies optional Story Tag assignments. `Scene#universe` resolves
-through `story.universe`.
+is valid. `belongs_to :section, optional: true` carries the organizational group, and the single
+optional `datetime` carries the in-world time point. The Events a Scene depicts are its own ordered
+link rows (`SceneEvent`), so a Scene may depict several; each link carries the author's free-text
+`role` and a `position`, and `Scene#event_id` no longer exists. `belongs_to :pov_character,
+class_name: "Character", optional: true` names the single character whose perspective presents the
+scene; it must belong to the scene's universe and is independent of both the Event links and the
+in-world time. The Event links and the datetime are **independent**: neither writes, clears, nor
+validates against the other, and a disagreement between them is not detected. Blank means no point of
+view is recorded. `has_many_tags :scene_tag, scope: :story_id` supplies optional Story Tag
+assignments. `Scene#universe` resolves through `story.universe`.
 
 `SceneTag belongs_to :story`, includes `Hierarchical`, `HasColor`, `HasSlug`, and the inverse
 `has_many_tagged :scene, scope: :story_id`. Definitions use the same positioned controller contract as
@@ -43,8 +45,8 @@ by Section. `ScenesController` uses the flat mode of `PositionedResourceOrder` t
 and `ApplicationHelper#universe_for_record` both delegate to it, so record-level authorization and the
 mutation controls a view renders cannot drift. It resolves a record through its own `#universe` or
 through a declared owner association (`story`, `scene`, `section`, `scene_element`). `SceneElement`,
-`SceneCharacter`, `SceneItem`, and `SceneLocation` all reach their Universe through `scene`, so none
-needs a new entry; `SceneDialogueTurn` delegates through its `scene_element`. Do not re-implement the
+`SceneCharacter`, `SceneItem`, `SceneLocation`, and `SceneEvent` all reach their Universe through
+`scene`, so none needs a new entry; `SceneDialogueTurn` delegates through its `scene_element`. Do not re-implement the
 walk in a view or a controller, and do not add a controller-specific visibility rule.
 
 Controllers resolve `@story` through `Current.universe.stories.find(...)`, then Scenes through that
@@ -55,16 +57,20 @@ authorization callback.
 ## Validation, not exceptions
 
 Same-Story and same-Universe scope is an application rule: a real foreign key cannot prove it. The
-`Scene` model adds `section_belongs_to_story`, `event_belongs_to_story_universe`,
-`optional_references_exist`, and `datetime_is_a_valid_point`. A malformed `section_id`/`event_id`
-therefore renders a `422` field error through the ordinary HTML re-render flow instead of raising a
-foreign-key exception, and an unparseable `datetime` is reported instead of being silently cast to
-`nil`. The editor re-renders the submitted raw value, so a rejected entry is never cleared from the
-field.
+`Scene` model adds `section_belongs_to_story`, `optional_references_exist`, and
+`datetime_is_a_valid_point`. A malformed `section_id` therefore renders a `422` field error through
+the ordinary HTML re-render flow instead of raising a foreign-key exception, and an unparseable
+`datetime` is reported instead of being silently cast to `nil`. The editor re-renders the submitted
+raw value, so a rejected entry is never cleared from the field.
+
+`SceneEvent` proves the Event it links is real, belongs to the Scene's Universe, and is not already
+linked to the same Scene while the link is live; a blank link is refused. Its unique index is partial
+over live rows, so a removed link can be created again without resurrecting the old one.
 
 The Scene-owned records prove their shared Universe the same way: `SceneElement#speakers_belong_to_the_scene_universe`,
 `SceneDialogueTurn#speaker_belongs_to_scene_universe`, `SceneCharacter#character_belongs_to_the_scene_universe`,
-`SceneItem#item_belongs_to_the_scene_universe`, and `SceneLocation#location_belongs_to_the_scene_universe`
+`SceneItem#item_belongs_to_the_scene_universe`, `SceneLocation#location_belongs_to_the_scene_universe`,
+and `SceneEvent#event_belongs_to_the_scene_universe`
 compare against `scene.story.universe_id`.
 A `character_ids` writer on `SceneElement` turns an unknown, duplicated, or cross-Universe id into an
 ordinary field error instead of a driver exception, exactly as `Scene#scene_tag_ids=` does, and a
@@ -88,6 +94,7 @@ rule is proved in the model *and* the database.
 | New / Edit Scene | `.../scenes/new`, `.../scenes/:id/edit` | HTML |
 | Scene Elements | `.../scenes/:scene_id/elements`, `.../elements/:id`, `.../elements/:id/move` | JSON only |
 | Scene Dialogue Turns | `.../elements/:scene_element_id/dialogue_turns`, `.../dialogue_turns/:id`, `.../dialogue_turns/:id/move` | JSON only |
+| Scene Events tab | `.../scenes/:scene_id/events`, `.../events/:id`, `.../events/:id/move` | HTML index, JSON mutations |
 | Scene Characters tab | `.../scenes/:scene_id/characters` | HTML index, JSON mutations |
 | Scene Items tab | `.../scenes/:scene_id/items` | HTML index, JSON mutations |
 | Scene Locations tab | `.../scenes/:scene_id/locations` | HTML index, JSON mutations |
@@ -107,8 +114,7 @@ covered for Characters, Items, and Events. The nested turn editor uses `scene_tu
 for add/edit and hands move/delete to `modal_form_controller.js`; all four turn actions preserve the
 same JSON, error, pending, and server-refresh behavior.
 
-`SceneDialogueTurnsController` has no read action — turns are read with their Element on Scene Details.
-Create, update, delete, and move are JSON-only and pass through `RequiresJsonMutationFormat` before
+`SceneDialogueTurnsController` has no read action — turns are read with their Element on Scene Details.Create, update, delete, and move are JSON-only and pass through `RequiresJsonMutationFormat` before
 writing. In `direct` mode, create returns `201`, update and move return `200`, each with the JSON
 fields `id`, `speaker_id`, `speaker_name`, `body`, `parenthetical`, `position`, `update_url`,
 `move_up_url`, `move_down_url`, and `destroy_url`; delete returns `204` with no body. In other
@@ -120,9 +126,17 @@ a narration Element refuses a turn with `422`, and an unknown move direction is 
 mutate and are sent to sign in; a read-only member receives `403`. HTML mutations are refused with
 `406` before any write. CSRF protection applies to all four mutation verbs.
 
-Documented per-action failures: a malformed `section_id`/`event_id`/`datetime` or foreign Scene Tag
+`SceneEventsController` follows the same read-page/JSON-mutation contract as the presence tabs. Its
+links are resolved through the request's authorized Universe → Story → Scene path, so a link belonging
+to another Scene, Story, or Universe is a `404`. Create returns `201`, update and move `200`, delete
+`204`; a draft-based universe remembers the change and returns `202`. An Event that is unknown or from
+another Universe is a `404`, a duplicate link is a `422` model error, a missing `event_id`,
+an unknown `direction`, or an update with neither editable field is a `400`, and an HTML mutation is
+refused with `406` before any write. Move is the only way to reorder the links.
+
+Documented per-action failures: a malformed `section_id`/`datetime` or foreign Scene Tag
 assignment in the editor is a `422` re-render; a foreign or unknown grouping target, scene, Element,
-dialogue turn, presence link, or Character is a `404`; a missing or unknown `direction`, a create with
+dialogue turn, event link, presence link, or Character is a `404`; a missing or unknown `direction`, a create with
 no `character_id`, or an update with neither field is a `400`. `SceneElementsController` has **no** read
 action — Elements are read on Scene Details — so every one of its actions is authenticated and none of
 them may be reached with an HTML request.
@@ -199,21 +213,23 @@ helper, so a fourth destination is added in one place rather than copied into fi
 
 **A conflict is one Scene, not a disagreement between the two orders.** `Scene.position` orders
 telling and the Timeline orders happening, so a reversal is a flashback, a parallel thread, or a
-cold open, never an error. The page reports a conflict only when a Scene links an Event with a known
-start or end and the Scene's own `datetime` falls outside that interval — before the start or after
-the end. A `datetime` with no Event, and an Event with no dates, claim nothing to disagree with. The
-Event supplies the timeline place; the `datetime` is shown beside it and is never used to move it.
-Nothing is rewritten, normalized, or resolved.
+cold open, never an error. The page reports a conflict only when a Scene links Events with a known
+start or end and the Scene's own `datetime` falls outside **every** one of their intervals — before
+every start or after every end. A time inside any linked Event is consistent with at least one fact
+the Scene records; a `datetime` with no Event link, and an Event with no dates, claim nothing to
+disagree with. The Event supplies the timeline place; the `datetime` is shown beside it and is never
+used to move it. Nothing is rewritten, normalized, or resolved.
 
-**A Scene is placed only by its Event, and only when the Timeline has a reason for the row.** A Scene
-with no Event is *unlinked*; a Scene whose Event's simultaneity group has no start/end date and no
-`before_event` or `after_event` relation is *unsequenced*. Both end the current *run*, so the next
-placed Scene starts a new run and is labelled **First in this run**; the comparison never reaches
+**A Scene is placed by the earliest of its Events the Timeline can place.** A Scene with no Event link
+is *unlinked*; a Scene whose Events all lack a place is *unsequenced*. The link order breaks a tie
+between Events in the same Timeline row. Both unlinked and unsequenced end the current *run*, so the
+next placed Scene starts a new run and is labelled **First in this run**; the comparison never reaches
 across a gap. Inside a
-run the step is **Later**, **Earlier**, **Same time** (the Events share a simultaneity group), or
+run the step is **Later**, **Earlier**, **Same time** (the placement Events share a simultaneity group), or
 **No known order** (the same row, different groups). `TimelineLayout#layer_for`, `#placed?`, and
 `#same_group?` are the read-only authority for those facts; do not recompute them in the view or the
-controller.
+controller. The left column lists every Event the Scene links, in the Scene's own order, so the
+placement Event is never the only one named.
 
 The page shows the whole Story and the whole Universe Timeline: no filter, sort, or pagination,
 because a narrowed sequence is not the telling order and a filtered Timeline is not the Timeline.
@@ -292,7 +308,7 @@ This is the single most repeated rule in the Scene system, and it is one rule:
   reports the union — a Character who both participates and speaks is one participant, never two.
   Never create a presence row for a speaker, and never add the sources together for a count.
 - Speaking is **not** a presence link: it never creates a `SceneCharacter` row.
-- `SceneAppearances` is the same union in the reverse direction, and adds the `event` reference as a
+- `SceneAppearances` is the same union in the reverse direction, and adds each Event link as a
   third source, so it is also a union and never a sum.
 
 The Characters tab (`/scenes/:id/characters`) is a real read page — a guest and a read-only member see
@@ -312,6 +328,18 @@ the row list, the page count, and the count a mutation changes are the same rows
 plural and hierarchical, so each row carries its full ancestor path from `LocationPaths` and the picker
 is depth-indented in root-first order. Both tabs offer every Universe Item/Location, because those
 records are shared by every Story in the Universe.
+
+The **Events** tab (`/scenes/:id/events`) is the Scene's link to the Universe's shared Events. It is a
+real read page — guests and read-only members see the same list without the controls — and its rows are
+the Scene's `SceneEvent` links in their own order, each naming the Event and the author's role or **No
+role recorded**. **Add event** opens the shared editor with a picker of every Universe Event and an
+optional free-text role; a row can repoint its Event, edit the role, move up or down, or be removed. A
+Scene may depict any number of Events, and the same Event may be depicted by any number of Scenes;
+neither side copies the other. Removing a link deletes neither the Event nor the Scene and never
+touches the Scene's `datetime`. The role is never a vocabulary, and the picker offers every Event
+rather than hiding the ones already linked, so a duplicate submitted by a stale page is an ordinary
+`422` rather than a missing option. The links reach the Universe through their Scene, so only the
+Scene's own tabs can change them.
 
 The **Tropes** tab (`/scenes/:id/tropes`) has the same page shape and mutation contract, but its rows
 are catalogue assignments rather than shared universe records: it lists only the references this Scene
@@ -337,9 +365,9 @@ pages build the index once instead.
 ## "Appears in scenes" traces a record forward
 
 The Character, Item, Location, and Event details pages each end with an **Appears in scenes of
-&lt;Story&gt;** section, the reverse of the three presence tabs. It is deliberately not a new workspace: the same
+&lt;Story&gt;** section, the reverse of the Events, Characters, Items, and Locations tabs. It is deliberately not a new workspace: the same
 links would be broken if it were. `SceneAppearances` reports the **union** of a stored presence link, a
-derived Dialogue speaker, and an Event reference — one row per Scene, never a sum — ordered by Scene
+derived Dialogue speaker, and an Event link — one row per Scene, never a sum — ordered by Scene
 `position`. A row is labelled with the reason(s) it appears, so **Linked**, **Speaks in N element(s)**,
 and **Depicted** are never collapsed into a single word, and a role is only ever shown for a stored
 link. The whole section is read-only navigation, so it renders for every access level: the Scenes it
@@ -372,21 +400,22 @@ drag records.
 ## The editor and its tabs
 
 Scene Details (`/scenes/:id`) is the canonical, inspectable page: it renders the Title, narrative
-position, short description, Section group, Scene Tags, linked Event, formatted in-world time, point
+position, short description, Section group, Scene Tags, linked Events, formatted in-world time, point
 of view, and story context for writers, read-only members, and guests, and gives only writers an
 **Edit scene** action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so
 there is no second edit surface and no second form for the same fields. The editor's workspace tabs go
-through `shared/_content_tabs`: **Scene Details**, **Characters**, **Items**, **Locations**, and
-**Tropes** are all live links, each its own canonical page. A tab is never a link to a route that does
-not exist and never an in-document Bootstrap pane.
+through `shared/_content_tabs`: **Scene Details**, **Events**, **Characters**, **Items**, **Locations**,
+and **Tropes** are all live links, each its own canonical page. A tab is never a link to a route that
+does not exist and never an in-document Bootstrap pane.
 
 The Scene form groups its fields: **Scene tags** holds the optional native multi-select with root-first
 tag paths, **Organization** holds the Section selector (with **Ungrouped** and depth-indented Section
-names), and **In-world time** holds the Event selector (with **None**) and the `datetime-local` field.
-Each field has copy stating what it does *not* do. Trope references are deliberately **not** a field
-of this form: the full catalogue is too long to stack there, so the **Tropes** tab lists only the
-references the Scene carries and offers the rest through its editor's picker. A new Scene therefore
-records its tropes after it has been saved.
+names), and **In-world time** holds the `datetime-local` field plus a note pointing at the Events tab.
+Each field has copy stating what it does *not* do. The Event selector is deliberately **not** on this
+form: a Scene may depict several Events, each with a role and an order, so the links belong to the
+Events tab and a new Scene links them after it has been saved. Trope references are deliberately **not**
+a field of this form either: the full catalogue is too long to stack there, so the **Tropes** tab lists
+only the references the Scene carries and offers the rest through its editor's picker.
 
 `Story#menu_scene_count` uses its own cache scope (`Story::SCENE_MENU_COUNT_SCOPE`, referenced by
 `Scene` itself) so it never overwrites `menu_section_count`; `Scene` declares

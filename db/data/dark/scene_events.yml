@@ -1,0 +1,53 @@
+# The Events each Scene depicts, one row per depicted Event.
+#
+# A Scene may depict several, so the link is its own row rather than a column on
+# the Scene. A blank role means no role; the role is the author's own words and is
+# never interpreted. The loader orders each Scene's rows by their order in this
+# file, so no `position` is written here.
+- scene: Scene.secrets
+  event: Event.jonas_meets_bartosz
+  role: "opening"
+
+# The same in-world event retold from another scene: a link is shared, never
+# copied, and each Scene keeps its own narrative position.
+- scene: Scene.michaels-waltz
+  event: Event.jonas_meets_bartosz
+
+- scene: Scene.lies
+  event: Event.ulrich_meets_hannah
+
+- scene: Scene.truths
+  event: Event.time_travel
+
+- scene: Scene.sic-mundus-creatus-est
+  event: Event.time_travel
+
+- scene: Scene.the-journey
+  event: Event.explosion
+
+- scene: Scene.the-golden-beast
+  event: Event.explosion
+
+- scene: Scene.darker-hollow-tree
+  event: Event.jonas_meets_bartosz
+
+- scene: Scene.darker-bartoszs-version
+  event: Event.conversation1
+
+# A Scene that depicts two Events: the conversation it remembers, and the meeting
+# it is about. Its own datetime is independent of both links.
+- scene: Scene.darker-what-the-wind-remembers
+  event: Event.meeting
+  role: "present"
+- scene: Scene.darker-what-the-wind-remembers
+  event: Event.conversation2
+  role: "remembered"
+
+- scene: Scene.bethesda-power-plant
+  event: Event.explosion
+
+- scene: Scene.bethesda-wardens-bridge
+  event: Event.party
+
+- scene: Scene.bethesda-cave-mouth
+  event: Event.time_travel

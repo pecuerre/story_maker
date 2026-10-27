@@ -66,6 +66,12 @@ Rails.application.routes.draw do
             patch :move, on: :member
           end
         end
+        # The Events tab is the Scene's own ordered list of depicted Events. A
+        # Scene may link several, each with an author's free-text role, so the
+        # links are their own records with their own read page and JSON mutations.
+        resources :scene_events, path: "events", only: %i[ index create update destroy ] do
+          patch :move, on: :member
+        end
         # The Characters tab is its own canonical page. Only the role is editable
         # afterwards: a link is added, given a role, or removed.
         resources :scene_characters, path: "characters", only: %i[ index create update destroy ]

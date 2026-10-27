@@ -73,7 +73,8 @@ class SceneAppearancesSectionTest < ActionDispatch::IntegrationTest
     # `event_one` is referenced by `scene_one` only in the fixtures; a second
     # reference is created here because "several scenes may depict one event" is
     # the property under test.
-    later = @story.scenes.create!(name: "The same fact, again", position: 3, event: events(:event_one))
+    later = @story.scenes.create!(name: "The same fact, again", position: 3)
+    later.scene_events.create!(event: events(:event_one))
     select_story(@story)
 
     get universe_event_path(universe_slug: @universe.slug, id: events(:event_one))

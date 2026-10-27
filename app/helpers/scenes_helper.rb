@@ -39,11 +39,11 @@ module ScenesHelper
   # rendered as an empty cell. Only the fallback sentence is chrome: the role
   # itself is the author's own words and is returned unchanged.
   #
-  # This has one home because four surfaces answer the same question — the
-  # Characters, Items, and Locations tabs, and the "Appears in Scenes" section on a
-  # record's own details page — and a Character linked in one of them and the same
-  # Character on another page have to be described identically. Both entry types
-  # answer `#role`, which is the only thing this reads.
+  # This has one home because five surfaces answer the same question — the
+  # Characters, Items, Locations, and Events tabs, and the "Appears in Scenes"
+  # section on a record's own details page — and a Character linked in one of them
+  # and the same Character on another page have to be described identically. Both
+  # entry types answer `#role`, which is the only thing this reads.
   #
   # It takes no view of *why* a row exists. `SceneAppearances::Entry` calls it only
   # for a stored link, because a derived speaker and a depicted Event never carry
@@ -52,17 +52,16 @@ module ScenesHelper
     entry.role.presence || t("scenes.participation.no_role")
   end
 
-  # [ label, value ] pairs in Rails' select order: an explicit **None** first,
-  # then the universe's events. Several Scenes may pick the same Event, so this
-  # is a plain single-select rather than an exclusion list.
+  # [ label, value ] pairs for the Events tab's picker: every Universe Event, in
+  # the order it is given.
   #
-  # The blank option's *value* is the empty string the form stores and the rest
-  # are event ids, so neither is translated; only the blank's own label and the
-  # events' own labels are chrome. An event's own label is `display_label` rather
-  # than the `display_string` a search document stores, so a Scene's event picker
-  # reads in the reader's language.
+  # The label is the Event's own `display_label` rather than the `display_string`
+  # a search document stores, so the picker reads in the reader's language; the
+  # value is the record id. Neither is translated. The modal supplies its own
+  # blank **Choose an event** option, and a blank submission is a `400` rather
+  # than a link to no Event.
   def scene_event_choices(events)
-    [ [ t("shared.none"), "" ] ] + events.map { |event| [ event.display_label, event.id ] }
+    events.map { |event| [ event.display_label, event.id ] }
   end
 
   # [ label, value ] pairs for the optional point-of-view selector: the

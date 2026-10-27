@@ -18,7 +18,7 @@ class Event < ApplicationRecord
 
   searchable kind: "event", title: :name, body: :description, route: "event"
   invalidates_menu_counts_for :universe
-  soft_deletes :children
+  soft_deletes :children, :scene_events
 
   # The event's own in-world span. Both datetimes are optional, and an absent
   # `end_datetime` is an open or unknown end rather than a missing value; only a
@@ -27,10 +27,12 @@ class Event < ApplicationRecord
 
   belongs_to :universe
   has_many_tags :event_tag, scope: :universe_id
-  # Deleting an Event only clears Scene references. The shared world record is
-  # never removed because a Scene depicted it, and the Scene keeps its own
-  # narrative position and (independent) in-world datetime.
-  has_many :scenes, dependent: :nullify
+  # Deleting an Event removes the Scenes' depictions of it, never the Scenes
+  # themselves. A link is its own row, so it leaves by its own delete rather than
+  # by clearing a column on a Scene, and the Scene keeps its own narrative
+  # position and (independent) in-world datetime.
+  has_many :scene_events, dependent: :destroy
+  has_many :scenes, through: :scene_events
   belongs_to :before_event, class_name: "Event", inverse_of: :before_event_references, optional: true
   belongs_to :after_event, class_name: "Event", inverse_of: :after_event_references, optional: true
   belongs_to :simultaneous_event, class_name: "Event", inverse_of: :simultaneous_event_references, optional: true
@@ -118,14 +120,13 @@ class Event < ApplicationRecord
 
   private
 
-  # A soft-deleted Event leaves every referrer in place but clears the
-  # references, exactly like a hard delete: Scenes lose their `event_id`, and
-  # temporal referrers lose the `before_event_id`/`after_event_id`/
-  # `simultaneous_event_id` that pointed here. A referrer that was only
-  # identifiable through this Event keeps its row and reports the missing
-  # identifier the next time it is saved, rather than being destroyed.
+  # A soft-deleted Event leaves every referrer in place but removes the links to
+  # it: Scenes lose their `scene_events` rows, and temporal referrers lose the
+  # `before_event_id`/`after_event_id`/`simultaneous_event_id` that pointed here.
+  # A referrer that was only identifiable through this Event keeps its row and
+  # reports the missing identifier the next time it is saved, rather than being
+  # destroyed.
   def soft_delete_dependencies
-    scenes.update_all(event_id: nil)
     before_event_references.update_all(before_event_id: nil)
     after_event_references.update_all(after_event_id: nil)
     simultaneous_event_references.update_all(simultaneous_event_id: nil)

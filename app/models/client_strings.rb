@@ -193,6 +193,7 @@ module ClientStrings
     route
     scene_character
     scene_element
+    scene_event
     scene_item
     scene_location
     scene_trope

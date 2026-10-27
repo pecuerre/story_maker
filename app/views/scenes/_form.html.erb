@@ -77,15 +77,6 @@
   <fieldset class="mb-3">
     <legend class="h6"><%= t("scenes.form.in_world_time_legend") %></legend>
     <div class="mb-3">
-      <%= form.label :event_id, t("scenes.form.event"), class: "form-label" %>
-      <%# The blank option clears the reference and the values are event ids, so
-          neither is translated; only the labels beside them are. %>
-      <%= form.select :event_id, scene_event_choices(event_options),
-        { include_blank: t("shared.none") }, class: "form-select" %>
-      <div class="form-text"><%= t("scenes.form.event_hint") %></div>
-    </div>
-
-    <div class="mb-3">
       <%= form.label :datetime, t("scenes.form.datetime"), class: "form-label" %>
       <%# `step: 1` matches `ApplicationHelper::DATETIME_LOCAL_FORMAT`, which is what
             `scene_datetime_field_value` formats this control with: a whole-minute
@@ -93,6 +84,20 @@
         <%= form.datetime_local_field :datetime, value: scene_datetime_field_value(scene), class: "form-control", step: 1 %>
       <div class="form-text"><%= t("scenes.form.datetime_hint") %></div>
     </div>
+
+    <%# The Event links are their own workspace tab, because a Scene may depict
+        several Events and each link carries a role and an order. A Scene that has
+        not been saved yet has no tab to open, so the two cases say different
+        things rather than linking to a route that does not exist. %>
+    <p class="form-text mb-0">
+      <% if scene.persisted? %>
+        <%= t("scenes.form.events_note_html",
+          events: link_to(t("scenes.form.events_link"),
+            universe_story_scene_scene_events_path(story_id: scene.story, scene_id: scene))) %>
+      <% else %>
+        <%= t("scenes.form.events_note_new") %>
+      <% end %>
+    </p>
   </fieldset>
 
   <fieldset class="mb-3">

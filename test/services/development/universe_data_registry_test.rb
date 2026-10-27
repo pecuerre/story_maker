@@ -22,6 +22,8 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
     assert_operator model_names.index("Section"), :<, model_names.index("Scene")
     assert_operator model_names.index("SceneTag"), :<, model_names.index("Scene")
     assert_operator model_names.index("Scene"), :<, model_names.index("SceneElement")
+    assert_operator model_names.index("Scene"), :<, model_names.index("SceneEvent")
+    assert_operator model_names.index("Event"), :<, model_names.index("SceneEvent")
     assert_operator model_names.index("SceneElement"), :<, model_names.index("SceneCharacter")
     assert_operator model_names.index("SceneElement"), :<, model_names.index("SceneDialogueTurn")
     assert_operator model_names.index("SceneDialogueTurn"), :<, model_names.index("SceneCharacter")
@@ -39,6 +41,7 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
   test "a scene-owned model is scoped to a scene and positioned flat" do
     element = Development::UniverseDataRegistry.definition_for_model("SceneElement")
     turns = Development::UniverseDataRegistry.definition_for_model("SceneDialogueTurn")
+    events = Development::UniverseDataRegistry.definition_for_model("SceneEvent")
     link = Development::UniverseDataRegistry.definition_for_model("SceneCharacter")
     item = Development::UniverseDataRegistry.definition_for_model("SceneItem")
     place = Development::UniverseDataRegistry.definition_for_model("SceneLocation")
@@ -52,6 +55,9 @@ class UniverseDataRegistryTest < ActiveSupport::TestCase
     assert_predicate turns, :positioned?
     assert_not turns.hierarchical_position?
     assert_nil turns.manifest_identifier_field
+    assert_equal :scene, events.scope
+    assert_predicate events, :positioned?
+    assert_not events.hierarchical_position?
     assert_equal :scene, link.scope
     assert_not link.positioned?
     # The two remaining world-presence links are the same shape: Scene-owned,

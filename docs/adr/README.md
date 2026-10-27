@@ -60,6 +60,7 @@ reasoning as of its date.
 | [0035](0035-faction-relationships-are-directed.md) | Accepted | Store faction relationships as directed links; never infer their reverse |
 | [0036](0036-a-remembered-change-can-be-dropped-before-it-is-applied.md) | Accepted | Let a working draft's author drop one remembered change without discarding the rest |
 | [0037](0037-compare-narrative-order-with-the-timeline-read-only.md) | Accepted | Compare a Story's narrative order with the Timeline, read-only, and define a conflict as one Scene's own time disagreeing with its Event |
+| [0038](0038-a-scene-depicts-events-through-ordered-links.md) | Accepted | Link a Scene to several Events through ordered, roled rows, and retire the single `event_id` |
 
 ## Format
 

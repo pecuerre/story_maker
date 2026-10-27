@@ -11,7 +11,6 @@
   slug: secrets
   description: "Jonas Kahnwald arrives in Winden and meets the Nielsen family."
   section: Section.s1e1
-  event: Event.jonas_meets_bartosz
   pov_character: Character.jonas
   scene_tags: [ SceneTag.mood, SceneTag.mystery ]
   plots: [ Plot.time-travel-mystery, Plot.jonas-and-martha ]
@@ -32,8 +31,8 @@
   slug: michaels-waltz
   description: "Michael teaches Jonas the waltz at the Nielsen house while the adults argue about 1986."
   section: Section.s1e1
-  # A second scene on the same event: several scenes may depict one event.
-  event: Event.jonas_meets_bartosz
+  # A second scene depicts the same event through its own link: several scenes may
+  # depict one event, and neither link copies the other.
   pov_character: Character.martha
   scene_tags: [ SceneTag.mood ]
   datetime: "1986-09-01T20:00"
@@ -44,7 +43,6 @@
   slug: lies
   description: "Martha Nielsen and Hannah lie about the night Noah disappeared."
   section: Section.s1e2
-  event: Event.ulrich_meets_hannah
   scene_tags: [ SceneTag.mystery ]
   position: 3
 
@@ -52,8 +50,8 @@
   name: "Past and Present"
   slug: past-and-present
   description: "The kindergarten argument reaches its breaking point in 1986 and again in 2019."
-  # No event on purpose: this scene carries an in-world time of its own so the
-  # event link and the datetime can be seen to disagree independently.
+  # No event link on purpose: this scene carries an in-world time of its own so
+  # the links and the datetime can be seen to disagree independently.
   section: Section.s1e3
   scene_tags: [ SceneTag.turning-point, SceneTag.revelation ]
   datetime: "2019-11-05T21:00"
@@ -71,7 +69,6 @@
   slug: truths
   description: "Jonas and Martha find the second Noah alive in the cave beneath the Sic Mundus ruins."
   section: Section.s1e5
-  event: Event.time_travel
   pov_character: Character.martha
   scene_tags: [ SceneTag.revelation ]
   plots: [ Plot.time-travel-mystery, Plot.jonas-and-martha ]
@@ -83,7 +80,6 @@
   slug: sic-mundus-creatus-est
   description: "The Sic Mundus cave is opened and the traveler's origin is revealed."
   section: Section.s1e6
-  event: Event.time_travel
   plots: [ Plot.time-travel-mystery ]
   position: 7
 
@@ -92,7 +88,6 @@
   slug: the-journey
   description: "Season 2 opens with the search for Jonas in the alternate timeline."
   section: Section.s2e1
-  event: Event.explosion
   scene_tags: [ SceneTag.turning-point ]
   plots: [ Plot.time-travel-mystery ]
   position: 8
@@ -102,7 +97,6 @@
   slug: the-golden-beast
   description: "The alt-world Jonas is approached by the German whose childhood he lived through."
   section: Section.s3e3
-  event: Event.explosion
   scene_tags: [ SceneTag.mood ]
   plots: [ Plot.time-travel-mystery ]
   position: 9
@@ -117,7 +111,7 @@
   datetime: "1953-11-05T03:15"
   position: 10
 
-# The second ungrouped scene: unfinished, with no description, event, in-world
+# The second ungrouped scene: unfinished, with no description, linked event, in-world
 # time, or tag, which is a valid scene.
 - story: Story.netflix-dark
   name: Interlude
@@ -133,7 +127,6 @@
   slug: darker-hollow-tree
   description: "Jonas opens the hollow tree a day before the series opens it, and finds it already empty."
   section: Section.act1s1
-  event: Event.jonas_meets_bartosz
   scene_tags: [ SceneTag.register, SceneTag.cold ]
   datetime: "1986-08-31T07:15"
   position: 0
@@ -143,7 +136,6 @@
   slug: darker-bartoszs-version
   description: "The older Jonas explains what the box is for, and refuses to say who emptied it."
   section: Section.act1s1
-  event: Event.conversation1
   scene_tags: [ SceneTag.without-relief ]
   position: 1
 
@@ -164,7 +156,6 @@
   slug: darker-what-the-wind-remembers
   description: "Claudia meets Jonas at the plant and offers him the record she has been keeping since 1986."
   section: Section.act-two
-  event: Event.meeting
   scene_tags: [ SceneTag.cold ]
   position: 3
 
@@ -195,7 +186,6 @@
   slug: bethesda-power-plant
   description: "Claudia gives the player the tour she gives no one else, and the tour is a trap."
   section: Section.ch2
-  event: Event.explosion
   scene_tags: [ SceneTag.cutscene ]
   position: 1
 
@@ -206,7 +196,6 @@
   slug: bethesda-wardens-bridge
   description: "The bridge fight the player can either fight or talk their way past."
   section: Section.ch3
-  event: Event.party
   scene_tags: [ SceneTag.playable, SceneTag.combat, SceneTag.cutscene ]
   plots: [ Plot.optional-quest ]
   datetime: "2024-01-01T11:30"
@@ -217,7 +206,6 @@
   slug: bethesda-cave-mouth
   description: "The cave the main quest points at, opened with the Tannhaus device the player has been carrying since chapter one."
   section: Section.ch3
-  event: Event.time_travel
   scene_tags: [ SceneTag.playable, SceneTag.optional ]
   plots: [ Plot.optional-quest ]
   position: 3

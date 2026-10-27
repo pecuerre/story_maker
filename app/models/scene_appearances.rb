@@ -9,7 +9,7 @@
 # - a **Dialogue speaker**, derived from the Element's roster or its line-level
 #   turns, and never made into a presence link, so the same Character can be both
 #   and is still one appearance;
-# - an **Event reference**, where the Scene's optional `event` is this Event.
+# - an **Event reference**, where the Scene has a link row depicting this Event.
 #
 # Two boundaries are deliberate. A Scene is never deduplicated against the Event
 # it depicts, so several Scenes appear here for one Event while `position` stays
@@ -33,8 +33,8 @@ class SceneAppearances
       speaking_elements.any?
     end
 
-    # The Scene points at this record as its optional shared in-world Event, so
-    # the Scene depicts it rather than merely using it.
+    # The Scene depicts this Event through one of its link rows, so the Scene
+    # tells it rather than merely using it.
     def depicted?
       event_reference
     end
@@ -140,11 +140,14 @@ class SceneAppearances
         end
     end
 
-    # An Event is not a presence link: a Scene points at it as an optional shared
-    # fact, and several Scenes may point at the same one.
+    # An Event is not a presence link: a Scene points at it through a scene-owned
+    # link row, and several Scenes may depict the same one.
     def event_referenced_scene_ids
       return Set.new unless record.is_a?(Event)
 
-      Scene.where(event_id: record.id, story_id: story.id).pluck(:id).to_set
+      SceneEvent.joins(:scene)
+        .where(event_id: record.id, scenes: { story_id: story.id })
+        .pluck(:scene_id)
+        .to_set
     end
 end

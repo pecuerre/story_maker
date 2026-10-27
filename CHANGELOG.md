@@ -43,10 +43,21 @@ Labels used below, in the order their groups appear:
 ### added
 
 - **Narrative order beside the Timeline.** Adds a signed-in, read-only Story tab that lists the Scene sequence beside the Timeline, labels each step, and reports a Scene whose own time falls outside its linked Event.
+- **Ordered Scene-to-Event links.** A Scene now depicts any number of Events through its own Events tab, each link carrying an optional free-text role and its own order; the single `event_id` and its form selector are gone.
+
+### changed
+
+- **Narrative comparison with several linked Events.** A Scene is placed by the earliest linked Event the Timeline can place, and conflicts only when its own time is outside every claiming Event.
+- **Scene API event links.** Scene JSON returns an ordered `events` array instead of `event_id`, and creating or updating a Scene no longer accepts a single `event_id`.
 
 ### chore
 
+- **Universes system test counts.** Aligns the browser test's entity totals with the factions fixtures and the controller test, which already expected 15 and 5.
 - **Settings limits test race.** Moves the save and flash assertions into request tests and keeps the browser case to the section's visibility and authorization, avoiding the auto-dismissing toast and parallel-suite click races.
+
+### docs
+
+- **Scene-to-Event decision and owners.** Records ADR 0038 and updates Scenes, Events, data model, i18n, and the backlog for ordered Scene-to-Event links.
 
 ### planned
 

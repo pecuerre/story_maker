@@ -456,7 +456,7 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
       # A thread is the same: this one is about a Scene, so it goes too — and its
       # messages with it, because a reply to a thread that is not there is the same
       # dangling reference.
-      %w[scene_tropes scene_elements scene_dialogue_turns scene_characters scene_items scene_locations discussions discussion_messages].each do |file|
+      %w[scene_tropes scene_elements scene_dialogue_turns scene_events scene_characters scene_items scene_locations discussions discussion_messages].each do |file|
         File.write(File.join(directory, "db/data/dark/#{file}.yml"), "[]\n")
       end
 
@@ -486,9 +486,9 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
   test "rejects a scene linked to an event from another universe" do
     with_data_copy do |directory|
-      scenes_path = File.join(directory, "db/data/dark/scenes.yml")
-      contents = File.read(scenes_path)
-      File.write(scenes_path, contents.sub("event: Event.time_travel", "event: Event.ring_given_to_frodo"))
+      events_path = File.join(directory, "db/data/dark/scene_events.yml")
+      contents = File.read(events_path)
+      File.write(events_path, contents.sub("event: Event.time_travel", "event: Event.ring_given_to_frodo"))
 
       error = assert_raises(Development::UniverseDataLoader::ValidationError) do
         Development::UniverseDataLoader.new(universe: "dark", root: directory, environment: :test).check!
@@ -735,19 +735,29 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     paths = SectionPaths.build(story.sections.reorder(:position, :id).to_a)
 
     assert_equal "Season 1 / Episode 1: Secrets", paths.label_for(scenes.first.section_id)
-    assert_equal "Jonas meets Bartosz - 2024-01-01 10:00", scenes.first.event.display_string
+    assert_equal [ "Jonas meets Bartosz - 2024-01-01 10:00" ],
+      scenes.first.scene_events.map { |link| link.event.display_string }
     assert_equal Time.utc(1986, 9, 1, 10), scenes.first.datetime
 
-    # A datetime without an event, an event without a datetime, and shared events.
-    assert_nil scenes[4].event
+    # A datetime without an event link, an event link without a datetime, and
+    # links shared by several Scenes.
+    assert_empty scenes[4].events
     assert_equal Time.utc(2019, 11, 5, 21), scenes[4].datetime
-    assert_equal scenes[6].event, scenes[7].event
-    assert_equal scenes[0].event, scenes[2].event
+    assert_equal scenes[6].events.to_a, scenes[7].events.to_a
+    assert_equal scenes[0].events.to_a, scenes[2].events.to_a
+
+    # One Scene may depict several Events, in its own order and with its own
+    # free-text roles.
+    multi = Scene.find_by!(slug: "darker-what-the-wind-remembers")
+    assert_equal [ Event.find_by!(slug: "meeting"), Event.find_by!(slug: "conversation2") ],
+      multi.scene_events.reorder(:position, :id).map(&:event)
+    assert_equal [ "present", "remembered" ], multi.scene_events.reorder(:position, :id).map(&:role)
+    assert_equal [ 0, 1 ], multi.scene_events.reorder(:position, :id).pluck(:position)
 
     # A title-only, ungrouped scene.
     assert_equal "Double Lives", scenes[5].name
     assert_nil scenes[5].section
-    assert_nil scenes[5].event
+    assert_empty scenes[5].events
     assert_nil scenes[5].datetime
   end
 

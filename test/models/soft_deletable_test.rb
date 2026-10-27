@@ -95,26 +95,31 @@ class SoftDeletableTest < ActiveSupport::TestCase
     assert scene.reload.persisted?, "the scene is kept"
   end
 
-  test "soft-deleting an event clears temporal references without destroying referrers" do
+  test "soft-deleting an event clears temporal references and scene links without destroying referrers" do
     event = events(:event_one)
     reference = Event.create!(universe: event.universe, title: "Reference", before_event: event)
+    link = scene_events(:scene_event_one)
 
     event.soft_delete
 
     assert event.reload.deleted?
     assert_nil reference.reload.before_event_id
     assert reference.reload.persisted?, "the referrer is kept"
+    assert link.reload.deleted?, "the scene's link to the event is removed, not the scene"
+    assert link.scene.reload.persisted?
   end
 
-  test "soft-deleting a scene soft-deletes its elements and presence links" do
+  test "soft-deleting a scene soft-deletes its elements, presence links, and event links" do
     scene = scenes(:scene_one)
     element = scene_elements(:narration_one)
     link = scene_characters(:scene_character_one)
+    event_link = scene_events(:scene_event_one)
 
     scene.soft_delete
 
     assert element.reload.deleted?
     assert link.reload.deleted?
+    assert event_link.reload.deleted?
   end
 
   test "a soft-deleted record can be re-created with the same unique key" do

@@ -15,7 +15,8 @@ User (owner)
        │   ├── Plot ── HABTM Scene (story-owned narrative through-lines)
       │   │                     └── HABTM SectionTag ──┐
       │   ├── SceneTag (tree, story-scoped) ── HABTM SceneTag assignment
-      │   └── Scene (contiguous narrative position) ──> Section / Event
+      │   └── Scene (contiguous narrative position) ──> Section
+       │       ├── SceneEvent (ordered Event link, optional free-text role) ──> Event
        │       ├── SceneElement (contiguous flat position) ── HABTM Character (block speakers)
        │       │   └── SceneDialogueTurn (contiguous flat position) ──> Character (line speaker)
        │       ├── SceneCharacter (explicit presence, optional free-text role) ──> Character
@@ -95,7 +96,7 @@ The unique indexes that would otherwise block re-creating a record with the same
 delete are partial (`WHERE deleted_at IS NULL`): `universes.slug`, `stories.[universe_id, slug]`,
 `plots.[story_id, name]`, `plots.[story_id, slug]`,
 `universe_memberships.[universe_id, user_id]`, and the `scene_characters` / `scene_items` /
-`scene_locations` presence-link pairs. The matching model validations carry the same condition.
+`scene_locations` / `scene_events` link pairs. The matching model validations carry the same condition.
 
 `users` and `sessions` are not soft-deletable: they have no user-facing delete action, and a
 session is an authentication token rather than content.
@@ -148,7 +149,8 @@ method. Each rule is stated in full in [features/photos.md](features/photos.md).
 | `scene_tropes` | `scene_id` FK (NOT NULL), `trope_slug`, `context_note` (nullable) | one contextual annotation per catalogue slug and Scene; unique `[scene_id, trope_slug]`; rows survive soft deletion for restore |
 | `section_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its chapter/book/episode labels |
 | `scene_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its scene-beat/mood labels; parent and position are story-local |
-| `scenes` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `position` (default 0, NOT NULL), `section_id` FK (nullable), `event_id` FK (nullable), `datetime` (nullable), `pov_character_id` FK (nullable) | narrative order is `position`; indexes on `[story_id, position]`, `[story_id, section_id]`, `section_id`, `event_id`, `pov_character_id`; no `parent_id` |
+| `scenes` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `position` (default 0, NOT NULL), `section_id` FK (nullable), `datetime` (nullable), `pov_character_id` FK (nullable) | narrative order is `position`; indexes on `[story_id, position]`, `[story_id, section_id]`, `section_id`, `pov_character_id`; no `parent_id`; Event links live in `scene_events`, not a column |
+| `scene_events` | `scene_id` FK (NOT NULL), `event_id` FK (NOT NULL), `role` (nullable), `position` (default 0, NOT NULL), `deleted_at` (nullable) | an ordered depiction link: a Scene may depict several Events; unique live `[scene_id, event_id]`, index on `[scene_id, position]` and `deleted_at`; `role` is free text and blank means no role; no `parent_id`, slug, or `universe_id` |
 | `scene_elements` | `scene_id` FK (NOT NULL), `kind` (NOT NULL, default `narration`), `name`, `body`, `word_count` (integer, NOT NULL, default 0), `position` (default 0, NOT NULL) | one flat ordered block of a Scene's prose; `word_count` is stored from `body` by `WordCountable` and summed by `WordCounts`; index on `[scene_id, position]`; `check_constraint` on `kind`; no `parent_id` |
 | `scene_dialogue_turns` | `scene_element_id` FK (NOT NULL), `speaker_id` FK to `characters` (NOT NULL), `body`, `word_count` (integer, NOT NULL, default 0), `parenthetical`, `position` (default 0, NOT NULL), `deleted_at` (nullable) | one attributed line inside a Dialogue Element; same-Universe speaker; `word_count` follows the same stored-count rule as an Element's; index on `[scene_element_id, position]` and `deleted_at`; no `parent_id`, public slug, or `universe_id` |
 | `scene_element_speakers` | `scene_element_id` FK (NOT NULL), `character_id` FK (NOT NULL) | no PK; unique `[scene_element_id, character_id]`; a plain many-to-many link with no data of its own |
@@ -184,7 +186,7 @@ Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `sec
 | `locations` | `name`, `description`, `sensory_sight`, `sensory_sound`, `sensory_smell`, `sensory_taste`, `sensory_touch`, `layout_structure`, `layout_key_areas`, `layout_pathways`, `layout_entrances_exits`, `layout_points_of_interest`, `significance`, `history_significant_events`, `history_past_occupants`, `history_changes`, `access_controlled_by`, `access_granted_how`, `access_security`, `access_restrictions`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; every profile field is optional text, ordered by `Location::PROFILE_FIELDS` and described in [features/locations.md](features/locations.md) |
 | `routes` | `universe_id`, `from_location_id`, `to_location_id`, optional `name`, `description`, optional free-form `distance` and `duration`, `slug`, `photo_id`, `deleted_at` | directional path between two Locations; both endpoints must belong to the same Universe; not hierarchical or positioned |
 | `items` | `name`, `description`, `what_it_does`, `how_it_is_used`, `side_effects`, `origin`, `value`, `cannot`, `constraints`, `history`, `jargon`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; every profile field is optional text, ordered by `Item::PROFILE_FIELDS` and described in [features/items.md](features/items.md) |
-| `events` | `title`, `name`, `description`, `slug`, `start_datetime`, `end_datetime`, `before_event_id`, `after_event_id`, `simultaneous_event_id` (all self-FKs), `parent_id`, `position`, `universe_id` | identity is title-driven; `has_many :scenes, dependent: :nullify`; the datetimes are a `TemporalInterval` |
+| `events` | `title`, `name`, `description`, `slug`, `start_datetime`, `end_datetime`, `before_event_id`, `after_event_id`, `simultaneous_event_id` (all self-FKs), `parent_id`, `position`, `universe_id` | identity is title-driven; `has_many :scene_events, dependent: :destroy` and `has_many :scenes, through: :scene_events`; the datetimes are a `TemporalInterval` |
 | `relations` | `character1_id`, `character2_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |
 | `ownerships` | `character_id`, `item_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |
 
@@ -197,8 +199,8 @@ and a unique index on its column pair** — the seven legacy tables by
 `db/migrate/20260928120000_add_integrity_constraints_to_legacy_join_tables.rb`, `scenes_scene_tags`
 from its own create migration — so an orphan or duplicate join row is refused by the database rather
 than only by the scoped association reads. The Scene-owned tables `scene_element_speakers`,
-`scene_characters`, `scene_items`, and `scene_locations` do the same, their unique index being partial
-(`WHERE deleted_at IS NULL`) because those four soft-delete. Every declaration supplies an explicit
+`scene_characters`, `scene_items`, `scene_locations`, and `scene_events` do the same, their unique index being partial
+(`WHERE deleted_at IS NULL`) because those five soft-delete. Every declaration supplies an explicit
 shared scope
 (`:universe_id`, or `:story_id` for Section/Scene tags), and both sides of each association validate
 every assigned member against that scope. Association reads also apply the scope, hiding foreign
@@ -427,9 +429,10 @@ their work, so a surprising line in the output has to be visible enough to undo 
 **not** a second writer: it takes no scope-owner lock, so `PositionedResourceOrder` remains what
 maintains a sequence while the application is writing to it.
 
-Not hierarchical: **Relation**, **Ownership** (link records), **Plot**, **Scene**, **SceneElement**, and
-**SceneDialogueTurn** (flat story-/scene-/element-owned sequences), **SceneCharacter**, **SceneItem**, **SceneLocation** (link
-records), **Story**, **Universe**, **User**, **Session**, **Draft** and **DraftChange**. A draft
+Not hierarchical: **Relation**, **Ownership** (link records), **Plot**, **Scene**, **SceneElement**,
+**SceneDialogueTurn** and **SceneEvent** (flat story-/scene-/element-owned sequences),
+**SceneCharacter**, **SceneItem**, **SceneLocation** (link records), **Story**, **Universe**, **User**,
+**Session**, **Draft** and **DraftChange**. A draft
 change *is* ordered — by `created_at`, then `id`, which is the order it was remembered in — but it
 is an append-only log rather than a sequence an author rearranges, so it carries no `position` and
 no `parent_id`.
@@ -450,7 +453,8 @@ no `parent_id`.
 | `Story` | `name` presence + unique per universe; `slug` unique per universe |
 | `Section` | `name` presence; `story` required; parent rules scoped to the story; `section_tags` optional, but when present they must all belong to the section's story through the shared HABTM scope; `has_many :scenes, dependent: :nullify` |
 | `Plot` | `name` presence and unique among live Plots in its Story; `story` required; `scenes` optional and, when present, all must belong to the same Story; unknown, duplicate, or cross-Story scene assignments are ordinary validation errors; no `parent_id` or `position` |
-| `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `event` optional and must belong to the story's universe; `pov_character` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; `plots` optional and, when present, all belong to the story; an unknown optional `section_id`/`event_id`/`pov_character_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id` |
+| `Scene` | `name` presence; `story` required; `section` optional and must belong to the same story; `pov_character` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; `plots` optional and, when present, all belong to the story; an unknown optional `section_id`/`pov_character_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id`; Event links are `SceneEvent` rows |
+| `SceneEvent` | `scene` and `event` required; `event_id` unique per scene among live links ("is already linked to this scene"); `event` must belong to the scene's universe; an unknown `event_id` is "must exist"; `role` is free text, blank means no role; `position` is flat and contiguous inside the Scene; no `parent_id`, slug, or `universe_id` |
 | `SceneTag` | `name` presence; `story` required; parent rules scoped to the story; `scenes` optional and, when present, all belong to the story; `HasColor`, `Hierarchical`, and slug behavior |
 | `SceneElement` | `name` presence; `scene` required; `kind` presence and `inclusion` in `narration`/`dialogue` (plus a database check constraint); a Dialogue needs at least one same-Universe Character in its block-level speaker roster ("Speakers is required for a dialogue element"); Narration may not keep roster speakers or any turn rows, including soft-deleted turns (unless roster removal is explicitly confirmed); an unknown, duplicated, or cross-universe `character_ids` entry is an ordinary field error; no `parent_id` |
 | `SceneDialogueTurn` | `scene_element` and `speaker` required; the Element must be Dialogue; the speaker must belong to the Scene's Universe; `body` and `parenthetical` optional; position is flat and contiguous inside the Element; no `parent_id` or `universe_id` |
@@ -531,9 +535,10 @@ behaviour:
 
 - The `scenes` create migration is schema-only: a real `story_id` foreign key, `null: false`
   `position` with a `0` default, `null: false` `slug`, timestamps, and a composite
-  `[story_id, position]` index. The optional `section_id` and `event_id` references and the `datetime`
+  `[story_id, position]` index. The optional `section_id` reference and the `datetime`
   column arrived in a **separate** alter migration (`AddSceneReferencesToScenes`), because the create
-  migration had already shipped.
+  migration had already shipped; `event_id` moved to its own `scene_events` table and the column was
+  removed by `RemoveEventFromScenes`.
 - An applied migration is never amended: on a freshly created database Rails loads `db/schema.rb`
   instead of executing the migration files, so an edit silently changes nothing. The mechanism and the
   required workflow are in

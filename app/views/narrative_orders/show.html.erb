@@ -108,8 +108,10 @@
                   </div>
 
                   <div class="small text-body-secondary mt-1">
-                    <% if row.event.present? %>
-                      <%= link_to narrative_event_label(row.event), universe_event_path(id: row.event) %>
+                    <% if row.events.any? %>
+                      <%= safe_join(row.events.map { |event|
+                        link_to narrative_event_label(event), universe_event_path(id: event)
+                      }, " · ") %>
                       <%= " · " if row.scene.datetime.present? %>
                     <% else %>
                       <%= t("narrative_orders.no_event") %>
@@ -139,9 +141,7 @@
 
                   <% if row.conflict? %>
                     <p class="small text-danger mt-2 mb-0">
-                      <%= t("narrative_orders.conflict",
-                        time: scene_in_world_time(row.scene),
-                        range: in_world_range(row.event.start_datetime, row.event.end_datetime)) %>
+                      <%= narrative_conflict_message(row) %>
                     </p>
                   <% end %>
                 </div>

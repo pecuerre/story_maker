@@ -1,0 +1,166 @@
+<% content_for :title, t("scenes.events.document_title", scene: @scene.name) %>
+<% editable = can_write_universe? %>
+
+<%# The editor's wrapper has to contain the modal *and* every control that opens
+    it, which is why the page header is inside it rather than beside it. %>
+<div
+  <% if editable %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="scene_event"
+  data-modal-form-response-value="json"
+  data-modal-form-create-title-value="<%= t("scenes.events.add") %>">
+  <%= render "shared/page_header",
+    title: t("events.title"),
+    eyebrow: t("shared.eyebrow.scene", scene: @scene.name),
+    description: t("scenes.events.description"),
+    count: @scene_events.size,
+    count_label: "event" do %>
+    <%= link_to t("scenes.back_to_details"), universe_story_scene_path(story_id: @story, id: @scene), class: "btn btn-outline-secondary" %>
+    <% if editable %>
+      <button type="button" class="btn btn-primary"
+        data-action="modal-form#open"
+        data-modal-form-url="<%= universe_story_scene_scene_events_path(story_id: @story, scene_id: @scene) %>"
+        data-modal-form-method="post"
+        data-modal-form-title="<%= t("scenes.events.add") %>"
+        data-modal-form-values-value="{}">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span><%= t("scenes.events.add") %></span>
+      </button>
+    <% end %>
+  <% end %>
+
+  <%= render "scenes/workspace_tabs" %>
+
+  <% if @scene_events.any? %>
+    <div class="content-surface entity-list">
+      <div class="list-group list-group-flush">
+        <% @scene_events.each_with_index do |scene_event, index| %>
+          <% at_first = index.zero? %>
+          <% at_last = index == @scene_events.size - 1 %>
+          <div class="list-group-item entity-row d-flex align-items-start gap-3">
+            <div class="entity-copy flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <%= link_to scene_event.event.display_label, universe_event_path(id: scene_event.event), class: "entity-title" %>
+              </div>
+              <%# The role is the author's own free text, so it is interpolated into
+                  the row's label rather than translated. %>
+              <div class="entity-description">
+                <%= t("scenes.participation.role", role: scene_role_label(scene_event)) %>
+              </div>
+            </div>
+
+            <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+              <% if editable %>
+                <div class="d-flex align-items-center gap-1">
+                  <button type="button" class="btn btn-sm btn-light border"
+                    data-action="modal-form#move"
+                    data-modal-form-url="<%= move_universe_story_scene_scene_event_path(story_id: @story, scene_id: @scene, id: scene_event, direction: "up") %>"
+                    data-modal-form-direction="up"
+                    <%= "disabled" if at_first %>
+                    title="<%= at_first ? t("scenes.events.move.already_first") : t("scenes.move.up") %>"
+                    aria-label="<%= t("scenes.events.move.up_aria", name: scene_event.event.display_label) %>">
+                    <i class="bi bi-arrow-up" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light border"
+                    data-action="modal-form#move"
+                    data-modal-form-url="<%= move_universe_story_scene_scene_event_path(story_id: @story, scene_id: @scene, id: scene_event, direction: "down") %>"
+                    data-modal-form-direction="down"
+                    <%= "disabled" if at_last %>
+                    title="<%= at_last ? t("scenes.events.move.already_last") : t("scenes.move.down") %>"
+                    aria-label="<%= t("scenes.events.move.down_aria", name: scene_event.event.display_label) %>">
+                    <i class="bi bi-arrow-down" aria-hidden="true"></i>
+                  </button>
+                </div>
+
+                <div class="dropdown row-actions">
+                  <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                    id="<%= dom_id(scene_event) %>-actions"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="<%= t("scenes.participation.actions_for", name: scene_event.event.display_label, scene: @scene.name) %>">
+                    <i class="bi bi-three-dots" aria-hidden="true"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="<%= dom_id(scene_event) %>-actions">
+                    <li>
+                      <button type="button" class="dropdown-item"
+                        data-action="modal-form#open"
+                        data-modal-form-url="<%= universe_story_scene_scene_event_path(story_id: @story, scene_id: @scene, id: scene_event) %>"
+                        data-modal-form-method="patch"
+                        data-modal-form-title="<%= t("scenes.events.edit") %>"
+                        data-modal-form-values-value="<%= scene_event_fields_json(scene_event) %>">
+                        <i class="bi bi-pencil me-2" aria-hidden="true"></i><%= t("scenes.events.edit") %>
+                      </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <button type="button" class="dropdown-item text-danger"
+                        data-action="modal-form#destroy"
+                        data-modal-form-url="<%= universe_story_scene_scene_event_path(story_id: @story, scene_id: @scene, id: scene_event) %>"
+                        data-modal-form-confirm="<%= t("scenes.participation.remove.event",
+                          name: scene_event.event.display_label, scene: @scene.name) %>">
+                        <i class="bi bi-trash me-2" aria-hidden="true"></i><%= t("scenes.participation.remove_label") %>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <%= render "shared/empty_state",
+      title: t("scenes.events.empty_title"),
+      description: t("scenes.events.empty_description"),
+      icon: "calendar-event" %>
+  <% end %>
+
+  <% if editable %>
+    <div class="modal fade" tabindex="-1"
+      aria-labelledby="scene-event-modal-title"
+      aria-hidden="true"
+      data-modal-form-target="modal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title fs-5" id="scene-event-modal-title" data-modal-form-target="title"><%= t("scenes.events.add") %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
+          </div>
+          <%= form_with scope: :scene_event,
+            url: universe_story_scene_scene_events_path(story_id: @story, scene_id: @scene),
+            method: :post,
+            data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
+            <div class="modal-body">
+              <%= render "shared/modal_errors" %>
+
+              <div class="mb-3">
+                <%= form.label :event_id, t("scenes.events.form.event"), class: "form-label" %>
+                <%# The blank prompt's value is the empty string the form stores,
+                    so it is not translated; the event ids beside the labels are
+                    record ids and are not translated either. %>
+                <%= form.select :event_id, scene_event_choices(@event_options),
+                  { include_blank: t("scenes.events.form.choose_event") },
+                  class: "form-select", required: true %>
+                <div class="form-text"><%= t("scenes.events.form.event_hint") %></div>
+              </div>
+
+              <div>
+                <%= form.label :role, t("scenes.events.form.role"), class: "form-label" %>
+                <%= form.text_field :role, class: "form-control" %>
+                <%# The examples are chrome too — they are words the interface
+                    suggests — so they are their own key, interpolated into the one
+                    hint all four tabs share. %>
+                <div class="form-text"><%= t("scenes.participation.role_hint",
+                  examples: t("scenes.events.role_examples")) %></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
+              <%= form.submit t("scenes.events.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

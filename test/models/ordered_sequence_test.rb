@@ -158,7 +158,7 @@ class OrderedSequenceTest < ActiveSupport::TestCase
   test "a flat declaration names an association its owner actually has" do
     flat = positioned_models.reject { |model| model.column_names.include?("parent_id") }
 
-    assert_equal [ Scene, SceneDialogueTurn, SceneElement ], flat
+    assert_equal [ Scene, SceneDialogueTurn, SceneElement, SceneEvent ], flat
 
     flat.each do |model|
       owner = model.reflect_on_association(model.ordered_sequence_owner)
@@ -175,7 +175,7 @@ class OrderedSequenceTest < ActiveSupport::TestCase
   # concern exists to prevent, and a controller that declares an ordering nothing
   # maintains is the same state seen from the other side.
   test "every positioned model repairs the sequence its controller maintains" do
-    assert_equal 17, positioned_models.size,
+    assert_equal 18, positioned_models.size,
       "the number of positioned models is what this guard is checked against; a new one changes it"
 
     positioned_models.each do |model|

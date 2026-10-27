@@ -13,7 +13,7 @@ class Scene < ApplicationRecord
   include HasDiscussion
 
   searchable kind: "scene", title: :name, body: :description, route: "scene", scope: :story
-  soft_deletes :scene_elements, :scene_characters, :scene_items, :scene_locations
+  soft_deletes :scene_elements, :scene_characters, :scene_items, :scene_locations, :scene_events
   invalidates_menu_counts_for :story, cache_scope: Story::SCENE_MENU_COUNT_SCOPE
   # The Story's one flat sequence. `ScenesController` maintains it through
   # `PositionedResourceOrder`; this is what keeps a direct destroy, soft delete, or
@@ -26,12 +26,20 @@ class Scene < ApplicationRecord
 
   belongs_to :story
   has_many_tags :scene_tag, scope: :story_id
-  # Elements and explicit presence links belong to this Scene. Deleting a Scene
-  # removes them, and a shared universe record it referred to always survives.
+  # Elements, explicit presence links, and Event links belong to this Scene.
+  # Deleting a Scene removes them, and a shared universe record it referred to
+  # always survives.
   has_many :scene_elements, dependent: :destroy
   has_many :scene_characters, dependent: :destroy
   has_many :scene_items, dependent: :destroy
   has_many :scene_locations, dependent: :destroy
+  # The Events this Scene depicts. The link is its own record because a Scene may
+  # depict several Events, each with the author's free-text role and an order that
+  # is independent of the Scene's narrative position.
+  has_many :scene_events, dependent: :destroy
+  # The Events in the Scene's own link order. A consumer that needs the role as
+  # well reads `scene_events`; this association is the convenient Event list.
+  has_many :events, -> { order("scene_events.position") }, through: :scene_events, source: :event
   has_many :scene_tropes, dependent: :destroy
   # The Tropes tab edits one assignment per request. The nested writer remains
   # only so a Scene change remembered before that tab existed can still be
@@ -51,18 +59,14 @@ class Scene < ApplicationRecord
   # places the Scene inside that Section's ancestor path; it is not a second
   # stored membership, and it never changes the narrative position.
   belongs_to :section, optional: true
-  # The Event is an optional shared in-world fact, not the Scene's identity.
-  # Several Scenes may reference the same Event.
-  belongs_to :event, optional: true
   # The one character whose perspective presents this scene, separate from who
-  # takes part in it and from its linked event. Same universe as the story only.
+  # takes part in it and from its linked events. Same universe as the story only.
   belongs_to :pov_character, class_name: "Character", optional: true
 
   validates :name, presence: true
   validate :optional_references_exist
   validate :pov_character_belongs_to_scene_universe
   validate :section_belongs_to_story
-  validate :event_belongs_to_story_universe
   validate :datetime_is_a_valid_point
   validate :scene_tag_assignments_are_valid
   validate :plot_assignments_are_valid
@@ -143,8 +147,7 @@ class Scene < ApplicationRecord
     end
 
     # Shared scopes are application-level rules: a real foreign key cannot prove
-    # that a Section belongs to this Scene's Story or that an Event belongs to
-    # this Story's Universe.
+    # that a Section belongs to this Scene's Story.
     #
     # Every `errors.add` below resolves its message through `I18n.t` rather than
     # holding an English literal, for the reason `Event` does: the message is read
@@ -158,18 +161,11 @@ class Scene < ApplicationRecord
       errors.add(:section, I18n.t("scenes.errors.must_belong_to_story"))
     end
 
-    def event_belongs_to_story_universe
-      return if event.nil? || story&.universe.nil?
-      return if event.universe_id == story.universe_id
-
-      errors.add(:event, I18n.t("scenes.errors.must_belong_to_universe"))
-    end
-
     # An unknown optional ID would otherwise raise a foreign-key exception (a
-    # 500) instead of rendering a field error.
+    # 500) instead of rendering a field error. A Scene's Event links are their own
+    # records, so each one proves its Event exists and shares this Universe.
     def optional_references_exist
       errors.add(:section, I18n.t("scenes.errors.must_exist")) if section_id.present? && section.nil?
-      errors.add(:event, I18n.t("scenes.errors.must_exist")) if event_id.present? && event.nil?
       errors.add(:pov_character, I18n.t("scenes.errors.must_exist")) if pov_character_id.present? && pov_character.nil?
     end
 

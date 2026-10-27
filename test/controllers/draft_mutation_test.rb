@@ -8,7 +8,7 @@ require "test_helper"
 # through and nothing else would notice.
 #
 # So this file is that something else. It walks **every** mutation controller in
-# both modes — twenty-seven of them, across the JSON-only flow, the HTML flow, and
+# both modes — twenty-eight of them, across the JSON-only flow, the HTML flow, and
 # both scopes — and asserts the single thing that differs between them: in `direct` a
 # mutation writes, and in a draft-based universe it does not. The table is the
 # contract; the tests below it are the details that the table cannot express,
@@ -198,6 +198,17 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
         scene_id: @scene.id, scene_element_id: scene_elements(:dialogue_one).id, id: scene_dialogue_turns(:turn_one).id) }
     },
     {
+      name: "scene_events", model: SceneEvent, json: true, label: :role,
+      scope: -> { [ "scene_id", @scene.id ] },
+      record: -> { @scene_event },
+      create: -> { [ universe_story_scene_scene_events_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id), { scene_event: { event_id: @unlinked_event.id, role: NEW } } ] },
+      update: -> { [ universe_story_scene_scene_event_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id, id: @scene_event.id), { scene_event: { role: RENAMED } } ] },
+      destroy: -> { universe_story_scene_scene_event_url(universe_slug: @universe.slug, story_id: @story.id,
+        scene_id: @scene.id, id: @scene_event.id) }
+    },
+    {
       name: "scene_characters", model: SceneCharacter, json: true, label: :role,
       scope: -> { [ "scene_id", @scene.id ] },
       record: -> { @scene_character },
@@ -318,6 +329,8 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     @section = sections(:section_one)
     @plot = plots(:plot_one)
     @scene_element = scene_elements(:narration_one)
+    @scene_event = scene_events(:scene_event_one)
+    @unlinked_event = events(:event_two)
     @scene_character = scene_characters(:scene_character_one)
     @scene_item = scene_items(:scene_item_one)
     @scene_location = scene_locations(:scene_location_one)

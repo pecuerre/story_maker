@@ -19,7 +19,6 @@ class ScenesController < ApplicationController
   # `create` and `update` re-render the same editor, so they need the same
   # descriptors as `new` and `edit`.
   before_action :set_section_paths, only: %i[ index show new edit create update group ]
-  before_action :set_event_options, only: %i[ show new edit create update ]
   before_action :set_character_options, only: %i[ new edit create update ]
   before_action :set_scene_tag_data, only: %i[ index show new edit create update ]
   before_action :set_plot_options, only: %i[ show new edit create update ]
@@ -179,18 +178,8 @@ class ScenesController < ApplicationController
     @section_paths = SectionPaths.build(@story.sections.reorder(:position, :id).to_a)
   end
 
-  # Events are shared universe records. Their temporal references are preloaded
-  # because `Event#display_label` can fall back to them for an option label.
-  def set_event_options
-    @event_options = Current.universe.events
-      .includes(:before_event, :after_event, :simultaneous_event)
-      .reorder(:name, :id)
-      .to_a
-  end
-
   # Every universe character can present a scene, so the selector offers them
-  # all, exactly as the event selector offers every universe event. A blank
-  # choice records no point of view.
+  # all. A blank choice records no point of view.
   def set_character_options
     @character_options = Current.universe.characters.reorder(:name, :id).to_a
   end
@@ -239,7 +228,7 @@ class ScenesController < ApplicationController
   end
 
   def scene_params
-    params.expect(scene: [ *photo_params, :name, :description, :section_id, :event_id, :datetime, :pov_character_id,
+    params.expect(scene: [ *photo_params, :name, :description, :section_id, :datetime, :pov_character_id,
       { scene_tag_ids: [], plot_ids: [] } ])
   end
 

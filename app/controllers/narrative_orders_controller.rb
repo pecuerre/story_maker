@@ -11,7 +11,7 @@ class NarrativeOrdersController < ApplicationController
       .includes(:before_event, :after_event, :simultaneous_event)
       .order(:id)
       .to_a
-    scenes = @story.scenes.includes(:event, :section).order(:position, :id)
+    scenes = @story.scenes.includes(:section, scene_events: :event).order(:position, :id)
     @comparison = NarrativeComparison.new(scenes: scenes, layout: TimelineLayout.new(events))
   end
 end

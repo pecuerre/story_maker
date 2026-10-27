@@ -235,7 +235,7 @@ class SequenceNormalizerTest < ActiveSupport::TestCase
   # the routed controllers in both directions — the same pair `draft_applier_test.rb`
   # holds for the applier's own derivation.
   test "it walks exactly the models whose controllers maintain an ordered sequence" do
-    assert_equal 17, positioned_models.size,
+    assert_equal 18, positioned_models.size,
       "the number of ordered controllers is what this walk is checked against; a new one changes it"
 
     assert_equal positioned_models, SequenceNormalizer.positioned_models

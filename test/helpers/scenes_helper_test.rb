@@ -31,11 +31,11 @@ class ScenesHelperTest < ActionView::TestCase
     assert_equal "2026-09-11T09:30:45", scene_datetime_field_value(scene.reload)
   end
 
-  test "offers an explicit none choice plus every universe event" do
+  test "offers every universe event with its own label and no synthetic none choice" do
     choices = scene_event_choices(universe_events)
 
-    assert_equal [ "None", "" ], choices.first
-    assert_includes choices.map(&:first), events(:event_one).display_string
+    assert_equal [ [ events(:event_one).display_label, events(:event_one).id ],
+      [ events(:event_two).display_label, events(:event_two).id ] ].sort_by(&:last), choices.sort_by(&:last)
   end
 
   test "formats the in-world time with minute precision and no value when unset" do

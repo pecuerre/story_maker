@@ -51,18 +51,17 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
     assert_selector ".entity-row", text: "Ungrouped"
   end
 
-  test "a writer sets the event link and the in-world time from scene details" do
+  test "a writer sets the section and the in-world time from scene details" do
     universe = universes(:universe_one)
     story = stories(:story_one)
     scene = scenes(:scene_three)
-    assert_nil scene.event
+    assert_empty scene.events
 
     sign_in_via_form(users(:user_one))
     visit edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene)
 
     assert_selector "nav.content-tabs[aria-label='Scene workspace'] a.active", text: "Scene Details"
     select "Section one", from: "Section"
-    select "The end - 2026-09-11 10:00", from: "Event"
     # A datetime-local input is typed in the browser's own locale, which is not
     # the test environment's to control, so the value is set the way a real edit
     # delivers it. The round trip through the editor and back to Details is what
@@ -78,7 +77,6 @@ class SceneSectionGroupingTest < ApplicationSystemTestCase
 
     assert_selector "h1", text: scene.name
     assert_text "Section one"
-    assert_text "The end - 2026-09-11 10:00"
     assert_text "2019-11-05 21:00"
     # Narrative position and in-world time stay separate on the details page.
     assert_text "3 of 3 in the order Story One is told"

@@ -13,7 +13,7 @@
   `Scene`, `SectionTag`, and `SceneTag` (`Section belongs_to :story`, `Plot belongs_to :story`,
   `Scene belongs_to :story`,
   `SectionTag belongs_to :story`, `SceneTag belongs_to :story`, and `Story belongs_to :universe`). A
-  Scene's own components are narrower still: `SceneElement`, `SceneCharacter`, `SceneItem`,
+  Scene's own components are narrower still: `SceneElement`, `SceneEvent`, `SceneCharacter`, `SceneItem`,
   `SceneLocation`, and `SceneTrope` belong to a Scene and reach the Universe through it;
   `SceneDialogueTurn` belongs to a `SceneElement` and delegates through that owner. A
   universe holds many
@@ -296,11 +296,11 @@ the same change, or `db:demo:check` fails.
 - Response formats:
   - **JSON-only mutations** (`respond_to` → `format.json`, no HTML): every `_tag` controller plus
      Characters, Factions, Locations, Items, Events, Sections, Plots, and the Scene-owned `SceneElementsController`,
-    `SceneDialogueTurnsController`, `SceneCharactersController`, `SceneItemsController`,
+    `SceneDialogueTurnsController`, `SceneEventsController`, `SceneCharactersController`, `SceneItemsController`,
     `SceneLocationsController`, and `SceneTropesController`. The page
     renders HTML; create/update/destroy are called by Stimulus with `Accept: application/json`.
      `SceneTagsController`, `CharactersController`, `FactionsController`, `ItemsController`, `EventsController`,
-    `SceneElementsController`, `SceneDialogueTurnsController`, `SceneCharactersController`,
+    `SceneElementsController`, `SceneDialogueTurnsController`, `SceneEventsController`, `SceneCharactersController`,
     `SceneItemsController`, `SceneLocationsController`, and `SceneTropesController` also
     include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
   - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, FactionRelationships, Ownerships, Routes, Universe
@@ -340,7 +340,8 @@ the same change, or `db:demo:check` fails.
   `universe_story_scene(s)`, `move_universe_story_scene_path` for the narrative-order move, and
   `group_universe_story_scenes_path` for the Section grouping form. Scene-owned resources are nested
   inside `resources :scenes` and mounted at readable paths:
-  `resources :scene_elements, path: "elements"`, `resources :scene_characters, path: "characters"`,
+  `resources :scene_elements, path: "elements"`, `resources :scene_events, path: "events"`,
+  `resources :scene_characters, path: "characters"`,
   `resources :scene_items, path: "items"`, `resources :scene_locations, path: "locations"`, and
   `resources :scene_tropes, path: "tropes"`.
 - **Path helpers must receive their keys explicitly** (`universe_story_path(id: story)`,

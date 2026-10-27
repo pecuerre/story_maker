@@ -3,31 +3,36 @@
 # `Scene.position` orders telling and `TimelineLayout` orders happening. They are
 # different questions, so a reversal between them is not an error: it is a
 # flashback, a parallel thread, or a cold open. The only thing this object calls a
-# conflict is a **single Scene** whose own `datetime` falls outside the Event it
-# links, because that is one Scene making two in-world claims that cannot both be
-# true.
+# conflict is a **single Scene** whose own `datetime` falls outside every Event it
+# depicts, because that is one Scene making in-world claims that cannot all be
+# true; a time inside any one of its Events is consistent with at least one.
 #
-# A Scene's place comes from its linked Event's row in the layout and never from
-# its own `datetime`. A Scene with no Event is unlinked; a Scene whose Event the
-# Timeline cannot place is unsequenced; both end the current run, so the next
-# placed Scene is the first in a new one. That is the whole of the comparison: it reads,
-# it never moves a Scene, links an Event, changes a `datetime`, or resolves a
-# disagreement.
+# A Scene's place comes from the earliest placed Event it links, never from its own
+# `datetime`; the link order breaks a tie between Events in the same Timeline row.
+# A Scene with no Event is unlinked; a Scene whose Events the Timeline cannot place
+# is unsequenced; both end the current run, so the next placed Scene is the first
+# in a new one. That is the whole of the comparison: it reads, it never moves a
+# Scene, links an Event, changes a `datetime`, or resolves a disagreement.
 class NarrativeComparison
   # One Scene in narrative order, with the place it can be given and the step
   # that place makes against the previous Scene in its run.
-  Row = Data.define(:scene, :position, :event, :timeline_row, :step, :compared_scene, :conflict) do
+  #
+  # `events` is every Event the Scene depicts, in the Scene's own link order.
+  # `event` is the one that places the Scene: the earliest linked Event the Timeline
+  # can place, with the link order breaking a tie. It is nil when none is placed.
+  Row = Data.define(:scene, :position, :events, :event, :timeline_row, :step, :compared_scene,
+    :conflict, :conflict_events) do
     def placed?
       !timeline_row.nil?
     end
 
     def unlinked?
-      event.nil?
+      events.empty?
     end
 
-    # The Scene names an Event, but the Timeline has no recorded time for it.
+    # The Scene names Events, but the Timeline has no recorded time for any of them.
     def unsequenced?
-      !event.nil? && !placed?
+      events.any? && !placed?
     end
 
     def conflict?
@@ -104,21 +109,43 @@ class NarrativeComparison
     end
 
     def build_row(scene, previous)
-      event = scene.event
+      events = scene_events_for(scene).map(&:event)
+      placement = placement_for(events)
       attributes = {
         scene: scene,
         position: scene.position + 1,
-        event: event,
-        conflict: conflict?(scene)
+        events: events,
+        event: placement&.first,
+        conflict: conflict?(scene, events),
+        conflict_events: conflict_events(scene, events)
       }
 
-      unless event.present? && layout.placed?(event)
+      unless placement
         return Row.new(**attributes, timeline_row: nil, step: nil, compared_scene: nil)
       end
 
-      timeline_row = timeline_row_for(event)
-      step, compared_scene = step_for(previous, event, timeline_row)
+      timeline_row = placement.last
+      step, compared_scene = step_for(previous, placement.first, timeline_row)
       Row.new(**attributes, timeline_row: timeline_row, step: step, compared_scene: compared_scene)
+    end
+
+    # A Scene's own links in the order the author put them. The loaded association
+    # is sorted in memory rather than re-queried, so a page that preloaded the links
+    # does not pay one query per Scene.
+    def scene_events_for(scene)
+      scene.scene_events.sort_by { |link| [ link.position, link.id ] }
+    end
+
+    # [ event, timeline row ] for the Event that places the Scene, or nil when the
+    # Timeline can place none of the Scene's Events. The earliest row wins; the link
+    # order decides between Events in the same row.
+    def placement_for(events)
+      events.each_with_index.filter_map do |event, index|
+        row = timeline_row_for(event)
+        next if row.nil?
+
+        [ event, row, index ]
+      end.min_by { |_event, row, index| [ row, index ] }&.first(2)
     end
 
     # A run is a maximal stretch of Scenes that all have a place. `previous` is
@@ -153,26 +180,45 @@ class NarrativeComparison
 
     def positions_by_event_id
       @positions_by_event_id ||= rows.each_with_object({}) do |row, positions|
-        next if row.event.nil?
-
-        (positions[row.event.id] ||= []) << row.position
+        row.events.each do |event|
+          (positions[event.id] ||= []) << row.position
+        end
       end
     end
 
-    # The only conflict there is. The Event states the bounds; an absent bound is
-    # open, a reversed range says nothing about the Scene, and a Scene without its
-    # own time or without an Event has no second claim to disagree with.
-    def conflict?(scene)
-      event = scene.event
-      return false if event.nil? || scene.datetime.nil?
+    # The Events whose recorded interval the Scene's own time falls outside. A
+    # Scene that links several Events may sit between two of them, so the conflict
+    # is only when it is outside **every** claiming Event: a time inside any one of
+    # them is consistent with at least one fact the Scene records.
+    def conflict_events(scene, events)
+      return [] if scene.datetime.nil?
 
+      claiming = events.select { |event| claims_a_time?(event) }
+      claiming.select { |event| outside_event?(scene.datetime, event) }
+    end
+
+    # The only conflict there is. The Events state the bounds; an absent bound is
+    # open, a reversed range says nothing about the Scene, and a Scene without its
+    # own time or without a claiming Event has no second claim to disagree with.
+    def conflict?(scene, events)
+      return false if scene.datetime.nil?
+
+      claiming = events.select { |event| claims_a_time?(event) }
+      claiming.any? && claiming.all? { |event| outside_event?(scene.datetime, event) }
+    end
+
+    def claims_a_time?(event)
       starts_at = event.start_datetime
       ends_at = event.end_datetime
       return false if starts_at.nil? && ends_at.nil?
       return false if starts_at && ends_at && ends_at < starts_at
 
-      before_start = starts_at.present? && scene.datetime < starts_at
-      after_end = ends_at.present? && scene.datetime > ends_at
+      true
+    end
+
+    def outside_event?(datetime, event)
+      before_start = event.start_datetime.present? && datetime < event.start_datetime
+      after_end = event.end_datetime.present? && datetime > event.end_datetime
 
       before_start || after_end
     end

@@ -148,6 +148,75 @@ class NarrativeComparisonTest < ActiveSupport::TestCase
     assert_equal 2, reversed.summary.unlinked
   end
 
+  test "a scene that depicts several events is placed by the earliest one" do
+    early = event("Early", start_datetime: "2026-01-01 09:00")
+    late = event("Late", start_datetime: "2026-01-01 10:00")
+    scene = @story.scenes.create!(name: "Spanning", position: 0)
+    scene.scene_events.create!(event: late, position: 0)
+    scene.scene_events.create!(event: early, position: 1)
+
+    comparison = comparison_for(early, late)
+    row = comparison.rows.first
+
+    # The link order is preserved for display, but the earliest placed Event is
+    # what gives the Scene its place.
+    assert_equal [ late, early ], row.events
+    assert_equal early, row.event
+    assert_equal 1, row.timeline_row
+    assert_equal [ 1 ], comparison.positions_for(early)
+    assert_equal [ 1 ], comparison.positions_for(late)
+  end
+
+  test "a scene linking a placed and an unplaced event is placed by the placed one" do
+    dated = event("Dated", start_datetime: "2026-01-01 09:00")
+    bare = event("Bare")
+    scene = @story.scenes.create!(name: "Partly placed", position: 0)
+    scene.scene_events.create!(event: bare, position: 0)
+    scene.scene_events.create!(event: dated, position: 1)
+
+    comparison = comparison_for(dated, bare)
+    row = comparison.rows.first
+
+    assert row.placed?
+    assert_equal dated, row.event
+    refute row.unsequenced?
+  end
+
+  test "a conflict needs the scene's time to be outside every linked event" do
+    morning = event("Morning", start_datetime: "2026-01-01 09:00", end_datetime: "2026-01-01 10:00")
+    evening = event("Evening", start_datetime: "2026-01-01 11:00", end_datetime: "2026-01-01 12:00")
+
+    inside = @story.scenes.create!(name: "Inside one", position: 0, datetime: "2026-01-01 09:30")
+    inside.scene_events.create!(event: morning)
+    inside.scene_events.create!(event: evening)
+
+    between = @story.scenes.create!(name: "Between both", position: 1, datetime: "2026-01-01 10:30")
+    between.scene_events.create!(event: morning)
+    between.scene_events.create!(event: evening)
+
+    comparison = comparison_for(morning, evening)
+
+    assert_equal [ false, true ], comparison.rows.map(&:conflict?)
+    # "Inside one" is consistent with the morning event, but its time is outside
+    # the evening one; only the second Scene is outside both.
+    assert_equal [ evening ], comparison.rows.first.conflict_events
+    assert_equal [ morning, evening ], comparison.rows.second.conflict_events
+    assert_equal 1, comparison.summary.conflicts
+  end
+
+  test "a scene linking one event with dates and one without is judged by the dated one" do
+    dated = event("Dated", start_datetime: "2026-01-01 09:00", end_datetime: "2026-01-01 10:00")
+    bare = event("Bare")
+    scene = @story.scenes.create!(name: "Mixed", position: 0, datetime: "2026-01-01 11:00")
+    scene.scene_events.create!(event: dated)
+    scene.scene_events.create!(event: bare)
+
+    row = comparison_for(dated, bare).rows.first
+
+    assert_predicate row, :conflict?
+    assert_equal [ dated ], row.conflict_events
+  end
+
   private
     def event(title, start_datetime: nil, end_datetime: nil, **attributes)
       @universe.events.create!(title: title, start_datetime: start_datetime,
@@ -155,7 +224,10 @@ class NarrativeComparisonTest < ActiveSupport::TestCase
     end
 
     def scene(name, position:, event: nil, datetime: nil)
-      @story.scenes.create!(name: name, position: position, event: event, datetime: datetime)
+      scene = @story.scenes.create!(name: name, position: position, datetime: datetime)
+      scene.scene_events.create!(event: event) if event
+
+      scene
     end
 
     def comparison_for(*events)

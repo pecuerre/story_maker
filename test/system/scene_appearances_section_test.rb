@@ -46,7 +46,8 @@ class SceneAppearancesSectionTest < ApplicationSystemTestCase
   end
 
   test "an event lists every scene that depicts it, without merging them" do
-    later = @story.scenes.create!(name: "The same fact retold", position: 3, event: events(:event_one))
+    later = @story.scenes.create!(name: "The same fact retold", position: 3)
+    later.scene_events.create!(event: events(:event_one))
 
     sign_in_via_form(users(:user_one))
     visit universe_story_path(universe_slug: @universe.slug, id: @story)

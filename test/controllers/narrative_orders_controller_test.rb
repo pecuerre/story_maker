@@ -64,7 +64,7 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
     universe = Universe.create!(owner: users(:user_one), name: "Unplaced events", slug: "unplaced-events")
     story = universe.stories.create!(name: "Unplaced story")
     bare = universe.events.create!(title: "Bare event")
-    story.scenes.create!(name: "Only scene", position: 0, event: bare)
+    story.scenes.create!(name: "Only scene", position: 0).scene_events.create!(event: bare)
 
     get narrative_order_url(story: story, universe: universe)
 

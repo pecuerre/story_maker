@@ -43,11 +43,13 @@ These items are deliberately **LATER** by default. Use the owner's **NOW / LATER
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
-The highest number this file has used is 60. The list below keeps the numbers it already had and never
+The highest number this file has used is 67. The list below keeps the numbers it already had and never
 reuses one. It was triaged on 2026-10-25: two Scene ideas had already been delivered and left the
 list, the rest became numbered items, and each item records what exists today and what its next step
 depends on. The competitor survey on 2026-10-27 turned the four `check <site>` notes into items
-49–60. Loose notes still belong under FUTURE WORK until they are triaged into this list.
+49–60; that day's second triage turned the five loose notes into items 61–67 and folded prose
+highlighting into the mention index. Loose notes still belong under FUTURE WORK until they are
+triaged into this list.
 
 38. **Universe URLs as subdomains instead of `/u/<universe_slug>`.**
 
@@ -130,6 +132,8 @@ depends on. The competitor survey on 2026-10-27 turned the four `check <site>` n
 
 50. **Universe canon rules.**
 
+   NOTE: The first story-structure import slice waits on this item.
+
    The app holds facts as records — profiles, knowledge changes, ownerships, relationships, Events —
    but no record states a rule the story must obey, such as what magic costs or how long a road takes.
    `PlotLens` sells exactly this as "world rules" and links each violation back to the rule's source,
@@ -147,8 +151,10 @@ depends on. The competitor survey on 2026-10-27 turned the four `check <site>` n
    timeline answer where a name appears, comes and goes, and is overused; its character detection is
    the same read. **Can be done without a model:** index Element bodies for registered names and
    aliases, present mentions as suggestions separate from presence so an unlinked name never becomes
-   a fact, and show a record's mentions beside "appears in scenes". It also supplies the data the
-   appearance heatmap idea in FUTURE WORK needs.
+   a fact, and show a record's mentions beside "appears in scenes". Highlighting a recognized name
+   in prose is the first surface of that same index rather than a separate feature: Scene Details
+   and the printable export mark the name and open the record, while an unlinked name stays a
+   suggestion. It also supplies the mention layer the appearance heatmap needs.
 
 52. **Scene planning board and matrix.**
 
@@ -233,17 +239,97 @@ depends on. The competitor survey on 2026-10-27 turned the four `check <site>` n
    routes, plots, tropes, memberships, and change history have no download. `Novilot` pushes
    manuscripts, Story Bible, and outline packages to Dropbox or a private GitHub repository as a
    safety net. **Needs a format and a gate:** the loader already validates YAML manifests, so an
-   admin-only archive in that shape is the obvious first slice, and restore is a separate, destructive,
-   approval-required command that must not reuse the demo reset path. Backup first, restore in a
-   second change.
+   admin-only archive in the story-structure layout is the obvious first slice, and restore is a
+   separate, destructive, approval-required command that must not reuse the demo reset path. Backup
+   first, restore in a second change.
+
+61. **Story-structure interchange layout.**
+
+   The tcs repository already holds a universe as directories of Markdown with YAML frontmatter —
+   `story/characters/`, `story/factions/`, `story/locations/`, `story/tech/`, `story/plots/`, and
+   `story/chapters/` — while this app has no format it can read or write. Define one layout and a
+   validator: a manifest naming the universe and its stories, one directory per record type,
+   frontmatter for every field that is not prose, a body whose sections map to the profile answers,
+   `[[slug]]` and `[[rule:ID]]` references, and a `canon/` home for rules. It is the contract the
+   importer reads and the universe backup writes, not a second storage format: the database stays the
+   source of truth. **Needs decisions:** how closely the layout follows tcs's own directories, which
+   frontmatter keys are required, how a `tech/` file becomes an Item, and how the single
+   `docs/canon.md` becomes rule records. The validator runs without writing, and every test fixture
+   is synthetic — the real novel is never committed.
+
+62. **First story-structure import: reader, command, page, and canon.**
+
+   Nothing imports a source directory today, and the importer is meant to grow one record type at a
+   time. This slice delivers the reusable path every later slice plugs into: a reader for the layout,
+   a registry where each record type is its own importer class behind one small shared interface, an
+   entry point that imports everything currently registered, a Rails task taking the source path
+   (proposed as `bin/rails story_structure:import`), and a platform-admin page that picks a folder
+   under a configured import root, lists the registered slices, and previews counts before writing.
+   Adding a type must not edit the command or the page. **Canon is the first slice, so this waits on
+   the Universe canon rules item.**
+
+   A run **replaces** the universe named by the manifest: create it when absent, delete and recreate
+   it when present, after an explicit destructive confirmation that says records created in the app
+   for that universe are lost. No other universe is touched. The source directory lives outside the
+   repository and is never copied into it; the page never accepts an arbitrary path from the browser,
+   only a folder under the configured root; the page is platform-admin-only because it creates and
+   destroys universes; and the task refuses a production run without the same confirmation. **Needs a
+   safety rule** for a target universe with open drafts or members other than the importer, and a
+   synthetic fixture universe that exercises the reader without any real prose.
+
+63. **Import slice: Characters and Factions.**
+
+   These are the first two record types after canon because they are the tcs directories that already
+   hold real records. Map the template frontmatter and body sections onto the existing profile
+   answers — `at_a_glance`, `wants`, `needs`, `lies_to_self`, `contradictions`,
+   `under_pressure_they`, `never`, `pronouns`, and `aliases` for a Character; `mission`,
+   `actual_aims`, `structure`, `internal_divisions`, `resources`, `would_never`, and
+   `would_absolutely` for a Faction — and resolve each `[[slug]]` reference to the record created in
+   the same run. **Needs a written field-by-field mapping** and a decision about `affiliation`, which
+   may be a Character's faction membership rather than a profile answer. A reference whose target is
+   missing is reported, never silently dropped, and a second import of an unchanged source must
+   produce an identical universe.
+
+64. **Import slice: Locations, Items, and Plots.**
+
+   tcs `locations/` maps to the five sensory answers and the five layout answers, `tech/` maps to
+   Items, and `plots/` maps to Story-owned Plots with their type, status, owner POV, and question.
+   **Needs the same field mapping** plus a hierarchy decision: tcs files are flat, while Locations
+   and Items carry `parent_id`. Scene assignments cannot arrive until the Scene slice exists, so a
+   Plot lands with its description and no Scenes.
+
+65. **Import slice: Sections, Scenes, and Elements.**
+
+   tcs's `chapters/` is empty today, so this slice waits for prose in the source. It is not the
+   arbitrary-manuscript importer: that one accepts Word, Markdown, or HTML and needs mapping and
+   preview rules, while this one reads files already in the interchange layout. **Needs** the
+   layout's Scene frontmatter — chapter, sequence, POV, location, timeline, branch, and status —
+   mapped onto Section, Scene, point of view, datetime, and Tags, with dialogue attribution preserved
+   only where the source records it. A chapter file that cannot be mapped is reported rather than
+   guessed at.
+
+66. **Appearance heatmap with a separate mention layer.**
+
+   `SceneAppearances` answers which Scenes one record appears in, but nothing shows the whole Story
+   at once. A Story-scoped grid has one row per Character and one column per Scene in narrative
+   order. **Two layers, never merged:** recorded presence (an explicit link, Dialogue speech, or an
+   Event reference) and names written in Element prose, drawn in a visually distinct way, with a
+   legend that says a mention is not an appearance. **Needs** the prose mention index for the second
+   layer, a visual design that holds in light and dark and print and does not rely on hue alone, and
+   a table equivalent for keyboard and screen readers. The grid stays read-only.
+
+67. **Scenes-per-Character chart.**
+
+   A record page lists its own appearances and the Characters list is Universe-scoped, but no page
+   answers how much of the current Story each Character carries. One bar per Character counts the
+   Scenes in which they appear, over the current Story. The count is the existing union — explicit
+   link, Dialogue speech, Event reference — with a Character who both participates and speaks
+   counted once; prose mentions are excluded until the mention index exists, and then only as a
+   second distinguished layer. **Needs a home** — the Story overview is the natural one because the
+   measure is Story-scoped — plus a table equivalent and a chart pattern shared with the heatmap.
+   There is no chart library; the Map's server-rendered SVG is the closest existing pattern.
 
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
 analyzed like the list above, given the next number, and moved under PENDING WORK.
-
-- highlight things in text (locations, characters, items, etc.)
-- appearance heatmap
-- characters per scenes chart
-- import characters, factions, scenes, from tcs.git
-- define a new story structure zipfile with directories for scenes, plot, canon, characters, etc.

@@ -1,0 +1,197 @@
+// The printable manuscript's page. It reuses the application's typography and
+// light-theme tokens; only the document measure, the title page, the scene
+// notes, and the print rules are its own. Everything here is scoped to the
+// manuscript layout, so no workspace page inherits a book's leading.
+.manuscript-body {
+  min-height: 100vh;
+  // The application shell offsets the body for the fixed navbar; this layout
+  // has no navbar, so the offset would only push the title page down.
+  padding-top: 0;
+  background: #fff;
+}
+
+.manuscript {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+  line-height: 1.75;
+}
+
+.manuscript-title-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 70vh;
+  margin-bottom: 4rem;
+  text-align: center;
+  break-after: page;
+}
+
+.manuscript-universe {
+  margin-bottom: .5rem;
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.manuscript-story-title {
+  margin-bottom: 1.5rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.manuscript-story-description {
+  max-width: 34rem;
+  margin: 0 auto;
+  color: var(--bs-secondary-color);
+  font-size: 1.125rem;
+}
+
+.manuscript-print-hint {
+  margin-top: 2rem;
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+}
+
+.manuscript-section {
+  margin-bottom: 3rem;
+}
+
+.manuscript-section-title {
+  margin-bottom: 1.5rem;
+  break-after: avoid;
+}
+
+.manuscript-scene {
+  margin-bottom: 2.5rem;
+}
+
+.manuscript-scene-title {
+  margin-bottom: 1rem;
+  break-after: avoid;
+}
+
+.manuscript-prose {
+  margin-bottom: 1rem;
+}
+
+.manuscript-empty {
+  color: var(--bs-secondary-color);
+  font-style: italic;
+}
+
+.manuscript-notes {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: .25rem 1rem;
+  margin-bottom: 1.5rem;
+  padding: .75rem 1rem;
+  border-left: 3px solid var(--bs-border-color);
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-secondary-color);
+  font-size: .875rem;
+  break-inside: avoid;
+}
+
+.manuscript-notes dt {
+  font-weight: 600;
+}
+
+.manuscript-notes dd {
+  margin: 0;
+}
+
+.manuscript-note-list {
+  margin: 0;
+}
+
+.manuscript-dialogue {
+  margin-bottom: 1rem;
+}
+
+.manuscript-turn {
+  margin-bottom: .75rem;
+}
+
+.manuscript-speaker {
+  display: block;
+  font-size: .8125rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.manuscript-parenthetical {
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.manuscript-line {
+  display: block;
+}
+
+.manuscript-attribution {
+  color: var(--bs-secondary-color);
+  font-style: italic;
+}
+
+.manuscript-appendix {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.manuscript-appendix-category {
+  margin-bottom: 2rem;
+  break-inside: avoid;
+}
+
+.manuscript-appendix-title {
+  margin-bottom: .75rem;
+}
+
+.manuscript-appendix-list li {
+  margin-bottom: .5rem;
+}
+
+.manuscript-appendix-name {
+  font-weight: 600;
+}
+
+.manuscript-appendix-summary {
+  display: block;
+  color: var(--bs-secondary-color);
+}
+
+@media print {
+  .manuscript-body {
+    background: #fff;
+  }
+
+  .manuscript {
+    max-width: none;
+    padding: 0;
+  }
+
+  // The print hint is the one piece of the page that is not the manuscript:
+  // it exists to tell a screen reader how to print the page it is on.
+  .manuscript-screen-only {
+    display: none !important;
+  }
+
+  .manuscript-title-page {
+    min-height: auto;
+    margin-bottom: 2rem;
+  }
+
+  .manuscript-notes {
+    background: transparent;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

@@ -95,20 +95,6 @@ depends on. Loose notes still belong under FUTURE WORK until they are triaged in
    needs a keyboard and touch path, and the SVG edges must stay aligned under the transform. Worth
    doing only when a universe's event count makes the wrapped layout genuinely hard to read.
 
-46. **Export a Story in book format.**
-
-   Nothing exists. **Needs a format and scope decision:** manuscript output (Markdown, HTML, PDF, or
-   EPUB), assembled from Sections and Scenes in narrative order, naming which fields and Elements
-   are included, whether pending changes are excluded, and where the action lives. Build it on the
-   story-scoped read path and keep access rules identical to reading the Story.
-
-47. **Export a Story in script format.**
-
-   Nothing exists. **Needs a format and scope decision:** screenplay/Fountain or plain text, with
-   Scene headings from Sections and Scenes, Element roles, and Dialogue turns. It shares the
-   assembly step with book export but not the output contract, so decide the two separately even if
-   they ship together.
-
 48. **The deployment-secret permissions test can pass with no assertions.**
 
    The 2026-10-25 suite reports "Test is missing assertions" for

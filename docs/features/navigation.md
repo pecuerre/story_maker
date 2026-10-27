@@ -86,7 +86,9 @@ always knows which scope a link belongs to:
   stories plus a prompt to select one. Creating a story belongs to the universe page (and the
   stories index), never to the sidebar. **Plots** and **Scenes** are real story-scoped links with
   their own cached counts once a story is selected, and `aria-disabled` `#` placeholders while no
-  story is current — neither falls back to the universe's first story.
+  story is current — neither falls back to the universe's first story. **Export** follows Scenes and
+  opens the Story's export options; its page contract is in
+  [features/exports.md](exports.md).
 
 Configuration is **not** in this column: this one stays about universe and story content only.
 

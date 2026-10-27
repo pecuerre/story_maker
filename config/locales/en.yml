@@ -77,6 +77,7 @@ en:
     plots: "Plots"
     scenes: "Scenes"
     narrative_order: "Narrative order"
+    export: "Export"
     all_stories: "All stories"
     select_story_hint: "Select a story to work on its sections, plot arcs, and scenes."
     # The right column: universe configuration and the reserved tool areas.
@@ -1156,6 +1157,47 @@ en:
       created: "Story was successfully created."
       updated: "Story was successfully updated."
       deleted: "Story was successfully deleted."
+
+  # The export surface is one options page and the printable document it opens.
+  # Scope values (`prose`, `front_matter`, `bible`) are URL data and stay
+  # untranslated; only the labels beside them are keys.
+  story_exports:
+    title: "Export"
+    description: "Turn %{story} into a document you can read, print, or save as a PDF."
+    back_to_story: "Back to story"
+    printable:
+      eyebrow: "Printable HTML page"
+      heading: "Printable HTML page"
+      description: "Open the story as a clean page with nothing but its prose. From the browser, print it or save it as a PDF."
+      scope_legend: "What to include"
+      submit: "Open printable page"
+    scopes:
+      prose:
+        label: "Prose only"
+        description: "Section headings, scene titles, narration, and dialogue."
+      front_matter:
+        label: "Prose and scene notes"
+        description: "The same document, with each scene's point of view, in-world time, characters, items, locations, and depicted events above its prose."
+      bible:
+        label: "Prose, scene notes, and the universe bible"
+        description: "The same document, with the universe's characters, locations, items, and events added as appendices."
+    notes:
+      heading: "About the export"
+      print: "The printable page opens in this tab. Use the browser's print command to print it or save it as a PDF."
+      pending: "Only saved records are exported. Changes remembered in a pending draft are not part of the story until they are applied."
+      pov: "Point of view"
+      time: "In-world time"
+      characters: "Characters"
+      items: "Items"
+      locations: "Locations"
+      events: "Events depicted"
+    manuscript:
+      document_title: "%{story} — manuscript"
+      print_hint: "Use the browser's print command to print this page or save it as a PDF."
+      back: "Export options"
+      empty: "This story has no scenes yet, so there is nothing to export."
+      no_prose: "No prose has been written for this scene yet."
+      appendix_heading: "Universe bible"
 
   tropes:
     title: "Tropes"

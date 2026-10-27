@@ -1,0 +1,63 @@
+<%# One Scene: its title, the optional notes the front-matter scope asks for, and
+    the prose from its Elements in the Scene's own flat order.
+
+    A Dialogue with line-level turns prints the turns, because those are the
+    attributed lines; its block body repeats the same speech. A Dialogue with no
+    turns prints its body and names the speakers, which is the only attribution
+    that source has. Narration prints its body alone. %>
+<article class="manuscript-scene">
+  <%= content_tag(manuscript_scene_heading(depth), scene.name, class: "manuscript-scene-title") %>
+
+  <% if manuscript.scene_notes? %>
+    <% notes = manuscript_scene_notes(scene) %>
+    <% if notes.any? %>
+      <dl class="manuscript-notes">
+        <% notes.each do |note| %>
+          <dt><%= note[:label] %></dt>
+          <dd>
+            <% if note[:text].present? %>
+              <%= note[:text] %>
+            <% else %>
+              <ul class="manuscript-note-list list-unstyled">
+                <% note[:entries].each do |name, role| %>
+                  <li><%= name %><% if role.present? %> — <%= role %><% end %></li>
+                <% end %>
+              </ul>
+            <% end %>
+          </dd>
+        <% end %>
+      </dl>
+    <% end %>
+  <% end %>
+
+  <% prose = false %>
+  <% scene.scene_elements.to_a.sort_by { |element| [ element.position, element.id ] }.each do |element| %>
+    <% turns = element.scene_dialogue_turns.to_a.sort_by { |turn| [ turn.position, turn.id ] } %>
+    <% if turns.any? %>
+      <% prose = true %>
+      <div class="manuscript-dialogue">
+        <% turns.each do |turn| %>
+          <p class="manuscript-turn">
+            <span class="manuscript-speaker">
+              <%= turn.speaker.name %>
+              <% if turn.parenthetical.present? %>
+                <span class="manuscript-parenthetical">(<%= turn.parenthetical %>)</span>
+              <% end %>
+            </span>
+            <span class="manuscript-line"><%= turn.body %></span>
+          </p>
+        <% end %>
+      </div>
+    <% elsif element.body.present? %>
+      <% prose = true %>
+      <%= simple_format(element.body, class: "manuscript-prose") %>
+      <% if element.dialogue? && element.characters.any? %>
+        <p class="manuscript-attribution"><%= element.characters.map(&:name).to_sentence %></p>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% unless prose %>
+    <p class="manuscript-empty"><%= t("story_exports.manuscript.no_prose") %></p>
+  <% end %>
+</article>

@@ -89,6 +89,14 @@ Rails.application.routes.draw do
       # only a `show`, and it is signed-in only (the controller deliberately does
       # not opt out of `require_authentication`).
       resource :narrative_order, only: :show
+      # The export surface: one options page and the printable manuscript it
+      # opens. Both are reads of the Story, so they are guest-readable like the
+      # Story page itself. A second output format adds one `get` beside
+      # `manuscript` rather than a route per scope. The manuscript is its own
+      # controller so the shared authorization sees a `show` and grants the same
+      # read the Story page grants, without teaching that policy this feature.
+      resource :export, only: :show, controller: "story_exports"
+      get "export/manuscript", to: "story_manuscripts#show", as: :export_manuscript
     end
     get "tags", to: "tags#index", as: :tags
     resources :item_tags, only: %i[ index show create update destroy ]

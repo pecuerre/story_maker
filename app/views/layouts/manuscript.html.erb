@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<%# The printable manuscript is a document, not a workspace page: it has no
+    navbar, sidebar, or action bar, which is what makes the printed page the
+    manuscript and nothing else. It is pinned to the light theme on purpose —
+    the reader's dark preference is a screen setting, and a dark page would
+    print as a page of ink. The app stylesheet supplies the same typography as
+    the rest of the product; `manuscript.css` adds only this document's page. %>
+<html lang="<%= AppLocale.html_lang_for(current_locale) %>" data-bs-theme="light">
+  <head>
+    <title><%= content_for(:title) || t("app.name") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csp_meta_tag %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  </head>
+
+  <body class="manuscript-body">
+    <%= yield %>
+  </body>
+</html>

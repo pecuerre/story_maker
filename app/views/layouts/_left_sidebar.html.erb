@@ -122,6 +122,15 @@
           count: scene_count,
           path: universe_story_scenes_path(story_id: Current.story),
           controllers: %i[ scenes ] %>
+
+        <%# Export reads the selected Story as a book. It belongs to the story
+            block rather than to a workspace tab: it is a destination of its own
+            and it is the same for every story page. %>
+        <%= render "shared/sidebar_link",
+          icon: "download",
+          label: t("sidebar.export"),
+          path: universe_story_export_path(story_id: Current.story),
+          controllers: %i[ story_exports ] %>
       <% else %>
         <%= render "shared/sidebar_link",
           icon: "books",

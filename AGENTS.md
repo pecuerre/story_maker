@@ -38,6 +38,7 @@ the subject and read its owner:
 | Universe-scoped Faction profiles and tags | [`docs/features/factions.md`](docs/features/factions.md) |
 | Location profile answers, presence, and the Locations workspace | [`docs/features/locations.md`](docs/features/locations.md) |
 | Item profile answers, ownership, and the Items workspace | [`docs/features/items.md`](docs/features/items.md) |
+| Reading a Story as a printable book and the export scopes | [`docs/features/exports.md`](docs/features/exports.md) |
 | **Universe-scoped Routes** between Locations | [`docs/features/routes.md`](docs/features/routes.md) |
 | The read-only Map view of Locations and Routes | [`docs/features/map.md`](docs/features/map.md) |
 | The contract every in-list filter shares: narrowing, canonical queries, empty results, pending rows | [`docs/features/list_filters.md`](docs/features/list_filters.md) |

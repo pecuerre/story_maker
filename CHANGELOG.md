@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Story book export.** Adds a Story-scoped Export page whose printable HTML manuscript assembles Sections and Scenes with prose, optional scene notes, and optional universe appendices, linked from the story sidebar.
 - **Narrative order beside the Timeline.** Adds a signed-in, read-only Story tab that lists the Scene sequence beside the Timeline, labels each step, and reports a Scene whose own time falls outside its linked Event.
 - **Ordered Scene-to-Event links.** A Scene now depicts any number of Events through its own Events tab, each link carrying an optional free-text role and its own order; the single `event_id` and its form selector are gone.
 
@@ -57,6 +58,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Story book export documentation.** Adds the export feature document and records the sidebar entry, the three scopes, the assembly order, and the printable layout.
 - **Scene-to-Event decision and owners.** Records ADR 0038 and updates Scenes, Events, data model, i18n, and the backlog for ordered Scene-to-Event links.
 
 ### planned

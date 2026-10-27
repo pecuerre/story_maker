@@ -1,0 +1,50 @@
+<% content_for :title, t("story_exports.title") %>
+
+<%= render "shared/page_header",
+  title: t("story_exports.title"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
+  description: t("story_exports.description", story: @story.name) do %>
+  <%= link_to t("story_exports.back_to_story"), universe_story_path(id: @story), class: "btn btn-outline-secondary" %>
+<% end %>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <%# The one output this page offers today. A second format is a second
+        section beside this one, not a second page: the scope choice is the
+        document's, and every future format reads the same assembled Story. %>
+    <section class="surface-card h-100 p-4" aria-labelledby="printable-html-title">
+      <div class="page-eyebrow"><%= t("story_exports.printable.eyebrow") %></div>
+      <h2 class="h5" id="printable-html-title"><%= t("story_exports.printable.heading") %></h2>
+      <p class="text-body-secondary"><%= t("story_exports.printable.description") %></p>
+
+      <%= form_with url: universe_story_export_manuscript_path(story_id: @story), method: :get do %>
+        <fieldset class="mb-4">
+          <legend class="form-label"><%= t("story_exports.printable.scope_legend") %></legend>
+          <% Manuscript::SCOPES.each do |scope| %>
+            <div class="form-check mb-3">
+              <%= radio_button_tag :scope, scope, scope == @scope,
+                id: "scope_#{scope}",
+                class: "form-check-input",
+                aria: { describedby: "scope_#{scope}_description" } %>
+              <%= label_tag "scope_#{scope}", t("story_exports.scopes.#{scope}.label"),
+                class: "form-check-label fw-semibold" %>
+              <p class="form-text mb-0" id="scope_<%= scope %>_description">
+                <%= t("story_exports.scopes.#{scope}.description") %>
+              </p>
+            </div>
+          <% end %>
+        </fieldset>
+
+        <%= submit_tag t("story_exports.printable.submit"), name: nil, class: "btn btn-primary" %>
+      <% end %>
+    </section>
+  </div>
+
+  <div class="col-lg-4">
+    <section class="surface-card h-100 p-4" aria-labelledby="export-notes-title">
+      <h2 class="h6" id="export-notes-title"><%= t("story_exports.notes.heading") %></h2>
+      <p class="text-body-secondary"><%= t("story_exports.notes.print") %></p>
+      <p class="text-body-secondary mb-0"><%= t("story_exports.notes.pending") %></p>
+    </section>
+  </div>
+</div>

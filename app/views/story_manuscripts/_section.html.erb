@@ -1,0 +1,15 @@
+<%# One Section and its Scenes, with child Sections nested below. The heading
+    level follows `node.depth`, so a chapter and its parts do not read as
+    siblings. Section descriptions are author notes about the structure rather
+    than manuscript prose, so they are deliberately not printed. %>
+<section class="manuscript-section">
+  <%= content_tag(manuscript_section_heading(node.depth), node.section.name, class: "manuscript-section-title") %>
+
+  <% node.scenes.each do |scene| %>
+    <%= render "story_manuscripts/scene", scene: scene, depth: node.depth, manuscript: manuscript %>
+  <% end %>
+
+  <% node.children.each do |child| %>
+    <%= render "story_manuscripts/section", node: child, manuscript: manuscript %>
+  <% end %>
+</section>

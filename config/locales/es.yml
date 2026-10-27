@@ -74,6 +74,7 @@ es:
     plots: "Tramas"
     scenes: "Escenas"
     narrative_order: "Orden narrativo"
+    export: "Exportar"
     all_stories: "Todas las historias"
     select_story_hint: "Selecciona una historia para trabajar en sus secciones, tramas y escenas."
     tools:
@@ -1098,6 +1099,48 @@ es:
       created: "La historia se ha creado correctamente."
       updated: "La historia se ha actualizado correctamente."
       deleted: "La historia se ha eliminado correctamente."
+
+  # La superficie de exportación: una página de opciones y el documento
+  # imprimible que abre. Los valores de alcance (`prose`, `front_matter`,
+  # `bible`) son datos de la URL y no se traducen; solo las etiquetas que los
+  # acompañan son claves.
+  story_exports:
+    title: "Exportar"
+    description: "Convierte %{story} en un documento que puedes leer, imprimir o guardar como PDF."
+    back_to_story: "Volver a la historia"
+    printable:
+      eyebrow: "Página HTML imprimible"
+      heading: "Página HTML imprimible"
+      description: "Abre la historia como una página limpia con solo su prosa. Desde el navegador, puedes imprimirla o guardarla como PDF."
+      scope_legend: "Qué incluir"
+      submit: "Abrir la página imprimible"
+    scopes:
+      prose:
+        label: "Solo prosa"
+        description: "Encabezados de sección, títulos de escena, narración y diálogo."
+      front_matter:
+        label: "Prosa y notas de escena"
+        description: "El mismo documento, con el punto de vista, la hora en el mundo, los personajes, los objetos, los lugares y los sucesos representados de cada escena encima de su prosa."
+      bible:
+        label: "Prosa, notas de escena y la biblia del universo"
+        description: "El mismo documento, con los personajes, lugares, objetos y sucesos del universo añadidos como apéndices."
+    notes:
+      heading: "Acerca de la exportación"
+      print: "La página imprimible se abre en esta pestaña. Usa el comando de impresión del navegador para imprimirla o guardarla como PDF."
+      pending: "Solo se exportan los registros guardados. Los cambios recordados en un borrador pendiente no forman parte de la historia hasta que se aplican."
+      pov: "Punto de vista"
+      time: "Hora en el mundo"
+      characters: "Personajes"
+      items: "Objetos"
+      locations: "Lugares"
+      events: "Sucesos representados"
+    manuscript:
+      document_title: "%{story} — manuscrito"
+      print_hint: "Usa el comando de impresión del navegador para imprimir esta página o guardarla como PDF."
+      back: "Opciones de exportación"
+      empty: "Esta historia aún no tiene escenas, así que no hay nada que exportar."
+      no_prose: "Todavía no se ha escrito prosa para esta escena."
+      appendix_heading: "Biblia del universo"
 
   tropes:
     title: "Tropos"

@@ -1,0 +1,60 @@
+<% content_for :title, t("story_exports.manuscript.document_title", story: @story.name) %>
+
+<article class="manuscript">
+  <header class="manuscript-title-page">
+    <p class="manuscript-universe"><%= Current.universe.name %></p>
+    <h1 class="manuscript-story-title"><%= @story.name %></h1>
+    <% if @story.description.present? %>
+      <p class="manuscript-story-description"><%= @story.description %></p>
+    <% end %>
+
+    <%# The only part of the document that is not the manuscript: it tells the
+        reader how to turn the page into paper or a PDF, and it is the one thing
+        the print stylesheet hides. %>
+    <p class="manuscript-screen-only manuscript-print-hint">
+      <%= t("story_exports.manuscript.print_hint") %>
+      <%= link_to t("story_exports.manuscript.back"), universe_story_export_path(story_id: @story) %>
+    </p>
+  </header>
+
+  <% if @manuscript.sections.empty? && @manuscript.ungrouped_scenes.empty? %>
+    <p class="manuscript-empty manuscript-screen-only"><%= t("story_exports.manuscript.empty") %></p>
+  <% end %>
+
+  <% @manuscript.sections.each do |node| %>
+    <%= render "story_manuscripts/section", node: node, manuscript: @manuscript %>
+  <% end %>
+
+  <% if @manuscript.ungrouped_scenes.any? %>
+    <section class="manuscript-section">
+      <h2 class="manuscript-section-title"><%= t(SectionPaths::UNGROUPED_LABEL_KEY) %></h2>
+      <% @manuscript.ungrouped_scenes.each do |scene| %>
+        <%= render "story_manuscripts/scene", scene: scene, depth: 0, manuscript: @manuscript %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if @manuscript.appendices.any? %>
+    <section class="manuscript-appendix" aria-labelledby="manuscript-appendix-title">
+      <h2 class="manuscript-section-title" id="manuscript-appendix-title">
+        <%= t("story_exports.manuscript.appendix_heading") %>
+      </h2>
+      <% @manuscript.appendices.each do |appendix| %>
+        <section class="manuscript-appendix-category">
+          <h3 class="manuscript-appendix-title"><%= t(appendix.label_key) %></h3>
+          <ul class="manuscript-appendix-list list-unstyled">
+            <% appendix.records.each do |record| %>
+              <li>
+                <span class="manuscript-appendix-name"><%= record.public_send(appendix.label_method) %></span>
+                <% summary = record.public_send(appendix.summary_method) %>
+                <% if summary.present? %>
+                  <span class="manuscript-appendix-summary"><%= summary %></span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </section>
+  <% end %>
+</article>

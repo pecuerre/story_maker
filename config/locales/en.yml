@@ -77,6 +77,7 @@ en:
     sections: "Sections"
     plots: "Plots"
     scenes: "Scenes"
+    scene_board: "Scene board"
     scene_matrix: "Scene matrix"
     appearances: "Appearances"
     narrative_order: "Narrative order"
@@ -2863,6 +2864,25 @@ en:
     empty_title: "No scenes yet"
     empty_writable_description: "Add the first scene to start the narrative order."
     empty_read_only_description: "This story has no scenes to compare yet."
+
+  # The read-only Story-wide Scene planning board. Every Section is a column,
+  # the ungrouped scenes have their own column, and the cards inside a column
+  # keep narrative order. The page adds no order, no editor, and no stored
+  # result.
+  scene_boards:
+    title: "Scene board"
+    description: "The shape of %{story} at once: every section as a column, with its scenes in the order the story tells them."
+    intro: "Columns are sections and the ungrouped scenes, and every card is a scene in narrative order. Move a card in the story's telling order, regroup it into another section, or open it to edit its fields."
+    scroll_label: "Scrollable scene board for %{story}."
+    column_empty: "No scenes here"
+    controls:
+      regroup: "Move to section"
+      section: "Section"
+      regroup_submit: "Move scene"
+    empty:
+      title: "No scenes yet"
+      writable_description: "Add the first scene to start the board."
+      read_only_description: "This story has no scenes to show yet."
 
   # The read-only Story-wide Scene matrix. One row per Scene in narrative order
   # and one column per fact the Story already stores; the table is its own

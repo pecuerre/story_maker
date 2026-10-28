@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Scene board controls.** Writers can move a Scene up or down and regroup it into another Section from its board card, posting the existing Scene actions and returning to the board.
+- **Scene board.** Adds a read-only Story page with every Section as a column plus the ungrouped scenes, each card linking to Scene Details in narrative order.
 - **Scene matrix.** Adds a read-only Story page with one row per Scene in narrative order and columns for section, tags, point of view, in-world time, linked events, element count, word count, and participant count.
 - **Appearance grid.** Adds a read-only Story page with one row per Character and one column per Scene, drawing recorded presence and prose mentions as separate marks with an accessible table and print styles.
 - **Prose mentions.** A read-time index matches Character names and aliases in Element bodies, lists unrecorded mentions on the Character page, links names on Scene Details, and marks them in the printable manuscript without recording presence.
@@ -54,6 +56,8 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Scene board control documentation.** Records the card controls, the named board return destination, and the no-drag rule in Scenes and Visual design, and removes the delivered slice from the backlog.
+- **Scene board documentation.** Adds the board section and route row to Scenes, the painted column rules to Visual design, and removes the delivered slice from the backlog.
 - **Scene matrix documentation.** Adds the matrix section and route row to Scenes, the painted table rules to Visual design, and removes the delivered slice from the backlog.
 - **Scene planning slices.** Splits the Scene planning board and matrix backlog note into three numbered slices — read-only matrix, read-only board, then reorder and regroup — so each lands separately.
 - **Appearance grid documentation.** Adds the appearances feature document and links it from Scenes, the grid's visual rules, and the docs index.

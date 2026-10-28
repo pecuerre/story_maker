@@ -1,0 +1,115 @@
+<% content_for :title, t("scene_boards.title") %>
+<% editable = can_write_universe? %>
+
+<%= render "shared/page_header",
+  title: t("scene_boards.title"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
+  description: t("scene_boards.description", story: @story.name),
+  count: @board.scenes.size,
+  count_label: "scene" %>
+
+<%= render "shared/content_tabs",
+  aria_label: t("sidebar.story_workspace"),
+  intro: t("scene_boards.intro", story: @story.name),
+  tabs: story_workspace_tabs(@story) %>
+
+<% if @board.scenes? %>
+  <%# The board is a row of Section columns inside one focusable scroll region,
+      so a Story with many Sections scrolls horizontally instead of squashing
+      every column below a readable width. Each card is a link into Scene
+      Details; nothing on the page writes. %>
+  <div class="scene-board-scroll" role="region" tabindex="0"
+    aria-label="<%= t("scene_boards.scroll_label", story: @story.name) %>">
+    <div class="scene-board">
+      <% @board.columns.each do |column| %>
+        <% column_key = column.section&.id || "ungrouped" %>
+        <section class="scene-board-column" aria-labelledby="scene-board-column-<%= column_key %>">
+          <header class="scene-board-column-header">
+            <h2 class="h6" id="scene-board-column-<%= column_key %>">
+              <% if column.ungrouped? %>
+                <%= column.label %>
+              <% else %>
+                <%= link_to column.label, universe_story_section_path(story_id: @story, id: column.section) %>
+              <% end %>
+            </h2>
+            <%= record_count_badge(column.scenes.size, "scene") %>
+          </header>
+
+          <% if column.scenes.any? %>
+            <ul class="list-unstyled scene-board-cards">
+              <% column.scenes.each do |scene| %>
+                <% at_first = scene.position <= @board.first_position %>
+                <% at_last = scene.position >= @board.last_position %>
+                <li class="scene-board-card">
+                  <div class="scene-board-card-main">
+                    <span class="scene-board-position"
+                      aria-label="<%= t("shared.scene_position_aria", position: scene.position + 1, total: @board.scenes.size) %>">
+                      <%= scene.position + 1 %>
+                    </span>
+                    <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene),
+                      class: "scene-board-scene-link" %>
+                  </div>
+
+                  <% if editable %>
+                    <%# The card posts the same move and group actions the Scenes list
+                        and the Sections workspace post. `return_to` names the board so
+                        the author stays here; the controller recognizes only that
+                        value and never a URL. The regroup form sits inside a native
+                        disclosure so a board of many cards stays scannable without
+                        hiding the control behind hover or JavaScript. %>
+                    <div class="scene-board-card-controls">
+                      <div class="d-flex align-items-center gap-1">
+                        <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, return_to: SceneBoard::RETURN_TO),
+                          method: :patch,
+                          params: { direction: "up" },
+                          class: "btn btn-sm btn-light border",
+                          disabled: at_first,
+                          title: at_first ? t("scenes.move.already_first") : t("scenes.move.up"),
+                          aria: { label: t("scenes.move.up_aria", name: scene.name) },
+                          data: { scene_board_move: "up" } do %>
+                          <i class="bi bi-arrow-up" aria-hidden="true"></i>
+                        <% end %>
+                        <%= button_to move_universe_story_scene_path(story_id: @story, id: scene, return_to: SceneBoard::RETURN_TO),
+                          method: :patch,
+                          params: { direction: "down" },
+                          class: "btn btn-sm btn-light border",
+                          disabled: at_last,
+                          title: at_last ? t("scenes.move.already_last") : t("scenes.move.down"),
+                          aria: { label: t("scenes.move.down_aria", name: scene.name) },
+                          data: { scene_board_move: "down" } do %>
+                          <i class="bi bi-arrow-down" aria-hidden="true"></i>
+                        <% end %>
+                      </div>
+
+                      <details class="scene-board-regroup">
+                        <summary class="btn btn-sm btn-light border scene-board-regroup-toggle"><i class="bi bi-folder-symlink" aria-hidden="true"></i> <%= t("scene_boards.controls.regroup") %></summary>
+                        <%= form_with url: group_universe_story_scenes_path(story_id: @story), method: :patch,
+                          class: "scene-board-regroup-form" do |form| %>
+                          <%= hidden_field_tag :scene_id, scene.id %>
+                          <%= hidden_field_tag :return_to, SceneBoard::RETURN_TO %>
+                          <%= label_tag "scene_#{scene.id}_section", t("scene_boards.controls.section"), class: "visually-hidden" %>
+                          <%= select_tag :section_id,
+                            options_for_select(@board.grouping_options, scene.section_id),
+                            id: "scene_#{scene.id}_section",
+                            class: "form-select form-select-sm" %>
+                          <%= form.submit t("scene_boards.controls.regroup_submit"), class: "btn btn-sm btn-outline-primary" %>
+                        <% end %>
+                      </details>
+                    </div>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="scene-board-empty"><%= t("scene_boards.column_empty") %></p>
+          <% end %>
+        </section>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <%= render "shared/empty_state",
+    title: t("scene_boards.empty.title"),
+    description: can_write_universe? ? t("scene_boards.empty.writable_description") : t("scene_boards.empty.read_only_description"),
+    icon: "kanban" %>
+<% end %>

@@ -115,7 +115,7 @@ class ScenesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to filtered_list_path, **flash_message, status: :see_other
+        redirect_to move_return_path, **flash_message, status: :see_other
       end
     end
   end
@@ -135,7 +135,7 @@ class ScenesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to universe_story_sections_path(story_id: @story), **group_flash, status: :see_other
+        redirect_to group_return_path, **group_flash, status: :see_other
       end
     end
   end
@@ -164,6 +164,26 @@ class ScenesController < ApplicationController
     path = universe_story_scenes_path(story_id: @story)
 
     query.any? ? "#{path}?#{query.to_query}" : path
+  end
+
+  # A move returns to the board when the card's form says so, and to the
+  # filtered Scenes list it has always returned to otherwise.
+  def move_return_path
+    return universe_story_scene_board_path(story_id: @story) if scene_board_return?
+
+    filtered_list_path
+  end
+
+  # A grouping returns to the board when the card's form says so, and to the
+  # Sections workspace it has always returned to otherwise.
+  def group_return_path
+    return universe_story_scene_board_path(story_id: @story) if scene_board_return?
+
+    universe_story_sections_path(story_id: @story)
+  end
+
+  def scene_board_return?
+    params[:return_to].to_s == SceneBoard::RETURN_TO
   end
 
   def set_scene

@@ -99,6 +99,10 @@ Rails.application.routes.draw do
       # own and no mutation route, so it is a singular resource with only a
       # `show`.
       resource :scene_matrix, only: :show
+      # The Story-wide Scene planning board: every Section as a column plus the
+      # ungrouped scenes. It is the same kind of read as the matrix — no record,
+      # no mutation route — so it is a singular resource with only a `show`.
+      resource :scene_board, only: :show
       # The export surface: one options page and the printable manuscript it
       # opens. Both are reads of the Story, so they are guest-readable like the
       # Story page itself. A second output format adds one `get` beside

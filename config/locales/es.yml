@@ -74,6 +74,7 @@ es:
     sections: "Secciones"
     plots: "Tramas"
     scenes: "Escenas"
+    scene_board: "Tablero de escenas"
     scene_matrix: "Matriz de escenas"
     appearances: "Apariciones"
     narrative_order: "Orden narrativo"
@@ -2827,6 +2828,25 @@ es:
     empty_title: "Aún no hay escenas"
     empty_writable_description: "Añade la primera escena para empezar el orden narrativo."
     empty_read_only_description: "Esta historia aún no tiene escenas que comparar."
+
+  # El tablero de escenas de toda la historia, de solo lectura. Cada sección es
+  # una columna, las escenas sin agrupar tienen la suya, y las tarjetas de una
+  # columna conservan el orden narrativo. La página no añade orden, editor ni
+  # resultado almacenado.
+  scene_boards:
+    title: "Tablero de escenas"
+    description: "La forma de %{story} de un vistazo: cada sección como una columna, con sus escenas en el orden en que la historia las cuenta."
+    intro: "Las columnas son las secciones y las escenas sin agrupar, y cada tarjeta es una escena en orden narrativo. Mueve una tarjeta en el orden en que la historia se cuenta, reagrúpala en otra sección o ábrela para editar sus campos."
+    scroll_label: "Tablero de escenas desplazable de %{story}."
+    column_empty: "Aquí no hay escenas"
+    controls:
+      regroup: "Mover a sección"
+      section: "Sección"
+      regroup_submit: "Mover escena"
+    empty:
+      title: "Aún no hay escenas"
+      writable_description: "Añade la primera escena para empezar el tablero."
+      read_only_description: "Esta historia aún no tiene escenas que mostrar."
 
   # La matriz de escenas de toda la historia, de solo lectura. Una fila por
   # escena en orden narrativo y una columna por cada dato que la historia ya

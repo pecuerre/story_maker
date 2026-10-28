@@ -11,6 +11,7 @@ module StoryWorkspaceHelper
       { label: t("sidebar.sections"), path: universe_story_sections_path(story_id: story), controller: :sections },
       { label: t("sidebar.plots"), path: universe_story_plots_path(story_id: story), controller: :plots },
       { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: story), controller: :scenes },
+      { label: t("sidebar.scene_board"), path: universe_story_scene_board_path(story_id: story), controller: :scene_boards },
       { label: t("sidebar.scene_matrix"), path: universe_story_scene_matrix_path(story_id: story), controller: :scene_matrices },
       { label: t("sidebar.appearances"), path: universe_story_appearances_path(story_id: story), controller: :appearances }
     ]

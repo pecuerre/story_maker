@@ -501,6 +501,27 @@ The painted shape:
 - A long Section name wraps instead of pushing the layout, and the action group wraps below the title
   at narrow widths instead of hiding it or relying on hover.
 
+### Scene board
+
+The board's columns, ordering, and read-only contract are in
+[features/scenes.md](features/scenes.md#the-story-wide-scene-planning-board); the painted shape:
+
+- A `.scene-board-scroll` region with `tabindex="0"` and an accessible name holds a row of fixed-width
+  columns. It scrolls horizontally rather than shrinking a column below a readable width, and a tall
+  board scrolls vertically inside the same bounded region, so each column heading stays at the top of
+  its column.
+- A column is a bordered surface carrying its Section name (linked to the Section page) and a count
+  pill that names what it counts. An empty column says **No scenes here** instead of disappearing.
+- A card uses the tertiary background inside its column and carries the 1-based position pill and the
+  Scene title link. Nothing on the card depends on hover.
+- A writer's card adds the list's Move up/Move down buttons, with the same disabled boundary state, and
+  a **Move to section** disclosure holding a compact Section selector and its submit. The disclosure is
+  a native `<details>`, so regrouping needs no JavaScript and a keyboard or touch reader uses the same
+  control as a mouse. Read-only members and guests get the card without those controls, and there is no
+  drag handle.
+- Print lets the columns wrap, removes the sticky heading offset, and keeps a column from breaking
+  across pages.
+
 ### Scene matrix
 
 The matrix's rows, columns, and read-only contract are in

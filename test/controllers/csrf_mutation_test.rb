@@ -172,6 +172,33 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the scene board's move and regroup forms carry the page token" do
+    with_forgery_protection do
+      story = stories(:story_one)
+      scene = scenes(:scene_one)
+      board_path = universe_story_scene_board_path(universe_slug: @universe.slug, story_id: story)
+      token = fetch_page_token(board_path)
+
+      get board_path
+      assert_response :success
+      assert_select "form[action*='move'] input[name=authenticity_token]", minimum: 1
+      assert_select "form input[name=return_to][value=?]", SceneBoard::RETURN_TO, minimum: 1
+
+      assert_no_difference -> { scene.reload.position } do
+        patch move_universe_story_scene_path(universe_slug: @universe.slug, story_id: story, id: scene),
+          params: { direction: "down", return_to: SceneBoard::RETURN_TO }
+      end
+      assert_includes 406..422, response.status
+
+      assert_difference -> { scene.reload.position }, 1 do
+        patch move_universe_story_scene_path(universe_slug: @universe.slug, story_id: story, id: scene),
+          params: { direction: "down", return_to: SceneBoard::RETURN_TO },
+          headers: { "X-CSRF-Token" => token }
+      end
+      assert_response :see_other
+    end
+  end
+
   test "a scene element mutation is accepted with the page's own token" do
     with_forgery_protection do
       scene = scenes(:scene_one)

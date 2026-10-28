@@ -287,31 +287,6 @@ triaged into this list.
    [Appearance grid](features/appearances.md). There is no chart library; the Map's server-rendered
    SVG is the closest existing pattern.
 
-69. **Read-only Scene planning board.**
-
-   A Section tree with a Scene list under each node makes a long Story hard to scan for shape, while
-   a board shows the same structure as columns at once: every Section in position order plus an
-   **Ungrouped** column, with that column's Scenes as cards in `Scene#position` order. **This is the
-   second slice**, and it is read-only for the same reason the matrix is: it is a projection of data
-   the list already answers, with each card linking to Scene Details and carrying the position badge
-   and Section name. It introduces no second order — a Section column sorts by the Story's position,
-   never by title — and no drag: the first board is keyboard-scrollable and every destination is a
-   link. **Needs a layout decision** for a Story whose Sections outnumber the viewport: the region
-   scrolls horizontally with the column heading sticky, the same treatment the Appearance grid gives
-   its row and column headers, and the board may state a column count rather than shrink columns
-   below a readable width. It reuses the matrix's reads rather than adding a query of its own.
-
-70. **Scene board control: reorder and regroup.**
-
-   **The third slice, and the only one that writes.** A board that only reorders must reuse the
-   existing sibling-position transaction rather than invent a position column write: `ScenesController#move`
-   with `direction=up|down`, its boundary clamping, no-op flash, and returned filtered list. Regrouping
-   reuses `ScenesController#group` and its copy that the narrative position did not change, so a card
-   never edits `position` and `section_id` in one action. **Needs a UI decision** about which of those
-   controls a card draws and at what width, but a drag gesture can only ever be a second affordance
-   over the same keyboard-operable `button_to` forms, never the only way to move a card. A card that
-   edits a field belongs to the existing draft-backed editor and is not this slice.
-
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is

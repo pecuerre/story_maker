@@ -100,6 +100,7 @@ rule is proved in the model *and* the database.
 | Scene Locations tab | `.../scenes/:scene_id/locations` | HTML index, JSON mutations |
 | Scene Tropes tab | `.../scenes/:scene_id/tropes` | HTML index, JSON mutations |
 | Story-wide Scene matrix | `/u/:universe_slug/s/:story_id/scene_matrix` | Read-only HTML |
+| Story-wide Scene board | `/u/:universe_slug/s/:story_id/scene_board` | HTML read; moves and regroups through the Scene actions |
 
 Scenes have no Universe-level route. Every Scene and Scene Tag route includes its Story, and all
 route-helper keys are passed by name.
@@ -271,6 +272,45 @@ surface, no stored result, and no JavaScript.
 
 The table is its own accessible equivalent, and its painted rules are in
 [visual_design.md](../visual_design.md#scene-matrix).
+
+## The Story-wide Scene planning board
+
+`GET /u/:universe_slug/s/:story_id/scene_board` (`SceneBoardsController#show`) shows the Story's shape
+as columns: every Section in the Story's tree order, plus the **Ungrouped** column, with each column's
+Scenes as cards in `Scene#position` order. It is the board beside the matrix, reached from
+`StoryWorkspaceHelper#story_workspace_tabs`, and it has no record and no mutation route of its own: a
+card posts the same `ScenesController#move` and `#group` actions the Scenes list and the Sections
+workspace already post.
+
+- **The columns are the whole Section tree, even when a column is empty.** A Section with no Scenes
+  keeps its column and says **No scenes here**, because an empty column is where the next Scene goes;
+  dropping it would hide part of the outline. The **Ungrouped** column is always last, so a Scene
+  with no Section can never fall off the board. A Story with no Scenes at all gets the same **No
+  scenes yet** empty state as the list and the matrix.
+- **Grouping is a column, never a second order.** Each column keeps its Scenes in the Story's
+  narrative position, so the board never sorts by title or renumbers anything.
+- **The board reads less than the matrix.** It draws only the Section tree and the Story's Scenes, so
+  it does not pay the matrix's Element, word, and participant counts for cards that show none of
+  them. Both pages read the same stored records.
+- **A writer's card carries the existing move and regroup controls, never a new write.** Move up and
+  Move down post `direction=up|down`; the Move control is disabled at the whole sequence's real first
+  and last positions, exactly as the list disables it. **Move to section** is a native disclosure
+  holding a Section selector and a submit that posts `scene_id` and `section_id` to `group`, so
+  regrouping changes only the grouping and never the narrative position. There is no drag gesture,
+  no in-place field editing, and no client-side scripting; a read-only member and a guest see the
+  same cards with no controls. A card that edits a field is the ordinary draft-backed editor.
+- **A mutation returns to the workspace that posted it.** Both forms send
+  `return_to=scene_board`, and the controller recognizes only that named destination; an unknown
+  value falls back to the action's ordinary destination, so the parameter can never name a URL. In a
+  draft-based universe the change is remembered and the ordinary referrer returns the author to the
+  board.
+- **Every destination is a link.** A Section heading opens its Section page, and a card's title opens
+  Scene Details with the Scene's 1-based position pill. No control exists only on hover.
+- **Access follows the Story**, exactly as the matrix does: a guest may read a public Universe's
+  board, a private Universe keeps its owner/membership rule, and another Universe's Story is a `404`.
+
+The board's painted rules, including the scroll region, the sticky column headings, and the card
+controls, are in [visual_design.md](../visual_design.md#scene-board).
 
 ## Elements
 

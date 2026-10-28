@@ -14,7 +14,7 @@ per-universe development-data convention, and the public/private universe access
 | [conventions.md](conventions.md) | The cross-cutting code conventions: models, controllers, routes, the three page patterns, list rows, record details pages, helpers, Stimulus controllers |
 | [data_model.md](data_model.md) | Database schema: ownership graph, every table, tag taxonomy matrix, hierarchies & positions, soft delete, per-model validations, the slug system |
 | [architecture.md](architecture.md) | Stack, request lifecycle (`Current`, before_action chain), authentication & sessions, routing/URL-generation rules, response-format matrix, production boundary, caching |
-| [features/](features/) | One document per feature, each the single home of that feature's rules: [scenes](features/scenes.md), [plots](features/plots.md), [tropes](features/tropes.md), [routes](features/routes.md), [map](features/map.md), [tags](features/tags.md), [search](features/search.md), [navigation](features/navigation.md), [photos](features/photos.md), [events](features/events.md), [characters](features/characters.md), [factions](features/factions.md), [locations](features/locations.md), [items](features/items.md), [export](features/exports.md), [i18n](features/i18n.md), [settings](features/settings.md), [list filters](features/list_filters.md) |
+| [features/](features/) | One document per feature, each the single home of that feature's rules: [scenes](features/scenes.md), [plots](features/plots.md), [tropes](features/tropes.md), [routes](features/routes.md), [canon](features/canon.md), [map](features/map.md), [tags](features/tags.md), [search](features/search.md), [navigation](features/navigation.md), [photos](features/photos.md), [events](features/events.md), [characters](features/characters.md), [factions](features/factions.md), [locations](features/locations.md), [items](features/items.md), [export](features/exports.md), [i18n](features/i18n.md), [settings](features/settings.md), [list filters](features/list_filters.md) |
 | [development.md](development.md) | Clarifying a request before coding, running the app, Minitest and client-side test suites, lint/security scans, per-universe development data (`db/data/<universe_slug>/`), CI, Kamal deployment, smoke test, and the full "adding a new model" workflow |
 | [data_factor_guidance.md](data_factor_guidance.md) | DataFactor report snapshot, verified/current status, sustainable maintenance guidance, and acceptance criteria for quality, security, CI, onboarding, and observability work |
 | [known_quirks.md](known_quirks.md) | Verified **open** oddities, dead code and tech debt — read before changing shared code |
@@ -38,6 +38,7 @@ How to use these docs:
     | Story-owned Plot arcs and Scene assignments | [features/plots.md](features/plots.md) |
      | Global trope references and contextual assignments | [features/tropes.md](features/tropes.md) |
     | Universe-scoped Routes between Locations | [features/routes.md](features/routes.md) |
+     | Universe canon rules with an optional Story owner | [features/canon.md](features/canon.md) |
    | Map view of Locations and Routes | [features/map.md](features/map.md) |
   | The tag DSL, taxonomies, the tree and its editor | [features/tags.md](features/tags.md) |
   | Global search and its dropdown | [features/search.md](features/search.md) |

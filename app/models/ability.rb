@@ -49,6 +49,7 @@ class Ability
     Location
     LocationTag
     Route
+    CanonRule
     Item
     ItemTag
     Event

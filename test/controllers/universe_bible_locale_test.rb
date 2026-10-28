@@ -388,6 +388,29 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "input[type=submit][value=?]", "Guardar ruta"
   end
 
+  test "the Canon workspace, its editor, and a rule's page are Spanish" do
+    get universe_canon_rules_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_equal "Canon", rendered_title
+    assert_select "h1", text: "Canon"
+    assert_select ".page-eyebrow", text: "Biblia del universo"
+    assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir regla"
+    assert_select "label[for=canon_rule_statement]", text: "Regla"
+    assert_select "label[for=canon_rule_source]", text: "Pasaje de origen"
+    assert_select "label[for=canon_rule_story_id]", text: "Pertenece a"
+    assert_select "input[type=submit][value=?]", "Guardar regla"
+    assert_select ".entity-row .badge", text: "Todo el universo"
+    # The rule itself is author prose and stays as it was written.
+    assert_select ".entity-title", text: "Magic always costs the caster a memory."
+
+    get universe_canon_rule_url(universe_slug: @universe.slug, id: canon_rules(:canon_rule_two))
+
+    assert_response :success
+    assert_select ".page-eyebrow", text: "Regla de canon"
+    assert_select ".detail-facts-wide dt", text: "Pasaje de origen"
+  end
+
   test "a rejected Relation create is explained in Spanish, with its own record type" do
     post universe_relations_url(universe_slug: @universe.slug), params: {
       relation: { character1_id: characters(:character_one).id, character2_id: "" }

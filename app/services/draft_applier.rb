@@ -418,13 +418,10 @@ class DraftApplier
       self.class.hierarchical?(model)
     end
 
-    # The owner association a model's scope column names, read in the same order
-    # `DraftMutation` chose the column to remember and `UniverseScopeResolver`
-    # walks to the same answer. A model with none of them is universe-scoped.
+    # The owner association a model's scope column names, read from the one place
+    # that answers it for every caller. A model with none is universe-scoped.
     def owner_association(model)
-      UniverseScopeResolver::OWNER_ASSOCIATIONS.find do |association|
-        model.column_names.include?("#{association}_id")
-      end
+      UniverseScopeResolver.owner_association_for(model)
     end
 
     def collection_name(model)

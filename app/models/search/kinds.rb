@@ -33,6 +33,7 @@ module Search
       "faction_relationship" => "searches.kinds.faction_relationship",
       "location" => "searches.kinds.location",
       "route" => "searches.kinds.route",
+      "canon_rule" => "searches.kinds.canon_rule",
       "item" => "searches.kinds.item",
       "event" => "searches.kinds.event",
       "relation" => "searches.kinds.relation",

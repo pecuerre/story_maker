@@ -1,0 +1,84 @@
+<% content_for :title, t("canon_rules.title") %>
+<% rejected = @canon_rule&.errors&.any? ? @canon_rule : nil %>
+<% pending_creates = draft_pending_creates_for(CanonRule) %>
+<% add_values = rejected&.new_record? ? canon_rule_fields_json(rejected) : "{}" %>
+
+<div
+  <% if can_write_universe? %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="canon_rule"
+  data-modal-form-response-value="html"
+  data-modal-form-create-title-value="<%= t("canon_rules.new_title") %>">
+  <%= render "shared/page_header", title: t("canon_rules.title"), eyebrow: t("canon_rules.eyebrow"),
+    description: t("canon_rules.description"),
+    count: @canon_rules.size, count_label: "canon_rule" do %>
+    <% if can_write_universe? %>
+      <button type="button" class="btn btn-primary" data-action="modal-form#open"
+        data-modal-form-url="<%= universe_canon_rules_path %>" data-modal-form-method="post"
+        data-modal-form-title="<%= t("canon_rules.new_title") %>" data-modal-form-values-value="<%= add_values %>">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> <span><%= t("canon_rules.add") %></span>
+      </button>
+    <% end %>
+  <% end %>
+
+  <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("canon_rules.errors.subject") %><% end %>
+  <% if @canon_rules.any? || pending_creates.any? %>
+    <div class="content-surface entity-list"><div class="list-group list-group-flush">
+      <% @canon_rules.each do |rule| %>
+        <div class="list-group-item entity-row d-flex align-items-center gap-3">
+          <div class="entity-copy flex-grow-1">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="entity-title"><%= rule.statement %></span>
+              <%= render "shared/draft_pending_badge", record: rule %>
+            </div>
+            <div class="entity-description">
+              <% if rule.universe_wide? %>
+                <span class="badge rounded-pill text-bg-light border"><%= t("canon_rules.scope.universe") %></span>
+              <% else %>
+                <span class="badge rounded-pill text-bg-light border"><%= t("canon_rules.scope.story") %></span>
+                <%= link_to rule.story.name, universe_story_path(id: rule.story) %>
+              <% end %>
+              <% if rule.source.present? %><span> · <%= rule.source %></span><% end %>
+            </div>
+          </div>
+          <%= record_details_link universe_canon_rule_path(id: rule), record: rule %>
+          <%= render "shared/row_actions", record: rule, label: t("canon_rule", count: 1),
+            record_name: rule.display_string, edit_url: universe_canon_rule_path(id: rule),
+            delete_url: universe_canon_rule_path(id: rule),
+            values: (rejected&.persisted? && rejected.id == rule.id) ? canon_rule_fields_json(rejected) : canon_rule_fields_json(rule) %>
+        </div>
+      <% end %>
+      <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
+    </div></div>
+  <% else %>
+    <%= render "shared/empty_state", title: t("canon_rules.empty_title"),
+      description: can_write_universe? ? t("canon_rules.empty_writable_description") : t("canon_rules.empty_read_only_description"),
+      icon: "journal-check" %>
+  <% end %>
+
+  <% if can_write_universe? %>
+    <div class="modal fade" tabindex="-1" aria-labelledby="canon-rule-modal-title" aria-hidden="true" data-modal-form-target="modal">
+      <div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="canon-rule-modal-title" data-modal-form-target="title"><%= t("canon_rules.new_title") %></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
+        </div>
+        <%= form_with scope: :canon_rule, url: universe_canon_rules_path, method: :post, data: { modal_form_target: "form" } do |form| %>
+          <div class="modal-body">
+            <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("canon_rules.errors.subject") %><% end %>
+            <div class="mb-3"><%= form.label :statement, t("canon_rules.form.statement"), class: "form-label" %>
+              <%= form.text_area :statement, class: "form-control", rows: 3, required: true %>
+              <div class="form-text"><%= t("canon_rules.form.statement_hint") %></div></div>
+            <div class="mb-3"><%= form.label :source, t("canon_rules.form.source"), class: "form-label" %>
+              <%= form.text_area :source, class: "form-control", rows: 3 %>
+              <div class="form-text"><%= t("canon_rules.form.source_hint") %></div></div>
+            <div class="mb-3"><%= form.label :story_id, t("canon_rules.form.scope"), class: "form-label" %>
+              <%= form.collection_select :story_id, @stories, :id, :name,
+                { include_blank: t("canon_rules.form.universe_wide") }, { class: "form-select" } %>
+              <div class="form-text"><%= t("canon_rules.form.scope_hint") %></div></div>
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button><%= form.submit t("canon_rules.save"), class: "btn btn-primary" %></div>
+        <% end %>
+      </div></div>
+    </div>
+  <% end %>
+</div>

@@ -108,6 +108,11 @@ Rails.application.routes.draw do
     # than with anything. `new` used to exist here as a bare `@record` builder
     # with no template; the `parent_id` it read is still accepted by `create`.
     resources :items, only: %i[ index show create update destroy ]
+    # Canon rules are world-building records with an optional story owner, so they
+    # live beside the shared records rather than under a story: `/u/:slug/canon`
+    # lists every rule in the universe, and a row says whether the universe or
+    # one story owns it.
+    resources :canon_rules, path: "canon", only: %i[ index show create update destroy ]
     resources :location_tags, only: %i[ index show create update destroy ]
     resources :locations, only: %i[ index show create update destroy ]
     resources :routes, only: %i[ index show create update destroy ]

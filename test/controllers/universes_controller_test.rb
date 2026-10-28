@@ -16,9 +16,9 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_select "td", text: /2 stories/
-    assert_select "td", text: /15 entities/
+    assert_select "td", text: /17 entities/
     assert_select "td", text: /1 story/
-    assert_select "td", text: /5 entities/
+    assert_select "td", text: /6 entities/
     assert_select "time", count: 2
   end
 

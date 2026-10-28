@@ -38,6 +38,26 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-28
+
+### added
+
+- **Universe canon rules.** Adds a Canon Rule with a required statement, optional source passage, and an optional Story owner, plus its `/u/:slug/canon` workspace, details page, discussion thread, search kind, and demo data.
+- **Canon rule development data.** Each demo universe carries one universe-wide rule and one story-owned rule, loaded after its Stories.
+
+### changed
+
+- **Scope resolution prefers a record's own universe.** `UniverseScopeResolver.owner_association_for` reads `universe_id` before the owner associations, so an optional story reference cannot hide a universe-wide rule from a class-level check or a remembered create.
+
+### docs
+
+- **Canon rules decision and owners.** Records ADR 0039, the Canon feature document, the schema and validation rows, the Universe Bible entry, the search kind, and the refreshed mutation-controller counts.
+- **Backlog canon item removed.** Canon rules are shipped, and the import item now points at the record it builds on.
+
+### chore
+
+- **Canon fixtures and contract rows.** Adds canon fixtures, model and request tests, the modal and draft contract rows, the Spanish page case, and the updated menu and summary counts.
+
 ## 2026-10-27
 
 ### added

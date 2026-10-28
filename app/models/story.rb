@@ -11,7 +11,7 @@ class Story < ApplicationRecord
   include HasDiscussion
 
   searchable kind: "story", title: :name, body: :description, route: "story"
-  soft_deletes :sections, :section_tags, :scene_tags, :plots, :scenes
+  soft_deletes :sections, :section_tags, :scene_tags, :plots, :scenes, :canon_rules
 
   after_destroy_commit :expire_story_menu_counts
   # A rename changes this story's slug, and every document below it stores a path
@@ -24,6 +24,7 @@ class Story < ApplicationRecord
   has_many :scene_tags, dependent: :destroy
   has_many :plots, dependent: :destroy
   has_many :scenes, dependent: :destroy
+  has_many :canon_rules, dependent: :destroy
   has_many :story_tropes, dependent: :destroy
 
   accepts_nested_attributes_for :story_tropes, allow_destroy: true,

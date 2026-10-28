@@ -1,0 +1,11 @@
+# A rule with no `story:` belongs to the whole universe; a rule naming one is
+# owned by that story. Both kinds sit in the same list because they are the same
+# record, and the distinction is the `story` reference alone.
+- universe: Universe.dark
+  statement: "Travel through the cave moves a person thirty-three years and never to a date they choose."
+  source: "Mikkel's disappearance and Jonas's first journey both land exactly thirty-three years apart."
+
+- universe: Universe.dark
+  story: Story.netflix-dark
+  statement: "The passage under the cave opens only while the cycle is turning."
+  source: "The passage is sealed in the years between the two halves of the cycle."

@@ -130,19 +130,6 @@ triaged into this list.
    than the finding deleted. It is the surface items 42–44 write into, so it should land before them,
    and it must never rewrite prose.
 
-50. **Universe canon rules.**
-
-   NOTE: The first story-structure import slice waits on this item.
-
-   The app holds facts as records — profiles, knowledge changes, ownerships, relationships, Events —
-   but no record states a rule the story must obey, such as what magic costs or how long a road takes.
-   `PlotLens` sells exactly this as "world rules" and links each violation back to the rule's source,
-   and `Novilot` checks a draft against its Story Bible for the same purpose. **Needs a scope and a
-   shape:** a rule belongs to the Universe unless the Story owns it, needs a short statement plus an
-   optional source passage, and only earns its keep when something checks prose against it, so it
-   pairs with item 49 and the contradiction analyzer rather than standing alone. Tropes are a genre
-   catalogue, not this.
-
 51. **Prose mention index and mention timeline.**
 
    Presence is an explicit link: a Character in a Scene appears only when somebody recorded it, and a
@@ -265,8 +252,8 @@ triaged into this list.
    entry point that imports everything currently registered, a Rails task taking the source path
    (proposed as `bin/rails story_structure:import`), and a platform-admin page that picks a folder
    under a configured import root, lists the registered slices, and previews counts before writing.
-   Adding a type must not edit the command or the page. **Canon is the first slice, so this waits on
-   the Universe canon rules item.**
+   Adding a type must not edit the command or the page. **Canon is the first slice**, and its record
+   already exists in [features/canon.md](features/canon.md) and [ADR 0039](adr/0039-canon-rules-are-universe-owned-with-an-optional-story.md).
 
    A run **replaces** the universe named by the manifest: create it when absent, delete and recreate
    it when present, after an explicit destructive confirmation that says records created in the app

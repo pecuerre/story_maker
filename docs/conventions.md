@@ -71,8 +71,9 @@ the same change, or `db:demo:check` fails.
   same address — which a symbolic `db/data` reference and a class-level lookup both depend on. It
   reads the association in Ruby rather than querying, because the record being slugged is new and its
   join rows do not exist yet.
-- `FactionRelationship`, `Relation`, `Ownership`, `Route` and `Event` add custom validators that keep their non-tag associated
-  records inside the same universe. `HasManyTags` independently enforces the shared universe or
+- `FactionRelationship`, `Relation`, `Ownership`, `Route`, `CanonRule` and `Event` add custom validators that keep their non-tag associated
+  records inside the same universe. `CanonRule`'s story reference is the optional one: a rule may
+  have no story, but a story it names must be in the rule's universe. `HasManyTags` independently enforces the shared universe or
   story scope in both directions for all nine content/tag pairs (see the taxonomy matrix in
   [data_model.md](data_model.md#tag-taxonomy-matrix)).
 - **An optional reference that names nothing is a field error, not a database failure.** Three
@@ -148,7 +149,9 @@ the same change, or `db:demo:check` fails.
   `scene`, and `section` — deliberately, so a record can never reach the wrong universe by accident —
   and a model one level below those, such as a speaker link under a Scene Element, defines
   `#universe` to delegate through its owner; the walk finds it on the first step and no entry is
-  added. A model that does not is caught two ways, and the two are not the same repair:
+  added. **A model that carries its own `universe_id` is placed by that column even when it also
+  names a narrower owner.** A Canon Rule is the first: its `story_id` is an optional reference, not
+  its scope, so a rule with no story must not fall out of the class-level filter. A model that does not is caught two ways, and the two are not the same repair:
   `universe_for` resolves to `nil`, which reads as a denial to `Ability` and as no controls to the
   views and raises nothing anywhere, so a test requires every persisted row of every model in
   `Ability::CONTENT_CLASS_NAMES` to resolve; and `records_in`, which filters in SQL and so cannot
@@ -242,7 +245,7 @@ the same change, or `db:demo:check` fails.
   both the record it would have written and the attributes it was going to write with it, and a callback
   would have to answer "what would this action write?" a second time — two answers that drift. It is also
    deliberately a call a controller can forget, so `test/controllers/draft_mutation_test.rb` walks all
-    twenty-four mutation controllers in both modes rather than testing the concern alone: a controller that omitted
+    twenty-nine mutation controllers in both modes rather than testing the concern alone: a controller that omitted
    it would write straight through and nothing else would notice. This includes Story create/update/delete;
    `move` and `group` are mutations too, and
   remember the position or the section they asked for. A remembered change is **not validated when it is
@@ -303,11 +306,11 @@ the same change, or `db:demo:check` fails.
     `SceneElementsController`, `SceneDialogueTurnsController`, `SceneEventsController`, `SceneCharactersController`,
     `SceneItemsController`, `SceneLocationsController`, and `SceneTropesController` also
     include `RequiresJsonMutationFormat`, so a rejected HTML mutation cannot commit first.
-  - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, FactionRelationships, Ownerships, Routes, Universe
+  - **HTML flow** (redirect / re-render): Universes, Stories, Scenes, Relations, FactionRelationships, Ownerships, Routes, CanonRules, Universe
     memberships, Sessions, Passwords, Drafts, Review Requests.
 - Actions: `index` + `create/update/destroy` everywhere, `new` for taxonomy editors and
   memberships. `show/edit` exist for Universes, Stories, and Scenes; `show` also exists for every
-  content model (Character, Faction, Location, Route, Item, Event, Relation, Ownership, Section, Plot) and every tag
+  content model (Character, Faction, Location, Route, CanonRule, Item, Event, Relation, Ownership, Section, Plot) and every tag
   model, because each record has exactly one details page. `ScenesController#move` (narrative
   order) and `#group` (Section grouping) are the two member and collection actions beyond that set.
 - **A route may only advertise an action the controller has, and a GET may only name an action with a
@@ -355,7 +358,9 @@ the same change, or `db:demo:check` fails.
   universe-level `/u/:universe_slug/sections`,
   `/u/:universe_slug/section_tags`, `/u/:universe_slug/scene_tags`, and
   `/u/:universe_slug/scenes` paths are intentionally invalid.
-- Factions, FactionTags, FactionRelationships, Relations, Ownerships, and Routes are limited to `index, show, create, update, destroy`; memberships are
+- Factions, FactionTags, FactionRelationships, Relations, Ownerships, Routes, and CanonRules are limited to `index, show, create, update, destroy`. Canon Rules are mounted at
+  `/u/:universe_slug/canon` (`resources :canon_rules, path: "canon"`), so the URL says what the list
+  holds while the helpers keep the model's name; memberships are
   mounted at `/u/:universe_slug/members` with `index`, `new`, `create`, `update`, and `destroy`, and
   are admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
   and `taxonomy=character|faction|relation|location|event|item|ownership|section` query parameters;
@@ -414,7 +419,7 @@ routes, and a successful mutation performs a same-URL Turbo visit so serialized 
 descriptors, page counts, and sidebar counts come from one fresh server render. User-controlled names
 and descriptions are assigned with `textContent`/DOM properties, never interpolated into `innerHTML`.
 
-**2. Flat list + Bootstrap modal** (characters, factions, items, events, relations, ownerships, routes):
+**2. Flat list + Bootstrap modal** (characters, factions, items, events, relations, ownerships, routes, canon rules):
 - `content-surface` + `list-group` rows with shared overflow actions + a modal in the same template.
   Each row also renders `record_details_link` before its actions, so the record's own page is one
   click away and visible to read-only viewers. The name is plain text; the Details link is the only
@@ -442,7 +447,7 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
     (`data-action="modal-form#move"`, direction in the URL) and a JSON-only **delete** are issued by
     the same controller for the same reason: a `204` destroy and a `PATCH` move both give Turbo no
     replacement to follow.
-  - **`html`** (relations, ownerships, routes): the documented redirect/re-render flow is untouched. The
+  - **`html`** (relations, ownerships, routes, canon rules): the documented redirect/re-render flow is untouched. The
     controller only opens the modal and pre-fills it; the browser submits, and `shared/_row_actions`
     keeps its Turbo `button_to` delete with `data-turbo-confirm`. A refused submission re-renders the
     whole index, so the workspace renders `shared/_error_summary` twice — once on the page the author
@@ -1328,6 +1333,7 @@ nested resource show routes:
 |---|---|
 | Character, Location, Item, Event | `/u/:universe_slug/characters\|locations\|items\|events/:id` |
 | Relation, Ownership | `/u/:universe_slug/relations\|ownerships/:id` |
+| Canon Rule | `/u/:universe_slug/canon/:id` |
 | Character/Relation/Location/Event/Item/Ownership tag | `/u/:universe_slug/<element>_tags/:id` |
 | Section, Section Tag, Scene Tag | `/u/:universe_slug/s/:story_id/sections\|section_tags\|scene_tags/:id` |
 | Universe, Story, Scene | `/u/:universe_slug`, `/u/:universe_slug/s/:story_id`, `.../scenes/:id` |

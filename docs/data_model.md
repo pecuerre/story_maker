@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_25_180000`) and the models in `app/models/`.
+`2026_10_28_120000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -29,6 +29,7 @@ User (owner)
        │   └── FactionRelationship (directed faction → faction)
        ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
        ├── Route (from Location → to Location, measured path)
+      ├── CanonRule (universe-wide, or owned by one Story)
       ├── Item      ──> parent Item        ── HABTM ItemTag      (tree)
       ├── Event     ──> parent Event, before/after/simultaneous Event ── HABTM EventTag (tree, optional)
       ├── Relation  (character1 × character2) ── HABTM RelationTag (tree)
@@ -36,11 +37,13 @@ User (owner)
       └── (Session belongs to User, unrelated to universes)
 ```
 
-**The one rule to remember:** world building (characters, factions and faction relationships, locations, routes, items, events, relations,
+**The one rule to remember:** world building (characters, factions and faction relationships, locations, routes, canon rules, items, events, relations,
 ownerships **and every `_tag` model except SectionTag and SceneTag**) belongs to the **universe** and
 is shared by all of its stories. Only **sections** (the script: books → chapters → scenes …),
 **scenes**, and their **section/scene tags** (chapter/book/episode or scene-beat labels) belong to a
-**story** — each story owns its own structure taxonomy and Plot arcs. A Scene's own components (Elements and
+**story** — each story owns its own structure taxonomy and Plot arcs. A canon rule is the one
+world-building record that may name a story, which narrows who follows it without moving it out of
+the universe's list. A Scene's own components (Elements and
 presence links) belong to one **Scene**; a Dialogue turn is nested under its Element. They resolve
 their Universe through those owners.
 
@@ -185,6 +188,7 @@ Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `sec
 | `faction_relationships` | `universe_id`, `from_faction_id`, `to_faction_id`, optional `name`, `description`, `from_date`, `to_date`, `slug`, `photo_id`, `deleted_at` | directed Faction-to-Faction link; endpoints must be distinct and in the same Universe; a reverse link is a separate record; the dates are a `TemporalInterval` |
 | `locations` | `name`, `description`, `sensory_sight`, `sensory_sound`, `sensory_smell`, `sensory_taste`, `sensory_touch`, `layout_structure`, `layout_key_areas`, `layout_pathways`, `layout_entrances_exits`, `layout_points_of_interest`, `significance`, `history_significant_events`, `history_past_occupants`, `history_changes`, `access_controlled_by`, `access_granted_how`, `access_security`, `access_restrictions`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; every profile field is optional text, ordered by `Location::PROFILE_FIELDS` and described in [features/locations.md](features/locations.md) |
 | `routes` | `universe_id`, `from_location_id`, `to_location_id`, optional `name`, `description`, optional free-form `distance` and `duration`, `slug`, `photo_id`, `deleted_at` | directional path between two Locations; both endpoints must belong to the same Universe; not hierarchical or positioned |
+| `canon_rules` | `universe_id` FK (NOT NULL), optional `story_id` FK, `statement` (NOT NULL), optional `source`, `deleted_at` | one rule the fiction obeys; no story means universe-wide, a story means that Story owns it; the Story must belong to the same Universe (application validation); addressed by id rather than a slug, so rewording a rule does not re-address it; no hierarchy, position, tags, or photo — see [features/canon.md](features/canon.md) |
 | `items` | `name`, `description`, `what_it_does`, `how_it_is_used`, `side_effects`, `origin`, `value`, `cannot`, `constraints`, `history`, `jargon`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; every profile field is optional text, ordered by `Item::PROFILE_FIELDS` and described in [features/items.md](features/items.md) |
 | `events` | `title`, `name`, `description`, `slug`, `start_datetime`, `end_datetime`, `before_event_id`, `after_event_id`, `simultaneous_event_id` (all self-FKs), `parent_id`, `position`, `universe_id` | identity is title-driven; `has_many :scene_events, dependent: :destroy` and `has_many :scenes, through: :scene_events`; the datetimes are a `TemporalInterval` |
 | `relations` | `character1_id`, `character2_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |
@@ -469,6 +473,7 @@ no `parent_id`.
 | `Relation` | `character1`/`character2` required; both characters and all `relation_tags` must be in the same universe |
 | `Ownership` | `character`/`item` required; both records and all `ownership_tags` must be in the same universe |
 | `Route` | `from_location` and `to_location` required; both Locations must belong to the Route's Universe; name, distance, and duration are optional |
+| `CanonRule` | `statement` required; `universe` required; `story` optional, but a named Story must belong to the Rule's Universe and an unknown `story_id` is "does not exist"; `source` optional; no slug |
 | `Photo` | `universe` required; an attachment must be present (`file must be attached`) or the row is not a useful record; `HasSlug` |
 | `User` | `has_secure_password` (password confirmation on create); unique normalized email (DB unique index) |
 | `Session` | `user` required |

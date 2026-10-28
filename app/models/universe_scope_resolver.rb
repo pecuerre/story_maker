@@ -43,6 +43,14 @@ module UniverseScopeResolver
   # a draft's own page can tell plumbing from something it can print. Reading the
   # model's columns is what keeps those three answers one answer.
   def owner_association_for(model)
+    # A model that carries its own `universe_id` is placed by that column even
+    # when it also names a narrower owner. A Canon Rule is the first: it belongs
+    # to the universe and *optionally* to a story, so `story_id` is a reference
+    # rather than the record's scope, and a rule with no story would fall out of a
+    # scope walk that filtered by it. So the direct column is asked first, and the
+    # owner associations are only consulted when there is none.
+    return nil if model.column_names.include?("universe_id")
+
     OWNER_ASSOCIATIONS.find do |association|
       model.column_names.include?("#{association}_id")
     end

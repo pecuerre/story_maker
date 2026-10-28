@@ -8,7 +8,7 @@ require "test_helper"
 # through and nothing else would notice.
 #
 # So this file is that something else. It walks **every** mutation controller in
-# both modes — twenty-eight of them, across the JSON-only flow, the HTML flow, and
+# both modes — twenty-nine of them, across the JSON-only flow, the HTML flow, and
 # both scopes — and asserts the single thing that differs between them: in `direct` a
 # mutation writes, and in a draft-based universe it does not. The table is the
 # contract; the tests below it are the details that the table cannot express,
@@ -276,6 +276,16 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       destroy: -> { universe_route_url(universe_slug: @universe.slug, id: @route.id) }
     },
     {
+      name: "canon_rules", model: CanonRule, json: false, label: :statement,
+      scope: -> { [ "universe_id", @universe.id ] },
+      record: -> { @canon_rule },
+      create: -> { [ universe_canon_rules_url(universe_slug: @universe.slug),
+        { canon_rule: { statement: NEW } } ] },
+      update: -> { [ universe_canon_rule_url(universe_slug: @universe.slug, id: @canon_rule.id),
+        { canon_rule: { statement: RENAMED } } ] },
+      destroy: -> { universe_canon_rule_url(universe_slug: @universe.slug, id: @canon_rule.id) }
+    },
+    {
       name: "faction_relationships", model: FactionRelationship, json: false, label: :name,
       scope: -> { [ "universe_id", @universe.id ] },
       record: -> { @faction_relationship },
@@ -352,6 +362,7 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       from_faction: @faction, to_faction: @other_faction, name: "Existing faction relationship")
     @route = Route.create!(universe: @universe, from_location: @location,
       to_location: locations(:location_two), name: "Existing route")
+    @canon_rule = canon_rules(:canon_rule_one)
     @ownership = Ownership.create!(universe: @universe, character: @character, item: @item)
     @unlinked_item = @universe.items.create!(name: "Unlinked item")
     @unlinked_location = @universe.locations.create!(name: "Unlinked location")

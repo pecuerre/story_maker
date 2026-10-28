@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_27_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_28_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -60,6 +60,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_120100) do
     t.index ["revoked_at"], name: "index_api_tokens_on_revoked_at"
     t.index ["token_prefix"], name: "index_api_tokens_on_token_prefix", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
+  end
+
+  create_table "canon_rules", force: :cascade do |t|
+    t.integer "universe_id", null: false
+    t.integer "story_id"
+    t.text "statement", null: false
+    t.text "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_canon_rules_on_deleted_at"
+    t.index ["story_id", "deleted_at"], name: "index_canon_rules_on_story_id_and_deleted_at"
+    t.index ["story_id"], name: "index_canon_rules_on_story_id"
+    t.index ["universe_id", "id"], name: "index_canon_rules_on_universe_id_and_id"
+    t.index ["universe_id"], name: "index_canon_rules_on_universe_id"
   end
 
   create_table "character_knowledges", force: :cascade do |t|
@@ -876,6 +891,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_120100) do
   add_foreign_key "api_token_universes", "api_tokens"
   add_foreign_key "api_token_universes", "universes"
   add_foreign_key "api_tokens", "users"
+  add_foreign_key "canon_rules", "stories"
+  add_foreign_key "canon_rules", "universes"
   add_foreign_key "character_knowledges", "characters"
   add_foreign_key "character_knowledges", "characters", column: "source_character_id"
   add_foreign_key "character_knowledges", "universes"

@@ -72,8 +72,10 @@ always knows which scope a link belongs to:
 - **Current universe** context: the universe name. The navbar already states the universe's
   visibility and access level, and the universe page lists the stories, so the context block stays a
   statement of scope.
-- **Universe Bible**: direct links to Characters, Factions, Locations, Routes, Map, Events, and Items. Routes
-  are universe-scoped paths between Locations and have their own workspace. Map is the read-only
+- **Universe Bible**: direct links to Characters, Factions, Locations, Routes, Canon, Map, Events, and Items. Routes
+  are universe-scoped paths between Locations and have their own workspace. Canon is the universe's
+  list of rules with an optional story owner, and its page contract is in
+  [features/canon.md](canon.md). Map is the read-only
   Location-hierarchy and Route view; its page contract is in [features/map.md](map.md). Characters
   and Items open their related record tabs (Relations and Ownerships respectively). **Events** opens
   the Event workspace, whose second tab is the **Timeline**, so the Timeline has no sidebar entry of

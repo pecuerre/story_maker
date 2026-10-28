@@ -69,6 +69,7 @@ en:
     factions: "Factions"
     locations: "Locations"
     routes: "Routes"
+    canon: "Canon"
     map: "Map"
     events: "Events"
     timeline: "Timeline"
@@ -2262,6 +2263,42 @@ en:
       updated: "Route updated."
       deleted: "Route deleted."
 
+  canon_rules:
+    title: "Canon"
+    eyebrow: "Universe Bible"
+    description: "State the rules this world obeys, and record the passage each rule comes from."
+    new_title: "New canon rule"
+    add: "Add rule"
+    save: "Save rule"
+    empty_title: "No canon rules yet"
+    empty_writable_description: "Write down what this world always does: what magic costs, how long a road takes, or what nobody can survive. A rule can belong to the whole universe or to one story."
+    empty_read_only_description: "The rules this universe follows will appear here once they have been added."
+    scope:
+      universe: "Whole universe"
+      story: "Story rule"
+    form:
+      statement: "Rule"
+      statement_hint: "One short statement the story must obey."
+      source: "Source passage"
+      source_hint: "Optional. Quote or cite the passage this rule comes from."
+      scope: "Owned by"
+      universe_wide: "The whole universe"
+      scope_hint: "Leave it on the universe unless only one story follows this rule."
+    show:
+      label: "Canon rule"
+      back_label: "All canon rules"
+      facts:
+        statement: "Rule"
+        source: "Source passage"
+        source_blank: "No source passage yet."
+        scope: "Owned by"
+    errors:
+      subject: "this canon rule"
+    flash:
+      created: "Canon rule created."
+      updated: "Canon rule updated."
+      deleted: "Canon rule deleted."
+
   items:
     title: "Items"
     description: "Objects and resources whose details are shared by every story in this universe."
@@ -2962,6 +2999,7 @@ en:
       faction: "Faction"
       location: "Location"
       route: "Route"
+      canon_rule: "Canon rule"
       item: "Item"
       event: "Event"
       relation: "Relation"
@@ -3228,6 +3266,13 @@ en:
         to_location_id: "To location"
         distance: "Distance"
         duration: "Travel time"
+      canon_rule:
+        statement: "Rule"
+        source: "Source passage"
+        # The drafts page prints the remembered owner by association, so the label
+        # says what choosing one means rather than "Story id".
+        story: "Owned by"
+        story_id: "Owned by"
       event:
         name: "Name"
         title: "Title"
@@ -3493,6 +3538,9 @@ en:
   route:
     one: "route"
     other: "routes"
+  canon_rule:
+    one: "rule"
+    other: "rules"
   event:
     one: "event"
     other: "events"
@@ -3560,6 +3608,7 @@ en:
   # than bare nouns. See `shared.error_summary.heading` for the same decision on
   # the server-rendered summary.
   record_subject:
+    canon_rule: "the canon rule"
     character: "the character"
     faction: "the faction"
     faction_relationship: "the faction relationship"

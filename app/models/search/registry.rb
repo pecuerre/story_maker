@@ -19,6 +19,7 @@ module Search
       FactionRelationship,
       Location,
       Route,
+      CanonRule,
       Item,
       Event,
       Relation,

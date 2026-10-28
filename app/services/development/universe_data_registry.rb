@@ -58,6 +58,10 @@ module Development
       # can open.
       ModelDefinition.new(model_name: "Photo", file_name: "photos", scope: :universe),
       ModelDefinition.new(model_name: "Story", file_name: "stories", scope: :universe),
+      # Canon rules are universe-owned with an optional story owner, so they load
+      # after Story and before every model that could cite one. A manifest names
+      # `universe:` always and `story:` only when one story owns the rule.
+      ModelDefinition.new(model_name: "CanonRule", file_name: "canon_rules", scope: :universe),
       ModelDefinition.new(model_name: "SectionTag", file_name: "section_tags", scope: :story, positioned: true),
       ModelDefinition.new(model_name: "SceneTag", file_name: "scene_tags", scope: :story, positioned: true),
       ModelDefinition.new(model_name: "Section", file_name: "sections", scope: :story, positioned: true),

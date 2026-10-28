@@ -12,9 +12,9 @@ class UniversesTest < ApplicationSystemTestCase
 
     within "table" do
       assert_selector "td", text: /2 stories/
-      assert_selector "td", text: /15 entities/
+      assert_selector "td", text: /17 entities/
       assert_selector "td", text: /1 story/
-      assert_selector "td", text: /5 entities/
+      assert_selector "td", text: /6 entities/
       assert_selector "time", count: 2
     end
   end

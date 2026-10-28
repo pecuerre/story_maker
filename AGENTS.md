@@ -40,6 +40,7 @@ the subject and read its owner:
 | Item profile answers, ownership, and the Items workspace | [`docs/features/items.md`](docs/features/items.md) |
 | Reading a Story as a printable book and the export scopes | [`docs/features/exports.md`](docs/features/exports.md) |
 | **Universe-scoped Routes** between Locations | [`docs/features/routes.md`](docs/features/routes.md) |
+| **Universe canon rules** with an optional Story owner | [`docs/features/canon.md`](docs/features/canon.md) |
 | The read-only Map view of Locations and Routes | [`docs/features/map.md`](docs/features/map.md) |
 | The contract every in-list filter shares: narrowing, canonical queries, empty results, pending rows | [`docs/features/list_filters.md`](docs/features/list_filters.md) |
 | The tag DSL, taxonomies, the tree and its editor, tagged-record counts | [`docs/features/tags.md`](docs/features/tags.md) |

@@ -1,5 +1,5 @@
 class Universe < ApplicationRecord
-  MENU_COUNT_ASSOCIATIONS = %i[characters factions faction_relationships relations locations routes events items ownerships].freeze
+  MENU_COUNT_ASSOCIATIONS = %i[characters factions faction_relationships relations locations routes events items canon_rules ownerships].freeze
 
   # The one value that decides how a change reaches a record in this universe:
   # `direct` writes straight through, while the other two remember the change for
@@ -67,7 +67,7 @@ class Universe < ApplicationRecord
   after_update_commit :queue_search_reindex, if: :saved_change_to_slug?
 
   soft_deletes :stories, :characters, :factions, :faction_relationships, :locations, :routes, :items, :events, :relations, :ownerships,
-    :character_tags, :faction_tags, :location_tags, :item_tags, :event_tags, :relation_tags, :ownership_tags, :memberships
+    :canon_rules, :character_tags, :faction_tags, :location_tags, :item_tags, :event_tags, :relation_tags, :ownership_tags, :memberships
 
   after_destroy_commit :expire_menu_counts
   validates :name, presence: true
@@ -171,6 +171,9 @@ class Universe < ApplicationRecord
   has_many :ownerships, dependent: :destroy
   has_many :event_tags, dependent: :destroy
   has_many :events, dependent: :destroy
+  # Canon rules are universe-owned with an optional story owner, so the universe
+  # holds every rule in it and a Story holds only the ones that name it.
+  has_many :canon_rules, dependent: :destroy
 
   def direct?
     collaboration_mode == "direct"
@@ -319,7 +322,7 @@ class Universe < ApplicationRecord
   # universe's figures once instead of once per row per render. `activity_at`
   # is the newest `updated_at` among everything counted, so recent activity
   # means a record was created, edited, or restored — not merely viewed.
-  SUMMARY_COUNT_ASSOCIATIONS = %i[stories characters factions faction_relationships locations routes events items relations ownerships].freeze
+  SUMMARY_COUNT_ASSOCIATIONS = %i[stories characters factions faction_relationships locations routes events items relations canon_rules ownerships].freeze
 
   def summary_counts
     MenuCountCache.fetch(MenuCountCache.key(:universe_summary, id), connection: self.class.connection) do

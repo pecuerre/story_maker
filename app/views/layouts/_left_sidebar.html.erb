@@ -74,6 +74,17 @@
         count: menu_counts[:items],
         path: universe_items_path,
         controllers: %i[ items ownerships ] %>
+
+      <%# A canon rule is a world-building record shared by every story in the
+          universe, so it sits in the Universe Bible block rather than under a
+          story even when one story owns it. %>
+      <%= render "shared/sidebar_link",
+        icon: "journal-check",
+        label: t("sidebar.canon"),
+        count_label: "canon_rule",
+        count: menu_counts[:canon_rules],
+        path: universe_canon_rules_path,
+        controllers: %i[ canon_rules ] %>
     </ul>
   </section>
 

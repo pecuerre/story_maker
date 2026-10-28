@@ -4,7 +4,7 @@ class HasDiscussionTest < ActiveSupport::TestCase
   DISCUSSIBLE = %w[
     Story Section Plot SectionTag Scene SceneTag SceneElement SceneCharacter SceneItem SceneLocation
     SceneEvent
-    Character CharacterTag Faction FactionTag FactionRelationship Location LocationTag Route Item ItemTag Event EventTag Relation RelationTag
+    Character CharacterTag Faction FactionTag FactionRelationship Location LocationTag Route CanonRule Item ItemTag Event EventTag Relation RelationTag
     Ownership OwnershipTag
   ].freeze
   NOT_DISCUSSIBLE_CONTENT = %w[ CharacterKnowledge SceneDialogueTurn SceneTrope ].freeze

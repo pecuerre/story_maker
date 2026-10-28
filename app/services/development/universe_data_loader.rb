@@ -22,6 +22,7 @@ module Development
       "User" => %w[password password_confirmation]
     }.freeze
     UNIVERSE_ASSOCIATION_FIELDS = %w[
+      story
       character1
       character2
       from_faction

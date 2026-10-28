@@ -27,6 +27,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       routes: 1,
       events: 2,
       items: 2,
+      canon_rules: 2,
       ownerships: 1
     }
 
@@ -99,6 +100,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       routes: -> { Route.create!(universe: @universe, from_location: locations(:location_one), to_location: locations(:location_two)) },
       events: -> { Event.create!(universe: @universe, title: "Cached event") },
       items: -> { Item.create!(universe: @universe, name: "Cached item") },
+      canon_rules: -> { CanonRule.create!(universe: @universe, statement: "Cached rule") },
       ownerships: -> {
         Ownership.create!(
           universe: @universe,
@@ -132,8 +134,9 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       events: 2,
       items: 2,
       relations: 1,
+      canon_rules: 2,
       ownerships: 1,
-      entities: 15
+      entities: 17
     }
 
     summary = @universe.summary_counts
@@ -162,6 +165,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       routes: -> { Route.create!(universe: @universe, from_location: locations(:location_one), to_location: locations(:location_two)) },
       events: -> { Event.create!(universe: @universe, title: "Cached event") },
       items: -> { Item.create!(universe: @universe, name: "Cached item") },
+      canon_rules: -> { CanonRule.create!(universe: @universe, statement: "Cached rule") },
       relations: -> {
         Relation.create!(
           universe: @universe,
@@ -208,8 +212,8 @@ class MenuCountCacheTest < ActiveSupport::TestCase
     stories(:story_one).soft_delete
 
     assert_equal 1, @universe.summary_counts.fetch(:stories)
-    assert_equal 15, @universe.summary_counts.fetch(:entities),
-      "entities exclude stories, so deleting one does not change them"
+    assert_equal 16, @universe.summary_counts.fetch(:entities),
+      "the story's own canon rule is soft-deleted with it, so entities lose that one even though stories are excluded from the total"
   end
 
   test "moving a counted record expires both universes' summaries" do

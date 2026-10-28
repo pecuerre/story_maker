@@ -66,6 +66,7 @@ es:
     factions: "Facciones"
     locations: "Lugares"
     routes: "Rutas"
+    canon: "Canon"
     map: "Mapa"
     events: "Sucesos"
     timeline: "Cronología"
@@ -2221,6 +2222,42 @@ es:
       updated: "Ruta actualizada."
       deleted: "Ruta eliminada."
 
+  canon_rules:
+    title: "Canon"
+    eyebrow: "Biblia del universo"
+    description: "Enuncia las reglas que obedece este mundo y registra el pasaje del que sale cada una."
+    new_title: "Nueva regla de canon"
+    add: "Añadir regla"
+    save: "Guardar regla"
+    empty_title: "Todavía no hay reglas de canon"
+    empty_writable_description: "Escribe lo que este mundo hace siempre: cuánto cuesta la magia, cuánto se tarda en recorrer un camino o qué no sobrevive nadie. Una regla puede pertenecer a todo el universo o a una sola historia."
+    empty_read_only_description: "Las reglas que sigue este universo aparecerán aquí en cuanto se hayan añadido."
+    scope:
+      universe: "Todo el universo"
+      story: "Regla de historia"
+    form:
+      statement: "Regla"
+      statement_hint: "Una frase breve que la historia debe cumplir."
+      source: "Pasaje de origen"
+      source_hint: "Opcional. Cita el pasaje del que sale esta regla."
+      scope: "Pertenece a"
+      universe_wide: "Todo el universo"
+      scope_hint: "Déjala en el universo salvo que solo una historia siga esta regla."
+    show:
+      label: "Regla de canon"
+      back_label: "Todas las reglas de canon"
+      facts:
+        statement: "Regla"
+        source: "Pasaje de origen"
+        source_blank: "Todavía no hay pasaje de origen."
+        scope: "Pertenece a"
+    errors:
+      subject: "esta regla de canon"
+    flash:
+      created: "Regla de canon creada."
+      updated: "Regla de canon actualizada."
+      deleted: "Regla de canon eliminada."
+
   items:
     title: "Objetos"
     description: "Objetos y recursos cuyos detalles comparten todas las historias de este universo."
@@ -2873,6 +2910,11 @@ es:
         to_location_id: "Lugar de destino"
         distance: "Distancia"
         duration: "Tiempo de viaje"
+      canon_rule:
+        statement: "Regla"
+        source: "Pasaje de origen"
+        story: "Pertenece a"
+        story_id: "Pertenece a"
       event:
         name: "Nombre"
         title: "Título"
@@ -3202,6 +3244,7 @@ es:
       faction: "Facción"
       location: "Lugar"
       route: "Ruta"
+      canon_rule: "Regla de canon"
       item: "Objeto"
       event: "Suceso"
       relation: "Relación"
@@ -3399,6 +3442,9 @@ es:
   route:
     one: "ruta"
     other: "rutas"
+  canon_rule:
+    one: "regla"
+    other: "reglas"
   event:
     one: "suceso"
     other: "sucesos"
@@ -3471,6 +3517,7 @@ es:
   # Véase `shared.error_summary.heading` para la misma decisión en el resumen que
   # dibuja el servidor.
   record_subject:
+    canon_rule: "esta regla de canon"
     character: "este personaje"
     faction: "esta facción"
     faction_relationship: "esta relación entre facciones"

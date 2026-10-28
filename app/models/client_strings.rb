@@ -182,6 +182,7 @@ module ClientStrings
   # `shared.error_summary.heading` gives: a bare noun in that slot needs an
   # article the sentence's own wording cannot know.
   RECORD_SUBJECTS = %w[
+    canon_rule
     character
     faction
     faction_relationship

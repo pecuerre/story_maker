@@ -137,6 +137,12 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
     assert_equal :scene, UniverseScopeResolver.owner_association_for(SceneCharacter)
     # A record with a `universe_id` of its own has no owner association to walk.
     assert_nil UniverseScopeResolver.owner_association_for(Character)
+    # A Canon Rule also names an optional story, but its own column places it: the
+    # story is a reference rather than the scope, so a universe-wide rule must not
+    # be filtered out by it.
+    assert_nil UniverseScopeResolver.owner_association_for(CanonRule)
+    assert_equal [ canon_rules(:canon_rule_one), canon_rules(:canon_rule_two) ].sort_by(&:id),
+      UniverseScopeResolver.records_in(CanonRule, @universe).order(:id).to_a
   end
 
   test "the answer agrees with the walk, for every model it is asked about" do

@@ -1,0 +1,10 @@
+canon_rule_one:
+  universe: universe_one
+  statement: "Magic always costs the caster a memory."
+  source: "The first spell in chapter two takes the caster's brother's name."
+
+canon_rule_two:
+  universe: universe_one
+  story: story_one
+  statement: "The river cannot be crossed at night."
+  source: "Chapter five: the ferryman refuses after dark."

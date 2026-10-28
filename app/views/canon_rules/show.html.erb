@@ -1,0 +1,18 @@
+<% content_for :title, @canon_rule.display_string %>
+
+<%= render "shared/record_details",
+  record: @canon_rule,
+  eyebrow: t("sidebar.universe_bible"),
+  label: t("canon_rules.show.label"),
+  description: "",
+  facts: [
+    detail_fact(t("canon_rules.show.facts.scope"),
+      @canon_rule.universe_wide? ? t("canon_rules.scope.universe") : link_to(@canon_rule.story.name, universe_story_path(id: @canon_rule.story)))
+  ],
+  wide_facts: [
+    detail_fact(t("canon_rules.show.facts.statement"), @canon_rule.statement),
+    detail_fact(t("canon_rules.show.facts.source"), @canon_rule.source, blank: t("canon_rules.show.facts.source_blank"))
+  ],
+  back_url: universe_canon_rules_path,
+  back_label: t("canon_rules.show.back_label"),
+  actions: discussion_control(@canon_rule) %>

@@ -34,7 +34,8 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     "relations" => [ :universe_relations_path, :universe_relation_path, :relation ],
     "faction_relationships" => [ :universe_faction_relationships_path, :universe_faction_relationship_path, :faction_relationship ],
     "ownerships" => [ :universe_ownerships_path, :universe_ownership_path, :ownership ],
-    "routes" => [ :universe_routes_path, :universe_route_path, :route ]
+    "routes" => [ :universe_routes_path, :universe_route_path, :route ],
+    "canon_rules" => [ :universe_canon_rules_path, :universe_canon_rule_path, :canon_rule ]
   }.freeze
 
   # Every flat-list editor, with the form scope whose field names its serializer
@@ -48,7 +49,8 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     "events" => [ :universe_events_path, "event" ],
     "relations" => [ :universe_relations_path, "relation" ],
     "ownerships" => [ :universe_ownerships_path, "ownership" ],
-    "routes" => [ :universe_routes_path, "route" ]
+    "routes" => [ :universe_routes_path, "route" ],
+    "canon_rules" => [ :universe_canon_rules_path, "canon_rule" ]
   }.freeze
 
   setup do
@@ -139,7 +141,8 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     faction_relationship = faction_relationships(:faction_relationship_one)
     ownership = Ownership.create!(universe: @universe, character: characters(:character_one), item: items(:item_one))
     records = { "relations" => relation, "faction_relationships" => faction_relationship,
-      "ownerships" => ownership, "routes" => routes(:route_one) }
+      "ownerships" => ownership, "routes" => routes(:route_one),
+      "canon_rules" => canon_rules(:canon_rule_one) }
 
     HTML_PAGES.each do |name, (index_helper, member_helper, _)|
       get public_send(index_helper, universe_slug: @universe.slug)

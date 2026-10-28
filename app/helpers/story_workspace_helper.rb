@@ -1,16 +1,17 @@
 module StoryWorkspaceHelper
   # The Story workspace's destinations. One helper rather than the same array in
-  # five views, because a fourth destination is exactly when a copy falls behind.
+  # five views, because another destination is exactly when a copy falls behind.
   #
-  # **Narrative order is the one signed-in destination.** The other three are
-  # guest-readable on a public universe, but the comparison is not, so a guest is
-  # not offered a link that would only send them to sign in. The controller still
-  # enforces the rule; this only keeps the strip honest.
+  # **Narrative order is the one signed-in destination.** The other destinations
+  # are guest-readable on a public universe, but the comparison is not, so a
+  # guest is not offered a link that would only send them to sign in. The
+  # controller still enforces the rule; this only keeps the strip honest.
   def story_workspace_tabs(story)
     tabs = [
       { label: t("sidebar.sections"), path: universe_story_sections_path(story_id: story), controller: :sections },
       { label: t("sidebar.plots"), path: universe_story_plots_path(story_id: story), controller: :plots },
-      { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: story), controller: :scenes }
+      { label: t("sidebar.scenes"), path: universe_story_scenes_path(story_id: story), controller: :scenes },
+      { label: t("sidebar.appearances"), path: universe_story_appearances_path(story_id: story), controller: :appearances }
     ]
 
     if Current.user.present?

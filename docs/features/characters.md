@@ -26,6 +26,9 @@ returns `at_a_glance` and the other profile values instead of `description`. Ali
 part of the searchable body, so a reader can find a Character by a name it is known by or by the
 pronouns recorded for it.
 
+The details page's prose mention suggestions are a separate read: a name written in a Scene never
+becomes an appearance. Their matching rules and surfaces are in [mentions.md](mentions.md).
+
 ## Faction membership
 
 A Character may be assigned zero, one, or several same-Universe Factions. The multi-select in the

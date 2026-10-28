@@ -50,7 +50,13 @@
       </div>
     <% elsif element.body.present? %>
       <% prose = true %>
-      <%= simple_format(element.body, class: "manuscript-prose") %>
+      <%= simple_format(
+        highlighted_mentions(element.body,
+          index: manuscript.mention_index,
+          present_character_ids: manuscript.participant_ids(scene)),
+        { class: "manuscript-prose" },
+        sanitize: false
+      ) %>
       <% if element.dialogue? && element.characters.any? %>
         <p class="manuscript-attribution"><%= element.characters.map(&:name).to_sentence %></p>
       <% end %>

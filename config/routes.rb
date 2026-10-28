@@ -89,6 +89,11 @@ Rails.application.routes.draw do
       # only a `show`, and it is signed-in only (the controller deliberately does
       # not opt out of `require_authentication`).
       resource :narrative_order, only: :show
+      # The Story-wide appearance grid: one row per Character, one column per
+      # Scene, with recorded presence and prose mentions as separate layers. It
+      # has no record of its own and no mutation route, so it is a singular
+      # resource with only a `show`.
+      resource :appearances, only: :show, controller: "appearances"
       # The export surface: one options page and the printable manuscript it
       # opens. Both are reads of the Story, so they are guest-readable like the
       # Story page itself. A second output format adds one `get` beside

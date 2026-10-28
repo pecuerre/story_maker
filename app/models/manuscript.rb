@@ -86,6 +86,30 @@ class Manuscript
     scope == "bible"
   end
 
+  # The Story's prose mention index. A printable page highlights a recognized
+  # name exactly as Scene Details does, but the document is assembled from the
+  # Scenes it already loaded, so the index is built once from this Universe's
+  # Characters and reused for every Element.
+  def mention_index
+    @mention_index ||= MentionIndex.new(universe.characters.reorder(:name, :id).to_a)
+  end
+
+  # The Character ids recorded as present in a Scene, using only the
+  # associations `preloaded_scenes` already read. A mention is highlighted
+  # differently when the Character is not in this set; the set never decides
+  # whether the name is a mention.
+  def participant_ids(scene)
+    @participant_ids ||= {}
+    @participant_ids[scene.id] ||= begin
+      links = scene.scene_characters.map(&:character_id)
+      speakers = scene.scene_elements.flat_map do |element|
+        element.characters.map(&:id) + element.scene_dialogue_turns.map(&:speaker_id)
+      end
+
+      (links + speakers).uniq.to_set
+    end
+  end
+
   # Characters, Locations, Items, and Events of this Story's Universe, each
   # category skipped when it is empty. A category is the workspace's own title
   # key, so the appendix calls the records what every workspace calls them.

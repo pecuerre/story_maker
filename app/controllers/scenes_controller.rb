@@ -24,6 +24,10 @@ class ScenesController < ApplicationController
   before_action :set_plot_options, only: %i[ show new edit create update ]
   # Scene Details hosts the ordered Element list and its speaker picker.
   before_action :set_element_data, only: %i[ show ]
+  # Prose mentions need the same Character list the speaker picker already
+  # loaded, plus the Scene's recorded participants to tell a suggestion from a
+  # name that is already an appearance.
+  before_action :set_mention_data, only: %i[ show ]
 
   # GET /u/:universe_slug/s/:story_id/scenes
   #
@@ -206,6 +210,15 @@ class ScenesController < ApplicationController
       .reorder(:position, :id).to_a
     @element_total = @scene_elements.size
     @character_options = Current.universe.characters.reorder(:name, :id).to_a
+  end
+
+  # The prose mention index reuses the Character rows the page already loaded,
+  # so highlighting costs no extra query of its own. The participant ids are the
+  # same union the Characters tab shows — an explicit link or a Dialogue speaker
+  # — and only decide the *style* of a mention, never whether it exists.
+  def set_mention_data
+    @mention_index = MentionIndex.new(@character_options)
+    @scene_participant_ids = SceneParticipants.character_ids_by_scene([ @scene ])[@scene.id] || []
   end
 
   # Two grouped queries answer both row counts for the whole list, once the rows

@@ -74,6 +74,7 @@ es:
     sections: "Secciones"
     plots: "Tramas"
     scenes: "Escenas"
+    appearances: "Apariciones"
     narrative_order: "Orden narrativo"
     export: "Exportar"
     all_stories: "Todas las historias"
@@ -155,6 +156,13 @@ es:
       aria: "Detalles de %{name}"
     record_photo:
       alt: "Foto de %{name}"
+    # La marca de mención en la prosa. Una mención es un nombre escrito en el
+    # cuerpo de un elemento, no una aparición registrada, así que la nota de
+    # sugerencia dice lo que el enlace discontinuo no es: un hecho sobre la
+    # presencia.
+    mention:
+      suggested_title: "Se menciona en la prosa, pero no está registrado como presente en esta escena"
+      suggested_note: "(sin registrar como presente)"
     error_summary:
       # `count` se pluraliza con la clave: un error se lee de otra forma que
       # muchos. `subject` es la frase que va detrás del «this» de la oración. En
@@ -1070,6 +1078,7 @@ es:
       open_sections: "Abrir las secciones"
       open_plots: "Abrir las tramas"
       open_scenes: "Abrir las escenas"
+      open_appearances: "Abrir la cuadrícula de apariciones"
       add_section: "Añadir sección"
       actions_aria: "Acciones de la historia"
       structure_eyebrow: "Estructura de la historia"
@@ -1513,6 +1522,7 @@ es:
       empty_title: "Todavía no hay elementos"
       empty_description: "Una escena puede tener cualquier número de elementos, incluido ninguno. Un bloque de narración describe lo que ocurre; un bloque de diálogo nombra a los personajes que hablan en él."
       no_content: "Todavía no hay contenido. Un título es todo lo que un elemento necesita."
+      mention_legend: "Los nombres enlazados son menciones en la prosa, no apariciones. Un subrayado discontinuo significa que el personaje no está registrado como presente en esta escena."
       delete_confirm: "¿Eliminar «%{name}»? Su contenido y sus enlaces con los hablantes se eliminarán de forma permanente. Los personajes y otros registros del universo no se eliminarán."
       # La frase que la fila de un diálogo declara sobre sus enlaces con
       # hablantes. `names` son los nombres de hablantes escritos por la persona
@@ -1852,6 +1862,16 @@ es:
         under_pressure_they: "Bajo presión, esta persona"
         never: "Nunca"
         blank: "Sin registrar."
+    mentions:
+      title: "Menciones en la prosa de %{story}"
+      title_without_story: "Menciones en la prosa"
+      empty_title: "No hay menciones sin registrar en %{story}"
+      empty_title_without_story: "Elige una historia para ver las menciones en la prosa"
+      empty_description: "Un nombre escrito en la prosa de una escena es una mención, no una aparición. Estas son solo sugerencias: la pestaña Personajes de la escena sigue siendo el único registro de quién está presente."
+      empty_description_without_story: "Las escenas pertenecen a una historia, así que la prosa solo se puede buscar cuando una historia es la actual. Elige una historia para buscar el nombre de este personaje."
+      in_elements: "Se menciona en: %{elements}"
+      mentioned_as: "Escrito como %{names}"
+      suggested_badge: "Sin registrar como presente"
     knowledge:
       title: "Lo que sabe este personaje"
       empty: "Aún no hay cambios de conocimiento registrados."
@@ -3121,6 +3141,34 @@ es:
         fgcolor: "Color de texto"
         parent: "Etiqueta padre"
         taggable: "Etiquetable"
+
+  # La cuadrícula de apariciones de toda la historia, de solo lectura. La
+  # presencia registrada y las menciones en la prosa son dos capas dibujadas con
+  # marcas distintas, nunca un único estado combinado; la leyenda lo dice en el
+  # idioma del lector.
+  appearances:
+    title: "Cuadrícula de apariciones"
+    description: "Todos los personajes de %{story} a la vez: las apariciones registradas y las menciones en la prosa son capas separadas."
+    intro: "Las filas son personajes y las columnas son escenas en orden narrativo. La presencia registrada es un enlace de personaje guardado o una línea de diálogo; una mención en la prosa es solo un nombre escrito en un elemento."
+    caption: "Apariciones registradas y menciones en la prosa de cada personaje en %{story}, por escena en orden narrativo."
+    scroll_label: "Cuadrícula de apariciones desplazable de %{story}."
+    character_column: "Personaje"
+    scene_link: "Escena %{position}: %{name}"
+    legend:
+      title: "Leyenda"
+      present: "Aparición registrada: un enlace de personaje guardado o una línea de diálogo."
+      mention: "Mención en la prosa: un nombre escrito en un elemento. Una mención no es una aparición."
+    states:
+      present: "Aparece"
+      mention: "Se menciona"
+      both: "Aparece y se menciona"
+      none: "No está presente"
+    empty:
+      no_scenes_title: "Todavía no hay escenas"
+      no_scenes_description: "Añade la primera escena para empezar la cuadrícula."
+      no_scenes_read_only_description: "Esta historia todavía no tiene escenas que mostrar."
+      no_characters_title: "Ningún personaje aparece ni se menciona en %{story} todavía"
+      no_characters_description: "Registra un personaje en la pestaña Personajes de una escena, o escribe su nombre en el contenido de un elemento. En ambos casos, el personaje tendrá una fila aquí."
 
   searches:
     bar:

@@ -490,12 +490,35 @@ The painted shape:
   Scene without an in-world time is not in a date range. Every access level sees it, because
   filtering is reading. While a filter is active the surface adds `Showing N scenes of M scenes.`
   followed by the active filters as neutral badges.
+- A recognized Character name in Element prose is a `.mention` link with a solid hairline underline.
+  A name the Scene does not record as present adds `.mention--suggested` and a dashed underline; the
+  difference is a line pattern rather than a hue, so it survives light, dark, and print. The matching
+  and suggestion rules are in [features/mentions.md](features/mentions.md).
 - Narration and Dialogue Elements use one Bootstrap modal and the shared modal contract, not a second
   editor. A one-line hint under the type selector states what each kind is, and the same line changes
   with the selection. An empty Element list gets its own empty state, because a Scene may hold any
   number of Elements, including none.
 - A long Section name wraps instead of pushing the layout, and the action group wraps below the title
   at narrow widths instead of hiding it or relying on hover.
+
+### Appearance grid
+
+The grid's rows, layers, and read-only contract are in
+[features/appearances.md](features/appearances.md); the painted shape:
+
+- A real `<table>` inside a `.appearance-grid-scroll` region with `tabindex="0"` and an accessible
+  name, exactly as the Map's scroll region is reachable. The Character column is sticky at the left;
+  Scene headers keep their `(position, id)` order and wrap rather than forcing the page wider.
+- A recorded appearance is `.appearance-mark--present`, a filled square. A prose mention is
+  `.appearance-mark--mention`, a dashed outline. A cell can hold both marks, and the legend names the
+  two layers rather than merging them. Neither mark depends on hue, so light, dark, and print keep the
+  distinction.
+- The legend sits above the table, outside the scroll region, and carries the sentence that a mention
+  is not an appearance. Empty cells have a visually hidden **Not present** label; the table has a
+  caption, column headers, and row headers for keyboard and screen-reader navigation.
+- Print removes the sticky offsets, keeps the marks as black fill and black dashes, and avoids
+  breaking a row across pages. The grid is a read-only page, so it adds no buttons, forms, or hover
+  actions.
 
 ### Map diagram
 

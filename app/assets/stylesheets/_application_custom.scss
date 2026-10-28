@@ -1204,6 +1204,27 @@ $um-search-match: #ffc107;
   text-underline-offset: .15em;
 }
 
+// A name written in prose, linked to the Character it belongs to. The underline
+// pattern carries the meaning without relying on hue: a recorded appearance is
+// a solid hairline, while a suggestion — a name in a Scene that does not record
+// the Character as present — is dashed.
+.mention {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .18em;
+}
+
+.mention:hover,
+.mention:focus-visible {
+  color: var(--bs-link-color);
+}
+
+.mention--suggested {
+  text-decoration-color: var(--bs-secondary-color);
+  text-decoration-style: dashed;
+}
+
 .row-actions .dropdown-toggle::after {
   margin-left: .35rem;
 }

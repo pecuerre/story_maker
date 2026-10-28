@@ -66,6 +66,8 @@ Element order is the Scene's own flat `position` sequence. Narration prints its 
 with line-level turns prints the turns — speaker, optional parenthetical, and line — because those are
 the attributed lines, and its block body repeats the same speech. A Dialogue with no turns prints its
 body followed by the names of its speakers, which is the only attribution that source carries.
+A registered Character name in a printed body is marked and linked, with a mention kept visually
+distinct from recorded presence; the matching rules are in [mentions.md](mentions.md).
 
 Scene names and Section names are printed as titles. Section descriptions, Scene descriptions, and
 Element names are author notes about the structure, not manuscript prose, so they are not printed.

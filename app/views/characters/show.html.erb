@@ -25,5 +25,10 @@
   back_label: t("characters.show.back_label"),
   actions: discussion_control(@character) %>
 
-<%= render "scene_appearances/section", record: @character %>
+<%# The appearances object is built once and shared with the mention suggestions
+    below it: both sections answer questions about the same Story, and the
+    suggestions have to know which Scenes already record the Character. %>
+<% appearances = SceneAppearances.for(@character, story: Current.story) %>
+<%= render "scene_appearances/section", record: @character, appearances: appearances %>
+<%= render "characters/mentions", character: @character, appearances: appearances %>
 <%= render "characters/knowledge", character: @character, knowledges: @character_knowledges, knowledge: @knowledge %>

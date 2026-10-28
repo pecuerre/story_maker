@@ -77,6 +77,7 @@ en:
     sections: "Sections"
     plots: "Plots"
     scenes: "Scenes"
+    appearances: "Appearances"
     narrative_order: "Narrative order"
     export: "Export"
     all_stories: "All stories"
@@ -161,6 +162,12 @@ en:
       aria: "Details for %{name}"
     record_photo:
       alt: "Photo of %{name}"
+    # The prose mention mark. A mention is a name written in an Element body, not
+    # a recorded appearance, so the suggestion note says what the dashed link is
+    # not: a fact about presence.
+    mention:
+      suggested_title: "Mentioned in the prose, but not recorded as present in this scene"
+      suggested_note: "(not recorded as present)"
     error_summary:
       # `count` is pluralized by the key: one error reads differently from many.
       # `subject` is the phrase that follows the sentence's own "this", so it
@@ -1125,6 +1132,7 @@ en:
       open_sections: "Open sections"
       open_plots: "Open plots"
       open_scenes: "Open scenes"
+      open_appearances: "Open appearance grid"
       add_section: "Add section"
       actions_aria: "Story actions"
       structure_eyebrow: "Story structure"
@@ -1571,6 +1579,7 @@ en:
       empty_title: "No elements yet"
       empty_description: "A scene can hold any number of elements, including none. A narration block describes what happens; a dialogue block names the characters who speak in it."
       no_content: "No content yet. A title is all an element needs."
+      mention_legend: "Linked names are prose mentions, not appearances. A dashed underline means the character is not recorded as present in this scene."
       delete_confirm: "Delete “%{name}”? Its content and its speaker links will be permanently removed. Characters and other universe records will not be deleted."
       # The sentence a Dialogue's row states about its speaker links. `names` is
       # the author-entered speaker names joined by the locale's own connector, so
@@ -1897,6 +1906,16 @@ en:
         under_pressure_they: "Under pressure, they"
         never: "Never"
         blank: "Not recorded."
+    mentions:
+      title: "Mentioned in prose of %{story}"
+      title_without_story: "Mentioned in prose"
+      empty_title: "No unrecorded mentions in %{story}"
+      empty_title_without_story: "Select a story to see prose mentions"
+      empty_description: "A name written in a scene's prose is a mention, not an appearance. These are suggestions only: the scene's Characters tab is still the only record of who is present."
+      empty_description_without_story: "Scenes belong to a story, so prose can only be searched once a story is the current one. Pick a story to look for this character's name."
+      in_elements: "Mentioned in: %{elements}"
+      mentioned_as: "Written as %{names}"
+      suggested_badge: "Not recorded as present"
     knowledge:
       title: "What this character knows"
       empty: "No knowledge changes recorded yet."
@@ -2843,6 +2862,33 @@ en:
     empty_title: "No scenes yet"
     empty_writable_description: "Add the first scene to start the narrative order."
     empty_read_only_description: "This story has no scenes to compare yet."
+
+  # The read-only Story-wide appearance grid. Recorded presence and prose
+  # mentions are two layers drawn with different marks, never one merged state;
+  # the legend says so in the reader's language.
+  appearances:
+    title: "Appearance grid"
+    description: "Every character in %{story} at once: recorded appearances and prose mentions are separate layers."
+    intro: "Rows are characters and columns are scenes in narrative order. Recorded presence is a stored character link or a line of dialogue; a prose mention is only a name written in an element."
+    caption: "Recorded appearances and prose mentions for each character in %{story}, by scene in narrative order."
+    scroll_label: "Scrollable appearance grid for %{story}."
+    character_column: "Character"
+    scene_link: "Scene %{position}: %{name}"
+    legend:
+      title: "Legend"
+      present: "Recorded appearance: a stored character link or a line of dialogue."
+      mention: "Prose mention: a name written in an element. A mention is not an appearance."
+    states:
+      present: "Appears"
+      mention: "Mentioned"
+      both: "Appears and is mentioned"
+      none: "Not present"
+    empty:
+      no_scenes_title: "No scenes yet"
+      no_scenes_description: "Add the first scene to start the grid."
+      no_scenes_read_only_description: "This story has no scenes to show yet."
+      no_characters_title: "No characters appear or are mentioned in %{story} yet"
+      no_characters_description: "Record a character in a scene's Characters tab, or write their name in an element's content. Either way, the character gets a row here."
 
   # The search box and the results page it opens. `bar.*` is the box in the top
   # bar; everything below it belongs to the results page, the scope dropdown, and

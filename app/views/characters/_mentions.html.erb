@@ -1,0 +1,71 @@
+<%# Prose mentions of one Character, on the Character's own details page.
+    They sit beside "Appears in scenes" because the two answer adjacent
+    questions, and the section deliberately lists only the Scenes where the name
+    is written but the Character is not recorded as present. A mention in a Scene
+    that already appears above is the same fact twice, so it is left to the
+    appearances section and this one stays a list of genuine suggestions.
+
+    The section is read-only for every access level: it points at Scenes and
+    Characters the reader may already read, and it never writes a presence link. %>
+<% story_selected = Current.story.present? %>
+<% suggestions = if story_selected
+  recorded_scene_ids = appearances.entries.map { |entry| entry.scene.id }.to_set
+  StoryMentions.for(Current.story).entries_for(character)
+    .reject { |entry| recorded_scene_ids.include?(entry.scene.id) }
+else
+  []
+end %>
+<% empty_action = link_to(t("sidebar.all_stories"), universe_stories_path, class: "btn btn-primary") unless story_selected %>
+<% if story_selected %>
+  <% section_title = t("characters.mentions.title", story: Current.story.name) %>
+  <% section_empty_title = t("characters.mentions.empty_title", story: Current.story.name) %>
+  <% section_empty_description = t("characters.mentions.empty_description") %>
+<% else %>
+  <% section_title = t("characters.mentions.title_without_story") %>
+  <% section_empty_title = t("characters.mentions.empty_title_without_story") %>
+  <% section_empty_description = t("characters.mentions.empty_description_without_story") %>
+<% end %>
+<%= render "shared/detail_section",
+  title: section_title,
+  icon: "journal-text",
+  count: suggestions.size,
+  count_label: "scene",
+  empty_title: section_empty_title,
+  empty_description: section_empty_description,
+  empty_action: empty_action do %>
+  <% scene_total = Current.story.scenes.count %>
+  <div class="list-group list-group-flush">
+    <% suggestions.each do |entry| %>
+      <%# The spelling the author used, which is only shown when it is not the
+          Character's own name. It is author data, so it is interpolated rather
+          than translated. %>
+      <% alias_names = entry.names.reject { |name| name.casecmp?(character.name) } %>
+      <div class="list-group-item entity-row d-flex align-items-start gap-3">
+        <div class="entity-copy flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge rounded-pill text-bg-light border"
+              aria-label="<%= t("shared.scene_position_aria", position: entry.scene.position + 1, total: scene_total) %>">
+              <%= entry.scene.position + 1 %>
+            </span>
+            <span class="entity-title">
+              <%= link_to entry.scene.name, universe_story_scene_path(story_id: Current.story, id: entry.scene), class: "text-break" %>
+            </span>
+            <span class="badge rounded-pill text-bg-light border"><%= t("characters.mentions.suggested_badge") %></span>
+          </div>
+          <div class="entity-description">
+            <%= t("characters.mentions.in_elements", elements: entry.elements.map(&:name).to_sentence) %>
+          </div>
+          <% if alias_names.any? %>
+            <div class="form-text">
+              <%= t("characters.mentions.mentioned_as", names: alias_names.to_sentence) %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="entity-row-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
+          <%= record_details_link universe_story_scene_path(story_id: Current.story, id: entry.scene), record: entry.scene %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

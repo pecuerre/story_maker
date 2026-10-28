@@ -130,19 +130,6 @@ triaged into this list.
    than the finding deleted. It is the surface items 42–44 write into, so it should land before them,
    and it must never rewrite prose.
 
-51. **Prose mention index and mention timeline.**
-
-   Presence is an explicit link: a Character in a Scene appears only when somebody recorded it, and a
-   name written inside an Element's body is invisible to every list, count, and the export's notes.
-   Characters now carry aliases, but only list search reads them. `Novelcrafter`'s Mentions and mention
-   timeline answer where a name appears, comes and goes, and is overused; its character detection is
-   the same read. **Can be done without a model:** index Element bodies for registered names and
-   aliases, present mentions as suggestions separate from presence so an unlinked name never becomes
-   a fact, and show a record's mentions beside "appears in scenes". Highlighting a recognized name
-   in prose is the first surface of that same index rather than a separate feature: Scene Details
-   and the printable export mark the name and open the record, while an unlinked name stays a
-   suggestion. It also supplies the mention layer the appearance heatmap needs.
-
 52. **Scene planning board and matrix.**
 
    Scenes are ordered in a list inside a Section tree, and the Story page shows structure as text;
@@ -295,26 +282,17 @@ triaged into this list.
    only where the source records it. A chapter file that cannot be mapped is reported rather than
    guessed at.
 
-66. **Appearance heatmap with a separate mention layer.**
-
-   `SceneAppearances` answers which Scenes one record appears in, but nothing shows the whole Story
-   at once. A Story-scoped grid has one row per Character and one column per Scene in narrative
-   order. **Two layers, never merged:** recorded presence (an explicit link, Dialogue speech, or an
-   Event reference) and names written in Element prose, drawn in a visually distinct way, with a
-   legend that says a mention is not an appearance. **Needs** the prose mention index for the second
-   layer, a visual design that holds in light and dark and print and does not rely on hue alone, and
-   a table equivalent for keyboard and screen readers. The grid stays read-only.
-
 67. **Scenes-per-Character chart.**
 
    A record page lists its own appearances and the Characters list is Universe-scoped, but no page
    answers how much of the current Story each Character carries. One bar per Character counts the
    Scenes in which they appear, over the current Story. The count is the existing union — explicit
    link, Dialogue speech, Event reference — with a Character who both participates and speaks
-   counted once; prose mentions are excluded until the mention index exists, and then only as a
-   second distinguished layer. **Needs a home** — the Story overview is the natural one because the
-   measure is Story-scoped — plus a table equivalent and a chart pattern shared with the heatmap.
-   There is no chart library; the Map's server-rendered SVG is the closest existing pattern.
+   counted once; prose mentions never add to it and may appear only as a second distinguished layer.
+   **Needs a home** — the Story overview is the natural one because the measure is Story-scoped —
+   plus a table equivalent and a chart pattern shared with the
+   [Appearance grid](features/appearances.md). There is no chart library; the Map's server-rendered
+   SVG is the closest existing pattern.
 
 ## FUTURE WORK
 

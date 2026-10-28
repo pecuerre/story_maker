@@ -35,6 +35,8 @@ the subject and read its owner:
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
 | Character profiles, Faction membership, and Character knowledge changes | [`docs/features/characters.md`](docs/features/characters.md) |
+| Prose mentions, suggestions, and in-place name highlighting | [`docs/features/mentions.md`](docs/features/mentions.md) |
+| The Story-wide appearance grid and its two layers | [`docs/features/appearances.md`](docs/features/appearances.md) |
 | Universe-scoped Faction profiles and tags | [`docs/features/factions.md`](docs/features/factions.md) |
 | Location profile answers, presence, and the Locations workspace | [`docs/features/locations.md`](docs/features/locations.md) |
 | Item profile answers, ownership, and the Items workspace | [`docs/features/items.md`](docs/features/items.md) |

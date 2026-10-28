@@ -8,7 +8,7 @@
     read the record it is attached to. The page's own authorization has already
     established that the reader may see this record, and a Scene in the same
     Story is readable by the same reader. %>
-<% appearances = SceneAppearances.for(record, story: Current.story) %>
+<% appearances = local_assigns[:appearances] || SceneAppearances.for(record, story: Current.story) %>
 <% story_selected = Current.story.present? %>
 <%# Without a current Story the section can only offer the way to pick one, so
     the empty case gets a real action rather than a dead end. The link's text is

@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Appearance grid.** Adds a read-only Story page with one row per Character and one column per Scene, drawing recorded presence and prose mentions as separate marks with an accessible table and print styles.
+- **Prose mentions.** A read-time index matches Character names and aliases in Element bodies, lists unrecorded mentions on the Character page, links names on Scene Details, and marks them in the printable manuscript without recording presence.
 - **Universe canon rules.** Adds a Canon Rule with a required statement, optional source passage, and an optional Story owner, plus its `/u/:slug/canon` workspace, details page, discussion thread, search kind, and demo data.
 - **Canon rule development data.** Each demo universe carries one universe-wide rule and one story-owned rule, loaded after its Stories.
 
@@ -51,6 +53,8 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Appearance grid documentation.** Adds the appearances feature document and links it from Scenes, the grid's visual rules, and the docs index.
+- **Prose mention documentation.** Adds the mentions feature document and links it from Characters, Scenes, Export, and the visual pattern reference.
 - **Canon rules decision and owners.** Records ADR 0039, the Canon feature document, the schema and validation rows, the Universe Bible entry, the search kind, and the refreshed mutation-controller counts.
 - **Backlog canon item removed.** Canon rules are shipped, and the import item now points at the record it builds on.
 

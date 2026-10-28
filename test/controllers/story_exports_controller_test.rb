@@ -75,6 +75,21 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Universe bible", count: 0
   end
 
+  test "the printable prose marks a registered name and keeps a suggestion distinct" do
+    character = @universe.characters.create!(name: "Mira")
+    scene = @story.scenes.create!(name: "The gate", position: 10)
+    scene.scene_elements.create!(name: "At the gate", kind: "narration",
+      body: "Mira waits by the gate.")
+
+    get manuscript_url
+
+    assert_response :success
+    assert_select ".manuscript-prose a.mention", text: /Mira/ do |links|
+      assert_equal universe_character_path(universe_slug: @universe.slug, id: character), links.first["href"]
+    end
+    assert_select ".manuscript-prose a.mention--suggested", text: /Mira/
+  end
+
   test "scene elements print in their own position order" do
     scene = @story.scenes.create!(name: "Ordered scene", position: 10)
     scene.scene_elements.create!(name: "Later block", kind: "narration", body: "Later prose", position: 1)

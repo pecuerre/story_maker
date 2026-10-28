@@ -45,6 +45,8 @@
       <% end %>
     </div>
 
+    <p class="form-text"><%= t("scenes.elements.mention_legend") %></p>
+
     <% if @scene_elements.any? %>
       <div class="content-surface">
         <div class="list-group list-group-flush">
@@ -67,7 +69,8 @@
                 </div>
 
                 <% if element.body.present? %>
-                  <div class="entity-description"><%= element.body %></div>
+                  <div class="entity-description"><%= highlighted_mentions(element.body,
+                    index: @mention_index, present_character_ids: @scene_participant_ids) %></div>
                 <% else %>
                   <div class="entity-description text-body-secondary"><%= t("scenes.elements.no_content") %></div>
                 <% end %>

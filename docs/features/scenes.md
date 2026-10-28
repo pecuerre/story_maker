@@ -197,8 +197,8 @@ refresh a save performs.
 
 ## Narrative order beside the Timeline
 
-The Story workspace's fourth tab, **Narrative order**
-(`GET /u/:universe_slug/s/:story_id/narrative_order`), is a signed-in, read-only comparison of the
+The Story workspace's **Narrative order** tab
+(`GET /u/:universe_slug/s/:story_id/narrative_order`) is a signed-in, read-only comparison of the
 Story's `Scene.position` sequence with the Universe Timeline. `NarrativeOrdersController#show`
 resolves the Story through the request's `Current.story` and builds `TimelineLayout` over the
 universe's Events, so the page cannot disagree with the Timeline about Event order. It has no
@@ -209,7 +209,7 @@ The tab is the one signed-in destination in the Story strip: a guest is sent to 
 shown the tab. After authentication the ordinary universe read rule applies — any signed-in reader
 may open it on a public universe, and a private universe keeps its owner/membership rule. The strip
 is built by `StoryWorkspaceHelper#story_workspace_tabs`; every Story workspace page uses that one
-helper, so a fourth destination is added in one place rather than copied into five views.
+helper, so another destination is added in one place rather than copied into the page views.
 
 **A conflict is one Scene, not a disagreement between the two orders.** `Scene.position` orders
 telling and the Timeline orders happening, so a reversal is a flashback, a parallel thread, or a
@@ -292,6 +292,10 @@ server, including remembered draft changes, so derived participation stays curre
 draft receipt is never shown as a saved turn. Every visible label, confirmation, and empty/save-first
 message is localized.
 
+A registered Character name written in an Element body is marked on Scene Details by the prose mention
+index, which is a separate read and never creates presence; its rules are in
+[mentions.md](mentions.md).
+
 ## Participation is a union, never a sum
 
 This is the single most repeated rule in the Scene system, and it is one rule:
@@ -310,6 +314,9 @@ This is the single most repeated rule in the Scene system, and it is one rule:
 - Speaking is **not** a presence link: it never creates a `SceneCharacter` row.
 - `SceneAppearances` is the same union in the reverse direction, and adds each Event link as a
   third source, so it is also a union and never a sum.
+
+The Story-wide grid that reads this union beside the prose mention layer is in
+[appearances.md](appearances.md).
 
 The Characters tab (`/scenes/:id/characters`) is a real read page — a guest and a read-only member see
 exactly what a writer sees minus the controls. Its rows are one per Character in the union, ordered by

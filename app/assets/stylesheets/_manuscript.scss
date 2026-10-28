@@ -75,6 +75,15 @@
   margin-bottom: 1rem;
 }
 
+// A mention in the book is still prose: the link opens the Character on screen,
+// but the printed page must read as the manuscript rather than as a page of
+// blue links. The underline pattern survives printing, so a suggestion remains
+// distinguishable without hue.
+.manuscript .mention {
+  color: inherit;
+  text-decoration-color: currentColor;
+}
+
 .manuscript-empty {
   color: var(--bs-secondary-color);
   font-style: italic;

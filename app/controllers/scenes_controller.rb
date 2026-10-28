@@ -261,7 +261,7 @@ class ScenesController < ApplicationController
   end
 
   def scene_params
-    params.expect(scene: [ *photo_params, :name, :description, :section_id, :datetime, :pov_character_id,
+    params.expect(scene: [ *photo_params, :name, :description, :status, :section_id, :datetime, :pov_character_id,
       { scene_tag_ids: [], plot_ids: [] } ])
   end
 

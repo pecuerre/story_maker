@@ -15,9 +15,12 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     universe_story_export_path(universe_slug: universe.slug, story_id: story)
   end
 
-  def manuscript_url(scope: nil, story: @story, universe: @universe)
+  def manuscript_url(scope: nil, final_only: false, story: @story, universe: @universe)
     url = universe_story_export_manuscript_url(universe_slug: universe.slug, story_id: story)
-    scope ? "#{url}?scope=#{scope}" : url
+    params = {}
+    params[:scope] = scope if scope
+    params[:final_only] = "1" if final_only
+    params.any? ? "#{url}?#{params.to_query}" : url
   end
 
   test "the export page offers the printable format and its three scopes" do
@@ -31,6 +34,8 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
       Manuscript::SCOPES.each do |scope|
         assert_select "input[type=radio][name=scope][value=?]", scope
       end
+      assert_select "input[type=checkbox][name=final_only][value='1']"
+      assert_select "label[for=final_only]", text: "Final scenes only"
       assert_select "input[type=submit][value=?]", "Open printable page"
     end
     assert_select "a[href=?]", universe_story_path(id: @story), text: "Back to story"
@@ -148,6 +153,35 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".manuscript-notes", count: 0
     assert_select "h2", text: "Universe bible", count: 0
     assert_select "p.manuscript-prose", text: /Jonas wedges the box/
+  end
+
+  test "the final-only manuscript prints final scenes and leaves the others out" do
+    get manuscript_url(final_only: true)
+
+    assert_response :success
+    assert_select ".manuscript-scene-title", text: "Scene one"
+    assert_select ".manuscript-scene-title", text: "Scene two", count: 0
+    assert_select ".manuscript-scene-title", text: "Scene three", count: 0
+  end
+
+  test "the manuscript includes every status unless final-only is chosen" do
+    get manuscript_url
+
+    assert_response :success
+    assert_select ".manuscript-scene-title", text: "Scene one"
+    assert_select ".manuscript-scene-title", text: "Scene two"
+    assert_select ".manuscript-scene-title", text: "Scene three"
+  end
+
+  test "a final-only manuscript with no final scenes says why it is empty" do
+    story = @universe.stories.create!(name: "All drafts")
+    story.scenes.create!(name: "Still drafting")
+
+    get manuscript_url(story: story, final_only: true)
+
+    assert_response :success
+    assert_select ".manuscript-empty",
+      text: "This story has no final scenes yet, so there is nothing to export with this choice."
   end
 
   test "a story with no scenes says there is nothing to export" do

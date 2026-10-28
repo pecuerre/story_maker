@@ -67,6 +67,29 @@ class SpanishChromeTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the story structure picker carries no untranslated English chrome" do
+    story = @universe.stories.create!(name: "Unstructured story")
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_includes response.body, I18n.t("stories.structures.choose", locale: :es)
+    assert_no_english_chrome("the story structure picker")
+  end
+
+  test "a remembered scene status prints its Spanish label" do
+    @universe.update!(collaboration_mode: "wikipedia")
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story.id, id: @scene.id),
+      params: { scene: { status: "draft" } }
+    assert_response :see_other
+
+    get universe_draft_url(universe_slug: @universe.slug, id: Draft.sole.id)
+
+    assert_response :success
+    assert_includes response.body, I18n.t("scenes.statuses.draft", locale: :es)
+  end
+
   # The pages above all render, so they never reach a validation message. That
   # left a whole class of English invisible to this file: a model that answered
   # a rejected save with a literal `errors.add` sentence rather than a key. The

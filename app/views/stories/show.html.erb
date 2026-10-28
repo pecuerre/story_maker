@@ -36,6 +36,57 @@
 <% end %>
 
 <div class="row g-3">
+  <%# A template is a starting shape, so it is offered only on an empty Story in
+      a direct universe. Choosing one creates ordinary Sections and Scenes; the
+      card disappears as soon as the Story has either. %>
+  <% if @story_structure_available && can_write_universe? %>
+    <div class="col-12">
+      <div class="surface-card p-4">
+        <div class="page-eyebrow"><%= t("stories.structures.eyebrow") %></div>
+        <h2 class="h4"><%= t("stories.structures.heading") %></h2>
+        <p class="text-body-secondary"><%= t("stories.structures.description") %></p>
+
+        <%= form_with url: apply_structure_universe_story_path(id: @story), method: :post, class: "form-surface" do |form| %>
+          <fieldset>
+            <legend class="form-label"><%= t("stories.structures.choose") %></legend>
+            <% @story_structure_options.each do |entry| %>
+              <div class="form-check mb-3">
+                <%= form.radio_button :structure_slug, entry.slug, class: "form-check-input",
+                  id: "structure_#{entry.slug}", required: true,
+                  aria: { describedby: "structure_#{entry.slug}_description" } %>
+                <label class="form-check-label" for="structure_<%= entry.slug %>">
+                  <span class="fw-semibold"><%= t(entry.name_key) %></span>
+                </label>
+                <div class="text-body-secondary small" id="structure_<%= entry.slug %>_description">
+                  <%= t(entry.description_key) %>
+                </div>
+                <details class="mt-2">
+                  <summary class="small"><%= t("stories.structures.preview") %></summary>
+                  <ul class="list-unstyled ms-3 mt-2 mb-0 small">
+                    <% entry.acts.each do |act| %>
+                      <li class="mb-2">
+                        <span class="fw-semibold"><%= t(act.name_key) %></span>
+                        <ul class="mb-0">
+                          <% act.beats.each do |beat| %>
+                            <li>
+                              <%= t(beat.name_key) %>
+                              <div class="text-body-secondary"><%= t(beat.description_key) %></div>
+                            </li>
+                          <% end %>
+                        </ul>
+                      </li>
+                    <% end %>
+                  </ul>
+                </details>
+              </div>
+            <% end %>
+          </fieldset>
+          <%= form.submit t("stories.structures.submit"), class: "btn btn-primary" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="col-md-6">
     <div class="surface-card h-100 p-4">
       <%# The Story's photo sits in the left column of the structure card, the
@@ -68,6 +119,14 @@
             <span><%= count_with_label(@word_counts.total, "word") %></span>
           </div>
         </div>
+
+        <%# A draft-based universe cannot remember a batch of creates whose Scenes
+            point at Sections the draft has not created yet, so the starting-shape
+            control is not offered there. The reason is stated rather than left as
+            a missing feature. %>
+        <% if @story_structure_empty && can_write_universe? && !Current.universe.direct? %>
+          <p class="text-body-secondary small mt-3 mb-0"><%= t("stories.structures.draft_unavailable") %></p>
+        <% end %>
       <% end %>
 
       <% if @story.photo %>

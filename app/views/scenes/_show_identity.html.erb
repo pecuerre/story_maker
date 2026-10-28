@@ -2,13 +2,20 @@
     beside them. Split out so the two layouts in `scenes/show` render exactly
     the same block and cannot drift apart. %>
 <div class="row g-4">
-  <div class="col-md-6">
+  <div class="col-md-4">
     <div class="page-eyebrow"><%= t("scenes.show.facts.title") %></div>
     <p class="mb-0 text-break"><%= scene.name %></p>
   </div>
-  <div class="col-md-6">
+  <div class="col-md-4">
     <div class="page-eyebrow"><%= t("scenes.show.facts.narrative_position") %></div>
     <p class="mb-0"><%= t("scenes.show.facts.position", position: scene.position + 1, total: @scene_total) %></p>
+  </div>
+  <div class="col-md-4">
+    <div class="page-eyebrow"><%= t("scenes.show.facts.status") %></div>
+    <p class="mb-0">
+      <span class="badge rounded-pill text-bg-light border"><%= scene_status_label(scene.status) %></span>
+    </p>
+    <div class="form-text"><%= t("scenes.show.facts.status_hint") %></div>
   </div>
   <div class="col-12">
     <div class="page-eyebrow"><%= t("scenes.show.facts.description") %></div>

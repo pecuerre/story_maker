@@ -15,6 +15,9 @@
 # - `bible`       the same, plus the Universe's Characters, Locations, Items,
 #                  and Events as appendices.
 #
+# `final_only` is a second, independent choice: it narrows the printed Scenes to
+# `Scene::FINAL_STATUS`, leaving the chosen scope's content rules untouched.
+#
 # A stored record is all an export ever contains. A remembered change that has
 # not been applied is a draft of the author's own work and is not part of the
 # Story yet, so it is outside this read path by construction: the Story, its
@@ -37,8 +40,8 @@ class Manuscript
 
   attr_reader :story, :scope
 
-  def self.for(story, scope: DEFAULT_SCOPE)
-    new(story, scope: scope)
+  def self.for(story, scope: DEFAULT_SCOPE, final_only: false)
+    new(story, scope: scope, final_only: final_only)
   end
 
   # An unknown or absent value is the plain-prose export rather than an error:
@@ -48,11 +51,26 @@ class Manuscript
     SCOPES.include?(value.to_s) ? value.to_s : DEFAULT_SCOPE
   end
 
-  def initialize(story, scope: DEFAULT_SCOPE)
+  def initialize(story, scope: DEFAULT_SCOPE, final_only: false)
     @story = story
     @scope = self.class.scope(scope)
+    @final_only = ActiveModel::Type::Boolean.new.cast(final_only)
     @sections = story.sections.reorder(:position, :id).to_a
     @scenes = preloaded_scenes
+  end
+
+  # Whether the reader asked for only final Scenes. This is a separate choice
+  # from the content scope: the scope decides what a printed Scene carries, and
+  # this decides which Scenes print at all.
+  def final_only?
+    @final_only
+  end
+
+  # No printed Scene at all. A Story whose Sections exist but whose Scenes are
+  # all filtered out is empty for this document, so the page states that rather
+  # than printing headings over nothing.
+  def empty?
+    @scenes.empty?
   end
 
   # Root Section nodes, in position order, with their children already nested.
@@ -139,9 +157,10 @@ class Manuscript
 
     # Every Scene of the Story in narrative order, with everything the notes and
     # the prose read preloaded. One fixed set of queries serves a Story of any
-    # length.
+    # length. A final-only document narrows the same relation, so its Scenes,
+    # Section tree, and mention index all agree about what is printed.
     def preloaded_scenes
-      story.scenes
+      relation = story.scenes
         .includes(
           :pov_character,
           { scene_characters: :character },
@@ -150,8 +169,8 @@ class Manuscript
           { scene_events: :event },
           { scene_elements: [ :characters, { scene_dialogue_turns: :speaker } ] }
         )
-        .reorder(:position, :id)
-        .to_a
+      relation = relation.where(status: Scene::FINAL_STATUS) if final_only?
+      relation.reorder(:position, :id).to_a
     end
 
     # `visited` stops a corrupt parent cycle from looping, and a Section whose

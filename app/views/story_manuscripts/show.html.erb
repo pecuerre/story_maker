@@ -17,21 +17,23 @@
     </p>
   </header>
 
-  <% if @manuscript.sections.empty? && @manuscript.ungrouped_scenes.empty? %>
-    <p class="manuscript-empty manuscript-screen-only"><%= t("story_exports.manuscript.empty") %></p>
-  <% end %>
+  <% if @manuscript.empty? %>
+    <p class="manuscript-empty manuscript-screen-only">
+      <%= t(@manuscript.final_only? ? "story_exports.manuscript.no_final_scenes" : "story_exports.manuscript.empty") %>
+    </p>
+  <% else %>
+    <% @manuscript.sections.each do |node| %>
+      <%= render "story_manuscripts/section", node: node, manuscript: @manuscript %>
+    <% end %>
 
-  <% @manuscript.sections.each do |node| %>
-    <%= render "story_manuscripts/section", node: node, manuscript: @manuscript %>
-  <% end %>
-
-  <% if @manuscript.ungrouped_scenes.any? %>
-    <section class="manuscript-section">
-      <h2 class="manuscript-section-title"><%= t(SectionPaths::UNGROUPED_LABEL_KEY) %></h2>
-      <% @manuscript.ungrouped_scenes.each do |scene| %>
-        <%= render "story_manuscripts/scene", scene: scene, depth: 0, manuscript: @manuscript %>
-      <% end %>
-    </section>
+    <% if @manuscript.ungrouped_scenes.any? %>
+      <section class="manuscript-section">
+        <h2 class="manuscript-section-title"><%= t(SectionPaths::UNGROUPED_LABEL_KEY) %></h2>
+        <% @manuscript.ungrouped_scenes.each do |scene| %>
+          <%= render "story_manuscripts/scene", scene: scene, depth: 0, manuscript: @manuscript %>
+        <% end %>
+      </section>
+    <% end %>
   <% end %>
 
   <% if @manuscript.appendices.any? %>

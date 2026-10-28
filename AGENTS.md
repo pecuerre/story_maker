@@ -33,6 +33,7 @@ the subject and read its owner:
 | Colors, tokens, light/dark, typography, shell, responsive behavior, accessibility, the painted treatment of a view | [`docs/visual_design.md`](docs/visual_design.md) |
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
+| **Code-owned starting shapes** for a Story's Sections and Scenes | [`docs/features/story_structures.md`](docs/features/story_structures.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
 | Character profiles, Faction membership, and Character knowledge changes | [`docs/features/characters.md`](docs/features/characters.md) |
 | Prose mentions, suggestions, and in-place name highlighting | [`docs/features/mentions.md`](docs/features/mentions.md) |

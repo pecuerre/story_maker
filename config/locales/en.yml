@@ -1164,6 +1164,109 @@ en:
       # universe's name: "Shared by every story in X" cannot become Spanish by
       # substituting the name into a fixed frame.
       bible_description: "Every story in %{universe} shares these records."
+    # The code-owned starting shapes in `StoryStructureCatalog`. Their labels are
+    # keys here rather than strings in the catalogue, so the picker and the
+    # records it creates render in the request's language.
+    structures:
+      eyebrow: "Story templates"
+      heading: "Start from a structure"
+      description: "Choose a shape for this empty story. Applying it creates named Sections and Scenes to edit; no prose or universe records are copied."
+      choose: "Choose a structure"
+      preview: "Preview acts and beats"
+      submit: "Apply structure"
+      draft_unavailable: "Story structures can be applied in a direct universe. This universe remembers changes in drafts, and one structure is many linked records rather than one remembered change."
+      flash:
+        applied: "The %{name} structure was applied. Its empty sections and scenes are ready to edit."
+        not_empty: "A structure can only be applied to a story with no sections or scenes."
+        draft_based: "A structure cannot be applied while this universe remembers changes in drafts."
+        not_applied: "The structure could not be applied. No sections or scenes were created."
+      catalog:
+        three_act:
+          name: "Three-Act Structure"
+          description: "A three-part shape that moves from setup through confrontation to resolution."
+          acts:
+            setup:
+              name: "Act I — Setup"
+              beats:
+                opening_image:
+                  name: "Opening Image"
+                  description: "Establish the world, the protagonist, and the tone before the story changes."
+                inciting_incident:
+                  name: "Inciting Incident"
+                  description: "Introduce the event that unsettles the protagonist's ordinary life."
+                first_plot_point:
+                  name: "First Plot Point"
+                  description: "Commit the protagonist to the story's central problem."
+            confrontation:
+              name: "Act II — Confrontation"
+              beats:
+                rising_action:
+                  name: "Rising Action"
+                  description: "Escalate the obstacles and show the protagonist adapting to the new situation."
+                midpoint:
+                  name: "Midpoint"
+                  description: "Turn the story with a revelation or reversal that changes what is at stake."
+                second_plot_point:
+                  name: "Second Plot Point"
+                  description: "Remove the protagonist's remaining easy options before the final effort."
+            resolution:
+              name: "Act III — Resolution"
+              beats:
+                climax:
+                  name: "Climax"
+                  description: "Bring the central conflict to its decisive confrontation."
+                resolution:
+                  name: "Resolution"
+                  description: "Show the changed world and the cost or reward of the outcome."
+        heros_journey:
+          name: "Hero's Journey"
+          description: "A twelve-stage journey of departure, initiation, and return."
+          acts:
+            departure:
+              name: "Departure"
+              beats:
+                ordinary_world:
+                  name: "Ordinary World"
+                  description: "Show the protagonist's familiar life and what is missing from it."
+                call_to_adventure:
+                  name: "Call to Adventure"
+                  description: "Present the challenge or discovery that invites the protagonist to leave."
+                refusal_of_the_call:
+                  name: "Refusal of the Call"
+                  description: "Let the protagonist hesitate and name what makes the journey difficult."
+                meeting_the_mentor:
+                  name: "Meeting the Mentor"
+                  description: "Introduce guidance, a gift, or knowledge that prepares the departure."
+                crossing_the_threshold:
+                  name: "Crossing the Threshold"
+                  description: "Move the protagonist into the unfamiliar world where the story's rules change."
+            initiation:
+              name: "Initiation"
+              beats:
+                tests_allies_enemies:
+                  name: "Tests, Allies, and Enemies"
+                  description: "Teach the protagonist the new world through challenges and new relationships."
+                approach_inmost_cave:
+                  name: "Approach to the Inmost Cave"
+                  description: "Bring the protagonist to the edge of the greatest danger."
+                ordeal:
+                  name: "Ordeal"
+                  description: "Confront the protagonist with the central fear or loss."
+                reward:
+                  name: "Reward"
+                  description: "Let the protagonist survive the ordeal with something gained or understood."
+            return:
+              name: "Return"
+              beats:
+                road_back:
+                  name: "The Road Back"
+                  description: "Send the protagonist home, or toward the final confrontation, with the stakes still open."
+                resurrection:
+                  name: "Resurrection"
+                  description: "Test the protagonist one last time and show what has changed."
+                return_with_the_elixir:
+                  name: "Return with the Elixir"
+                  description: "Close with what the protagonist brings back to the ordinary world."
     flash:
       created: "Story was successfully created."
       updated: "Story was successfully updated."
@@ -1181,6 +1284,8 @@ en:
       heading: "Printable HTML page"
       description: "Open the story as a clean page with nothing but its prose. From the browser, print it or save it as a PDF."
       scope_legend: "What to include"
+      final_only: "Final scenes only"
+      final_only_description: "Print only scenes whose writing status is final. Leave this unchecked to include draft and revised scenes."
       submit: "Open printable page"
     scopes:
       prose:
@@ -1207,6 +1312,7 @@ en:
       print_hint: "Use the browser's print command to print this page or save it as a PDF."
       back: "Export options"
       empty: "This story has no scenes yet, so there is nothing to export."
+      no_final_scenes: "This story has no final scenes yet, so there is nothing to export with this choice."
       no_prose: "No prose has been written for this scene yet."
       appendix_heading: "Universe bible"
 
@@ -1408,6 +1514,12 @@ en:
   scenes:
     title: "Scenes"
     add: "Add scene"
+    # The fixed writing-state vocabulary. The values are data and never
+    # translated; only these labels are.
+    statuses:
+      draft: "Draft"
+      revised: "Revised"
+      final: "Final"
     # `new_*` and `edit_*` are flat rather than nested blocks, because the editor's
     # own page titles and descriptions are the four strings beside them and a
     # `new:` block would collide with the `new_title` key beside it.
@@ -1452,6 +1564,7 @@ en:
       delete_confirm: "Delete “%{name}”? Its elements, tag assignments, trope annotations, and links to story and universe records will be permanently removed. Linked records will not be deleted."
       # The two row badges that are not counts, and the two titles that explain
       # what a grouping badge means.
+      status_title: "Writing status. The export can be narrowed to final scenes."
       grouped_title: "Grouped under %{grouping}. Grouping does not change the narrative order."
       ungrouped_title: "Not grouped under a section. Grouping does not change the narrative order."
       participants_title: "Characters that take part in this scene, whether they are stored participants or only speakers in a dialogue. Counted once."
@@ -1460,13 +1573,15 @@ en:
       participants_aria: "%{characters} taking part"
     filter:
       title: "Find scenes"
-      description: "A story can hold hundreds or thousands of scenes. Narrow the list by text, section, scene tag, or in-world date range. Filtering never changes the narrative order, and a scene without an in-world time is not in a date range."
+      description: "A story can hold hundreds or thousands of scenes. Narrow the list by text, section, scene tag, status, or in-world date range. Filtering never changes the narrative order, and a scene without an in-world time is not in a date range."
       search_label: "Search"
       search_placeholder: "Title or short description"
       section_label: "Section"
       all_sections: "All sections"
       scene_tag_label: "Scene tag"
       all_scene_tags: "All scene tags"
+      status_label: "Status"
+      all_statuses: "All statuses"
       from_label: "In-world from"
       to_label: "In-world to"
       submit: "Filter scenes"
@@ -1481,6 +1596,7 @@ en:
         search: "Search: “%{value}”"
         section: "Section: %{value}"
         scene_tag: "Scene tag: %{value}"
+        status: "Status: %{value}"
         from: "In-world from %{value}"
         to: "In-world to %{value}"
       # A filter value the filter could not use. `bound` is `scenes.filter.bound.*`
@@ -1492,6 +1608,7 @@ en:
       discarded:
         section: "The section filter was ignored because it is not a section of this story."
         scene_tag: "The scene tag filter was ignored because it is not a scene tag of this story."
+        status: "The status filter was ignored because it is not a known scene status."
         date: "The in-world %{bound} date “%{value}” could not be read, so it was ignored."
     show:
       description: "Scene %{position} of %{total} in the order %{story} is told. Narrative order is not in-world chronology."
@@ -1501,6 +1618,8 @@ en:
         narrative_position: "Narrative position"
         # The position and the total beside it, with no words of their own.
         position: "%{position} of %{total}"
+        status: "Status"
+        status_hint: "A writing label for this scene. The export can include only final scenes; this does not change the narrative order."
         description: "Short description"
         description_blank: "No short description yet."
         tags: "Scene tags"
@@ -1542,6 +1661,8 @@ en:
       name_hint: "The scene's title in the narrative order. Only a title is required."
       description: "Short description"
       description_hint: "An optional one-line summary shown in the scene list."
+      status: "Status"
+      status_hint: "An author-chosen writing state. New scenes start as draft; the export can be narrowed to final scenes without changing the narrative order."
       tags_legend: "Scene tags"
       tags_label: "Scene tags"
       tags_hint: "Optional. Assign any labels that describe this scene. Tags belong to this story and can be managed under Configuration → Tags → Story Tags → Scene tags."
@@ -3423,6 +3544,7 @@ en:
       scene:
         name: "Title"
         description: "Short description"
+        status: "Status"
         section: "Section"
         datetime: "In-world time"
         pov_character: "Point of view"

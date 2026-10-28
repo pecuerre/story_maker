@@ -50,6 +50,16 @@
       </select>
     </div>
 
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="scene_filter_status"><%= t("scenes.filter.status_label") %></label>
+      <select class="form-select" id="scene_filter_status" name="status">
+        <option value=""><%= t("scenes.filter.all_statuses") %></option>
+        <% Scene::STATUSES.each do |status| %>
+          <option value="<%= status %>"<%= " selected" if filter.status == status %>><%= scene_status_label(status) %></option>
+        <% end %>
+      </select>
+    </div>
+
     <div class="col-6 col-sm-3 col-lg">
       <label class="form-label" for="scene_filter_from"><%= t("scenes.filter.from_label") %></label>
       <input type="date" class="form-control" id="scene_filter_from" name="from"

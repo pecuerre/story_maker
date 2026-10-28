@@ -43,6 +43,10 @@ Rails.application.routes.draw do
     get "search", to: "searches#show", as: :search
 
     resources :stories, path: "s" do
+      # Seeding a Story's starting shape is one HTML mutation rather than a
+      # record of its own: the catalogue is code-owned, and applying an entry
+      # creates ordinary Sections and Scenes.
+      post :apply_structure, on: :member
       # A Section is created and edited through the JSON modal on the Sections
       # workspace, so it has the same five actions as the other content models and
       # no `new`/`edit` page — see the Characters resource below.

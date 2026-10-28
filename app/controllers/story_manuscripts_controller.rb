@@ -13,7 +13,7 @@ class StoryManuscriptsController < ApplicationController
 
   # GET /u/:universe_slug/s/:story_id/export/manuscript
   def show
-    @manuscript = Manuscript.for(@story, scope: params[:scope])
+    @manuscript = Manuscript.for(@story, scope: params[:scope], final_only: params[:final_only])
     render layout: "manuscript"
   end
 end

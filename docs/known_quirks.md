@@ -61,6 +61,15 @@ for what that pass actually ran.
    load-bearing, and why Active Storage must not be treated as dead weight — is in
    [architecture.md](architecture.md#routing--url-generation-the-sharp-edges).
 
+3. **Medium — a Spanish draft page can print the English fallback "a record".** A draft page rendered
+   under `es` in `SpanishChromeTest` contained the exact English string "a record"; the only value
+   with that text is `notifications.a_record`, whose Spanish entry is "un registro". The page may be
+   choosing the English value before the request's locale reaches the notification sentence, or the
+   text may be reaching the body through a path the visible notification list does not own. The
+   negative Spanish-chrome assertion was removed from the status case so it does not claim a fix;
+   re-read `NotificationsHelper#notification_sentence` and the draft page's layout before changing
+   either.
+
 ## Audit baseline and evidence
 
 The findings here were gathered by a non-destructive audit on 2026-09-24 against commit `8fcf4d4`. The

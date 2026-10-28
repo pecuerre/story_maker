@@ -43,6 +43,19 @@ document that adds nothing the author did not ask for.
 | `front_matter` | Prose and scene notes | The same, plus each Scene's notes (below) |
 | `bible` | Prose, scene notes, and the universe bible | The same, plus the Universe appendices (below) |
 
+## Scene status
+
+The export page also offers **Final scenes only**, an independent GET choice beside the scope. It is
+unchecked by default, so the complete manuscript remains the default output; when checked, the
+manuscript URL carries `final_only=1` and `Manuscript` narrows its loaded Scenes to
+`Scene::FINAL_STATUS`. The chosen scope still decides what each printed Scene carries, and section
+grouping and narrative order are untouched. The Scene relation is narrowed before the Section tree,
+notes, and prose are assembled, so the document cannot contain a Scene the choice excluded; the
+Universe appendices are unchanged. A Story with Sections but no final Scenes says that it has no final
+scenes yet rather than printing headings over nothing.
+
+The status vocabulary itself, its filter, and its badges belong to [Scenes](scenes.md#writing-status).
+
 ## Assembly
 
 `Manuscript` (`app/models/manuscript.rb`) is the one assembly step, a value object that loads the

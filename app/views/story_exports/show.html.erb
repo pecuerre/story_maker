@@ -35,6 +35,18 @@
           <% end %>
         </fieldset>
 
+        <div class="form-check mb-4">
+          <%= check_box_tag :final_only, "1", false,
+            id: "final_only",
+            class: "form-check-input",
+            aria: { describedby: "final_only_description" } %>
+          <%= label_tag :final_only, t("story_exports.printable.final_only"),
+            class: "form-check-label fw-semibold" %>
+          <p class="form-text mb-0" id="final_only_description">
+            <%= t("story_exports.printable.final_only_description") %>
+          </p>
+        </div>
+
         <%= submit_tag t("story_exports.printable.submit"), name: nil, class: "btn btn-primary" %>
       <% end %>
     </section>

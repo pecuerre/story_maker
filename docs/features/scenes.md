@@ -8,6 +8,10 @@ depict are organized by [ADR 0038](../adr/0038-a-scene-depicts-events-through-or
 Story-level Plot assignments are a separate through-line grouping axis; their domain and editor are
 owned by [Plot arcs](plots.md), not duplicated here.
 
+A Story's first Sections and Scenes can be seeded from a code-owned starting shape; that catalogue,
+the apply rules, and its direct-universe restriction are owned by
+[Story structures](story_structures.md).
+
 Story- and Scene-level trope annotations use the shared curated reference list described in
 [Tropes](tropes.md); they are distinct from the Story-local Scene Tag taxonomy.
 
@@ -18,8 +22,10 @@ reuse are in [conventions.md](../conventions.md#views---three-patterns).
 
 `Scene belongs_to :story`, includes `HasSlug`, and is **flat rather than hierarchical** — no
 `parent_id`. A required `name` is labelled **Title**; `description` is optional and a title-only Scene
-is valid. `belongs_to :section, optional: true` carries the organizational group, and the single
-optional `datetime` carries the in-world time point. The Events a Scene depicts are its own ordered
+is valid. Every Scene also carries a fixed writing `status` — `draft`, `revised`, or `final`, defaulting
+to `draft` — validated by the model and a database check constraint; it is an author-chosen label, not
+a manuscript state machine. `belongs_to :section, optional: true` carries the organizational group,
+and the single optional `datetime` carries the in-world time point. The Events a Scene depicts are its own ordered
 link rows (`SceneEvent`), so a Scene may depict several; each link carries the author's free-text
 `role` and a `position`, and `Scene#event_id` no longer exists. `belongs_to :pov_character,
 class_name: "Character", optional: true` names the single character whose perspective presents the
@@ -160,19 +166,19 @@ directly. The flash copy always states that the narrative position did not chang
 A Story can hold hundreds of Scenes, so the canonical list narrows with a GET search area instead of
 growing without limit. `SceneFilter` (`app/models/scene_filter.rb`) is the value object that owns this
 list's keys: `q` (title and short description), `section_id` (a Section of this Story or the literal
-`ungrouped`), `scene_tag_id` (a Scene Tag of this Story), and inclusive in-world `from`/`to`
-**days**. Filters combine with `AND`. It is a `ListFilter`, so the contract it shares with every other
-workspace's filter — how a value is validated and dropped, what a canonical query is, how a filtered
-list treats pending rows, and what an empty result says — is in
+`ungrouped`), `scene_tag_id` (a Scene Tag of this Story), `status` (one of `Scene::STATUSES`), and
+inclusive in-world `from`/`to` **days**. Filters combine with `AND`. It is a `ListFilter`, so the
+contract it shares with every other workspace's filter — how a value is validated and dropped, what a
+canonical query is, how a filtered list treats pending rows, and what an empty result says — is in
 [`list_filters.md`](list_filters.md), not here. What is this list's alone:
 
 - The filter never reorders, regroups, or renumbers. `Scene#position` is the only order there is, so
   this list has no sort control; a workspace that offers one is making a different decision, in
   [`list_filters.md`](list_filters.md#what-this-contract-does-not-decide).
-- A filter value is validated against the already-loaded story-scoped lists, so a foreign or unknown
-  id is dropped and reported instead of reaching the query. The tag filter narrows through the scoped
-  inverse association (`SceneTag#tagged_records.select(:id)`), so it cannot disclose another Story's
-  scenes.
+- A filter value is validated against the already-loaded story-scoped lists or, for `status`, the
+  code-owned vocabulary, so a foreign or unknown value is dropped and reported instead of reaching the
+  query. The tag filter narrows through the scoped inverse association
+  (`SceneTag#tagged_records.select(:id)`), so it cannot disclose another Story's scenes.
 - The position badge, the story total, and the Move boundary state come from the whole sequence — one
   aggregate query (`COUNT(*)`, `MIN(position)`, `MAX(position)`) — never from the filtered rows, so a
   narrowed list cannot mistake its first visible row for the first scene of the Story.
@@ -477,21 +483,41 @@ available by keyboard and on touch. Read-only members and guests see the same li
 and the tree's read-only empty state has its own copy, so a read-only member is not told to add or
 drag records.
 
+## Writing status
+
+Every Scene carries one fixed status: **Draft**, **Revised**, or **Final**. The value is one of
+`Scene::STATUSES`, a new Scene starts as `draft`, and the model's inclusion validation and a database
+check constraint keep an unknown value out. The status is an author-chosen writing label; it never
+changes `position`, grouping, participation, or prose.
+
+The Scene editor offers the status beside the title and description, Scene Details states it as a
+fact, and every row of the Scenes list carries the matching badge. The Scenes filter accepts
+`status`, validates it against the same code-owned vocabulary, and reports an unknown value like any
+other unusable filter value. The list's status badge is informational; the list is never silently
+narrowed to final Scenes.
+
+The export's **Final scenes only** choice reads this status to decide which Scenes print. It is
+independent of the export scope, defaults to off, and is owned by [Exports](exports.md#scene-status).
+The bearer-token Scene API returns `status` in its JSON and accepts it on create and update alongside
+the other Scene fields. Custom per-Story labels and the archive of Scenes withheld from the manuscript
+are deliberately not part of this vocabulary.
+
 ## The editor and its tabs
 
 Scene Details (`/scenes/:id`) is the canonical, inspectable page: it renders the Title, narrative
-position, short description, Section group, Scene Tags, linked Events, formatted in-world time, point
-of view, and story context for writers, read-only members, and guests, and gives only writers an
-**Edit scene** action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so
+position, writing status, short description, Section group, Scene Tags, linked Events, formatted
+in-world time, point of view, and story context for writers, read-only members, and guests, and gives
+only writers an **Edit scene** action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so
 there is no second edit surface and no second form for the same fields. The editor's workspace tabs go
 through `shared/_content_tabs`: **Scene Details**, **Events**, **Characters**, **Items**, **Locations**,
 and **Tropes** are all live links, each its own canonical page. A tab is never a link to a route that
 does not exist and never an in-document Bootstrap pane.
 
-The Scene form groups its fields: **Scene tags** holds the optional native multi-select with root-first
-tag paths, **Organization** holds the Section selector (with **Ungrouped** and depth-indented Section
-names), and **In-world time** holds the `datetime-local` field plus a note pointing at the Events tab.
-Each field has copy stating what it does *not* do. The Event selector is deliberately **not** on this
+The Scene form offers the fixed **Status** selector beside the title and description. **Scene tags**
+holds the optional native multi-select with root-first tag paths, **Organization** holds the Section
+selector (with **Ungrouped** and depth-indented Section names), and **In-world time** holds the
+`datetime-local` field plus a note pointing at the Events tab. Each field has copy stating what it
+does *not* do. The Event selector is deliberately **not** on this
 form: a Scene may depict several Events, each with a role and an order, so the links belong to the
 Events tab and a new Scene links them after it has been saved. Trope references are deliberately **not**
 a field of this form either: the full catalogue is too long to stack there, so the **Tropes** tab lists
@@ -510,9 +536,10 @@ lines belong to whom. Clearing it records no point of view rather than choosing 
 
 The Scenes list shows an **Element** count and a **Characters take part** count. They are read for the
 whole page in grouped queries — never one query per row — and the participant count unions explicit
-links, block-level speakers, and turn speakers exactly as the Characters tab does. Item and Location
-counts are deliberately absent: they would need one extra grouped query each per page, and the three
-workspace tabs are the place that detail belongs. Do not render placeholder counts for them.
+links, block-level speakers, and turn speakers exactly as the Characters tab does. Each row also
+carries its writing-status badge. Item and Location counts are deliberately absent: they would need
+one extra grouped query each per page, and the three workspace tabs are the place that detail
+belongs. Do not render placeholder counts for them.
 
 ## Word counts
 

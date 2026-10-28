@@ -52,10 +52,13 @@ the same as `active?` and needs no special case.
 
 ## Rules a filter must not break
 
-1. **A value is validated against a list the index already loaded.** The controller already has the
+1. **A value is validated against a list the index already loaded, or a code-owned vocabulary.**
+   The controller already has the
    story's Sections, the universe's tags, or the workspace's parent records in hand for the list and
    the form. Resolving a filter value against those costs no query and means a foreign or unknown id
-   **cannot reach the query at all**, rather than reaching it and returning nothing.
+   **cannot reach the query at all**, rather than reaching it and returning nothing. A value whose
+   choices are code-owned rather than records — the Scenes list's `status` — is resolved against that
+   vocabulary the same way.
 2. **A value that cannot be used is dropped and reported.** Never swallowed, and never left to empty
    the list into looking like a reader's own mistake. It is dropped because guessing at an
    unresolvable value would answer a question the reader did not ask. The report is an

@@ -45,6 +45,24 @@ class ManuscriptTest < ActiveSupport::TestCase
     assert_equal [ first, middle, last ], manuscript.sections.first.scenes
   end
 
+  test "a final-only manuscript prints only final scenes" do
+    manuscript = Manuscript.for(@story, final_only: "1")
+
+    assert manuscript.final_only?
+    assert_equal [ scenes(:scene_one) ], manuscript.sections.first.scenes
+    assert_empty manuscript.ungrouped_scenes
+    assert_not manuscript.empty?
+  end
+
+  test "a final-only manuscript with no final scenes is empty" do
+    story = @universe.stories.create!(name: "All drafts")
+    story.scenes.create!(name: "Draft one", status: "draft")
+    story.scenes.create!(name: "Draft two", status: "revised")
+
+    assert Manuscript.for(story, final_only: true).empty?
+    refute Manuscript.for(story).empty?
+  end
+
   test "a scene whose section is not part of the story is printed ungrouped" do
     story = @universe.stories.create!(name: "Broken grouping")
     scene = story.scenes.create!(name: "Orphan")

@@ -312,7 +312,9 @@ the same change, or `db:demo:check` fails.
   memberships. `show/edit` exist for Universes, Stories, and Scenes; `show` also exists for every
   content model (Character, Faction, Location, Route, CanonRule, Item, Event, Relation, Ownership, Section, Plot) and every tag
   model, because each record has exactly one details page. `ScenesController#move` (narrative
-  order) and `#group` (Section grouping) are the two member and collection actions beyond that set.
+  order) and `#group` (Section grouping) are the two member and collection actions beyond that set,
+  and `StoriesController#apply_structure` is the one member action that seeds an empty Story's
+  Sections and Scenes from the code-owned catalogue.
 - **A route may only advertise an action the controller has, and a GET may only name an action with a
   template.** A `resources` line names seven verbs whether or not they exist, and the two ways of
   being wrong look different from the outside: a missing action answers `ActionNotFound` (**404**),

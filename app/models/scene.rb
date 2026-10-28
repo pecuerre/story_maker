@@ -3,6 +3,14 @@
 # in later slices. The sequence is flat: `position` expresses narrative order,
 # not in-world chronology, and is maintained by PositionedResourceOrder.
 class Scene < ApplicationRecord
+  # The one fixed writing-state vocabulary. A Scene is not a manuscript state
+  # machine: these are author-chosen labels, and the export may narrow to final
+  # ones without changing the Scene sequence. `status` stores the value, so a
+  # label is never translated into the database.
+  STATUSES = %w[ draft revised final ].freeze
+  DEFAULT_STATUS = "draft"
+  FINAL_STATUS = "final"
+
   include HasManyTags
   include HasSlug
   include HasPhoto
@@ -64,6 +72,7 @@ class Scene < ApplicationRecord
   belongs_to :pov_character, class_name: "Character", optional: true
 
   validates :name, presence: true
+  validates :status, presence: true, inclusion: { in: STATUSES }
   validate :optional_references_exist
   validate :pov_character_belongs_to_scene_universe
   validate :section_belongs_to_story

@@ -63,6 +63,16 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_includes grouping_badges, "Ungrouped"
   end
 
+  test "index badges each scene with its writing status" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    status_badges = css_select(".entity-row .badge").map { |badge| badge.text.squish }
+    assert_includes status_badges, "Final"
+    assert_includes status_badges, "Revised"
+    assert_includes status_badges, "Draft"
+  end
+
   test "index shows scene tag badges for tagged scenes" do
     get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
 
@@ -115,6 +125,11 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       assert_select "select[name=scene_tag_id] option[value=?]", scene_tags(:scene_tag_two).id,
         text: "Scene tag one / Scene tag two"
       assert_select "select[name=scene_tag_id] option[value=?]", scene_tags(:scene_tag_three).id, count: 0
+      assert_select "select[name=status] option[value='']", text: "All statuses"
+      Scene::STATUSES.each do |status|
+        assert_select "select[name=status] option[value=?]", status,
+          text: I18n.t("scenes.statuses.#{status}")
+      end
       assert_select "input[type=date][name=from]"
       assert_select "input[type=date][name=to]"
       assert_select "input[type=submit][value=?]", "Filter scenes"
@@ -173,6 +188,22 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal [ "Scene one" ], listed_scene_titles
     assert_select ".scene-filter", text: /Scene tag: Scene tag one/
+  end
+
+  test "index filters by writing status" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, status: "revised")
+
+    assert_response :success
+    assert_equal [ "Scene two" ], listed_scene_titles
+    assert_select ".scene-filter", text: /Status: Revised/
+  end
+
+  test "index reports an unknown status filter instead of showing an empty list" do
+    get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story, status: "published")
+
+    assert_response :success
+    assert_equal [ "Scene one", "Scene two", "Scene three" ], listed_scene_titles
+    assert_includes flash[:alert], "not a known scene status"
   end
 
   test "index filters by an inclusive in-world date range and leaves untimed scenes out" do
@@ -420,6 +451,8 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Scene one"
     assert_includes response.body, "The first scene of the story"
     assert_includes response.body, "Scene 1 of 3 in the order Story One is told"
+    assert_select ".page-eyebrow", text: "Status"
+    assert_select ".badge", text: "Final"
     assert_select "a[href=?]", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story)
     assert_select "a[href=?]", edit_universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
     assert_select "form[action=?]", universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene), count: 0
@@ -656,6 +689,16 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_empty created.events
     assert_nil created.datetime
     assert_predicate created.description, :blank?
+    assert_equal "draft", created.status
+  end
+
+  test "should create a scene with an explicit writing status" do
+    assert_difference("Scene.count") do
+      post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+        params: { scene: { name: "Finished scene", status: "final" } }
+    end
+
+    assert_equal "final", @story.scenes.find_by!(name: "Finished scene").status
   end
 
   test "should create a scene with a section and an in-world time" do
@@ -847,15 +890,21 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Edit scene"
     assert_select "form[action=?]", universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
     assert_select "input[name='scene[name]'][value=?]", "Scene one"
+    Scene::STATUSES.each do |status|
+      assert_select "select[name='scene[status]'] option[value=?]", status,
+        text: I18n.t("scenes.statuses.#{status}")
+    end
+    assert_select "select[name='scene[status]'] option[selected][value=?]", "final"
   end
 
   test "should update scene and redirect" do
     patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
-      params: { scene: { name: "Renamed scene", description: "Updated summary" } }
+      params: { scene: { name: "Renamed scene", description: "Updated summary", status: "revised" } }
 
     assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
     @scene.reload
-    assert_equal [ "Renamed scene", "Updated summary" ], [ @scene.name, @scene.description ]
+    assert_equal [ "Renamed scene", "Updated summary", "revised" ],
+      [ @scene.name, @scene.description, @scene.status ]
   end
 
   test "update cannot move a scene and re-renders errors instead" do

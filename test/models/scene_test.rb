@@ -30,6 +30,23 @@ class SceneTest < ActiveSupport::TestCase
     assert Scene.create!(story: @story, name: "Unfinished scene")
   end
 
+  test "a new scene starts as draft and accepts the fixed status vocabulary" do
+    scene = Scene.new(story: @story, name: "Status scene")
+
+    assert_equal "draft", scene.status
+    Scene::STATUSES.each do |status|
+      scene.status = status
+      assert scene.valid?, "#{status} must be a valid scene status"
+    end
+  end
+
+  test "rejects a status outside the fixed vocabulary" do
+    scene = Scene.new(story: @story, name: "Unknown status", status: "published")
+
+    assert_not scene.valid?
+    assert_includes scene.errors[:status], "is not included in the list"
+  end
+
   test "resolves its universe through its story" do
     assert_equal universes(:universe_one), scenes(:scene_one).universe
     assert_nil Scene.new(name: "Orphan").universe

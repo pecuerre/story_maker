@@ -10,7 +10,8 @@ The current architecture and conventions are documented in:
 - [`../data_model.md`](../data_model.md) — schema, constraints, validations, slugs, positions
 - [`../conventions.md`](../conventions.md) — cross-cutting code patterns and page shapes
 - [`../features/`](../features/) — one document per feature, each the single home of that
-  feature's rules: [scenes](../features/scenes.md), [plots](../features/plots.md), [tags](../features/tags.md),
+  feature's rules: [scenes](../features/scenes.md), [plots](../features/plots.md), [story structures](../features/story_structures.md),
+  [tags](../features/tags.md),
   [tropes](../features/tropes.md), [search](../features/search.md), [navigation](../features/navigation.md),
   [photos](../features/photos.md), [events](../features/events.md), [factions](../features/factions.md), [i18n](../features/i18n.md),
   [settings](../features/settings.md)
@@ -61,6 +62,8 @@ reasoning as of its date.
 | [0036](0036-a-remembered-change-can-be-dropped-before-it-is-applied.md) | Accepted | Let a working draft's author drop one remembered change without discarding the rest |
 | [0037](0037-compare-narrative-order-with-the-timeline-read-only.md) | Accepted | Compare a Story's narrative order with the Timeline, read-only, and define a conflict as one Scene's own time disagreeing with its Event |
 | [0038](0038-a-scene-depicts-events-through-ordered-links.md) | Accepted | Link a Scene to several Events through ordered, roled rows, and retire the single `event_id` |
+| [0039](0039-canon-rules-are-universe-owned-with-an-optional-story.md) | Accepted | Make a canon rule universe-owned with an optional Story owner, without becoming an analyzer |
+| [0040](0040-story-structures-are-a-code-owned-starting-shape.md) | Accepted | Seed an empty Story's Sections and Scenes from a code-owned catalogue of acts and beats |
 
 ## Format
 

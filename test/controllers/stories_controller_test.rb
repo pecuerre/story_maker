@@ -238,4 +238,134 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "38 words"
   end
+
+  test "an empty direct story offers every structure with a preview" do
+    story = empty_story
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select "form[action=?]",
+      apply_structure_universe_story_path(universe_slug: @universe.slug, id: story), count: 1
+    assert_select "input[name='structure_slug']", count: StoryStructureCatalog.entries.size
+    assert_select "details", count: StoryStructureCatalog.entries.size
+    assert_select "legend", text: I18n.t("stories.structures.choose")
+  end
+
+  test "a story with sections does not offer a structure" do
+    get universe_story_url(universe_slug: @universe.slug, id: stories(:story_one))
+
+    assert_select "form[action=?]",
+      apply_structure_universe_story_path(universe_slug: @universe.slug, id: stories(:story_one)), count: 0
+  end
+
+  test "a draft-based universe explains why it does not offer a structure" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    story = empty_story
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_select "form[action=?]",
+      apply_structure_universe_story_path(universe_slug: @universe.slug, id: story), count: 0
+    assert_includes response.body, I18n.t("stories.structures.draft_unavailable")
+  end
+
+  test "applying a structure creates ordinary sections and scenes" do
+    story = empty_story
+    entry = StoryStructureCatalog.find("three-act")
+
+    assert_difference -> { story.sections.count }, entry.section_count do
+      assert_difference -> { story.scenes.count }, entry.scene_count do
+        post apply_structure_universe_story_url(universe_slug: @universe.slug, id: story),
+          params: { structure_slug: entry.slug }
+      end
+    end
+
+    assert_redirected_to universe_story_url(universe_slug: @universe.slug, id: story)
+    assert_equal I18n.t("stories.structures.flash.applied", name: I18n.t(entry.name_key)), flash[:notice]
+    assert_equal entry.acts.map { |act| I18n.t(act.name_key) },
+      story.sections.order(:position, :id).map(&:name)
+    assert_equal (0...entry.scene_count).to_a, story.scenes.order(:position, :id).map(&:position)
+  end
+
+  test "a structure is refused for a story that already has a section or a scene" do
+    story = stories(:story_one)
+
+    assert_no_difference [ "Section.count", "Scene.count" ] do
+      post apply_structure_universe_story_url(universe_slug: @universe.slug, id: story),
+        params: { structure_slug: "three-act" }
+    end
+
+    assert_redirected_to universe_story_url(universe_slug: @universe.slug, id: story)
+    assert_equal I18n.t("stories.structures.flash.not_empty"), flash[:alert]
+  end
+
+  test "an unknown structure is not found" do
+    story = empty_story
+
+    assert_no_difference [ "Section.count", "Scene.count" ] do
+      post apply_structure_universe_story_url(universe_slug: @universe.slug, id: story),
+        params: { structure_slug: "not-a-structure" }
+    end
+
+    assert_response :not_found
+  end
+
+  test "a structure does not write through a draft-based universe" do
+    @universe.update!(collaboration_mode: "wikipedia")
+    story = empty_story
+
+    assert_no_difference [ "Section.count", "Scene.count", "DraftChange.count" ] do
+      post apply_structure_universe_story_url(universe_slug: @universe.slug, id: story),
+        params: { structure_slug: "three-act" }
+    end
+
+    assert_redirected_to universe_story_url(universe_slug: @universe.slug, id: story)
+    assert_equal I18n.t("stories.structures.flash.draft_based"), flash[:alert]
+  end
+
+  test "guests are sent to sign in before applying a structure" do
+    story = empty_story
+    sign_out
+
+    assert_no_difference [ "Section.count", "Scene.count" ] do
+      post apply_structure_universe_story_url(universe_slug: @universe.slug, id: story),
+        params: { structure_slug: "three-act" }
+    end
+
+    assert_redirected_to new_session_url
+  end
+
+  test "a guest sees no structure control on an empty public story" do
+    story = empty_story
+    sign_out
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select "form[action=?]",
+      apply_structure_universe_story_path(universe_slug: @universe.slug, id: story), count: 0
+  end
+
+  test "read-only members cannot apply a structure" do
+    universe = Universe.create!(owner: users(:user_one), name: "Private structures",
+      slug: "private-structures", private: true)
+    story = universe.stories.create!(name: "Private empty story")
+    UniverseMembership.create!(universe: universe, user: users(:user_two), access_level: :read)
+    sign_out
+    sign_in_as(users(:user_two))
+
+    assert_no_difference [ "Section.count", "Scene.count" ] do
+      post apply_structure_universe_story_url(universe_slug: universe.slug, id: story),
+        params: { structure_slug: "three-act" }
+    end
+
+    assert_response :forbidden
+  end
+
+  private
+
+  def empty_story
+    @universe.stories.create!(name: "Unstructured story")
+  end
 end

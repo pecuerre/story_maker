@@ -29,6 +29,13 @@
     <div class="form-text"><%= t("scenes.form.description_hint") %></div>
   </div>
 
+  <div class="mb-3">
+    <%= form.label :status, t("scenes.form.status"), class: "form-label" %>
+    <%= form.select :status, Scene::STATUSES.map { |status| [ scene_status_label(status), status ] },
+      {}, class: "form-select" %>
+    <div class="form-text"><%= t("scenes.form.status_hint") %></div>
+  </div>
+
   <fieldset class="mb-3">
     <legend class="h6"><%= t("scenes.form.tags_legend") %></legend>
     <div class="mb-3">

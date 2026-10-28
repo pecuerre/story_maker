@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Scene writing status.** Scenes carry a fixed draft, revised, or final status, defaulting to draft, with a list badge, a details fact, and an editor field.
+- **Story structure templates.** An empty Story in a direct universe can start from a code-owned three-act or Hero's Journey shape that creates named Sections and Scenes, never prose or Universe records.
 - **Scene board controls.** Writers can move a Scene up or down and regroup it into another Section from its board card, posting the existing Scene actions and returning to the board.
 - **Scene board.** Adds a read-only Story page with every Section as a column plus the ungrouped scenes, each card linking to Scene Details in narrative order.
 - **Scene matrix.** Adds a read-only Story page with one row per Scene in narrative order and columns for section, tags, point of view, in-world time, linked events, element count, word count, and participant count.
@@ -52,10 +54,14 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Final-only manuscript export.** The export page adds an unchecked **Final scenes only** option that narrows the printed Scenes without changing the content scope or narrative order.
 - **Scope resolution prefers a record's own universe.** `UniverseScopeResolver.owner_association_for` reads `universe_id` before the owner associations, so an optional story reference cannot hide a universe-wide rule from a class-level check or a remembered create.
 
 ### docs
 
+- **Spanish draft-page fallback finding.** Records in known quirks the deferred untranslated “a record” observation from the status test.
+- **Scene status documentation.** Records the fixed vocabulary, filter, badges, export choice, schema row, and validation, and narrows the backlog item to the archive and custom labels.
+- **Story structure documentation.** Adds the Story structures feature document and ADR 0040, links them from Scenes and the docs index, refreshes the ADR index, and removes the delivered backlog item.
 - **Scene board control documentation.** Records the card controls, the named board return destination, and the no-drag rule in Scenes and Visual design, and removes the delivered slice from the backlog.
 - **Scene board documentation.** Adds the board section and route row to Scenes, the painted column rules to Visual design, and removes the delivered slice from the backlog.
 - **Scene matrix documentation.** Adds the matrix section and route row to Scenes, the painted table rules to Visual design, and removes the delivered slice from the backlog.
@@ -67,6 +73,8 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Scene status coverage and demo data.** Adds statuses to the fixtures and both demo universes, plus model, filter, controller, API, manuscript, and export coverage.
+- **Story structure coverage.** Adds catalogue, applier, controller, CSRF, and Spanish chrome tests for the new apply path.
 - **Canon fixtures and contract rows.** Adds canon fixtures, model and request tests, the modal and draft contract rows, the Spanish page case, and the updated menu and summary counts.
 
 ## 2026-10-27

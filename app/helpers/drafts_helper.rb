@@ -711,6 +711,7 @@ module DraftsHelper
     # and is handed the **records** the loaded association already holds, so nothing is
     # fetched again. `resolved` says which of the two the value already is.
     def draft_change_value(model, name, value, association, entry: nil, key: nil, resolved: false)
+      return t("scenes.statuses.#{value}") if model == Scene && name.to_s == "status" && Scene::STATUSES.include?(value.to_s)
       return trope_assignment_summary(value) if trope_assignment_association(model, name)
       return trope_reference_name(value) if model == SceneTrope && name.to_s == "trope_slug"
 

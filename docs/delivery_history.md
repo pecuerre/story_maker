@@ -27,6 +27,55 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-28
+
+- **[added]** **A Scene carries a fixed writing status.**
+  - **The gap.** A Scene could exist or be soft-deleted, and nothing between those two states said
+    whether it was still being drafted, being revised, or finished. The export had no way to tell a
+    finished manuscript from work in progress.
+  - **The decision.** `Scene::STATUSES` is the fixed `draft`/`revised`/`final` vocabulary, stored in
+    a `status` string that defaults to `draft`, validated by the model and a database check
+    constraint. The owner chose that every existing and new Scene starts as draft, so no Scene is
+    backfilled to final and the status stays an author's deliberate label. The Scenes list shows the
+    badge, Scene Details states it, and the editor sets it; the list filter accepts it through
+    `SceneFilter` and drops an unknown value like any other unusable filter value.
+  - **The export.** `Manuscript` gained an independent `final_only` choice, exposed as an unchecked
+    **Final scenes only** checkbox on the export page. Unchecked keeps today's complete manuscript;
+    checked narrows the loaded Scenes to `Scene::FINAL_STATUS` before the Section tree and prose are
+    assembled, and an all-draft Story states that it has no final Scenes yet. The scope still decides
+    what a printed Scene carries.
+  - **Rejected alternatives.** A `final` default for every Scene would need no backfill but would make
+    a new Scene print before the author had decided it was ready. Treating the archive as a fourth
+    status would conflate "not ready" with "deliberately withheld from this manuscript"; the backlog
+    keeps that as a separate decision. Making the export final-only by default would silently change
+    the existing complete-manuscript output.
+  - **Verification.** Model, filter, controller, API, manuscript, export, translation, and demo-data
+    checks; the full Minitest suite, RuboCop, and Brakeman. The disposable development database was
+    reset and the two demo universes loaded after the manifest statuses were added.
+
+- **[added]** **A Story can start from a code-owned Section/Scene shape.**
+  - **The gap.** A new Story was an empty shell whose Sections and Scenes had to be created one at a
+    time, so the application offered no answer to "where does this story begin?".
+  - **The decision.** `StoryStructureCatalog` is a two-entry, code-owned catalogue in the spirit of
+    `TropeCatalog`, and `StoryStructureApplier` turns one entry into ordinary records: each act is a
+    `Section`, each beat is a `Scene` in that Section, and the beat's guidance becomes the Scene's
+    starting description. The apply locks the Story, re-checks that it has no live Sections or
+    Scenes, and creates every record through `PositionedResourceOrder` inside one transaction.
+    [ADR 0040](adr/0040-story-structures-are-a-code-owned-starting-shape.md) owns the ownership
+    decision, and [the feature document](features/story_structures.md) owns the current rules.
+  - **Rejected alternatives.** A Universe-owned template table would need a migration, editor, policy,
+    and tests before a single template could be applied; a user-saved Story skeleton has the same
+    cost plus a copying decision. Treating a beat as a Section or a note loses the narrative Scene
+    sequence the feature exists to seed. Remembering the batch in a draft-based universe cannot work
+    while one `DraftChange` names one record and each Scene points at a Section the draft has not
+    created yet, so the first slice refuses there.
+  - **The surfaces.** The Story page offers the picker only on an empty Story in a direct universe,
+    with each entry's acts and beats in a closed `<details>` preview. The apply is
+    `POST /u/:universe_slug/s/:story_id/apply_structure`, follows the HTML redirect flow, and states
+    the direct-universe restriction where the control would otherwise be.
+  - **Verification.** Catalogue, applier, controller, CSRF, and Spanish chrome coverage; the full
+    Minitest suite, RuboCop, Brakeman, and the translation key checks.
+
 ### 2026-10-27
 
 - **[added]** **A Scene depicts several Events through its own ordered link rows.**

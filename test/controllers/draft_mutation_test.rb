@@ -464,6 +464,22 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     assert_equal "create", last_change.action
   end
 
+  test "applying a Story structure is refused rather than remembered in a draft-based universe" do
+    # One structure is many creates, and each Scene names a Section the draft has
+    # not created yet. A remembered change names one record, so this batch cannot
+    # be represented and the action refuses instead of writing through the draft.
+    collaboration_mode("wikipedia")
+    story = @universe.stories.create!(name: "Draft structure story")
+
+    assert_no_difference [ "Section.count", "Scene.count", "DraftChange.count" ] do
+      post apply_structure_universe_story_url(universe_slug: @universe.slug, id: story),
+        params: { structure_slug: "three-act" }
+    end
+
+    assert_response :found
+    assert_equal I18n.t("stories.structures.flash.draft_based"), flash[:alert]
+  end
+
   test "a mode the application does not know still remembers, rather than writing" do
     Universe.where(id: @universe.id).update_all(collaboration_mode: "gitlab")
 
@@ -514,6 +530,18 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     # report itself a conflict the moment it is applied. A raw `Time` here would
     # never equal this string, and every change would conflict forever.
     assert_not VersionStamp.changed?(@character.reload, change.base_version)
+  end
+
+  test "a remembered Scene status keeps its submitted value without writing it" do
+    collaboration_mode("wikipedia")
+    scene = scenes(:scene_two)
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story.id,
+      id: scene.id), params: { scene: { status: "final" } }
+
+    assert_response :see_other
+    assert_equal({ "status" => "final" }, last_change.payload)
+    assert_equal "revised", scene.reload.status
   end
 
   test "a remembered presence-link edit keeps the resolved character rather than the submitted one" do

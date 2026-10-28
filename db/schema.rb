@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_28_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_28_230000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -750,12 +750,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_120000) do
     t.datetime "deleted_at"
     t.integer "photo_id"
     t.integer "pov_character_id"
+    t.string "status", default: "draft", null: false
     t.index ["photo_id"], name: "index_scenes_on_photo_id"
     t.index ["pov_character_id"], name: "index_scenes_on_pov_character_id"
     t.index ["section_id"], name: "index_scenes_on_section_id"
     t.index ["story_id", "position"], name: "index_scenes_on_story_id_and_position"
     t.index ["story_id", "section_id"], name: "index_scenes_on_story_id_and_section_id"
+    t.index ["story_id", "status"], name: "index_scenes_on_story_id_and_status"
     t.index ["story_id"], name: "index_scenes_on_story_id"
+    t.check_constraint "status IN ('draft', 'revised', 'final')", name: "scenes_status_is_known"
   end
 
   create_table "scenes_scene_tags", id: false, force: :cascade do |t|

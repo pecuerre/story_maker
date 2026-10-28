@@ -42,6 +42,7 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
     body = response.parsed_body
     assert_equal scenes(:scene_one).id, body["id"]
     assert_equal scenes(:scene_one).name, body["name"]
+    assert_equal "final", body["status"]
     assert_equal scenes(:scene_one).section_id, body["section_id"]
     assert_equal [ { "event_id" => events(:event_one).id, "role" => nil, "position" => 0 } ], body["events"]
     assert_nil body["pov_character_id"]
@@ -83,6 +84,7 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Scene.count") do
       post api_universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story.id),
         params: { scene: { name: "Api scene", description: "Via the API",
+          status: "revised",
           section_id: sections(:section_one).id,
           pov_character_id: characters(:character_two).id,
           datetime: "2026-09-12 09:00:00" } },
@@ -93,6 +95,7 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
     body = response.parsed_body
     assert_equal "Api scene", body["name"]
     assert_equal "Via the API", body["description"]
+    assert_equal "revised", body["status"]
     assert_equal sections(:section_one).id, body["section_id"]
     assert_empty body["events"]
     assert_equal characters(:character_two).id, body["pov_character_id"]
@@ -137,12 +140,23 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
   test "update updates a scene as json" do
     patch api_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story.id,
       id: scenes(:scene_two)),
-      params: { scene: { name: "Renamed via api", description: "Via the API" } },
+      params: { scene: { name: "Renamed via api", description: "Via the API", status: "final" } },
       headers: headers, as: :json
 
     assert_response :success
     assert_equal "Renamed via api", scenes(:scene_two).reload.name
     assert_equal "Via the API", scenes(:scene_two).reload.description
+    assert_equal "final", scenes(:scene_two).reload.status
+  end
+
+  test "create rejects an unknown status" do
+    assert_no_difference("Scene.count") do
+      post api_universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story.id),
+        params: { scene: { name: "Unknown status", status: "published" } },
+        headers: headers, as: :json
+    end
+
+    assert_response :unprocessable_content
   end
 
   test "update rejects a section from another story" do

@@ -60,6 +60,21 @@ class SceneFilterTest < ActiveSupport::TestCase
     assert_equal @story.scenes.reorder(:position, :id).to_a, apply(foreign)
   end
 
+  test "the status filter accepts the fixed vocabulary and narrows the list" do
+    assert_equal [ scenes(:scene_one) ], apply(filter_for(status: "final"))
+    assert_equal [ scenes(:scene_two) ], apply(filter_for(status: "revised"))
+    assert_equal [ scenes(:scene_three) ], apply(filter_for(status: "draft"))
+  end
+
+  test "an unknown status is dropped and reported instead of emptying the list" do
+    filter = filter_for(status: "published")
+
+    assert_not filter.active?
+    assert_nil filter.status
+    assert_match(/not a known scene status/, filter.discarded.first)
+    assert_equal @story.scenes.reorder(:position, :id).to_a, apply(filter)
+  end
+
   test "the in-world range covers whole days inclusively and skips scenes without a time" do
     scenes(:scene_three).update!(datetime: Time.utc(2026, 10, 2, 10))
 
@@ -96,6 +111,7 @@ class SceneFilterTest < ActiveSupport::TestCase
 
   test "query_params carries only the filters that are really in effect" do
     assert_equal({ q: "second" }, filter_for(q: "  second  ").query_params)
+    assert_equal({ status: "final" }, filter_for(status: " final ").query_params)
     assert_equal({ section_id: SceneFilter::UNGROUPED, from: "2026-09-01", to: "2026-09-30" },
       filter_for(section_id: SceneFilter::UNGROUPED, from: "2026-09-01", to: "2026-09-30").query_params)
   end

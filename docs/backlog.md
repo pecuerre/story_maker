@@ -134,23 +134,14 @@ triaged into this list.
    than the finding deleted. It is the surface items 42–44 write into, so it should land before them,
    and it must never rewrite prose.
 
-53. **Story structure templates and beat sheets.**
+54. **Scene archive and custom status labels.**
 
-   Sections and Scenes are created by hand, one at a time; nothing seeds a shape. `Novelcrafter` ships
-   novel templates and a 12-act structure, `Novilot` offers beat-sheet templates, and `Sudowrite` walks
-   from idea to outline to chapters. **Needs a decision on ownership:** whether a template is shipped
-   data, a Universe record, or a user-saved Story skeleton, and whether a beat is a Section, a Scene,
-   or a note on one. The safe first slice applies a template that creates empty Sections and Scenes
-   through the ordinary mutation path, so a template can never import prose or facts.
-
-54. **Scene status labels and archive.**
-
-   A Scene has a soft delete and a word count but no state between "exists" and "removed": nothing
-   says draft, revised, or final. `Novelcrafter` offers custom Scene labels and a Scene archive for
-   scenes pulled from the manuscript without being deleted. **Needs a vocabulary and a filter:** a
-   small fixed set of statuses, shown as a badge on the row and details page, offered by the Scene
-   filter under the existing list-filter contract, and with the export deciding explicitly whether
-   non-final scenes print. Custom labels per Story are a later decision, not the first move.
+   Scenes now carry a fixed draft/revised/final status, shown on the list and details page, filterable,
+   and available to the export's final-only choice. The competitor **Scene archive** pulls scenes from
+   the manuscript without deleting them, and custom per-Story labels are still undecided. **Needs a
+   model decision:** whether the archive is a separate flag from the writing status or a fourth
+   status, and whether a custom label replaces the fixed vocabulary or sits beside it. Keep the
+   archive distinct from soft delete, which already owns removal and restoration.
 
 55. **Word-count goals and progress.**
 

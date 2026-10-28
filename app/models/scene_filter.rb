@@ -15,6 +15,7 @@
 #   `q`             free text over the scene title and short description
 #   `section_id`    a Section of this story, or `UNGROUPED` for scenes with none
 #   `scene_tag_id`  a Scene Tag of this story: the author's label for a scene
+#   `status`        one of the fixed Scene statuses
 #   `from`, `to`    inclusive in-world days, applied to the scene's own datetime
 #
 # A value that cannot be used — an id from another story, an unreadable date — is
@@ -24,9 +25,9 @@ class SceneFilter < ListFilter
   # Section ids are integers, so this value cannot collide with one and keeps
   # "ungrouped" distinct from "no section filter".
   UNGROUPED = "ungrouped"
-  PARAMS = %i[ q section_id scene_tag_id from to ].freeze
+  PARAMS = %i[ q section_id scene_tag_id status from to ].freeze
 
-  attr_reader :section_id, :from_date, :to_date, :scene_tag
+  attr_reader :section_id, :from_date, :to_date, :scene_tag, :status
 
   # `section_ids` and `scene_tags` are the story-scoped lists the index already
   # loaded, so a filter value is validated against them without another query and
@@ -56,6 +57,7 @@ class SceneFilter < ListFilter
   def apply(relation)
     relation = narrowed_by_tag(relation, scene_tag)
     relation = narrowed_by_text(relation, table: "scenes", columns: %w[ name description ])
+    relation = relation.where(status: status) if status
     relation = narrowed_by_group(relation)
     relation = narrowed_by_day_range(relation, :datetime, from: from_date, to: to_date)
     relation.reorder(:position, :id)
@@ -68,6 +70,7 @@ class SceneFilter < ListFilter
     query[:q] = text if text.present?
     query[:section_id] = group_value if group_value.present?
     query[:scene_tag_id] = scene_tag.id.to_s if scene_tag
+    query[:status] = status if status
     query[:from] = from_date.iso8601 if from_date
     query[:to] = to_date.iso8601 if to_date
     query
@@ -80,12 +83,25 @@ class SceneFilter < ListFilter
       @section_id = group_value == UNGROUPED ? nil : group_value&.to_i
       @scene_tag = resolve_in_list(@params[:scene_tag_id], @scene_tags,
         "scenes.filter.discarded.scene_tag", identifier: :id)
+      @status = resolve_status(@params[:status])
       @from_date = resolve_day(@params[:from],
         label_key: "scenes.filter.bound.start",
         discard_key: "scenes.filter.discarded.date")
       @to_date = resolve_day(@params[:to],
         label_key: "scenes.filter.bound.end",
         discard_key: "scenes.filter.discarded.date")
+    end
+
+    # The vocabulary is code-owned, so a status needs no loaded list to validate
+    # against. An unknown value is dropped and reported like any other unusable
+    # filter value rather than reaching the query.
+    def resolve_status(value)
+      raw = value.to_s.strip
+      return if raw.blank?
+      return raw if Scene::STATUSES.include?(raw)
+
+      discard("scenes.filter.discarded.status")
+      nil
     end
 
     # The ungrouped group is a value rather than a Section, so it is resolved

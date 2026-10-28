@@ -673,6 +673,28 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "applying a story structure is refused without a token and writes nothing" do
+    story = @universe.stories.create!(name: "Token structure story")
+    entry = StoryStructureCatalog.find("three-act")
+    apply_path = apply_structure_universe_story_url(universe_slug: @universe.slug, id: story)
+
+    with_forgery_protection do
+      token = fetch_page_token(universe_story_path(universe_slug: @universe.slug, id: story))
+
+      assert_no_difference [ "Section.count", "Scene.count" ] do
+        post apply_path, params: { structure_slug: entry.slug }
+      end
+      assert_includes 406..422, response.status
+
+      assert_difference -> { Section.count }, entry.section_count do
+        assert_difference -> { Scene.count }, entry.scene_count do
+          post apply_path, params: { structure_slug: entry.slug }, headers: { "X-CSRF-Token" => token }
+        end
+      end
+      assert_redirected_to universe_story_url(universe_slug: @universe.slug, id: story)
+    end
+  end
+
   private
     # Loads a page so the session holds a CSRF token, and returns the value the
     # page published for its own JavaScript.

@@ -1107,6 +1107,106 @@ es:
       bible_eyebrow: "Biblia del universo compartida"
       bible_heading: "Registros de construcción del mundo"
       bible_description: "Todas las historias de %{universe} comparten estos registros."
+    structures:
+      eyebrow: "Plantillas de historia"
+      heading: "Empezar a partir de una estructura"
+      description: "Elige una forma para esta historia vacía. Al aplicarla se crean secciones y escenas con nombre para editar; no se copia prosa ni registros del universo."
+      choose: "Elige una estructura"
+      preview: "Ver los actos y los hitos"
+      submit: "Aplicar estructura"
+      draft_unavailable: "Las estructuras de historia se pueden aplicar en un universo directo. Este universo recuerda los cambios en borradores, y una estructura son muchos registros enlazados, no un único cambio recordado."
+      flash:
+        applied: "Se ha aplicado la estructura %{name}. Sus secciones y escenas vacías están listas para editar."
+        not_empty: "Solo se puede aplicar una estructura a una historia sin secciones ni escenas."
+        draft_based: "No se puede aplicar una estructura mientras este universo recuerde los cambios en borradores."
+        not_applied: "No se ha podido aplicar la estructura. No se ha creado ninguna sección ni escena."
+      catalog:
+        three_act:
+          name: "Estructura en tres actos"
+          description: "Una forma en tres partes que avanza del planteamiento a la confrontación y al desenlace."
+          acts:
+            setup:
+              name: "Acto I — Planteamiento"
+              beats:
+                opening_image:
+                  name: "Imagen inicial"
+                  description: "Presenta el mundo, el protagonista y el tono antes de que la historia cambie."
+                inciting_incident:
+                  name: "Incidente incitador"
+                  description: "Presenta el suceso que altera la vida cotidiana del protagonista."
+                first_plot_point:
+                  name: "Primer punto de giro"
+                  description: "Compromete al protagonista con el problema central de la historia."
+            confrontation:
+              name: "Acto II — Confrontación"
+              beats:
+                rising_action:
+                  name: "Acción creciente"
+                  description: "Aumenta los obstáculos y muestra cómo se adapta el protagonista a la nueva situación."
+                midpoint:
+                  name: "Punto medio"
+                  description: "Gira la historia con una revelación o un revés que cambia lo que está en juego."
+                second_plot_point:
+                  name: "Segundo punto de giro"
+                  description: "Elimina las opciones fáciles que le quedan al protagonista antes del esfuerzo final."
+            resolution:
+              name: "Acto III — Resolución"
+              beats:
+                climax:
+                  name: "Clímax"
+                  description: "Lleva el conflicto central a su enfrentamiento decisivo."
+                resolution:
+                  name: "Desenlace"
+                  description: "Muestra el mundo transformado y el coste o la recompensa del desenlace."
+        heros_journey:
+          name: "Viaje del héroe"
+          description: "Un viaje de doce etapas: partida, iniciación y regreso."
+          acts:
+            departure:
+              name: "Partida"
+              beats:
+                ordinary_world:
+                  name: "Mundo ordinario"
+                  description: "Muestra la vida conocida del protagonista y lo que le falta."
+                call_to_adventure:
+                  name: "Llamada a la aventura"
+                  description: "Presenta el desafío o el descubrimiento que invita al protagonista a marcharse."
+                refusal_of_the_call:
+                  name: "Rechazo de la llamada"
+                  description: "Deja que el protagonista dude y exprese qué hace difícil el viaje."
+                meeting_the_mentor:
+                  name: "Encuentro con el mentor"
+                  description: "Presenta una guía, un don o un conocimiento que prepara la partida."
+                crossing_the_threshold:
+                  name: "Cruce del umbral"
+                  description: "Traslada al protagonista al mundo desconocido donde cambian las reglas de la historia."
+            initiation:
+              name: "Iniciación"
+              beats:
+                tests_allies_enemies:
+                  name: "Pruebas, aliados y enemigos"
+                  description: "Enseña al protagonista el nuevo mundo mediante desafíos y nuevas relaciones."
+                approach_inmost_cave:
+                  name: "Acercamiento a la cueva más profunda"
+                  description: "Lleva al protagonista al borde del peligro más grave."
+                ordeal:
+                  name: "Prueba suprema"
+                  description: "Enfrenta al protagonista con su miedo o su pérdida central."
+                reward:
+                  name: "Recompensa"
+                  description: "Deja que el protagonista sobreviva a la prueba con algo ganado o comprendido."
+            return:
+              name: "Regreso"
+              beats:
+                road_back:
+                  name: "Camino de vuelta"
+                  description: "Devuelve al protagonista a casa, o hacia el enfrentamiento final, con lo que está en juego aún abierto."
+                resurrection:
+                  name: "Resurrección"
+                  description: "Pon a prueba al protagonista una última vez y muestra qué ha cambiado."
+                return_with_the_elixir:
+                  name: "Regreso con el elixir"
+                  description: "Cierra con lo que el protagonista trae de vuelta al mundo ordinario."
     flash:
       created: "La historia se ha creado correctamente."
       updated: "La historia se ha actualizado correctamente."
@@ -1125,6 +1225,8 @@ es:
       heading: "Página HTML imprimible"
       description: "Abre la historia como una página limpia con solo su prosa. Desde el navegador, puedes imprimirla o guardarla como PDF."
       scope_legend: "Qué incluir"
+      final_only: "Solo escenas finales"
+      final_only_description: "Imprime solo las escenas cuyo estado de escritura sea final. Déjalo desmarcado para incluir las escenas en borrador y revisadas."
       submit: "Abrir la página imprimible"
     scopes:
       prose:
@@ -1151,6 +1253,7 @@ es:
       print_hint: "Usa el comando de impresión del navegador para imprimir esta página o guardarla como PDF."
       back: "Opciones de exportación"
       empty: "Esta historia aún no tiene escenas, así que no hay nada que exportar."
+      no_final_scenes: "Esta historia aún no tiene escenas finales, así que no hay nada que exportar con esta opción."
       no_prose: "Todavía no se ha escrito prosa para esta escena."
       appendix_heading: "Biblia del universo"
 
@@ -1344,6 +1447,10 @@ es:
   scenes:
     title: "Escenas"
     add: "Añadir escena"
+    statuses:
+      draft: "Borrador"
+      revised: "Revisada"
+      final: "Final"
     # `new_*` y `edit_*` son planos y no bloques anidados, porque los títulos y las
     # descripciones de las páginas del editor son las cuatro cadenas que hay a su
     # lado y un bloque `new:` chocaría con la clave `new_title` de al lado.
@@ -1390,6 +1497,7 @@ es:
       delete_confirm: "¿Eliminar «%{name}»? Sus elementos, las asignaciones de etiquetas, las anotaciones de tropos y los enlaces con registros de la historia y del universo se eliminarán de forma permanente. Los registros vinculados no se eliminarán."
       # Las dos píldoras de la fila que no son recuentos, y los dos títulos que
       # explican qué significa una píldora de agrupación.
+      status_title: "Estado de escritura. La exportación se puede limitar a las escenas finales."
       grouped_title: "Agrupada bajo %{grouping}. La agrupación no cambia el orden narrativo."
       ungrouped_title: "Sin agrupar bajo ninguna sección. La agrupación no cambia el orden narrativo."
       participants_title: "Personajes que participan en esta escena, tanto si son participantes almacenados como si solo hablan en un diálogo. Contados una sola vez."
@@ -1399,13 +1507,15 @@ es:
       participants_aria: "%{characters} participando"
     filter:
       title: "Buscar escenas"
-      description: "Una historia puede tener cientos o miles de escenas. Reduce la lista por texto, sección, etiqueta de escena o rango de fechas en el mundo. Filtrar nunca cambia el orden narrativo, y una escena sin tiempo en el mundo no pertenece a ningún rango de fechas."
+      description: "Una historia puede tener cientos o miles de escenas. Reduce la lista por texto, sección, etiqueta de escena, estado o rango de fechas en el mundo. Filtrar nunca cambia el orden narrativo, y una escena sin tiempo en el mundo no pertenece a ningún rango de fechas."
       search_label: "Buscar"
       search_placeholder: "Título o descripción breve"
       section_label: "Sección"
       all_sections: "Todas las secciones"
       scene_tag_label: "Etiqueta de escena"
       all_scene_tags: "Todas las etiquetas de escenas"
+      status_label: "Estado"
+      all_statuses: "Todos los estados"
       from_label: "En el mundo desde"
       to_label: "En el mundo hasta"
       submit: "Filtrar escenas"
@@ -1420,6 +1530,7 @@ es:
         search: "Búsqueda: «%{value}»"
         section: "Sección: %{value}"
         scene_tag: "Etiqueta de escena: %{value}"
+        status: "Estado: %{value}"
         from: "En el mundo desde %{value}"
         to: "En el mundo hasta %{value}"
       # Un valor de filtro que el filtro no pudo usar. `bound` es
@@ -1432,6 +1543,7 @@ es:
       discarded:
         section: "Se ha ignorado el filtro de sección porque no es una sección de esta historia."
         scene_tag: "Se ha ignorado el filtro de etiqueta de escena porque no es una etiqueta de escena de esta historia."
+        status: "Se ha ignorado el filtro de estado porque no es un estado de escena conocido."
         date: "No se ha podido leer la fecha de %{bound} en el mundo «%{value}», así que se ha ignorado."
     show:
       description: "Escena %{position} de %{total} en el orden en que se cuenta %{story}. El orden narrativo no es la cronología en el mundo."
@@ -1441,6 +1553,8 @@ es:
         narrative_position: "Posición narrativa"
         # La posición y el total que la acompañan, sin palabras propias.
         position: "%{position} de %{total}"
+        status: "Estado"
+        status_hint: "Una etiqueta de escritura para esta escena. La exportación puede incluir solo las escenas finales; esto no cambia el orden narrativo."
         description: "Descripción breve"
         description_blank: "Todavía no hay descripción breve."
         tags: "Etiquetas de escena"
@@ -1483,6 +1597,8 @@ es:
       name_hint: "El título de la escena en el orden narrativo. Solo hace falta un título."
       description: "Descripción breve"
       description_hint: "Un resumen opcional de una línea que se muestra en la lista de escenas."
+      status: "Estado"
+      status_hint: "Un estado de escritura elegido por quien escribe. Las escenas nuevas empiezan como borrador; la exportación se puede limitar a las escenas finales sin cambiar el orden narrativo."
       tags_legend: "Etiquetas de escena"
       tags_label: "Etiquetas de escena"
       tags_hint: "Opcional. Asigna las etiquetas que describan esta escena. Las etiquetas pertenecen a esta historia y se pueden gestionar en Configuración → Etiquetas → Etiquetas de historia → Etiquetas de escenas."
@@ -3042,6 +3158,7 @@ es:
       scene:
         name: "Título"
         description: "Descripción breve"
+        status: "Estado"
         section: "Sección"
         datetime: "Tiempo en el mundo"
         pov_character: "Punto de vista"

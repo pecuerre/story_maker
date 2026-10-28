@@ -60,6 +60,10 @@ end %>
                 <%= scene.position + 1 %>
               </span>
               <span class="entity-title"><%= scene.name %></span>
+              <span class="badge rounded-pill text-bg-light border"
+                title="<%= t("scenes.index.status_title") %>">
+                <%= scene_status_label(scene.status) %>
+              </span>
               <% grouping = scene_grouping_label(scene, @section_paths) %>
               <span class="badge rounded-pill text-bg-light border"
                 title="<%= grouping.present? ? t("scenes.index.grouped_title", grouping: grouping) : t("scenes.index.ungrouped_title") %>">

@@ -7,6 +7,7 @@
   scene_tags: [ SceneTag.adventure, SceneTag.fellowship ]
   plots: [ Plot.the-rings-journey, Plot.the-fellowship ]
   datetime: "3018-09-29T00:00"
+  status: final
   position: 0
 
 - story: Story.the-lord-of-the-rings
@@ -16,6 +17,7 @@
   section: Section.the-fellowship-of-the-ring
   pov_character: Character.gandalf_the_grey
   plots: [ Plot.the-rings-journey ]
+  status: revised
   position: 1
 
 - story: Story.the-lord-of-the-rings
@@ -42,4 +44,5 @@
   pov_character: Character.aragorn
   scene_tags: [ SceneTag.loss, SceneTag.homecoming ]
   plots: [ Plot.the-rings-journey, Plot.the-fellowship ]
+  status: final
   position: 4

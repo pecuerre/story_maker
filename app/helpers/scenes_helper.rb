@@ -4,6 +4,13 @@
 # redirect/re-render responsibility, and the JSON+Stimulus responsibility stays
 # with the Element and presence-link flows added in later slices.
 module ScenesHelper
+  # The label beside a stored Scene status. The value is code-owned data, so only
+  # the label is translated; `scene_status_label` is the one answer the row, the
+  # details page, the form, and the filter summary use.
+  def scene_status_label(status)
+    t("scenes.statuses.#{status}")
+  end
+
   # The Section group of a Scene, or nil when it is ungrouped. Grouping is
   # organization only, so this is never used to derive an order.
   def scene_grouping_label(scene, section_paths)
@@ -118,6 +125,7 @@ module ScenesHelper
     if filter.scene_tag
       summaries << t("scenes.filter.summaries.scene_tag", value: scene_tag_paths.label_for(filter.scene_tag))
     end
+    summaries << t("scenes.filter.summaries.status", value: scene_status_label(filter.status)) if filter.status
     summaries << t("scenes.filter.summaries.from", value: filter.from_date.iso8601) if filter.from_date
     summaries << t("scenes.filter.summaries.to", value: filter.to_date.iso8601) if filter.to_date
     summaries

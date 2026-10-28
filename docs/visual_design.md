@@ -501,6 +501,23 @@ The painted shape:
 - A long Section name wraps instead of pushing the layout, and the action group wraps below the title
   at narrow widths instead of hiding it or relying on hover.
 
+### Scene matrix
+
+The matrix's rows, columns, and read-only contract are in
+[features/scenes.md](features/scenes.md#the-story-wide-scene-matrix); the painted shape:
+
+- A real `<table>` inside a `.scene-matrix-scroll` region with `tabindex="0"` and an accessible name.
+  The Scene column is sticky at the left and carries the same 1-based bordered position pill the
+  Scenes list uses; the fact columns wrap rather than forcing the page wider.
+- The Scene title opens Scene Details and each linked Event opens its own page. The three count
+  columns are plain right-aligned numbers under headers that name what they count, so a figure is
+  never a bare number without its subject.
+- An absent fact is secondary-colored words — **No tags**, **No point of view recorded**, **No
+  in-world time recorded**, **No events linked** — never an empty cell. Tag badges keep their taxonomy
+  colors.
+- The page adds no buttons, forms, or hover actions. Print removes the sticky offset, avoids breaking
+  a row across pages, and shrinks the type, so a Story can be read on paper as well as on screen.
+
 ### Appearance grid
 
 The grid's rows, layers, and read-only contract are in

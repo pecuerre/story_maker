@@ -74,6 +74,7 @@ es:
     sections: "Secciones"
     plots: "Tramas"
     scenes: "Escenas"
+    scene_matrix: "Matriz de escenas"
     appearances: "Apariciones"
     narrative_order: "Orden narrativo"
     export: "Exportar"
@@ -2826,6 +2827,36 @@ es:
     empty_title: "Aún no hay escenas"
     empty_writable_description: "Añade la primera escena para empezar el orden narrativo."
     empty_read_only_description: "Esta historia aún no tiene escenas que comparar."
+
+  # La matriz de escenas de toda la historia, de solo lectura. Una fila por
+  # escena en orden narrativo y una columna por cada dato que la historia ya
+  # guarda; la tabla es su propio equivalente accesible, y la página no añade
+  # orden, editor ni resultado almacenado.
+  scene_matrices:
+    title: "Matriz de escenas"
+    description: "Todas las escenas de %{story} a la vez, en el orden en que la historia las cuenta, con los datos que ya tiene registrados de cada una."
+    intro: "Las filas son escenas en orden narrativo y las columnas son lo que la historia ya registra sobre ellas. Esta página es una lectura: edita una escena, sus etiquetas o sus sucesos desde las páginas de la propia escena."
+    caption: "Las escenas de %{story} en orden narrativo, con la sección, las etiquetas, el punto de vista, el tiempo en el mundo, los sucesos vinculados, el número de elementos, el número de palabras y el número de personajes participantes de cada escena."
+    scroll_label: "Matriz de escenas desplazable de %{story}."
+    columns:
+      scene: "Escena"
+      section: "Sección"
+      tags: "Etiquetas de escena"
+      pov: "Punto de vista"
+      in_world_time: "Tiempo en el mundo"
+      events: "Sucesos"
+      elements: "Elementos"
+      words: "Palabras"
+      participants: "Personajes participantes"
+    values:
+      no_tags: "Sin etiquetas"
+      no_pov: "Sin punto de vista registrado"
+      no_time: "Sin tiempo en el mundo registrado"
+      no_events: "Sin sucesos vinculados"
+    empty:
+      title: "Aún no hay escenas"
+      writable_description: "Añade la primera escena para empezar la matriz."
+      read_only_description: "Esta historia aún no tiene escenas que mostrar."
 
   # Los nombres de los atributos que leen los formularios y los mensajes de
   # error de esta rebanada. Ver la explicación equivalente en `en.yml`.

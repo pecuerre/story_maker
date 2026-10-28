@@ -99,6 +99,7 @@ rule is proved in the model *and* the database.
 | Scene Items tab | `.../scenes/:scene_id/items` | HTML index, JSON mutations |
 | Scene Locations tab | `.../scenes/:scene_id/locations` | HTML index, JSON mutations |
 | Scene Tropes tab | `.../scenes/:scene_id/tropes` | HTML index, JSON mutations |
+| Story-wide Scene matrix | `/u/:universe_slug/s/:story_id/scene_matrix` | Read-only HTML |
 
 Scenes have no Universe-level route. Every Scene and Scene Tag route includes its Story, and all
 route-helper keys are passed by name.
@@ -238,6 +239,38 @@ attached; Events this Story never depicts stay visible but secondary, and Events
 time sit in a separate **No recorded time** group instead of an arbitrary numbered row. The left
 column is the whole narrative sequence with each Scene's own time and step. Pending draft changes
 are not projected: the page reads saved records, like the Timeline.
+
+## The Story-wide Scene matrix
+
+`GET /u/:universe_slug/s/:story_id/scene_matrix` (`SceneMatricesController#show`) is the whole Story as
+a table: one row per Scene in `(position, id)` order and one column for each fact the Story already
+stores on it — Section path, Scene Tags, point of view, in-world time, linked Events, Element count,
+word count, and participant count. It is the table counterpart to the Appearance grid, reached from
+`StoryWorkspaceHelper#story_workspace_tabs`, and it is a **read**: no form, no mutation route, no CSRF
+surface, no stored result, and no JavaScript.
+
+- **Rows and columns are the whole Story.** There is no filter, sort, or pagination: a narrowed matrix
+  is not the Story at once, and `Scene#position` stays the only order. Section grouping is a column,
+  never a second grouping of the table, because grouping does not change the telling order.
+- **Every fact is already stored.** `SceneMatrix` preloads each Scene's Section, point of view, Scene
+  Tags, and Event links; the Element and participant counts are one grouped query each; and the prose
+  column is `WordCounts#for_scene`, the per-Scene reader over the Story's existing totals. A Story of
+  hundreds of Scenes costs the same number of queries as a short one.
+- **Presence is the union, not a sum.** The participant count is `SceneParticipants.counts_by_scene`,
+  so it is the same number the Characters tab, the Scenes list, and the Appearance grid report. A
+  Character who both participates and speaks is counted once, and a prose mention never adds to it.
+- **An absent fact is stated, not left blank.** An untagged Scene says **No tags**, one with no
+  recording says **No point of view recorded** or **No in-world time recorded**, and one with no link
+  says **No events linked**. A zero count is a real measurement and stays a number.
+- **Every row links out rather than editing in place.** The Scene title opens Scene Details, and each
+  linked Event opens its own Universe page. The page never becomes a second editor with its own
+  validation; writing stays on the ordinary draft-backed Scene form.
+- **Access follows the Story.** A guest may read a public Universe's matrix, a private Universe keeps
+  its owner/membership rule, and another Universe's Story is a `404`. An empty Story says **No scenes
+  yet**, with the writer's copy offering the first Scene and the read-only copy not doing so.
+
+The table is its own accessible equivalent, and its painted rules are in
+[visual_design.md](../visual_design.md#scene-matrix).
 
 ## Elements
 

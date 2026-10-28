@@ -1,0 +1,134 @@
+// The Story-wide Scene matrix. The table is the matrix and its own accessible
+// equivalent: a caption, real column headers, and a Scene row header. It scrolls
+// horizontally inside a focusable region, and the Scene column stays put so a
+// row never loses the name it belongs to.
+.scene-matrix-scroll {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.scene-matrix-scroll:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.scene-matrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: .875rem;
+  min-width: 100%;
+}
+
+.scene-matrix th,
+.scene-matrix td {
+  border-bottom: 1px solid var(--bs-border-color);
+  padding: .5rem .6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.scene-matrix tbody tr:last-child th,
+.scene-matrix tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.scene-matrix thead th {
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-secondary-color);
+  font-size: .75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// The Scene column stays at the left edge while the fact columns scroll.
+.scene-matrix thead th:first-child,
+.scene-matrix tbody th {
+  left: 0;
+  max-width: 18rem;
+  min-width: 12rem;
+  position: sticky;
+  z-index: 1;
+}
+
+.scene-matrix tbody th {
+  background: var(--bs-body-bg);
+}
+
+.scene-matrix thead th:first-child {
+  background: var(--bs-tertiary-bg);
+  z-index: 2;
+}
+
+.scene-matrix tbody tr:hover th,
+.scene-matrix tbody tr:hover td {
+  background: var(--um-row-hover);
+}
+
+.scene-matrix td {
+  max-width: 16rem;
+  min-width: 7rem;
+}
+
+// The header names what the column counts, so a count is a plain right-aligned
+// number rather than a second labelled pill.
+.scene-matrix-count {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.scene-matrix-position {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  display: inline-block;
+  font-size: .6875rem;
+  line-height: 1;
+  margin-right: .35rem;
+  padding: .15rem .35rem;
+}
+
+.scene-matrix-scene-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.scene-matrix-scene-link:hover,
+.scene-matrix-scene-link:focus-visible {
+  color: var(--bs-link-color);
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+@media print {
+  .scene-matrix-scroll {
+    border-color: #000;
+    overflow: visible;
+  }
+
+  .scene-matrix {
+    font-size: .625rem;
+  }
+
+  .scene-matrix th,
+  .scene-matrix td {
+    padding: .2rem .3rem;
+  }
+
+  .scene-matrix thead th:first-child,
+  .scene-matrix tbody th {
+    background: transparent;
+    position: static;
+  }
+
+  .scene-matrix tr {
+    break-inside: avoid;
+  }
+
+  .scene-matrix a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

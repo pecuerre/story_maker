@@ -43,7 +43,7 @@ These items are deliberately **LATER** by default. Use the owner's **NOW / LATER
 before expanding a feature task; the DataFactor report is directional evidence, not an automatic
 work order.
 
-The highest number this file has used is 67. The list below keeps the numbers it already had and never
+The highest number this file has used is 70. The list below keeps the numbers it already had and never
 reuses one. It was triaged on 2026-10-25: two Scene ideas had already been delivered and left the
 list, the rest became numbered items, and each item records what exists today and what its next step
 depends on. The competitor survey on 2026-10-27 turned the four `check <site>` notes into items
@@ -64,6 +64,8 @@ triaged into this list.
    smoke test survive, and keep the browser-owned start page working before a universe is chosen.
 
 41. **Structured Scene roles from free-text annotations.**
+
+   NOTE: Leave for later
 
    `SceneCharacter`, `SceneItem`, and `SceneLocation` carry a free-text `role` that is never checked
    against a vocabulary. **Blocked on evidence:** analyze existing annotations first, then promote
@@ -106,6 +108,8 @@ triaged into this list.
    needs a keyboard and touch path, and the SVG edges must stay aligned under the transform. Worth
    doing only when a universe's event count makes the wrapped layout genuinely hard to read.
 
+   NOTE: Leave for later
+
 48. **The deployment-secret permissions test can pass with no assertions.**
 
    NOTE: Wait until deployment
@@ -129,17 +133,6 @@ triaged into this list.
    evidence and its source, a status lifecycle, and an inbox page, with a dismissal recorded rather
    than the finding deleted. It is the surface items 42–44 write into, so it should land before them,
    and it must never rewrite prose.
-
-52. **Scene planning board and matrix.**
-
-   Scenes are ordered in a list inside a Section tree, and the Story page shows structure as text;
-   there is no board or spreadsheet surface. `Novelcrafter`'s Grid drags Section columns and Scene
-   cards, its Matrix is one row per Scene against attributes, and `Sudowrite`'s Canvas is a freeform
-   board. **Needs UI design and a decision about writes:** a board that only reorders must reuse the
-   existing sibling-position transaction, a card that edits a field must be a draft change like every
-   other mutation, and the matrix must not become a second editor with its own validation. Worth
-   doing when a long Story makes the list hard to scan; a structural gap is cheaper to see here than
-   in prose.
 
 53. **Story structure templates and beat sheets.**
 
@@ -293,6 +286,31 @@ triaged into this list.
    plus a table equivalent and a chart pattern shared with the
    [Appearance grid](features/appearances.md). There is no chart library; the Map's server-rendered
    SVG is the closest existing pattern.
+
+69. **Read-only Scene planning board.**
+
+   A Section tree with a Scene list under each node makes a long Story hard to scan for shape, while
+   a board shows the same structure as columns at once: every Section in position order plus an
+   **Ungrouped** column, with that column's Scenes as cards in `Scene#position` order. **This is the
+   second slice**, and it is read-only for the same reason the matrix is: it is a projection of data
+   the list already answers, with each card linking to Scene Details and carrying the position badge
+   and Section name. It introduces no second order — a Section column sorts by the Story's position,
+   never by title — and no drag: the first board is keyboard-scrollable and every destination is a
+   link. **Needs a layout decision** for a Story whose Sections outnumber the viewport: the region
+   scrolls horizontally with the column heading sticky, the same treatment the Appearance grid gives
+   its row and column headers, and the board may state a column count rather than shrink columns
+   below a readable width. It reuses the matrix's reads rather than adding a query of its own.
+
+70. **Scene board control: reorder and regroup.**
+
+   **The third slice, and the only one that writes.** A board that only reorders must reuse the
+   existing sibling-position transaction rather than invent a position column write: `ScenesController#move`
+   with `direction=up|down`, its boundary clamping, no-op flash, and returned filtered list. Regrouping
+   reuses `ScenesController#group` and its copy that the narrative position did not change, so a card
+   never edits `position` and `section_id` in one action. **Needs a UI decision** about which of those
+   controls a card draws and at what width, but a drag gesture can only ever be a second affordance
+   over the same keyboard-operable `button_to` forms, never the only way to move a card. A card that
+   edits a field belongs to the existing draft-backed editor and is not this slice.
 
 ## FUTURE WORK
 

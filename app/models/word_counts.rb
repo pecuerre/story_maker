@@ -32,7 +32,15 @@ class WordCounts
   # A Section's own Scenes plus every descendant Section's. A Section that does
   # not belong to this Story has no words here and answers zero.
   def for_section(section_or_id)
-    @by_section.fetch(section_id_of(section_or_id), 0)
+    @by_section.fetch(record_id_of(section_or_id), 0)
+  end
+
+  # One Scene's own prose: its Element Content plus its Dialogue turn lines. A
+  # Scene that belongs to another Story has no words here and answers zero, the
+  # same way `for_section` does. The grouped rows are already read for the
+  # Story total, so a caller that draws a number per Scene costs no extra query.
+  def for_scene(scene_or_id)
+    @by_scene.fetch(record_id_of(scene_or_id), 0)
   end
 
   private
@@ -81,7 +89,7 @@ class WordCounts
       end
     end
 
-    def section_id_of(section_or_id)
-      section_or_id.respond_to?(:id) ? section_or_id.id : section_or_id
+    def record_id_of(record_or_id)
+      record_or_id.respond_to?(:id) ? record_or_id.id : record_or_id
     end
 end

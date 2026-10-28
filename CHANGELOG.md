@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Scene matrix.** Adds a read-only Story page with one row per Scene in narrative order and columns for section, tags, point of view, in-world time, linked events, element count, word count, and participant count.
 - **Appearance grid.** Adds a read-only Story page with one row per Character and one column per Scene, drawing recorded presence and prose mentions as separate marks with an accessible table and print styles.
 - **Prose mentions.** A read-time index matches Character names and aliases in Element bodies, lists unrecorded mentions on the Character page, links names on Scene Details, and marks them in the printable manuscript without recording presence.
 - **Universe canon rules.** Adds a Canon Rule with a required statement, optional source passage, and an optional Story owner, plus its `/u/:slug/canon` workspace, details page, discussion thread, search kind, and demo data.
@@ -53,6 +54,8 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Scene matrix documentation.** Adds the matrix section and route row to Scenes, the painted table rules to Visual design, and removes the delivered slice from the backlog.
+- **Scene planning slices.** Splits the Scene planning board and matrix backlog note into three numbered slices — read-only matrix, read-only board, then reorder and regroup — so each lands separately.
 - **Appearance grid documentation.** Adds the appearances feature document and links it from Scenes, the grid's visual rules, and the docs index.
 - **Prose mention documentation.** Adds the mentions feature document and links it from Characters, Scenes, Export, and the visual pattern reference.
 - **Canon rules decision and owners.** Records ADR 0039, the Canon feature document, the schema and validation rows, the Universe Bible entry, the search kind, and the refreshed mutation-controller counts.

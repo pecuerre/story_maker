@@ -49,6 +49,13 @@ class WordCountsTest < ActiveSupport::TestCase
     assert_equal 0, counts.for_section(sections(:section_two))
   end
 
+  test "a scene total sums only that scene's prose" do
+    counts = WordCounts.for_story(@story)
+
+    assert_equal 38, counts.for_scene(scenes(:scene_one))
+    assert_equal 0, counts.for_scene(scenes(:scene_two))
+  end
+
   test "a section of another story has no words here" do
     assert_equal 0, WordCounts.for_story(@story).for_section(sections(:section_alt))
   end
@@ -61,6 +68,7 @@ class WordCountsTest < ActiveSupport::TestCase
 
     assert_equal 38, WordCounts.for_story(@story).total
     assert_equal 3, WordCounts.for_story(stories(:story_alt)).total
+    assert_equal 0, WordCounts.for_story(@story).for_scene(scenes(:scene_alt))
   end
 
   test "soft-deleted element content and turns leave the total" do

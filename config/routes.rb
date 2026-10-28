@@ -94,6 +94,11 @@ Rails.application.routes.draw do
       # has no record of its own and no mutation route, so it is a singular
       # resource with only a `show`.
       resource :appearances, only: :show, controller: "appearances"
+      # The Story-wide Scene matrix: one row per Scene and one column per fact
+      # already stored on it. Like the appearance grid it has no record of its
+      # own and no mutation route, so it is a singular resource with only a
+      # `show`.
+      resource :scene_matrix, only: :show
       # The export surface: one options page and the printable manuscript it
       # opens. Both are reads of the Story, so they are guest-readable like the
       # Story page itself. A second output format adds one `get` beside

@@ -1,0 +1,100 @@
+<% content_for :title, t("scene_matrices.title") %>
+
+<%= render "shared/page_header",
+  title: t("scene_matrices.title"),
+  eyebrow: t("shared.eyebrow.story", story: @story.name),
+  description: t("scene_matrices.description", story: @story.name),
+  count: @matrix.scenes.size,
+  count_label: "scene" %>
+
+<%= render "shared/content_tabs",
+  aria_label: t("sidebar.story_workspace"),
+  intro: t("scene_matrices.intro", story: @story.name),
+  tabs: story_workspace_tabs(@story) %>
+
+<% if @matrix.scenes? %>
+  <%# The table is the matrix and its own accessible equivalent: a caption, real
+      column headers, and a Scene row header. The scroll region is focusable so a
+      keyboard reader can reach a wide Story without the page moving. %>
+  <section class="surface-card p-3 p-md-4">
+    <div class="scene-matrix-scroll" role="region" tabindex="0"
+      aria-label="<%= t("scene_matrices.scroll_label", story: @story.name) %>">
+      <table class="scene-matrix">
+        <caption class="visually-hidden"><%= t("scene_matrices.caption", story: @story.name) %></caption>
+        <thead>
+          <tr>
+            <% count_columns = %i[ elements words participants ] %>
+            <% %i[ scene section tags pov in_world_time events elements words participants ].each do |column| %>
+              <th scope="col" class="<%= "scene-matrix-count" if count_columns.include?(column) %>"><%= t("scene_matrices.columns.#{column}") %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @matrix.scenes.each do |scene| %>
+            <tr>
+              <th scope="row">
+                <span class="scene-matrix-position"
+                  aria-label="<%= t("shared.scene_position_aria", position: scene.position + 1, total: @matrix.scenes.size) %>">
+                  <%= scene.position + 1 %>
+                </span>
+                <%= link_to scene.name, universe_story_scene_path(story_id: @story, id: scene),
+                  class: "scene-matrix-scene-link" %>
+              </th>
+
+              <td>
+                <%= scene_grouping_label(scene, @section_paths) || @section_paths.ungrouped_label %>
+              </td>
+
+              <td>
+                <% if scene.scene_tags.any? %>
+                  <%= entity_tag_badge(scene) %>
+                <% else %>
+                  <span class="text-body-secondary"><%= t("scene_matrices.values.no_tags") %></span>
+                <% end %>
+              </td>
+
+              <td>
+                <% if scene.pov_character %>
+                  <%= scene.pov_character.name %>
+                <% else %>
+                  <span class="text-body-secondary"><%= t("scene_matrices.values.no_pov") %></span>
+                <% end %>
+              </td>
+
+              <td>
+                <% in_world_time = scene_in_world_time(scene) %>
+                <% if in_world_time %>
+                  <%= in_world_time %>
+                <% else %>
+                  <span class="text-body-secondary"><%= t("scene_matrices.values.no_time") %></span>
+                <% end %>
+              </td>
+
+              <td>
+                <% if scene.scene_events.any? %>
+                  <%= safe_join(scene.scene_events.map { |link|
+                    link_to link.event.display_label, universe_event_path(id: link.event)
+                  }, " · ") %>
+                <% else %>
+                  <span class="text-body-secondary"><%= t("scene_matrices.values.no_events") %></span>
+                <% end %>
+              </td>
+
+              <%# The three count columns name what they count in their headers, so
+                  the number is read with that header rather than given a second
+                  visible label. A zero is a real measurement, not a missing value. %>
+              <td class="scene-matrix-count"><%= @matrix.element_count_for(scene) %></td>
+              <td class="scene-matrix-count"><%= @matrix.word_count_for(scene) %></td>
+              <td class="scene-matrix-count"><%= @matrix.participant_count_for(scene) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% else %>
+  <%= render "shared/empty_state",
+    title: t("scene_matrices.empty.title"),
+    description: can_write_universe? ? t("scene_matrices.empty.writable_description") : t("scene_matrices.empty.read_only_description"),
+    icon: "table" %>
+<% end %>

@@ -77,6 +77,7 @@ en:
     sections: "Sections"
     plots: "Plots"
     scenes: "Scenes"
+    scene_matrix: "Scene matrix"
     appearances: "Appearances"
     narrative_order: "Narrative order"
     export: "Export"
@@ -2862,6 +2863,36 @@ en:
     empty_title: "No scenes yet"
     empty_writable_description: "Add the first scene to start the narrative order."
     empty_read_only_description: "This story has no scenes to compare yet."
+
+  # The read-only Story-wide Scene matrix. One row per Scene in narrative order
+  # and one column per fact the Story already stores; the table is its own
+  # accessible equivalent, and the page adds no order, no editor, and no stored
+  # result.
+  scene_matrices:
+    title: "Scene matrix"
+    description: "Every scene in %{story} at once, in the order the story tells them, with the facts already recorded about each one."
+    intro: "Rows are scenes in narrative order and columns are what the story already records on them. This page is a read: edit a scene, its tags, or its events from the scene's own pages."
+    caption: "The scenes of %{story} in narrative order, with each scene's section, tags, point of view, in-world time, linked events, element count, word count, and participant count."
+    scroll_label: "Scrollable scene matrix for %{story}."
+    columns:
+      scene: "Scene"
+      section: "Section"
+      tags: "Scene tags"
+      pov: "Point of view"
+      in_world_time: "In-world time"
+      events: "Events"
+      elements: "Elements"
+      words: "Words"
+      participants: "Characters take part"
+    values:
+      no_tags: "No tags"
+      no_pov: "No point of view recorded"
+      no_time: "No in-world time recorded"
+      no_events: "No events linked"
+    empty:
+      title: "No scenes yet"
+      writable_description: "Add the first scene to start the matrix."
+      read_only_description: "This story has no scenes to show yet."
 
   # The read-only Story-wide appearance grid. Recorded presence and prose
   # mentions are two layers drawn with different marks, never one merged state;

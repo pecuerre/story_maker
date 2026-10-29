@@ -5,11 +5,13 @@ services:
       dockerfile: Dockerfile.dev
     environment:
       RAILS_ENV: development
+      STORY_INTERCHANGE_IMPORT_ROOT: ${STORY_INTERCHANGE_IMPORT_ROOT:-}
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
       - ./app:/rails/app
       - ./lib:/rails/lib
+      - ${STORY_INTERCHANGE_SOURCE_DIR:-../tcs.git}:/sources/tcs.git:ro
       - storage:/rails/storage
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/up >/dev/null || exit 1"]

@@ -33,13 +33,19 @@ module StoryInterchange
     # Plot, whose directory is what scopes it.
     Entity = Data.define(:kind, :slug, :name, :frontmatter, :sections, :introduction, :story_slug)
 
-    attr_reader :universe_slug, :universe_name, :stories, :counts, :issues,
+    # One chapter directory. A chapter has no file of its own, so its only
+    # source facts are the directory name and the Story that holds it; the
+    # Sections slice derives the display name from the slug.
+    Chapter = Data.define(:story_slug, :slug)
+
+    attr_reader :universe_slug, :universe_name, :stories, :chapters, :counts, :issues,
       :canon_rules, :canon_questions
 
     def initialize
       @universe_slug = nil
       @universe_name = nil
       @stories = []
+      @chapters = []
       @counts = Hash.new(0)
       @issues = []
       @canon_rules = []
@@ -57,6 +63,12 @@ module StoryInterchange
 
     def add_story(slug:, name:)
       @stories << { slug: slug, name: name }
+    end
+
+    # One chapter directory, in the source's sorted order. The order is the
+    # Section position the import writes.
+    def add_chapter(story_slug:, slug:)
+      @chapters << Chapter.new(story_slug: story_slug, slug: slug)
     end
 
     def count(kind)

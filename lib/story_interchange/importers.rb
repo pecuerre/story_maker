@@ -14,6 +14,8 @@ module StoryInterchange
       Locations,
       Items,
       Stories,
+      Sections,
+      Scenes,
       Plots
     ].freeze
 

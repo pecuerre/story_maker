@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Section, Scene, and Element import.** The story-interchange import writes one Section per chapter directory, each Scene with its point of view, location, status, and position, and one Narration Element per prose paragraph, reporting timeline, branch, id, and depends_on.
 - **Location, Item, Story, and Plot import.** The story-interchange import writes Locations and Items from their profile sections, a Story from each story directory's README heading, and Story-owned Plots with their description, reporting every section and key that has no column.
 - **Character and Faction import.** The story-interchange import writes Characters and Factions from their frontmatter and mapped profile sections, resolves `[[slug]]` references to records the run writes, and reports every section, key, and reference it deliberately leaves behind.
 - **Story interchange import.** A platform-admin page and the `story_interchange:import` task write a source into its named universe through a registry of record-type slices, starting with canon rules.
@@ -54,10 +55,15 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Section and Scene import mapping.** Records chapter-to-Section naming, the frontmatter that becomes Scene fields, prose as Narration Elements, and why timeline, branch, depends_on, and Scene Tags stay reported.
 - **Location, Item, Story, and Plot import mapping.** Records the grouped-answer split, the flat Location and Item hierarchy, `invented_by` becoming `origin`, and the Story-before-Plot slices in the interchange document.
 - **Character and Faction import mapping.** Records the section-to-profile mapping, the reported sections and frontmatter keys, and why affiliation, knowledge, and Relations stay reported rather than written.
 - **Story interchange import documentation.** Adds ADR 0043 and the import, safety, confirmation, slice-registry, and import-root rules to the interchange feature document.
 - **Universe backup documentation.** Adds ADR 0042 and the feature document for the archive format, admin gate, deferred tables, and restore boundary, with links from export, navigation, and architecture.
+
+### chore
+
+- **Compose import source.** `docker compose` passes `STORY_INTERCHANGE_IMPORT_ROOT` and bind-mounts the host tree named by `STORY_INTERCHANGE_SOURCE_DIR` read-only at `/sources/tcs.git`, so the import page can list it.
 
 ## 2026-10-28
 

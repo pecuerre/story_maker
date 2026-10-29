@@ -64,6 +64,22 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal "synthetic-story", plot.story_slug
     assert_equal "The question",
       plot.sections.find { |section| section.heading == "The question" }.heading
+
+    # Chapters are directories, so the report carries the Story and the
+    # directory name rather than a file entity.
+    assert_equal [
+      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "01-arrival"),
+      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "02-winter")
+    ], report.chapters
+
+    # A Scene is parsed like an entity too; its chapter is in its frontmatter
+    # and its body is the manuscript prose.
+    scene = report.entity("01-the-gate")
+    assert_equal :scene, scene.kind
+    assert_equal "The gate", scene.name
+    assert_equal "synthetic-story", scene.story_slug
+    assert_equal "01-arrival", scene.frontmatter["chapter"]
+    assert_includes scene.introduction, "Ada carries the lantern through the gate"
   end
 
   test "reads the body before the first section as an introduction" do

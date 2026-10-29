@@ -119,6 +119,65 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_empty plot.scenes
   end
 
+  test "writes each chapter as a section and each scene with its point of view, location, and prose" do
+    universe = import.call.universe
+    story = universe.stories.find_by!(slug: "synthetic-story")
+
+    arrival = story.sections.find_by!(slug: "01-arrival")
+    assert_equal "Arrival", arrival.name
+    assert_equal 0, arrival.position
+    assert_nil arrival.parent
+
+    winter = story.sections.find_by!(slug: "02-winter")
+    assert_equal "Winter", winter.name
+    assert_equal 1, winter.position
+    assert_empty winter.scenes
+
+    gate = story.scenes.find_by!(slug: "01-arrival-01-the-gate")
+    assert_equal "The gate", gate.name
+    assert_equal arrival, gate.section
+    assert_equal 0, gate.position
+    assert_equal "draft", gate.status
+    assert_equal universe.characters.find_by!(slug: "ada"), gate.pov_character
+    assert_equal [ universe.locations.find_by!(slug: "keep") ], gate.scene_locations.map(&:location)
+    assert_nil gate.datetime
+
+    hall = story.scenes.find_by!(slug: "01-arrival-02-the-hall")
+    assert_equal 1, hall.position
+    assert_equal "revised", hall.status
+
+    # Prose is one Narration Element per paragraph. The first takes the Scene's
+    # title, because the source records no block title; later ones are numbered.
+    gate_elements = gate.scene_elements.reorder(:position, :id)
+    assert_equal 1, gate_elements.count
+    assert_equal "The gate", gate_elements.first.name
+    assert_equal "narration", gate_elements.first.kind
+    assert_includes gate_elements.first.body, "Ada carries the lantern through the gate"
+    assert_includes gate_elements.first.body, "The Wardens"
+    assert_not_includes gate_elements.first.body, "[[wardens]]"
+    # A rule citation is not an entity reference and stays as written.
+    assert_includes gate_elements.first.body, "[[rule:L1]]"
+
+    hall_elements = hall.scene_elements.reorder(:position, :id)
+    assert_equal [ "The hall", "The hall (2)" ], hall_elements.map(&:name)
+    assert_includes hall_elements.last.body, "Ada sets the lantern down and waits for the warden to speak."
+  end
+
+  test "reports the scene facts the application has no column for" do
+    report = import.plan.report
+
+    assert_equal [
+      "01-the-gate: id",
+      "01-the-gate: timeline",
+      "01-the-gate: branch",
+      "01-the-gate: depends_on",
+      "02-the-hall: id",
+      "02-the-hall: timeline",
+      "02-the-hall: branch",
+      "02-the-hall: depends_on"
+    ], StoryInterchange::Importers::Scenes.reported(report)
+  end
+
   test "reports every item of every slice it does not write" do
     report = import.plan.report
 
@@ -191,6 +250,8 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     items = item_records(first.items)
     stories = first.stories.pluck(:slug, :name)
     plots = first.stories.flat_map { |story| story.plots.order(:slug).pluck(:slug, :name, :description) }
+    sections = section_records(first)
+    scenes = scene_records(first)
 
     second = import.call.universe
 
@@ -200,6 +261,8 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal items, item_records(second.items)
     assert_equal stories, second.stories.pluck(:slug, :name)
     assert_equal plots, second.stories.flat_map { |story| story.plots.order(:slug).pluck(:slug, :name, :description) }
+    assert_equal sections, section_records(second)
+    assert_equal scenes, scene_records(second)
   end
 
   test "creates the universe its directory names and writes one rule per K/L/D item" do
@@ -286,9 +349,9 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     plan = import.plan
 
     assert plan.importable?
-    assert_equal [ "Canon rules", "Characters", "Factions", "Locations", "Items", "Stories", "Plots" ],
+    assert_equal [ "Canon rules", "Characters", "Factions", "Locations", "Items", "Stories", "Sections", "Scenes", "Plots" ],
       plan.slices.map { |slice| I18n.t(slice.label_key) }
-    assert_equal [ 3, 1, 1, 1, 1, 1, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
+    assert_equal [ 3, 1, 1, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
     assert_equal [ "O-I1" ], plan.slices.first.reported(plan.report)
     assert_includes plan.slices.second.reported(plan.report), "ada: Voice"
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
@@ -315,5 +378,26 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     def item_records(collection)
       collection.order(:slug).pluck(:slug, :name, :description, :parent_id, :origin, *Item::PROFILE_FIELDS)
+    end
+
+    def section_records(universe)
+      universe.stories.flat_map { |story| story.sections.order(:slug).pluck(:slug, :name, :position) }
+    end
+
+    def scene_records(universe)
+      universe.stories.flat_map do |story|
+        story.scenes.order(:slug).map do |scene|
+          [
+            scene.slug,
+            scene.name,
+            scene.status,
+            scene.position,
+            scene.section&.slug,
+            scene.pov_character&.slug,
+            scene.scene_locations.map { |link| link.location.slug }.sort,
+            scene.scene_elements.reorder(:position, :id).pluck(:name, :kind, :body)
+          ]
+        end
+      end
     end
 end

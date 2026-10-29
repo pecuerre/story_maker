@@ -86,9 +86,10 @@ Markdown file in `universe/canon/` is one area of canon.
   regenerated for a human rather than imported as a second source of order. The prose has no Story
   column to fill, so only the heading and the directory slug become the Story record.
 - `stories/<story>/chapters/` is optional. Each child is a chapter directory `NN-slug`, and each
-  child of that is a scene file `NN-slug.md`. Chapter and scene numbers are two-digit positions; they
-  are filenames, not database ids, and a scene also carries its stable in-world identity in
-  frontmatter.
+  child of that is a scene file `NN-slug.md`. A chapter becomes one top-level Section whose slug is
+  the directory name and whose name is its slug part titleized (`01-arrival` → `Arrival`), in sorted
+  directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
+  database ids, and a scene also carries its stable in-world identity in frontmatter.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread.
 
 ## Frontmatter
@@ -227,15 +228,26 @@ top-level.
 
 A Plot is Story-owned, so the Stories slice runs first and writes them. A Plot's `## The question`
 section is its `description`; its remaining sections are not profile answers and are reported, as
-are `type`, `status`, `owner_pov`, `opened_in`, and `backlog`, which have no Plot column. Scene
-assignments cannot arrive until the Scene slice exists, so a Plot lands with no Scenes.
+are `type`, `status`, `owner_pov`, `opened_in`, and `backlog`, which have no Plot column. Plot Scene
+assignments belong to a later slice, so a Plot lands with no Scenes.
 
-A Scene is still validator-only: [Scenes](scenes.md) owns the Scene record, and its slice decides how
-`timeline`, `branch`, and `depends_on` land. The source keeps them in frontmatter so the decision is
-not made by dropping them.
+A Scene file becomes one Scene in the Section its chapter directory names. The frontmatter with an
+application column is written: `title` is the Scene's name, `chapter` selects the Section, `sequence`
+with the chapter order gives its flat position in the Story, `pov` is its point-of-view Character,
+`location` is a Location presence link with no role, and `status` is its writing status. `id`,
+`timeline`, `branch`, and `depends_on` have no Scene column and are reported. `timeline` is author
+prose such as "ninth day after the flare", never a date the import may parse into `datetime`, so the
+Scene's in-world time stays empty and the source text is kept in the report. A `##` heading in a
+Scene is reported too: the Scene contract has no sections, so its prose is not guessed into a
+profile answer.
 
-A Scene's body is manuscript prose. It maps to the Scene's ordered Elements, one block per
-paragraph, when the Scene import slice exists.
+A Scene's body is manuscript prose; every blank-line-separated paragraph becomes one ordered
+Narration [Element](scenes.md#elements). The source records no block title, so the first Element
+takes the Scene's title and each later one appends its number. No Dialogue Element, speaker, or turn
+is invented: the source states a speaker and line only in prose, so dialogue attribution is
+preserved only where it is written. Entity references in that prose are written as record names, as
+in a profile answer; rule, scene, and backlog references stay as written. The source carries no tag
+taxonomy, so the import creates no Scene Tags.
 
 ## Canon ledger
 
@@ -270,22 +282,24 @@ a reference inside inline code is real, because the source writes rule citations
 `[[slug]]` written as bare documentation is allowed as a placeholder; any other unresolved reference
 is an error.
 
-The import writes a `[[slug]]` in a profile answer as the name of the record whose kind a slice in
-that run writes — every entity kind has one now — so nothing is silently rewritten or dropped. Rule,
-scene, and backlog references are not entity references and are left as written.
+The import writes a `[[slug]]` in a profile answer or a Scene's prose as the name of the record whose
+kind a slice in that run writes — every entity kind has one now — so nothing is silently rewritten or
+dropped. Rule, scene, and backlog references are not entity references and are left as written.
 
 ## The validator
 
 `StoryInterchange.validate(path)` reads the source and returns a `StoryInterchange::Report`. The
-report exposes `universe_slug`, `universe_name`, `stories`, `counts`, `errors`, `warnings`, and
-`valid?`, plus the parsed `canon_rules` and `canon_questions` so the canon slice writes what the
-preview showed. Counts are available for canon rules, open canon questions, characters, factions,
-locations, items, stories, plots, chapters, and scenes.
+report exposes `universe_slug`, `universe_name`, `stories`, `chapters`, `counts`, `errors`,
+`warnings`, and `valid?`, plus the parsed `canon_rules` and `canon_questions` so the canon slice
+writes what the preview showed. Counts are available for canon rules, open canon questions,
+characters, factions, locations, items, stories, plots, chapters, and scenes.
 
 The report also carries each parsed record as a `Report::Entity` — its kind, slug, name, frontmatter,
 `##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`. A Plot entity
-also names the `story_slug` whose directory holds it. A profile slice reads that instead of opening
-the file again, so the write cannot disagree with the preview about a heading or a reference.
+also names the `story_slug` whose directory holds it. A slice reads that instead of opening the file
+again, so the write cannot disagree with the preview about a heading or a reference. A chapter is a
+directory rather than a file, so it is a separate `Report::Chapter` with its Story slug and directory
+name, in the sorted order the Sections slice writes.
 
 Run it without writing anything:
 
@@ -374,9 +388,11 @@ reports. The preview, the task, and the page read that list, so adding a type ne
 **Canon** writes the rules described under [Canon ledger](#canon-ledger) and reports the `O` items
 by id instead of writing them. **Characters**, **Factions**, **Locations**, and **Items** write one
 record per file from the mapping above. **Stories** writes one Story per story directory, because a
-Plot needs the Story it belongs to, and **Plots** then writes each Plot with no Scenes. Scenes,
-chapters, Sections, and their remaining references are still validator-only and plug into the same
-registry when their slices exist.
+Plot needs the Story it belongs to, and **Sections** then writes one Section per chapter directory.
+**Scenes** follows, writing each Scene with its Elements, because it needs the Story, the Section,
+and the Character and Location links those earlier slices created. **Plots** runs last and writes
+each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
+registry when their slice exists.
 
 A slice's `Outcome` names every source item it reports instead of writing, and the preview shows that
 list before the run: an open canon question, an unmapped section, a frontmatter key with no column,
@@ -394,7 +410,7 @@ a guest signs in and a signed-in non-operator receives `403`.
 
 It writes only the records a registered slice owns, and it does not write the source back out, copy
 it into the repository, or restore a replaced Universe. Knowledge records, Relations, Faction
-membership, Location and Item hierarchy, Plot Scene assignments, and Scenes do not arrive from this
-slice; the source text that would carry them is reported. A [Universe
-backup](universe_backup.md) writes the reverse direction as a readable projection; that document
-owns what the projection can and cannot carry.
+membership, Location and Item hierarchy, Plot Scene assignments, Scene Tags, and a Scene's in-world
+datetime do not arrive from this slice; the source text that would carry them is reported. A
+[Universe backup](universe_backup.md) writes the reverse direction as a readable projection; that
+document owns what the projection can and cannot carry.

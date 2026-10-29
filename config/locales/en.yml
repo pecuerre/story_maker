@@ -429,6 +429,8 @@ en:
       locations: "Locations"
       items: "Items"
       stories: "Stories"
+      sections: "Sections"
+      scenes: "Scenes"
       plots: "Plots"
     show:
       title: "Story interchange import"

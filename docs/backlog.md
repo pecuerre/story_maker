@@ -202,16 +202,6 @@ triaged into this list.
    approval-required: it must remap ids, decide how an older archive's missing tables are treated,
    and must not reuse the development-data reset path.
 
-65. **Import slice: Sections, Scenes, and Elements.**
-
-   tcs's `stories/<story>/chapters/` is empty today, so this slice waits for prose in the source.
-   It is not the arbitrary-manuscript importer: that one accepts Word, Markdown, or HTML and needs
-   mapping and preview rules, while this one reads files already in the interchange layout. **Needs**
-   the layout's Scene frontmatter — chapter, sequence, POV, location, timeline, branch, and status —
-   mapped onto Section, Scene, point of view, datetime, and Tags, with dialogue attribution preserved
-   only where the source records it. A chapter file that cannot be mapped is reported rather than
-   guessed at.
-
 67. **Scenes-per-Character chart.**
 
    A record page lists its own appearances and the Characters list is Universe-scoped, but no page

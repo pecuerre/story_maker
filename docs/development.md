@@ -97,8 +97,11 @@ database and uploads, so use it only when you intend to discard them. The `app/`
 mounted for development: Rails reloads application code and autoloadable library code, and the CSS
 watcher rebuilds stylesheets as they change. No image rebuild or container restart is needed for
 those edits; refresh the browser to see the new page styling or client-side code. Some `lib/` files
-loaded only by an initializer are not autoloaded. Changes to `config/`, dependencies, or container
-configuration still require `docker compose up --build`; development-data YAML still follows the
+loaded only by an initializer are not autoloaded. The host directory named by
+`STORY_INTERCHANGE_SOURCE_DIR` is mounted read-only at `/sources/tcs.git`, and the container's
+`STORY_INTERCHANGE_IMPORT_ROOT` is `/sources`, so the admin import page lists that folder as a
+source. Changes to `config/`, dependencies, or container configuration still require
+`docker compose up --build`; development-data YAML still follows the
 explicit check-and-reset workflow below. The health check requests `/up` after the schema and initial
 demo load finish.
 

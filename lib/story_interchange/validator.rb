@@ -350,6 +350,7 @@ module StoryInterchange
           end
 
           @report.count(:chapters)
+          @report.add_chapter(story_slug: story_slug, slug: chapter)
           markdown_files(chapter_directory).each do |file|
             read_scene(file, story_slug, chapter)
           end
@@ -376,6 +377,7 @@ module StoryInterchange
           slug_from_filename: false)
         return unless frontmatter
 
+        register_entity(document, :scene, frontmatter, story_slug: story_slug, name: frontmatter["title"])
         check_scene(document, frontmatter, story_slug, chapter, sequence)
       end
 
@@ -470,11 +472,11 @@ module StoryInterchange
       # Hands the parsed record to the report so an import slice writes it. The
       # filename is the identity (the contract requires the frontmatter slug to
       # match it), and the body is split once here rather than by every slice.
-      def register_entity(document, kind, frontmatter, story_slug: nil)
+      def register_entity(document, kind, frontmatter, story_slug: nil, name: nil)
         @report.add_entity(Report::Entity.new(
           kind: kind,
           slug: File.basename(document.path, ".md"),
-          name: frontmatter["name"].to_s,
+          name: (name || frontmatter["name"]).to_s,
           frontmatter: frontmatter,
           sections: document.sections,
           introduction: document.introduction,

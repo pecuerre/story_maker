@@ -413,6 +413,8 @@ es:
       locations: "Lugares"
       items: "Objetos"
       stories: "Historias"
+      sections: "Secciones"
+      scenes: "Escenas"
       plots: "Tramas"
     show:
       title: "Importación de story interchange"

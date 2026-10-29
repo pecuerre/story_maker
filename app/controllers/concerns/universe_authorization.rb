@@ -36,6 +36,11 @@ module UniverseAuthorization
 
     def universe_access_for_request
       return :admin if controller_name == "universes" && %w[edit update destroy].include?(action_name)
+      # A permanent delete is the owner's alone. The existing `destroy` above
+      # hides a universe and an admin may do that, but erasing its rows is not a
+      # level a membership can grant: `Ability` answers `:purge` from its
+      # `:owner` level, which no grant can produce.
+      return :purge if controller_name == "universe_purges"
       return :admin if controller_name == "memberships"
       # Reading somebody else's unfinished work and deciding what happens to it is the
       # owner's and the admins' call, and it is the *whole* controller rather than two of

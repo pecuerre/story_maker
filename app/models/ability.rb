@@ -107,6 +107,18 @@ class Ability
         # rather than about a place they have been given.
         can :create, Universe
         define_rule(Universe, :admin, %i[admin edit update destroy manage]) { |universe| universe }
+        # Erasing a universe for good is not an administrator's power. An admin
+        # can already hide a universe from every page, but the rows and the work
+        # they hold are the owner's and cannot be handed back; only the account
+        # that owns it may take them away.
+        define_rule(Universe, :owner, %i[purge]) { |universe| universe }
+        # The admin rule above includes `:manage`, which CanCan expands to every
+        # action, so an administrator would otherwise inherit this one. A `cannot`
+        # rule is the way to take one action back out; it is declared after the
+        # permission it narrows, and it leaves `:manage` itself intact.
+        cannot :purge, Universe do |universe|
+          @user.blank? || universe.owner_id != @user.id
+        end
       end
     end
 
@@ -181,9 +193,10 @@ class Ability
       end
     end
 
-    # The three access levels, named once. Both answers to both kinds of check go
+    # The access levels, named once. Both answers to both kinds of check go
     # through here, so a level cannot mean one thing to a record and another to a
-    # class.
+    # class. `:owner` is deliberately not a fourth membership level: it is the
+    # creator's own account, and no grant can produce it.
     def universe_permits?(universe, level)
       # The one level that is not a question about a universe, asked before the
       # nil guard below: there is no universe to consult, so a nil scope is the
@@ -196,6 +209,7 @@ class Ability
       when :read then universe.readable_by?(@user)
       when :write then universe.writable_by?(@user)
       when :admin then universe.administrable_by?(@user)
+      when :owner then @user.present? && universe.owner_id == @user.id
       end
     end
 

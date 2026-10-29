@@ -734,6 +734,26 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "permanent universe deletion requires the page token" do
+    with_forgery_protection do
+      token = fetch_page_token(universe_purge_path(universe_slug: @universe.slug))
+
+      assert_no_difference("Universe.count") do
+        delete universe_purge_url(universe_slug: @universe.slug),
+          params: { confirmation: @universe.name }
+      end
+      assert_includes 406..422, response.status
+      assert Universe.exists?(@universe.id)
+
+      assert_difference("Universe.count", -1) do
+        delete universe_purge_url(universe_slug: @universe.slug),
+          params: { confirmation: @universe.name },
+          headers: { "X-CSRF-Token" => token }
+      end
+      assert_response :see_other
+    end
+  end
+
   private
     # Loads a page so the session holds a CSRF token, and returns the value the
     # page published for its own JavaScript.

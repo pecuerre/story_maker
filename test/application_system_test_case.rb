@@ -116,6 +116,16 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       end
     end
 
+    # The one way into a universe from the landing page. The row's name is plain
+    # text, so a test that lands there cannot click the name: every row ends with
+    # the shared Details link, and addressing it by its class also survives a
+    # reader whose language is not English.
+    def open_universe(universe)
+      within ".entity-row", text: universe.name do
+        find("a.details-link").click
+      end
+    end
+
     # One row's action menu, opened and then used.
     #
     # The menu is a `display: none` `<ul>` that the row's own toggle reveals, so

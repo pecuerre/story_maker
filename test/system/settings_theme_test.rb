@@ -44,7 +44,7 @@ class SettingsThemeTest < ApplicationSystemTestCase
     assert_equal "dark", theme_attribute
     assert_equal dark_background, background_color("body")
 
-    click_link universe.name
+    open_universe(universe)
 
     assert_selector "h1", text: universe.name
     assert_equal "dark", theme_attribute

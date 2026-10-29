@@ -393,8 +393,8 @@ different address.
 - A replaced Universe keeps its `private` and `collaboration_mode`; a fresh one takes the model
   defaults (public, direct). The source carries neither setting.
 
-Delete, create, and every slice run in one transaction, so a slice that fails leaves the database as
-it was.
+Delete, create, every slice, and the run's own row run in one transaction, so a slice that fails
+leaves the database as it was and a committed run always has its report.
 
 ### Safety and confirmation
 
@@ -417,6 +417,26 @@ CONFIRM_STORY_INTERCHANGE_IMPORT=1 \
 
 `STORY_INTERCHANGE_PATH` and `STORY_INTERCHANGE_OWNER` are the environment forms.
 
+### The run page
+
+A completed run has its own page at `/import/runs/:id`, and the write redirects there. It names the
+source folder, the Universe the run wrote, whether it created or replaced one, the operator and the
+moment, and each slice's written count beside **every** source item that slice reported instead of
+writing.
+
+That answer is stored in `story_interchange_runs.outcomes`, not carried in the flash. A source with a
+few hundred reported ids builds a message larger than the 4 KB a session cookie may hold, and the
+cookie store raises `ActionDispatch::Cookies::CookieOverflow` while the response commits — after the
+import transaction has already succeeded, so the operator saw a 500 for a completed import. The run row
+is written inside that transaction, so the page exists exactly when the write does. The flash after the
+redirect is one sentence (`imports.flash.imported`).
+
+The page copies the Universe's name and slug into the run rather than resolving them, because a later
+run replaces the Universe this one created and a soft-deleted Universe is hidden from the ordinary
+scope. It links to a live Universe only when one still has that slug. This is
+[ADR 0025](../adr/0025-a-notification-is-a-stored-sentence.md)'s stored-sentence trade, applied to a
+run's report.
+
 ### Slices
 
 One record type is one `StoryInterchange::Importer` subclass, registered in `Importers::ALL`. A
@@ -433,16 +453,17 @@ and the Character and Location links those earlier slices created. **Plots** run
 each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
 registry when their slice exists.
 
-A slice's `Outcome` names every source item it reports instead of writing, and the preview shows that
-list before the run: an open canon question, an unmapped section, a frontmatter key with no column,
-the preamble block, or a `[[slug]]` whose record kind has no slice.
+A slice's `Outcome` names every source item it reports instead of writing, and both the preview and
+the [run page](#the-run-page) show that list: an open canon question, an unmapped section, a
+frontmatter key with no column, the preamble block, or a `[[slug]]` whose record kind has no slice.
 
 ### Where a source may live
 
 The page never accepts a path. It lists only the folders directly under
 `STORY_INTERCHANGE_IMPORT_ROOT`, and a name with a separator, `..`, a dot-file, or a symlink that
-resolves outside the root is refused. Nothing is copied into the repository. Both actions ask for
-`:manage` on `StoryInterchange::Import`, the platform-level question the creation limit also asks, so
+resolves outside the root is refused. Nothing is copied into the repository. The preview, the write,
+and a run's page all ask for `:manage` on `StoryInterchange::Import`, the platform-level question the
+creation limit also asks, so
 a guest signs in and a signed-in non-operator receives `403`.
 
 ## What the import does not do

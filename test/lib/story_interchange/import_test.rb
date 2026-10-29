@@ -308,6 +308,34 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert second.universe.wikipedia?
   end
 
+  test "records the run in the same transaction as the write it describes" do
+    result = import.call
+
+    run = result.run
+    assert_equal @owner, run.user
+    assert_equal "synthetic-universe", run.source
+    assert_equal result.universe.name, run.universe_name
+    assert_equal result.universe.slug, run.universe_slug
+    assert_not run.replaced?
+    assert_equal result.outcomes.map(&:created), run.slices.map(&:created)
+    assert_equal result.outcomes.flat_map(&:skipped), run.slices.flat_map(&:skipped)
+    assert_equal 1, StoryInterchangeRun.count
+  end
+
+  test "records a run for a replaced universe, and none for a refused one" do
+    import.call
+    second = import.call
+
+    assert second.run.replaced?
+    assert_equal 2, StoryInterchangeRun.count
+
+    Draft.create!(user: @owner, universe: second.universe)
+    assert_raises(StoryInterchange::Import::Refused) { import.call }
+
+    assert_equal 2, StoryInterchangeRun.count
+    assert_not second.universe.reload.deleted?
+  end
+
   test "does not touch another universe" do
     other = universes(:universe_one)
     rules_before = other.canon_rules.count

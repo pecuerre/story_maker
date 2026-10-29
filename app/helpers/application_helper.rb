@@ -162,6 +162,13 @@ module ApplicationHelper
     universe_ability(universe, :admin)
   end
 
+  # The one universe action that is the owner's rather than an administrator's:
+  # deleting it for good. It goes through the same ability as the controller
+  # check, so the control and the refusal cannot disagree.
+  def can_purge_universe?(universe = Current.universe)
+    universe_ability(universe, :purge)
+  end
+
   def universe_access_level(universe = Current.universe)
     return if universe.nil?
 

@@ -6,7 +6,9 @@ module StoryInterchange
   # replacing the target Universe is safe, soft-deletes it when it exists, creates
   # a fresh Universe with the derived slug and name, and asks every registered
   # slice to write its records — all in one transaction, so a refused or failed
-  # slice leaves the database as it was.
+  # slice leaves the database as it was. The run's own `StoryInterchangeRun` row
+  # commits in that same transaction, so the page the caller redirects to exists
+  # exactly when the write does.
   #
   # **Replacing is a soft delete, not a hard one.** This application's own delete
   # is `SoftDeletable#soft_delete`, and a hard delete would leave soft-deleted
@@ -31,7 +33,7 @@ module StoryInterchange
       end
     end
 
-    Result = Data.define(:universe, :replaced, :outcomes)
+    Result = Data.define(:universe, :replaced, :outcomes, :run)
 
     # What a run would do, computed before anything is written. The page shows
     # this as its preview; `call` builds the same plan and refuses it if it is
@@ -84,7 +86,17 @@ module StoryInterchange
         universe = create_universe(plan)
         outcomes = Importers::ALL.map { |slice| slice.new(report: plan.report, universe:).call }
 
-        result = Result.new(universe:, replaced: plan.existing?, outcomes:)
+        # The run's own row commits with the write it describes, so a refused or
+        # failed run leaves no report and a committed one always has a page.
+        run = StoryInterchangeRun.record!(
+          universe: universe,
+          replaced: plan.existing?,
+          outcomes: outcomes,
+          operator: @owner,
+          source: File.basename(@path)
+        )
+
+        result = Result.new(universe:, replaced: plan.existing?, outcomes:, run:)
       end
 
       result

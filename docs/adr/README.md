@@ -67,6 +67,7 @@ reasoning as of its date.
 | [0041](0041-the-story-interchange-is-a-directory-contract.md) | Accepted | Read and write a universe as the source tree itself, with no manifest and the database authoritative |
 | [0042](0042-a-universe-backup-is-a-core-data-archive.md) | Accepted | Make the lossless table dump authoritative, treat the interchange tree as a projection, and defer identity and history |
 | [0043](0043-a-story-interchange-import-replaces-one-universe.md) | Accepted | Replace one Universe per run through a slice registry, a platform-admin page, a configured import root, and a safety refusal |
+| [0044](0044-permanent-universe-deletion-is-owner-only.md) | Accepted | Let only the owner permanently delete a Universe, after typing its exact name, through a purge that includes soft-deleted rows and leaves notifications alone |
 
 ## Format
 

@@ -1,0 +1,71 @@
+<% content_for :title, t("imports.result.title") %>
+
+<%= render "shared/page_header",
+  title: t("imports.result.title"),
+  eyebrow: t("imports.result.eyebrow"),
+  description: t("imports.result.description") do %>
+  <% if @universe %>
+    <%= link_to t("imports.result.open_universe"), universe_path(universe_slug: @universe.slug),
+      class: "btn btn-primary" %>
+  <% end %>
+  <%= link_to t("imports.result.import_again"), import_path, class: "btn btn-outline-secondary" %>
+<% end %>
+
+<div class="surface-card p-4">
+  <h2 class="h4"><%= t("imports.result.identity_title") %></h2>
+  <dl class="row mb-0">
+    <dt class="col-sm-3"><%= t("imports.result.universe") %></dt>
+    <dd class="col-sm-9"><%= @run.universe_name %> (<code><%= @run.universe_slug %></code>)</dd>
+
+    <dt class="col-sm-3"><%= t("imports.result.source") %></dt>
+    <dd class="col-sm-9"><code><%= @run.source %></code></dd>
+
+    <dt class="col-sm-3"><%= t("imports.result.action") %></dt>
+    <dd class="col-sm-9">
+      <%= @run.replaced? ? t("imports.result.replaced") : t("imports.result.created") %>
+    </dd>
+
+    <dt class="col-sm-3"><%= t("imports.result.run_by") %></dt>
+    <dd class="col-sm-9"><%= @run.user.email_address %></dd>
+
+    <dt class="col-sm-3"><%= t("imports.result.run_at") %></dt>
+    <dd class="col-sm-9"><%= time_tag @run.created_at, l(@run.created_at, format: :short) %></dd>
+  </dl>
+</div>
+
+<div class="surface-card p-4 mt-3">
+  <h2 class="h4"><%= t("imports.result.records_title") %></h2>
+
+  <% unless @run.reported? %>
+    <p><%= t("imports.result.nothing_reported") %></p>
+  <% end %>
+
+  <table class="table mb-0">
+    <thead>
+      <tr>
+        <th scope="col"><%= t("imports.result.slice") %></th>
+        <th scope="col"><%= t("imports.result.written") %></th>
+        <th scope="col"><%= t("imports.result.reported") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @run.slices.each do |slice| %>
+        <tr>
+          <td><%= t(slice.label_key) %></td>
+          <td><%= slice.created %></td>
+          <td>
+            <% if slice.skipped? %>
+              <ul class="mb-0">
+                <% slice.skipped.each do |source_item| %>
+                  <li><%= source_item %></li>
+                <% end %>
+              </ul>
+            <% else %>
+              —
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

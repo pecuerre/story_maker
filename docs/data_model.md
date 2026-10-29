@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_28_120000`) and the models in `app/models/`.
+`2026_10_29_130000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -103,6 +103,11 @@ delete are partial (`WHERE deleted_at IS NULL`): `universes.slug`, `stories.[uni
 
 `users` and `sessions` are not soft-deletable: they have no user-facing delete action, and a
 session is an authentication token rather than content.
+
+A permanent delete is a different operation: the owner of a Universe may purge it and every
+universe-owned row, including soft-deleted ones. The authorization and the full contract are in
+[features/universe_deletion.md](features/universe_deletion.md); this section owns only what a soft
+delete means.
 
 ## Photos
 
@@ -342,6 +347,12 @@ has to keep working; the cost is names stored twice and validated by nothing, de
 no payload at all is printable and simply has nothing to link at, which is what `payload` being
 nullable buys. See [conventions.md](conventions.md#notifications), which owns who is told what, and
 [ADR 0025](adr/0025-a-notification-is-a-stored-sentence.md), which owns why the copy is the design.
+
+### The `story_interchange_runs` table
+
+| Table | Columns | Notes |
+|---|---|---|
+| `story_interchange_runs` | `user_id` FK to `users` (NOT NULL), `source` (NOT NULL), `universe_name` (NOT NULL), `universe_slug` (NOT NULL), `replaced` (boolean, NOT NULL, default false), `outcomes` json (NOT NULL), `created_at` | one platform admin's completed story-interchange import, written in the import's own transaction. `outcomes` is the array of per-slice answers — `label_key`, `created`, `skipped` — because the full reported list is too large for a flash; [features/story_interchange.md](features/story_interchange.md#the-run-page) owns the page. **No foreign key to `universes`**: the name and slug are copied in so a run whose universe a later run replaced can still print, the trade [ADR 0025](adr/0025-a-notification-is-a-stored-sentence.md) makes. `created_at` with **no `updated_at`**, because the row is never edited. |
 
 ### Non-app tables
 `solid_cache` / `solid_cable` / `solid_queue` live in their own schema files

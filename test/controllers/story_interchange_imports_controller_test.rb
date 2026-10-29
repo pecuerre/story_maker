@@ -102,13 +102,16 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
   end
 
-  test "imports and reports the run after an explicit confirmation" do
+  test "imports, records the run, and reports it on the run's own page" do
     sign_in_as @operator
 
     post import_url, params: { source: "synthetic-universe", confirm: "1" }
 
     assert_response :see_other
-    assert_redirected_to universe_url("synthetic-universe")
+    run = StoryInterchangeRun.sole
+    assert_redirected_to story_interchange_run_url(run)
+    # The flash is one sentence: the detail below is the page's job, not a cookie's.
+    assert_equal "Imported Synthetic Universe.", flash["notice"]
 
     universe = Universe.find_by!(slug: "synthetic-universe")
     assert_equal @operator, universe.owner
@@ -120,17 +123,72 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, universe.stories.count
     assert_equal 1, universe.stories.first.plots.count
 
+    assert_equal @operator, run.user
+    assert_equal "synthetic-universe", run.source
+    assert_equal "Synthetic Universe", run.universe_name
+    assert_equal "synthetic-universe", run.universe_slug
+    assert_not run.replaced?
+    assert_equal 3, run.slices.first.created
+    assert_equal [ "O-I1" ], run.slices.first.skipped
+
     follow_redirect!
     assert_response :success
     assert_includes response.body, "Imported Synthetic Universe."
-    assert_includes response.body, "Canon rules: 3 written"
-    assert_includes response.body, "1 reported, not written (O-I1)"
-    assert_includes response.body, "Characters: 1 written"
-    assert_includes response.body, "Factions: 1 written"
-    assert_includes response.body, "Locations: 1 written"
-    assert_includes response.body, "Items: 1 written"
-    assert_includes response.body, "Stories: 1 written"
-    assert_includes response.body, "Plots: 1 written"
+    assert_includes response.body, "Canon rules"
+    assert_includes response.body, "O-I1"
+    assert_includes response.body, "ada: Voice"
+    assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
+  end
+
+  test "a run whose reported list is too large for a session cookie still answers with its page" do
+    # The message this page replaced was the full `to_sentence` of every reported id:
+    # 300 long ids are more than the 4 KB a session cookie may hold, and the cookie
+    # store raised while committing the response — after the write had succeeded.
+    sign_in_as @operator
+    canon = File.join(@source_root, "synthetic-universe/universe/canon/mechanism.md")
+    content = File.read(canon)
+    content += "\n" unless content.end_with?("\n")
+    content += 300.times.map { |index| "- **O-BLAHBLAHBLAH#{format('%04d', index)}.** Is this answered?" }.join("\n") + "\n"
+    File.write(canon, content)
+
+    post import_url, params: { source: "synthetic-universe", confirm: "1" }
+
+    assert_response :see_other
+    run = StoryInterchangeRun.sole
+    reported = run.slices.flat_map(&:skipped)
+    assert_operator reported.join(", ").bytesize, :>, 4096
+
+    follow_redirect!
+    assert_response :success
+    assert_includes response.body, "O-BLAHBLAHBLAH0299"
+  end
+
+  test "a guest is sent to sign in from a run's page" do
+    get story_interchange_run_url(create_run)
+
+    assert_redirected_to new_session_url
+  end
+
+  test "an account without the platform flag cannot read a run" do
+    sign_in_as users(:user_one)
+
+    get story_interchange_run_url(create_run)
+
+    assert_response :forbidden
+  end
+
+  test "a run links to its universe only when the reader can open it" do
+    private_universe = Universe.create!(
+      owner: users(:user_one), name: "Private run universe", slug: "private-run", private: true
+    )
+    run = create_run(universe_name: private_universe.name, universe_slug: private_universe.slug)
+    sign_in_as @operator
+
+    get story_interchange_run_url(run)
+
+    assert_response :success
+    assert_includes response.body, private_universe.name
+    assert_select "a[href=?]", universe_path(universe_slug: private_universe.slug), count: 0
   end
 
   test "refuses to replace a universe with an open draft" do
@@ -170,6 +228,18 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def create_run(universe_name: "Synthetic Universe", universe_slug: "synthetic-universe")
+      StoryInterchangeRun.create!(
+        user: @operator,
+        source: "synthetic-universe",
+        universe_name: universe_name,
+        universe_slug: universe_slug,
+        outcomes: [
+          { "label_key" => "imports.slices.canon_rules", "created" => 3, "skipped" => [ "O-I1" ] }
+        ]
+      )
+    end
+
     def import_source
       StoryInterchange::Import.new(File.join(@source_root, "synthetic-universe"), owner: @operator)
     end

@@ -195,13 +195,17 @@ module UniverseBackup
       end
 
       def select_join_rows(table, column, ids)
-        quoted_ids = ids.map { |id| connection.quote(id) }
-        return [] if quoted_ids.empty?
+        return [] if ids.empty?
 
-        connection.select_all(
-          "SELECT * FROM #{connection.quote_table_name(table)} " \
-          "WHERE #{connection.quote_column_name(column)} IN (#{quoted_ids.join(", ")}) ORDER BY 1, 2"
-        ).to_a
+        # Arel quotes the ids and the two names, so nothing in this query is a
+        # string built from data. `ORDER BY 1, 2` is the join table's own column
+        # order, which is the order the dump wants and needs no column names.
+        join_table = Arel::Table.new(table)
+        query = join_table.project(Arel.star)
+          .where(join_table[column].in(ids))
+          .order(Arel.sql("1, 2"))
+
+        connection.select_all(query).to_a
       end
 
       def connection

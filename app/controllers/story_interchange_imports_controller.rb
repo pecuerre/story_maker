@@ -1,11 +1,11 @@
 # The platform-admin story-interchange import.
 #
-# **Both actions ask for `:manage` on `StoryInterchange::Import`**, the same
-# platform-level question the universe creation limit asks. An import creates a
-# Universe and replaces the one its source directory names, so it is not a
-# read or a write inside any universe: there is no universe to borrow an admin
-# from. A guest is sent to sign in; a signed-in account without the platform flag
-# receives `403`.
+# **The preview, the write, and a run's own page all ask for `:manage` on
+# `StoryInterchange::Import`**, the same platform-level question the universe
+# creation limit asks. An import creates a Universe and replaces the one its source
+# directory names, so it is not a read or a write inside any universe: there is no
+# universe to borrow an admin from. A guest is sent to sign in; a signed-in account
+# without the platform flag receives `403`.
 #
 # The page never accepts a path from the browser. It offers the folders directly
 # under `STORY_INTERCHANGE_IMPORT_ROOT`, and `StoryInterchange::ImportRoot` turns a
@@ -31,13 +31,26 @@ class StoryInterchangeImportsController < ApplicationController
 
     result = @import.call
 
-    redirect_to universe_path(result.universe),
-      notice: outcome_message(result), status: :see_other
+    redirect_to story_interchange_run_path(result.run),
+      notice: t("imports.flash.imported", name: result.universe.name), status: :see_other
   rescue StoryInterchange::Import::Refused => refusal
     # The state changed between the preview and the write. The plan the service
     # refused is the one to show, so the page names what it found now.
     @plan = refusal.plan
     refuse(t("imports.flash.blocked"))
+  end
+
+  # A completed run, with every source item the slices reported instead of writing.
+  # The list is here rather than in the flash because a source with a few hundred
+  # reported ids overflows the session cookie — see `StoryInterchangeRun`.
+  def result
+    authorize! :manage, StoryInterchange::Import
+    @run = StoryInterchangeRun.find(params[:id])
+    # The slug may name a Universe this admin cannot read: the platform flag is not
+    # universe membership. The page still reports the run; it links only to a page
+    # the reader can actually open.
+    @universe = Universe.find_by(slug: @run.universe_slug)
+    @universe = nil unless @universe&.readable_by?(Current.user)
   end
 
   private
@@ -56,23 +69,5 @@ class StoryInterchangeImportsController < ApplicationController
     def refuse(message)
       flash.now[:alert] = message
       render :show, status: :unprocessable_content
-    end
-
-    # One sentence per slice: what was written, and the source ids the slice
-    # deliberately reported instead of writing. The task prints the same answer
-    # from the same `Outcome`, so the two surfaces cannot describe the run
-    # differently.
-    def outcome_message(result)
-      sentences = [ t("imports.flash.imported", name: result.universe.name) ]
-
-      result.outcomes.each do |outcome|
-        sentences << t("imports.flash.written", label: t(outcome.label_key), count: outcome.created)
-        next unless outcome.skipped?
-
-        sentences << t("imports.flash.skipped", label: t(outcome.label_key),
-          count: outcome.skipped.size, ids: outcome.skipped.to_sentence)
-      end
-
-      sentences.to_sentence
     end
 end

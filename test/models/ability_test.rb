@@ -65,6 +65,20 @@ class AbilityTest < ActiveSupport::TestCase
     assert_equal "admin", ability.access_level_for(@public_universe)
   end
 
+  test "only the owner may permanently purge a universe" do
+    owner = Ability.new(users(:user_one))
+    assert owner.can?(:purge, @public_universe)
+
+    universe_admin = Ability.new(@admin_user)
+    UniverseMembership.create!(universe: @public_universe, user: @admin_user, access_level: :admin)
+    assert universe_admin.can?(:admin, @public_universe)
+    assert_not universe_admin.can?(:purge, @public_universe),
+      "an administrator may hide a universe but may not erase its owner's work"
+
+    assert_not Ability.new(@write_user).can?(:purge, @public_universe)
+    assert_not Ability.new(nil).can?(:purge, @public_universe)
+  end
+
   test "read and write checks cover every universe and story component" do
     relation = Relation.create!(universe: @public_universe, character1: characters(:character_one), character2: characters(:character_two))
     route = routes(:route_one)
@@ -319,7 +333,11 @@ class AbilityTest < ActiveSupport::TestCase
       # Registering it as content would give the content rules a `universe` to ask
       # about and hand every signed-in reader `write` on it. Its one rule is the
       # `:platform` level, answered from `users.platform_admin`.
-      "PlatformSetting" => "the deployment's own configuration, authorized by the platform level rather than a universe"
+      "PlatformSetting" => "the deployment's own configuration, authorized by the platform level rather than a universe",
+      # One completed import, kept as its own page. Its page asks the same platform
+      # question the import page does, so no action authorizes a run on its own and
+      # registering it as content would give CanCan a `universe` it does not have.
+      "StoryInterchangeRun" => "one platform admin's import report, authorized at the platform level"
     }
 
     # Zeitwerk loads a model the first time something names it, so a model this

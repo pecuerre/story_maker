@@ -472,14 +472,27 @@ en:
       destructive_notice: "This replaces %{name}. Records created in the app for that universe are lost. No other universe is touched."
       confirm_label: "I understand the existing universe's records are lost."
       submit: "Import and replace"
+    result:
+      title: "Import run"
+      eyebrow: "Platform"
+      description: "Every record this run wrote, and every source item it reported instead of writing."
+      open_universe: "Open universe"
+      import_again: "Import another source"
+      identity_title: "What this run did"
+      universe: "Universe"
+      source: "Source folder"
+      action: "Action"
+      replaced: "Replaced the universe that had this slug."
+      created: "Created a new universe."
+      run_by: "Run by"
+      run_at: "Run at"
+      records_title: "Records this run wrote"
+      slice: "Record type"
+      written: "Written"
+      reported: "Reported, not written"
+      nothing_reported: "Every source item was written."
     flash:
       imported: "Imported %{name}."
-      written:
-        one: "%{label}: 1 written"
-        other: "%{label}: %{count} written"
-      skipped:
-        one: "%{label}: 1 reported, not written (%{ids})"
-        other: "%{label}: %{count} reported, not written (%{ids})"
       source_required: "Choose a source folder first."
       unknown_source: "That folder is not under the configured import root."
       unconfirmed: "Confirm that the existing records are lost before importing."
@@ -507,18 +520,13 @@ en:
     # workspace's own "Edit universe" title.
     edit_document_title: "Edit %{name}"
     edit_description: "Update the name, visibility, collaboration mode, and change limit of this universe."
-    open: "Open universe"
     manage_members: "Manage members"
     delete: "Delete universe"
     delete_confirm: "Delete %{name} and all of its content?"
-    columns:
-      universe: "Universe"
-      contents: "Contents"
-      activity: "Activity"
-      visibility: "Visibility"
-      actions: "Actions"
     activity:
-      ago: "%{time} ago"
+      # The row has no "Activity" column header to give this phrase its context,
+      # so the sentence says what changed.
+      updated_ago: "updated %{time} ago"
     visibility:
       private: "Private"
       public: "Public"
@@ -567,6 +575,33 @@ en:
       # is English only, so the label is named here rather than inherited.
       submit_create: "Create Universe"
       submit_update: "Update Universe"
+    purge:
+      eyebrow: "Danger zone"
+      document_title: "Permanently delete %{name}"
+      heading: "Permanently delete %{name}"
+      description: "Remove this universe and everything it holds. This is not the recoverable delete."
+      backup: "Download a backup first"
+      edit_heading: "Delete this universe permanently"
+      edit_description: "Erase %{name} and every record in it. This cannot be undone; take a backup first if you may want the data."
+      edit_action: "Delete this universe permanently"
+      menu_action: "Delete universe permanently"
+      warning_title: "This is irreversible, please confirm that you understand what you are doing."
+      warning_body: "“%{name}” and everything that belongs to it will be permanently removed from the database, including its photos and any records that were soft-deleted."
+      contents_title: "What will be deleted"
+      contents:
+        bible: "Every Universe Bible record: characters, factions, faction relationships, locations, routes, canon rules, items, events, relations, ownerships, and every tag taxonomy."
+        stories: "Every story with its sections, plots, scenes, scene elements, dialogue, presence links, and trope annotations."
+        pending: "Every draft, remembered change, apply outcome, review request, and discussion in the universe."
+        members: "Every membership and every API token link that names this universe."
+        photos: "Every uploaded photo, including the stored image files."
+        soft_deleted: "Every record that was previously soft-deleted, which the ordinary delete would have left behind."
+      form:
+        label: "Type %{name} to confirm"
+        hint: "The name is case-sensitive. Capital letters, punctuation, accents, and spaces must match exactly."
+        submit: "Delete this universe permanently"
+        mismatch: "That does not match “%{name}” exactly. Nothing was deleted."
+      flash:
+        destroyed: "“%{name}” was permanently deleted."
     show:
       eyebrow: "Universe"
       description: "The shared world and story collection for this workspace."

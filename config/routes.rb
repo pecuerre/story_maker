@@ -16,8 +16,11 @@ Rails.application.routes.draw do
   # A story-interchange import creates one Universe and replaces the one its
   # source directory names, so it is platform administration rather than a page
   # inside a universe. `show` previews a folder under the configured import root;
-  # `create` is the destructive write. Neither takes a path from the browser.
+  # `create` is the destructive write; a run's own page, after the redirect, names
+  # every source item the write reported instead of taking. Neither action takes a
+  # path from the browser.
   resource :import, only: %i[ show create ], controller: "story_interchange_imports"
+  get "import/runs/:id", to: "story_interchange_imports#result", as: :story_interchange_run
 
   # What happened to you while you were elsewhere, and the one page that lists it.
   # Also not universe-scoped, and deliberately so: a notification carries its own
@@ -47,6 +50,12 @@ Rails.application.routes.draw do
 
   scope "u/:universe_slug", as: :universe do
     get "search", to: "searches#show", as: :search
+
+    # Deleting a universe for good is its own page rather than a row action: the
+    # reader has to be told exactly what is lost and type the name back. `show`
+    # is that page; `destroy` is the one irreversible write. Owner-only — see
+    # `UniverseAuthorization`.
+    resource :purge, only: %i[ show destroy ], controller: "universe_purges"
 
     resources :stories, path: "s" do
       # Seeding a Story's starting shape is one HTML mutation rather than a

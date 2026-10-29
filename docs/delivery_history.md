@@ -27,6 +27,55 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-10-29
+
+- **[added]** **A completed import has its own report page.**
+  - **The gap.** The write redirected to the Universe with the whole run in a flash: one sentence per
+    slice and the full `to_sentence` of every source item reported instead of written. Against a real
+    source (`tcs`) that was 375 items and a 9,629-byte notice, and the session cookie grew to 17,667
+    bytes.
+  - **The decision.** `StoryInterchangeRun` stores the source folder, the Universe name and slug, the
+    operator, whether it replaced a Universe, and each slice's `label_key`/`created`/`skipped` answer.
+    `Import#call` writes the row inside its own transaction, so a refused or failed run leaves nothing
+    and a committed run always has a page at `/import/runs/:id`. The flash is one sentence; the page
+    prints every reported id.
+  - **The name is copied, not resolved.** A later run replaces the Universe this one created, and the
+    soft-deleted row is hidden from the ordinary scope; a page that resolved its Universe to print
+    itself would lose the name it has to say. The page links to a live Universe only when one still has
+    the slug. This is ADR 0025's stored-sentence trade, applied to a run report.
+  - **Rejected alternatives.** Counts only in the flash (short, but the operator loses the list after
+    the write), and a bounded sample with "and N more" (the detail the change existed to keep, halved).
+    The owner chose the result page.
+  - **Verification.** Model, controller, import, ability, translation, and docs tests. The regression
+    case appends 300 long canon ids — more than 4 KB of `skipped` ids — and asserts the write answers
+    `303` and the page lists the last one. RuboCop, Brakeman, and the full Minitest suite.
+
+- **[changed]** **The backup dump's join-table query is Arel, not string interpolation.**
+  - **The warning.** `bin/brakeman` reported one medium SQL-injection warning at
+    `UniverseBackup::DataDump#select_join_rows`. Every value was already `connection.quote`d and the
+    table and column names were quoted through the connection, so the finding was about the shape of
+    the SQL rather than an unsafe value.
+  - **The change.** The method now builds an `Arel::Table`, projects `*`, filters the join column with
+    `in(ids)`, and keeps `ORDER BY 1, 2` as a literal `Arel.sql`. Quoting belongs to the visitor and no
+    row data reaches the string. `bin/brakeman` reports no warnings, and the backup archive suite was
+    run.
+
+- **[fixed]** **A large import answer no longer overflows the session cookie.**
+  - **The failure.** `StoryInterchangeImportsController#create` put `outcome_message` in the redirect's
+    `notice`. The message listed every skipped id, so the cookie store raised
+    `ActionDispatch::Cookies::CookieOverflow` while committing the response, after the import
+    transaction had committed: the records existed and the operator got a 500. The `rescue Exception`
+    in `RequestLogMiddleware` logged it as a 500 and re-raised, which is where the stack trace pointed.
+  - **The fix.** The flash is `imports.flash.imported` only; the detail is the run page above. The
+    now-unused `imports.flash.written` and `imports.flash.skipped` keys were removed from both locales.
+  - **Verified by** the controller case above, which raises the same exception on the old message.
+
+- **[chore]** **The compose test matches the import source mount.**
+  - `compose.yaml` had gained `${STORY_INTERCHANGE_SOURCE_DIR:-../tcs.git}:/sources/tcs.git:ro` for
+    the import page, while `DevelopmentComposeTest` still expected three volumes. The full suite
+    therefore failed on HEAD for a reason unrelated to the import work. The expectation now names the
+    mount, including its read-only suffix.
+
 ### 2026-10-28
 
 - **[added]** **A Scene carries a fixed writing status.**

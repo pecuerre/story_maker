@@ -8,3 +8,18 @@
   description: t("universes.edit_description") %>
 
 <%= render "form", universe: @universe %>
+
+<%# The owner's irreversible delete is separated from the settings form rather
+    than placed beside its save button: it is not a setting, and a form that
+    submits with the others would let a mistake reach it. The admin-only soft
+    delete stays in the universe's own action menu. %>
+<% if can_purge_universe?(@universe) %>
+  <section class="surface-card p-4 mt-4 border border-danger-subtle" aria-labelledby="universe-danger-title">
+    <div class="page-eyebrow text-danger"><%= t("universes.purge.eyebrow") %></div>
+    <h2 class="h4" id="universe-danger-title"><%= t("universes.purge.edit_heading") %></h2>
+    <p class="text-body-secondary"><%= t("universes.purge.edit_description", name: @universe.name) %></p>
+    <%= link_to t("universes.purge.edit_action"),
+      universe_purge_path(universe_slug: @universe.slug),
+      class: "btn btn-outline-danger" %>
+  </section>
+<% end %>

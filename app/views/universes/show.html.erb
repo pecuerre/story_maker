@@ -48,13 +48,14 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><%= link_to t("universes.edit"), edit_universe_path(@universe), class: "dropdown-item" %></li>
-        <li><hr class="dropdown-divider"></li>
-        <li>
-          <%= button_to t("universes.delete"), universe_path(@universe),
-            method: :delete,
-            class: "dropdown-item text-danger",
-            data: { turbo_confirm: t("universes.delete_confirm", name: @universe.name) } %>
-        </li>
+        <% if can_purge_universe?(@universe) %>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <%= link_to t("universes.purge.menu_action"),
+              universe_purge_path(universe_slug: @universe.slug),
+              class: "dropdown-item text-danger" %>
+          </li>
+        <% end %>
       </ul>
     </div>
   <% end %>

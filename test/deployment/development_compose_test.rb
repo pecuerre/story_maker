@@ -12,7 +12,15 @@ class DevelopmentComposeTest < ActiveSupport::TestCase
 
     assert_equal "Dockerfile.dev", service.dig("build", "dockerfile")
     assert_equal [ "127.0.0.1:3000:3000" ], service.fetch("ports")
-    assert_equal [ "./app:/rails/app", "./lib:/rails/lib", "storage:/rails/storage" ], service.fetch("volumes")
+    # The story-interchange source is host configuration mounted read-only at the
+    # path STORY_INTERCHANGE_IMPORT_ROOT names; the page still lists only folders
+    # under that root.
+    assert_equal [
+      "./app:/rails/app",
+      "./lib:/rails/lib",
+      "${STORY_INTERCHANGE_SOURCE_DIR:-../tcs.git}:/sources/tcs.git:ro",
+      "storage:/rails/storage"
+    ], service.fetch("volumes")
     assert_equal "development", service.dig("environment", "RAILS_ENV")
     assert_includes service.dig("healthcheck", "test").join(" "), "http://127.0.0.1:3000/up"
     assert_equal({ "storage" => nil }, compose.fetch("volumes"))

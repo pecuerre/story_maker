@@ -174,6 +174,18 @@ class Universe < ApplicationRecord
   # Canon rules are universe-owned with an optional story owner, so the universe
   # holds every rule in it and a Story holds only the ones that name it.
   has_many :canon_rules, dependent: :destroy
+  # Every photo uploaded anywhere in this universe names it, including the one
+  # this universe shows itself. Destroying the universe takes the rows, and each
+  # Photo's own Active Storage attachment purges its stored file.
+  has_many :photos, dependent: :destroy
+
+  # Delete this universe and everything it holds, including rows a soft delete
+  # had hidden. The ordinary `destroy` above is only reachable through the soft
+  # delete path; this is the one irreversible operation and it is owner-only at
+  # the request layer. `UniversePurge` owns the association walk.
+  def purge!
+    UniversePurge.call(self)
+  end
 
   def direct?
     collaboration_mode == "direct"
@@ -346,6 +358,10 @@ class Universe < ApplicationRecord
   private
     def expire_menu_counts
       MenuCountCache.expire(:universe, id)
+      # The Universe index also caches how much of it there is, under a second
+      # key. A destroy removes the row and leaves that entry behind; expiring it
+      # here keeps the delete from outliving itself in the cache.
+      MenuCountCache.expire(:universe_summary, id)
     end
 
     def queue_search_reindex

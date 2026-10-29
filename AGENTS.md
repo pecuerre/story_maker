@@ -36,6 +36,7 @@ the subject and read its owner:
 | **Code-owned starting shapes** for a Story's Sections and Scenes | [`docs/features/story_structures.md`](docs/features/story_structures.md) |
 | The interchange directory layout, its canon ledger, references, validator, and import | [`docs/features/story_interchange.md`](docs/features/story_interchange.md) |
 | The admin-only Universe backup archive and the data it defers | [`docs/features/universe_backup.md`](docs/features/universe_backup.md) |
+| The owner-only permanent Universe delete, its typed-name confirmation, and what survives | [`docs/features/universe_deletion.md`](docs/features/universe_deletion.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
 | Character profiles, Faction membership, and Character knowledge changes | [`docs/features/characters.md`](docs/features/characters.md) |
 | Prose mentions, suggestions, and in-place name highlighting | [`docs/features/mentions.md`](docs/features/mentions.md) |

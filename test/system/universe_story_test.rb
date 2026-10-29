@@ -43,7 +43,7 @@ class UniverseStoryTest < ApplicationSystemTestCase
 
     # Sign-in lands on the universe list, and the universe is one click from it.
     assert_selector "h1", text: "Universes"
-    click_link universe.name
+    open_universe(universe)
 
     assert_selector "h1", text: universe.name
     assert_selector "#universe-stories-title", text: "2 stories"
@@ -59,11 +59,11 @@ class UniverseStoryTest < ApplicationSystemTestCase
 
     # Back to the picker for the second story. The one just left is marked, so
     # the reader can see which of the two is current. The link home starts a Turbo
-    # navigation, and this universe's name is a link on the page it lands on as well
-    # as on the one it leaves, so the second click waits for the list to be there.
+    # navigation, and this universe's row is on the landing page it reaches, so
+    # the second opening waits for the list to be there.
     click_link "Universe Maker"
     assert_selector "h1", text: "Universes"
-    click_link universe.name
+    open_universe(universe)
     assert_selector ".badge", text: "Current"
     assert_text first.name
 

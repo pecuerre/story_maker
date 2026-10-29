@@ -1,0 +1,68 @@
+<% content_for :title, t("universes.purge.document_title", name: @universe.name) %>
+
+<%= render "shared/page_header",
+  title: t("universes.purge.heading", name: @universe.name),
+  eyebrow: t("universes.purge.eyebrow"),
+  description: t("universes.purge.description") do %>
+  <%= link_to t("universes.purge.backup"), universe_backup_path, class: "btn btn-outline-secondary" %>
+<% end %>
+
+<div class="surface-card p-4">
+  <div class="alert alert-danger" role="alert">
+    <h2 class="h5"><%= t("universes.purge.warning_title") %></h2>
+    <p class="mb-0"><%= t("universes.purge.warning_body", name: @universe.name) %></p>
+  </div>
+
+  <h3 class="h6"><%= t("universes.purge.contents_title") %></h3>
+  <ul>
+    <li><%= t("universes.purge.contents.bible") %></li>
+    <li><%= t("universes.purge.contents.stories") %></li>
+    <li><%= t("universes.purge.contents.pending") %></li>
+    <li><%= t("universes.purge.contents.members") %></li>
+    <li><%= t("universes.purge.contents.photos") %></li>
+    <li><%= t("universes.purge.contents.soft_deleted") %></li>
+  </ul>
+
+  <%# The form's own `autocomplete="off"` and the input's attributes are the
+      browser half of "type it yourself": no saved name is offered and no
+      autocorrect changes the punctuation. The Stimulus controller beside it
+      keeps the destructive button disabled until the value matches. Neither is
+      the rule — the server compares the exact name again — so a browser with
+      JavaScript turned off still cannot delete the wrong universe. %>
+  <%= form_with url: universe_purge_path(universe_slug: @universe.slug),
+    method: :delete,
+    class: "form-surface mt-4",
+    html: { autocomplete: "off" },
+    data: { controller: "name-confirmation", name_confirmation_expected_value: @universe.name } do |form| %>
+    <div class="mb-3">
+      <%= form.label :confirmation, t("universes.purge.form.label", name: @universe.name), class: "form-label" %>
+      <%= form.text_field :confirmation,
+        value: params[:confirmation],
+        class: "form-control",
+        autocomplete: "off",
+        autocapitalize: "none",
+        autocorrect: "off",
+        spellcheck: "false",
+        required: true,
+        autofocus: true,
+        aria: { describedby: "universe-purge-confirmation-hint" },
+        data: {
+          name_confirmation_target: "input",
+          action: "input->name-confirmation#check",
+          "1p-ignore": "true",
+          "lpignore": "true"
+        } %>
+      <div id="universe-purge-confirmation-hint" class="form-text">
+        <%= t("universes.purge.form.hint") %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <%= form.submit t("universes.purge.form.submit"),
+        class: "btn btn-danger",
+        disabled: true,
+        data: { name_confirmation_target: "submit" } %>
+      <%= link_to t("shared.form.cancel"), edit_universe_path(@universe), class: "btn btn-link" %>
+    </div>
+  <% end %>
+</div>

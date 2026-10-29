@@ -15,10 +15,10 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     get universes_url
     assert_response :success
 
-    assert_select "td", text: /2 stories/
-    assert_select "td", text: /17 entities/
-    assert_select "td", text: /1 story/
-    assert_select "td", text: /6 entities/
+    assert_select ".entity-row", text: /2 stories/
+    assert_select ".entity-row", text: /17 entities/
+    assert_select ".entity-row", text: /1 story/
+    assert_select ".entity-row", text: /6 entities/
     assert_select "time", count: 2
   end
 
@@ -27,8 +27,13 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
 
     get universes_url
 
-    assert_select "td", text: "0 stories", count: 1
-    assert_select "span.text-body-secondary", text: "—", count: 1
+    assert_select ".entity-row" do |rows|
+      row = rows.find { |element| element.at_css(".entity-title").text == "Empty" }
+
+      assert_not_nil row
+      assert_includes row.at_css(".entity-description").text, "0 stories"
+      assert_nil row.at_css("time")
+    end
   end
 
   test "guests see public universes only on the index" do
@@ -38,8 +43,8 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     get universes_url
     assert_response :success
 
-    assert_select "a", text: "Universe one"
-    assert_select "a", text: "Private", count: 0
+    assert_select ".entity-title", text: "Universe one"
+    assert_select ".entity-title", text: "Private", count: 0
   end
 
   test "the index does not recount every universe on every render" do

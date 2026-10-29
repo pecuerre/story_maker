@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Permanent universe deletion.** The owner can erase a universe and every row it owns — Bible records, stories, scenes, pending drafts, photos, and soft-deleted content — from a dedicated danger-zone page.
+- **Import run page.** A completed story-interchange import writes a `StoryInterchangeRun` in the same transaction and redirects to its page, which lists every source item the run reported instead of writing.
 - **Section, Scene, and Element import.** The story-interchange import writes one Section per chapter directory, each Scene with its point of view, location, status, and position, and one Narration Element per prose paragraph, reporting timeline, branch, id, and depends_on.
 - **Location, Item, Story, and Plot import.** The story-interchange import writes Locations and Items from their profile sections, a Story from each story directory's README heading, and Story-owned Plots with their description, reporting every section and key that has no column.
 - **Character and Faction import.** The story-interchange import writes Characters and Factions from their frontmatter and mapped profile sections, resolves `[[slug]]` references to records the run writes, and reports every section, key, and reference it deliberately leaves behind.
@@ -50,16 +52,25 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Universe list rows.** The Universes index now uses the standard list-row layout instead of a table, so each row carries the name, visibility, contents, activity, a Details link, and the admin menu, which is no longer clipped by a scrolling table wrapper.
+- **Universe backup join rows.** The dump builds its join-table query with Arel instead of quoted SQL interpolation, so Brakeman reports no SQL-injection warning and the row order is unchanged.
 - **Story interchange README rule.** A `README.md` is documentation at every depth, so the import skips entity, plot, and chapter READMEs and ignores their example references, while still reading the universe name from `universe/README.md` and the story name from the story README.
 - **Story interchange prose parsing.** A Scene's `##` title heading now names the record instead of hiding its prose, a chapter README supplies its Section's name, HTML comments are stripped, and a file directly under `universe/` with no slice is reported.
 
+### fixed
+
+- **Universe delete menu.** The action menus now open the permanent-delete confirmation page instead of soft-deleting in one click, and its submit button starts disabled until the typed name matches.
+- **Import flash overflow.** The post-run flash no longer carries the full reported list, which overflowed the session cookie and answered a completed import with a 500.
+
 ### security
 
+- **Owner-only universe purge.** Permanent deletion asks for a new `:owner` ability level, so administrators keep the soft delete but receive 403, and the server requires the universe name exactly as written.
 - **Import safety.** Import asks for the platform flag, accepts only a folder name under `STORY_INTERCHANGE_IMPORT_ROOT`, requires a destructive confirmation, and refuses a target universe with open drafts or other members.
 - **Universe backup access.** The backup page and download require Universe admin, the download is served no-store, and the archive states which sensitive tables it omits.
 
 ### docs
 
+- **Universe deletion documentation.** Adds the feature document and ADR 0044 for the owner-only purge, the typed-name confirmation, the association walk, and what survives it.
 - **Interchange source structure.** The story-interchange document now describes README documentation at every depth, the universe-name heading, chapter README naming, Scene title headings, comment stripping, and the reported `universe/inspirations.md`.
 - **Section and Scene import mapping.** Records chapter-to-Section naming, the frontmatter that becomes Scene fields, prose as Narration Elements, and why timeline, branch, depends_on, and Scene Tags stay reported.
 - **Location, Item, Story, and Plot import mapping.** Records the grouped-answer split, the flat Location and Item hierarchy, `invented_by` becoming `origin`, and the Story-before-Plot slices in the interchange document.
@@ -69,6 +80,8 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Permanent deletion tests.** Adds the purge graph walk, the owner/admin/guest request cases, the exact-name browser flow, and the CSRF case for the new HTML mutation.
+- **Compose test volumes.** `DevelopmentComposeTest` now expects the read-only story-interchange source mount `compose.yaml` already declares.
 - **Compose import source.** `docker compose` passes `STORY_INTERCHANGE_IMPORT_ROOT` and bind-mounts the host tree named by `STORY_INTERCHANGE_SOURCE_DIR` read-only at `/sources/tcs.git`, so the import page can list it.
 
 ## 2026-10-28

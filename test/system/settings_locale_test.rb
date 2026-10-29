@@ -45,7 +45,7 @@ class SettingsLocaleTest < ApplicationSystemTestCase
     assert_current_path root_path
     assert_selector "html[lang='es']"
 
-    click_link universe.name
+    open_universe(universe)
 
     assert_selector "h1", text: universe.name
     assert_selector "html[lang='es']"

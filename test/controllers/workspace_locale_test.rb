@@ -21,7 +21,7 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     patch settings_url, params: { locale: "es" }
   end
 
-  test "the universes list, its empty state, and its columns are Spanish" do
+  test "the universes list and its rows are Spanish" do
     get universes_url
 
     assert_response :success
@@ -29,13 +29,12 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Universos"
     assert_select ".page-description", text: /Elige un mundo/
     assert_select "a.btn-primary", text: /Nuevo universo/
-    assert_select "th", text: "Universo"
-    assert_select "th", text: "Visibilidad"
-    assert_select "th", text: "Acciones"
-    assert_select ".badge", text: "Público"
+    assert_select ".entity-row .badge", text: "Público"
+    assert_select ".entity-description", text: /2 historias/
+    assert_select ".entity-description", text: /actualizado hace/
     # Author data is never translated: the universe's own name still reads as its
     # owner typed it.
-    assert_select "a.fw-semibold", text: @universe.name
+    assert_select ".entity-title", text: @universe.name
   end
 
   test "the universes list tells a signed-in reader to create one" do

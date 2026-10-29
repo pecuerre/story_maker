@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_28_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -836,6 +836,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_230000) do
     t.index ["universe_id"], name: "index_stories_on_universe_id"
   end
 
+  create_table "story_interchange_runs", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "source", null: false
+    t.string "universe_name", null: false
+    t.string "universe_slug", null: false
+    t.boolean "replaced", default: false, null: false
+    t.json "outcomes", null: false
+    t.datetime "created_at", null: false
+    t.index ["user_id"], name: "index_story_interchange_runs_on_user_id"
+  end
+
   create_table "story_tropes", force: :cascade do |t|
     t.integer "story_id", null: false
     t.string "trope_slug", null: false
@@ -1020,6 +1031,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_28_230000) do
   add_foreign_key "sessions", "users"
   add_foreign_key "stories", "photos", on_delete: :nullify
   add_foreign_key "stories", "universes"
+  add_foreign_key "story_interchange_runs", "users"
   add_foreign_key "story_tropes", "stories"
   add_foreign_key "universe_memberships", "universes"
   add_foreign_key "universe_memberships", "users"

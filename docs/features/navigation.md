@@ -51,8 +51,10 @@ reader types. The notifications bell does issue one, and says why below.
   who is on another page, through the reader stream described in
   [Real-time updates](../conventions.md#real-time-updates).
 - **Account** — the other action, a dropdown rendered for every visitor. A signed-in reader
-  sees their email, **Settings**, and **Log out**; a guest sees **Log in** and **Settings**. The
-  menu button carries `.active` and `aria-current="page"` on the settings page.
+  sees their email, **Settings**, and **Log out**; a reader with the platform flag also sees
+  **Import**, because replacing a universe is platform administration rather than a page inside one;
+  a guest sees **Log in** and **Settings**. The menu button carries `.active` and
+  `aria-current="page"` on the settings page.
 - **Settings** — the platform settings page (`/settings`), inside the account menu in
   `.navbar-actions`, and rendered for every visitor including a guest, because its preferences belong
   to the browser rather than to a universe. It is deliberately **not** a **Configuration** link in

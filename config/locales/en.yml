@@ -47,6 +47,7 @@ en:
     log_in: "Log in"
     log_out: "Log out"
     settings: "Settings"
+    import: "Import"
     read_only: "read-only"
     scope:
       universe: "Universe:"
@@ -417,6 +418,66 @@ en:
   # The button labels and the page titles are the same string, so one key serves
   # both the `content_for :title` and the `h1` — a reader who follows "New
   # universe" expects the page it opens to be called that too.
+  # The platform-admin story-interchange import. A slice's label lives under
+  # `imports.slices`, keyed by the importer's own `label_key`, so a new slice adds
+  # one label here and nothing in the command or the page.
+  imports:
+    slices:
+      canon_rules: "Canon rules"
+      characters: "Characters"
+      factions: "Factions"
+    show:
+      title: "Story interchange import"
+      eyebrow: "Platform"
+      description: "Write a story-interchange source directory into a universe. A run replaces the universe its directory names."
+      no_root_title: "No import root configured"
+      no_root: "Set STORY_INTERCHANGE_IMPORT_ROOT to the directory that holds your sources. The page only offers folders directly under it."
+      choose_title: "Choose a source"
+      choose_description: "These are the folders directly under the configured root. The source directory's name becomes the universe slug."
+      source_label: "Source folder"
+      source_blank: "Choose a folder"
+      preview: "Preview"
+      empty_root: "The configured root has no folders."
+      identity_title: "What this run will do"
+      name: "Universe name"
+      slug: "Universe slug"
+      action: "Action"
+      creates: "Creates a new universe."
+      replaces: "Replaces the existing universe with this slug."
+      unknown: "Unknown"
+      validation_title: "Validator"
+      valid: "The source is valid."
+      invalid:
+        one: "The source has 1 error; nothing will be written."
+        other: "The source has %{count} errors; nothing will be written."
+      errors: "Errors"
+      warnings: "Warnings"
+      slices_title: "Records this run will write"
+      slice: "Record type"
+      records: "Records"
+      reported: "Reported, not written"
+      safety_title: "Replacement safety"
+      safe: "No open drafts or other members: this universe can be replaced."
+      blocked: "This universe cannot be replaced while it has open drafts or members other than you. Resolve them in the app first, then preview again."
+      open_drafts: "Open drafts"
+      draft_by: "Draft %{id} by %{author}"
+      other_members: "Members other than you"
+      member: "%{name} (%{email})"
+      destructive_notice: "This replaces %{name}. Records created in the app for that universe are lost. No other universe is touched."
+      confirm_label: "I understand the existing universe's records are lost."
+      submit: "Import and replace"
+    flash:
+      imported: "Imported %{name}."
+      written:
+        one: "%{label}: 1 written"
+        other: "%{label}: %{count} written"
+      skipped:
+        one: "%{label}: 1 reported, not written (%{ids})"
+        other: "%{label}: %{count} reported, not written (%{ids})"
+      source_required: "Choose a source folder first."
+      unknown_source: "That folder is not under the configured import root."
+      unconfirmed: "Confirm that the existing records are lost before importing."
+      blocked: "The target universe has open drafts or members other than you."
   universe_backups:
     show:
       title: "Universe backup"

@@ -1,4 +1,6 @@
 require "test_helper"
+require "fileutils"
+require "tmpdir"
 
 # The shared editors mutate through `fetch`, so the server has to accept a real
 # CSRF token and has to refuse a mutation that carries none, without writing
@@ -692,6 +694,43 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
         end
       end
       assert_redirected_to universe_story_url(universe_slug: @universe.slug, id: story)
+    end
+  end
+
+  test "the story-interchange import is refused without a token and writes nothing" do
+    # Import is the one HTML mutation here that creates and replaces a whole
+    # Universe, so a forged request would be the widest write in this file. It is
+    # gated by the platform flag as well as the token; this case exercises both
+    # together, because a token is not an authorization.
+    operator = users(:platform_operator)
+    sign_in_as operator
+    previous_root = Rails.configuration.x.story_interchange.import_root
+
+    Dir.mktmpdir("csrf-import") do |temporary|
+      source_root = File.join(temporary, "sources")
+      FileUtils.mkdir_p(source_root)
+      FileUtils.cp_r(Rails.root.join("test/fixtures/files/story_interchange/synthetic-universe"),
+        File.join(source_root, "synthetic-universe"))
+      Rails.configuration.x.story_interchange.import_root = source_root
+
+      begin
+        with_forgery_protection do
+          token = fetch_page_token(import_path)
+
+          assert_no_difference -> { Universe.where(slug: "synthetic-universe").count } do
+            post import_url, params: { source: "synthetic-universe", confirm: "1" }
+          end
+          assert_includes 406..422, response.status
+
+          post import_url, params: { source: "synthetic-universe", confirm: "1" },
+            headers: { "X-CSRF-Token" => token }
+
+          assert_response :see_other
+          assert_equal 1, Universe.where(slug: "synthetic-universe").count
+        end
+      ensure
+        Rails.configuration.x.story_interchange.import_root = previous_root
+      end
     end
   end
 

@@ -162,6 +162,11 @@ class Ability
     return unless @user&.platform_admin?
 
     @class_rules << { model: PlatformSetting, action: :manage, level: :platform }
+    # A story-interchange import creates and destroys universes. Like the
+    # creation limit, there is no universe whose admins could own that decision,
+    # so it asks the same operator question rather than borrowing `admin` from a
+    # scope that does not exist yet.
+    @class_rules << { model: StoryInterchange::Import, action: :manage, level: :platform }
   end
 
   def define_rule(model, level, actions, &universe_of)
@@ -205,10 +210,11 @@ class Ability
 
       # The authorized universe *is* the `Universe` record, so for that one class
       # the record always exists once the level above has been answered. A
-      # `PlatformSetting` is the other case of the same shape: it is not *inside* an
-      # authorized universe, so there is nothing to look for rows of — and routing it
-      # through `UniverseScopeResolver` would ask a resolver that has no rule for it.
-      return true if [ Universe, PlatformSetting ].include?(subject)
+      # `PlatformSetting` and the import command are the other case of the same
+      # shape: neither is *inside* an authorized universe, so there is nothing to
+      # look for rows of — and routing one through `UniverseScopeResolver` would ask
+      # a resolver that has no rule for it.
+      return true if [ Universe, PlatformSetting, StoryInterchange::Import ].include?(subject)
 
       UniverseScopeResolver.records_in(subject, @universe).exists?
     end

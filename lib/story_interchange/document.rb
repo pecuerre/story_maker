@@ -15,8 +15,13 @@ module StoryInterchange
   class Document
     FRONTMATTER = /\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\z)/m
     REFERENCE = /\[\[([^\[\]\n]+)\]\]/
+    SECTION = /^##[ \t]+(.+?)[ \t]*$/
 
     Reference = Data.define(:target, :line)
+    # One `##` section of the body, with its heading as the source wrote it. The
+    # body is kept verbatim (minus the surrounding blank lines) because a
+    # profile answer is author prose, not something the import may reformat.
+    Section = Data.define(:heading, :body)
 
     attr_reader :path, :root, :frontmatter, :body, :raw, :parse_error
 
@@ -46,6 +51,37 @@ module StoryInterchange
 
     def references
       @references ||= scan_references
+    end
+
+    # The `##` sections in source order. A `###` subheading stays part of the
+    # section it is written under, because the profile answer owns the whole
+    # block.
+    def sections
+      @sections ||= begin
+        collected = []
+        current = nil
+
+        body.each_line do |line|
+          if (match = SECTION.match(line))
+            current = [ match[1], +"" ]
+            collected << current
+          elsif current
+            current[1] << line
+          end
+        end
+
+        collected.map { |heading, text| Section.new(heading: heading, body: text.strip) }
+      end
+    end
+
+    # The prose between the `#` title and the first `##` section. The source puts
+    # the author's identity block there, and no profile answer owns it.
+    def introduction
+      @introduction ||= begin
+        match = SECTION.match(body)
+        text = match ? body[0...match.begin(0)] : body
+        text.lstrip.sub(/\A#[ \t]+[^\n]*\n?/, "").strip
+      end
     end
 
     private

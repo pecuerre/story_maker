@@ -13,6 +13,12 @@ Rails.application.routes.draw do
   # so the page is reachable before a universe is chosen and by a guest.
   resource :settings, only: %i[ show update ]
 
+  # A story-interchange import creates one Universe and replaces the one its
+  # source directory names, so it is platform administration rather than a page
+  # inside a universe. `show` previews a folder under the configured import root;
+  # `create` is the destructive write. Neither takes a path from the browser.
+  resource :import, only: %i[ show create ], controller: "story_interchange_imports"
+
   # What happened to you while you were elsewhere, and the one page that lists it.
   # Also not universe-scoped, and deliberately so: a notification carries its own
   # universe's slug in its payload, so the navbar can show a reader something from

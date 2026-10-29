@@ -83,6 +83,16 @@
                 <%= t("layouts.settings") %>
               <% end %>
             </li>
+            <%# Importing replaces a universe, so it is platform administration and
+                appears only for an account with the platform flag. %>
+            <% if platform_admin? %>
+              <li>
+                <%= link_to import_path, class: "dropdown-item d-inline-flex align-items-center gap-2" do %>
+                  <i class="bi bi-box-arrow-in-down" aria-hidden="true"></i>
+                  <%= t("layouts.import") %>
+                <% end %>
+              </li>
+            <% end %>
             <% if Current.user.present? %>
               <li><hr class="dropdown-divider"></li>
               <li>

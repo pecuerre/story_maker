@@ -5,10 +5,12 @@ number of its Stories. It is the format the author's `tcs` repository already us
 future import reads, and the contract a future Universe backup writes.
 
 The ownership decision is [ADR 0041](../adr/0041-the-story-interchange-is-a-directory-contract.md),
-and the validator is `StoryInterchange::Validator` in `lib/story_interchange/`. This document owns the
-directory layout, the frontmatter, the section-to-profile mapping, the reference forms, and what the
-validator reports. It is **not** a second storage format: the database stays the source of truth, and
-this slice only reads a source.
+the import decision is
+[ADR 0043](../adr/0043-a-story-interchange-import-replaces-one-universe.md), and the code is
+`StoryInterchange` in `lib/story_interchange/`. This document owns the directory layout, the
+frontmatter, the section-to-profile mapping, the reference forms, what the validator reports, and
+what an import writes. It is **not** a second storage format: the database stays the source of truth,
+and the source is read in place and never modified.
 
 The app's code-owned starting shapes are a different subject: [Story structures](story_structures.md).
 
@@ -120,10 +122,14 @@ Rules for those values:
 ## Profile sections
 
 The body starts with one `#` heading and continues with `##` sections. A section that maps to a
-profile answer is written into that answer; a section with no target is reported by the import
-slice, never silently dropped. The exact profile field lists live in
-[Characters](characters.md#profile), [Factions](factions.md#scope-and-profile),
+profile answer is written into that answer, with its Markdown body kept as written; a section with
+no target is reported by the import slice, never silently dropped. The exact profile field lists
+live in [Characters](characters.md#profile), [Factions](factions.md#scope-and-profile),
 [Locations](locations.md#location-profile), and [Items](items.md#item-profile).
+
+The prose before the first `##` section — the source's identity block — has no target and is
+reported as the record's `introduction`. A frontmatter key the application has no column for is
+reported by name rather than folded into another answer.
 
 ### Character
 
@@ -136,15 +142,25 @@ slice, never silently dropped. The exact profile field lists live in
 | Contradictions | `contradictions` |
 | Under pressure they | `under_pressure_they` |
 | Never | `never` |
-| State of knowledge | the Character's knowledge records |
-| Relationships | universe Relation records |
+| State of knowledge | no target in this slice — report |
+| Relationships | no target in this slice — report |
 | Voice | no app field — report |
 | Arc | no app field — report |
 | Open questions | no record — report |
 
+`Lies about` is matched by its opening words, because the source writes the parenthetical for the
+character's own pronouns: `Lies about (to herself)` and `Lies about (to himself)` both write
+`lies_to_self`.
+
+State of knowledge and Relationships exist as separate records — a `CharacterKnowledge` and a
+`Relation` — and this slice writes neither: their source tables do not line up with the app forms,
+so they are reported section by section for a later slice.
+
 The source has no pronouns or aliases section; those profile answers stay blank when a Character has
-none. `affiliation` is a faction reference or free text; the import slice decides whether it becomes
-Faction membership, a profile answer, or both.
+none. `affiliation` is free text in the real source and may name a Faction, another record, or
+prose, so this slice **reports it and never turns it into Faction membership**: the operator assigns
+membership in the app. The frontmatter keys `role`, `affiliation`, `status`, `first_appears`, and
+`backlog` all have no Character column and are reported.
 
 ### Faction
 
@@ -158,6 +174,9 @@ Faction membership, a profile answer, or both.
 | Would never | `would_never` |
 | Would absolutely | `would_absolutely` |
 | Register, The two rivals, Relationships, Open questions | no app field — report |
+
+The Faction frontmatter keys `type`, `home`, `status`, and `backlog` have no Faction column and are
+reported.
 
 ### Location
 
@@ -235,12 +254,23 @@ a reference inside inline code is real, because the source writes rule citations
 `[[slug]]` written as bare documentation is allowed as a placeholder; any other unresolved reference
 is an error.
 
+The import writes a `[[slug]]` in a profile answer as the name of the record whose kind a slice in
+that run writes; a reference to a kind with no slice yet keeps its bracket form and is reported, so
+nothing is silently rewritten or dropped. Rule, scene, and backlog references are not entity
+references and are left as written.
+
 ## The validator
 
 `StoryInterchange.validate(path)` reads the source and returns a `StoryInterchange::Report`. The
 report exposes `universe_slug`, `universe_name`, `stories`, `counts`, `errors`, `warnings`, and
-`valid?`. Counts are available for canon rules, open canon questions, characters, factions,
-locations, items, plots, chapters, and scenes, so an import preview can show them before writing.
+`valid?`, plus the parsed `canon_rules` and `canon_questions` so the canon slice writes what the
+preview showed. Counts are available for canon rules, open canon questions, characters, factions,
+locations, items, plots, chapters, and scenes.
+
+The report also carries each parsed universe record as a `Report::Entity` — its kind, slug, name,
+frontmatter, `##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`.
+A profile slice reads that instead of opening the file again, so the write cannot disagree with the
+preview about a heading or a reference.
 
 Run it without writing anything:
 
@@ -275,9 +305,78 @@ knows:
 The validator's fixtures are synthetic and live under
 `test/fixtures/files/story_interchange/`. The real novel is never committed here.
 
-## What this slice does not do
+## Importing a source
 
-It does not write a record, create a page, add a route, or copy a source into the repository. The
-first import slice owns those. A [Universe backup](universe_backup.md) writes the reverse direction
-as a readable projection; that document owns what the projection can and cannot carry. Until then the
-layout and the validator are the whole contract.
+`StoryInterchange::Import` writes a validated source into ordinary records. The platform-admin page
+at `/import` and `bin/rails story_interchange:import` both call it; neither keeps an import path or
+policy of its own.
+
+### One universe, replaced
+
+The target is derived, not chosen: the source directory's basename is the Universe's slug and its
+titleized form is the default name ([Identity without a manifest](#identity-without-a-manifest)). A
+run replaces the one live Universe with that slug. No other universe is touched, and there is no way
+to import into a Universe with a different address.
+
+- When no live Universe has the slug, the run creates one owned by the importer.
+- When one exists, the run soft-deletes it and creates a fresh Universe with the same slug. The
+  application's own delete is a soft delete, so the old rows stay hidden exactly as every other
+  deleted record does, while the new Universe takes the address. There is no restore path for a
+  Universe, which is why the confirmation says the records created in the app for it are lost.
+- A replaced Universe keeps its `private` and `collaboration_mode`; a fresh one takes the model
+  defaults (public, direct). The source carries neither setting.
+
+Delete, create, and every slice run in one transaction, so a slice that fails leaves the database as
+it was.
+
+### Safety and confirmation
+
+The run refuses, and writes nothing, when the validator reports an error, when the target Universe
+has an open draft, or when it has a member other than the importer — including an owner who is
+somebody else. The last two exist because replacing the Universe would destroy somebody else's
+unfinished work or access; both surfaces name what they found, and the operator resolves it in the
+app first.
+
+The page shows the derived slug, the display name, and the records each slice will write before it
+offers the write. The write is a `POST` behind a checkbox that says the existing records are lost;
+a request without it is refused. The task prints the same preview and refuses to write unless
+`CONFIRM_STORY_INTERCHANGE_IMPORT=1` is set. It takes the owner's email, because a Universe must have
+an owner:
+
+```bash
+CONFIRM_STORY_INTERCHANGE_IMPORT=1 \
+  bin/rails 'story_interchange:import[/path/to/source,owner@example.com]'
+```
+
+`STORY_INTERCHANGE_PATH` and `STORY_INTERCHANGE_OWNER` are the environment forms.
+
+### Slices
+
+One record type is one `StoryInterchange::Importer` subclass, registered in `Importers::ALL`. A
+slice declares an I18n key for its name and the validator count it writes; a profile slice also
+declares the record kind it writes, its section-to-column mapping, and the frontmatter keys it
+reports. The preview, the task, and the page read that list, so adding a type never edits them.
+**Canon** writes the rules described under [Canon ledger](#canon-ledger) and reports the `O` items
+by id instead of writing them. **Characters** and **Factions** write one record per file from the
+mapping above. Locations, Items, Plots, Scenes, chapters, Sections, and their remaining references
+are still validator-only and plug into the same registry when their slices exist.
+
+A slice's `Outcome` names every source item it reports instead of writing, and the preview shows that
+list before the run: an open canon question, an unmapped section, a frontmatter key with no column,
+the preamble block, or a `[[slug]]` whose record kind has no slice.
+
+### Where a source may live
+
+The page never accepts a path. It lists only the folders directly under
+`STORY_INTERCHANGE_IMPORT_ROOT`, and a name with a separator, `..`, a dot-file, or a symlink that
+resolves outside the root is refused. Nothing is copied into the repository. Both actions ask for
+`:manage` on `StoryInterchange::Import`, the platform-level question the creation limit also asks, so
+a guest signs in and a signed-in non-operator receives `403`.
+
+## What the import does not do
+
+It writes only the records a registered slice owns, and it does not write the source back out, copy
+it into the repository, or restore a replaced Universe. Knowledge records, Relations, Faction
+membership, Locations, Items, Plots, and Scenes do not arrive from this slice; the source text that
+would carry them is reported. A [Universe backup](universe_backup.md) writes the reverse direction
+as a readable projection; that document owns what the projection can and cannot carry.

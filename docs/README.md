@@ -37,7 +37,7 @@ How to use these docs:
    | Scenes, Elements, participation, the Scene filter | [features/scenes.md](features/scenes.md) |
     | Story-owned Plot arcs and Scene assignments | [features/plots.md](features/plots.md) |
     | Starting a Story from a code-owned Section/Scene shape | [features/story_structures.md](features/story_structures.md) |
-    | The interchange layout, canon ledger, references, and validator | [features/story_interchange.md](features/story_interchange.md) |
+    | The interchange layout, canon ledger, references, validator, and import | [features/story_interchange.md](features/story_interchange.md) |
     | The admin-only Universe backup archive and its deferred data | [features/universe_backup.md](features/universe_backup.md) |
      | Global trope references and contextual assignments | [features/tropes.md](features/tropes.md) |
     | Universe-scoped Routes between Locations | [features/routes.md](features/routes.md) |

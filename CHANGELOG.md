@@ -42,14 +42,19 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Character and Faction import.** The story-interchange import writes Characters and Factions from their frontmatter and mapped profile sections, resolves `[[slug]]` references to records the run writes, and reports every section, key, and reference it deliberately leaves behind.
+- **Story interchange import.** A platform-admin page and the `story_interchange:import` task write a source into its named universe through a registry of record-type slices, starting with canon rules.
 - **Universe backup archive.** An admin-only `.tar.gz` carries a lossless table dump, the stored photo files, and a readable story-interchange projection, with memberships and change history explicitly deferred.
 
 ### security
 
+- **Import safety.** Import asks for the platform flag, accepts only a folder name under `STORY_INTERCHANGE_IMPORT_ROOT`, requires a destructive confirmation, and refuses a target universe with open drafts or other members.
 - **Universe backup access.** The backup page and download require Universe admin, the download is served no-store, and the archive states which sensitive tables it omits.
 
 ### docs
 
+- **Character and Faction import mapping.** Records the section-to-profile mapping, the reported sections and frontmatter keys, and why affiliation, knowledge, and Relations stay reported rather than written.
+- **Story interchange import documentation.** Adds ADR 0043 and the import, safety, confirmation, slice-registry, and import-root rules to the interchange feature document.
 - **Universe backup documentation.** Adds ADR 0042 and the feature document for the archive format, admin gate, deferred tables, and restore boundary, with links from export, navigation, and architecture.
 
 ## 2026-10-28

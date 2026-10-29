@@ -202,46 +202,6 @@ triaged into this list.
    approval-required: it must remap ids, decide how an older archive's missing tables are treated,
    and must not reuse the development-data reset path.
 
-62. **First story-interchange import: registry, command, page, and canon.**
-
-   The validator reads a source but nothing imports one, and the importer is meant to grow one record
-   type at a time. This slice delivers the reusable path every later slice plugs into: a registry
-   where each record type is its own importer class behind one small shared interface, an entry point
-   that imports everything currently registered, a Rails task taking the source path (proposed as
-   `bin/rails story_interchange:import`), and a platform-admin page that picks a folder under a
-   configured import root, lists the registered slices, and previews the validator's counts before
-   writing. Adding a type must not edit the command or the page. **Canon is the first slice**, and its
-   record already exists in [features/canon.md](features/canon.md) and
-   [ADR 0039](adr/0039-canon-rules-are-universe-owned-with-an-optional-story.md); the validator
-   already registers each `K`/`L`/`D` item id, so the slice reads the item text and writes one rule
-   per item, reporting the `O` questions instead.
-
-   A run **replaces** the universe named by the source root, whose directory name is its slug:
-   create it when absent, delete and recreate it when present, after an explicit destructive
-   confirmation that says records created in the app for that universe are lost. No other universe is
-   touched. The source directory lives outside the repository and is never copied into it; the page
-   never accepts an arbitrary path from the browser, only a folder under the configured root; the
-   page is platform-admin-only because it creates and destroys universes; and the task refuses a
-   production run without the same confirmation. **Needs a safety rule** for a target universe with
-   open drafts or members other than the importer, and the import page must show the derived universe
-   slug and display name before writing.
-
-63. **Import slice: Characters and Factions.**
-
-   These are the first two record types after canon because `universe/characters/` and
-   `universe/factions/` already hold real records. Map the template frontmatter and body sections
-   onto the existing profile answers — `at_a_glance`, `wants`, `needs`, `lies_to_self`,
-   `contradictions`, `under_pressure_they`, `never`, `pronouns`, and `aliases` for a Character;
-   `mission`, `actual_aims`, `structure`, `internal_divisions`, `resources`, `would_never`, and
-   `would_absolutely` for a Faction — and resolve each `[[slug]]` reference to the record created in
-   the same run. **Needs a written field-by-field mapping** — including the Character template's
-   `Voice`, `State of knowledge`, `Relationships`, and `Arc` sections, which have no profile answer:
-   knowledge records and Relationships exist separately, while Voice and Arc need a decision and are
-   reported rather than dropped — and a decision about `affiliation`, which may be a Character's
-   faction membership rather than a profile answer. A reference whose target is missing is reported,
-   never silently dropped, and a second import of an unchanged source must produce an identical
-   universe.
-
 64. **Import slice: Locations, Items, and Plots.**
 
    tcs's `universe/locations/` maps to the five sensory answers and the five layout answers,
@@ -276,3 +236,9 @@ triaged into this list.
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is
 analyzed like the list above, given the next number, and moved under PENDING WORK.
+
+- **The import confirmation outgrows the flash cookie.** A run lists every reported item in its
+  post-import flash. The real `tcs` source is now about 3.9 kB of ids (canon, characters, factions),
+  and Rails stores flash in the cookie session, so the confirmation can raise `CookieOverflow` after
+  the import has committed. The preview and the rake task need no change; the page flash should
+  summarize counts per slice instead of every id, or move the detail to a redirect target.

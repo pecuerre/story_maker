@@ -27,6 +27,13 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert_equal 3, report.counts[:canon_rules]
     assert_equal 1, report.counts[:canon_questions]
+    assert_equal %w[K1 L1 D1], report.canon_rules.map(&:id)
+    assert_equal "The lantern burns only while someone holds it.", report.canon_rules.second.statement
+    assert_includes report.canon_rules.first.source, "- **K1.** The lantern was built before the first winter."
+    assert_includes report.canon_rules.first.source, "Canon: universe/canon/mechanism.md"
+    assert_equal [ "O-I1" ], report.canon_questions.map(&:id)
+    assert_equal "Who built the first lantern?", report.canon_questions.first.statement
+    assert_nil report.canon_questions.first.source
     assert_equal 1, report.counts[:characters]
     assert_equal 1, report.counts[:factions]
     assert_equal 1, report.counts[:locations]
@@ -34,6 +41,26 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal 1, report.counts[:plots]
     assert_equal 2, report.counts[:chapters]
     assert_equal 2, report.counts[:scenes]
+
+    character = report.entity("ada")
+    assert_equal :character, character.kind
+    assert_equal "Ada", character.name
+    assert_equal "The engineer trusted by [[wardens]] to keep the lantern lit.",
+      character.sections.find { |section| section.heading == "At a glance" }.body
+    assert_empty character.introduction
+
+    faction = report.entity("wardens")
+    assert_equal :faction, faction.kind
+    assert_equal "The Wardens", faction.name
+    assert_equal "[[keep]]", faction.frontmatter["home"]
+  end
+
+  test "reads the body before the first section as an introduction" do
+    replace("universe/characters/ada.md", "# Ada\n", "# Ada\n\nAn engineer from the lower yard.\n")
+
+    report = validate
+
+    assert_equal "An engineer from the lower yard.", report.entity("ada").introduction
   end
 
   test "ignores references inside fenced blocks" do

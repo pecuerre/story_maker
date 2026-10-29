@@ -1,0 +1,153 @@
+<% content_for :title, t("imports.show.title") %>
+
+<%= render "shared/page_header",
+  title: t("imports.show.title"),
+  eyebrow: t("imports.show.eyebrow"),
+  description: t("imports.show.description") %>
+
+<% unless @import_root.configured? %>
+  <div class="alert alert-warning" role="alert">
+    <h2 class="h5 alert-heading"><%= t("imports.show.no_root_title") %></h2>
+    <p class="mb-0"><%= t("imports.show.no_root") %></p>
+  </div>
+<% else %>
+  <div class="surface-card p-4">
+    <h2 class="h4"><%= t("imports.show.choose_title") %></h2>
+    <p><%= t("imports.show.choose_description") %></p>
+
+    <% if @import_root.folders.empty? %>
+      <p class="mb-0"><%= t("imports.show.empty_root") %></p>
+    <% else %>
+      <%= form_with url: import_path, method: :get, class: "form-surface" do |form| %>
+        <div class="mb-3">
+          <%= form.label :source, t("imports.show.source_label"), class: "form-label" %>
+          <%= form.select :source,
+            @import_root.folders.map { |name| [ name, name ] },
+            { include_blank: t("imports.show.source_blank"), selected: @source },
+            class: "form-select" %>
+        </div>
+        <%= form.submit t("imports.show.preview"), class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @plan %>
+  <div class="surface-card p-4 mt-3">
+    <h2 class="h4"><%= t("imports.show.identity_title") %></h2>
+    <dl class="row mb-0">
+      <dt class="col-sm-3"><%= t("imports.show.name") %></dt>
+      <dd class="col-sm-9"><%= @plan.name.presence || t("imports.show.unknown") %></dd>
+
+      <dt class="col-sm-3"><%= t("imports.show.slug") %></dt>
+      <dd class="col-sm-9"><code><%= @plan.slug.presence || t("imports.show.unknown") %></code></dd>
+
+      <dt class="col-sm-3"><%= t("imports.show.action") %></dt>
+      <dd class="col-sm-9">
+        <%= @plan.existing? ? t("imports.show.replaces") : t("imports.show.creates") %>
+      </dd>
+    </dl>
+  </div>
+
+  <div class="surface-card p-4 mt-3">
+    <h2 class="h4"><%= t("imports.show.validation_title") %></h2>
+
+    <% if @plan.valid? %>
+      <p class="mb-0"><%= t("imports.show.valid") %></p>
+    <% else %>
+      <p class="mb-0">
+        <%= t("imports.show.invalid", count: @plan.report.errors.size) %>
+      </p>
+    <% end %>
+
+    <% if @plan.report.errors.any? %>
+      <h3 class="h5 mt-3"><%= t("imports.show.errors") %></h3>
+      <ul class="mb-0">
+        <% @plan.report.errors.each do |issue| %>
+          <li><%= issue %></li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <% if @plan.report.warnings.any? %>
+      <h3 class="h5 mt-3"><%= t("imports.show.warnings") %></h3>
+      <ul class="mb-0">
+        <% @plan.report.warnings.each do |issue| %>
+          <li><%= issue %></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+
+  <div class="surface-card p-4 mt-3">
+    <h2 class="h4"><%= t("imports.show.slices_title") %></h2>
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th scope="col"><%= t("imports.show.slice") %></th>
+          <th scope="col"><%= t("imports.show.records") %></th>
+          <th scope="col"><%= t("imports.show.reported") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @plan.slices.each do |slice| %>
+          <% reported = slice.reported(@plan.report) %>
+          <tr>
+            <td><%= t(slice.label_key) %></td>
+            <td><%= slice.preview(@plan.report) %></td>
+            <td><%= reported.any? ? reported.to_sentence : "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @plan.existing? %>
+    <div class="surface-card p-4 mt-3">
+      <h2 class="h4"><%= t("imports.show.safety_title") %></h2>
+
+      <% if @plan.safe? %>
+        <p class="mb-0"><%= t("imports.show.safe") %></p>
+      <% else %>
+        <p><%= t("imports.show.blocked") %></p>
+
+        <% if @plan.open_drafts.any? %>
+          <h3 class="h5"><%= t("imports.show.open_drafts") %></h3>
+          <ul>
+            <% @plan.open_drafts.each do |draft| %>
+              <li><%= t("imports.show.draft_by", id: draft.id, author: draft.user.email_address) %></li>
+            <% end %>
+          </ul>
+        <% end %>
+
+        <% if @plan.other_members.any? %>
+          <h3 class="h5"><%= t("imports.show.other_members") %></h3>
+          <ul class="mb-0">
+            <% @plan.other_members.each do |member| %>
+              <li><%= t("imports.show.member", name: member.name, email: member.email_address) %></li>
+            <% end %>
+          </ul>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @plan.importable? %>
+    <div class="surface-card p-4 mt-3">
+      <div class="alert alert-danger" role="alert">
+        <%= t("imports.show.destructive_notice", name: @plan.name) %>
+      </div>
+
+      <%= form_with url: import_path, method: :post, class: "form-surface" do |form| %>
+        <%= hidden_field_tag :source, @source %>
+
+        <div class="form-check mb-3">
+          <%= check_box_tag :confirm, "1", false, class: "form-check-input", required: true %>
+          <%= label_tag :confirm, t("imports.show.confirm_label"), class: "form-check-label" %>
+        </div>
+
+        <%= form.submit t("imports.show.submit"), class: "btn btn-danger" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

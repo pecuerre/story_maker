@@ -19,8 +19,10 @@ module StoryInterchange
     SCENE_STATUSES = %w[draft revised final].freeze
     # A definition is a bold id followed by a period or an em dash. Bold ids in
     # ordinary prose (`**K43's signature**`, `**D8 expires**`) are references,
-    # not definitions.
-    CANON_ITEM = /\A\s*(?:-\s+)?\*\*(?<id>K\d+|L\d+|D\d+|O(?:-[A-Z0-9]+)?\d+)(?:\.|\s+—)/
+    # not definitions. `marker` holds what follows the id inside the bold run —
+    # the period, or an em dash and the item's heading — and `text` holds the
+    # prose after the bold run, which is what the statement is drawn from.
+    CANON_ITEM = /\A\s*(?:-\s+)?\*\*(?<id>K\d+|L\d+|D\d+|O(?:-[A-Z0-9]+)?\d+)(?<marker>\.|\s+—[^*]*)\*\*(?<text>[^\n]*)\r?\n?\z/
     CANON_HEADING = /\A##\s+(.+?)\s*\z/
     RULE_REFERENCE = /\Arule:(.+)\z/
     SCENE_REFERENCE = /\Ascene:(.+)\z/
@@ -168,7 +170,7 @@ module StoryInterchange
           if (match = CANON_HEADING.match(line))
             section = canon_section(match[1])
           elsif (match = CANON_ITEM.match(line))
-            register_canon_id(match[:id], document, number, section)
+            register_canon_id(match[:id], document, number, section, line, match)
           end
         end
       end
@@ -184,23 +186,62 @@ module StoryInterchange
         end
       end
 
-      def register_canon_id(id, document, line, section)
+      def register_canon_id(id, document, line_number, section, raw_line, match)
         if @canon_ids.key?(id)
-          error(document, line, "canon id #{id} is already defined in #{@canon_ids[id].relative_path}")
+          error(document, line_number, "canon id #{id} is already defined in #{@canon_ids[id].relative_path}")
           return
         end
 
         @canon_ids[id] = document
         question = id.start_with?("O")
         @report.count(question ? :canon_questions : :canon_rules)
+        register_canon_item(id, document, line_number, raw_line, match, question)
 
         if section == :open && !question
-          warning(document, line, "canon id #{id} is a locked rule but sits under Open")
+          warning(document, line_number, "canon id #{id} is a locked rule but sits under Open")
         elsif section == :rule && question
-          warning(document, line, "canon id #{id} is an open question but sits under Locked")
+          warning(document, line_number, "canon id #{id} is an open question but sits under Locked")
         elsif section.nil? || section == :other
-          warning(document, line, "canon id #{id} is outside a Locked, Derived, or Open section")
+          warning(document, line_number, "canon id #{id} is outside a Locked, Derived, or Open section")
         end
+      end
+
+      # Hands the parsed item to the report so an import slice can write it. The
+      # validator stays the one place that reads `universe/canon/`, rather than
+      # the importer parsing the same files a second way.
+      def register_canon_item(id, document, line_number, raw_line, match, question)
+        item = Report::CanonItem.new(
+          id: id,
+          statement: canon_statement(match),
+          source: question ? nil : canon_source(document, raw_line),
+          path: document.relative_path,
+          line: line_number
+        )
+
+        if question
+          @report.add_canon_question(item)
+        else
+          @report.add_canon_rule(item)
+        end
+      end
+
+      # The first sentence of the item's prose, or the heading inside its bold id
+      # when the item has no prose after it. The item is author prose, so this
+      # only draws the boundary a citation needs; it never rewrites a word.
+      def canon_statement(match)
+        text = match[:text].to_s.strip
+        return first_sentence(text) if text.present?
+
+        heading = match[:marker].to_s.sub(/\A\s*—\s*/, "").sub(/\.\z/, "").strip
+        heading.presence || match[0].strip
+      end
+
+      def first_sentence(text)
+        text[/\A.*?[.!?](?=\s|\z)/m]&.strip || text
+      end
+
+      def canon_source(document, raw_line)
+        "#{raw_line.strip}\n\nCanon: #{document.relative_path}"
       end
 
       def read_entities
@@ -212,12 +253,13 @@ module StoryInterchange
             document = document_for(file)
             @entries << Entry.new(document: document, kind: config[:kind], story_slug: nil, chapter_slug: nil)
             @report.count(config[:count])
-            validate_frontmatter(document,
+            frontmatter = validate_frontmatter(document,
               kind: config[:kind],
               required: config[:required],
               optional: config[:optional],
               label: config[:label],
               slug_from_filename: true)
+            register_entity(document, config[:kind], frontmatter) if frontmatter
           end
         end
       end
@@ -421,6 +463,20 @@ module StoryInterchange
 
         @character_slugs << slug if kind == :character
         @location_slugs << slug if kind == :location
+      end
+
+      # Hands the parsed record to the report so an import slice writes it. The
+      # filename is the identity (the contract requires the frontmatter slug to
+      # match it), and the body is split once here rather than by every slice.
+      def register_entity(document, kind, frontmatter)
+        @report.add_entity(Report::Entity.new(
+          kind: kind,
+          slug: File.basename(document.path, ".md"),
+          name: frontmatter["name"].to_s,
+          frontmatter: frontmatter,
+          sections: document.sections,
+          introduction: document.introduction
+        ))
       end
 
       def check_references

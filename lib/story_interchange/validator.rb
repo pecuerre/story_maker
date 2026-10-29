@@ -69,6 +69,12 @@ module StoryInterchange
     SCENE_REQUIRED = %w[id title chapter sequence pov location timeline branch status].freeze
     SCENE_OPTIONAL = %w[depends_on].freeze
 
+    # Everything directly under `universe/` that the interchange reads. A
+    # `README.md` is documentation at any depth, and `inspirations.md` is
+    # authoring guidance with no record behind it, so it is reported rather than
+    # silently ignored.
+    UNIVERSE_ENTRIES = %w[README.md canon characters factions locations tech].freeze
+
     Entry = Data.define(:document, :kind, :story_slug, :chapter_slug)
 
     def initialize(path)
@@ -91,6 +97,7 @@ module StoryInterchange
       read_identity
       return @report unless check_layout
 
+      check_universe_entries
       read_canon
       read_entities
       read_stories
@@ -109,7 +116,17 @@ module StoryInterchange
         end
 
         @report.universe_slug = slug
-        @report.universe_name = slug.titleize
+        @report.universe_name = universe_name || slug.titleize
+      end
+
+      # The directory name is the Universe's address; `universe/README.md` opens
+      # with the name a reader knows it by (`# Meridian`). The heading is the
+      # display name when it exists, and the titleized slug is the fallback.
+      def universe_name
+        readme = File.join(@root, "universe", "README.md")
+        return nil unless File.file?(readme)
+
+        Document.load(readme, root: @root).title.to_s.strip.presence
       end
 
       def check_layout
@@ -149,24 +166,41 @@ module StoryInterchange
         valid
       end
 
+      # A file directly under `universe/` that is neither the README nor an
+      # entity directory has no record kind in the application. The source may
+      # legitimately carry one (`inspirations.md`), so it is a warning and the
+      # preview names it instead of the import reading it as content.
+      def check_universe_entries
+        Dir.children(@universe).sort.each do |child|
+          next if child.start_with?(".")
+          next if UNIVERSE_ENTRIES.include?(child)
+
+          path = File.join(@universe, child)
+          @report.warning(path: relative(path),
+            message: "unexpected entry in universe/; only README.md, canon/, and the entity directories are read")
+        end
+      rescue SystemCallError
+        nil
+      end
+
       def read_canon
         directory = File.join(@universe, "canon")
-        markdown_files(directory).each do |file|
-          document = document_for(file)
+        markdown_files(directory, include_readme: true).each do |file|
+          # The ledger README states the rules and indexes the areas. It is
+          # documentation: required, but not an entity and not a reference
+          # source.
+          next if File.basename(file) == "README.md"
 
-          if File.basename(file) == "README.md"
-            @entries << Entry.new(document: document, kind: :canon_readme, story_slug: nil, chapter_slug: nil)
-          else
-            @entries << Entry.new(document: document, kind: :canon, story_slug: nil, chapter_slug: nil)
-            read_canon_area(document)
-          end
+          document = document_for(file)
+          @entries << Entry.new(document: document, kind: :canon, story_slug: nil, chapter_slug: nil)
+          read_canon_area(document)
         end
       end
 
       def read_canon_area(document)
         section = nil
 
-        document.raw.each_line.with_index(1) do |line, number|
+        document.content.each_line.with_index(1) do |line, number|
           if (match = CANON_HEADING.match(line))
             section = canon_section(match[1])
           elsif (match = CANON_ITEM.match(line))
@@ -296,7 +330,6 @@ module StoryInterchange
         end
 
         document = document_for(path)
-        @entries << Entry.new(document: document, kind: :story_readme, story_slug: slug, chapter_slug: nil)
 
         if blank?(document.title)
           @report.add_story(slug: slug, name: slug.titleize)
@@ -350,11 +383,22 @@ module StoryInterchange
           end
 
           @report.count(:chapters)
-          @report.add_chapter(story_slug: story_slug, slug: chapter)
+          @report.add_chapter(story_slug: story_slug, slug: chapter, name: chapter_name(chapter_directory, chapter))
           markdown_files(chapter_directory).each do |file|
             read_scene(file, story_slug, chapter)
           end
         end
+      end
+
+      # A chapter directory may carry a README whose `#` heading names the
+      # chapter for a human: `# Chapter 06 — The Meeting`. The heading supplies
+      # the Section's display name when it names one, and the directory's own
+      # slug part is the fallback so a chapter without a README still has a name.
+      def chapter_name(directory, slug)
+        readme = File.join(directory, "README.md")
+        heading = File.file?(readme) ? Document.load(readme, root: @root).title.to_s.strip : ""
+        heading = heading.sub(/\Achapter\s+\d{2}\s*[—–:-]\s*/i, "").strip
+        heading.presence || slug.sub(/\A\d{2}-/, "").tr("-", " ").titleize
       end
 
       def read_scene(file, story_slug, chapter)
@@ -520,11 +564,15 @@ module StoryInterchange
         Document.load(path, root: @root)
       end
 
-      def markdown_files(directory)
+      # Only `.md` files are read. `README.md` is documentation at every depth —
+      # the directory's own guide, never a record — so it is skipped unless the
+      # caller is the canon ledger, which asks for it by name.
+      def markdown_files(directory, include_readme: false)
         return [] unless File.directory?(directory)
 
         Dir.children(directory).sort.filter_map do |child|
           next if child.start_with?(".")
+          next if child == "README.md" && !include_readme
           next unless child.end_with?(".md")
 
           path = File.join(directory, child)

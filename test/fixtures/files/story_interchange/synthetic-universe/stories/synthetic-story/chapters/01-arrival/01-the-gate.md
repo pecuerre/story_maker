@@ -11,7 +11,7 @@ status: draft
 depends_on: [B-001]
 ---
 
-# The gate
+## The gate
 
 Ada carries the lantern through the gate (`[[rule:L1]]`) and is met by a
 warden (`[[wardens]]`, `[[keep]]`). The wick is already low.

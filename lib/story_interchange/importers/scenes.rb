@@ -7,19 +7,22 @@ module StoryInterchange
     # `pov` is the point-of-view Character, `location` is a Location presence
     # link, and `status` is the writing status.
     #
-    # The body is manuscript prose. The source has no per-block marker, so every
-    # blank-line-separated paragraph becomes one Narration Element: the first
-    # carries the Scene's title and each later one is numbered, because an
-    # Element requires a Title and the source records no block titles. Nothing
-    # is split into Dialogue, because the source records no speaker or line —
-    # dialogue attribution is preserved only where the source states it.
+    # The body is manuscript prose. It opens with the Scene's own `##` title
+    # heading, which names the record rather than being a section; any further
+    # `##` heading is reported, because the Scene contract has no sections. HTML
+    # comments are drafting notes and never reach stored prose.
+    #
+    # The source has no per-block marker, so every blank-line-separated
+    # paragraph becomes one Narration Element: the first carries the Scene's
+    # title and each later one is numbered, because an Element requires a Title
+    # and the source records no block titles. Nothing is split into Dialogue,
+    # because the source records no speaker or line — dialogue attribution is
+    # preserved only where the source states it.
     #
     # `id`, `timeline`, `branch`, and `depends_on` are source facts with no
     # Scene column. `timeline` is deliberately author prose ("ninth day after
     # the flare") rather than a parseable date, so it is reported instead of
-    # guessed into `datetime`. A `##` heading in a Scene is reported too: the
-    # Scene contract has no sections, and dropping or reinterpreting its prose
-    # would be worse than naming it for the operator.
+    # guessed into `datetime`.
     class Scenes < Importer
       slice label_key: "imports.slices.scenes",
         count: :scenes,

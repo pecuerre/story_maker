@@ -124,7 +124,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     story = universe.stories.find_by!(slug: "synthetic-story")
 
     arrival = story.sections.find_by!(slug: "01-arrival")
-    assert_equal "Arrival", arrival.name
+    assert_equal "The Arrival Gate", arrival.name
     assert_equal 0, arrival.position
     assert_nil arrival.parent
 
@@ -161,6 +161,10 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     hall_elements = hall.scene_elements.reorder(:position, :id)
     assert_equal [ "The hall", "The hall (2)" ], hall_elements.map(&:name)
     assert_includes hall_elements.last.body, "Ada sets the lantern down and waits for the warden to speak."
+    # The Scene's title heading names the record rather than starting the prose,
+    # and a drafting comment never reaches an Element.
+    assert_not_includes hall_elements.map(&:body).join("\n"), "## The hall"
+    assert_not_includes hall_elements.map(&:body).join("\n"), "drafting note"
   end
 
   test "reports the scene facts the application has no column for" do

@@ -65,11 +65,11 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal "The question",
       plot.sections.find { |section| section.heading == "The question" }.heading
 
-    # Chapters are directories, so the report carries the Story and the
-    # directory name rather than a file entity.
+    # Chapters are directories, so the report carries the Story, the directory
+    # name, and the `#` heading its README supplies as the display name.
     assert_equal [
-      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "01-arrival"),
-      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "02-winter")
+      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "01-arrival", name: "The Arrival Gate"),
+      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "02-winter", name: "Winter")
     ], report.chapters
 
     # A Scene is parsed like an entity too; its chapter is in its frontmatter
@@ -91,10 +91,62 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "ignores references inside fenced blocks" do
+    replace("universe/characters/ada.md", "## At a glance",
+      "## At a glance\n\n```\n[[not-a-record]]\n```\n")
+
     report = validate
 
     refute report.errors.any? { |issue| issue.message.include?("not-a-record") },
-      "the README's fenced example must not be treated as a reference"
+      "a fenced example must not be treated as a reference"
+  end
+
+  test "does not read a README as a record or check its references" do
+    report = validate
+
+    assert report.valid?, report.errors.map(&:to_s).join("\n")
+    assert_nil report.entity("README")
+    assert_equal 1, report.counts[:characters]
+    assert_equal 1, report.counts[:plots]
+    assert_equal 2, report.counts[:scenes]
+  end
+
+  test "strips an HTML comment from stored prose and ignores its references" do
+    replace("universe/characters/ada.md", "The engineer trusted by [[wardens]] to keep the lantern lit.",
+      "The engineer trusted by [[wardens]] to keep the lantern lit.\n\n<!-- [[nobody]] drafting note -->")
+
+    report = validate
+
+    assert report.valid?, report.errors.map(&:to_s).join("\n")
+    assert_equal "The engineer trusted by [[wardens]] to keep the lantern lit.",
+      report.entity("ada").sections.find { |section| section.heading == "At a glance" }.body
+  end
+
+  test "reads the universe display name from universe/README.md" do
+    write("universe/README.md", "# Meridian\n\nThe shared universe.\n")
+
+    report = validate
+
+    assert report.valid?, report.errors.map(&:to_s).join("\n")
+    assert_equal "synthetic-universe", report.universe_slug
+    assert_equal "Meridian", report.universe_name
+  end
+
+  test "warns about an entry directly under universe/ that no slice reads" do
+    write("universe/inspirations.md", "# Inspirations\n\nWhere the story comes from.\n")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_match(/unexpected entry in universe\//, warnings(report))
+  end
+
+  test "reads a scene title heading as the name, not as a section" do
+    report = validate
+    scene = report.entity("01-the-gate")
+
+    assert_equal "The gate", scene.name
+    assert_empty scene.sections
+    assert_includes scene.introduction, "Ada carries the lantern through the gate"
   end
 
   test "checks references written inside inline code" do

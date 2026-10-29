@@ -48,6 +48,11 @@ Labels used below, in the order their groups appear:
 - **Story interchange import.** A platform-admin page and the `story_interchange:import` task write a source into its named universe through a registry of record-type slices, starting with canon rules.
 - **Universe backup archive.** An admin-only `.tar.gz` carries a lossless table dump, the stored photo files, and a readable story-interchange projection, with memberships and change history explicitly deferred.
 
+### changed
+
+- **Story interchange README rule.** A `README.md` is documentation at every depth, so the import skips entity, plot, and chapter READMEs and ignores their example references, while still reading the universe name from `universe/README.md` and the story name from the story README.
+- **Story interchange prose parsing.** A Scene's `##` title heading now names the record instead of hiding its prose, a chapter README supplies its Section's name, HTML comments are stripped, and a file directly under `universe/` with no slice is reported.
+
 ### security
 
 - **Import safety.** Import asks for the platform flag, accepts only a folder name under `STORY_INTERCHANGE_IMPORT_ROOT`, requires a destructive confirmation, and refuses a target universe with open drafts or other members.
@@ -55,6 +60,7 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Interchange source structure.** The story-interchange document now describes README documentation at every depth, the universe-name heading, chapter README naming, Scene title headings, comment stripping, and the reported `universe/inspirations.md`.
 - **Section and Scene import mapping.** Records chapter-to-Section naming, the frontmatter that becomes Scene fields, prose as Narration Elements, and why timeline, branch, depends_on, and Scene Tags stay reported.
 - **Location, Item, Story, and Plot import mapping.** Records the grouped-answer split, the flat Location and Item hierarchy, `invented_by` becoming `origin`, and the Story-before-Plot slices in the interchange document.
 - **Character and Faction import mapping.** Records the section-to-profile mapping, the reported sections and frontmatter keys, and why affiliation, knowledge, and Relations stay reported rather than written.

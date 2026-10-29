@@ -1,9 +1,10 @@
 module StoryInterchange
   module Importers
-    # Each chapter directory is one Section. The source has no chapter file, so
-    # the directory name is the only chapter fact: the Section's slug is that
-    # name (`01-arrival`) and its display name is the slug part titleized
-    # (`Arrival`). The number is the chapter's place, not part of its name.
+    # Each chapter directory is one Section. The source has no chapter record,
+    # so the directory name is its slug (`01-arrival`), the `#` heading in the
+    # chapter's README is its display name when it carries one, and the slug
+    # part titleized is the fallback. The number is the chapter's place, not part
+    # of its name.
     #
     # Chapters are flat, so every imported Section is top-level and its position
     # follows the sorted directory order within its Story. The chapter is read
@@ -21,7 +22,7 @@ module StoryInterchange
 
           Section.create!(
             story: story,
-            name: name_for(chapter.slug),
+            name: chapter.name,
             slug: chapter.slug,
             position: position
           )
@@ -29,14 +30,6 @@ module StoryInterchange
 
         Outcome.new(label_key: label_key, created: created.size, skipped: [])
       end
-
-      private
-        # `01-arrival` names the chapter "Arrival". The number is positional
-        # metadata that the slug keeps so a chapter's identity stays the
-        # filename the source uses.
-        def name_for(slug)
-          slug.sub(/\A\d{2}-/, "").tr("-", " ").titleize
-        end
     end
   end
 end

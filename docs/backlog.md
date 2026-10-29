@@ -214,6 +214,12 @@ triaged into this list.
    [Appearance grid](features/appearances.md). There is no chart library; the Map's server-rendered
    SVG is the closest existing pattern.
 
+68. is there any statistic about contributions per universe? something like
+  - john doe: 40%
+  - jane doe: 33%
+  - mark markson: 20%
+  - jack jackson: 7%
+
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is

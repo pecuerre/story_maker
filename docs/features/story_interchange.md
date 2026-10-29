@@ -22,21 +22,29 @@ repository process, not interchange data, and are ignored.
 ```
 <source>/
   universe/
+    README.md                the universe's name and the shared conventions
     canon/
       README.md              the ledger rules and area index
       <area>.md              one canon area: Locked facts and Open questions
-    characters/<slug>.md
-    factions/<slug>.md
-    locations/<slug>.md
-    tech/<slug>.md
+    characters/
+      README.md              folder guide
+      <slug>.md
+    factions/                README.md and <slug>.md
+    locations/               README.md and <slug>.md
+    tech/                    README.md and <slug>.md
+    inspirations.md          authoring guidance — read by nobody, reported
   stories/
     README.md                optional human index of the stories
     <story>/
       README.md              the reading order and the story's name
       chapters/
+        README.md            how chapters and scenes are numbered
         NN-chapter/
+          README.md          the chapter's header and its display name
           NN-scene.md
-      plots/<slug>.md
+      plots/
+        README.md            the plot-thread index
+        <slug>.md
 ```
 
 `universe/` holds every record every Story shares. `stories/<story>/` holds only what that Story
@@ -46,6 +54,11 @@ owns: its chapters and scenes, its Plot threads, and its reading order. Prose ne
 A file whose name starts with `.` is ignored, so `.gitkeep` may keep an empty directory in version
 control. Only `.md` files are read.
 
+**A `README.md` is documentation at every depth.** It describes its directory for a human and is
+never a record, so the validator skips it rather than reporting a missing frontmatter block or
+parsing its examples as references. Three READMEs are still read for the one fact each owns: the
+Universe's display name, the Story's name, and optionally a chapter's display name.
+
 ## Identity without a manifest
 
 There is no manifest. The tree itself names its universe and stories:
@@ -53,8 +66,9 @@ There is no manifest. The tree itself names its universe and stories:
 - **Universe slug** — the source directory's basename, with a trailing `.git` removed and the rest
   parameterized (`The Fifth Cabinet.git` → `the-fifth-cabinet`, `tcs.git` → `tcs`). A name with no
   letters or digits is refused.
-- **Universe display name** — the slug titleized (`the-fifth-cabinet` → `The Fifth Cabinet`). It is a
-  default; the Universe's name can be edited in the application after an import.
+- **Universe display name** — the first `#` heading in `universe/README.md` when it has one
+  (`# Meridian` → `Meridian`), otherwise the slug titleized. It is a default; the Universe's name
+  can be edited in the application after an import.
 - **Story slug** — each directory directly under `stories/`.
 - **Story name** — the first `#` heading in that Story's `README.md`.
 
@@ -76,8 +90,14 @@ record's slug:
 A slug is frozen once its file exists. Slugs are unique across all four entity directories and
 `stories/<story>/plots/`, because a bare `[[slug]]` must resolve without a type.
 
-`universe/canon/README.md` is required. It holds the ledger rules and the area index; every other
-Markdown file in `universe/canon/` is one area of canon.
+`universe/canon/README.md` is required. It holds the ledger rules and the area index; it is
+documentation, so it is not parsed as one of the areas. Every other Markdown file in
+`universe/canon/` is one area of canon.
+
+A file directly under `universe/` that is not the README, the canon directory, or one of the four
+entity directories has no record kind — `universe/inspirations.md` is the real example, authoring
+guidance with no table behind it. It is reported as a warning and never read, so the import cannot
+turn it into a record by accident.
 
 ## Story records
 
@@ -86,11 +106,16 @@ Markdown file in `universe/canon/` is one area of canon.
   regenerated for a human rather than imported as a second source of order. The prose has no Story
   column to fill, so only the heading and the directory slug become the Story record.
 - `stories/<story>/chapters/` is optional. Each child is a chapter directory `NN-slug`, and each
-  child of that is a scene file `NN-slug.md`. A chapter becomes one top-level Section whose slug is
-  the directory name and whose name is its slug part titleized (`01-arrival` → `Arrival`), in sorted
-  directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
-  database ids, and a scene also carries its stable in-world identity in frontmatter.
-- `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread.
+  child of that is a scene file `NN-slug.md`; a chapter's own `README.md` is documentation and is
+  not a scene. A chapter becomes one top-level Section whose slug is the directory name
+  (`01-arrival`) and whose name is the first `#` heading in the chapter's `README.md` when it has
+  one, with the leading `Chapter NN —` removed (`# Chapter 01 — The Arrival Gate` → `The Arrival
+  Gate`); without that heading the name is the slug part titleized (`01-arrival` → `Arrival`).
+  Chapters are written in sorted directory order. Chapter and scene numbers are two-digit
+  positions; they are filenames, not database ids, and a scene also carries its stable in-world
+  identity in frontmatter.
+- `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
+  `README.md` is its human index and is not a Plot.
 
 ## Frontmatter
 
@@ -123,11 +148,17 @@ Rules for those values:
 
 ## Profile sections
 
-The body starts with one `#` heading and continues with `##` sections. A section that maps to a
-profile answer is written into that answer, with its Markdown body kept as written; a section with
-no target is reported by the import slice, never silently dropped. The exact profile field lists
-live in [Characters](characters.md#profile), [Factions](factions.md#scope-and-profile),
+The body starts with one heading and continues with `##` sections. A profile file opens with `#`
+and a Scene opens with its own `##` title (see [Plot and Scene](#plot-and-scene)); either heading
+names the record and is not prose. A section that maps to a profile answer is written into that
+answer, with its Markdown body kept as written; a section with no target is reported by the import
+slice, never silently dropped. The exact profile field lists live in
+[Characters](characters.md#profile), [Factions](factions.md#scope-and-profile),
 [Locations](locations.md#location-profile), and [Items](items.md#item-profile).
+
+HTML comments (`<!-- … -->`) are drafting notes for the author, not prose. They are stripped before
+a section is stored and before references are scanned, so a `[[slug]]` inside one is an example
+rather than a reference.
 
 The prose before the first `##` section — the source's identity block — has no target and is
 reported as the record's `introduction`. A frontmatter key the application has no column for is
@@ -237,16 +268,16 @@ with the chapter order gives its flat position in the Story, `pov` is its point-
 `location` is a Location presence link with no role, and `status` is its writing status. `id`,
 `timeline`, `branch`, and `depends_on` have no Scene column and are reported. `timeline` is author
 prose such as "ninth day after the flare", never a date the import may parse into `datetime`, so the
-Scene's in-world time stays empty and the source text is kept in the report. A `##` heading in a
-Scene is reported too: the Scene contract has no sections, so its prose is not guessed into a
-profile answer.
+Scene's in-world time stays empty and the source text is kept in the report.
 
-A Scene's body is manuscript prose; every blank-line-separated paragraph becomes one ordered
-Narration [Element](scenes.md#elements). The source records no block title, so the first Element
-takes the Scene's title and each later one appends its number. No Dialogue Element, speaker, or turn
-is invented: the source states a speaker and line only in prose, so dialogue attribution is
-preserved only where it is written. Entity references in that prose are written as record names, as
-in a profile answer; rule, scene, and backlog references stay as written. The source carries no tag
+A Scene's body opens with its `##` title — the same text as the frontmatter `title` — and continues
+as manuscript prose. The heading names the Scene and is not a section; every later `##` heading has
+no Scene target and is reported. Every blank-line-separated paragraph becomes one ordered Narration
+[Element](scenes.md#elements). The source records no block title, so the first Element takes the
+Scene's title and each later one appends its number. No Dialogue Element, speaker, or turn is
+invented: the source states a speaker and line only in prose, so dialogue attribution is preserved
+only where it is written. Entity references in that prose are written as record names, as in a
+profile answer; rule, scene, and backlog references stay as written. The source carries no tag
 taxonomy, so the import creates no Scene Tags.
 
 ## Canon ledger
@@ -277,7 +308,11 @@ a reference inside inline code is real, because the source writes rule citations
 | `[[slug]]` | a Character, Faction, Location, Item, or Plot in the same source |
 | `[[rule:ID]]` | a canon item (`K`, `L`, `D`, or `O`) in `universe/canon/` |
 | `[[scene:NN-slug]]` | a scene in the same chapter as the referring scene |
-| `[[B-###]]` | the author's backlog; opaque to the app |
+| `B-###` | the author's backlog, written bare and never resolved; opaque to the app |
+
+A work-item id is not a link: the source writes `B-###` as plain prose, so the scanner ignores it
+rather than treating it as a reference. A bracketed `[[B-###]]` is still accepted as the same
+opaque id for an older source, and is never resolved either.
 
 `[[slug]]` written as bare documentation is allowed as a placeholder; any other unresolved reference
 is an error.
@@ -298,8 +333,8 @@ The report also carries each parsed record as a `Report::Entity` — its kind, s
 `##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`. A Plot entity
 also names the `story_slug` whose directory holds it. A slice reads that instead of opening the file
 again, so the write cannot disagree with the preview about a heading or a reference. A chapter is a
-directory rather than a file, so it is a separate `Report::Chapter` with its Story slug and directory
-name, in the sorted order the Sections slice writes.
+directory rather than a record file, so it is a separate `Report::Chapter` with its Story slug,
+directory name, and display name, in the sorted order the Sections slice writes.
 
 Run it without writing anything:
 
@@ -329,7 +364,9 @@ knows:
 
 - an unknown frontmatter key;
 - a canon id outside a Locked, Derived, or Open section, or a locked id under Open;
-- an unexpected entry in a story directory.
+- an unexpected entry in a story directory;
+- an entry directly under `universe/` that is neither the README, `canon/`, nor one of the entity
+  directories (`universe/inspirations.md` is the real example).
 
 The validator's fixtures are synthetic and live under
 `test/fixtures/files/story_interchange/`. The real novel is never committed here.
@@ -342,10 +379,11 @@ policy of its own.
 
 ### One universe, replaced
 
-The target is derived, not chosen: the source directory's basename is the Universe's slug and its
-titleized form is the default name ([Identity without a manifest](#identity-without-a-manifest)). A
-run replaces the one live Universe with that slug. No other universe is touched, and there is no way
-to import into a Universe with a different address.
+The target is derived, not chosen: the source directory's basename is the Universe's slug and the
+`universe/README.md` heading (or the titleized slug when there is none) is the default name
+([Identity without a manifest](#identity-without-a-manifest)). A run replaces the one live Universe
+with that slug. No other universe is touched, and there is no way to import into a Universe with a
+different address.
 
 - When no live Universe has the slug, the run creates one owned by the importer.
 - When one exists, the run soft-deletes it and creates a fresh Universe with the same slug. The
@@ -388,7 +426,8 @@ reports. The preview, the task, and the page read that list, so adding a type ne
 **Canon** writes the rules described under [Canon ledger](#canon-ledger) and reports the `O` items
 by id instead of writing them. **Characters**, **Factions**, **Locations**, and **Items** write one
 record per file from the mapping above. **Stories** writes one Story per story directory, because a
-Plot needs the Story it belongs to, and **Sections** then writes one Section per chapter directory.
+Plot needs the Story it belongs to, and **Sections** then writes one Section per chapter directory,
+named from its README heading as described under [Story records](#story-records).
 **Scenes** follows, writing each Scene with its Elements, because it needs the Story, the Section,
 and the Character and Location links those earlier slices created. **Plots** runs last and writes
 each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
@@ -411,6 +450,7 @@ a guest signs in and a signed-in non-operator receives `403`.
 It writes only the records a registered slice owns, and it does not write the source back out, copy
 it into the repository, or restore a replaced Universe. Knowledge records, Relations, Faction
 membership, Location and Item hierarchy, Plot Scene assignments, Scene Tags, and a Scene's in-world
-datetime do not arrive from this slice; the source text that would carry them is reported. A
-[Universe backup](universe_backup.md) writes the reverse direction as a readable projection; that
+datetime do not arrive from this slice; the source text that would carry them is reported. Authoring
+guidance such as `universe/inspirations.md` has no record kind and is reported rather than imported.
+A [Universe backup](universe_backup.md) writes the reverse direction as a readable projection; that
 document owns what the projection can and cannot carry.

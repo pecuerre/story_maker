@@ -281,6 +281,7 @@ module StoryInterchange
           return
         end
 
+        @report.count(:stories)
         read_story_readme(directory, slug)
         read_story_records(directory, slug)
       end
@@ -330,12 +331,13 @@ module StoryInterchange
           document = document_for(file)
           @entries << Entry.new(document: document, kind: :plot, story_slug: slug, chapter_slug: nil)
           @report.count(:plots)
-          validate_frontmatter(document,
+          frontmatter = validate_frontmatter(document,
             kind: :plot,
             required: PLOT_REQUIRED,
             optional: PLOT_OPTIONAL,
             label: "plot",
             slug_from_filename: true)
+          register_entity(document, :plot, frontmatter, story_slug: slug) if frontmatter
         end
       end
 
@@ -468,14 +470,15 @@ module StoryInterchange
       # Hands the parsed record to the report so an import slice writes it. The
       # filename is the identity (the contract requires the frontmatter slug to
       # match it), and the body is split once here rather than by every slice.
-      def register_entity(document, kind, frontmatter)
+      def register_entity(document, kind, frontmatter, story_slug: nil)
         @report.add_entity(Report::Entity.new(
           kind: kind,
           slug: File.basename(document.path, ".md"),
           name: frontmatter["name"].to_s,
           frontmatter: frontmatter,
           sections: document.sections,
-          introduction: document.introduction
+          introduction: document.introduction,
+          story_slug: story_slug
         ))
       end
 

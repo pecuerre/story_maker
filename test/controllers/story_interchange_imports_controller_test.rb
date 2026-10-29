@@ -115,6 +115,10 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 3, universe.canon_rules.count
     assert_equal 1, universe.characters.count
     assert_equal 1, universe.factions.count
+    assert_equal 1, universe.locations.count
+    assert_equal 1, universe.items.count
+    assert_equal 1, universe.stories.count
+    assert_equal 1, universe.stories.first.plots.count
 
     follow_redirect!
     assert_response :success
@@ -123,6 +127,10 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "1 reported, not written (O-I1)"
     assert_includes response.body, "Characters: 1 written"
     assert_includes response.body, "Factions: 1 written"
+    assert_includes response.body, "Locations: 1 written"
+    assert_includes response.body, "Items: 1 written"
+    assert_includes response.body, "Stories: 1 written"
+    assert_includes response.body, "Plots: 1 written"
   end
 
   test "refuses to replace a universe with an open draft" do

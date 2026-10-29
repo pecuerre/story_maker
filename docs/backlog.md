@@ -202,14 +202,6 @@ triaged into this list.
    approval-required: it must remap ids, decide how an older archive's missing tables are treated,
    and must not reuse the development-data reset path.
 
-64. **Import slice: Locations, Items, and Plots.**
-
-   tcs's `universe/locations/` maps to the five sensory answers and the five layout answers,
-   `universe/tech/` maps to Items, and `stories/<story>/plots/` maps to Story-owned Plots with their
-   type, status, owner POV, and question. **Needs the same field mapping** plus a hierarchy
-   decision: tcs files are flat, while Locations and Items carry `parent_id`. Scene assignments
-   cannot arrive until the Scene slice exists, so a Plot lands with its description and no Scenes.
-
 65. **Import slice: Sections, Scenes, and Elements.**
 
    tcs's `stories/<story>/chapters/` is empty today, so this slice waits for prose in the source.

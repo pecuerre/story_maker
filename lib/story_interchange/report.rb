@@ -25,10 +25,13 @@ module StoryInterchange
     # no source because it never becomes a rule.
     CanonItem = Data.define(:id, :statement, :source, :path, :line)
 
-    # One parsed universe record: the frontmatter the validator checked, the
-    # slug its filename fixes, and the body split into `##` sections so a slice
-    # maps headings to profile answers without reading the file a second time.
-    Entity = Data.define(:kind, :slug, :name, :frontmatter, :sections, :introduction)
+    # One parsed record: the frontmatter the validator checked, the slug its
+    # filename fixes, and the body split into `##` sections so a slice maps
+    # headings to profile answers without reading the file a second time.
+    #
+    # `story_slug` is nil for a Universe record and names the owning Story for a
+    # Plot, whose directory is what scopes it.
+    Entity = Data.define(:kind, :slug, :name, :frontmatter, :sections, :introduction, :story_slug)
 
     attr_reader :universe_slug, :universe_name, :stories, :counts, :issues,
       :canon_rules, :canon_questions

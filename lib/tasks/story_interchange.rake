@@ -23,6 +23,7 @@ namespace :story_interchange do
       factions: "Factions",
       locations: "Locations",
       items: "Items",
+      stories: "Stories",
       plots: "Plots",
       chapters: "Chapters",
       scenes: "Scenes"

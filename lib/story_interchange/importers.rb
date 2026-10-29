@@ -10,7 +10,11 @@ module StoryInterchange
     ALL = [
       Canon,
       Characters,
-      Factions
+      Factions,
+      Locations,
+      Items,
+      Stories,
+      Plots
     ].freeze
 
     # Whether this run writes any record of `kind`. A reference to a kind with no

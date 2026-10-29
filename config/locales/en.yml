@@ -426,6 +426,10 @@ en:
       canon_rules: "Canon rules"
       characters: "Characters"
       factions: "Factions"
+      locations: "Locations"
+      items: "Items"
+      stories: "Stories"
+      plots: "Plots"
     show:
       title: "Story interchange import"
       eyebrow: "Platform"

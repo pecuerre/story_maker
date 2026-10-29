@@ -83,7 +83,8 @@ Markdown file in `universe/canon/` is one area of canon.
 
 - `stories/<story>/README.md` is required. Its first `#` heading is the Story's name. Its reading
   order is presentation: **Scene positions and Section order are the data**, and the table is
-  regenerated for a human rather than imported as a second source of order.
+  regenerated for a human rather than imported as a second source of order. The prose has no Story
+  column to fill, so only the heading and the directory slug become the Story record.
 - `stories/<story>/chapters/` is optional. Each child is a chapter directory `NN-slug`, and each
   child of that is a scene file `NN-slug.md`. Chapter and scene numbers are two-digit positions; they
   are filenames, not database ids, and a scene also carries its stable in-world identity in
@@ -190,6 +191,16 @@ reported.
 | History | the three `history_*` answers |
 | Who is here, Events here, Story rules affecting this place, Open questions | no app field — report |
 
+A section that fills several answers is split by label: `- Sight: a gate taller than the wall.`
+writes `sensory_sight`. An item whose label names several answers fills each of them (`- Touch /
+smell: cold stone.`), and words that name none are ignored. An item whose label names no answer, and
+prose with no label at all, fills the group's first answer, so `sensory_sight`, `layout_structure`,
+`access_controlled_by`, and `history_significant_events` hold an unlabelled paragraph.
+
+The Location frontmatter keys `type`, `controller`, `status`, and `backlog` have no Location column
+and are reported. The source is flat and a Location carries a `parent_id`, but a filename says
+nothing about the hierarchy, so every imported Location is top-level and the tree is the operator's.
+
 ### Item
 
 | Source | Target |
@@ -204,19 +215,24 @@ reported.
 | Jargon | `jargon` |
 | History | `history` |
 | `invented_by` (frontmatter) | `origin` |
-| `type` and `status` (frontmatter) | no app field — report |
+| `type`, `status`, and `backlog` (frontmatter) | no app field — report |
 | In the story, Open questions | no app field — report |
 
 A `tech/` file is therefore an Item, not a new record kind. Its `type` and `status` are recognized
-source facts with no Item column today; the slice that imports Items decides whether to keep them in
-the profile prose or add a field.
+source facts with no Item column, so they are reported rather than kept in another answer. An Item
+carries a `parent_id` like a Location, and the same flat-source rule applies: every imported Item is
+top-level.
 
 ### Plot and Scene
 
-Plot and Scene sections are not profile answers. [Plots](plots.md) owns which Plot columns exist and
-[Scenes](scenes.md) owns the Scene record; the import slices for them decide how `type`, `status`,
-`owner_pov`, `opened_in`, `timeline`, `branch`, and `depends_on` land. The source keeps them in
-frontmatter so the decision is not made by dropping them.
+A Plot is Story-owned, so the Stories slice runs first and writes them. A Plot's `## The question`
+section is its `description`; its remaining sections are not profile answers and are reported, as
+are `type`, `status`, `owner_pov`, `opened_in`, and `backlog`, which have no Plot column. Scene
+assignments cannot arrive until the Scene slice exists, so a Plot lands with no Scenes.
+
+A Scene is still validator-only: [Scenes](scenes.md) owns the Scene record, and its slice decides how
+`timeline`, `branch`, and `depends_on` land. The source keeps them in frontmatter so the decision is
+not made by dropping them.
 
 A Scene's body is manuscript prose. It maps to the Scene's ordered Elements, one block per
 paragraph, when the Scene import slice exists.
@@ -255,9 +271,8 @@ a reference inside inline code is real, because the source writes rule citations
 is an error.
 
 The import writes a `[[slug]]` in a profile answer as the name of the record whose kind a slice in
-that run writes; a reference to a kind with no slice yet keeps its bracket form and is reported, so
-nothing is silently rewritten or dropped. Rule, scene, and backlog references are not entity
-references and are left as written.
+that run writes — every entity kind has one now — so nothing is silently rewritten or dropped. Rule,
+scene, and backlog references are not entity references and are left as written.
 
 ## The validator
 
@@ -265,12 +280,12 @@ references and are left as written.
 report exposes `universe_slug`, `universe_name`, `stories`, `counts`, `errors`, `warnings`, and
 `valid?`, plus the parsed `canon_rules` and `canon_questions` so the canon slice writes what the
 preview showed. Counts are available for canon rules, open canon questions, characters, factions,
-locations, items, plots, chapters, and scenes.
+locations, items, stories, plots, chapters, and scenes.
 
-The report also carries each parsed universe record as a `Report::Entity` — its kind, slug, name,
-frontmatter, `##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`.
-A profile slice reads that instead of opening the file again, so the write cannot disagree with the
-preview about a heading or a reference.
+The report also carries each parsed record as a `Report::Entity` — its kind, slug, name, frontmatter,
+`##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`. A Plot entity
+also names the `story_slug` whose directory holds it. A profile slice reads that instead of opening
+the file again, so the write cannot disagree with the preview about a heading or a reference.
 
 Run it without writing anything:
 
@@ -357,9 +372,11 @@ slice declares an I18n key for its name and the validator count it writes; a pro
 declares the record kind it writes, its section-to-column mapping, and the frontmatter keys it
 reports. The preview, the task, and the page read that list, so adding a type never edits them.
 **Canon** writes the rules described under [Canon ledger](#canon-ledger) and reports the `O` items
-by id instead of writing them. **Characters** and **Factions** write one record per file from the
-mapping above. Locations, Items, Plots, Scenes, chapters, Sections, and their remaining references
-are still validator-only and plug into the same registry when their slices exist.
+by id instead of writing them. **Characters**, **Factions**, **Locations**, and **Items** write one
+record per file from the mapping above. **Stories** writes one Story per story directory, because a
+Plot needs the Story it belongs to, and **Plots** then writes each Plot with no Scenes. Scenes,
+chapters, Sections, and their remaining references are still validator-only and plug into the same
+registry when their slices exist.
 
 A slice's `Outcome` names every source item it reports instead of writing, and the preview shows that
 list before the run: an open canon question, an unmapped section, a frontmatter key with no column,
@@ -377,6 +394,7 @@ a guest signs in and a signed-in non-operator receives `403`.
 
 It writes only the records a registered slice owns, and it does not write the source back out, copy
 it into the repository, or restore a replaced Universe. Knowledge records, Relations, Faction
-membership, Locations, Items, Plots, and Scenes do not arrive from this slice; the source text that
-would carry them is reported. A [Universe backup](universe_backup.md) writes the reverse direction
-as a readable projection; that document owns what the projection can and cannot carry.
+membership, Location and Item hierarchy, Plot Scene assignments, and Scenes do not arrive from this
+slice; the source text that would carry them is reported. A [Universe
+backup](universe_backup.md) writes the reverse direction as a readable projection; that document
+owns what the projection can and cannot carry.

@@ -410,6 +410,10 @@ es:
       canon_rules: "Reglas de canon"
       characters: "Personajes"
       factions: "Facciones"
+      locations: "Lugares"
+      items: "Objetos"
+      stories: "Historias"
+      plots: "Tramas"
     show:
       title: "Importación de story interchange"
       eyebrow: "Plataforma"

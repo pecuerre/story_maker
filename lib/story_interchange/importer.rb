@@ -13,6 +13,12 @@ module StoryInterchange
   # record this run writes, and `reported` lists everything the slice deliberately
   # leaves behind so the preview says so before the run rather than only after.
   #
+  # A profile value may be a column name or, for a section the app splits into
+  # several answers, an ordered label map. `Sensory` writes the five `sensory_*`
+  # answers: each labelled list item fills the answer its label names, several
+  # labels may share one item, and prose with no recognized label fills the first
+  # answer of the group so it is never dropped.
+  #
   # `Outcome` is the small shared answer a slice returns: how many records it
   # wrote, and the source items it deliberately did not write. A slice reports
   # those instead of dropping them, because the layout may carry more than the app
@@ -133,6 +139,11 @@ module StoryInterchange
     private
       attr_reader :report, :universe
 
+      # A list item whose label names the profile answer it fills:
+      # `- Sight: a gate taller than the wall.` The label is stripped, the text is
+      # kept as written, and an indented continuation line stays with its item.
+      GROUP_ITEM = /\A[ \t]*(?:[-*]|\d+\.)[ \t]+([^:\n]{1,60}):[ \t]*(.*)\z/
+
       # The shared body of a profile slice: one record per parsed entity, built
       # from the frontmatter and the sections `field_for` maps.
       def write_entities(record_class)
@@ -143,13 +154,88 @@ module StoryInterchange
         Outcome.new(label_key: label_key, created: created.size, skipped: self.class.reported(report))
       end
 
+      # What every record of this slice carries besides its profile answers. A
+      # Story-owned record overrides this to name its Story instead of the
+      # Universe.
+      def record_attributes(entity)
+        { name: entity.name, slug: entity.slug, universe: universe }
+      end
+
       def attributes_for(entity)
-        entity.sections.each_with_object({ name: entity.name, slug: entity.slug, universe: universe }) do |section, attributes|
+        entity.sections.each_with_object(record_attributes(entity)) do |section, attributes|
           field = self.class.field_for(section.heading)
           next unless field
 
-          attributes[field] = self.class.resolve_references(report, section.body)
+          if field.is_a?(Hash)
+            attributes.merge!(grouped_attributes(field, section.body))
+          else
+            attributes[field] = self.class.resolve_references(report, section.body)
+          end
         end
+      end
+
+      # Splits one section into the answers its ordered label map declares. The
+      # first entry is the fallback: text whose label names no answer is written
+      # there rather than dropped.
+      def grouped_attributes(fields, body)
+        attributes = {}
+
+        grouped_items(body).each do |label, text|
+          text = self.class.resolve_references(report, text)
+          next if text.blank?
+
+          targets = label ? label_fields(fields, label) : []
+          targets = [ fields.values.first ] if targets.empty?
+          targets.each { |field| append_answer(attributes, field, text) }
+        end
+
+        attributes
+      end
+
+      # `[label, text]` pairs in source order; a plain paragraph is one pair with
+      # no label.
+      def grouped_items(body)
+        items = []
+        blank = false
+
+        body.each_line do |line|
+          stripped = line.chomp.strip
+          if stripped.empty?
+            blank = true
+            next
+          end
+
+          if (match = GROUP_ITEM.match(line.chomp))
+            items << [ match[1].strip, +match[2] ]
+          elsif items.any? && !blank && line.match?(/\A[ \t]+/)
+            items.last.last << "\n" << stripped
+          else
+            items << [ nil, +stripped ]
+          end
+
+          blank = false
+        end
+
+        items.map { |label, text| [ label, text.strip ] }.reject { |_label, text| text.empty? }
+      end
+
+      # Every answer a label names. A label may name several (`Touch / smell`),
+      # and a word that names none (`gravity`) is ignored. A singular label still
+      # names a plural answer (`Point of interest`), so a trailing `s` on the
+      # answer's own label is optional.
+      def label_fields(fields, label)
+        words = label.downcase.split(%r{[/,]}).map(&:strip)
+        fields.filter_map do |fragment, field|
+          field if words.any? { |word| label_matches?(word, fragment) }
+        end.uniq
+      end
+
+      def label_matches?(word, fragment)
+        word.include?(fragment) || word.include?(fragment.delete_suffix("s"))
+      end
+
+      def append_answer(attributes, field, text)
+        attributes[field] = [ attributes[field], text ].compact_blank.join("\n\n")
       end
   end
 end

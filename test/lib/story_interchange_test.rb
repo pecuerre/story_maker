@@ -38,6 +38,7 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal 1, report.counts[:factions]
     assert_equal 1, report.counts[:locations]
     assert_equal 1, report.counts[:items]
+    assert_equal 1, report.counts[:stories]
     assert_equal 1, report.counts[:plots]
     assert_equal 2, report.counts[:chapters]
     assert_equal 2, report.counts[:scenes]
@@ -45,6 +46,7 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     character = report.entity("ada")
     assert_equal :character, character.kind
     assert_equal "Ada", character.name
+    assert_nil character.story_slug
     assert_equal "The engineer trusted by [[wardens]] to keep the lantern lit.",
       character.sections.find { |section| section.heading == "At a glance" }.body
     assert_empty character.introduction
@@ -53,6 +55,15 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal :faction, faction.kind
     assert_equal "The Wardens", faction.name
     assert_equal "[[keep]]", faction.frontmatter["home"]
+
+    # A Plot is parsed like an entity, and the story directory that holds it is
+    # what scopes it.
+    plot = report.entity("the-lantern")
+    assert_equal :plot, plot.kind
+    assert_equal "The lantern", plot.name
+    assert_equal "synthetic-story", plot.story_slug
+    assert_equal "The question",
+      plot.sections.find { |section| section.heading == "The question" }.heading
   end
 
   test "reads the body before the first section as an introduction" do

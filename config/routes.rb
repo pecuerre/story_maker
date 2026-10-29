@@ -148,6 +148,11 @@ Rails.application.routes.draw do
     resources :ownership_tags, only: %i[ index show create update destroy ]
     resources :ownerships, only: %i[ index show create update destroy ]
     resources :memberships, only: %i[ index new create update destroy ], path: "members"
+    # The universe backup is one admin-only download. Its page explains what the
+    # archive holds and what this slice deliberately leaves out; the download is a
+    # GET because it reads the universe and writes no record.
+    resource :backup, only: :show, controller: "universe_backups"
+    get "backup/download", to: "universe_backups#download", as: :backup_download
     # One conversation per record. `show` is a guest-readable read of an
     # append-only thread; it never creates anything. The "Discuss" control on a
     # record's details page POSTs to `create`, which finds or creates the thread

@@ -191,77 +191,71 @@ triaged into this list.
    must not duplicate ownership or knowledge. Start only after something can read the existing three,
    or the new rows become another source nobody checks.
 
-60. **Universe backup archive.**
+60. **Universe backup archive: identity, access, and restore.**
 
-   The printable export covers a Story's prose and appendices, not the Universe's data: photos, tags,
-   routes, plots, tropes, memberships, and change history have no download. `Novilot` pushes
-   manuscripts, Story Bible, and outline packages to Dropbox or a private GitHub repository as a
-   safety net. **Needs a format and a gate:** the loader already validates YAML manifests, so an
-   admin-only archive in the story-structure layout is the obvious first slice, and restore is a
-   separate, destructive, approval-required command that must not reuse the demo reset path. Backup
-   first, restore in a second change.
+   The core archive exists: an admin downloads a `.tar.gz` of the Universe's content, photos, and a
+   readable projection, and [the backup document](features/universe_backup.md) owns what it carries.
+   Users, memberships, drafts and their change history, review requests, notifications, and API
+   tokens are deliberately deferred. **Needs a privacy decision** on whether those rows join the same
+   archive, get a separate owner-only archive, or stay out: they carry identity, access, or somebody
+   else's unfinished work. Restore is the other half, and it is still separate, destructive, and
+   approval-required: it must remap ids, decide how an older archive's missing tables are treated,
+   and must not reuse the development-data reset path.
 
-61. **Story-structure interchange layout.**
+62. **First story-interchange import: registry, command, page, and canon.**
 
-   The tcs repository already holds a universe as directories of Markdown with YAML frontmatter —
-   `story/characters/`, `story/factions/`, `story/locations/`, `story/tech/`, `story/plots/`, and
-   `story/chapters/` — while this app has no format it can read or write. Define one layout and a
-   validator: a manifest naming the universe and its stories, one directory per record type,
-   frontmatter for every field that is not prose, a body whose sections map to the profile answers,
-   `[[slug]]` and `[[rule:ID]]` references, and a `canon/` home for rules. It is the contract the
-   importer reads and the universe backup writes, not a second storage format: the database stays the
-   source of truth. **Needs decisions:** how closely the layout follows tcs's own directories, which
-   frontmatter keys are required, how a `tech/` file becomes an Item, and how the single
-   `docs/canon.md` becomes rule records. The validator runs without writing, and every test fixture
-   is synthetic — the real novel is never committed.
+   The validator reads a source but nothing imports one, and the importer is meant to grow one record
+   type at a time. This slice delivers the reusable path every later slice plugs into: a registry
+   where each record type is its own importer class behind one small shared interface, an entry point
+   that imports everything currently registered, a Rails task taking the source path (proposed as
+   `bin/rails story_interchange:import`), and a platform-admin page that picks a folder under a
+   configured import root, lists the registered slices, and previews the validator's counts before
+   writing. Adding a type must not edit the command or the page. **Canon is the first slice**, and its
+   record already exists in [features/canon.md](features/canon.md) and
+   [ADR 0039](adr/0039-canon-rules-are-universe-owned-with-an-optional-story.md); the validator
+   already registers each `K`/`L`/`D` item id, so the slice reads the item text and writes one rule
+   per item, reporting the `O` questions instead.
 
-62. **First story-structure import: reader, command, page, and canon.**
-
-   Nothing imports a source directory today, and the importer is meant to grow one record type at a
-   time. This slice delivers the reusable path every later slice plugs into: a reader for the layout,
-   a registry where each record type is its own importer class behind one small shared interface, an
-   entry point that imports everything currently registered, a Rails task taking the source path
-   (proposed as `bin/rails story_structure:import`), and a platform-admin page that picks a folder
-   under a configured import root, lists the registered slices, and previews counts before writing.
-   Adding a type must not edit the command or the page. **Canon is the first slice**, and its record
-   already exists in [features/canon.md](features/canon.md) and [ADR 0039](adr/0039-canon-rules-are-universe-owned-with-an-optional-story.md).
-
-   A run **replaces** the universe named by the manifest: create it when absent, delete and recreate
-   it when present, after an explicit destructive confirmation that says records created in the app
-   for that universe are lost. No other universe is touched. The source directory lives outside the
-   repository and is never copied into it; the page never accepts an arbitrary path from the browser,
-   only a folder under the configured root; the page is platform-admin-only because it creates and
-   destroys universes; and the task refuses a production run without the same confirmation. **Needs a
-   safety rule** for a target universe with open drafts or members other than the importer, and a
-   synthetic fixture universe that exercises the reader without any real prose.
+   A run **replaces** the universe named by the source root, whose directory name is its slug:
+   create it when absent, delete and recreate it when present, after an explicit destructive
+   confirmation that says records created in the app for that universe are lost. No other universe is
+   touched. The source directory lives outside the repository and is never copied into it; the page
+   never accepts an arbitrary path from the browser, only a folder under the configured root; the
+   page is platform-admin-only because it creates and destroys universes; and the task refuses a
+   production run without the same confirmation. **Needs a safety rule** for a target universe with
+   open drafts or members other than the importer, and the import page must show the derived universe
+   slug and display name before writing.
 
 63. **Import slice: Characters and Factions.**
 
-   These are the first two record types after canon because they are the tcs directories that already
-   hold real records. Map the template frontmatter and body sections onto the existing profile
-   answers — `at_a_glance`, `wants`, `needs`, `lies_to_self`, `contradictions`,
-   `under_pressure_they`, `never`, `pronouns`, and `aliases` for a Character; `mission`,
-   `actual_aims`, `structure`, `internal_divisions`, `resources`, `would_never`, and
+   These are the first two record types after canon because `universe/characters/` and
+   `universe/factions/` already hold real records. Map the template frontmatter and body sections
+   onto the existing profile answers — `at_a_glance`, `wants`, `needs`, `lies_to_self`,
+   `contradictions`, `under_pressure_they`, `never`, `pronouns`, and `aliases` for a Character;
+   `mission`, `actual_aims`, `structure`, `internal_divisions`, `resources`, `would_never`, and
    `would_absolutely` for a Faction — and resolve each `[[slug]]` reference to the record created in
-   the same run. **Needs a written field-by-field mapping** and a decision about `affiliation`, which
-   may be a Character's faction membership rather than a profile answer. A reference whose target is
-   missing is reported, never silently dropped, and a second import of an unchanged source must
-   produce an identical universe.
+   the same run. **Needs a written field-by-field mapping** — including the Character template's
+   `Voice`, `State of knowledge`, `Relationships`, and `Arc` sections, which have no profile answer:
+   knowledge records and Relationships exist separately, while Voice and Arc need a decision and are
+   reported rather than dropped — and a decision about `affiliation`, which may be a Character's
+   faction membership rather than a profile answer. A reference whose target is missing is reported,
+   never silently dropped, and a second import of an unchanged source must produce an identical
+   universe.
 
 64. **Import slice: Locations, Items, and Plots.**
 
-   tcs `locations/` maps to the five sensory answers and the five layout answers, `tech/` maps to
-   Items, and `plots/` maps to Story-owned Plots with their type, status, owner POV, and question.
-   **Needs the same field mapping** plus a hierarchy decision: tcs files are flat, while Locations
-   and Items carry `parent_id`. Scene assignments cannot arrive until the Scene slice exists, so a
-   Plot lands with its description and no Scenes.
+   tcs's `universe/locations/` maps to the five sensory answers and the five layout answers,
+   `universe/tech/` maps to Items, and `stories/<story>/plots/` maps to Story-owned Plots with their
+   type, status, owner POV, and question. **Needs the same field mapping** plus a hierarchy
+   decision: tcs files are flat, while Locations and Items carry `parent_id`. Scene assignments
+   cannot arrive until the Scene slice exists, so a Plot lands with its description and no Scenes.
 
 65. **Import slice: Sections, Scenes, and Elements.**
 
-   tcs's `chapters/` is empty today, so this slice waits for prose in the source. It is not the
-   arbitrary-manuscript importer: that one accepts Word, Markdown, or HTML and needs mapping and
-   preview rules, while this one reads files already in the interchange layout. **Needs** the
-   layout's Scene frontmatter — chapter, sequence, POV, location, timeline, branch, and status —
+   tcs's `stories/<story>/chapters/` is empty today, so this slice waits for prose in the source.
+   It is not the arbitrary-manuscript importer: that one accepts Word, Markdown, or HTML and needs
+   mapping and preview rules, while this one reads files already in the interchange layout. **Needs**
+   the layout's Scene frontmatter — chapter, sequence, POV, location, timeline, branch, and status —
    mapped onto Section, Scene, point of view, datetime, and Tags, with dialogue attribution preserved
    only where the source records it. A chapter file that cannot be mapped is reported rather than
    guessed at.

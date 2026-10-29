@@ -242,9 +242,10 @@ Other global behavior: `allow_browser versions: :modern`,
     member may change universe settings or memberships;
   - private universe: only the owner and members may enter; read members cannot mutate, write
     members can contribute, and admin members can also manage access;
-  - two controllers ask for `admin` on **every** action rather than following the `index`/`show` →
-    `read`, everything else → `write` rule: **memberships** and **review_requests**, because what
-    they carry is access itself and somebody else's unfinished work;
+  - five controllers ask for `admin` on **every** action rather than following the `index`/`show` →
+    `read`, everything else → `write` rule: **memberships**, **review_requests**, **histories**,
+    **collaborators**, and **universe_backups**, because what they carry is access itself, somebody
+    else's unfinished work, who has worked here, or the whole core dataset;
   - access is inherited by every story and component in the universe; story-scoped records are
     authorized through their story's universe.
 - `Universe.visible_to(user)` applies the same policy to the universes index (the landing page).

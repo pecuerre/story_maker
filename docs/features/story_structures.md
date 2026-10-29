@@ -5,6 +5,9 @@ feature offers a small set of **starting shapes** instead, so a writer can seed 
 and then rename, regroup, delete, or fill the records like any others. The shape is a template, not a
 second kind of Story content.
 
+The [story interchange](story_interchange.md) is a different subject: it defines the import and
+backup directory layout, not a starting shape for one Story.
+
 The templates are code-owned rather than stored records. `StoryStructureCatalog` is the single
 catalogue, in the same spirit as [`TropeCatalog`](tropes.md#the-reference-catalogue): adding a
 structure is a code change, no Universe owns a template, and no writer edits the shared list.

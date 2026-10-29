@@ -38,10 +38,25 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-29
+
+### added
+
+- **Universe backup archive.** An admin-only `.tar.gz` carries a lossless table dump, the stored photo files, and a readable story-interchange projection, with memberships and change history explicitly deferred.
+
+### security
+
+- **Universe backup access.** The backup page and download require Universe admin, the download is served no-store, and the archive states which sensitive tables it omits.
+
+### docs
+
+- **Universe backup documentation.** Adds ADR 0042 and the feature document for the archive format, admin gate, deferred tables, and restore boundary, with links from export, navigation, and architecture.
+
 ## 2026-10-28
 
 ### added
 
+- **Story interchange validator.** Reads a tcs-style universe and story tree, checking frontmatter, slugs, canon ids, scene numbering, and references and returning record counts without writing.
 - **Scene writing status.** Scenes carry a fixed draft, revised, or final status, defaulting to draft, with a list badge, a details fact, and an editor field.
 - **Story structure templates.** An empty Story in a direct universe can start from a code-owned three-act or Hero's Journey shape that creates named Sections and Scenes, never prose or Universe records.
 - **Scene board controls.** Writers can move a Scene up or down and regroup it into another Section from its board card, posting the existing Scene actions and returning to the board.
@@ -59,6 +74,8 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Story interchange contract.** Adds ADR 0041 and the feature document defining the universe and story layout, frontmatter, profile-section mapping, canon ledger, references, and validator.
+- **Story-structure import backlog refreshed.** Updates the layout and import items to tcs's current `universe/` and `stories/<story>/` split, its per-area canon files, and its story-owned Plots directory.
 - **Spanish draft-page fallback finding.** Records in known quirks the deferred untranslated “a record” observation from the status test.
 - **Scene status documentation.** Records the fixed vocabulary, filter, badges, export choice, schema row, and validation, and narrows the backlog item to the archive and custom labels.
 - **Story structure documentation.** Adds the Story structures feature document and ADR 0040, links them from Scenes and the docs index, refreshes the ADR index, and removes the delivered backlog item.

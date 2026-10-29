@@ -88,6 +88,7 @@ es:
       configuration: "Configuración"
       tags: "Etiquetas"
       members: "Miembros"
+      backup: "Copia de seguridad"
       collaboration: "Colaboración"
       # La única entrada viva del grupo Colaboración. Apunta a los cambios
       # recordados del propio lector, y solo se ofrece donde eso puede existir: un
@@ -403,6 +404,19 @@ es:
       cancel: "Cancelar"
       close: "Cerrar"
 
+  universe_backups:
+    show:
+      title: "Copia de seguridad del universo"
+      eyebrow: "Herramientas del universo"
+      description: "Descarga los datos principales de este universo en un único archivo que puedas guardar en otro lugar."
+      download: "Descargar copia"
+      contents_title: "Qué contiene el archivo"
+      contents:
+        data: "Todos los registros principales, sus filas eliminadas lógicamente y sus vínculos de etiquetas, tropos, rutas, sucesos, relaciones y propiedades, en un volcado de tablas sin pérdidas."
+        photos: "Los archivos de foto de 300×300 guardados, nombrados por sus metadatos en el volcado."
+        content: "Una proyección legible en el formato de intercambio de historias. Sirve para leer, no para restaurar."
+      deferred_title: "Qué deja fuera esta copia"
+      deferred: "Las membresías, los usuarios, el historial de cambios, las solicitudes de revisión, las notificaciones y los tokens de API son una parte posterior y con su propia autorización. La restauración aún no está implementada."
   universes:
     title: "Universos"
     description: "Elige un mundo en el que trabajar. Cada universo contiene sus propias historias y sus registros de construcción del mundo compartidos."

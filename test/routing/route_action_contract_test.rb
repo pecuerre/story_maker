@@ -34,6 +34,11 @@ class RouteActionContractTest < ActiveSupport::TestCase
   # is excluded however it is namespaced.
   APPLICATION_CONTROLLER_DIRECTORY = "app/controllers".freeze
 
+  # A download is a GET that answers with bytes instead of rendering a page. It is
+  # the one deliberate exception to "a GET has a template": the backup page beside
+  # it is the HTML surface, and the download action's whole job is `send_data`.
+  TEMPLATELESS_GET_ACTIONS = %w[universe_backups#download].freeze
+
   test "every route resolves to an action its controller implements" do
     offenses = application_routes.filter_map do |route|
       controller = controller_for(route)
@@ -64,6 +69,7 @@ class RouteActionContractTest < ActiveSupport::TestCase
 
       controller = route.defaults[:controller]
       action = route.defaults[:action]
+      next if TEMPLATELESS_GET_ACTIONS.include?("#{controller}##{action}")
       next if template_exists?(controller, action)
 
       "#{verb(route)} #{route.path.spec} -> #{controller}##{action} (no template)"

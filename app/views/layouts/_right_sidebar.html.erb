@@ -25,6 +25,14 @@
           label: t("sidebar.tools.members"),
           path: universe_memberships_path,
           controllers: %i[ memberships ] %>
+
+        <%# A download of the whole core dataset, so it belongs beside the other
+            admin-only governance entry and not in the reading tools. %>
+        <%= render "shared/sidebar_link",
+          icon: "download",
+          label: t("sidebar.tools.backup"),
+          path: universe_backup_path,
+          controllers: %i[ universe_backups ] %>
       <% end %>
     </ul>
   </section>

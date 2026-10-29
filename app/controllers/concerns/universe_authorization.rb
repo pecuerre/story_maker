@@ -52,6 +52,9 @@ module UniverseAuthorization
       # same question for the same reason: the list names every author who has ever
       # closed a draft here, and a plain writer has no business reading that.
       return :admin if controller_name == "collaborators"
+      # A backup downloads the universe's whole core dataset, including rows a
+      # plain writer has no page for. It is the owner's and the admins' copy.
+      return :admin if controller_name == "universe_backups"
       return :read if %w[index show].include?(action_name)
 
       :write

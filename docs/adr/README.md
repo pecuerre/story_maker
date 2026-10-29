@@ -64,6 +64,8 @@ reasoning as of its date.
 | [0038](0038-a-scene-depicts-events-through-ordered-links.md) | Accepted | Link a Scene to several Events through ordered, roled rows, and retire the single `event_id` |
 | [0039](0039-canon-rules-are-universe-owned-with-an-optional-story.md) | Accepted | Make a canon rule universe-owned with an optional Story owner, without becoming an analyzer |
 | [0040](0040-story-structures-are-a-code-owned-starting-shape.md) | Accepted | Seed an empty Story's Sections and Scenes from a code-owned catalogue of acts and beats |
+| [0041](0041-the-story-interchange-is-a-directory-contract.md) | Accepted | Read and write a universe as the source tree itself, with no manifest and the database authoritative |
+| [0042](0042-a-universe-backup-is-a-core-data-archive.md) | Accepted | Make the lossless table dump authoritative, treat the interchange tree as a projection, and defer identity and history |
 
 ## Format
 

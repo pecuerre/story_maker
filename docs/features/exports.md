@@ -3,6 +3,9 @@
 A Story can be read as a book. The feature is one Story-scoped **Export** page and the printable HTML
 manuscript it produces; there is no persisted export record, and nothing about the Story changes.
 
+This is not a Universe backup. The export reads one Story's prose and appendices; a
+[Universe backup](universe_backup.md) copies the Universe's data behind every Story.
+
 ## Routes and access
 
 | Purpose | Canonical URL |

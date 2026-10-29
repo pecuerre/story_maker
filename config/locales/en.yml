@@ -92,6 +92,7 @@ en:
       configuration: "Configuration"
       tags: "Tags"
       members: "Members"
+      backup: "Backup"
       collaboration: "Collaboration"
       # The one live entry in the Collaboration group. It points at the reader's
       # own remembered changes, and it is offered only where such a thing can
@@ -416,6 +417,19 @@ en:
   # The button labels and the page titles are the same string, so one key serves
   # both the `content_for :title` and the `h1` — a reader who follows "New
   # universe" expects the page it opens to be called that too.
+  universe_backups:
+    show:
+      title: "Universe backup"
+      eyebrow: "Universe tools"
+      description: "Download this universe's core data as a single archive you can keep somewhere else."
+      download: "Download backup"
+      contents_title: "What the archive contains"
+      contents:
+        data: "Every core record, its soft-deleted rows, and its tag, trope, route, event, relation, and ownership links, in a lossless table dump."
+        photos: "The stored 300×300 photo files, named by their metadata in the dump."
+        content: "A human-readable projection in the story-interchange layout. It is for reading, not for restoring."
+      deferred_title: "What this backup leaves out"
+      deferred: "Memberships, users, change history, review requests, notifications, and API tokens are a later, separately gated slice. Restore is not implemented yet."
   universes:
     title: "Universes"
     description: "Choose a world to work in. Each universe contains its own stories and shared world-building records."

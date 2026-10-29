@@ -28,8 +28,8 @@ The required **statement** is the rule itself: one short sentence the Story must
 are author prose and are never translated.
 
 A rule is addressed by its numeric id, not a slug: its identity is the statement, so a slug would
-change when the author reworded the rule and break any citation that stored it. A later
-story-structure import can therefore point at a rule by id without the row moving.
+change when the author reworded the rule and break any citation that stored it. The
+[story interchange](story_interchange.md) can therefore point at a rule by id without the row moving.
 
 Rules are flat and unordered. They are not hierarchical, positioned, tagged, or photographed, and a
 Story does not get a second canon workspace beside its Sections, Plots, and Scenes.

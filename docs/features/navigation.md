@@ -108,8 +108,9 @@ then the sections that follow it:
 
 - **Configuration**: **Tags**, which opens the shared taxonomy workspace with **Universe Tags**
   selected by default and **Story Tags** for the story-scoped taxonomies, plus the universe
-  **Members** access manager, which only admins see. The list itself is unconditional, so a guest or
-  read-only member still gets **Tags** without an empty Configuration header.
+  **Members** access manager and the **Backup** download, both of which only admins see. The list
+  itself is unconditional, so a guest or read-only member still gets **Tags** without an empty
+  Configuration header.
 - **Collaboration**: the reader's own pending work, which exists only in a universe that remembers changes
   rather than writing them and only for a signed-in reader. It is **a panel and a link**, in that order:
   the panel states how many changes are waiting and names each one with the action and the record, and
@@ -154,9 +155,9 @@ then the sections that follow it:
   row at all. A person who has not collaborated here is a **404**, not an empty page.
 - **Review requests**: the reviewer's queue, and the one entry in this group that answers for the reader
   rather than about them. It is gated on **admin**, which is the whole of `review_requests`'s
-  authorization (`review_requests` and `memberships` are the two controllers whose every action asks for
-  `admin` rather than the `index`/`show` → `read` rule), because the queue names every author who has
-  submitted something. It is **not** gated on the collaboration mode: the mode is enforced on the one
+  authorization (`review_requests`, `memberships`, `histories`, `collaborators`, and
+  `universe_backups` are the controllers whose every action asks for `admin` rather than the
+  `index`/`show` → `read` rule), because the queue names every author who has submitted something. It is **not** gated on the collaboration mode: the mode is enforced on the one
   control that can make a submission, so a submission made before a mode change is still a queue row
   somebody has to decide, and the queue is a page in every mode. Its figure counts **what is waiting**
   rather than what the queue holds, so decided and withdrawn submissions lower nothing a reviewer is
@@ -167,8 +168,8 @@ then the sections that follow it:
   the readers who may see the queue.
 - **Inspector**: page-relevant details beside Configuration and Collaboration — the selected story's section and scene counts, and a selected record's relations and ownerships. It renders at most five rows and nothing at all when the page has nothing useful to say, so it stays hidden rather than rendering an empty box. It replaced the Analytics and AI placeholder groups, which had no model or route behind them.
 
-Configuration is about **the universe**: Tags and Members only. A platform preference belongs in the
-top bar's **Settings** entry instead, because a theme is not universe state.
+Configuration is about **the universe**: Tags, Members, and Backup. A platform preference belongs in
+the top bar's **Settings** entry instead, because a theme is not universe state.
 
 ## Navigation entries are honest about what exists
 

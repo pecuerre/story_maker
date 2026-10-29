@@ -34,6 +34,8 @@ the subject and read its owner:
 | **Scenes**, Elements, participation, the Scene filter, the deletion contract | [`docs/features/scenes.md`](docs/features/scenes.md) |
 | **Story-owned Plot arcs** and their Scene assignments | [`docs/features/plots.md`](docs/features/plots.md) |
 | **Code-owned starting shapes** for a Story's Sections and Scenes | [`docs/features/story_structures.md`](docs/features/story_structures.md) |
+| The interchange directory layout, its canon ledger, references, and read-only validator | [`docs/features/story_interchange.md`](docs/features/story_interchange.md) |
+| The admin-only Universe backup archive and the data it defers | [`docs/features/universe_backup.md`](docs/features/universe_backup.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
 | Character profiles, Faction membership, and Character knowledge changes | [`docs/features/characters.md`](docs/features/characters.md) |
 | Prose mentions, suggestions, and in-place name highlighting | [`docs/features/mentions.md`](docs/features/mentions.md) |

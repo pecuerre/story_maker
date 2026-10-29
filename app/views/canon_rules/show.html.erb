@@ -6,6 +6,9 @@
   label: t("canon_rules.show.label"),
   description: "",
   facts: [
+    detail_fact(t("canon_rules.show.facts.slug"), @canon_rule.slug),
+    detail_fact(t("canon_rules.show.facts.canon_type"), canon_type_label(@canon_rule)),
+    detail_fact(t("canon_rules.show.facts.category"), @canon_rule.category),
     detail_fact(t("canon_rules.show.facts.scope"),
       @canon_rule.universe_wide? ? t("canon_rules.scope.universe") : link_to(@canon_rule.story.name, universe_story_path(id: @canon_rule.story)))
   ],

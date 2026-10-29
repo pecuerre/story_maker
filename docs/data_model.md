@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_29_130000`) and the models in `app/models/`.
+`2026_10_29_140000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -97,7 +97,7 @@ keeps its row and reports the missing identifier the next time it is saved.
 
 The unique indexes that would otherwise block re-creating a record with the same key after a soft
 delete are partial (`WHERE deleted_at IS NULL`): `universes.slug`, `stories.[universe_id, slug]`,
-`plots.[story_id, name]`, `plots.[story_id, slug]`,
+`plots.[story_id, name]`, `plots.[story_id, slug]`, `canon_rules.[universe_id, slug]`,
 `universe_memberships.[universe_id, user_id]`, and the `scene_characters` / `scene_items` /
 `scene_locations` / `scene_events` link pairs. The matching model validations carry the same condition.
 
@@ -193,7 +193,7 @@ Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `sec
 | `faction_relationships` | `universe_id`, `from_faction_id`, `to_faction_id`, optional `name`, `description`, `from_date`, `to_date`, `slug`, `photo_id`, `deleted_at` | directed Faction-to-Faction link; endpoints must be distinct and in the same Universe; a reverse link is a separate record; the dates are a `TemporalInterval` |
 | `locations` | `name`, `description`, `sensory_sight`, `sensory_sound`, `sensory_smell`, `sensory_taste`, `sensory_touch`, `layout_structure`, `layout_key_areas`, `layout_pathways`, `layout_entrances_exits`, `layout_points_of_interest`, `significance`, `history_significant_events`, `history_past_occupants`, `history_changes`, `access_controlled_by`, `access_granted_how`, `access_security`, `access_restrictions`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; every profile field is optional text, ordered by `Location::PROFILE_FIELDS` and described in [features/locations.md](features/locations.md) |
 | `routes` | `universe_id`, `from_location_id`, `to_location_id`, optional `name`, `description`, optional free-form `distance` and `duration`, `slug`, `photo_id`, `deleted_at` | directional path between two Locations; both endpoints must belong to the same Universe; not hierarchical or positioned |
-| `canon_rules` | `universe_id` FK (NOT NULL), optional `story_id` FK, `statement` (NOT NULL), optional `source`, `deleted_at` | one rule the fiction obeys; no story means universe-wide, a story means that Story owns it; the Story must belong to the same Universe (application validation); addressed by id rather than a slug, so rewording a rule does not re-address it; no hierarchy, position, tags, or photo — see [features/canon.md](features/canon.md) |
+| `canon_rules` | `universe_id` FK (NOT NULL), optional `story_id` FK, `name` (model-required), `slug` (model-required), optional `category`, optional `canon_type`, `statement` (NOT NULL), optional `source`, `deleted_at` | one rule the fiction obeys; no story means universe-wide, a story means that Story owns it; the Story must belong to the same Universe (application validation); the name is the short title, the slug is the stable address and is unique among the Universe's live rules, the optional category names the source area, and the optional canon type is `locked`/`rule`/`consequence`/`open`; `name` and `slug` are nullable in the table because existing rows are re-imported rather than backfilled; no hierarchy, position, tags, or photo — see [features/canon.md](features/canon.md) and [ADR 0045](adr/0045-a-canon-rule-has-a-name-and-a-stable-slug.md) |
 | `items` | `name`, `description`, `what_it_does`, `how_it_is_used`, `side_effects`, `origin`, `value`, `cannot`, `constraints`, `history`, `jargon`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; every profile field is optional text, ordered by `Item::PROFILE_FIELDS` and described in [features/items.md](features/items.md) |
 | `events` | `title`, `name`, `description`, `slug`, `start_datetime`, `end_datetime`, `before_event_id`, `after_event_id`, `simultaneous_event_id` (all self-FKs), `parent_id`, `position`, `universe_id` | identity is title-driven; `has_many :scene_events, dependent: :destroy` and `has_many :scenes, through: :scene_events`; the datetimes are a `TemporalInterval` |
 | `relations` | `character1_id`, `character2_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |

@@ -396,13 +396,17 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Canon"
     assert_select ".page-eyebrow", text: "Biblia del universo"
     assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir regla"
+    assert_select "label[for=canon_rule_name]", text: "Nombre"
+    assert_select "label[for=canon_rule_slug]", text: "Slug"
+    assert_select "label[for=canon_rule_canon_type]", text: "Tipo de canon"
+    assert_select "label[for=canon_rule_category]", text: "Categoría"
     assert_select "label[for=canon_rule_statement]", text: "Regla"
     assert_select "label[for=canon_rule_source]", text: "Pasaje de origen"
     assert_select "label[for=canon_rule_story_id]", text: "Pertenece a"
     assert_select "input[type=submit][value=?]", "Guardar regla"
     assert_select ".entity-row .badge", text: "Todo el universo"
-    # The rule itself is author prose and stays as it was written.
-    assert_select ".entity-title", text: "Magic always costs the caster a memory."
+    # The rule's own title and prose stay as they were written.
+    assert_select ".entity-title", text: "Magic costs a memory"
 
     get universe_canon_rule_url(universe_slug: @universe.slug, id: canon_rules(:canon_rule_two))
 

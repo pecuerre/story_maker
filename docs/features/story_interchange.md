@@ -287,14 +287,29 @@ Every area file begins with a `# Canon: <subject>` heading and holds items under
 `## Derived consequences`, and `## Open` headings.
 
 - An item is a bold id at the start of a line, bulleted or not: `**K16.**`, `**L1 — Substrate.**`,
-  `**D8.**`, `**O-I1.**`.
+  `**D8.**`, `**O-I1.**`. The punctuation after the id is either a full stop or a short title after a
+  dash; hyphen, en dash, and em dash are all read.
 - `K##`, `L##`, and `D##` are rules. `O##` and `O-<letters>N` are open questions. The id prefix, not
   the heading, says which is which; a locked id under Open is a warning.
 - Ids are global and stable across every area file. A duplicate is an error.
-- The application imports one Canon Rule per `K`/`L`/`D` item. The rule's statement is the item's
-  first sentence or heading text, and its optional source passage is the item's text and area
-  citation. Open questions are reported, never imported as rules, because an open question is not a
-  rule the prose must obey.
+- The application imports one Canon Rule per `K`/`L`/`D`/`O` item. The id is the slug, lowercased
+  (`L2` → `l2`); the title after the dash is the name (`L2 — Trigger` → `Trigger`), or the statement
+  when the item states no title; the prefix is the canon type (`K` locked, `L` rule, `D` consequence,
+  `O` open); and the area filename without `.md` is the category. The statement is the first sentence
+  of the whole item, and the optional source passage is the item's own text. An open question becomes
+  a rule of type `open`, so it is held beside the rules it questions rather than dropped from the
+  import.
+- An item's text runs from its bold id to the next item or `##` heading, so a sentence may span the
+  line breaks the author used. The text is author prose, but it is stored as plain prose: emphasis,
+  inline-code backticks, and strikethrough markers are stripped; a table keeps its cells on one line
+  without its pipes or rule; a list keeps its text without its bullet; and a source file path such as
+  `universe/canon/mechanism.md` or `README.md` is removed rather than stored. Rule, scene, and backlog
+  references stay as written.
+- A citation in the title — `(Amended by K27)`, a `rule:L3` reference — is removed from the name and
+  stays in the item's text, which is where the source passage and the statement read it. A leading
+  amendment note (`*(Amended by K27.)*`, `(Author direction — K67: …)`) stays in the source passage
+  and is skipped when the statement is drawn, so an untitled rule is named after the rule rather than
+  after the note.
 
 The text of each item is author prose. An import must not summarize, merge, or reorder it.
 
@@ -443,8 +458,8 @@ One record type is one `StoryInterchange::Importer` subclass, registered in `Imp
 slice declares an I18n key for its name and the validator count it writes; a profile slice also
 declares the record kind it writes, its section-to-column mapping, and the frontmatter keys it
 reports. The preview, the task, and the page read that list, so adding a type never edits them.
-**Canon** writes the rules described under [Canon ledger](#canon-ledger) and reports the `O` items
-by id instead of writing them. **Characters**, **Factions**, **Locations**, and **Items** write one
+**Canon** writes every `K`/`L`/`D`/`O` item described under [Canon ledger](#canon-ledger), the open
+question as a rule of type `open`. **Characters**, **Factions**, **Locations**, and **Items** write one
 record per file from the mapping above. **Stories** writes one Story per story directory, because a
 Plot needs the Story it belongs to, and **Sections** then writes one Section per chapter directory,
 named from its README heading as described under [Story records](#story-records).
@@ -454,8 +469,8 @@ each Plot with no Scenes. Plot Scene assignments remain validator-only and plug 
 registry when their slice exists.
 
 A slice's `Outcome` names every source item it reports instead of writing, and both the preview and
-the [run page](#the-run-page) show that list: an open canon question, an unmapped section, a
-frontmatter key with no column, the preamble block, or a `[[slug]]` whose record kind has no slice.
+the [run page](#the-run-page) show that list: an unmapped section, a frontmatter key with no column,
+the preamble block, or a `[[slug]]` whose record kind has no slice.
 
 ### Where a source may live
 

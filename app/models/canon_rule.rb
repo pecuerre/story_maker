@@ -7,12 +7,21 @@
 # rules from story rules would duplicate the wall, the editor, and the search
 # document. The domain decision is in ADR 0039.
 #
-# **The record is addressed by its id, not by a slug.** Unlike a Character or a
-# Route, a Canon Rule has no name to derive one from: its identity is the
-# statement, which is prose. Deriving a slug from it would re-address the rule
-# every time an author rewords it, and a citation stored as a slug would then
-# dangle. The stable id is what a `[[rule:ID]]` reference can point at, so a rule
-# can be reworded without breaking the passage that cites it.
+# **The record has its own name and slug.** The name is the short title a list,
+# a search result, and a citation show; the statement stays the sentence the
+# prose must obey. The slug is how the rule is addressed, because the
+# story-interchange ledger already keys each item by a stable id (`K16`, `L2`,
+# `D8`) and re-importing a source must find the same rule again. The slug is the
+# ledger id when a rule comes from a source and the name parameterized otherwise.
+# A rename must not re-address the rule, which is why this model does not include
+# HasSlug — that concern regenerates the slug whenever the name changes. ADR 0045
+# records why this reverses ADR 0039's addressed-by-id choice.
+#
+# The optional **category** is the source area the rule came from (the area
+# file's name), and the optional **canon type** is the ledger's own distinction
+# between a locked fact, a rule of the mechanism, a derived consequence, and an
+# open question. The prefix in the source decides the type, so the attribute is
+# stored rather than derived from the id at read time.
 #
 # Nothing here checks prose against a rule. A rule earns its keep beside the
 # continuity findings inbox and the contradiction analyzer; this record is what
@@ -24,12 +33,26 @@ class CanonRule < ApplicationRecord
   include Searchable
   include HasDiscussion
 
-  searchable kind: "canon_rule", title: :statement, body: :source, route: "canon_rule"
+  # The ledger's four kinds of canon item, in the order the interface lists them.
+  # A rule may carry none, because a rule written straight into the app need not
+  # come from a ledger.
+  CANON_TYPES = %w[ locked rule consequence open ].freeze
+
+  searchable kind: "canon_rule", title: :name, body: :search_body, route: "canon_rule"
   invalidates_menu_counts_for :universe
 
   belongs_to :universe
   belongs_to :story, optional: true
 
+  # Registered before the validations so a form that submits a blank slug still
+  # saves with one derived from the name. It runs on every validation but keeps a
+  # slug that already exists, so a ledger id survives the rule being renamed.
+  before_validation :assign_slug
+
+  validates :name, presence: true
+  validates :slug, presence: true,
+    uniqueness: { scope: :universe_id, conditions: -> { where(deleted_at: nil) } }
+  validates :canon_type, inclusion: { in: CANON_TYPES }, allow_blank: true
   validates :statement, presence: true
   # A `story_id` that names nothing is a field error rather than the foreign key's
   # 500, for the same reason Scene's optional references are: the same id can
@@ -43,14 +66,28 @@ class CanonRule < ApplicationRecord
     story_id.nil?
   end
 
-  # The statement is the record's own label: a rule has no separate name, and the
-  # shared row partials name a record through this. It is author-written prose, so
-  # it is never translated; only the chrome around it is.
+  # The name is the record's own label. The statement is the fallback for a row
+  # written before names existed, which the next import replaces rather than the
+  # application repairing in place.
   def display_string
-    statement
+    name.presence || statement
+  end
+
+  # The statement and the passage are both prose a reader searches by, so one
+  # body carries them; the name alone would leave the rule itself unfindable.
+  def search_body
+    [ statement, source ].compact_blank.join(" ")
   end
 
   private
+
+    # The slug a reader may type is normalized the same way every other slug in
+    # the application is; when none is given, the name supplies one. `L2` becomes
+    # `l2`, because a slug is lowercase and hyphenated everywhere else.
+    def assign_slug
+      self.slug = slug.presence&.parameterize
+      self.slug = name.to_s.parameterize if slug.blank? && name.present?
+    end
 
     def story_reference_exists
       errors.add(:story, I18n.t("shared.errors.reference.must_exist")) if story_id.present? && story.nil?

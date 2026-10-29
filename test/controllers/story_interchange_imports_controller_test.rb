@@ -79,8 +79,10 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Creates a new universe."
     assert_includes response.body, "Canon rules"
     assert_includes response.body, "The source is valid."
-    # An open question is reported in the preview rather than silently missing.
-    assert_includes response.body, "O-I1"
+    # Every canon item, the open question included, is counted as a rule to write.
+    assert_select "tbody tr", text: /Canon rules/ do
+      assert_select "td", text: "4"
+    end
   end
 
   test "refuses a source name that is not a folder under the root" do
@@ -115,7 +117,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
 
     universe = Universe.find_by!(slug: "synthetic-universe")
     assert_equal @operator, universe.owner
-    assert_equal 3, universe.canon_rules.count
+    assert_equal 4, universe.canon_rules.count
     assert_equal 1, universe.characters.count
     assert_equal 1, universe.factions.count
     assert_equal 1, universe.locations.count
@@ -128,14 +130,13 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Synthetic Universe", run.universe_name
     assert_equal "synthetic-universe", run.universe_slug
     assert_not run.replaced?
-    assert_equal 3, run.slices.first.created
-    assert_equal [ "O-I1" ], run.slices.first.skipped
+    assert_equal 4, run.slices.first.created
+    assert_empty run.slices.first.skipped
 
     follow_redirect!
     assert_response :success
     assert_includes response.body, "Imported Synthetic Universe."
     assert_includes response.body, "Canon rules"
-    assert_includes response.body, "O-I1"
     assert_includes response.body, "ada: Voice"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
@@ -145,11 +146,11 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     # 300 long ids are more than the 4 KB a session cookie may hold, and the cookie
     # store raised while committing the response — after the write had succeeded.
     sign_in_as @operator
-    canon = File.join(@source_root, "synthetic-universe/universe/canon/mechanism.md")
-    content = File.read(canon)
+    character = File.join(@source_root, "synthetic-universe/universe/characters/ada.md")
+    content = File.read(character)
     content += "\n" unless content.end_with?("\n")
-    content += 300.times.map { |index| "- **O-BLAHBLAHBLAH#{format('%04d', index)}.** Is this answered?" }.join("\n") + "\n"
-    File.write(canon, content)
+    content += 300.times.map { |index| "## Unmapped note #{format('%04d', index)} with a long heading" }.join("\n\n") + "\n"
+    File.write(character, content)
 
     post import_url, params: { source: "synthetic-universe", confirm: "1" }
 
@@ -160,7 +161,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
 
     follow_redirect!
     assert_response :success
-    assert_includes response.body, "O-BLAHBLAHBLAH0299"
+    assert_includes response.body, "Unmapped note 0299"
   end
 
   test "a guest is sent to sign in from a run's page" do
@@ -235,7 +236,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
         universe_name: universe_name,
         universe_slug: universe_slug,
         outcomes: [
-          { "label_key" => "imports.slices.canon_rules", "created" => 3, "skipped" => [ "O-I1" ] }
+          { "label_key" => "imports.slices.canon_rules", "created" => 4, "skipped" => [] }
         ]
       )
     end

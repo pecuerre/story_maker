@@ -22,6 +22,8 @@
   Plot arcs, and ordered scenes. The distinct Plot domain is in
   [features/plots.md](features/plots.md).
 - Every content model and every `_tag` taxonomy model has its own `slug` (see `HasSlug`).
+  `CanonRule` owns its slug logic instead, so a ledger id survives a rename; see
+  [ADR 0045](adr/0045-a-canon-rule-has-a-name-and-a-stable-slug.md).
 - Typical content columns: `name`, `description`, `universe_id` (FK), `parent_id` (self FK),
   `position` (default 0), `slug`, timestamps. Exceptions (Faction, FactionRelationship, Relation, Ownership, Route, Event, Story) are
   listed in [data_model.md](data_model.md).

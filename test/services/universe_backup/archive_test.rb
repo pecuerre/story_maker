@@ -100,7 +100,22 @@ class UniverseBackup::ArchiveTest < ActiveSupport::TestCase
     assert_includes character, "— TBD", "a field the database does not store is named as absent"
 
     assert @files.key?("content/one/universe/canon/README.md")
+    assert @files.key?("content/one/universe/canon/magic.md")
     assert @files.key?("content/one/universe/canon/rules.md")
+
+    canon_readme = @files.fetch("content/one/universe/canon/README.md")
+    assert_includes canon_readme, "| `magic.md` | magic |"
+    assert_includes canon_readme, "| `rules.md` | rules |"
+
+    magic = @files.fetch("content/one/universe/canon/magic.md")
+    assert_includes magic, "# Canon: magic"
+    assert_includes magic, "## Locked"
+    assert_includes magic, "- **K1 — Magic costs a memory.** Magic always costs the caster a memory."
+
+    untitled_area = @files.fetch("content/one/universe/canon/rules.md")
+    assert_includes untitled_area, "- **L2 — The night crossing.** The river cannot be crossed at night."
+    assert_includes untitled_area, "  Source: Chapter five"
+    assert_includes untitled_area, "  Story: story-one"
     assert @files.key?("content/one/stories/story-one/README.md")
     assert @files.keys.any? { |path| path.end_with?("/01-scene-one.md") }
     assert @files.key?("content/one/stories/story-one/chapters/00-ungrouped/01-scene-three.md")

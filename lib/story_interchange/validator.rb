@@ -22,8 +22,15 @@ module StoryInterchange
     # not definitions. `marker` holds what follows the id inside the bold run —
     # the period, or an em dash and the item's heading — and `text` holds the
     # prose after the bold run, which is what the statement is drawn from.
-    CANON_ITEM = /\A\s*(?:-\s+)?\*\*(?<id>K\d+|L\d+|D\d+|O(?:-[A-Z0-9]+)?\d+)(?<marker>\.|\s+—[^*]*)\*\*(?<text>[^\n]*)\r?\n?\z/
+    # A canon item opens with its bold id and then either a full stop or a short
+    # title after a dash: `**K16.**`, `**L2 — Trigger.**`, `**D8.**`. Any of the
+    # three dash characters the author may type separates the title, because the
+    # source is prose and the separator is not a fact the application should
+    # refuse to read.
+    CANON_ITEM = /\A\s*(?:-\s+)?\*\*(?<id>K\d+|L\d+|D\d+|O(?:-[A-Z0-9]+)?\d+)(?<marker>\.|\s+[-–—][^*]*)\*\*(?<text>[^\n]*)\r?\n?\z/
     CANON_HEADING = /\A##\s+(.+?)\s*\z/
+    # What an id's prefix means, which is the canon type the record stores.
+    CANON_TYPES = { "K" => "locked", "L" => "rule", "D" => "consequence", "O" => "open" }.freeze
     RULE_REFERENCE = /\Arule:(.+)\z/
     SCENE_REFERENCE = /\Ascene:(.+)\z/
     BACKLOG_REFERENCE = /\AB-\d{3}\z/
@@ -199,14 +206,29 @@ module StoryInterchange
 
       def read_canon_area(document)
         section = nil
+        item = nil
+        lines = []
 
         document.content.each_line.with_index(1) do |line, number|
           if (match = CANON_HEADING.match(line))
+            register_canon_item(item, lines, document, section) if item
+            item = nil
+            lines = []
             section = canon_section(match[1])
           elsif (match = CANON_ITEM.match(line))
-            register_canon_id(match[:id], document, number, section, line, match)
+            register_canon_item(item, lines, document, section) if item
+            item = { id: match[:id], line: number, match: match }
+            lines = [ line ]
+          elsif item
+            # Everything between this item's bold id and the next item or heading
+            # is the item's own text. Keeping it whole is what lets the statement
+            # be a real first sentence and the source passage be the passage,
+            # rather than only the line the id happens to start on.
+            lines << line
           end
         end
+
+        register_canon_item(item, lines, document, section) if item
       end
 
       def canon_section(heading)
@@ -220,7 +242,14 @@ module StoryInterchange
         end
       end
 
-      def register_canon_id(id, document, line_number, section, raw_line, match)
+      # Finalizes the item that just ended. The lines include the item's own bold
+      # id line, so the text is the passage as the author wrote it.
+      def register_canon_item(item, lines, document, section)
+        text = lines.join.strip
+        register_canon_id(item[:id], document, item[:line], section, item[:match], text)
+      end
+
+      def register_canon_id(id, document, line_number, section, match, text)
         if @canon_ids.key?(id)
           error(document, line_number, "canon id #{id} is already defined in #{@canon_ids[id].relative_path}")
           return
@@ -228,8 +257,12 @@ module StoryInterchange
 
         @canon_ids[id] = document
         question = id.start_with?("O")
-        @report.count(question ? :canon_questions : :canon_rules)
-        register_canon_item(id, document, line_number, raw_line, match, question)
+        # Every item becomes a rule, an open question included: the type is what
+        # keeps the question distinguishable in the workspace. The question count
+        # remains a subset the validator task and the preview can name.
+        @report.count(:canon_rules)
+        @report.count(:canon_questions) if question
+        add_canon_item(id, document, line_number, match, text, question)
 
         if section == :open && !question
           warning(document, line_number, "canon id #{id} is a locked rule but sits under Open")
@@ -243,39 +276,126 @@ module StoryInterchange
       # Hands the parsed item to the report so an import slice can write it. The
       # validator stays the one place that reads `universe/canon/`, rather than
       # the importer parsing the same files a second way.
-      def register_canon_item(id, document, line_number, raw_line, match, question)
+      def add_canon_item(id, document, line_number, match, text, question)
+        statement = canon_statement(match, text)
         item = Report::CanonItem.new(
           id: id,
-          statement: canon_statement(match),
-          source: question ? nil : canon_source(document, raw_line),
+          slug: id.downcase,
+          name: canon_name(match, statement),
+          canon_type: CANON_TYPES.fetch(id[0]),
+          category: canon_category(document),
+          statement: statement,
+          source: canon_source(text),
           path: document.relative_path,
           line: line_number
         )
 
-        if question
-          @report.add_canon_question(item)
-        else
-          @report.add_canon_rule(item)
-        end
+        @report.add_canon_rule(item)
+        @report.add_canon_question(item) if question
       end
 
-      # The first sentence of the item's prose, or the heading inside its bold id
-      # when the item has no prose after it. The item is author prose, so this
-      # only draws the boundary a citation needs; it never rewrites a word.
-      def canon_statement(match)
-        text = match[:text].to_s.strip
-        return first_sentence(text) if text.present?
+      # The item's own title when it states one (`**L2 — Trigger.**` names
+      # `Trigger`), otherwise the statement, because a rule's name is required and
+      # `**K16.**` states nothing but the rule itself.
+      def canon_name(match, statement)
+        canon_title(match).presence || statement
+      end
 
-        heading = match[:marker].to_s.sub(/\A\s*—\s*/, "").sub(/\.\z/, "").strip
-        heading.presence || match[0].strip
+      # The area file an item sits in, without the extension, which is the rule's
+      # category. The ledger README is not an area and never reaches this method.
+      def canon_category(document)
+        File.basename(document.relative_path, ".md")
+      end
+
+      # The first sentence of the item's prose, or its title when the item has no
+      # prose after the id. The prose is the whole item, not only its opening
+      # line, so a sentence may span the line breaks the author used. Markdown and
+      # source-file paths are presentation, not the rule, so they are cleaned off
+      # before the sentence boundary is drawn: a period that closes bold text sits
+      # beside `*`, not whitespace, until the markers are gone. A leading
+      # amendment note is kept in the source and skipped here, so the statement
+      # is the rule rather than a citation of what changed around it.
+      def canon_statement(match, text)
+        prose = strip_leading_canon_note(canon_clean(text_after_canon_id(text)))
+        statement = first_sentence(prose).squish
+        return statement if statement.present?
+
+        canon_title(match).presence || canon_clean(match[0]).squish
+      end
+
+      # `*(Amended by K27.)*`, `(Author direction — K67: …)`, or a similar note at
+      # the start of an item. It stays in `source`; it is not the rule.
+      LEADING_CANON_NOTE = /\A\s*\((?=[^)]*(?:amend|author|stated|canon\b|K\d+|L\d+|D\d+|O-[A-Z0-9]+|rule:))[^)]*\)\s*/i
+
+      def strip_leading_canon_note(prose)
+        without_note = prose.sub(LEADING_CANON_NOTE, "")
+        without_note.presence || prose
+      end
+
+      # The opening `**K16.**` or `**L2 — Trigger.**`, and nothing after it.
+      def text_after_canon_id(text)
+        text.sub(/\A\s*(?:-\s+)?\*\*[A-Z0-9-]+.*?\*\*/, "").strip
+      end
+
+      # A title's citation tail belongs in the body, not in the name: an
+      # amendment such as `(Amended by K27)` or a `rule:L3` reference is removed
+      # here, while `canon_source` keeps the item's original text whole.
+      def canon_title(match)
+        raw = match[:marker].to_s.sub(/\A\s*[-–—]\s*/, "").sub(/\.\z/, "").strip
+        return "" if raw.blank?
+
+        canon_clean(raw)
+          .gsub(/\s*\([^()]*?(?:amended|rule:|K\d+|L\d+|D\d+|O-[A-Z0-9]+)[^()]*\)/i, "")
+          .gsub(/\s*\[{0,2}rule:[^\]\s]+\]{0,2}/i, "")
+          .sub(/\s*[-–—]\s*(?:amended|see)\b.*\z/i, "")
+          .strip
       end
 
       def first_sentence(text)
         text[/\A.*?[.!?](?=\s|\z)/m]&.strip || text
       end
 
-      def canon_source(document, raw_line)
-        "#{raw_line.strip}\n\nCanon: #{document.relative_path}"
+      # What an item is stored as: its own text, with the Markdown the app cannot
+      # render and the source tree's file paths taken out. Paragraph breaks stay,
+      # because they are the author's, and rule references stay as written.
+      def canon_source(text)
+        canon_clean(text)
+      end
+
+      MARKDOWN_LINK = /\[([^\]\n]+)\]\([^)\n]+\)/
+      INLINE_CODE = /`+([^`\n]*)`+/
+      SOURCE_FILE_REFERENCE = %r{(?<![\w/])(?:[\w.-]+/)*[\w.-]+\.md\b}
+      TABLE_RULE = /\A\|?[\s:|-]+\|?\z/
+
+      # What an item is stored as: its own text, with the Markdown the app cannot
+      # render and the source tree's file paths taken out. Paragraph breaks stay,
+      # because they are the author's, and rule references stay as written. A
+      # table keeps its cells as one readable line and loses the pipes and the
+      # rule beneath its header; a list keeps its text and loses the marker.
+      def canon_clean(text)
+        text.to_s
+          .gsub(MARKDOWN_LINK, '\1')
+          .gsub(INLINE_CODE, '\1')
+          .gsub(SOURCE_FILE_REFERENCE, "")
+          .gsub(/~~/, "")
+          .gsub(/\*\*|__/, "")
+          .gsub(/\*/, "")
+          .lines.map { |line| canon_clean_line(line) }.join("\n")
+          .gsub(/\n{3,}/, "\n\n")
+          .strip
+      end
+
+      def canon_clean_line(line)
+        line = line.gsub(/[ \t]+/, " ").strip
+        return "" if line.include?("|") && TABLE_RULE.match?(line)
+
+        if line.start_with?("|")
+          return line.sub(/\A\|/, "").sub(/\|\z/, "").split("|").map(&:strip).reject(&:blank?).join(" · ")
+        end
+
+        line.sub(/\A#+\s+/, "")
+          .sub(/\A>\s+/, "")
+          .sub(/\A[-+]\s+/, "")
       end
 
       def read_entities

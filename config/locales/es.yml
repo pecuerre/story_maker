@@ -2486,7 +2486,20 @@ es:
     scope:
       universe: "Todo el universo"
       story: "Regla de historia"
+    canon_type:
+      locked: "Bloqueada"
+      rule: "Regla"
+      consequence: "Consecuencia"
+      open: "Pregunta abierta"
     form:
+      name: "Nombre"
+      name_hint: "El título breve que muestran la lista y los resultados de búsqueda."
+      slug: "Slug"
+      slug_hint: "Opcional. Se deriva del nombre si se deja vacío; al importar, es el id del ledger de story interchange."
+      category: "Categoría"
+      category_hint: "Opcional. El área de canon a la que pertenece esta regla."
+      canon_type: "Tipo de canon"
+      canon_type_blank: "Sin tipo"
       statement: "Regla"
       statement_hint: "Una frase breve que la historia debe cumplir."
       source: "Pasaje de origen"
@@ -2498,6 +2511,9 @@ es:
       label: "Regla de canon"
       back_label: "Todas las reglas de canon"
       facts:
+        slug: "Slug"
+        canon_type: "Tipo de canon"
+        category: "Categoría"
         statement: "Regla"
         source: "Pasaje de origen"
         source_blank: "Todavía no hay pasaje de origen."
@@ -3211,6 +3227,10 @@ es:
         distance: "Distancia"
         duration: "Tiempo de viaje"
       canon_rule:
+        name: "Nombre"
+        slug: "Slug"
+        category: "Categoría"
+        canon_type: "Tipo de canon"
         statement: "Regla"
         source: "Pasaje de origen"
         story: "Pertenece a"

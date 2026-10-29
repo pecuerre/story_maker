@@ -100,7 +100,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       routes: -> { Route.create!(universe: @universe, from_location: locations(:location_one), to_location: locations(:location_two)) },
       events: -> { Event.create!(universe: @universe, title: "Cached event") },
       items: -> { Item.create!(universe: @universe, name: "Cached item") },
-      canon_rules: -> { CanonRule.create!(universe: @universe, statement: "Cached rule") },
+      canon_rules: -> { CanonRule.create!(universe: @universe, name: "Cached rule", statement: "Cached rule") },
       ownerships: -> {
         Ownership.create!(
           universe: @universe,
@@ -165,7 +165,7 @@ class MenuCountCacheTest < ActiveSupport::TestCase
       routes: -> { Route.create!(universe: @universe, from_location: locations(:location_one), to_location: locations(:location_two)) },
       events: -> { Event.create!(universe: @universe, title: "Cached event") },
       items: -> { Item.create!(universe: @universe, name: "Cached item") },
-      canon_rules: -> { CanonRule.create!(universe: @universe, statement: "Cached rule") },
+      canon_rules: -> { CanonRule.create!(universe: @universe, name: "Cached rule", statement: "Cached rule") },
       relations: -> {
         Relation.create!(
           universe: @universe,

@@ -8,10 +8,10 @@ require "yaml"
 # starting point.
 #
 # The database does not store every field the interchange layout asks for
-# (a Character's role, a Plot's type, a Scene's branch, a canon area, and so on),
-# so this projection writes `— TBD` where the app has no answer and keeps the
-# stored answer in the data dump. It is therefore deliberately not guaranteed to
-# pass `StoryInterchange::Validator`; the archive README says why.
+# (a Character's role, a Plot's type, a Scene's branch, and so on), so this
+# projection writes `— TBD` where the app has no answer and keeps the stored
+# answer in the data dump. It is therefore deliberately not guaranteed to pass
+# `StoryInterchange::Validator`; the archive README says why.
 module UniverseBackup
   class ContentProjection
     ROOT = "content"
@@ -42,45 +42,95 @@ module UniverseBackup
         @base ||= "#{ROOT}/#{universe.slug}"
       end
 
+      # One file per category, named after the category, because the story
+      # interchange stores one area per file. A rule with no category lands in
+      # `rules.md`, and a category is parameterized so a hand-typed one cannot
+      # write outside the canon directory.
       def canon_files
-        rules = universe.canon_rules.order(:id).to_a
-        {
-          "#{base}/universe/canon/README.md" => canon_readme,
-          "#{base}/universe/canon/rules.md" => canon_rules(rules)
-        }
+        groups = universe.canon_rules.order(:id).to_a.group_by { |rule| canon_area(rule) }
+        groups = { "rules" => [] } if groups.empty?
+
+        areas = groups.to_h do |area, rules|
+          [ "#{base}/universe/canon/#{area}.md", canon_area_document(area, rules) ]
+        end
+
+        areas.merge("#{base}/universe/canon/README.md" => canon_readme(groups.keys))
       end
 
-      def canon_readme
+      def canon_readme(areas)
+        index = areas.map { |area| "| `#{area}.md` | #{area} |" }.join("\n")
+
         <<~MARKDOWN
           # Canon
 
-          A projection from the application's Canon Rules. Rule ids are the
-          application's database ids, not ids from another source repository.
+          A projection from the application's Canon Rules. An item id is the
+          rule's slug when it is a ledger id, and its database id otherwise, not
+          an id from another source repository.
 
           ## Areas
 
           | File | Area |
           |---|---|
-          | `rules.md` | every rule |
+          #{index}
         MARKDOWN
       end
 
-      def canon_rules(rules)
-        items = if rules.empty?
+      def canon_area_document(area, rules)
+        body = if rules.empty?
           "## Locked\n\n- No rules recorded.\n"
         else
-          "## Locked\n\n" + rules.map { |rule| canon_item(rule) }.join("\n\n") + "\n"
+          canon_sections(rules).filter_map do |heading, items|
+            next if items.empty?
+
+            "## #{heading}\n\n#{items.map { |rule| canon_item(rule) }.join("\n\n")}"
+          end.join("\n\n") + "\n"
         end
 
-        "# Canon: rules\n\n#{items}"
+        "# Canon: #{area}\n\n#{body}"
+      end
+
+      # The ledger knows three section headings: Locked (which holds both a
+      # locked fact and a rule of the mechanism), Derived consequences, and Open.
+      def canon_sections(rules)
+        [
+          [ "Locked", rules.reject { |rule| %w[ consequence open ].include?(rule.canon_type) } ],
+          [ "Derived consequences", rules.select { |rule| rule.canon_type == "consequence" } ],
+          [ "Open", rules.select { |rule| rule.canon_type == "open" } ]
+        ]
       end
 
       def canon_item(rule)
         statement = indent(rule.statement.presence || "— TBD")
-        lines = [ "- **K#{rule.id}.** #{statement}" ]
+        title = rule.name.presence
+        # The title is only written when it says something the statement does
+        # not; an untitled rule is the `**K16.**` form the ledger already uses.
+        line = if title.present? && title != rule.statement
+          "- **#{canon_item_id(rule)} — #{indent(title)}.** #{statement}"
+        else
+          "- **#{canon_item_id(rule)}.** #{statement}"
+        end
+        lines = [ line ]
         lines << "  Source: #{indent(rule.source)}" if rule.source.present?
         lines << "  Story: #{rule.story.slug}" if rule.story
         lines.join("\n")
+      end
+
+      # A stored slug is already a ledger id when its prefix matches the rule's
+      # type; otherwise the projection falls back to the database id under the
+      # prefix the type implies, because the numeric id is the only stable key a
+      # hand-written rule has.
+      def canon_item_id(rule)
+        prefix = { "locked" => "K", "rule" => "L", "consequence" => "D", "open" => "O" }
+          .fetch(rule.canon_type.to_s, "K")
+        slug = rule.slug.to_s
+
+        return slug.upcase if slug.match?(/\A#{prefix.downcase}(?:-[a-z0-9]+)?\d+\z/)
+
+        "#{prefix}#{rule.id}"
+      end
+
+      def canon_area(rule)
+        rule.category.to_s.parameterize.presence || "rules"
       end
 
       def character_files

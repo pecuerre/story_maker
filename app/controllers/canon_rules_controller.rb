@@ -50,7 +50,7 @@ class CanonRulesController < ApplicationController
     @stories = Current.universe.stories.order(:name, :id)
     # Universe-wide rules first, then each story's, because the universe's own
     # rules are what every story shares.
-    @canon_rules = Current.universe.canon_rules.includes(:story).order(:story_id, :statement)
+    @canon_rules = Current.universe.canon_rules.includes(:story).order(:story_id, :name, :id)
   end
 
   def set_canon_rule
@@ -58,6 +58,6 @@ class CanonRulesController < ApplicationController
   end
 
   def canon_rule_params
-    params.expect(canon_rule: [ :statement, :source, :story_id ])
+    params.expect(canon_rule: [ :name, :slug, :category, :canon_type, :statement, :source, :story_id ])
   end
 end

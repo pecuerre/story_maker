@@ -27,10 +27,19 @@
         <div class="list-group-item entity-row d-flex align-items-center gap-3">
           <div class="entity-copy flex-grow-1">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <span class="entity-title"><%= rule.statement %></span>
+              <span class="entity-title"><%= rule.display_string %></span>
+              <% if rule.canon_type.present? %>
+                <span class="badge rounded-pill text-bg-light border"><%= canon_type_label(rule) %></span>
+              <% end %>
+              <% if rule.category.present? %>
+                <span class="badge rounded-pill text-bg-light border"><%= rule.category %></span>
+              <% end %>
+              <code class="small text-body-secondary"><%= rule.slug %></code>
               <%= render "shared/draft_pending_badge", record: rule %>
             </div>
             <div class="entity-description">
+              <span><%= rule.statement %></span>
+              <span> · </span>
               <% if rule.universe_wide? %>
                 <span class="badge rounded-pill text-bg-light border"><%= t("canon_rules.scope.universe") %></span>
               <% else %>
@@ -65,6 +74,19 @@
         <%= form_with scope: :canon_rule, url: universe_canon_rules_path, method: :post, data: { modal_form_target: "form" } do |form| %>
           <div class="modal-body">
             <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("canon_rules.errors.subject") %><% end %>
+            <div class="mb-3"><%= form.label :name, t("canon_rules.form.name"), class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", required: true %>
+              <div class="form-text"><%= t("canon_rules.form.name_hint") %></div></div>
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6"><%= form.label :slug, t("canon_rules.form.slug"), class: "form-label" %>
+                <%= form.text_field :slug, class: "form-control" %>
+                <div class="form-text"><%= t("canon_rules.form.slug_hint") %></div></div>
+              <div class="col-12 col-sm-6"><%= form.label :canon_type, t("canon_rules.form.canon_type"), class: "form-label" %>
+                <%= form.select :canon_type, canon_type_options, { include_blank: t("canon_rules.form.canon_type_blank") }, { class: "form-select" } %></div>
+            </div>
+            <div class="mb-3"><%= form.label :category, t("canon_rules.form.category"), class: "form-label" %>
+              <%= form.text_field :category, class: "form-control" %>
+              <div class="form-text"><%= t("canon_rules.form.category_hint") %></div></div>
             <div class="mb-3"><%= form.label :statement, t("canon_rules.form.statement"), class: "form-label" %>
               <%= form.text_area :statement, class: "form-control", rows: 3, required: true %>
               <div class="form-text"><%= t("canon_rules.form.statement_hint") %></div></div>

@@ -1,8 +1,16 @@
 - universe: Universe.lotr
+  slug: k1
+  name: "Only the fire that made the Ring unmakes it"
+  category: "ring"
+  canon_type: locked
   statement: "The One Ring can be unmade only in the fire that made it."
   source: "The Council of Elrond names Mount Doom and no other place."
 
 - universe: Universe.lotr
   story: Story.the-lord-of-the-rings
+  slug: d1
+  name: "The oathbreakers follow Isildur's heir"
+  category: "oath"
+  canon_type: consequence
   statement: "The dead who broke their oath follow the heir of Isildur until the oath is fulfilled."
   source: "The Paths of the Dead, where the oathbreakers answer Aragorn."

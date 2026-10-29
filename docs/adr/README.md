@@ -68,6 +68,8 @@ reasoning as of its date.
 | [0042](0042-a-universe-backup-is-a-core-data-archive.md) | Accepted | Make the lossless table dump authoritative, treat the interchange tree as a projection, and defer identity and history |
 | [0043](0043-a-story-interchange-import-replaces-one-universe.md) | Accepted | Replace one Universe per run through a slice registry, a platform-admin page, a configured import root, and a safety refusal |
 | [0044](0044-permanent-universe-deletion-is-owner-only.md) | Accepted | Let only the owner permanently delete a Universe, after typing its exact name, through a purge that includes soft-deleted rows and leaves notifications alone |
+| [0045](0045-a-canon-rule-has-a-name-and-a-stable-slug.md) | Accepted | Give a canon rule a name and a stable slug, plus its ledger category and canon type, and supersede ADR 0039's addressed-by-id choice |
+| [0046](0046-an-open-canon-question-is-a-rule-of-type-open.md) | Accepted | Import an open canon question as a canon rule of type `open` instead of reporting it |
 
 ## Format
 

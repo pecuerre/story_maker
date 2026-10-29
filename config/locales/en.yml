@@ -2534,7 +2534,20 @@ en:
     scope:
       universe: "Whole universe"
       story: "Story rule"
+    canon_type:
+      locked: "Locked"
+      rule: "Rule"
+      consequence: "Consequence"
+      open: "Open question"
     form:
+      name: "Name"
+      name_hint: "The short title the list and search results show."
+      slug: "Slug"
+      slug_hint: "Optional. Derived from the name when left blank; the story-interchange ledger's id when imported."
+      category: "Category"
+      category_hint: "Optional. The canon area this rule belongs to."
+      canon_type: "Canon type"
+      canon_type_blank: "No type"
       statement: "Rule"
       statement_hint: "One short statement the story must obey."
       source: "Source passage"
@@ -2546,6 +2559,9 @@ en:
       label: "Canon rule"
       back_label: "All canon rules"
       facts:
+        slug: "Slug"
+        canon_type: "Canon type"
+        category: "Category"
         statement: "Rule"
         source: "Source passage"
         source_blank: "No source passage yet."
@@ -3601,6 +3617,10 @@ en:
         distance: "Distance"
         duration: "Travel time"
       canon_rule:
+        name: "Name"
+        slug: "Slug"
+        category: "Category"
+        canon_type: "Canon type"
         statement: "Rule"
         source: "Source passage"
         # The drafts page prints the remembered owner by association, so the label

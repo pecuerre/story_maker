@@ -1,10 +1,17 @@
 canon_rule_one:
   universe: universe_one
+  name: Magic costs a memory
+  slug: k1
+  category: magic
+  canon_type: locked
   statement: "Magic always costs the caster a memory."
   source: "The first spell in chapter two takes the caster's brother's name."
 
 canon_rule_two:
   universe: universe_one
   story: story_one
+  name: The night crossing
+  slug: l2
+  canon_type: rule
   statement: "The river cannot be crossed at night."
   source: "Chapter five: the ferryman refuses after dark."

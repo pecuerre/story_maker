@@ -1,6 +1,10 @@
 # ADR 0039: A canon rule belongs to the universe unless a story owns it
 
-- **Status:** Accepted
+- **Status:** Accepted — **superseded in part, 2026-10-29.** The record now has a required name and
+  a stable slug, plus a ledger category and canon type, because the story-interchange source keys
+  each rule by an id and titles it with a name. The ownership rule and the deliberately-not-an-analyzer
+  boundary below still hold; [ADR 0045](0045-a-canon-rule-has-a-name-and-a-stable-slug.md) records the
+  replacement for the addressed-by-id choice.
 - **Date:** 2026-10-28
 - **Related:** [ADR 0001](0001-universe-and-story-scope.md), [Canon rules](../features/canon.md), [Data model](../data_model.md)
 

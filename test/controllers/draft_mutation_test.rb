@@ -276,13 +276,13 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       destroy: -> { universe_route_url(universe_slug: @universe.slug, id: @route.id) }
     },
     {
-      name: "canon_rules", model: CanonRule, json: false, label: :statement,
+      name: "canon_rules", model: CanonRule, json: false, label: :name,
       scope: -> { [ "universe_id", @universe.id ] },
       record: -> { @canon_rule },
       create: -> { [ universe_canon_rules_url(universe_slug: @universe.slug),
-        { canon_rule: { statement: NEW } } ] },
+        { canon_rule: { name: NEW, statement: NEW } } ] },
       update: -> { [ universe_canon_rule_url(universe_slug: @universe.slug, id: @canon_rule.id),
-        { canon_rule: { statement: RENAMED } } ] },
+        { canon_rule: { name: RENAMED } } ] },
       destroy: -> { universe_canon_rule_url(universe_slug: @universe.slug, id: @canon_rule.id) }
     },
     {

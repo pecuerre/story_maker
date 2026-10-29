@@ -19,11 +19,14 @@ module StoryInterchange
       end
     end
 
-    # One canon item that the import can turn into a record. `statement` is the
-    # item's first sentence, or its heading text when the item has no body, and
-    # `source` is the item's own text plus the area it came from. A question has
-    # no source because it never becomes a rule.
-    CanonItem = Data.define(:id, :statement, :source, :path, :line)
+    # One canon item that the import can turn into a record. `id` is the ledger's
+    # own `K`/`L`/`D`/`O` id; `slug` is that id lowercased, `name` is the title the
+    # item states (its first statement when it states none), `canon_type` is what
+    # the id's prefix means, and `category` is the area file the item sits in.
+    # `statement` is the first sentence of the item's prose (or its title when the
+    # item has no prose), and `source` is the item's whole text, cleaned of
+    # Markdown and file paths.
+    CanonItem = Data.define(:id, :slug, :name, :canon_type, :category, :statement, :source, :path, :line)
 
     # One parsed record: the frontmatter the validator checked, the slug its
     # filename fixes, and the body split into `##` sections so a slice maps
@@ -80,8 +83,9 @@ module StoryInterchange
       @canon_rules << item
     end
 
-    # An O item: reported to the operator and never written, because an open
-    # question is not a rule the prose must obey.
+    # The O subset of those items. An open question is written as a rule of type
+    # `open`; this list is what the validator task and the preview can count
+    # separately from the rules that answer a question.
     def add_canon_question(item)
       @canon_questions << item
     end

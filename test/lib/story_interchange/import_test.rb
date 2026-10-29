@@ -269,21 +269,35 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal scenes, scene_records(second)
   end
 
-  test "creates the universe its directory names and writes one rule per K/L/D item" do
+  test "creates the universe its directory names and writes one rule per K/L/D/O item" do
     result = import.call
 
     assert_equal "synthetic-universe", result.universe.slug
     assert_equal "Synthetic Universe", result.universe.name
     assert_equal @owner, result.universe.owner
     assert_not result.replaced
-    assert_equal 3, result.universe.canon_rules.count
+    assert_equal 4, result.universe.canon_rules.count
 
     rule = result.universe.canon_rules.find_by(statement: "The lantern burns only while someone holds it.")
-    assert_includes rule.source, "Canon: universe/canon/mechanism.md"
+    assert_equal "l1", rule.slug
+    assert_equal "Light", rule.name
+    assert_equal "rule", rule.canon_type
+    assert_equal "mechanism", rule.category
+    assert_equal "L1 — Light. The lantern burns only while someone holds it.", rule.source
+
+    locked = result.universe.canon_rules.find_by!(slug: "k1")
+    assert_equal "The lantern was built before the first winter.", locked.name
+    assert_equal "locked", locked.canon_type
+    assert_equal "consequence", result.universe.canon_rules.find_by!(slug: "d1").canon_type
+
+    question = result.universe.canon_rules.find_by!(slug: "o-i1")
+    assert_equal "open", question.canon_type
+    assert_equal "Who built the first lantern?", question.name
+    assert_includes question.source, "Who built the first lantern?"
 
     outcome = result.outcomes.first
-    assert_equal 3, outcome.created
-    assert_equal [ "O-I1" ], outcome.skipped
+    assert_equal 4, outcome.created
+    assert_empty outcome.skipped
   end
 
   test "replaces an existing universe by soft-deleting it and creating a fresh one" do
@@ -295,7 +309,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_not_equal first.universe.id, second.universe.id
     assert Universe.with_deleted.find(first.universe.id).deleted?
     assert_equal 1, Universe.where(slug: "synthetic-universe").count
-    assert_equal 3, second.universe.canon_rules.count
+    assert_equal 4, second.universe.canon_rules.count
   end
 
   test "keeps the replaced universe's privacy and collaboration mode" do
@@ -383,8 +397,8 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert plan.importable?
     assert_equal [ "Canon rules", "Characters", "Factions", "Locations", "Items", "Stories", "Sections", "Scenes", "Plots" ],
       plan.slices.map { |slice| I18n.t(slice.label_key) }
-    assert_equal [ 3, 1, 1, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
-    assert_equal [ "O-I1" ], plan.slices.first.reported(plan.report)
+    assert_equal [ 4, 1, 1, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
+    assert_empty plan.slices.first.reported(plan.report)
     assert_includes plan.slices.second.reported(plan.report), "ada: Voice"
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
   end

@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Canon rule identity.** A canon rule now has a required name and slug, an optional category, and an optional canon type, so the list, editor, details page, and search show a short title and the ledger's own grouping.
 - **Permanent universe deletion.** The owner can erase a universe and every row it owns — Bible records, stories, scenes, pending drafts, photos, and soft-deleted content — from a dedicated danger-zone page.
 - **Import run page.** A completed story-interchange import writes a `StoryInterchangeRun` in the same transaction and redirects to its page, which lists every source item the run reported instead of writing.
 - **Section, Scene, and Element import.** The story-interchange import writes one Section per chapter directory, each Scene with its point of view, location, status, and position, and one Narration Element per prose paragraph, reporting timeline, branch, id, and depends_on.
@@ -52,6 +53,12 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Canon leading notes.** A leading amendment note stays in the rule's source passage but no longer becomes an untitled rule's name or statement.
+- **Canon questions and text.** Open canon questions are imported as rules of type `open`, and the text cleaner also drops tables, strikethrough, heading markers, and bullet markers.
+- **Canon rule identity constraints.** `slug` and `name` are now `NOT NULL` in the table, after the source was re-imported into the development universe.
+- **Canon import text.** A canon item is read whole instead of only its opening line, so its statement is a complete first sentence and its source keeps the item's text; Markdown and source file paths are stripped, and a title's citation stays in the body.
+- **Canon import identity.** The Canon slice writes each ledger item's lowercased id as its slug, its title as the name, its prefix as the canon type, and its area file as the category.
+- **Canon rule display and search.** A rule is titled by its name instead of its statement, its statement and source are searched together, and its slug is assigned once so a rename does not re-address it.
 - **Universe list rows.** The Universes index now uses the standard list-row layout instead of a table, so each row carries the name, visibility, contents, activity, a Details link, and the admin menu, which is no longer clipped by a scrolling table wrapper.
 - **Universe backup join rows.** The dump builds its join-table query with Arel instead of quoted SQL interpolation, so Brakeman reports no SQL-injection warning and the row order is unchanged.
 - **Story interchange README rule.** A `README.md` is documentation at every depth, so the import skips entity, plot, and chapter READMEs and ignores their example references, while still reading the universe name from `universe/README.md` and the story name from the story README.
@@ -70,6 +77,10 @@ Labels used below, in the order their groups appear:
 
 ### docs
 
+- **Canon open-question documentation.** Adds ADR 0046 for importing an open question as a rule of type `open`, and updates the ledger and canon documents to say so.
+- **Canon import text documentation.** Records whole-item capture, the plain-prose cleaning rules, and the title citation that stays in the body in the interchange document.
+- **Canon import documentation.** Records the ledger id, title, prefix, and area-file mapping in the interchange document, and the backup projection's one-file-per-category canon shape.
+- **Canon rule identity documentation.** Adds ADR 0045, records the name, slug, category, and canon type in the canon, data-model, and conventions documents, and notes that ADR 0039's addressed-by-id choice is superseded in part.
 - **Universe deletion documentation.** Adds the feature document and ADR 0044 for the owner-only purge, the typed-name confirmation, the association walk, and what survives it.
 - **Interchange source structure.** The story-interchange document now describes README documentation at every depth, the universe-name heading, chapter README naming, Scene title headings, comment stripping, and the reported `universe/inspirations.md`.
 - **Section and Scene import mapping.** Records chapter-to-Section naming, the frontmatter that becomes Scene fields, prose as Narration Elements, and why timeline, branch, depends_on, and Scene Tags stay reported.
@@ -80,6 +91,10 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Canon open-question and cleaning coverage.** The synthetic source now writes its open question instead of reporting it, covers tables, strikethrough, bullets, and leading notes, and uses an unmapped character section for the large-reported-list cookie case.
+- **Canon import text coverage.** Adds multi-line capture, Markdown and file-path cleaning, and title-citation cases to the synthetic ledger tests.
+- **Canon import coverage.** The synthetic ledger pins the parsed slug, name, canon type, category, dash separators, and untitled fallback, and the archive test pins the projection's canon files.
+- **Canon rule fixtures and manifests.** The canon fixtures and both development manifests carry names, slugs, categories, and canon types, and the model tests cover slug derivation, stability, uniqueness, and type validation.
 - **Permanent deletion tests.** Adds the purge graph walk, the owner/admin/guest request cases, the exact-name browser flow, and the CSRF case for the new HTML mutation.
 - **Compose test volumes.** `DevelopmentComposeTest` now expects the read-only story-interchange source mount `compose.yaml` already declares.
 - **Compose import source.** `docker compose` passes `STORY_INTERCHANGE_IMPORT_ROOT` and bind-mounts the host tree named by `STORY_INTERCHANGE_SOURCE_DIR` read-only at `/sources/tcs.git`, so the import page can list it.

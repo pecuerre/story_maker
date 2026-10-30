@@ -152,28 +152,6 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "Character knowledge mutations require the character details page token" do
-    with_forgery_protection do
-      character = characters(:character_one)
-      index_path = universe_character_path(universe_slug: @universe.slug, id: character)
-      token = fetch_page_token(index_path)
-      create_path = universe_character_character_knowledges_path(
-        universe_slug: @universe.slug, character_id: character
-      )
-      attributes = { when_text: "At the bridge", what_learned: "The guard left." }
-
-      assert_no_difference("CharacterKnowledge.count") do
-        post create_path, params: { character_knowledge: attributes }
-      end
-      assert_includes 406..422, response.status
-
-      assert_difference("CharacterKnowledge.count", 1) do
-        post create_path, params: { character_knowledge: attributes }, headers: { "X-CSRF-Token" => token }
-      end
-      assert_response :found
-    end
-  end
-
   test "the scene board's move and regroup forms carry the page token" do
     with_forgery_protection do
       story = stories(:story_one)

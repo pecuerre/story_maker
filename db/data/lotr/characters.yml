@@ -3,13 +3,37 @@
   slug: frodo_baggins
   pronouns: "he/him"
   aliases: "Ring-bearer"
-  at_a_glance: "Hobbit Ring-bearer of the Fellowship."
-  wants: "To return to the Shire and be left in peace."
-  needs: "To accept help and carry the Ring to its destruction."
-  lies_to_self: "The Ring's burden is his to bear alone."
-  contradictions: "He longs for home while choosing a path away from it."
-  under_pressure_they: "Endures pain quietly and keeps moving."
-  never: "Use the Ring to dominate another."
+  summary: "Hobbit Ring-bearer of the Fellowship."
+  description: |
+    ## Wants
+
+    To return to the Shire and be left in peace.
+
+    ## Needs
+
+    To accept help and carry the Ring to its destruction.
+
+    ## Lies about (to himself)
+
+    The Ring's burden is his to bear alone.
+
+    ## Contradictions
+
+    He longs for home while choosing a path away from it.
+
+    ## Under pressure
+
+    Endures pain quietly and keeps moving.
+
+    ## Never
+
+    Use the Ring to dominate another.
+
+    ## Knowledge
+
+    At Bag End, before the Fellowship leaves, he learns from
+    [[character:gandalf-the-grey]] that the Ring is the One Ring and must be
+    destroyed in Mordor. It changes his plan.
   character_tags: [ CharacterTag.hobbit, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring ]
   photo: Photo.the_shire
@@ -17,7 +41,7 @@
 - universe: Universe.lotr
   name: Samwise Gamgee
   slug: samwise_gamgee
-  at_a_glance: "Frodo's gardener and closest companion."
+  summary: "Frodo's gardener and closest companion."
   character_tags: [ CharacterTag.hobbit, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring ]
 
@@ -26,7 +50,7 @@
   slug: gandalf_the_grey
   pronouns: "he/him"
   aliases: "Mithrandir, The Grey Pilgrim"
-  at_a_glance: "Wizard who leads the Fellowship out of the Shire."
+  summary: "Wizard who leads the Fellowship out of the Shire."
   character_tags: [ CharacterTag.man, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring, Faction.white_council ]
 
@@ -35,21 +59,21 @@
   slug: aragorn
   pronouns: "he/him"
   aliases: "Strider, Elessar"
-  at_a_glance: "Ranger of the North and heir to the throne of Gondor."
+  summary: "Ranger of the North and heir to the throne of Gondor."
   character_tags: [ CharacterTag.man, CharacterTag.rangers_of_the_north, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring ]
 
 - universe: Universe.lotr
   name: Legolas
   slug: legolas
-  at_a_glance: "Prince of the Woodland Realm."
+  summary: "Prince of the Woodland Realm."
   character_tags: [ CharacterTag.elf, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring ]
 
 - universe: Universe.lotr
   name: Gimli
   slug: gimli
-  at_a_glance: "Dwarf of the Lonely Mountain."
+  summary: "Dwarf of the Lonely Mountain."
   character_tags: [ CharacterTag.dwarf, CharacterTag.fellowship_of_the_ring ]
   factions: [ Faction.fellowship_of_the_ring ]
 
@@ -58,5 +82,5 @@
   slug: gollum
   pronouns: "he/him"
   aliases: "Sméagol"
-  at_a_glance: "Former owner of the One Ring."
+  summary: "Former owner of the One Ring."
   character_tags: [ CharacterTag.hobbit ]

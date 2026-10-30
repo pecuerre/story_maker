@@ -153,47 +153,35 @@ and a Scene opens with its own `##` title (see [Plot and Scene](#plot-and-scene)
 names the record and is not prose. A section that maps to a profile answer is written into that
 answer, with its Markdown body kept as written; a section with no target is reported by the import
 slice, never silently dropped. The exact profile field lists live in
-[Characters](characters.md#profile), [Factions](factions.md#scope-and-profile),
-[Locations](locations.md#location-profile), and [Items](items.md#item-profile).
+[Factions](factions.md#scope-and-profile), [Locations](locations.md#location-profile), and
+[Items](items.md#item-profile); [Characters](characters.md#profile) maps its whole body instead, as
+described below.
 
 HTML comments (`<!-- … -->`) are drafting notes for the author, not prose. They are stripped before
 a section is stored and before references are scanned, so a `[[slug]]` inside one is an example
 rather than a reference.
 
-The prose before the first `##` section — the source's identity block — has no target and is
-reported as the record's `introduction`. A frontmatter key the application has no column for is
-reported by name rather than folded into another answer.
+The prose before the first `##` section — the source's identity block — has no dedicated column. A
+Character folds it into `description`; the other profile slices report it as the record's
+`introduction`. A frontmatter key the application has no column for is reported by name rather than
+folded into another answer.
 
 ### Character
 
-| Section | Target |
-|---|---|
-| At a glance | `at_a_glance` |
-| Wants | `wants` |
-| Needs | `needs` |
-| Lies about (to themselves) | `lies_to_self` |
-| Contradictions | `contradictions` |
-| Under pressure they | `under_pressure_they` |
-| Never | `never` |
-| State of knowledge | no target in this slice — report |
-| Relationships | no target in this slice — report |
-| Voice | no app field — report |
-| Arc | no app field — report |
-| Open questions | no record — report |
+A Character is one short summary and one Markdown description. `At a glance` writes `summary`; the
+identity block before the first `##` and every other `##` section are joined into `description`, in
+source order, with their headings and Markdown kept as written. Nothing in the body is reported,
+because the description has a target for all of it.
 
-`Lies about` is matched by its opening words, because the source writes the parenthetical for the
-character's own pronouns: `Lies about (to herself)` and `Lies about (to himself)` both write
-`lies_to_self`.
+The description is the one answer whose `[[kind:slug]]` references stay in their source form: the
+details page turns each into a link, so resolving it to plain names would lose the link. That render
+is owned by [Characters](characters.md#links-inside-a-description).
 
-State of knowledge and Relationships exist as separate records — a `CharacterKnowledge` and a
-`Relation` — and this slice writes neither: their source tables do not line up with the app forms,
-so they are reported section by section for a later slice.
-
-The source has no pronouns or aliases section; those profile answers stay blank when a Character has
-none. `affiliation` is free text in the real source and may name a Faction, another record, or
-prose, so this slice **reports it and never turns it into Faction membership**: the operator assigns
-membership in the app. The frontmatter keys `role`, `affiliation`, `status`, `first_appears`, and
-`backlog` all have no Character column and are reported.
+The source has no pronouns or aliases section; those fields stay blank when a Character has none.
+`affiliation` is free text in the real source and may name a Faction, another record, or prose, so
+this slice **reports it and never turns it into Faction membership**: the operator assigns membership
+in the app. The frontmatter keys `role`, `affiliation`, `status`, `first_appears`, and `backlog` all
+have no Character column and are reported.
 
 ### Faction
 
@@ -315,15 +303,25 @@ The text of each item is author prose. An import must not summarize, merge, or r
 
 ## References
 
-The source resolves four forms. A reference inside a fenced code block is an example and is ignored;
+The source resolves these forms. A reference inside a fenced code block is an example and is ignored;
 a reference inside inline code is real, because the source writes rule citations that way.
 
 | Form | Resolves to |
 |---|---|
-| `[[slug]]` | a Character, Faction, Location, Item, or Plot in the same source |
+| `[[character:slug]]` | a Character in the same source |
+| `[[faction:slug]]` | a Faction in the same source |
+| `[[location:slug]]` | a Location in the same source |
+| `[[item:slug]]` or `[[tech:slug]]` | an Item in the same source |
+| `[[plot:slug]]` | a Plot in the same source |
+| `[[slug]]` | a Character, Faction, Location, Item, or Plot in the same source, by slug alone |
 | `[[rule:ID]]` | a canon item (`K`, `L`, `D`, or `O`) in `universe/canon/` |
 | `[[scene:NN-slug]]` | a scene in the same chapter as the referring scene |
 | `B-###` | the author's backlog, written bare and never resolved; opaque to the app |
+
+A typed reference must name a record of the kind its prefix declares. `[[location:ada]]` is an error
+even though `ada` exists, because the page would have to break the link the author asked for. A bare
+`[[slug]]` is the older form and is still accepted; it relies on the slug being unique across every
+record kind, which the layout already requires.
 
 A work-item id is not a link: the source writes `B-###` as plain prose, so the scanner ignores it
 rather than treating it as a reference. A bracketed `[[B-###]]` is still accepted as the same
@@ -332,9 +330,10 @@ opaque id for an older source, and is never resolved either.
 `[[slug]]` written as bare documentation is allowed as a placeholder; any other unresolved reference
 is an error.
 
-The import writes a `[[slug]]` in a profile answer or a Scene's prose as the name of the record whose
-kind a slice in that run writes — every entity kind has one now — so nothing is silently rewritten or
-dropped. Rule, scene, and backlog references are not entity references and are left as written.
+A profile answer other than a Character description, and a Scene's prose, store a reference as the
+name of the record whose kind a slice in that run writes, so the sentence reads as prose. A Character
+description keeps the reference instead, because its page renders it as a link. Rule, scene, and
+backlog references are not entity references and are left as written.
 
 ## The validator
 
@@ -484,9 +483,9 @@ a guest signs in and a signed-in non-operator receives `403`.
 ## What the import does not do
 
 It writes only the records a registered slice owns, and it does not write the source back out, copy
-it into the repository, or restore a replaced Universe. Knowledge records, Relations, Faction
-membership, Location and Item hierarchy, Plot Scene assignments, Scene Tags, and a Scene's in-world
-datetime do not arrive from this slice; the source text that would carry them is reported. Authoring
+it into the repository, or restore a replaced Universe. Relations, Faction membership, Location and
+Item hierarchy, Plot Scene assignments, Scene Tags, and a Scene's in-world datetime do not arrive
+from this slice; the source text that would carry them is reported. Authoring
 guidance such as `universe/inspirations.md` has no record kind and is reported rather than imported.
 A [Universe backup](universe_backup.md) writes the reverse direction as a readable projection; that
 document owns what the projection can and cannot carry.

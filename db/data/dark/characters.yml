@@ -3,13 +3,36 @@
   character_tags: [ CharacterTag.family_kahnwald ]
   factions: [ Faction.sic_mundus ]
   pronouns: "he/him"
-  at_a_glance: "A young man caught in the knot's repeating cycles."
-  wants: "To prevent his father's suicide and save Martha."
-  needs: "To accept that certainty can make him part of the cycle."
-  lies_to_self: "He can end the cycle without becoming what he opposes."
-  contradictions: "He seeks freedom while following a path laid by older selves."
-  under_pressure_they: "Withholds what he knows and acts alone."
-  never: "Deliberately abandon Martha to the cycle."
+  summary: "A young man caught in the knot's repeating cycles."
+  description: |
+    ## Wants
+
+    To prevent his father's suicide and save Martha.
+
+    ## Needs
+
+    To accept that certainty can make him part of the cycle.
+
+    ## Lies about (to himself)
+
+    He can end the cycle without becoming what he opposes.
+
+    ## Contradictions
+
+    He seeks freedom while following a path laid by older selves.
+
+    ## Under pressure
+
+    Withholds what he knows and acts alone.
+
+    ## Never
+
+    Deliberately abandon Martha to the cycle.
+
+    ## Knowledge
+
+    When Martha describes the other world, he learns that a second version of
+    the world exists and that she comes from it. It changes his plan.
   photo: Photo.the_tannhaus
 
 - universe: Universe.dark

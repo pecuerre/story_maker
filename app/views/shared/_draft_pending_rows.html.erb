@@ -28,7 +28,7 @@
       <%= entity_tag_badge(record) %>
       <%= render "shared/draft_pending_badge", record: record %>
     </div>
-    <% description = record.try(:at_a_glance) || record.try(:description) %>
+    <% description = record.try(:summary) || record.try(:description) %>
     <% if description.present? %>
       <div class="entity-description"><%= description %></div>
     <% end %>

@@ -110,7 +110,7 @@ class ModalJsonContractTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='modal-form#destroy'][data-modal-form-url=?][data-modal-form-confirm=?]",
       universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
       "Delete “#{characters(:character_one).name}”? Its descendant characters, relations, ownerships, " \
-      "knowledge records, tag assignments, and links to scenes will be permanently removed. Scenes, " \
+      "tag assignments, and links to scenes will be permanently removed. Scenes, " \
       "factions, and other universe records will remain."
     assert_select "form[action=?] input[name='_method'][value='delete']", universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
       count: 0, message: "a JSON-only row must not keep a Turbo delete form that answers 204 with no replacement"

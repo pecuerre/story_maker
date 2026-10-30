@@ -2,7 +2,7 @@
 name: The Lantern
 slug: lantern
 type: "artifact"
-invented_by: "[[wardens]]"
+invented_by: "[[faction:wardens]]"
 status: "operational"
 ---
 

@@ -2,7 +2,7 @@
 name: The Keep
 slug: keep
 type: "installation"
-controller: "[[wardens]]"
+controller: "[[faction:wardens]]"
 status: active
 ---
 

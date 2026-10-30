@@ -137,7 +137,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Imported Synthetic Universe."
     assert_includes response.body, "Canon rules"
-    assert_includes response.body, "ada: Voice"
+    assert_includes response.body, "ada: role"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
 
@@ -146,11 +146,13 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     # 300 long ids are more than the 4 KB a session cookie may hold, and the cookie
     # store raised while committing the response — after the write had succeeded.
     sign_in_as @operator
-    character = File.join(@source_root, "synthetic-universe/universe/characters/ada.md")
-    content = File.read(character)
+    # A Character description now absorbs every section, so the reported list is
+    # inflated on a profile slice that still reports an unmapped section.
+    location = File.join(@source_root, "synthetic-universe/universe/locations/keep.md")
+    content = File.read(location)
     content += "\n" unless content.end_with?("\n")
     content += 300.times.map { |index| "## Unmapped note #{format('%04d', index)} with a long heading" }.join("\n\n") + "\n"
-    File.write(character, content)
+    File.write(location, content)
 
     post import_url, params: { source: "synthetic-universe", confirm: "1" }
 

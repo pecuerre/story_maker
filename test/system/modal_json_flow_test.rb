@@ -22,7 +22,7 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     click_button "Add character"
     within ".modal.show" do
       fill_in "Name", with: "Modal character"
-      fill_in "At a glance", with: "Saved as JSON."
+      fill_in "Short summary", with: "Saved as JSON."
       click_button "Save character"
     end
 

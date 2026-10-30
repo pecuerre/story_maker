@@ -38,7 +38,7 @@ class StoryInterchangeTasksTest < ActiveSupport::TestCase
 
     assert_includes output, "Universe: Synthetic Universe (synthetic-universe)"
     assert_includes output, "Canon rules: 4"
-    assert_includes output, "Characters: 1, 9 reported not written"
+    assert_includes output, "Characters: 1, 4 reported not written"
     assert_includes output, "Factions: 1, 7 reported not written"
     assert_includes output, "Locations: 1, 7 reported not written"
     assert_includes output, "Items: 1, 4 reported not written"
@@ -46,7 +46,7 @@ class StoryInterchangeTasksTest < ActiveSupport::TestCase
     assert_includes output, "Plots: 1, 11 reported not written"
     assert_includes output, "Imported Synthetic Universe (synthetic-universe)."
     assert_includes output, "Canon rules: 4 written"
-    assert_includes output, "Characters: 1 written, 9 skipped"
+    assert_includes output, "Characters: 1 written, 4 skipped"
     assert_includes output, "Factions: 1 written, 7 skipped"
     assert_includes output, "Locations: 1 written, 7 skipped"
     assert_includes output, "Items: 1 written, 4 skipped"

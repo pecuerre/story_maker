@@ -8,32 +8,15 @@
   <div class="form-text"><%= t("characters.form.aliases_hint") %></div>
 </div>
 <div class="mb-3">
-  <%= form.label :at_a_glance, t("characters.form.at_a_glance"), class: "form-label" %>
-  <%= form.text_area :at_a_glance, class: "form-control", rows: 3 %>
+  <%= form.label :summary, t("characters.form.summary"), class: "form-label" %>
+  <%= form.text_area :summary, class: "form-control", rows: 3 %>
+  <div class="form-text"><%= t("characters.form.summary_hint") %></div>
 </div>
 <div class="mb-3">
-  <%= form.label :wants, t("characters.form.wants"), class: "form-label" %>
-  <%= form.text_area :wants, class: "form-control", rows: 2 %>
-</div>
-<div class="mb-3">
-  <%= form.label :needs, t("characters.form.needs"), class: "form-label" %>
-  <%= form.text_area :needs, class: "form-control", rows: 2 %>
-</div>
-<div class="mb-3">
-  <%= form.label :lies_to_self, t("characters.form.lies_to_self"), class: "form-label" %>
-  <%= form.text_area :lies_to_self, class: "form-control", rows: 2 %>
-</div>
-<div class="mb-3">
-  <%= form.label :contradictions, t("characters.form.contradictions"), class: "form-label" %>
-  <%= form.text_area :contradictions, class: "form-control", rows: 2 %>
-</div>
-<div class="mb-3">
-  <%= form.label :under_pressure_they, t("characters.form.under_pressure_they"), class: "form-label" %>
-  <%= form.text_area :under_pressure_they, class: "form-control", rows: 2 %>
-</div>
-<div class="mb-3">
-  <%= form.label :never, t("characters.form.never"), class: "form-label" %>
-  <%= form.text_area :never, class: "form-control", rows: 2 %>
+  <%= form.label :description, t("characters.form.description"), class: "form-label" %>
+  <%= form.text_area :description, class: "form-control font-monospace", rows: 14 %>
+  <div class="form-text"><%= t("characters.form.description_hint") %></div>
+  <div class="form-text"><%= t("characters.form.description_reference_hint") %></div>
 </div>
 <div class="mb-3">
   <%= form.label :faction_ids, t("characters.form.factions_label"), class: "form-label" %>

@@ -9,7 +9,7 @@ class UniverseBackup::ArchiveTest < ActiveSupport::TestCase
     @universe = universes(:universe_one)
     @story = stories(:story_one)
     @generated_at = Time.utc(2026, 10, 28, 12, 0, 0)
-    characters(:character_one).update!(at_a_glance: "A character a reader can meet.")
+    characters(:character_one).update!(summary: "A character a reader can meet.")
     @archive = UniverseBackup::Archive.new(@universe, generated_at: @generated_at)
     @files = read_archive(@archive)
   end

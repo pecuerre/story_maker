@@ -76,14 +76,14 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".empty-title", text: "Todavía no hay personajes"
   end
 
-  test "the Character details knowledge section is Spanish" do
+  test "the Character description label is Spanish" do
+    @character.update_columns(description: "## Quiere\n\nVolver a casa.")
+
     get universe_character_url(universe_slug: @universe.slug, id: @character)
 
     assert_response :success
-    assert_select "#character-knowledge-heading", text: "Lo que sabe este personaje"
-    assert_select "label", text: "Qué aprende"
-    assert_select "label", text: "De quién"
-    assert_select "label", text: "¿Cambia esto su plan?"
+    assert_select "dt", text: "Descripción"
+    assert_select ".detail-facts-wide h2", text: "Quiere"
   end
 
   test "a discarded filter value is reported in Spanish" do

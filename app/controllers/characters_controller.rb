@@ -41,11 +41,8 @@ class CharactersController < ApplicationController
     flash_discarded_filter_values
   end
 
-  # GET /characters/:id — the record's own read-only details page, with its
-  # related knowledge records under the same universe-scoped URL.
+  # GET /characters/:id — the record's own read-only details page.
   def show
-    @character_knowledges = @character.character_knowledges.includes(:source_character).order(:created_at, :id)
-    @knowledge = Current.universe.character_knowledges.new(character: @character)
   end
 
   def create
@@ -113,9 +110,8 @@ class CharactersController < ApplicationController
   end
 
   def character_params
-    params.expect(character: [ *photo_params, :name, :pronouns, :aliases, :at_a_glance, :wants, :needs,
-      :lies_to_self, :contradictions, :under_pressure_they, :never, { character_tag_ids: [] },
-      { faction_ids: [] }, :parent_id, :position ])
+    params.expect(character: [ *photo_params, :name, :pronouns, :aliases, :summary, :description,
+      { character_tag_ids: [] }, { faction_ids: [] }, :parent_id, :position ])
   end
 
   def character_json
@@ -124,13 +120,8 @@ class CharactersController < ApplicationController
       name: @character.name,
       pronouns: @character.pronouns,
       aliases: @character.aliases,
-      at_a_glance: @character.at_a_glance,
-      wants: @character.wants,
-      needs: @character.needs,
-      lies_to_self: @character.lies_to_self,
-      contradictions: @character.contradictions,
-      under_pressure_they: @character.under_pressure_they,
-      never: @character[:never],
+      summary: @character.summary,
+      description: @character.description,
       character_tag_ids: @character.character_tag_ids,
       faction_ids: @character.faction_ids,
       parent_id: @character.parent_id,

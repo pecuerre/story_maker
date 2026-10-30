@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_29_140000`) and the models in `app/models/`.
+`2026_10_30_120000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -24,7 +24,6 @@ User (owner)
        │       └── SceneLocation (explicit presence, optional free-text role) > Location
       ├── Discussion (one per record, polymorphic) ──> DiscussionMessage ──> User
        ├── Character ──> parent Character   ── HABTM CharacterTag (tree), HABTM Faction
-       │   └── CharacterKnowledge (when / what learned / source Character / plan change)
        ├── Faction    ── HABTM FactionTag (tree)
        │   └── FactionRelationship (directed faction → faction)
        ├── Location  ──> parent Location    ── HABTM LocationTag  (tree)
@@ -86,7 +85,7 @@ Soft-deleting a parent cascades to its declared children (a Universe soft-delete
 characters, factions, faction relationships, tags, routes, and memberships; a Faction soft-deletes
 relationships on either endpoint; a Story soft-deletes its sections, plots, and scenes; a Scene
 soft-deletes its elements and presence links; a SceneElement soft-deletes its dialogue turns; a
-Character soft-deletes its relations, ownerships, presence links, and knowledge records; a Location soft-deletes Routes
+Character soft-deletes its relations, ownerships, and presence links; a Location soft-deletes Routes
 using it as either endpoint). Plot-to-Scene join rows are
 retained when a Plot is soft-deleted, so restoring it restores its assignments. Dialogue-turn speaker rows
 are retained when a Character is soft-deleted, like the Element-level speaker join, so restoring
@@ -187,8 +186,7 @@ Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `sec
 ### Content tables
 | Table | Columns | Notes |
 |---|---|---|
-| `characters` | `name`, `pronouns`, `aliases`, `at_a_glance`, `wants`, `needs`, `lies_to_self`, `contradictions`, `under_pressure_they`, `never`, `slug`, `parent_id`, `position`, `universe_id` | profile text fields are optional; Faction membership is zero-to-many and universe-scoped |
-| `character_knowledges` | `universe_id`, `character_id`, optional `source_character_id`, `when_text`, `what_learned`, `changes_plan` (bool, default false), `deleted_at` | Character-owned knowledge change; both Character references must belong to the same Universe |
+| `characters` | `name`, `pronouns`, `aliases`, `summary`, `description`, `slug`, `parent_id`, `position`, `universe_id` | summary is one plain line; description is Markdown with the profile's `##` sections and typed links; both are optional; Faction membership is zero-to-many and universe-scoped |
 | `factions` | `name`, `slug`, `mission`, `actual_aims`, `structure`, `internal_divisions`, `resources`, `would_never`, `would_absolutely`, `universe_id`, `photo_id`, `deleted_at` | flat, universe-scoped profile |
 | `faction_relationships` | `universe_id`, `from_faction_id`, `to_faction_id`, optional `name`, `description`, `from_date`, `to_date`, `slug`, `photo_id`, `deleted_at` | directed Faction-to-Faction link; endpoints must be distinct and in the same Universe; a reverse link is a separate record; the dates are a `TemporalInterval` |
 | `locations` | `name`, `description`, `sensory_sight`, `sensory_sound`, `sensory_smell`, `sensory_taste`, `sensory_touch`, `layout_structure`, `layout_key_areas`, `layout_pathways`, `layout_entrances_exits`, `layout_points_of_interest`, `significance`, `history_significant_events`, `history_past_occupants`, `history_changes`, `access_controlled_by`, `access_granted_how`, `access_security`, `access_restrictions`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; every profile field is optional text, ordered by `Location::PROFILE_FIELDS` and described in [features/locations.md](features/locations.md) |

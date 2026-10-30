@@ -30,7 +30,7 @@ class DraftWorkflowTest < ApplicationSystemTestCase
     click_button "Add character"
     within ".modal.show" do
       fill_in "Name", with: "Remembered in the browser"
-      fill_in "At a glance", with: "Not live until it is applied."
+      fill_in "Short summary", with: "Not live until it is applied."
       click_button "Save character"
     end
 

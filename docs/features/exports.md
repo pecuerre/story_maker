@@ -109,7 +109,7 @@ sources the Scene domain defines in [scenes](scenes.md).
 
 `bible` ends the document with the Universe's Characters, Locations, Items, and Events — not only the
 records this Story uses — each named by its own label and followed by one summary line when it has
-one: `Character#at_a_glance` for Characters, `description` for the other three. Categories are in
+one: `Character#summary` for Characters, `description` for the other three. Categories are in
 that order, use the same title their workspace uses, and an empty category is omitted; a Universe
 with none of the four adds no appendix section.
 

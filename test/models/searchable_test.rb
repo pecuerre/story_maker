@@ -95,7 +95,7 @@ class SearchableTest < ActiveSupport::TestCase
 
   test "saving queues an index write carrying the committed document" do
     character = characters(:character_one)
-    character.update!(at_a_glance: "A wizard")
+    character.update!(summary: "A wizard")
 
     document = nil
     assert_enqueued_with job: Search::IndexRecordJob, args: ->(args) { document = args.first }
@@ -119,7 +119,7 @@ class SearchableTest < ActiveSupport::TestCase
 
     assert_no_enqueued_jobs only: Search::IndexRecordJob do
       Character.transaction do
-        character.update!(at_a_glance: "Never committed")
+        character.update!(summary: "Never committed")
         raise ActiveRecord::Rollback
       end
     end

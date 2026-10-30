@@ -142,15 +142,8 @@ module UniverseBackup
             "affiliation" => character.factions.map(&:slug).sort.join(", ").presence || "— TBD",
             "status" => "— TBD"
           }
-          sections = {
-            "At a glance" => character.at_a_glance,
-            "Wants" => character.wants,
-            "Needs" => character.needs,
-            "Lies about (to themselves)" => character.lies_to_self,
-            "Contradictions" => character.contradictions,
-            "Under pressure they" => character.under_pressure_they,
-            "Never" => character.never
-          }
+          sections = { "At a glance" => character.summary }
+            .merge(description_sections(character.description))
           [ "#{base}/universe/characters/#{character.slug}.md", document(frontmatter, character.name, sections) ]
         end
       end
@@ -386,6 +379,26 @@ module UniverseBackup
       def frontmatter(values)
         body = values.compact.to_yaml.sub(/\A---\n/, "")
         "---\n#{body}---\n"
+      end
+
+      # A Character's description is Markdown that already carries its own `##`
+      # sections. The projection keeps those headings so the readable tree reads
+      # like the source; prose before the first heading becomes a `Description`
+      # section rather than being dropped.
+      def description_sections(description)
+        text = description.to_s.strip
+        return {} if text.blank?
+
+        sections = {}
+        chunks = text.split(/^##[ \t]+/)
+        sections["Description"] = chunks.shift.strip if chunks.any? && chunks.first.present?
+
+        chunks.each do |chunk|
+          heading, body = chunk.split(/\r?\n/, 2)
+          sections[heading.strip] = body.to_s.strip
+        end
+
+        sections
       end
 
       def bullets(values)

@@ -128,13 +128,13 @@ class DraftPreviewTest < ActiveSupport::TestCase
     # the view layer's job, and this class holds records rather than labels for the
     # same reason `DraftChanges::Reader` does.
     character = characters(:character_one)
-    remember_update(character, "name" => "Ariadne", "at_a_glance" => "The thread puller")
+    remember_update(character, "name" => "Ariadne", "summary" => "The thread puller")
 
     pending = preview_for(@author).pending_for(character)
 
     assert_equal :edit, pending.state
     assert_equal 1, pending.count
-    assert_equal [ "name", "at_a_glance" ], pending.attribute_names
+    assert_equal [ "name", "summary" ], pending.attribute_names
   end
 
   test "several remembered edits on one record report one set of fields" do
@@ -145,14 +145,14 @@ class DraftPreviewTest < ActiveSupport::TestCase
     # reader asking "which fields" wants the answer once, in the order they wrote.
     character = characters(:character_one)
     remember_update(character, "name" => "Ariadne")
-    remember_update(character, "at_a_glance" => "The thread puller",
+    remember_update(character, "summary" => "The thread puller",
       "character_tag_ids" => [ character_tags(:character_tag_one).id ])
     remember_update(character, "name" => "Ariadne II")
 
     pending = preview_for(@author).pending_for(character)
 
     assert_equal 3, pending.count
-    assert_equal [ "name", "at_a_glance", "character_tag_ids" ], pending.attribute_names
+    assert_equal [ "name", "summary", "character_tag_ids" ], pending.attribute_names
   end
 
   test "the column that places a record in its scope is not one of its fields" do
@@ -223,7 +223,7 @@ class DraftPreviewTest < ActiveSupport::TestCase
   # What the draft would have created
 
   test "a remembered create is the record a list would have shown" do
-    remember_create("Character", "name" => "Ariadne", "at_a_glance" => "The thread puller")
+    remember_create("Character", "name" => "Ariadne", "summary" => "The thread puller")
 
     pending = preview_for(@author).creates_for(Character)
 
@@ -231,7 +231,7 @@ class DraftPreviewTest < ActiveSupport::TestCase
     record = pending.first
     assert_predicate record, :new_record?
     assert_equal "Ariadne", record.name
-    assert_equal "The thread puller", record.at_a_glance
+    assert_equal "The thread puller", record.summary
   end
 
   test "a remembered create arrives in the order it was remembered" do

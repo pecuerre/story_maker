@@ -2,7 +2,7 @@
 name: The Wardens
 slug: wardens
 type: "militia"
-home: "[[keep]]"
+home: "[[location:keep]]"
 status: active
 ---
 

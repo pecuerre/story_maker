@@ -351,7 +351,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
       remember_create_payload("")
     )
     change = target.draft_changes.first
-    @character.update!(name: "Renamed by somebody else", at_a_glance: "Also changed by somebody else")
+    @character.update!(name: "Renamed by somebody else", summary: "Also changed by somebody else")
 
     post apply_universe_draft_url(universe_slug: @universe.slug, id: target),
       params: { resolutions: { change.id => "theirs" } }
@@ -772,7 +772,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     change = moved.draft_changes.first
     # Somebody else renamed the same record after the change was remembered,
     # which is what `base_version` exists to notice.
-    @character.update!(name: "Renamed by somebody else", at_a_glance: "Also changed by somebody else")
+    @character.update!(name: "Renamed by somebody else", summary: "Also changed by somebody else")
     assert VersionStamp.changed?(@character, change.base_version)
 
     post apply_universe_draft_url(universe_slug: @universe.slug, id: moved)
@@ -824,7 +824,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   test "answering a conflict with theirs keeps the record and drops the change" do
     moved = draft_with(remember_update_payload("Renamed by a draft"), remember_create_payload)
     change = moved.draft_changes.first
-    @character.update!(name: "Renamed by somebody else", at_a_glance: "Also changed by somebody else")
+    @character.update!(name: "Renamed by somebody else", summary: "Also changed by somebody else")
 
     post apply_universe_draft_url(universe_slug: @universe.slug, id: moved),
       params: { resolutions: { change.id => "theirs" } }
@@ -888,7 +888,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   test "answering a conflict with mine writes the remembered fields over what is there" do
     moved = draft_with(remember_update_payload("Renamed by a draft"), remember_create_payload)
     change = moved.draft_changes.first
-    @character.update!(name: "Renamed by somebody else", at_a_glance: "Also changed by somebody else")
+    @character.update!(name: "Renamed by somebody else", summary: "Also changed by somebody else")
 
     post apply_universe_draft_url(universe_slug: @universe.slug, id: moved),
       params: { resolutions: { change.id => "mine" } }
@@ -898,7 +898,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
     # "Overwrite with my change" is the change's own payload, not the whole row:
     # a conflict is per record, and a field the author never submitted is still
     # the other editor's.
-    assert_equal "Also changed by somebody else", @character.at_a_glance
+    assert_equal "Also changed by somebody else", @character.summary
     assert_predicate moved.reload, :applied?
   end
 
@@ -941,8 +941,8 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
       remember_create_payload
     )
     first, second = draft.draft_changes.to_a
-    @character.update!(at_a_glance: "Changed by somebody else")
-    other.update!(at_a_glance: "Changed by somebody else too")
+    @character.update!(summary: "Changed by somebody else")
+    other.update!(summary: "Changed by somebody else too")
 
     post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
       params: { resolutions: { first.id => "mine" } }
@@ -970,7 +970,7 @@ class DraftsControllerTest < ActionDispatch::IntegrationTest
   test "an answer that is not one of the two the page offers is ignored" do
     draft = draft_with(remember_update_payload("Renamed by a draft"))
     change = draft.draft_changes.first
-    @character.update!(at_a_glance: "Changed by somebody else")
+    @character.update!(summary: "Changed by somebody else")
 
     post apply_universe_draft_url(universe_slug: @universe.slug, id: draft),
       params: { resolutions: { change.id => "perhaps" } }

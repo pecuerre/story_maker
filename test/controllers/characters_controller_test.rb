@@ -39,7 +39,7 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
   # cannot is the page around it — the canonical URL, the two empty states, and
   # what a filter does to the reader's own pending rows.
   test "index renders a search area that narrows, orders, and stays in the URL" do
-    @character.update!(at_a_glance: "The keeper of the gate")
+    @character.update!(summary: "The keeper of the gate")
     @universe.characters.create!(name: "A spare")
 
     get universe_characters_url(universe_slug: @universe.slug, q: "keeper", sort: "created")
@@ -235,7 +235,8 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Character.count") do
       post universe_characters_url(universe_slug: @universe.slug),
         params: { character: { name: "New character", pronouns: "she/her", aliases: "The Gate",
-          at_a_glance: "A description", character_tag_ids: [ @character_tag.id ], faction_ids: [ factions(:faction_two).id ] } },
+          summary: "A summary", description: "## Wants\n\nThe road home.",
+          character_tag_ids: [ @character_tag.id ], faction_ids: [ factions(:faction_two).id ] } },
         as: :json
     end
 
@@ -243,7 +244,8 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ @character_tag.id ], response.parsed_body["character_tag_ids"]
     assert_equal "she/her", response.parsed_body["pronouns"]
     assert_equal "The Gate", response.parsed_body["aliases"]
-    assert_equal "A description", Character.order(:id).last.at_a_glance
+    assert_equal "A summary", Character.order(:id).last.summary
+    assert_equal "## Wants\n\nThe road home.", Character.order(:id).last.description
     assert_equal [ factions(:faction_two).id ], response.parsed_body["faction_ids"]
   end
 
@@ -275,14 +277,14 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
 
   test "should update character details as json" do
     patch universe_character_url(universe_slug: @universe.slug, id: @character),
-      params: { character: { name: "Renamed", at_a_glance: "Updated", pronouns: "they/them",
+      params: { character: { name: "Renamed", summary: "Updated", pronouns: "they/them",
         aliases: "The Gate", character_tag_ids: [ @character_tag.id ] } },
       as: :json
 
     assert_response :success
     @character.reload
     assert_equal [ "Renamed", "Updated", "they/them", "The Gate", [ @character_tag.id ] ],
-      [ @character.name, @character.at_a_glance, @character.pronouns, @character.aliases,
+      [ @character.name, @character.summary, @character.pronouns, @character.aliases,
         @character.character_tag_ids ]
     assert_equal "they/them", response.parsed_body["pronouns"]
     assert_equal "The Gate", response.parsed_body["aliases"]
@@ -297,8 +299,8 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     # copy is carried by that control and must not be weakened.
     assert_select "button[data-action='modal-form#destroy'][data-modal-form-url=?][data-modal-form-confirm=?]",
       universe_character_path(universe_slug: @universe.slug, id: @character),
-      "Delete “#{@character.name}”? Its descendant characters, relations, ownerships, knowledge " \
-      "records, tag assignments, and links to scenes will be permanently removed. Scenes, factions, " \
+      "Delete “#{@character.name}”? Its descendant characters, relations, ownerships, tag " \
+      "assignments, and links to scenes will be permanently removed. Scenes, factions, " \
       "and other universe records will remain."
   end
 
@@ -327,21 +329,26 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "must belong to the same universe" ], response.parsed_body["factions"]
   end
 
-  test "character details show profile, faction, and knowledge records" do
-    @character.update!(at_a_glance: "A quick summary", wants: "The key", pronouns: "she/her",
-      aliases: "Ariadne, The Thread Puller")
-    knowledge = character_knowledges(:knowledge_one)
+  test "character details show the summary, profile, faction, and Markdown description" do
+    keep = @universe.locations.create!(name: "The Keep")
+    @character.update!(summary: "A quick summary", pronouns: "she/her",
+      aliases: "Ariadne, The Thread Puller",
+      description: "## Wants\n\nTo find **the key** and open [[location:the-keep]].")
 
     get universe_character_url(universe_slug: @universe.slug, id: @character)
 
     assert_response :success
     assert_includes response.body, "A quick summary"
-    assert_includes response.body, "The key"
     assert_includes response.body, "she/her"
     assert_includes response.body, "Ariadne, The Thread Puller"
     assert_includes response.body, "Faction one"
-    assert_select "#character-knowledge-heading", text: "What this character knows"
-    assert_select "article", text: /#{Regexp.escape(knowledge.what_learned)}/
+
+    document = Nokogiri::HTML(response.body)
+    assert_equal "Wants", document.at_css(".detail-facts-wide h2").text
+    assert_equal "the key", document.at_css(".detail-facts-wide strong").text
+    assert_equal "The Keep", document.at_css(".detail-facts-wide a").text
+    assert_equal universe_location_path(universe_slug: @universe.slug, id: keep),
+      document.at_css(".detail-facts-wide a")["href"]
   end
 
   test "a show_in_menu tag appears as a workspace tab linking to its details page" do

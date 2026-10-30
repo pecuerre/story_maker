@@ -33,6 +33,18 @@ module StoryInterchange
     CANON_TYPES = { "K" => "locked", "L" => "rule", "D" => "consequence", "O" => "open" }.freeze
     RULE_REFERENCE = /\Arule:(.+)\z/
     SCENE_REFERENCE = /\Ascene:(.+)\z/
+    # A typed entity reference: `[[character:ada]]`, `[[location:keep]]`. The
+    # prefix says what the record must be, so a link cannot silently point at a
+    # different kind that happens to share a slug.
+    TYPED_REFERENCE = /\A(?<kind>[a-z]+):(?<slug>.+)\z/
+    KIND_FOR_PREFIX = {
+      "character" => :character,
+      "faction" => :faction,
+      "location" => :location,
+      "item" => :item,
+      "tech" => :item,
+      "plot" => :plot
+    }.freeze
     BACKLOG_REFERENCE = /\AB-\d{3}\z/
     PLACEHOLDER_REFERENCES = %w[slug].freeze
 
@@ -89,6 +101,7 @@ module StoryInterchange
       @report = Report.new
       @entries = []
       @slugs = {}
+      @slug_kinds = {}
       @character_slugs = Set.new
       @location_slugs = Set.new
       @canon_ids = {}
@@ -627,6 +640,7 @@ module StoryInterchange
           error(document, 1, "duplicate record slug `#{slug}` (also #{@slugs[slug].relative_path})")
         else
           @slugs[slug] = document
+          @slug_kinds[slug] = kind
         end
 
         @character_slugs << slug if kind == :character
@@ -671,6 +685,8 @@ module StoryInterchange
           unless entry.kind == :scene && @scene_keys.include?([ entry.story_slug, entry.chapter_slug, match[1] ])
             error(entry.document, reference.line, "unknown scene `#{match[1]}` in this chapter")
           end
+        elsif (match = target.match(TYPED_REFERENCE)) && KIND_FOR_PREFIX.key?(match[:kind])
+          check_typed_reference(entry, reference, KIND_FOR_PREFIX[match[:kind]], match[:slug])
         elsif target.match?(SLUG)
           unless @slugs.key?(target)
             error(entry.document, reference.line, "unknown record slug `#{target}`")
@@ -678,6 +694,21 @@ module StoryInterchange
         else
           error(entry.document, reference.line, "unknown reference form `[[#{target}]]`")
         end
+      end
+
+      # A typed reference must name a record of the kind its prefix declares.
+      # `[[location:ada]]` is an error even though `ada` exists, because the
+      # author asked for a Location and the page would have to break that promise.
+      def check_typed_reference(entry, reference, kind, slug)
+        unless slug.match?(SLUG) && @slugs.key?(slug)
+          error(entry.document, reference.line, "unknown record slug `#{slug}`")
+          return
+        end
+
+        return if @slug_kinds[slug] == kind
+
+        error(entry.document, reference.line,
+          "reference `[[#{reference.target}]]` names a #{@slug_kinds[slug]}, not a #{kind}")
       end
 
       def document_for(path)

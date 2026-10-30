@@ -1,6 +1,0 @@
-- universe: Universe.dark
-  character: Character.jonas
-  when_text: "When Martha describes the other world"
-  what_learned: "A second version of the world exists, and Martha comes from it."
-  source_character: Character.martha
-  changes_plan: true

@@ -38,6 +38,23 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-30
+
+### added
+
+- **Markdown character description.** A Character's details page renders `##` headings, bold, lists, tables, and safe links from its stored Markdown description.
+- **Typed record links.** `[[character:slug]]`, `[[location:slug]]`, and the other typed reference forms become links to the named record; the interchange validator and import read the same forms.
+
+### changed
+
+- **Character profile simplified.** A Character keeps its name, tags, factions, pronouns, aliases, short summary, and one Markdown description; the separate wants, needs, lies, contradictions, pressure, and never columns are gone.
+- **Character knowledge records removed.** The `CharacterKnowledge` model, form, routes, demo records, and search/report surfaces are gone; knowledge prose lives in the description's `## Knowledge` section.
+- **Character interchange mapping.** The `At a glance` section writes the summary and every other body section writes the description as written, so the body is no longer reported section by section.
+
+### chore
+
+- **Demo character data.** Dark and Lord of the Rings characters carry the simplified profile and move their old knowledge records into Markdown descriptions.
+
 ## 2026-10-29
 
 ### added

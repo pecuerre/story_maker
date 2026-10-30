@@ -11,8 +11,7 @@ class Character < ApplicationRecord
 
   searchable kind: "character", title: :name, body: :search_description, route: "character"
   invalidates_menu_counts_for :universe
-  soft_deletes :children, :relations_as_character1, :relations_as_character2, :ownerships, :scene_characters,
-    :character_knowledges
+  soft_deletes :children, :relations_as_character1, :relations_as_character2, :ownerships, :scene_characters
   before_destroy :clear_faction_memberships
 
   belongs_to :universe
@@ -34,18 +33,15 @@ class Character < ApplicationRecord
   # its own right: it carries a discussion, and `delete_all` skips callbacks, so
   # it would remove the link row and leave the thread behind pointing at nothing.
   has_many :scene_characters, dependent: :destroy
-  has_many :character_knowledges, dependent: :destroy
-  has_many :deleted_character_knowledges, -> { only_deleted }, class_name: "CharacterKnowledge",
-    foreign_key: :character_id, dependent: :destroy
-  has_many :source_knowledge_entries, -> { with_deleted }, class_name: "CharacterKnowledge", foreign_key: :source_character_id,
-    dependent: :nullify
 
   validates :name, presence: true
   validate :factions_belong_to_same_universe
 
+  # The short summary is plain text; the description is Markdown and is rendered
+  # by `CharacterDescription` when a page shows it. Both are part of the record's
+  # search body, so a reader can find a Character by what its profile says.
   def search_description
-    [ at_a_glance, pronouns, aliases, wants, needs, lies_to_self, contradictions, under_pressure_they,
-      self[:never] ].compact_blank.join(" ")
+    [ summary, pronouns, aliases, description ].compact_blank.join(" ")
   end
 
   private

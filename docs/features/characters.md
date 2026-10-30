@@ -6,28 +6,51 @@ and ownership graph are summarized in [data_model.md](../data_model.md).
 
 ## Profile
 
-The Character modal records a name and optional plain-text profile fields:
+A Character has one short summary and one Markdown description beside the identity fields:
 
 | Field | What it records |
 |---|---|
+| `name` | The Character's name |
+| `character_tags` | Optional Universe-scoped Character Tags |
+| `factions` | Zero or more same-Universe Factions |
 | `pronouns` | The pronouns the Character uses |
 | `aliases` | Other names the Character goes by, usually separated by commas |
-| `at_a_glance` | A short overview |
-| `wants` | What the Character wants |
-| `needs` | What the Character needs |
-| `lies_to_self` | What the Character believes that is not true |
-| `contradictions` | Conflicting traits, motives, or choices |
-| `under_pressure_they` | How the Character responds under pressure |
-| `never` | An action or boundary the Character will not cross |
+| `summary` | One line shown in the list and at the top of the details page |
+| `description` | The full profile, written in Markdown |
 
-Every profile field is optional. The old `description` column was renamed to `at_a_glance`, preserving
-existing summaries. Character text search and the API use the structured profile fields; the API
-returns `at_a_glance` and the other profile values instead of `description`. Aliases and pronouns are
-part of the searchable body, so a reader can find a Character by a name it is known by or by the
-pronouns recorded for it.
+Every field except `name` is optional. There are deliberately no separate columns for wants, needs,
+lies, contradictions, pressure, or knowledge: those are `##` sections inside `description`, which
+keeps the form short and lets the author choose the shape of a Character's profile.
 
-The details page's prose mention suggestions are a separate read: a name written in a Scene never
-becomes an appearance. Their matching rules and surfaces are in [mentions.md](mentions.md).
+The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
+`**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. Raw
+HTML in the body is stripped, and an unknown reference stays visible as written. The renderer is
+`CharacterDescription` in `app/services/character_description.rb`, reached through
+`CharactersHelper#character_description_html` so every surface uses one dialect.
+
+Aliases and pronouns are part of the searchable body, as are the summary and description, so a
+reader can find a Character by a name it is known by or by what its profile says.
+
+## Links inside a description
+
+A description may link another record with a typed reference:
+
+| Reference | Opens |
+|---|---|
+| `[[character:slug]]` | the Character |
+| `[[faction:slug]]` | the Faction |
+| `[[location:slug]]` | the Location |
+| `[[item:slug]]` | the Item |
+
+`[[plot:slug]]`, `[[scene:slug]]`, and `[[rule:ID]]` are also resolved when the record exists. A bare
+`[[slug]]` is the older form and still works; it is looked up across the Universe kinds in the order
+Character, Faction, Location, Item, then Plot. A reference to a missing record, or to a record of a
+different kind than its prefix declares, stays literal so the author sees it rather than losing it.
+A reference inside a code span or fenced block is an example and is not linked.
+
+The interchange's link rules are in
+[story_interchange.md](story_interchange.md#references); this page owns how the application renders
+them.
 
 ## Faction membership
 
@@ -35,34 +58,25 @@ A Character may be assigned zero, one, or several same-Universe Factions. The mu
 Character editor is optional; the Character details page links to assigned Factions. Membership is a
 scoped HABTM join with database uniqueness and foreign-key constraints. Reads hide a corrupt
 cross-Universe join, and model validation rejects a foreign membership on write. Deleting a Character
-soft-deletes its own knowledge records but leaves its faction membership joins available for restore;
-hard destruction removes the joins without deleting either endpoint.
+leaves its faction membership joins available for restore; hard destruction removes the joins
+without deleting either endpoint.
 
 Factions themselves and their taxonomy are documented in [factions.md](factions.md).
 
-## Knowledge changes
-
-The Character details page holds any number of knowledge records. Each captures a free-form **When**
-label, **What they learn**, an optional source Character (**From whom**), and whether the information
-changes their plan. The When field is intentionally prose rather than a date or Event reference, so a
-writer can describe a Scene, revelation, or other in-world moment without inventing chronology.
-Knowledge records belong to both their Universe and Character; the optional source must also belong
-to that Universe. They are listed chronologically by creation order and can be edited or soft-deleted
-from the details page. A Character's soft deletion cascades to its knowledge records.
-
 The Character workspace follows the existing JSON modal mutation contract and Universe access policy.
-Knowledge records use HTML forms embedded on the details page and the same draft-aware mutation path;
-all reads and writes are scoped through the authorized Universe and nested Character URL.
+All reads and writes are scoped through the authorized Universe URL.
+
+The details page's prose mention suggestions are a separate read: a name written in a Scene never
+becomes an appearance. Their matching rules and surfaces are in [mentions.md](mentions.md).
 
 ## Character sample records
 
-Character profile examples demonstrate populated and blank optional fields, including pronouns and
-aliases, multiple faction memberships, and a Character with no Faction. In Dark, family and job tags
-describe Characters while faction membership is the separate Faction association. Each Universe also
-includes a connected knowledge record with a source Character. The manifests are `characters.yml` and
-`character_knowledges.yml`; the latter loads after the Character and Faction definitions.
+Character profile examples demonstrate populated and blank fields, including pronouns and aliases,
+multiple faction memberships, a Character with no Faction, and a Markdown description with `##`
+sections and a typed link. In Dark, family and job tags describe Characters while faction membership
+is the separate Faction association. The manifest is `characters.yml` in each Universe directory.
 
-After changing either Universe's manifests, validate and reload both development datasets using the
+After changing either Universe's manifest, validate and reload both development datasets using the
 workflow in [development.md](../development.md#required-workflow-after-editing-demo-yaml):
 
 ```sh
@@ -73,5 +87,5 @@ script/demo reset dark lotr
 
 For manual verification, sign in as `dark@dark` with the development password configured in
 `UNIVERSE_MAKER_DEV_PASSWORD`, select Dark, and open `/u/dark/characters`. Open Jonas's Details page
-to see the profile, faction membership, and sample knowledge entry; the Character list and details
+to see the summary, faction membership, and Markdown description; the Character list and details
 page are also the browser entry points for editing those records.

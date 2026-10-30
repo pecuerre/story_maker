@@ -41,7 +41,6 @@ class Ability
     SceneLocation
     SceneTrope
     Character
-    CharacterKnowledge
     CharacterTag
     Faction
     FactionTag

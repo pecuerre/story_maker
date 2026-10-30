@@ -56,7 +56,7 @@ The dump covers the core records:
 - canon rules;
 - every tag taxonomy (character, faction, location, item, event, relation, ownership, section, and
   scene tags);
-- Characters and their knowledge records; Factions and faction relationships; Locations, Routes,
+- Characters; Factions and faction relationships; Locations, Routes,
   Items, and Ownerships; Relations; Events;
 - Sections, Plots, Story and Scene tropes, Scenes, Scene Elements, Dialogue turns, and every Scene
   presence and Event link;

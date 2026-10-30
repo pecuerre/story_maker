@@ -12,11 +12,13 @@ class CharacterTest < ActiveSupport::TestCase
     assert Character.create!(universe: universes(:universe_one), name: "Untagged")
   end
 
-  test "pronouns and aliases are optional and join the searchable profile" do
+  test "summary, pronouns, aliases, and description join the searchable profile" do
     character = Character.create!(universe: universes(:universe_one), name: "Ariadne",
-      at_a_glance: "Thread-puller", pronouns: "she/her", aliases: "The Gate, Ari")
+      summary: "Thread-puller", pronouns: "she/her", aliases: "The Gate, Ari",
+      description: "## Wants\n\nTo leave the maze.")
 
-    assert_equal "Thread-puller she/her The Gate, Ari", character.search_description
+    assert_equal "Thread-puller she/her The Gate, Ari ## Wants\n\nTo leave the maze.",
+      character.search_description
 
     blank = Character.create!(universe: universes(:universe_one), name: "Unnamed")
     assert_nil blank.pronouns
@@ -48,34 +50,6 @@ class CharacterTest < ActiveSupport::TestCase
     SQL
 
     assert_not_includes character.factions, foreign_faction
-  end
-
-  test "soft-deleting a character also soft-deletes its knowledge records" do
-    character = characters(:character_one)
-    knowledge = character_knowledges(:knowledge_one)
-
-    character.soft_delete
-
-    assert knowledge.reload.deleted?
-  end
-
-  test "hard-destroying a Character cleans up knowledge records even if already soft-deleted" do
-    character = characters(:character_one)
-    knowledge = character_knowledges(:knowledge_one)
-    knowledge.soft_delete
-
-    character.destroy!
-
-    assert_not CharacterKnowledge.with_deleted.exists?(knowledge.id)
-  end
-
-  test "hard-destroying a source Character clears that optional attribution" do
-    source = characters(:character_two)
-    knowledge = character_knowledges(:knowledge_one)
-
-    source.destroy!
-
-    assert_nil knowledge.reload.source_character_id
   end
 
   test "soft-deleting a turn speaker preserves its attributed lines for restore" do

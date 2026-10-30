@@ -32,7 +32,7 @@ class ListFilterTest < ActiveSupport::TestCase
     end
 
     def apply(relation)
-      relation = narrowed_by_text(relation, table: "characters", columns: %w[ name at_a_glance ])
+      relation = narrowed_by_text(relation, table: "characters", columns: %w[ name summary ])
       relation = relation.where(parent_id: parent.id) if parent
       relation = narrowed_by_day_range(relation, :created_at, from: from_date)
       relation.order(:name, :id)
@@ -59,9 +59,9 @@ class ListFilterTest < ActiveSupport::TestCase
     # Descriptions are what the text filter reads besides the name, and fixed
     # timestamps are what the day range reads, so neither depends on when the
     # fixtures were loaded.
-    @character_one.update!(at_a_glance: "The keeper of the gate", created_at: Time.utc(2026, 10, 2, 23, 59))
-    @character_two.update!(at_a_glance: "The sworn companion", created_at: Time.utc(2026, 1, 5))
-    @character_three.update!(at_a_glance: "The silent cartographer", created_at: Time.utc(2026, 6, 1))
+    @character_one.update!(summary: "The keeper of the gate", created_at: Time.utc(2026, 10, 2, 23, 59))
+    @character_two.update!(summary: "The sworn companion", created_at: Time.utc(2026, 1, 5))
+    @character_three.update!(summary: "The silent cartographer", created_at: Time.utc(2026, 6, 1))
 
     @candidates = [ @character_one, @character_two, @character_three ]
     @candidates_ids = apply_with(filter_for).map(&:id)

@@ -29,7 +29,7 @@ class CharacterFilterTest < ApplicationSystemTestCase
   end
 
   test "a writer narrows the character list, sees it in the URL, and clears it" do
-    characters(:character_one).update!(at_a_glance: "The keeper of the gate")
+    characters(:character_one).update!(summary: "The keeper of the gate")
 
     sign_in_via_form(users(:user_one))
     visit universe_characters_path(universe_slug: @universe.slug)

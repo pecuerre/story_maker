@@ -29,7 +29,6 @@ module UniverseBackup
       FactionTag
       Faction
       Character
-      CharacterKnowledge
       FactionRelationship
       RelationTag
       Relation

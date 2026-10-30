@@ -56,14 +56,14 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal :character, character.kind
     assert_equal "Ada", character.name
     assert_nil character.story_slug
-    assert_equal "The engineer trusted by [[wardens]] to keep the lantern lit.",
+    assert_equal "The engineer trusted by [[faction:wardens]] to keep the lantern lit.",
       character.sections.find { |section| section.heading == "At a glance" }.body
     assert_empty character.introduction
 
     faction = report.entity("wardens")
     assert_equal :faction, faction.kind
     assert_equal "The Wardens", faction.name
-    assert_equal "[[keep]]", faction.frontmatter["home"]
+    assert_equal "[[location:keep]]", faction.frontmatter["home"]
 
     # A Plot is parsed like an entity, and the story directory that holds it is
     # what scopes it.
@@ -120,14 +120,32 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "strips an HTML comment from stored prose and ignores its references" do
-    replace("universe/characters/ada.md", "The engineer trusted by [[wardens]] to keep the lantern lit.",
-      "The engineer trusted by [[wardens]] to keep the lantern lit.\n\n<!-- [[nobody]] drafting note -->")
+    replace("universe/characters/ada.md", "The engineer trusted by [[faction:wardens]] to keep the lantern lit.",
+      "The engineer trusted by [[faction:wardens]] to keep the lantern lit.\n\n<!-- [[nobody]] drafting note -->")
 
     report = validate
 
     assert report.valid?, report.errors.map(&:to_s).join("\n")
-    assert_equal "The engineer trusted by [[wardens]] to keep the lantern lit.",
+    assert_equal "The engineer trusted by [[faction:wardens]] to keep the lantern lit.",
       report.entity("ada").sections.find { |section| section.heading == "At a glance" }.body
+  end
+
+  test "refuses a typed reference to a record of another kind" do
+    replace("universe/characters/ada.md", "[[location:keep]]", "[[character:keep]]")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/reference `\[\[character:keep\]\]` names a location, not a character/, errors(report))
+  end
+
+  test "refuses a typed reference to a missing record" do
+    replace("universe/characters/ada.md", "[[faction:wardens]]", "[[faction:nobody]]")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/unknown record slug `nobody`/, errors(report))
   end
 
   test "reads the universe display name from universe/README.md" do
@@ -262,7 +280,8 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "reports a slug reference that names no record" do
-    replace("universe/characters/ada.md", "affiliation: \"[[wardens]]\"", "affiliation: \"[[nobody]]\"")
+    replace("universe/characters/ada.md", "affiliation: \"[[faction:wardens]]\"",
+      "affiliation: \"[[faction:nobody]]\"")
 
     report = validate
 

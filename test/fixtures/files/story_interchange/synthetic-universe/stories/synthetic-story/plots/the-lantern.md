@@ -11,7 +11,7 @@ opened_in: B-001
 
 ## The question
 
-Can Ada reach the hall before the light fails? `[[ada]]` believes she can.
+Can Ada reach the hall before the light fails? `[[character:ada]]` believes she can.
 
 ## Stakes
 
@@ -21,8 +21,8 @@ The road closes for the winter.
 
 | Character / faction | Role | Wants from this thread |
 |---|---|---|
-| `[[ada]]` | carrier | the hall |
-| `[[wardens]]` | gatekeepers | the quiet |
+| `[[character:ada]]` | carrier | the hall |
+| `[[faction:wardens]]` | gatekeepers | the quiet |
 
 ## Status
 

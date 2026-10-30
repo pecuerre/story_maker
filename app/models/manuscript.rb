@@ -137,7 +137,7 @@ class Manuscript
     @appendices = if bible?
       [
         Appendix.new(label_key: "characters.title", records: universe.characters.reorder(:name, :id).to_a,
-          label_method: :name, summary_method: :at_a_glance),
+          label_method: :name, summary_method: :summary),
         Appendix.new(label_key: "locations.title", records: universe.locations.reorder(:name, :id).to_a,
           label_method: :name, summary_method: :description),
         Appendix.new(label_key: "items.title", records: universe.items.reorder(:name, :id).to_a,

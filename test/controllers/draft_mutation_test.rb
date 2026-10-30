@@ -8,7 +8,7 @@ require "test_helper"
 # through and nothing else would notice.
 #
 # So this file is that something else. It walks **every** mutation controller in
-# both modes — twenty-nine of them, across the JSON-only flow, the HTML flow, and
+# both modes — twenty-eight of them, across the JSON-only flow, the HTML flow, and
 # both scopes — and asserts the single thing that differs between them: in `direct` a
 # mutation writes, and in a draft-based universe it does not. The table is the
 # contract; the tests below it are the details that the table cannot express,
@@ -42,18 +42,6 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
       update: -> { [ universe_character_url(universe_slug: @universe.slug, id: @character.id),
         { character: { name: RENAMED } } ] },
       destroy: -> { universe_character_url(universe_slug: @universe.slug, id: @character.id) }
-    },
-    {
-      name: "character_knowledges", model: CharacterKnowledge, json: false, label: :what_learned,
-      scope: -> { [ "universe_id", @universe.id ] },
-      record: -> { @knowledge },
-      create: -> { [ universe_character_character_knowledges_url(universe_slug: @universe.slug,
-        character_id: @character.id), { character_knowledge: { when_text: NEW, what_learned: NEW } } ] },
-      update: -> { [ universe_character_character_knowledge_url(universe_slug: @universe.slug,
-        character_id: @character.id, id: @knowledge.id),
-        { character_knowledge: { when_text: RENAMED, what_learned: RENAMED } } ] },
-      destroy: -> { universe_character_character_knowledge_url(universe_slug: @universe.slug,
-        character_id: @character.id, id: @knowledge.id) }
     },
     {
       name: "locations", model: Location, json: true, label: :name,
@@ -330,7 +318,6 @@ class DraftMutationTest < ActionDispatch::IntegrationTest
     @story = stories(:story_one)
     @scene = scenes(:scene_one)
     @character = characters(:character_one)
-    @knowledge = character_knowledges(:knowledge_one)
     @other_character = characters(:character_two)
     @unlinked_character = characters(:character_three)
     @location = locations(:location_one)

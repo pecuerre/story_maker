@@ -31,7 +31,7 @@ class VersionStampTest < ActiveSupport::TestCase
   test "an edit is reported as changed" do
     taken = VersionStamp.capture(@character)
 
-    @character.update!(at_a_glance: "Edited after the change was drafted")
+    @character.update!(summary: "Edited after the change was drafted")
 
     assert VersionStamp.changed?(@character, taken.stamp)
   end
@@ -64,10 +64,10 @@ class VersionStampTest < ActiveSupport::TestCase
     base = Time.current.change(usec: 100_000)
     through_seconds = ->(stamp) { stamp[0, 19] }
 
-    @character.update_columns(updated_at: base, at_a_glance: "First")
+    @character.update_columns(updated_at: base, summary: "First")
     first = VersionStamp.capture(@character)
 
-    @character.update_columns(updated_at: base + 0.5, at_a_glance: "Second")
+    @character.update_columns(updated_at: base + 0.5, summary: "Second")
     second = VersionStamp.capture(@character)
 
     assert_equal base.to_time.utc.iso8601(6), first.stamp

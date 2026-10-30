@@ -19,19 +19,26 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     FileUtils.remove_entry(@temporary_directory) if File.directory?(@temporary_directory)
   end
 
-  test "writes characters and factions from frontmatter and profile sections" do
+  test "writes a character as a summary and one Markdown description, and factions from profile sections" do
     universe = import.call.universe
 
     character = universe.characters.find_by!(slug: "ada")
     assert_equal "Ada", character.name
-    assert_equal "The engineer trusted by The Wardens to keep the lantern lit.", character.at_a_glance
-    assert_equal "To ask someone else to carry it to The Keep.", character.needs
-    assert_equal "That the dark is only a weather problem.", character.lies_to_self
-    assert_equal "| Trait A | Trait B |\n|---|---|\n| careful | impatient |", character.contradictions
-    assert_equal "- counts the wick\n- lies about the count", character.under_pressure_they
-    assert_equal "Leaves the lantern on the ground.", character.never
+    assert_equal "The engineer trusted by The Wardens to keep the lantern lit.", character.summary
     assert_nil character.pronouns
     assert_nil character.aliases
+    # Every profile section except the summary is one description, in source
+    # order, with the source's Markdown and typed links kept as written.
+    assert_includes character.description, "## Wants\n\nTo reach the hall before the light fails."
+    assert_includes character.description, "## Needs\n\nTo ask someone else to carry it to [[location:keep]]."
+    assert_includes character.description, "## Lies about (to herself)"
+    assert_includes character.description, "| Trait A | Trait B |\n|---|---|\n| careful | impatient |"
+    assert_includes character.description, "## Under pressure they\n\n- counts the wick\n- lies about the count"
+    assert_includes character.description, "## Never\n\nLeaves the lantern on the ground."
+    assert_includes character.description, "## State of knowledge"
+    assert_includes character.description, "## Voice"
+    assert_includes character.description, "## Arc"
+    assert_includes character.description, "## Open questions"
     # An affiliation is reported, not guessed into Faction membership.
     assert_empty character.factions
 
@@ -46,14 +53,15 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal "Bar the hall when the lantern arrives.", faction.would_absolutely
   end
 
-  test "resolves a reference to a record this run writes and leaves the rest as written" do
+  test "resolves a reference in plain prose and keeps a typed link in a description" do
     universe = import.call.universe
 
     character = universe.characters.find_by!(slug: "ada")
-    assert_includes character.at_a_glance, "The Wardens"
-    assert_not_includes character.at_a_glance, "[[wardens]]"
-    assert_includes character.needs, "The Keep"
-    assert_not_includes character.needs, "[[keep]]"
+    assert_includes character.summary, "The Wardens"
+    assert_not_includes character.summary, "[[faction:wardens]]"
+    # The description is the one answer whose references stay as written: the
+    # details page turns each one into a link to the record it names.
+    assert_includes character.description, "[[location:keep]]"
 
     item = universe.items.find_by!(slug: "lantern")
     assert_equal "The Wardens", item.origin
@@ -154,7 +162,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal "narration", gate_elements.first.kind
     assert_includes gate_elements.first.body, "Ada carries the lantern through the gate"
     assert_includes gate_elements.first.body, "The Wardens"
-    assert_not_includes gate_elements.first.body, "[[wardens]]"
+    assert_not_includes gate_elements.first.body, "[[faction:wardens]]"
     # A rule citation is not an entity reference and stays as written.
     assert_includes gate_elements.first.body, "[[rule:L1]]"
 
@@ -187,11 +195,6 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     characters = StoryInterchange::Importers::Characters.reported(report)
     assert_equal [
-      "ada: Voice",
-      "ada: State of knowledge",
-      "ada: Relationships",
-      "ada: Arc",
-      "ada: Open questions",
       "ada: role",
       "ada: affiliation",
       "ada: status",
@@ -399,7 +402,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       plan.slices.map { |slice| I18n.t(slice.label_key) }
     assert_equal [ 4, 1, 1, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
     assert_empty plan.slices.first.reported(plan.report)
-    assert_includes plan.slices.second.reported(plan.report), "ada: Voice"
+    assert_includes plan.slices.second.reported(plan.report), "ada: role"
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
   end
 
@@ -409,8 +412,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     end
 
     def character_records(collection)
-      collection.order(:slug).pluck(:slug, :name, :at_a_glance, :wants, :needs, :lies_to_self,
-        :contradictions, :under_pressure_they, :never)
+      collection.order(:slug).pluck(:slug, :name, :summary, :description)
     end
 
     def faction_records(collection)

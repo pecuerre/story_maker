@@ -38,7 +38,7 @@ class CharacterFilterTest < ActiveSupport::TestCase
   end
 
   test "free text matches the name or any profile field, ignoring case" do
-    @character_one.update!(wants: "The keeper of the gate")
+    @character_one.update!(summary: "The keeper of the gate")
 
     assert_equal [ @character_one ], apply(filter_for(q: "keeper"))
     assert_equal [ @character_one ], apply(filter_for(q: "KEEPER")), "a search box ignores case"
@@ -46,14 +46,13 @@ class CharacterFilterTest < ActiveSupport::TestCase
     assert_empty apply(filter_for(q: "Character tag one")), "a tag is not searchable text"
   end
 
-  test "free text also searches the other structured profile fields" do
+  test "free text also searches the Markdown description" do
     @character_one.update!(
-      needs: "a lantern", lies_to_self: "the bridge is safe", contradictions: "brave but cautious",
-      under_pressure_they: "runs toward danger", never: "leave a friend behind"
+      description: "## Needs\n\na lantern\n\n## Lies about\n\nthe bridge is safe"
     )
 
-    %w[lantern bridge cautious danger friend].each do |term|
-      assert_equal [ @character_one ], apply(filter_for(q: term)), "#{term} should match the Character profile"
+    %w[lantern bridge].each do |term|
+      assert_equal [ @character_one ], apply(filter_for(q: term)), "#{term} should match the Character description"
     end
   end
 

@@ -14,4 +14,4 @@ depends_on: [B-001]
 ## The gate
 
 Ada carries the lantern through the gate (`[[rule:L1]]`) and is met by a
-warden (`[[wardens]]`, `[[keep]]`). The wick is already low.
+warden (`[[faction:wardens]]`, `[[location:keep]]`). The wick is already low.

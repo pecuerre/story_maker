@@ -76,10 +76,10 @@ triaged into this list.
 
    NOTE: Wait until the story is more advanced
 
-   Character knowledge records exist and are entered by hand; a Scene is not attributed as the place
-   or occasion where something was learned. **Needs explicit attribution rules** — witnessed, told,
-   or inferred — before storing anything. Presence must not imply knowledge, so this is a design
-   decision before it is a query.
+   A Character's knowledge is prose in the description's `## Knowledge` section and is entered by
+   hand; a Scene is not attributed as the place or occasion where something was learned. **Needs
+   explicit attribution rules** — witnessed, told, or inferred — before storing anything. Presence
+   must not imply knowledge, so this is a design decision before it is a query.
 
 43. **Scene causality and temporal analyzer.**
 
@@ -183,13 +183,13 @@ triaged into this list.
 
 59. **Authored progressions beyond ownership and knowledge.**
 
-   Time-varying facts exist in three places — `CharacterKnowledge` changes, item `Ownership` rows with
-   dates, and Event-linked Scene presence — and the rest of a record's profile is one present-tense
-   answer. `Novelcrafter` generalizes this as Codex progressions, so a title, allegiance, or
-   appearance can differ by chapter. **Needs a model decision:** whether a progression is a new
-   Event-linked fact row or a dated profile answer, and whether it is Universe- or Story-scoped; it
-   must not duplicate ownership or knowledge. Start only after something can read the existing three,
-   or the new rows become another source nobody checks.
+   Time-varying facts exist in two places — item `Ownership` rows with dates, and Event-linked Scene
+   presence — and the rest of a record's profile, including a Character's description, is one
+   present-tense answer. `Novelcrafter` generalizes this as Codex progressions, so a title,
+   allegiance, or appearance can differ by chapter. **Needs a model decision:** whether a progression
+   is a new Event-linked fact row or a dated profile answer, and whether it is Universe- or
+   Story-scoped; it must not duplicate ownership. Start only after something can read the existing
+   two, or the new rows become another source nobody checks.
 
 60. **Universe backup archive: identity, access, and restore.**
 

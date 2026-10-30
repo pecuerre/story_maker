@@ -122,7 +122,7 @@ class ManuscriptTest < ActiveSupport::TestCase
 
     character_appendix = appendices.first
     assert_equal :name, character_appendix.label_method
-    assert_equal :at_a_glance, character_appendix.summary_method
+    assert_equal :summary, character_appendix.summary_method
     assert_includes character_appendix.records, characters(:character_three)
 
     event_appendix = appendices.last

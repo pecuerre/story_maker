@@ -158,7 +158,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
   end
 
   test "a pending row is badged as a draft and carries no controls" do
-    remember_create("Character", "name" => "Pending character", "at_a_glance" => "Not live yet")
+    remember_create("Character", "name" => "Pending character", "summary" => "Not live yet")
 
     get universe_characters_path(universe_slug: @universe.slug)
 
@@ -346,7 +346,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     # held one change or three.
     character = characters(:character_one)
     remember_edit(character, "name" => "Ariadne")
-    remember_edit(character, "at_a_glance" => "The thread puller")
+    remember_edit(character, "summary" => "The thread puller")
     remember_edit(character, "character_tag_ids" => [ character_tags(:character_tag_one).id ])
 
     get universe_characters_path(universe_slug: @universe.slug)
@@ -354,14 +354,14 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     assert_response :success
     title = badge_title_for(character.name)
     assert_includes title, I18n.t("drafts.pending.changes", count: 3)
-    assert_includes title, Character.human_attribute_name(:at_a_glance)
+    assert_includes title, Character.human_attribute_name(:summary)
   end
 
   test "a badge names the fields the author first submitted them in, once each" do
     # Two remembered edits to one column are **one field**, and a reader asking
     # "which fields would this write" wants the answer once rather than twice.
     character = characters(:character_one)
-    remember_edit(character, "name" => "Ariadne", "at_a_glance" => "The thread puller")
+    remember_edit(character, "name" => "Ariadne", "summary" => "The thread puller")
     remember_edit(character, "name" => "Ariadne II")
 
     get universe_characters_path(universe_slug: @universe.slug)
@@ -369,7 +369,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     assert_response :success
     title = badge_title_for(character.name)
     assert_equal 1, title.scan(Character.human_attribute_name(:name)).size
-    assert_includes title, Character.human_attribute_name(:at_a_glance)
+    assert_includes title, Character.human_attribute_name(:summary)
   end
 
   test "a badge names at most four fields and counts the rest" do
@@ -379,7 +379,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     # complete answer.
     character = characters(:character_one)
     remember_edit(character, "name" => "Ariadne")
-    remember_edit(character, "at_a_glance" => "The thread puller")
+    remember_edit(character, "summary" => "The thread puller")
     remember_edit(character, "notes" => "A note")
     remember_edit(character, "age" => "31")
     remember_edit(character, "gender" => "woman")
@@ -436,7 +436,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     # by construction rather than by two call sites agreeing.
     character = characters(:character_one)
     remember_edit(character, "name" => "Ariadne")
-    remember_edit(character, "at_a_glance" => "The thread puller")
+    remember_edit(character, "summary" => "The thread puller")
 
     get universe_character_path(universe_slug: @universe.slug, id: character)
     details_title = css_select(".draft-pending-badge").first["title"]
@@ -454,7 +454,7 @@ class DraftPendingListTest < ActionDispatch::IntegrationTest
     character = characters(:character_one)
     tag = character_tags(:character_tag_one)
     remember_edit(character, "name" => "Ariadne")
-    remember_edit(character, "at_a_glance" => "The thread puller")
+    remember_edit(character, "summary" => "The thread puller")
 
     get universe_character_tag_path(universe_slug: @universe.slug, id: tag)
 

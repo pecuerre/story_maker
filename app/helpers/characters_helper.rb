@@ -1,4 +1,12 @@
 module CharactersHelper
+  # The Character's Markdown description as safe HTML, with `[[kind:slug]]`
+  # references resolved to links inside its own Universe. The service owns the
+  # Markdown dialect and the reference rules; this is only the view's entry
+  # point, so a second surface cannot invent a different rendering.
+  def character_description_html(character)
+    CharacterDescription.new(character.universe, character.description).to_html
+  end
+
   # "Label: value" descriptions of the filters currently in effect, in the order
   # the search area lists them. The result set of a large universe is otherwise
   # ambiguous, and an empty result has to be able to say what caused it.

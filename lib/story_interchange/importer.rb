@@ -75,10 +75,22 @@ module StoryInterchange
       def resolve_references(report, text)
         text.to_s.gsub(Document::REFERENCE) do
           target = Regexp.last_match(1).strip
-          entity = report.entity(target)
+          kind, slug = reference_kind_and_slug(target)
+          entity = report.entity(slug)
+          entity = nil if kind && entity && entity.kind != kind
 
           entity && Importers.written?(entity.kind) ? entity.name : Regexp.last_match(0)
         end
+      end
+
+      # A reference is either typed (`[[character:ada]]`, the form the source
+      # writes now) or bare (`[[ada]]`, the older form). The kind is nil for a
+      # bare reference, and the caller resolves it by slug alone.
+      def reference_kind_and_slug(target)
+        match = target.match(Validator::TYPED_REFERENCE)
+        kind = match && Validator::KIND_FOR_PREFIX[match[:kind].downcase]
+
+        kind ? [ kind, match[:slug] ] : [ nil, target ]
       end
 
       private
@@ -113,11 +125,12 @@ module StoryInterchange
         end
 
         def unresolved?(report, target)
-          return false unless target.match?(Validator::SLUG)
-          return false if Validator::PLACEHOLDER_REFERENCES.include?(target)
+          kind, slug = reference_kind_and_slug(target)
+          return false unless slug.match?(Validator::SLUG)
+          return false if Validator::PLACEHOLDER_REFERENCES.include?(slug)
 
-          entity = report.entity(target)
-          entity.nil? || !Importers.written?(entity.kind)
+          entity = report.entity(slug)
+          entity.nil? || (kind && entity.kind != kind) || !Importers.written?(entity.kind)
         end
     end
 

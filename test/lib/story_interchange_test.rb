@@ -57,7 +57,7 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal "Ada", character.name
     assert_nil character.story_slug
     assert_equal "The engineer trusted by [[faction:wardens]] to keep the lantern lit.",
-      character.sections.find { |section| section.heading == "At a glance" }.body
+      character.sections.find { |section| section.heading == "Short summary" }.body
     assert_empty character.introduction
 
     faction = report.entity("wardens")
@@ -100,8 +100,8 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "ignores references inside fenced blocks" do
-    replace("universe/characters/ada.md", "## At a glance",
-      "## At a glance\n\n```\n[[not-a-record]]\n```\n")
+    replace("universe/characters/ada.md", "## Short summary",
+      "## Short summary\n\n```\n[[not-a-record]]\n```\n")
 
     report = validate
 
@@ -127,7 +127,7 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert report.valid?, report.errors.map(&:to_s).join("\n")
     assert_equal "The engineer trusted by [[faction:wardens]] to keep the lantern lit.",
-      report.entity("ada").sections.find { |section| section.heading == "At a glance" }.body
+      report.entity("ada").sections.find { |section| section.heading == "Short summary" }.body
   end
 
   test "refuses a typed reference to a record of another kind" do
@@ -177,7 +177,7 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "checks references written inside inline code" do
-    replace("universe/characters/ada.md", "## At a glance", "## At a glance\n\nSee `[[nobody]]`.")
+    replace("universe/characters/ada.md", "## Short summary", "## Short summary\n\nSee `[[nobody]]`.")
 
     report = validate
 
@@ -234,12 +234,12 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "requires every kind-specific frontmatter key" do
-    replace("universe/characters/ada.md", "role: \"engineer — the one who carries the lantern\"\n", "")
+    replace("universe/characters/ada.md", "affiliation: \"[[faction:wardens]]\"\n", "")
 
     report = validate
 
     assert_not report.valid?
-    assert_match(/missing required frontmatter key `role`/, errors(report))
+    assert_match(/missing required frontmatter key `affiliation`/, errors(report))
   end
 
   test "requires a slug to match its filename" do
@@ -271,7 +271,8 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "warns about an unknown frontmatter key without refusing the source" do
-    replace("universe/characters/ada.md", "first_appears: B-001", "first_appears: B-001\nmood: calm")
+    replace("universe/characters/ada.md", "affiliation: \"[[faction:wardens]]\"",
+      "affiliation: \"[[faction:wardens]]\"\nmood: calm")
 
     report = validate
 
@@ -298,8 +299,25 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_match(/unknown canon rule `K99`/, errors(report))
   end
 
+  test "accepts [[canon:ID]] as a canon reference" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "[[rule:L1]]", "[[canon:K1]]")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+  end
+
+  test "reports a canon reference that names no canon id" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "[[rule:L1]]", "[[canon:K99]]")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/unknown canon rule `K99`/, errors(report))
+  end
+
   test "reports an unknown reference form" do
-    replace("universe/characters/ada.md", "## At a glance", "## At a glance\n\nSee [[thing:value]].")
+    replace("universe/characters/ada.md", "## Short summary", "## Short summary\n\nSee [[thing:value]].")
 
     report = validate
 

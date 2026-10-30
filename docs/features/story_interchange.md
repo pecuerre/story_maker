@@ -124,7 +124,7 @@ README and a canon area file do not need one.
 
 | Record | Required keys | Optional keys |
 |---|---|---|
-| Character | `name`, `slug`, `role`, `affiliation`, `status` | `first_appears`, `backlog` |
+| Character | `name`, `slug`, `affiliation` | `role`, `status`, `first_appears`, `backlog` |
 | Faction | `name`, `slug`, `type`, `home`, `status` | `backlog` |
 | Location | `name`, `slug`, `type`, `controller`, `status` | `backlog` |
 | Item (`tech/`) | `name`, `slug`, `type`, `invented_by`, `status` | `backlog` |
@@ -168,10 +168,13 @@ folded into another answer.
 
 ### Character
 
-A Character is one short summary and one Markdown description. `At a glance` writes `summary`; the
-identity block before the first `##` and every other `##` section are joined into `description`, in
-source order, with their headings and Markdown kept as written. Nothing in the body is reported,
-because the description has a target for all of it.
+A Character is one short summary and one Markdown description. `Short summary`
+writes `summary`; the identity block before the first `##` and every other `##`
+section are joined into `description`, in source order, with their headings and
+Markdown kept as written. That includes `Information`, where the source keeps
+role, status, age, homeworld, languages, occupation, and first appearance.
+Nothing in the body is reported, because the description has a target for all of
+it. `At a glance` is the older summary heading and is still read.
 
 The description is the one answer whose `[[kind:slug]]` references stay in their source form: the
 details page turns each into a link, so resolving it to plain names would lose the link. That render
@@ -181,7 +184,8 @@ The source has no pronouns or aliases section; those fields stay blank when a Ch
 `affiliation` is free text in the real source and may name a Faction, another record, or prose, so
 this slice **reports it and never turns it into Faction membership**: the operator assigns membership
 in the app. The frontmatter keys `role`, `affiliation`, `status`, `first_appears`, and `backlog` all
-have no Character column and are reported.
+have no Character column and are reported when they are present; the current source keeps only the
+three identity keys in frontmatter and writes the others under `Information`.
 
 ### Faction
 
@@ -314,7 +318,7 @@ a reference inside inline code is real, because the source writes rule citations
 | `[[item:slug]]` or `[[tech:slug]]` | an Item in the same source |
 | `[[plot:slug]]` | a Plot in the same source |
 | `[[slug]]` | a Character, Faction, Location, Item, or Plot in the same source, by slug alone |
-| `[[rule:ID]]` | a canon item (`K`, `L`, `D`, or `O`) in `universe/canon/` |
+| `[[rule:ID]]` or `[[canon:ID]]` | a canon item (`K`, `L`, `D`, or `O`) in `universe/canon/` |
 | `[[scene:NN-slug]]` | a scene in the same chapter as the referring scene |
 | `B-###` | the author's backlog, written bare and never resolved; opaque to the app |
 
@@ -368,8 +372,8 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
   key;
 - a slug does not match its filename, or two records share a slug;
 - a canon id is duplicated;
-- a `[[slug]]`, `[[rule:ID]]`, or `[[scene:NN-slug]]` does not resolve, or a bracket reference has
-  an unknown form;
+- a `[[slug]]`, `[[rule:ID]]`/`[[canon:ID]]`, or `[[scene:NN-slug]]` does not resolve, or a bracket
+  reference has an unknown form;
 - a Scene's chapter, sequence, id, branch, status, point of view, location, or `depends_on` does not
   match the contract above.
 

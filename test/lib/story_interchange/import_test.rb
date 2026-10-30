@@ -29,6 +29,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_nil character.aliases
     # Every profile section except the summary is one description, in source
     # order, with the source's Markdown and typed links kept as written.
+    assert_includes character.description, "## Information"
     assert_includes character.description, "## Wants\n\nTo reach the hall before the light fails."
     assert_includes character.description, "## Needs\n\nTo ask someone else to carry it to [[location:keep]]."
     assert_includes character.description, "## Lies about (to herself)"
@@ -195,10 +196,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     characters = StoryInterchange::Importers::Characters.reported(report)
     assert_equal [
-      "ada: role",
-      "ada: affiliation",
-      "ada: status",
-      "ada: first_appears"
+      "ada: affiliation"
     ], characters
 
     factions = StoryInterchange::Importers::Factions.reported(report)
@@ -402,7 +400,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       plan.slices.map { |slice| I18n.t(slice.label_key) }
     assert_equal [ 4, 1, 1, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
     assert_empty plan.slices.first.reported(plan.report)
-    assert_includes plan.slices.second.reported(plan.report), "ada: role"
+    assert_includes plan.slices.second.reported(plan.report), "ada: affiliation"
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
   end
 

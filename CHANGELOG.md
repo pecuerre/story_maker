@@ -47,6 +47,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Character interchange source format.** Character frontmatter now needs only `name`, `slug`, and `affiliation`; `Short summary` writes the summary, `Information` and the other sections write the description, and `[[canon:ID]]` is accepted beside `[[rule:ID]]`.
 - **Character profile simplified.** A Character keeps its name, tags, factions, pronouns, aliases, short summary, and one Markdown description; the separate wants, needs, lies, contradictions, pressure, and never columns are gone.
 - **Character knowledge records removed.** The `CharacterKnowledge` model, form, routes, demo records, and search/report surfaces are gone; knowledge prose lives in the description's `## Knowledge` section.
 - **Character interchange mapping.** The `At a glance` section writes the summary and every other body section writes the description as written, so the body is no longer reported section by section.

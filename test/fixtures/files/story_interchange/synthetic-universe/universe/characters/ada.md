@@ -1,17 +1,21 @@
 ---
 name: Ada
 slug: ada
-role: "engineer — the one who carries the lantern"
 affiliation: "[[faction:wardens]]"
-status: active
-first_appears: B-001
 ---
 
 # Ada
 
-## At a glance
+## Short summary
 
 The engineer trusted by [[faction:wardens]] to keep the lantern lit.
+
+## Information
+
+- Role: engineer, the one who carries the lantern
+- Status: active
+- Age: TBD
+- First appears: B-001
 
 ## Wants
 

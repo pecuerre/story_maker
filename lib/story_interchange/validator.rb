@@ -31,7 +31,9 @@ module StoryInterchange
     CANON_HEADING = /\A##\s+(.+?)\s*\z/
     # What an id's prefix means, which is the canon type the record stores.
     CANON_TYPES = { "K" => "locked", "L" => "rule", "D" => "consequence", "O" => "open" }.freeze
-    RULE_REFERENCE = /\Arule:(.+)\z/
+    # The source may cite a canon item as `[[rule:ID]]` or, in the current
+    # character files, as `[[canon:ID]]`; both name the same locked or open id.
+    RULE_REFERENCE = /\A(?:rule|canon):(.+)\z/
     SCENE_REFERENCE = /\Ascene:(.+)\z/
     # A typed entity reference: `[[character:ada]]`, `[[location:keep]]`. The
     # prefix says what the record must be, so a link cannot silently point at a
@@ -54,8 +56,11 @@ module StoryInterchange
         kind: :character,
         count: :characters,
         label: "character",
-        required: %w[name slug role affiliation status],
-        optional: %w[first_appears backlog]
+        # The current character file keeps only the three identity fields in
+        # frontmatter and moves role, status, and first appearance into the
+        # `## Information` body. The older keys are still accepted.
+        required: %w[name slug affiliation],
+        optional: %w[role status first_appears backlog]
       },
       "factions" => {
         directory: "factions",

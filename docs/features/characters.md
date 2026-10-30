@@ -42,7 +42,8 @@ A description may link another record with a typed reference:
 | `[[location:slug]]` | the Location |
 | `[[item:slug]]` | the Item |
 
-`[[plot:slug]]`, `[[scene:slug]]`, and `[[rule:ID]]` are also resolved when the record exists. A bare
+`[[plot:slug]]`, `[[scene:slug]]`, `[[rule:ID]]`, and `[[canon:ID]]` are also resolved when the
+record exists. A bare
 `[[slug]]` is the older form and still works; it is looked up across the Universe kinds in the order
 Character, Faction, Location, Item, then Plot. A reference to a missing record, or to a record of a
 different kind than its prefix declares, stays literal so the author sees it rather than losing it.

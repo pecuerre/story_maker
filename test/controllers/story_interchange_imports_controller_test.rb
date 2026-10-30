@@ -137,7 +137,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Imported Synthetic Universe."
     assert_includes response.body, "Canon rules"
-    assert_includes response.body, "ada: role"
+    assert_includes response.body, "ada: affiliation"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
 

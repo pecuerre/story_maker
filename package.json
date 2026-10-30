@@ -25,7 +25,7 @@
     "defaults"
   ],
   "devDependencies": {
-    "@biomejs/biome": "^2.5.14",
+    "@biomejs/biome": "^2.6.3",
     "@happy-dom/global-registrator": "^21.0.4"
   }
 }

@@ -3,7 +3,7 @@
     other record's card is: the wide prose block exists only when there is prose
     to read. %>
 <% description_facts = if @character.description.present?
-  [ detail_fact(t("characters.show.facts.description"), character_description_html(@character)) ]
+  [ detail_fact(t("characters.show.facts.description"), markdown_description_html(@character)) ]
 else
   []
 end %>

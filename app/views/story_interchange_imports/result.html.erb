@@ -54,10 +54,18 @@
           <td><%= t(slice.label_key) %></td>
           <td><%= slice.created %></td>
           <td>
-            <% if slice.skipped? %>
+            <% if slice.reported? %>
               <ul class="mb-0">
-                <% slice.skipped.each do |source_item| %>
-                  <li><%= source_item %></li>
+                <% slice.reported.each do |record| %>
+                  <li>
+                    <%= record.label %>
+                    <% details = [] %>
+                    <% details << t("imports.result.reported_sections", count: record.sections) if record.sections.to_i.positive? %>
+                    <% details << t("imports.result.reported_words", count: record.words) if record.words %>
+                    <% if details.any? %>
+                      <span class="text-body-secondary small"><%= details.join(" · ") %></span>
+                    <% end %>
+                  </li>
                 <% end %>
               </ul>
             <% else %>

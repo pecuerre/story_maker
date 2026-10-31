@@ -20,12 +20,21 @@ module StoryInterchange
   # answer of the group so it is never dropped.
   #
   # `Outcome` is the small shared answer a slice returns: how many records it
-  # wrote, and the source items it deliberately did not write. A slice reports
+  # wrote, and the records it deliberately did not write whole. A slice reports
   # those instead of dropping them, because the layout may carry more than the app
   # knows and the operator should see what was left behind.
   class Importer
-    Outcome = Data.define(:label_key, :created, :skipped) do
-      def skipped? = skipped.any?
+    # One record this slice only partly writes. `sections` is how many of its
+    # `##` subsections the slice reports instead of writing, and `words` is the
+    # record's whole body, so a page can size the record without repeating every
+    # heading. `items` keeps the detailed report the task prints, while the
+    # preview and the run page show the record's name and the two counts.
+    Reported = Data.define(:name, :slug, :sections, :words, :items) do
+      def label = name.presence || slug
+    end
+
+    Outcome = Data.define(:label_key, :created, :reported) do
+      def reported? = reported.any?
     end
 
     class << self
@@ -52,13 +61,24 @@ module StoryInterchange
         report.counts[count]
       end
 
-      # Source items this slice will report rather than write. The default is
-      # nothing; a slice that deliberately leaves a source record behind overrides
-      # it, so the preview says so before the run rather than only after.
+      # The records this slice will only partly write, one per source record.
+      # A record with nothing left behind is omitted; a slice that owns no
+      # entity kind reports nothing.
       def reported(report)
         return [] if kind.nil?
 
-        report.entities(kind).flat_map { |entity| reported_entries(report, entity) }
+        report.entities(kind).filter_map do |entity|
+          items = reported_entries(report, entity)
+          next if items.empty?
+
+          Reported.new(
+            name: entity.name,
+            slug: entity.slug,
+            sections: reported_section_count(entity),
+            words: WordCountable.words_in(body_text(entity)),
+            items: items
+          )
+        end
       end
 
       # The column a source heading writes, or nil when no profile answer owns it.
@@ -94,6 +114,18 @@ module StoryInterchange
       end
 
       private
+        # How many of the record's `##` subsections this slice leaves behind. A
+        # Scene has no profile, so every section it carries is reported.
+        def reported_section_count(entity)
+          entity.sections.count { |section| field_for(section.heading).nil? }
+        end
+
+        # The whole body, introduction included, so a word count describes the
+        # record a reader would otherwise have to open.
+        def body_text(entity)
+          [ entity.introduction, *entity.sections.map(&:body) ].join("\n\n")
+        end
+
         # Everything this entity carries that no column or section target owns:
         # the preamble block, an unmapped section, a frontmatter key with no
         # column, and a `[[slug]]` whose record kind has no slice yet.
@@ -164,7 +196,7 @@ module StoryInterchange
           record_class.create!(**attributes_for(entity))
         end
 
-        Outcome.new(label_key: label_key, created: created.size, skipped: self.class.reported(report))
+        Outcome.new(label_key: label_key, created: created.size, reported: self.class.reported(report))
       end
 
       # What every record of this slice carries besides its profile answers. A

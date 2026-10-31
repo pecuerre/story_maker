@@ -13,7 +13,7 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     run = StoryInterchangeRun.record!(
       universe: @universe,
       replaced: true,
-      outcomes: [ outcome(created: 3, skipped: [ "O-I1" ]) ],
+      outcomes: [ outcome(created: 3, reported: [ reported_record(name: "The Warden", slug: "warden", sections: 2, words: 40) ]) ],
       operator: @operator,
       source: "synthetic-universe"
     )
@@ -27,8 +27,11 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     slice = run.slices.sole
     assert_equal "imports.slices.canon_rules", slice.label_key
     assert_equal 3, slice.created
-    assert_equal [ "O-I1" ], slice.skipped
-    assert slice.skipped?
+    record = slice.reported.sole
+    assert_equal "The Warden", record.label
+    assert_equal 2, record.sections
+    assert_equal 40, record.words
+    assert slice.reported?
     assert run.reported?
   end
 
@@ -36,13 +39,33 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     run = StoryInterchangeRun.record!(
       universe: @universe,
       replaced: false,
-      outcomes: [ outcome(created: 1, skipped: []) ],
+      outcomes: [ outcome(created: 1, reported: []) ],
       operator: @operator,
       source: "synthetic-universe"
     )
 
     assert_not run.reported?
-    assert_not run.slices.sole.skipped?
+    assert_not run.slices.sole.reported?
+  end
+
+  test "a run written before the counts existed still renders its reported records" do
+    run = StoryInterchangeRun.create!(
+      user: @operator,
+      source: "synthetic-universe",
+      universe_name: @universe.name,
+      universe_slug: @universe.slug,
+      replaced: false,
+      outcomes: [ {
+        "label_key" => "imports.slices.locations",
+        "created" => 1,
+        "skipped" => [ "keep: type", "keep: Open questions" ]
+      } ]
+    )
+
+    slice = run.slices.sole
+    assert slice.reported?
+    assert_equal [ "keep" ], slice.reported.map(&:label)
+    assert_equal [ [ "keep: type", "keep: Open questions" ] ], slice.reported.map(&:items)
   end
 
   test "a run names its source, its universe, and at least one slice" do
@@ -56,9 +79,15 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
   end
 
   private
-    def outcome(created:, skipped:)
+    def outcome(created:, reported:)
       StoryInterchange::Importer::Outcome.new(
-        label_key: "imports.slices.canon_rules", created: created, skipped: skipped
+        label_key: "imports.slices.canon_rules", created: created, reported: reported
+      )
+    end
+
+    def reported_record(name:, slug:, sections:, words:)
+      StoryInterchange::Importer::Reported.new(
+        name: name, slug: slug, sections: sections, words: words, items: []
       )
     end
 end

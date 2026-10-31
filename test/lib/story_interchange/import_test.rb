@@ -19,7 +19,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     FileUtils.remove_entry(@temporary_directory) if File.directory?(@temporary_directory)
   end
 
-  test "writes a character as a summary and one Markdown description, and factions from profile sections" do
+  test "writes a character and a faction as a summary and one Markdown description" do
     universe = import.call.universe
 
     character = universe.characters.find_by!(slug: "ada")
@@ -40,18 +40,38 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_includes character.description, "## Voice"
     assert_includes character.description, "## Arc"
     assert_includes character.description, "## Open questions"
-    # An affiliation is reported, not guessed into Faction membership.
-    assert_empty character.factions
+    # A `[[faction:slug]]` affiliation is a membership, not free text.
+    assert_equal [ "wardens" ], character.factions.map(&:slug)
 
     faction = universe.factions.find_by!(slug: "wardens")
     assert_equal "The Wardens", faction.name
-    assert_equal "Keep the gate open.", faction.mission
-    assert_equal "Keep the gate closed to everyone else.", faction.actual_aims
-    assert_includes faction.structure, "Leadership: a captain."
-    assert_includes faction.internal_divisions, "the gate watch"
-    assert_includes faction.resources, "control of the road"
-    assert_equal "Abandon the gate.", faction.would_never
-    assert_equal "Bar the hall when the lantern arrives.", faction.would_absolutely
+    assert_equal "Keep the gate open.", faction.summary
+    # Every section except the summary is one description, in source order,
+    # with the source's Markdown kept as written.
+    assert_includes faction.description, "## Actually for\n\nKeep the gate closed to everyone else."
+    assert_includes faction.description, "## Structure\n\n- Leadership: a captain."
+    assert_includes faction.description, "## Register\n\nIn-world, the Wardens call a closed gate \"the quiet\"."
+    assert_includes faction.description, "## Internal split\n\n| Faction within | Wants | Against whom |"
+    assert_includes faction.description, "## Resources\n\n| Asset | What it buys them | Limits |"
+    assert_includes faction.description, "## Would never\n\nAbandon the gate."
+    assert_includes faction.description, "## Would absolutely\n\nBar the hall when the lantern arrives."
+    assert_includes faction.description, "## The two rivals"
+    assert_includes faction.description, "## Relationships"
+    assert_includes faction.description, "## Open questions"
+  end
+
+  test "reports an affiliation that names no Faction and keeps it out of membership" do
+    path = File.join(@root, "universe/characters/ada.md")
+    File.write(path, File.read(path).sub(
+      'affiliation: "[[faction:wardens]]"',
+      'affiliation: "[[faction:wardens]] · International Lunar Programme"'
+    ))
+
+    plan = import.plan
+    assert_includes reported_items(StoryInterchange::Importers::Characters.reported(plan.report)), "ada: affiliation"
+
+    character = import.call.universe.characters.find_by!(slug: "ada")
+    assert_equal [ "wardens" ], character.factions.map(&:slug)
   end
 
   test "resolves a reference in plain prose and keeps a typed link in a description" do
@@ -188,29 +208,23 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       "02-the-hall: timeline",
       "02-the-hall: branch",
       "02-the-hall: depends_on"
-    ], StoryInterchange::Importers::Scenes.reported(report)
+    ], reported_items(StoryInterchange::Importers::Scenes.reported(report))
   end
 
   test "reports every item of every slice it does not write" do
     report = import.plan.report
 
-    characters = StoryInterchange::Importers::Characters.reported(report)
-    assert_equal [
-      "ada: affiliation"
-    ], characters
+    characters = reported_items(StoryInterchange::Importers::Characters.reported(report))
+    assert_empty characters
 
-    factions = StoryInterchange::Importers::Factions.reported(report)
+    factions = reported_items(StoryInterchange::Importers::Factions.reported(report))
     assert_equal [
-      "wardens: Register",
-      "wardens: The two rivals",
-      "wardens: Relationships",
-      "wardens: Open questions",
       "wardens: type",
       "wardens: home",
       "wardens: status"
     ], factions
 
-    locations = StoryInterchange::Importers::Locations.reported(report)
+    locations = reported_items(StoryInterchange::Importers::Locations.reported(report))
     assert_equal [
       "keep: Who is here",
       "keep: Events here",
@@ -221,7 +235,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       "keep: status"
     ], locations
 
-    items = StoryInterchange::Importers::Items.reported(report)
+    items = reported_items(StoryInterchange::Importers::Items.reported(report))
     assert_equal [
       "lantern: In the story",
       "lantern: Open questions",
@@ -231,7 +245,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     assert_empty StoryInterchange::Importers::Stories.reported(report)
 
-    plots = StoryInterchange::Importers::Plots.reported(report)
+    plots = reported_items(StoryInterchange::Importers::Plots.reported(report))
     assert_equal [
       "the-lantern: Stakes",
       "the-lantern: Players",
@@ -245,6 +259,21 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       "the-lantern: owner_pov",
       "the-lantern: opened_in"
     ], plots
+  end
+
+  test "a reported record carries its section and word counts for the page" do
+    report = import.plan.report
+
+    keep = StoryInterchange::Importers::Locations.reported(report).sole
+    assert_equal "The Keep", keep.label
+    assert_equal 4, keep.sections
+    assert_predicate keep.words, :positive?
+
+    wardens = StoryInterchange::Importers::Factions.reported(report).sole
+    assert_equal "The Wardens", wardens.label
+    # The whole body lands in the description, so no section is left behind.
+    assert_equal 0, wardens.sections
+    assert_predicate wardens.words, :positive?
   end
 
   test "a second import of an unchanged source writes the same records" do
@@ -298,7 +327,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     outcome = result.outcomes.first
     assert_equal 4, outcome.created
-    assert_empty outcome.skipped
+    assert_empty outcome.reported
   end
 
   test "replaces an existing universe by soft-deleting it and creating a fresh one" do
@@ -333,7 +362,10 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal result.universe.slug, run.universe_slug
     assert_not run.replaced?
     assert_equal result.outcomes.map(&:created), run.slices.map(&:created)
-    assert_equal result.outcomes.flat_map(&:skipped), run.slices.flat_map(&:skipped)
+    assert_equal(
+      result.outcomes.flat_map(&:reported).map { |record| [ record.name, record.slug, record.sections, record.words ] },
+      run.slices.flat_map(&:reported).map { |record| [ record.name, record.slug, record.sections, record.words ] }
+    )
     assert_equal 1, StoryInterchangeRun.count
   end
 
@@ -396,15 +428,19 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     plan = import.plan
 
     assert plan.importable?
-    assert_equal [ "Canon rules", "Characters", "Factions", "Locations", "Items", "Stories", "Sections", "Scenes", "Plots" ],
+    assert_equal [ "Canon rules", "Factions", "Characters", "Locations", "Items", "Stories", "Sections", "Scenes", "Plots" ],
       plan.slices.map { |slice| I18n.t(slice.label_key) }
     assert_equal [ 4, 1, 1, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
     assert_empty plan.slices.first.reported(plan.report)
-    assert_includes plan.slices.second.reported(plan.report), "ada: affiliation"
+    assert_empty plan.slices.third.reported(plan.report)
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
   end
 
   private
+    def reported_items(records)
+      records.flat_map(&:items)
+    end
+
     def import
       StoryInterchange::Import.new(@root, owner: @owner)
     end
@@ -414,8 +450,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     end
 
     def faction_records(collection)
-      collection.order(:slug).pluck(:slug, :name, :mission, :actual_aims, :structure,
-        :internal_divisions, :resources, :would_never, :would_absolutely)
+      collection.order(:slug).pluck(:slug, :name, :summary, :description)
     end
 
     def location_records(collection)

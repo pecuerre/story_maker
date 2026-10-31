@@ -38,6 +38,19 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-10-31
+
+### changed
+
+- **Import preview report.** The preview and a completed run list each partly written record once, with its subsection and word counts, instead of repeating every skipped heading and key.
+- **Character import membership.** A Character import now turns each `[[faction:slug]]` in its `affiliation` frontmatter into the Faction membership; a bare institution name is reported instead of guessed into one.
+- **Faction profile simplified.** A Faction keeps its name, tags, short summary, and one Markdown description; the mission, aims, structure, divisions, resources, would-never, and would-absolutely columns are gone.
+- **Faction details list members.** The page renders the Markdown description, then the Characters affiliated with the Faction.
+
+### chore
+
+- **Demo faction data.** Dark and Lord of the Rings factions carry the simplified profile, with their old profile answers folded into description sections.
+
 ## 2026-10-30
 
 ### added

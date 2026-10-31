@@ -94,7 +94,7 @@ class CsrfMutationTest < ActionDispatch::IntegrationTest
       faction = Faction.find(response.parsed_body.fetch("id"))
 
       patch universe_faction_path(universe_slug: @universe.slug, id: faction),
-        params: { faction: { mission: "Updated mission" } },
+        params: { faction: { summary: "Updated summary" } },
         headers: { "X-CSRF-Token" => token }, as: :json
       assert_response :success
 

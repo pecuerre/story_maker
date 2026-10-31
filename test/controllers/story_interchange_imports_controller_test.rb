@@ -83,6 +83,12 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr", text: /Canon rules/ do
       assert_select "td", text: "4"
     end
+    # A reported record is one list item with the record's name and its section
+    # and word counts, not one sentence repeating every source item.
+    assert_select "li", text: /The Keep/
+    assert_includes response.body, "4 sections"
+    assert_includes response.body, "words"
+    assert_not_includes response.body, "keep: Open questions"
   end
 
   test "refuses a source name that is not a folder under the root" do
@@ -131,23 +137,22 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "synthetic-universe", run.universe_slug
     assert_not run.replaced?
     assert_equal 4, run.slices.first.created
-    assert_empty run.slices.first.skipped
+    assert_empty run.slices.first.reported
 
     follow_redirect!
     assert_response :success
     assert_includes response.body, "Imported Synthetic Universe."
     assert_includes response.body, "Canon rules"
-    assert_includes response.body, "ada: affiliation"
+    assert_select "li", text: /The Wardens/
+    assert_includes response.body, "words"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
 
-  test "a run whose reported list is too large for a session cookie still answers with its page" do
-    # The message this page replaced was the full `to_sentence` of every reported id:
-    # 300 long ids are more than the 4 KB a session cookie may hold, and the cookie
-    # store raised while committing the response — after the write had succeeded.
+  test "a source with hundreds of unmapped sections still renders its reported record" do
+    # The page used to print every reported source item. The report now stores one
+    # record with its section and word counts, so a large source can neither
+    # overflow the session cookie nor flood the page.
     sign_in_as @operator
-    # A Character description now absorbs every section, so the reported list is
-    # inflated on a profile slice that still reports an unmapped section.
     location = File.join(@source_root, "synthetic-universe/universe/locations/keep.md")
     content = File.read(location)
     content += "\n" unless content.end_with?("\n")
@@ -158,12 +163,14 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :see_other
     run = StoryInterchangeRun.sole
-    reported = run.slices.flat_map(&:skipped)
-    assert_operator reported.join(", ").bytesize, :>, 4096
+    record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The Keep" }
+    assert_equal 304, record.sections
+    assert_predicate record.words, :positive?
 
     follow_redirect!
     assert_response :success
-    assert_includes response.body, "Unmapped note 0299"
+    assert_select "li", text: /The Keep/
+    assert_includes response.body, "304 sections"
   end
 
   test "a guest is sent to sign in from a run's page" do

@@ -95,7 +95,25 @@
           <tr>
             <td><%= t(slice.label_key) %></td>
             <td><%= slice.preview(@plan.report) %></td>
-            <td><%= reported.any? ? reported.to_sentence : "—" %></td>
+            <td>
+              <% if reported.any? %>
+                <ul class="mb-0">
+                  <% reported.each do |record| %>
+                    <li>
+                      <%= record.label %>
+                      <% details = [] %>
+                      <% details << t("imports.show.reported_sections", count: record.sections) if record.sections.positive? %>
+                      <% details << t("imports.show.reported_words", count: record.words) if record.words %>
+                      <% if details.any? %>
+                        <span class="text-body-secondary small"><%= details.join(" · ") %></span>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                —
+              <% end %>
+            </td>
           </tr>
         <% end %>
       </tbody>

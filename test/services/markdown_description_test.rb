@@ -1,10 +1,10 @@
 require "test_helper"
 
-# A Character description is Markdown, and its `[[kind:slug]]` references are
-# the source's links. Rendering is a read, so the test is about what a reader
-# sees: headings and emphasis, a link only to a record that exists in the same
+# A record's description is Markdown, and its `[[kind:slug]]` references are the
+# source's links. Rendering is a read, so the test is about what a reader sees:
+# headings and emphasis, a link only to a record that exists in the same
 # Universe, and an unknown or wrong-kind reference left as the author wrote it.
-class CharacterDescriptionTest < ActiveSupport::TestCase
+class MarkdownDescriptionTest < ActiveSupport::TestCase
   include Rails.application.routes.url_helpers
 
   setup do
@@ -28,6 +28,16 @@ class CharacterDescriptionTest < ActiveSupport::TestCase
     link = Nokogiri::HTML.fragment(html).at_css("a")
     assert_equal "Ada", link.text
     assert_equal universe_character_path(universe_slug: @universe.slug, id: character), link["href"]
+  end
+
+  test "a typed reference to a Faction becomes a link to the Faction" do
+    faction = @universe.factions.create!(name: "The Wardens")
+
+    html = render("Join [[faction:the-wardens]].")
+
+    link = Nokogiri::HTML.fragment(html).at_css("a")
+    assert_equal "The Wardens", link.text
+    assert_equal universe_faction_path(universe_slug: @universe.slug, id: faction), link["href"]
   end
 
   test "a typed reference to a Location becomes a link to the Location" do
@@ -100,6 +110,6 @@ class CharacterDescriptionTest < ActiveSupport::TestCase
 
   private
     def render(text)
-      CharacterDescription.new(@universe, text).to_html
+      MarkdownDescription.new(@universe, text).to_html
     end
 end

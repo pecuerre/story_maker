@@ -337,6 +337,15 @@ module ApplicationHelper
     content_tag(:span, record_count_text(count, label), class: "record-count")
   end
 
+  # A record's Markdown description as safe HTML, with `[[kind:slug]]` references
+  # resolved to links inside its own Universe. `MarkdownDescription` owns the
+  # dialect and the reference rules; this is only the view's entry point, so a
+  # second surface cannot invent a different rendering. Characters and Factions
+  # both reach it here.
+  def markdown_description_html(record)
+    MarkdownDescription.new(record.universe, record.description).to_html
+  end
+
   private
     # `key?` rather than a truthy test in both memos: "cannot write" and "no access
     # level" are answers this render repeats as often as the positive ones, and a

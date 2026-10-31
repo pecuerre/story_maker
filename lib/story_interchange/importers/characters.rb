@@ -14,28 +14,66 @@ module StoryInterchange
     # profile answer this slice deliberately does **not** resolve into plain
     # names: a link is the meaning, not decoration.
     #
-    # `role`, `affiliation`, `status`, `first_appears`, and `backlog` have no
-    # Character column and are reported when they appear in frontmatter.
-    # `affiliation` never becomes Faction membership here: it is free text in the
-    # real source and may name a Faction, another record, or prose, so the
-    # operator assigns membership in the app.
+    # `affiliation` is the source's faction list. A `[[faction:slug]]` becomes a
+    # Faction membership, and the Factions slice runs first so the record it
+    # names exists by then. A bare name such as an in-world institution, or
+    # `TBD`, has no Faction record and is reported instead of guessed into one.
+    #
+    # `role`, `status`, `first_appears`, and `backlog` have no Character column
+    # and are reported when they appear in frontmatter.
     class Characters < Importer
       SUMMARY_HEADINGS = [ "short summary", "at a glance" ].freeze
+      FACTION_REFERENCE = /\A\[\[faction:([^\[\]]+)\]\]\z/
 
       slice label_key: "imports.slices.characters",
         count: :characters,
         kind: :character,
-        reported_keys: %w[role affiliation status first_appears backlog]
+        reported_keys: %w[role status first_appears backlog]
 
       # Nothing in the body is left behind: the identity block and every section
-      # land in the description, except the summary. Only the frontmatter keys
-      # with no column are reported.
-      def self.reported(report)
-        report.entities(:character).flat_map do |entity|
-          reported_keys.filter_map do |key|
-            "#{entity.slug}: #{key}" if entity.frontmatter[key].present?
+      # land in the description, except the summary. A frontmatter key with no
+      # column is reported, and so is an affiliation the source wrote without a
+      # Faction link.
+      class << self
+        # The Faction slugs the affiliation names, in source order. A typed link to
+        # anything but a Faction cannot be a membership even though the validator
+        # would refuse it, so the kind check keeps this helper safe on its own.
+        def faction_slugs(report, entity)
+          affiliation_parts(entity).filter_map do |part|
+            match = FACTION_REFERENCE.match(part)
+            next unless match
+
+            slug = match[1].strip
+            slug if report.entity(slug)&.kind == :faction
+          end.uniq
+        end
+
+        # The affiliation entries that are not Faction links: a bare institution
+        # name or `TBD`. They have no record to join, so the import reports them.
+        def unlinked_affiliations(report, entity)
+          affiliation_parts(entity).reject do |part|
+            match = FACTION_REFERENCE.match(part)
+            match && report.entity(match[1].strip)&.kind == :faction
           end
         end
+
+        def affiliation_parts(entity)
+          entity.frontmatter["affiliation"].to_s.split("·").map(&:strip).reject(&:blank?)
+        end
+
+        private
+          def reported_entries(report, entity)
+            entries = reported_keys.filter_map do |key|
+              "#{entity.slug}: #{key}" if entity.frontmatter[key].present?
+            end
+            entries << "#{entity.slug}: affiliation" if unlinked_affiliations(report, entity).any?
+            entries
+          end
+
+          # Every section lands in the description, so none is left behind.
+          def reported_section_count(_entity)
+            0
+          end
       end
 
       def call
@@ -46,8 +84,19 @@ module StoryInterchange
         def attributes_for(entity)
           record_attributes(entity).merge(
             summary: summary_for(entity),
-            description: description_for(entity)
+            description: description_for(entity),
+            factions: factions_for(entity)
           )
+        end
+
+        # Every Faction link in the affiliation becomes one membership. The
+        # query is Universe-scoped, so a link can only join a same-Universe
+        # Faction.
+        def factions_for(entity)
+          slugs = self.class.faction_slugs(report, entity)
+          return [] if slugs.empty?
+
+          Faction.where(universe: universe, slug: slugs).to_a
         end
 
         def summary_for(entity)

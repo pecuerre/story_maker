@@ -70,7 +70,7 @@ module StoryInterchange
           scene
         end
 
-        Outcome.new(label_key: label_key, created: created.size, skipped: self.class.reported(report))
+        Outcome.new(label_key: label_key, created: created.size, reported: self.class.reported(report))
       end
 
       private

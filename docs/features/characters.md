@@ -25,8 +25,9 @@ keeps the form short and lets the author choose the shape of a Character's profi
 The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
 `**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. Raw
 HTML in the body is stripped, and an unknown reference stays visible as written. The renderer is
-`CharacterDescription` in `app/services/character_description.rb`, reached through
-`CharactersHelper#character_description_html` so every surface uses one dialect.
+`MarkdownDescription` in `app/services/markdown_description.rb`, reached through
+`ApplicationHelper#markdown_description_html` so every surface uses one dialect. Characters and
+[Factions](factions.md#scope-and-profile) both store their description this way.
 
 Aliases and pronouns are part of the searchable body, as are the summary and description, so a
 reader can find a Character by a name it is known by or by what its profile says.

@@ -41,8 +41,8 @@
                 <%= entity_tag_badge(faction) %>
                 <%= render "shared/draft_pending_badge", record: faction %>
               </div>
-              <% if faction.mission.present? %>
-                <div class="entity-description"><%= faction.mission %></div>
+              <% if faction.summary.present? %>
+                <div class="entity-description"><%= faction.summary %></div>
               <% end %>
             </div>
             <%= record_details_link universe_faction_path(id: faction), record: faction %>
@@ -90,12 +90,17 @@
                 <%= form.collection_select :faction_tag_ids, @assignable_faction_tags, :id, :name, {},
                   { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
               </div>
-              <% %i[mission actual_aims structure internal_divisions resources would_never would_absolutely].each do |field| %>
-                <div class="mb-3">
-                  <%= form.label field, t("factions.form.#{field}"), class: "form-label" %>
-                  <%= form.text_area field, class: "form-control", rows: 3 %>
-                </div>
-              <% end %>
+              <div class="mb-3">
+                <%= form.label :summary, t("factions.form.summary"), class: "form-label" %>
+                <%= form.text_area :summary, class: "form-control", rows: 3 %>
+                <div class="form-text"><%= t("factions.form.summary_hint") %></div>
+              </div>
+              <div class="mb-3">
+                <%= form.label :description, t("factions.form.description"), class: "form-label" %>
+                <%= form.text_area :description, class: "form-control font-monospace", rows: 14 %>
+                <div class="form-text"><%= t("factions.form.description_hint") %></div>
+                <div class="form-text"><%= t("factions.form.description_reference_hint") %></div>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>

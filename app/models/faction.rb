@@ -22,9 +22,11 @@ class Faction < ApplicationRecord
 
   validates :name, presence: true
 
+  # The short summary is plain text; the description is Markdown and is rendered
+  # by `MarkdownDescription` when a page shows it. Both are part of the record's
+  # search body, so a reader can find a Faction by what its profile says.
   def search_description
-    [ mission, actual_aims, structure, internal_divisions, resources, would_never, would_absolutely ]
-      .compact_blank.join(" ")
+    [ summary, description ].compact_blank.join(" ")
   end
 
   private

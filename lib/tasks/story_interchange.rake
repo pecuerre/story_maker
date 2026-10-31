@@ -59,7 +59,7 @@ namespace :story_interchange do
     puts plan.existing? ? "Replaces the existing universe of that slug." : "Creates a new universe."
     plan.slices.each do |slice|
       line = "#{I18n.t(slice.label_key)}: #{slice.preview(plan.report)}"
-      reported = slice.reported(plan.report)
+      reported = slice.reported(plan.report).flat_map(&:items)
       line += ", #{reported.size} reported not written (#{reported.to_sentence})" if reported.any?
       puts line
     end
@@ -85,7 +85,8 @@ namespace :story_interchange do
     puts "Imported #{result.universe.name} (#{result.universe.slug})."
     result.outcomes.each do |outcome|
       line = "#{I18n.t(outcome.label_key)}: #{outcome.created} written"
-      line += ", #{outcome.skipped.size} skipped (#{outcome.skipped.to_sentence})" if outcome.skipped?
+      skipped = outcome.reported.flat_map(&:items)
+      line += ", #{skipped.size} skipped (#{skipped.to_sentence})" if skipped.any?
       puts line
     end
   end

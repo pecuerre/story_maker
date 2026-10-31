@@ -15,7 +15,7 @@ module StoryInterchange
           Story.create!(universe: universe, slug: story[:slug], name: story[:name])
         end
 
-        Outcome.new(label_key: label_key, created: created.size, skipped: [])
+        Outcome.new(label_key: label_key, created: created.size, reported: [])
       end
     end
   end

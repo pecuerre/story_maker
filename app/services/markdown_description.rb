@@ -1,9 +1,11 @@
-# Renders a Character's Markdown description for the details page.
+# Renders a record's Markdown description for its details page.
 #
 # The description is author-written Markdown: `##` headings, `**bold**`, lists,
 # tables, and inline `[[kind:slug]]` references. Rendering happens in one place
 # so every surface shows the same safe HTML, and so the reference syntax is
-# resolved against the Character's own Universe rather than trusted as a URL.
+# resolved against the record's own Universe rather than trusted as a URL.
+# Characters and Factions share this dialect; a page reaches it through
+# `ApplicationHelper#markdown_description_html`.
 #
 # A reference is a link only when it names a record the reader can open:
 # `[[character:ada]]`, `[[faction:wardens]]`, `[[location:keep]]`, and
@@ -15,7 +17,7 @@
 #
 # A reference inside a code span or a fenced block is an example, not a link,
 # and is left alone.
-class CharacterDescription
+class MarkdownDescription
   include Rails.application.routes.url_helpers
 
   # Redcarpet's safe subset. `filter_html` refuses raw HTML in the stored body;

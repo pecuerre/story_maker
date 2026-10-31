@@ -99,6 +99,13 @@ class UniverseBackup::ArchiveTest < ActiveSupport::TestCase
     assert_includes character, "## At a glance"
     assert_includes character, "— TBD", "a field the database does not store is named as absent"
 
+    faction = @files.fetch("content/one/universe/factions/faction-one.md")
+    assert_includes faction, "slug: faction-one"
+    assert_includes faction, "## Mission"
+    assert_includes faction, "A public promise"
+    assert_includes faction, "## Actual aims"
+    assert_includes faction, "A private goal"
+
     assert @files.key?("content/one/universe/canon/README.md")
     assert @files.key?("content/one/universe/canon/magic.md")
     assert @files.key?("content/one/universe/canon/rules.md")

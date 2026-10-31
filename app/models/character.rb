@@ -38,7 +38,7 @@ class Character < ApplicationRecord
   validate :factions_belong_to_same_universe
 
   # The short summary is plain text; the description is Markdown and is rendered
-  # by `CharacterDescription` when a page shows it. Both are part of the record's
+  # by `MarkdownDescription` when a page shows it. Both are part of the record's
   # search body, so a reader can find a Character by what its profile says.
   def search_description
     [ summary, pronouns, aliases, description ].compact_blank.join(" ")

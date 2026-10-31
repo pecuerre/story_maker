@@ -1,13 +1,6 @@
 require "test_helper"
 
 class FactionTest < ActiveSupport::TestCase
-  # test "the truth" do
-  #   assert true
-  # end
-end
-require "test_helper"
-
-class FactionTest < ActiveSupport::TestCase
   test "requires a name and allows no faction tags" do
     faction = Faction.new(universe: universes(:universe_one))
 
@@ -16,24 +9,18 @@ class FactionTest < ActiveSupport::TestCase
     assert Faction.create!(universe: universes(:universe_one), name: "Untagged group")
   end
 
-  test "generates a slug and stores the profile fields" do
+  test "generates a slug and stores the summary and description" do
     faction = Faction.create!(
       universe: universes(:universe_one),
       name: "The Glass Council",
-      mission: "Keep the peace",
-      actual_aims: "Control the archive",
-      structure: "A rotating council",
-      internal_divisions: "Two members disagree",
-      resources: "A hidden library",
-      would_never: "Destroy the archive",
-      would_absolutely: "Protect the collection"
+      summary: "Keep the peace",
+      description: "## Actual aims\n\nControl the archive"
     )
 
     assert_equal "the-glass-council", faction.slug
-    assert_equal [ "Keep the peace", "Control the archive", "A rotating council",
-      "Two members disagree", "A hidden library", "Destroy the archive", "Protect the collection" ],
-      [ faction.mission, faction.actual_aims, faction.structure, faction.internal_divisions,
-        faction.resources, faction.would_never, faction.would_absolutely ]
+    assert_equal "Keep the peace", faction.summary
+    assert_equal "## Actual aims\n\nControl the archive", faction.description
+    assert_includes faction.search_document[:body], "Keep the peace"
     assert_includes faction.search_document[:body], "Control the archive"
   end
 

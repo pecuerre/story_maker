@@ -1,0 +1,32 @@
+<%# The Characters affiliated with this Faction, read from the Character-side
+    membership. Like "Appears in scenes", this is read-only navigation and renders
+    for every access level: a reader who may see the Faction may see the Characters
+    in the same Universe. Membership is edited on the Character's own form. %>
+<%= render "shared/detail_section",
+  title: t("factions.characters.title"),
+  count: characters.size,
+  count_label: "character",
+  empty_title: t("factions.characters.empty_title"),
+  empty_description: t("factions.characters.empty_description"),
+  icon: "people" do %>
+  <div class="list-group list-group-flush">
+    <% characters.each do |character| %>
+      <div class="list-group-item entity-row d-flex align-items-center gap-3">
+        <div class="entity-copy flex-grow-1">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="entity-title">
+              <%= link_to character.name,
+                universe_character_path(universe_slug: Current.universe.slug, id: character),
+                class: "text-break" %>
+            </span>
+            <%= entity_tag_badge(character) %>
+          </div>
+          <% if character.summary.present? %>
+            <div class="entity-description"><%= character.summary %></div>
+          <% end %>
+        </div>
+        <%= record_details_link universe_character_path(id: character), record: character %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

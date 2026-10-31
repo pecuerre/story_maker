@@ -173,13 +173,8 @@ module ModalFields
   def faction_fields_json(faction)
     {
       name: faction.name,
-      mission: faction.mission,
-      actual_aims: faction.actual_aims,
-      structure: faction.structure,
-      internal_divisions: faction.internal_divisions,
-      resources: faction.resources,
-      would_never: faction.would_never,
-      would_absolutely: faction.would_absolutely,
+      summary: faction.summary,
+      description: faction.description,
       faction_tag_ids: faction.faction_tag_ids,
       photo_url: record_photo_url(faction)
     }.to_json

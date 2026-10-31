@@ -16,7 +16,8 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".entity-title", text: @faction.name
     assert_select "button[data-action='modal-form#open'][data-modal-form-url=?]",
       universe_faction_path(universe_slug: @universe.slug, id: @faction)
-    assert_select "textarea[name='faction[actual_aims]']"
+    assert_select "textarea[name='faction[summary]']"
+    assert_select "textarea[name='faction[description]']"
     assert_select "select[name='faction[faction_tag_ids][]']"
     assert_select "nav.content-tabs a[href=?]", universe_factions_path(universe_slug: @universe.slug), text: "Factions"
     assert_select "nav.content-tabs a[href=?]",
@@ -26,13 +27,8 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
   test "creates and updates a faction as JSON with optional tags" do
     attributes = {
       name: "The Lantern Circle",
-      mission: "Keep the roads safe",
-      actual_aims: "Control the crossings",
-      structure: "Three local stewards",
-      internal_divisions: "The stewards disagree on tolls",
-      resources: "A chain of roadside inns",
-      would_never: "Abandon a traveler",
-      would_absolutely: "Close a road to protect its people",
+      summary: "Keep the roads safe",
+      description: "## Actual aims\n\nControl the crossings",
       faction_tag_ids: [ @tag.id ]
     }
 
@@ -44,13 +40,14 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
     faction = Faction.order(:id).last
     assert_equal "the-lantern-circle", faction.slug
     assert_equal [ @tag.id ], faction.faction_tag_ids
-    assert_equal "Control the crossings", response.parsed_body["actual_aims"]
+    assert_equal "Keep the roads safe", response.parsed_body["summary"]
+    assert_equal "## Actual aims\n\nControl the crossings", response.parsed_body["description"]
 
     patch universe_faction_url(universe_slug: @universe.slug, id: faction),
-      params: { faction: { mission: "Guide travelers safely", faction_tag_ids: [ "" ] } }, as: :json
+      params: { faction: { summary: "Guide travelers safely", faction_tag_ids: [ "" ] } }, as: :json
 
     assert_response :success
-    assert_equal "Guide travelers safely", faction.reload.mission
+    assert_equal "Guide travelers safely", faction.reload.summary
     assert_empty faction.faction_tag_ids
   end
 
@@ -66,17 +63,14 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "must belong to the same universe" ], response.parsed_body["faction_tags"]
   end
 
-  test "details show each faction profile field" do
+  test "details show the summary, rendered description, and affiliated characters" do
     get universe_faction_url(universe_slug: @universe.slug, id: @faction)
 
     assert_response :success
-    assert_select ".detail-fact", text: /A public promise/
-    assert_select ".detail-fact", text: /A private goal/
-    assert_select ".detail-fact", text: /Council-led/
-    assert_select ".detail-fact", text: /The elders disagree/
-    assert_select ".detail-fact", text: /Access to a library/
-    assert_select ".detail-fact", text: /Betray an ally/
-    assert_select ".detail-fact", text: /Protect its own/
+    assert_select ".page-description", text: @faction.summary
+    assert_select ".detail-facts-wide h2", text: "Actual aims"
+    assert_select ".detail-facts-wide", text: /A private goal/
+    assert_select ".detail-section .entity-title a", text: characters(:character_one).name
   end
 
   test "a guest can read factions but sees no mutation controls" do

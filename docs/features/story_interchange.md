@@ -153,18 +153,18 @@ and a Scene opens with its own `##` title (see [Plot and Scene](#plot-and-scene)
 names the record and is not prose. A section that maps to a profile answer is written into that
 answer, with its Markdown body kept as written; a section with no target is reported by the import
 slice, never silently dropped. The exact profile field lists live in
-[Factions](factions.md#scope-and-profile), [Locations](locations.md#location-profile), and
-[Items](items.md#item-profile); [Characters](characters.md#profile) maps its whole body instead, as
-described below.
+[Locations](locations.md#location-profile) and [Items](items.md#item-profile);
+[Characters](characters.md#profile) and [Factions](factions.md#scope-and-profile) map their whole body
+instead, as described below.
 
 HTML comments (`<!-- … -->`) are drafting notes for the author, not prose. They are stripped before
 a section is stored and before references are scanned, so a `[[slug]]` inside one is an example
 rather than a reference.
 
 The prose before the first `##` section — the source's identity block — has no dedicated column. A
-Character folds it into `description`; the other profile slices report it as the record's
-`introduction`. A frontmatter key the application has no column for is reported by name rather than
-folded into another answer.
+Character and a Faction fold it into `description`; the other profile slices report it as the
+record's `introduction`. A frontmatter key the application has no column for is reported by name
+rather than folded into another answer.
 
 ### Character
 
@@ -173,6 +173,7 @@ writes `summary`; the identity block before the first `##` and every other `##`
 section are joined into `description`, in source order, with their headings and
 Markdown kept as written. That includes `Information`, where the source keeps
 role, status, age, homeworld, languages, occupation, and first appearance.
+
 Nothing in the body is reported, because the description has a target for all of
 it. `At a glance` is the older summary heading and is still read.
 
@@ -181,27 +182,24 @@ details page turns each into a link, so resolving it to plain names would lose t
 is owned by [Characters](characters.md#links-inside-a-description).
 
 The source has no pronouns or aliases section; those fields stay blank when a Character has none.
-`affiliation` is free text in the real source and may name a Faction, another record, or prose, so
-this slice **reports it and never turns it into Faction membership**: the operator assigns membership
-in the app. The frontmatter keys `role`, `affiliation`, `status`, `first_appears`, and `backlog` all
-have no Character column and are reported when they are present; the current source keeps only the
-three identity keys in frontmatter and writes the others under `Information`.
+`affiliation` is the source's faction list. Each `[[faction:slug]]` becomes a Faction membership;
+the validator has already refused a link to a missing record or to another kind, and the Factions
+slice runs first so the record exists. A bare name such as an in-world institution, or `TBD`, has no
+Faction behind it and is reported instead of guessed into one. The frontmatter keys `role`, `status`,
+`first_appears`, and `backlog` have no Character column and are reported when they are present; the
+current source keeps only the three identity keys in frontmatter and writes the others under
+`Information`.
 
 ### Faction
 
-| Section | Target |
-|---|---|
-| Mission | `mission` |
-| Actually for | `actual_aims` |
-| Structure | `structure` |
-| Internal split | `internal_divisions` |
-| Resources | `resources` |
-| Would never | `would_never` |
-| Would absolutely | `would_absolutely` |
-| Register, The two rivals, Relationships, Open questions | no app field — report |
+A Faction is one short summary and one Markdown description. `Short summary`, or the older
+`Mission` heading, writes `summary`; the identity block before the first `##` and every other `##`
+section are joined into `description`, in source order, with their headings and Markdown kept as
+written. Nothing in the body is reported, because the description has a target for all of it.
+`type`, `home`, `status`, and `backlog` have no Faction column and are reported by name.
 
-The Faction frontmatter keys `type`, `home`, `status`, and `backlog` have no Faction column and are
-reported.
+The description's `[[kind:slug]]` references stay in their source form too, and the details page
+renders them with the same dialect as a Character's description.
 
 ### Location
 
@@ -439,15 +437,13 @@ CONFIRM_STORY_INTERCHANGE_IMPORT=1 \
 
 A completed run has its own page at `/import/runs/:id`, and the write redirects there. It names the
 source folder, the Universe the run wrote, whether it created or replaced one, the operator and the
-moment, and each slice's written count beside **every** source item that slice reported instead of
-writing.
+moment, and each slice's written count beside every record that slice reported instead of writing
+whole, with that record's subsection and word counts.
 
-That answer is stored in `story_interchange_runs.outcomes`, not carried in the flash. A source with a
-few hundred reported ids builds a message larger than the 4 KB a session cookie may hold, and the
-cookie store raises `ActionDispatch::Cookies::CookieOverflow` while the response commits — after the
-import transaction has already succeeded, so the operator saw a 500 for a completed import. The run row
-is written inside that transaction, so the page exists exactly when the write does. The flash after the
-redirect is one sentence (`imports.flash.imported`).
+That answer is stored in `story_interchange_runs.outcomes`, not carried in the flash, so the page
+exists exactly when the write does and a large source does not overflow the session cookie. The
+report keeps a record's name and two counts rather than every source item it left behind. The flash
+after the redirect is one sentence (`imports.flash.imported`).
 
 The page copies the Universe's name and slug into the run rather than resolving them, because a later
 run replaces the Universe this one created and a soft-deleted Universe is hidden from the ordinary
@@ -462,18 +458,22 @@ slice declares an I18n key for its name and the validator count it writes; a pro
 declares the record kind it writes, its section-to-column mapping, and the frontmatter keys it
 reports. The preview, the task, and the page read that list, so adding a type never edits them.
 **Canon** writes every `K`/`L`/`D`/`O` item described under [Canon ledger](#canon-ledger), the open
-question as a rule of type `open`. **Characters**, **Factions**, **Locations**, and **Items** write one
-record per file from the mapping above. **Stories** writes one Story per story directory, because a
-Plot needs the Story it belongs to, and **Sections** then writes one Section per chapter directory,
-named from its README heading as described under [Story records](#story-records).
+question as a rule of type `open`. **Factions** runs before **Characters**, **Locations**, and
+**Items**, which write one record per file from the mapping above; a Character's
+`[[faction:slug]]` affiliation needs its Faction to exist first. **Stories** writes one Story per
+story directory, because a Plot needs the Story it belongs to, and **Sections** then writes one
+Section per chapter directory, named from its README heading as described under
+[Story records](#story-records).
 **Scenes** follows, writing each Scene with its Elements, because it needs the Story, the Section,
 and the Character and Location links those earlier slices created. **Plots** runs last and writes
 each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
 registry when their slice exists.
 
-A slice's `Outcome` names every source item it reports instead of writing, and both the preview and
-the [run page](#the-run-page) show that list: an unmapped section, a frontmatter key with no column,
-the preamble block, or a `[[slug]]` whose record kind has no slice.
+A slice's `Outcome` names every record it reports instead of writing whole, with the number of its
+`##` subsections it leaves behind and its word count. Both the preview and the
+[run page](#the-run-page) show one list item per record, so an unmapped section, a frontmatter key
+with no column, the preamble block, or a `[[slug]]` whose record kind has no slice is visible as a
+record the operator should open, without the page repeating every heading and key.
 
 ### Where a source may live
 
@@ -487,9 +487,10 @@ a guest signs in and a signed-in non-operator receives `403`.
 ## What the import does not do
 
 It writes only the records a registered slice owns, and it does not write the source back out, copy
-it into the repository, or restore a replaced Universe. Relations, Faction membership, Location and
-Item hierarchy, Plot Scene assignments, Scene Tags, and a Scene's in-world datetime do not arrive
-from this slice; the source text that would carry them is reported. Authoring
+it into the repository, or restore a replaced Universe. Character relations, Faction-to-Faction
+relationships, Location and Item hierarchy, Plot Scene assignments, Scene Tags, and a Scene's
+in-world datetime do not arrive from this slice; the source text that would carry them is reported.
+Authoring
 guidance such as `universe/inspirations.md` has no record kind and is reported rather than imported.
 A [Universe backup](universe_backup.md) writes the reverse direction as a readable projection; that
 document owns what the projection can and cannot carry.

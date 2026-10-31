@@ -5,12 +5,15 @@ module StoryInterchange
   # command, the page, and the preview all read the list rather than naming a
   # type themselves, so adding one never means editing those three surfaces.
   # The order also decides which references resolve: a `[[slug]]` becomes a name
-  # when a slice in this list owns the target's kind.
+  # when a slice in this list owns the target's kind. It also orders the writes
+  # themselves: Factions runs before Characters because a Character's
+  # `[[faction:slug]]` affiliation becomes a membership of a record that must
+  # already exist.
   module Importers
     ALL = [
       Canon,
-      Characters,
       Factions,
+      Characters,
       Locations,
       Items,
       Stories,

@@ -15,6 +15,7 @@ class FactionsController < ApplicationController
   end
 
   def show
+    @characters = @faction.characters.includes(:photo, :character_tags).order(:name, :id)
   end
 
   def create
@@ -58,8 +59,7 @@ class FactionsController < ApplicationController
   end
 
   def faction_params
-    params.expect(faction: [ *photo_params, :name, :mission, :actual_aims, :structure,
-      :internal_divisions, :resources, :would_never, :would_absolutely, { faction_tag_ids: [] } ])
+    params.expect(faction: [ *photo_params, :name, :summary, :description, { faction_tag_ids: [] } ])
   end
 
   def faction_json
@@ -67,13 +67,8 @@ class FactionsController < ApplicationController
       id: @faction.id,
       name: @faction.name,
       slug: @faction.slug,
-      mission: @faction.mission,
-      actual_aims: @faction.actual_aims,
-      structure: @faction.structure,
-      internal_divisions: @faction.internal_divisions,
-      resources: @faction.resources,
-      would_never: @faction.would_never,
-      would_absolutely: @faction.would_absolutely,
+      summary: @faction.summary,
+      description: @faction.description,
       faction_tag_ids: @faction.faction_tag_ids,
       url: universe_faction_path(id: @faction)
     }

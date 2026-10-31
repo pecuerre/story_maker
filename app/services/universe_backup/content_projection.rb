@@ -157,15 +157,8 @@ module UniverseBackup
             "home" => "— TBD",
             "status" => "— TBD"
           }
-          sections = {
-            "Mission" => faction.mission,
-            "Actually for" => faction.actual_aims,
-            "Structure" => faction.structure,
-            "Internal split" => faction.internal_divisions,
-            "Resources" => faction.resources,
-            "Would never" => faction.would_never,
-            "Would absolutely" => faction.would_absolutely
-          }
+          sections = { "Mission" => faction.summary }
+            .merge(description_sections(faction.description))
           [ "#{base}/universe/factions/#{faction.slug}.md", document(frontmatter, faction.name, sections) ]
         end
       end
@@ -381,7 +374,7 @@ module UniverseBackup
         "---\n#{body}---\n"
       end
 
-      # A Character's description is Markdown that already carries its own `##`
+      # A record's description is Markdown that already carries its own `##`
       # sections. The projection keeps those headings so the readable tree reads
       # like the source; prose before the first heading becomes a `Description`
       # section rather than being dropped.
@@ -391,7 +384,8 @@ module UniverseBackup
 
         sections = {}
         chunks = text.split(/^##[ \t]+/)
-        sections["Description"] = chunks.shift.strip if chunks.any? && chunks.first.present?
+        prose = chunks.shift
+        sections["Description"] = prose.strip if prose.present?
 
         chunks.each do |chunk|
           heading, body = chunk.split(/\r?\n/, 2)

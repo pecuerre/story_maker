@@ -531,12 +531,13 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Facciones"
     assert_select ".page-actions button", text: "Añadir facción"
-    assert_select "label", text: "Lo que realmente quieren conseguir"
+    assert_select "label", text: "Resumen breve"
+    assert_select "label", text: "Descripción"
 
     get universe_faction_url(universe_slug: @universe.slug, id: factions(:faction_one))
     assert_response :success
-    assert_select "dt", text: "Misión pública: lo que dicen en voz alta"
-    assert_select "dt", text: "Lo que realmente quieren conseguir"
+    assert_select "dt", text: "Descripción"
+    assert_select "h2", text: "Actual aims"
   end
 
   # The seven universe-level taxonomies read the same `tags.types.<type>` copy the

@@ -7,26 +7,39 @@ taxonomy workflow; the schema is summarized in [data_model.md](../data_model.md)
 ## Scope and profile
 
 A Faction belongs directly to one Universe and is shared by all of that Universe's Stories. It has a
-required `name`, a `slug` generated from the name, and optional profile fields:
+required `name`, a `slug` generated from the name, and two optional profile fields:
 
 | Field | What it records |
 |---|---|
-| `mission` | The public mission — what the Faction says out loud |
-| `actual_aims` | What it truly aims to achieve |
-| `structure` | How the group is organized |
-| `internal_divisions` | Disagreements or factions within the Faction |
-| `resources` | What it can draw on |
-| `would_never` | What the Faction would never do |
-| `would_absolutely` | What it would absolutely do |
+| `summary` | One line shown in the Faction list and at the top of its details page |
+| `description` | The full profile, written in Markdown |
 
-The profile fields are plain text. They have no required order or interpretation, and a blank field
-means that the author has not recorded an answer. Factions are flat records; they do not have
-`parent_id` or `position`.
+The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
+`**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. The
+dialect and the `[[kind:slug]]` reference syntax are the shared description dialect owned by
+[characters.md](characters.md#links-inside-a-description) and implemented by `MarkdownDescription`.
+Both the summary and the description are part of the Faction's searchable body.
+
+There are deliberately no separate mission, aims, structure, divisions, or resources columns: those
+are `##` sections inside `description`, so the form stays short and the author chooses the shape of
+the profile. A blank field means that the author has not recorded an answer. Factions are flat
+records; they do not have `parent_id` or `position`.
 
 Factions are managed at `/u/:universe_slug/factions`, with a list, a modal editor, and a read-only
 details page at `/u/:universe_slug/factions/:id`. Create, edit, and delete use the JSON modal contract.
 Deletion is a soft delete, so restoring a Faction also restores its tag assignments. Factions carry
 the same optional Photo and Discussion support as other universe content.
+
+## Characters in a Faction
+
+The details page lists the Characters affiliated with the Faction after its description. The list is
+read-only navigation: a reader can open each Character's page, but membership is edited on the
+Character form, not here. The membership rules and the Character profile are owned by
+[characters.md](characters.md).
+
+The section renders for every access level, because a reader who may see the Faction may see the
+Characters in the same Universe. A Faction with no affiliated Character says so rather than showing an
+empty box.
 
 ## Faction tags
 
@@ -48,7 +61,7 @@ signed-in users may write, and private Universes require a member. In a draft-ba
 mutations are remembered and applied through the existing draft path rather than written directly.
 
 Factions and FactionTags are searchable. A Faction's search document uses its name as the title and
-its profile fields as searchable body text; a FactionTag searches by name and description. Their
+its summary and description as searchable body text; a FactionTag searches by name and description. Their
 results are filtered by the same Universe visibility rule as all other content.
 
 ## Faction relationships
@@ -65,18 +78,14 @@ flow, and draft-based Universes remember those mutations. The ordinary Universe 
 Its search document uses the optional name or directed endpoints as the title and its description as
 searchable body text.
 
-## Character membership
-
-Characters may belong to zero, one, or several Factions. Membership is edited on the Character form;
-the many-to-many membership rules and the Character profile are owned by
-[characters.md](characters.md).
-
 ## Dark and LOTR examples
 
 Each registered Universe manifest has `faction_tags.yml`, `factions.yml`, and
 `faction_relationships.yml`. Tag definitions load before Factions, which load before Character
 membership and faction relationships so symbolic references resolve in order. Dark demonstrates the
-Sic Mundus–Erit Lux conflict; LOTR demonstrates the Fellowship's alliance with the White Council.
+Sic Mundus–Erit Lux conflict and affiliated Characters on each details page; LOTR demonstrates the
+Fellowship's alliance with the White Council. Every demo Faction has a summary and a description with
+`##` sections.
 
 To check and reload both local demo Universes after changing these manifests:
 

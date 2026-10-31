@@ -14,7 +14,7 @@
 # key to `universes`.
 #
 # `outcomes` is the same data `Importers::Importer::Outcome` returns to the preview and
-# the task: one entry per slice, with the source items that slice reported instead of
+# the task: one entry per slice, with the records that slice reported instead of
 # writing. `slices` is the reader that gives those entries named methods, so a view is
 # not indexing a JSON hash by hand.
 #
@@ -22,10 +22,10 @@
 # platform question the import page does (`:manage` on `StoryInterchange::Import`), so
 # there is no per-row authorization: every platform admin may read every run.
 class StoryInterchangeRun < ApplicationRecord
-  # One slice's answer, read back from `outcomes`. `skipped` names the source items the
-  # slice deliberately left unwritten.
-  Slice = Data.define(:label_key, :created, :skipped) do
-    def skipped? = skipped.any?
+  # One slice's answer, read back from `outcomes`. `reported` names the records
+  # the slice left partly unwritten, with the counts the page shows.
+  Slice = Data.define(:label_key, :created, :reported) do
+    def reported? = reported.any?
   end
 
   belongs_to :user
@@ -44,18 +44,61 @@ class StoryInterchangeRun < ApplicationRecord
       universe_slug: universe.slug,
       replaced: replaced,
       outcomes: outcomes.map do |outcome|
-        { "label_key" => outcome.label_key, "created" => outcome.created, "skipped" => outcome.skipped }
+        {
+          "label_key" => outcome.label_key,
+          "created" => outcome.created,
+          "reported" => outcome.reported.map do |record|
+            {
+              "name" => record.name,
+              "slug" => record.slug,
+              "sections" => record.sections,
+              "words" => record.words
+            }
+          end
+        }
       end
     )
   end
 
   def slices
     outcomes.map do |outcome|
-      Slice.new(label_key: outcome["label_key"], created: outcome["created"], skipped: outcome["skipped"])
+      Slice.new(
+        label_key: outcome["label_key"],
+        created: outcome["created"],
+        reported: reported_from(outcome)
+      )
     end
   end
 
   def reported?
-    slices.any?(&:skipped?)
+    slices.any?(&:reported?)
   end
+
+  private
+    # The page needs a record's name and two counts, not the detailed list of
+    # source items it used to store. A row written before the counts existed still
+    # renders: its strings are grouped back under the record its prefix names.
+    def reported_from(outcome)
+      if outcome.key?("reported")
+        outcome["reported"].map { |record| record_from(record) }
+      else
+        legacy_records(outcome["skipped"])
+      end
+    end
+
+    def record_from(record)
+      StoryInterchange::Importer::Reported.new(
+        name: record["name"],
+        slug: record["slug"],
+        sections: (record["sections"] || 0).to_i,
+        words: record["words"],
+        items: []
+      )
+    end
+
+    def legacy_records(items)
+      Array(items).group_by { |item| item.split(": ", 2).first }.map do |slug, grouped|
+        StoryInterchange::Importer::Reported.new(name: nil, slug: slug, sections: 0, words: nil, items: grouped)
+      end
+    end
 end

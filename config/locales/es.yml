@@ -446,6 +446,12 @@ es:
       slice: "Tipo de registro"
       records: "Registros"
       reported: "Reportados, no escritos"
+      reported_sections:
+        one: "1 sección"
+        other: "%{count} secciones"
+      reported_words:
+        one: "1 palabra"
+        other: "%{count} palabras"
       safety_title: "Seguridad del reemplazo"
       safe: "No hay borradores abiertos ni otros miembros: este universo se puede reemplazar."
       blocked: "Este universo no se puede reemplazar mientras tenga borradores abiertos o miembros distintos de ti. Resuélvelos en la aplicación y vuelve a previsualizar."
@@ -459,7 +465,7 @@ es:
     result:
       title: "Ejecución de importación"
       eyebrow: "Plataforma"
-      description: "Cada registro que escribió esta ejecución y cada elemento del origen que reportó en lugar de escribir."
+      description: "Cada registro que escribió esta ejecución y cada registro que reportó en lugar de escribirlo entero."
       open_universe: "Abrir universo"
       import_again: "Importar otro origen"
       identity_title: "Qué hizo esta ejecución"
@@ -474,7 +480,13 @@ es:
       slice: "Tipo de registro"
       written: "Escritos"
       reported: "Reportados, no escritos"
-      nothing_reported: "Se escribió cada elemento del origen."
+      reported_sections:
+        one: "1 sección"
+        other: "%{count} secciones"
+      reported_words:
+        one: "1 palabra"
+        other: "%{count} palabras"
+      nothing_reported: "Se escribió cada registro del origen."
     flash:
       imported: "Se importó %{name}."
       source_required: "Elige primero una carpeta de origen."
@@ -2101,7 +2113,7 @@ es:
 
   factions:
     title: "Facciones"
-    description: "Organizaciones y grupos con una misión pública, objetivos privados, estructura y recursos propios."
+    description: "Organizaciones y grupos, con un resumen breve y una descripción en Markdown que comparten las historias del universo."
     tabs_aria_label: "Espacio de trabajo de facciones"
     new_title: "Nueva facción"
     add: "Añadir facción"
@@ -2109,13 +2121,11 @@ es:
     form:
       name: "Nombre"
       tags_label: "Etiquetas de facciones"
-      mission: "Misión pública: lo que dicen en voz alta"
-      actual_aims: "Lo que realmente quieren conseguir"
-      structure: "Estructura"
-      internal_divisions: "Divisiones internas"
-      resources: "Recursos"
-      would_never: "Lo que nunca harían"
-      would_absolutely: "Lo que harían sin dudarlo"
+      summary: "Resumen breve"
+      summary_hint: "Una línea que el lector ve en la lista y al principio de la página de detalles."
+      description: "Descripción"
+      description_hint: "Markdown. Usa ## para un encabezado de sección, **negrita** para enfatizar y listas o tablas cuando ayuden."
+      description_reference_hint: "Enlaza otro registro con [[character:slug]], [[faction:slug]], [[location:slug]] o [[item:slug]]."
     empty_title: "Todavía no hay facciones"
     empty_writable_description: "Las facciones pertenecen al universo y las comparten sus historias. Añade la primera para dar un espacio propio a sus organizaciones."
     empty_read_only_description: "Las facciones pertenecen al universo y las comparten sus historias."
@@ -2127,7 +2137,11 @@ es:
         universe: "Universo"
         tags: "Etiquetas de facciones"
         tags_blank: "No hay etiquetas asignadas. Las etiquetas son opcionales."
-        blank: "Sin especificar."
+        description: "Descripción"
+    characters:
+      title: "Personajes"
+      empty_title: "Todavía no hay personajes"
+      empty_description: "Los personajes afiliados a esta facción se enlazan desde sus propios perfiles y aparecerán aquí."
     tabs:
       factions: "Facciones"
       relationships: "Relaciones"
@@ -3143,13 +3157,8 @@ es:
         factions: "Facciones"
       faction:
         name: "Nombre"
-        mission: "Misión pública"
-        actual_aims: "Objetivos reales"
-        structure: "Estructura"
-        internal_divisions: "Divisiones internas"
-        resources: "Recursos"
-        would_never: "Nunca haría"
-        would_absolutely: "Haría sin dudarlo"
+        summary: "Resumen breve"
+        description: "Descripción"
         faction_tags: "Etiquetas de facciones"
       faction_relationship:
         name: "Nombre"

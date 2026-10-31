@@ -23,7 +23,7 @@ module StoryInterchange
           )
         end
 
-        Outcome.new(label_key: label_key, created: created.size, skipped: [])
+        Outcome.new(label_key: label_key, created: created.size, reported: [])
       end
     end
   end

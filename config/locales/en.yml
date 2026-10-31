@@ -462,6 +462,12 @@ en:
       slice: "Record type"
       records: "Records"
       reported: "Reported, not written"
+      reported_sections:
+        one: "1 section"
+        other: "%{count} sections"
+      reported_words:
+        one: "1 word"
+        other: "%{count} words"
       safety_title: "Replacement safety"
       safe: "No open drafts or other members: this universe can be replaced."
       blocked: "This universe cannot be replaced while it has open drafts or members other than you. Resolve them in the app first, then preview again."
@@ -475,7 +481,7 @@ en:
     result:
       title: "Import run"
       eyebrow: "Platform"
-      description: "Every record this run wrote, and every source item it reported instead of writing."
+      description: "Every record this run wrote, and every record it reported instead of writing whole."
       open_universe: "Open universe"
       import_again: "Import another source"
       identity_title: "What this run did"
@@ -490,7 +496,13 @@ en:
       slice: "Record type"
       written: "Written"
       reported: "Reported, not written"
-      nothing_reported: "Every source item was written."
+      reported_sections:
+        one: "1 section"
+        other: "%{count} sections"
+      reported_words:
+        one: "1 word"
+        other: "%{count} words"
+      nothing_reported: "Every source record was written."
     flash:
       imported: "Imported %{name}."
       source_required: "Choose a source folder first."
@@ -2153,7 +2165,7 @@ en:
 
   factions:
     title: "Factions"
-    description: "Organizations and groups with their own public mission, private aims, structure, and resources."
+    description: "Organizations and groups, with a short summary and one Markdown description they carry across the universe's stories."
     tabs_aria_label: "Faction workspace"
     new_title: "New faction"
     add: "Add faction"
@@ -2161,13 +2173,11 @@ en:
     form:
       name: "Name"
       tags_label: "Faction tags"
-      mission: "Public mission — what they say out loud"
-      actual_aims: "What they truly aim to achieve"
-      structure: "Structure"
-      internal_divisions: "Internal divisions"
-      resources: "Resources"
-      would_never: "What they would never do"
-      would_absolutely: "What they would absolutely do"
+      summary: "Short summary"
+      summary_hint: "One line a reader sees in the list and at the top of the details page."
+      description: "Description"
+      description_hint: "Markdown. Use ## for a section heading, **bold** for emphasis, and lists or tables where they help."
+      description_reference_hint: "Link another record with [[character:slug]], [[faction:slug]], [[location:slug]], or [[item:slug]]."
     empty_title: "No factions yet"
     empty_writable_description: "Factions belong to the universe and are shared by its stories. Add the first one to give its organizations a place of their own."
     empty_read_only_description: "Factions belong to the universe and are shared by its stories."
@@ -2179,7 +2189,11 @@ en:
         universe: "Universe"
         tags: "Faction tags"
         tags_blank: "No tags assigned. Tags are optional."
-        blank: "Not specified."
+        description: "Description"
+    characters:
+      title: "Characters"
+      empty_title: "No characters yet"
+      empty_description: "Characters affiliated with this faction are linked from their own profiles and will appear here."
     tabs:
       factions: "Factions"
       relationships: "Relationships"
@@ -3533,13 +3547,8 @@ en:
         factions: "Factions"
       faction:
         name: "Name"
-        mission: "Public mission"
-        actual_aims: "Actual aims"
-        structure: "Structure"
-        internal_divisions: "Internal divisions"
-        resources: "Resources"
-        would_never: "Would never"
-        would_absolutely: "Would absolutely"
+        summary: "Short summary"
+        description: "Description"
         faction_tags: "Faction tags"
       faction_relationship:
         name: "Name"

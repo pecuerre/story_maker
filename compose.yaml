@@ -11,6 +11,7 @@ services:
     volumes:
       - ./app:/rails/app
       - ./lib:/rails/lib
+      - ./config:/rails/config
       - ${STORY_INTERCHANGE_SOURCE_DIR:-../tcs.git}:/sources/tcs.git:ro
       - storage:/rails/storage
     healthcheck:

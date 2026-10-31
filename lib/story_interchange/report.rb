@@ -37,9 +37,11 @@ module StoryInterchange
     Entity = Data.define(:kind, :slug, :name, :frontmatter, :sections, :introduction, :story_slug)
 
     # One chapter directory. A chapter has no record file, so its source facts
-    # are the directory name, the Story that holds it, and the optional `#`
-    # heading in its README that names it for a reader.
-    Chapter = Data.define(:story_slug, :slug, :name)
+    # are the directory name, the Story that holds it, the optional `#` heading
+    # in its README that names it for a reader, the identity block that becomes
+    # the Section's description, and the `##` sections that have no Section
+    # column. `sections` is empty when the README has no subsection.
+    Chapter = Data.define(:story_slug, :slug, :name, :description, :sections)
 
     attr_reader :universe_slug, :universe_name, :stories, :chapters, :counts, :issues,
       :canon_rules, :canon_questions
@@ -69,9 +71,11 @@ module StoryInterchange
     end
 
     # One chapter directory, in the source's sorted order. The order is the
-    # Section position the import writes.
-    def add_chapter(story_slug:, slug:, name:)
-      @chapters << Chapter.new(story_slug: story_slug, slug: slug, name: name)
+    # Section position the import writes, and the README's identity block and
+    # subsections are what the Sections slice writes and reports.
+    def add_chapter(story_slug:, slug:, name:, description:, sections:)
+      @chapters << Chapter.new(story_slug: story_slug, slug: slug, name: name,
+        description: description, sections: sections)
     end
 
     def count(kind)

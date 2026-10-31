@@ -42,6 +42,8 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Import record list.** The preview and a completed run now list every record each slice writes, marking only the records that keep content the app cannot store with their subsection and word counts.
+- **Section import from chapter README.** A chapter README's identity block becomes the Section description, and its `##` subsections are reported instead of dropped.
 - **Import preview report.** The preview and a completed run list each partly written record once, with its subsection and word counts, instead of repeating every skipped heading and key.
 - **Character import membership.** A Character import now turns each `[[faction:slug]]` in its `affiliation` frontmatter into the Faction membership; a bare institution name is reported instead of guessed into one.
 - **Faction profile simplified.** A Faction keeps its name, tags, short summary, and one Markdown description; the mission, aims, structure, divisions, resources, would-never, and would-absolutely columns are gone.
@@ -49,6 +51,7 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Compose config mount.** The development service bind-mounts `config/`, so locale and other configuration changes need a container restart rather than an image rebuild.
 - **Demo faction data.** Dark and Lord of the Rings factions carry the simplified profile, with their old profile answers folded into description sections.
 
 ## 2026-10-30

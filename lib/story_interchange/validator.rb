@@ -520,21 +520,32 @@ module StoryInterchange
             next
           end
 
+          document = chapter_readme(chapter_directory)
           @report.count(:chapters)
-          @report.add_chapter(story_slug: story_slug, slug: chapter, name: chapter_name(chapter_directory, chapter))
+          @report.add_chapter(
+            story_slug: story_slug,
+            slug: chapter,
+            name: chapter_name(chapter, document),
+            description: document&.introduction.to_s,
+            sections: document&.sections || []
+          )
           markdown_files(chapter_directory).each do |file|
             read_scene(file, story_slug, chapter)
           end
         end
       end
 
-      # A chapter directory may carry a README whose `#` heading names the
-      # chapter for a human: `# Chapter 06 — The Meeting`. The heading supplies
-      # the Section's display name when it names one, and the directory's own
-      # slug part is the fallback so a chapter without a README still has a name.
-      def chapter_name(directory, slug)
+      # A chapter directory may carry a README. Its `#` heading names the
+      # chapter for a human (`# Chapter 06 — The Meeting`), the prose before the
+      # first `##` becomes the Section's description, and the subsections are
+      # reported because a Section has no column for them.
+      def chapter_readme(directory)
         readme = File.join(directory, "README.md")
-        heading = File.file?(readme) ? Document.load(readme, root: @root).title.to_s.strip : ""
+        File.file?(readme) ? document_for(readme) : nil
+      end
+
+      def chapter_name(slug, document)
+        heading = document&.title.to_s.strip
         heading = heading.sub(/\Achapter\s+\d{2}\s*[—–:-]\s*/i, "").strip
         heading.presence || slug.sub(/\A\d{2}-/, "").tr("-", " ").titleize
       end

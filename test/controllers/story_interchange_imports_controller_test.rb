@@ -83,11 +83,21 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tbody tr", text: /Canon rules/ do
       assert_select "td", text: "4"
     end
-    # A reported record is one list item with the record's name and its section
-    # and word counts, not one sentence repeating every source item.
+    # Every record is listed, and a record with content the app cannot store
+    # carries its section and word counts rather than a sentence repeating every
+    # source item.
     assert_select "li", text: /The Keep/
     assert_includes response.body, "4 sections"
+    # A record with nothing left behind is listed too.
+    assert_select "li", text: /Ada/
+    # The chapter README's subsection is reported beside the Section the run
+    # writes from its identity block, and the chapter with no subsection is still
+    # listed.
+    assert_select "li", text: /The Arrival Gate/
+    assert_select "li", text: /Winter/
+    assert_includes response.body, "1 section"
     assert_includes response.body, "words"
+    assert_includes response.body, "Records and notes"
     assert_not_includes response.body, "keep: Open questions"
   end
 
@@ -144,7 +154,11 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Imported Synthetic Universe."
     assert_includes response.body, "Canon rules"
     assert_select "li", text: /The Wardens/
+    assert_select "li", text: /The Arrival Gate/
+    assert_select "li", text: /Ada/
+    assert_select "li", text: /Winter/
     assert_includes response.body, "words"
+    assert_includes response.body, "Records and notes"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
 

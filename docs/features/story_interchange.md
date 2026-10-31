@@ -56,8 +56,9 @@ control. Only `.md` files are read.
 
 **A `README.md` is documentation at every depth.** It describes its directory for a human and is
 never a record, so the validator skips it rather than reporting a missing frontmatter block or
-parsing its examples as references. Three READMEs are still read for the one fact each owns: the
-Universe's display name, the Story's name, and optionally a chapter's display name.
+parsing its examples as references. The Universe's and the Story's READMEs are still read for the
+one fact each owns: their display name. A chapter README is read for its Section as well, as
+described under [Story records](#story-records).
 
 ## Identity without a manifest
 
@@ -107,13 +108,17 @@ turn it into a record by accident.
   column to fill, so only the heading and the directory slug become the Story record.
 - `stories/<story>/chapters/` is optional. Each child is a chapter directory `NN-slug`, and each
   child of that is a scene file `NN-slug.md`; a chapter's own `README.md` is documentation and is
-  not a scene. A chapter becomes one top-level Section whose slug is the directory name
+  not a scene, but it supplies the Section record. A chapter becomes one top-level Section whose
+  slug is the directory name
   (`01-arrival`) and whose name is the first `#` heading in the chapter's `README.md` when it has
   one, with the leading `Chapter NN —` removed (`# Chapter 01 — The Arrival Gate` → `The Arrival
   Gate`); without that heading the name is the slug part titleized (`01-arrival` → `Arrival`).
-  Chapters are written in sorted directory order. Chapter and scene numbers are two-digit
-  positions; they are filenames, not database ids, and a scene also carries its stable in-world
-  identity in frontmatter.
+  The prose before the README's first `##` heading is the Section's `description`, with its
+  Markdown kept and its entity references resolved to record names like any other profile answer.
+  A `##` subsection has no Section column, so the import reports it rather than dropping it; the
+  preview names the chapter and its subsection and word counts. Chapters are written in sorted
+  directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
+  database ids, and a scene also carries its stable in-world identity in frontmatter.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
   `README.md` is its human index and is not a Plot.
 
@@ -350,7 +355,8 @@ The report also carries each parsed record as a `Report::Entity` — its kind, s
 also names the `story_slug` whose directory holds it. A slice reads that instead of opening the file
 again, so the write cannot disagree with the preview about a heading or a reference. A chapter is a
 directory rather than a record file, so it is a separate `Report::Chapter` with its Story slug,
-directory name, and display name, in the sorted order the Sections slice writes.
+directory name, display name, the README identity block its Section writes as `description`, and the
+`##` subsections it reports, in the sorted order the Sections slice writes.
 
 Run it without writing anything:
 
@@ -437,13 +443,13 @@ CONFIRM_STORY_INTERCHANGE_IMPORT=1 \
 
 A completed run has its own page at `/import/runs/:id`, and the write redirects there. It names the
 source folder, the Universe the run wrote, whether it created or replaced one, the operator and the
-moment, and each slice's written count beside every record that slice reported instead of writing
-whole, with that record's subsection and word counts.
+moment, and each slice's written count beside every record that slice wrote, with the subsection
+and word counts of a record that still carries content the app cannot store.
 
 That answer is stored in `story_interchange_runs.outcomes`, not carried in the flash, so the page
 exists exactly when the write does and a large source does not overflow the session cookie. The
-report keeps a record's name and two counts rather than every source item it left behind. The flash
-after the redirect is one sentence (`imports.flash.imported`).
+report keeps each record's name, its reported flag, and its two counts rather than every source
+item it left behind. The flash after the redirect is one sentence (`imports.flash.imported`).
 
 The page copies the Universe's name and slug into the run rather than resolving them, because a later
 run replaces the Universe this one created and a soft-deleted Universe is hidden from the ordinary
@@ -469,11 +475,14 @@ and the Character and Location links those earlier slices created. **Plots** run
 each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
 registry when their slice exists.
 
-A slice's `Outcome` names every record it reports instead of writing whole, with the number of its
-`##` subsections it leaves behind and its word count. Both the preview and the
-[run page](#the-run-page) show one list item per record, so an unmapped section, a frontmatter key
-with no column, the preamble block, or a `[[slug]]` whose record kind has no slice is visible as a
-record the operator should open, without the page repeating every heading and key.
+A slice's `Outcome` lists every record it writes, in source order, and marks the ones that carry
+content the app cannot store as reported, with the number of their `##` subsections left behind and
+their word count. Both the preview and the [run page](#the-run-page) show one list item per record,
+so the whole slice is visible and only a record that needs a second look carries a note. That note
+says how large the record is without the page repeating every heading and key, whether the leftover
+is an unmapped section, a frontmatter key with no column, the preamble block, or a `[[slug]]` whose
+record kind has no slice. Sections reports a chapter by its README subsections even though it writes
+the README's identity block as the Section description.
 
 ### Where a source may live
 

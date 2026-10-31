@@ -11,6 +11,23 @@ module StoryInterchange
     class Canon < Importer
       slice label_key: "imports.slices.canon_rules", count: :canon_rules
 
+      class << self
+        # Every rule is written whole, so none is reported; the list is still
+        # complete, because the page shows the records a run writes.
+        def records(report)
+          report.canon_rules.map do |item|
+            Importer::Record.new(
+              name: item.name,
+              slug: item.slug,
+              sections: 0,
+              words: nil,
+              reported: false,
+              items: []
+            )
+          end
+        end
+      end
+
       def call
         created = report.canon_rules.map do |item|
           universe.canon_rules.create!(
@@ -23,7 +40,7 @@ module StoryInterchange
           )
         end
 
-        Outcome.new(label_key: label_key, created: created.size, reported: [])
+        Outcome.new(label_key: label_key, created: created.size, records: [])
       end
     end
   end

@@ -416,6 +416,14 @@ es:
       sections: "Secciones"
       scenes: "Escenas"
       plots: "Tramas"
+    # The notes beside a record on the preview and the run page.
+    records:
+      sections:
+        one: "1 sección no importada"
+        other: "%{count} secciones no importadas"
+      words:
+        one: "1 palabra"
+        other: "%{count} palabras"
     show:
       title: "Importación de story interchange"
       eyebrow: "Plataforma"
@@ -443,15 +451,10 @@ es:
       errors: "Errores"
       warnings: "Advertencias"
       slices_title: "Registros que escribirá esta ejecución"
+      slices_description: "Todos los registros que escribirá esta ejecución. Un registro que conserve contenido que la aplicación no puede guardar muestra sus recuentos de secciones y palabras junto a su nombre."
       slice: "Tipo de registro"
       records: "Registros"
-      reported: "Reportados, no escritos"
-      reported_sections:
-        one: "1 sección"
-        other: "%{count} secciones"
-      reported_words:
-        one: "1 palabra"
-        other: "%{count} palabras"
+      record_list: "Registros y notas"
       safety_title: "Seguridad del reemplazo"
       safe: "No hay borradores abiertos ni otros miembros: este universo se puede reemplazar."
       blocked: "Este universo no se puede reemplazar mientras tenga borradores abiertos o miembros distintos de ti. Resuélvelos en la aplicación y vuelve a previsualizar."
@@ -477,15 +480,10 @@ es:
       run_by: "Ejecutada por"
       run_at: "Ejecutada el"
       records_title: "Registros que escribió esta ejecución"
+      records_description: "Todos los registros que escribió esta ejecución. Un registro que conserve contenido que la aplicación no pudo guardar muestra sus recuentos de secciones y palabras junto a su nombre."
       slice: "Tipo de registro"
       written: "Escritos"
-      reported: "Reportados, no escritos"
-      reported_sections:
-        one: "1 sección"
-        other: "%{count} secciones"
-      reported_words:
-        one: "1 palabra"
-        other: "%{count} palabras"
+      record_list: "Registros y notas"
       nothing_reported: "Se escribió cada registro del origen."
     flash:
       imported: "Se importó %{name}."

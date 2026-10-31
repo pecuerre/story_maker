@@ -156,6 +156,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal "The Arrival Gate", arrival.name
     assert_equal 0, arrival.position
     assert_nil arrival.parent
+    # The README's identity block is the description, with references resolved
+    # to names; its `##` subsection has no Section column and is reported.
+    assert_includes arrival.description, "Documentation for this chapter directory"
+    assert_includes arrival.description, "follows Ada."
+    assert_not_includes arrival.description, "[[ada]]"
+    assert_not_includes arrival.description, "## What is here"
 
     winter = story.sections.find_by!(slug: "02-winter")
     assert_equal "Winter", winter.name
@@ -216,6 +222,11 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     characters = reported_items(StoryInterchange::Importers::Characters.reported(report))
     assert_empty characters
+    # Every character is listed even when nothing is left behind; only the ones
+    # with leftover content are reported.
+    character_list = StoryInterchange::Importers::Characters.records(report)
+    assert_equal [ "Ada" ], character_list.map(&:label)
+    assert_not character_list.sole.reported?
 
     factions = reported_items(StoryInterchange::Importers::Factions.reported(report))
     assert_equal [
@@ -245,6 +256,14 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     assert_empty StoryInterchange::Importers::Stories.reported(report)
 
+    sections = reported_items(StoryInterchange::Importers::Sections.reported(report))
+    assert_equal [ "01-arrival: What is here" ], sections
+    # Both chapters are Sections this run writes; only the first has a
+    # subsection the app cannot store.
+    section_list = StoryInterchange::Importers::Sections.records(report)
+    assert_equal [ "The Arrival Gate", "Winter" ], section_list.map(&:label)
+    assert_equal [ true, false ], section_list.map(&:reported?)
+
     plots = reported_items(StoryInterchange::Importers::Plots.reported(report))
     assert_equal [
       "the-lantern: Stakes",
@@ -259,6 +278,16 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       "the-lantern: owner_pov",
       "the-lantern: opened_in"
     ], plots
+
+    # A slice with no profile still lists its records; none of them can leave
+    # content behind.
+    canon = StoryInterchange::Importers::Canon.records(report)
+    assert_equal 4, canon.size
+    assert_not canon.any?(&:reported?)
+
+    stories = StoryInterchange::Importers::Stories.records(report)
+    assert_equal [ "Synthetic Story" ], stories.map(&:label)
+    assert_not stories.sole.reported?
   end
 
   test "a reported record carries its section and word counts for the page" do
@@ -274,6 +303,11 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     # The whole body lands in the description, so no section is left behind.
     assert_equal 0, wardens.sections
     assert_predicate wardens.words, :positive?
+
+    arrival = StoryInterchange::Importers::Sections.reported(report).sole
+    assert_equal "The Arrival Gate", arrival.label
+    assert_equal 1, arrival.sections
+    assert_predicate arrival.words, :positive?
   end
 
   test "a second import of an unchanged source writes the same records" do
@@ -362,9 +396,11 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal result.universe.slug, run.universe_slug
     assert_not run.replaced?
     assert_equal result.outcomes.map(&:created), run.slices.map(&:created)
+    # The run keeps every record, not only the reported ones, so its page can
+    # list the whole slice after the source is gone.
     assert_equal(
-      result.outcomes.flat_map(&:reported).map { |record| [ record.name, record.slug, record.sections, record.words ] },
-      run.slices.flat_map(&:reported).map { |record| [ record.name, record.slug, record.sections, record.words ] }
+      result.outcomes.flat_map(&:records).map { |record| [ record.name, record.slug, record.sections, record.words, record.reported? ] },
+      run.slices.flat_map(&:records).map { |record| [ record.name, record.slug, record.sections, record.words, record.reported? ] }
     )
     assert_equal 1, StoryInterchangeRun.count
   end
@@ -462,7 +498,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     end
 
     def section_records(universe)
-      universe.stories.flat_map { |story| story.sections.order(:slug).pluck(:slug, :name, :position) }
+      universe.stories.flat_map { |story| story.sections.order(:slug).pluck(:slug, :name, :position, :description) }
     end
 
     def scene_records(universe)

@@ -13,7 +13,10 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     run = StoryInterchangeRun.record!(
       universe: @universe,
       replaced: true,
-      outcomes: [ outcome(created: 3, reported: [ reported_record(name: "The Warden", slug: "warden", sections: 2, words: 40) ]) ],
+      outcomes: [ outcome(created: 2, records: [
+        record(name: "The Warden", slug: "warden", sections: 2, words: 40, reported: true),
+        record(name: "The Gate", slug: "gate", words: 12)
+      ]) ],
       operator: @operator,
       source: "synthetic-universe"
     )
@@ -26,7 +29,10 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
 
     slice = run.slices.sole
     assert_equal "imports.slices.canon_rules", slice.label_key
-    assert_equal 3, slice.created
+    assert_equal 2, slice.created
+    # Every record is kept, not only the one that lost content, so the page can
+    # list the whole slice.
+    assert_equal [ "The Warden", "The Gate" ], slice.records.map(&:label)
     record = slice.reported.sole
     assert_equal "The Warden", record.label
     assert_equal 2, record.sections
@@ -35,17 +41,39 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     assert run.reported?
   end
 
-  test "a run with nothing reported is still a run" do
+  test "a run with nothing reported still lists every record" do
     run = StoryInterchangeRun.record!(
       universe: @universe,
       replaced: false,
-      outcomes: [ outcome(created: 1, reported: []) ],
+      outcomes: [ outcome(created: 1, records: [ record(name: "The Gate", slug: "gate", words: 12) ]) ],
       operator: @operator,
       source: "synthetic-universe"
     )
 
+    slice = run.slices.sole
+    assert_equal [ "The Gate" ], slice.records.map(&:label)
     assert_not run.reported?
-    assert_not run.slices.sole.reported?
+    assert_not slice.reported?
+  end
+
+  test "a run written before every record was stored still renders its records" do
+    run = StoryInterchangeRun.create!(
+      user: @operator,
+      source: "synthetic-universe",
+      universe_name: @universe.name,
+      universe_slug: @universe.slug,
+      replaced: false,
+      outcomes: [ {
+        "label_key" => "imports.slices.locations",
+        "created" => 2,
+        "reported" => [ { "name" => "The Keep", "slug" => "keep", "sections" => 1, "words" => 30 } ]
+      } ]
+    )
+
+    slice = run.slices.sole
+    assert slice.reported?
+    assert_equal [ "The Keep" ], slice.reported.map(&:label)
+    assert_equal [ 1 ], slice.reported.map(&:sections)
   end
 
   test "a run written before the counts existed still renders its reported records" do
@@ -79,15 +107,15 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
   end
 
   private
-    def outcome(created:, reported:)
+    def outcome(created:, records:)
       StoryInterchange::Importer::Outcome.new(
-        label_key: "imports.slices.canon_rules", created: created, reported: reported
+        label_key: "imports.slices.canon_rules", created: created, records: records
       )
     end
 
-    def reported_record(name:, slug:, sections:, words:)
-      StoryInterchange::Importer::Reported.new(
-        name: name, slug: slug, sections: sections, words: words, items: []
+    def record(name:, slug:, sections: 0, words: nil, reported: false)
+      StoryInterchange::Importer::Record.new(
+        name: name, slug: slug, sections: sections, words: words, reported: reported, items: []
       )
     end
 end

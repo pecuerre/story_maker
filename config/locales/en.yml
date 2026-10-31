@@ -432,6 +432,16 @@ en:
       sections: "Sections"
       scenes: "Scenes"
       plots: "Plots"
+    # The notes beside a record on the preview and the run page. A section is
+    # counted only when it is left behind; the word count is the record's whole
+    # size, so the operator can judge how much text the record carries.
+    records:
+      sections:
+        one: "1 section not imported"
+        other: "%{count} sections not imported"
+      words:
+        one: "1 word"
+        other: "%{count} words"
     show:
       title: "Story interchange import"
       eyebrow: "Platform"
@@ -459,15 +469,10 @@ en:
       errors: "Errors"
       warnings: "Warnings"
       slices_title: "Records this run will write"
+      slices_description: "Every record this run will write. A record that keeps content the app cannot store shows its section and word counts beside its name."
       slice: "Record type"
       records: "Records"
-      reported: "Reported, not written"
-      reported_sections:
-        one: "1 section"
-        other: "%{count} sections"
-      reported_words:
-        one: "1 word"
-        other: "%{count} words"
+      record_list: "Records and notes"
       safety_title: "Replacement safety"
       safe: "No open drafts or other members: this universe can be replaced."
       blocked: "This universe cannot be replaced while it has open drafts or members other than you. Resolve them in the app first, then preview again."
@@ -493,15 +498,10 @@ en:
       run_by: "Run by"
       run_at: "Run at"
       records_title: "Records this run wrote"
+      records_description: "Every record this run wrote. A record that keeps content the app could not store shows its section and word counts beside its name."
       slice: "Record type"
       written: "Written"
-      reported: "Reported, not written"
-      reported_sections:
-        one: "1 section"
-        other: "%{count} sections"
-      reported_words:
-        one: "1 word"
-        other: "%{count} words"
+      record_list: "Records and notes"
       nothing_reported: "Every source record was written."
     flash:
       imported: "Imported %{name}."

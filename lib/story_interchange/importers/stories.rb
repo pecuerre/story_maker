@@ -10,12 +10,29 @@ module StoryInterchange
     class Stories < Importer
       slice label_key: "imports.slices.stories", count: :stories
 
+      class << self
+        # A Story has no profile, so nothing is left behind and only its name is
+        # listed.
+        def records(report)
+          report.stories.map do |story|
+            Importer::Record.new(
+              name: story[:name],
+              slug: story[:slug],
+              sections: 0,
+              words: nil,
+              reported: false,
+              items: []
+            )
+          end
+        end
+      end
+
       def call
         created = report.stories.map do |story|
           Story.create!(universe: universe, slug: story[:slug], name: story[:name])
         end
 
-        Outcome.new(label_key: label_key, created: created.size, reported: [])
+        Outcome.new(label_key: label_key, created: created.size, records: [])
       end
     end
   end

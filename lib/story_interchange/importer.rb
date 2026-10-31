@@ -10,8 +10,9 @@ module StoryInterchange
   # A profile slice — a record built from frontmatter and `##` sections — declares
   # its section mapping once here instead of in `#call`. `field_for` resolves a
   # heading to a column, `resolve_references` turns a `[[slug]]` into the name of a
-  # record this run writes, and `reported` lists everything the slice deliberately
-  # leaves behind so the preview says so before the run rather than only after.
+  # record this run writes, and `records` lists every record the slice writes while
+  # `reported` keeps the ones it deliberately leaves content behind for, so the
+  # preview can show the whole list and mark the records to open.
   #
   # A profile value may be a column name or, for a section the app splits into
   # several answers, an ordered label map. `Sensory` writes the five `sensory_*`
@@ -20,20 +21,25 @@ module StoryInterchange
   # answer of the group so it is never dropped.
   #
   # `Outcome` is the small shared answer a slice returns: how many records it
-  # wrote, and the records it deliberately did not write whole. A slice reports
-  # those instead of dropping them, because the layout may carry more than the app
-  # knows and the operator should see what was left behind.
+  # wrote, and every record it wrote as one `Record`, with the source content the
+  # slice deliberately did not write whole. A slice reports that content instead
+  # of dropping it, because the layout may carry more than the app knows and the
+  # operator should see what was left behind.
   class Importer
-    # One record this slice only partly writes. `sections` is how many of its
-    # `##` subsections the slice reports instead of writing, and `words` is the
-    # record's whole body, so a page can size the record without repeating every
-    # heading. `items` keeps the detailed report the task prints, while the
-    # preview and the run page show the record's name and the two counts.
-    Reported = Data.define(:name, :slug, :sections, :words, :items) do
+    # One record the slice writes. `sections` is how many of its `##` subsections
+    # the slice reports instead of writing, and `words` is the record's whole
+    # body, so a page can show the record's size without repeating every heading.
+    # `reported` says whether anything was left behind; `items` keeps the detailed
+    # report the task prints, while the preview and the run page show the record's
+    # name and the two counts.
+    Record = Data.define(:name, :slug, :sections, :words, :reported, :items) do
       def label = name.presence || slug
+      def reported? = reported
     end
 
-    Outcome = Data.define(:label_key, :created, :reported) do
+    Outcome = Data.define(:label_key, :created, :records) do
+      # The records with content this slice did not write whole, in source order.
+      def reported = records.select(&:reported?)
       def reported? = reported.any?
     end
 
@@ -61,24 +67,30 @@ module StoryInterchange
         report.counts[count]
       end
 
-      # The records this slice will only partly write, one per source record.
-      # A record with nothing left behind is omitted; a slice that owns no
-      # entity kind reports nothing.
-      def reported(report)
+      # Every record this slice writes, in source order. A record with nothing
+      # left behind is in the list too, so the page can show the whole slice
+      # rather than only the records that need a second look.
+      def records(report)
         return [] if kind.nil?
 
-        report.entities(kind).filter_map do |entity|
+        report.entities(kind).map do |entity|
           items = reported_entries(report, entity)
-          next if items.empty?
 
-          Reported.new(
+          Record.new(
             name: entity.name,
             slug: entity.slug,
             sections: reported_section_count(entity),
             words: WordCountable.words_in(body_text(entity)),
+            reported: items.any?,
             items: items
           )
         end
+      end
+
+      # The records this slice writes only in part. A record with nothing left
+      # behind is omitted; a slice that owns no entity kind reports nothing.
+      def reported(report)
+        records(report).select(&:reported?)
       end
 
       # The column a source heading writes, or nil when no profile answer owns it.
@@ -196,7 +208,7 @@ module StoryInterchange
           record_class.create!(**attributes_for(entity))
         end
 
-        Outcome.new(label_key: label_key, created: created.size, reported: self.class.reported(report))
+        Outcome.new(label_key: label_key, created: created.size, records: self.class.records(report))
       end
 
       # What every record of this slice carries besides its profile answers. A

@@ -81,38 +81,22 @@
 
   <div class="surface-card p-4 mt-3">
     <h2 class="h4"><%= t("imports.show.slices_title") %></h2>
+    <p><%= t("imports.show.slices_description") %></p>
     <table class="table mb-0">
       <thead>
         <tr>
           <th scope="col"><%= t("imports.show.slice") %></th>
           <th scope="col"><%= t("imports.show.records") %></th>
-          <th scope="col"><%= t("imports.show.reported") %></th>
+          <th scope="col"><%= t("imports.show.record_list") %></th>
         </tr>
       </thead>
       <tbody>
         <% @plan.slices.each do |slice| %>
-          <% reported = slice.reported(@plan.report) %>
           <tr>
             <td><%= t(slice.label_key) %></td>
             <td><%= slice.preview(@plan.report) %></td>
             <td>
-              <% if reported.any? %>
-                <ul class="mb-0">
-                  <% reported.each do |record| %>
-                    <li>
-                      <%= record.label %>
-                      <% details = [] %>
-                      <% details << t("imports.show.reported_sections", count: record.sections) if record.sections.positive? %>
-                      <% details << t("imports.show.reported_words", count: record.words) if record.words %>
-                      <% if details.any? %>
-                        <span class="text-body-secondary small"><%= details.join(" · ") %></span>
-                      <% end %>
-                    </li>
-                  <% end %>
-                </ul>
-              <% else %>
-                —
-              <% end %>
+              <%= render "record_list", records: slice.records(@plan.report) %>
             </td>
           </tr>
         <% end %>

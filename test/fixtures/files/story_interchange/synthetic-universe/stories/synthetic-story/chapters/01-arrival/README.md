@@ -1,7 +1,9 @@
 # Chapter 01 — The Arrival Gate
 
-Documentation for this chapter directory, not content. The scenes are the
-files beside it, read in filename order:
+Documentation for this chapter directory, not content. The chapter opens at
+[[location:keep]] and follows [[ada]].
+
+## What is here
 
 | # | Scene file | POV |
 |---|---|---|

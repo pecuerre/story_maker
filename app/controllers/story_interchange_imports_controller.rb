@@ -40,9 +40,9 @@ class StoryInterchangeImportsController < ApplicationController
     refuse(t("imports.flash.blocked"))
   end
 
-  # A completed run, with every source item the slices reported instead of writing.
-  # The list is here rather than in the flash because a source with a few hundred
-  # reported ids overflows the session cookie — see `StoryInterchangeRun`.
+  # A completed run, with every record the slices wrote and the content they left
+  # behind. The list is here rather than in the flash because a source with a few
+  # hundred records overflows the session cookie — see `StoryInterchangeRun`.
   def result
     authorize! :manage, StoryInterchange::Import
     @run = StoryInterchangeRun.find(params[:id])

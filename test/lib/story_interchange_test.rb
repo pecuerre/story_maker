@@ -76,10 +76,16 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     # Chapters are directories, so the report carries the Story, the directory
     # name, and the `#` heading its README supplies as the display name.
-    assert_equal [
-      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "01-arrival", name: "The Arrival Gate"),
-      StoryInterchange::Report::Chapter.new(story_slug: "synthetic-story", slug: "02-winter", name: "Winter")
-    ], report.chapters
+    assert_equal [ "01-arrival", "02-winter" ], report.chapters.map(&:slug)
+    assert_equal [ "synthetic-story", "synthetic-story" ], report.chapters.map(&:story_slug)
+    assert_equal [ "The Arrival Gate", "Winter" ], report.chapters.map(&:name)
+
+    # The README's prose before its first `##` is the Section description, and
+    # the subsection has no Section column so the importer reports it.
+    arrival = report.chapters.first
+    assert_includes arrival.description, "[[location:keep]] and follows [[ada]]"
+    assert_equal [ "What is here" ], arrival.sections.map(&:heading)
+    assert_empty report.chapters.last.description
 
     # A Scene is parsed like an entity too; its chapter is in its frontmatter
     # and its body is the manuscript prose.

@@ -93,17 +93,18 @@ Compose publishes Rails only on host loopback at `127.0.0.1:3000`. It persists
 not bind-mount the host's `storage/` directory, so an existing local database or
 uploaded files cannot be overwritten or exposed to the container. `docker compose down` stops and
 removes the container but keeps this volume; `docker compose down -v` deletes that Compose project's
-database and uploads, so use it only when you intend to discard them. The `app/` and `lib/` trees are
-mounted for development: Rails reloads application code and autoloadable library code, and the CSS
-watcher rebuilds stylesheets as they change. No image rebuild or container restart is needed for
-those edits; refresh the browser to see the new page styling or client-side code. Some `lib/` files
-loaded only by an initializer are not autoloaded. The host directory named by
+database and uploads, so use it only when you intend to discard them. The `app/`, `lib/`, and
+`config/` trees are mounted for development: Rails reloads application code and autoloadable library
+code, and the CSS watcher rebuilds stylesheets as they change. No image rebuild or container restart
+is needed for those edits; refresh the browser to see the new page styling or client-side code. Some
+`lib/` files loaded only by an initializer are not autoloaded, and mounted `config/` files loaded at
+boot — locale files, initializers, and environment configuration — are not re-read by a reload; use
+`docker compose restart web` for those. The host directory named by
 `STORY_INTERCHANGE_SOURCE_DIR` is mounted read-only at `/sources/tcs.git`, and the container's
 `STORY_INTERCHANGE_IMPORT_ROOT` is `/sources`, so the admin import page lists that folder as a
-source. Changes to `config/`, dependencies, or container configuration still require
-`docker compose up --build`; development-data YAML still follows the
-explicit check-and-reset workflow below. The health check requests `/up` after the schema and initial
-demo load finish.
+source. Changes to dependencies or container configuration still require `docker compose up --build`;
+development-data YAML still follows the explicit check-and-reset workflow below. The health check
+requests `/up` after the schema and initial demo load finish.
 
 The Compose path is not a production deployment workflow: it uses `RAILS_ENV=development`, checked-in
 disposable demo data, and no production credentials. `db:prepare` supplies the schema and

@@ -14,10 +14,12 @@ class DevelopmentComposeTest < ActiveSupport::TestCase
     assert_equal [ "127.0.0.1:3000:3000" ], service.fetch("ports")
     # The story-interchange source is host configuration mounted read-only at the
     # path STORY_INTERCHANGE_IMPORT_ROOT names; the page still lists only folders
-    # under that root.
+    # under that root. `config/` is mounted too, so a locale or initializer edit
+    # needs a container restart rather than an image rebuild.
     assert_equal [
       "./app:/rails/app",
       "./lib:/rails/lib",
+      "./config:/rails/config",
       "${STORY_INTERCHANGE_SOURCE_DIR:-../tcs.git}:/sources/tcs.git:ro",
       "storage:/rails/storage"
     ], service.fetch("volumes")

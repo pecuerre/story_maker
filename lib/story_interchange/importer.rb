@@ -26,15 +26,33 @@ module StoryInterchange
   # of dropping it, because the layout may carry more than the app knows and the
   # operator should see what was left behind.
   class Importer
-    # One record the slice writes. `sections` is how many of its `##` subsections
-    # the slice reports instead of writing, and `words` is the record's whole
-    # body, so a page can show the record's size without repeating every heading.
-    # `reported` says whether anything was left behind; `items` keeps the detailed
-    # report the task prints, while the preview and the run page show the record's
-    # name and the two counts.
-    Record = Data.define(:name, :slug, :sections, :words, :reported, :items) do
+    # One thing a record carries that no column or section target owns. `kind`
+    # says which question the note answers — an unmapped section, a frontmatter
+    # key with no column, the preamble block, a reference to no record this run
+    # writes, or an affiliation that names no Faction — and `subject` names the
+    # leftover itself, so the page can say *what* was not imported rather than
+    # only how large the record is.
+    Note = Data.define(:kind, :subject) do
+      # The task's one-line form. A subject names the leftover where there is
+      # one; `introduction` and `affiliation` keep their own words so the line
+      # reads as a sentence about the source.
+      def item(record_slug)
+        case kind
+        when :introduction then "#{record_slug}: introduction"
+        when :affiliation then "#{record_slug}: affiliation (#{subject})"
+        else "#{record_slug}: #{subject}"
+        end
+      end
+    end
+
+    # One record the slice writes, with every leftover note the slice has for it.
+    # A record with no notes is written whole and is shown by its name alone;
+    # the preview and the run page explain only the notes. `items` is the task's
+    # one-line form of the same notes, so the two reports cannot disagree.
+    Record = Data.define(:name, :slug, :notes) do
       def label = name.presence || slug
-      def reported? = reported
+      def reported? = notes.any?
+      def items = notes.map { |note| note.item(slug) }
     end
 
     Outcome = Data.define(:label_key, :created, :records) do
@@ -74,15 +92,10 @@ module StoryInterchange
         return [] if kind.nil?
 
         report.entities(kind).map do |entity|
-          items = reported_entries(report, entity)
-
           Record.new(
             name: entity.name,
             slug: entity.slug,
-            sections: reported_section_count(entity),
-            words: WordCountable.words_in(body_text(entity)),
-            reported: items.any?,
-            items: items
+            notes: reported_entries(report, entity)
           )
         end
       end
@@ -126,31 +139,19 @@ module StoryInterchange
       end
 
       private
-        # How many of the record's `##` subsections this slice leaves behind. A
-        # Scene has no profile, so every section it carries is reported.
-        def reported_section_count(entity)
-          entity.sections.count { |section| field_for(section.heading).nil? }
-        end
-
-        # The whole body, introduction included, so a word count describes the
-        # record a reader would otherwise have to open.
-        def body_text(entity)
-          [ entity.introduction, *entity.sections.map(&:body) ].join("\n\n")
-        end
-
         # Everything this entity carries that no column or section target owns:
         # the preamble block, an unmapped section, a frontmatter key with no
         # column, and a `[[slug]]` whose record kind has no slice yet.
         def reported_entries(report, entity)
           entries = []
-          entries << "#{entity.slug}: introduction" if entity.introduction.present?
+          entries << Note.new(:introduction, nil) if entity.introduction.present?
 
           entity.sections.each do |section|
-            entries << "#{entity.slug}: #{section.heading}" unless field_for(section.heading)
+            entries << Note.new(:section, section.heading) unless field_for(section.heading)
           end
 
           reported_keys.each do |key|
-            entries << "#{entity.slug}: #{key}" if entity.frontmatter[key].present?
+            entries << Note.new(:frontmatter, key) if entity.frontmatter[key].present?
           end
 
           entries.concat(unresolved_references(report, entity))
@@ -159,7 +160,7 @@ module StoryInterchange
         def unresolved_references(report, entity)
           written_bodies(entity).flat_map do |body|
             body.scan(Document::REFERENCE).flatten.map(&:strip).uniq.filter_map do |target|
-              "#{entity.slug}: [[#{target}]]" if unresolved?(report, target)
+              Note.new(:reference, "[[#{target}]]") if unresolved?(report, target)
             end
           end.uniq
         end

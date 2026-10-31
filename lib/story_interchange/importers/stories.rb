@@ -18,10 +18,7 @@ module StoryInterchange
             Importer::Record.new(
               name: story[:name],
               slug: story[:slug],
-              sections: 0,
-              words: nil,
-              reported: false,
-              items: []
+              notes: []
             )
           end
         end

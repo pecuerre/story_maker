@@ -3,13 +3,9 @@
     <% records.each do |record| %>
       <li>
         <%= record.label %>
-        <% if record.reported? %>
-          <% details = [] %>
-          <% details << t("imports.records.sections", count: record.sections) if record.sections.to_i.positive? %>
-          <% details << t("imports.records.words", count: record.words) if record.words %>
-          <% if details.any? %>
-            <span class="text-body-secondary small"><%= details.join(" · ") %></span>
-          <% end %>
+        <% note = import_record_notes(record) %>
+        <% if note.present? %>
+          <span class="text-body-secondary small"><%= note %></span>
         <% end %>
       </li>
     <% end %>

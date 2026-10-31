@@ -418,12 +418,25 @@ es:
       plots: "Tramas"
     # The notes beside a record on the preview and the run page.
     records:
-      sections:
-        one: "1 sección no importada"
-        other: "%{count} secciones no importadas"
-      words:
-        one: "1 palabra"
-        other: "%{count} palabras"
+      notes:
+        quoted: "«%{subject}»"
+        and_more:
+          one: "%{listed} y 1 más"
+          other: "%{listed} y %{count} más"
+        section:
+          one: "La sección %{subjects} no tiene campo, así que no se importó."
+          other: "Las secciones %{subjects} no tienen campo, así que no se importaron."
+        frontmatter:
+          one: "La clave de frontmatter %{subjects} no tiene campo, así que no se importó."
+          other: "Las claves de frontmatter %{subjects} no tienen campo, así que no se importaron."
+        introduction: "El texto anterior a la primera sección no tiene campo, así que no se importó."
+        reference:
+          one: "La referencia %{subjects} no nombra ningún registro que escriba esta ejecución, así que se dejó tal cual."
+          other: "Las referencias %{subjects} no nombran ningún registro que escriba esta ejecución, así que se dejaron tal cual."
+        affiliation:
+          one: "%{subjects} no nombra ninguna facción, así que no se creó ninguna membresía."
+          other: "%{subjects} no nombran ninguna facción, así que no se creó ninguna membresía."
+        unspecified: "Parte del contenido no tiene campo y no se importó."
     show:
       title: "Importación de story interchange"
       eyebrow: "Plataforma"
@@ -451,7 +464,7 @@ es:
       errors: "Errores"
       warnings: "Advertencias"
       slices_title: "Registros que escribirá esta ejecución"
-      slices_description: "Todos los registros que escribirá esta ejecución. Un registro que conserve contenido que la aplicación no puede guardar muestra sus recuentos de secciones y palabras junto a su nombre."
+      slices_description: "Todos los registros que escribirá esta ejecución. Un registro que conserve contenido que la aplicación no puede guardar dice junto a su nombre qué quedó fuera."
       slice: "Tipo de registro"
       records: "Registros"
       record_list: "Registros y notas"
@@ -480,7 +493,7 @@ es:
       run_by: "Ejecutada por"
       run_at: "Ejecutada el"
       records_title: "Registros que escribió esta ejecución"
-      records_description: "Todos los registros que escribió esta ejecución. Un registro que conserve contenido que la aplicación no pudo guardar muestra sus recuentos de secciones y palabras junto a su nombre."
+      records_description: "Todos los registros que escribió esta ejecución. Un registro que conserve contenido que la aplicación no pudo guardar dice junto a su nombre qué quedó fuera."
       slice: "Tipo de registro"
       written: "Escritos"
       record_list: "Registros y notas"

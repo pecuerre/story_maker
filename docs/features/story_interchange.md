@@ -116,7 +116,7 @@ turn it into a record by accident.
   The prose before the README's first `##` heading is the Section's `description`, with its
   Markdown kept and its entity references resolved to record names like any other profile answer.
   A `##` subsection has no Section column, so the import reports it rather than dropping it; the
-  preview names the chapter and its subsection and word counts. Chapters are written in sorted
+  preview names the subsections it left behind. Chapters are written in sorted
   directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
   database ids, and a scene also carries its stable in-world identity in frontmatter.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
@@ -449,13 +449,14 @@ CONFIRM_STORY_INTERCHANGE_IMPORT=1 \
 
 A completed run has its own page at `/import/runs/:id`, and the write redirects there. It names the
 source folder, the Universe the run wrote, whether it created or replaced one, the operator and the
-moment, and each slice's written count beside every record that slice wrote, with the subsection
-and word counts of a record that still carries content the app cannot store.
+moment, and each slice's written count beside every record that slice wrote; a record that still
+carries content the app cannot store says beside its name what was left out.
 
 That answer is stored in `story_interchange_runs.outcomes`, not carried in the flash, so the page
 exists exactly when the write does and a large source does not overflow the session cookie. The
-report keeps each record's name, its reported flag, and its two counts rather than every source
-item it left behind. The flash after the redirect is one sentence (`imports.flash.imported`).
+report keeps each record's name, its slug, and its leftover notes, so the page can still name what
+was missing after the source is gone. The flash after the redirect is one sentence
+(`imports.flash.imported`).
 
 The page copies the Universe's name and slug into the run rather than resolving them, because a later
 run replaces the Universe this one created and a soft-deleted Universe is hidden from the ordinary
@@ -482,13 +483,14 @@ each Plot with no Scenes. Plot Scene assignments remain validator-only and plug 
 registry when their slice exists.
 
 A slice's `Outcome` lists every record it writes, in source order, and marks the ones that carry
-content the app cannot store as reported, with the number of their `##` subsections left behind and
-their word count. Both the preview and the [run page](#the-run-page) show one list item per record,
-so the whole slice is visible and only a record that needs a second look carries a note. That note
-says how large the record is without the page repeating every heading and key, whether the leftover
-is an unmapped section, a frontmatter key with no column, the preamble block, or a `[[slug]]` whose
-record kind has no slice. Sections reports a chapter by its README subsections even though it writes
-the README's identity block as the Section description.
+content the app cannot store as reported. Both the preview and the [run page](#the-run-page) show one
+list item per record, so the whole slice is visible, and only a record that needs a second look
+carries a note. **That note is a sentence naming the leftover, not a count**: an unmapped section, a
+frontmatter key with no column, the preamble block, a `[[slug]]` whose record kind has no slice, or an
+affiliation that names no Faction. A long list is bounded to three names and its tail counted, so a
+source with hundreds of unmapped headings still fits on the page. A record written whole is shown by
+its name alone. Sections reports a chapter by its README subsections even though it writes the
+README's identity block as the Section description.
 
 ### Where a source may live
 

@@ -432,16 +432,33 @@ en:
       sections: "Sections"
       scenes: "Scenes"
       plots: "Plots"
-    # The notes beside a record on the preview and the run page. A section is
-    # counted only when it is left behind; the word count is the record's whole
-    # size, so the operator can judge how much text the record carries.
+    # The note beside a record on the preview and the run page. A record written
+    # whole carries none and is shown by its name alone; each kind of leftover is
+    # one sentence naming what the app has no place for, so the operator reads
+    # what is missing rather than how large the file is.
     records:
-      sections:
-        one: "1 section not imported"
-        other: "%{count} sections not imported"
-      words:
-        one: "1 word"
-        other: "%{count} words"
+      notes:
+        # The leftover itself, quoted in the sentence below it.
+        quoted: "“%{subject}”"
+        # The tail of a list longer than the page should print in full.
+        and_more:
+          one: "%{listed} and 1 more"
+          other: "%{listed} and %{count} more"
+        section:
+          one: "The section %{subjects} has no field, so it was not imported."
+          other: "The sections %{subjects} have no field, so they were not imported."
+        frontmatter:
+          one: "The frontmatter key %{subjects} has no field, so it was not imported."
+          other: "The frontmatter keys %{subjects} have no field, so they were not imported."
+        introduction: "The text before the first section has no field, so it was not imported."
+        reference:
+          one: "The reference %{subjects} names no record this run writes, so it was left as written."
+          other: "The references %{subjects} name no record this run writes, so they were left as written."
+        affiliation:
+          one: "%{subjects} names no Faction, so no membership was created."
+          other: "%{subjects} name no Faction, so no membership was created."
+        # A run stored before notes were kept still says the record was reported.
+        unspecified: "Some content has no field and was not imported."
     show:
       title: "Story interchange import"
       eyebrow: "Platform"
@@ -469,7 +486,7 @@ en:
       errors: "Errors"
       warnings: "Warnings"
       slices_title: "Records this run will write"
-      slices_description: "Every record this run will write. A record that keeps content the app cannot store shows its section and word counts beside its name."
+      slices_description: "Every record this run will write. A record that keeps content the app cannot store says beside its name what was left out."
       slice: "Record type"
       records: "Records"
       record_list: "Records and notes"
@@ -498,7 +515,7 @@ en:
       run_by: "Run by"
       run_at: "Run at"
       records_title: "Records this run wrote"
-      records_description: "Every record this run wrote. A record that keeps content the app could not store shows its section and word counts beside its name."
+      records_description: "Every record this run wrote. A record that keeps content the app could not store says beside its name what was left out."
       slice: "Record type"
       written: "Written"
       record_list: "Records and notes"

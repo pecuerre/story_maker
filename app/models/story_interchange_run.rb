@@ -52,9 +52,9 @@ class StoryInterchangeRun < ApplicationRecord
             {
               "name" => record.name,
               "slug" => record.slug,
-              "sections" => record.sections,
-              "words" => record.words,
-              "reported" => record.reported?
+              "notes" => record.notes.map do |note|
+                { "kind" => note.kind.to_s, "subject" => note.subject }
+              end
             }
           end
         }
@@ -79,7 +79,9 @@ class StoryInterchangeRun < ApplicationRecord
   private
     # A row written before every record was stored still renders: its `reported`
     # entries are the records it kept, and a row older than those keeps its
-    # strings, grouped back under the record its prefix names.
+    # strings, grouped back under the record its prefix names. Neither carries
+    # the leftovers themselves, so each record gets the one note that says only
+    # that something was left behind.
     def records_from(outcome)
       if outcome.key?("records")
         outcome["records"].map { |record| record_from(record) }
@@ -91,25 +93,32 @@ class StoryInterchangeRun < ApplicationRecord
     end
 
     def record_from(record)
+      notes = notes_from(record)
+      notes << unspecified_note if notes.empty? && record["reported"]
+
       StoryInterchange::Importer::Record.new(
         name: record["name"],
         slug: record["slug"],
-        sections: (record["sections"] || 0).to_i,
-        words: record["words"],
-        reported: record.fetch("reported", true),
-        items: []
+        notes: notes
       )
     end
 
+    def notes_from(record)
+      Array(record["notes"]).map do |note|
+        StoryInterchange::Importer::Note.new(kind: note["kind"].to_sym, subject: note["subject"])
+      end
+    end
+
+    def unspecified_note
+      StoryInterchange::Importer::Note.new(kind: :unspecified, subject: nil)
+    end
+
     def legacy_records(items)
-      Array(items).group_by { |item| item.split(": ", 2).first }.map do |slug, grouped|
+      Array(items).group_by { |item| item.split(": ", 2).first }.map do |slug, _grouped|
         StoryInterchange::Importer::Record.new(
           name: nil,
           slug: slug,
-          sections: 0,
-          words: nil,
-          reported: true,
-          items: grouped
+          notes: [ unspecified_note ]
         )
       end
     end

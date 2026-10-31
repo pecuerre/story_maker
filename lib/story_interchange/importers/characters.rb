@@ -64,15 +64,12 @@ module StoryInterchange
         private
           def reported_entries(report, entity)
             entries = reported_keys.filter_map do |key|
-              "#{entity.slug}: #{key}" if entity.frontmatter[key].present?
+              Importer::Note.new(:frontmatter, key) if entity.frontmatter[key].present?
             end
-            entries << "#{entity.slug}: affiliation" if unlinked_affiliations(report, entity).any?
+            unlinked_affiliations(report, entity).each do |name|
+              entries << Importer::Note.new(:affiliation, name)
+            end
             entries
-          end
-
-          # Every section lands in the description, so none is left behind.
-          def reported_section_count(_entity)
-            0
           end
       end
 

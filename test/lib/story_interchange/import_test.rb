@@ -86,7 +86,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     ))
 
     plan = import.plan
-    assert_includes reported_items(StoryInterchange::Importers::Characters.reported(plan.report)), "ada: affiliation"
+    record = StoryInterchange::Importers::Characters.reported(plan.report).sole
+    # The note names the source text that could not become a membership, so the
+    # page can say which affiliation was left behind.
+    assert_equal [ [ :affiliation, "International Lunar Programme" ] ],
+      record.notes.map { |note| [ note.kind, note.subject ] }
+    assert_equal [ "ada: affiliation (International Lunar Programme)" ], record.items
 
     character = import.call.universe.characters.find_by!(slug: "ada")
     assert_equal [ "wardens" ], character.factions.map(&:slug)
@@ -304,25 +309,31 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_not stories.sole.reported?
   end
 
-  test "a reported record carries its section and word counts for the page" do
+  test "a reported record names what was left behind, and a whole one carries no note" do
     report = import.plan.report
 
     keep = StoryInterchange::Importers::Locations.reported(report).sole
     assert_equal "The Keep", keep.label
-    assert_equal 4, keep.sections
-    assert_predicate keep.words, :positive?
+    assert_equal [
+      [ :section, "Who is here" ],
+      [ :section, "Events here" ],
+      [ :section, "Story rules affecting this place" ],
+      [ :section, "Open questions" ],
+      [ :frontmatter, "type" ],
+      [ :frontmatter, "controller" ],
+      [ :frontmatter, "status" ]
+    ], keep.notes.map { |note| [ note.kind, note.subject ] }
 
     wardens = StoryInterchange::Importers::Factions.records(report).sole
     assert_equal "The Wardens", wardens.label
-    # The whole body lands in the description, so no section is left behind.
-    assert_equal 0, wardens.sections
-    assert_predicate wardens.words, :positive?
+    # The whole body lands in the description, so nothing is left behind and
+    # the page shows the name alone.
+    assert_empty wardens.notes
     assert_not wardens.reported?
 
     arrival = StoryInterchange::Importers::Sections.reported(report).sole
     assert_equal "The Arrival Gate", arrival.label
-    assert_equal 1, arrival.sections
-    assert_predicate arrival.words, :positive?
+    assert_equal [ [ :section, "What is here" ] ], arrival.notes.map { |note| [ note.kind, note.subject ] }
   end
 
   test "a second import of an unchanged source writes the same records" do
@@ -414,8 +425,8 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     # The run keeps every record, not only the reported ones, so its page can
     # list the whole slice after the source is gone.
     assert_equal(
-      result.outcomes.flat_map(&:records).map { |record| [ record.name, record.slug, record.sections, record.words, record.reported? ] },
-      run.slices.flat_map(&:records).map { |record| [ record.name, record.slug, record.sections, record.words, record.reported? ] }
+      result.outcomes.flat_map(&:records).map { |record| [ record.name, record.slug, record.reported?, record.items ] },
+      run.slices.flat_map(&:records).map { |record| [ record.name, record.slug, record.reported?, record.items ] }
     )
     assert_equal 1, StoryInterchangeRun.count
   end

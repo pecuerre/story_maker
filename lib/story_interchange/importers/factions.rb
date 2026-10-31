@@ -34,13 +34,8 @@ module StoryInterchange
         private
           def reported_entries(_report, entity)
             reported_keys.filter_map do |key|
-              "#{entity.slug}: #{key}" if entity.frontmatter[key].present?
+              Importer::Note.new(:frontmatter, key) if entity.frontmatter[key].present?
             end
-          end
-
-          # Every section lands in the description, so none is left behind.
-          def reported_section_count(_entity)
-            0
           end
       end
 

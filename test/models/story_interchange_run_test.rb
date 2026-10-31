@@ -14,8 +14,8 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
       universe: @universe,
       replaced: true,
       outcomes: [ outcome(created: 2, records: [
-        record(name: "The Warden", slug: "warden", sections: 2, words: 40, reported: true),
-        record(name: "The Gate", slug: "gate", words: 12)
+        record(name: "The Warden", slug: "warden", notes: [ [ :section, "Who is here" ], [ :frontmatter, "type" ] ]),
+        record(name: "The Gate", slug: "gate")
       ]) ],
       operator: @operator,
       source: "synthetic-universe"
@@ -35,8 +35,10 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     assert_equal [ "The Warden", "The Gate" ], slice.records.map(&:label)
     record = slice.reported.sole
     assert_equal "The Warden", record.label
-    assert_equal 2, record.sections
-    assert_equal 40, record.words
+    # The note survives the round trip, so the page can still name what was
+    # left behind after the source is gone.
+    assert_equal [ [ :section, "Who is here" ], [ :frontmatter, "type" ] ],
+      record.notes.map { |note| [ note.kind, note.subject ] }
     assert slice.reported?
     assert run.reported?
   end
@@ -45,7 +47,7 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     run = StoryInterchangeRun.record!(
       universe: @universe,
       replaced: false,
-      outcomes: [ outcome(created: 1, records: [ record(name: "The Gate", slug: "gate", words: 12) ]) ],
+      outcomes: [ outcome(created: 1, records: [ record(name: "The Gate", slug: "gate") ]) ],
       operator: @operator,
       source: "synthetic-universe"
     )
@@ -56,7 +58,7 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     assert_not slice.reported?
   end
 
-  test "a run written before every record was stored still renders its records" do
+  test "a run written before every record was stored still renders its reported records" do
     run = StoryInterchangeRun.create!(
       user: @operator,
       source: "synthetic-universe",
@@ -73,7 +75,9 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     slice = run.slices.sole
     assert slice.reported?
     assert_equal [ "The Keep" ], slice.reported.map(&:label)
-    assert_equal [ 1 ], slice.reported.map(&:sections)
+    # The row kept counts rather than the leftovers themselves, so the page can
+    # still say the record was reported but not what it left behind.
+    assert_equal [ :unspecified ], slice.reported.sole.notes.map(&:kind)
   end
 
   test "a run written before the counts existed still renders its reported records" do
@@ -93,7 +97,7 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
     slice = run.slices.sole
     assert slice.reported?
     assert_equal [ "keep" ], slice.reported.map(&:label)
-    assert_equal [ [ "keep: type", "keep: Open questions" ] ], slice.reported.map(&:items)
+    assert_equal [ :unspecified ], slice.reported.sole.notes.map(&:kind)
   end
 
   test "a run names its source, its universe, and at least one slice" do
@@ -113,9 +117,11 @@ class StoryInterchangeRunTest < ActiveSupport::TestCase
       )
     end
 
-    def record(name:, slug:, sections: 0, words: nil, reported: false)
+    def record(name:, slug:, notes: [])
       StoryInterchange::Importer::Record.new(
-        name: name, slug: slug, sections: sections, words: words, reported: reported, items: []
+        name: name,
+        slug: slug,
+        notes: notes.map { |kind, subject| StoryInterchange::Importer::Note.new(kind: kind, subject: subject) }
       )
     end
 end

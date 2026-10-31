@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Import record notes.** The preview and a completed run now name what could not be imported beside each record, such as an unmapped section or an unlinked affiliation, instead of showing its subsection and word counts.
 - **Faction interchange source format.** Faction frontmatter now needs only `name` and `slug`; `type`, `home`, `status`, and `backlog` live under `Information`, and `Mission` stays a description section when `Short summary` is present.
 - **Import record list.** The preview and a completed run now list every record each slice writes, marking only the records that keep content the app cannot store with their subsection and word counts.
 - **Section import from chapter README.** A chapter README's identity block becomes the Section description, and its `##` subsections are reported instead of dropped.
@@ -52,6 +53,7 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Compose config mount test.** The deployment test now expects the `./config` bind mount the development service already uses.
 - **Compose config mount.** The development service bind-mounts `config/`, so locale and other configuration changes need a container restart rather than an image rebuild.
 - **Demo faction data.** Dark and Lord of the Rings factions carry the simplified profile, with their old profile answers folded into description sections.
 

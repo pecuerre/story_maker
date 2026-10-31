@@ -32,29 +32,19 @@ module StoryInterchange
           # Section is written from the README's identity block, and the
           # subsections are what the slice leaves behind.
           def record_for(report, chapter)
-            items = chapter.sections.map { |section| "#{chapter.slug}: #{section.heading}" }
-            items.concat(unresolved_references(report, chapter))
+            notes = chapter.sections.map { |section| Importer::Note.new(:section, section.heading) }
+            notes.concat(unresolved_references(report, chapter))
 
             Importer::Record.new(
               name: chapter.name,
               slug: chapter.slug,
-              sections: chapter.sections.size,
-              words: WordCountable.words_in(chapter_body_text(chapter)),
-              reported: items.any?,
-              items: items
+              notes: notes
             )
-          end
-
-          # The whole README body, because the description is written and the
-          # subsections are reported; the counts describe the record a reader
-          # would otherwise have to open.
-          def chapter_body_text(chapter)
-            [ chapter.description.to_s, *chapter.sections.map(&:body) ].join("\n\n")
           end
 
           def unresolved_references(report, chapter)
             chapter.description.to_s.scan(Document::REFERENCE).flatten.map(&:strip).uniq.filter_map do |target|
-              "#{chapter.slug}: [[#{target}]]" if unresolved?(report, target)
+              Importer::Note.new(:reference, "[[#{target}]]") if unresolved?(report, target)
             end
           end
       end

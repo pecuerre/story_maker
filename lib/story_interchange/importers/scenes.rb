@@ -34,14 +34,12 @@ module StoryInterchange
           # A Scene's introduction is the manuscript prose this slice writes as
           # Elements, so it is not reported; its `##` sections are.
           def reported_entries(report, entity)
-            entries = []
-
-            entity.sections.each do |section|
-              entries << "#{entity.slug}: #{section.heading}"
+            entries = entity.sections.map do |section|
+              Importer::Note.new(:section, section.heading)
             end
 
             reported_keys.each do |key|
-              entries << "#{entity.slug}: #{key}" if entity.frontmatter[key].present?
+              entries << Importer::Note.new(:frontmatter, key) if entity.frontmatter[key].present?
             end
 
             entries.concat(prose_references(report, entity))
@@ -51,7 +49,7 @@ module StoryInterchange
           # prose, so the preview names it like an unmapped profile reference.
           def prose_references(report, entity)
             entity.introduction.scan(Document::REFERENCE).flatten.map(&:strip).uniq.filter_map do |target|
-              "#{entity.slug}: [[#{target}]]" if unresolved?(report, target)
+              Importer::Note.new(:reference, "[[#{target}]]") if unresolved?(report, target)
             end
           end
       end

@@ -84,19 +84,19 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
       assert_select "td", text: "4"
     end
     # Every record is listed, and a record with content the app cannot store
-    # carries its section and word counts rather than a sentence repeating every
-    # source item.
+    # says what is missing rather than only how large the file is.
     assert_select "li", text: /The Keep/
-    assert_includes response.body, "4 sections"
-    # A record with nothing left behind is listed too.
+    assert_includes response.body, "The sections “Who is here”, “Events here”, “Story rules affecting this place” and 1 more have no field, so they were not imported."
+    assert_includes response.body, "The frontmatter keys “type”, “controller”, and “status” have no field, so they were not imported."
+    # A record with nothing left behind is listed too, and carries no note.
     assert_select "li", text: /Ada/
+    assert_no_match(/\d+ words/, response.body)
     # The chapter README's subsection is reported beside the Section the run
     # writes from its identity block, and the chapter with no subsection is still
     # listed.
     assert_select "li", text: /The Arrival Gate/
     assert_select "li", text: /Winter/
-    assert_includes response.body, "1 section"
-    assert_includes response.body, "words"
+    assert_includes response.body, "The section “What is here” has no field, so it was not imported."
     assert_includes response.body, "Records and notes"
     assert_not_includes response.body, "keep: Open questions"
   end
@@ -157,15 +157,14 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "li", text: /The Arrival Gate/
     assert_select "li", text: /Ada/
     assert_select "li", text: /Winter/
-    assert_includes response.body, "words"
+    assert_includes response.body, "The sections “Who is here”, “Events here”, “Story rules affecting this place” and 1 more have no field, so they were not imported."
     assert_includes response.body, "Records and notes"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
 
   test "a source with hundreds of unmapped sections still renders its reported record" do
-    # The page used to print every reported source item. The report now stores one
-    # record with its section and word counts, so a large source can neither
-    # overflow the session cookie nor flood the page.
+    # The report stores one record with a bounded note, so a large source can
+    # neither overflow the session cookie nor flood the page with 300 headings.
     sign_in_as @operator
     location = File.join(@source_root, "synthetic-universe/universe/locations/keep.md")
     content = File.read(location)
@@ -178,13 +177,14 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :see_other
     run = StoryInterchangeRun.sole
     record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The Keep" }
-    assert_equal 304, record.sections
-    assert_predicate record.words, :positive?
+    assert_equal 304, record.notes.count { |note| note.kind == :section }
 
     follow_redirect!
     assert_response :success
     assert_select "li", text: /The Keep/
-    assert_includes response.body, "304 sections"
+    # The page names the first three leftovers and counts the rest.
+    assert_includes response.body, "“Who is here”, “Events here”, “Story rules affecting this place” and 301 more have no field"
+    assert_no_match(/Unmapped note/, response.body)
   end
 
   test "a guest is sent to sign in from a run's page" do

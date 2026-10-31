@@ -78,16 +78,22 @@ module StoryInterchange
         kind: :location,
         count: :locations,
         label: "location",
-        required: %w[name slug type controller status],
-        optional: %w[backlog]
+        # The current location file keeps only the two identity fields in
+        # frontmatter and moves type, controller, status, and backlog into the
+        # `## Information` body. The older keys are still accepted.
+        required: %w[name slug],
+        optional: %w[type controller status backlog]
       },
       "tech" => {
         directory: "tech",
         kind: :item,
         count: :items,
         label: "item",
-        required: %w[name slug type invented_by status],
-        optional: %w[backlog]
+        # The current tech file keeps only the two identity fields in
+        # frontmatter and moves type, invented by, status, and backlog into the
+        # `## Information` body. The older keys are still accepted.
+        required: %w[name slug],
+        optional: %w[type invented_by status backlog]
       }
     }.freeze
 

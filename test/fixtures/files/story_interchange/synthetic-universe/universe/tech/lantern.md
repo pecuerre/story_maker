@@ -1,12 +1,20 @@
 ---
 name: The Lantern
 slug: lantern
-type: "artifact"
-invented_by: "[[faction:wardens]]"
-status: "operational"
 ---
 
 # The Lantern
+
+## Short summary
+
+Makes light while it is held.
+
+## Information
+
+- Type: artifact
+- Invented by: [[faction:wardens]]
+- Status: operational
+- Backlog: B-001
 
 ## One line
 

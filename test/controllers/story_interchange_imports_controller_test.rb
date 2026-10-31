@@ -86,8 +86,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     # Every record is listed, and a record with content the app cannot store
     # says what is missing rather than only how large the file is.
     assert_select "li", text: /The Keep/
-    assert_includes response.body, "The sections “Who is here”, “Events here”, “Story rules affecting this place” and 1 more have no field, so they were not imported."
-    assert_includes response.body, "The frontmatter keys “type”, “controller”, and “status” have no field, so they were not imported."
+    assert_includes response.body, "The sections “Short summary”, “Information”, “Who is here” and 3 more have no field, so they were not imported."
     # A record with nothing left behind is listed too, and carries no note.
     assert_select "li", text: /Ada/
     assert_no_match(/\d+ words/, response.body)
@@ -157,7 +156,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "li", text: /The Arrival Gate/
     assert_select "li", text: /Ada/
     assert_select "li", text: /Winter/
-    assert_includes response.body, "The sections “Who is here”, “Events here”, “Story rules affecting this place” and 1 more have no field, so they were not imported."
+    assert_includes response.body, "The sections “Short summary”, “Information”, “Who is here” and 3 more have no field, so they were not imported."
     assert_includes response.body, "Records and notes"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
@@ -177,13 +176,13 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :see_other
     run = StoryInterchangeRun.sole
     record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The Keep" }
-    assert_equal 304, record.notes.count { |note| note.kind == :section }
+    assert_equal 306, record.notes.count { |note| note.kind == :section }
 
     follow_redirect!
     assert_response :success
     assert_select "li", text: /The Keep/
     # The page names the first three leftovers and counts the rest.
-    assert_includes response.body, "“Who is here”, “Events here”, “Story rules affecting this place” and 301 more have no field"
+    assert_includes response.body, "“Short summary”, “Information”, “Who is here” and 303 more have no field"
     assert_no_match(/Unmapped note/, response.body)
   end
 

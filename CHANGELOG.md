@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Location and item interchange source format.** Location and tech frontmatter now needs only `name` and `slug`; the moved fields live under `Information`, and an item's `Invented by` bullet still writes `origin`.
 - **Import record notes.** The preview and a completed run now name what could not be imported beside each record, such as an unmapped section or an unlinked affiliation, instead of showing its subsection and word counts.
 - **Faction interchange source format.** Faction frontmatter now needs only `name` and `slug`; `type`, `home`, `status`, and `backlog` live under `Information`, and `Mission` stays a description section when `Short summary` is present.
 - **Import record list.** The preview and a completed run now list every record each slice writes, marking only the records that keep content the app cannot store with their subsection and word counts.

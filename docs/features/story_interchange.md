@@ -131,8 +131,8 @@ README and a canon area file do not need one.
 |---|---|---|
 | Character | `name`, `slug`, `affiliation` | `role`, `status`, `first_appears`, `backlog` |
 | Faction | `name`, `slug` | `type`, `home`, `status`, `backlog` |
-| Location | `name`, `slug`, `type`, `controller`, `status` | `backlog` |
-| Item (`tech/`) | `name`, `slug`, `type`, `invented_by`, `status` | `backlog` |
+| Location | `name`, `slug` | `type`, `controller`, `status`, `backlog` |
+| Item (`tech/`) | `name`, `slug` | `type`, `invented_by`, `status`, `backlog` |
 | Plot | `name`, `slug`, `type`, `status`, `owner_pov` | `opened_in`, `backlog` |
 | Scene | `id`, `title`, `chapter`, `sequence`, `pov`, `location`, `timeline`, `branch`, `status` | `depends_on` |
 
@@ -230,9 +230,12 @@ smell: cold stone.`), and words that name none are ignored. An item whose label 
 prose with no label at all, fills the group's first answer, so `sensory_sight`, `layout_structure`,
 `access_controlled_by`, and `history_significant_events` hold an unlabelled paragraph.
 
-The Location frontmatter keys `type`, `controller`, `status`, and `backlog` have no Location column
-and are reported. The source is flat and a Location carries a `parent_id`, but a filename says
-nothing about the hierarchy, so every imported Location is top-level and the tree is the operator's.
+The current source keeps only `name` and `slug` in a Location's frontmatter and writes type,
+controller, status, and backlog as labelled bullets under `## Information`. The older frontmatter
+keys are still accepted. None of those fields, and neither `Short summary` nor `Information`, has a
+Location column, so they are reported. The source is flat and a Location carries a `parent_id`, but a
+filename says nothing about the hierarchy, so every imported Location is top-level and the tree is
+the operator's.
 
 ### Item
 
@@ -247,14 +250,14 @@ nothing about the hierarchy, so every imported Location is top-level and the tre
 | Constraints | `constraints` |
 | Jargon | `jargon` |
 | History | `history` |
-| `invented_by` (frontmatter) | `origin` |
-| `type`, `status`, and `backlog` (frontmatter) | no app field — report |
+| `Invented by` (under `## Information`) or `invented_by` (frontmatter) | `origin` |
+| `Short summary`, `Information`, `type`, `status`, and `backlog` | no app field — report; the `Invented by` bullet is read for `origin` |
 | In the story, Open questions | no app field — report |
 
 A `tech/` file is therefore an Item, not a new record kind. Its `type` and `status` are recognized
-source facts with no Item column, so they are reported rather than kept in another answer. An Item
-carries a `parent_id` like a Location, and the same flat-source rule applies: every imported Item is
-top-level.
+source facts with no Item column, so they are reported rather than kept in another answer. The current
+file keeps them under `## Information`, while an older file keeps them in frontmatter. An Item carries
+a `parent_id` like a Location, and the same flat-source rule applies: every imported Item is top-level.
 
 ### Plot and Scene
 

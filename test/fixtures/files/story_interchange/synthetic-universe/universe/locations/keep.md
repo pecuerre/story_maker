@@ -1,12 +1,20 @@
 ---
 name: The Keep
 slug: keep
-type: "installation"
-controller: "[[faction:wardens]]"
-status: active
 ---
 
 # The Keep
+
+## Short summary
+
+A square of stone around one gate, with a hall behind it.
+
+## Information
+
+- Type: installation
+- Controller: [[faction:wardens]]
+- Status: active
+- Backlog: B-001
 
 ## What it is
 

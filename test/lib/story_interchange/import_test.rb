@@ -139,7 +139,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_nil location.parent
   end
 
-  test "writes an item with invented_by as its origin and its sections as profile answers" do
+  test "writes an item with its invented-by bullet as its origin and its sections as profile answers" do
     universe = import.call.universe
 
     item = universe.items.find_by!(slug: "lantern")
@@ -155,6 +155,18 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal "Built before the first winter (K1).", item.history
     assert_equal "The Wardens", item.origin
     assert_nil item.parent
+  end
+
+  test "reads an older item's invented_by frontmatter as its origin" do
+    path = File.join(@root, "universe/tech/lantern.md")
+    content = File.read(path)
+      .sub("## Information\n\n- Type: artifact\n- Invented by: [[faction:wardens]]\n- Status: operational\n- Backlog: B-001\n\n", "")
+      .sub("slug: lantern\n", "slug: lantern\ntype: \"artifact\"\ninvented_by: \"[[faction:wardens]]\"\nstatus: \"operational\"\n")
+    File.write(path, content)
+
+    item = import.call.universe.items.find_by!(slug: "lantern")
+
+    assert_equal "The Wardens", item.origin
   end
 
   test "writes each story and its plots, with no scene assignments" do
@@ -256,21 +268,20 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     locations = reported_items(StoryInterchange::Importers::Locations.reported(report))
     assert_equal [
+      "keep: Short summary",
+      "keep: Information",
       "keep: Who is here",
       "keep: Events here",
       "keep: Story rules affecting this place",
-      "keep: Open questions",
-      "keep: type",
-      "keep: controller",
-      "keep: status"
+      "keep: Open questions"
     ], locations
 
     items = reported_items(StoryInterchange::Importers::Items.reported(report))
     assert_equal [
+      "lantern: Short summary",
+      "lantern: Information",
       "lantern: In the story",
-      "lantern: Open questions",
-      "lantern: type",
-      "lantern: status"
+      "lantern: Open questions"
     ], items
 
     assert_empty StoryInterchange::Importers::Stories.reported(report)
@@ -315,13 +326,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     keep = StoryInterchange::Importers::Locations.reported(report).sole
     assert_equal "The Keep", keep.label
     assert_equal [
+      [ :section, "Short summary" ],
+      [ :section, "Information" ],
       [ :section, "Who is here" ],
       [ :section, "Events here" ],
       [ :section, "Story rules affecting this place" ],
-      [ :section, "Open questions" ],
-      [ :frontmatter, "type" ],
-      [ :frontmatter, "controller" ],
-      [ :frontmatter, "status" ]
+      [ :section, "Open questions" ]
     ], keep.notes.map { |note| [ note.kind, note.subject ] }
 
     wardens = StoryInterchange::Importers::Factions.records(report).sole

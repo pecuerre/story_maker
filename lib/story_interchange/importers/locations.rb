@@ -7,8 +7,11 @@ module StoryInterchange
     # — fills the group's first answer.
     #
     # `type`, `controller`, `status`, and `backlog` have no Location column, so
-    # they are reported along with the sections the app does not keep (Who is
-    # here, Events here, Story rules affecting this place, Open questions).
+    # they are reported along with the sections the app does not keep (Short
+    # summary, Information, Who is here, Events here, Story rules affecting this
+    # place, Open questions). The current source keeps those four fields as
+    # labelled bullets under `## Information`; the older frontmatter keys are
+    # still reported when a file carries them.
     #
     # The source is a flat directory and a Location carries a `parent_id`, but a
     # filename says nothing about the hierarchy, so every imported Location is

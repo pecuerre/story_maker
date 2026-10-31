@@ -260,6 +260,18 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_empty report.warnings
   end
 
+  test "accepts a location and an item that still carry their body fields in frontmatter" do
+    replace("universe/locations/keep.md", "slug: keep\n",
+      "slug: keep\ntype: \"installation\"\ncontroller: \"[[faction:wardens]]\"\nstatus: active\n")
+    replace("universe/tech/lantern.md", "slug: lantern\n",
+      "slug: lantern\ntype: \"artifact\"\ninvented_by: \"[[faction:wardens]]\"\nstatus: \"operational\"\n")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_empty report.warnings
+  end
+
   test "requires a slug to match its filename" do
     replace("universe/characters/ada.md", "slug: ada", "slug: ada-two")
 

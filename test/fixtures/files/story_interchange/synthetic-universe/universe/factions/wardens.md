@@ -1,16 +1,26 @@
 ---
 name: The Wardens
 slug: wardens
-type: "militia"
-home: "[[location:keep]]"
-status: active
 ---
 
 # The Wardens
 
-## Mission
+## Short summary
 
 Keep the gate open.
+
+## Information
+
+- Type: militia
+- Home: [[location:keep]]
+- Status: active
+- Backlog: B-001
+
+The gate has been held by the same family since the first winter.
+
+## Mission
+
+Hold the gate against the hall.
 
 ## Actually for
 
@@ -29,15 +39,15 @@ In-world, the Wardens call a closed gate "the quiet".
 
 ## Internal split
 
-| Faction within | Wants | Against whom |
-|---|---|---|
-| the gate watch | keep it shut | the captain |
+- The gate watch, and the captain who leads it.
+  Wants: the gate shut at every hour.
+  Against: every visitor the captain admits.
 
 ## Resources
 
-| Asset | What it buys them | Limits |
-|---|---|---|
-| the gate | control of the road | one road |
+- The gate.
+  Buys: control of the road.
+  Limits: one road.
 
 ## Would never
 
@@ -49,18 +59,22 @@ Bar the hall when the lantern arrives.
 
 ## The two rivals
 
-| | The Wardens | The hall |
-|---|---|---|
-| Public claim | order | hospitality |
-| Actually for | control | survival |
-| Willing to cross which line | the quiet | the dark |
+A ([[faction:wardens]]):
+
+- Public claim: order.
+- Actually for: control.
+- Willing to cross which line: the quiet.
+
+B (the hall):
+
+- Public claim: hospitality.
+- Actually for: survival.
+- Willing to cross which line: the dark.
 
 ## Relationships
 
-| Other faction | Dynamic |
-|---|---|
-| — | — |
+- the hall: an old argument about who owns the road.
 
 ## Open questions
 
-- — TBD
+- TBD

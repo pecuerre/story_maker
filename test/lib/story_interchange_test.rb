@@ -63,7 +63,9 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     faction = report.entity("wardens")
     assert_equal :faction, faction.kind
     assert_equal "The Wardens", faction.name
-    assert_equal "[[location:keep]]", faction.frontmatter["home"]
+    assert_equal %w[name slug], faction.frontmatter.keys
+    information = faction.sections.find { |section| section.heading == "Information" }
+    assert_includes information.body, "- Home: [[location:keep]]"
 
     # A Plot is parsed like an entity, and the story directory that holds it is
     # what scopes it.
@@ -246,6 +248,16 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert_not report.valid?
     assert_match(/missing required frontmatter key `affiliation`/, errors(report))
+  end
+
+  test "accepts a faction that still carries type, home, and status in frontmatter" do
+    replace("universe/factions/wardens.md", "slug: wardens\n",
+      "slug: wardens\ntype: \"militia\"\nhome: \"[[location:keep]]\"\nstatus: active\n")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_empty report.warnings
   end
 
   test "requires a slug to match its filename" do

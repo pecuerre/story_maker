@@ -130,7 +130,7 @@ README and a canon area file do not need one.
 | Record | Required keys | Optional keys |
 |---|---|---|
 | Character | `name`, `slug`, `affiliation` | `role`, `status`, `first_appears`, `backlog` |
-| Faction | `name`, `slug`, `type`, `home`, `status` | `backlog` |
+| Faction | `name`, `slug` | `type`, `home`, `status`, `backlog` |
 | Location | `name`, `slug`, `type`, `controller`, `status` | `backlog` |
 | Item (`tech/`) | `name`, `slug`, `type`, `invented_by`, `status` | `backlog` |
 | Plot | `name`, `slug`, `type`, `status`, `owner_pov` | `opened_in`, `backlog` |
@@ -197,11 +197,17 @@ current source keeps only the three identity keys in frontmatter and writes the 
 
 ### Faction
 
-A Faction is one short summary and one Markdown description. `Short summary`, or the older
-`Mission` heading, writes `summary`; the identity block before the first `##` and every other `##`
-section are joined into `description`, in source order, with their headings and Markdown kept as
-written. Nothing in the body is reported, because the description has a target for all of it.
-`type`, `home`, `status`, and `backlog` have no Faction column and are reported by name.
+A Faction is one short summary and one Markdown description. `Short summary` writes `summary`;
+when a file has no `Short summary`, the older `Mission` heading is the summary instead. When both
+are present, `Mission` is one more `##` section and lands in `description` with everything else.
+The identity block before the first `##` and every other `##` section are joined into
+`description`, in source order, with their headings and Markdown kept as written. Nothing in the
+body is reported, because the description has a target for all of it, including `Information`,
+where the current source keeps type, home, status, and backlog as labelled bullets.
+
+`type`, `home`, `status`, and `backlog` have no Faction column. The current source writes them under
+`Information`, so they stay in the description; an older file that still carries them in
+frontmatter has them reported by name.
 
 The description's `[[kind:slug]]` references stay in their source form too, and the details page
 renders them with the same dialect as a Character's description.

@@ -67,8 +67,11 @@ module StoryInterchange
         kind: :faction,
         count: :factions,
         label: "faction",
-        required: %w[name slug type home status],
-        optional: %w[backlog]
+        # The current faction file keeps only the two identity fields in
+        # frontmatter and moves type, home, status, and backlog into the
+        # `## Information` body. The older keys are still accepted.
+        required: %w[name slug],
+        optional: %w[type home status backlog]
       },
       "locations" => {
         directory: "locations",

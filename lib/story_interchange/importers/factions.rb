@@ -1,19 +1,26 @@
 module StoryInterchange
   module Importers
     # A Faction keeps the two things its record has columns for: a short summary
-    # from `Short summary` (or the older `Mission` heading), and one Markdown
-    # description carrying every other `##` section the source wrote, in source
-    # order.
+    # from `Short summary`, and one Markdown description carrying every other
+    # `##` section the source wrote, in source order.
+    #
+    # The current file keeps only `name` and `slug` in frontmatter; `type`,
+    # `home`, `status`, and `backlog` are body data under `## Information`, so
+    # they stay in the description. `Mission` is the older summary heading and
+    # is still read when a file has no `Short summary`; when both are present,
+    # `Short summary` is the summary and `Mission` is one more section in the
+    # description.
     #
     # The description is stored as written so the app can render its headings,
-    # emphasis, lists, and `[[kind:slug]]` links at read time. That is the one
-    # profile answer this slice deliberately does **not** resolve into plain
-    # names: a link is the meaning, not decoration.
+    # lists, and `[[kind:slug]]` links at read time. That is the one profile
+    # answer this slice deliberately does **not** resolve into plain names: a
+    # link is the meaning, not decoration.
     #
     # `type`, `home`, `status`, and `backlog` have no Faction column and are
-    # reported when they appear in frontmatter.
+    # reported when an older file still carries them in frontmatter.
     class Factions < Importer
-      SUMMARY_HEADINGS = [ "short summary", "mission" ].freeze
+      SHORT_SUMMARY_HEADING = "short summary"
+      LEGACY_SUMMARY_HEADING = "mission"
 
       slice label_key: "imports.slices.factions",
         count: :factions,
@@ -50,7 +57,7 @@ module StoryInterchange
         end
 
         def summary_for(entity)
-          section = entity.sections.find { |candidate| SUMMARY_HEADINGS.include?(normalized_heading(candidate.heading)) }
+          section = summary_section(entity)
           section && self.class.resolve_references(report, section.body)
         end
 
@@ -58,16 +65,25 @@ module StoryInterchange
         # summary's. References stay in their source form so the details page can
         # turn each one into a link to the record it names.
         def description_for(entity)
+          summary = summary_section(entity)
           parts = []
           parts << entity.introduction if entity.introduction.present?
 
           entity.sections.each do |section|
-            next if SUMMARY_HEADINGS.include?(normalized_heading(section.heading))
+            next if section.equal?(summary)
 
             parts << "## #{section.heading}\n\n#{section.body}"
           end
 
           parts.join("\n\n").presence
+        end
+
+        # `Short summary` is the current heading. `Mission` was the summary
+        # before the faction format split the two, so it is the fallback only
+        # when the file carries no `Short summary`.
+        def summary_section(entity)
+          entity.sections.find { |section| normalized_heading(section.heading) == SHORT_SUMMARY_HEADING } ||
+            entity.sections.find { |section| normalized_heading(section.heading) == LEGACY_SUMMARY_HEADING }
         end
 
         def normalized_heading(heading)

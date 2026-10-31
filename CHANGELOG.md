@@ -42,6 +42,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Faction interchange source format.** Faction frontmatter now needs only `name` and `slug`; `type`, `home`, `status`, and `backlog` live under `Information`, and `Mission` stays a description section when `Short summary` is present.
 - **Import record list.** The preview and a completed run now list every record each slice writes, marking only the records that keep content the app cannot store with their subsection and word counts.
 - **Section import from chapter README.** A chapter README's identity block becomes the Section description, and its `##` subsections are reported instead of dropped.
 - **Import preview report.** The preview and a completed run list each partly written record once, with its subsection and word counts, instead of repeating every skipped heading and key.

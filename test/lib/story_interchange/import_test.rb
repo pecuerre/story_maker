@@ -45,19 +45,37 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     faction = universe.factions.find_by!(slug: "wardens")
     assert_equal "The Wardens", faction.name
+    # `Short summary` is the summary; `Mission` stays a section in the
+    # description because both headings are present.
     assert_equal "Keep the gate open.", faction.summary
     # Every section except the summary is one description, in source order,
     # with the source's Markdown kept as written.
+    assert_includes faction.description,
+      "## Information\n\n- Type: militia\n- Home: [[location:keep]]\n- Status: active\n- Backlog: B-001"
+    assert_includes faction.description, "## Mission\n\nHold the gate against the hall."
     assert_includes faction.description, "## Actually for\n\nKeep the gate closed to everyone else."
     assert_includes faction.description, "## Structure\n\n- Leadership: a captain."
     assert_includes faction.description, "## Register\n\nIn-world, the Wardens call a closed gate \"the quiet\"."
-    assert_includes faction.description, "## Internal split\n\n| Faction within | Wants | Against whom |"
-    assert_includes faction.description, "## Resources\n\n| Asset | What it buys them | Limits |"
+    assert_includes faction.description,
+      "## Internal split\n\n- The gate watch, and the captain who leads it.\n  Wants: the gate shut at every hour."
+    assert_includes faction.description,
+      "## Resources\n\n- The gate.\n  Buys: control of the road.\n  Limits: one road."
     assert_includes faction.description, "## Would never\n\nAbandon the gate."
     assert_includes faction.description, "## Would absolutely\n\nBar the hall when the lantern arrives."
     assert_includes faction.description, "## The two rivals"
     assert_includes faction.description, "## Relationships"
     assert_includes faction.description, "## Open questions"
+  end
+
+  test "uses Mission as a Faction summary only when there is no Short summary" do
+    path = File.join(@root, "universe/factions/wardens.md")
+    File.write(path, File.read(path).sub("## Short summary\n\nKeep the gate open.\n\n", ""))
+
+    faction = import.call.universe.factions.find_by!(slug: "wardens")
+
+    assert_equal "Hold the gate against the hall.", faction.summary
+    assert_not_includes faction.description, "## Mission"
+    assert_includes faction.description, "## Information"
   end
 
   test "reports an affiliation that names no Faction and keeps it out of membership" do
@@ -229,11 +247,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_not character_list.sole.reported?
 
     factions = reported_items(StoryInterchange::Importers::Factions.reported(report))
-    assert_equal [
-      "wardens: type",
-      "wardens: home",
-      "wardens: status"
-    ], factions
+    assert_empty factions
 
     locations = reported_items(StoryInterchange::Importers::Locations.reported(report))
     assert_equal [
@@ -298,11 +312,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal 4, keep.sections
     assert_predicate keep.words, :positive?
 
-    wardens = StoryInterchange::Importers::Factions.reported(report).sole
+    wardens = StoryInterchange::Importers::Factions.records(report).sole
     assert_equal "The Wardens", wardens.label
     # The whole body lands in the description, so no section is left behind.
     assert_equal 0, wardens.sections
     assert_predicate wardens.words, :positive?
+    assert_not wardens.reported?
 
     arrival = StoryInterchange::Importers::Sections.reported(report).sole
     assert_equal "The Arrival Gate", arrival.label

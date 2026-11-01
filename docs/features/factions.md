@@ -11,14 +11,16 @@ required `name`, a `slug` generated from the name, and two optional profile fiel
 
 | Field | What it records |
 |---|---|
-| `summary` | One line shown in the Faction list and at the top of its details page |
+| `summary` | One line shown in the Faction list and at the top of its details page; plain text, references included |
 | `description` | The full profile, written in Markdown |
 
 The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
 `**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. The
 dialect and the `[[kind:slug]]` reference syntax are the shared description dialect owned by
 [characters.md](characters.md#links-inside-a-description) and implemented by `MarkdownDescription`.
-Both the summary and the description are part of the Faction's searchable body.
+The summary accepts the same references, linked on the details page and named without a link in a
+list row, as [characters.md](characters.md#references-in-a-summary) describes. Both the summary and
+the description are part of the Faction's searchable body.
 
 There are deliberately no separate mission, aims, structure, divisions, or resources columns: those
 are `##` sections inside `description`, so the form stays short and the author chooses the shape of

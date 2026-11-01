@@ -108,65 +108,77 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_includes character.description, "[[location:keep]]"
 
     item = universe.items.find_by!(slug: "lantern")
-    assert_equal "The Wardens", item.origin
-    # A rule reference is a citation, not a record this run writes.
-    assert_includes item.constraints, "[[rule:D1]]"
+    # The item's whole body is its description, so its links stay as written too.
+    assert_includes item.description, "[[faction:wardens]]"
+    assert_includes item.description, "[[rule:D1]]"
   end
 
-  test "writes a location from its profile sections, grouped answers, and flat hierarchy" do
+  test "writes a location as one Markdown description and a flat hierarchy" do
     universe = import.call.universe
 
     location = universe.locations.find_by!(slug: "keep")
     assert_equal "The Keep", location.name
-    assert_equal "A square of stone around one gate, with a hall behind it.", location.description
-    # A labelled list item fills the answer its label names, and one item may
-    # name several answers.
-    assert_equal "a gate that is taller than the wall.", location.sensory_sight
-    assert_equal "wind through the hinge.", location.sensory_sound
-    assert_equal "cold stone, wet rope, ordinary weight.", location.sensory_smell
-    assert_equal "cold stone, wet rope, ordinary weight.", location.sensory_touch
-    assert_nil location.sensory_taste
-    # Prose without a label fills the group's first answer.
-    assert_equal "The gate opens onto a yard; the hall is the far side of the yard.",
-      location.layout_structure
-    assert_nil location.layout_key_areas
-    assert_equal "The only road through the winter runs under the gate.", location.significance
-    assert_equal "the Wardens.", location.access_controlled_by
-    assert_equal "one watch at the gate, none at the hall.", location.access_security
-    assert_includes location.access_restrictions, "travellers with a token."
-    assert_includes location.access_restrictions, "the ledger."
+    # Every section lands in the description, in source order, with the source's
+    # Markdown and typed links kept as written.
+    assert_includes location.description, "## Short summary\n\nA square of stone around one gate, with a hall behind it."
+    assert_includes location.description,
+      "## Information\n\n- Type: installation\n- Controller: [[faction:wardens]]\n- Status: active\n- Backlog: B-001"
+    assert_includes location.description, "## What it is\n\nA square of stone around one gate, with a hall behind it."
+    assert_includes location.description,
+      "## Sensory\n\n- Sight: a gate that is taller than the wall.\n- Sound: wind through the hinge."
+    assert_includes location.description,
+      "## Layout\n\nThe gate opens onto a yard; the hall is the far side of the yard."
+    assert_includes location.description, "## Why it matters"
+    assert_includes location.description, "## Control and access"
+    assert_includes location.description, "## History"
+    assert_includes location.description, "## Open questions"
     # The source is flat, so the record is top-level.
     assert_nil location.parent
   end
 
-  test "writes an item with its invented-by bullet as its origin and its sections as profile answers" do
+  test "writes an item as one Markdown description and a flat hierarchy" do
     universe = import.call.universe
 
     item = universe.items.find_by!(slug: "lantern")
     assert_equal "The Lantern", item.name
-    assert_equal "Makes light while it is held.", item.what_it_does
-    assert_equal "A wick in a glass case, with a handle and no switch.", item.description
-    assert_includes item.how_it_is_used, "1. Hold the handle."
-    assert_includes item.side_effects, "A smell of oil."
-    assert_equal "Burn while it is on the ground.", item.cannot
-    assert_includes item.value, "one flask a night"
-    assert_equal "It must stay above the snow (`[[rule:D1]]`).", item.constraints
-    assert_includes item.jargon, "the quiet"
-    assert_equal "Built before the first winter (K1).", item.history
-    assert_equal "The Wardens", item.origin
+    # Every section lands in the description, in source order, with the source's
+    # Markdown and typed links kept as written.
+    assert_includes item.description, "## Short summary\n\nMakes light while it is held."
+    assert_includes item.description,
+      "## Information\n\n- Type: artifact\n- Invented by: [[faction:wardens]]\n- Status: operational\n- Backlog: B-001"
+    assert_includes item.description, "## One line\n\nMakes light while it is held."
+    assert_includes item.description,
+      "## What it actually is\n\nA wick in a glass case, with a handle and no switch."
+    assert_includes item.description, "## How it is operated\n\n1. Hold the handle."
+    assert_includes item.description, "## Physical side effects\n\n1. A smell of oil."
+    assert_includes item.description, "## Cannot\n\nBurn while it is on the ground."
+    assert_includes item.description, "## Costs"
+    assert_includes item.description, "## Constraints\n\nIt must stay above the snow (`[[rule:D1]]`)."
+    assert_includes item.description, "## Jargon"
+    assert_includes item.description, "## History\n\nBuilt before the first winter (K1)."
+    assert_includes item.description, "## In the story"
+    assert_includes item.description, "## Open questions"
+    # The source is flat, so the record is top-level.
     assert_nil item.parent
   end
 
-  test "reads an older item's invented_by frontmatter as its origin" do
+  test "reports an older item's invented_by frontmatter instead of importing it" do
     path = File.join(@root, "universe/tech/lantern.md")
     content = File.read(path)
       .sub("## Information\n\n- Type: artifact\n- Invented by: [[faction:wardens]]\n- Status: operational\n- Backlog: B-001\n\n", "")
       .sub("slug: lantern\n", "slug: lantern\ntype: \"artifact\"\ninvented_by: \"[[faction:wardens]]\"\nstatus: \"operational\"\n")
     File.write(path, content)
 
-    item = import.call.universe.items.find_by!(slug: "lantern")
+    report = import.plan.report
+    record = StoryInterchange::Importers::Items.records(report).sole
+    assert_equal [
+      [ :frontmatter, "type" ],
+      [ :frontmatter, "invented_by" ],
+      [ :frontmatter, "status" ]
+    ], record.notes.map { |note| [ note.kind, note.subject ] }
 
-    assert_equal "The Wardens", item.origin
+    item = import.call.universe.items.find_by!(slug: "lantern")
+    assert_not_includes item.description, "The Wardens"
   end
 
   test "writes each story and its plots, with no scene assignments" do
@@ -267,22 +279,10 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_empty factions
 
     locations = reported_items(StoryInterchange::Importers::Locations.reported(report))
-    assert_equal [
-      "keep: Short summary",
-      "keep: Information",
-      "keep: Who is here",
-      "keep: Events here",
-      "keep: Story rules affecting this place",
-      "keep: Open questions"
-    ], locations
+    assert_empty locations
 
     items = reported_items(StoryInterchange::Importers::Items.reported(report))
-    assert_equal [
-      "lantern: Short summary",
-      "lantern: Information",
-      "lantern: In the story",
-      "lantern: Open questions"
-    ], items
+    assert_empty items
 
     assert_empty StoryInterchange::Importers::Stories.reported(report)
 
@@ -323,16 +323,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
   test "a reported record names what was left behind, and a whole one carries no note" do
     report = import.plan.report
 
-    keep = StoryInterchange::Importers::Locations.reported(report).sole
+    # The whole Location body lands in the description, so nothing is left
+    # behind and the page shows the name alone.
+    keep = StoryInterchange::Importers::Locations.records(report).sole
     assert_equal "The Keep", keep.label
-    assert_equal [
-      [ :section, "Short summary" ],
-      [ :section, "Information" ],
-      [ :section, "Who is here" ],
-      [ :section, "Events here" ],
-      [ :section, "Story rules affecting this place" ],
-      [ :section, "Open questions" ]
-    ], keep.notes.map { |note| [ note.kind, note.subject ] }
+    assert_empty keep.notes
+    assert_not keep.reported?
 
     wardens = StoryInterchange::Importers::Factions.records(report).sole
     assert_equal "The Wardens", wardens.label
@@ -526,11 +522,11 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     end
 
     def location_records(collection)
-      collection.order(:slug).pluck(:slug, :name, :description, :parent_id, *Location::PROFILE_FIELDS)
+      collection.order(:slug).pluck(:slug, :name, :description, :parent_id)
     end
 
     def item_records(collection)
-      collection.order(:slug).pluck(:slug, :name, :description, :parent_id, :origin, *Item::PROFILE_FIELDS)
+      collection.order(:slug).pluck(:slug, :name, :description, :parent_id)
     end
 
     def section_records(universe)

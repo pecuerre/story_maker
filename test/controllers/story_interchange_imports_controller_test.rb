@@ -84,9 +84,9 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
       assert_select "td", text: "4"
     end
     # Every record is listed, and a record with content the app cannot store
-    # says what is missing rather than only how large the file is.
+    # says what is missing rather than only how large the file is. The Keep's
+    # whole body lands in its description, so its row carries no note.
     assert_select "li", text: /The Keep/
-    assert_includes response.body, "The sections “Short summary”, “Information”, “Who is here” and 3 more have no field, so they were not imported."
     # A record with nothing left behind is listed too, and carries no note.
     assert_select "li", text: /Ada/
     assert_no_match(/\d+ words/, response.body)
@@ -156,7 +156,7 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "li", text: /The Arrival Gate/
     assert_select "li", text: /Ada/
     assert_select "li", text: /Winter/
-    assert_includes response.body, "The sections “Short summary”, “Information”, “Who is here” and 3 more have no field, so they were not imported."
+    assert_includes response.body, "The section “What is here” has no field, so it was not imported."
     assert_includes response.body, "Records and notes"
     assert_select "a[href=?]", universe_path(universe_slug: "synthetic-universe")
   end
@@ -165,24 +165,24 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
     # The report stores one record with a bounded note, so a large source can
     # neither overflow the session cookie nor flood the page with 300 headings.
     sign_in_as @operator
-    location = File.join(@source_root, "synthetic-universe/universe/locations/keep.md")
-    content = File.read(location)
+    plot = File.join(@source_root, "synthetic-universe/stories/synthetic-story/plots/the-lantern.md")
+    content = File.read(plot)
     content += "\n" unless content.end_with?("\n")
     content += 300.times.map { |index| "## Unmapped note #{format('%04d', index)} with a long heading" }.join("\n\n") + "\n"
-    File.write(location, content)
+    File.write(plot, content)
 
     post import_url, params: { source: "synthetic-universe", confirm: "1" }
 
     assert_response :see_other
     run = StoryInterchangeRun.sole
-    record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The Keep" }
-    assert_equal 306, record.notes.count { |note| note.kind == :section }
+    record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The lantern" }
+    assert_equal 307, record.notes.count { |note| note.kind == :section }
 
     follow_redirect!
     assert_response :success
-    assert_select "li", text: /The Keep/
+    assert_select "li", text: /The lantern/
     # The page names the first three leftovers and counts the rest.
-    assert_includes response.body, "“Short summary”, “Information”, “Who is here” and 303 more have no field"
+    assert_includes response.body, "“Stakes”, “Players”, “Status” and 304 more have no field"
     assert_no_match(/Unmapped note/, response.body)
   end
 

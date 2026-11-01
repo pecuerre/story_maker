@@ -346,6 +346,25 @@ module ApplicationHelper
     MarkdownDescription.new(record.universe, record.description).to_html
   end
 
+  # The short summary at the top of a record's details page, as one safe line in
+  # which a reference is the link it is inside the description. The summary is
+  # not Markdown, so no heading, emphasis, or table is interpreted there.
+  #
+  # The Universe is `Current`'s rather than the record's own so that a row of a
+  # list does not pay an association load per record; every record a list shows
+  # is already scoped to the Universe being read.
+  def summary_html(record)
+    MarkdownDescription.new(Current.universe, record.try(:summary)).to_inline_html
+  end
+
+  # The same summary as plain text for a list row: a reference is reduced to the
+  # name of the record it names and never becomes a link, because the row
+  # already carries its own Details link. The value is plain text, so the view
+  # escapes it like any other string.
+  def summary_text(record)
+    MarkdownDescription.new(Current.universe, record.try(:summary)).as_plain_text
+  end
+
   private
     # `key?` rather than a truthy test in both memos: "cannot write" and "no access
     # level" are answers this render repeats as often as the positive ones, and a

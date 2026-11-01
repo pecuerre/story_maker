@@ -15,7 +15,7 @@ A Character has one short summary and one Markdown description beside the identi
 | `factions` | Zero or more same-Universe Factions |
 | `pronouns` | The pronouns the Character uses |
 | `aliases` | Other names the Character goes by, usually separated by commas |
-| `summary` | One line shown in the list and at the top of the details page |
+| `summary` | One line shown in the list and at the top of the details page; plain text that may carry a reference |
 | `description` | The full profile, written in Markdown |
 
 Every field except `name` is optional. There are deliberately no separate columns for wants, needs,
@@ -44,7 +44,10 @@ A description may link another record with a typed reference:
 | `[[item:slug]]` | the Item |
 
 `[[plot:slug]]`, `[[scene:slug]]`, `[[rule:ID]]`, and `[[canon:ID]]` are also resolved when the
-record exists. A bare
+record exists. A `rule` or `canon` reference keeps its own ledger id as the label — `[[canon:K47]]`
+reads as `K47`, not as the rule's full name — because a citation names the rule by id and the name
+would repeat the rule inside the sentence citing it; every other kind is labeled with the record's
+name. A bare
 `[[slug]]` is the older form and still works; it is looked up across the Universe kinds in the order
 Character, Faction, Location, Item, then Plot. A reference to a missing record, or to a record of a
 different kind than its prefix declares, stays literal so the author sees it rather than losing it.
@@ -53,6 +56,23 @@ A reference inside a code span or fenced block is an example and is not linked.
 The interchange's link rules are in
 [story_interchange.md](story_interchange.md#references); this page owns how the application renders
 them.
+
+### References in a summary
+
+The summary is one line of plain text and is never rendered as Markdown: `##` and `**` stay as the
+author typed them, and no block element is produced. It accepts the same `[[kind:slug]]` references
+as the description, rendered one of two ways by `MarkdownDescription`:
+
+- at the top of the details page, a reference becomes the link; an unresolved reference stays
+  written, exactly as in the description.
+- in a list row (the Character list, a Faction's affiliated Characters, and a remembered create's
+  pending row), a reference becomes the name of the record it names and is never a link: the row
+  already carries its own Details link, and a second one inside a two-line preview competes with it.
+  A `rule` or `canon` reference keeps its ledger id here too, for the same reason it does in the
+  description. An unresolved reference stays written there too, so a typo stays visible.
+
+The views reach both renderings through `ApplicationHelper#summary_html` and
+`ApplicationHelper#summary_text`; nothing escapes or resolves a reference on its own.
 
 ## Faction membership
 

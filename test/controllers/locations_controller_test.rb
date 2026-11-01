@@ -66,65 +66,46 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_empty Location.order(:id).last.location_tags
   end
 
-  test "should create and return a location's profile answers" do
+  test "should create a location with a Markdown description" do
     assert_difference("Location.count") do
       post universe_locations_url(universe_slug: @universe.slug),
-        params: { location: { name: "Winden Cave", sensory_smell: "Damp stone",
-          history_significant_events: "The passage is found", access_security: "A padlocked grate" } },
+        params: { location: { name: "Winden Cave", description: "## Sensory\n\nDamp stone and dripping water." } },
         as: :json
     end
 
     assert_response :created
     location = Location.order(:id).last
-    assert_equal [ "Damp stone", "The passage is found", "A padlocked grate" ],
-      [ location.sensory_smell, location.history_significant_events, location.access_security ]
-    assert_equal "Damp stone", response.parsed_body["sensory_smell"]
-    assert_equal "A padlocked grate", response.parsed_body["access_security"]
+    assert_equal "## Sensory\n\nDamp stone and dripping water.", location.description
+    assert_equal location.description, response.parsed_body["description"]
   end
 
-  test "every declared profile field is permitted and persisted by an update" do
-    # `Location::PROFILE_FIELDS` drives the editor and the page, while strong
-    # parameters list the keys by hand so `TranslationsTest` can see them. This is
-    # the assertion that the two lists agree.
-    answers = Location::PROFILE_FIELDS.to_h { |field| [ field, "answer for #{field}" ] }
-
-    patch universe_location_url(universe_slug: @universe.slug, id: @location),
-      params: { location: answers }, as: :json
-
-    assert_response :success
-    @location.reload
-    Location::PROFILE_FIELDS.each do |field|
-      assert_equal "answer for #{field}", @location.public_send(field), "#{field} was not persisted"
-      assert_equal "answer for #{field}", response.parsed_body[field.to_s]
-    end
-  end
-
-  test "the tree serializes the profile fields the browser builds the editor from" do
+  test "the tree serializes the editor fields without the old profile answers" do
     get universe_locations_url(universe_slug: @universe.slug)
 
     assert_response :success
     fields = JSON.parse(Nokogiri::HTML(response.body)
       .at_css("[data-taxonomy-tree-modal-fields-value]")["data-taxonomy-tree-modal-fields-value"])
-    profile_fields = fields.select { |field| Location::PROFILE_FIELDS.map(&:to_s).include?(field["name"]) }
 
-    assert_equal Location::PROFILE_FIELDS.map(&:to_s), profile_fields.map { |field| field["name"] }
-    assert profile_fields.all? { |field| field["type"] == "textarea" }
-    assert_equal "Sensory: sight", profile_fields.first["label"]
-    assert profile_fields.none? { |field| field.key?("label_key") }, "the tree receives resolved labels only"
+    assert_equal %w[name description parent_id location_tag_ids photo], fields.map { |field| field["name"] }
+    assert fields.none? { |field| field["name"].start_with?("sensory_", "layout_", "history_", "access_") }
+    assert_equal "textarea", fields.find { |field| field["name"] == "description" }["type"]
   end
 
-  test "the details page lists every profile answer with its group and a blank message" do
-    @location.update!(sensory_sight: "Gray light through a high window", significance: "The first place the story leaves")
+  test "the details page renders the description as Markdown with record and canon links" do
+    @location.update!(description: "## History\n\nThe cave links [[character:character-one]] and [[canon:K1]].")
 
     get universe_location_url(universe_slug: @universe.slug, id: @location)
 
     assert_response :success
-    assert_select "dt", text: "Sensory: sight"
-    assert_select "dt", text: "Why it matters"
-    assert_select "dt", text: "Control and access: restrictions"
-    assert_includes fact_values, [ "Sensory: sight", "Gray light through a high window" ]
-    assert_includes fact_values, [ "Why it matters", "The first place the story leaves" ]
-    assert_includes fact_values, [ "Sensory: sound", "Not recorded yet." ]
+    assert_select "dt", text: "Description"
+    assert_select ".detail-fact dd h2", text: "History"
+    assert_select ".detail-fact dd a[href=?]",
+      universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+      text: "Character one"
+    # A canon citation keeps its ledger id as the link text.
+    assert_select ".detail-fact dd a[href=?]",
+      universe_canon_rule_path(universe_slug: @universe.slug, id: canon_rules(:canon_rule_one)),
+      text: "K1"
   end
 
   test "should reject location tags from another universe" do
@@ -248,13 +229,4 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
       assert_select ".entity-description", text: /^in /, count: 0
     end
   end
-
-  private
-    # The identity block's [label, value] pairs, so an assertion can tie a value
-    # to the label it belongs to.
-    def fact_values
-      Nokogiri::HTML(response.body).css(".detail-fact").map do |fact|
-        [ fact.at_css("dt").text.strip, fact.at_css("dd").text.strip ]
-      end
-    end
 end

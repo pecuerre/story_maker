@@ -73,6 +73,19 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".detail-section .entity-title a", text: characters(:character_one).name
   end
 
+  test "a reference in the summary is a link on the details page" do
+    character = characters(:character_one)
+    @faction.update!(summary: "Led by [[character:#{character.slug}]].")
+
+    get universe_faction_url(universe_slug: @universe.slug, id: @faction)
+
+    assert_response :success
+    description = Nokogiri::HTML(response.body).at_css(".page-description")
+    link = description.at_css("a")
+    assert_equal character.name, link.text
+    assert_equal universe_character_path(universe_slug: @universe.slug, id: character), link["href"]
+  end
+
   test "a guest can read factions but sees no mutation controls" do
     sign_out
 

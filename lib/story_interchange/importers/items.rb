@@ -1,58 +1,62 @@
 module StoryInterchange
   module Importers
-    # A `tech/` file is an Item, not a new record kind. Its sections map to the
-    # Item profile and its invented-by field becomes `origin`, with a `[[slug]]`
-    # resolved to the name of the Faction or Character this run writes. The
-    # current source keeps that field as the `Invented by` bullet under
-    # `## Information`; the older `invented_by` frontmatter key is still read.
+    # A `tech/` file is an Item, not a new record kind. It keeps only the fields
+    # its record has columns for: a name, its place in the hierarchy, and one
+    # Markdown description carrying every `##` section the source wrote, in
+    # source order.
     #
-    # `type`, `status`, and `backlog` have no Item column, so they are reported
-    # along with the sections the app does not keep (Short summary, Information,
-    # In the story, Open questions). The source is flat and an Item carries a
-    # `parent_id`, but a filename says nothing about the hierarchy, so every
-    # imported Item is top-level and the operator builds the tree in the app.
+    # The current file keeps only `name` and `slug` in frontmatter; `type`,
+    # `invented_by`, `status`, and `backlog` are body data under `## Information`,
+    # so they stay in the description. An older file that still carries them in
+    # frontmatter has them reported.
+    #
+    # The description is stored as written so the app can render its headings,
+    # lists, and `[[kind:slug]]` links at read time. That is the one profile
+    # answer this slice deliberately does **not** resolve into plain names: a
+    # link is the meaning, not decoration.
+    #
+    # The source is flat and an Item carries a `parent_id`, but a filename says
+    # nothing about the hierarchy, so every imported Item is top-level and the
+    # operator builds the tree in the app.
     class Items < Importer
-      INFORMATION_HEADING = "information"
-      ORIGIN_LABEL = /\Ainvented by\z/i
-
       slice label_key: "imports.slices.items",
         count: :items,
         kind: :item,
-        profile: {
-          "one line" => :what_it_does,
-          "what it actually is" => :description,
-          "how it is operated" => :how_it_is_used,
-          "physical side effects" => :side_effects,
-          "cannot" => :cannot,
-          "costs" => :value,
-          "constraints" => :constraints,
-          "jargon" => :jargon,
-          "history" => :history
-        },
-        reported_keys: %w[type status backlog]
+        reported_keys: %w[type invented_by status backlog]
+
+      # Nothing in the body is left behind: the identity block and every section
+      # land in the description. Only the frontmatter keys with no column are
+      # reported.
+      class << self
+        private
+          def reported_entries(_report, entity)
+            reported_keys.filter_map do |key|
+              Importer::Note.new(:frontmatter, key) if entity.frontmatter[key].present?
+            end
+          end
+      end
 
       def call
         write_entities(Item)
       end
 
       private
-        # The invented-by field is the one value that names a column. It is resolved
-        # like a profile answer, so `[[wardens]]` reads as "The Wardens".
         def attributes_for(entity)
-          super.merge(origin: origin_for(entity))
+          record_attributes(entity).merge(description: description_for(entity))
         end
 
-        # The current source writes `- Invented by: …` under `## Information`.
-        # The older frontmatter key wins when a file still carries both.
-        def origin_for(entity)
-          frontmatter = entity.frontmatter["invented_by"]
-          return self.class.resolve_references(report, frontmatter) if frontmatter.present?
+        # The source's identity block, then every `##` section, in source order.
+        # References stay in their source form so the details page can turn each
+        # one into a link to the record it names.
+        def description_for(entity)
+          parts = []
+          parts << entity.introduction if entity.introduction.present?
 
-          section = entity.sections.find do |candidate|
-            candidate.heading.to_s.downcase.squish == INFORMATION_HEADING
+          entity.sections.each do |section|
+            parts << "## #{section.heading}\n\n#{section.body}"
           end
-          item = section && grouped_items(section.body).find { |label, _text| label.to_s.match?(ORIGIN_LABEL) }
-          item && self.class.resolve_references(report, item.last)
+
+          parts.join("\n\n").presence
         end
     end
   end

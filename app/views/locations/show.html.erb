@@ -1,19 +1,26 @@
 <% content_for :title, @location.name %>
+<%# A Location with no description keeps the identity card exactly as every
+    other record's card is: the wide prose block exists only when there is prose
+    to read. The description is Markdown, so its `##` sections and its
+    `[[kind:slug]]` links are rendered by the shared dialect. %>
+<% description_facts = if @location.description.present?
+  [ detail_fact(t("locations.show.facts.description"), markdown_description_html(@location)) ]
+else
+  []
+end %>
 
 <%= render "shared/record_details",
   record: @location,
   eyebrow: t("sidebar.universe_bible"),
   label: t("locations.show.label"),
+  description: "",
   facts: [
     detail_fact(t("locations.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
     detail_fact(t("locations.show.facts.tags"), entity_tag_badge(@location), blank: t("locations.show.facts.tags_blank")),
     detail_fact(t("locations.show.facts.parent"), @location.parent && @location.parent.name, blank: t("locations.show.facts.parent_blank")),
-    detail_fact(t("locations.show.facts.children"), count_with_label(@location.children.size, "location"), blank: t("locations.show.facts.children_blank")),
-    detail_fact(t("locations.show.facts.description"), @location.description, blank: t("locations.show.facts.description_blank")),
-    *Location::PROFILE_FIELDS.map { |field|
-      detail_fact(t("locations.show.facts.#{field}"), @location.public_send(field), blank: t("locations.show.facts.blank"))
-    }
+    detail_fact(t("locations.show.facts.children"), count_with_label(@location.children.size, "location"), blank: t("locations.show.facts.children_blank"))
   ],
+  wide_facts: description_facts,
   back_url: universe_locations_path,
   back_label: t("locations.show.back_label"),
   actions: discussion_control(@location) %>

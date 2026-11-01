@@ -351,6 +351,37 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
       document.at_css(".detail-facts-wide a")["href"]
   end
 
+  # The summary is one line of plain text, but an author may still link a record
+  # in it. The details page links it; the list row names it without a link,
+  # because the row already has its own Details link.
+  test "a reference in the summary is a link on the details page" do
+    faction = factions(:faction_one)
+    @character.update!(summary: "Sworn to [[faction:#{faction.slug}]].")
+
+    get universe_character_url(universe_slug: @universe.slug, id: @character)
+
+    assert_response :success
+    description = Nokogiri::HTML(response.body).at_css(".page-description")
+    link = description.at_css("a")
+    assert_equal faction.name, link.text
+    assert_equal universe_faction_path(universe_slug: @universe.slug, id: faction), link["href"]
+  end
+
+  test "a reference in the summary is named but not linked in the list row" do
+    faction = factions(:faction_one)
+    @character.update!(summary: "Sworn to [[faction:#{faction.slug}]].")
+
+    get universe_characters_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    row = Nokogiri::HTML(response.body).css(".entity-row").find { |element|
+      element.at_css(".entity-title")&.text == @character.name
+    }
+    description = row.at_css(".entity-description")
+    assert_equal "Sworn to #{faction.name}.", description.text
+    assert_nil description.at_css("a")
+  end
+
   test "a show_in_menu tag appears as a workspace tab linking to its details page" do
     get universe_characters_url(universe_slug: @universe.slug)
 

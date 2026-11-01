@@ -22,8 +22,11 @@ class Faction < ApplicationRecord
 
   validates :name, presence: true
 
-  # The short summary is plain text; the description is Markdown and is rendered
-  # by `MarkdownDescription` when a page shows it. Both are part of the record's
+  # The short summary is one line of plain text and is never rendered as
+  # Markdown, but it may carry the same `[[kind:slug]]` references the
+  # description does: the details page links them and a list row names them
+  # without a link. The description is Markdown and is rendered by
+  # `MarkdownDescription` when a page shows it. Both are part of the record's
   # search body, so a reader can find a Faction by what its profile says.
   def search_description
     [ summary, description ].compact_blank.join(" ")

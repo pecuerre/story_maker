@@ -12,7 +12,7 @@ end %>
   record: @faction,
   eyebrow: t("sidebar.universe_bible"),
   label: t("factions.show.label"),
-  description: @faction.summary || "",
+  description: summary_html(@faction),
   facts: [
     detail_fact(t("factions.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
     detail_fact(t("factions.show.facts.tags"), entity_tag_badge(@faction), blank: t("factions.show.facts.tags_blank"))

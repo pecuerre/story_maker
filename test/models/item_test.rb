@@ -12,29 +12,16 @@ class ItemTest < ActiveSupport::TestCase
     assert Item.create!(universe: universes(:universe_one), name: "Untagged")
   end
 
-  test "the search body includes the description and every profile answer" do
-    # Search is the one reader that must not miss a profile field, and reading
-    # the constant rather than a written list is what keeps a new column in it.
+  test "the search body is the description" do
     item = Item.new(universe: universes(:universe_one), name: "The Gate Key",
-      description: "A brass key", what_it_does: "Opens the sealed gate",
-      jargon: "Gate-key")
+      description: "## What it does\n\nA brass key that opens the sealed gate.")
 
-    Item::PROFILE_FIELDS.each_with_index do |field, index|
-      item.public_send("#{field}=", "answer #{index}")
-    end
-
-    body = item.search_description
-
-    assert_includes body, "A brass key"
-    Item::PROFILE_FIELDS.each_with_index do |_field, index|
-      assert_includes body, "answer #{index}"
-    end
-    assert_not_includes body, "nil"
+    assert_equal item.description, item.search_description
   end
 
-  test "a blank profile is left out of the search body rather than joined as empty words" do
-    item = Item.create!(universe: universes(:universe_one), name: "Empty Key", description: "Only a summary")
+  test "a blank description is left out of the search body rather than joined as empty words" do
+    item = Item.create!(universe: universes(:universe_one), name: "Empty Key")
 
-    assert_equal "Only a summary", item.search_description
+    assert_nil item.search_description
   end
 end

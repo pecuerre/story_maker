@@ -188,7 +188,6 @@ module ModalFields
     {
       name: item.name,
       description: item.description,
-      **Item::PROFILE_FIELDS.to_h { |field| [ field, item.public_send(field) ] },
       item_tag_ids: item.item_tag_ids,
       photo_url: record_photo_url(item)
     }.to_json
@@ -242,19 +241,13 @@ module ModalFields
     ].map { |field| modal_field(field) }
   end
 
-  # The nested-record editor plus the Location profile. The profile answers are
-  # plain optional prose, so each is one textarea and the labels are the
-  # workspace's own keys rather than the shared taxonomy ones.
-  #
-  # The fields are read from `Location::PROFILE_FIELDS` in its declared order, so
-  # the editor, the details page, the search body, and the API cannot drift apart.
+  # The nested-record editor for a Location. Its profile lives in the shared
+  # Markdown `description`, so unlike its first version it adds no answer
+  # textareas after the photo.
   def location_taxonomy_fields(location_tags, locations = [])
     nested_record_taxonomy_fields(location_tags, locations,
       tag_field: "location_tag_ids",
-      tag_label_key: "modal_fields.location_tags",
-      extra_fields: Location::PROFILE_FIELDS.map { |field|
-        { name: field.to_s, label_key: "locations.form.#{field}", type: "textarea" }
-      })
+      tag_label_key: "modal_fields.location_tags")
   end
 
   def ownership_tag_taxonomy_fields(nodes = [])

@@ -53,8 +53,8 @@ How to use these docs:
    | Character profiles, Markdown descriptions and links, Faction membership | [features/characters.md](features/characters.md) |
    | Prose mentions, suggestions, and in-place name highlighting | [features/mentions.md](features/mentions.md) |
    | The Story-wide appearance grid and its two layers | [features/appearances.md](features/appearances.md) |
-   | Location profile answers, presence, search, and the Locations workspace | [features/locations.md](features/locations.md) |
-   | Item profiles, ownership, search, and the Items workspace | [features/items.md](features/items.md) |
+   | Location Markdown profiles, presence, search, and the Locations workspace | [features/locations.md](features/locations.md) |
+   | Item Markdown profiles, ownership, search, and the Items workspace | [features/items.md](features/items.md) |
    | Reading a Story as a printable book, and the export scopes | [features/exports.md](features/exports.md) |
    | Translations and writing a translatable string | [features/i18n.md](features/i18n.md) |
   | The platform Settings page and its two preferences | [features/settings.md](features/settings.md) |

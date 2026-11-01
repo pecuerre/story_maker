@@ -86,18 +86,10 @@ class LocationsController < ApplicationController
     @location = Current.universe.locations.find(params.expect(:id))
   end
 
-  # The profile answers are written out rather than splatted from
-  # `Location::PROFILE_FIELDS`: `TranslationsTest` reads this list to prove every
-  # permitted payload key has a label in both locales, and a splat hides those
-  # keys from it.
+  # The editor's own fields. The profile lives in `description`, which the
+  # details page renders as Markdown, so there are no separate answer keys here.
   def location_params
     params.expect(location: [ *photo_params, :name, :description,
-      :sensory_sight, :sensory_sound, :sensory_smell, :sensory_taste, :sensory_touch,
-      :layout_structure, :layout_key_areas, :layout_pathways, :layout_entrances_exits,
-      :layout_points_of_interest,
-      :significance,
-      :history_significant_events, :history_past_occupants, :history_changes,
-      :access_controlled_by, :access_granted_how, :access_security, :access_restrictions,
       { location_tag_ids: [] }, :parent_id, :position ])
   end
 
@@ -110,7 +102,6 @@ class LocationsController < ApplicationController
       id: @location.id,
       name: @location.name,
       description: @location.description,
-      **Location::PROFILE_FIELDS.to_h { |field| [ field, @location.public_send(field) ] },
       location_tag_ids: @location.location_tag_ids,
       parent_id: @location.parent_id,
       position: @location.position,

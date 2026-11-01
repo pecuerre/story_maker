@@ -50,7 +50,7 @@ class ModalFieldsHelperTest < ActionView::TestCase
   # is about to replace.
   SERIALIZED_KEYS = {
     "character" => %w[name pronouns aliases summary description character_tag_ids faction_ids photo_url],
-    "item" => %w[name description what_it_does how_it_is_used side_effects origin value cannot constraints history jargon item_tag_ids photo_url],
+    "item" => %w[name description item_tag_ids photo_url],
     "event" => %w[title start_datetime end_datetime before_event_id after_event_id
                   simultaneous_event_id description event_tag_ids photo_url],
     "relation" => %w[name character1_id character2_id relation_tag_ids description
@@ -148,14 +148,11 @@ class ModalFieldsHelperTest < ActionView::TestCase
     assert_equal "The Gate", values["aliases"]
   end
 
-  test "an Item's profile answers are handed to the editor, in declared order" do
+  test "an Item's description is handed to the editor" do
     item = items(:item_one)
     values = serialized(item)
 
-    assert_equal "Opens the sealed gate", values["what_it_does"]
-    assert_equal "Gate-key", values["jargon"]
-    assert_equal Item::PROFILE_FIELDS.map(&:to_s),
-      values.keys & Item::PROFILE_FIELDS.map(&:to_s)
+    assert_equal "A brass key that opens the sealed gate.", values["description"]
   end
 
   test "every taxonomy's editor is the shared fields plus its own" do
@@ -220,8 +217,7 @@ class ModalFieldsHelperTest < ActionView::TestCase
     # Location and Section are the two editors that carry a parent selector and a
     # tag selector, and they are hand-maintained separately. They must stay the
     # same editor apart from which taxonomy the selector reads: the two pages
-    # share one reader, one tree, and one photo widget. Location alone appends
-    # its profile textareas after the photo.
+    # share one reader, one tree, and one photo widget.
     locations = location_taxonomy_fields([])
     sections = section_taxonomy_fields([])
 
@@ -230,7 +226,7 @@ class ModalFieldsHelperTest < ActionView::TestCase
     assert_equal "location_tag_ids", locations[3][:name]
     assert_equal "section_tag_ids", sections[3][:name]
     assert_equal locations[4], sections[4], "the photo widget is the same descriptor"
-    assert_equal Location::PROFILE_FIELDS.map(&:to_s), locations.drop(5).map { |field| field[:name] }
+    assert_equal 5, locations.size, "Location has no profile textareas beyond the shared editor"
     assert_nil sections[5], "Section has no profile fields"
 
     [ locations, sections ].each do |fields|
@@ -238,18 +234,6 @@ class ModalFieldsHelperTest < ActionView::TestCase
 
       assert selector, "the tag selector is a multiple select in both editors"
     end
-  end
-
-  test "the Location editor appends one named textarea per profile field" do
-    # The order is `Location::PROFILE_FIELDS`, so the details page, the filter,
-    # the search body, and the API present the same answers in the same order.
-    fields = location_taxonomy_fields([]).drop(5)
-
-    assert_equal Location::PROFILE_FIELDS.map(&:to_s), fields.map { |field| field[:name] }
-    assert fields.all? { |field| field[:type] == "textarea" }
-    assert_equal I18n.t("locations.form.sensory_sight"), fields.first[:label]
-    assert_equal I18n.t("locations.form.access_restrictions"), fields.last[:label]
-    assert fields.none? { |field| field[:required] }, "every profile answer is optional"
   end
 
   test "the nested-record tag selector offers the tag's id and its own name" do

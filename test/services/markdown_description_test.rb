@@ -66,8 +66,34 @@ class MarkdownDescriptionTest < ActiveSupport::TestCase
     html = render("See [[rule:K1]].")
 
     link = Nokogiri::HTML.fragment(html).at_css("a")
-    assert_equal rule.display_string, link.text
+    assert_equal "K1", link.text
     assert_equal universe_canon_rule_path(universe_slug: @universe.slug, id: rule), link["href"]
+  end
+
+  test "a canon reference keeps the ledger id as the link text" do
+    rule = canon_rules(:canon_rule_one)
+
+    html = render("See [[canon:K1]].")
+
+    link = Nokogiri::HTML.fragment(html).at_css("a")
+    assert_equal "K1", link.text
+    assert_equal universe_canon_rule_path(universe_slug: @universe.slug, id: rule), link["href"]
+  end
+
+  test "as plain text a canon reference keeps the ledger id" do
+    canon_rules(:canon_rule_one)
+
+    text = MarkdownDescription.new(@universe, "See [[canon:K1]].")
+
+    assert_equal "See K1.", text.as_plain_text
+  end
+
+  test "as plain text a canon reference in a summary keeps the ledger id" do
+    canon_rules(:canon_rule_one)
+
+    html = MarkdownDescription.new(@universe, "See [[canon:K1]].").to_inline_html
+
+    assert_equal "K1", Nokogiri::HTML.fragment(html).at_css("a").text
   end
 
   test "a reference to another Universe's record stays literal" do
@@ -106,6 +132,47 @@ class MarkdownDescriptionTest < ActiveSupport::TestCase
   test "a blank description renders nothing" do
     assert_equal "", render(nil)
     assert_equal "", render("")
+  end
+
+  test "the summary links a reference without interpreting Markdown" do
+    character = @universe.characters.create!(name: "Ada")
+
+    html = MarkdownDescription.new(@universe, "Meet [[character:ada]] in **the hall**.").to_inline_html
+
+    document = Nokogiri::HTML.fragment(html)
+    link = document.at_css("a")
+    assert_equal "Ada", link.text
+    assert_equal universe_character_path(universe_slug: @universe.slug, id: character), link["href"]
+    assert_nil document.at_css("strong"), "a summary is plain text, so ** is not emphasis"
+  end
+
+  test "the summary escapes its prose" do
+    html = MarkdownDescription.new(@universe, "<script>alert('x')</script>").to_inline_html
+
+    assert_not_includes html, "<script>"
+    assert_includes html, "&lt;script&gt;"
+  end
+
+  test "the summary leaves an unresolved reference as written" do
+    html = MarkdownDescription.new(@universe, "Meet [[character:nobody]].").to_inline_html
+
+    assert_nil Nokogiri::HTML.fragment(html).at_css("a")
+    assert_includes html, "[[character:nobody]]"
+  end
+
+  test "as plain text a reference becomes the name it names, with no link" do
+    @universe.characters.create!(name: "Ada")
+    @universe.factions.create!(name: "The Wardens")
+
+    text = MarkdownDescription.new(@universe, "Meet [[character:ada]] of [[the-wardens]].")
+
+    assert_equal "Meet Ada of The Wardens.", text.as_plain_text
+  end
+
+  test "as plain text an unresolved reference is left as written" do
+    text = MarkdownDescription.new(@universe, "Meet [[character:nobody]].")
+
+    assert_equal "Meet [[character:nobody]].", text.as_plain_text
   end
 
   private

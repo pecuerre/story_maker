@@ -66,7 +66,7 @@
                 <%= record_count_badge(ownership_count, "ownership") if ownership_count.positive? %>
               </div>
               <% if character.summary.present? %>
-                <div class="entity-description"><%= character.summary %></div>
+                <div class="entity-description"><%= summary_text(character) %></div>
               <% end %>
             </div>
 

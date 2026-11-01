@@ -172,35 +172,7 @@ module UniverseBackup
             "controller" => "— TBD",
             "status" => "— TBD"
           }
-          sections = {
-            "What it is" => location.description,
-            "Sensory" => bullets(
-              "Sight" => location.sensory_sight,
-              "Sound" => location.sensory_sound,
-              "Smell" => location.sensory_smell,
-              "Taste" => location.sensory_taste,
-              "Touch / gravity" => location.sensory_touch
-            ),
-            "Layout" => bullets(
-              "Structure" => location.layout_structure,
-              "Key areas" => location.layout_key_areas,
-              "Pathways" => location.layout_pathways,
-              "Entrances and exits" => location.layout_entrances_exits,
-              "Points of interest" => location.layout_points_of_interest
-            ),
-            "Why it matters" => location.significance,
-            "Control and access" => bullets(
-              "Controlled by" => location.access_controlled_by,
-              "Granted how" => location.access_granted_how,
-              "Security" => location.access_security,
-              "Restrictions" => location.access_restrictions
-            ),
-            "History" => bullets(
-              "Significant events" => location.history_significant_events,
-              "Past occupants" => location.history_past_occupants,
-              "Changes" => location.history_changes
-            )
-          }
+          sections = description_sections(location.description)
           [ "#{base}/universe/locations/#{location.slug}.md", document(frontmatter, location.name, sections) ]
         end
       end
@@ -214,17 +186,7 @@ module UniverseBackup
             "invented_by" => "— TBD",
             "status" => "— TBD"
           }
-          sections = {
-            "One line" => item.what_it_does,
-            "What it actually is" => item.description,
-            "How it is operated" => item.how_it_is_used,
-            "Physical side effects" => item.side_effects,
-            "Cannot" => item.cannot,
-            "Costs" => item.value,
-            "Constraints" => item.constraints,
-            "Jargon" => item.jargon,
-            "History" => item.history
-          }
+          sections = description_sections(item.description)
           [ "#{base}/universe/tech/#{item.slug}.md", document(frontmatter, item.name, sections) ]
         end
       end
@@ -393,10 +355,6 @@ module UniverseBackup
         end
 
         sections
-      end
-
-      def bullets(values)
-        values.filter_map { |label, value| "- #{label}: #{value}" if value.present? }.join("\n").presence
       end
 
       def indent(value)

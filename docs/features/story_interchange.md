@@ -155,12 +155,11 @@ Rules for those values:
 
 The body starts with one heading and continues with `##` sections. A profile file opens with `#`
 and a Scene opens with its own `##` title (see [Plot and Scene](#plot-and-scene)); either heading
-names the record and is not prose. A section that maps to a profile answer is written into that
+names the record and is not prose. A section that maps to a record's own answer is written into that
 answer, with its Markdown body kept as written; a section with no target is reported by the import
-slice, never silently dropped. The exact profile field lists live in
-[Locations](locations.md#location-profile) and [Items](items.md#item-profile);
-[Characters](characters.md#profile) and [Factions](factions.md#scope-and-profile) map their whole body
-instead, as described below.
+slice, never silently dropped. Characters, Factions, Locations, and Items map their whole body
+instead, as described below; a Plot maps only `The question`, and a Section maps only its identity
+block.
 
 HTML comments (`<!-- … -->`) are drafting notes for the author, not prose. They are stripped before
 a section is stored and before references are scanned, so a `[[slug]]` inside one is an example
@@ -214,50 +213,36 @@ renders them with the same dialect as a Character's description.
 
 ### Location
 
-| Section | Target |
-|---|---|
-| What it is | `description` |
-| Sensory | the five `sensory_*` answers |
-| Layout | the five `layout_*` answers |
-| Why it matters | `significance` |
-| Control and access | the four `access_*` answers |
-| History | the three `history_*` answers |
-| Who is here, Events here, Story rules affecting this place, Open questions | no app field — report |
-
-A section that fills several answers is split by label: `- Sight: a gate taller than the wall.`
-writes `sensory_sight`. An item whose label names several answers fills each of them (`- Touch /
-smell: cold stone.`), and words that name none are ignored. An item whose label names no answer, and
-prose with no label at all, fills the group's first answer, so `sensory_sight`, `layout_structure`,
-`access_controlled_by`, and `history_significant_events` hold an unlabelled paragraph.
+A Location keeps only the fields its record has columns for: a name, its place in the hierarchy, and
+one Markdown description carrying every `##` section the source wrote, in source order.
 
 The current source keeps only `name` and `slug` in a Location's frontmatter and writes type,
-controller, status, and backlog as labelled bullets under `## Information`. The older frontmatter
-keys are still accepted. None of those fields, and neither `Short summary` nor `Information`, has a
-Location column, so they are reported. The source is flat and a Location carries a `parent_id`, but a
-filename says nothing about the hierarchy, so every imported Location is top-level and the tree is
-the operator's.
+controller, status, and backlog as labelled bullets under `## Information`, so they stay in the
+description. The older frontmatter keys are still accepted, and an older file that still carries
+them in frontmatter has them reported by name. Every body section lands in the description,
+including `Short summary`, `Information`, `Who is here`, `Events here`, `Story rules affecting this
+place`, and `Open questions`.
+
+The description's `[[kind:slug]]` references stay in their source form too, and the details page
+renders them with the same dialect as a Character's description. The source is flat and a Location
+carries a `parent_id`, but a filename says nothing about the hierarchy, so every imported Location is
+top-level and the tree is the operator's.
 
 ### Item
 
-| Source | Target |
-|---|---|
-| One line | `what_it_does` |
-| What it actually is | `description` |
-| How it is operated | `how_it_is_used` |
-| Physical side effects | `side_effects` |
-| Cannot | `cannot` |
-| Costs | `value` |
-| Constraints | `constraints` |
-| Jargon | `jargon` |
-| History | `history` |
-| `Invented by` (under `## Information`) or `invented_by` (frontmatter) | `origin` |
-| `Short summary`, `Information`, `type`, `status`, and `backlog` | no app field — report; the `Invented by` bullet is read for `origin` |
-| In the story, Open questions | no app field — report |
+A `tech/` file is an Item, not a new record kind. An Item keeps only the fields its record has
+columns for: a name, its place in the hierarchy, and one Markdown description carrying every `##`
+section the source wrote, in source order.
 
-A `tech/` file is therefore an Item, not a new record kind. Its `type` and `status` are recognized
-source facts with no Item column, so they are reported rather than kept in another answer. The current
-file keeps them under `## Information`, while an older file keeps them in frontmatter. An Item carries
-a `parent_id` like a Location, and the same flat-source rule applies: every imported Item is top-level.
+The current source keeps only `name` and `slug` in an Item's frontmatter and writes type, invented
+by, status, and backlog as labelled bullets under `## Information`, so they stay in the description.
+The older frontmatter keys are still accepted, and an older file that still carries them in
+frontmatter has them reported by name. Every body section lands in the description, including
+`Short summary`, `Information`, `In the story`, and `Open questions`.
+
+The description's `[[kind:slug]]` references stay in their source form too, and the details page
+renders them with the same dialect as a Character's description. An Item carries a `parent_id` like a
+Location, and the same flat-source rule applies: every imported Item is top-level.
 
 ### Plot and Scene
 

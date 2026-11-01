@@ -1,17 +1,18 @@
 module StoryInterchange
   module Importers
-    # A Location is its frontmatter plus the profile answers the source's `##`
-    # sections map to. `Sensory`, `Layout`, `Control and access`, and `History`
-    # each fill several answers: a labelled list item writes every answer its
-    # label names, and text whose label names none — or prose with no label at all
-    # — fills the group's first answer.
+    # A Location keeps only the fields its record has columns for: a name, its
+    # place in the hierarchy, and one Markdown description carrying every `##`
+    # section the source wrote, in source order.
     #
-    # `type`, `controller`, `status`, and `backlog` have no Location column, so
-    # they are reported along with the sections the app does not keep (Short
-    # summary, Information, Who is here, Events here, Story rules affecting this
-    # place, Open questions). The current source keeps those four fields as
-    # labelled bullets under `## Information`; the older frontmatter keys are
-    # still reported when a file carries them.
+    # The current file keeps only `name` and `slug` in frontmatter; `type`,
+    # `controller`, `status`, and `backlog` are body data under `## Information`,
+    # so they stay in the description. An older file that still carries them in
+    # frontmatter has them reported.
+    #
+    # The description is stored as written so the app can render its headings,
+    # lists, and `[[kind:slug]]` links at read time. That is the one profile
+    # answer this slice deliberately does **not** resolve into plain names: a
+    # link is the meaning, not decoration.
     #
     # The source is a flat directory and a Location carries a `parent_id`, but a
     # filename says nothing about the hierarchy, so every imported Location is
@@ -20,42 +21,42 @@ module StoryInterchange
       slice label_key: "imports.slices.locations",
         count: :locations,
         kind: :location,
-        profile: {
-          "what it is" => :description,
-          "sensory" => {
-            "sight" => :sensory_sight,
-            "sound" => :sensory_sound,
-            "smell" => :sensory_smell,
-            "taste" => :sensory_taste,
-            "touch" => :sensory_touch
-          },
-          "layout" => {
-            "structure" => :layout_structure,
-            "key areas" => :layout_key_areas,
-            "pathways" => :layout_pathways,
-            "entrances" => :layout_entrances_exits,
-            "points of interest" => :layout_points_of_interest
-          },
-          "why it matters" => :significance,
-          "control and access" => {
-            "controlled by" => :access_controlled_by,
-            "operated by" => :access_controlled_by,
-            "granted" => :access_granted_how,
-            "security" => :access_security,
-            "restricted" => :access_restrictions,
-            "cannot leave" => :access_restrictions
-          },
-          "history" => {
-            "significant events" => :history_significant_events,
-            "past occupants" => :history_past_occupants,
-            "changes" => :history_changes
-          }
-        },
         reported_keys: %w[type controller status backlog]
+
+      # Nothing in the body is left behind: the identity block and every section
+      # land in the description. Only the frontmatter keys with no column are
+      # reported.
+      class << self
+        private
+          def reported_entries(_report, entity)
+            reported_keys.filter_map do |key|
+              Importer::Note.new(:frontmatter, key) if entity.frontmatter[key].present?
+            end
+          end
+      end
 
       def call
         write_entities(Location)
       end
+
+      private
+        def attributes_for(entity)
+          record_attributes(entity).merge(description: description_for(entity))
+        end
+
+        # The source's identity block, then every `##` section, in source order.
+        # References stay in their source form so the details page can turn each
+        # one into a link to the record it names.
+        def description_for(entity)
+          parts = []
+          parts << entity.introduction if entity.introduction.present?
+
+          entity.sections.each do |section|
+            parts << "## #{section.heading}\n\n#{section.body}"
+          end
+
+          parts.join("\n\n").presence
+        end
     end
   end
 end

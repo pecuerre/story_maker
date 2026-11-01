@@ -8,35 +8,41 @@ patterns they follow are in [conventions.md](../conventions.md).
 
 ## Location profile
 
-The Location editor records the place's name, description, optional tag assignment, parent, photo,
-and any number of optional profile answers. Every profile answer is plain text, and every one may be
-left blank; none is validated for presence, and none changes what a Location is.
+A Location records its name, its place in the hierarchy, optional tags, a photo, and one Markdown
+description. Every field except `name` is optional, and none changes what a Location is.
 
 | Field | What it records |
 |---|---|
-| `sensory_sight`, `sensory_sound`, `sensory_smell`, `sensory_taste`, `sensory_touch` | What the place looks, sounds, smells, tastes, and feels like |
-| `layout_structure`, `layout_key_areas`, `layout_pathways`, `layout_entrances_exits`, `layout_points_of_interest` | How the place is arranged and what a visitor can reach |
-| `significance` | Why the place matters |
-| `history_significant_events`, `history_past_occupants`, `history_changes` | What happened here, who was here before, and how it changed |
-| `access_controlled_by`, `access_granted_how`, `access_security`, `access_restrictions` | Who holds the place and how one gets in |
+| `name` | The place's name |
+| `location_tags` | Optional Universe-scoped Location Tags |
+| `parent` | The place this one sits inside, if any; the reverse is its children |
+| `description` | The full profile, written in Markdown |
 
-`Location::PROFILE_FIELDS` is the single ordered list those answers are read from. The editor's
-fields, the details page's facts, the list filter's text columns, the search body, and the API all
-read it, so a new column is added to the list and appears everywhere rather than needing five
-separate edits.
+There are deliberately no separate sensory, layout, significance, history, or access columns: those
+are `##` sections inside `description`, which keeps the form short and lets the author choose the
+shape of a place's profile. A blank description means that the author has not recorded an answer.
 
-An empty answer renders the shared blank copy on the details page, never an empty row. The profile is
-read-only outside the editor: like the rest of the tree, a Location is changed through its modal.
+The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
+`**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. The
+dialect and the `[[kind:slug]]` reference syntax are the shared description dialect owned by
+[characters.md](characters.md#links-inside-a-description) and implemented by `MarkdownDescription`.
+A Location may therefore link a Character, Faction, Item, another Location, a Scene or Plot, or a
+canon rule; a canon citation keeps its ledger id as the label (`[[canon:K47]]` reads as `K47`), while
+every other kind is labeled with the record's name.
+
+The editor is the shared hierarchical tree modal: it offers the name, the Markdown description, the
+parent selector, the tag selector, and the photo. The description is read-only outside the editor,
+like the rest of the tree.
 
 ## Search, filter, and API
 
-Location text search covers the name, the description, and every profile answer. The Locations list's
-`q` filter covers the same columns, so a writer who remembers only that a place smelled of pipeweed
-or was controlled by a particular faction still finds it. The filter contract itself is in
-[list_filters.md](list_filters.md).
+Location text search covers the name and the description. The Locations list's `q` filter covers the
+same columns, so a writer who remembers only that a place smelled of pipeweed or was controlled by a
+particular faction still finds it through the prose that now records it. The filter contract itself
+is in [list_filters.md](list_filters.md).
 
-The read-only JSON API at `/api/u/:universe_slug/locations` returns every profile field beside the
-existing identity values.
+The read-only JSON API at `/api/u/:universe_slug/locations` returns the name, description, tag ids,
+parent id, and position.
 
 ## Who is here
 
@@ -70,10 +76,12 @@ of them.
 
 ## Sample records
 
-Every checked-in development universe includes both populated and blank profile answers, so the
-details page can be read full and empty. `db/data/dark/locations.yml` profiles Winden, Jonas House,
-Jonas Room, Winden Cave, and Winden Forest; `db/data/lotr/locations.yml` profiles The Shire,
-Hobbiton, Rivendell, and Moria, leaving the other places blank.
+Every checked-in development universe includes both populated and blank descriptions, so the details
+page can be read full and empty. `db/data/dark/locations.yml` describes Winden, Jonas House, Jonas
+Room, Winden Cave, and Winden Forest; `db/data/lotr/locations.yml` describes The Shire, Hobbiton,
+Rivendell, and Moria, leaving the other places blank. Winden Cave links a Character and a canon rule,
+and Rivendell links a canon rule and a Character, so the shared reference dialect is visible on a
+place page.
 
 After changing either manifest, validate and reload both development universes with the workflow in
 [development.md](../development.md#required-workflow-after-editing-demo-yaml):
@@ -84,8 +92,8 @@ script/demo reset dark lotr
 ```
 
 Then sign in as `dark@dark` (or `lotr@lotr`) with the development password from `.env` and open
-`/u/dark/locations`, and choose a profiled place's **Details** page to read it.
+`/u/dark/locations`, and choose a described place's **Details** page to read it.
 
 The same universes' `db/data/<universe_slug>/scene_locations.yml` and `scene_characters.yml`
-already place Characters at profiled places. Select a Story, open **Jonas House** or **Rivendell**,
+already place Characters at described places. Select a Story, open **Jonas House** or **Rivendell**,
 and the **Who is here** rows show the participants, reasons, and factions recorded by those Scenes.

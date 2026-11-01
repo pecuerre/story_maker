@@ -42,7 +42,7 @@
                 <%= render "shared/draft_pending_badge", record: faction %>
               </div>
               <% if faction.summary.present? %>
-                <div class="entity-description"><%= faction.summary %></div>
+                <div class="entity-description"><%= summary_text(faction) %></div>
               <% end %>
             </div>
             <%= record_details_link universe_faction_path(id: faction), record: faction %>

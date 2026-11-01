@@ -42,6 +42,12 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Item profile simplified.** An Item keeps its name, tags, parent, children, and one Markdown description; the what-it-does, how-it-is-used, side-effects, origin, value, cannot, constraints, history, and jargon columns are gone.
+- **Item import.** Every Item body section now writes the Markdown description, with `[[kind:slug]]` links kept as written; only the old frontmatter keys with no column are reported.
+- **Location profile simplified.** A Location keeps its name, tags, parent, children, and one Markdown description; the sensory, layout, significance, history, and access columns are gone.
+- **Location import.** Every Location body section now writes the Markdown description, with `[[kind:slug]]` links kept as written; only the old frontmatter keys with no column are reported.
+- **Canon reference label.** A `[[rule:ID]]` or `[[canon:ID]]` still links its rule, but the link and the summary text now read as the ledger id (`K47`) rather than the rule's full name.
+- **Summary references.** A Character or Faction summary may name a record with `[[kind:slug]]`: the details page links it, and a list row shows that record's name with no link instead of the raw brackets.
 - **Location and item interchange source format.** Location and tech frontmatter now needs only `name` and `slug`; the moved fields live under `Information`, and an item's `Invented by` bullet still writes `origin`.
 - **Import record notes.** The preview and a completed run now name what could not be imported beside each record, such as an unmapped section or an unlinked affiliation, instead of showing its subsection and word counts.
 - **Faction interchange source format.** Faction frontmatter now needs only `name` and `slug`; `type`, `home`, `status`, and `backlog` live under `Information`, and `Mission` stays a description section when `Short summary` is present.
@@ -54,6 +60,8 @@ Labels used below, in the order their groups appear:
 
 ### chore
 
+- **Demo item data.** Dark and Lord of the Rings items carry the simplified profile, with their old profile answers folded into description sections and a canon and Character link on the One Ring.
+- **Demo location data.** Dark and Lord of the Rings locations carry the simplified profile, with their old profile answers folded into description sections and a canon and Character link in two of them.
 - **Compose config mount test.** The deployment test now expects the `./config` bind mount the development service already uses.
 - **Compose config mount.** The development service bind-mounts `config/`, so locale and other configuration changes need a container restart rather than an image rebuild.
 - **Demo faction data.** Dark and Lord of the Rings factions carry the simplified profile, with their old profile answers folded into description sections.

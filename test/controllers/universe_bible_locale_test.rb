@@ -174,10 +174,9 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     # A count and its record type, resolved with a `count:` from the locale, in
     # the same fact row as its own label.
     assert_includes fact_values, [ "Lugares hijos", "1 lugar" ]
-    # The profile labels are chrome, so they are Spanish; the answers are the
-    # author's own words and stay as written.
-    assert_includes fact_values, [ "Sensorial: vista", "Gray light through a high window" ]
-    assert_includes fact_values, [ "Sensorial: oído", "Todavía no se ha registrado." ]
+    # The description label is chrome, so it is Spanish; the prose is the
+    # author's own words and stays as written.
+    assert_includes fact_values, [ "Descripción", "A keep on the coast." ]
     # Presence is derived from Scenes, so without a selected Story the section
     # asks for one in Spanish rather than falling back to a Story.
     assert_select ".detail-section h2", text: "Quién está aquí"
@@ -289,8 +288,7 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Objetos"
     assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir objeto"
     assert_select "label[for=item_item_tag_ids]", text: "Etiquetas de objetos"
-    assert_select "label[for=item_what_it_does]", text: "Qué hace"
-    assert_select "label[for=item_jargon]", text: "Jerga"
+    assert_select "label[for=item_description]", text: "Descripción"
     assert_select "input[type=submit][value=?]", "Guardar objeto"
     assert_select "nav.content-tabs a", text: "Propiedades"
 
@@ -300,7 +298,7 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".page-eyebrow", text: "Objeto"
     assert_select "dt", text: "Etiquetas de objetos"
-    assert_select "dt", text: "Jerga"
+    assert_includes fact_values, [ "Descripción", "A brass key that opens the sealed gate." ]
     assert_select "dt", text: "En propiedad actual de"
     assert_select ".page-actions a", text: "Todos los objetos"
   end

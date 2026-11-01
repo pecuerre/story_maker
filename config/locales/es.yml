@@ -2204,28 +2204,6 @@ es:
     # dos descripciones van bajo ese título, y la segunda es la de solo lectura.
     empty_description: "Añade un lugar y luego arrastra las filas para crear lugares padres e hijos."
     read_only_empty_description: "Todavía no se ha añadido ningún lugar."
-    # El modal se construye con `form_with scope:`, así que no tiene un modelo del
-    # que leer `human_attribute_name`. Las respuestas del perfil son prosa
-    # opcional y cada una es un textarea; su orden lo da `Location::PROFILE_FIELDS`.
-    form:
-      sensory_sight: "Sensorial: vista"
-      sensory_sound: "Sensorial: oído"
-      sensory_smell: "Sensorial: olfato"
-      sensory_taste: "Sensorial: gusto"
-      sensory_touch: "Sensorial: tacto"
-      layout_structure: "Estructura: estructura general"
-      layout_key_areas: "Estructura: zonas clave"
-      layout_pathways: "Estructura: pasillos y caminos"
-      layout_entrances_exits: "Estructura: entradas y salidas"
-      layout_points_of_interest: "Estructura: puntos de interés"
-      significance: "Por qué importa"
-      history_significant_events: "Historia: acontecimientos importantes"
-      history_past_occupants: "Historia: ocupantes anteriores"
-      history_changes: "Historia: cambios con el tiempo"
-      access_controlled_by: "Control y acceso: quién lo controla"
-      access_granted_how: "Control y acceso: cómo se concede el acceso"
-      access_security: "Control y acceso: medidas de seguridad"
-      access_restrictions: "Control y acceso: restricciones"
     # Un lugar tiene dependientes, así que cada nodo del árbol lleva su propia cascada
     # como el `confirm_message` que el árbol de taxonomías compartido serializa. La
     # misma frase que impone el ADR 0007 que usan las listas de personajes y objetos.
@@ -2247,29 +2225,6 @@ es:
         children: "Lugares hijos"
         children_blank: "Todavía no hay lugares anidados."
         description: "Descripción"
-        description_blank: "Todavía no hay descripción."
-        # Las fichas del perfil llevan su grupo en la etiqueta, porque la página
-        # de detalles las muestra todas en una sola rejilla y un simple «Vista»
-        # no diría qué describe. Las etiquetas cortas del editor están en `form`.
-        sensory_sight: "Sensorial: vista"
-        sensory_sound: "Sensorial: oído"
-        sensory_smell: "Sensorial: olfato"
-        sensory_taste: "Sensorial: gusto"
-        sensory_touch: "Sensorial: tacto"
-        layout_structure: "Estructura: estructura general"
-        layout_key_areas: "Estructura: zonas clave"
-        layout_pathways: "Estructura: pasillos y caminos"
-        layout_entrances_exits: "Estructura: entradas y salidas"
-        layout_points_of_interest: "Estructura: puntos de interés"
-        significance: "Por qué importa"
-        history_significant_events: "Historia: acontecimientos importantes"
-        history_past_occupants: "Historia: ocupantes anteriores"
-        history_changes: "Historia: cambios con el tiempo"
-        access_controlled_by: "Control y acceso: quién lo controla"
-        access_granted_how: "Control y acceso: cómo se concede el acceso"
-        access_security: "Control y acceso: medidas de seguridad"
-        access_restrictions: "Control y acceso: restricciones"
-        blank: "Todavía no se ha registrado."
     # Quién está en este lugar en la historia actual, derivado de la presencia
     # en las escenas. Una fila por escena, porque la escena es el momento en el
     # que se registra la presencia.
@@ -2535,19 +2490,6 @@ es:
     form:
       name: "Nombre"
       description: "Descripción"
-      # Las respuestas opcionales del perfil, en el orden de `Item::PROFILE_FIELDS`.
-      # Cada una es un área de texto, y las etiquetas agrupan las preguntas para que
-      # la única cuadrícula de la página de detalles siga diciendo qué describe cada
-      # respuesta.
-      what_it_does: "Qué hace"
-      how_it_is_used: "Cómo se usa"
-      side_effects: "Efectos secundarios"
-      origin: "Origen"
-      value: "Valor"
-      cannot: "No puede"
-      constraints: "Restricciones"
-      history: "Historia"
-      jargon: "Jerga"
       tags_label: "Etiquetas de objetos"
     empty_title: "Todavía no hay objetos"
     empty_writable_description: "Los objetos pertenecen al universo y sirven para seguir objetos, recursos y propiedades a lo largo de todas las historias. Añade el primero para empezar."
@@ -2612,20 +2554,6 @@ es:
         historical_owners: "En propiedad anterior de"
         historical_owners_blank: "No hay propietario anterior registrado."
         description: "Descripción"
-        description_blank: "Todavía no hay descripción."
-        # Los datos del perfil. Quién posee el objeto no es uno de ellos: la
-        # propiedad es un registro de Propiedad con fechas, así que se lee de las
-        # propiedades de arriba en lugar de escribirse en el objeto.
-        what_it_does: "Qué hace"
-        how_it_is_used: "Cómo se usa"
-        side_effects: "Efectos secundarios"
-        origin: "Origen"
-        value: "Valor"
-        cannot: "No puede"
-        constraints: "Restricciones"
-        history: "Historia"
-        jargon: "Jerga"
-        blank: "Todavía no se ha registrado."
     # Datos de las filas: quién tiene el objeto y quién lo tuvo antes.
     facts:
       current_owner: "Ahora con %{owners}"
@@ -3183,24 +3111,6 @@ es:
         description: "Descripción"
         parent: "Lugar padre"
         location_tags: "Etiquetas de lugares"
-        sensory_sight: "Sensorial: vista"
-        sensory_sound: "Sensorial: oído"
-        sensory_smell: "Sensorial: olfato"
-        sensory_taste: "Sensorial: gusto"
-        sensory_touch: "Sensorial: tacto"
-        layout_structure: "Estructura: estructura general"
-        layout_key_areas: "Estructura: zonas clave"
-        layout_pathways: "Estructura: pasillos y caminos"
-        layout_entrances_exits: "Estructura: entradas y salidas"
-        layout_points_of_interest: "Estructura: puntos de interés"
-        significance: "Por qué importa"
-        history_significant_events: "Historia: acontecimientos importantes"
-        history_past_occupants: "Historia: ocupantes anteriores"
-        history_changes: "Historia: cambios con el tiempo"
-        access_controlled_by: "Control y acceso: quién lo controla"
-        access_granted_how: "Control y acceso: cómo se concede el acceso"
-        access_security: "Control y acceso: medidas de seguridad"
-        access_restrictions: "Control y acceso: restricciones"
       route:
         name: "Nombre"
         description: "Descripción"
@@ -3239,15 +3149,6 @@ es:
       item:
         name: "Nombre"
         description: "Descripción"
-        what_it_does: "Qué hace"
-        how_it_is_used: "Cómo se usa"
-        side_effects: "Efectos secundarios"
-        origin: "Origen"
-        value: "Valor"
-        cannot: "No puede"
-        constraints: "Restricciones"
-        history: "Historia"
-        jargon: "Jerga"
         parent: "Objeto padre"
         item_tags: "Etiquetas de objetos"
       relation:

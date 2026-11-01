@@ -114,6 +114,27 @@ describe("the stored photo", () => {
 
     expect(controller.previewImage.getAttribute("src")).toBe("/rails/active_storage/second.jpg")
   })
+
+  // A Turbo snapshot restored from the cache still carries the widget this
+  // controller built, and the element itself can move through the DOM. Connecting
+  // again has to rebuild in place: appending to the cached children would show a
+  // second Photo input, a second preview, and a second Remove box.
+  test("reconnecting rebuilds the control instead of adding a second one", () => {
+    const { controller, host } = build({ currentUrl: "/rails/active_storage/photo.jpg" })
+
+    controller.disconnect()
+    controller.connect()
+
+    expect(host.querySelectorAll("input[type=file]").length).toBe(1)
+    expect(host.querySelectorAll(".photo-preview").length).toBe(1)
+    expect(host.querySelectorAll(".photo-remove").length).toBe(1)
+    expect(host.querySelectorAll(".photo-status").length).toBe(1)
+    expect(host.querySelectorAll(".photo-crop").length).toBe(1)
+    expect(host.querySelectorAll("input[name='character[photo_data]']").length).toBe(1)
+
+    expect(controller.valueField().name).toBe("character[photo_data]")
+    expect(host.querySelectorAll("input[name='character[photo_data]']").length).toBe(1)
+  })
 })
 
 describe("the submitted fields", () => {

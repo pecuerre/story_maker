@@ -58,13 +58,15 @@ export default class PhotoCropController extends Controller {
     this.form = this.element.closest("form")
     this.onFormReset = () => this.reset()
     this.form?.addEventListener("reset", this.onFormReset)
-    this.element.addEventListener(ROW_CHANGED, (event) => this.load(event))
+    this.onRowChanged = (event) => this.load(event)
+    this.element.addEventListener(ROW_CHANGED, this.onRowChanged)
 
     this.reset()
   }
 
   disconnect() {
     this.form?.removeEventListener("reset", this.onFormReset)
+    this.element.removeEventListener(ROW_CHANGED, this.onRowChanged)
     this.release()
   }
 
@@ -80,6 +82,14 @@ export default class PhotoCropController extends Controller {
   // ---------------------------------------------------------------- the widget
 
   build() {
+    // A controller can be connected again to the same element — a Turbo snapshot
+    // restored from the cache still carries the DOM this control built, and the
+    // element itself lives on through a form move. Rebuilding in place is what
+    // keeps the input, the preview, and the cropper from appearing a second time;
+    // appending to whatever was already there would duplicate the whole widget.
+    this.element.replaceChildren()
+    this.value = null
+
     this.chooser = this.group(...this.fileField())
     this.preview = this.element.appendChild(this.previewBox())
     this.removeControl = this.element.appendChild(this.removeControlBox())

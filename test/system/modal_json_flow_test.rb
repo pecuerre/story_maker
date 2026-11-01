@@ -32,6 +32,22 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     assert_equal "Edited from the details page.", character.reload.summary
   end
 
+  test "the character editor is one wide form in the workspace's field order" do
+    sign_in_via_form(@user)
+    visit universe_characters_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+
+    click_button "Add character"
+    within ".modal.show" do
+      assert_selector ".modal-dialog.modal-lg"
+      assert_equal [ "Name", "Aliases", "Pronouns", "Character tags", "Factions", "Photo",
+        "Short summary", "Description" ], all(".modal-body label").map(&:text)
+      # One photo control, whatever the controller's connect history: the shared
+      # modal is reused and a cached page reconnects it.
+      assert_selector "input[type=file]", count: 1
+    end
+  end
+
   test "a modal create saves through JSON and refreshes the list and its counts" do
     sign_in_via_form(@user)
     visit universe_characters_path(universe_slug: @universe.slug)

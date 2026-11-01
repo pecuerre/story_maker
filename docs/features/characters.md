@@ -22,6 +22,10 @@ Every field except `name` is optional. There are deliberately no separate column
 lies, contradictions, pressure, or knowledge: those are `##` sections inside `description`, which
 keeps the form short and lets the author choose the shape of a Character's profile.
 
+The editor presents them in that reading order after the name — aliases, pronouns, tags, factions,
+photo, short summary, description — in the same wide, scrollable modal the other flat-list
+workspaces use.
+
 The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
 `**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. Raw
 HTML in the body is stripped, and an unknown reference stays visible as written. The renderer is

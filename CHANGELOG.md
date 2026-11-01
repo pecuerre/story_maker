@@ -48,6 +48,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Character editor layout.** The Character modal is now wide and scrollable like the Faction one, and reads name, aliases, pronouns, tags, factions, photo, short summary, and description in that order.
 - **Canon details prose.** The rule statement and source passage render as Markdown on the details page, so paragraphs, lists, and `[[kind:slug]]` references read as written; list rows stay one plain line.
 - **Canon list rows.** A rule's ledger id now leads its row, and its statement and source passage show as plain text with references named but not linked, matching the other flat lists.
 
@@ -55,6 +56,8 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Scrollable modal footers.** A modal whose body and footer sit inside a server-rendered form now keeps its footer visible, because the form shrinks around the scrolling body instead of pushing the actions past the dialog.
+- **Duplicated photo control.** A photo field that reconnects, such as on a restored Turbo snapshot, rebuilds its input, preview, and Remove box in place instead of showing a second one.
 - **Canon error summary subject.** A rejected canon save no longer reads "this this canon rule" in English, because the shared sentence already supplies the "this".
 
 ### docs

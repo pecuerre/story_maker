@@ -233,22 +233,7 @@ triaged into this list.
    say how the Markdown description appendix should read once references are handled there too.
 
 
-82. in the character modal form
-- i see photo twice
-- reorganize the form
-  - name
-  - aliases
-  - pronouns
-  - tags
-  - factions
-  - phoro
-  - short summary
-  - description
-- increase the width of the modal form (like factions)
-
-
 84. in the faction modal form
-- i see the photo twice
 - i don't see the description there
 - reorganize the fields
   - name
@@ -284,7 +269,6 @@ triaged into this list.
 
 92. in the item modal form
 - increase the width (like factions)
-- photo is duplicated
 - reorganize the fields
   - name
   - tags

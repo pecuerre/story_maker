@@ -11,7 +11,7 @@
   aria-labelledby="character-modal-title"
   aria-hidden="true"
   data-modal-form-target="modal">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h2 class="modal-title fs-5" id="character-modal-title" data-modal-form-target="title"><%= t("characters.new_title") %></h2>
@@ -27,14 +27,7 @@
             <%= form.label :name, t("characters.form.name"), class: "form-label" %>
             <%= form.text_field :name, class: "form-control", required: true %>
           </div>
-          <%= render "shared/photo_field", param: "character" %>
-          <div class="mb-3">
-            <%= form.label :character_tag_ids, t("characters.form.tags_label"), class: "form-label" %>
-            <%= form.collection_select :character_tag_ids, tags, :id, :name,
-              {},
-              { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
-          </div>
-          <%= render "profile_fields", form: form, factions: factions %>
+          <%= render "profile_fields", form: form, tags: tags, factions: factions %>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>

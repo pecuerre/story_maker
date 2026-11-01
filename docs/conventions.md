@@ -447,7 +447,10 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   scope tabs and the scope-specific taxonomy selector.
 - Driven by `modal_form_controller.js`; a select that needs a searchable picker uses
   `data-controller="tom-select"` (a multi-select gets the pillbox with remove controls, a
-  single-select gets one searchable choice). The controller's mutation contract is the one decided in
+  single-select gets one searchable choice). A modal with a long form uses `modal-lg`
+  `modal-dialog-scrollable`; because the body and footer sit inside the server-rendered `<form>`,
+  that form is the flex column the scrollable variant sizes, so the body scrolls and the footer
+  stays visible above the bottom of the dialog. The controller's mutation contract is the one decided in
   [ADR 0011](adr/0011-modal-json-mutation-contract.md), and every modal page declares it with
   `data-modal-form-response-value`:
   - **`json`** (characters, factions, items, events, Scene Elements, Scene Characters): the form carries

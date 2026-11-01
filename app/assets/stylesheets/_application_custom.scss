@@ -1719,6 +1719,22 @@ $um-search-match: #ffc107;
   object-fit: cover;
 }
 
+// A modal whose body and footer are inside the server-rendered `<form>` makes
+// the form, not `.modal-content`, the flex item the scrollable variant has to
+// size. Without this the body cannot shrink and a tall editor pushes its footer
+// past the bottom of the dialog, where it cannot be seen or clicked.
+.modal-dialog-scrollable form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.modal-dialog-scrollable form .modal-body {
+  min-height: 0;
+}
+
 .photo-preview {
   margin-bottom: 1rem;
 }

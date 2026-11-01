@@ -1,12 +1,33 @@
-<div class="mb-3">
-  <%= form.label :pronouns, t("characters.form.pronouns"), class: "form-label" %>
-  <%= form.text_field :pronouns, class: "form-control" %>
-</div>
+<%# Everything the Character editor collects after the name, in the one order the
+    workspace reads: the names a Character is known by first, then how it is
+    tagged and affiliated, then its picture, then the short summary and the long
+    profile. The editor modal renders this once, so the order lives here rather
+    than being split around a separately rendered photo or tag field.
+
+    Local contract:
+      tags     - the assignable Character Tags for this request
+      factions - the same-universe Factions the membership picker offers %>
 <div class="mb-3">
   <%= form.label :aliases, t("characters.form.aliases"), class: "form-label" %>
   <%= form.text_area :aliases, class: "form-control", rows: 2 %>
   <div class="form-text"><%= t("characters.form.aliases_hint") %></div>
 </div>
+<div class="mb-3">
+  <%= form.label :pronouns, t("characters.form.pronouns"), class: "form-label" %>
+  <%= form.text_field :pronouns, class: "form-control" %>
+</div>
+<div class="mb-3">
+  <%= form.label :character_tag_ids, t("characters.form.tags_label"), class: "form-label" %>
+  <%= form.collection_select :character_tag_ids, tags, :id, :name,
+    {},
+    { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
+</div>
+<div class="mb-3">
+  <%= form.label :faction_ids, t("characters.form.factions_label"), class: "form-label" %>
+  <%= form.collection_select :faction_ids, factions, :id, :name, {},
+    { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
+</div>
+<%= render "shared/photo_field", param: "character" %>
 <div class="mb-3">
   <%= form.label :summary, t("characters.form.summary"), class: "form-label" %>
   <%= form.text_area :summary, class: "form-control", rows: 3 %>
@@ -17,9 +38,4 @@
   <%= form.text_area :description, class: "form-control font-monospace", rows: 14 %>
   <div class="form-text"><%= t("characters.form.description_hint") %></div>
   <div class="form-text"><%= t("characters.form.description_reference_hint") %></div>
-</div>
-<div class="mb-3">
-  <%= form.label :faction_ids, t("characters.form.factions_label"), class: "form-label" %>
-  <%= form.collection_select :faction_ids, factions, :id, :name, {},
-    { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
 </div>

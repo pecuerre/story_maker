@@ -64,6 +64,9 @@ The photo field is the same control everywhere, which is why it is built in one 
   open showing the previous row's photo.
 - `photo_crop_controller.js` must stay a **named** class export: the Stimulus registration name is
   derived from the file, and the controller self-references its own static constants.
+- The container is rebuilt in place on every connect. A Turbo snapshot restored from the cache still
+  carries the DOM the control built, so `build()` clears its children and recreates its hidden fields
+  instead of appending a second file input, preview, and Remove box.
 
 A file opens in a square viewport the author can drag or move with the arrow keys; confirming draws
 that square to a canvas and hands the result to the form as a `data:` URL.

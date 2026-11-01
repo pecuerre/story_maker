@@ -38,6 +38,16 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-02
+
+### added
+
+- **Item short summary.** An Item now has a one-line short summary shown as a plain-text list row and at the top of its Details page, and its search body and JSON API carry it.
+
+### changed
+
+- **Item editor layout.** The Item modal is now wide and scrollable like the Faction one, and reads name, tags, photo, short summary, and description in that order.
+
 ## 2026-11-01
 
 ### added
@@ -45,9 +55,11 @@ Labels used below, in the order their groups appear:
 - **Canon details editor.** A writer's canon rule page carries an Edit control that opens the workspace modal, returns to the rule after a save, and re-renders that page when a save is refused.
 - **Canon list filter.** The Canon list narrows by free text, canon type, and owner — one story or the universe-wide rules — and offers a reader-chosen order; a narrowed list says what emptied it and keeps the filter through a mutation.
 - **Edit from a details page.** A writer's Character, Faction, Location, and Item pages carry an Edit control that opens the workspace's own editor modal in place; guests and read-only members see the page without it.
+- **Location short summary.** A Location now has a one-line short summary, shown as a plain-text tree row and at the top of its Details page, and its wide editor reads name, parent, tags, photo, summary, description.
 
 ### changed
 
+- **Faction editor layout.** The Faction modal now reads name, tags, photo, short summary, and description in that order.
 - **Character editor layout.** The Character modal is now wide and scrollable like the Faction one, and reads name, aliases, pronouns, tags, factions, photo, short summary, and description in that order.
 - **Canon details prose.** The rule statement and source passage render as Markdown on the details page, so paragraphs, lists, and `[[kind:slug]]` references read as written; list rows stay one plain line.
 - **Canon list rows.** A rule's ledger id now leads its row, and its statement and source passage show as plain text with references named but not linked, matching the other flat lists.

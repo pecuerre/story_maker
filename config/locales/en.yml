@@ -2589,8 +2589,12 @@ en:
     save: "Save item"
     form:
       name: "Name"
-      description: "Description"
       tags_label: "Item tags"
+      summary: "Short summary"
+      summary_hint: "One line a reader sees in the list and at the top of the details page."
+      description: "Description"
+      description_hint: "Markdown. Use ## for a section heading, **bold** for emphasis, and lists or tables where they help."
+      description_reference_hint: "Link another record with [[character:slug]], [[faction:slug]], [[location:slug]], or [[item:slug]]."
     empty_title: "No items yet"
     empty_writable_description: "Items belong to the universe and can be used to track objects, resources, and ownership across every story. Add the first one to begin."
     empty_read_only_description: "Items belong to the universe and are shared by all of its stories."
@@ -2606,7 +2610,7 @@ en:
       title: "Find items"
       description: "A universe can hold hundreds of items. Narrow the list by text or an item tag, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
       search_label: "Search"
-      search_placeholder: "Name or description"
+      search_placeholder: "Name, summary, or description"
       tag_label: "Item tag"
       all_tags: "All item tags"
       sort_label: "Order"
@@ -2870,6 +2874,7 @@ en:
   # resolved per request by `ModalFields#modal_field`.
   modal_fields:
     name: "Name"
+    summary: "Short summary"
     description: "Description"
     background_color: "Background color"
     foreground_color: "Foreground color"
@@ -3551,6 +3556,7 @@ en:
         to_date: "To"
       location:
         name: "Name"
+        summary: "Short summary"
         description: "Description"
         parent: "Parent location"
         location_tags: "Location tags"
@@ -3591,6 +3597,7 @@ en:
         event_tags: "Event tags"
       item:
         name: "Name"
+        summary: "Short summary"
         description: "Description"
         parent: "Parent item"
         item_tags: "Item tags"

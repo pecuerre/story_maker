@@ -2,15 +2,13 @@
     every row's edit trigger; the record's own details page renders it because
     its Edit control opens this same form, so the fields, the error region, and
     the JSON mutation contract stay one editor rather than a second form that
-    could drift.
+    could drift. The fields read name, tags, photo, short summary, description.
 
     Local contract:
       tags - the assignable Item Tags for this request %>
-<div class="modal fade" tabindex="-1"
-  aria-labelledby="item-modal-title"
-  aria-hidden="true"
+<div class="modal fade" tabindex="-1" aria-labelledby="item-modal-title" aria-hidden="true"
   data-modal-form-target="modal">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h2 class="modal-title fs-5" id="item-modal-title" data-modal-form-target="title"><%= t("items.new_title") %></h2>
@@ -24,16 +22,23 @@
             <%= form.label :name, t("items.form.name"), class: "form-label" %>
             <%= form.text_field :name, class: "form-control", required: true %>
           </div>
-          <%= render "shared/photo_field", param: "item" %>
           <div class="mb-3">
             <%= form.label :item_tag_ids, t("items.form.tags_label"), class: "form-label" %>
             <%= form.collection_select :item_tag_ids, tags, :id, :name,
               {},
               { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
           </div>
+          <%= render "shared/photo_field", param: "item" %>
+          <div class="mb-3">
+            <%= form.label :summary, t("items.form.summary"), class: "form-label" %>
+            <%= form.text_area :summary, class: "form-control", rows: 3 %>
+            <div class="form-text"><%= t("items.form.summary_hint") %></div>
+          </div>
           <div class="mb-3">
             <%= form.label :description, t("items.form.description"), class: "form-label" %>
-            <%= form.text_area :description, class: "form-control", rows: 4 %>
+            <%= form.text_area :description, class: "form-control font-monospace", rows: 14 %>
+            <div class="form-text"><%= t("items.form.description_hint") %></div>
+            <div class="form-text"><%= t("items.form.description_reference_hint") %></div>
           </div>
         </div>
         <div class="modal-footer">

@@ -25,11 +25,18 @@ class Location < ApplicationRecord
 
   validates :name, presence: true
 
-  # Everything the search engine should find on this Location. The description
-  # is the whole profile: its `##` sections carry what the separate sensory,
-  # layout, history, and access columns used to hold, so a reader can still find
-  # a place by what it smells like or who controls it, not only by its name.
+  # The short summary is one line of plain text and is never rendered as
+  # Markdown, but it may carry the same `[[kind:slug]]` references the
+  # description does: the details page links them and a list row names them
+  # without a link. The description is Markdown and is rendered by
+  # `MarkdownDescription` when a page shows it. Both are part of the record's
+  # search body, so a reader can find a place by what its profile says.
+  #
+  # The description is the whole profile: its `##` sections carry what the
+  # separate sensory, layout, history, and access columns used to hold, so a
+  # reader can still find a place by what it smells like or who controls it, not
+  # only by its name.
   def search_description
-    description
+    [ summary, description ].compact_blank.join(" ")
   end
 end

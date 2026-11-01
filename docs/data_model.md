@@ -2,7 +2,7 @@
 
 Everything about the schema: tables, ownership/scoping rules, tag taxonomy matrix, validations
 and the slug system. Verified against `db/schema.rb` (SQLite, schema version
-`2026_10_30_120000`) and the models in `app/models/`.
+`2026_11_02_120000`) and the models in `app/models/`.
 
 ## Ownership graph
 
@@ -189,10 +189,10 @@ Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `sec
 | `characters` | `name`, `pronouns`, `aliases`, `summary`, `description`, `slug`, `parent_id`, `position`, `universe_id` | summary is one plain line; description is Markdown with the profile's `##` sections and typed links; both are optional; Faction membership is zero-to-many and universe-scoped |
 | `factions` | `name`, `slug`, `summary`, `description`, `universe_id`, `photo_id`, `deleted_at` | flat, universe-scoped profile; summary is one plain line, description is Markdown with the profile's `##` sections and typed links; both are optional |
 | `faction_relationships` | `universe_id`, `from_faction_id`, `to_faction_id`, optional `name`, `description`, `from_date`, `to_date`, `slug`, `photo_id`, `deleted_at` | directed Faction-to-Faction link; endpoints must be distinct and in the same Universe; a reverse link is a separate record; the dates are a `TemporalInterval` |
-| `locations` | `name`, `description`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; the description is the whole Markdown profile, described in [features/locations.md](features/locations.md) |
+| `locations` | `name`, `summary`, `description`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; the summary is one plain line and the description is the whole Markdown profile, described in [features/locations.md](features/locations.md) |
 | `routes` | `universe_id`, `from_location_id`, `to_location_id`, optional `name`, `description`, optional free-form `distance` and `duration`, `slug`, `photo_id`, `deleted_at` | directional path between two Locations; both endpoints must belong to the same Universe; not hierarchical or positioned |
 | `canon_rules` | `universe_id` FK (NOT NULL), optional `story_id` FK, `name` (model-required), `slug` (model-required), optional `category`, optional `canon_type`, `statement` (NOT NULL), optional `source`, `deleted_at` | one rule the fiction obeys; no story means universe-wide, a story means that Story owns it; the Story must belong to the same Universe (application validation); the name is the short title, the slug is the stable address and is unique among the Universe's live rules, the optional category names the source area, and the optional canon type is `locked`/`rule`/`consequence`/`open`; `name` and `slug` are nullable in the table because existing rows are re-imported rather than backfilled; no hierarchy, position, tags, or photo — see [features/canon.md](features/canon.md) and [ADR 0045](adr/0045-a-canon-rule-has-a-name-and-a-stable-slug.md) |
-| `items` | `name`, `description`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; the description is the whole Markdown profile, described in [features/items.md](features/items.md) |
+| `items` | `name`, `summary`, `description`, `slug`, `parent_id`, `position`, `universe_id`, `photo_id`, `deleted_at` | hierarchical and positioned; the summary is one plain line and the description is the whole Markdown profile, described in [features/items.md](features/items.md) |
 | `events` | `title`, `name`, `description`, `slug`, `start_datetime`, `end_datetime`, `before_event_id`, `after_event_id`, `simultaneous_event_id` (all self-FKs), `parent_id`, `position`, `universe_id` | identity is title-driven; `has_many :scene_events, dependent: :destroy` and `has_many :scenes, through: :scene_events`; the datetimes are a `TemporalInterval` |
 | `relations` | `character1_id`, `character2_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |
 | `ownerships` | `character_id`, `item_id` (NOT NULL FKs), `name` (optional), `description`, `from_date`, `to_date`, `slug`, `universe_id` | **no** `parent_id`, **no** `position`; the dates are a `TemporalInterval` |

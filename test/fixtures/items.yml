@@ -6,6 +6,7 @@ item_one:
   slug: "item-one"
   universe: universe_one
   item_tags: item_tag_one
+  summary: "A brass key for the sealed gate."
   description: "A brass key that opens the sealed gate."
 
 item_two:

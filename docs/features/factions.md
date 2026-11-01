@@ -29,9 +29,11 @@ records; they do not have `parent_id` or `position`.
 
 Factions are managed at `/u/:universe_slug/factions`, with a list, a modal editor, and a read-only
 details page at `/u/:universe_slug/factions/:id`. Create, edit, and delete use the JSON modal contract.
-A writer's details page carries an **Edit faction** control that opens the same modal. Deletion is a
-soft delete, so restoring a Faction also restores its tag assignments. Factions carry the same
-optional Photo and Discussion support as other universe content.
+The editor presents its fields in that reading order after the name — tags, photo, short summary,
+description — in the same wide, scrollable modal the other flat-list workspaces use. A writer's
+details page carries an **Edit faction** control that opens the same modal. Deletion is a soft
+delete, so restoring a Faction also restores its tag assignments. Factions carry the same optional
+Photo and Discussion support as other universe content.
 
 ## Characters in a Faction
 

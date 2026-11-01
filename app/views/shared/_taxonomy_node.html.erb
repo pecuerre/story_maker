@@ -11,6 +11,10 @@
     rename is cancelled. The server formats it, so JavaScript never has to
     pluralize anything. %>
 <% record_count = details_count&.call(node) %>
+<%# The row's second line is the record's short summary when it has one, and
+    its description otherwise. The raw description still travels separately
+    because the editor prefills its textarea from it. %>
+<% row_description = taxonomy_row_description(node) %>
 
 <li class="taxonomy-node"
   <% if editable %>
@@ -25,6 +29,7 @@
   <% end %>
   data-name="<%= node.name %>"
   data-description="<%= node.description %>"
+  data-row-description="<%= row_description %>"
   <% if record_count %>
     data-record-count-label="<%= record_count_text(record_count, details_count_label) %>"
   <% end %>
@@ -60,8 +65,8 @@
             <span class="entity-description d-block text-break"><%= t("shared.taxonomy_node.parent", name: parent.name) %></span>
           <% end %>
           <%= record_count_badge(record_count, details_count_label) %>
-          <% if node.description.present? %>
-            <span class="entity-description d-block"><%= node.description %></span>
+          <% if row_description.present? %>
+            <span class="entity-description d-block"><%= row_description %></span>
           <% end %>
         <% end %>
       <% else %>
@@ -78,8 +83,8 @@
             <span class="entity-description d-block text-break"><%= t("shared.taxonomy_node.parent", name: parent.name) %></span>
           <% end %>
           <%= record_count_badge(record_count, details_count_label) %>
-          <% if node.description.present? %>
-            <span class="entity-description d-block"><%= node.description %></span>
+          <% if row_description.present? %>
+            <span class="entity-description d-block"><%= row_description %></span>
           <% end %>
         </span>
       <% end %>

@@ -232,50 +232,6 @@ triaged into this list.
    printed book:** a reference should most likely read as the record's name with no link, and it must
    say how the Markdown description appendix should read once references are handled there too.
 
-
-84. in the faction modal form
-- i don't see the description there
-- reorganize the fields
-  - name
-  - tags
-  - photo
-  - short summary
-  - decription
-- the save button is missing
-
-85. for location model include a short summary field
-
-86. in the locations list view
-- show only the short summary (like characters and factions)
-- script the links like in characters and factions
-
-
-88. in the locations modal form
-- increase the width (like factions)
-- reorganize the fields
-  - name
-  - parent
-  - tags
-  - photo
-  - short summary
-  - description
-
-89. in the item model add a short summary field
-
-90. in the item list view
-- show only the short summary
-- strip the links
-
-
-92. in the item modal form
-- increase the width (like factions)
-- reorganize the fields
-  - name
-  - tags
-  - photo
-  - short summary
-  - description
-
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is

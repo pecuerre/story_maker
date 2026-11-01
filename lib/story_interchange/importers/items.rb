@@ -1,9 +1,10 @@
 module StoryInterchange
   module Importers
-    # A `tech/` file is an Item, not a new record kind. It keeps only the fields
-    # its record has columns for: a name, its place in the hierarchy, and one
-    # Markdown description carrying every `##` section the source wrote, in
-    # source order.
+    # A `tech/` file is an Item, not a new record kind. The import writes the
+    # name, the place in the hierarchy, and one Markdown description carrying
+    # every `##` section the source wrote, in source order. A `Short summary`
+    # section therefore stays in the description rather than filling the
+    # record's own summary column.
     #
     # The current file keeps only `name` and `slug` in frontmatter; `type`,
     # `invented_by`, `status`, and `backlog` are body data under `## Information`,

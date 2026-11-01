@@ -3,6 +3,7 @@
   slug: winden
   location_tags: [ LocationTag.town ]
   photo: Photo.winden
+  summary: The town at the center of the knot, where every family's choices echo across cycles.
   description: |
     The town at the center of the knot, where every family's choices echo across
     cycles.
@@ -17,6 +18,7 @@
   slug: jonas_house
   location_tags: [ LocationTag.house ]
   parent: Location.winden
+  summary: The Kahnwald family home, with Jonas's room and the attic studio above it.
   description: |
     A narrow two-storey family house with a steep roof and a converted attic.
 
@@ -53,6 +55,7 @@
   name: Winden Cave
   location_tags: [ LocationTag.cave ]
   parent: Location.winden
+  summary: The cave above Winden where the passage opens, and where [[character:jonas]] learns what [[canon:K1]] costs.
   description: |
     The cave in the forest above Winden, where the passage opens and the cycle
     turns again.
@@ -78,6 +81,7 @@
   name: Winden Forest
   location_tags: [ LocationTag.forest ]
   parent: Location.winden
+  summary: The pines above Winden, where the cave mouth hides in the rock.
   description: |
     The pines above Winden, where the cave mouth hides in the rock.
 

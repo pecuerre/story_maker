@@ -12,7 +12,7 @@
 #
 # Query contract for `GET /u/:universe_slug/locations`:
 #
-#   `q`                free text over the location name and description
+#   `q`                free text over the location name, summary, and description
 #   `location_tag_id`  a Location Tag of this universe: a tag a reader can pick
 #
 # `location_tags` is every tag of the universe, **not** the assignable subset the
@@ -49,7 +49,7 @@ class LocationFilter < ListFilter
   def apply(relation)
     relation = narrowed_by_tag(relation, location_tag)
     relation = narrowed_by_text(relation, table: "locations",
-      columns: %w[ name description ])
+      columns: %w[ name summary description ])
     relation
   end
 

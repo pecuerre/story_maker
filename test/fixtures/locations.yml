@@ -3,6 +3,7 @@ location_one:
   name: Location one
   location_tags: location_tag_one
   slug: "location-one"
+  summary: "A keep on the coast watched by [[character:character-one]]."
   description: "A keep on the coast."
 
 location_two:

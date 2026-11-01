@@ -34,11 +34,12 @@ class ItemFilterTest < ActiveSupport::TestCase
     assert_equal [ "Item one", "Item two" ], apply(filter).map(&:name)
   end
 
-  test "free text matches the name or the description, ignoring case" do
-    @item_one.update!(description: "The keeper of the gate")
+  test "free text matches the name, summary, or description, ignoring case" do
+    @item_one.update!(summary: "The keeper of the gate", description: "A brass key")
 
     assert_equal [ "Item one" ], apply(filter_for(q: "keeper")).map(&:name)
     assert_equal [ "Item one" ], apply(filter_for(q: "KEEPER")).map(&:name), "a search box ignores case"
+    assert_equal [ "Item one" ], apply(filter_for(q: "brass")).map(&:name), "the description is searched too"
     assert_equal [ "Item two" ], apply(filter_for(q: "Item two")).map(&:name)
     assert_empty apply(filter_for(q: "Item tag one")).map(&:name), "a tag is not searchable text"
   end

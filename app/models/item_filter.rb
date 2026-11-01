@@ -14,7 +14,7 @@
 #
 # Query contract for `GET /u/:universe_slug/items`:
 #
-#   `q`            free text over the item name and description
+#   `q`            free text over the item name, summary, and description
 #   `item_tag_id`  an Item Tag of this universe: a tag a reader can pick
 #   `sort`         one of `SORTS`, which is an allowlist rather than an order
 #
@@ -77,7 +77,7 @@ class ItemFilter < ListFilter
   def apply(relation)
     relation = narrowed_by_tag(relation, item_tag)
     relation = narrowed_by_text(relation, table: "items",
-      columns: %w[ name description ])
+      columns: %w[ name summary description ])
     sorted(relation)
   end
 

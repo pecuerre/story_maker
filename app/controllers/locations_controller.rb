@@ -91,10 +91,11 @@ class LocationsController < ApplicationController
     @location = Current.universe.locations.find(params.expect(:id))
   end
 
-  # The editor's own fields. The profile lives in `description`, which the
-  # details page renders as Markdown, so there are no separate answer keys here.
+  # The editor's own fields. The full profile lives in `description`, which the
+  # details page renders as Markdown, so there are no separate answer keys here;
+  # `summary` is the one-line glance shown before it.
   def location_params
-    params.expect(location: [ *photo_params, :name, :description,
+    params.expect(location: [ *photo_params, :name, :summary, :description,
       { location_tag_ids: [] }, :parent_id, :position ])
   end
 
@@ -106,6 +107,7 @@ class LocationsController < ApplicationController
     {
       id: @location.id,
       name: @location.name,
+      summary: @location.summary,
       description: @location.description,
       location_tag_ids: @location.location_tag_ids,
       parent_id: @location.parent_id,

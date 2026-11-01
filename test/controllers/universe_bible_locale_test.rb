@@ -161,6 +161,9 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     # The tree names its own empty state from the model param, not from a
     # hand-written string, and this workspace has no separate empty title.
     assert_select ".taxonomy-node", 2
+    # The editor's labels are serialized for the browser-built modal, so the
+    # summary's chrome crosses that boundary already translated too.
+    assert_includes taxonomy_modal_fields.map { |field| field["label"] }, "Resumen breve"
 
     location = locations(:location_one)
     Location.create!(universe: @universe, name: "Hijo", parent: location)
@@ -288,6 +291,7 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Objetos"
     assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir objeto"
     assert_select "label[for=item_item_tag_ids]", text: "Etiquetas de objetos"
+    assert_select "label[for=item_summary]", text: "Resumen breve"
     assert_select "label[for=item_description]", text: "Descripción"
     assert_select "input[type=submit][value=?]", "Guardar objeto"
     assert_select "nav.content-tabs a", text: "Propiedades"

@@ -42,8 +42,9 @@ class Api::LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ location_tags(:location_tag_one).id ], body["location_tag_ids"]
     assert_nil body["parent_id"]
     assert_equal locations(:location_one).position, body["position"]
+    assert_equal locations(:location_one).summary, body["summary"]
     assert_equal locations(:location_one).description, body["description"]
-    assert_equal %w[id name description location_tag_ids parent_id position].sort, body.keys.sort
+    assert_equal %w[id name summary description location_tag_ids parent_id position].sort, body.keys.sort
   end
 
   test "a token issued for one universe is refused on another" do

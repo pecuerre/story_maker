@@ -12,16 +12,18 @@ class ItemTest < ActiveSupport::TestCase
     assert Item.create!(universe: universes(:universe_one), name: "Untagged")
   end
 
-  test "the search body is the description" do
+  test "the search body is the summary and the description" do
     item = Item.new(universe: universes(:universe_one), name: "The Gate Key",
+      summary: "A brass key for the sealed gate.",
       description: "## What it does\n\nA brass key that opens the sealed gate.")
 
-    assert_equal item.description, item.search_description
+    assert_equal "A brass key for the sealed gate. ## What it does\n\nA brass key that opens the sealed gate.",
+      item.search_description
   end
 
-  test "a blank description is left out of the search body rather than joined as empty words" do
+  test "a blank description and summary are left out of the search body rather than joined as empty words" do
     item = Item.create!(universe: universes(:universe_one), name: "Empty Key")
 
-    assert_nil item.search_description
+    assert_empty item.search_description
   end
 end

@@ -35,16 +35,18 @@ class LocationTest < ActiveSupport::TestCase
     assert_equal universes(:universe_two).id, location.reload.universe_id
   end
 
-  test "the search body is the description" do
+  test "the search body is the summary and the description" do
     location = Location.new(universe: universes(:universe_one), name: "The Keep",
+      summary: "An old keep on the coast.",
       description: "## Sensory\n\nAn old keep that smells of pipeweed.")
 
-    assert_equal location.description, location.search_description
+    assert_equal "An old keep on the coast. ## Sensory\n\nAn old keep that smells of pipeweed.",
+      location.search_description
   end
 
-  test "a blank description is left out of the search body rather than joined as empty words" do
+  test "a blank description and summary are left out of the search body rather than joined as empty words" do
     location = Location.create!(universe: universes(:universe_one), name: "Empty Keep")
 
-    assert_nil location.search_description
+    assert_empty location.search_description
   end
 end

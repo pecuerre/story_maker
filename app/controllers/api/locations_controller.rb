@@ -23,6 +23,7 @@ class Api::LocationsController < Api::BaseController
       {
         id: location.id,
         name: location.name,
+        summary: location.summary,
         description: location.description,
         location_tag_ids: location.location_tag_ids,
         parent_id: location.parent_id,

@@ -391,6 +391,17 @@ module ApplicationHelper
     MarkdownDescription.new(Current.universe, record.try(:summary)).as_plain_text
   end
 
+  # The one line a taxonomy tree row prints below its name. A content record
+  # with a short summary shows **only** that summary, reduced to plain text: a
+  # Location row is a glance, and the full profile belongs to the details page.
+  # A tag taxonomy has no summary, so its description is the row's line. `nil`
+  # means the row has no second line, which is different from an empty one.
+  def taxonomy_row_description(record)
+    return record.description unless record.respond_to?(:summary)
+
+    summary_text(record).presence
+  end
+
   private
     # `key?` rather than a truthy test in both memos: "cannot write" and "no access
     # level" are answers this render repeats as often as the positive ones, and a

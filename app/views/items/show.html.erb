@@ -1,8 +1,9 @@
 <% content_for :title, @item.name %>
 <%# An Item with no description keeps the identity card exactly as every other
     record's card is: the wide prose block exists only when there is prose to
-    read. The description is Markdown, so its `##` sections and its
-    `[[kind:slug]]` links are rendered by the shared dialect. %>
+    read. The summary is one plain line at the top, with its references linked;
+    the description is Markdown, so its `##` sections and its `[[kind:slug]]`
+    links are rendered by the shared dialect. %>
 <% description_facts = if @item.description.present?
   [ detail_fact(t("items.show.facts.description"), markdown_description_html(@item)) ]
 else
@@ -21,7 +22,7 @@ end %>
     record: @item,
     eyebrow: t("sidebar.universe_bible"),
     label: t("items.show.label"),
-    description: "",
+    description: summary_html(@item),
     facts: [
       detail_fact(t("items.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
       detail_fact(t("items.show.facts.tags"), entity_tag_badge(@item), blank: t("items.show.facts.tags_blank")),

@@ -27,8 +27,9 @@
         <span class="entity-title"><%= draft_pending_record_label(record) %></span>
         <%= entity_tag_badge(record) %>
         <%= render "shared/draft_pending_badge", record: record %>
-        <% if record.description.present? %>
-          <span class="entity-description d-block"><%= record.description %></span>
+        <% row_description = taxonomy_row_description(record) %>
+        <% if row_description.present? %>
+          <span class="entity-description d-block"><%= row_description %></span>
         <% end %>
       </span>
     </span>

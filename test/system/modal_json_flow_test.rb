@@ -48,6 +48,26 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     end
   end
 
+  test "the faction editor is one wide form in the workspace's field order" do
+    sign_in_via_form(@user)
+    visit universe_factions_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+
+    click_button "Add faction"
+    within ".modal.show" do
+      assert_selector ".modal-dialog.modal-lg"
+      assert_equal [ "Name", "Faction tags", "Photo", "Short summary", "Description" ],
+        all(".modal-body label").map(&:text)
+      # The description is the last field of a scrolling body, so the footer's
+      # Save must stay above the bottom of the dialog rather than being pushed
+      # past it by the form.
+      dialog = find(".modal-dialog").rect
+      save = find("[data-modal-form-target='submit']").rect
+      assert_operator save.y + save.height, :<=, dialog.y + dialog.height
+      assert_selector "input[type=file]", count: 1
+    end
+  end
+
   test "a modal create saves through JSON and refreshes the list and its counts" do
     sign_in_via_form(@user)
     visit universe_characters_path(universe_slug: @universe.slug)

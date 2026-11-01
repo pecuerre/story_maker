@@ -15,6 +15,7 @@
   slug: the_shire
   location_tags: [ LocationTag.region ]
   parent: Location.eriador
+  summary: A quiet land the wider world has largely forgotten, and the place the Ring leaves first.
   description: |
     A quiet land the wider world has largely forgotten, and the place the Ring
     leaves first.
@@ -31,6 +32,7 @@
 - universe: Universe.lotr
   name: Hobbiton
   slug: hobbiton
+  summary: The Shire village of the Baggins family, with Bag End above the mill.
   description: |
     The Shire village of the Baggins family.
 
@@ -48,6 +50,7 @@
   slug: rivendell
   location_tags: [ LocationTag.stronghold ]
   parent: Location.eriador
+  summary: A refuge where the council decides the fate of the Ring, hidden in a gorge beneath the mountains.
   description: |
     A refuge where the council decides the fate of the Ring. [[canon:K1]] is
     argued here before [[character:frodo-baggins]] carries the Ring south.
@@ -70,6 +73,7 @@
   slug: moria
   location_tags: [ LocationTag.stronghold ]
   parent: Location.eriador
+  summary: The ancient Dwarf city beneath the Misty Mountains, now held by Orcs and the Balrog.
   description: |
     The ancient Dwarf city beneath the Misty Mountains.
 

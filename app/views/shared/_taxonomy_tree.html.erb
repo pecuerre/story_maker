@@ -47,6 +47,10 @@ end %>
 
 <div class="taxonomy-tree"
   <% if editable %>data-controller="taxonomy-tree"<% end %>
+  <%# The tree controller builds the editor dialog, so a caller that wants the
+      wide record dialog names its class here. An empty value keeps the narrow
+      default a tag taxonomy wants. %>
+  data-modal-dialog-class="<%= local_assigns[:modal_dialog_class] %>"
   data-taxonomy-tree-model-param-value="<%= model_param %>"
   <% if editable %>
     data-taxonomy-tree-create-url-value="<%= create_url %>"

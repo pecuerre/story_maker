@@ -3,6 +3,7 @@
   name: "Jonas Key"
   item_tags: [ ItemTag.key ]
   slug: "jonas_key"
+  summary: "The small key that opens the cave-mouth grate."
   description: |
     The small key Jonas carries through the cave.
 
@@ -35,6 +36,7 @@
   item_tags: [ ItemTag.time_machine ]
   slug: "tannhaus_clockwork_device"
   photo: Photo.the_tannhaus
+  summary: "A clockmaker's apparatus that runs a cycle of time."
   description: |
     A clockmaker's apparatus that runs a cycle of time.
 
@@ -74,6 +76,7 @@
   name: "St Christopher Medal"
   item_tags: [ ItemTag.medal ]
   slug: "st_christopher_medal"
+  summary: "A traveller's medal passed between the families."
   description: |
     A traveller's medal passed between the families.
 
@@ -97,6 +100,7 @@
   name: "Sphere Machine"
   item_tags: [ ItemTag.time_machine ]
   slug: "sphere_machine"
+  summary: "A sphere-shaped machine built to move between cycles."
   description: |
     A sphere-shaped machine built to move between cycles.
 
@@ -132,6 +136,7 @@
   name: "The God Particle"
   item_tags: [ ItemTag.time_machine ]
   slug: "the_god_particle"
+  summary: "The unstable particle at the centre of the cycle."
   description: |
     The unstable particle at the centre of the cycle.
 

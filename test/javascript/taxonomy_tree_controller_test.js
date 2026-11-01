@@ -441,6 +441,47 @@ describe("taxonomy row building", () => {
     expect(trigger.textContent).toContain("(4 characters)")
     expect(document.activeElement).toBe(trigger)
   })
+
+  test("a rebuilt row shows the server's summary line rather than the description", () => {
+    // A Location row shows its short summary; a tag row shows its description.
+    // The server sends the exact line as `rowDescription`, so cancelling a
+    // rename must restore the same text the page rendered.
+    const { controller, host } = build()
+
+    const trigger = controller.buildNameTrigger({
+      name: "Winden",
+      rowDescription: "The town at the center of the knot.",
+      description: "The full profile."
+    })
+    host.append(trigger)
+
+    expect(trigger.querySelector(".entity-description").textContent).toBe("The town at the center of the knot.")
+  })
+
+  test("an empty summary line keeps the row to one line, not the description", () => {
+    const { controller, host } = build()
+
+    const trigger = controller.buildNameTrigger({ name: "Winden", rowDescription: "", description: "The full profile." })
+    host.append(trigger)
+
+    expect(trigger.querySelector(".entity-description")).toBeNull()
+  })
+
+  test("the editor dialog takes the class the page names", () => {
+    const node = document.createElement("li")
+    node.dataset.nodeId = "1"
+    node.dataset.name = "Winden"
+    node.dataset.updateUrl = "/u/dark/locations/1"
+
+    const narrow = build().controller.buildModal(node)
+    expect(narrow.querySelector(".modal-dialog").classList.contains("modal-lg")).toBe(false)
+
+    const { controller } = build()
+    controller.element.dataset.modalDialogClass = "modal-dialog modal-lg modal-dialog-scrollable"
+    const wide = controller.buildModal(node)
+    expect(wide.querySelector(".modal-dialog").classList.contains("modal-lg")).toBe(true)
+    expect(wide.querySelector(".modal-dialog").classList.contains("modal-dialog-scrollable")).toBe(true)
+  })
 })
 
 // The editor is a second Bootstrap dialog of its own, and it had the same

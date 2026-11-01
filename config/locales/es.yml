@@ -2518,8 +2518,12 @@ es:
     save: "Guardar objeto"
     form:
       name: "Nombre"
-      description: "Descripción"
       tags_label: "Etiquetas de objetos"
+      summary: "Resumen breve"
+      summary_hint: "Una línea que el lector ve en la lista y al principio de la página de detalles."
+      description: "Descripción"
+      description_hint: "Markdown. Usa ## para un encabezado de sección, **negrita** para dar énfasis, y listas o tablas cuando ayuden."
+      description_reference_hint: "Enlaza otro registro con [[character:slug]], [[faction:slug]], [[location:slug]] o [[item:slug]]."
     empty_title: "Todavía no hay objetos"
     empty_writable_description: "Los objetos pertenecen al universo y sirven para seguir objetos, recursos y propiedades a lo largo de todas las historias. Añade el primero para empezar."
     empty_read_only_description: "Los objetos pertenecen al universo y los comparten todas sus historias."
@@ -2536,7 +2540,7 @@ es:
       title: "Buscar objetos"
       description: "Un universo puede tener cientos de objetos. Reduce la lista por texto o por una etiqueta de objeto, y elige el orden. Filtrar y ordenar solo cambian lo que muestra esta página; ninguno cambia ningún registro."
       search_label: "Buscar"
-      search_placeholder: "Nombre o descripción"
+      search_placeholder: "Nombre, resumen o descripción"
       tag_label: "Etiqueta de objeto"
       all_tags: "Todas las etiquetas de objetos"
       sort_label: "Orden"
@@ -2810,6 +2814,7 @@ es:
   # se resuelven en cada petición con `ModalFields#modal_field`.
   modal_fields:
     name: "Nombre"
+    summary: "Resumen breve"
     description: "Descripción"
     background_color: "Color de fondo"
     foreground_color: "Color de texto"
@@ -3137,6 +3142,7 @@ es:
         to_date: "Hasta"
       location:
         name: "Nombre"
+        summary: "Resumen breve"
         description: "Descripción"
         parent: "Lugar padre"
         location_tags: "Etiquetas de lugares"
@@ -3177,6 +3183,7 @@ es:
         event_tags: "Etiquetas de sucesos"
       item:
         name: "Nombre"
+        summary: "Resumen breve"
         description: "Descripción"
         parent: "Objeto padre"
         item_tags: "Etiquetas de objetos"

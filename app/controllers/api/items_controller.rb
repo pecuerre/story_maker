@@ -23,6 +23,7 @@ class Api::ItemsController < Api::BaseController
       {
         id: item.id,
         name: item.name,
+        summary: item.summary,
         description: item.description,
         item_tag_ids: item.item_tag_ids,
         parent_id: item.parent_id,

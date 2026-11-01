@@ -24,11 +24,18 @@ class Item < ApplicationRecord
 
   validates :name, presence: true
 
-  # Everything the search engine should find on this Item. The description is
-  # the whole profile: its `##` sections carry what the separate what-it-does,
-  # origin, constraints, and jargon columns used to hold, so a reader can still
-  # find an object by what it does, where it came from, or what it cannot do.
+  # The short summary is one line of plain text and is never rendered as
+  # Markdown, but it may carry the same `[[kind:slug]]` references the
+  # description does: the details page links them and a list row names them
+  # without a link. The description is Markdown and is rendered by
+  # `MarkdownDescription` when a page shows it. Both are part of the record's
+  # search body, so a reader can find an object by what its profile says.
+  #
+  # The description is the whole profile: its `##` sections carry what the
+  # separate what-it-does, origin, constraints, and jargon columns used to hold,
+  # so a reader can still find an object by what it does, where it came from, or
+  # what it cannot do.
   def search_description
-    description
+    [ summary, description ].compact_blank.join(" ")
   end
 end

@@ -45,12 +45,15 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "should create location as json" do
     assert_difference("Location.count") do
       post universe_locations_url(universe_slug: @universe.slug),
-        params: { location: { name: "New location", description: "A description", location_tag_ids: [ @location_tag.id ] } },
+        params: { location: { name: "New location", summary: "A short summary", description: "A description",
+          location_tag_ids: [ @location_tag.id ] } },
         as: :json
     end
 
     assert_response :created
     assert_equal [ @location_tag.id ], response.parsed_body["location_tag_ids"]
+    assert_equal "A short summary", response.parsed_body["summary"]
+    assert_equal "A short summary", Location.order(:id).last.summary
     assert_equal "A description", Location.order(:id).last.description
   end
 
@@ -79,16 +82,22 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal location.description, response.parsed_body["description"]
   end
 
-  test "the tree serializes the editor fields without the old profile answers" do
+  test "the tree serializes the editor fields in reading order without the old profile answers" do
     get universe_locations_url(universe_slug: @universe.slug)
 
     assert_response :success
-    fields = JSON.parse(Nokogiri::HTML(response.body)
-      .at_css("[data-taxonomy-tree-modal-fields-value]")["data-taxonomy-tree-modal-fields-value"])
+    tree = Nokogiri::HTML(response.body).at_css("[data-taxonomy-tree-modal-fields-value]")
+    fields = JSON.parse(tree["data-taxonomy-tree-modal-fields-value"])
 
-    assert_equal %w[name description parent_id location_tag_ids photo], fields.map { |field| field["name"] }
+    assert_equal %w[name parent_id location_tag_ids photo summary description],
+      fields.map { |field| field["name"] }
     assert fields.none? { |field| field["name"].start_with?("sensory_", "layout_", "history_", "access_") }
+    assert_equal "textarea", fields.find { |field| field["name"] == "summary" }["type"]
     assert_equal "textarea", fields.find { |field| field["name"] == "description" }["type"]
+    # A Location's editor is the wide, scrollable dialog the flat-list record
+    # editors use, rather than the narrow one a tag taxonomy opens.
+    assert_equal "modal-dialog modal-lg modal-dialog-scrollable",
+      tree["data-modal-dialog-class"]
   end
 
   test "the details page renders the description as Markdown with record and canon links" do
@@ -136,12 +145,14 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update location details as json" do
     patch universe_location_url(universe_slug: @universe.slug, id: @location),
-      params: { location: { name: "Renamed", description: "Updated", location_tag_ids: [ @location_tag.id ] } },
+      params: { location: { name: "Renamed", summary: "Briefly", description: "Updated",
+        location_tag_ids: [ @location_tag.id ] } },
       as: :json
 
     assert_response :success
     @location.reload
-    assert_equal [ "Renamed", "Updated", [ @location_tag.id ] ], [ @location.name, @location.description, @location.location_tag_ids ]
+    assert_equal [ "Renamed", "Briefly", "Updated", [ @location_tag.id ] ],
+      [ @location.name, @location.summary, @location.description, @location.location_tag_ids ]
   end
 
   # The filter, and the three empty states. `LocationFilterTest` covers the
@@ -228,5 +239,43 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".taxonomy-node[data-node-id=?]", locations(:location_one).id do
       assert_select ".entity-description", text: /^in /, count: 0
     end
+  end
+
+  test "the tree row shows the short summary with references named but not linked" do
+    @location.update!(summary: "A keep watched by [[character:character-one]].", description: "The full profile.")
+
+    get universe_locations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".taxonomy-node[data-node-id=?]", @location.id do
+      assert_select ".entity-description", text: "A keep watched by Character one."
+      assert_select ".entity-description", text: /full profile/, count: 0
+      assert_select "a", text: "Character one", count: 0
+    end
+  end
+
+  test "a location with no summary shows no row line rather than its description" do
+    @location.update!(summary: nil, description: "The full profile.")
+
+    get universe_locations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".taxonomy-node[data-node-id=?]", @location.id do
+      assert_select ".entity-description", text: /full profile/, count: 0
+    end
+  end
+
+  test "the details page shows the short summary above the description and links its references" do
+    @location.update!(summary: "A keep watched by [[character:character-one]].",
+      description: "## History\n\nThe full profile.")
+
+    get universe_location_url(universe_slug: @universe.slug, id: @location)
+
+    assert_response :success
+    assert_select ".page-description", text: "A keep watched by Character one."
+    assert_select ".page-description a[href=?]",
+      universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+      text: "Character one"
+    assert_select ".detail-fact dd h2", text: "History"
   end
 end

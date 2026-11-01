@@ -31,7 +31,7 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
   # in `ItemFilterTest`; what a request can show and this cannot is the page
   # around it — the canonical URL, and what a filter does to the list.
   test "index renders a search area that narrows, orders, and stays in the URL" do
-    @item.update!(description: "The keeper of the gate")
+    @item.update!(summary: "The keeper of the gate")
 
     get universe_items_url(universe_slug: @universe.slug, q: "keeper", sort: "created")
 
@@ -42,6 +42,21 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_select ".item-filter", text: /Showing 1 item of 2 items/
     assert_equal [ @item.name ], listed_item_names
+  end
+
+  test "index rows show only the summary, with references reduced to names" do
+    @item.update!(
+      summary: "A key tied to [[character:character-one]].",
+      description: "The full profile belongs on the details page."
+    )
+
+    get universe_items_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".entity-title", text: @item.name
+    assert_select ".entity-description", text: "A key tied to Character one."
+    assert_select ".entity-description a", count: 0
+    assert_select ".entity-description", text: /full profile/, count: 0
   end
 
   test "index orders the whole list by the reader's choice" do
@@ -193,12 +208,13 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
   test "should create item as json" do
     assert_difference("Item.count") do
       post universe_items_url(universe_slug: @universe.slug),
-        params: { item: { name: "New item", description: "A description", item_tag_ids: [ @item_tag.id ] } },
+        params: { item: { name: "New item", summary: "A short glance", description: "A description", item_tag_ids: [ @item_tag.id ] } },
         as: :json
     end
 
     assert_response :created
     assert_equal [ @item_tag.id ], response.parsed_body["item_tag_ids"]
+    assert_equal "A short glance", response.parsed_body["summary"]
     assert_equal "A description", Item.order(:id).last.description
   end
 
@@ -227,12 +243,16 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal item.description, response.parsed_body["description"]
   end
 
-  test "the details page renders the description as Markdown with record and canon links" do
+  test "the details page renders the summary with links and the description as Markdown" do
+    @item.update!(summary: "The key [[character:character-one]] carries.")
     @item.update!(description: "## History\n\nThe key links [[character:character-one]] and [[canon:K1]].")
 
     get universe_item_url(universe_slug: @universe.slug, id: @item)
 
     assert_response :success
+    assert_select ".page-description a[href=?]",
+      universe_character_path(universe_slug: @universe.slug, id: characters(:character_one)),
+      text: "Character one"
     assert_select "dt", text: "Description"
     assert_select ".detail-fact dd h2", text: "History"
     assert_select ".detail-fact dd a[href=?]",
@@ -304,12 +324,13 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update item details as json" do
     patch universe_item_url(universe_slug: @universe.slug, id: @item),
-      params: { item: { name: "Renamed", description: "Updated", item_tag_ids: [ @item_tag.id ] } },
+      params: { item: { name: "Renamed", summary: "Updated glance", description: "Updated", item_tag_ids: [ @item_tag.id ] } },
       as: :json
 
     assert_response :success
     @item.reload
-    assert_equal [ "Renamed", "Updated", [ @item_tag.id ] ], [ @item.name, @item.description, @item.item_tag_ids ]
+    assert_equal [ "Renamed", "Updated glance", "Updated", [ @item_tag.id ] ],
+      [ @item.name, @item.summary, @item.description, @item.item_tag_ids ]
   end
 
   private

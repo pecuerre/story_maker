@@ -230,9 +230,10 @@ top-level and the tree is the operator's.
 
 ### Item
 
-A `tech/` file is an Item, not a new record kind. An Item keeps only the fields its record has
-columns for: a name, its place in the hierarchy, and one Markdown description carrying every `##`
-section the source wrote, in source order.
+A `tech/` file is an Item, not a new record kind. An Item keeps a name, its place in the hierarchy,
+a short summary, and one Markdown description. The import writes the name, the hierarchy, and the
+description: every `##` section the source wrote lands in the description, including
+`Short summary`, in source order.
 
 The current source keeps only `name` and `slug` in an Item's frontmatter and writes type, invented
 by, status, and backlog as labelled bullets under `## Information`, so they stay in the description.

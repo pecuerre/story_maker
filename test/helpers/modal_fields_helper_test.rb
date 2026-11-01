@@ -50,7 +50,7 @@ class ModalFieldsHelperTest < ActionView::TestCase
   # is about to replace.
   SERIALIZED_KEYS = {
     "character" => %w[name pronouns aliases summary description character_tag_ids faction_ids photo_url],
-    "item" => %w[name description item_tag_ids photo_url],
+    "item" => %w[name summary description item_tag_ids photo_url],
     "event" => %w[title start_datetime end_datetime before_event_id after_event_id
                   simultaneous_event_id description event_tag_ids photo_url],
     "relation" => %w[name character1_id character2_id relation_tag_ids description
@@ -213,21 +213,28 @@ class ModalFieldsHelperTest < ActionView::TestCase
     end
   end
 
-  test "the two nested-record editors share the same core descriptors" do
+  test "the two nested-record editors share descriptors, and a Location reads a summary" do
     # Location and Section are the two editors that carry a parent selector and a
-    # tag selector, and they are hand-maintained separately. They must stay the
-    # same editor apart from which taxonomy the selector reads: the two pages
-    # share one reader, one tree, and one photo widget.
+    # tag selector, and they are hand-maintained separately. They share one
+    # reader, one tree, and one photo widget, but a Location now carries a short
+    # summary before its full profile, so its reading order is its own.
     locations = location_taxonomy_fields([])
     sections = section_taxonomy_fields([])
 
-    assert_equal %w[name description parent_id], locations.first(3).map { |field| field[:name] }
-    assert_equal locations.first(3), sections.first(3)
-    assert_equal "location_tag_ids", locations[3][:name]
+    assert_equal %w[name parent_id location_tag_ids photo summary description],
+      locations.map { |field| field[:name] }
+    assert_equal %w[name description parent_id section_tag_ids photo],
+      sections.map { |field| field[:name] }
+
+    assert_equal sections[0], locations[0], "the name field is the same descriptor"
+    assert_equal sections[2], locations[1], "the parent selector is the same descriptor"
+    assert_equal sections[4], locations[3], "the photo widget is the same descriptor"
+    assert_equal sections[1], locations[5], "the description is the same descriptor"
+    assert_equal "location_tag_ids", locations[2][:name]
     assert_equal "section_tag_ids", sections[3][:name]
-    assert_equal locations[4], sections[4], "the photo widget is the same descriptor"
-    assert_equal 5, locations.size, "Location has no profile textareas beyond the shared editor"
-    assert_nil sections[5], "Section has no profile fields"
+    assert_equal I18n.t("modal_fields.summary"), locations[4][:label]
+    assert_equal 6, locations.size, "Location's summary is the one profile textarea it adds"
+    assert_equal 5, sections.size, "Section has no profile summary"
 
     [ locations, sections ].each do |fields|
       selector = fields.find { |field| field[:type] == "select" && field[:multiple] }

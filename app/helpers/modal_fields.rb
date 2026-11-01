@@ -187,6 +187,7 @@ module ModalFields
   def item_fields_json(item)
     {
       name: item.name,
+      summary: item.summary,
       description: item.description,
       item_tag_ids: item.item_tag_ids,
       photo_url: record_photo_url(item)
@@ -202,52 +203,71 @@ module ModalFields
   # Location and Section are the only two models with both a parent and a tag
   # assignment, so they are the only two editors with a parent selector beside a
   # tag selector. They were maintained separately and had to be kept in step by
-  # hand; they differ in two values and nothing else — which field carries the tag
-  # ids, and what that selector is called — so those are the only two arguments.
+  # hand; they differ in a few values and nothing else — which field carries the
+  # tag ids, what that selector is called, and whether the record has a short
+  # summary — so those are the only arguments.
+  #
+  # `profile_summary` adds the one-line summary a content record carries. A
+  # Location passes it and reads name, parent, tags, photo, summary, description,
+  # so its glance comes before its full profile; Section has no summary and keeps
+  # the shared order with the description after the name.
   #
   # `tags` and `parents` are the two per-call lists: the parent's own editor is
   # built from its siblings and its tag selector from its taxonomy's tags. The
   # option *value* is an id in both selectors, and the option *text* is the
   # author's own record name, so neither is translated — only the blank parent's
   # label and the two selectors' own labels are chrome.
-  def nested_record_taxonomy_fields(tags, parents = [], tag_field:, tag_label_key:, extra_fields: [])
-    [
-      {
-        name: "name",
-        label_key: "modal_fields.name",
-        type: "text",
-        required: true
-      },
-      {
-        name: "description",
-        label_key: "modal_fields.description",
-        type: "textarea"
-      },
-      {
-        name: "parent_id",
-        label_key: "modal_fields.parent",
-        type: "select",
-        options: taxonomy_parent_options(parents)
-      },
-      {
-        name: tag_field,
-        label_key: tag_label_key,
-        type: "select",
-        multiple: true,
-        options: tags.map { |tag| [ tag.id, tag.name ] }
-      },
-      photo_field,
-      *extra_fields
-    ].map { |field| modal_field(field) }
+  def nested_record_taxonomy_fields(tags, parents = [], tag_field:, tag_label_key:,
+    profile_summary: false, extra_fields: [])
+    name_field = {
+      name: "name",
+      label_key: "modal_fields.name",
+      type: "text",
+      required: true
+    }
+    description_field = {
+      name: "description",
+      label_key: "modal_fields.description",
+      type: "textarea"
+    }
+    parent_field = {
+      name: "parent_id",
+      label_key: "modal_fields.parent",
+      type: "select",
+      options: taxonomy_parent_options(parents)
+    }
+    tag_field_descriptor = {
+      name: tag_field,
+      label_key: tag_label_key,
+      type: "select",
+      multiple: true,
+      options: tags.map { |tag| [ tag.id, tag.name ] }
+    }
+    summary_field = {
+      name: "summary",
+      label_key: "modal_fields.summary",
+      type: "textarea"
+    }
+
+    fields = if profile_summary
+      [ name_field, parent_field, tag_field_descriptor, photo_field,
+        summary_field, description_field, *extra_fields ]
+    else
+      [ name_field, description_field, parent_field, tag_field_descriptor,
+        photo_field, *extra_fields ]
+    end
+
+    fields.map { |field| modal_field(field) }
   end
 
-  # The nested-record editor for a Location. Its profile lives in the shared
-  # Markdown `description`, so unlike its first version it adds no answer
-  # textareas after the photo.
+  # The nested-record editor for a Location. Its full profile lives in the
+  # shared Markdown `description`; the short summary is the one line the tree row
+  # and the top of the details page show before it.
   def location_taxonomy_fields(location_tags, locations = [])
     nested_record_taxonomy_fields(location_tags, locations,
       tag_field: "location_tag_ids",
-      tag_label_key: "modal_fields.location_tags")
+      tag_label_key: "modal_fields.location_tags",
+      profile_summary: true)
   end
 
   # The values one taxonomy node is prefilled from: one per descriptor, with a

@@ -109,10 +109,11 @@ class ItemsController < ApplicationController
     @item = Current.universe.items.find(params.expect(:id))
   end
 
-  # The editor's own fields. The profile lives in `description`, which the
-  # details page renders as Markdown, so there are no separate answer keys here.
+  # The editor's own fields. The full profile lives in `description`, which the
+  # details page renders as Markdown, and `summary` is the one-line glance shown
+  # before it, so there are no separate answer keys here.
   def item_params
-    params.expect(item: [ *photo_params, :name, :description,
+    params.expect(item: [ *photo_params, :name, :summary, :description,
       { item_tag_ids: [] }, :parent_id, :position ])
   end
 
@@ -124,6 +125,7 @@ class ItemsController < ApplicationController
     {
       id: @item.id,
       name: @item.name,
+      summary: @item.summary,
       description: @item.description,
       item_tag_ids: @item.item_tag_ids,
       parent_id: @item.parent_id,

@@ -68,8 +68,8 @@
               <% if item_historical_owners(item).present? %>
                 <div class="entity-description"><%= t("items.facts.historical_owners", owners: item_historical_owners(item)) %></div>
               <% end %>
-              <% if item.description.present? %>
-                <div class="entity-description"><%= item.description %></div>
+              <% if item.summary.present? %>
+                <div class="entity-description"><%= summary_text(item) %></div>
               <% end %>
             </div>
 

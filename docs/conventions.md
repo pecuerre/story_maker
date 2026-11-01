@@ -1454,9 +1454,11 @@ value objects, and the deletion contract are one feature with one home, in
     `event_tag_taxonomy_fields`, `section_tag_taxonomy_fields`, `scene_tag_taxonomy_fields`.
   - `*_taxonomy_fields(tags)` — content editors with tag selectors, e.g.
     `location_taxonomy_fields`, `section_taxonomy_fields`. Both delegate to one
-    `nested_record_taxonomy_fields(tags, parents, tag_field:, tag_label_key:)`, because Location and
-    Section are the only two models with a parent *and* a tag assignment and their editors are the
-    same editor apart from those two named values. Keeping them as two hand-written blocks meant
+    `nested_record_taxonomy_fields(tags, parents, tag_field:, tag_label_key:, profile_summary:)`,
+    because Location and Section are the only two models with a parent *and* a tag assignment and
+    their editors are the same editor apart from those named values. `profile_summary` adds the
+    short summary a content record carries and puts Location's fields in its own reading order;
+    Section has no summary and keeps the shared one. Keeping them as two hand-written blocks meant
     adding a field to one and not the other, which nothing but the two trees rendering differently
     would have shown.
   - `datetime_local_value(datetime)` — the one expression that turns a stored in-world datetime into

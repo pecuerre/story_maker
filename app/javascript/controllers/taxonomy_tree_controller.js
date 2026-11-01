@@ -269,7 +269,10 @@ export default class extends Controller {
     modal.setAttribute("aria-hidden", "true")
 
     const dialog = document.createElement("div")
-    dialog.className = "modal-dialog"
+    // The caller names the dialog's own classes, because a tag taxonomy wants
+    // the narrow default while a content record's editor opens wide like the
+    // flat-list record editors. No class means the narrow default.
+    dialog.className = this.element.dataset.modalDialogClass || "modal-dialog"
     const content = document.createElement("div")
     content.className = "modal-content"
     const header = document.createElement("div")
@@ -930,10 +933,15 @@ export default class extends Controller {
       fragment.append(count)
     }
 
-    if (data.description) {
+    // A content record's row shows its short summary and a tag taxonomy's shows
+    // its description; the server sends the exact line as `rowDescription`, so
+    // the rebuilt trigger matches what was rendered. A node from an older page
+    // without the attribute falls back to the description.
+    const rowDescription = data.rowDescription === undefined ? data.description : data.rowDescription
+    if (rowDescription) {
       const description = document.createElement("span")
       description.className = "entity-description d-block"
-      description.textContent = data.description
+      description.textContent = rowDescription
       fragment.append(description)
     }
     return fragment
@@ -949,7 +957,8 @@ export default class extends Controller {
     const values = this.parseJson(node.dataset.taxonomyValues, {})
     // Cancelling a rename puts back what the server rendered, not the text the
     // author was typing: a row must never show a name the database does not have.
-    const data = { ...values, name: values.name || node.dataset.name, description: node.dataset.description }
+    const data = { ...values, name: values.name || node.dataset.name, description: node.dataset.description,
+      rowDescription: node.dataset.rowDescription }
     // The server sends the already-formatted count text, so no pluralization is
     // duplicated here.
     if (node.dataset.recordCountLabel) data.recordCountLabel = node.dataset.recordCountLabel

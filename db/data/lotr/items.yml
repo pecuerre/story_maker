@@ -1,6 +1,7 @@
 - universe: Universe.lotr
   name: "The One Ring"
   slug: "one_ring"
+  summary: "The master Ring, forged in Mount Doom and carried to Mordor by [[character:frodo-baggins]]."
   description: |
     The master Ring of the Lord of the Rings.
 
@@ -43,6 +44,7 @@
 - universe: Universe.lotr
   name: "Sting"
   slug: "sting"
+  summary: "Frodo's Elvish blade, which glows blue when orcs are near."
   description: |
     Frodo's Elvish blade.
 
@@ -69,6 +71,7 @@
 - universe: Universe.lotr
   name: "Andúril"
   slug: "anduril"
+  summary: "The reforged Flame of the West, and Aragorn's claim to be king."
   description: |
     Flame of the West, reforged for Aragorn.
 
@@ -95,6 +98,7 @@
 - universe: Universe.lotr
   name: "Belthronding"
   slug: "belthronding"
+  summary: "Legolas's bow, strung with a single strand of his own hair."
   description: |
     Legolas's bow, strung with a single strand of his own hair.
 
@@ -105,6 +109,7 @@
 - universe: Universe.lotr
   name: "Ring of Barahir"
   slug: "ring_of_barahir"
+  summary: "The heirloom Ring of Barahir passed down to Aragorn."
   description: |
     The heirloom Ring of Barahir passed down to Aragorn.
 

@@ -17,7 +17,7 @@ end %>
   record: @location,
   eyebrow: t("sidebar.universe_bible"),
   label: t("locations.show.label"),
-  description: "",
+  description: summary_html(@location),
   facts: [
     detail_fact(t("locations.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
     detail_fact(t("locations.show.facts.tags"), entity_tag_badge(@location), blank: t("locations.show.facts.tags_blank")),

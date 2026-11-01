@@ -69,9 +69,10 @@ as the description, rendered one of two ways by `MarkdownDescription`:
 
 - at the top of the details page, a reference becomes the link; an unresolved reference stays
   written, exactly as in the description.
-- in a list row (the Character list, a Faction's affiliated Characters, and a remembered create's
-  pending row), a reference becomes the name of the record it names and is never a link: the row
-  already carries its own Details link, and a second one inside a two-line preview competes with it.
+- in a list row (the Character, Faction, and Item lists, a Faction's affiliated Characters, the
+  Locations tree row, and a remembered create's pending row), a reference becomes the name of the
+  record it names and is never a link: the row already carries its own Details link, and a second
+  one inside a two-line preview competes with it.
   A `rule` or `canon` reference keeps its ledger id here too, for the same reason it does in the
   description. An unresolved reference stays written there too, so a typo stays visible.
 

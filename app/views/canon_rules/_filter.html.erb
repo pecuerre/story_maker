@@ -1,0 +1,84 @@
+<%# The Canon search area. It is a GET form over the same canonical index URL,
+    so a filter is visible in the address, shareable, and removable in one
+    click. It narrows what the list shows and it orders it; it never writes.
+    Visible to every access level, because filtering is reading. %>
+<% filter = local_assigns.fetch(:filter) %>
+<% total = local_assigns.fetch(:total) %>
+<% shown = local_assigns.fetch(:shown) %>
+<% filters_path = universe_canon_rules_path %>
+
+<div class="content-surface canon-rule-filter p-3 p-md-4 mb-4">
+  <h2 class="h6 mb-1"><%= t("canon_rules.filter.title") %></h2>
+  <p class="text-body-secondary">
+    <%= t("canon_rules.filter.description") %>
+  </p>
+
+  <%= form_with url: filters_path, method: :get, class: "row g-2 align-items-end" do %>
+    <div class="col-12 col-lg">
+      <label class="form-label" for="canon_rule_filter_q"><%= t("canon_rules.filter.search_label") %></label>
+      <input type="search" class="form-control" id="canon_rule_filter_q" name="q"
+        value="<%= filter.text %>" placeholder="<%= t("canon_rules.filter.search_placeholder") %>" autocomplete="off">
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="canon_rule_filter_canon_type"><%= t("canon_rules.filter.canon_type_label") %></label>
+      <select class="form-select" id="canon_rule_filter_canon_type" name="canon_type">
+        <option value=""><%= t("canon_rules.filter.all_canon_types") %></option>
+        <% canon_type_options.each do |label, value| %>
+          <option value="<%= value %>"<%= " selected" if filter.canon_type == value %>><%= label %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="canon_rule_filter_owner_story_id"><%= t("canon_rules.filter.scope_label") %></label>
+      <select class="form-select" id="canon_rule_filter_owner_story_id" name="owner_story_id">
+        <option value=""><%= t("canon_rules.filter.all_scopes") %></option>
+        <%# The universe-wide rules have a null owner, so the select needs a value
+            of its own for them; `CanonRuleFilter` owns that sentinel. %>
+        <option value="<%= CanonRuleFilter::UNIVERSE_SCOPE %>"<%= " selected" if filter.universe_wide? %>><%= t("canon_rules.scope.universe") %></option>
+        <% @stories.each do |story| %>
+          <option value="<%= story.id %>"<%= " selected" if filter.story == story %>><%= story.name %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <label class="form-label" for="canon_rule_filter_sort"><%= t("canon_rules.filter.sort_label") %></label>
+      <%# Every option is a key in `CanonRuleFilter::SORTS`, so the control and
+          the query allowlist cannot drift apart. %>
+      <select class="form-select" id="canon_rule_filter_sort" name="sort">
+        <% CanonRuleFilter.sort_values.each do |value| %>
+          <option value="<%= value %>"<%= " selected" if filter.sort == value %>><%= t("canon_rules.filter.sort_options.#{value}") %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+      <%= submit_tag t("canon_rules.filter.submit"), class: "btn btn-primary", name: nil %>
+      <%# With no result there is nothing to clear from here, so the empty state
+          below offers the only way back. %>
+      <% if filter.active? && shown.positive? %>
+        <%= link_to t("canon_rules.filter.clear"), filters_path, class: "btn btn-light border" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if filter.active? %>
+    <p class="text-body-secondary mb-0 mt-3">
+      <%# Both counts are resolved with a `count:` before they are interpolated, so
+          each chooses its own plural rather than the sentence building it. %>
+      <%= t("canon_rules.filter.showing",
+        shown: count_with_label(shown, "canon_rule"), total: count_with_label(total, "canon_rule")) %>
+      <%# The active filters are repeated as text so an empty result set can always
+          say which value produced it, and so a result set is never ambiguous
+          about what produced it. %>
+      <span class="d-block mt-1">
+        <%= t("canon_rules.filter.filtered_by") %>
+        <% canon_rule_filter_summaries(filter).each do |summary| %>
+          <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+        <% end %>
+      </span>
+    </p>
+  <% end %>
+</div>

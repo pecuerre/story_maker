@@ -1,8 +1,8 @@
 # List filters
 
 One home for the contract **every** in-list filter shares. Every in-list filter in the application
-follows it; the Scenes, Characters, Items, Events, Relations, and Ownerships lists each carry their
-own keys, and so do Locations and all nine tag taxonomies, and each workspace makes its own
+follows it; the Scenes, Characters, Items, Events, Relations, Ownerships, and Canon lists each carry
+their own keys, and so do Locations and all nine tag taxonomies, and each workspace makes its own
 decisions about them. The Scene filter's are in
 [`scenes.md`](scenes.md#the-list-the-filter-and-the-ordering).
 

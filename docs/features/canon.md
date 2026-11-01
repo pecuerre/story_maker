@@ -42,7 +42,8 @@ type**, a required **statement**, and an optional **source**.
   application without coming from a ledger. An open question imported from a ledger is stored as a
   rule of type `open`, beside the rules it questions; [ADR 0046](../adr/0046-an-open-canon-question-is-a-rule-of-type-open.md)
   owns that decision.
-- **statement** is the rule itself: one short sentence the Story must obey.
+- **statement** is the rule itself: one short sentence the Story must obey. An import may write the
+  item's whole text here; [Story interchange](story_interchange.md#canon-ledger) owns that mapping.
 - **source** is the passage the rule comes from — a quotation, a chapter reference, or a citation.
 
 Name, statement, and source are author prose and are never translated. A rule is still reached at its
@@ -54,16 +55,33 @@ Story does not get a second canon workspace beside its Sections, Plots, and Scen
 ## The Canon workspace
 
 The workspace is `/u/:universe_slug/canon`, opened from **Canon** in the Universe Bible sidebar, with
-a read-only details page at `/u/:universe_slug/canon/:id`. It is the flat list + modal pattern: every
-rule in the Universe appears in one list, universe-wide rules first, each row naming its name, slug,
-canon type, category, statement, owner, and linking to the Story when one owns it. The editor holds
-the name, slug, category, canon type, statement, source passage, and an optional owner; choosing
-**The whole universe** is how a rule is handed back to every Story. A blank slug is derived from the
-name on create and then left alone.
+a details page at `/u/:universe_slug/canon/:id`. It is the flat list + modal pattern: every
+rule in the Universe appears in one list, universe-wide rules first, and a row leads with the rule's
+ledger id (`k1` reads as `K1`, so the row and a citation in prose use the same label), then its name,
+canon type, category, statement, owner, and the Story when one owns it. The statement and the source
+passage are plain text in a row, and a `[[canon:K1]]` reference in either is reduced to `K1` with no
+link: the row already carries its own Details link. The details page renders both passages in the
+shared Markdown dialect instead, so paragraphs, lists, emphasis, and `[[kind:slug]]` references are
+read as the author wrote them; a reference there links the record it names. The editor holds the
+name, slug, category, canon type, statement, source passage, and an optional owner; choosing **The
+whole universe** is how a rule is handed back to every Story. A blank slug is derived from the name
+on create and then left alone.
+
+The list narrows by free text over the name, statement, and source passage, by canon type, and by
+owner — one Story's rules or the rules no Story owns — and a reader may choose the order. The keys
+are `q`, `canon_type`, `story_id`, and `sort`; `story_id=universe` is the universe-wide choice, because
+a null owner is not something a select can submit on its own. Every order keeps the universe-wide
+rules first, for the same reason the unfiltered list does. The shared narrowing, canonical-query, and
+empty-result rules are [`list_filters.md`](list_filters.md)'s; a narrowed list shows no remembered
+creates, and a mutation returns to the filter it was performed under.
 
 Index and Details are guest-readable. Create, update, and delete are HTML-flow mutations, so a refused
 submission re-renders the list with the shared error summary and reopens the editor on the rejected
-values. In a draft-based Universe the change is remembered rather than written.
+values. A writer's details page carries the same editor behind an **Edit** control in its header: a
+save opened there returns to the rule instead of the list, and a refusal re-renders that page with the
+error summary beside the card. The editor rides a `return_to=details` marker rather than a submitted
+URL, so a hand-built request cannot name its own destination. In a draft-based Universe the change is
+remembered rather than written.
 
 A rule is searchable by its name, statement, and source, and a result opens its details page. It also
 carries the optional discussion thread every content record does. Neither the list nor the details

@@ -1,6 +1,16 @@
 <% content_for :title, t("canon_rules.title") %>
+<%# The list has three empty states: a writer is told to add the first rule, a
+    guest or read-only member is only told what a rule is, and a *filtered* list
+    that matched nothing says which filters produced nothing rather than "no
+    canon rules yet". %>
+<% narrowed = @list_filter.narrowed? %>
+<% empty_description = can_write_universe? ? t("canon_rules.empty_writable_description") : t("canon_rules.empty_read_only_description") %>
+<%# A remembered create belongs to this universe's list, but **not to a filtered
+    one**: it names no record, so it cannot match a text, type, or owner filter.
+    A reader who only *sorted* the list still sees their own pending work,
+    because a sort selects nothing. %>
+<% pending_creates = narrowed ? [] : draft_pending_creates_for(CanonRule) %>
 <% rejected = @canon_rule&.errors&.any? ? @canon_rule : nil %>
-<% pending_creates = draft_pending_creates_for(CanonRule) %>
 <% add_values = rejected&.new_record? ? canon_rule_fields_json(rejected) : "{}" %>
 
 <div
@@ -13,7 +23,7 @@
     count: @canon_rules.size, count_label: "canon_rule" do %>
     <% if can_write_universe? %>
       <button type="button" class="btn btn-primary" data-action="modal-form#open"
-        data-modal-form-url="<%= universe_canon_rules_path %>" data-modal-form-method="post"
+        data-modal-form-url="<%= universe_canon_rules_path(**@list_filter.query_params) %>" data-modal-form-method="post"
         data-modal-form-title="<%= t("canon_rules.new_title") %>" data-modal-form-values-value="<%= add_values %>">
         <i class="bi bi-plus-lg" aria-hidden="true"></i> <span><%= t("canon_rules.add") %></span>
       </button>
@@ -21,12 +31,21 @@
   <% end %>
 
   <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("canon_rules.errors.subject") %><% end %>
+
+  <%= render "canon_rules/filter",
+    filter: @list_filter,
+    total: @canon_rule_total,
+    shown: @canon_rules.size %>
   <% if @canon_rules.any? || pending_creates.any? %>
     <div class="content-surface entity-list"><div class="list-group list-group-flush">
       <% @canon_rules.each do |rule| %>
         <div class="list-group-item entity-row d-flex align-items-center gap-3">
           <div class="entity-copy flex-grow-1">
             <div class="d-flex align-items-center gap-2 flex-wrap">
+              <%# The ledger id leads the row: it is how prose and the interchange
+                  source cite the rule, so it is the first thing a reader scans
+                  rather than a footnote after the statement. %>
+              <code class="canon-rule-id"><%= canon_rule_id(rule) %></code>
               <span class="entity-title"><%= rule.display_string %></span>
               <% if rule.canon_type.present? %>
                 <span class="badge rounded-pill text-bg-light border"><%= canon_type_label(rule) %></span>
@@ -34,11 +53,13 @@
               <% if rule.category.present? %>
                 <span class="badge rounded-pill text-bg-light border"><%= rule.category %></span>
               <% end %>
-              <code class="small text-body-secondary"><%= rule.slug %></code>
               <%= render "shared/draft_pending_badge", record: rule %>
             </div>
             <div class="entity-description">
-              <span><%= rule.statement %></span>
+              <%# Prose is plain text with its references reduced to labels: the
+                  row already carries its own Details link, so a link inside a
+                  two-line preview would compete with it. %>
+              <span><%= canon_rule_prose(rule.statement) %></span>
               <span> · </span>
               <% if rule.universe_wide? %>
                 <span class="badge rounded-pill text-bg-light border"><%= t("canon_rules.scope.universe") %></span>
@@ -46,61 +67,46 @@
                 <span class="badge rounded-pill text-bg-light border"><%= t("canon_rules.scope.story") %></span>
                 <%= link_to rule.story.name, universe_story_path(id: rule.story) %>
               <% end %>
-              <% if rule.source.present? %><span> · <%= rule.source %></span><% end %>
+              <% if rule.source.present? %><span> · <%= canon_rule_prose(rule.source) %></span><% end %>
             </div>
           </div>
           <%= record_details_link universe_canon_rule_path(id: rule), record: rule %>
           <%= render "shared/row_actions", record: rule, label: t("canon_rule", count: 1),
-            record_name: rule.display_string, edit_url: universe_canon_rule_path(id: rule),
-            delete_url: universe_canon_rule_path(id: rule),
+            record_name: rule.display_string,
+            edit_url: universe_canon_rule_path(id: rule, **@list_filter.query_params),
+            delete_url: universe_canon_rule_path(id: rule, **@list_filter.query_params),
             values: (rejected&.persisted? && rejected.id == rule.id) ? canon_rule_fields_json(rejected) : canon_rule_fields_json(rule) %>
         </div>
       <% end %>
       <%= render partial: "shared/draft_pending_rows", collection: pending_creates, as: :record %>
     </div></div>
+  <% elsif narrowed %>
+    <%# A filter that matched nothing is not a universe without canon, so it says
+        which filters produced nothing, repeats them, and offers the way back. %>
+    <div class="content-surface p-3 p-md-4">
+      <%= render "shared/empty_state", title: t("canon_rules.no_match_title"),
+        description: t("canon_rules.no_match_description",
+          universe: Current.universe.name, total: count_with_label(@canon_rule_total, "canon_rule")),
+        icon: "filter" do %>
+        <span class="d-block mb-3">
+          <% canon_rule_filter_summaries(@list_filter).each do |summary| %>
+            <span class="badge rounded-pill text-bg-light border me-1"><%= summary %></span>
+          <% end %>
+        </span>
+        <%= link_to t("canon_rules.filter.clear"), universe_canon_rules_path, class: "btn btn-primary" %>
+      <% end %>
+    </div>
   <% else %>
     <%= render "shared/empty_state", title: t("canon_rules.empty_title"),
-      description: can_write_universe? ? t("canon_rules.empty_writable_description") : t("canon_rules.empty_read_only_description"),
+      description: empty_description,
       icon: "journal-check" %>
   <% end %>
 
   <% if can_write_universe? %>
-    <div class="modal fade" tabindex="-1" aria-labelledby="canon-rule-modal-title" aria-hidden="true" data-modal-form-target="modal">
-      <div class="modal-dialog modal-lg"><div class="modal-content">
-        <div class="modal-header">
-          <h2 class="modal-title fs-5" id="canon-rule-modal-title" data-modal-form-target="title"><%= t("canon_rules.new_title") %></h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
-        </div>
-        <%= form_with scope: :canon_rule, url: universe_canon_rules_path, method: :post, data: { modal_form_target: "form" } do |form| %>
-          <div class="modal-body">
-            <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("canon_rules.errors.subject") %><% end %>
-            <div class="mb-3"><%= form.label :name, t("canon_rules.form.name"), class: "form-label" %>
-              <%= form.text_field :name, class: "form-control", required: true %>
-              <div class="form-text"><%= t("canon_rules.form.name_hint") %></div></div>
-            <div class="row g-3 mb-3">
-              <div class="col-12 col-sm-6"><%= form.label :slug, t("canon_rules.form.slug"), class: "form-label" %>
-                <%= form.text_field :slug, class: "form-control" %>
-                <div class="form-text"><%= t("canon_rules.form.slug_hint") %></div></div>
-              <div class="col-12 col-sm-6"><%= form.label :canon_type, t("canon_rules.form.canon_type"), class: "form-label" %>
-                <%= form.select :canon_type, canon_type_options, { include_blank: t("canon_rules.form.canon_type_blank") }, { class: "form-select" } %></div>
-            </div>
-            <div class="mb-3"><%= form.label :category, t("canon_rules.form.category"), class: "form-label" %>
-              <%= form.text_field :category, class: "form-control" %>
-              <div class="form-text"><%= t("canon_rules.form.category_hint") %></div></div>
-            <div class="mb-3"><%= form.label :statement, t("canon_rules.form.statement"), class: "form-label" %>
-              <%= form.text_area :statement, class: "form-control", rows: 3, required: true %>
-              <div class="form-text"><%= t("canon_rules.form.statement_hint") %></div></div>
-            <div class="mb-3"><%= form.label :source, t("canon_rules.form.source"), class: "form-label" %>
-              <%= form.text_area :source, class: "form-control", rows: 3 %>
-              <div class="form-text"><%= t("canon_rules.form.source_hint") %></div></div>
-            <div class="mb-3"><%= form.label :story_id, t("canon_rules.form.scope"), class: "form-label" %>
-              <%= form.collection_select :story_id, @stories, :id, :name,
-                { include_blank: t("canon_rules.form.universe_wide") }, { class: "form-select" } %>
-              <div class="form-text"><%= t("canon_rules.form.scope_hint") %></div></div>
-          </div>
-          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button><%= form.submit t("canon_rules.save"), class: "btn btn-primary" %></div>
-        <% end %>
-      </div></div>
-    </div>
+    <%= render "canon_rules/editor_modal",
+      form_url: universe_canon_rules_path(**@list_filter.query_params),
+      form_method: :post,
+      title: t("canon_rules.new_title"),
+      rejected: rejected %>
   <% end %>
 </div>

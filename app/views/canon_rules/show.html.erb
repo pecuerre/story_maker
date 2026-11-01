@@ -1,21 +1,53 @@
 <% content_for :title, @canon_rule.display_string %>
+<%# The rule and its source passage are author prose, so the details page renders
+    them in the shared Markdown dialect: paragraphs, lists, emphasis, and
+    `[[kind:slug]]` references the reader can follow. A list row keeps the plain
+    one-line form, because the row already carries its own Details link. %>
+<% editable = can_write_universe? %>
+<% rejected = @canon_rule.errors.any? ? @canon_rule : nil %>
 
-<%= render "shared/record_details",
-  record: @canon_rule,
-  eyebrow: t("sidebar.universe_bible"),
-  label: t("canon_rules.show.label"),
-  description: "",
-  facts: [
-    detail_fact(t("canon_rules.show.facts.slug"), @canon_rule.slug),
-    detail_fact(t("canon_rules.show.facts.canon_type"), canon_type_label(@canon_rule)),
-    detail_fact(t("canon_rules.show.facts.category"), @canon_rule.category),
-    detail_fact(t("canon_rules.show.facts.scope"),
-      @canon_rule.universe_wide? ? t("canon_rules.scope.universe") : link_to(@canon_rule.story.name, universe_story_path(id: @canon_rule.story)))
-  ],
-  wide_facts: [
-    detail_fact(t("canon_rules.show.facts.statement"), @canon_rule.statement),
-    detail_fact(t("canon_rules.show.facts.source"), @canon_rule.source, blank: t("canon_rules.show.facts.source_blank"))
-  ],
-  back_url: universe_canon_rules_path,
-  back_label: t("canon_rules.show.back_label"),
-  actions: discussion_control(@canon_rule) %>
+<div
+  <% if editable %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="canon_rule"
+  data-modal-form-response-value="html">
+  <%# The page carries the workspace's own editor for a writer, so its Edit
+      control opens the same modal the list rows do. A guest or read-only member
+      gets the page without the controller, the button, or the modal. The error
+      summary above the card is what a rejected save from here lands on; the
+      editor reopens with the rejected values. %>
+  <%= render "shared/record_details",
+    record: @canon_rule,
+    eyebrow: t("sidebar.universe_bible"),
+    label: t("canon_rules.show.label"),
+    description: "",
+    facts: [
+      detail_fact(t("canon_rules.show.facts.slug"), @canon_rule.slug),
+      detail_fact(t("canon_rules.show.facts.canon_type"), canon_type_label(@canon_rule)),
+      detail_fact(t("canon_rules.show.facts.category"), @canon_rule.category),
+      detail_fact(t("canon_rules.show.facts.scope"),
+        @canon_rule.universe_wide? ? t("canon_rules.scope.universe") : link_to(@canon_rule.story.name, universe_story_path(id: @canon_rule.story)))
+    ],
+    wide_facts: [
+      detail_fact(t("canon_rules.show.facts.statement"), canon_rule_prose_html(@canon_rule.statement)),
+      detail_fact(t("canon_rules.show.facts.source"), canon_rule_prose_html(@canon_rule.source), blank: t("canon_rules.show.facts.source_blank"))
+    ],
+    back_url: universe_canon_rules_path,
+    back_label: t("canon_rules.show.back_label"),
+    editor: (record_edit_control(@canon_rule, path: universe_canon_rule_path(id: @canon_rule),
+      values: canon_rule_fields_json(@canon_rule)) if editable),
+    actions: discussion_control(@canon_rule) do %>
+    <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("canon_rules.errors.subject") %><% end %>
+  <% end %>
+
+  <% if editable %>
+    <%# `return_to` is the page's own marker: a save opened here returns to the
+        rule instead of the list, and a rejection re-renders this page rather than
+        the list at a details URL. %>
+    <%= render "canon_rules/editor_modal",
+      form_url: universe_canon_rule_path(id: @canon_rule),
+      form_method: :patch,
+      title: t("shared.row_actions.edit_title", label: t("canon_rules.show.label")),
+      rejected: rejected,
+      return_to: "details" %>
+  <% end %>
+</div>

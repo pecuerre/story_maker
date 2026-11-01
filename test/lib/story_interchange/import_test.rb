@@ -374,22 +374,24 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_not result.replaced
     assert_equal 4, result.universe.canon_rules.count
 
-    rule = result.universe.canon_rules.find_by(statement: "The lantern burns only while someone holds it.")
-    assert_equal "l1", rule.slug
-    assert_equal "Light", rule.name
+    rule = result.universe.canon_rules.find_by!(slug: "l1")
+    assert_equal "Light burns only while someone holds the lantern", rule.name
     assert_equal "rule", rule.canon_type
     assert_equal "mechanism", rule.category
-    assert_equal "L1 — Light. The lantern burns only while someone holds it.", rule.source
+    assert_equal "Light burns only while someone holds the lantern\n\nThe lantern burns only while someone holds it.",
+      rule.statement
+    assert_nil rule.source
 
     locked = result.universe.canon_rules.find_by!(slug: "k1")
-    assert_equal "The lantern was built before the first winter.", locked.name
+    assert_equal "The lantern built before the first winter", locked.name
     assert_equal "locked", locked.canon_type
     assert_equal "consequence", result.universe.canon_rules.find_by!(slug: "d1").canon_type
 
     question = result.universe.canon_rules.find_by!(slug: "o-i1")
     assert_equal "open", question.canon_type
-    assert_equal "Who built the first lantern?", question.name
-    assert_includes question.source, "Who built the first lantern?"
+    assert_equal "Who built the first lantern", question.name
+    assert_equal "Who built the first lantern\n\nWho built the first lantern?", question.statement
+    assert_nil question.source
 
     outcome = result.outcomes.first
     assert_equal 4, outcome.created

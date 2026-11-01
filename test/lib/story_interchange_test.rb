@@ -30,19 +30,20 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal %w[K1 L1 D1 O-I1], report.canon_rules.map(&:id)
     assert_equal %w[k1 l1 d1 o-i1], report.canon_rules.map(&:slug)
     assert_equal %w[locked rule consequence open], report.canon_rules.map(&:canon_type)
-    assert_equal [ "The lantern was built before the first winter.", "Light",
-      "A lantern left on the ground goes dark.", "Who built the first lantern?" ],
+    assert_equal [ "The lantern built before the first winter", "Light burns only while someone holds the lantern",
+      "A lantern left on the ground goes dark", "Who built the first lantern" ],
       report.canon_rules.map(&:name)
     assert_equal %w[mechanism mechanism mechanism mechanism], report.canon_rules.map(&:category)
-    assert_equal "The lantern burns only while someone holds it.", report.canon_rules.second.statement
-    assert_includes report.canon_rules.first.source, "K1. The lantern was built before the first winter."
-    refute_includes report.canon_rules.first.source, "universe/canon/mechanism.md"
+    assert_equal "Light burns only while someone holds the lantern\n\nThe lantern burns only while someone holds it.",
+      report.canon_rules.second.statement
+    assert_nil report.canon_rules.first.source
     assert_equal [ "O-I1" ], report.canon_questions.map(&:id)
     assert_equal "o-i1", report.canon_questions.first.slug
     assert_equal "open", report.canon_questions.first.canon_type
     assert_equal "mechanism", report.canon_questions.first.category
-    assert_equal "Who built the first lantern?", report.canon_questions.first.statement
-    assert_includes report.canon_questions.first.source, "Who built the first lantern?"
+    assert_equal "Who built the first lantern\n\nWho built the first lantern?",
+      report.canon_questions.first.statement
+    assert_nil report.canon_questions.first.source
     assert_equal 1, report.counts[:characters]
     assert_equal 1, report.counts[:factions]
     assert_equal 1, report.counts[:locations]
@@ -355,21 +356,50 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_match(/unknown reference form `\[\[thing:value\]\]`/, errors(report))
   end
 
-  test "reads a canon item's title after any dash separator" do
-    replace("universe/canon/mechanism.md", "- **L1 — Light.**", "- **L1 - Trigger.**")
+  test "reads the what-line as the name and the item's whole text as the statement" do
+    canon_ledger("- K1. The lantern built before the first winter\n\n" \
+      "  The lantern was built before the *first* winter.\n\n" \
+      "  A second paragraph.")
+
+    rule = validate.canon_rules.first
+
+    assert_equal "The lantern built before the first winter", rule.name
+    assert_equal "k1", rule.slug
+    assert_equal "The lantern built before the first winter\n\n" \
+      "The lantern was built before the first winter.\n\n" \
+      "A second paragraph.", rule.statement
+    assert_nil rule.source
+  end
+
+  test "ends an item at a group heading without changing its ledger" do
+    canon_ledger("- K1. The lantern built before the first winter\n\n" \
+      "  The lantern was built before the first winter.\n\n" \
+      "### Later\n\n" \
+      "- K2. The gate that came later\n\n" \
+      "  The gate came later.")
 
     report = validate
 
     assert report.valid?, errors(report)
-    assert_equal "Trigger", report.canon_rules.second.name
-    assert_equal "l1", report.canon_rules.second.slug
-    assert_equal "The lantern burns only while someone holds it.", report.canon_rules.second.statement
+    assert_equal "The lantern was built before the first winter.", report.canon_rules.first.statement.lines.last.strip
+    assert_equal "The gate that came later", report.canon_rules.second.name
+    assert_equal "locked", report.canon_rules.second.canon_type
   end
 
-  test "keeps the whole item as its statement and source" do
-    replace("universe/canon/mechanism.md",
-      "- **K1.** The lantern was built before the first winter.",
-      "- **K1.** The lantern was built before the first winter, and the\n" \
+  test "still reads the older bold item form" do
+    canon_ledger("- **K1 - Trigger.** The lantern was built before the first winter.")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    rule = report.canon_rules.first
+    assert_equal "Trigger", rule.name
+    assert_equal "The lantern was built before the first winter.", rule.statement
+    assert_includes rule.source, "The lantern was built before the first winter."
+  end
+
+  test "keeps the older item's whole text as its source" do
+    canon_ledger("- **K1.** The lantern was built before the first winter, and the\n" \
       "  wall around it is younger.\n\n" \
       "  A second paragraph says the gate came later.")
 
@@ -382,9 +412,8 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "strips markdown and source-file paths from a canon item" do
-    replace("universe/canon/mechanism.md",
-      "- **K1.** The lantern was built before the first winter.",
-      "- **K1.** The **lantern** was built before the *first* winter, as " \
+    canon_ledger("- K1. The lantern built before the first winter\n\n" \
+      "  The **lantern** was built before the *first* winter, as " \
       "`universe/canon/mechanism.md` records.\n\n" \
       "  See the `README.md` for `code`.\n\n" \
       "  ~~Old wording.~~ The table below is a note.\n\n" \
@@ -393,34 +422,30 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     rule = validate.canon_rules.first
 
-    assert_equal "The lantern was built before the first winter, as records.", rule.statement
-    assert_includes rule.source, "The lantern was built before the first winter, as records."
-    assert_includes rule.source, "See the for code."
-    assert_includes rule.source, "Old wording. The table below is a note."
-    assert_includes rule.source, "Band · Meaning"
-    assert_includes rule.source, "1 · now"
-    assert_includes rule.source, "a bullet\nanother"
-    refute_includes rule.source, "**"
-    refute_includes rule.source, "`"
-    refute_includes rule.source, "|"
-    refute_includes rule.source, "~~"
-    refute_includes rule.source, "mechanism.md"
-    refute_includes rule.source, "README.md"
+    assert_equal "The lantern built before the first winter\n\n" \
+      "The lantern was built before the first winter, as records.\n\n" \
+      "See the for code.\n\n" \
+      "Old wording. The table below is a note.\n\n" \
+      "Band · Meaning\n\n1 · now\n\na bullet\nanother", rule.statement
+    refute_includes rule.statement, "**"
+    refute_includes rule.statement, "`"
+    refute_includes rule.statement, "|"
+    refute_includes rule.statement, "~~"
+    refute_includes rule.statement, "mechanism.md"
+    refute_includes rule.statement, "README.md"
   end
 
-  test "removes a citation tail from a canon item's title and keeps it in the source" do
-    replace("universe/canon/mechanism.md", "- **L1 — Light.**", "- **L1 — Light (Amended by K27).**")
+  test "removes a citation tail from an older item's title and keeps it in the source" do
+    canon_ledger("- **K1 — Light (Amended by K27).** The lantern was built before the first winter.")
 
-    rule = validate.canon_rules.second
+    rule = validate.canon_rules.first
 
     assert_equal "Light", rule.name
     assert_includes rule.source, "(Amended by K27)"
   end
 
-  test "skips a leading amendment note when it names an untitled item" do
-    replace("universe/canon/mechanism.md",
-      "- **K1.** The lantern was built before the first winter.",
-      "- **K1.** *(Amended by K27.)* The lantern was built before the first winter.\n\n" \
+  test "skips a leading amendment note when it names an untitled older item" do
+    canon_ledger("- **K1.** *(Amended by K27.)* The lantern was built before the first winter.\n\n" \
       "  The note stays in the passage.")
 
     rule = validate.canon_rules.first
@@ -430,7 +455,9 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_includes rule.source, "(Amended by K27.) The lantern was built before the first winter."
   end
 
-  test "names an untitled canon item after its own statement" do
+  test "names a canon item with no what-line after its own statement" do
+    canon_ledger("- K1.\n\n  The lantern was built before the first winter.")
+
     rule = validate.canon_rules.first
 
     assert_equal "K1", rule.id
@@ -438,13 +465,13 @@ class StoryInterchangeTest < ActiveSupport::TestCase
   end
 
   test "requires canon ids to be unique" do
-    replace("universe/canon/mechanism.md", "- **L1 — Light.** The lantern burns only while someone holds it.",
-      "- **L1 — Light.** The lantern burns only while someone holds it.\n- **L1.** A duplicate.")
+    canon_ledger("- K1. The lantern built before the first winter\n\n  The lantern was built first.",
+      "- K1. A duplicate\n\n  A duplicate item.")
 
     report = validate
 
     assert_not report.valid?
-    assert_match(/canon id L1 is already defined/, errors(report))
+    assert_match(/canon id K1 is already defined/, errors(report))
   end
 
   test "requires the canon ledger README" do
@@ -530,6 +557,20 @@ class StoryInterchangeTest < ActiveSupport::TestCase
       content = File.read(path)
       assert_includes content, before, "the fixture no longer contains #{before.inspect}"
       File.write(path, content.sub(before, after))
+    end
+
+    # Replaces the fixture's canon area with the given items, then the ledger's
+    # own L1, D1, and O-I1 so a scene's references to them still resolve.
+    def canon_ledger(*items)
+      overwrite("universe/canon/mechanism.md",
+        "# Canon: mechanism\n\n## Locked\n\n#{items.join("\n\n")}\n\n" \
+        "- L1. Light burns only while someone holds the lantern\n\n" \
+        "  The lantern burns only while someone holds it.\n\n" \
+        "- D1. A lantern left on the ground goes dark\n\n" \
+        "  A lantern left on the ground goes dark.\n\n" \
+        "## Open\n\n" \
+        "- O-I1. Who built the first lantern\n\n" \
+        "  Who built the first lantern?\n")
     end
 
     def errors(report)

@@ -2492,6 +2492,52 @@ en:
     empty_title: "No canon rules yet"
     empty_writable_description: "Write down what this world always does: what magic costs, how long a road takes, or what nobody can survive. A rule can belong to the whole universe or to one story."
     empty_read_only_description: "The rules this universe follows will appear here once they have been added."
+    # A filtered list that matched nothing is a third empty state, and it never
+    # says "No canon rules yet": the universe has rules, the filters did not
+    # match them.
+    no_match_title: "No canon rules match these filters"
+    no_match_description: "%{universe} has %{total}, but none of them match the filters above. Clear them to see the whole list."
+    # The list narrows by free text, a canon type, and the Story that owns the
+    # rule — or the universe-wide ones — and a reader may choose the order. The
+    # keys and their meaning are this workspace's.
+    filter:
+      title: "Find canon rules"
+      description: "Narrow the list by text, canon type, or owner, and choose the order. Filtering and sorting only change what this page shows; neither changes any record."
+      search_label: "Search"
+      search_placeholder: "Name, rule, or source"
+      canon_type_label: "Canon type"
+      all_canon_types: "All canon types"
+      scope_label: "Owned by"
+      all_scopes: "Any owner"
+      sort_label: "Order"
+      # Every option here is a key in `CanonRuleFilter::SORTS`, so a label and an
+      # order clause cannot drift apart.
+      sort_options:
+        name: "Name (A to Z)"
+        created: "Newest first"
+        updated: "Recently edited first"
+      submit: "Filter canon rules"
+      clear: "Clear filters"
+      # The sentence a narrowed list opens with. Both counts are resolved with a
+      # `count:` before they are interpolated, so each chooses its own plural.
+      showing: "Showing %{shown} of %{total}."
+      filtered_by: "Filtered by"
+      # The active filters repeated as text, so an empty result set can always
+      # say which value produced it. The sort is included because a reader who
+      # reordered the list needs to know the order was applied.
+      summaries:
+        search: "Search: “%{value}”"
+        canon_type: "Canon type: %{value}"
+        scope: "Owned by: %{value}"
+        sort: "Order: %{value}"
+      # A filter value the filter could not use. The canon type is resolved
+      # against the model's own vocabulary and the owner against the universe's
+      # Stories; a sort is resolved against an allowlist, so a hand-edited URL
+      # cannot choose the order.
+      discarded:
+        canon_type: "The canon type filter was ignored because it is not a canon type this list offers."
+        story: "The owner filter was ignored because it is not a story of this universe."
+        sort: "That order is not one this list offers, so it was ignored."
     scope:
       universe: "Whole universe"
       story: "Story rule"
@@ -2528,7 +2574,7 @@ en:
         source_blank: "No source passage yet."
         scope: "Owned by"
     errors:
-      subject: "this canon rule"
+      subject: "canon rule"
     flash:
       created: "Canon rule created."
       updated: "Canon rule updated."

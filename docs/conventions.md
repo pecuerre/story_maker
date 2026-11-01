@@ -1334,10 +1334,11 @@ batched read returns the same set the per-row read did, refusal by refusal.
 
 ## Record details pages
 
-A details page is a fourth *page* shape, not a fourth editing pattern: it has no editor, so it is
-built from the shared read-only partials and never from a modal. Each record type supplies its own
-`facts` array and its own sections, so new information is added to an existing page instead of a new
-page being invented.
+A details page is a fourth *page* shape, not a fourth editing pattern: the page itself is read-only,
+built from the shared partials, and each record type supplies its own `facts` array and its own
+sections, so new information is added to an existing page instead of a new page being invented. A
+writer gets the workspace's own **Edit** control in the page header where the workspace has an
+editor; it opens that modal in place rather than adding an `edit` route.
 
 Every standard element and every element tag has exactly one details page, and it is the destination
 of the **Details** link that every list row and taxonomy node renders. The URLs are the ordinary

@@ -4,10 +4,12 @@ module StoryInterchange
     #
     # The item's identity and prose were parsed by the validator, so this class
     # does not read `universe/canon/` again and cannot disagree with the report
-    # about what an item says. The ledger id becomes the slug, its title the name,
-    # its prefix the canon type, and its area file the category. An open question
-    # is written too, as a rule whose type is `open`, so the workspace can hold it
-    # beside the rules it belongs to instead of dropping it from the import.
+    # about what an item says. The ledger id becomes the slug, its what-line the
+    # name, its prefix the canon type, and its area file the category. The rule's
+    # statement is the item's whole text and its source passage is empty for now.
+    # An open question is written too, as a rule whose type is `open`, so the
+    # workspace can hold it beside the rules it belongs to instead of dropping it
+    # from the import.
     class Canon < Importer
       slice label_key: "imports.slices.canon_rules", count: :canon_rules
 

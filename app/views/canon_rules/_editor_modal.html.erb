@@ -1,0 +1,58 @@
+<%# The canon workspace's editor, shared by the list and a rule's own details page.
+    The page owns the `modal-form` controller; this partial is only the modal it
+    opens. The list opens it for a create and for a row's edit, so its form starts
+    as a POST to the collection and the modal controller swaps the action and adds
+    `_method` for a row. A details page opens it for its own record only, so it
+    passes the member URL and PATCH as the form's own starting point.
+
+    Local contract:
+      form_url    - where the form submits
+      form_method - :post from the list, :patch from a details page
+      title       - the title shown before a trigger replaces it
+      rejected    - the record whose errors the modal shows again, if any
+      return_to   - optional marker telling the controller the edit was opened
+                    from the record's own page, so a save returns there instead
+                    of to the list %>
+<% form_url = local_assigns.fetch(:form_url) %>
+<% form_method = local_assigns.fetch(:form_method, :post) %>
+<% rejected = local_assigns[:rejected] %>
+<% return_to = local_assigns[:return_to] %>
+
+<div class="modal fade" tabindex="-1" aria-labelledby="canon-rule-modal-title" aria-hidden="true" data-modal-form-target="modal">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title fs-5" id="canon-rule-modal-title" data-modal-form-target="title"><%= local_assigns.fetch(:title) %></h2>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
+    </div>
+    <%= form_with scope: :canon_rule, url: form_url, method: form_method, data: { modal_form_target: "form" } do |form| %>
+      <%= hidden_field_tag :return_to, return_to if return_to.present? %>
+      <div class="modal-body">
+        <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("canon_rules.errors.subject") %><% end %>
+        <div class="mb-3"><%= form.label :name, t("canon_rules.form.name"), class: "form-label" %>
+          <%= form.text_field :name, class: "form-control", required: true %>
+          <div class="form-text"><%= t("canon_rules.form.name_hint") %></div></div>
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-sm-6"><%= form.label :slug, t("canon_rules.form.slug"), class: "form-label" %>
+            <%= form.text_field :slug, class: "form-control" %>
+            <div class="form-text"><%= t("canon_rules.form.slug_hint") %></div></div>
+          <div class="col-12 col-sm-6"><%= form.label :canon_type, t("canon_rules.form.canon_type"), class: "form-label" %>
+            <%= form.select :canon_type, canon_type_options, { include_blank: t("canon_rules.form.canon_type_blank") }, { class: "form-select" } %></div>
+        </div>
+        <div class="mb-3"><%= form.label :category, t("canon_rules.form.category"), class: "form-label" %>
+          <%= form.text_field :category, class: "form-control" %>
+          <div class="form-text"><%= t("canon_rules.form.category_hint") %></div></div>
+        <div class="mb-3"><%= form.label :statement, t("canon_rules.form.statement"), class: "form-label" %>
+          <%= form.text_area :statement, class: "form-control", rows: 3, required: true %>
+          <div class="form-text"><%= t("canon_rules.form.statement_hint") %></div></div>
+        <div class="mb-3"><%= form.label :source, t("canon_rules.form.source"), class: "form-label" %>
+          <%= form.text_area :source, class: "form-control", rows: 3 %>
+          <div class="form-text"><%= t("canon_rules.form.source_hint") %></div></div>
+        <div class="mb-3"><%= form.label :story_id, t("canon_rules.form.scope"), class: "form-label" %>
+          <%= form.collection_select :story_id, @stories, :id, :name,
+            { include_blank: t("canon_rules.form.universe_wide") }, { class: "form-select" } %>
+          <div class="form-text"><%= t("canon_rules.form.scope_hint") %></div></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button><%= form.submit t("canon_rules.save"), class: "btn btn-primary" %></div>
+    <% end %>
+  </div></div>
+</div>

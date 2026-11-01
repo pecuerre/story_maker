@@ -1,17 +1,42 @@
 require "application_system_test_case"
 
-# Browser regressions for the two modal workspaces that keep the HTML
-# redirect/re-render flow (relations and ownerships). They are the counterpart of
-# `modal_json_flow_test.rb`: the editor opens and pre-fills the same way, but the
-# controller re-renders the whole index when it refuses a submission. That means
-# the reason and the entered values have to survive that re-render, which is what
-# these tests pin.
+# Browser regressions for the modal workspaces that keep the HTML
+# redirect/re-render flow (relations, ownerships, and canon rules). They are the
+# counterpart of `modal_json_flow_test.rb`: the editor opens and pre-fills the same
+# way, but the controller re-renders the whole page when it refuses a submission.
+# That means the reason and the entered values have to survive that re-render,
+# which is what these tests pin.
 class ModalHtmlFlowTest < ApplicationSystemTestCase
   setup do
     @user = users(:user_one)
     @universe = universes(:universe_one)
     @character_one = characters(:character_one)
     @character_two = characters(:character_two)
+  end
+
+  test "a canon rule is edited from its own page and the reader stays there" do
+    rule = canon_rules(:canon_rule_two)
+
+    sign_in_via_form(@user)
+    visit universe_canon_rule_path(universe_slug: @universe.slug, id: rule)
+    assert_stimulus_loaded
+
+    within ".page-actions" do
+      click_button "Edit rule"
+    end
+
+    within ".modal.show" do
+      assert_field "Name", with: "The night crossing"
+      fill_in "Rule", with: "The river is crossed only at dawn."
+      click_button "Save rule"
+    end
+
+    assert_selector ".alert-danger[role=alert]", count: 0, wait: REFRESH_WAIT
+    assert_current_path universe_canon_rule_path(universe_slug: @universe.slug, id: rule)
+    # The page is re-rendered from the rule, so the saved prose is read back from
+    # the record rather than from anything the browser still held.
+    assert_selector ".detail-facts-wide", text: "The river is crossed only at dawn."
+    assert_equal "The river is crossed only at dawn.", rule.reload.statement
   end
 
   test "a rejected relation states the reason and reopens with the entered values" do

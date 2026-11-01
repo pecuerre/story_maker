@@ -20,12 +20,12 @@ module StoryInterchange
     end
 
     # One canon item that the import can turn into a record. `id` is the ledger's
-    # own `K`/`L`/`D`/`O` id; `slug` is that id lowercased, `name` is the title the
-    # item states (its first statement when it states none), `canon_type` is what
+    # own `K`/`L`/`D`/`O` id; `slug` is that id lowercased, `name` is the item's
+    # what-line (its first statement when it states none), `canon_type` is what
     # the id's prefix means, and `category` is the area file the item sits in.
-    # `statement` is the first sentence of the item's prose (or its title when the
-    # item has no prose), and `source` is the item's whole text, cleaned of
-    # Markdown and file paths.
+    # `statement` is the item's whole text, the what-line and body together, and
+    # `source` is empty for the current format; the older bold form still fills it
+    # with the item's text and draws the statement from its first sentence.
     CanonItem = Data.define(:id, :slug, :name, :canon_type, :category, :statement, :source, :path, :line)
 
     # One parsed record: the frontmatter the validator checked, the slug its

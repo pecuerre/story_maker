@@ -17,18 +17,23 @@ module StoryInterchange
     SCENE_ID = /\AB-\d{3}\z/
     SCENE_BRANCH = /\A(?:main|fork of [A-Za-z0-9-]+-\d{2})\z/
     SCENE_STATUSES = %w[draft revised final].freeze
-    # A definition is a bold id followed by a period or an em dash. Bold ids in
-    # ordinary prose (`**K43's signature**`, `**D8 expires**`) are references,
-    # not definitions. `marker` holds what follows the id inside the bold run —
-    # the period, or an em dash and the item's heading — and `text` holds the
-    # prose after the bold run, which is what the statement is drawn from.
-    # A canon item opens with its bold id and then either a full stop or a short
-    # title after a dash: `**K16.**`, `**L2 — Trigger.**`, `**D8.**`. Any of the
-    # three dash characters the author may type separates the title, because the
-    # source is prose and the separator is not a fact the application should
-    # refuse to read.
-    CANON_ITEM = /\A\s*(?:-\s+)?\*\*(?<id>K\d+|L\d+|D\d+|O(?:-[A-Z0-9]+)?\d+)(?<marker>\.|\s+[-–—][^*]*)\*\*(?<text>[^\n]*)\r?\n?\z/
-    CANON_HEADING = /\A##\s+(.+?)\s*\z/
+    # A canon item opens with a column-0 bullet whose marker is its own id and a
+    # full stop, then its **what**: one line naming what the item is about. The
+    # item's text follows beneath, indented two spaces: `- K16. The moon event as
+    # the first checkout`. `what` is nil for an item whose marker line states no
+    # title.
+    CANON_ITEM = /\A(?:-\s+)?(?<id>K\d+|L\d+|D\d+|O(?:-[A-Z0-9]+)?\d+)\.(?:[ \t]+(?<what>[^\r\n]*))?[ \t]*\r?\n?\z/
+    # The older form states the id in bold and starts the text on the same line:
+    # `- **K16.** The moon event …` or `**L2 — Trigger.** …`. It is still read.
+    # `marker` holds what follows the id inside the bold run — the period, or an
+    # em dash and the item's heading — and `text` holds the prose after the bold
+    # run. Any of the three dash characters the author may type separates the
+    # title.
+    LEGACY_CANON_ITEM = /\A\s*(?:-\s+)?\*\*(?<id>K\d+|L\d+|D\d+|O(?:-[A-Z0-9]+)?\d+)(?<marker>\.|\s+[-–—][^*]*)\*\*(?<text>[^\n]*)\r?\n?\z/
+    # A `##` heading changes the ledger a following item sits in; a `###` group
+    # heading ends the current item but keeps the surrounding ledger, which is
+    # how `mechanism.md` groups its rules, consequences, and decisions.
+    CANON_HEADING = /\A(?<hashes>\#{2,3})\s+(?<heading>.+?)\s*\z/
     # What an id's prefix means, which is the canon type the record stores.
     CANON_TYPES = { "K" => "locked", "L" => "rule", "D" => "consequence", "O" => "open" }.freeze
     # The source may cite a canon item as `[[rule:ID]]` or, in the current
@@ -241,16 +246,15 @@ module StoryInterchange
             register_canon_item(item, lines, document, section) if item
             item = nil
             lines = []
-            section = canon_section(match[1])
-          elsif (match = CANON_ITEM.match(line))
+            section = canon_section(match[:heading]) if match[:hashes] == "##"
+          elsif (match = CANON_ITEM.match(line) || LEGACY_CANON_ITEM.match(line))
             register_canon_item(item, lines, document, section) if item
             item = { id: match[:id], line: number, match: match }
             lines = [ line ]
           elsif item
-            # Everything between this item's bold id and the next item or heading
-            # is the item's own text. Keeping it whole is what lets the statement
-            # be a real first sentence and the source passage be the passage,
-            # rather than only the line the id happens to start on.
+            # Everything between this item's marker and the next item or heading
+            # is the item's own text. Keeping it whole is what lets the item be
+            # read as written instead of only the line the id happens to start on.
             lines << line
           end
         end
@@ -269,8 +273,8 @@ module StoryInterchange
         end
       end
 
-      # Finalizes the item that just ended. The lines include the item's own bold
-      # id line, so the text is the passage as the author wrote it.
+      # Finalizes the item that just ended. The lines include the marker line, so
+      # the text is the item as the author wrote it.
       def register_canon_item(item, lines, document, section)
         text = lines.join.strip
         register_canon_id(item[:id], document, item[:line], section, item[:match], text)
@@ -304,8 +308,45 @@ module StoryInterchange
       # validator stays the one place that reads `universe/canon/`, rather than
       # the importer parsing the same files a second way.
       def add_canon_item(id, document, line_number, match, text, question)
+        item = if match.names.include?("what")
+          current_canon_item(id, document, line_number, match, text)
+        else
+          legacy_canon_item(id, document, line_number, match, text)
+        end
+
+        @report.add_canon_rule(item)
+        @report.add_canon_question(item) if question
+      end
+
+      # The current item: its what-line is the name, its whole text — what-line and
+      # body together — is the statement, and the source passage stays empty for
+      # now. The item states no what-line sometimes, and then the statement names
+      # it, because a rule's name is required.
+      def current_canon_item(id, document, line_number, match, text)
+        what = canon_clean(match[:what].to_s).squish
+        body = canon_clean(text.sub(/\A[^\n]*\n?/, ""))
+        statement = [ what, body ].reject(&:blank?).join("\n\n")
+
+        Report::CanonItem.new(
+          id: id,
+          slug: id.downcase,
+          name: what.presence || first_sentence(statement).presence || id,
+          canon_type: CANON_TYPES.fetch(id[0]),
+          category: canon_category(document),
+          statement: statement,
+          source: nil,
+          path: document.relative_path,
+          line: line_number
+        )
+      end
+
+      # The older bold item keeps its older mapping: a title after a dash is the
+      # name, the first sentence of the prose is the statement, and the whole item
+      # is the source passage.
+      def legacy_canon_item(id, document, line_number, match, text)
         statement = canon_statement(match, text)
-        item = Report::CanonItem.new(
+
+        Report::CanonItem.new(
           id: id,
           slug: id.downcase,
           name: canon_name(match, statement),
@@ -316,12 +357,9 @@ module StoryInterchange
           path: document.relative_path,
           line: line_number
         )
-
-        @report.add_canon_rule(item)
-        @report.add_canon_question(item) if question
       end
 
-      # The item's own title when it states one (`**L2 — Trigger.**` names
+      # The older item's own title when it states one (`**L2 — Trigger.**` names
       # `Trigger`), otherwise the statement, because a rule's name is required and
       # `**K16.**` states nothing but the rule itself.
       def canon_name(match, statement)
@@ -334,14 +372,14 @@ module StoryInterchange
         File.basename(document.relative_path, ".md")
       end
 
-      # The first sentence of the item's prose, or its title when the item has no
-      # prose after the id. The prose is the whole item, not only its opening
-      # line, so a sentence may span the line breaks the author used. Markdown and
-      # source-file paths are presentation, not the rule, so they are cleaned off
-      # before the sentence boundary is drawn: a period that closes bold text sits
-      # beside `*`, not whitespace, until the markers are gone. A leading
-      # amendment note is kept in the source and skipped here, so the statement
-      # is the rule rather than a citation of what changed around it.
+      # The first sentence of the older item's prose, or its title when the item
+      # has no prose after the id. The prose is the whole item, not only its
+      # opening line, so a sentence may span the line breaks the author used.
+      # Markdown and source-file paths are presentation, not the rule, so they are
+      # cleaned off before the sentence boundary is drawn: a period that closes
+      # bold text sits beside `*`, not whitespace, until the markers are gone. A
+      # leading amendment note is kept in the source and skipped here, so the
+      # statement is the rule rather than a citation of what changed around it.
       def canon_statement(match, text)
         prose = strip_leading_canon_note(canon_clean(text_after_canon_id(text)))
         statement = first_sentence(prose).squish

@@ -275,30 +275,30 @@ taxonomy, so the import creates no Scene Tags.
 Every area file begins with a `# Canon: <subject>` heading and holds items under `## Locked`,
 `## Derived consequences`, and `## Open` headings.
 
-- An item is a bold id at the start of a line, bulleted or not: `**K16.**`, `**L1 — Substrate.**`,
-  `**D8.**`, `**O-I1.**`. The punctuation after the id is either a full stop or a short title after a
-  dash; hyphen, en dash, and em dash are all read.
+- An item opens with a column-0 bullet whose marker is its own id and a full stop, followed by its
+  **what**: one line naming what the item is about. `- K16. The moon event as the first checkout`,
+  `- L1. Substrate`, `- O-I1. How rare the carrier condition is`. A blank line follows it, and the
+  item's text runs beneath, indented two spaces, until the next column-0 marker or heading. A `###`
+  group heading ends the item but not the ledger it sits in.
 - `K##`, `L##`, and `D##` are rules. `O##` and `O-<letters>N` are open questions. The id prefix, not
   the heading, says which is which; a locked id under Open is a warning.
 - Ids are global and stable across every area file. A duplicate is an error.
 - The application imports one Canon Rule per `K`/`L`/`D`/`O` item. The id is the slug, lowercased
-  (`L2` → `l2`); the title after the dash is the name (`L2 — Trigger` → `Trigger`), or the statement
-  when the item states no title; the prefix is the canon type (`K` locked, `L` rule, `D` consequence,
-  `O` open); and the area filename without `.md` is the category. The statement is the first sentence
-  of the whole item, and the optional source passage is the item's own text. An open question becomes
-  a rule of type `open`, so it is held beside the rules it questions rather than dropped from the
-  import.
-- An item's text runs from its bold id to the next item or `##` heading, so a sentence may span the
+  (`L2` → `l2`); the what-line is the name (`- L2. Trigger` → `Trigger`); the prefix is the canon
+  type (`K` locked, `L` rule, `D` consequence, `O` open); and the area filename without `.md` is the
+  category. **For now the rule's `statement` is the item's whole text, the what-line and the body
+  together, and the optional source passage stays empty.** An open question becomes a rule of type
+  `open`, so it is held beside the rules it questions rather than dropped from the import.
+- An item's text runs from its what-line to the next item or heading, so a sentence may span the
   line breaks the author used. The text is author prose, but it is stored as plain prose: emphasis,
   inline-code backticks, and strikethrough markers are stripped; a table keeps its cells on one line
   without its pipes or rule; a list keeps its text without its bullet; and a source file path such as
-  `universe/canon/mechanism.md` or `README.md` is removed rather than stored. Rule, scene, and backlog
-  references stay as written.
-- A citation in the title — `(Amended by K27)`, a `rule:L3` reference — is removed from the name and
-  stays in the item's text, which is where the source passage and the statement read it. A leading
-  amendment note (`*(Amended by K27.)*`, `(Author direction — K67: …)`) stays in the source passage
-  and is skipped when the statement is drawn, so an untitled rule is named after the rule rather than
-  after the note.
+  `universe/canon/mechanism.md` or `README.md` is removed rather than stored. Rule, scene, and
+  backlog references stay as written.
+
+The older bold item form — `- **K16.** The moon event …`, with the item's text starting on the id
+line — is still read, with its older mapping: a title after a dash is the name, the first sentence
+is the statement, and the whole item is the source passage.
 
 The text of each item is author prose. An import must not summarize, merge, or reorder it.
 

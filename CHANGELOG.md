@@ -42,9 +42,25 @@ Labels used below, in the order their groups appear:
 
 ### added
 
+- **Canon details editor.** A writer's canon rule page carries an Edit control that opens the workspace modal, returns to the rule after a save, and re-renders that page when a save is refused.
+- **Canon list filter.** The Canon list narrows by free text, canon type, and owner — one story or the universe-wide rules — and offers a reader-chosen order; a narrowed list says what emptied it and keeps the filter through a mutation.
 - **Edit from a details page.** A writer's Character, Faction, Location, and Item pages carry an Edit control that opens the workspace's own editor modal in place; guests and read-only members see the page without it.
 
+### changed
+
+- **Canon details prose.** The rule statement and source passage render as Markdown on the details page, so paragraphs, lists, and `[[kind:slug]]` references read as written; list rows stay one plain line.
+- **Canon list rows.** A rule's ledger id now leads its row, and its statement and source passage show as plain text with references named but not linked, matching the other flat lists.
+
+- **Canon import items.** A canon item is read from its `- K16. What it is` header line and the text beneath it, written whole as the rule statement with the source passage left empty.
+
+### fixed
+
+- **Canon error summary subject.** A rejected canon save no longer reads "this this canon rule" in English, because the shared sentence already supplies the "this".
+
 ### docs
+
+- **Canon details documentation.** The canon document records the Markdown details prose and the Edit control that returns to the rule after a save.
+- **Canon list documentation.** The canon and list-filter documents record the id-first row, the plain-text prose, and the narrow-by-text, type, owner, and order contract.
 
 - **Details-page editor contract.** Conventions and the Character, Faction, Location, and Item documents state that a details page reuses its workspace editor rather than adding an edit route.
 

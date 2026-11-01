@@ -1162,6 +1162,16 @@ $um-search-match: #ffc107;
   overflow-wrap: anywhere;
 }
 
+// A canon rule is cited by its ledger id, so the list row leads with it and
+// gives it the weight of a label rather than a footnote. It stays a `code`
+// element, so the identifier's own role is in the markup.
+.canon-rule-id {
+  color: var(--bs-body-color);
+  font-size: .9375rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
 .entity-description {
   display: -webkit-box;
   max-width: 52rem;

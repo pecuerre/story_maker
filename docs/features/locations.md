@@ -31,8 +31,9 @@ canon rule; a canon citation keeps its ledger id as the label (`[[canon:K47]]` r
 every other kind is labeled with the record's name.
 
 The editor is the shared hierarchical tree modal: it offers the name, the Markdown description, the
-parent selector, the tag selector, and the photo. The description is read-only outside the editor,
-like the rest of the tree.
+parent selector, the tag selector, and the photo. A writer's details page carries an **Edit location**
+control that opens the same editor in place, with the record and its descendants kept out of its own
+parent selector. The description is read-only outside the editor, like the rest of the tree.
 
 ## Search, filter, and API
 

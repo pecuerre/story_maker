@@ -328,9 +328,12 @@ the same change, or `db:demo:check` fails.
   `update` respectively. `test/routing/route_action_contract_test.rb` holds both halves of the
   contract, per request verb rather than per action, because a mutation correctly renders no template.
 - A `show` action is **read-only and guest-readable** (`allow_unauthenticated_access only: %i[index
-  show]`), loads its record through the authorized scope, and renders no mutation control. Because
-  a details page has no form, `can_write_universe?` only decides whether an editor link is
-  rendered, and read-only members and guests see identical content.
+  show]`) and loads its record through the authorized scope. A details page renders no form of its
+  own, but a writer gets the record's **Edit** control in the page header, and it opens the
+  workspace's own editor modal in place. A guest or read-only member gets the page without the
+  controller, the control, or the modal, so both see the same content. The flat-list pages share the
+  workspace's editor partial; a Location's details page reuses the taxonomy tree's browser-built
+  editor by serializing the same descriptor list and node prefill values the tree renders.
 
 ### Routes
 - Universe content lives under `scope "u/:universe_slug", as: :universe` → helpers are prefixed
@@ -428,6 +431,13 @@ and descriptions are assigned with `textContent`/DOM properties, never interpola
   Each row also renders `record_details_link` before its actions, so the record's own page is one
   click away and visible to read-only viewers. The name is plain text; the Details link is the only
   link into the record's own page.
+- Characters, Factions, and Items keep their editor in a per-model partial
+  (`characters/_editor_modal`, `factions/_editor_modal`, `items/_editor_modal`). The workspace
+  renders it once, and the record's own details page renders it again beside a header Edit control
+  built by `record_edit_control` (the same trigger a row's overflow menu uses). A save therefore
+  refreshes whichever page opened the editor. Locations have no separate partial: their details
+  page's Edit control is a tree-shaped trigger carrying the same descriptors and prefill values as a
+  tree node, so the browser-built tree editor serves both pages.
 - Every record workspace uses `shared/_content_tabs`: URL-backed Bootstrap `nav-tabs` that keep
   related records together while preserving each canonical page. Character tags pinned with
   `show_in_menu` also appear on the Relations page. Their links include `from=workspace`; the tag

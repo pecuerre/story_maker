@@ -13,6 +13,25 @@ class ModalJsonFlowTest < ApplicationSystemTestCase
     @universe = universes(:universe_one)
   end
 
+  test "a details page's Edit control opens the same editor and saves in place" do
+    sign_in_via_form(@user)
+    character = characters(:character_one)
+    visit universe_character_path(universe_slug: @universe.slug, id: character)
+
+    click_button "Edit character"
+    within ".modal.show" do
+      assert_field "Name", with: character.name
+      fill_in "Short summary", with: "Edited from the details page."
+      click_button "Save character"
+    end
+
+    # The save refreshes the details page the reader is on, not the list, so the
+    # summary they just wrote is the one the page shows.
+    assert_selector ".page-description", text: "Edited from the details page.", wait: REFRESH_WAIT
+    assert_no_selector ".modal.show"
+    assert_equal "Edited from the details page.", character.reload.summary
+  end
+
   test "a modal create saves through JSON and refreshes the list and its counts" do
     sign_in_via_form(@user)
     visit universe_characters_path(universe_slug: @universe.slug)

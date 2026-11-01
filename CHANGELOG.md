@@ -38,6 +38,16 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-01
+
+### added
+
+- **Edit from a details page.** A writer's Character, Faction, Location, and Item pages carry an Edit control that opens the workspace's own editor modal in place; guests and read-only members see the page without it.
+
+### docs
+
+- **Details-page editor contract.** Conventions and the Character, Faction, Location, and Item documents state that a details page reuses its workspace editor rather than adding an edit route.
+
 ## 2026-10-31
 
 ### changed

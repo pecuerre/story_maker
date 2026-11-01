@@ -116,43 +116,6 @@
   <% end %>
 
   <% if can_write_universe? %>
-    <div class="modal fade" tabindex="-1"
-    aria-labelledby="item-modal-title"
-    aria-hidden="true"
-    data-modal-form-target="modal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 class="modal-title fs-5" id="item-modal-title" data-modal-form-target="title"><%= t("items.new_title") %></h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
-        </div>
-        <%= form_with scope: :item, url: universe_items_path, method: :post,
-          data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
-          <div class="modal-body">
-            <%= render "shared/modal_errors" %>
-            <div class="mb-3">
-              <%= form.label :name, t("items.form.name"), class: "form-label" %>
-              <%= form.text_field :name, class: "form-control", required: true %>
-            </div>
-            <%= render "shared/photo_field", param: "item" %>
-            <div class="mb-3">
-              <%= form.label :item_tag_ids, t("items.form.tags_label"), class: "form-label" %>
-              <%= form.collection_select :item_tag_ids, @assignable_item_tags, :id, :name,
-                {},
-                { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
-            </div>
-            <div class="mb-3">
-              <%= form.label :description, t("items.form.description"), class: "form-label" %>
-              <%= form.text_area :description, class: "form-control", rows: 4 %>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
-            <%= form.submit t("items.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  </div>
+    <%= render "items/editor_modal", tags: @assignable_item_tags %>
   <% end %>
 </div>

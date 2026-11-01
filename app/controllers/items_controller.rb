@@ -39,7 +39,11 @@ class ItemsController < ApplicationController
   # GET /items/:id — the record's own read-only details page. It identifies the
   # record and is the destination of every "Details" link; later slices add
   # the related-records sections without changing this URL.
+  #
+  # A writer also gets the workspace's editor here, so the page loads the tag list
+  # its modal offers. A guest or read-only member pays for none of it.
   def show
+    set_item_tag_data if can?(:write, Current.universe)
   end
 
   def create

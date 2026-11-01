@@ -8,23 +8,38 @@
 else
   []
 end %>
+<%# The page carries the workspace's own editor for a writer, so its Edit control
+    opens the same modal the list rows do. A guest or read-only member gets the
+    page without the controller, the button, or the modal. %>
+<% editable = can_write_universe? %>
 
-<%= render "shared/record_details",
-  record: @item,
-  eyebrow: t("sidebar.universe_bible"),
-  label: t("items.show.label"),
-  description: "",
-  facts: [
-    detail_fact(t("items.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
-    detail_fact(t("items.show.facts.tags"), entity_tag_badge(@item), blank: t("items.show.facts.tags_blank")),
-    detail_fact(t("items.show.facts.current_owners"), item_current_owners(@item),
-      blank: t("items.show.facts.current_owners_blank")),
-    detail_fact(t("items.show.facts.historical_owners"), item_historical_owners(@item),
-      blank: t("items.show.facts.historical_owners_blank"))
-  ],
-  wide_facts: description_facts,
-  back_url: universe_items_path,
-  back_label: t("items.show.back_label"),
-  actions: discussion_control(@item) %>
+<div
+  <% if editable %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="item"
+  data-modal-form-response-value="json">
+  <%= render "shared/record_details",
+    record: @item,
+    eyebrow: t("sidebar.universe_bible"),
+    label: t("items.show.label"),
+    description: "",
+    facts: [
+      detail_fact(t("items.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
+      detail_fact(t("items.show.facts.tags"), entity_tag_badge(@item), blank: t("items.show.facts.tags_blank")),
+      detail_fact(t("items.show.facts.current_owners"), item_current_owners(@item),
+        blank: t("items.show.facts.current_owners_blank")),
+      detail_fact(t("items.show.facts.historical_owners"), item_historical_owners(@item),
+        blank: t("items.show.facts.historical_owners_blank"))
+    ],
+    wide_facts: description_facts,
+    back_url: universe_items_path,
+    back_label: t("items.show.back_label"),
+    editor: (record_edit_control(@item, path: universe_item_path(id: @item),
+      values: item_fields_json(@item)) if editable),
+    actions: discussion_control(@item) %>
 
-<%= render "scene_appearances/section", record: @item %>
+  <%= render "scene_appearances/section", record: @item %>
+
+  <% if editable %>
+    <%= render "items/editor_modal", tags: @assignable_item_tags %>
+  <% end %>
+</div>

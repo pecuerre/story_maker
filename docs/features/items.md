@@ -31,8 +31,9 @@ An Item may therefore link a Character, Faction, Location, another Item, a Scene
 rule; a canon citation keeps its ledger id as the label (`[[canon:K47]]` reads as `K47`), while every
 other kind is labeled with the record's name.
 
-The editor is the Items list's modal: it offers the name, the Markdown description, the tag selector,
-and the photo. The description is read-only outside the editor, like the rest of the workspace.
+The editor is the Items modal, opened from a row in the list or from the details page's **Edit item**
+control: it offers the name, the Markdown description, the tag selector, and the photo. The
+description is read-only outside the editor, like the rest of the workspace.
 
 ## Ownership and history
 

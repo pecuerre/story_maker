@@ -21,12 +21,13 @@
                     one quiet line at the bottom of the card. See
                     `shared/_detail_footer` for the shape and why.
       back_url / back_label - where the list this page was opened from lives
-      edit_url / edit_label - optional editor link, writers only
+      editor     - optional already-rendered editor control (the Edit button that
+                   opens the record's own modal), writers only
       actions     - optional already-rendered controls placed in the page header's
-                    action group, after the back and edit links. A page passes one
-                    only when the control is genuinely its own: the "Discuss"
-                    control decides for itself whether a reader may use it, so
-                    passing it cannot give a guest a control to press.
+                    action group, after the back link and editor control. A page
+                    passes one only when the control is genuinely its own: the
+                    "Discuss" control decides for itself whether a reader may use
+                    it, so passing it cannot give a guest a control to press.
       block      - optional content between the page header and the identity
                     card. The tab strip belongs to the page's navigation
                     chrome, not to the record, so a workspace that stays open
@@ -47,9 +48,8 @@
   description: local_assigns[:description] || record.description do %>
   <%= link_to local_assigns.fetch(:back_label), local_assigns.fetch(:back_url),
     class: "btn btn-outline-secondary" %>
-  <% if local_assigns[:edit_url].present? && can_write_universe? %>
-    <%= link_to local_assigns.fetch(:edit_label), local_assigns.fetch(:edit_url),
-      class: "btn btn-primary" %>
+  <% if local_assigns[:editor].present? && can_write_universe? %>
+    <%= local_assigns[:editor] %>
   <% end %>
   <%= local_assigns[:actions] %>
 <% end %>

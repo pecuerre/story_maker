@@ -292,6 +292,32 @@ module ApplicationHelper
     end
   end
 
+  # The Edit control a record's own details page puts beside Back. It is the same
+  # trigger a list row's overflow menu renders, so it opens the workspace's own
+  # modal rather than a second editor: the page must hold a `modal-form`
+  # controller and the workspace's editor modal, which is what `shared/_record_details`
+  # and each details page set up for a writer.
+  #
+  # Only writers get one. The caller renders it only inside that branch, and the
+  # shared details partial keeps the same guard so a page cannot hand a guest a
+  # control its workspace would not.
+  def record_edit_control(record, path:, values:)
+    label = t("shared.row_actions.edit_title", label: t(record.model_name.singular_route_key, count: 1))
+
+    button_tag type: "button", class: "btn btn-primary",
+      data: {
+        action: "modal-form#open",
+        modal_form_url: path,
+        modal_form_method: "patch",
+        modal_form_record_id: record.id,
+        modal_form_title: label,
+        modal_form_values_value: values
+      } do
+      concat content_tag(:i, "", class: "bi bi-pencil", aria: { hidden: true })
+      concat content_tag(:span, label)
+    end
+  end
+
   # How a record is named wherever a shared partial has to name it without
   # knowing the model: a row action's delete confirmation, a record's own details
   # page, a taxonomy page's list of what carries a tag.

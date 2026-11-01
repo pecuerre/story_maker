@@ -1,6 +1,28 @@
 require "application_system_test_case"
 
 class TaxonomyTreeTest < ApplicationSystemTestCase
+  test "a location details page opens the tree editor in place" do
+    user = users(:user_one)
+    universe = universes(:universe_one)
+    location = locations(:location_one)
+
+    sign_in_via_form(user)
+    visit universe_location_path(universe_slug: universe.slug, id: location)
+
+    click_button "Edit location"
+    within ".modal.show" do
+      assert_field "Name", with: location.name
+      fill_in "Description", with: "## Edited here\n\nFrom the details page."
+      click_button "Save changes"
+    end
+
+    # The tree editor refreshes the page it was opened from, and the details page
+    # renders the stored Markdown description from that fresh render.
+    assert_selector ".detail-facts-wide", text: "Edited here", wait: REFRESH_WAIT
+    assert_no_selector ".modal.show"
+    assert_includes location.reload.description, "From the details page."
+  end
+
   test "taxonomy names are text, parent options refresh, and counts update" do
     user = users(:user_one)
     universe = universes(:universe_one)

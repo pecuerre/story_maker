@@ -1,0 +1,37 @@
+<%# The Location details page's Edit control.
+
+    A Location is edited by the shared taxonomy tree editor, whose modal is built
+    in the browser from the descriptor list on the controller element. The details
+    page therefore renders the editor's trigger as a node with no row: the tree
+    controller reads a node's own id, update URL, name, description, and prefill
+    values, and nothing here needs a tree around it. Using the same descriptors and
+    the same `taxonomy_node_values_json` payload is what keeps this editor the one
+    Location editor rather than a second form that could drift.
+
+    Local contract:
+      location - the record being shown
+      fields   - the `location_taxonomy_fields` descriptors for this request %>
+<% location = local_assigns.fetch(:location) %>
+<% fields = local_assigns.fetch(:fields) %>
+
+<span
+  data-controller="taxonomy-tree"
+  data-taxonomy-tree-model-param-value="location"
+  data-taxonomy-tree-modal-fields-value="<%= fields.to_json %>"
+  data-taxonomy-tree-editable-value="true">
+  <%# The tree's own live region. The details page has no tree surface to put it
+      on, but the editor still reports a refused save here rather than nowhere;
+      a successful save refreshes the page before it is read. %>
+  <span class="visually-hidden" data-taxonomy-tree-status aria-live="polite"></span>
+  <span
+    data-node-id="<%= location.id %>"
+    data-update-url="<%= universe_location_path(id: location) %>"
+    data-name="<%= location.name %>"
+    data-description="<%= location.description %>"
+    data-taxonomy-values="<%= taxonomy_node_values_json(location, fields) %>">
+    <button type="button" class="btn btn-primary" data-action="taxonomy-tree#edit">
+      <i class="bi bi-pencil" aria-hidden="true"></i>
+      <span><%= t("shared.row_actions.edit_title", label: t("location", count: 1)) %></span>
+    </button>
+  </span>
+</span>

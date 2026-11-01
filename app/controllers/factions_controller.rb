@@ -10,12 +10,14 @@ class FactionsController < ApplicationController
 
   def index
     @factions = Current.universe.factions.includes(:photo, :faction_tags).order(:name, :id)
-    @faction_tags = Current.universe.faction_tags.reorder(:position, :id).to_a
-    @assignable_faction_tags = @faction_tags.select(&:taggable)
+    set_faction_tag_data
   end
 
+  # The details page renders the workspace's editor for a writer, so it needs the
+  # assignable tags the modal offers. A guest or read-only member loads none.
   def show
     @characters = @faction.characters.includes(:photo, :character_tags).order(:name, :id)
+    set_faction_tag_data if can?(:write, Current.universe)
   end
 
   def create
@@ -56,6 +58,11 @@ class FactionsController < ApplicationController
 
   def set_faction
     @faction = Current.universe.factions.find(params.expect(:id))
+  end
+
+  def set_faction_tag_data
+    @faction_tags = Current.universe.faction_tags.reorder(:position, :id).to_a
+    @assignable_faction_tags = @faction_tags.select(&:taggable)
   end
 
   def faction_params

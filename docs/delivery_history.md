@@ -27,6 +27,25 @@ are linked rather than repeated, so there is one place to keep them current.
 
 ## Dated entries
 
+### 2026-11-01
+
+- **[added]** **A record's own details page opens its workspace editor in place.**
+  - **The gap.** Characters, Factions, Locations, and Items had no Edit control on their details
+    pages, so a reader had to return to the list and use the row menu. `shared/_record_details` had
+    carried unused `edit_url`/`edit_label` locals, which could only have rendered a link and there is
+    no separate edit route to point at.
+  - **The decision.** The details page renders the same editor, not a second form. Characters,
+    Factions, and Items moved their modal into a per-model partial that the workspace and the details
+    page both render, and `record_edit_control` is the same trigger a row menu uses. A Location
+    reuses the tree's browser-built modal by rendering a node-shaped trigger with the same descriptor
+    list and prefill payload; its parent options exclude the record and its descendants because the
+    page has no rendered subtree for the tree controller to exclude.
+  - **Rejected alternatives.** A new `edit` route and page (the modal-edited models deliberately have
+    none), and a link back to the list (which is not an editor).
+  - **Verification.** Request tests for the writer/guest/read-only contract and the descriptor-prefill
+    match, plus browser journeys that open the flat-list and tree editors from a details page and
+    save in place.
+
 ### 2026-10-29
 
 - **[added]** **A completed import has its own report page.**

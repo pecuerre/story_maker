@@ -8,6 +8,10 @@
 else
   []
 end %>
+<%# A writer gets the tree's own editor as an Edit control; the descriptors are
+    built once here so the trigger and the page's other reads share one list. %>
+<% editable = can_write_universe? %>
+<% edit_fields = location_taxonomy_fields(@location_tags, @location_options) if editable %>
 
 <%= render "shared/record_details",
   record: @location,
@@ -23,6 +27,7 @@ end %>
   wide_facts: description_facts,
   back_url: universe_locations_path,
   back_label: t("locations.show.back_label"),
+  editor: (render("locations/edit_control", location: @location, fields: edit_fields) if editable),
   actions: discussion_control(@location) %>
 
 <%= render "locations/presence", location: @location %>

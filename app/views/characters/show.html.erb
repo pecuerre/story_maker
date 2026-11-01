@@ -7,29 +7,46 @@
 else
   []
 end %>
+<%# The page carries the workspace's own editor for a writer, so its Edit control
+    opens the same modal the list rows do. A guest or read-only member gets the
+    page without the controller, the button, or the modal. %>
+<% editable = can_write_universe? %>
 
-<%= render "shared/record_details",
-  record: @character,
-  eyebrow: t("sidebar.universe_bible"),
-  label: t("characters.show.label"),
-  description: summary_html(@character),
-  facts: [
-    detail_fact(t("characters.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
-    detail_fact(t("characters.show.facts.tags"), entity_tag_badge(@character), blank: t("characters.show.facts.tags_blank")),
-    detail_fact(t("characters.show.facts.factions"), safe_join(@character.factions.order(:name).map { |faction|
-      link_to(faction.name, universe_faction_path(universe_slug: Current.universe.slug, id: faction))
-    }, ", "), blank: t("characters.show.facts.factions_blank")),
-    detail_fact(t("characters.show.facts.pronouns"), @character.pronouns, blank: t("characters.show.facts.blank")),
-    detail_fact(t("characters.show.facts.aliases"), @character.aliases, blank: t("characters.show.facts.blank"))
-  ],
-  wide_facts: description_facts,
-  back_url: universe_characters_path,
-  back_label: t("characters.show.back_label"),
-  actions: discussion_control(@character) %>
+<div
+  <% if editable %>data-controller="modal-form"<% end %>
+  data-modal-form-model-param-value="character"
+  data-modal-form-response-value="json">
+  <%= render "shared/record_details",
+    record: @character,
+    eyebrow: t("sidebar.universe_bible"),
+    label: t("characters.show.label"),
+    description: summary_html(@character),
+    facts: [
+      detail_fact(t("characters.show.facts.universe"), link_to(Current.universe.name, universe_path(id: Current.universe))),
+      detail_fact(t("characters.show.facts.tags"), entity_tag_badge(@character), blank: t("characters.show.facts.tags_blank")),
+      detail_fact(t("characters.show.facts.factions"), safe_join(@character.factions.order(:name).map { |faction|
+        link_to(faction.name, universe_faction_path(universe_slug: Current.universe.slug, id: faction))
+      }, ", "), blank: t("characters.show.facts.factions_blank")),
+      detail_fact(t("characters.show.facts.pronouns"), @character.pronouns, blank: t("characters.show.facts.blank")),
+      detail_fact(t("characters.show.facts.aliases"), @character.aliases, blank: t("characters.show.facts.blank"))
+    ],
+    wide_facts: description_facts,
+    back_url: universe_characters_path,
+    back_label: t("characters.show.back_label"),
+    editor: (record_edit_control(@character, path: universe_character_path(id: @character),
+      values: character_fields_json(@character)) if editable),
+    actions: discussion_control(@character) %>
 
-<%# The appearances object is built once and shared with the mention suggestions
-    below it: both sections answer questions about the same Story, and the
-    suggestions have to know which Scenes already record the Character. %>
-<% appearances = SceneAppearances.for(@character, story: Current.story) %>
-<%= render "scene_appearances/section", record: @character, appearances: appearances %>
-<%= render "characters/mentions", character: @character, appearances: appearances %>
+  <%# The appearances object is built once and shared with the mention suggestions
+      below it: both sections answer questions about the same Story, and the
+      suggestions have to know which Scenes already record the Character. %>
+  <% appearances = SceneAppearances.for(@character, story: Current.story) %>
+  <%= render "scene_appearances/section", record: @character, appearances: appearances %>
+  <%= render "characters/mentions", character: @character, appearances: appearances %>
+
+  <% if editable %>
+    <%= render "characters/editor_modal",
+      tags: @assignable_character_tags,
+      factions: @factions %>
+  <% end %>
+</div>

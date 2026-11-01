@@ -250,6 +250,24 @@ module ModalFields
       tag_label_key: "modal_fields.location_tags")
   end
 
+  # The values one taxonomy node is prefilled from: one per descriptor, with a
+  # descriptor marked `url` naming the record's stored image rather than a column.
+  # The node cannot produce that URL itself because an Active Storage URL belongs
+  # to the request.
+  #
+  # The tree's node partial and the details page's editor trigger both read it, so
+  # the browser receives the same payload whether the editor was opened from the
+  # tree or from the record's own page.
+  def taxonomy_node_values(record, modal_fields)
+    modal_fields.to_h do |field|
+      [ field[:name], field[:url] ? record_photo_url(record) : record.public_send(field[:name]) ]
+    end
+  end
+
+  def taxonomy_node_values_json(record, modal_fields)
+    taxonomy_node_values(record, modal_fields).to_json
+  end
+
   def ownership_tag_taxonomy_fields(nodes = [])
     taxonomy_tag_fields(nodes)
   end

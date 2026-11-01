@@ -43,7 +43,12 @@ class LocationsController < ApplicationController
   # GET /locations/:id — the record's own read-only details page. It identifies the
   # record and is the destination of every "Details" link; later slices add
   # the related-records sections without changing this URL.
+  #
+  # A writer also gets the tree's own editor here: the page renders the same
+  # descriptor list and prefill payload a tree node carries, so the Edit control
+  # opens the one Location editor rather than a second form.
   def show
+    set_location_editor_data if can?(:write, Current.universe)
   end
 
   def create
@@ -129,5 +134,33 @@ class LocationsController < ApplicationController
   def set_location_tag_data
     @all_location_tags = Current.universe.location_tags.reorder(:position, :id).to_a
     @location_tags = @all_location_tags.select(&:taggable)
+  end
+
+  # The details page's editor is the shared tree editor, so it needs the tree's
+  # two per-call answers: the assignable tags and the places this record may sit
+  # inside. A Location may not be its own parent or a descendant of itself, and
+  # the tree excludes that subtree from a row's parent selector; the index reads
+  # it from the rendered row, but this page has no row, so the same exclusion is
+  # computed here from one loaded hierarchy.
+  def set_location_editor_data
+    set_location_tag_data
+
+    hierarchy = HierarchyIndex.build(Current.universe.locations.reorder(:position, :id))
+    excluded = location_subtree_ids(hierarchy, @location)
+    @location_options = hierarchy.records.reject { |location| excluded.include?(location.id) }
+  end
+
+  def location_subtree_ids(hierarchy, location)
+    ids = [ location.id ]
+    queue = [ location.id ]
+
+    while (id = queue.shift)
+      hierarchy.children_of(id).each do |child|
+        ids << child.id
+        queue << child.id
+      end
+    end
+
+    ids
   end
 end

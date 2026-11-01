@@ -42,7 +42,11 @@ class CharactersController < ApplicationController
   end
 
   # GET /characters/:id — the record's own read-only details page.
+  #
+  # A writer also gets the workspace's editor here, so the page loads the two
+  # lists its modal offers. A guest or read-only member pays for neither.
   def show
+    set_character_tag_data if can?(:write, Current.universe)
   end
 
   def create

@@ -68,47 +68,6 @@
   <% end %>
 
   <% if can_write_universe? %>
-    <div class="modal fade" tabindex="-1" aria-labelledby="faction-modal-title" aria-hidden="true"
-      data-modal-form-target="modal">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title fs-5" id="faction-modal-title" data-modal-form-target="title"><%= t("factions.new_title") %></h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
-          </div>
-          <%= form_with scope: :faction, url: universe_factions_path, method: :post,
-            data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
-            <div class="modal-body">
-              <%= render "shared/modal_errors" %>
-              <div class="mb-3">
-                <%= form.label :name, t("factions.form.name"), class: "form-label" %>
-                <%= form.text_field :name, class: "form-control", required: true %>
-              </div>
-              <%= render "shared/photo_field", param: "faction" %>
-              <div class="mb-3">
-                <%= form.label :faction_tag_ids, t("factions.form.tags_label"), class: "form-label" %>
-                <%= form.collection_select :faction_tag_ids, @assignable_faction_tags, :id, :name, {},
-                  { class: "form-select", multiple: true, data: { controller: "tom-select" } } %>
-              </div>
-              <div class="mb-3">
-                <%= form.label :summary, t("factions.form.summary"), class: "form-label" %>
-                <%= form.text_area :summary, class: "form-control", rows: 3 %>
-                <div class="form-text"><%= t("factions.form.summary_hint") %></div>
-              </div>
-              <div class="mb-3">
-                <%= form.label :description, t("factions.form.description"), class: "form-label" %>
-                <%= form.text_area :description, class: "form-control font-monospace", rows: 14 %>
-                <div class="form-text"><%= t("factions.form.description_hint") %></div>
-                <div class="form-text"><%= t("factions.form.description_reference_hint") %></div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
-              <%= form.submit t("factions.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
+    <%= render "factions/editor_modal", tags: @assignable_faction_tags %>
   <% end %>
 </div>

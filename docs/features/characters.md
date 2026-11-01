@@ -86,7 +86,9 @@ without deleting either endpoint.
 Factions themselves and their taxonomy are documented in [factions.md](factions.md).
 
 The Character workspace follows the existing JSON modal mutation contract and Universe access policy.
-All reads and writes are scoped through the authorized Universe URL.
+All reads and writes are scoped through the authorized Universe URL. A writer's details page carries
+an **Edit character** control that opens the same modal, so a Character can be edited without
+returning to the list.
 
 The details page's prose mention suggestions are a separate read: a name written in a Scene never
 becomes an appearance. Their matching rules and surfaces are in [mentions.md](mentions.md).

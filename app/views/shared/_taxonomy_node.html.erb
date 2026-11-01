@@ -32,9 +32,7 @@
       marked `url` names a stored image rather than a column: the photo editor is
       given the URL of the photo this node already has, which the node cannot
       produce itself because an Active Storage URL belongs to the request. %>
-  data-taxonomy-values="<%= modal_fields.to_h { |field|
-    [ field[:name], field[:url] ? record_photo_url(node) : node.public_send(field[:name]) ]
-  }.to_json %>"
+  data-taxonomy-values="<%= taxonomy_node_values_json(node, modal_fields) %>"
   <% if taxonomy_field %>data-taxonomy-field-value="<%= node.public_send(taxonomy_field).to_json %>"<% end %>>
 
   <div class="taxonomy-row d-flex align-items-center gap-2 border-bottom">

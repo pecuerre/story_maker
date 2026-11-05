@@ -27,8 +27,7 @@ class Api::SceneElementsController < Api::BaseController
         name: element.name,
         kind: element.kind,
         body: element.body,
-        position: element.position,
-        character_ids: element.character_ids
+        position: element.position
       }
     end
 end

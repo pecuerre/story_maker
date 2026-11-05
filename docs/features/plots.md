@@ -8,11 +8,14 @@ decision is recorded in [ADR 0031](../adr/0031-story-owned-plot-arcs.md); the sc
 
 ## Scope and assignment
 
-`Plot belongs_to :story` and has a required name, optional description, story-local slug, and soft
-delete. A Story may own any number of plots, and each Plot may link to any number of Scenes from that
-same Story. The many-to-many assignment is an independent grouping axis: a Scene may have multiple
-Plots, a Plot may cross Sections, and neither association changes `Scene.position` or `section_id`.
-Plots have no parent hierarchy or user-controlled ordering.
+`Plot belongs_to :story` and has a required name, an optional `short_summary`, an optional Markdown
+`description`, a story-local slug, and soft delete. The short summary is the one line the Plots list
+shows, reduced to plain text so a reference is a record's name rather than a link; the description
+is the record's full profile and may carry `##` sections and `[[kind:slug]]` links, which its details
+page renders with the shared Markdown dialect. A Story may own any number of plots, and each Plot may
+link to any number of Scenes from that same Story. The many-to-many assignment is an independent
+grouping axis: a Scene may have multiple Plots, a Plot may cross Sections, and neither association
+changes `Scene.position` or `section_id`. Plots have no parent hierarchy or user-controlled ordering.
 
 Both association writers validate unknown, duplicate, and cross-Story assignments before a join row
 can be written. The development-data loader checks every referenced Plot as well. These are
@@ -23,9 +26,10 @@ cannot prove that two records share a Story.
 
 The Plot workspace is `/u/:universe_slug/s/:story_id/plots`, with a read-only details page at
 `.../plots/:id`. It uses the flat list + modal pattern: a writer can create, edit, or soft-delete a
-Plot from the list, and its Details page lists assigned Scenes in narrative order. The Scene's
-existing full-page editor assigns zero or more Plots; it also links back to the Plot workspace when
-none exist. The story sidebar and story workspace tabs expose Sections, Plots, and Scenes as separate
+Plot from the list, and the details page's **Edit plot** control opens that same editor rather than a
+second form. Its Details page lists assigned Scenes in narrative order. The Scene's existing
+full-page editor assigns zero or more Plots; it also links back to the Plot workspace when none
+exist. The story sidebar and story workspace tabs expose Sections, Plots, and Scenes as separate
 destinations.
 
 Index and Details are guest-readable. Create, update, and delete are JSON-only mutations through the

@@ -164,26 +164,28 @@ class StoryInterchangeImportsControllerTest < ActionDispatch::IntegrationTest
   test "a source with hundreds of unmapped sections still renders its reported record" do
     # The report stores one record with a bounded note, so a large source can
     # neither overflow the session cookie nor flood the page with 300 headings.
+    # A chapter README is the slice that still reports its subsections: the
+    # profile slices fold their sections into a description instead.
     sign_in_as @operator
-    plot = File.join(@source_root, "synthetic-universe/stories/synthetic-story/plots/the-lantern.md")
-    content = File.read(plot)
+    chapter = File.join(@source_root, "synthetic-universe/stories/synthetic-story/chapters/01-arrival/README.md")
+    content = File.read(chapter)
     content += "\n" unless content.end_with?("\n")
     content += 300.times.map { |index| "## Unmapped note #{format('%04d', index)} with a long heading" }.join("\n\n") + "\n"
-    File.write(plot, content)
+    File.write(chapter, content)
 
     post import_url, params: { source: "synthetic-universe", confirm: "1" }
 
     assert_response :see_other
     run = StoryInterchangeRun.sole
-    record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The lantern" }
-    assert_equal 307, record.notes.count { |note| note.kind == :section }
+    record = run.slices.flat_map(&:reported).find { |reported| reported.label == "The Arrival Gate" }
+    assert_equal 301, record.notes.count { |note| note.kind == :section }
 
     follow_redirect!
     assert_response :success
-    assert_select "li", text: /The lantern/
+    assert_select "li", text: /The Arrival Gate/
     # The page names the first three leftovers and counts the rest.
-    assert_includes response.body, "“Stakes”, “Players”, “Status” and 304 more have no field"
-    assert_no_match(/Unmapped note/, response.body)
+    assert_includes response.body, "“What is here”, “Unmapped note 0000 with a long heading”, “Unmapped note 0001 with a long heading” and 298 more have no field"
+    assert_no_match(/Unmapped note 0299/, response.body)
   end
 
   test "a guest is sent to sign in from a run's page" do

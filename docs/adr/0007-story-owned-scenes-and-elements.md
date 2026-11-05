@@ -404,6 +404,15 @@ Coverage: model validation tests, controller tests for the editor and the 422 gu
 system test for the write and read-only journeys; connected Dark and LOTR data name POV characters
 on several scenes while leaving others blank so both states are reachable by hand.
 
+## Dated execution note (2026-11-03, Dialogue cast is its turns)
+
+The rejected "Allow Dialogue with no speakers" alternative above assumed the block-level speaker
+roster was the only way a Dialogue could name its cast. Once line-level turns existed, every saved
+line already named its speaker, and the roster could disagree with those lines while adding no fact
+of its own. The roster and its `scene_element_speakers` join are therefore removed: a Dialogue with no
+turns yet is valid, a Dialogue's cast is derived from its turns, and narration is still refused while
+any turn remains. This supersedes that one rejected-alternative decision without rewriting it.
+
 ## Consequences
 
 ### Benefits

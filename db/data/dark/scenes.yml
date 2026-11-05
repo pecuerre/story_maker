@@ -10,6 +10,10 @@
   name: Secrets
   slug: secrets
   description: "Jonas Kahnwald arrives in Winden and meets the Nielsen family."
+  drafting_contract: |
+    - one place, one beat of time, one POV, one dramatic question: what does Jonas
+      already know about the cave?
+    - exit question the reader carries out: who arranged the meeting in the woods?
   section: Section.s1e1
   pov_character: Character.jonas
   scene_tags: [ SceneTag.mood, SceneTag.mystery ]

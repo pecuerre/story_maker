@@ -2,6 +2,10 @@
   name: A Long-expected Party
   slug: a-long-expected-party
   description: "Bilbo's birthday party brings Gandalf and the Ring to the Shire."
+  drafting_contract: |
+    - one place, one beat of time, one POV, one dramatic question: will Bilbo give
+      up the Ring?
+    - the truth in this scene is held by: Bilbo, who does not know it yet.
   section: Section.the-fellowship-of-the-ring
   pov_character: Character.frodo_baggins
   scene_tags: [ SceneTag.adventure, SceneTag.fellowship ]

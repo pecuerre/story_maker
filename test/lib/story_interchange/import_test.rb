@@ -191,8 +191,33 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     plot = story.plots.find_by!(slug: "the-lantern")
     assert_equal "The lantern", plot.name
-    assert_equal "Can Ada reach the hall before the light fails? `Ada` believes she can.", plot.description
+    # `Short summary` is the list row; the identity block and every other
+    # section are one Markdown description, headings and links kept as written.
+    assert_equal "Can Ada reach the hall before the light fails?", plot.short_summary
+    assert_includes plot.description, "## Information"
+    assert_includes plot.description, "- Type: arc"
+    assert_includes plot.description, "## The question"
+    assert_includes plot.description, "`[[character:ada]]` believes she can."
+    assert_includes plot.description, "## Stakes"
+    assert_includes plot.description, "## Players"
+    assert_includes plot.description, "## Open questions"
+    assert_not_includes plot.description, "## Short summary"
     assert_empty plot.scenes
+  end
+
+  test "reports an older plot's frontmatter keys instead of importing them" do
+    path = File.join(@root, "stories/synthetic-story/plots/the-lantern.md")
+    File.write(path, File.read(path).sub("slug: the-lantern\n",
+      "slug: the-lantern\ntype: \"arc\"\nstatus: \"open\"\nowner_pov: \"ada\"\nopened_in: B-001\n"))
+
+    report = import.plan.report
+
+    assert_equal [
+      "the-lantern: type",
+      "the-lantern: status",
+      "the-lantern: owner_pov",
+      "the-lantern: opened_in"
+    ], reported_items(StoryInterchange::Importers::Plots.reported(report))
   end
 
   test "writes each chapter as a section and each scene with its point of view, location, and prose" do
@@ -226,27 +251,72 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     hall = story.scenes.find_by!(slug: "01-arrival-02-the-hall")
     assert_equal 1, hall.position
-    assert_equal "revised", hall.status
+    # The new scene format keeps no writing status in the source, so an imported
+    # Scene starts in the vocabulary's default state.
+    assert_equal "draft", hall.status
 
-    # Prose is one Narration Element per paragraph. The first takes the Scene's
-    # title, because the source records no block title; later ones are numbered.
+    # One Element per `##` block: a Narration block is one Element carrying its
+    # paragraphs, and a Dialog block is a Dialogue Element with its turns.
     gate_elements = gate.scene_elements.reorder(:position, :id)
-    assert_equal 1, gate_elements.count
-    assert_equal "The gate", gate_elements.first.name
-    assert_equal "narration", gate_elements.first.kind
+    assert_equal [ "narration", "dialogue" ], gate_elements.map(&:kind)
+    assert_equal [ "The gate", "The gate (2)" ], gate_elements.map(&:name)
     assert_includes gate_elements.first.body, "Ada carries the lantern through the gate"
     assert_includes gate_elements.first.body, "The Wardens"
     assert_not_includes gate_elements.first.body, "[[faction:wardens]]"
     # A rule citation is not an entity reference and stays as written.
     assert_includes gate_elements.first.body, "[[rule:L1]]"
 
+    dialogue = gate_elements.last
+    turns = dialogue.scene_dialogue_turns.reorder(:position, :id)
+    assert_equal [ "The gate is open.", "Then it stays barred to The Wardens." ], turns.map(&:body)
+    assert_equal [ universe.characters.find_by!(slug: "ada"), universe.characters.find_by!(slug: "ada") ],
+      turns.map(&:speaker)
+    # `@gatekeeper` names no Character file, so its line cannot become a turn;
+    # the preview reports the speaker instead.
+    assert_not_includes turns.map(&:body), "It opens for the lantern."
+
     hall_elements = hall.scene_elements.reorder(:position, :id)
-    assert_equal [ "The hall", "The hall (2)" ], hall_elements.map(&:name)
+    assert_equal [ "narration", "dialogue", "narration" ], hall_elements.map(&:kind)
+    assert_equal [ "The hall", "The hall (2)", "The hall (3)" ], hall_elements.map(&:name)
+    assert_includes hall_elements.first.body, "[[rule:D1]]"
+    assert_equal [ "There is nothing here." ],
+      hall_elements.second.scene_dialogue_turns.reorder(:position, :id).map(&:body)
     assert_includes hall_elements.last.body, "Ada sets the lantern down and waits for the warden to speak."
     # The Scene's title heading names the record rather than starting the prose,
-    # and a drafting comment never reaches an Element.
-    assert_not_includes hall_elements.map(&:body).join("\n"), "## The hall"
-    assert_not_includes hall_elements.map(&:body).join("\n"), "drafting note"
+    # and the drafting contract never reaches an Element.
+    all_bodies = gate_elements.map(&:body).join("\n") + hall_elements.map(&:body).join("\n")
+    assert_not_includes all_bodies, "## The gate"
+    assert_not_includes all_bodies, "DRAFTING CONTRACT"
+  end
+
+  test "writes a scene's drafting contract to its own column" do
+    universe = import.call.universe
+    story = universe.stories.find_by!(slug: "synthetic-story")
+    gate = story.scenes.find_by!(slug: "01-arrival-01-the-gate")
+
+    assert_includes gate.drafting_contract, "one place, one beat of time"
+    assert_includes gate.drafting_contract, "can the lantern"
+    assert_includes gate.drafting_contract, "the wick fails"
+    # An entity reference in the note reads as prose, like any other answer.
+    assert_includes gate.drafting_contract, "with The Wardens watching?"
+    assert_not_includes gate.drafting_contract, "<!--"
+  end
+
+  test "keeps a dialogue with no character speaker as narration prose" do
+    path = File.join(@root, "stories/synthetic-story/chapters/01-arrival/02-the-hall.md")
+    File.write(path, File.read(path).sub('@[[character:ada]] "There is nothing here."', '@other "There is nothing here."'))
+
+    universe = import.call.universe
+    hall = universe.stories.find_by!(slug: "synthetic-story").scenes.find_by!(slug: "01-arrival-02-the-hall")
+    dialogue = hall.scene_elements.reorder(:position, :id).second
+
+    # No line names a Character file, so the block cannot be a Dialogue Element;
+    # its lines stay as prose instead of being lost.
+    assert_equal "narration", dialogue.kind
+    assert_equal "The hall (2)", dialogue.name
+    assert_includes dialogue.body, "other: There is nothing here."
+    assert_includes dialogue.body, "warden: Then we wait."
+    assert_empty dialogue.scene_dialogue_turns
   end
 
   test "reports the scene facts the application has no column for" do
@@ -256,11 +326,11 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       "01-the-gate: id",
       "01-the-gate: timeline",
       "01-the-gate: branch",
-      "01-the-gate: depends_on",
+      "01-the-gate: gatekeeper",
       "02-the-hall: id",
       "02-the-hall: timeline",
       "02-the-hall: branch",
-      "02-the-hall: depends_on"
+      "02-the-hall: warden"
     ], reported_items(StoryInterchange::Importers::Scenes.reported(report))
   end
 
@@ -295,19 +365,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal [ true, false ], section_list.map(&:reported?)
 
     plots = reported_items(StoryInterchange::Importers::Plots.reported(report))
-    assert_equal [
-      "the-lantern: Stakes",
-      "the-lantern: Players",
-      "the-lantern: Status",
-      "the-lantern: Decisions taken (author)",
-      "the-lantern: Progression",
-      "the-lantern: Open questions",
-      "the-lantern: Resolved",
-      "the-lantern: type",
-      "the-lantern: status",
-      "the-lantern: owner_pov",
-      "the-lantern: opened_in"
-    ], plots
+    assert_empty plots
 
     # A slice with no profile still lists its records; none of them can leave
     # content behind.
@@ -349,7 +407,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     locations = location_records(first.locations)
     items = item_records(first.items)
     stories = first.stories.pluck(:slug, :name)
-    plots = first.stories.flat_map { |story| story.plots.order(:slug).pluck(:slug, :name, :description) }
+    plots = first.stories.flat_map { |story| story.plots.order(:slug).pluck(:slug, :name, :short_summary, :description) }
     sections = section_records(first)
     scenes = scene_records(first)
 
@@ -360,7 +418,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal locations, location_records(second.locations)
     assert_equal items, item_records(second.items)
     assert_equal stories, second.stories.pluck(:slug, :name)
-    assert_equal plots, second.stories.flat_map { |story| story.plots.order(:slug).pluck(:slug, :name, :description) }
+    assert_equal plots, second.stories.flat_map { |story| story.plots.order(:slug).pluck(:slug, :name, :short_summary, :description) }
     assert_equal sections, section_records(second)
     assert_equal scenes, scene_records(second)
   end
@@ -545,8 +603,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
             scene.position,
             scene.section&.slug,
             scene.pov_character&.slug,
+            scene.drafting_contract,
             scene.scene_locations.map { |link| link.location.slug }.sort,
-            scene.scene_elements.reorder(:position, :id).pluck(:name, :kind, :body)
+            scene.scene_elements.reorder(:position, :id).map do |element|
+              [ element.name, element.kind, element.body,
+                element.scene_dialogue_turns.reorder(:position, :id).map { |turn| [ turn.speaker.slug, turn.body ] } ]
+            end
           ]
         end
       end

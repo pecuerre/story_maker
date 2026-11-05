@@ -1,17 +1,15 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import SceneElementFormController from "../../app/javascript/controllers/scene_element_form_controller"
 
-// Narration cannot keep speakers and a Dialogue must name at least one, so the
-// speaker picker and the "remove the speakers" confirmation are the same decision
-// seen from two sides. This controller only decides which of them the author is
-// looking at; the server is what refuses an unconfirmed change.
+// Narration keeps its prose in Content and Dialogue keeps it in ordered turns,
+// so this controller only decides which control the author is looking at. The
+// server refuses a Narration that still has turns.
 const DESCRIPTIONS = {
   narration: "Description or action, with no one speaking.",
-  dialogue: "A spoken block. Name everyone who speaks in it."
+  dialogue: "A spoken block, written as ordered lines."
 }
 
-function build({ kind = "narration", selected = [] } = {}) {
-  const options = selected.map((value) => `<option value="${value}" selected>Character ${value}</option>`).join("")
+function build({ kind = "narration" } = {}) {
   const host = document.createElement("div")
   host.innerHTML = `
     <div class="modal">
@@ -21,15 +19,8 @@ function build({ kind = "narration", selected = [] } = {}) {
           <option value="dialogue">Dialogue</option>
         </select>
         <div data-scene-element-form-target="kindDescription"></div>
-        <fieldset data-scene-element-form-target="speakers">
-          <select multiple data-scene-element-form-target="speakerPicker">
-            <option value="1">Character 1</option>
-            <option value="2">Character 2</option>
-            ${options}
-          </select>
-        </fieldset>
-        <div data-scene-element-form-target="removeSpeakers" hidden>
-          <input type="checkbox" id="scene_element_remove_speakers" name="scene_element[remove_speakers]" value="1" />
+        <div data-scene-element-form-target="body">
+          <textarea name="scene_element[body]"></textarea>
         </div>
       </form>
     </div>
@@ -41,9 +32,7 @@ function build({ kind = "narration", selected = [] } = {}) {
   controller.element = form
   controller.kindTarget = form.querySelector("[data-scene-element-form-target='kind']")
   controller.kindDescriptionTarget = form.querySelector("[data-scene-element-form-target='kindDescription']")
-  controller.speakersTarget = form.querySelector("[data-scene-element-form-target='speakers']")
-  controller.speakerPickerTarget = form.querySelector("[data-scene-element-form-target='speakerPicker']")
-  controller.removeSpeakersTarget = form.querySelector("[data-scene-element-form-target='removeSpeakers']")
+  controller.bodyTarget = form.querySelector("[data-scene-element-form-target='body']")
   controller.descriptionsValue = DESCRIPTIONS
   controller.kindTarget.value = kind
   return { controller, form }
@@ -55,66 +44,44 @@ beforeEach(() => {
 })
 
 describe("scene element form kind switching", () => {
-  test("narration hides the speaker picker and offers no confirmation", () => {
+  test("narration shows Content and describes itself", () => {
     const { controller } = build({ kind: "narration" })
 
     controller.sync()
 
-    expect(controller.speakersTarget.hidden).toBe(true)
-    expect(controller.removeSpeakersTarget.hidden).toBe(true)
+    expect(controller.bodyTarget.hidden).toBe(false)
     expect(controller.kindDescriptionTarget.textContent).toBe(DESCRIPTIONS.narration)
   })
 
-  test("dialogue shows the speaker picker and still offers no confirmation", () => {
+  test("dialogue hides Content and describes itself", () => {
     const { controller } = build({ kind: "dialogue" })
 
     controller.sync()
 
-    expect(controller.speakersTarget.hidden).toBe(false)
-    expect(controller.removeSpeakersTarget.hidden).toBe(true)
+    expect(controller.bodyTarget.hidden).toBe(true)
     expect(controller.kindDescriptionTarget.textContent).toBe(DESCRIPTIONS.dialogue)
   })
 
-  test("switching a dialogue with speakers to narration asks for the confirmation", () => {
-    const { controller, form } = build({ kind: "dialogue", selected: [ "1", "2" ] })
-
-    controller.sync()
-    controller.kindTarget.value = "narration"
-    controller.sync()
-
-    expect(controller.speakersTarget.hidden).toBe(true)
-    expect(controller.removeSpeakersTarget.hidden).toBe(false)
-    expect(form.querySelector("#scene_element_remove_speakers")).not.toBeNull()
-  })
-
-  test("narration with nothing selected offers no confirmation to give", () => {
+  test("switching kinds shows the control the new kind uses", () => {
     const { controller } = build({ kind: "narration" })
 
     controller.sync()
-
-    expect(controller.removeSpeakersTarget.hidden).toBe(true)
-  })
-
-  test("the hidden picker keeps its selection so the server can see it", () => {
-    const { controller } = build({ kind: "dialogue", selected: [ "1" ] })
+    controller.kindTarget.value = "dialogue"
     controller.sync()
+    expect(controller.bodyTarget.hidden).toBe(true)
+
     controller.kindTarget.value = "narration"
     controller.sync()
-
-    // Hiding is not disabling: a disabled control would drop the value from the
-    // payload, and the server could no longer tell that there is something to
-    // confirm.
-    expect(controller.speakerPickerTarget.disabled).toBe(false)
-    expect([ ...controller.speakerPickerTarget.selectedOptions ].map((option) => option.value)).toEqual([ "1" ])
+    expect(controller.bodyTarget.hidden).toBe(false)
   })
 
-  test("an unknown kind still describes itself and hides the picker", () => {
+  test("an unknown kind still describes itself", () => {
     const { controller } = build({ kind: "narration" })
 
     controller.kindTarget.value = "aside"
     controller.sync()
 
-    expect(controller.speakersTarget.hidden).toBe(true)
+    expect(controller.bodyTarget.hidden).toBe(false)
     expect(controller.kindDescriptionTarget.textContent).toBe("")
   })
 

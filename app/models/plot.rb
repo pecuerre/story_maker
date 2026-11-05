@@ -19,6 +19,12 @@ class Plot < ApplicationRecord
     foreign_key: :plot_id,
     association_foreign_key: :scene_id
 
+  # A Plot is story-owned, and the shared Markdown helpers reach a record's
+  # Universe through this method like every other content record's.
+  def universe
+    story&.universe
+  end
+
   validates :name, presence: true,
     uniqueness: { scope: :story_id, conditions: -> { where(deleted_at: nil) } }
   validates :slug, uniqueness: { scope: :story_id, conditions: -> { where(deleted_at: nil) } }

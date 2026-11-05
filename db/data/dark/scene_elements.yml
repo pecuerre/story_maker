@@ -1,18 +1,19 @@
 # Scene Elements for the Dark universe. They are the ordered prose blocks of a
-# Scene: a narration describes what happens, a dialogue names the characters who
-# speak in it. Positions are flat and contiguous inside their own Scene, and a
-# Dialogue's speakers are ordinary universe Characters rather than copies.
+# Scene: a narration describes what happens, a dialogue is written as ordered
+# turns whose speakers are ordinary universe Characters rather than copies.
+# Positions are flat and contiguous inside their own Scene.
 #
 # The data deliberately includes every state the editor has to handle: a dialogue
-# with one speaker and with three, a narration with no content, a Scene with no
-# elements at all, and a speaker who is not a stored participant of the Scene.
+# with one line and with several, a narration with no content, a Scene with no
+# elements at all, and a turn speaker who is not a stored participant of the
+# Scene.
 #
 # A Scene Element belongs to a Scene and reaches the Story and the Universe
 # through it, so the second and third stories in this directory have their own
-# elements while the speakers are still the same universe Characters.
+# elements while the turn speakers are still the same universe Characters.
 
-# A Scene with four elements, including a Dialogue whose two speakers are not
-# stored participants: they are derived from the dialogue alone.
+# A Scene with four elements, including a Dialogue whose speakers are not stored
+# participants: they are derived from its turns alone.
 - scene: Scene.secrets
   name: The arrival
   kind: narration
@@ -24,7 +25,6 @@
   manifest_key: dark-secrets-dialogue
   kind: dialogue
   body: "You found the map, didn't you. I found a map. In a drawer that was empty last Tuesday."
-  characters: [ Character.katharina, Character.martha ]
   position: 1
 
 # A title-only narration: Content is optional, so a half-written block is valid.
@@ -38,7 +38,6 @@
   manifest_key: dark-secrets-interruption
   kind: dialogue
   body: "The phone rings before either of them can answer."
-  characters: [ Character.martha ]
   position: 3
 
 # A one-speaker dialogue beside a narration, and a title-only closing beat.
@@ -53,7 +52,6 @@
   manifest_key: dark-waltz-dialogue
   kind: dialogue
   body: "You are not dancing with a chair. I am dancing with the count."
-  characters: [ Character.jonas ]
   position: 1
 
 - scene: Scene.michaels-waltz
@@ -61,13 +59,12 @@
   kind: narration
   position: 2
 
-# Three speakers in one block. The link records who is in the conversation; it
-# does not say which line belongs to whom.
+# Several speakers in one block. Each line names its own speaker, so the block
+# says who is in the conversation and what each of them says.
 - scene: Scene.lies
   name: "What happened in 1986"
   kind: dialogue
   body: "She was never here. You were never here. We were all somewhere else, and now we are here."
-  characters: [ Character.martha, Character.hannah, Character.ulrich ]
   position: 0
 
 - scene: Scene.past-and-present
@@ -82,7 +79,6 @@
   name: "The second Noah"
   kind: dialogue
   body: "He is alive. We have been looking at an empty cave for thirty years."
-  characters: [ Character.jonas, Character.martha ]
   position: 0
 
 - scene: Scene.sic-mundus-creatus-est
@@ -101,7 +97,6 @@
   name: "A voice in the corridor"
   kind: dialogue
   body: "Do not be afraid of me. I am the child you will never have."
-  characters: [ Character.jonas, Character.ulrich ]
   position: 0
 
 # "The Grotto" and "Double Lives" are left with no elements on purpose: a Scene
@@ -123,7 +118,6 @@
   name: "An hour earlier"
   kind: dialogue
   body: "You will want to know what is in there. You will not want to have been the one to look."
-  characters: [ Character.bartosz, Character.jonas ]
   position: 1
 
 - scene: Scene.darker-bartoszs-version
@@ -142,7 +136,6 @@
   name: Under the headstone
   kind: dialogue
   body: "There is no Noah. There is a photograph of Noah, and a date, and nothing underneath either."
-  characters: [ Character.martha, Character.hannah ]
   position: 0
 
 - scene: Scene.darker-what-the-wind-remembers
@@ -169,7 +162,6 @@
   name: "The stranger on the platform"
   kind: dialogue
   body: "You are not from here. Nobody comes to Winden on purpose twice."
-  characters: [ Character.bartosz, Character.claudia ]
   position: 1
 
 - scene: Scene.bethesda-power-plant
@@ -182,7 +174,6 @@
   name: "Why you are still here"
   kind: dialogue
   body: "Everyone who leaves this town comes back. The town does not consider that a problem."
-  characters: [ Character.claudia ]
   position: 1
 
 # Two speakers, one of whom is also a stored participant below.
@@ -190,7 +181,6 @@
   name: "Terms of the fight"
   kind: dialogue
   body: "Cross the bridge or come back with the device. I will not do this part twice."
-  characters: [ Character.ulrich, Character.egon ]
   position: 0
 
 - scene: Scene.bethesda-cave-mouth

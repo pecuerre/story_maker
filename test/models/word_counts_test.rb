@@ -67,7 +67,8 @@ class WordCountsTest < ActiveSupport::TestCase
     )
 
     assert_equal 38, WordCounts.for_story(@story).total
-    assert_equal 3, WordCounts.for_story(stories(:story_alt)).total
+    # The Alt story's own Dialogue turn (4 words) plus the Narration added here.
+    assert_equal 7, WordCounts.for_story(stories(:story_alt)).total
     assert_equal 0, WordCounts.for_story(@story).for_scene(scenes(:scene_alt))
   end
 

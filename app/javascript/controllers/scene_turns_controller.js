@@ -11,7 +11,7 @@ import { t } from "i18n"
 export default class extends Controller {
   static targets = [
     "turns", "turnsHeading", "speakerSelect", "bodyField", "parentheticalField", "kindSelect",
-    "addButton", "emptyState", "saveFirst"
+    "entryFields", "addButton", "emptyState", "saveFirst"
   ]
 
   static values = {
@@ -72,6 +72,7 @@ export default class extends Controller {
     this.turnsTarget.hidden = !hasTurns
     this.turnsHeadingTarget.hidden = !hasTurns
     this.emptyStateTarget.hidden = !dialogue || hasTurns
+    this.entryFieldsTarget.hidden = !canAddTurns
     this.addButtonTarget.hidden = !canAddTurns
     this.saveFirstTarget.hidden = !dialogue || Boolean(this.turnsCreateUrl)
     this.speakerSelectTarget.disabled = !canAddTurns
@@ -79,79 +80,108 @@ export default class extends Controller {
     this.parentheticalFieldTarget.disabled = !canAddTurns
   }
 
-  // One turn in display mode: speaker, line, optional parenthetical, and the
-  // move/delete/edit controls. Move and delete are issued by the shared modal
-  // form, so they refresh the page exactly as an Element move/delete does.
-  row(turn, position, total) {
+  // One turn in display mode, read as one sentence — `speaker: line (note)` —
+  // with the move/delete/edit controls at the right edge. Move and delete are
+  // issued by the shared modal form, so they refresh the page exactly as an
+  // Element move/delete does.
+  row(turn, position, total, { pending = false } = {}) {
     const container = document.createElement("div")
-    container.className = "turn-row list-group-item d-flex align-items-start gap-2"
-    container.dataset.turnId = turn.id
-    container.dataset.speakerId = turn.speaker_id
-    container.dataset.speakerName = turn.speaker_name
-    container.dataset.body = turn.body ?? ""
-    container.dataset.parenthetical = turn.parenthetical ?? ""
-    container.dataset.updateUrl = turn.update_url
-    container.dataset.moveUpUrl = turn.move_up_url
-    container.dataset.moveDownUrl = turn.move_down_url
-    container.dataset.destroyUrl = turn.destroy_url
+    container.className = pending
+      ? "turn-row turn-row--pending list-group-item"
+      : "turn-row list-group-item"
+
+    if (!pending) {
+      container.dataset.turnId = turn.id
+      container.dataset.speakerId = turn.speaker_id
+      container.dataset.speakerName = turn.speaker_name
+      container.dataset.body = turn.body ?? ""
+      container.dataset.parenthetical = turn.parenthetical ?? ""
+      container.dataset.updateUrl = turn.update_url
+      container.dataset.moveUpUrl = turn.move_up_url
+      container.dataset.moveDownUrl = turn.move_down_url
+      container.dataset.destroyUrl = turn.destroy_url
+    }
+
+    const copy = document.createElement("p")
+    copy.className = "turn-copy"
 
     const speaker = document.createElement("span")
     speaker.className = "turn-speaker"
     speaker.textContent = turn.speaker_name
-    container.appendChild(speaker)
+    copy.append(speaker, document.createTextNode(": "))
 
     const line = document.createElement("span")
     line.className = "turn-line"
     line.textContent = turn.body
-    container.appendChild(line)
+    copy.appendChild(line)
 
     if (turn.parenthetical) {
       const note = document.createElement("span")
-      note.className = "turn-parenthetical text-body-secondary ms-2"
-      note.textContent = `(${turn.parenthetical})`
-      container.appendChild(note)
+      note.className = "turn-parenthetical"
+      note.textContent = ` (${turn.parenthetical})`
+      copy.appendChild(note)
     }
 
+    container.appendChild(copy)
+
     const actions = document.createElement("div")
-    actions.className = "ms-auto d-flex align-items-center gap-1"
+    actions.className = "turn-actions"
+
+    if (pending) {
+      const badge = document.createElement("span")
+      badge.className = "badge rounded-pill text-bg-warning border"
+      badge.textContent = t("scenes.elements.dialogue_turns.pending")
+      actions.appendChild(badge)
+      container.appendChild(actions)
+      return container
+    }
 
     actions.append(
       this.moveButton(turn.move_up_url, "up", position === 0),
-      this.moveButton(turn.move_down_url, "down", position === total - 1)
+      this.moveButton(turn.move_down_url, "down", position === total - 1),
+      this.iconButton("bi-pencil", t("scenes.elements.dialogue_turns.edit"), {
+        action: "scene-turns#edit"
+      }),
+      this.iconButton("bi-trash", t("scenes.elements.dialogue_turns.delete"), {
+        action: "modal-form#destroy",
+        url: turn.destroy_url,
+        confirm: t("scenes.elements.dialogue_turns.delete_confirm"),
+        danger: true
+      })
     )
-
-    const del = document.createElement("button")
-    del.type = "button"
-    del.className = "btn btn-sm btn-light border text-danger"
-    del.dataset.action = "modal-form#destroy"
-    del.dataset.modalFormUrl = turn.destroy_url
-    del.dataset.modalFormConfirm = t("scenes.elements.dialogue_turns.delete_confirm")
-    del.textContent = t("shared.row_actions.delete")
-    actions.appendChild(del)
-
-    const edit = document.createElement("button")
-    edit.type = "button"
-    edit.className = "btn btn-sm btn-light border ms-2"
-    edit.dataset.action = "scene-turns#edit"
-    edit.textContent = t("scenes.elements.dialogue_turns.edit")
-    actions.appendChild(edit)
 
     container.appendChild(actions)
     return container
   }
 
   moveButton(url, direction, disabled) {
+    const label = direction === "up" ? t("scenes.move.up") : t("scenes.move.down")
+    return this.iconButton(direction === "up" ? "bi-arrow-up" : "bi-arrow-down", label, {
+      action: "modal-form#move",
+      url,
+      direction,
+      disabled
+    })
+  }
+
+  // Every turn action is an icon with an accessible name, so the right-hand
+  // column keeps one width instead of growing with the words "Edit turn".
+  iconButton(icon, label, { action, url = null, direction = null, confirm = null, disabled = false, danger = false } = {}) {
     const button = document.createElement("button")
     button.type = "button"
-    button.className = "btn btn-sm btn-light border"
-    button.dataset.action = "modal-form#move"
-    button.dataset.modalFormUrl = url
-    button.dataset.modalFormDirection = direction
+    button.className = danger ? "btn btn-sm btn-light border text-danger" : "btn btn-sm btn-light border"
+    button.dataset.action = action
+    if (url) button.dataset.modalFormUrl = url
+    if (direction) button.dataset.modalFormDirection = direction
+    if (confirm) button.dataset.modalFormConfirm = confirm
     button.disabled = disabled
-    button.textContent = direction === "up" ? "↑" : "↓"
-    const label = direction === "up" ? t("scenes.move.up") : t("scenes.move.down")
     button.title = label
     button.setAttribute("aria-label", label)
+
+    const iconElement = document.createElement("i")
+    iconElement.className = `bi ${icon}`
+    iconElement.setAttribute("aria-hidden", "true")
+    button.appendChild(iconElement)
     return button
   }
 
@@ -200,7 +230,7 @@ export default class extends Controller {
     cancel.textContent = t("shared.form.cancel")
 
     container.append(speaker, line, parenthetical, save, cancel)
-    container.className = "turn-row list-group-item d-flex align-items-center gap-1"
+    container.className = "turn-row turn-row--editing list-group-item"
   }
 
   // Restores the stored row, discarding an inline edit.
@@ -222,19 +252,65 @@ export default class extends Controller {
     container.replaceWith(this.row(turn, position, rows.length))
   }
 
-  // Adds a turn from the controls; successful writes refresh from the server.
+  // Adds a turn from the controls and appends it in the open modal, so an author
+  // writing a conversation never loses the editor between lines. A direct
+  // mutation returns the stored row; a draft-based universe returns a receipt,
+  // and the row is shown as saved to the draft instead of pretending it is
+  // already stored. The speaker is kept for the next line; the line and its
+  // delivery note are cleared.
   create() {
     if (!this.speakerSelectTarget.value) {
       this.showError(t("scenes.elements.dialogue_turns.speaker_required"))
       return false
     }
 
+    const speakerOption = this.speakerSelectTarget.selectedOptions[0]
+    const pendingTurn = {
+      speaker_name: speakerOption?.textContent.trim() || "",
+      body: this.bodyFieldTarget.value,
+      parenthetical: this.parentheticalFieldTarget.value
+    }
+
     const formData = new FormData()
     formData.append("scene_dialogue_turn[speaker_id]", this.speakerSelectTarget.value)
-    formData.append("scene_dialogue_turn[body]", this.bodyFieldTarget.value)
-    formData.append("scene_dialogue_turn[parenthetical]", this.parentheticalFieldTarget.value)
+    formData.append("scene_dialogue_turn[body]", pendingTurn.body)
+    formData.append("scene_dialogue_turn[parenthetical]", pendingTurn.parenthetical)
 
-    return this.submit(this.turnsCreateUrl, "POST", formData)
+    return this.submit(this.turnsCreateUrl, "POST", formData, {
+      saved: (turn) => {
+        this.appendTurn(turn)
+        this.resetEntry()
+      },
+      pending: () => {
+        this.appendPendingTurn(pendingTurn)
+        this.resetEntry()
+      }
+    })
+  }
+
+  resetEntry() {
+    this.bodyFieldTarget.value = ""
+    this.parentheticalFieldTarget.value = ""
+  }
+
+  // A saved turn joins the end of the list. The row that was last keeps its
+  // controls, but its Move down is no longer at the boundary.
+  appendTurn(turn) {
+    const total = this.turnsTarget.childElementCount
+    const previous = this.turnsTarget.lastElementChild
+    const previousDown = previous?.querySelector("button[data-modal-form-direction='down']")
+    if (previousDown) previousDown.disabled = false
+
+    this.turnsTarget.appendChild(this.row(turn, total, total + 1))
+    this.syncVisibility()
+  }
+
+  // A remembered turn has no server id yet, so it has no move/edit/delete
+  // controls; the badge says it is waiting in the author's draft.
+  appendPendingTurn(turn) {
+    const total = this.turnsTarget.childElementCount
+    this.turnsTarget.appendChild(this.row(turn, total, total + 1, { pending: true }))
+    this.syncVisibility()
   }
 
   save(event) {
@@ -252,7 +328,7 @@ export default class extends Controller {
     return this.submit(container.dataset.updateUrl, "PATCH", formData)
   }
 
-  async submit(url, method, formData) {
+  async submit(url, method, formData, handlers = {}) {
     const params = new URLSearchParams(formData)
     const token = document.querySelector("meta[name='csrf-token']")?.content
     const headers = {
@@ -277,9 +353,23 @@ export default class extends Controller {
         return false
       }
 
-      // A direct mutation is rendered from persisted state; a draft mutation is
-      // only a receipt. Refresh for both so the client never presents an
-      // unpersisted change as a saved turn and derived participation stays fresh.
+      // A direct mutation returns the stored turn, which can join the open list
+      // as it is. A draft mutation is only a receipt, so it joins the list as a
+      // clearly pending row; neither case closes the editor. Every other
+      // mutation keeps the page-refresh contract.
+      const payload = await response.json().catch(() => null)
+      if (handlers.saved && payload?.id) {
+        handlers.saved(payload)
+        this.setPending(false)
+        return true
+      }
+
+      if (handlers.pending && payload?.draft) {
+        handlers.pending(payload)
+        this.setPending(false)
+        return true
+      }
+
       this.refresh()
       return true
     } catch (_error) {

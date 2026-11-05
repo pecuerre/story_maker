@@ -1,12 +1,12 @@
 # Who takes part in a Scene, read from the two independent sources the domain
 # model allows.
 #
-# An explicit `SceneCharacter` presence link may carry a role, and Dialogue
-# speakers come from both the Element's broad roster and the line-level turns.
-# Speaking is never stored as a presence link, so the same Character can be both,
-# and a Character who only speaks is still a participant. Every count and list
-# derived here is therefore the *union* of the sources, never their sum: a
-# Character who participates and speaks is one participant, not two.
+# An explicit `SceneCharacter` presence link may carry a role, and a Dialogue
+# speaker is derived from the line-level `SceneDialogueTurn` rows. Speaking is
+# never stored as a presence link, so the same Character can be both, and a
+# Character who only speaks is still a participant. Every count and list derived
+# here is therefore the *union* of the sources, never their sum: a Character who
+# participates and speaks is one participant, not two.
 #
 # The grouped count queries and the preloaded page query have a fixed cost, so a
 # list of Scenes costs the same number of queries rather than one per row.
@@ -61,26 +61,15 @@ class SceneParticipants
 
   # Every `[character_id, scene_id]` pair derived from Dialogue for several
   # Scenes at once, so a page that reads presence backwards costs a fixed number
-  # of queries rather than four per Scene.
-  #
-  # Element-level roster speakers are one source; turns add line-attributed
-  # speakers. The queries stay separate so each association proves its own scope,
-  # and the pair list is deduplicated because a Character may be both.
+  # of queries rather than one per Scene.
   def self.speaking_pairs(scenes)
     scene_ids = scenes.map(&:id)
     return [] if scene_ids.empty?
 
-    roster = Character.joins(:scene_elements)
-      .where(scene_elements: { scene_id: scene_ids })
-      .distinct
-      .pluck(:id, "scene_elements.scene_id")
-
-    turns = SceneDialogueTurn.joins(:speaker, scene_element: :scene)
+    SceneDialogueTurn.joins(:speaker, scene_element: :scene)
       .where(scenes: { id: scene_ids })
       .distinct
       .pluck(:speaker_id, "scenes.id")
-
-    (roster + turns).uniq
   end
 
   # The participants of one Scene, ordered by Character name. Explicit links and
@@ -91,13 +80,12 @@ class SceneParticipants
       links = scene.scene_characters.includes(:character).to_a
       links_by_character = links.index_by(&:character_id)
 
-      elements = scene.scene_elements.includes(:characters, scene_dialogue_turns: :speaker)
+      elements = scene.scene_elements.includes(scene_dialogue_turns: :speaker)
         .reorder(:position, :id).to_a
       speaking_elements = Hash.new { |hash, key| hash[key] = [] }
       speaking_characters = []
       elements.each do |element|
-        speakers = element.characters.to_a + element.scene_dialogue_turns.filter_map(&:speaker)
-        speakers.uniq(&:id).each do |character|
+        element.scene_dialogue_turns.filter_map(&:speaker).uniq(&:id).each do |character|
           speaking_characters << character
           speaking_elements[character.id] << element
         end

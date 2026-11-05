@@ -26,8 +26,8 @@ class LocationPresenceTest < ActiveSupport::TestCase
     entry = presence_for.entries.first
 
     # Alphabetical by Character name. character_one is linked and also speaks;
-    # character_two is linked with no role and speaks; character_three only
-    # speaks, through a Dialogue turn, and has no stored link.
+    # character_two is linked with no role; character_three only speaks, through
+    # a Dialogue turn, and has no stored link.
     assert_equal [ "Character one", "Character three", "Character two" ],
       entry.participants.map { |participant| participant.character.name }
 

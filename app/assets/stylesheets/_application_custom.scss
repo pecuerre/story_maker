@@ -1184,6 +1184,14 @@ $um-search-match: #ffc107;
   -webkit-line-clamp: 2;
 }
 
+// The imported drafting contract is one note kept as the author wrote it, so
+// its line breaks are prose and stay visible instead of collapsing.
+.drafting-contract-body {
+  max-width: 52rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .row-actions {
   flex-shrink: 0;
 }
@@ -1557,6 +1565,64 @@ $um-search-match: #ffc107;
   outline: 2px solid var(--bs-primary);
   outline-offset: 2px;
   border-radius: var(--bs-border-radius-sm);
+}
+
+// A Dialogue turn reads as one sentence — `speaker: line (delivery note)` — with
+// its action buttons held at the right edge. The line wraps under itself instead
+// of squeezing the speaker or the controls into a column.
+.turn-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.turn-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.turn-speaker {
+  font-style: italic;
+}
+
+.turn-parenthetical {
+  color: var(--bs-body-secondary-color);
+}
+
+.turn-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: .25rem;
+}
+
+.turn-actions .btn {
+  white-space: nowrap;
+}
+
+// The inline editor keeps the speaker field at a stable width and lets the line
+// grow, so editing a row does not move the rest of the list.
+.turn-row--editing {
+  align-items: flex-start;
+}
+
+.turn-row--editing > * {
+  min-width: 0;
+}
+
+.turn-row--editing select {
+  flex: 0 0 11rem;
+}
+
+.turn-row--editing textarea {
+  flex: 1 1 auto;
+}
+
+.turn-row--editing input {
+  flex: 0 0 9rem;
 }
 
 .detail-section {

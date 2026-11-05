@@ -4,10 +4,9 @@ require "test_helper"
 # same way, or a writer sees missing controls while a record-level check denies
 # an allowed mutation. Both paths are covered here.
 class UniverseScopeResolverTest < ActiveSupport::TestCase
-  # Stand-ins for a model nested below everything the walk names, borrowing the
-  # shape of the speaker join table: a `scene_element_id` and nothing the resolver
-  # can walk from or filter by. The application has no model class for that join,
-  # so these supply one.
+  # Stand-ins for a model nested below everything the walk names: a `widget_id`
+  # and nothing the resolver can walk from or filter by. The application has no
+  # persisted model of this shape, so these supply one.
   #
   # They are deliberately not `ApplicationRecord` subclasses. A test-defined
   # persisted model would appear in `ApplicationRecord.descendants` and fail
@@ -25,7 +24,7 @@ class UniverseScopeResolverTest < ActiveSupport::TestCase
     end
 
     def self.name = "NestedRecord"
-    def self.table_name = "scene_element_speakers"
+    def self.table_name = "nested_records"
     def self.column_names = COLUMNS
   end
 

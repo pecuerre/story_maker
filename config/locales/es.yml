@@ -436,6 +436,9 @@ es:
         affiliation:
           one: "%{subjects} no nombra ninguna facción, así que no se creó ninguna membresía."
           other: "%{subjects} no nombran ninguna facción, así que no se creó ninguna membresía."
+        speaker:
+          one: "El hablante %{subjects} no tiene archivo de Personaje, así que su línea no se escribió como turno de diálogo."
+          other: "Los hablantes %{subjects} no tienen archivo de Personaje, así que sus líneas no se escribieron como turnos de diálogo."
         unspecified: "Parte del contenido no tiene campo y no se importó."
     show:
       title: "Importación de story interchange"
@@ -1136,7 +1139,7 @@ es:
   collaborators:
     index:
       title: "Colaboradores"
-      description: "Todo el que ha aplicado o descartado un borrador en este universo, con el número de cambios que recordó. Sus cambios cuentan tanto si se escribieron como si se tiraron."
+      description: "Todo el que ha aplicado o descartado un borrador en este universo, con el número de cambios que recordó y su parte de todos ellos. Sus cambios cuentan tanto si se escribieron como si se tiraron."
       back: "Volver al universo"
       # La cifra de la fila son cambios recordados y no ejecuciones, porque eso es lo
       # que el lector va a leer al otro lado del enlace. Los cambios de un borrador
@@ -1144,6 +1147,10 @@ es:
       changes:
         one: "%{count} cambio recordado"
         other: "%{count} cambios recordados"
+      # La segunda cifra de la fila: la parte entera de esta persona sobre todos los
+      # cambios recordados en este universo. El conjunto suma 100 siempre que haya
+      # cambios que repartir.
+      share: "%{percent}%"
       # La única navegación de la fila, a la derecha como en cualquier otra fila de
       # lista. El nombre accesible nombra a la persona, porque la palabra visible no puede.
       open: "Historial"
@@ -1376,7 +1383,7 @@ es:
         description: "El mismo documento, con los personajes, lugares, objetos y sucesos del universo añadidos como apéndices."
     notes:
       heading: "Acerca de la exportación"
-      print: "La página imprimible se abre en esta pestaña. Usa el comando de impresión del navegador para imprimirla o guardarla como PDF."
+      print: "La página imprimible se abre en una pestaña nueva. Usa el comando de impresión del navegador para imprimirla o guardarla como PDF."
       pending: "Solo se exportan los registros guardados. Los cambios recordados en un borrador pendiente no forman parte de la historia hasta que se aplican."
       pov: "Punto de vista"
       time: "Hora en el mundo"
@@ -1552,7 +1559,10 @@ es:
     delete_confirm: "¿Eliminar «%{name}»? Desaparecerá del espacio de Tramas; sus asignaciones a escenas se conservarán si se restaura, y ninguna escena ni orden narrativo cambiará."
     form:
       name: "Nombre"
+      short_summary: "Resumen breve"
+      short_summary_hint: "Una o dos frases sencillas que se muestran en la lista de Tramas. Las referencias se nombran, no se enlazan."
       description: "Descripción"
+      description_hint: "Markdown. Usa ## para un encabezado de sección y [[kind:slug]] para enlazar un Personaje, Facción, Lugar, Objeto u otra Trama. La lista nunca muestra este texto largo."
     show:
       back_label: "Todas las tramas"
       facts:
@@ -1693,6 +1703,8 @@ es:
         status_hint: "Una etiqueta de escritura para esta escena. La exportación puede incluir solo las escenas finales; esto no cambia el orden narrativo."
         description: "Descripción breve"
         description_blank: "Todavía no hay descripción breve."
+        drafting_contract: "Contrato de escritura"
+        drafting_contract_blank: "Todavía no hay contrato de escritura registrado."
         tags: "Etiquetas de escena"
         tags_blank: "Todavía no hay etiquetas de escena asignadas."
         tags_hint: "Las etiquetas son opcionales y pertenecen a esta historia."
@@ -1733,6 +1745,8 @@ es:
       name_hint: "El título de la escena en el orden narrativo. Solo hace falta un título."
       description: "Descripción breve"
       description_hint: "Un resumen opcional de una línea que se muestra en la lista de escenas."
+      drafting_contract: "Contrato de escritura"
+      drafting_contract_hint: "Opcional. El lugar, el momento, el punto de vista y la pregunta dramática de la escena, guardados como nota para quien escribe. No forma parte de la prosa."
       status: "Estado"
       status_hint: "Un estado de escritura elegido por quien escribe. Las escenas nuevas empiezan como borrador; la exportación se puede limitar a las escenas finales sin cambiar el orden narrativo."
       tags_legend: "Etiquetas de escena"
@@ -1774,35 +1788,31 @@ es:
       edit: "Editar elemento"
       position_aria: "Elemento %{position} de %{total}"
       empty_title: "Todavía no hay elementos"
-      empty_description: "Una escena puede tener cualquier número de elementos, incluido ninguno. Un bloque de narración describe lo que ocurre; un bloque de diálogo nombra a los personajes que hablan en él."
+      empty_description: "Una escena puede tener cualquier número de elementos, incluido ninguno. Un bloque de narración describe lo que ocurre; un bloque de diálogo se escribe como líneas habladas ordenadas."
       no_content: "Todavía no hay contenido. Un título es todo lo que un elemento necesita."
       mention_legend: "Los nombres enlazados son menciones en la prosa, no apariciones. Un subrayado discontinuo significa que el personaje no está registrado como presente en esta escena."
-      delete_confirm: "¿Eliminar «%{name}»? Su contenido y sus enlaces con los hablantes se eliminarán de forma permanente. Los personajes y otros registros del universo no se eliminarán."
-      # La frase que la fila de un diálogo declara sobre sus enlaces con
-      # hablantes. `names` son los nombres de hablantes escritos por la persona
-      # autora unidos por el conector de la locale, así que se interpola; la
-      # separación one/other es la concordancia del verbo con la cuenta.
-      speaker_note:
-        one: "%{names} habla en este bloque. El enlace registra quién está en la conversación, no qué línea es de quién."
-        other: "%{names} hablan en este bloque. El enlace registra quién está en la conversación, no qué línea es de quién."
-      speaker_note_empty: "Un diálogo debe nombrar al menos un hablante."
+      delete_confirm: "¿Eliminar «%{name}»? Su contenido y sus turnos de diálogo se eliminarán de forma permanente. Los personajes y otros registros del universo no se eliminarán."
+      # La medida junto a la insignia del tipo: una narración cuenta sus palabras
+      # y un diálogo cuenta las líneas habladas (turnos) que contiene.
+      word_count:
+        one: "%{count} palabra"
+        other: "%{count} palabras"
+      line_count:
+        one: "%{count} línea"
+        other: "%{count} líneas"
       # Los dos tipos de elemento. El `kind` es el valor que el selector almacena,
       # así que solo se traduce la etiqueta.
       kinds:
         narration: "Narración"
         dialogue: "Diálogo"
         narration_description: "Descripción o acción, sin que nadie hable."
-        dialogue_description: "Un bloque hablado. Nombra a todos los que hablan en él."
+        dialogue_description: "Un bloque hablado, escrito como líneas ordenadas."
       form:
-        kind: "Tipo de elemento"
+        kind: "Tipo de elemento de escena"
         name: "Título"
         name_hint: "El título del bloque. Solo hace falta un título; el contenido puede llegar después."
         body: "Contenido"
         body_hint: "Texto sin formato, guardado exactamente como está escrito. Aquí nada se interpreta como cronología ni se contrasta con el universo."
-        speakers: "Hablantes"
-        speakers_hint: "Todos los que hablan en este bloque. Varios personajes pueden compartir un mismo diálogo; el enlace registra quién está en la conversación, no qué línea es de quién."
-        remove_speakers: "Quitar los hablantes y convertir esto en narración"
-        remove_speakers_hint: "La narración no puede conservar hablantes. Esta es la confirmación que los quita, y ocurre en el mismo guardado."
         save: "Guardar elemento"
       # Los turnos hablados dentro de un elemento de diálogo. Un turno nombra a un
       # hablante, la línea que dice y una nota de entrega opcional, en orden dentro
@@ -1816,7 +1826,9 @@ es:
         save_element_first: "Guarda primero este elemento de diálogo y vuelve a abrirlo para añadir turnos."
         empty_title: "Todavía no hay turnos"
         empty_description: "Un turno de diálogo es una línea hablada: quién habla, qué dice y una nota de entrega opcional. Añade el primer turno a continuación."
+        delete: "Eliminar turno"
         delete_confirm: "¿Eliminar este turno? La línea se eliminará del diálogo."
+        pending: "Guardado en el borrador"
         save_failed: "No se pudo guardar el turno."
         speaker: "Hablante"
         speaker_hint: "El personaje que dice esta línea. El hablante de un turno no es un enlace de presencia en la escena: hablar no añade al personaje al reparto de la escena."
@@ -1989,20 +2001,16 @@ es:
       must_belong_to_universe: "debe pertenecer al universo de la historia"
       must_be_unique: "no puede estar repetido"
       invalid_datetime: "no es una fecha y una hora válidas"
-    # Los tres enlaces de presencia y la lista de hablantes del Elemento. Sus dos
+    # Los tres enlaces de presencia y el hablante de un turno de diálogo. Sus dos
     # reglas de ámbito son un par de claves para los cuatro modelos porque la
-    # oración es la misma la diga el enlace que la diga: los modelos de presencia
-    # la añaden al atributo del registro enlazado y el Elemento a
-    # `:character_ids`, pero al lector se le dice el mismo hecho.
+    # oración es la misma la diga el enlace que la diga: cada uno la añade al
+    # atributo del registro enlazado, pero al lector se le dice el mismo hecho.
     participation_errors:
       already_in_scene: "ya está en esta escena"
       must_belong_to_scene_universe: "debe pertenecer al universo de la escena"
-    # Mensajes de validación del tipo de elemento. `narration` es la `label` del
-    # tipo, no su valor `kind`, así que el mensaje de hablantes lo interpola y
-    # nombra el tipo que el lector eligió en el selector.
+    # Mensaje de validación del tipo de elemento: nombra el tipo que el lector
+    # eligió en el selector, no su valor `kind`.
     element_errors:
-      speakers_required: "es obligatorio para un elemento de diálogo"
-      narration_with_speakers: "no puede ser %{narration} mientras todavía haya hablantes asignados"
       narration_with_turns: "no puede ser Narración mientras queden turnos de diálogo"
     dialogue_turns:
       element_must_be_dialogue: "un elemento de narración no puede llevar un turno"
@@ -3212,6 +3220,7 @@ es:
       scene:
         name: "Título"
         description: "Descripción breve"
+        drafting_contract: "Contrato de escritura"
         status: "Estado"
         section: "Sección"
         datetime: "Tiempo en el mundo"
@@ -3255,15 +3264,15 @@ es:
         section_tags: "Etiquetas de secciones"
       plot:
         name: "Nombre"
+        short_summary: "Resumen breve"
         description: "Descripción"
       # El `name` de un elemento es su título y su `body` su contenido, que es lo
       # que llaman las propias etiquetas de su editor, y `characters` es la
       # colección que rellena el selector de hablantes de un diálogo.
       scene_element:
-        kind: "Tipo de elemento"
+        kind: "Tipo de elemento de escena"
         name: "Título"
         body: "Contenido"
-        characters: "Hablantes"
       scene_dialogue_turn:
         speaker: "Hablante"
         body: "Línea"

@@ -47,11 +47,8 @@
           <ul class="manuscript-appendix-list list-unstyled">
             <% appendix.records.each do |record| %>
               <li>
-                <span class="manuscript-appendix-name"><%= record.public_send(appendix.label_method) %></span>
-                <% summary = record.public_send(appendix.summary_method) %>
-                <% if summary.present? %>
-                  <span class="manuscript-appendix-summary"><%= summary %></span>
-                <% end %>
+                <h4 class="manuscript-appendix-name"><%= record.public_send(appendix.label_method) %></h4>
+                <%= manuscript_appendix_text(record, appendix) %>
               </li>
             <% end %>
           </ul>

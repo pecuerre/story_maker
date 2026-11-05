@@ -65,8 +65,7 @@ The dump covers the core records:
 
 The join tables are `characters_character_tags`, `characters_factions`, `events_event_tags`,
 `factions_faction_tags`, `items_item_tags`, `locations_location_tags`, `ownerships_ownership_tags`,
-`plots_scenes`, `relations_relation_tags`, `scene_element_speakers`, `scenes_scene_tags`, and
-`sections_section_tags`.
+`plots_scenes`, `relations_relation_tags`, `scenes_scene_tags`, and `sections_section_tags`.
 
 ## The content projection
 

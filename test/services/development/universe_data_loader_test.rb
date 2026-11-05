@@ -602,7 +602,6 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_empty grotto.scene_elements
 
     dialogue = secrets.scene_elements.find_by!(kind: "dialogue")
-    assert_equal [ "Katharina", "Martha" ], dialogue.characters.order(:name).pluck(:name)
     assert_predicate dialogue.body, :present?
     assert_equal [ 0, 1 ], dialogue.scene_dialogue_turns.reorder(:position, :id).pluck(:position)
     assert_equal [ "Katharina", "Martha" ], dialogue.scene_dialogue_turns.includes(:speaker)
@@ -615,8 +614,9 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
     # A title-only narration loads with no content, which is a valid element.
     assert_nil secrets.scene_elements.find_by!(name: "The photograph").body
-    # A single-speaker dialogue is as valid as the three-speaker one.
-    assert_equal [ "Jonas" ], waltz.scene_elements.find_by!(kind: "dialogue").characters.pluck(:name)
+    # A single-speaker dialogue is as valid as a multi-speaker one.
+    assert_equal [ "Jonas", "Jonas" ], waltz.scene_elements.find_by!(kind: "dialogue")
+      .scene_dialogue_turns.includes(:speaker).reorder(:position, :id).map { |turn| turn.speaker.name }
 
     # Presence links carry a free-text role, and a blank role loads as no role.
     link = secrets.scene_characters.find_by!(character: story.universe.characters.find_by!(slug: "martha"))
@@ -632,15 +632,13 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal 3, participants.count
   end
 
-  test "the Lord of the Rings manifest loads block speakers and line-level turns" do
+  test "the Lord of the Rings manifest loads line-level turns" do
     Development::UniverseDataLoader.new(universe: "lotr", environment: :development, verbose: false).load!
 
     story = Universe.find_by!(slug: "lotr").stories.first
     council = story.scenes.find_by!(slug: "the-council-of-elrond")
 
     assert_equal [ 0, 1, 2 ], council.scene_elements.reorder(:position, :id).pluck(:position)
-    dialogue = council.scene_elements.find_by!(kind: "dialogue")
-    assert_equal [ "Aragorn", "Gandalf the Grey", "Gimli", "Legolas" ], dialogue.characters.order(:name).pluck(:name)
     party = story.scenes.find_by!(slug: "a-long-expected-party")
     turn_dialogue = party.scene_elements.find_by!(kind: "dialogue")
     assert_equal [ "Gandalf the Grey", "Frodo Baggins" ], turn_dialogue.scene_dialogue_turns.includes(:speaker)

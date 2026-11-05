@@ -41,9 +41,12 @@ class SceneNarrativeOrderTest < ApplicationSystemTestCase
     click_button "Update Scene"
 
     assert_selector "h1", text: "Browser scene"
-    assert_text "Renamed summary from the browser."
+    # The short description stays on the record and in the list, but Scene
+    # Details does not print it.
+    assert_no_text "Renamed summary from the browser."
 
     visit universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
+    assert_selector ".entity-list .entity-row", text: "Renamed summary from the browser."
     click_row_menu_action find(".entity-list .entity-row", text: "Browser scene"), "Delete", confirm: true
 
     assert_selector ".alert-success", text: "Scene was successfully destroyed."
@@ -63,6 +66,7 @@ class SceneNarrativeOrderTest < ApplicationSystemTestCase
 
     assert_selector "h1", text: "Scenes"
     assert_selector ".entity-list .entity-title", text: "Private scene"
+    assert_selector ".entity-list .entity-row", text: "Read-only details"
     # The row is plain text plus a Details link, so a read-only member can reach
     # the scene page and the link never waits for a hover.
     assert_selector ".entity-list a.details-link[href='#{universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: scene)}']",
@@ -74,7 +78,7 @@ class SceneNarrativeOrderTest < ApplicationSystemTestCase
     visit universe_story_scene_path(universe_slug: private_universe.slug, story_id: story, id: scene)
 
     assert_selector "h1", text: "Private scene"
-    assert_text "Read-only details"
+    assert_no_text "Read-only details"
     assert_no_link "Edit scene"
     assert_no_selector "form[action$='/scenes/']"
   end

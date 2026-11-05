@@ -166,6 +166,40 @@ class ModalHtmlFlowTest < ApplicationSystemTestCase
     assert_equal "Hannah → Jonas", relation.display_string
   end
 
+  test "a control reached while the editor is opening keeps focus" do
+    sign_in_via_form(@user)
+    visit universe_relations_path(universe_slug: @universe.slug)
+    assert_stimulus_loaded
+
+    # Bootstrap finishes opening the dialog by focusing it, and a reader who has
+    # already clicked a field would lose it mid-gesture: a native select's popup
+    # closes and can commit the option under the pointer. Focus a field on every
+    # frame of the opening — it becomes focusable partway through the fade — and
+    # assert the end of the opening left it there, which is what this editor now
+    # has to do.
+    execute_script(<<~JS)
+      const modal = document.querySelector(".modal")
+      const field = () => document.querySelector("select[name='relation[character1_id]']")
+      let finished = false
+      modal.addEventListener("shown.bs.modal", () => {
+        finished = true
+        document.body.dataset.openingFinished = "true"
+      }, { once: true })
+      const reach = () => {
+        if (finished) return
+        field().focus()
+        requestAnimationFrame(reach)
+      }
+      modal.addEventListener("show.bs.modal", reach, { once: true })
+    JS
+
+    click_button "Add relation"
+    assert_selector "body[data-opening-finished='true']"
+    within ".modal.show" do
+      assert_equal "relation[character1_id]", evaluate_script("document.activeElement.name")
+    end
+  end
+
   test "the row actions and the editor stay usable at a narrow viewport" do
     sign_in_via_form(@user)
     page.current_window.resize_to(390, 844)

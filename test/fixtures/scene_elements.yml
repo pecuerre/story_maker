@@ -1,6 +1,5 @@
 # Scene Elements. `kind` is a plain column, not a `type` discriminator, and a
-# Dialogue names its speakers through the same many-to-many join the
-# development data uses.
+# Dialogue's cast is its ordered turns, which name their own speakers.
 #
 # Fixtures insert rows without running callbacks, so `word_count` is written out
 # here. `WordCountsTest` holds each value to the body's own whitespace-delimited
@@ -21,10 +20,9 @@ dialogue_one:
   word_count: 11
   kind: dialogue
   position: 1
-  characters: [ character_one, character_two ]
 
-# A Dialogue needs at least one speaker, so a second Narration follows it to
-# prove the two kinds coexist in one Scene's flat sequence.
+# A second Narration follows the Dialogue to prove the two kinds coexist in one
+# Scene's flat sequence.
 narration_two:
   scene: scene_one
   name: "The adults argue"
@@ -45,4 +43,3 @@ dialogue_alt:
   name: "A warning at the gate"
   kind: dialogue
   position: 0
-  characters: [ character_one ]

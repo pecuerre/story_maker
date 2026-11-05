@@ -21,12 +21,9 @@ class Character < ApplicationRecord
   has_many :relations_as_character1, class_name: "Relation", foreign_key: :character1_id, dependent: :destroy
   has_many :relations_as_character2, class_name: "Relation", foreign_key: :character2_id, dependent: :destroy
   has_many :ownerships, dependent: :destroy
-  # The speaker side of the Scene Element link. Deleting a Character removes its
-  # speaker links and presence links; it never removes a Scene.
-  has_and_belongs_to_many :scene_elements, join_table: :scene_element_speakers, foreign_key: :character_id
-  # Turn rows remain when the Character is soft-deleted, just like the plain
-  # speaker join above, so restoring the Character restores its attributed lines.
-  # A hard destroy removes those rows rather than leaving a dangling speaker FK.
+  # Turn rows remain when the Character is soft-deleted, so restoring the
+  # Character restores the lines attributed to it. A hard destroy removes those
+  # rows rather than leaving a dangling speaker FK.
   has_many :scene_dialogue_turns_as_speaker, -> { with_deleted }, class_name: "SceneDialogueTurn",
     foreign_key: :speaker_id, inverse_of: :speaker, dependent: :destroy
   # `:destroy` rather than `:delete_all`, because a presence link is a record in

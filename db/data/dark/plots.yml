@@ -1,20 +1,24 @@
 # These story-owned through-lines deliberately cross Section boundaries.
 - story: Story.netflix-dark
   name: The Time-Travel Mystery
+  short_summary: "Jonas follows the clues behind Winden's time-travel cycle."
   slug: time-travel-mystery
   description: Jonas follows the clues behind Winden's time-travel cycle.
 
 - story: Story.netflix-dark
   name: Jonas and Martha
+  short_summary: "Their choices connect scenes told in different parts of the story."
   slug: jonas-and-martha
   description: Their choices connect scenes told in different parts of the story.
 
 - story: Story.netflix-darker
   name: The Empty Grave
+  short_summary: "A mystery that threads through the darker retelling."
   slug: darker-empty-grave
   description: A mystery that threads through the darker retelling.
 
 - story: Story.bethesda-dark
   name: The Optional Quest
+  short_summary: "The quest can be taken up or left unresolved by the player."
   slug: optional-quest
   description: The quest can be taken up or left unresolved by the player.

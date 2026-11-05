@@ -37,10 +37,11 @@ function build({ kind = "narration", turns = [], createUrl = "/turns" } = {}) {
   const bodyField = document.createElement("textarea")
   const parentheticalField = document.createElement("input")
   const addButton = document.createElement("button")
+  const entryFields = document.createElement("div")
   for (const [ target, element ] of [
     [ "kindSelect", kindSelect ], [ "turns", turnsList ], [ "turnsHeading", turnsHeading ], [ "emptyState", emptyState ],
     [ "saveFirst", saveFirst ], [ "speakerSelect", speakerSelect ], [ "bodyField", bodyField ],
-    [ "parentheticalField", parentheticalField ], [ "addButton", addButton ]
+    [ "parentheticalField", parentheticalField ], [ "entryFields", entryFields ], [ "addButton", addButton ]
   ]) {
     element.dataset.sceneTurnsTarget = target
     form.append(element)
@@ -58,13 +59,14 @@ function build({ kind = "narration", turns = [], createUrl = "/turns" } = {}) {
   controller.speakerSelectTarget = speakerSelect
   controller.bodyFieldTarget = bodyField
   controller.parentheticalFieldTarget = parentheticalField
+  controller.entryFieldsTarget = entryFields
   controller.addButtonTarget = addButton
   controller.speakerChoicesValue = SPEAKER_CHOICES
   controller.connect()
   controller.showTurns({ kind, turns, turns_create_url: createUrl })
 
   return { controller, host, form, kindSelect, turnsList, turnsHeading, emptyState, saveFirst, speakerSelect, bodyField,
-    parentheticalField, addButton }
+    parentheticalField, entryFields, addButton }
 }
 
 beforeEach(() => {
@@ -103,20 +105,33 @@ describe("Scene dialogue turns editor", () => {
     controller.disconnect()
   })
 
-  test("switching to Dialogue exposes the add workflow, but Narration cannot add a turn", () => {
-    const { controller, kindSelect, turnsList, emptyState, saveFirst, addButton, speakerSelect } = build()
+  test("reads a turn as speaker: line with the delivery note inline", () => {
+    const { controller, turnsList } = build({ kind: "dialogue", turns: [ TURN ] })
 
+    expect(turnsList.querySelector(".turn-copy").textContent).toBe("Ada: Hello. (quietly)")
+    expect(turnsList.querySelector(".turn-speaker").textContent).toBe("Ada")
+    expect(turnsList.querySelector(".turn-actions").children.length).toBe(4)
+
+    controller.disconnect()
+  })
+
+  test("switching to Dialogue exposes the add workflow, but Narration cannot add a turn", () => {
+    const { controller, kindSelect, turnsList, emptyState, saveFirst, entryFields, addButton, speakerSelect } = build()
+
+    expect(entryFields.hidden).toBe(true)
     expect(addButton.hidden).toBe(true)
     kindSelect.value = "dialogue"
     kindSelect.dispatchEvent(new Event("change"))
 
     expect(emptyState.hidden).toBe(false)
+    expect(entryFields.hidden).toBe(false)
     expect(addButton.hidden).toBe(false)
     expect(speakerSelect.options[0].value).toBe("")
 
     kindSelect.value = "narration"
     kindSelect.dispatchEvent(new Event("change"))
     expect(addButton.hidden).toBe(true)
+    expect(entryFields.hidden).toBe(true)
     expect(speakerSelect.disabled).toBe(true)
     expect(turnsList.hidden).toBe(true)
     expect(saveFirst.hidden).toBe(true)
@@ -146,7 +161,7 @@ describe("Scene dialogue turns editor", () => {
     controller.disconnect()
   })
 
-  test("posts the selected speaker's turn and refreshes from the persisted element", async () => {
+  test("posts the selected speaker's turn and appends it without closing the editor", async () => {
     const { controller, speakerSelect, bodyField, parentheticalField, turnsList, emptyState } = build({ kind: "dialogue" })
     const visits = []
     window.Turbo = { visit: (...args) => visits.push(args) }
@@ -162,13 +177,31 @@ describe("Scene dialogue turns editor", () => {
     }
 
     expect(await controller.create()).toBe(true)
-    expect(turnsList.childElementCount).toBe(0)
-    expect(bodyField.value).toBe("Welcome.")
-    expect(parentheticalField.value).toBe("smiling")
+    expect(turnsList.childElementCount).toBe(1)
+    expect(turnsList.querySelector(".turn-line").textContent).toBe("Welcome.")
+    // The speaker stays chosen for the next line; the line and note are cleared.
+    expect(bodyField.value).toBe("")
+    expect(parentheticalField.value).toBe("")
     expect(speakerSelect.value).toBe("12")
-    expect(emptyState.hidden).toBe(false)
-    expect(visits).toEqual([ [ window.location.href, { action: "replace" } ] ])
+    expect(emptyState.hidden).toBe(true)
+    expect(visits).toEqual([])
     delete window.Turbo
+    controller.disconnect()
+  })
+
+  test("a second appended turn takes over the move boundary", async () => {
+    const { controller, speakerSelect, bodyField, turnsList } = build({ kind: "dialogue", turns: [ TURN ] })
+    speakerSelect.value = "12"
+    bodyField.value = "Second line."
+    window.fetch = async () => new Response(JSON.stringify({
+      ...TURN, id: 8, speaker_id: 12, speaker_name: "Bea", body: "Second line.", parenthetical: "", position: 1
+    }), { status: 201 })
+
+    expect(await controller.create()).toBe(true)
+    const rows = turnsList.querySelectorAll(".turn-row")
+    expect(rows.length).toBe(2)
+    expect(rows[0].querySelector("button[data-modal-form-direction='down']").disabled).toBe(false)
+    expect(rows[1].querySelector("button[data-modal-form-direction='down']").disabled).toBe(true)
     controller.disconnect()
   })
 
@@ -185,17 +218,25 @@ describe("Scene dialogue turns editor", () => {
     controller.disconnect()
   })
 
-  test("refreshes a remembered draft receipt instead of rendering it as a saved turn", async () => {
-    const { controller, speakerSelect, bodyField, turnsList } = build({ kind: "dialogue" })
+  test("a remembered draft turn joins the open list as a pending row", async () => {
+    const { controller, speakerSelect, bodyField, parentheticalField, turnsList } = build({ kind: "dialogue" })
     const visits = []
     window.Turbo = { visit: (...args) => visits.push(args) }
     speakerSelect.value = "11"
     bodyField.value = "Remember this."
+    parentheticalField.value = "quietly"
     window.fetch = async () => new Response(JSON.stringify({ draft: true, change: { action: "create" } }), { status: 202 })
 
     expect(await controller.create()).toBe(true)
-    expect(turnsList.childElementCount).toBe(0)
-    expect(visits).toEqual([ [ window.location.href, { action: "replace" } ] ])
+    expect(turnsList.childElementCount).toBe(1)
+    const row = turnsList.querySelector(".turn-row--pending")
+    expect(row.querySelector(".turn-line").textContent).toBe("Remember this.")
+    expect(row.querySelector(".turn-parenthetical").textContent.trim()).toBe("(quietly)")
+    expect(row.querySelector(".turn-actions .badge").textContent).toBe("Saved to draft")
+    // A pending row has no controls and does not pretend to be stored.
+    expect(row.querySelector("button")).toBeNull()
+    expect(visits).toEqual([])
+    expect(bodyField.value).toBe("")
     delete window.Turbo
     controller.disconnect()
   })

@@ -43,6 +43,7 @@ class Api::ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_equal scenes(:scene_one).id, body["id"]
     assert_equal scenes(:scene_one).name, body["name"]
     assert_equal "final", body["status"]
+    assert_nil body["drafting_contract"]
     assert_equal scenes(:scene_one).section_id, body["section_id"]
     assert_equal [ { "event_id" => events(:event_one).id, "role" => nil, "position" => 0 } ], body["events"]
     assert_nil body["pov_character_id"]

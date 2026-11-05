@@ -23,8 +23,10 @@ class Collaborators
   # across their closed drafts and `drafts` counts those drafts, and they are different
   # numbers on purpose: the page's figure is about changes because that is what the
   # reader is about to read, and the history sidebar's figure is about runs because
-  # that is the unit the history page groups by.
-  Entry = Struct.new(:user, :changes, :drafts, keyword_init: true)
+  # that is the unit the history page groups by. `percent` is this person's
+  # whole-number share of the same changes, which the list rounds as a partition of
+  # 100 rather than one row at a time.
+  Entry = Struct.new(:user, :changes, :drafts, :percent, keyword_init: true)
 
   attr_reader :universe
 
@@ -48,12 +50,14 @@ class Collaborators
 
     users = User.where(id: drafts_by_user.keys).index_by(&:id)
 
-    drafts_by_user.filter_map do |user_id, draft_count|
+    entries = drafts_by_user.filter_map do |user_id, draft_count|
       user = users[user_id]
       next if user.nil?
 
       Entry.new(user: user, drafts: draft_count, changes: changes_by_user.fetch(user_id, 0))
     end.sort_by { |entry| [ -entry.changes, entry.user.name.downcase, entry.user.id ] }
+
+    assign_percentages(entries)
   end
 
   # How many people there are, which is what the sidebar carries. It is the size of the
@@ -83,4 +87,30 @@ class Collaborators
 
     universe.drafts.closed.where(user: user).exists?
   end
+
+  private
+    # **Whole-number shares of the universe's remembered changes.** They add up to 100
+    # whenever there is a change to divide, which rounding each row on its own does not
+    # promise: three equal authors would print 33% each and leave a point unaccounted
+    # for. Each entry takes its floor, and the leftover points go to the largest
+    # fractional parts; a tie stays in the list's own order (most changes, then name),
+    # so the same universe prints the same shares on every request. A universe whose
+    # closed drafts remember nothing divides no changes, and every share is zero.
+    def assign_percentages(entries)
+      entries.each { |entry| entry.percent = 0 }
+      total = entries.sum(&:changes)
+      return entries if total.zero?
+
+      exact = entries.map { |entry| entry.changes * 100.0 / total }
+      percents = exact.map(&:floor)
+      leftover = 100 - percents.sum
+
+      exact.each_index
+        .sort_by { |index| [ -(exact[index] - percents[index]), index ] }
+        .first(leftover)
+        .each { |index| percents[index] += 1 }
+
+      entries.each_with_index { |entry, index| entry.percent = percents[index] }
+      entries
+    end
 end

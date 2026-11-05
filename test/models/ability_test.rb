@@ -150,9 +150,10 @@ class AbilityTest < ActiveSupport::TestCase
       scene.scene_items.create!(item: @private_universe.items.create!(name: "A prop")),
       scene.scene_locations.create!(location: @private_universe.locations.create!(name: "A place"))
     ]
-    dialogue = scene.scene_elements.create!(name: "A private exchange", kind: "dialogue",
-      characters: [ @private_universe.characters.create!(name: "A speaker") ])
-    records << dialogue.scene_dialogue_turns.create!(speaker: dialogue.characters.first, body: "A private line")
+    dialogue = scene.scene_elements.create!(name: "A private exchange", kind: "dialogue")
+    records << dialogue.scene_dialogue_turns.create!(
+      speaker: @private_universe.characters.create!(name: "A speaker"), body: "A private line"
+    )
 
     non_member = Ability.new(@read_user)
     records.each do |record|

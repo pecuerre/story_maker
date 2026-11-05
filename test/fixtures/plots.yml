@@ -1,7 +1,13 @@
 plot_one:
   story: story_one
   name: Plot one
-  description: A story-level through-line.
+  short_summary: A summary of the story-level through-line.
+  description: |
+    A story-level through-line.
+
+    ## Information
+
+    - Type: arc
   slug: plot-one
 
 plot_alt:

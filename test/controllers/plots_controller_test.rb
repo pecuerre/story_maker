@@ -25,6 +25,35 @@ class PlotsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".sidebar-count", text: "1"
   end
 
+  test "index uses the short summary and strips its links" do
+    @plot.update!(short_summary: "The [[character:character-one]] through-line.")
+    get universe_story_plots_url(universe_slug: @universe.slug, story_id: @story)
+
+    assert_response :success
+    assert_select ".entity-description", text: "The Character one through-line."
+    assert_no_match(/\[\[character:character-one\]\]/, css_select(".entity-description").map(&:text).join)
+  end
+
+  test "Details shows the short summary, the Markdown description, and an Edit control for a writer" do
+    get universe_story_plot_url(universe_slug: @universe.slug, story_id: @story, id: @plot)
+
+    assert_response :success
+    assert_includes response.body, "A summary of the story-level through-line."
+    assert_select "h2", text: "Information"
+    assert_select "button", text: "Edit plot"
+    assert_select ".modal[data-modal-form-target=?]", "modal"
+  end
+
+  test "Details gives a guest the page without the Edit control" do
+    sign_out
+
+    get universe_story_plot_url(universe_slug: @universe.slug, story_id: @story, id: @plot)
+
+    assert_response :success
+    assert_select "button", text: "Edit plot", count: 0
+    assert_select ".modal", count: 0
+  end
+
   test "Details lists assigned Scenes in narrative order" do
     get universe_story_plot_url(universe_slug: @universe.slug, story_id: @story, id: @plot)
 
@@ -37,16 +66,18 @@ class PlotsControllerTest < ActionDispatch::IntegrationTest
   test "create, update, and delete use JSON and soft deletion" do
     assert_difference("Plot.count", 1) do
       post universe_story_plots_url(universe_slug: @universe.slug, story_id: @story),
-        params: { plot: { name: "New arc", description: "A through-line" } }, as: :json
+        params: { plot: { name: "New arc", short_summary: "A short line", description: "A through-line" } }, as: :json
     end
     assert_response :created
     assert_equal "New arc", response.parsed_body["name"]
+    assert_equal "A short line", response.parsed_body["short_summary"]
     created = @story.plots.find(response.parsed_body["id"])
 
     patch universe_story_plot_url(universe_slug: @universe.slug, story_id: @story, id: created),
-      params: { plot: { name: "Renamed arc" } }, as: :json
+      params: { plot: { name: "Renamed arc", short_summary: "A shorter line" } }, as: :json
     assert_response :success
     assert_equal "Renamed arc", created.reload.name
+    assert_equal "A shorter line", created.short_summary
 
     assert_no_difference("Scene.count") do
       delete universe_story_plot_url(universe_slug: @universe.slug, story_id: @story, id: created), as: :json

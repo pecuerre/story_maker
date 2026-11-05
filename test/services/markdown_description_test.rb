@@ -175,6 +175,55 @@ class MarkdownDescriptionTest < ActiveSupport::TestCase
     assert_equal "Meet [[character:nobody]].", text.as_plain_text
   end
 
+  test "the unlinked description names a reference and keeps the Markdown" do
+    @universe.characters.create!(name: "Ada")
+
+    html = MarkdownDescription.new(@universe, "Meet [[character:ada]] in **the hall**.").to_unlinked_html
+
+    document = Nokogiri::HTML.fragment(html)
+    assert_nil document.at_css("a")
+    assert_includes document.text, "Meet Ada in the hall."
+    assert_equal "the hall", document.at_css("strong").text
+  end
+
+  test "the unlinked description keeps a canon rule's ledger id" do
+    canon_rules(:canon_rule_one)
+
+    html = MarkdownDescription.new(@universe, "See [[canon:K1]].").to_unlinked_html
+
+    assert_includes Nokogiri::HTML.fragment(html).text, "See K1."
+  end
+
+  test "the unlinked description leaves an unresolved reference as written" do
+    html = MarkdownDescription.new(@universe, "Meet [[character:nobody]].").to_unlinked_html
+
+    assert_includes html, "[[character:nobody]]"
+  end
+
+  test "the unlinked description leaves a reference inside code as written" do
+    @universe.characters.create!(name: "Ada")
+
+    html = MarkdownDescription.new(@universe, "Write `[[character:ada]]` to link her.").to_unlinked_html
+
+    assert_includes html, "[[character:ada]]"
+  end
+
+  test "the unlinked description demotes its headings below the appendix entry" do
+    html = MarkdownDescription.new(@universe, "## Wants\n\n### Details\n\nFind the key.")
+      .to_unlinked_html(heading_offset: 3)
+
+    document = Nokogiri::HTML.fragment(html)
+    assert_nil document.at_css("h2")
+    assert_equal "Wants", document.at_css("h5").text
+    assert_equal "Details", document.at_css("h6").text
+  end
+
+  test "the unlinked description clamps a demoted heading at h6" do
+    html = MarkdownDescription.new(@universe, "### Deep").to_unlinked_html(heading_offset: 6)
+
+    assert_equal "Deep", Nokogiri::HTML.fragment(html).at_css("h6").text
+  end
+
   private
     def render(text)
       MarkdownDescription.new(@universe, text).to_html

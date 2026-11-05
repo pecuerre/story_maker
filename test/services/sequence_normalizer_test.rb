@@ -204,8 +204,7 @@ class SequenceNormalizerTest < ActiveSupport::TestCase
   test "it renumbers turns per Element when that universe is normalized" do
     element = scene_elements(:dialogue_one)
     last = element.scene_dialogue_turns.create!(speaker: characters(:character_one), body: "Last", position: 8)
-    other_element = @scene.scene_elements.create!(name: "Another dialogue", kind: "dialogue",
-      characters: [ characters(:character_two) ])
+    other_element = @scene.scene_elements.create!(name: "Another dialogue", kind: "dialogue")
     other_turn = other_element.scene_dialogue_turns.create!(speaker: characters(:character_two),
       body: "First here", position: 5)
     output = StringIO.new

@@ -58,9 +58,9 @@ module SceneElementsHelper
     SceneElement::KINDS.to_h { |kind| [ kind, scene_element_kind_description(kind) ] }
   end
 
-  # [ label, value ] pairs for the many-speaker picker. Every universe Character
-  # is offered, because the same Character may speak in any number of Elements.
-  # The pairs are `ScenesHelper#name_id_choices`, shared with the three
+  # [ label, value ] pairs for a dialogue turn's speaker picker. Every universe
+  # Character is offered, because the same Character may speak in any number of
+  # Elements. The pairs are `ScenesHelper#name_id_choices`, shared with the three
   # participation tabs, so a Character offered here is offered under the same name
   # and with the same value there.
   def scene_element_speaker_choices(characters)
@@ -77,23 +77,14 @@ module SceneElementsHelper
     body.truncate(length, separator: " ")
   end
 
-  # One sentence describing what a Dialogue's speaker links do and do not mean.
-  # It is repeated in the editor because "who speaks here" is the question an
-  # author asks first, and "which line is theirs" is the one this version cannot
-  # answer.
-  #
-  # The names are the author's own words and are interpolated; the verb agrees
-  # with the count, so the sentence is `one:`/`other:` rather than an English
-  # singular spliced onto a plural.
-  def scene_element_speaker_note(element)
-    return nil unless element.dialogue?
-
-    names = element.characters.map(&:name).sort
-
-    if names.empty?
-      t("scenes.elements.speaker_note_empty")
-    else
-      t("scenes.elements.speaker_note", count: names.size, names: names.to_sentence)
+  # The measure beside an Element's kind badge: a Narration reports its stored
+  # word count and a Dialogue reports how many spoken lines it holds. Both are
+  # read from records the page already loaded, so the row costs no extra query.
+  def scene_element_length_label(element)
+    if element.narration?
+      t("scenes.elements.word_count", count: element.word_count)
+    elsif element.dialogue?
+      t("scenes.elements.line_count", count: element.scene_dialogue_turns.size)
     end
   end
 
@@ -104,7 +95,6 @@ module SceneElementsHelper
       kind: element.kind,
       name: element.name,
       body: element.body,
-      character_ids: element.character_ids,
       turns: element.scene_dialogue_turns.reorder(:position, :id).map do |turn|
         scene_dialogue_turn_fields(turn)
       end,

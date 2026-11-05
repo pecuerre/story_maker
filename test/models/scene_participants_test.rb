@@ -1,7 +1,7 @@
 require "test_helper"
 
 # Participation in a Scene is read from the explicit-presence source and the
-# dialogue-speaking sources; it is a union, not a sum.
+# dialogue turns; it is a union, not a sum.
 class SceneParticipantsTest < ActiveSupport::TestCase
   setup do
     @scene = scenes(:scene_one)
@@ -11,10 +11,8 @@ class SceneParticipantsTest < ActiveSupport::TestCase
   test "an explicit link and a derived speaker are one participant, not two" do
     participants = SceneParticipants.for(@scene)
 
-    # `character_one` is explicitly linked with a role and also speaks in
-    # `dialogue_one`; `character_two` is linked without a role and also speaks.
-    # Turn speakers add a second route to speaking, and `character_three` is
-    # attributed only by a turn.
+    # `character_one` and `character_two` are explicitly linked; character_one
+    # and character_three are also attributed by turns. The union is three.
     assert_equal 3, participants.count
     assert_predicate participants, :any?
   end
@@ -30,8 +28,8 @@ class SceneParticipantsTest < ActiveSupport::TestCase
 
   test "a character who only speaks is a participant without a stored link" do
     scene = @scene.story.scenes.create!(name: "Solo stage")
-    element = scene.scene_elements.create!(name: "Alone", kind: "dialogue",
-      characters: [ characters(:character_one) ])
+    element = scene.scene_elements.create!(name: "Alone", kind: "dialogue")
+    element.scene_dialogue_turns.create!(speaker: characters(:character_one), body: "I am here.")
 
     entry = SceneParticipants.for(scene).entries.sole
     assert_equal characters(:character_one), entry.character
@@ -40,14 +38,19 @@ class SceneParticipantsTest < ActiveSupport::TestCase
     assert_equal [ element ], entry.speaking_elements
   end
 
-  test "a turn-only speaker is included and a roster-and-turn speaker appears once per Element" do
-    entries = SceneParticipants.for(@scene).entries
+  test "a speaker with several turns appears once per Element" do
+    scene = @scene.story.scenes.create!(name: "Two turns in one block")
+    element = scene.scene_elements.create!(name: "One voice twice", kind: "dialogue")
+    element.scene_dialogue_turns.create!([
+      { speaker: characters(:character_three), body: "First." },
+      { speaker: characters(:character_three), body: "Second." }
+    ])
+
+    entries = SceneParticipants.for(scene).entries
     turn_only = entries.find { |item| item.character == characters(:character_three) }
-    roster_and_turn = entries.find { |item| item.character == characters(:character_one) }
 
     assert_not_predicate turn_only, :explicitly_linked?
-    assert_equal [ "Michael teaches the waltz" ], turn_only.speaking_elements.map(&:name)
-    assert_equal [ "Michael teaches the waltz" ], roster_and_turn.speaking_elements.map(&:name)
+    assert_equal [ element ], turn_only.speaking_elements
   end
 
   test "a character with neither source is not a participant" do
@@ -68,7 +71,8 @@ class SceneParticipantsTest < ActiveSupport::TestCase
     counts = SceneParticipants.counts_by_scene([ @scene, @alt_scene ])
 
     assert_equal 3, counts[@scene.id]
-    # `dialogue_alt` names `character_one` with no presence link at all.
+    # `dialogue_alt` names `character_one` by its one turn and has no presence
+    # link for that Character.
     assert_equal 1, counts[@alt_scene.id]
     # A Scene nobody takes part in is absent rather than mapped to zero, so a
     # caller cannot confuse "no row" with a real measurement.
@@ -90,8 +94,8 @@ class SceneParticipantsTest < ActiveSupport::TestCase
 
   test "only explicit links are offered to the add, remove, and role controls" do
     derived_only = @scene.story.scenes.create!(name: "Derived only")
-    derived_only.scene_elements.create!(name: "Two voices", kind: "dialogue",
-      characters: [ characters(:character_one) ])
+    element = derived_only.scene_elements.create!(name: "Two voices", kind: "dialogue")
+    element.scene_dialogue_turns.create!(speaker: characters(:character_one), body: "Only me.")
 
     assert_equal @scene.scene_characters.order(:id).to_a,
       SceneParticipants.for(@scene).explicit_links.sort_by(&:id)

@@ -21,7 +21,7 @@ module UniverseScopeResolver
   # Raised when a model is asked which of its rows belong to a universe and there
   # is no column to ask with: the model has neither a `universe_id` of its own nor
   # one of the owner associations above. A model in that position is nested below
-  # something the walk does not name — a speaker link under a Scene Element, for
+  # something the walk does not name — a join row below a Scene Element, for
   # instance — and it has to say so by defining its own `#universe` to delegate
   # through its owner.
   #

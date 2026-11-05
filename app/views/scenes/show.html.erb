@@ -38,3 +38,14 @@
     its identity and references, and the ordered prose blocks belong to the same
     page rather than to a second one. %>
 <%= render "scenes/elements" %>
+
+<%# The drafting contract closes the page: it is the writer's note about the
+    scene as a whole, not one of its identity facts. %>
+<section class="detail-section scene-drafting-contract">
+  <h2 class="h5 mb-3"><%= t("scenes.show.facts.drafting_contract") %></h2>
+  <% if @scene.drafting_contract.present? %>
+    <div class="drafting-contract-body text-break"><%= @scene.drafting_contract %></div>
+  <% else %>
+    <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.drafting_contract_blank") %></p>
+  <% end %>
+</section>

@@ -28,9 +28,10 @@ exists today, and returns to the Story overview.
 
 **Printable HTML page** is the only format. Its form is a `GET` to the manuscript URL, so choosing a
 scope never writes anything and the chosen document is a shareable address. The submit control opens
-the manuscript in the same tab; the reader prints it or saves it as a PDF with the browser's own
-print command. The page deliberately adds no PDF or EPUB dependency: the browser already owns that
-step, and a printable document is the same HTML a future download would assemble.
+the manuscript in a new tab, so the export options stay beside the document; the reader prints it or
+saves it as a PDF with the browser's own print command. The page deliberately adds no PDF or EPUB
+dependency: the browser already owns that step, and a printable document is the same HTML a future
+download would assemble.
 
 A second format is a second section on this page plus one `get` route, reading the same assembled
 Story. It is not a second page, and it does not add a scope of its own.
@@ -81,7 +82,10 @@ Story's Sections and Scenes once each with their Elements, presence links, Event
 Element order is the Scene's own flat `position` sequence. Narration prints its `body`. A Dialogue
 with line-level turns prints the turns — speaker, optional parenthetical, and line — because those are
 the attributed lines, and its block body repeats the same speech. A Dialogue with no turns prints its
-body followed by the names of its speakers, which is the only attribution that source carries.
+body alone. Each turn prints as one hyphenated line, `- *Speaker* (parenthetical): line`, with the
+speaker in italics and a colon before the speech, so the turns read as a list of spoken lines rather
+than as a cast list. A wrapped line hangs under the speech, not under the hyphen.
+
 A registered Character name in a printed body is marked and linked, with a mention kept visually
 distinct from recorded presence; the matching rules are in [mentions.md](mentions.md).
 
@@ -108,10 +112,24 @@ sources the Scene domain defines in [scenes](scenes.md).
 ### Universe appendices
 
 `bible` ends the document with the Universe's Characters, Locations, Items, and Events — not only the
-records this Story uses — each named by its own label and followed by one summary line when it has
-one: `Character#summary` for Characters, `description` for the other three. Categories are in
-that order, use the same title their workspace uses, and an empty category is omitted; a Universe
-with none of the four adds no appendix section.
+records this Story uses. Each category prints its workspace title, and each record is its own entry:
+the record named by its label (`display_label` for an Event, whose name may be a date) and, below that
+name, the profile text the record has.
+
+A Character prints its one-line `summary`, which stays one line of plain text. A Location and an Item
+print their Markdown `description`, rendered with the same dialect as the details page, so its `##`
+sections become headings. Each description heading is demoted below the entry's own heading, so a
+profile section cannot outrank the category above it. An Event's `description` is plain text, exactly
+as its details page shows it.
+
+A `[[kind:slug]]` reference reads as the name of the record it names — a canon rule keeps its ledger
+id — and is never a link: paper has nothing to click, and the entry already belongs to its category.
+An unresolved reference stays literal, and one inside a code span stays as written, exactly as on
+screen. [characters.md](characters.md#links-inside-a-description) owns the reference rules;
+`StoryExportsHelper#manuscript_appendix_text` chooses the rendering.
+
+Categories are in the order Characters, Locations, Items, Events, use the same title their workspace
+uses, and an empty category is omitted; a Universe with none of the four adds no appendix section.
 
 ## The printable page
 

@@ -118,7 +118,8 @@ turn it into a record by accident.
   A `##` subsection has no Section column, so the import reports it rather than dropping it; the
   preview names the subsections it left behind. Chapters are written in sorted
   directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
-  database ids, and a scene also carries its stable in-world identity in frontmatter.
+  database ids. A scene's frontmatter `id` is the backlog item it was written from, never a unique
+  scene key; the filename is the scene's identity inside its chapter.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
   `README.md` is its human index and is not a Plot.
 
@@ -133,8 +134,8 @@ README and a canon area file do not need one.
 | Faction | `name`, `slug` | `type`, `home`, `status`, `backlog` |
 | Location | `name`, `slug` | `type`, `controller`, `status`, `backlog` |
 | Item (`tech/`) | `name`, `slug` | `type`, `invented_by`, `status`, `backlog` |
-| Plot | `name`, `slug`, `type`, `status`, `owner_pov` | `opened_in`, `backlog` |
-| Scene | `id`, `title`, `chapter`, `sequence`, `pov`, `location`, `timeline`, `branch`, `status` | `depends_on` |
+| Plot | `name`, `slug` | `type`, `status`, `owner_pov`, `opened_in`, `backlog` |
+| Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | none |
 
 Rules for those values:
 
@@ -142,33 +143,37 @@ Rules for those values:
 - `name`, `role`, `type`, `status`, and the other free-text keys are author prose. `type` and a
   plot or entity `status` are not restricted to the values the template suggests, because the real
   source already uses values outside it.
-- A Scene's `id` is `B-###`. `chapter` must equal its chapter directory name, and `sequence` must
-  match the filename prefix. `pov` names a Character, `location` names a Location, and both must
-  exist in the same source. A blank or `— TBD` value means the Scene has not recorded one.
+- A Scene's `id` is `B-###`, the author's backlog item. It is not a unique scene key and two scenes
+  may share it. `chapter` and `sequence` are the path, not frontmatter: a Scene's chapter is its
+  directory and its sequence is the filename prefix. `pov` names a Character, `location` names a
+  Location, and both must exist in the same source. A blank or `— TBD` value means the Scene has not
+  recorded one.
 - A Scene's `branch` is `main` or `fork of <Holder>-<NN>`.
-- A Scene's `status` is one of `draft`, `revised`, or `final`, matching the application's Scene
-  status vocabulary.
-- `depends_on` is a list of `B-###` ids.
+- A Scene carries no writing status and no dependency list. The application writes every imported
+  Scene as `draft`; a `status` or `depends_on` key is an unknown frontmatter key.
+- `timeline` is author prose such as "ninth day after the flare", never a date the import may parse
+  into `datetime`, so it is reported rather than imported.
 - An unknown frontmatter key is a warning; a missing or blank required key is an error.
 
 ## Profile sections
 
-The body starts with one heading and continues with `##` sections. A profile file opens with `#`
-and a Scene opens with its own `##` title (see [Plot and Scene](#plot-and-scene)); either heading
-names the record and is not prose. A section that maps to a record's own answer is written into that
+The body starts with one heading and continues with `##` sections. A profile file and a Scene both
+open with their record's `#` heading (see [Plot and Scene](#plot-and-scene)); that heading names the
+record and is not prose. A section that maps to a record's own answer is written into that
 answer, with its Markdown body kept as written; a section with no target is reported by the import
 slice, never silently dropped. Characters, Factions, Locations, and Items map their whole body
-instead, as described below; a Plot maps only `The question`, and a Section maps only its identity
-block.
+instead, as described below; a Plot maps its `Short summary` and folds the rest into its description,
+and a Section maps only its identity block.
 
 HTML comments (`<!-- … -->`) are drafting notes for the author, not prose. They are stripped before
 a section is stored and before references are scanned, so a `[[slug]]` inside one is an example
-rather than a reference.
+rather than a reference. The one exception is a Scene's closing `DRAFTING CONTRACT` comment, which
+the import reads into the Scene's `drafting_contract` note rather than storing as prose.
 
 The prose before the first `##` section — the source's identity block — has no dedicated column. A
-Character and a Faction fold it into `description`; the other profile slices report it as the
-record's `introduction`. A frontmatter key the application has no column for is reported by name
-rather than folded into another answer.
+Character, Faction, Location, Item, or Plot folds it into `description`; a Scene reports prose before
+its first block rather than storing it. A frontmatter key the application has no column for is
+reported by name rather than folded into another answer.
 
 ### Character
 
@@ -247,28 +252,36 @@ Location, and the same flat-source rule applies: every imported Item is top-leve
 
 ### Plot and Scene
 
-A Plot is Story-owned, so the Stories slice runs first and writes them. A Plot's `## The question`
-section is its `description`; its remaining sections are not profile answers and are reported, as
-are `type`, `status`, `owner_pov`, `opened_in`, and `backlog`, which have no Plot column. Plot Scene
+A Plot is Story-owned, so the Stories slice runs first and writes them. `Short summary` writes the
+Plot's `short_summary`, which its list row reads. The identity block before the first `##` section
+and every other `##` section become one Markdown `description`, in source order, with their headings
+and references kept as written. `type`, `status`, `owner_pov`, `opened_in`, and `backlog` have no
+Plot column; the current source keeps them under `## Information`, so they stay in the description,
+and an older file that still carries them in frontmatter has them reported by name. Plot Scene
 assignments belong to a later slice, so a Plot lands with no Scenes.
 
 A Scene file becomes one Scene in the Section its chapter directory names. The frontmatter with an
-application column is written: `title` is the Scene's name, `chapter` selects the Section, `sequence`
-with the chapter order gives its flat position in the Story, `pov` is its point-of-view Character,
-`location` is a Location presence link with no role, and `status` is its writing status. `id`,
-`timeline`, `branch`, and `depends_on` have no Scene column and are reported. `timeline` is author
-prose such as "ninth day after the flare", never a date the import may parse into `datetime`, so the
-Scene's in-world time stays empty and the source text is kept in the report.
+application column is written: `title` is the Scene's name, `pov` is its point-of-view Character,
+and `location` is a Location presence link with no role. `chapter`, `sequence`, and the scene slug
+come from the path, and `id`, `timeline`, and `branch` have no Scene column and are reported. Every
+imported Scene is written as `draft`, because the source keeps no writing status. A Scene's closing
+`DRAFTING CONTRACT` HTML comment is read into the Scene's `drafting_contract` note rather than
+into prose; it is the one comment the import keeps.
 
-A Scene's body opens with its `##` title — the same text as the frontmatter `title` — and continues
-as manuscript prose. The heading names the Scene and is not a section; every later `##` heading has
-no Scene target and is reported. Every blank-line-separated paragraph becomes one ordered Narration
-[Element](scenes.md#elements). The source records no block title, so the first Element takes the
-Scene's title and each later one appends its number. No Dialogue Element, speaker, or turn is
-invented: the source states a speaker and line only in prose, so dialogue attribution is preserved
-only where it is written. Entity references in that prose are written as record names, as in a
-profile answer; rule, scene, and backlog references stay as written. The source carries no tag
-taxonomy, so the import creates no Scene Tags.
+A Scene's body opens with its `#` title heading — the same text as the frontmatter `title` — and
+continues as alternating `## Narration` and `## Dialog` blocks in reading order: the first block is
+Narration, and two blocks of the same kind never sit next to each other. Each block becomes one
+ordered Element. A Narration block's paragraphs are the Element's Content, with entity references
+written as record names as in a profile answer. A Dialog block becomes a Dialogue Element whose
+resolvable lines are its ordered turns: `@[[character:slug]] "…"`
+is a turn, and `[[kind:slug]]` inside the line is a prose mention, resolved the same way. A bare
+`@slug` names a speaker with no entity file, so its line cannot become a turn and the preview
+reports the speaker; a Dialog block with no registrable speaker at all is kept as Narration prose so
+the lines are not lost. A `##` heading other than those two, prose before the first block, and two
+adjacent blocks of the same kind are reported or refused as described under
+[The validator](#the-validator). The source records no block title, so the first Element takes the
+Scene's title and each later one appends its number. The source carries no tag taxonomy, so the
+import creates no Scene Tags.
 
 ## Canon ledger
 
@@ -320,6 +333,11 @@ a reference inside inline code is real, because the source writes rule citations
 | `[[scene:NN-slug]]` | a scene in the same chapter as the referring scene |
 | `B-###` | the author's backlog, written bare and never resolved; opaque to the app |
 
+A Scene's `## Dialog` block names each line's speaker with an `@` form:
+`@[[character:slug]] "…"` is a Character in the same source, and `@slug "…"` is a speaker with no
+entity file. A bare speaker is never resolved to a Character that happens to share its slug.
+Entity references inside a spoken line are ordinary references and resolve to record names.
+
 A typed reference must name a record of the kind its prefix declares. `[[location:ada]]` is an error
 even though `ada` exists, because the page would have to break the link the author asked for. A bare
 `[[slug]]` is the older form and is still accepted; it relies on the slug being unique across every
@@ -347,7 +365,8 @@ characters, factions, locations, items, stories, plots, chapters, and scenes.
 
 The report also carries each parsed record as a `Report::Entity` — its kind, slug, name, frontmatter,
 `##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`. A Plot entity
-also names the `story_slug` whose directory holds it. A slice reads that instead of opening the file
+also names the `story_slug` whose directory holds it, and a Scene names its `chapter_slug` and the
+`drafting_contract` its closing comment supplied. A slice reads that instead of opening the file
 again, so the write cannot disagree with the preview about a heading or a reference. A chapter is a
 directory rather than a record file, so it is a separate `Report::Chapter` with its Story slug,
 directory name, display name, the README identity block its Section writes as `description`, and the
@@ -373,13 +392,19 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
 - a canon id is duplicated;
 - a `[[slug]]`, `[[rule:ID]]`/`[[canon:ID]]`, or `[[scene:NN-slug]]` does not resolve, or a bracket
   reference has an unknown form;
-- a Scene's chapter, sequence, id, branch, status, point of view, location, or `depends_on` does not
-  match the contract above.
+- a Scene's id, branch, point of view, or location does not match the contract above;
+- a Scene has no `#` title heading, no `## Narration` block, a block other than `## Narration` or
+  `## Dialog`, a first block that is not Narration, two adjacent blocks of the same kind, or a
+  Dialog line that is not `@speaker "line"`.
 
 **Warnings** do not stop an import, because the source may legitimately carry more than the app
 knows:
 
 - an unknown frontmatter key;
+- a Scene's `#` title heading that disagrees with its frontmatter `title`;
+- prose before a Scene's first `##` block, which has no Element target;
+- a `## Dialog` block whose speakers are all bare `@slug` names, because it has no Character the
+  application can make a Dialogue from and is written as Narration prose instead;
 - a canon id outside a Locked, Derived, or Open section, or a locked id under Open;
 - an unexpected entry in a story directory;
 - an entry directly under `universe/` that is neither the README, `canon/`, nor one of the entity
@@ -466,10 +491,10 @@ question as a rule of type `open`. **Factions** runs before **Characters**, **Lo
 story directory, because a Plot needs the Story it belongs to, and **Sections** then writes one
 Section per chapter directory, named from its README heading as described under
 [Story records](#story-records).
-**Scenes** follows, writing each Scene with its Elements, because it needs the Story, the Section,
-and the Character and Location links those earlier slices created. **Plots** runs last and writes
-each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
-registry when their slice exists.
+**Scenes** follows, writing each Scene with its Elements and dialogue turns, because it needs the
+Story, the Section, and the Character and Location links those earlier slices created. **Plots** runs
+last and writes each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into
+the same registry when their slice exists.
 
 A slice's `Outcome` lists every record it writes, in source order, and marks the ones that carry
 content the app cannot store as reported. Both the preview and the [run page](#the-run-page) show one

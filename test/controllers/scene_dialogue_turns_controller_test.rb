@@ -23,8 +23,7 @@ class SceneDialogueTurnsControllerTest < ActionDispatch::IntegrationTest
     story = Story.create!(universe: universe, name: "Private story")
     scene = story.scenes.create!(name: "Private scene")
     speaker = universe.characters.create!(name: "Private speaker")
-    element = scene.scene_elements.create!(name: "Private dialogue", kind: SceneElement::DIALOGUE,
-      character_ids: [ speaker.id ])
+    element = scene.scene_elements.create!(name: "Private dialogue", kind: SceneElement::DIALOGUE)
     [ universe, story, scene, element, speaker ]
   end
 
@@ -257,8 +256,7 @@ class SceneDialogueTurnsControllerTest < ActionDispatch::IntegrationTest
 
   test "a turn of another element is not found" do
     other_scene = @universe.stories.create!(name: "Other story").scenes.create!(name: "Other scene")
-    other_element = other_scene.scene_elements.create!(name: "Other dialogue", kind: SceneElement::DIALOGUE,
-      character_ids: [ characters(:character_three).id ])
+    other_element = other_scene.scene_elements.create!(name: "Other dialogue", kind: SceneElement::DIALOGUE)
     other_turn = other_element.scene_dialogue_turns.create!(speaker: characters(:character_three), body: "Other turn")
 
     patch turn_url(other_turn), params: { scene_dialogue_turn: { body: "Hijacked" } }, as: :json

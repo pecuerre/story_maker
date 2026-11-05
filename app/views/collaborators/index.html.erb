@@ -29,7 +29,8 @@
                 A discarded draft's changes are in it — remembering a change is
                 collaborating here even when the run never wrote it. %>
             <div class="entity-description">
-              <%= t("collaborators.index.changes", count: collaborator.changes) %>
+              <%= t("collaborators.index.changes", count: collaborator.changes) %> ·
+              <span class="collaborator-share"><%= t("collaborators.index.share", percent: collaborator.percent) %></span>
             </div>
           </div>
 

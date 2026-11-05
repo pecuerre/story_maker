@@ -58,7 +58,8 @@ class SceneMentionsTest < ActionDispatch::IntegrationTest
   end
 
   test "a speaker is recorded presence even without a stored link" do
-    @element.update!(kind: SceneElement::DIALOGUE, characters: [ @character ])
+    @element.update!(kind: SceneElement::DIALOGUE)
+    @element.scene_dialogue_turns.create!(speaker: @character, body: "I am here.")
 
     get element_path
 

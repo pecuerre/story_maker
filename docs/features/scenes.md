@@ -24,7 +24,10 @@ reuse are in [conventions.md](../conventions.md#views---three-patterns).
 `parent_id`. A required `name` is labelled **Title**; `description` is optional and a title-only Scene
 is valid. Every Scene also carries a fixed writing `status` — `draft`, `revised`, or `final`, defaulting
 to `draft` — validated by the model and a database check constraint; it is an author-chosen label, not
-a manuscript state machine. `belongs_to :section, optional: true` carries the organizational group,
+a manuscript state machine. `drafting_contract` is an optional free-text note recording the scene's
+one place, one beat of time, one point of view, and dramatic question; it is writer's guidance, not
+prose, and a story interchange import writes a scene's closing `DRAFTING CONTRACT` block into it.
+`belongs_to :section, optional: true` carries the organizational group,
 and the single optional `datetime` carries the in-world time point. The Events a Scene depicts are its own ordered
 link rows (`SceneEvent`), so a Scene may depict several; each link carries the author's free-text
 `role` and a `position`, and `Scene#event_id` no longer exists. `belongs_to :pov_character,
@@ -73,20 +76,17 @@ raw value, so a rejected entry is never cleared from the field.
 linked to the same Scene while the link is live; a blank link is refused. Its unique index is partial
 over live rows, so a removed link can be created again without resurrecting the old one.
 
-The Scene-owned records prove their shared Universe the same way: `SceneElement#speakers_belong_to_the_scene_universe`,
+The Scene-owned records prove their shared Universe the same way:
 `SceneDialogueTurn#speaker_belongs_to_scene_universe`, `SceneCharacter#character_belongs_to_the_scene_universe`,
 `SceneItem#item_belongs_to_the_scene_universe`, `SceneLocation#location_belongs_to_the_scene_universe`,
 and `SceneEvent#event_belongs_to_the_scene_universe`
 compare against `scene.story.universe_id`.
-A `character_ids` writer on `SceneElement` turns an unknown, duplicated, or cross-Universe id into an
-ordinary field error instead of a driver exception, exactly as `Scene#scene_tag_ids=` does, and a
-direct association assignment is checked by the same validation. The same-Universe rule is also in
-each controller, where a foreign id is a `404` because the record is resolved through
-`Current.universe`. The development-data loader proves it a third time: a Scene-owned record's
-Universe is resolved through its Scene, and a manifest may only reference records from its own
-universe directory. `scene_elements` additionally carries a database `check_constraint` on `kind`, and
-the four Scene-owned join tables carry real foreign keys and a unique pair index, so every uniqueness
-rule is proved in the model *and* the database.
+The same-Universe rule is also in each controller, where a foreign id is a `404` because the record is
+resolved through `Current.universe`. The development-data loader proves it a third time: a
+Scene-owned record's Universe is resolved through its Scene, and a manifest may only reference records
+from its own universe directory. `scene_elements` additionally carries a database `check_constraint`
+on `kind`, and the three Scene-owned presence join tables carry real foreign keys and a unique pair
+index, so every uniqueness rule is proved in the model *and* the database.
 
 ## Routes and responses
 
@@ -330,46 +330,42 @@ form field: the Move controls are the only way to order Elements.
 
 The Element list and its modal render on Scene Details (`scenes/_elements`), because the Scene above
 it already carries identity, references, and tags; splitting the prose onto a second page would add
-navigation without adding meaning. A Scene may hold any number of Elements, including none, so the
-empty state says so instead of implying a Scene is unfinished.
+navigation without adding meaning. Each row's kind badge is followed by that kind's own measure: a
+Narration reports its stored word count and a Dialogue reports how many spoken lines it holds. Both
+numbers come from records the page already loaded. A Scene may hold any number of Elements, including
+none, so the empty state says so instead of implying a Scene is unfinished.
 
-**Narration and Dialogue are the same editor with two different sets of rules**, so the modal offers
-an **Element type** selector, a required **Title**, an optional **Content** textarea, and a
-many-speaker **Speakers** picker. `scene_element_form_controller.js` owns only the presentation of
-that rule (show the picker for Dialogue, offer the remove-speakers confirmation when needed); the
-server is what enforces it. Hide a control, never disable it, when its value still has to be
-submitted: a hidden picker is still submitted so the server can see there is something to confirm, and
-the confirmation then sends an empty speaker list in the same request, which is the only way a
-Dialogue becomes Narration. A dialogue's own copy states the limitation out loud — the link records
-who is in the conversation, not which line belongs to whom.
-
-**Block-level speakers** remain a plain many-to-many link (`has_and_belongs_to_many :characters,
-join_table: :scene_element_speakers`): the roster says who speaks in the block, without assigning
-individual lines. A Dialogue must name at least one same-Universe Character in this roster; Narration
-may name none.
+**Narration and Dialogue are the same editor with two different sets of rules**, so the modal reads a
+required **Title**, a **Scene element type** selector, and, for Narration only, an optional **Content**
+textarea. A Dialogue has no Content field: its prose is its ordered turns, so the Dialogue-only turn
+fields are hidden for Narration and Content is hidden for Dialogue. `scene_element_form_controller.js`
+and `scene_turns_controller.js` own that presentation; the server is what enforces it.
 
 `SceneDialogueTurn belongs_to :scene_element` and records one line's same-Universe `speaker`, optional
 plain-text `body`, optional `parenthetical`/delivery note, and flat contiguous `position` within that
 Element. It has no URL, public slug, or independent Universe; its Universe is resolved through
-`scene_element → scene → story → universe`. Narration Elements cannot carry turns. The roster and turns
-are independent levels of attribution: neither is inferred from nor automatically writes the other.
-Both contribute to derived speaker participation and appearance, with duplicates collapsed to one
-Character/Element; neither creates a `SceneCharacter` presence link. `position` is not a form field;
-only the editor's Move up/Move down operations change turn order. The table, manifest reference, and
-validation details are in [data_model.md](../data_model.md).
+`scene_element → scene → story → universe`. **The turns are the Dialogue's cast**: there is no separate
+block-level speaker list, so the cast cannot disagree with the lines it describes, and a Dialogue with
+no turns yet is a valid empty block. A turn contributes to derived speaker participation and
+appearance, with duplicates collapsed to one Character/Element; it never creates a `SceneCharacter`
+presence link. `position` is not a form field; only the editor's Move up/Move down operations change
+turn order. The table, manifest reference, and validation details are in
+[data_model.md](../data_model.md).
 
 The ordered turns are edited inside the existing **Elements** modal, not on a new page. A new Element
 must first be saved as Dialogue so it has a scoped id; reopening it then exposes the turn editor. The
 modal shows each turn's speaker, line, and optional delivery note, and supports adding a turn, editing
-those three fields, and moving a turn up or down, with sequence-boundary moves disabled. The speaker
-picker uses the same Universe Character choices as the block-level roster, but selecting a turn
-speaker never changes that roster. Switching an Element to Narration hides the add controls while
-keeping existing turn rows available to remove; the server refuses to save Narration while any turns
-remain. Turn mutations use the nested JSON-only endpoints and server-provided scoped URLs. Every
-successful mutation refreshes the page from the
-server, including remembered draft changes, so derived participation stays current and an unpersisted
-draft receipt is never shown as a saved turn. Every visible label, confirmation, and empty/save-first
-message is localized.
+those three fields, and moving a turn up or down, with sequence-boundary moves disabled. Switching an
+Element to Narration hides the turn entry fields while keeping existing turn rows available to remove;
+the server refuses to save Narration while any turns remain. Turn mutations use the nested JSON-only
+endpoints and server-provided scoped URLs. A saved turn is appended to the open list from the response,
+so writing a conversation does not close the editor between lines. A draft-based Universe returns only
+a receipt, so its row is appended as a clearly badged **Saved to draft** row with no move/edit/delete
+controls until the draft is applied. Editing, moving, and deleting a turn keep the page-refresh
+contract, and derived participation is refreshed with it. Every visible label, confirmation, and
+empty/save-first message is localized. A turn reads as one sentence — **speaker**: line (delivery
+note) — with its actions as icons at the right edge, so a long line wraps without pushing the
+speaker or the controls out of place.
 
 A registered Character name written in an Element body is marked on Scene Details by the prose mention
 index, which is a separate read and never creates presence; its rules are in
@@ -387,9 +383,9 @@ This is the single most repeated rule in the Scene system, and it is one rule:
   are join models for the same reason.
 - Participation has **two independent sources** and nothing merges them into one stored row: an
   explicit `SceneCharacter` link, and a Character who speaks in one of the Scene's Dialogue Elements.
-  Speech is derived from the union of the block-level roster and line-level turns. `SceneParticipants`
-  reports the union — a Character who both participates and speaks is one participant, never two.
-  Never create a presence row for a speaker, and never add the sources together for a count.
+  Speech is derived from the line-level turns. `SceneParticipants` reports the union — a Character who
+  both participates and speaks is one participant, never two. Never create a presence row for a
+  speaker, and never add the sources together for a count.
 - Speaking is **not** a presence link: it never creates a `SceneCharacter` row.
 - `SceneAppearances` is the same union in the reverse direction, and adds each Event link as a
   third source, so it is also a union and never a sum.
@@ -505,15 +501,21 @@ are deliberately not part of this vocabulary.
 ## The editor and its tabs
 
 Scene Details (`/scenes/:id`) is the canonical, inspectable page: it renders the Title, narrative
-position, writing status, short description, Section group, Scene Tags, linked Events, formatted
-in-world time, point of view, and story context for writers, read-only members, and guests, and gives
-only writers an **Edit scene** action. The form lives once, at `/scenes/:id/edit` (`scenes/_form`, reused by `new`), so
-there is no second edit surface and no second form for the same fields. The editor's workspace tabs go
+position, writing status, Section group, Scene Tags, linked Events, formatted in-world time, point of
+view, and story context for writers, read-only members, and guests, and gives only writers an **Edit
+scene** action. The short description is deliberately not printed there; it stays on the record, in
+the editor, and in the Scenes list. The drafting contract closes the page in its own section below
+the Elements, because it is the writer's note about the scene as a whole rather than an identity
+fact. The form lives once, at `/scenes/:id/edit`
+(`scenes/_form`, reused by `new`), so there is no second edit surface and no second form for the same
+fields. The editor's workspace tabs go
 through `shared/_content_tabs`: **Scene Details**, **Events**, **Characters**, **Items**, **Locations**,
 and **Tropes** are all live links, each its own canonical page. A tab is never a link to a route that
 does not exist and never an in-document Bootstrap pane.
 
-The Scene form offers the fixed **Status** selector beside the title and description. **Scene tags**
+The Scene form offers the fixed **Status** selector beside the title and description, and a
+**Drafting contract** textarea that keeps the author's scene note as written; neither field changes
+the narrative position. **Scene tags**
 holds the optional native multi-select with root-first tag paths, **Organization** holds the Section
 selector (with **Ungrouped** and depth-indented Section names), and **In-world time** holds the
 `datetime-local` field plus a note pointing at the Events tab. Each field has copy stating what it
@@ -536,7 +538,7 @@ lines belong to whom. Clearing it records no point of view rather than choosing 
 
 The Scenes list shows an **Element** count and a **Characters take part** count. They are read for the
 whole page in grouped queries — never one query per row — and the participant count unions explicit
-links, block-level speakers, and turn speakers exactly as the Characters tab does. Each row also
+links and turn speakers exactly as the Characters tab does. Each row also
 carries its writing-status badge. Item and Location counts are deliberately absent: they would need
 one extra grouped query each per page, and the three workspace tabs are the place that detail
 belongs. Do not render placeholder counts for them.
@@ -564,18 +566,18 @@ It is asymmetric, and the asymmetry is deliberate:
   are removed when the Scene is hard-destroyed. Removing one from the Tropes tab hard-deletes that
   assignment and frees the same catalogue reference for that Scene again; the shared catalogue and
   any other Scene's assignment are untouched.
-- **Join-table rows are deliberately retained**, not cascaded: a Scene's Scene Tag assignments and
-  Dialogue speaker links, and a Character's tag assignments and speaker links, all survive a soft
-  delete. That is what makes a **restore** complete — the record returns with its tags and speakers
-  intact — and it is why `soft_delete` walks only the `soft_deletes` list and never touches a HABTM
-  join table. ADR 0007's Decision section was written against the hard-delete contract and predates
-  this; the divergence is recorded in that ADR's dated execution notes.
+- **Join-table rows are deliberately retained**, not cascaded: a Scene's Scene Tag assignments and a
+  Character's tag assignments survive a soft delete. That is what makes a **restore** complete — the
+  record returns with its tags intact — and it is why `soft_delete` walks only the `soft_deletes`
+  list and never touches a HABTM join table. ADR 0007's Decision section was written against the
+  hard-delete contract and predates this; the divergence is recorded in that ADR's dated execution
+  notes.
 - Deleting a **Section** clears Scene references (`section_id` nullified) and deleting an **Event**
   clears the temporal reference, while preserving Scene narrative order. Neither removes a Scene.
 - Deleting a shared Character, Item, or Location soft-deletes its presence links in addition to the
-  existing model-dependent behavior, and never removes a Scene. Its HABTM tag assignments and
-  Element-level speaker links and turn speaker records are retained, for the restore reason above.
-  A hard destroy removes turn rows that reference that Character, rather than leaving an orphaned FK.
+  existing model-dependent behavior, and never removes a Scene. A Character's tag assignments and the
+  Dialogue turns that name it are retained, for the restore reason above. A hard destroy removes turn
+  rows that reference that Character, rather than leaving an orphaned FK.
 - Event retains its existing child and temporal-referrer cleanup.
 
 A soft delete follows the shared rules in [data_model.md](../data_model.md#soft-delete): a deleted

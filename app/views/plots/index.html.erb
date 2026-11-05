@@ -44,8 +44,8 @@
                 </span>
                 <%= render "shared/draft_pending_badge", record: plot %>
               </div>
-              <% if plot.description.present? %>
-                <div class="entity-description"><%= plot.description %></div>
+              <% if plot.short_summary.present? %>
+                <div class="entity-description"><%= plot_summary_text(plot) %></div>
               <% end %>
             </div>
 
@@ -81,34 +81,6 @@
   <% end %>
 
   <% if editable %>
-    <div class="modal fade" tabindex="-1" aria-labelledby="plot-modal-title" aria-hidden="true"
-      data-modal-form-target="modal">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title fs-5" id="plot-modal-title" data-modal-form-target="title"><%= t("plots.new_title") %></h2>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t("shared.form.close") %>"></button>
-          </div>
-          <%= form_with scope: :plot, url: universe_story_plots_path(story_id: @story), method: :post,
-            data: { modal_form_target: "form", action: "modal-form#save" } do |form| %>
-            <div class="modal-body">
-              <%= render "shared/modal_errors" %>
-              <div class="mb-3">
-                <%= form.label :name, t("plots.form.name"), class: "form-label" %>
-                <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
-              </div>
-              <div class="mb-3">
-                <%= form.label :description, t("plots.form.description"), class: "form-label" %>
-                <%= form.text_area :description, class: "form-control", rows: 3 %>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= t("shared.form.cancel") %></button>
-              <%= form.submit t("plots.save"), class: "btn btn-primary", data: { modal_form_target: "submit" } %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
+    <%= render "plots/editor_modal" %>
   <% end %>
 </div>

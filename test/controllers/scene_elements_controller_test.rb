@@ -52,19 +52,17 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
       (0...@scene.scene_elements.count).to_a
   end
 
-  test "creates a dialogue element with many speakers" do
-    ids = @scene.universe.characters.pluck(:id)
-
+  test "creates a dialogue element before it has any turns" do
     assert_difference("SceneElement.count", 1) do
       post @elements_path, params: {
-        scene_element: { kind: "dialogue", name: "The kitchen argument", body: "You knew.", character_ids: ids }
+        scene_element: { kind: "dialogue", name: "The kitchen argument" }
       }, as: :json
     end
 
     created = @scene.scene_elements.order(:id).last
     assert_response :created
-    assert_equal ids.sort, created.character_ids.sort
-    assert_equal ids.sort, response.parsed_body["character_ids"].sort
+    assert_equal SceneElement::DIALOGUE, created.kind
+    assert_empty created.scene_dialogue_turns
   end
 
   test "the response carries the element the page will show again" do
@@ -84,15 +82,6 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
     assert_equal @scene.scene_elements.count - 1, response.parsed_body["position"]
   end
 
-  test "a dialogue without a speaker is a 422 the modal can render" do
-    assert_no_difference("SceneElement.count") do
-      post @elements_path, params: { scene_element: { kind: "dialogue", name: "Nobody" } }, as: :json
-    end
-
-    assert_response :unprocessable_content
-    assert_equal [ "is required for a dialogue element" ], response.parsed_body["character_ids"]
-  end
-
   test "a title is required and a kind outside the two known ones is refused" do
     post @elements_path, params: { scene_element: { kind: "narration", name: "" } }, as: :json
 
@@ -103,28 +92,6 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_content
     assert_equal [ "is not included in the list" ], response.parsed_body["kind"]
-  end
-
-  test "a speaker from another universe is a 422 rather than a cross-scope write" do
-    outsider = universes(:universe_two).characters.create!(name: "Outsider")
-
-    assert_no_difference("SceneElement.count") do
-      post @elements_path, params: {
-        scene_element: { kind: "dialogue", name: "Wrong speaker", character_ids: [ outsider.id ] }
-      }, as: :json
-    end
-
-    assert_response :unprocessable_content
-    assert_equal [ "must belong to the scene's universe" ], response.parsed_body["character_ids"]
-  end
-
-  test "an unknown speaker id is a 422 rather than a foreign key error" do
-    post @elements_path, params: {
-      scene_element: { kind: "dialogue", name: "Ghost", character_ids: [ 0 ] }
-    }, as: :json
-
-    assert_response :unprocessable_content
-    assert_equal [ "must exist" ], response.parsed_body["character_ids"]
   end
 
   test "updates the title and content without moving the element" do
@@ -139,60 +106,16 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_position, element.position
   end
 
-  test "updates the speakers of a dialogue" do
+  test "an Element with dialogue turns cannot become Narration" do
     element = scene_elements(:dialogue_one)
-
-    patch element_url(element), params: {
-      scene_element: { character_ids: [ @scene.universe.characters.first.id ] }
-    }, as: :json
-
-    assert_response :success
-    assert_equal [ @scene.universe.characters.first.id ], element.reload.character_ids
-  end
-
-  test "an edit that does not mention speakers keeps them" do
-    element = scene_elements(:dialogue_one)
-    speaker_ids = element.character_ids
-
-    patch element_url(element), params: { scene_element: { name: "The waltz, again" } }, as: :json
-
-    assert_response :success
-    assert_equal speaker_ids.sort, element.reload.character_ids.sort
-  end
-
-  test "narration cannot keep speakers and the explicit confirmation clears them" do
-    element = @scene.scene_elements.create!(name: "Dialogue without turns", kind: "dialogue",
-      characters: [ characters(:character_one) ])
+    original_turns = element.scene_dialogue_turns.order(:position, :id).pluck(:id, :body)
 
     patch element_url(element), params: { scene_element: { kind: "narration" } }, as: :json
 
     assert_response :unprocessable_content
-    assert_equal [ "cannot be Narration while speakers are still assigned" ], response.parsed_body["kind"]
-    assert_equal SceneElement::DIALOGUE, element.reload.kind
-
-    patch element_url(element), params: {
-      scene_element: { kind: "narration", remove_speakers: "1" }
-    }, as: :json
-
-    assert_response :success
-    element.reload
-    assert_equal SceneElement::NARRATION, element.kind
-    assert_empty element.characters
-  end
-
-  test "clearing block speakers cannot turn an Element with lines into Narration" do
-    element = scene_elements(:dialogue_one)
-    original_speakers = element.character_ids.sort
-
-    patch element_url(element), params: {
-      scene_element: { kind: "narration", remove_speakers: "1" }
-    }, as: :json
-
-    assert_response :unprocessable_content
     assert_includes response.parsed_body["kind"], "cannot be Narration while dialogue turns remain"
     assert_equal SceneElement::DIALOGUE, element.reload.kind
-    assert_equal original_speakers, element.character_ids.sort
-    assert_equal 2, element.scene_dialogue_turns.count
+    assert_equal original_turns, element.scene_dialogue_turns.order(:position, :id).pluck(:id, :body)
   end
 
   test "moves an element up and down in its own sequence" do
@@ -235,7 +158,7 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, element.reload.position
   end
 
-  test "deleting an element closes the gap and keeps its speaker links for restore" do
+  test "deleting an element closes the gap and keeps its turns soft-deleted for restore" do
     element = scene_elements(:dialogue_one)
 
     assert_no_difference("SceneElement.with_deleted.count") do
@@ -246,9 +169,8 @@ class SceneElementsControllerTest < ActionDispatch::IntegrationTest
     assert element.reload.deleted?, "the element is soft-deleted, not removed"
     assert_equal [ 0, 1, 2 ], @scene.scene_elements.reorder(:position, :id).pluck(:position)
     assert_equal 3, @scene.universe.characters.count, "a shared character is never deleted with an element"
-    assert_equal 2, ActiveRecord::Base.connection.select_value(
-      "SELECT COUNT(*) FROM scene_element_speakers WHERE scene_element_id = #{element.id}"
-    ).to_i, "speaker links are kept so a restore brings them back"
+    assert_equal 2, element.scene_dialogue_turns.with_deleted.count,
+      "turns are soft-deleted with their element so a restore brings them back"
   end
 
   test "an html mutation is refused before anything is written" do

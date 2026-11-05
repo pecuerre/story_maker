@@ -6,9 +6,9 @@
 #
 # - a **stored presence link** (`SceneCharacter`, `SceneItem`, `SceneLocation`),
 #   which may carry the author's own free-text role;
-# - a **Dialogue speaker**, derived from the Element's roster or its line-level
-#   turns, and never made into a presence link, so the same Character can be both
-#   and is still one appearance;
+# - a **Dialogue speaker**, derived from the line-level turns, and never made
+#   into a presence link, so the same Character can be both and is still one
+#   appearance;
 # - an **Event reference**, where the Scene has a link row depicting this Event.
 #
 # Two boundaries are deliberate. A Scene is never deduplicated against the Event
@@ -116,28 +116,19 @@ class SceneAppearances
     end
 
     # Only a Character has Dialogue speaker appearances, so this is empty for
-    # every other record and is skipped rather than queried. The broad Element
-    # roster and line-level turns are independent queries whose results are
-    # merged by Element name; the final union never reports the same Element
-    # twice for one speaker.
+    # every other record and is skipped rather than queried. A speaker is
+    # derived from the line they speak, and one Element is reported once even
+    # when the same Character has several turns in it.
     def speaker_element_names
       return {} unless record.is_a?(Character)
 
-      roster_names = SceneElement.joins(:characters, :scene)
-        .where(characters: { id: record.id }, scenes: { story_id: story.id })
-        .reorder("scene_elements.position", "scene_elements.id")
-        .pluck("scenes.id", "scene_elements.id", "scene_elements.name")
-
-      turn_names = SceneDialogueTurn.joins(:speaker, scene_element: :scene)
+      SceneDialogueTurn.joins(:speaker, scene_element: :scene)
         .where(speaker_id: record.id, scenes: { story_id: story.id })
         .reorder("scene_elements.position", "scene_elements.id")
         .pluck("scenes.id", "scene_elements.id", "scene_elements.name")
-
-      (roster_names + turn_names)
+        .then { |rows| rows.uniq { |_scene_id, element_id, _name| element_id } }
         .group_by(&:first)
-        .transform_values do |rows|
-          rows.uniq { |_scene_id, element_id, _name| element_id }.map(&:last)
-        end
+        .transform_values { |rows| rows.map(&:last) }
     end
 
     # An Event is not a presence link: a Scene points at it through a scene-owned

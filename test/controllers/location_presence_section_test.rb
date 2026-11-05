@@ -54,7 +54,7 @@ class LocationPresenceSectionTest < ActionDispatch::IntegrationTest
     # The individual's stored free-text role is the reason; speaking is derived
     # and says so. A linked participant with no role says that too.
     assert_includes text, "Character one — setting and speaks in this scene"
-    assert_includes text, "Character two — speaks in this scene"
+    assert_includes text, "Character two — no role recorded"
     assert_includes text, "Character three — speaks in this scene"
     # Scene three has the Location but no participants, and says so rather than
     # hiding the row: the Scene still happens here.

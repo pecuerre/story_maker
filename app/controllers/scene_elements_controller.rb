@@ -26,7 +26,7 @@ class SceneElementsController < ApplicationController
   # permitted: the only way to order Elements is the Move controls, so a form
   # can never renumber the sequence behind the author's back.
   def create
-    attributes = scene_element_attributes
+    attributes = scene_element_params
     @scene_element = @scene.scene_elements.new(attributes)
     return if remember_draft_create(@scene_element, attributes)
 
@@ -41,12 +41,10 @@ class SceneElementsController < ApplicationController
 
   # PATCH /u/:universe_slug/s/:story_id/scenes/:scene_id/elements/:id
   #
-  # Changing a Dialogue to Narration is refused while speakers remain, so the
-  # modal asks for an explicit confirmation and sends an empty speaker list in
-  # the same request. `remove_speakers` is that confirmation; without it the
-  # stored speakers are simply left alone.
+  # Changing a Dialogue to Narration is refused while dialogue turns remain; the
+  # modal shows those rows so the author can remove them first.
   def update
-    attributes = scene_element_attributes
+    attributes = scene_element_params
     return if remember_draft_update(@scene_element, attributes)
 
     respond_to do |format|
@@ -114,15 +112,7 @@ class SceneElementsController < ApplicationController
   end
 
   def scene_element_params
-    params.expect(scene_element: [ :kind, :name, :body, :remove_speakers, { character_ids: [] } ])
-  end
-
-  def scene_element_attributes
-    attributes = scene_element_params.except(:remove_speakers)
-    # The confirmation is only a confirmation: without it the request never
-    # mentions the speakers and the stored ones survive.
-    attributes[:character_ids] = [] if scene_element_params[:remove_speakers] == "1"
-    attributes
+    params.expect(scene_element: [ :kind, :name, :body ])
   end
 
   def scene_element_json
@@ -132,7 +122,6 @@ class SceneElementsController < ApplicationController
       kind: @scene_element.kind,
       body: @scene_element.body,
       position: @scene_element.position,
-      character_ids: @scene_element.character_ids,
       url: universe_story_scene_scene_element_path(story_id: @story, scene_id: @scene, id: @scene_element)
     }
   end

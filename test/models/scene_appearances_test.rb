@@ -35,7 +35,8 @@ class SceneAppearancesTest < ActiveSupport::TestCase
   test "a character who only speaks is still an appearance, with no stored link" do
     outsider = @universe.characters.create!(name: "Passer-by")
     scene = @story.scenes.create!(name: "Street")
-    scene.scene_elements.create!(name: "Passing", kind: "dialogue", characters: [ outsider ])
+    element = scene.scene_elements.create!(name: "Passing", kind: "dialogue")
+    element.scene_dialogue_turns.create!(speaker: outsider, body: "Good evening.")
 
     appearances = appearances_for(outsider)
 
@@ -46,7 +47,7 @@ class SceneAppearancesTest < ActiveSupport::TestCase
     assert_nil entry.role
   end
 
-  test "a turn-only speaker is an appearance and duplicate sources name the Element once" do
+  test "a turn-only speaker is an appearance and several turns name the Element once" do
     appearances = appearances_for(characters(:character_three))
     entry = appearances.entries.sole
 
@@ -55,10 +56,10 @@ class SceneAppearancesTest < ActiveSupport::TestCase
     assert_predicate entry, :speaks?
     assert_equal [ "Michael teaches the waltz" ], entry.speaking_elements
 
-    # character_one has the Element roster entry and a line-level turn, but the
-    # reverse view still reports this one Element once.
-    roster_and_turn = appearances_for(characters(:character_one)).entries.sole
-    assert_equal [ "Michael teaches the waltz" ], roster_and_turn.speaking_elements
+    # character_one is also a stored participant, but the reverse view still
+    # reports the Element once.
+    linked_and_speaking = appearances_for(characters(:character_one)).entries.sole
+    assert_equal [ "Michael teaches the waltz" ], linked_and_speaking.speaking_elements
   end
 
   test "a character with no role is linked and not merely absent" do
@@ -151,9 +152,9 @@ class SceneAppearancesTest < ActiveSupport::TestCase
     assert_equal 2, appearances_query_counts.call(item),
       "the query count must not grow with the number of appearances"
 
-    # A Character adds the two derived-speaker queries (Element roster and turns);
-    # an Event has no presence link at all, so it needs two fewer.
-    assert_equal 4, appearances_query_counts.call(characters(:character_one))
+    # A Character adds one derived-speaker query (the turns); an Event has no
+    # presence link at all, so it needs two fewer.
+    assert_equal 3, appearances_query_counts.call(characters(:character_one))
     assert_equal 2, appearances_query_counts.call(events(:event_one))
   end
 

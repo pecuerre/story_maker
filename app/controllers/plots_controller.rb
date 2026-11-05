@@ -60,13 +60,14 @@ class PlotsController < ApplicationController
   end
 
   def plot_params
-    params.expect(plot: [ :name, :description ])
+    params.expect(plot: [ :name, :short_summary, :description ])
   end
 
   def plot_json
     {
       id: @plot.id,
       name: @plot.name,
+      short_summary: @plot.short_summary,
       description: @plot.description,
       url: universe_story_plot_path(story_id: @story, id: @plot)
     }

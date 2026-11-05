@@ -74,8 +74,8 @@ class DraftApplierTest < ActiveSupport::TestCase
     outsider_story = outsider.stories.create!(name: "Other universe story")
     outsider_scene = outsider_story.scenes.create!(name: "Other universe scene")
     outsider_speaker = outsider.characters.create!(name: "Other universe speaker")
-    outsider_element = outsider_scene.scene_elements.create!(name: "Other exchange", kind: "dialogue",
-      characters: [ outsider_speaker ])
+    outsider_element = outsider_scene.scene_elements.create!(name: "Other exchange", kind: "dialogue")
+    outsider_element.scene_dialogue_turns.create!(speaker: outsider_speaker, body: "Local line")
     draft = draft_with(change(action: "create", type: "SceneDialogueTurn", payload: {
       "scene_element_id" => outsider_element.id,
       "speaker_id" => outsider_speaker.id,

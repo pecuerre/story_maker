@@ -17,14 +17,8 @@
     </p>
     <div class="form-text"><%= t("scenes.show.facts.status_hint") %></div>
   </div>
-  <div class="col-12">
-    <div class="page-eyebrow"><%= t("scenes.show.facts.description") %></div>
-    <% if scene.description.present? %>
-      <p class="mb-0 text-break"><%= scene.description %></p>
-    <% else %>
-      <p class="mb-0 text-body-secondary"><%= t("scenes.show.facts.description_blank") %></p>
-    <% end %>
-  </div>
+  <%# The short description is deliberately not shown on Scene Details: it stays
+      on the record and in the Scene editor, and the Scenes list still uses it. %>
   <div class="col-12">
     <div class="page-eyebrow"><%= t("scenes.show.facts.tags") %></div>
     <% if scene.scene_tags.any? %>
@@ -46,6 +40,8 @@
         workspace: link_to(t("scenes.show.facts.workspace_link"), universe_tags_path(scope: "story", taxonomy: "scene"))) %>
     </div>
   </div>
+  <%# The drafting contract is a note about the scene as a whole, so it closes
+      the page in its own section rather than sitting among the identity facts. %>
   <div class="col-12">
     <div class="page-eyebrow"><%= t("scenes.show.facts.section_group") %></div>
     <% grouping = scene_grouping_label(scene, @section_paths) %>

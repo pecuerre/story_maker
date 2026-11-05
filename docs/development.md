@@ -626,12 +626,12 @@ test mode instead of replanting demo records.
 ## Scene delivery (complete)
 
 The Scene domain, its confirmed defaults (Title labelling, a single-point `datetime`, nullable roles,
-Dialogue needing a speaker, the mandatory deletion confirmations), its workspace tabs, and its
-deletion contract are in [features/scenes.md](features/scenes.md). The Scene-owned tables shipped as
-their own create migrations (`CreateSceneElements`, which also creates the `scene_element_speakers`
-join, `CreateSceneCharacters`, `CreateSceneItems`, and `CreateSceneLocations`). Turn-level dialogue
-adds `CreateSceneDialogueTurns` and its soft-delete column migration, described with the Scene model
-in [data_model.md](data_model.md).
+a Dialogue whose cast is its turns, the mandatory deletion confirmations), its workspace tabs, and
+its deletion contract are in [features/scenes.md](features/scenes.md). The Scene-owned tables shipped
+as their own create migrations (`CreateSceneElements`, `CreateSceneCharacters`, `CreateSceneItems`,
+and `CreateSceneLocations`); the separate block-level speaker join was later dropped by
+`DropSceneElementSpeakers`. Turn-level dialogue adds `CreateSceneDialogueTurns` and its soft-delete
+column migration, described with the Scene model in [data_model.md](data_model.md).
 
 The delivery history — what each slice added, in order — is in
 [`delivery_history.md`](delivery_history.md), which is the durable record of it. A planned slice
@@ -681,12 +681,11 @@ every assigned Scene Tag, and every assigned Plot belong to the Scene's Story be
 resolves its Universe through that Element. Element positions are flat and contiguous inside their
 Scene, while turn positions are flat and contiguous inside their Element. `SceneElement` uses a
 YAML-only `manifest_key` when turns need to reference an Element that has no public slug. A Dialogue
-names its block-level roster with `characters: [ Character.slug, ... ]`; turns independently
-attribute lines with their own speaker references. Both contribute to derived speaker participation. A
+attributes each line with its own `speaker:` reference, and those turns are its whole cast. A
 `SceneCharacter` declares `character:`, a `SceneItem` declares `item:`, and a `SceneLocation` declares
 `location:` — each with an optional `role:`; leave `role:` empty to record the appearance without
 one. The Dark manifests deliberately include a Scene with no elements at all, a
-Dialogue whose speakers are not stored participants, a one-speaker dialogue, a three-speaker
+Dialogue whose speakers are not stored participants, a one-speaker dialogue, a multi-speaker
 dialogue, two title-only Element blocks, a populated role and blank roles, the same Item in two
 Scenes, two Items in one Scene, one Scene with three linked Locations, a nested Location beside a
 top-level one, and Scenes with no Item or Location at all so each tab's empty state is reachable.
@@ -776,14 +775,15 @@ count; the second is the union of stored participants and dialogue speakers, so 
 both participates and speaks is counted once.
 
 Below the Scene's facts, check the **Scene elements** list: the ordered blocks are in this Scene's
-own sequence, each with its position, kind, content (or an explicit "No content yet"), and — for a
-dialogue — its speakers plus the sentence saying the link records who is in the conversation and not
-which line belongs to whom. **Add element** opens the modal; a narration saves with only a title; a
-dialogue reveals the speaker picker and refuses to save without a speaker, keeping the modal open
-and rendering the server's own message on the Speakers control. Switching a dialogue that has
-speakers to narration reveals the **Remove the speakers and make this narration** confirmation and
-only then saves. Move up/Move down reorder the blocks and are disabled at the boundaries; the delete
-confirmation says the content and speaker links go but characters do not.
+own sequence, each with its position, kind, content (or an explicit "No content yet"), and its
+measure — a narration's word count or a dialogue's line count. **Add element** opens the modal; a
+narration saves with only a title and shows Content; a dialogue hides Content because its prose is
+its ordered turns, and a saved dialogue offers the first-turn prompt until a line is added. Adding a
+turn appends it to the open modal; a draft-based Universe badges the row **Saved to draft** instead
+of pretending it is stored. Switching a dialogue with turns to narration hides the turn entry fields,
+keeps the turn rows for removal, and is refused while any turn remains. Move up/Move down reorder the
+blocks and are disabled at the boundaries; the delete confirmation says the content and turns go but
+characters do not.
 
 Then follow the **Characters** tab and check: the rows are one per character in the union of the two
 participation sources; a stored participant is badged **Participant** and shows its role or **No role

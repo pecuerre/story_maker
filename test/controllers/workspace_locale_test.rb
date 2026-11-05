@@ -422,8 +422,7 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
         "section_tag_ids" => [ section_tags(:section_tag_one).id ], "position" => "2",
         "photo_data" => "data:image/png;base64,iVBORw0KGgo=" })
     draft.draft_changes.create!(action: "create", record_type: "SceneElement",
-      payload: { "name" => "Elemento recordado", "scene_id" => scene.id, "kind" => "narration", "body" => "Texto",
-        "character_ids" => [ characters(:character_one).id ] })
+      payload: { "name" => "Elemento recordado", "scene_id" => scene.id, "kind" => "narration", "body" => "Texto" })
     draft.draft_changes.create!(action: "create", record_type: "SceneCharacter",
       payload: { "scene_id" => scene.id, "character_id" => characters(:character_two).id, "role" => "entra" })
 
@@ -473,13 +472,12 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_match(/Posición: 2/, section_row)
     assert_match(/Foto: una foto nueva/, section_row)
 
-    # A **Scene Element's** own attributes, including the speakers it names by the
-    # collection they fill rather than by the `character_ids` a form submits.
+    # A **Scene Element's** own attributes, on a model whose editor labels its
+    # kind as a Scene element type rather than as the humanized column.
     element_row = row_for("Elemento recordado")
-    assert_match(/Tipo de elemento: narration/, element_row)
+    assert_match(/Tipo de elemento de escena: narration/, element_row)
     assert_match(/Título: Elemento recordado/, element_row)
     assert_match(/Contenido: Texto/, element_row)
-    assert_match(/Hablantes: #{characters(:character_one).name}/, element_row)
 
     # A **presence link's** own two attributes.
     link_row = row_for("entra")

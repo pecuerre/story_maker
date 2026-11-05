@@ -74,8 +74,10 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal :plot, plot.kind
     assert_equal "The lantern", plot.name
     assert_equal "synthetic-story", plot.story_slug
-    assert_equal "The question",
-      plot.sections.find { |section| section.heading == "The question" }.heading
+    assert_equal %w[name slug], plot.frontmatter.keys
+    assert_equal [ "Short summary", "Information", "The question", "Stakes", "Players", "Status",
+      "Decisions taken (author)", "Progression", "Open questions", "Resolved" ],
+      plot.sections.map(&:heading)
 
     # Chapters are directories, so the report carries the Story, the directory
     # name, and the `#` heading its README supplies as the display name.
@@ -90,14 +92,19 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal [ "What is here" ], arrival.sections.map(&:heading)
     assert_empty report.chapters.last.description
 
-    # A Scene is parsed like an entity too; its chapter is in its frontmatter
-    # and its body is the manuscript prose.
+    # A Scene is parsed like an entity too; its chapter and sequence are the
+    # path, so the report names the directory that holds it, and its body is the
+    # alternating narration/dialog blocks.
     scene = report.entity("01-the-gate")
     assert_equal :scene, scene.kind
     assert_equal "The gate", scene.name
     assert_equal "synthetic-story", scene.story_slug
-    assert_equal "01-arrival", scene.frontmatter["chapter"]
-    assert_includes scene.introduction, "Ada carries the lantern through the gate"
+    assert_equal "01-arrival", scene.chapter_slug
+    assert_equal %w[Narration Dialog], scene.sections.map(&:heading)
+    # The closing drafting contract is a Scene fact with its own column, so it
+    # is read rather than reported or left in the prose.
+    assert_includes scene.drafting_contract, "one place, one beat of time"
+    assert_empty scene.introduction
   end
 
   test "reads the body before the first section as an introduction" do
@@ -181,8 +188,102 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     scene = report.entity("01-the-gate")
 
     assert_equal "The gate", scene.name
-    assert_empty scene.sections
-    assert_includes scene.introduction, "Ada carries the lantern through the gate"
+    assert_equal %w[Narration Dialog], scene.sections.map(&:heading)
+    assert_includes scene.sections.first.body, "Ada carries the lantern through the gate"
+  end
+
+  test "keeps a scene's chapter and sequence in the path" do
+    report = validate
+    scene = report.entity("02-the-hall")
+
+    assert_equal "01-arrival", scene.chapter_slug
+    assert_equal "02-the-hall", scene.slug
+    # The old frontmatter keys are not required and not read.
+    assert_nil scene.frontmatter["chapter"]
+    assert_nil scene.frontmatter["sequence"]
+  end
+
+  test "allows two scenes to share the backlog id the scene was written from" do
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md", "id: B-002", "id: B-001")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_equal [ "B-001", "B-001" ], report.entities(:scene).map { |scene| scene.frontmatter["id"] }
+  end
+
+  test "refuses a scene body that does not open with narration" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "## Narration", "## Dialog")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/the first scene block must be `## Narration`/, errors(report))
+  end
+
+  test "refuses two scene blocks of the same kind in a row" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "## Dialog", "## Narration")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/two `## Narration` blocks cannot sit next to each other/, errors(report))
+  end
+
+  test "refuses a scene section that is neither narration nor dialog" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "## Dialog", "## Notes")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene section `Notes` is not a `## Narration` or `## Dialog` block/, errors(report))
+  end
+
+  test "refuses a dialog line without a speaker and a quoted line" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md",
+      '@[[character:ada]] "The gate is open."', "Ada says the gate is open.")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/dialog line must be `@speaker "line"`/, errors(report))
+  end
+
+  test "warns about a dialog block with no character speaker" do
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md",
+      '@[[character:ada]] "There is nothing here."', '@warden "There is nothing here."')
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_match(/no `@\[\[character:…\]\]` speaker/, warnings(report))
+  end
+
+  test "warns about a scene frontmatter key that has no column" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "branch: main", "branch: main\nstatus: draft")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_match(/scene: unknown frontmatter key `status`/, warnings(report))
+  end
+
+  test "refuses a scene without a title heading" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "# The gate\n\n", "")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene needs a `# Title` heading/, errors(report))
+  end
+
+  test "warns when a scene title heading disagrees with its frontmatter" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "# The gate", "# The other gate")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_match(/scene title heading `The other gate` does not match frontmatter title `The gate`/, warnings(report))
   end
 
   test "checks references written inside inline code" do
@@ -271,6 +372,25 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert report.valid?, errors(report)
     assert_empty report.warnings
+  end
+
+  test "accepts a plot that still carries its body fields in frontmatter" do
+    replace("stories/synthetic-story/plots/the-lantern.md", "slug: the-lantern\n",
+      "slug: the-lantern\ntype: \"arc\"\nstatus: \"open\"\nowner_pov: \"ada\"\nopened_in: B-001\n")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+    assert_empty report.warnings
+  end
+
+  test "requires a plot name and slug" do
+    replace("stories/synthetic-story/plots/the-lantern.md", "name: The lantern\n", "")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/plot: missing required frontmatter key `name`/, errors(report))
   end
 
   test "requires a slug to match its filename" do
@@ -483,24 +603,6 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_match(%r{universe/canon/README\.md is required}, errors(report))
   end
 
-  test "requires a scene dependency list to hold backlog ids" do
-    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "depends_on: [B-001]", "depends_on: B-001")
-
-    report = validate
-
-    assert_not report.valid?
-    assert_match(/depends_on must be a list of B-### ids/, errors(report))
-  end
-
-  test "requires a scene sequence to match its filename prefix" do
-    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "sequence: 1", "sequence: 3")
-
-    report = validate
-
-    assert_not report.valid?
-    assert_match(/scene sequence `3` must match filename prefix `01`/, errors(report))
-  end
-
   test "requires a scene branch to be main or a named fork" do
     replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "branch: main", "branch: sideways")
 
@@ -526,15 +628,6 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert_not report.valid?
     assert_match(/scene location `nowhere` does not name a record/, errors(report))
-  end
-
-  test "requires a scene status from the fixed vocabulary" do
-    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md", "status: draft", "status: polished")
-
-    report = validate
-
-    assert_not report.valid?
-    assert_match(/scene status `polished`/, errors(report))
   end
 
   private

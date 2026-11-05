@@ -30,6 +30,12 @@
   </div>
 
   <div class="mb-3">
+    <%= form.label :drafting_contract, t("scenes.form.drafting_contract"), class: "form-label" %>
+    <%= form.text_area :drafting_contract, class: "form-control", rows: 8 %>
+    <div class="form-text"><%= t("scenes.form.drafting_contract_hint") %></div>
+  </div>
+
+  <div class="mb-3">
     <%= form.label :status, t("scenes.form.status"), class: "form-label" %>
     <%= form.select :status, Scene::STATUSES.map { |status| [ scene_status_label(status), status ] },
       {}, class: "form-select" %>

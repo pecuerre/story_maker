@@ -5,7 +5,6 @@ class SceneElementTest < ActiveSupport::TestCase
     @scene = scenes(:scene_one)
     @narration = scene_elements(:narration_one)
     @dialogue = scene_elements(:dialogue_one)
-    @characters = [ characters(:character_one), characters(:character_two) ]
   end
 
   test "requires a scene, a title, and a known kind" do
@@ -35,6 +34,13 @@ class SceneElementTest < ActiveSupport::TestCase
     assert_predicate scene_elements(:narration_two).body, :blank?
   end
 
+  test "a dialogue with no turns yet is valid" do
+    element = SceneElement.new(scene: @scene, name: "A conversation to come", kind: SceneElement::DIALOGUE)
+
+    assert_predicate element, :valid?
+    assert element.save
+  end
+
   test "resolves its universe through its scene" do
     assert_equal universes(:universe_one), @narration.universe
     assert_nil SceneElement.new(name: "Orphan").universe
@@ -47,66 +53,36 @@ class SceneElementTest < ActiveSupport::TestCase
     assert_equal [ 0 ], scenes(:scene_alt).scene_elements.reorder(:position, :id).pluck(:position)
   end
 
-  test "a scene owns and cascades its elements" do
+  test "a scene owns and cascades its elements and their turns" do
     assert_includes @scene.scene_elements, @narration
     assert_not_includes scenes(:scene_alt).scene_elements, @narration
-
-    assert_difference("SceneElement.count", -1) do
-      scenes(:scene_alt).destroy!
-    end
-  end
-
-  test "deleting a scene removes its elements and their speaker links" do
-    scene = @scene
-    speaker_ids = @dialogue.character_ids
+    turn_ids = @dialogue.scene_dialogue_turns.ids
 
     assert_difference("SceneElement.count", -4) do
-      scene.destroy!
+      assert_difference("SceneDialogueTurn.count", -turn_ids.length) do
+        scenes(:scene_one).destroy!
+      end
     end
 
-    assert_equal speaker_ids.length, Character.where(id: speaker_ids).count
-    assert_equal 0, ActiveRecord::Base.connection.select_value(
-      "SELECT COUNT(*) FROM scene_element_speakers WHERE scene_element_id NOT IN (SELECT id FROM scene_elements)"
-    ).to_i
+    assert_empty SceneDialogueTurn.where(id: turn_ids)
   end
 
-  test "deleting a character removes its speaker links but never a scene or element" do
-    character = @characters.first
+  test "deleting a character removes the turns it spoke but never a scene or element" do
+    character = characters(:character_three)
     element_ids = @scene.scene_elements.ids
 
     assert_no_difference([ "Scene.count", "SceneElement.count" ]) do
-      character.destroy!
+      assert_difference("SceneDialogueTurn.count", -1) do
+        character.destroy!
+      end
     end
 
     assert_equal element_ids.sort, @scene.scene_elements.reorder(:position, :id).ids.sort
-    assert_equal [ @characters.last ], @dialogue.reload.characters
+    assert_equal [ "One, two, three. Again, and slower this time." ], @dialogue.reload.scene_dialogue_turns.map(&:body)
   end
 
-  test "a dialogue must name at least one speaker" do
-    element = SceneElement.new(scene: @scene, name: "Nobody speaks", kind: SceneElement::DIALOGUE)
-
-    assert_not element.valid?
-    assert_includes element.errors[:character_ids], "is required for a dialogue element"
-  end
-
-  test "narration cannot keep speakers" do
-    dialogue_without_turns = scene_elements(:dialogue_alt)
-    dialogue_without_turns.kind = SceneElement::NARRATION
-
-    assert_not dialogue_without_turns.valid?
-    assert_includes dialogue_without_turns.errors[:kind], "cannot be Narration while speakers are still assigned"
-
-    # The explicit confirmation clears them in the same atomic update.
-    dialogue_without_turns.character_ids = []
-
-    assert_predicate dialogue_without_turns, :valid?
-    assert dialogue_without_turns.save
-    assert_empty dialogue_without_turns.reload.characters
-  end
-
-  test "a Dialogue with turns cannot become Narration after its roster is cleared" do
+  test "a Dialogue with turns cannot become Narration" do
     @dialogue.kind = SceneElement::NARRATION
-    @dialogue.character_ids = []
 
     assert_not @dialogue.valid?
     assert_includes @dialogue.errors[:kind], "cannot be Narration while dialogue turns remain"
@@ -115,54 +91,9 @@ class SceneElementTest < ActiveSupport::TestCase
   test "a soft-deleted turn still prevents changing its Element to Narration" do
     scene_dialogue_turns(:turn_one).soft_delete
     @dialogue.kind = SceneElement::NARRATION
-    @dialogue.character_ids = []
 
     assert_not @dialogue.valid?
     assert_includes @dialogue.errors[:kind], "cannot be Narration while dialogue turns remain"
-  end
-
-  test "narration with an empty submitted speaker list is accepted" do
-    element = SceneElement.new(scene: @scene, name: "No speakers", kind: SceneElement::NARRATION,
-      character_ids: [ "" ])
-
-    assert_predicate element, :valid?
-  end
-
-  test "a speaker from another universe is refused instead of raising" do
-    outsider = universes(:universe_two).characters.create!(name: "Outsider")
-
-    element = SceneElement.new(scene: @scene, name: "Wrong speaker", kind: SceneElement::DIALOGUE,
-      character_ids: [ outsider.id ])
-
-    assert_not element.valid?
-    assert_includes element.errors[:character_ids], "must belong to the scene's universe"
-    assert_empty element.characters
-  end
-
-  test "an unknown or repeated speaker id is an ordinary validation error" do
-    unknown = SceneElement.new(scene: @scene, name: "Ghost", kind: SceneElement::DIALOGUE,
-      character_ids: [ 0 ])
-    assert_not unknown.valid?
-    assert_includes unknown.errors[:character_ids], "must exist"
-
-    repeated = SceneElement.new(scene: @scene, name: "Twice", kind: SceneElement::DIALOGUE,
-      character_ids: [ @characters.first.id, @characters.first.id ])
-    assert_not repeated.valid?
-    assert_includes repeated.errors[:character_ids], "must be unique"
-  end
-
-  test "a direct association assignment is checked for the shared universe" do
-    outsider = universes(:universe_two).characters.create!(name: "Outsider")
-    element = SceneElement.new(scene: @scene, name: "Sneaky", kind: SceneElement::DIALOGUE)
-    element.characters = [ outsider ]
-
-    assert_not element.valid?
-    assert_includes element.errors[:character_ids], "must belong to the scene's universe"
-  end
-
-  test "a dialogue may name many speakers but records no turn order" do
-    assert_equal @characters.sort_by(&:id), @dialogue.characters.order(:id).to_a
-    assert_equal 2, @dialogue.characters.size
   end
 
   test "the kind column is not named type" do

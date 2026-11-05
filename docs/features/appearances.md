@@ -31,7 +31,7 @@ appearance: `AppearanceGrid#appears?` reads only the presence union, and no code
 ## The two layers
 
 **Recorded presence** is the union `SceneParticipants` owns: an explicit `SceneCharacter` link and a
-Dialogue speaker (the block roster or a line-level turn). It is the same union the Characters tab and
+Dialogue speaker (a line-level turn). It is the same union the Characters tab and
 `SceneAppearances` already report. An Event reference is a source for an Event's appearances, not for
 a Character row, so it does not appear in this grid.
 

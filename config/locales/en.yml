@@ -457,6 +457,9 @@ en:
         affiliation:
           one: "%{subjects} names no Faction, so no membership was created."
           other: "%{subjects} name no Faction, so no membership was created."
+        speaker:
+          one: "The speaker %{subjects} has no Character file, so their line was not written as a dialogue turn."
+          other: "The speakers %{subjects} have no Character file, so their lines were not written as dialogue turns."
         # A run stored before notes were kept still says the record was reported.
         unspecified: "Some content has no field and was not imported."
     show:
@@ -1183,7 +1186,7 @@ en:
   collaborators:
     index:
       title: "Collaborators"
-      description: "Everybody who has applied or discarded a draft in this universe, with the number of changes they remembered. Their changes count whether they were written or thrown away."
+      description: "Everybody who has applied or discarded a draft in this universe, with the number of changes they remembered and their share of all of them. Their changes count whether they were written or thrown away."
       back: "Back to the universe"
       # The row's figure is remembered changes rather than runs, because that is what
       # the reader is about to read on the other side of the link. A discarded draft's
@@ -1191,6 +1194,10 @@ en:
       changes:
         one: "%{count} remembered change"
         other: "%{count} remembered changes"
+      # The row's second figure: this person's whole-number share of every change
+      # remembered in this universe. The set adds up to 100 whenever there are
+      # changes to divide.
+      share: "%{percent}%"
       # The row's one navigation, on the right as every list row carries it. The
       # accessible name names the person, because the visible word cannot.
       open: "History"
@@ -1444,7 +1451,7 @@ en:
         description: "The same document, with the universe's characters, locations, items, and events added as appendices."
     notes:
       heading: "About the export"
-      print: "The printable page opens in this tab. Use the browser's print command to print it or save it as a PDF."
+      print: "The printable page opens in a new tab. Use the browser's print command to print it or save it as a PDF."
       pending: "Only saved records are exported. Changes remembered in a pending draft are not part of the story until they are applied."
       pov: "Point of view"
       time: "In-world time"
@@ -1630,7 +1637,10 @@ en:
     delete_confirm: "Delete “%{name}”? It will leave the Plot workspace; its Scene assignments stay available if it is restored, and no Scene or narrative order changes."
     form:
       name: "Name"
+      short_summary: "Short summary"
+      short_summary_hint: "One or two plain sentences shown in the Plots list. References are named, not linked."
       description: "Description"
+      description_hint: "Markdown. Use ## for a section heading, and [[kind:slug]] to link a Character, Faction, Location, Item, or other Plot. The list never shows this long text."
     show:
       back_label: "All plots"
       facts:
@@ -1767,6 +1777,8 @@ en:
         status_hint: "A writing label for this scene. The export can include only final scenes; this does not change the narrative order."
         description: "Short description"
         description_blank: "No short description yet."
+        drafting_contract: "Drafting contract"
+        drafting_contract_blank: "No drafting contract recorded yet."
         tags: "Scene tags"
         tags_blank: "No scene tags assigned yet."
         tags_hint: "Tags are optional and belong to this story."
@@ -1806,6 +1818,8 @@ en:
       name_hint: "The scene's title in the narrative order. Only a title is required."
       description: "Short description"
       description_hint: "An optional one-line summary shown in the scene list."
+      drafting_contract: "Drafting contract"
+      drafting_contract_hint: "Optional. The scene's one place, one beat of time, one point of view, and dramatic question, kept as a note for the writer. It is not part of the prose."
       status: "Status"
       status_hint: "An author-chosen writing state. New scenes start as draft; the export can be narrowed to final scenes without changing the narrative order."
       tags_legend: "Scene tags"
@@ -1845,34 +1859,31 @@ en:
       edit: "Edit element"
       position_aria: "Element %{position} of %{total}"
       empty_title: "No elements yet"
-      empty_description: "A scene can hold any number of elements, including none. A narration block describes what happens; a dialogue block names the characters who speak in it."
+      empty_description: "A scene can hold any number of elements, including none. A narration block describes what happens; a dialogue block is written as ordered spoken lines."
       no_content: "No content yet. A title is all an element needs."
       mention_legend: "Linked names are prose mentions, not appearances. A dashed underline means the character is not recorded as present in this scene."
-      delete_confirm: "Delete “%{name}”? Its content and its speaker links will be permanently removed. Characters and other universe records will not be deleted."
-      # The sentence a Dialogue's row states about its speaker links. `names` is
-      # the author-entered speaker names joined by the locale's own connector, so
-      # it is interpolated; the one/other split is the verb agreeing with the count.
-      speaker_note:
-        one: "%{names} speaks in this block. The link records who is in the conversation, not which line belongs to whom."
-        other: "%{names} speak in this block. The link records who is in the conversation, not which line belongs to whom."
-      speaker_note_empty: "A dialogue must name at least one speaker."
+      delete_confirm: "Delete “%{name}”? Its content and its dialogue turns will be permanently removed. Characters and other universe records will not be deleted."
+      # The measure beside the kind badge: a Narration counts its words and a
+      # Dialogue counts the spoken lines (turns) it holds.
+      word_count:
+        one: "%{count} word"
+        other: "%{count} words"
+      line_count:
+        one: "%{count} line"
+        other: "%{count} lines"
       # The two Element kinds. `kind` is the value the select stores, so only the
       # label is translated.
       kinds:
         narration: "Narration"
         dialogue: "Dialogue"
         narration_description: "Description or action, with no one speaking."
-        dialogue_description: "A spoken block. Name everyone who speaks in it."
+        dialogue_description: "A spoken block, written as ordered lines."
       form:
-        kind: "Element type"
+        kind: "Scene element type"
         name: "Title"
         name_hint: "The block's title. Only a title is required; the content can follow later."
         body: "Content"
         body_hint: "Plain text, kept exactly as written. Nothing here is interpreted as chronology or checked against the universe."
-        speakers: "Speakers"
-        speakers_hint: "Everyone who speaks in this block. Several characters may share one dialogue; the link records who is in the conversation, not which line belongs to whom."
-        remove_speakers: "Remove the speakers and make this narration"
-        remove_speakers_hint: "Narration cannot keep speakers. This is the confirmation that removes them, and it happens in the same save."
         save: "Save element"
       # The spoken turns inside a Dialogue element. A turn names one speaker, the
       # line they speak, and an optional delivery note, in order inside the block.
@@ -1885,7 +1896,9 @@ en:
         save_element_first: "Save this Dialogue element first, then reopen it to add turns."
         empty_title: "No turns yet"
         empty_description: "A dialogue turn is one spoken line: who speaks, what they say, and an optional delivery note. Add the first turn below."
+        delete: "Delete turn"
         delete_confirm: "Delete this turn? The line will be removed from the dialogue."
+        pending: "Saved to draft"
         save_failed: "The turn could not be saved."
         speaker: "Speaker"
         speaker_hint: "The character who speaks this line. A turn's speaker is not a scene presence link — speaking does not add the character to the scene's cast."
@@ -2052,20 +2065,16 @@ en:
       must_belong_to_universe: "must belong to the story's universe"
       must_be_unique: "must be unique"
       invalid_datetime: "is not a valid date and time"
-    # The three presence links and the Element's speaker list. Their two scope
+    # The three presence links and a dialogue turn's speaker. Their two scope
     # rules are one pair of keys for all four models because the sentence is the
-    # same whichever link states it: the presence models add to the linked
-    # record's own attribute and the Element to `:character_ids`, but the reader
-    # is told the same fact either way.
+    # same whichever link states it: each adds the message to the linked record's
+    # own attribute, but the reader is told the same fact either way.
     participation_errors:
       already_in_scene: "is already in this scene"
       must_belong_to_scene_universe: "must belong to the scene's universe"
-    # Element-kind validation messages. `narration` is the kind's `label`, not
-    # its `kind` value, so the speaker message interpolates it: the sentence names
-    # the type the reader picked in the select.
+    # Element-kind validation message. It names the kind the reader picked in the
+    # select rather than the raw `kind` value.
     element_errors:
-      speakers_required: "is required for a dialogue element"
-      narration_with_speakers: "cannot be %{narration} while speakers are still assigned"
       narration_with_turns: "cannot be Narration while dialogue turns remain"
     dialogue_turns:
       element_must_be_dialogue: "a narration element cannot carry a turn"
@@ -3625,6 +3634,7 @@ en:
       scene:
         name: "Title"
         description: "Short description"
+        drafting_contract: "Drafting contract"
         status: "Status"
         section: "Section"
         datetime: "In-world time"
@@ -3665,15 +3675,15 @@ en:
         section_tags: "Section tags"
       plot:
         name: "Name"
+        short_summary: "Short summary"
         description: "Description"
       # An Element's `name` is its title and its `body` its content, which is what
       # the Element editor's own labels call them, and `characters` is the
       # collection the Dialogue speaker picker fills.
       scene_element:
-        kind: "Element type"
+        kind: "Scene element type"
         name: "Title"
         body: "Content"
-        characters: "Speakers"
       scene_dialogue_turn:
         speaker: "Speaker"
         body: "Line"

@@ -500,7 +500,7 @@ describe("modal form move", () => {
   })
 
   test("a rejected move reports the server's own message, not a generic one", async () => {
-    captureFetch(new Response(JSON.stringify({ errors: { character_ids: [ "is required for a dialogue element" ] } }), { status: 422 }))
+    captureFetch(new Response(JSON.stringify({ errors: { kind: [ "cannot be Narration while dialogue turns remain" ] } }), { status: 422 }))
     const { controller, host } = build("<form></form>", { withSummary: false })
     const trigger = moveButton("down")
     controller.closeMenu = () => {}
@@ -510,7 +510,7 @@ describe("modal form move", () => {
 
     const region = host.querySelector("[data-mutation-status]")
     expect(region.hidden).toBe(false)
-    expect(region.textContent).toContain("is required for a dialogue element")
+    expect(region.textContent).toContain("cannot be Narration while dialogue turns remain")
     // The row stays where it is, and the control comes back so the author can
     // try again.
     expect(trigger.disabled).toBe(false)
@@ -784,6 +784,85 @@ describe("modal form dismiss", () => {
     expect(focused).toBe(0)
   })
 })
+
+// A reader can reach the form before the dialog has finished fading in. The
+// opening used to end by moving focus to the dialog and then to the first field,
+// which closed a native select's popup mid-gesture and could commit the option
+// under the pointer. The trap is claimed as the dialog opens, and a control the
+// reader already focused keeps it.
+describe("modal form opening focus", () => {
+  function connectedEditor() {
+    const built = build(`
+      <div class="modal fade" data-modal-form-target="modal">
+        <form data-modal-form-target="form">
+          <input id="character_name" name="character[name]">
+          <select id="character_kind" name="character[kind]">
+            <option value="">Choose a kind</option>
+            <option value="hero">Hero</option>
+          </select>
+        </form>
+      </div>
+    `)
+    const activations = []
+    class FakeModal {
+      constructor(element) {
+        this.element = element
+        this._focustrap = { activate: () => activations.push(true) }
+      }
+      show() { this.element.dispatchEvent(new Event("show.bs.modal")) }
+      hide() {}
+    }
+    globalThis.window.bootstrap = { Modal: FakeModal }
+    built.controller.connect()
+    return { ...built, activations }
+  }
+
+  test("claims the focus trap as the dialog starts opening, before Bootstrap would", () => {
+    const { controller, activations } = connectedEditor()
+
+    openEditor(controller)
+
+    expect(activations).toHaveLength(1)
+  })
+
+  test("an opening Bootstrap refuses does not leave a trap behind", () => {
+    const { controller, activations } = connectedEditor()
+    controller.modal.show = () => {}
+
+    openEditor(controller)
+
+    // `show()` returns without showing while the instance is still transitioning,
+    // and a trap claimed then would take focus into a dialog that is on its way
+    // out.
+    expect(activations).toHaveLength(0)
+  })
+
+  test("leaves a control the reader already reached during the opening alone", () => {
+    const { controller, form } = connectedEditor()
+    let focused = 0
+    controller.focusFirstField = () => { focused += 1 }
+
+    openEditor(controller)
+    const select = form.querySelector("select")
+    select.focus()
+    finishedOpening(controller)
+
+    expect(focused).toBe(0)
+    expect(document.activeElement).toBe(select)
+  })
+
+  test("still claims the first field when the reader has not reached inside", () => {
+    const { controller } = connectedEditor()
+    let focused = 0
+    controller.focusFirstField = () => { focused += 1 }
+
+    openEditor(controller)
+    finishedOpening(controller)
+
+    expect(focused).toBe(1)
+  })
+})
+
 
 // The Event editor's three temporal selects are the one place a record must not
 // be offered as one of its own references. The server cannot do it — one modal

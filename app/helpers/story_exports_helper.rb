@@ -14,6 +14,25 @@ module StoryExportsHelper
     "h#{depth + 3 < 6 ? depth + 3 : 6}"
   end
 
+  # The text printed under one appendix entry's name. A category either prints
+  # a one-line summary or the record's full profile. A Markdown profile is
+  # rendered with the description dialect but with every `[[kind:slug]]`
+  # reference reduced to the name it names and no link, because the document is
+  # paper: there is nothing to click, and the entry already sits under its
+  # category. Its headings are demoted three levels so they read as that
+  # entry's own sections rather than competing with the category title above.
+  def manuscript_appendix_text(record, appendix)
+    text = record.public_send(appendix.text_method)
+    return if text.blank?
+
+    description = MarkdownDescription.new(Current.universe, text)
+    if appendix.markdown?
+      content_tag(:div, description.to_unlinked_html(heading_offset: 3), class: "manuscript-appendix-description")
+    else
+      content_tag(:p, description.as_plain_text, class: "manuscript-appendix-summary")
+    end
+  end
+
   # The notes above one printed Scene, in the order the block reads: point of
   # view, in-world time, then the author's recorded participants and depicted
   # Events. A row is either `text:` (one value) or `entries:` (name/role pairs).

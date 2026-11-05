@@ -12,7 +12,9 @@
 # narrower renderings of the same reference syntax rather than the full dialect:
 # `#to_inline_html` links the record it names at the top of the details page,
 # and `#as_plain_text` names that record without a link in a list row, which
-# already carries its own Details link.
+# already carries its own Details link. `#to_unlinked_html` is the same
+# no-link rule for a full description, for a surface that is not a screen the
+# reader can click: the printable manuscript's appendix.
 #
 # A reference is a link only when it names a record the reader can open:
 # `[[character:ada]]`, `[[faction:wardens]]`, `[[location:keep]]`, and
@@ -55,6 +57,13 @@ class MarkdownDescription
   # documentation is not turned into a link.
   PROTECTED_HTML = %r{(<(?:code|pre)\b[^>]*>.*?</(?:code|pre)>)}m
   REFERENCE = /\[\[(?:(?<kind>[a-z]+):)?(?<slug>[^\[\]\s]+)\]\]/i
+  # Sanitized heading tags carry no attributes, so the pair is only the tag and
+  # its level. Escaped `<` inside code is `&lt;` and never matches.
+  HEADING_TAG = %r{<(/?)h([1-6])>}i
+
+  # HTML's deepest heading. Demoting a description under an appendix entry
+  # clamps here instead of producing an `h7`.
+  MAX_HEADING_LEVEL = 6
 
   KIND_MODELS = {
     "character" => Character,
@@ -92,11 +101,32 @@ class MarkdownDescription
     @text.to_enum(:scan, REFERENCE).each do
       match = Regexp.last_match
       html << ERB::Util.html_escape(@text[cursor...match.begin(0)].to_s)
-      html << (reference_html(match[:kind]&.downcase, match[:slug]) || ERB::Util.html_escape(match[0]))
+      html << (reference_for(match[:kind]&.downcase, match[:slug]) || ERB::Util.html_escape(match[0]))
       cursor = match.end(0)
     end
     html << ERB::Util.html_escape(@text[cursor..].to_s)
     html.html_safe
+  end
+
+  # The whole description as safe HTML with the same no-link rule as
+  # `#as_plain_text`: a resolved reference is the name of the record it names
+  # (or a canon rule's ledger id), never an `<a>`, because this rendering is
+  # for the printable manuscript's appendix and paper has nothing to click.
+  # Everything else keeps the description dialect, and a reference inside a
+  # code span stays as written, exactly as `#to_html` leaves it.
+  #
+  # `heading_offset` demotes each rendered heading so a description's own
+  # sections sit below the appendix entry that owns them instead of competing
+  # with the category title above it. The clamp keeps the deepest heading at
+  # `h6`.
+  def to_unlinked_html(heading_offset: 0)
+    return "".html_safe if @text.blank?
+
+    sanitized = helpers.sanitize(rendered_markdown, tags: ALLOWED_TAGS, attributes: ALLOWED_ATTRIBUTES)
+    html = replace_references(sanitized) do |kind, record, slug|
+      ERB::Util.html_escape(label_for(kind, record, slug))
+    end
+    demote_headings(html, heading_offset).html_safe
   end
 
   # The same line with each reference reduced to the name of the record it
@@ -130,20 +160,47 @@ class MarkdownDescription
     # Split on the protected regions; the captured separators are the odd
     # elements, and only the even ones are prose that may carry a reference.
     def link_references(html)
+      replace_references(html) do |kind, record, slug|
+        reference_html(kind, record, slug)
+      end
+    end
+
+    # The shared walk over the rendered prose: every reference the author wrote
+    # outside a code region is resolved once, and the block decides what to
+    # emit. A missing record, or a block that emits nothing, leaves the
+    # reference exactly as written so an author sees the typo.
+    def replace_references(html)
       html.split(PROTECTED_HTML).map.with_index do |part, index|
         next part if index.odd?
 
         part.gsub(REFERENCE) do
           match = Regexp.last_match
-          reference_html(match[:kind]&.downcase, match[:slug]) || match[0]
+          kind, record = resolve(match[:kind]&.downcase, match[:slug])
+          (record && yield(kind, record, match[:slug])) || match[0]
         end
       end.join
     end
 
-    def reference_html(kind, slug)
-      kind, record = resolve(kind, slug)
-      return nil unless record
+    # A description heading is demoted by a caller that places the rendered
+    # prose below a heading of its own, so a description's `##` section does not
+    # outrank the category that owns it. Sanitized headings have no attributes,
+    # and an escaped `&lt;` inside code cannot match.
+    def demote_headings(html, offset)
+      offset = offset.to_i
+      return html unless offset.positive?
 
+      html.gsub(HEADING_TAG) do
+        closing, level = Regexp.last_match(1), Regexp.last_match(2).to_i
+        "<#{closing}h#{[ level + offset, MAX_HEADING_LEVEL ].min}>"
+      end
+    end
+
+    def reference_for(kind, slug)
+      kind, record = resolve(kind, slug)
+      record && reference_html(kind, record, slug)
+    end
+
+    def reference_html(kind, record, slug)
       href = path_for(kind, record)
       return nil unless href
 

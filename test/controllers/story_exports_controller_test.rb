@@ -29,7 +29,7 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Export"
     assert_select ".page-eyebrow", text: "Story: Story One"
-    assert_select "form[action=?][method=get]", universe_story_export_manuscript_path(story_id: @story) do
+    assert_select "form[action=?][method=get][target=_blank]", universe_story_export_manuscript_path(story_id: @story) do
       assert_select "input[type=radio][name=scope]", count: 3
       Manuscript::SCOPES.each do |scope|
         assert_select "input[type=radio][name=scope][value=?]", scope
@@ -73,6 +73,8 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".manuscript-line", text: "Count with me."
     assert_select ".manuscript-line", text: "One, two, three. Again, and slower this time."
     assert_select ".manuscript-parenthetical", text: "(grinning)"
+    assert_select ".manuscript-turn", text: /\A-\s+Character three:\s+Count with me\.\z/
+    assert_select ".manuscript-turn", text: /\A-\s+Character one\s+\(grinning\):\s+One, two, three\. Again, and slower this time\.\z/
     assert_select ".manuscript-scene", text: /Count with me\. One, two, three/, count: 0
 
     # No notes and no appendices in the plain-prose document.
@@ -144,6 +146,29 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
 
     # The larger scope still carries the notes it contains.
     assert_select ".manuscript-notes", text: /In-world time/
+  end
+
+  test "the bible appendix renders a description's Markdown below its entry" do
+    locations(:location_one).update!(description: "## History\n\nA keep on the coast.")
+
+    get manuscript_url(scope: "bible")
+
+    assert_response :success
+    assert_select ".manuscript-appendix-description h5", text: "History"
+    assert_select ".manuscript-appendix-description h2", count: 0
+  end
+
+  test "the bible appendix names a reference and does not link it" do
+    characters(:character_one).update!(summary: "Watch [[character:character-two]].")
+    locations(:location_one).update!(description: "A keep watched by [[character:character-one]].")
+
+    get manuscript_url(scope: "bible")
+
+    assert_response :success
+    assert_select ".manuscript-appendix-summary", text: "Watch Character two."
+    assert_select ".manuscript-appendix-description", text: /A keep watched by Character one\./
+    assert_select ".manuscript-appendix a", count: 0
+    assert_select ".manuscript-appendix", text: /\[\[/, count: 0
   end
 
   test "an unknown scope is the plain prose export" do

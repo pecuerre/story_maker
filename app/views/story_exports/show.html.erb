@@ -17,7 +17,9 @@
       <h2 class="h5" id="printable-html-title"><%= t("story_exports.printable.heading") %></h2>
       <p class="text-body-secondary"><%= t("story_exports.printable.description") %></p>
 
-      <%= form_with url: universe_story_export_manuscript_path(story_id: @story), method: :get do %>
+      <%# The document opens in a new tab so the reader keeps the export
+          options beside it; Turbo leaves a `_blank` form to the browser. %>
+      <%= form_with url: universe_story_export_manuscript_path(story_id: @story), method: :get, html: { target: "_blank" } do %>
         <fieldset class="mb-4">
           <legend class="form-label"><%= t("story_exports.printable.scope_legend") %></legend>
           <% Manuscript::SCOPES.each do |scope| %>

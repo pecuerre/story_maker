@@ -43,7 +43,7 @@ class StoryInterchangeTasksTest < ActiveSupport::TestCase
     assert_includes output, "Locations: 1\n"
     assert_includes output, "Items: 1\n"
     assert_includes output, "Stories: 1"
-    assert_includes output, "Plots: 1, 11 reported not written"
+    assert_includes output, "Plots: 1\n"
     assert_includes output, "Imported Synthetic Universe (synthetic-universe)."
     assert_includes output, "Canon rules: 4 written"
     assert_includes output, "Characters: 1 written"
@@ -51,7 +51,7 @@ class StoryInterchangeTasksTest < ActiveSupport::TestCase
     assert_includes output, "Locations: 1 written\n"
     assert_includes output, "Items: 1 written\n"
     assert_includes output, "Stories: 1 written"
-    assert_includes output, "Plots: 1 written, 11 skipped"
+    assert_includes output, "Plots: 1 written\n"
   end
 
   test "refuses to write without the confirmation" do

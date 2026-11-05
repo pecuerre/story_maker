@@ -122,14 +122,14 @@ class SpanishChromeTest < ActionDispatch::IntegrationTest
     assert_equal [ spanish("scenes.participation_errors.already_in_scene") ], response.parsed_body["character_id"]
     assert_no_english_chrome("a rejected presence link")
 
-    # A record-level message, which the browser wraps in a sentence about the
-    # record rather than in a field label.
-    post universe_story_scene_scene_elements_path(universe_slug: @universe.slug,
-      story_id: @story.id, scene_id: @scene.id),
-      params: { scene_element: { kind: "dialogue", name: "Spanish probe" } },
+    # An Element's own message: a saved Dialogue cannot become Narration while
+    # its ordered turns remain.
+    patch universe_story_scene_scene_element_path(universe_slug: @universe.slug,
+      story_id: @story.id, scene_id: @scene.id, id: scene_elements(:dialogue_one)),
+      params: { scene_element: { kind: "narration" } },
       as: :json
     assert_response :unprocessable_content
-    assert_equal [ spanish("scenes.element_errors.speakers_required") ], response.parsed_body["character_ids"]
+    assert_equal [ spanish("scenes.element_errors.narration_with_turns") ], response.parsed_body["kind"]
     assert_no_english_chrome("a rejected element save")
   end
 

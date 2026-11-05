@@ -179,7 +179,6 @@ class TranslationsTest < ActiveSupport::TestCase
   test "every attribute a remembered change can print has a name in both locales" do
     unnamed = permitted_payload_keys.filter_map do |model, key, association|
       key = key.to_s
-      next if stripped_before_remembering.include?([ model.name, key ])
 
       missing = missing_locales(model, key, association)
       [ model.name, key, missing ] if missing.any?
@@ -276,15 +275,6 @@ class TranslationsTest < ActiveSupport::TestCase
       attribute = "activerecord.attributes.#{model.model_name.i18n_key}.#{field}"
 
       %i[en es].reject { |locale| I18n.exists?(attribute, locale) }
-    end
-
-    # A permitted attribute that never reaches a payload, so naming it would be a
-    # key nothing renders. `SceneElementsController#scene_element_attributes`
-    # drops `remove_speakers` before the attributes are assigned *and* before they
-    # are remembered: it is the confirmation that a Narration keeps no speakers,
-    # not a value about the record.
-    def stripped_before_remembering
-      [ [ "SceneElement", "remove_speakers" ] ]
     end
 
     def load_locale(name)

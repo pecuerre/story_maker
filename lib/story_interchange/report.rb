@@ -33,8 +33,11 @@ module StoryInterchange
     # headings to profile answers without reading the file a second time.
     #
     # `story_slug` is nil for a Universe record and names the owning Story for a
-    # Plot, whose directory is what scopes it.
-    Entity = Data.define(:kind, :slug, :name, :frontmatter, :sections, :introduction, :story_slug)
+    # Plot or a Scene. `chapter_slug` names the chapter directory a Scene's
+    # identity and placement come from. `drafting_contract` is the scene's
+    # closing `DRAFTING CONTRACT` note when it has one; both are nil elsewhere.
+    Entity = Data.define(:kind, :slug, :name, :frontmatter, :sections, :introduction, :story_slug,
+      :chapter_slug, :drafting_contract)
 
     # One chapter directory. A chapter has no record file, so its source facts
     # are the directory name, the Story that holds it, the optional `#` heading

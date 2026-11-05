@@ -214,24 +214,6 @@ triaged into this list.
    [Appearance grid](features/appearances.md). There is no chart library; the Map's server-rendered
    SVG is the closest existing pattern.
 
-68. is there any statistic about contributions per universe? something like
-  - john doe: 40%
-  - jane doe: 33%
-  - mark markson: 20%
-  - jack jackson: 7%
-
-71. **Printable export appendix shows raw `[[kind:slug]]` references.**
-
-   NOTE: Leave for later
-
-   The Story manuscript's appendix prints a Character's summary and a Faction's, Location's, or
-   Item's description as raw text, so a reference appears there as the literal brackets rather than
-   as the name it stands for. The list rows and the details-page summary now render the same syntax
-   through `MarkdownDescription`, as [characters.md](features/characters.md#references-in-a-summary)
-   owns, and the appendix is the one prose surface left outside it. **Needs a decision about the
-   printed book:** a reference should most likely read as the record's name with no link, and it must
-   say how the Markdown description appendix should read once references are handled there too.
-
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is

@@ -55,7 +55,8 @@ class SceneCharactersTest < ApplicationSystemTestCase
   test "a character who only speaks is listed without a control to edit" do
     passer_by = @universe.characters.create!(name: "Passer-by")
     scene = @story.scenes.create!(name: "Street")
-    scene.scene_elements.create!(name: "Passing", kind: "dialogue", characters: [ passer_by ])
+    element = scene.scene_elements.create!(name: "Passing", kind: "dialogue")
+    element.scene_dialogue_turns.create!(speaker: passer_by, body: "Good evening.")
 
     sign_in_via_form(users(:user_one))
     visit universe_story_scene_scene_characters_path(universe_slug: @universe.slug, story_id: @story, scene_id: scene)

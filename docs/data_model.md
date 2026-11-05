@@ -17,7 +17,7 @@ User (owner)
       │   ├── SceneTag (tree, story-scoped) ── HABTM SceneTag assignment
       │   └── Scene (contiguous narrative position) ──> Section
        │       ├── SceneEvent (ordered Event link, optional free-text role) ──> Event
-       │       ├── SceneElement (contiguous flat position) ── HABTM Character (block speakers)
+       │       ├── SceneElement (contiguous flat position)
        │       │   └── SceneDialogueTurn (contiguous flat position) ──> Character (line speaker)
        │       ├── SceneCharacter (explicit presence, optional free-text role) ──> Character
        │       ├── SceneItem (explicit presence, optional free-text role) ─────> Item
@@ -150,17 +150,16 @@ method. Each rule is stated in full in [features/photos.md](features/photos.md).
 |---|---|---|
 | `stories` | `universe_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL) | unique index on `[universe_id, slug]`; `has_many :scenes, dependent: :destroy` |
 | `sections` | `story_id` FK (NOT NULL), `name`, `description`, `slug`, `parent_id` self-FK, `position` (default 0) | sections belong directly to a story; `has_many :scenes, dependent: :nullify` (deleting a section only ungroups scenes) |
-| `plots` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `deleted_at` (nullable) | named story-owned through-line; unique live `[story_id, name]` and `[story_id, slug]`; flat and unordered |
+| `plots` | `story_id` FK (NOT NULL), `name`, `short_summary`, `description`, `slug` (NOT NULL), `deleted_at` (nullable) | named story-owned through-line; `short_summary` is the list row's one line, while `description` keeps the source's Markdown sections; unique live `[story_id, name]` and `[story_id, slug]`; flat and unordered |
 | `plots_scenes` | `plot_id` FK, `scene_id` FK | HABTM link; unique `[plot_id, scene_id]`; both ends must belong to the same Story (application validation) |
 | `story_tropes` | `story_id` FK (NOT NULL), `trope_slug`, `context_note` (nullable) | one contextual annotation per catalogue slug and Story; unique `[story_id, trope_slug]`; rows survive soft deletion for restore |
 | `scene_tropes` | `scene_id` FK (NOT NULL), `trope_slug`, `context_note` (nullable) | one contextual annotation per catalogue slug and Scene; unique `[scene_id, trope_slug]`; rows survive soft deletion for restore |
 | `section_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its chapter/book/episode labels |
 | `scene_tags` | tag columns (below), `story_id` (NOT NULL) | story-scoped: each story owns its scene-beat/mood labels; parent and position are story-local |
-| `scenes` | `story_id` FK (NOT NULL), `name`, `description`, `slug` (NOT NULL), `status` (default `draft`, NOT NULL), `position` (default 0, NOT NULL), `section_id` FK (nullable), `datetime` (nullable), `pov_character_id` FK (nullable) | narrative order is `position`; `status` is one of `draft`/`revised`/`final` with a database check constraint; indexes on `[story_id, position]`, `[story_id, section_id]`, `[story_id, status]`, `section_id`, `pov_character_id`; no `parent_id`; Event links live in `scene_events`, not a column |
+| `scenes` | `story_id` FK (NOT NULL), `name`, `description`, `drafting_contract`, `slug` (NOT NULL), `status` (default `draft`, NOT NULL), `position` (default 0, NOT NULL), `section_id` FK (nullable), `datetime` (nullable), `pov_character_id` FK (nullable) | narrative order is `position`; `status` is one of `draft`/`revised`/`final` with a database check constraint; `drafting_contract` is the author's scene note, written by the story interchange import and editable in the Scene form; indexes on `[story_id, position]`, `[story_id, section_id]`, `[story_id, status]`, `section_id`, `pov_character_id`; no `parent_id`; Event links live in `scene_events`, not a column |
 | `scene_events` | `scene_id` FK (NOT NULL), `event_id` FK (NOT NULL), `role` (nullable), `position` (default 0, NOT NULL), `deleted_at` (nullable) | an ordered depiction link: a Scene may depict several Events; unique live `[scene_id, event_id]`, index on `[scene_id, position]` and `deleted_at`; `role` is free text and blank means no role; no `parent_id`, slug, or `universe_id` |
 | `scene_elements` | `scene_id` FK (NOT NULL), `kind` (NOT NULL, default `narration`), `name`, `body`, `word_count` (integer, NOT NULL, default 0), `position` (default 0, NOT NULL) | one flat ordered block of a Scene's prose; `word_count` is stored from `body` by `WordCountable` and summed by `WordCounts`; index on `[scene_id, position]`; `check_constraint` on `kind`; no `parent_id` |
 | `scene_dialogue_turns` | `scene_element_id` FK (NOT NULL), `speaker_id` FK to `characters` (NOT NULL), `body`, `word_count` (integer, NOT NULL, default 0), `parenthetical`, `position` (default 0, NOT NULL), `deleted_at` (nullable) | one attributed line inside a Dialogue Element; same-Universe speaker; `word_count` follows the same stored-count rule as an Element's; index on `[scene_element_id, position]` and `deleted_at`; no `parent_id`, public slug, or `universe_id` |
-| `scene_element_speakers` | `scene_element_id` FK (NOT NULL), `character_id` FK (NOT NULL) | no PK; unique `[scene_element_id, character_id]`; a plain many-to-many link with no data of its own |
 | `scene_characters` | `scene_id` FK (NOT NULL), `character_id` FK (NOT NULL), `role` (nullable) | explicit presence; unique `[scene_id, character_id]`; `role` is free text and blank means no role |
 | `scene_items` | `scene_id` FK (NOT NULL), `item_id` FK (NOT NULL), `role` (nullable) | explicit presence; unique `[scene_id, item_id]`; `role` is free text and blank means no role |
 | `scene_locations` | `scene_id` FK (NOT NULL), `location_id` FK (NOT NULL), `role` (nullable) | explicit presence; unique `[scene_id, location_id]`; `role` is free text and blank means no role |
@@ -205,9 +204,9 @@ Tag models: `character_tags`, `faction_tags`, `location_tags`, `item_tags`, `sec
 and a unique index on its column pair** — the seven legacy tables by
 `db/migrate/20260928120000_add_integrity_constraints_to_legacy_join_tables.rb`, `scenes_scene_tags`
 from its own create migration — so an orphan or duplicate join row is refused by the database rather
-than only by the scoped association reads. The Scene-owned tables `scene_element_speakers`,
-`scene_characters`, `scene_items`, `scene_locations`, and `scene_events` do the same, their unique index being partial
-(`WHERE deleted_at IS NULL`) because those five soft-delete. Every declaration supplies an explicit
+than only by the scoped association reads. The Scene-owned tables `scene_characters`, `scene_items`,
+`scene_locations`, and `scene_events` do the same, their unique index being partial
+(`WHERE deleted_at IS NULL`) because those four soft-delete. Every declaration supplies an explicit
 shared scope
 (`:universe_id`, or `:story_id` for Section/Scene tags), and both sides of each association validate
 every assigned member against that scope. Association reads also apply the scope, hiding foreign
@@ -469,7 +468,7 @@ no `parent_id`.
 | `Scene` | `name` presence; `status` presence and inclusion in `draft`/`revised`/`final` (plus a database check constraint); `story` required; `section` optional and must belong to the same story; `pov_character` optional and must belong to the story's universe; `scene_tags` optional and, when present, all belong to the story; `plots` optional and, when present, all belong to the story; an unknown optional `section_id`/`pov_character_id` is "must exist"; an unparseable `datetime` is "is not a valid date and time"; no `parent_id`; Event links are `SceneEvent` rows |
 | `SceneEvent` | `scene` and `event` required; `event_id` unique per scene among live links ("is already linked to this scene"); `event` must belong to the scene's universe; an unknown `event_id` is "must exist"; `role` is free text, blank means no role; `position` is flat and contiguous inside the Scene; no `parent_id`, slug, or `universe_id` |
 | `SceneTag` | `name` presence; `story` required; parent rules scoped to the story; `scenes` optional and, when present, all belong to the story; `HasColor`, `Hierarchical`, and slug behavior |
-| `SceneElement` | `name` presence; `scene` required; `kind` presence and `inclusion` in `narration`/`dialogue` (plus a database check constraint); a Dialogue needs at least one same-Universe Character in its block-level speaker roster ("Speakers is required for a dialogue element"); Narration may not keep roster speakers or any turn rows, including soft-deleted turns (unless roster removal is explicitly confirmed); an unknown, duplicated, or cross-universe `character_ids` entry is an ordinary field error; no `parent_id` |
+| `SceneElement` | `name` presence; `scene` required; `kind` presence and `inclusion` in `narration`/`dialogue` (plus a database check constraint); Narration may not keep any turn rows, including soft-deleted turns; a Dialogue with no turns yet is valid; no `parent_id` |
 | `SceneDialogueTurn` | `scene_element` and `speaker` required; the Element must be Dialogue; the speaker must belong to the Scene's Universe; `body` and `parenthetical` optional; position is flat and contiguous inside the Element; no `parent_id` or `universe_id` |
 | `SceneCharacter` | `scene` and `character` required; `character_id` unique per scene ("is already in this scene"); `character` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |
 | `SceneItem` | `scene` and `item` required; `item_id` unique per scene ("is already in this scene"); `item` must belong to the scene's universe; `role` is free text, blank means no role; no `parent_id`, no `position` |

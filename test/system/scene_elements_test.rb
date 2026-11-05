@@ -3,8 +3,8 @@ require "application_system_test_case"
 # Scene Elements are edited through the shared modal editor, so what a browser
 # has to prove is the interaction the request suite cannot: the modal opens with
 # the values the server stored, a rejected save stays open and explains itself in
-# the modal, a Dialogue reveals its speaker picker only for Dialogue, and a
-# successful mutation refreshes the list and its counts from one server render.
+# the modal, a Dialogue hides Content in favour of its turns, and a successful
+# mutation refreshes the list and its counts from one server render.
 class SceneElementsTest < ApplicationSystemTestCase
   setup do
     @universe = universes(:universe_one)
@@ -55,40 +55,39 @@ class SceneElementsTest < ApplicationSystemTestCase
     assert_selector ".scene-elements .badge[aria-label='4 elements']"
   end
 
-  test "a dialogue reveals its speaker picker and keeps every selected speaker" do
+  test "a dialogue hides Content and starts with the first-turn prompt" do
     sign_in_via_form(users(:user_one))
     visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
     click_button "Add element"
     within ".modal.show" do
-      # Narration has no speakers, so the picker starts hidden.
-      assert_no_selector "[data-scene-element-form-target='speakers']", visible: :visible
+      # Narration keeps its prose in Content; a Dialogue keeps it in turns.
+      assert_selector "[data-scene-element-form-target='body']", visible: :visible
 
-      select "Dialogue", from: "Element type"
-      assert_selector "[data-scene-element-form-target='speakers']", visible: :visible
-      assert_text "A spoken block. Name everyone who speaks in it."
+      select "Dialogue", from: "Scene element type"
+      assert_no_selector "[data-scene-element-form-target='body']", visible: :visible
+      assert_no_selector "[data-scene-turns-target='entryFields']", visible: :visible
+      assert_text "A spoken block, written as ordered lines."
       assert_selector "[data-scene-turns-target='saveFirst']", visible: :visible
       assert_no_button "Add turn"
 
       fill_in "Title", with: "A kitchen argument"
-      fill_in "Content", with: "You knew. I knew nothing."
-      select "Character one", from: "Speakers"
-      select "Character two", from: "Speakers"
       click_button "Save element"
     end
 
     within ".scene-elements" do
       row = find(".entity-row", text: "A kitchen argument", wait: REFRESH_WAIT)
       assert_text "Dialogue"
-      assert_text "Character one and Character two speak in this block"
+      assert_text "0 lines"
     end
 
-    # Reopening the editor brings the stored kind and speakers back, which is the
-    # part a request test cannot see.
+    # Reopening the editor brings the stored kind back and still hides Content,
+    # which is the part a request test cannot see.
     click_row_menu_action find(".scene-elements .entity-row", text: "A kitchen argument"), "Edit"
     within ".modal.show" do
-      assert_field "Element type", with: "dialogue"
-      assert_equal [ "Character one", "Character two" ], selected_speakers
+      assert_field "Scene element type", with: "dialogue"
+      assert_no_selector "[data-scene-element-form-target='body']", visible: :visible
+      assert_selector "[data-scene-turns-target='emptyState']", visible: :visible
     end
   end
 
@@ -98,9 +97,8 @@ class SceneElementsTest < ApplicationSystemTestCase
 
     click_button "Add element"
     within ".modal.show" do
-      select "Dialogue", from: "Element type"
+      select "Dialogue", from: "Scene element type"
       fill_in "Title", with: "A two-line exchange"
-      select "Character one", from: "Speakers"
       click_button "Save element"
     end
 
@@ -109,27 +107,22 @@ class SceneElementsTest < ApplicationSystemTestCase
     within ".modal.show" do
       assert_selector "[data-scene-turns-target='emptyState']", visible: :visible
       assert_selector "[data-scene-turns-target='saveFirst']", visible: :hidden
+      assert_selector "[data-scene-turns-target='entryFields']", visible: :visible
       assert_field "Speaker", with: ""
 
       select "Character one", from: "Speaker"
       fill_in "Line", with: "First line."
       fill_in "Delivery note", with: "quietly"
       click_button "Add turn"
-    end
-    assert_no_selector ".modal.show", wait: REFRESH_WAIT
 
-    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
-    within ".modal.show" do
+      # Adding a line keeps the editor open and appends the saved row; staying
+      # inside the still-present modal is what proves it did not close.
       assert_selector ".turn-row", count: 1
       assert_equal [ "First line." ], turn_lines
+
       select "Character two", from: "Speaker"
       fill_in "Line", with: "Second line."
       click_button "Add turn"
-    end
-    assert_no_selector ".modal.show", wait: REFRESH_WAIT
-
-    click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
-    within ".modal.show" do
       assert_selector ".turn-row", count: 2
       assert_equal [ "First line.", "Second line." ], turn_lines
 
@@ -144,7 +137,7 @@ class SceneElementsTest < ApplicationSystemTestCase
 
     click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
     within ".modal.show" do
-      assert_selector ".turn-row", text: /Character two\s+Edited first line\.\s+\(firmly\)/
+      assert_selector ".turn-row", text: /Character two:\s+Edited first line\.\s+\(firmly\)/
       find(".turn-row", text: "Second line.").find("button[data-modal-form-direction='up']").click
     end
     assert_no_selector ".modal.show", wait: REFRESH_WAIT
@@ -152,66 +145,40 @@ class SceneElementsTest < ApplicationSystemTestCase
     click_row_menu_action find(".scene-elements .entity-row", text: "A two-line exchange", wait: REFRESH_WAIT), "Edit"
     within ".modal.show" do
       assert_equal [ "Second line.", "Edited first line." ], turn_lines
-      assert_selector ".turn-row", text: /Character two\s+Edited first line\.\s+\(firmly\)/
+      assert_selector ".turn-row", text: /Character two:\s+Edited first line\.\s+\(firmly\)/
     end
   end
 
-  test "a dialogue with no speaker is refused in the modal, which stays open" do
-    sign_in_via_form(users(:user_one))
-    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
-
-    click_button "Add element"
-    within ".modal.show" do
-      select "Dialogue", from: "Element type"
-      fill_in "Title", with: "Nobody speaks"
-      click_button "Save element"
-
-      # The server's own message is rendered in the modal and on the control, the
-      # entered values survive, and nothing was written.
-      assert_selector "[data-modal-form-target='errors'] .alert-danger", text: "The change could not be saved"
-      assert_selector "[data-modal-form-target='errors'] li", text: "Speakers is required for a dialogue element"
-      assert_selector "select#scene_element_character_ids[aria-invalid='true']"
-      assert_field "Title", with: "Nobody speaks"
-    end
-    # A rejected save must not close the modal.
-    assert_selector ".modal.show"
-    assert_equal 4, @scene.scene_elements.count
-  end
-
-  test "narration stays dialogue until its turns are removed and speakers are confirmed" do
+  test "narration stays blocked until its dialogue turns are removed" do
     element = scene_elements(:dialogue_one)
 
     sign_in_via_form(users(:user_one))
     visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
-    click_row_menu_action find(".scene-elements .entity-row", text: element.name), "Edit"
+    click_element_edit(element.name)
 
     within ".modal.show" do
-      assert_selector "[data-scene-element-form-target='removeSpeakers']", visible: :all
-      select "Narration", from: "Element type"
-      assert_selector "[data-scene-element-form-target='removeSpeakers']", visible: :visible
-      check "Remove the speakers and make this narration"
+      select "Narration", from: "Scene element type"
+      assert_selector "[data-scene-element-form-target='body']", visible: :visible
+      assert_no_selector "[data-scene-turns-target='entryFields']", visible: :visible
       click_button "Save element"
       assert_selector "[data-modal-form-target='errors'] li",
-        text: "Element type cannot be Narration while dialogue turns remain"
+        text: "Scene element type cannot be Narration while dialogue turns remain"
       assert_selector ".turn-row", count: 2
     end
 
     # The server refuses to discard turns through a kind change. Once those
-    # child rows are removed, the existing speaker-removal confirmation remains
-    # the explicit second half of the transition.
+    # child rows are removed, the same edit is accepted.
     element.scene_dialogue_turns.destroy_all
     visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
-    click_row_menu_action find(".scene-elements .entity-row", text: element.name), "Edit"
+    click_element_edit(element.name)
     within ".modal.show" do
-      select "Narration", from: "Element type"
-      check "Remove the speakers and make this narration"
+      select "Narration", from: "Scene element type"
       click_button "Save element"
     end
 
     assert_selector ".scene-elements .entity-row", text: element.name, wait: REFRESH_WAIT
-    assert_empty element.reload.characters
-    assert_equal SceneElement::NARRATION, element.kind
+    assert_equal SceneElement::NARRATION, element.reload.kind
   end
 
   test "a read-only member sees the element list without a single control" do
@@ -263,11 +230,18 @@ class SceneElementsTest < ApplicationSystemTestCase
       nil
     end
 
-    def selected_speakers
-      page.evaluate_script(
-        "Array.from(document.querySelectorAll('#scene_element_character_ids option:checked'))" \
-        ".map(option => option.textContent.trim())"
-      )
+    # Opening a row's menu through the page, for the initial Scene Details load.
+    # The native click on this toggle is dropped on a loaded machine even though
+    # `elementFromPoint` returns it; `ReviewWorkflowTest#press_control` documents
+    # the same measured failure. The modal flow under test still runs normally.
+    def click_element_edit(name)
+      row = find(".scene-elements .entity-row", text: name)
+      page.execute_script("arguments[0].scrollIntoView({ block: 'center' })", row.native)
+      within row do
+        page.execute_script("arguments[0].click()", find(".dropdown .dropdown-toggle", match: :first).native)
+        assert_selector ".dropdown-menu.show", visible: :visible, wait: MENU_WAIT
+        page.execute_script("arguments[0].click()", find(".dropdown-item", text: "Edit").native)
+      end
     end
 
     def turn_lines

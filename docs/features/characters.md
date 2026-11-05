@@ -57,6 +57,11 @@ Character, Faction, Location, Item, then Plot. A reference to a missing record, 
 different kind than its prefix declares, stays literal so the author sees it rather than losing it.
 A reference inside a code span or fenced block is an example and is not linked.
 
+On screen a description is rendered with its references as links. The printable manuscript's appendix
+is the one surface that renders a description without them: there a reference is the name of the
+record it names, because paper has nothing to click. [exports.md](exports.md#universe-appendices)
+owns that document and its heading levels.
+
 The interchange's link rules are in
 [story_interchange.md](story_interchange.md#references); this page owns how the application renders
 them.
@@ -70,14 +75,16 @@ as the description, rendered one of two ways by `MarkdownDescription`:
 - at the top of the details page, a reference becomes the link; an unresolved reference stays
   written, exactly as in the description.
 - in a list row (the Character, Faction, and Item lists, a Faction's affiliated Characters, the
-  Locations tree row, and a remembered create's pending row), a reference becomes the name of the
-  record it names and is never a link: the row already carries its own Details link, and a second
-  one inside a two-line preview competes with it.
+  Locations tree row, and a remembered create's pending row) and in the printable manuscript's
+  appendix, a reference becomes the name of the record it names and is never a link: the row already
+  carries its own Details link, and a second one inside a two-line preview competes with it, while
+  paper has nothing to click at all ([exports.md](exports.md#universe-appendices)).
   A `rule` or `canon` reference keeps its ledger id here too, for the same reason it does in the
   description. An unresolved reference stays written there too, so a typo stays visible.
 
 The views reach both renderings through `ApplicationHelper#summary_html` and
-`ApplicationHelper#summary_text`; nothing escapes or resolves a reference on its own.
+`ApplicationHelper#summary_text`; the appendix reaches the plain-text one through
+`StoryExportsHelper#manuscript_appendix_text`. Nothing escapes or resolves a reference on its own.
 
 ## Faction membership
 

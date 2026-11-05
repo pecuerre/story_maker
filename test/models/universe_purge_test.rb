@@ -19,7 +19,6 @@ class UniversePurgeTest < ActiveSupport::TestCase
     "ownerships_ownership_tags" => %w[ ownership_id ownership_tag_id ],
     "plots_scenes" => %w[ plot_id scene_id ],
     "relations_relation_tags" => %w[ relation_id relation_tag_id ],
-    "scene_element_speakers" => %w[ scene_element_id character_id ],
     "scenes_scene_tags" => %w[ scene_id scene_tag_id ],
     "sections_section_tags" => %w[ section_id section_tag_id ]
   }.freeze

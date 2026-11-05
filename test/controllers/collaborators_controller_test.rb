@@ -31,7 +31,8 @@ class CollaboratorsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".collaborator-row", count: 2
     # Most active first, which is the order a reader scans for "who did the most here".
     rows = css_select(".collaborator-row .entity-description").map { |row| row.text.squish }
-    assert_equal [ I18n.t("collaborators.index.changes", count: 5), I18n.t("collaborators.index.changes", count: 3) ], rows
+    assert_match(/\A#{Regexp.escape(I18n.t("collaborators.index.changes", count: 5))}/, rows.first)
+    assert_match(/\A#{Regexp.escape(I18n.t("collaborators.index.changes", count: 3))}/, rows.second)
     assert_select "a[href=?]", universe_collaborator_path(universe_slug: @universe.slug, id: @author)
     assert_select "a[href=?]", universe_collaborator_path(universe_slug: @universe.slug, id: @owner)
     # **The name is a plain span and the row carries exactly one link.** A list row in
@@ -45,6 +46,31 @@ class CollaboratorsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".collaborator-row .entity-title", text: /\/collaborators\/\d+/, count: 0
     # One link per row, so the count is the row count rather than a number.
     assert_select ".collaborator-row a", count: 2
+  end
+
+  test "each row's percentage is its share of every remembered change here" do
+    closed_draft(3, by: @author)
+    closed_draft(1, by: @owner)
+
+    get universe_collaborators_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_equal [ "75%", "25%" ],
+      css_select(".collaborator-row .collaborator-share").map { |share| share.text.squish }
+  end
+
+  test "the displayed shares add up to 100 when the split does not divide evenly" do
+    closed_draft(1, by: @author)
+    closed_draft(1, by: @owner)
+    closed_draft(1, by: a_third_user)
+
+    get universe_collaborators_url(universe_slug: @universe.slug)
+
+    shares = css_select(".collaborator-row .collaborator-share")
+      .map { |share| share.text.squish.delete_suffix("%").to_i }
+    assert_equal 3, shares.size
+    assert_equal 100, shares.sum
+    assert_operator shares.max - shares.min, :<=, 1
   end
 
   test "a member who has never edited anything is not a collaborator, and a writer who has is" do

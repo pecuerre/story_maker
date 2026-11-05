@@ -155,8 +155,6 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
   end
 
   test "Scene Details states its facts in Spanish" do
-    @scene.update_column(:description, nil)
-
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
     assert_response :success
@@ -166,13 +164,14 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".page-actions a", text: "Todas las escenas"
     assert_select ".page-actions a", text: "Editar escena"
     assert_select ".page-eyebrow", text: "Posición narrativa"
-    assert_select ".page-eyebrow", text: "Descripción breve"
+    # The short description is not printed on Details at all.
+    assert_select ".page-eyebrow", text: "Descripción breve", count: 0
     assert_select ".page-eyebrow", text: "Etiquetas de escena"
     assert_select ".page-eyebrow", text: "Grupo de sección"
     assert_select ".page-eyebrow", text: "Tiempo en el mundo"
     assert_select ".page-eyebrow", text: "Historia"
-    assert_select ".page-description + .page-eyebrow, .col-12 p.text-body-secondary",
-      text: "Todavía no hay descripción breve."
+    assert_select ".scene-drafting-contract h2", text: "Contrato de escritura"
+    assert_select ".scene-drafting-contract p", text: "Todavía no hay contrato de escritura registrado."
     # The scene tags are the author's own words, beside translated chrome.
     assert_select ".taxonomy-tag", text: "Scene tag one"
   end
@@ -210,11 +209,9 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     # The kind is a stored value and is not translated; the label beside it is.
     assert_select ".scene-elements .badge", text: "Narración"
     assert_select ".scene-elements .badge", text: "Diálogo"
+    assert_select ".scene-elements .small", text: "16 palabras"
+    assert_select ".scene-elements .small", text: "2 líneas"
     assert_includes response.body, "Todavía no hay contenido"
-    # The speaker note's verb agrees with the count, and the names are the
-    # author's own.
-    assert_includes response.body, "Character one y Character two hablan en este bloque"
-    assert_includes response.body, "El enlace registra quién está en la conversación, no qué línea es de quién"
   end
 
   test "the element editor is Spanish and serializes its descriptions translated" do
@@ -223,10 +220,9 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "button[data-action='modal-form#open']", text: "Añadir elemento"
     assert_select ".modal-title", text: "Añadir elemento"
-    assert_select "label[for=scene_element_kind]", text: "Tipo de elemento"
+    assert_select "label[for=scene_element_kind]", text: "Tipo de elemento de escena"
     assert_select "label[for=scene_element_name]", text: "Título"
     assert_select "label[for=scene_element_body]", text: "Contenido"
-    assert_select "label[for=scene_element_character_ids]", text: "Hablantes"
     assert_select "h3[data-scene-turns-target=turnsHeading]", text: "Turnos"
     assert_select "[data-scene-turns-target=saveFirst]", text: "Guarda primero este elemento de diálogo y vuelve a abrirlo para añadir turnos."
     assert_select "label[for=scene_dialogue_turn_speaker]", text: "Hablante"
@@ -242,7 +238,7 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     # The descriptions cross into the browser already translated, because the
     # browser prints them when the type changes.
     assert_equal({ "narration" => "Descripción o acción, sin que nadie hable.",
-                   "dialogue" => "Un bloque hablado. Nombra a todos los que hablan en él." },
+                   "dialogue" => "Un bloque hablado, escrito como líneas ordenadas." },
       scene_element_kind_descriptions)
   end
 

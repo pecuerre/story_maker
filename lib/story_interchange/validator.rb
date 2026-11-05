@@ -16,7 +16,15 @@ module StoryInterchange
     SCENE_FILE = /\A(\d{2})-(.+)\.md\z/
     SCENE_ID = /\AB-\d{3}\z/
     SCENE_BRANCH = /\A(?:main|fork of [A-Za-z0-9-]+-\d{2})\z/
-    SCENE_STATUSES = %w[draft revised final].freeze
+    # A Scene's body alternates `## Narration` and `## Dialog` blocks. A Dialog
+    # line is one physical line: its speaker as `@[[character:slug]]` or a bare
+    # `@slug` for a speaker with no entity file, then the quoted line.
+    SCENE_BLOCKS = %w[Narration Dialog].freeze
+    SCENE_DIALOGUE_LINE = /\A@(?:\[\[[^\[\]\n]+\]\]|[a-z0-9][a-z0-9-]*)[ \t]+".*"[ \t]*\z/
+    # The scene's closing authoring note. It is an HTML comment, so it is masked
+    # out of the prose and out of the reference scan, and read once here as the
+    # Scene's `drafting_contract`.
+    DRAFTING_CONTRACT = /<!--\s*DRAFTING CONTRACT\s*(.*?)-->/m
     # A canon item opens with a column-0 bullet whose marker is its own id and a
     # full stop, then its **what**: one line naming what the item is about. The
     # item's text follows beneath, indented two spaces: `- K16. The moon event as
@@ -102,10 +110,13 @@ module StoryInterchange
       }
     }.freeze
 
-    PLOT_REQUIRED = %w[name slug type status owner_pov].freeze
-    PLOT_OPTIONAL = %w[opened_in backlog].freeze
-    SCENE_REQUIRED = %w[id title chapter sequence pov location timeline branch status].freeze
-    SCENE_OPTIONAL = %w[depends_on].freeze
+    PLOT_REQUIRED = %w[name slug].freeze
+    PLOT_OPTIONAL = %w[type status owner_pov opened_in backlog].freeze
+    # The chapter and sequence live in the path, and the new scene format keeps
+    # no status or dependency list. `id` is the author's backlog item, not a
+    # unique scene identity: two scenes may share it.
+    SCENE_REQUIRED = %w[id title pov location timeline branch].freeze
+    SCENE_OPTIONAL = [].freeze
 
     # Everything directly under `universe/` that the interchange reads. A
     # `README.md` is documentation at any depth, and `inspirations.md` is
@@ -604,7 +615,6 @@ module StoryInterchange
           return
         end
 
-        sequence = match[1]
         document = document_for(file)
         @entries << Entry.new(document: document, kind: :scene, story_slug: story_slug, chapter_slug: chapter)
         @report.count(:scenes)
@@ -617,26 +627,17 @@ module StoryInterchange
           slug_from_filename: false)
         return unless frontmatter
 
-        register_entity(document, :scene, frontmatter, story_slug: story_slug, name: frontmatter["title"])
-        check_scene(document, frontmatter, story_slug, chapter, sequence)
+        register_entity(document, :scene, frontmatter, story_slug: story_slug, chapter_slug: chapter,
+          name: frontmatter["title"], drafting_contract: drafting_contract(document))
+        check_scene(document, frontmatter, story_slug, chapter)
       end
 
-      def check_scene(document, frontmatter, story_slug, chapter, sequence)
-        if frontmatter["chapter"].is_a?(String) && frontmatter["chapter"] != chapter
-          error(document, 1, "scene chapter `#{frontmatter["chapter"]}` must match its directory `#{chapter}`")
-        end
-
-        unless frontmatter["sequence"].to_s.rjust(2, "0") == sequence
-          error(document, 1, "scene sequence `#{frontmatter["sequence"]}` must match filename prefix `#{sequence}`")
-        end
-
+      # The chapter and the two-digit sequence are the path, not frontmatter. The
+      # other frontmatter is the Scene's identity and its author facts: `id` is
+      # the backlog item the scene was written from, never a unique scene key.
+      def check_scene(document, frontmatter, story_slug, chapter)
         id = frontmatter["id"]
         error(document, 1, "scene id `#{id}` must be B-### (three digits)") unless id.is_a?(String) && id.match?(SCENE_ID)
-
-        status = frontmatter["status"]
-        unless SCENE_STATUSES.include?(status)
-          error(document, 1, "scene status `#{status}` must be one of #{SCENE_STATUSES.join(", ")}")
-        end
 
         branch = frontmatter["branch"]
         unless branch.is_a?(String) && branch.match?(SCENE_BRANCH)
@@ -645,8 +646,78 @@ module StoryInterchange
 
         check_named_slug(document, frontmatter["pov"], @character_slugs, "point of view")
         check_named_slug(document, frontmatter["location"], @location_slugs, "location")
-        check_depends_on(document, frontmatter["depends_on"])
+        check_scene_title(document, frontmatter["title"])
+        check_scene_blocks(document)
         @scene_keys << [ story_slug, chapter, File.basename(document.path, ".md") ]
+      end
+
+      # The source repeats the title as the file's only `#` heading. It names the
+      # record for a reader; the frontmatter value is what the import writes, so
+      # a different heading is worth naming but does not stop the import.
+      def check_scene_title(document, title)
+        heading = document.title.to_s.strip
+        if heading.blank?
+          error(document, 1, "scene needs a `# Title` heading")
+        elsif heading != title.to_s.strip
+          warning(document, 1, "scene title heading `#{heading}` does not match frontmatter title `#{title}`")
+        end
+      end
+
+      # A Scene's body is an alternating sequence of `## Narration` and
+      # `## Dialog` blocks in reading order: it opens with Narration and never
+      # puts two blocks of the same kind side by side. Anything else has no
+      # Element target and is refused rather than silently dropped.
+      def check_scene_blocks(document)
+        sections = document.sections
+
+        if sections.empty?
+          error(document, 1, "scene body must open with a `## Narration` block")
+          return
+        end
+
+        if document.introduction.present?
+          warning(document, 1, "scene prose before the first `##` block has no Element and is not imported")
+        end
+
+        previous = nil
+        sections.each do |section|
+          heading = section.heading
+
+          unless SCENE_BLOCKS.include?(heading)
+            error(document, 1, "scene section `#{heading}` is not a `## Narration` or `## Dialog` block")
+            next
+          end
+
+          if previous.nil? && heading != "Narration"
+            error(document, 1, "the first scene block must be `## Narration`")
+          elsif previous == heading
+            error(document, 1, "two `## #{heading}` blocks cannot sit next to each other")
+          end
+
+          check_dialog_lines(document, section) if heading == "Dialog"
+          previous = heading
+        end
+      end
+
+      # Every nonblank line of a Dialog block is one spoken line with its
+      # speaker. A block with no `@[[character:…]]` speaker has no Character the
+      # application can attribute a dialogue to, so it is named as a warning.
+      def check_dialog_lines(document, section)
+        lines = section.body.each_line.map(&:strip).reject(&:empty?)
+
+        lines.each do |line|
+          next if line.match?(SCENE_DIALOGUE_LINE)
+
+          error(document, 1, "dialog line must be `@speaker \"line\"`; got `#{line.truncate(60)}`")
+        end
+
+        return if lines.any? { |line| line.start_with?("@[[character:") }
+
+        warning(document, 1, "a `## Dialog` block with no `@[[character:…]]` speaker cannot be imported as a dialogue")
+      end
+
+      def drafting_contract(document)
+        document.raw[DRAFTING_CONTRACT, 1].to_s.strip.presence
       end
 
       def check_named_slug(document, value, allowed, label)
@@ -655,13 +726,6 @@ module StoryInterchange
         unless value.is_a?(String) && allowed.include?(value)
           error(document, 1, "scene #{label} `#{value}` does not name a record in the source")
         end
-      end
-
-      def check_depends_on(document, value)
-        return if blank?(value)
-        return if value.is_a?(Array) && value.all? { |item| item.is_a?(String) && item.match?(BACKLOG_REFERENCE) }
-
-        error(document, 1, "depends_on must be a list of B-### ids")
       end
 
       def validate_frontmatter(document, kind:, required:, optional:, label:, slug_from_filename:)
@@ -713,7 +777,8 @@ module StoryInterchange
       # Hands the parsed record to the report so an import slice writes it. The
       # filename is the identity (the contract requires the frontmatter slug to
       # match it), and the body is split once here rather than by every slice.
-      def register_entity(document, kind, frontmatter, story_slug: nil, name: nil)
+      def register_entity(document, kind, frontmatter, story_slug: nil, chapter_slug: nil, name: nil,
+        drafting_contract: nil)
         @report.add_entity(Report::Entity.new(
           kind: kind,
           slug: File.basename(document.path, ".md"),
@@ -721,7 +786,9 @@ module StoryInterchange
           frontmatter: frontmatter,
           sections: document.sections,
           introduction: document.introduction,
-          story_slug: story_slug
+          story_slug: story_slug,
+          chapter_slug: chapter_slug,
+          drafting_contract: drafting_contract
         ))
       end
 

@@ -12,6 +12,7 @@ class PlotsTest < ApplicationSystemTestCase
     click_button "Add plot"
     within ".modal.show" do
       fill_in "Name", with: "Browser through-line"
+      fill_in "Short summary", with: "Connects scenes across sections."
       fill_in "Description", with: "Connects scenes across sections."
       click_button "Save plot"
     end

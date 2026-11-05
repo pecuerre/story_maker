@@ -19,3 +19,10 @@ turn_two:
   word_count: 8
   parenthetical: "grinning"
   position: 1
+
+turn_alt:
+  scene_element: dialogue_alt
+  speaker: character_one
+  body: "The gate is watched."
+  word_count: 4
+  position: 0

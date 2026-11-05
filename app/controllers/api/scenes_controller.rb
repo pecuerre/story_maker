@@ -116,6 +116,7 @@ class Api::ScenesController < Api::BaseController
         id: scene.id,
         name: scene.name,
         description: scene.description,
+        drafting_contract: scene.drafting_contract,
         status: scene.status,
         section_id: scene.section_id,
         events: scene.scene_events.sort_by { |link| [ link.position, link.id ] }.map do |link|
@@ -140,7 +141,8 @@ class Api::ScenesController < Api::BaseController
     end
 
     def scene_params
-      params.expect(scene: [ :name, :description, :status, :section_id, :datetime, :pov_character_id, { scene_tag_ids: [] } ])
+      params.expect(scene: [ :name, :description, :drafting_contract, :status, :section_id, :datetime,
+        :pov_character_id, { scene_tag_ids: [] } ])
     end
 
     def move_direction

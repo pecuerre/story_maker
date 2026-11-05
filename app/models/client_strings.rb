@@ -147,17 +147,18 @@ module ClientStrings
   # is not repeated here.
   SCENE_TURNS = %w[
     scenes.elements.dialogue_turns.choose_speaker
+    scenes.elements.dialogue_turns.delete
     scenes.elements.dialogue_turns.delete_confirm
     scenes.elements.dialogue_turns.edit
     scenes.elements.dialogue_turns.form.body
     scenes.elements.dialogue_turns.form.parenthetical
     scenes.elements.dialogue_turns.form.save
     scenes.elements.dialogue_turns.form.speaker
+    scenes.elements.dialogue_turns.pending
     scenes.elements.dialogue_turns.save_failed
     scenes.elements.dialogue_turns.speaker_required
     scenes.move.down
     scenes.move.up
-    shared.row_actions.delete
   ].freeze
 
   # Every key any shipped controller reads, deduplicated and sorted so a diff is

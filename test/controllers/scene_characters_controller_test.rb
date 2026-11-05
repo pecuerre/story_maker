@@ -34,8 +34,8 @@ class SceneCharactersControllerTest < ActionDispatch::IntegrationTest
     get @path
 
     assert_response :success
-    # The two stored participants also appear in the block roster; the turn-only
-    # speaker is a third Character, and the union still lists each one once.
+    # The two stored participants are joined by the turn-only speaker, and the
+    # union still lists each Character once.
     assert_equal [ "Character one", "Character three", "Character two" ], listed_names
     assert_select ".entity-list .badge", text: "Participant"
     assert_select ".entity-list .badge", text: "Speaks in 1 element"
@@ -53,7 +53,8 @@ class SceneCharactersControllerTest < ActionDispatch::IntegrationTest
   test "a character who only speaks is listed without a stored record" do
     outsider = @universe.characters.create!(name: "Passer-by")
     scene = @story.scenes.create!(name: "Street")
-    scene.scene_elements.create!(name: "Passing", kind: "dialogue", characters: [ outsider ])
+    element = scene.scene_elements.create!(name: "Passing", kind: "dialogue")
+    element.scene_dialogue_turns.create!(speaker: outsider, body: "Good evening.")
 
     get universe_story_scene_scene_characters_path(universe_slug: @universe.slug, story_id: @story, scene_id: scene)
 
@@ -239,9 +240,10 @@ class SceneCharactersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :no_content
     assert Character.exists?(link.character_id)
-    # Removing a presence link does not touch who speaks: the Dialogue still
-    # names both characters, so the removed one is now only a speaker.
-    assert_equal scene_elements(:dialogue_one).reload.character_ids.sort, [ characters(:character_one).id, characters(:character_two).id ].sort
+    # Removing a presence link does not touch who speaks: the Dialogue turns
+    # still name character_one, so the removed one is now only a speaker.
+    assert_includes scene_elements(:dialogue_one).reload.scene_dialogue_turns.map(&:speaker_id),
+      characters(:character_one).id
     assert_equal 3, SceneParticipants.for(@scene).count
   end
 

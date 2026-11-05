@@ -1,6 +1,7 @@
 # Scene Elements for the Lord of the Rings universe: the ordered prose blocks of
-# each Scene. Narration describes what happens, a dialogue names the characters
-# who speak in it, and positions are flat and contiguous inside their own Scene.
+# each Scene. Narration describes what happens, a dialogue is written as ordered
+# turns that each name their speaker, and positions are flat and contiguous inside
+# their own Scene.
 #
 # Every Scene of this story has at least one element, so the list is exercised in
 # both the populated and the partly-written state: two narration blocks carry no
@@ -17,21 +18,18 @@
   manifest_key: lotr-party-dialogue
   kind: dialogue
   body: "It is hot. It is. I wish it were not. All the things I wish, and it is hot."
-  characters: [ Character.gandalf_the_grey, Character.frodo_baggins ]
   position: 1
 
 - scene: Scene.the-shadow-of-the-past
   name: "You should not go"
   kind: dialogue
   body: "The road is dangerous for you, and I cannot stop you from taking it. That is the whole of what I know."
-  characters: [ Character.gandalf_the_grey ]
   position: 0
 
 - scene: Scene.three-is-company
   name: "A pony, a cart, two hobbits"
   kind: dialogue
   body: "I will not go. I said I would, and now I have said it twice, which is once more than I mean to."
-  characters: [ Character.frodo_baggins, Character.samwise_gamgee ]
   position: 0
 
 # A title-only element: the Scene exists and the block is still a blank page.
@@ -46,13 +44,11 @@
   body: "The house is lit from inside, and the water is loud, and no one comes to the door."
   position: 0
 
-# Four speakers in one block, and none of the four says a line the others do not:
-# the link records the conversation, not the turns.
+# Four speakers in one block, each line attributed to the Character who says it.
 - scene: Scene.the-council-of-elrond
   name: "The ring goes to a hobbit"
   kind: dialogue
   body: "I will take it. All of it. Set a bearer, the council says, and no one looks at the hobbit."
-  characters: [ Character.gandalf_the_grey, Character.aragorn, Character.legolas, Character.gimli ]
   position: 1
 
 - scene: Scene.the-council-of-elrond

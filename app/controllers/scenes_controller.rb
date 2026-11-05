@@ -222,11 +222,11 @@ class ScenesController < ApplicationController
     @plot_options = @story.plots.order(:name, :id).to_a
   end
 
-  # The ordered Element list and the speaker picker that fills a Dialogue. Both
-  # are preloaded here: every row shows its Element's speakers, so a page that
-  # queried per Element would be a query per row.
+  # The ordered Element list and the Character choices the turn editor and the
+  # point-of-view field use. Each Element's turns are preloaded here, so a page
+  # that queried per Element would be a query per row.
   def set_element_data
-    @scene_elements = @scene.scene_elements.includes(:characters, scene_dialogue_turns: :speaker)
+    @scene_elements = @scene.scene_elements.includes(scene_dialogue_turns: :speaker)
       .reorder(:position, :id).to_a
     @element_total = @scene_elements.size
     @character_options = Current.universe.characters.reorder(:name, :id).to_a
@@ -261,8 +261,8 @@ class ScenesController < ApplicationController
   end
 
   def scene_params
-    params.expect(scene: [ *photo_params, :name, :description, :status, :section_id, :datetime, :pov_character_id,
-      { scene_tag_ids: [], plot_ids: [] } ])
+    params.expect(scene: [ *photo_params, :name, :description, :drafting_contract, :status, :section_id, :datetime,
+      :pov_character_id, { scene_tag_ids: [], plot_ids: [] } ])
   end
 
   def move_direction

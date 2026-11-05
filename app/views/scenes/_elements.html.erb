@@ -66,6 +66,7 @@
                     <i class="bi <%= element.dialogue? ? "bi-chat-quote" : "bi-text-paragraph" %>" aria-hidden="true"></i>
                     <%= scene_element_kind_label(element) %>
                   </span>
+                  <span class="small text-body-secondary"><%= scene_element_length_label(element) %></span>
                 </div>
 
                 <% if element.body.present? %>
@@ -75,11 +76,6 @@
                   <div class="entity-description text-body-secondary"><%= t("scenes.elements.no_content") %></div>
                 <% end %>
 
-                <% if element.dialogue? %>
-                  <div class="form-text">
-                    <%= scene_element_speaker_note(element) %>
-                  </div>
-                <% end %>
               </div>
 
               <% if editable %>
@@ -154,7 +150,7 @@
       aria-labelledby="scene-element-modal-title"
       aria-hidden="true"
       data-modal-form-target="modal">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h2 class="modal-title fs-5" id="scene-element-modal-title" data-modal-form-target="title"><%= t("scenes.elements.add") %></h2>
@@ -177,6 +173,12 @@
               <%= render "shared/modal_errors" %>
 
               <div class="mb-3">
+                <%= form.label :name, t("scenes.elements.form.name"), class: "form-label" %>
+                <%= form.text_field :name, class: "form-control", required: true %>
+                <div class="form-text"><%= t("scenes.elements.form.name_hint") %></div>
+              </div>
+
+              <div class="mb-3">
                 <%= form.label :kind, t("scenes.elements.form.kind"), class: "form-label" %>
                 <%= form.select :kind, scene_element_kind_options, {},
                   class: "form-select",
@@ -190,34 +192,10 @@
                 </div>
               </div>
 
-              <div class="mb-3">
-                <%= form.label :name, t("scenes.elements.form.name"), class: "form-label" %>
-                <%= form.text_field :name, class: "form-control", required: true %>
-                <div class="form-text"><%= t("scenes.elements.form.name_hint") %></div>
-              </div>
-
-              <div class="mb-3">
+              <div class="mb-3" data-scene-element-form-target="body">
                 <%= form.label :body, t("scenes.elements.form.body"), class: "form-label" %>
                 <%= form.text_area :body, class: "form-control", rows: 5 %>
                 <div class="form-text"><%= t("scenes.elements.form.body_hint") %></div>
-              </div>
-
-              <fieldset class="mb-3" data-scene-element-form-target="speakers">
-                <legend class="h6"><%= t("scenes.elements.form.speakers") %></legend>
-                <%= form.label :character_ids, t("scenes.elements.form.speakers"), class: "form-label" %>
-                <%= form.select :character_ids, scene_element_speaker_choices(@character_options),
-                  { include_hidden: true },
-                  multiple: true, class: "form-select", size: [ @character_options.size, 6 ].min.clamp(2, 6),
-                  data: { scene_element_form_target: "speakerPicker" } %>
-                <div class="form-text"><%= t("scenes.elements.form.speakers_hint") %></div>
-              </fieldset>
-
-              <div class="form-check mb-3" data-scene-element-form-target="removeSpeakers" hidden>
-                <%= check_box_tag "scene_element[remove_speakers]", "1", false,
-                  class: "form-check-input", id: "scene_element_remove_speakers" %>
-                <%= label_tag "scene_element_remove_speakers",
-                  t("scenes.elements.form.remove_speakers"), class: "form-check-label" %>
-                <div class="form-text"><%= t("scenes.elements.form.remove_speakers_hint") %></div>
               </div>
 
               <h3 class="h6" data-scene-turns-target="turnsHeading" hidden>
@@ -231,7 +209,7 @@
               <p data-scene-turns-target="saveFirst" class="text-body-secondary small mb-3" hidden>
                 <%= t("scenes.elements.dialogue_turns.save_element_first") %>
               </p>
-              <div class="row g-2 mb-3">
+              <div class="row g-2 mb-3" data-scene-turns-target="entryFields">
                 <div class="col-md-4">
                   <label for="scene_dialogue_turn_speaker" class="form-label"><%= t("scenes.elements.dialogue_turns.form.speaker") %></label>
                   <select id="scene_dialogue_turn_speaker" data-scene-turns-target="speakerSelect" class="form-select"></select>

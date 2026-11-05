@@ -1,17 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Narration cannot keep speakers and a Dialogue must name at least one, so the
-// speaker picker and the confirmation that removes speakers are the same
-// decision seen from two sides. This controller only shows which of them
-// applies: the server is what enforces the rule, and it refuses a Narration
-// that still has speakers unless the request carries the explicit confirmation.
+// The two Scene Element kinds write their prose in different places: a Narration
+// keeps it in Content, while a Dialogue keeps it in its ordered turns. This
+// controller only shows the control the chosen kind uses; the server is what
+// enforces that a Narration cannot keep turns, and the turn editor refuses to
+// add one until the element is a saved Dialogue.
 //
-// The picker is hidden rather than disabled, so a hidden selection is still
-// submitted and the server can see that there is something to confirm. A modal
-// that has not opened yet is left in the state the server rendered, so the page
-// is correct without scripting.
+// A modal that has not opened yet is left in the state the server rendered, so
+// the page is correct without scripting.
 export default class extends Controller {
-  static targets = [ "kind", "kindDescription", "speakers", "speakerPicker", "removeSpeakers" ]
+  static targets = [ "kind", "kindDescription", "body" ]
   static values = { descriptions: Object }
 
   connect() {
@@ -28,12 +26,8 @@ export default class extends Controller {
   sync() {
     const kind = this.kindTarget.value
     const dialogue = kind === "dialogue"
-    const hasSpeakers = [ ...this.speakerPickerTarget.selectedOptions ].length > 0
 
-    this.speakersTarget.hidden = !dialogue
-    // Only offered when switching a Dialogue that has speakers to Narration:
-    // without speakers there is nothing to confirm.
-    this.removeSpeakersTarget.hidden = dialogue || !hasSpeakers
+    this.bodyTarget.hidden = dialogue
     this.kindDescriptionTarget.textContent = this.descriptionsValue[kind] || ""
   }
 }

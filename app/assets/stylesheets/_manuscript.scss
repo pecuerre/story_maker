@@ -118,32 +118,26 @@
   margin-bottom: 1rem;
 }
 
+// A spoken line reads as a hyphenated line of the book, not as a cast entry:
+// the speaker's name is set in italics before a colon. A wrapped line hangs
+// one em in, so its continuation sits under the speech rather than the hyphen.
 .manuscript-turn {
-  margin-bottom: .75rem;
+  margin-bottom: .5rem;
+  padding-left: 1rem;
+  text-indent: -1rem;
 }
 
 .manuscript-speaker {
-  display: block;
-  font-size: .8125rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  font-weight: 600;
+  font-style: italic;
 }
 
 .manuscript-parenthetical {
-  font-weight: 400;
   font-style: italic;
-  letter-spacing: 0;
-  text-transform: none;
 }
 
 .manuscript-line {
-  display: block;
-}
-
-.manuscript-attribution {
-  color: var(--bs-secondary-color);
-  font-style: italic;
+  font-style: normal;
 }
 
 .manuscript-appendix {
@@ -154,24 +148,44 @@
 
 .manuscript-appendix-category {
   margin-bottom: 2rem;
-  break-inside: avoid;
 }
 
 .manuscript-appendix-title {
   margin-bottom: .75rem;
 }
 
+// An entry may carry a whole Markdown profile, so the list cannot promise to
+// keep itself on one page; a heading is kept with the text it introduces
+// instead.
 .manuscript-appendix-list li {
-  margin-bottom: .5rem;
+  margin-bottom: 1.5rem;
 }
 
 .manuscript-appendix-name {
+  margin-bottom: .5rem;
+  font-size: 1rem;
   font-weight: 600;
+  break-after: avoid;
 }
 
 .manuscript-appendix-summary {
-  display: block;
+  margin-bottom: 0;
   color: var(--bs-secondary-color);
+}
+
+// A description's headings are demoted below the entry's own `h4`, so they
+// render as `h5` or `h6`. Bootstrap's sizes for those are workspace small
+// print, too small for a book's section heading.
+.manuscript-appendix-description h5,
+.manuscript-appendix-description h6 {
+  margin-top: 1rem;
+  margin-bottom: .5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.manuscript-appendix-description > :last-child {
+  margin-bottom: 0;
 }
 
 @media print {

@@ -60,6 +60,11 @@ export default class extends Controller {
       // focused, instead of the first-field focus of a modal that has only just
       // become visible stealing it back.
       if (this.hasErrorsTarget && !this.errorsTarget.hidden) return
+      // The reader may already be inside the form: a field clicked while the
+      // dialog was still fading in keeps focus. Moving it to the first field
+      // would close a native select's popup mid-gesture, and the browser can
+      // commit whichever option sat under the pointer when it closed.
+      if (this.formTarget.contains(document.activeElement)) return
       this.focusFirstField()
     }
     this.handleHidden = () => {
@@ -71,12 +76,15 @@ export default class extends Controller {
     }
     this.modalTarget.addEventListener("shown.bs.modal", this.handleShown)
     this.modalTarget.addEventListener("hidden.bs.modal", this.handleHidden)
+    this.handleShow = () => this.claimFocusTrap()
+    this.modalTarget.addEventListener("show.bs.modal", this.handleShow)
     this.deferDismissWhileOpening()
   }
 
   disconnect() {
     this.modalTarget?.removeEventListener("shown.bs.modal", this.handleShown)
     this.modalTarget?.removeEventListener("hidden.bs.modal", this.handleHidden)
+    this.modalTarget?.removeEventListener("show.bs.modal", this.handleShow)
     this.modal?.dispose()
     this.modal = null
   }
@@ -170,6 +178,20 @@ export default class extends Controller {
     )
 
     this.modal.show()
+  }
+
+  // Bootstrap activates its focus trap only when the opening transition ends,
+  // and activation focuses the dialog itself. A reader who reaches into the form
+  // during that fade — clicking the character select, say — would have focus
+  // pulled off the control mid-gesture: the native popup closes and can commit
+  // whatever option was under the pointer. Activating the trap here, as the
+  // opening starts, makes Bootstrap's own activation a no-op, so nothing takes
+  // focus from a field the reader has already claimed.
+  //
+  // `_focustrap` is the instance field Bootstrap's `Modal` keeps its focus trap
+  // on; a build without it keeps the old behaviour rather than throwing.
+  claimFocusTrap() {
+    this.modal?._focustrap?.activate()
   }
 
   // One form serves every row, so a select that must not offer the record being

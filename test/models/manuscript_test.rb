@@ -122,11 +122,17 @@ class ManuscriptTest < ActiveSupport::TestCase
 
     character_appendix = appendices.first
     assert_equal :name, character_appendix.label_method
-    assert_equal :summary, character_appendix.summary_method
+    assert_equal :summary, character_appendix.text_method
+    refute character_appendix.markdown?
     assert_includes character_appendix.records, characters(:character_three)
+
+    assert_equal %i[description description], appendices[1..2].map(&:text_method)
+    assert appendices[1..2].all?(&:markdown?), "a Location and an Item print their Markdown profile"
 
     event_appendix = appendices.last
     assert_equal :display_label, event_appendix.label_method
+    assert_equal :description, event_appendix.text_method
+    refute event_appendix.markdown?, "an Event's description is plain text"
     assert_includes event_appendix.records, events(:event_one)
     assert_not_includes event_appendix.records, events(:event_other_universe)
   end

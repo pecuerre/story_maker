@@ -449,7 +449,9 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Scene one"
-    assert_includes response.body, "The first scene of the story"
+    # The short description stays on the record and in the editor, but Scene
+    # Details no longer prints it.
+    refute_includes response.body, "The first scene of the story"
     assert_includes response.body, "Scene 1 of 3 in the order Story One is told"
     assert_select ".page-eyebrow", text: "Status"
     assert_select ".badge", text: "Final"
@@ -541,7 +543,7 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "scene details lists the ordered elements with their kind and speakers" do
+  test "scene details lists the ordered elements with their kind and measure" do
     get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
     assert_response :success
@@ -553,8 +555,10 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     end
     assert_select ".scene-elements .badge", text: /Narration/
     assert_select ".scene-elements .badge", text: /Dialogue/
-    assert_includes response.body, "Character one and Character two speak in this block"
-    assert_includes response.body, "not which line belongs to whom"
+    # A Narration reports its stored word count and a Dialogue the number of
+    # spoken lines it holds.
+    assert_select ".scene-elements .entity-row", text: /The hollow tree.*Narration.*16 words/m
+    assert_select ".scene-elements .entity-row", text: /Michael teaches the waltz.*Dialogue.*2 lines/m
     # A content-free element says so rather than showing an empty box.
     assert_includes response.body, "No content yet"
   end
@@ -570,7 +574,6 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='scene_element[kind]'] option[value=?]", "dialogue", text: "Dialogue"
     assert_select "input[name='scene_element[name]'][required]"
     assert_select "textarea[name='scene_element[body]']"
-    assert_select "select[name='scene_element[character_ids][]'][multiple]"
     assert_select "[data-modal-form-target='errors']", 1
 
     sign_out
@@ -612,7 +615,7 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     # Scene one has four elements and three participants: two are both linked and
-    # roster speakers, while a third is attributed by a turn. The other
+    # turn speakers, while a third is attributed by a turn. The other
     # two scenes have neither, and still say so on their own row.
     assert_select ".entity-row .badge[aria-label=?]", "4 elements", count: 1
     assert_select ".entity-row .badge[aria-label=?]", "3 characters taking part", count: 1
@@ -626,8 +629,8 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
 
     assert_response :success
-    # Removing Character one's stored link does not remove either speaker source;
-    # the roster still names characters one and two, and the turn names character three.
+    # Removing Character one's stored link does not remove its turn; the turns
+    # still name characters one and three, and character_two remains linked.
     assert_select ".entity-row .badge[aria-label=?]", "3 characters taking part", count: 1
   end
 
@@ -648,7 +651,8 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Private scene"
-    assert_includes response.body, "Only members see this"
+    # The description stays on the record but is not printed on Details.
+    refute_includes response.body, "Only members see this"
     assert_select "form[action=?]", universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene), count: 0
     assert_select "a[href=?]", edit_universe_story_scene_path(universe_slug: universe.slug, story_id: story, id: scene), count: 0
   end
@@ -883,6 +887,30 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=datetime-local][name='scene[datetime]'][value=?]", "not-a-datetime"
   end
 
+  test "scene details and editor carry the drafting contract" do
+    @scene.update!(drafting_contract: "- one place.\n- one beat of time.")
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select ".scene-drafting-contract h2", text: "Drafting contract"
+    assert_includes response.body, "one beat of time"
+    # It closes the page, after the ordered Elements.
+    assert_operator response.body.index("scene-drafting-contract"), :>, response.body.index("scene-elements")
+
+    get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select "textarea[name='scene[drafting_contract]']", text: /one beat of time/
+  end
+
+  test "scene details states when a scene has no drafting contract" do
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
+
+    assert_response :success
+    assert_includes response.body, "No drafting contract recorded yet."
+  end
+
   test "should get edit" do
     get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
@@ -899,12 +927,13 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
 
   test "should update scene and redirect" do
     patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
-      params: { scene: { name: "Renamed scene", description: "Updated summary", status: "revised" } }
+      params: { scene: { name: "Renamed scene", description: "Updated summary", drafting_contract: "- one place.",
+        status: "revised" } }
 
     assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
     @scene.reload
-    assert_equal [ "Renamed scene", "Updated summary", "revised" ],
-      [ @scene.name, @scene.description, @scene.status ]
+    assert_equal [ "Renamed scene", "Updated summary", "- one place.", "revised" ],
+      [ @scene.name, @scene.description, @scene.drafting_contract, @scene.status ]
   end
 
   test "update cannot move a scene and re-renders errors instead" do

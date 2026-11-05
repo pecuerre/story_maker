@@ -560,6 +560,55 @@ describe("taxonomy editor dismiss", () => {
   })
 })
 
+// The editor opens with the same fade as the flat-list modal, and a field the
+// reader reached during it used to lose focus when the fade ended: a native
+// select's popup closes and can commit the option under the pointer.
+describe("taxonomy editor opening focus", () => {
+  const nodeHtml = `
+    <ul class="taxonomy-list" data-drop-parent-id="">
+      <li class="taxonomy-node" data-node-id="1" data-name="Factions" data-update-url="/u/dark/character_tags/1" data-taxonomy-values='{"name":"Factions"}'>
+        <button type="button" data-action="taxonomy-tree#edit">Edit</button>
+      </li>
+    </ul>
+  `
+
+  function openEditor({ opens = true } = {}) {
+    const activations = []
+    class FakeModal {
+      constructor(element) {
+        this.element = element
+        this._focustrap = { activate: () => activations.push(true) }
+      }
+      show() {
+        if (opens) this.element.dispatchEvent(new Event("show.bs.modal"))
+      }
+      hide() {}
+    }
+    globalThis.window.bootstrap = { Modal: FakeModal }
+
+    const { controller, host } = build({
+      elementHtml: nodeHtml,
+      modalFields: [ { name: "name", label: "Name", type: "text", required: true } ]
+    })
+    controller.edit({ preventDefault() {}, currentTarget: host.querySelector("[data-action='taxonomy-tree#edit']") })
+    return { controller, activations }
+  }
+
+  test("claims the focus trap as the editor starts opening, before Bootstrap would", () => {
+    const { activations } = openEditor()
+
+    expect(activations).toHaveLength(1)
+  })
+
+  test("an opening Bootstrap refuses claims nothing", () => {
+    const { activations } = openEditor({ opens: false })
+
+    // `show()` returns while the instance is still transitioning; a trap
+    // claimed then would take focus into a dialog on its way out.
+    expect(activations).toHaveLength(0)
+  })
+})
+
 describe("taxonomy announcements", () => {
   test("a failure is visible and a progress note is not", () => {
     const { controller, host } = build({ elementHtml: '<div data-taxonomy-tree-status></div>' })

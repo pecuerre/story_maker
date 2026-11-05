@@ -144,8 +144,9 @@ then the sections that follow it:
   the review queue's reason, since it moves on the very request that ran an apply. Both of its rows
   are the ones `drafts/_change` already renders, and its day heading is the draft's `closed_at` rather
   than a change's own `created_at`, which is when it was first remembered and can be days earlier.
-- **Collaborators**: who has changed this universe, each with the number of changes they remembered,
-  and a per-person page that is the change history above narrowed to that author — the same
+- **Collaborators**: who has changed this universe, each with the number of changes they remembered
+  and their share of every change remembered here, and a per-person page that is the change history
+  above narrowed to that author — the same
   `histories/_day` grouping and the same `drafts/_change` rows, with the author's own name omitted
   because the page's heading is already that name. It shares the history's two gates: **admin**,
   because the list names every author who has closed a draft here, and a draft-based collaboration

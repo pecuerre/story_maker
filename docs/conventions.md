@@ -745,7 +745,13 @@ own figure has to count **changes**, and one page would have to be right about b
 per-person lookup is scoped through the universe's closed drafts, so "has not collaborated here" and
 "does not exist" are one **404** rather than an empty page confirming that a user id is somebody's at
 all. `Collaborators` is the query object behind both pages and its sidebar figure: two grouped counts
-and one load of the names, never an author resolved per row.
+and one load of the names, never an author resolved per row. Each entry also carries its
+**whole-number percentage** of the universe's remembered changes. That rounding is done across the
+list rather than one row at a time, so the displayed shares add up to 100 whenever there is a change
+to divide; three equal authors print 34%, 33%, and 33%, not 33% three times. A universe whose closed
+drafts remember nothing divides no changes and shows 0% for everyone. A tie for the leftover point
+stays in the list's own order — most changes first, then name — so a reload does not reshuffle the
+shares.
 
 **Both drafts pages carry the workflow in three steps.** `drafts/_workflow_guide` renders
 `drafts.guide` on the list and on a draft, because those two pages are one place in this workflow: the
@@ -1604,7 +1610,10 @@ subsystems it shares helpers and Stimulus controllers with.
   editor does the same on its own instance: Bootstrap's `hide()` returns without doing anything while
   the instance is transitioning in, and the `btn-close` button, the footer's **Cancel**, Escape, and a
   backdrop click all resolve to the one instance each controller owns. Wrapping `hide()` covers all
-  four triggers at once, so no editor has to be dismissed twice.
+  four triggers at once, so no editor has to be dismissed twice. **Both editors' openings claim the
+  focus trap before Bootstrap does**, because the trap's own activation at the end of the fade focuses
+  the dialog: that would close a native select's popup mid-gesture and can commit an option nobody
+  chose. The flat-list editor also leaves alone a control the reader already reached during the fade.
 - `photo_crop_controller.js` — the square photo editor, which serves all three page patterns from one
   implementation. It is described in [features/photos.md](features/photos.md), including the rule
   that it must stay a **named** class export.

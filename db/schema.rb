@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_03_090000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -471,6 +471,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "short_summary"
     t.index ["deleted_at"], name: "index_plots_on_deleted_at"
     t.index ["story_id", "name"], name: "index_plots_on_live_story_and_name", unique: true, where: "deleted_at IS NULL"
     t.index ["story_id", "slug"], name: "index_plots_on_live_story_and_slug", unique: true, where: "deleted_at IS NULL"
@@ -599,14 +600,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.index ["speaker_id"], name: "index_scene_dialogue_turns_on_speaker_id"
   end
 
-  create_table "scene_element_speakers", id: false, force: :cascade do |t|
-    t.integer "scene_element_id", null: false
-    t.integer "character_id", null: false
-    t.index ["character_id"], name: "index_scene_element_speakers_on_character_id"
-    t.index ["scene_element_id", "character_id"], name: "index_scene_element_speakers_on_element_and_character", unique: true
-    t.index ["scene_element_id"], name: "index_scene_element_speakers_on_scene_element_id"
-  end
-
   create_table "scene_elements", force: :cascade do |t|
     t.integer "scene_id", null: false
     t.string "kind", default: "narration", null: false
@@ -704,6 +697,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.integer "photo_id"
     t.integer "pov_character_id"
     t.string "status", default: "draft", null: false
+    t.text "drafting_contract"
     t.index ["photo_id"], name: "index_scenes_on_photo_id"
     t.index ["pov_character_id"], name: "index_scenes_on_pov_character_id"
     t.index ["section_id"], name: "index_scenes_on_section_id"
@@ -951,8 +945,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
   add_foreign_key "scene_characters", "scenes"
   add_foreign_key "scene_dialogue_turns", "characters", column: "speaker_id"
   add_foreign_key "scene_dialogue_turns", "scene_elements"
-  add_foreign_key "scene_element_speakers", "characters"
-  add_foreign_key "scene_element_speakers", "scene_elements"
   add_foreign_key "scene_elements", "scenes"
   add_foreign_key "scene_events", "events"
   add_foreign_key "scene_events", "scenes"

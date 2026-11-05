@@ -77,7 +77,6 @@ module UniverseBackup
       "ownerships_ownership_tags" => "ownership_id",
       "plots_scenes" => "plot_id",
       "relations_relation_tags" => "relation_id",
-      "scene_element_speakers" => "scene_element_id",
       "scenes_scene_tags" => "scene_id",
       "sections_section_tags" => "section_id"
     }.freeze

@@ -35,8 +35,15 @@ class Manuscript
   # this object is built before the request's locale is known to it, the record
   # method that names each entry, and the record method whose text the appendix
   # prints beside that name. An Event's own label is `display_label` because a
-  # date-only Event has no title to print.
-  Appendix = Struct.new(:label_key, :records, :label_method, :summary_method, keyword_init: true)
+  # date-only Event has no title to print. A Character prints its one-line
+  # summary, and the other categories print the record's full profile, which is
+  # Markdown for a Location or an Item and plain text for an Event; the
+  # `markdown` flag is what the printable page reads to choose the rendering.
+  Appendix = Struct.new(:label_key, :records, :label_method, :text_method, :markdown, keyword_init: true) do
+    def markdown?
+      markdown
+    end
+  end
 
   attr_reader :story, :scope
 
@@ -120,9 +127,7 @@ class Manuscript
     @participant_ids ||= {}
     @participant_ids[scene.id] ||= begin
       links = scene.scene_characters.map(&:character_id)
-      speakers = scene.scene_elements.flat_map do |element|
-        element.characters.map(&:id) + element.scene_dialogue_turns.map(&:speaker_id)
-      end
+      speakers = scene.scene_elements.flat_map { |element| element.scene_dialogue_turns.map(&:speaker_id) }
 
       (links + speakers).uniq.to_set
     end
@@ -137,13 +142,13 @@ class Manuscript
     @appendices = if bible?
       [
         Appendix.new(label_key: "characters.title", records: universe.characters.reorder(:name, :id).to_a,
-          label_method: :name, summary_method: :summary),
+          label_method: :name, text_method: :summary, markdown: false),
         Appendix.new(label_key: "locations.title", records: universe.locations.reorder(:name, :id).to_a,
-          label_method: :name, summary_method: :description),
+          label_method: :name, text_method: :description, markdown: true),
         Appendix.new(label_key: "items.title", records: universe.items.reorder(:name, :id).to_a,
-          label_method: :name, summary_method: :description),
+          label_method: :name, text_method: :description, markdown: true),
         Appendix.new(label_key: "events.title", records: universe.events.reorder(:name, :id).to_a,
-          label_method: :display_label, summary_method: :description)
+          label_method: :display_label, text_method: :description, markdown: false)
       ].reject { |appendix| appendix.records.empty? }
     else
       []
@@ -167,7 +172,7 @@ class Manuscript
           { scene_items: :item },
           { scene_locations: :location },
           { scene_events: :event },
-          { scene_elements: [ :characters, { scene_dialogue_turns: :speaker } ] }
+          { scene_elements: { scene_dialogue_turns: :speaker } }
         )
       relation = relation.where(status: Scene::FINAL_STATUS) if final_only?
       relation.reorder(:position, :id).to_a

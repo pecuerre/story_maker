@@ -214,6 +214,7 @@ export default class extends Controller {
     this.openingEditor = true
     this.dismissEditorOnShow = false
     this.deferEditorDismissWhileOpening()
+    modal.addEventListener("show.bs.modal", () => this.claimFocusTrap())
     modal.addEventListener("hidden.bs.modal", () => {
       modal.querySelectorAll("select[multiple]").forEach((select) => {
         select.tomselect?.destroy()
@@ -258,6 +259,18 @@ export default class extends Controller {
       }
       this.dismissEditorOnShow = true
     }
+  }
+
+  // Bootstrap activates its focus trap only when the opening transition ends,
+  // and activation focuses the dialog itself. A reader who reaches into the form
+  // during that fade — clicking a select, say — would have focus pulled off the
+  // control mid-gesture: the native popup closes and can commit whatever option
+  // was under the pointer. Activating the trap as the opening starts makes
+  // Bootstrap's own activation a no-op, so nothing takes focus from a field the
+  // reader has already claimed. `_focustrap` is the instance field Bootstrap's
+  // `Modal` keeps its focus trap on; a build without it keeps the old behaviour.
+  claimFocusTrap() {
+    this.modal?._focustrap?.activate()
   }
 
   buildModal(node) {

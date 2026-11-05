@@ -38,15 +38,56 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-05
+
+### fixed
+
+- **Modal editor focus.** A field clicked while a record or taxonomy editor is still opening keeps focus, so a character select no longer closes instantly and commits an option the reader did not choose.
+
+## 2026-11-03
+
+### added
+
+- **Collaborator share.** Each row on the admin-only Collaborators page also prints the person's whole-number percentage of the changes remembered in the universe, rounded so the displayed shares add up to 100.
+
+### changed
+
+- **Export page opens a new tab.** The printable manuscript opens in a new tab from the export options, which keeps the scope choice beside the document.
+- **Hyphenated dialogue lines.** A manuscript dialogue turn prints as a hyphenated line with an italic speaker and a colon, instead of a speaker label above the speech.
+- **Dialogue speakers removed.** A Dialogue's cast is now derived from its ordered turns, the block-level speaker roster and its join table are gone, and an empty Dialogue is valid.
+- **Scene element editor order and labels.** The modal reads Title before Scene element type, hides Content for a Dialogue and the turn fields for a Narration, and is wider.
+- **Dialogue turn rows.** A turn now reads as `speaker: line (delivery note)` with icon-only actions at the right edge, instead of wrapping across separate columns.
+
+### fixed
+
+- **Printable appendix references.** The bible appendix renders a record's Markdown profile with its headings demoted under the entry, and a `[[kind:slug]]` reference reads as the record's name with no link.
+- **Add dialogue turn.** Adding a turn no longer closes the modal: a stored turn joins the open list, and a draft-based Universe appends a clearly badged pending row.
+
+### docs
+
+- **Scene dialogue documentation.** The Scene, data model, interchange, export, appearance, backup, and development documents describe turns as the Dialogue's whole cast.
+
 ## 2026-11-02
 
 ### added
 
+- **Scene drafting contract.** A Scene has an optional `drafting_contract` note, shown on Scene Details, editable in the Scene editor, carried by the Scene API, and filled by a story interchange import from the scene file's closing `DRAFTING CONTRACT` comment.
+- **Plot short summary.** A Plot has an optional `short_summary` shown as plain text in the Plots list, editable in its shared modal, and carried by the JSON API; the Plot details page gains an Edit plot control that opens that modal.
 - **Item short summary.** An Item now has a one-line short summary shown as a plain-text list row and at the top of its Details page, and its search body and JSON API carry it.
 
 ### changed
 
+- **Scene details layout.** The short description is hidden on Scene Details, the drafting contract closes the page below the Elements, and each Element row states a Narration's word count or a Dialogue's line count.
+- **Scene element editor.** The modal is wider and hides the control the chosen kind does not use: Content for a Dialogue and the turn entry fields for a Narration.
+- **Story interchange scenes.** The import now reads the source's `#` title and alternating `## Narration`/`## Dialog` blocks, writing one Element per block and a dialogue turn per `@[[character:slug]]` line; chapter and sequence come from the path, and `id` is the backlog item.
+- **Story interchange plots.** Plot frontmatter now keeps only `name` and `slug`; `Short summary` writes the new column, and the identity block and every other section become one Markdown description.
+- **Plot details prose.** The Plot details page renders its description as Markdown with section headings and record links, and the Plots list no longer prints the long description.
 - **Item editor layout.** The Item modal is now wide and scrollable like the Faction one, and reads name, tags, photo, short summary, and description in that order.
+
+### docs
+
+- **Scene import documentation.** The interchange and Scene documents describe the narration/dialog blocks, dialogue speakers, path-based chapter and sequence, and the new drafting contract.
+- **Plot documentation.** The interchange and Plot documents describe the summary/description split and the details-page editor control.
 
 ## 2026-11-01
 
@@ -68,6 +109,7 @@ Labels used below, in the order their groups appear:
 
 ### fixed
 
+- **Scene dialogue turn editor.** Add turn appends the saved line to the open modal instead of closing it, keeping the editor open for the next line; a remembered draft change still refreshes the page.
 - **Scrollable modal footers.** A modal whose body and footer sit inside a server-rendered form now keeps its footer visible, because the form shrinks around the scrolling body instead of pushing the actions past the dialog.
 - **Duplicated photo control.** A photo field that reconnects, such as on a restored Turbo snapshot, rebuilds its input, preview, and Remove box in place instead of showing a second one.
 - **Canon error summary subject.** A rejected canon save no longer reads "this this canon rule" in English, because the shared sentence already supplies the "this".

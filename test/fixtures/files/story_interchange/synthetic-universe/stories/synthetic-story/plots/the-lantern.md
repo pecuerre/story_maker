@@ -1,13 +1,20 @@
 ---
 name: The lantern
 slug: the-lantern
-type: "arc"
-status: "open"
-owner_pov: "ada"
-opened_in: B-001
 ---
 
 # The lantern
+
+## Short summary
+
+Can Ada reach the hall before the light fails?
+
+## Information
+
+- Type: arc
+- Status: open
+- Owner POV: [[character:ada]]
+- Opened in: B-001
 
 ## The question
 

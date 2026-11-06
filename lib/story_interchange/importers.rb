@@ -8,12 +8,14 @@ module StoryInterchange
   # when a slice in this list owns the target's kind. It also orders the writes
   # themselves: Factions runs before Characters because a Character's
   # `[[faction:slug]]` affiliation becomes a membership of a record that must
-  # already exist.
+  # already exist, and Relations runs after Characters because every edge links
+  # records that must already exist.
   module Importers
     ALL = [
       Canon,
       Factions,
       Characters,
+      Relations,
       Locations,
       Items,
       Stories,

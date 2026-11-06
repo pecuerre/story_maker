@@ -1,6 +1,8 @@
 - universe: Universe.lotr
   name: Fellowship of the Ring
   slug: fellowship-of-the-ring
+  bgcolor: "#ffc107"
+  fgcolor: "#000000"
   summary: Carry the One Ring to Mount Doom and destroy it.
   description: |
     ## Actual aims
@@ -31,6 +33,8 @@
 - universe: Universe.lotr
   name: White Council
   slug: white-council
+  bgcolor: "#0d6efd"
+  fgcolor: "#ffffff"
   summary: Resist the return of the Shadow in Middle-earth.
   description: |
     ## Actual aims

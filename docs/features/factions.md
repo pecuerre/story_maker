@@ -7,12 +7,18 @@ taxonomy workflow; the schema is summarized in [data_model.md](../data_model.md)
 ## Scope and profile
 
 A Faction belongs directly to one Universe and is shared by all of that Universe's Stories. It has a
-required `name`, a `slug` generated from the name, and two optional profile fields:
+required `name`, a `slug` generated from the name, two optional profile fields, and two required
+colors:
 
 | Field | What it records |
 |---|---|
 | `summary` | One line shown in the Faction list and at the top of its details page; plain text, references included |
 | `description` | The full profile, written in Markdown |
+| `bgcolor` | A `#rrggbb` color; it paints the Faction's dotted links on the Character network |
+| `fgcolor` | A `#rrggbb` color stored for future use; currently not painted |
+
+The colors default to `#d3d3d3` and `#000000`. `HasColor` validates both as `#rrggbb`. The Character
+network chooses the first Faction by name then id when a pair belongs to several.
 
 The description is stored as Markdown and rendered on the details page: `##` becomes a heading,
 `**text**` becomes bold, and lists, tables, fenced code, and blockquotes keep their written form. The
@@ -29,8 +35,8 @@ records; they do not have `parent_id` or `position`.
 
 Factions are managed at `/u/:universe_slug/factions`, with a list, a modal editor, and a read-only
 details page at `/u/:universe_slug/factions/:id`. Create, edit, and delete use the JSON modal contract.
-The editor presents its fields in that reading order after the name — tags, photo, short summary,
-description — in the same wide, scrollable modal the other flat-list workspaces use. A writer's
+The editor presents its fields in that reading order after the name — colors, tags, photo, short
+summary, description — in the same wide, scrollable modal the other flat-list workspaces use. A writer's
 details page carries an **Edit faction** control that opens the same modal. Deletion is a soft
 delete, so restoring a Faction also restores its tag assignments. Factions carry the same optional
 Photo and Discussion support as other universe content.

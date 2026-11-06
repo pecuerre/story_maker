@@ -146,6 +146,27 @@ class StoryInterchangeTest < ActiveSupport::TestCase
       report.entity("ada").sections.find { |section| section.heading == "Short summary" }.body
   end
 
+  test "reads the slug before a relationship type on a character reference" do
+    replace("universe/characters/ada.md",
+      "## Relationships\n\n| Character | Dynamic | Leverage |\n|---|---|---|\n| — | — | — |",
+      "## Relationships\n\n- [[character:ada|type:boss]] - the same engineer, written from her own side.")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+  end
+
+  test "refuses an unknown slug before a relationship type" do
+    replace("universe/characters/ada.md",
+      "## Relationships\n\n| Character | Dynamic | Leverage |\n|---|---|---|\n| — | — | — |",
+      "## Relationships\n\n- [[character:nobody|type:boss]] - a missing record.")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/unknown record slug `nobody`/, errors(report))
+  end
+
   test "refuses a typed reference to a record of another kind" do
     replace("universe/characters/ada.md", "[[location:keep]]", "[[character:keep]]")
 
@@ -228,6 +249,27 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert_not report.valid?
     assert_match(/two `## Narration` blocks cannot sit next to each other/, errors(report))
+  end
+
+  test "accepts a dialogue turn that wraps across physical lines" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md",
+      '@[[character:ada]] "The gate is open."',
+      "@[[character:ada]] \"The gate is open,\nand the wick is low.\"")
+
+    report = validate
+
+    assert report.valid?, errors(report)
+  end
+
+  test "refuses a dialogue turn with no closing quote" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md",
+      '@[[character:ada]] "The gate is open."',
+      "@[[character:ada]] \"The gate is open.\n@gatekeeper \"It opens for the lantern.\"")
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/dialog turn has no closing quote/, errors(report))
   end
 
   test "refuses a scene section that is neither narration nor dialog" do

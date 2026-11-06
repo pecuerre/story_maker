@@ -156,6 +156,29 @@ class RelationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".entity-list .entity-row", count: 2
     assert_select ".entity-list .entity-title",
       text: "#{@character_one.name} — #{@relation_tag.name} → #{@character_two.name}"
+
+    badge = css_select(".entity-list .entity-title .taxonomy-tag").find do |candidate|
+      candidate.text == @relation_tag.name
+    end
+
+    assert badge, "the tag renders as its badge inside the sentence"
+    assert_includes badge["style"], "background-color: #d3d3d3"
+  end
+
+  test "index row uses the first tag by position as the colored verb" do
+    first = relation_tags(:relation_tag_one)
+    second = relation_tags(:relation_tag_two)
+    first.update!(position: 1)
+    second.update!(position: 0)
+    relations(:relation_one).update!(relation_tags: [ first, second ])
+
+    get universe_relations_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select ".entity-list .entity-title",
+      text: "#{@character_one.name} — #{second.name} → #{@character_two.name}"
+    assert_select ".entity-list .entity-title .taxonomy-tag[style*=?]",
+      "background-color: #{second.bgcolor}", text: second.name
   end
 
   test "index row renders the in-world date range as metadata" do

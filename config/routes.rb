@@ -151,6 +151,10 @@ Rails.application.routes.draw do
     resources :routes, only: %i[ index show create update destroy ]
     resources :character_tags, only: %i[ index show create update destroy ]
     resources :characters, only: %i[ index show create update destroy ]
+    # The Characters workspace's third tab. It is a read of the whole Universe
+    # rather than a record of its own, so it is a singular resource with only a
+    # `show`: no create, update, or destroy route exists for a derived graph.
+    resource :character_network, only: :show, path: "network", controller: "character_networks"
     resources :faction_tags, only: %i[ index show create update destroy ]
     resources :factions, only: %i[ index show create update destroy ]
     resources :faction_relationships, only: %i[ index show create update destroy ]

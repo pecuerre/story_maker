@@ -372,7 +372,10 @@ the same change, or `db:demo:check` fails.
   are admin-only. The taxonomy workspace is `GET /u/:universe_slug/tags`, with `scope=universe|story`
   and `taxonomy=character|faction|relation|location|event|item|ownership|section` query parameters;
   timeline and Map are single-page GETs (`timeline#index` and `maps#index`); the Map page's behavior is
-  in [features/map.md](features/map.md). `root` → `universes#index`; health check `/up`.
+  in [features/map.md](features/map.md). The Characters workspace's third tab is the read-only
+  Network at `/u/:universe_slug/network` (`character_networks#show`), a singular resource with no
+  mutation route; its rules are in [features/characters.md](features/characters.md#interaction-network).
+  `root` → `universes#index`; health check `/up`.
 - **Drafts are `index`/`show` plus three member POSTs and one nested `DELETE`**, mounted at
   `/u/:universe_slug/drafts`: `resources :drafts, only: %i[ index show ]` with `post :apply, on:
   :member`, `post :submit, on: :member`, `post :discard, on: :member`, and `resources :changes, only:
@@ -1419,7 +1422,9 @@ means the same thing in every workspace:
   next to a name is ambiguous in a list of many rows, so the label is part of the visible text and is
   therefore the pill's own accessible name. `record_count_text(count, label)` formats it and
   `record_count_badge(count, label)` wraps it in the pill, which is styled like the sidebar's
-  `.sidebar-count` pills;
+  `.sidebar-count` pills. A Relation row is the one row whose tag is the sentence's verb: its first
+  tag by `(position, id)` renders as that tag's colored badge between the two endpoint names, and an
+  untagged Relation falls back to `Character one → Character two`;
 - **right**: `record_details_link` — real navigation to that record's own page, rendered for read-only
   members and public guests too, labelled **Details** only, with the record name in its accessible
   name — followed by the action menu (`shared/_row_actions` for flat lists, the taxonomy row's own

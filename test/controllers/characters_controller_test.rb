@@ -32,6 +32,8 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
       universe_characters_path(universe_slug: @universe.slug)
     assert_select "nav.content-tabs a[href=?]",
       universe_relations_path(universe_slug: @universe.slug), text: "Relations"
+    assert_select "nav.content-tabs a[href=?]",
+      universe_character_network_path(universe_slug: @universe.slug), text: "Network"
   end
 
   # The filter, the sort, and the three ways this list can be empty. The value

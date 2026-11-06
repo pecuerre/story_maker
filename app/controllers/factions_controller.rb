@@ -66,7 +66,8 @@ class FactionsController < ApplicationController
   end
 
   def faction_params
-    params.expect(faction: [ *photo_params, :name, :summary, :description, { faction_tag_ids: [] } ])
+    params.expect(faction: [ *photo_params, :name, :summary, :description, :bgcolor, :fgcolor,
+      { faction_tag_ids: [] } ])
   end
 
   def faction_json
@@ -76,6 +77,8 @@ class FactionsController < ApplicationController
       slug: @faction.slug,
       summary: @faction.summary,
       description: @faction.description,
+      bgcolor: @faction.bgcolor,
+      fgcolor: @faction.fgcolor,
       faction_tag_ids: @faction.faction_tag_ids,
       url: universe_faction_path(id: @faction)
     }

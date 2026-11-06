@@ -1,4 +1,5 @@
 class Faction < ApplicationRecord
+  include HasColor
   include HasManyTags
   include HasSlug
   include HasPhoto

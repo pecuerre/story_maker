@@ -18,6 +18,9 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
       universe_faction_path(universe_slug: @universe.slug, id: @faction)
     assert_select "textarea[name='faction[summary]']"
     assert_select "textarea[name='faction[description]']"
+    assert_select "input[type=color][name='faction[bgcolor]'][value=?]", "#d3d3d3"
+    assert_select "input[type=color][name='faction[fgcolor]'][value=?]", "#000000"
+    assert_select "[data-modal-form-values-value*=?]", '"bgcolor":"#d3d3d3"'
     assert_select "select[name='faction[faction_tag_ids][]']"
     assert_select "nav.content-tabs a[href=?]", universe_factions_path(universe_slug: @universe.slug), text: "Factions"
     assert_select "nav.content-tabs a[href=?]",
@@ -29,6 +32,8 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
       name: "The Lantern Circle",
       summary: "Keep the roads safe",
       description: "## Actual aims\n\nControl the crossings",
+      bgcolor: "#123456",
+      fgcolor: "#ffffff",
       faction_tag_ids: [ @tag.id ]
     }
 
@@ -42,6 +47,8 @@ class FactionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ @tag.id ], faction.faction_tag_ids
     assert_equal "Keep the roads safe", response.parsed_body["summary"]
     assert_equal "## Actual aims\n\nControl the crossings", response.parsed_body["description"]
+    assert_equal "#123456", response.parsed_body["bgcolor"]
+    assert_equal "#ffffff", response.parsed_body["fgcolor"]
 
     patch universe_faction_url(universe_slug: @universe.slug, id: faction),
       params: { faction: { summary: "Guide travelers safely", faction_tag_ids: [ "" ] } }, as: :json

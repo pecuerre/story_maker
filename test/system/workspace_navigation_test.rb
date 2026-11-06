@@ -22,9 +22,10 @@ class WorkspaceNavigationTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Characters"
     assert_current_path universe_characters_path(universe_slug: universe.slug)
     within "nav[aria-label='Character workspace']" do
-      assert_selector "a", count: 3
+      assert_selector "a", count: 4
       assert_selector "a.active", text: "Characters"
       assert_selector "a", text: "Relations"
+      assert_selector "a", text: "Network"
       assert_selector "a", text: "Character tag one"
     end
 

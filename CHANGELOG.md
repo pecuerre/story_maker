@@ -38,10 +38,30 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-06
+
+### added
+
+- **Faction colors.** A Faction now has editable `bgcolor` and `fgcolor`, and the Character network paints its same-faction dotted links with the Faction's `bgcolor`.
+- **Faction links on the Network.** The Network tab draws same-faction Characters as dotted links by default, switchable off in the options bar, without changing any interaction score.
+- **Relation-tagged network lines.** A network edge takes the color of the pair's first tagged Relation, and the connections table repeats the tag badge so the color is not the only signal.
+- **Network unconnected toggle.** The Network tab can include Characters with no recorded connection, drawn as dashed rings in a band below the graph through a URL-backed control, and summarizes the connected count against the Universe's Character total.
+- **Character interaction network.** The Characters workspace's Network tab derives pairwise interaction from shared scenes, shared dialogue, and back-and-forth exchanges, drawing a force-directed SVG and a ranked table.
+
+### changed
+
+- **Network defaults and layout.** Unconnected Characters and faction links are on by default, every node shares one force layout with faction links as springs, and Characters with no interaction are no longer parked in a separate band.
+- **Colored Relation tags in the list.** A Relation row renders its first tag as the tag's colored badge inside the endpoint sentence instead of as plain text.
+
 ## 2026-11-05
+
+### added
+
+- **Story interchange relationships.** A character file's `## Relationships` bullets become Relations, with a Relation tag created for every `type:` the source names and one relation per character pair.
 
 ### fixed
 
+- **Wrapped scene dialogue.** A story interchange Scene dialogue turn now continues across physical lines until its closing quote, so a source that wraps spoken lines imports instead of failing validation.
 - **Modal editor focus.** A field clicked while a record or taxonomy editor is still opening keeps focus, so a character select no longer closes instantly and commits an option the reader did not choose.
 
 ## 2026-11-03

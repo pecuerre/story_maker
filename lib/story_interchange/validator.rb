@@ -17,10 +17,10 @@ module StoryInterchange
     SCENE_ID = /\AB-\d{3}\z/
     SCENE_BRANCH = /\A(?:main|fork of [A-Za-z0-9-]+-\d{2})\z/
     # A Scene's body alternates `## Narration` and `## Dialog` blocks. A Dialog
-    # line is one physical line: its speaker as `@[[character:slug]]` or a bare
-    # `@slug` for a speaker with no entity file, then the quoted line.
+    # turn starts with its speaker as `@[[character:slug]]` or a bare `@slug`
+    # for a speaker with no entity file, then the quoted line. The quote may
+    # wrap across physical lines; SceneDialogue owns that parse.
     SCENE_BLOCKS = %w[Narration Dialog].freeze
-    SCENE_DIALOGUE_LINE = /\A@(?:\[\[[^\[\]\n]+\]\]|[a-z0-9][a-z0-9-]*)[ \t]+".*"[ \t]*\z/
     # The scene's closing authoring note. It is an HTML comment, so it is masked
     # out of the prose and out of the reference scan, and read once here as the
     # Scene's `drafting_contract`.
@@ -50,8 +50,11 @@ module StoryInterchange
     SCENE_REFERENCE = /\Ascene:(.+)\z/
     # A typed entity reference: `[[character:ada]]`, `[[location:keep]]`. The
     # prefix says what the record must be, so a link cannot silently point at a
-    # different kind that happens to share a slug.
-    TYPED_REFERENCE = /\A(?<kind>[a-z]+):(?<slug>.+)\z/
+    # different kind that happens to share a slug. A Character link in a
+    # `## Relationships` bullet may also carry the relationship type:
+    # `[[character:ada|type:boss]]`. The slug is everything before the `|`, and
+    # the type is read by the Relationships slice, never as part of the slug.
+    TYPED_REFERENCE = /\A(?<kind>[a-z]+):(?<slug>[^|\[\]\n]+)(?:\|type:(?<type>[^\[\]\n]*))?\z/
     KIND_FOR_PREFIX = {
       "character" => :character,
       "faction" => :faction,
@@ -699,19 +702,23 @@ module StoryInterchange
         end
       end
 
-      # Every nonblank line of a Dialog block is one spoken line with its
-      # speaker. A block with no `@[[character:…]]` speaker has no Character the
-      # application can attribute a dialogue to, so it is named as a warning.
+      # Every nonblank line of a Dialog block starts a turn or continues the
+      # open turn its speaker began. A block with no `@[[character:…]]` speaker
+      # has no Character the application can attribute a dialogue to, so it is
+      # named as a warning.
       def check_dialog_lines(document, section)
-        lines = section.body.each_line.map(&:strip).reject(&:empty?)
+        parsed = SceneDialogue.parse(section.body)
 
-        lines.each do |line|
-          next if line.match?(SCENE_DIALOGUE_LINE)
-
-          error(document, 1, "dialog line must be `@speaker \"line\"`; got `#{line.truncate(60)}`")
+        parsed.invalid.each do |line|
+          message = if line.reason == :unterminated
+            "dialog turn has no closing quote; got `#{line.text.truncate(60)}`"
+          else
+            "dialog line must be `@speaker \"line\"`; got `#{line.text.truncate(60)}`"
+          end
+          error(document, 1, message)
         end
 
-        return if lines.any? { |line| line.start_with?("@[[character:") }
+        return if parsed.turns.any? { |turn| turn.speaker.start_with?("[[character:") }
 
         warning(document, 1, "a `## Dialog` block with no `@[[character:…]]` speaker cannot be imported as a dialogue")
       end

@@ -175,6 +175,8 @@ module ModalFields
       name: faction.name,
       summary: faction.summary,
       description: faction.description,
+      bgcolor: faction.bgcolor,
+      fgcolor: faction.fgcolor,
       faction_tag_ids: faction.faction_tag_ids,
       photo_url: record_photo_url(faction)
     }.to_json

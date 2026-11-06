@@ -50,7 +50,7 @@ How to use these docs:
   | Record photos and the cropper | [features/photos.md](features/photos.md) |
    | Events and the Timeline algorithm | [features/events.md](features/events.md) |
    | Universe-scoped Faction profiles and tags | [features/factions.md](features/factions.md) |
-   | Character profiles, Markdown descriptions and links, Faction membership | [features/characters.md](features/characters.md) |
+   | Character profiles, Markdown descriptions and links, Faction membership, the interaction network | [features/characters.md](features/characters.md) |
    | Prose mentions, suggestions, and in-place name highlighting | [features/mentions.md](features/mentions.md) |
    | The Story-wide appearance grid and its two layers | [features/appearances.md](features/appearances.md) |
    | Location Markdown profiles, presence, search, and the Locations workspace | [features/locations.md](features/locations.md) |

@@ -93,4 +93,24 @@ class CharacterWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".alert", text: /Se ha ignorado el filtro de etiqueta de personaje/
   end
+
+  test "the Network tab, its options, and its table are Spanish" do
+    @universe.characters.create!(name: "Sin conexión")
+    factions(:faction_one).characters << characters(:character_two)
+
+    get universe_character_network_url(universe_slug: @universe.slug)
+
+    assert_response :success
+    assert_select "h1", text: "Red"
+    assert_select "nav.content-tabs a.active", text: "Red"
+    assert_select "th", text: "Personajes"
+    assert_select "th", text: "Etiqueta de relación"
+    assert_select ".character-network-options", text: /3 de 4 personajes tienen una conexión registrada/
+    assert_select ".character-network-options a", text: "Ocultar personajes sin conexión"
+    assert_select ".character-network-option-buttons a[role=button]",
+      text: "Mostrar la pertenencia a facciones como relación"
+    assert_select ".character-network-legend", text: /Línea punteada: misma facción/
+    assert_select ".character-network-table caption",
+      text: /Cada escena compartida suma 1, cada diálogo compartido suma 2/
+  end
 end

@@ -425,6 +425,7 @@ en:
     slices:
       canon_rules: "Canon rules"
       characters: "Characters"
+      relations: "Relations"
       factions: "Factions"
       locations: "Locations"
       items: "Items"
@@ -2188,6 +2189,51 @@ en:
     tabs:
       characters: "Characters"
       relations: "Relations"
+      network: "Network"
+
+  character_networks:
+    title: "Network"
+    description: "How often each pair of Characters shares recorded scenes and dialogue across every Story in this Universe."
+    diagram_heading: "Interaction network"
+    diagram_caption: "Each line joins two Characters. Its thickness combines shared scenes, shared dialogue, and back-and-forth exchanges; its color follows the pair's Relation tag when one exists."
+    diagram_scroll_label: "Character interaction network"
+    diagram_aria_label: "Network of %{characters} characters and %{connections} connections"
+    diagram_legend_label: "How to read the network"
+    legend_line: "Line thickness: interaction points"
+    legend_relation_tag: "Colored line: the pair's Relation tag"
+    legend_faction_link: "Dotted line: same faction"
+    legend_node: "Dot size: total interaction"
+    legend_unconnected: "Dashed ring: no recorded connection"
+    character_link: "Open %{name}"
+    node_title: "%{name}: %{score} interaction points with %{connections} other characters"
+    node_title_unconnected: "%{name}: no recorded connection"
+    character_summary: "%{connected} of %{total} characters have a recorded connection."
+    show_unconnected:
+      one: "Show 1 character with no connection"
+      other: "Show %{count} characters with no connections"
+    hide_unconnected: "Hide characters with no connections"
+    show_faction_links: "Show faction membership as relation"
+    characters_truncated: "The diagram shows at most %{limit} characters."
+    faction_links_truncated: "At most %{limit} faction links are drawn."
+    connections_heading: "Strongest connections"
+    connections_caption: "Character pairs ordered by interaction points, strongest first. Only pairs with a recorded connection are listed. Each shared scene adds 1, each shared dialogue adds 2, and each back-and-forth exchange adds 1. The Relation tag column repeats the tag that colors the line."
+    truncated: "Showing the %{shown} strongest of %{total} connections."
+    pair_separator: "and"
+    table:
+      pair: "Characters"
+      relation_tag: "Relation tag"
+      no_relation_tag: "No relation tag"
+      scenes: "Shared scenes"
+      dialogue: "Shared dialogue"
+      exchanges: "Exchanges"
+      weight: "Interaction"
+    empty_characters_title: "No characters yet"
+    empty_characters_description: "Add Characters to this Universe to start the network."
+    empty_scenes_title: "No scenes to read yet"
+    empty_scenes_description: "The network is derived from recorded scene participation and dialogue. Add a Story and its scenes to see the cast connect."
+    empty_interactions_title: "No Character interactions recorded yet"
+    empty_interactions_description: "Two Characters connect when they take part in the same scene or exchange lines in the same dialogue. Record presence on a scene's Characters tab to start the network."
+    no_interactions_yet: "No interaction connections recorded yet. The diagram still shows the cast and any faction links."
 
   factions:
     title: "Factions"
@@ -2198,6 +2244,10 @@ en:
     save: "Save faction"
     form:
       name: "Name"
+      bgcolor: "Background color"
+      bgcolor_hint: "Colors this Faction's dotted links on the Character network."
+      fgcolor: "Foreground color"
+      fgcolor_hint: "Stored for future use; not painted yet."
       tags_label: "Faction tags"
       summary: "Short summary"
       summary_hint: "One line a reader sees in the list and at the top of the details page."
@@ -3555,6 +3605,8 @@ en:
         name: "Name"
         summary: "Short summary"
         description: "Description"
+        bgcolor: "Background color"
+        fgcolor: "Foreground color"
         faction_tags: "Faction tags"
       faction_relationship:
         name: "Name"
@@ -3816,6 +3868,10 @@ en:
   element:
     one: "element"
     other: "elements"
+  # A derived pair on the Character network, counted by the page header.
+  connection:
+    one: "connection"
+    other: "connections"
   # The unit a prose counter reports, resolved with `count:` like the record-type
   # nouns above so "1 word" and "1,234 words" come from the locale.
   word:

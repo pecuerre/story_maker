@@ -35,18 +35,13 @@ module StoryInterchange
       # The Scene facts the application has no column for.
       REPORTED_KEYS = %w[id timeline branch].freeze
 
-      # One spoken line: `@[[character:slug]] "line"` or `@slug "line"`.
-      DIALOGUE_LINE = /\A@(?<speaker>\[\[[^\[\]\n]+\]\]|[a-z0-9][a-z0-9-]*)[ \t]+"(?<body>.*)"[ \t]*\z/
-
       class << self
-        # The nonblank spoken lines of one `## Dialog` block, in source order.
+        # The turns of one `## Dialog` block, in source order. A quoted line may
+        # wrap across physical lines; `SceneDialogue` joins it into one turn.
         # The preview and the write read the same parse.
         def dialogue_lines(body)
-          body.to_s.each_line.filter_map do |line|
-            match = DIALOGUE_LINE.match(line.strip)
-            next unless match
-
-            { speaker: match[:speaker], body: match[:body] }
+          SceneDialogue.parse(body).turns.map do |turn|
+            { speaker: turn.speaker, body: turn.body }
           end
         end
 

@@ -113,6 +113,49 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_includes item.description, "[[rule:D1]]"
   end
 
+  test "creates a relation tag for every relationship type and one relation per character pair" do
+    replace_character_relationships("ada", <<~MARKDOWN.chomp)
+      - [[character:bryn|type:crew]] - the engineer [[faction:wardens]] trusts ([[canon:K1]]).
+        Leverage: the watch.
+    MARKDOWN
+    write_character("bryn", "Bryn", <<~MARKDOWN.chomp)
+      - [[character:ada|type:boss]] - the engineer he answers to.
+        Leverage: the lantern.
+    MARKDOWN
+    write_character("cy", "Cy", <<~MARKDOWN.chomp)
+      - [[character:ada|type:]] - a neighbour with no clear tie.
+    MARKDOWN
+
+    import_run = import
+    assert_equal 2, StoryInterchange::Importers::Relations.preview(import_run.plan.report)
+
+    universe = import_run.call.universe
+    ada = universe.characters.find_by!(slug: "ada")
+    bryn = universe.characters.find_by!(slug: "bryn")
+    cy = universe.characters.find_by!(slug: "cy")
+
+    # Every stated type becomes a tag, including the one on the reciprocal
+    # bullet that did not decide the pair.
+    assert_equal %w[boss crew], universe.relation_tags.order(:name).pluck(:name)
+
+    # The files state the same pair from both ends, so one Relation is written.
+    # Ada's file sorts first, so its `crew` type is the one that survives.
+    relation = universe.relations.find_by!(character1: bryn, character2: ada)
+    assert_equal %w[crew], relation.relation_tags.map(&:name)
+    # The description is plain text: entity references read as names and canon
+    # references as the ids a reader can follow.
+    assert_includes relation.description, "the engineer The Wardens trusts (K1)."
+    refute_includes relation.description, "[["
+    assert_includes relation.description, "Leverage: the watch."
+
+    # A blank type creates an untagged Relation instead of dropping the edge.
+    untagged = universe.relations.find_by!(character1: cy, character2: ada)
+    assert_empty untagged.relation_tags
+    assert_equal "a neighbour with no clear tie.", untagged.description
+
+    assert_equal 2, universe.relations.count
+  end
+
   test "writes a location as one Markdown description and a flat hierarchy" do
     universe = import.call.universe
 
@@ -287,6 +330,21 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     all_bodies = gate_elements.map(&:body).join("\n") + hall_elements.map(&:body).join("\n")
     assert_not_includes all_bodies, "## The gate"
     assert_not_includes all_bodies, "DRAFTING CONTRACT"
+  end
+
+  test "joins a dialogue turn that wraps across physical lines" do
+    path = File.join(@root, "stories/synthetic-story/chapters/01-arrival/01-the-gate.md")
+    File.write(path, File.read(path).sub(
+      '@[[character:ada]] "The gate is open."',
+      "@[[character:ada]] \"The gate is open,\nand the wick is low.\""
+    ))
+
+    universe = import.call.universe
+    gate = universe.stories.find_by!(slug: "synthetic-story").scenes.find_by!(slug: "01-arrival-01-the-gate")
+    turns = gate.scene_elements.reorder(:position, :id).last.scene_dialogue_turns.reorder(:position, :id)
+
+    assert_includes turns.map(&:body), "The gate is open, and the wick is low."
+    assert_not_includes turns.map(&:body), "The gate is open,\nand the wick is low."
   end
 
   test "writes a scene's drafting contract to its own column" do
@@ -556,15 +614,50 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     plan = import.plan
 
     assert plan.importable?
-    assert_equal [ "Canon rules", "Factions", "Characters", "Locations", "Items", "Stories", "Sections", "Scenes", "Plots" ],
+    assert_equal [ "Canon rules", "Factions", "Characters", "Relations", "Locations", "Items", "Stories",
+      "Sections", "Scenes", "Plots" ],
       plan.slices.map { |slice| I18n.t(slice.label_key) }
-    assert_equal [ 4, 1, 1, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
+    assert_equal [ 4, 1, 1, 0, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
     assert_empty plan.slices.first.reported(plan.report)
     assert_empty plan.slices.third.reported(plan.report)
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
   end
 
   private
+    def write(relative_path, content)
+      path = File.join(@root, relative_path)
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, content)
+    end
+
+    def write_character(slug, name, relationships)
+      write("universe/characters/#{slug}.md", <<~MARKDOWN)
+        ---
+        name: #{name}
+        slug: #{slug}
+        affiliation: "[[faction:wardens]]"
+        ---
+
+        # #{name}
+
+        ## Short summary
+
+        A member of the gate watch.
+
+        ## Relationships
+
+        #{relationships}
+      MARKDOWN
+    end
+
+    def replace_character_relationships(slug, body)
+      path = File.join(@root, "universe/characters/#{slug}.md")
+      content = File.read(path)
+      old = "## Relationships\n\n| Character | Dynamic | Leverage |\n|---|---|---|\n| — | — | — |"
+      assert_includes content, old, "the fixture's relationship table changed"
+      File.write(path, content.sub(old, "## Relationships\n\n#{body}\n"))
+    end
+
     def reported_items(records)
       records.flat_map(&:items)
     end

@@ -30,16 +30,25 @@ module RelationsHelper
 
   # The readable sentence a relation list row renders: the two characters as
   # subjects and the relation tag as the verb, with the arrow as direction.
-  # `Character one — Relation tag one → Character two`. Tags are optional, so a
+  # `Character one — [colored tag badge] → Character two`. Tags are optional, so a
   # relation without one falls back to the neutral endpoints form
-  # `Character one → Character two`. No new source fields: the tag name and the
+  # `Character one → Character two`. No new source fields: the tag and the
   # endpoints already exist, only the presentation changes.
+  #
+  # The badge is the tag's own colored badge, so the color a reader sees here is
+  # the same color the tag carries on its taxonomy page and on the Character
+  # network. The first tag by `(position, id)` is the verb, matching the network's
+  # choice, rather than the undefined order of a HABTM.
   def relation_row_sentence(relation)
-    verb = relation.relation_tags.first&.name
-    if verb.present?
-      "#{relation.character1.name} — #{verb} → #{relation.character2.name}"
-    else
-      "#{relation.character1.name} → #{relation.character2.name}"
-    end
+    tag = relation.relation_tags.min_by { |candidate| [ candidate.position, candidate.id ] }
+    return "#{relation.character1.name} → #{relation.character2.name}" if tag.nil?
+
+    safe_join([
+      relation.character1.name,
+      " — ",
+      entity_tag_badge(tag),
+      " → ",
+      relation.character2.name
+    ])
   end
 end

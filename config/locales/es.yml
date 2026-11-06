@@ -409,6 +409,7 @@ es:
     slices:
       canon_rules: "Reglas de canon"
       characters: "Personajes"
+      relations: "Relaciones"
       factions: "Facciones"
       locations: "Lugares"
       items: "Objetos"
@@ -2129,6 +2130,51 @@ es:
     tabs:
       characters: "Personajes"
       relations: "Relaciones"
+      network: "Red"
+
+  character_networks:
+    title: "Red"
+    description: "Con qué frecuencia cada pareja de personajes comparte escenas y diálogos registrados en todas las historias de este universo."
+    diagram_heading: "Red de interacciones"
+    diagram_caption: "Cada línea une dos personajes. Su grosor combina escenas compartidas, diálogo compartido e intercambios de réplica; su color sigue la etiqueta de relación de la pareja cuando existe."
+    diagram_scroll_label: "Red de interacciones de personajes"
+    diagram_aria_label: "Red de %{characters} personajes y %{connections} conexiones"
+    diagram_legend_label: "Cómo leer la red"
+    legend_line: "Grosor de la línea: puntos de interacción"
+    legend_relation_tag: "Línea coloreada: etiqueta de relación de la pareja"
+    legend_faction_link: "Línea punteada: misma facción"
+    legend_node: "Tamaño del punto: interacción total"
+    legend_unconnected: "Anillo discontinuo: sin conexión registrada"
+    character_link: "Abrir %{name}"
+    node_title: "%{name}: %{score} puntos de interacción con otros %{connections} personajes"
+    node_title_unconnected: "%{name}: sin conexión registrada"
+    character_summary: "%{connected} de %{total} personajes tienen una conexión registrada."
+    show_unconnected:
+      one: "Mostrar 1 personaje sin conexión"
+      other: "Mostrar %{count} personajes sin conexión"
+    hide_unconnected: "Ocultar personajes sin conexión"
+    show_faction_links: "Mostrar la pertenencia a facciones como relación"
+    characters_truncated: "El diagrama muestra como máximo %{limit} personajes."
+    faction_links_truncated: "Se dibujan como máximo %{limit} vínculos de facción."
+    connections_heading: "Conexiones más fuertes"
+    connections_caption: "Parejas de personajes ordenadas por puntos de interacción, de mayor a menor. Solo se listan las parejas con una conexión registrada. Cada escena compartida suma 1, cada diálogo compartido suma 2 y cada intercambio de réplica suma 1. La columna de etiqueta de relación repite la etiqueta que colorea la línea."
+    truncated: "Se muestran las %{shown} conexiones más fuertes de %{total}."
+    pair_separator: "y"
+    table:
+      pair: "Personajes"
+      relation_tag: "Etiqueta de relación"
+      no_relation_tag: "Sin etiqueta de relación"
+      scenes: "Escenas compartidas"
+      dialogue: "Diálogos compartidos"
+      exchanges: "Réplicas"
+      weight: "Interacción"
+    empty_characters_title: "Todavía no hay personajes"
+    empty_characters_description: "Añade personajes a este universo para empezar la red."
+    empty_scenes_title: "Todavía no hay escenas que leer"
+    empty_scenes_description: "La red se calcula a partir de la participación registrada en escenas y de los diálogos. Añade una historia y sus escenas para ver cómo se conecta el reparto."
+    empty_interactions_title: "Todavía no hay interacciones registradas"
+    empty_interactions_description: "Dos personajes se conectan cuando participan en la misma escena o intercambian réplicas en el mismo diálogo. Registra su presencia en la pestaña Personajes de una escena para empezar la red."
+    no_interactions_yet: "Todavía no hay conexiones de interacción registradas. El diagrama sigue mostrando el reparto y los vínculos de facción."
 
   factions:
     title: "Facciones"
@@ -2139,6 +2185,10 @@ es:
     save: "Guardar facción"
     form:
       name: "Nombre"
+      bgcolor: "Color de fondo"
+      bgcolor_hint: "Colorea los vínculos punteados de esta facción en la red de personajes."
+      fgcolor: "Color de primer plano"
+      fgcolor_hint: "Se guarda para un uso futuro; todavía no se pinta."
       tags_label: "Etiquetas de facciones"
       summary: "Resumen breve"
       summary_hint: "Una línea que el lector ve en la lista y al principio de la página de detalles."
@@ -3140,6 +3190,8 @@ es:
         name: "Nombre"
         summary: "Resumen breve"
         description: "Descripción"
+        bgcolor: "Color de fondo"
+        fgcolor: "Color de primer plano"
         faction_tags: "Etiquetas de facciones"
       faction_relationship:
         name: "Nombre"
@@ -3688,6 +3740,10 @@ es:
   element:
     one: "elemento"
     other: "elementos"
+  # Una pareja derivada en la red de personajes, contada por la cabecera.
+  connection:
+    one: "conexión"
+    other: "conexiones"
   # La unidad que informa un contador de prosa, resuelta con `count:` como los
   # nombres de tipo de registro de arriba, para que «1 palabra» y «1.234 palabras»
   # los elija la Locale.

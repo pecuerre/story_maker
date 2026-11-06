@@ -199,6 +199,27 @@ Faction behind it and is reported instead of guessed into one. The frontmatter k
 current source keeps only the three identity keys in frontmatter and writes the others under
 `Information`.
 
+#### Relationships
+
+The bullets under `## Relationships` become Relations. A bullet leads with the Character it names:
+`[[character:slug|type:boss]] - the dynamic.` The slug is everything before the `|`; the type after
+`type:` names the linked Character's role toward the file's own Character. The type is optional:
+`[[character:slug]]` and `[[character:slug|type:]]` both mean a relationship with no type. A bullet
+that does not lead with a Character link, such as a plain name or a Faction, names no record the
+Relation can link and is not imported.
+
+Every distinct nonblank type becomes a Relation tag in the imported Universe, created when that name
+does not already exist. The tag keeps the source's name exactly. The source defines no inverse, so
+the created tag keeps the model's symmetric default.
+
+**One Relation is written per unordered pair of Characters.** The source states a mutual
+relationship from both files, so reciprocal bullets collapse into one edge. The first typed bullet
+decides the pair where one is stated, and a later typed bullet replaces an earlier untyped one so a
+type the source did state is not lost. With a type, the linked Character is `character1` and the
+file's Character is `character2`, so the tag reads as a verb about the first endpoint; an untagged
+Relation keeps the file's Character first. The Relation's `description` is the bullet's dynamic plus
+its `Leverage:` paragraph, with references resolved to record names and canon or rule ids.
+
 ### Faction
 
 A Faction is one short summary and one Markdown description. `Short summary` writes `summary`;
@@ -274,7 +295,9 @@ Narration, and two blocks of the same kind never sit next to each other. Each bl
 ordered Element. A Narration block's paragraphs are the Element's Content, with entity references
 written as record names as in a profile answer. A Dialog block becomes a Dialogue Element whose
 resolvable lines are its ordered turns: `@[[character:slug]] "…"`
-is a turn, and `[[kind:slug]]` inside the line is a prose mention, resolved the same way. A bare
+is a turn, and `[[kind:slug]]` inside the line is a prose mention, resolved the same way. A turn may
+wrap across physical lines; it continues until its closing quote, and the continuation lines are
+joined with a space because the source's line break is the editor's. A bare
 `@slug` names a speaker with no entity file, so its line cannot become a turn and the preview
 reports the speaker; a Dialog block with no registrable speaker at all is kept as Narration prose so
 the lines are not lost. A `##` heading other than those two, prose before the first block, and two
@@ -324,6 +347,7 @@ a reference inside inline code is real, because the source writes rule citations
 | Form | Resolves to |
 |---|---|
 | `[[character:slug]]` | a Character in the same source |
+| `[[character:slug\|type:type]]` | the same Character; [the Relationships slice](#relationships) reads the optional type |
 | `[[faction:slug]]` | a Faction in the same source |
 | `[[location:slug]]` | a Location in the same source |
 | `[[item:slug]]` or `[[tech:slug]]` | an Item in the same source |
@@ -394,8 +418,8 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
   reference has an unknown form;
 - a Scene's id, branch, point of view, or location does not match the contract above;
 - a Scene has no `#` title heading, no `## Narration` block, a block other than `## Narration` or
-  `## Dialog`, a first block that is not Narration, two adjacent blocks of the same kind, or a
-  Dialog line that is not `@speaker "line"`.
+  `## Dialog`, a first block that is not Narration, two adjacent blocks of the same kind, a Dialog
+  line that is not `@speaker "line"`, or a Dialog turn whose quote never closes.
 
 **Warnings** do not stop an import, because the source may legitimately carry more than the app
 knows:

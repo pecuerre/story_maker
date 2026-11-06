@@ -38,7 +38,7 @@ the subject and read its owner:
 | The admin-only Universe backup archive and the data it defers | [`docs/features/universe_backup.md`](docs/features/universe_backup.md) |
 | The owner-only permanent Universe delete, its typed-name confirmation, and what survives | [`docs/features/universe_deletion.md`](docs/features/universe_deletion.md) |
 | **Global trope references** and contextual Story/Scene annotations | [`docs/features/tropes.md`](docs/features/tropes.md) |
-| Character profiles, Faction membership, and Character knowledge changes | [`docs/features/characters.md`](docs/features/characters.md) |
+| Character profiles, Faction membership, Character knowledge changes, and the interaction network | [`docs/features/characters.md`](docs/features/characters.md) |
 | Prose mentions, suggestions, and in-place name highlighting | [`docs/features/mentions.md`](docs/features/mentions.md) |
 | The Story-wide appearance grid and its two layers | [`docs/features/appearances.md`](docs/features/appearances.md) |
 | Universe-scoped Faction profiles and tags | [`docs/features/factions.md`](docs/features/factions.md) |

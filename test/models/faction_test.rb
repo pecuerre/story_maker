@@ -9,6 +9,18 @@ class FactionTest < ActiveSupport::TestCase
     assert Faction.create!(universe: universes(:universe_one), name: "Untagged group")
   end
 
+  test "defaults its colors and rejects a value that is not a hex color" do
+    faction = Faction.create!(universe: universes(:universe_one), name: "Colored group")
+
+    assert_equal "#d3d3d3", faction.bgcolor
+    assert_equal "#000000", faction.fgcolor
+
+    faction.bgcolor = "red"
+
+    assert_not faction.valid?
+    assert_includes faction.errors[:bgcolor], "must be a hex color like #d3d3d3"
+  end
+
   test "generates a slug and stores the summary and description" do
     faction = Faction.create!(
       universe: universes(:universe_one),

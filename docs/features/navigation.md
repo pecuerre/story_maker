@@ -79,7 +79,8 @@ always knows which scope a link belongs to:
   list of rules with an optional story owner, and its page contract is in
   [features/canon.md](canon.md). Map is the read-only
   Location-hierarchy and Route view; its page contract is in [features/map.md](map.md). Characters
-  and Items open their related record tabs (Relations and Ownerships respectively). **Events** opens
+  opens its related record tabs (Relations and the derived Network, whose rules are in
+  [features/characters.md](characters.md#interaction-network)); Items opens Ownerships. **Events** opens
   the Event workspace, whose second tab is the **Timeline**, so the Timeline has no sidebar entry of
   its own and that one link stays current across both tabs. Locations and Sections remain
   single-record workspaces.

@@ -1,6 +1,8 @@
 - universe: Universe.dark
   name: Sic Mundus
   slug: sic-mundus
+  bgcolor: "#6f42c1"
+  fgcolor: "#ffffff"
   summary: Preserve the loop and guide humanity toward its promised future.
   description: |
     ## Actual aims
@@ -31,6 +33,8 @@
 - universe: Universe.dark
   name: Erit Lux
   slug: erit-lux
+  bgcolor: "#20c997"
+  fgcolor: "#000000"
   summary: Preserve the origin world and free humanity from the knot.
   description: |
     ## Actual aims

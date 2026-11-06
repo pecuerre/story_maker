@@ -1,0 +1,80 @@
+<% layout = local_assigns.fetch(:layout) %>
+
+<figure class="character-network-diagram content-surface">
+  <div class="character-network-scroll" role="region" tabindex="0"
+    aria-label="<%= t("character_networks.diagram_scroll_label") %>">
+    <svg class="character-network-svg" width="<%= layout.width %>" height="<%= layout.height %>"
+      viewBox="0 0 <%= layout.width %> <%= layout.height %>" role="group"
+      aria-label="<%= t("character_networks.diagram_aria_label", characters: layout.nodes.length, connections: layout.edges.length) %>">
+      <g class="character-network-faction-links" aria-hidden="true">
+        <% layout.faction_links.each do |link| %>
+          <line class="character-network-faction-link"
+            style="stroke: <%= link.factions.first.bgcolor %>;"
+            x1="<%= link.source.x %>" y1="<%= link.source.y %>"
+            x2="<%= link.target.x %>" y2="<%= link.target.y %>"></line>
+        <% end %>
+      </g>
+
+      <g class="character-network-edges" aria-hidden="true">
+        <% layout.edges.each do |edge| %>
+          <% tagged = edge.relation_tag.present? %>
+          <line class="character-network-edge<%= " character-network-edge--tagged" if tagged %>"
+            <% if tagged %>style="stroke: <%= edge.relation_tag.bgcolor %>;"<% end %>
+            stroke-width="<%= edge.stroke_width %>"
+            x1="<%= edge.source.x %>" y1="<%= edge.source.y %>"
+            x2="<%= edge.target.x %>" y2="<%= edge.target.y %>"></line>
+        <% end %>
+      </g>
+
+      <g class="character-network-nodes">
+        <% layout.nodes.each do |node| %>
+          <% isolated = node.degree.zero? %>
+          <%= link_to universe_character_path(id: node.character),
+            class: "character-network-node#{' character-network-node--isolated' if isolated}",
+            aria: { label: t("character_networks.character_link", name: node.character.name) } do %>
+            <circle cx="<%= node.x %>" cy="<%= node.y %>" r="<%= node.radius %>"></circle>
+            <% if isolated %>
+              <title><%= t("character_networks.node_title_unconnected", name: node.character.name) %></title>
+            <% else %>
+              <title><%= t("character_networks.node_title", name: node.character.name,
+                score: node.interaction_total, connections: node.degree) %></title>
+            <% end %>
+            <text x="<%= node.x %>" y="<%= (node.y + node.radius + 15).round(2) %>"
+              text-anchor="middle"><%= node.label %></text>
+          <% end %>
+        <% end %>
+      </g>
+    </svg>
+  </div>
+
+  <figcaption class="character-network-caption">
+    <p class="mb-2"><%= t("character_networks.diagram_caption") %></p>
+    <ul class="character-network-legend list-inline mb-0"
+      aria-label="<%= t("character_networks.diagram_legend_label") %>">
+      <li class="list-inline-item">
+        <span class="character-network-legend-line" aria-hidden="true"></span>
+        <%= t("character_networks.legend_line") %>
+      </li>
+      <li class="list-inline-item">
+        <span class="character-network-legend-line character-network-legend-line--tagged" aria-hidden="true"></span>
+        <%= t("character_networks.legend_relation_tag") %>
+      </li>
+      <% if layout.faction_links.any? %>
+        <li class="list-inline-item">
+          <span class="character-network-legend-line character-network-legend-line--faction" aria-hidden="true"></span>
+          <%= t("character_networks.legend_faction_link") %>
+        </li>
+      <% end %>
+      <li class="list-inline-item">
+        <span class="character-network-legend-node" aria-hidden="true"></span>
+        <%= t("character_networks.legend_node") %>
+      </li>
+      <% if layout.nodes.any? { |node| node.degree.zero? } %>
+        <li class="list-inline-item">
+          <span class="character-network-legend-node character-network-legend-node--isolated" aria-hidden="true"></span>
+          <%= t("character_networks.legend_unconnected") %>
+        </li>
+      <% end %>
+    </ul>
+  </figcaption>
+</figure>

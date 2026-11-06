@@ -154,7 +154,8 @@ module TagsHelper
       key: "characters",
       tabs: [
         { name: "characters", path: :universe_characters_path, controller: :characters },
-        { name: "relations", path: :universe_relations_path, controller: :relations }
+        { name: "relations", path: :universe_relations_path, controller: :relations },
+        { name: "network", path: :universe_character_network_path, controller: :character_networks }
       ]
     },
     "faction" => {

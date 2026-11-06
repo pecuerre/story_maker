@@ -23,6 +23,18 @@
             <%= form.label :name, t("factions.form.name"), class: "form-label" %>
             <%= form.text_field :name, class: "form-control", required: true %>
           </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <%= form.label :bgcolor, t("factions.form.bgcolor"), class: "form-label" %>
+              <%= form.color_field :bgcolor, value: "#d3d3d3", class: "form-control form-control-color" %>
+              <div class="form-text"><%= t("factions.form.bgcolor_hint") %></div>
+            </div>
+            <div class="col-md-6">
+              <%= form.label :fgcolor, t("factions.form.fgcolor"), class: "form-label" %>
+              <%= form.color_field :fgcolor, value: "#000000", class: "form-control form-control-color" %>
+              <div class="form-text"><%= t("factions.form.fgcolor_hint") %></div>
+            </div>
+          </div>
           <div class="mb-3">
             <%= form.label :faction_tag_ids, t("factions.form.tags_label"), class: "form-label" %>
             <%= form.collection_select :faction_tag_ids, tags, :id, :name, {},

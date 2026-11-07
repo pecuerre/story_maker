@@ -16,6 +16,8 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav.content-tabs a[href=?]",
       universe_relations_path(universe_slug: @universe.slug), text: "Relations"
 
+    assert_select "[data-controller=character-network]"
+    assert_select "a[data-action='character-network#toggleFactionLinks'][data-character-network-target=factionButton]"
     assert_select "svg.character-network-svg[role=group]"
     assert_select ".character-network-node", count: 3
     assert_select ".character-network-edge", count: 3
@@ -67,10 +69,11 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     get universe_character_network_url(universe_slug: @universe.slug, faction_links: "0")
 
     assert_response :success
-    assert_select ".character-network-faction-link", count: 0
+    assert_select ".character-network-faction-link", count: 1
+    assert_select ".character-network-faction-link.character-network-hidden", count: 1
+    assert_select "[data-character-network-faction-legend].character-network-hidden", count: 1
     assert_select ".character-network-option-buttons a[role=button][aria-pressed=false]",
       text: "Show faction membership as relation"
-    assert_select ".character-network-legend", text: /Dotted line: same faction/, count: 0
   end
 
   test "each network option keeps the other one as it was" do
@@ -104,7 +107,7 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
       universe_character_network_path(universe_slug: @universe.slug, show_unconnected: "0")
   end
 
-  test "all Characters are in the graph by default and zero hides the unconnected ones" do
+  test "all Characters are in the graph by default and zero only hides the unconnected ones" do
     @universe.characters.create!(name: "A Loner")
 
     get universe_character_network_url(universe_slug: @universe.slug)
@@ -112,7 +115,9 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".character-network-options", text: /3 of 4 characters have a recorded connection/
     assert_select ".character-network-node", count: 4
+    assert_select ".character-network-node.character-network-hidden", count: 0
     assert_select ".character-network-node--isolated", count: 1
+    assert_select "a[data-action='character-network#toggleUnconnected'][data-character-network-target=unconnectedButton]"
     assert_select ".character-network-options a[href=?]",
       universe_character_network_path(universe_slug: @universe.slug, show_unconnected: "0"),
       text: "Hide characters with no connections"
@@ -121,24 +126,54 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "0")
 
     assert_response :success
-    assert_select ".character-network-node", count: 3
+    assert_select ".character-network-node", count: 4
+    assert_select ".character-network-node:not(.character-network-hidden)", count: 3
+    assert_select ".character-network-node.character-network-hidden", count: 1
     assert_select ".character-network-options a[href=?]",
       universe_character_network_path(universe_slug: @universe.slug),
       text: "Show 1 character with no connection"
   end
 
-  test "only zero turns the extra nodes off" do
+  test "only zero turns the unconnected layer off" do
     @universe.characters.create!(name: "A Loner")
 
     get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "1")
 
     assert_response :success
     assert_select ".character-network-node", count: 4
+    assert_select ".character-network-node.character-network-hidden", count: 0
 
     get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "0")
 
     assert_response :success
-    assert_select ".character-network-node", count: 3
+    assert_select ".character-network-node", count: 4
+    assert_select ".character-network-node.character-network-hidden", count: 1
+  end
+
+  test "the initial URL hides layers without removing them from the layout" do
+    loner = @universe.characters.create!(name: "A Loner")
+    factions(:faction_one).characters << [ characters(:character_two), loner ]
+
+    get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "0")
+
+    assert_response :success
+    assert_select "[data-character-network-show-unconnected-value=false]"
+    assert_select "[data-character-network-show-faction-links-value=true]"
+    assert_select ".character-network-node", count: 4
+    assert_select ".character-network-node.character-network-hidden", count: 1
+    assert_select ".character-network-faction-link.character-network-hidden", count: 2
+    assert_select ".character-network-faction-link:not(.character-network-hidden)", count: 1
+    assert_select "[data-character-network-unconnected-legend].character-network-hidden", count: 1
+    assert_select "[data-character-network-faction-legend].character-network-hidden", count: 0
+
+    get universe_character_network_url(universe_slug: @universe.slug, faction_links: "0")
+
+    assert_response :success
+    assert_select "[data-character-network-show-faction-links-value=false]"
+    assert_select ".character-network-node.character-network-hidden", count: 0
+    assert_select ".character-network-faction-link", count: 3
+    assert_select ".character-network-faction-link.character-network-hidden", count: 3
+    assert_select "[data-character-network-faction-legend].character-network-hidden", count: 1
   end
 
   test "faction links can carry the graph when there is no interaction edge" do
@@ -201,15 +236,9 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".character-network-node", count: 3
     assert_select ".character-network-table", count: 0
     assert_select "p", text: /No interaction connections recorded yet/
-
-    get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "0")
-
-    assert_response :success
-    assert_select ".empty-title", text: "No Character interactions recorded yet"
-    assert_select ".character-network-svg", count: 0
   end
 
-  test "a universe with no scenes still shows the cast, or the scene empty state when narrowed" do
+  test "a universe with no scenes still shows the cast" do
     Scene.where(story_id: @universe.stories.select(:id)).find_each(&:soft_delete)
 
     get universe_character_network_url(universe_slug: @universe.slug)
@@ -218,12 +247,6 @@ class CharacterNetworksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".character-network-svg"
     assert_select ".character-network-node", count: 3
     assert_select "p", text: /No interaction connections recorded yet/
-
-    get universe_character_network_url(universe_slug: @universe.slug, show_unconnected: "0")
-
-    assert_response :success
-    assert_select ".empty-title", text: "No scenes to read yet"
-    assert_select ".character-network-svg", count: 0
   end
 
   test "a universe with no characters says so" do

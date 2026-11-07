@@ -2170,10 +2170,6 @@ es:
       weight: "Interacción"
     empty_characters_title: "Todavía no hay personajes"
     empty_characters_description: "Añade personajes a este universo para empezar la red."
-    empty_scenes_title: "Todavía no hay escenas que leer"
-    empty_scenes_description: "La red se calcula a partir de la participación registrada en escenas y de los diálogos. Añade una historia y sus escenas para ver cómo se conecta el reparto."
-    empty_interactions_title: "Todavía no hay interacciones registradas"
-    empty_interactions_description: "Dos personajes se conectan cuando participan en la misma escena o intercambian réplicas en el mismo diálogo. Registra su presencia en la pestaña Personajes de una escena para empezar la red."
     no_interactions_yet: "Todavía no hay conexiones de interacción registradas. El diagrama sigue mostrando el reparto y los vínculos de facción."
 
   factions:

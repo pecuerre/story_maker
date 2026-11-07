@@ -111,7 +111,6 @@ class CharacterNetworkTest < ActiveSupport::TestCase
     other = CharacterNetwork.new(universes(:universe_two))
     assert_empty other.nodes
     assert_empty other.edges
-    refute other.scenes?
   end
 
   test "same-faction pairs are a separate layer that is on by default" do

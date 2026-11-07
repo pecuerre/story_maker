@@ -98,10 +98,6 @@ class CharacterNetwork
     characters.size
   end
 
-  def scenes?
-    scenes.any?
-  end
-
   # With the unconnected layer on, every live Character is a node, so a Universe
   # with no interaction edge still draws its cast and any faction links. The page
   # is empty only when there is no node to draw at all.

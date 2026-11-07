@@ -50,6 +50,7 @@ Labels used below, in the order their groups appear:
 
 ### changed
 
+- **Stable Network toggles.** The Network tab's two view controls now hide and show layers in place with Stimulus, so nodes keep their positions; without JavaScript the links still navigate to the server-rendered alternative.
 - **Network defaults and layout.** Unconnected Characters and faction links are on by default, every node shares one force layout with faction links as springs, and Characters with no interaction are no longer parked in a separate band.
 - **Colored Relation tags in the list.** A Relation row renders its first tag as the tag's colored badge inside the endpoint sentence instead of as plain text.
 

@@ -141,7 +141,8 @@ connections** is also on by default, every live Character is a node, so faction 
 recorded interaction are included and the layout places them as a group. A pair in several Factions
 gets one line, colored by the first Faction in that pair's list. At most 160 faction pairs are drawn,
 in Faction name then member name order, and the summary says when the cap truncated them. Turning the
-option off is `faction_links=0` in the URL; both view options preserve each other.
+option off is `faction_links=0` in the URL; both view options preserve each other. The server always
+renders the whole graph, so a toggle only hides a layer and never moves a node.
 
 A Faction's `bgcolor` is the dotted line's color. `fgcolor` is stored for a future use and is not
 painted. A pair in several Factions uses the first Faction by name then id, matching the order the
@@ -173,8 +174,13 @@ dashed ring and still takes part in the force layout, rather than being parked i
 because the default faction links need it in the graph to group its Faction. A Universe with no
 interaction edge still draws its cast; the connections table is omitted and a note says there are no
 interaction connections yet. The summary above the diagram states how many of the Universe's
-Characters have a recorded connection. Turning the unconnected Characters off is
-`show_unconnected=0` in the URL; the view stays bookmarkable and needs no JavaScript.
+Characters have a recorded connection.
+
+The two view controls are real links, so without JavaScript they navigate to the server-rendered
+alternative and preserve the other option. With JavaScript, `character_network_controller.js` hides
+and shows the layers in place instead: the server has already laid out every node, so a toggle never
+moves a node and leaves a gap where a hidden Character or faction line was. The URL is rewritten in
+place (`show_unconnected=0`, `faction_links=0`), so a reload or a shared link restores the same view.
 
 An edge is neutral unless the pair has a Relation carrying a Relation tag. It then takes that tag's
 `bgcolor`, and the table repeats the tag badge, so the color is never the only signal. The graph is
@@ -186,8 +192,9 @@ still draws no line.
 The ordered table below the diagram is the accessible and printable equivalent: it names the pair,
 the Relation tag that colors the line, the shared Scene count, the shared Dialogue count, the
 exchange count, and the score. The diagram is a labelled `role="group"` inside a focusable scroll
-region and every node links to its Character. Empty states distinguish a Universe with no Characters
-from, when the unconnected layer is off, one with no Scenes or no shared interaction.
+region and every node links to its Character. The only empty state is a Universe with no Characters:
+a Universe with Characters but no interaction edge still draws the cast and says the interaction
+connections are not recorded yet.
 
 ## Character sample records
 

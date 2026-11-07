@@ -11,113 +11,116 @@
   intro: t("character_networks.description"),
   tabs: content_workspace_tabs(:character) %>
 
-<% if @network.characters.any? %>
-  <div class="character-network-options">
-    <p>
-      <%= t("character_networks.character_summary",
-        connected: @network.connected_count, total: @network.character_total) %>
-      <% if @network.nodes_truncated? %>
-        <%= t("character_networks.characters_truncated", limit: CharacterNetwork::MAX_NODES) %>
-      <% end %>
-      <% if @network.faction_links_truncated? %>
-        <%= t("character_networks.faction_links_truncated", limit: CharacterNetwork::MAX_FACTION_LINKS) %>
-      <% end %>
-    </p>
-    <div class="character-network-option-buttons">
-      <% if @network.unconnected_characters.any? %>
-        <% if @network.include_unconnected? %>
-          <%= link_to t("character_networks.hide_unconnected"),
-            character_network_unconnected_toggle_path(@network),
-            class: "btn btn-sm btn-outline-secondary" %>
-        <% else %>
-          <%= link_to t("character_networks.show_unconnected", count: @network.unconnected_characters.size),
-            character_network_unconnected_toggle_path(@network),
-            class: "btn btn-sm btn-outline-secondary" %>
-        <% end %>
-      <% end %>
-      <%= link_to t("character_networks.show_faction_links"),
-        character_network_faction_links_toggle_path(@network),
-        class: "btn btn-sm #{@network.include_faction_links? ? 'btn-primary' : 'btn-outline-secondary'}",
-        role: "button",
-        aria: { pressed: @network.include_faction_links? } %>
-    </div>
-  </div>
-<% end %>
-
 <% if @network.empty? %>
-  <% if @network.characters.empty? %>
-    <%= render "shared/empty_state",
-      title: t("character_networks.empty_characters_title"),
-      description: t("character_networks.empty_characters_description"),
-      icon: "person" %>
-  <% elsif @network.scenes? %>
-    <%= render "shared/empty_state",
-      title: t("character_networks.empty_interactions_title"),
-      description: t("character_networks.empty_interactions_description"),
-      icon: "diagram-3" %>
-  <% else %>
-    <%= render "shared/empty_state",
-      title: t("character_networks.empty_scenes_title"),
-      description: t("character_networks.empty_scenes_description"),
-      icon: "film" %>
-  <% end %>
+  <%= render "shared/empty_state",
+    title: t("character_networks.empty_characters_title"),
+    description: t("character_networks.empty_characters_description"),
+    icon: "person" %>
 <% else %>
-  <section class="mb-4" aria-labelledby="character-network-diagram-heading">
-    <h2 class="h5 mb-3" id="character-network-diagram-heading"><%= t("character_networks.diagram_heading") %></h2>
-    <%= render "diagram", layout: @layout %>
-  </section>
-
-  <% if @network.edges.any? %>
-    <section aria-labelledby="character-network-connections-heading">
-      <h2 class="h5 mb-3" id="character-network-connections-heading"><%= t("character_networks.connections_heading") %></h2>
-      <% if @network.truncated? %>
-        <p class="text-body-secondary">
-          <%= t("character_networks.truncated", shown: @network.edges.size, total: @network.total_edge_count) %>
-        </p>
-      <% end %>
-      <div class="content-surface character-network-table-wrap">
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0 character-network-table">
-            <caption class="visually-hidden"><%= t("character_networks.connections_caption") %></caption>
-            <thead>
-              <tr>
-                <th scope="col"><%= t("character_networks.table.pair") %></th>
-                <th scope="col"><%= t("character_networks.table.relation_tag") %></th>
-                <th scope="col" class="text-end"><%= t("character_networks.table.scenes") %></th>
-                <th scope="col" class="text-end"><%= t("character_networks.table.dialogue") %></th>
-                <th scope="col" class="text-end"><%= t("character_networks.table.exchanges") %></th>
-                <th scope="col" class="text-end"><%= t("character_networks.table.weight") %></th>
-              </tr>
-            </thead>
-            <tbody>
-              <% @network.edges.each do |edge| %>
-                <tr>
-                  <th scope="row" class="fw-normal">
-                    <%= link_to edge.character_a.name, universe_character_path(id: edge.character_a) %>
-                    <span aria-hidden="true">↔</span>
-                    <span class="visually-hidden"><%= t("character_networks.pair_separator") %></span>
-                    <%= link_to edge.character_b.name, universe_character_path(id: edge.character_b) %>
-                  </th>
-                  <td>
-                    <% if edge.relation_tag %>
-                      <%= entity_tag_badge(edge.relation_tag) %>
-                    <% else %>
-                      <span aria-hidden="true">—</span>
-                      <span class="visually-hidden"><%= t("character_networks.table.no_relation_tag") %></span>
-                    <% end %>
-                  </td>
-                  <td class="text-end"><%= edge.shared_scenes %></td>
-                  <td class="text-end"><%= edge.shared_dialogue_elements %></td>
-                  <td class="text-end"><%= edge.exchanges %></td>
-                  <td class="text-end fw-semibold"><%= edge.weight %></td>
-                </tr>
+  <div data-controller="character-network"
+    data-character-network-show-unconnected-value="<%= @show_unconnected %>"
+    data-character-network-show-faction-links-value="<%= @show_faction_links %>">
+    <div class="character-network-options">
+      <p>
+        <%= t("character_networks.character_summary",
+          connected: @network.connected_count, total: @network.character_total) %>
+        <% if @network.nodes_truncated? %>
+          <%= t("character_networks.characters_truncated", limit: CharacterNetwork::MAX_NODES) %>
+        <% end %>
+        <% if @network.faction_links_truncated? %>
+          <%= t("character_networks.faction_links_truncated", limit: CharacterNetwork::MAX_FACTION_LINKS) %>
+        <% end %>
+      </p>
+      <div class="character-network-option-buttons">
+        <% if @network.unconnected_characters.any? %>
+          <%= link_to character_network_unconnected_toggle_path(
+              show_unconnected: @show_unconnected, show_faction_links: @show_faction_links),
+            class: "btn btn-sm btn-outline-secondary",
+            role: "button",
+            aria: { pressed: @show_unconnected },
+            data: { action: "character-network#toggleUnconnected",
+              character_network_target: "unconnectedButton" } do %>
+            <span data-character-network-target="unconnectedLabel"
+              data-character-network-on-label="<%= t("character_networks.hide_unconnected") %>"
+              data-character-network-off-label="<%= t("character_networks.show_unconnected", count: @network.unconnected_characters.size) %>">
+              <% if @show_unconnected %>
+                <%= t("character_networks.hide_unconnected") %>
+              <% else %>
+                <%= t("character_networks.show_unconnected", count: @network.unconnected_characters.size) %>
               <% end %>
-            </tbody>
-          </table>
-        </div>
+            </span>
+          <% end %>
+        <% end %>
+        <%= link_to character_network_faction_links_toggle_path(
+            show_unconnected: @show_unconnected, show_faction_links: @show_faction_links),
+          class: "btn btn-sm #{@show_faction_links ? 'btn-primary' : 'btn-outline-secondary'}",
+          role: "button",
+          aria: { pressed: @show_faction_links },
+          data: { action: "character-network#toggleFactionLinks",
+            character_network_target: "factionButton" } do %>
+          <%= t("character_networks.show_faction_links") %>
+        <% end %>
       </div>
+    </div>
+
+    <section class="mb-4" aria-labelledby="character-network-diagram-heading">
+      <h2 class="h5 mb-3" id="character-network-diagram-heading"><%= t("character_networks.diagram_heading") %></h2>
+      <%= render "diagram", layout: @layout,
+        show_unconnected: @show_unconnected, show_faction_links: @show_faction_links %>
     </section>
-  <% else %>
-    <p class="text-body-secondary"><%= t("character_networks.no_interactions_yet") %></p>
-  <% end %>
+
+    <% if @network.edges.any? %>
+      <section aria-labelledby="character-network-connections-heading">
+        <h2 class="h5 mb-3" id="character-network-connections-heading"><%= t("character_networks.connections_heading") %></h2>
+        <% if @network.truncated? %>
+          <p class="text-body-secondary">
+            <%= t("character_networks.truncated", shown: @network.edges.size, total: @network.total_edge_count) %>
+          </p>
+        <% end %>
+        <div class="content-surface character-network-table-wrap">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0 character-network-table">
+              <caption class="visually-hidden"><%= t("character_networks.connections_caption") %></caption>
+              <thead>
+                <tr>
+                  <th scope="col"><%= t("character_networks.table.pair") %></th>
+                  <th scope="col"><%= t("character_networks.table.relation_tag") %></th>
+                  <th scope="col" class="text-end"><%= t("character_networks.table.scenes") %></th>
+                  <th scope="col" class="text-end"><%= t("character_networks.table.dialogue") %></th>
+                  <th scope="col" class="text-end"><%= t("character_networks.table.exchanges") %></th>
+                  <th scope="col" class="text-end"><%= t("character_networks.table.weight") %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @network.edges.each do |edge| %>
+                  <tr>
+                    <th scope="row" class="fw-normal">
+                      <%= link_to edge.character_a.name, universe_character_path(id: edge.character_a) %>
+                      <span aria-hidden="true">↔</span>
+                      <span class="visually-hidden"><%= t("character_networks.pair_separator") %></span>
+                      <%= link_to edge.character_b.name, universe_character_path(id: edge.character_b) %>
+                    </th>
+                    <td>
+                      <% if edge.relation_tag %>
+                        <%= entity_tag_badge(edge.relation_tag) %>
+                      <% else %>
+                        <span aria-hidden="true">—</span>
+                        <span class="visually-hidden"><%= t("character_networks.table.no_relation_tag") %></span>
+                      <% end %>
+                    </td>
+                    <td class="text-end"><%= edge.shared_scenes %></td>
+                    <td class="text-end"><%= edge.shared_dialogue_elements %></td>
+                    <td class="text-end"><%= edge.exchanges %></td>
+                    <td class="text-end fw-semibold"><%= edge.weight %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    <% else %>
+      <p class="text-body-secondary"><%= t("character_networks.no_interactions_yet") %></p>
+    <% end %>
+  </div>
 <% end %>

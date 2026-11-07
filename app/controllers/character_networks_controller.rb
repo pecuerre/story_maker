@@ -11,17 +11,17 @@ class CharacterNetworksController < ApplicationController
     # The toggle is a view option, not a filter: it changes which nodes are
     # drawn and never which records exist. Only the one documented value turns it
     # on, so a hand-edited URL cannot ask for an arbitrary mode.
-    # Both view layers are on by default. The URL records only the decision to
-    # turn one off, and the toggles preserve each other.
-    show_unconnected = params[:show_unconnected] != "0"
-    # Faction links are on by default, so the URL records only the decision to
-    # turn them off. The label on the toggle stays the same and `aria-pressed`
-    # states which way it is set.
-    include_faction_links = params[:faction_links] != "0"
+    # Both layers are on by default. The URL records only the decision to turn
+    # one off, and the buttons preserve each other.
+    @show_unconnected = params[:show_unconnected] != "0"
+    @show_faction_links = params[:faction_links] != "0"
+    # The server always builds the whole graph, because the client-side toggles
+    # only hide layers and must not move a node. The initial URL state is applied
+    # as visibility here, so the page is correct before JavaScript runs.
     @network = CharacterNetwork.new(
       Current.universe,
-      include_unconnected: show_unconnected,
-      include_faction_links: include_faction_links
+      include_unconnected: true,
+      include_faction_links: true
     )
     @layout = CharacterNetworkLayout.new(@network)
   end

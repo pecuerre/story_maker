@@ -1,4 +1,6 @@
 <% layout = local_assigns.fetch(:layout) %>
+<% show_unconnected = local_assigns.fetch(:show_unconnected) %>
+<% show_faction_links = local_assigns.fetch(:show_faction_links) %>
 
 <figure class="character-network-diagram content-surface">
   <div class="character-network-scroll" role="region" tabindex="0"
@@ -8,8 +10,12 @@
       aria-label="<%= t("character_networks.diagram_aria_label", characters: layout.nodes.length, connections: layout.edges.length) %>">
       <g class="character-network-faction-links" aria-hidden="true">
         <% layout.faction_links.each do |link| %>
-          <line class="character-network-faction-link"
+          <% touches_unconnected = link.source.degree.zero? || link.target.degree.zero? %>
+          <% hidden = !show_faction_links || (!show_unconnected && touches_unconnected) %>
+          <line class="character-network-faction-link<%= " character-network-hidden" if hidden %>"
             style="stroke: <%= link.factions.first.bgcolor %>;"
+            data-character-network-faction-link
+            <% if touches_unconnected %>data-character-network-faction-unconnected="true"<% end %>
             x1="<%= link.source.x %>" y1="<%= link.source.y %>"
             x2="<%= link.target.x %>" y2="<%= link.target.y %>"></line>
         <% end %>
@@ -29,8 +35,10 @@
       <g class="character-network-nodes">
         <% layout.nodes.each do |node| %>
           <% isolated = node.degree.zero? %>
+          <% hidden = isolated && !show_unconnected %>
           <%= link_to universe_character_path(id: node.character),
-            class: "character-network-node#{' character-network-node--isolated' if isolated}",
+            class: "character-network-node#{' character-network-node--isolated' if isolated}#{' character-network-hidden' if hidden}",
+            data: isolated ? { character_network_unconnected: "true" } : {},
             aria: { label: t("character_networks.character_link", name: node.character.name) } do %>
             <circle cx="<%= node.x %>" cy="<%= node.y %>" r="<%= node.radius %>"></circle>
             <% if isolated %>
@@ -60,7 +68,8 @@
         <%= t("character_networks.legend_relation_tag") %>
       </li>
       <% if layout.faction_links.any? %>
-        <li class="list-inline-item">
+        <li class="list-inline-item<%= " character-network-hidden" unless show_faction_links %>"
+          data-character-network-faction-legend>
           <span class="character-network-legend-line character-network-legend-line--faction" aria-hidden="true"></span>
           <%= t("character_networks.legend_faction_link") %>
         </li>
@@ -70,7 +79,8 @@
         <%= t("character_networks.legend_node") %>
       </li>
       <% if layout.nodes.any? { |node| node.degree.zero? } %>
-        <li class="list-inline-item">
+        <li class="list-inline-item<%= " character-network-hidden" unless show_unconnected %>"
+          data-character-network-unconnected-legend>
           <span class="character-network-legend-node character-network-legend-node--isolated" aria-hidden="true"></span>
           <%= t("character_networks.legend_unconnected") %>
         </li>

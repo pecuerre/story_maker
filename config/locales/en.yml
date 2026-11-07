@@ -2229,10 +2229,6 @@ en:
       weight: "Interaction"
     empty_characters_title: "No characters yet"
     empty_characters_description: "Add Characters to this Universe to start the network."
-    empty_scenes_title: "No scenes to read yet"
-    empty_scenes_description: "The network is derived from recorded scene participation and dialogue. Add a Story and its scenes to see the cast connect."
-    empty_interactions_title: "No Character interactions recorded yet"
-    empty_interactions_description: "Two Characters connect when they take part in the same scene or exchange lines in the same dialogue. Record presence on a scene's Characters tab to start the network."
     no_interactions_yet: "No interaction connections recorded yet. The diagram still shows the cast and any faction links."
 
   factions:

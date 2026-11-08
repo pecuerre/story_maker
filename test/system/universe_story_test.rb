@@ -169,6 +169,15 @@ class UniverseStoryTest < ApplicationSystemTestCase
     assert_link I18n.t("stories.show.open_scenes"), href: universe_story_scenes_path(universe_slug: universe.slug, story_id: story)
     assert_link I18n.t("stories.show.add_section"), href: universe_story_sections_path(universe_slug: universe.slug, story_id: story)
 
+    # Story balance: one bar per Character, each linking to the Character, with
+    # the table equivalent beneath it.
+    within ".character-scene-chart" do
+      assert_selector "svg.character-scene-chart-svg a.character-scene-chart-row", count: 3
+    end
+    find(".character-scene-chart-table summary").click
+    assert_selector ".character-scene-chart-table tbody tr", count: 3
+    assert_link characters(:character_one).name, href: universe_character_path(universe_slug: universe.slug, id: characters(:character_one))
+
     # Section-tree preview: root section with its child indented beneath it.
     root = sections(:section_one)
     child = sections(:section_two)

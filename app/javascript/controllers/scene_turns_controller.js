@@ -92,7 +92,8 @@ export default class extends Controller {
 
     if (!pending) {
       container.dataset.turnId = turn.id
-      container.dataset.speakerId = turn.speaker_id
+      container.dataset.speakerId = turn.speaker_id ?? ""
+      container.dataset.speakerValue = turn.speaker_value ?? ""
       container.dataset.speakerName = turn.speaker_name
       container.dataset.body = turn.body ?? ""
       container.dataset.parenthetical = turn.parenthetical ?? ""
@@ -199,9 +200,11 @@ export default class extends Controller {
       const option = document.createElement("option")
       option.value = String(pair[1])
       option.textContent = pair[0]
-      if (String(pair[1]) === container.dataset.speakerId) option.selected = true
       speaker.appendChild(option)
     })
+    // Selecting after every option is appended is the reliable path; setting an
+    // option's `selected` while it is detached is not.
+    if (container.dataset.speakerValue) speaker.value = container.dataset.speakerValue
 
     const line = document.createElement("textarea")
     line.className = "form-control form-control-sm me-1 flex-grow-1"
@@ -239,6 +242,7 @@ export default class extends Controller {
     const turn = {
       id: container.dataset.turnId,
       speaker_id: container.dataset.speakerId,
+      speaker_value: container.dataset.speakerValue,
       speaker_name: container.dataset.speakerName,
       body: container.dataset.body,
       parenthetical: container.dataset.parenthetical,

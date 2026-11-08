@@ -363,6 +363,39 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "story show draws the scenes-per-character chart and its table" do
+    story = stories(:story_one)
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_select ".character-scene-chart svg.character-scene-chart-svg a.character-scene-chart-row", count: 3
+    assert_select ".character-scene-chart-table tbody tr", count: 3
+    assert_select "a[href=?]", universe_character_path(id: characters(:character_one)),
+      text: characters(:character_one).name
+  end
+
+  test "a story with no scenes shows the chart's empty state" do
+    story = empty_story
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_includes response.body, I18n.t("stories.show.cast_none_scenes_title")
+    assert_select ".character-scene-chart svg", count: 0
+  end
+
+  test "a story whose scenes record no character shows the cast empty state" do
+    story = @universe.stories.create!(name: "Bare cast")
+    story.scenes.create!(name: "Nobody here", position: 0)
+
+    get universe_story_url(universe_slug: @universe.slug, id: story)
+
+    assert_response :success
+    assert_includes response.body, I18n.t("stories.show.cast_none_characters_title", story: story.name)
+    assert_select ".character-scene-chart svg", count: 0
+  end
+
   private
 
   def empty_story

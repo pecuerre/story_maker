@@ -1,0 +1,79 @@
+// The Story overview's scenes-per-character chart. The SVG keeps its own
+// height, so it never scales the labels down on a narrow card; the bars use
+// percentage widths and stay responsive, and the scroll region keeps a long
+// cast from pushing the rest of the overview down.
+.character-scene-chart {
+  margin: 0;
+}
+
+.character-scene-chart-scroll {
+  max-height: 22rem;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+}
+
+.character-scene-chart-scroll:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.character-scene-chart-svg {
+  display: block;
+}
+
+.character-scene-chart-row {
+  text-decoration: none;
+}
+
+.character-scene-chart-label {
+  fill: var(--bs-body-color);
+  font-size: .8125rem;
+}
+
+.character-scene-chart-value {
+  fill: var(--bs-secondary-color);
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.character-scene-chart-track {
+  fill: var(--bs-tertiary-bg);
+}
+
+.character-scene-chart-bar {
+  fill: var(--bs-primary);
+}
+
+.character-scene-chart-row:hover .character-scene-chart-bar {
+  fill: var(--bs-primary-text-emphasis);
+}
+
+.character-scene-chart-row:focus-visible .character-scene-chart-bar {
+  stroke: var(--bs-body-color);
+  stroke-width: 2;
+}
+
+.character-scene-chart-caption {
+  margin-top: .75rem;
+  margin-bottom: 0;
+}
+
+@media print {
+  .character-scene-chart-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .character-scene-chart-track {
+    fill: #fff;
+    stroke: #000;
+  }
+
+  .character-scene-chart-bar {
+    fill: #000;
+  }
+
+  .character-scene-chart-row:focus-visible .character-scene-chart-bar {
+    stroke: none;
+  }
+}

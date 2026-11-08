@@ -107,7 +107,13 @@ class SceneDialogueTurnsController < ApplicationController
   end
 
   def scene_dialogue_turn_params
-    params.expect(scene_dialogue_turn: [ :speaker_id, :body, :parenthetical ])
+    attributes = params.expect(scene_dialogue_turn: [ :speaker_id, :body, :parenthetical ])
+    # The picker's non-Character choice is a UI value, not an id: a line with no
+    # Character speaker stores a null link and keeps the tag in `body`.
+    if attributes[:speaker_id].to_s == SceneDialogueTurn::NON_CHARACTER_SPEAKER
+      attributes[:speaker_id] = nil
+    end
+    attributes
   end
 
   def scene_dialogue_turn_json

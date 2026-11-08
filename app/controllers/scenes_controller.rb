@@ -22,6 +22,9 @@ class ScenesController < ApplicationController
   before_action :set_character_options, only: %i[ new edit create update ]
   before_action :set_scene_tag_data, only: %i[ index show new edit create update ]
   before_action :set_plot_options, only: %i[ show new edit create update ]
+  # The Scene form's searchable Event field offers the Universe's shared Events,
+  # not only the ones this Story already depicts.
+  before_action :set_event_options, only: %i[ new edit create update ]
   # Scene Details hosts the ordered Element list and its speaker picker.
   before_action :set_element_data, only: %i[ show ]
   # Prose mentions need the same Character list the speaker picker already
@@ -222,6 +225,16 @@ class ScenesController < ApplicationController
     @plot_options = @story.plots.order(:name, :id).to_a
   end
 
+  # The Event picker reads `display_label`, which walks a temporal reference
+  # when an Event has no title or date, so the three associations are preloaded
+  # once for the whole option list.
+  def set_event_options
+    @event_options = Current.universe.events
+      .includes(:before_event, :after_event, :simultaneous_event)
+      .reorder(:name, :id)
+      .to_a
+  end
+
   # The ordered Element list and the Character choices the turn editor and the
   # point-of-view field use. Each Element's turns are preloaded here, so a page
   # that queried per Element would be a query per row.
@@ -262,7 +275,7 @@ class ScenesController < ApplicationController
 
   def scene_params
     params.expect(scene: [ *photo_params, :name, :description, :drafting_contract, :status, :section_id, :datetime,
-      :pov_character_id, { scene_tag_ids: [], plot_ids: [] } ])
+      :pov_character_id, :create_event, { scene_tag_ids: [], plot_ids: [], event_ids: [] } ])
   end
 
   def move_direction

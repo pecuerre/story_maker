@@ -19,18 +19,37 @@ class SceneDialogueTurnTest < ActiveSupport::TestCase
     )
   end
 
-  test "requires an element, a speaker, and a dialogue element" do
+  test "requires an element and a dialogue element" do
     t = build_turn
     assert t.valid?
 
     t.scene_element = nil
     assert_not t.valid?
     assert_includes t.errors[:scene_element], "must exist"
+  end
 
-    t.scene_element = @element
-    t.speaker = nil
+  test "a non-character speaker stores no Character and keeps the tag in the line" do
+    t = build_turn(speaker: nil, body: "review-chair: The gate is open.")
+
+    assert t.valid?
+    assert t.non_character_speaker?
+    t.save!
+    assert_nil t.speaker_id
+    assert_equal "review-chair: The gate is open.", t.body
+  end
+
+  test "a non-character speaker needs a line because the line carries the tag" do
+    t = build_turn(speaker: nil, body: "")
+
     assert_not t.valid?
-    assert_includes t.errors[:speaker], "must exist"
+    assert_includes t.errors[:body], "can't be blank"
+  end
+
+  test "a Character speaker may still have no line" do
+    t = build_turn(body: "")
+
+    assert t.valid?
+    assert_not t.non_character_speaker?
   end
 
   test "a narration element cannot carry a turn" do
@@ -48,7 +67,7 @@ class SceneDialogueTurnTest < ActiveSupport::TestCase
   end
 
   test "an unknown speaker is an ordinary validation error" do
-    t = SceneDialogueTurn.new(scene_element: @element, speaker_id: 0)
+    t = SceneDialogueTurn.new(scene_element: @element, speaker_id: 0, body: "Ghost")
 
     assert_not t.valid?
     assert_includes t.errors[:speaker], "must exist"

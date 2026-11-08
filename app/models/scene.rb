@@ -79,6 +79,12 @@ class Scene < ApplicationRecord
   validate :datetime_is_a_valid_point
   validate :scene_tag_assignments_are_valid
   validate :plot_assignments_are_valid
+  validate :event_assignments_are_valid
+  # The form's Event field and its create-an-Event checkbox are one decision,
+  # written after the Scene itself so a new Scene has an id to link from. A
+  # draft-based universe remembers the same payload and the applier builds the
+  # Scene through this model, so the callback runs there too.
+  after_save :sync_assigned_events, if: -> { @requested_event_ids || create_event? }
 
   # Active Record's generated collection-id writer raises when an optional tag id
   # is unknown. Scene Details accepts optional tag assignments, so turn that
@@ -134,11 +140,85 @@ class Scene < ApplicationRecord
     self.plot_ids = Array(records).map(&:id)
   end
 
+  # The form's searchable Event field. It is a plain setter rather than the
+  # through association's generated writer because the link rows carry their own
+  # order and the Events tab's role, and a removed link must be soft-deleted like
+  # every other Scene-owned record. The requested ids are reconciled after save;
+  # until then `event_ids` answers what the form submitted so a refused save
+  # re-renders with the author's choices still selected.
+  def event_ids=(ids)
+    requested_ids = Array(ids).filter_map { |id| id.respond_to?(:id) ? id.id : id }
+      .compact_blank.map(&:to_s)
+    unique_ids = requested_ids.uniq
+    existing = Event.where(id: requested_ids).to_a
+    existing_ids = existing.map { |event| event.id.to_s }
+
+    @event_assignment_errors = []
+    @event_assignment_errors << I18n.t("scenes.errors.must_exist") if (requested_ids - existing_ids).any?
+    @event_assignment_errors << I18n.t("scenes.errors.must_be_unique") if unique_ids.length != requested_ids.length
+
+    # A collection build assigns the submitted attributes before it sets the
+    # owning Story, so the same-Universe check cannot run here; the validation
+    # below reads the Story once it is known.
+    @requested_event_ids = existing.map(&:id)
+    @event_ids_for_form = existing.map(&:id)
+  end
+
+  def event_ids
+    @event_ids_for_form || super
+  end
+
+  # The form's create-only checkbox. It is a virtual attribute so the same
+  # payload works in a direct universe and in a remembered draft, where the
+  # applier builds the Scene through this model.
+  attr_writer :create_event
+
+  def create_event?
+    ActiveModel::Type::Boolean.new.cast(@create_event)
+  end
+
   def universe
     story&.universe
   end
 
   private
+    # Creates an Event named after this Scene when the create form asked for
+    # one, then reconciles every requested link. A blank Event field removes the
+    # Scene's links; it never removes the Events themselves.
+    def sync_assigned_events
+      created_event = create_event_from_scene if previously_new_record? && create_event?
+      requested = @requested_event_ids
+
+      return if requested.nil? && created_event.nil?
+
+      requested = (requested || scene_events.map(&:event_id))
+      requested = requested + [ created_event.id ] if created_event
+
+      reconcile_scene_events(requested)
+    end
+
+    def create_event_from_scene
+      Event.create!(universe: story.universe, title: name, start_datetime: datetime)
+    end
+
+    def reconcile_scene_events(requested_ids)
+      live = scene_events.reload.to_a
+      requested_ids = Event.where(id: requested_ids.uniq, universe_id: story.universe_id).pluck(:id)
+
+      live.each do |link|
+        link.soft_delete unless requested_ids.include?(link.event_id)
+      end
+
+      remaining = scene_events.reload.to_a
+      existing_ids = remaining.map(&:event_id)
+      next_position = (remaining.map(&:position).max || -1) + 1
+
+      (requested_ids - existing_ids).each do |event_id|
+        SceneEvent.create!(scene: self, event_id: event_id, position: next_position)
+        next_position += 1
+      end
+    end
+
     def mark_unselected_scene_tropes_for_destruction
       scene_tropes.each do |assignment|
         assignment.mark_for_destruction if assignment.persisted? && !assignment.selected
@@ -153,6 +233,14 @@ class Scene < ApplicationRecord
 
     def plot_assignments_are_valid
       Array(@plot_assignment_errors).each { |message| errors.add(:plots, message) }
+    end
+
+    def event_assignments_are_valid
+      Array(@event_assignment_errors).each { |message| errors.add(:events, message) }
+      return if story.nil? || @requested_event_ids.blank?
+
+      foreign = Event.where(id: @requested_event_ids).where.not(universe_id: story.universe_id)
+      errors.add(:events, I18n.t("scenes.errors.must_belong_to_universe")) if foreign.exists?
     end
 
     # Shared scopes are application-level rules: a real foreign key cannot prove

@@ -3,10 +3,11 @@ module StoryInterchange
   #
   # A turn starts with its speaker and an opening quote:
   # `@[[character:ada]] "The gate is open."`. The speaker is either a typed
-  # Character link or a bare slug for a speaker with no entity file. A quoted
-  # line may wrap across physical lines; the turn continues until a line ends
-  # with the closing quote, and the continuation lines are joined with a space
-  # because the source's line break is the editor's, not the dialogue's.
+  # Character link or a bare slug for a speaker with no entity file; the bare
+  # form becomes a non-character turn whose body carries the tag. A quoted line
+  # may wrap across physical lines; the turn continues until a line ends with the
+  # closing quote, and the continuation lines are joined with a space because the
+  # source's line break is the editor's, not the dialogue's.
   #
   # A nonblank line that does not start a turn, and a turn that reaches the next
   # turn or the end of the block without closing its quote, are returned as

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import SceneTurnsController from "../../app/javascript/controllers/scene_turns_controller"
 
-const SPEAKER_CHOICES = [ [ "Ada", 11 ], [ "Bea", 12 ] ]
+const SPEAKER_CHOICES = [ [ "Ada", 11 ], [ "Bea", 12 ], [ "Non-character speaker", "non_character" ] ]
 const TURN = {
   id: 7,
   speaker_id: 11,
@@ -186,6 +186,39 @@ describe("Scene dialogue turns editor", () => {
     expect(emptyState.hidden).toBe(true)
     expect(visits).toEqual([])
     delete window.Turbo
+    controller.disconnect()
+  })
+
+  test("a non-character speaker submits the picker value and keeps the tag in the line", async () => {
+    const { controller, speakerSelect, bodyField, turnsList } = build({ kind: "dialogue" })
+    speakerSelect.value = "non_character"
+    bodyField.value = "review-chair: Something"
+    window.fetch = async (_url, options) => {
+      expect(new URLSearchParams(options.body).get("scene_dialogue_turn[speaker_id]")).toBe("non_character")
+      return new Response(JSON.stringify({
+        ...TURN, id: 9, speaker_id: null, speaker_value: "non_character",
+        speaker_name: "Non-character speaker", body: "review-chair: Something"
+      }), { status: 201 })
+    }
+
+    expect(await controller.create()).toBe(true)
+    const row = turnsList.querySelector(".turn-row")
+    expect(row.querySelector(".turn-speaker").textContent).toBe("Non-character speaker")
+    expect(row.querySelector(".turn-line").textContent).toBe("review-chair: Something")
+    controller.disconnect()
+  })
+
+  test("editing a non-character turn preselects the non-character option", () => {
+    const turn = {
+      ...TURN, speaker_id: null, speaker_value: "non_character",
+      speaker_name: "Non-character speaker", body: "review-chair: Something"
+    }
+    const { controller, turnsList } = build({ kind: "dialogue", turns: [ turn ] })
+
+    controller.edit({ currentTarget: turnsList.querySelector("button[data-action='scene-turns#edit']") })
+
+    expect(turnsList.querySelector("select[name='speaker_id']").value).toBe("non_character")
+    expect(turnsList.querySelector("textarea[name='body']").value).toBe("review-chair: Something")
     controller.disconnect()
   })
 

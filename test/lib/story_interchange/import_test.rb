@@ -290,10 +290,15 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal "draft", gate.status
     assert_equal universe.characters.find_by!(slug: "ada"), gate.pov_character
     assert_equal [ universe.locations.find_by!(slug: "keep") ], gate.scene_locations.map(&:location)
-    assert_nil gate.datetime
+    # `moment` is the parseable twin of `timeline`, so a concrete value is the
+    # Scene's own in-world time as well as its Event's.
+    assert_equal Time.utc(2050, 1, 1, 20), gate.datetime
 
     hall = story.scenes.find_by!(slug: "01-arrival-02-the-hall")
     assert_equal 1, hall.position
+    # A relation is not a point, so it does not fill the Scene's own datetime;
+    # the Events slice resolves it on the Event.
+    assert_nil hall.datetime
     # The new scene format keeps no writing status in the source, so an imported
     # Scene starts in the vocabulary's default state.
     assert_equal "draft", hall.status
@@ -311,18 +316,19 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     dialogue = gate_elements.last
     turns = dialogue.scene_dialogue_turns.reorder(:position, :id)
-    assert_equal [ "The gate is open.", "Then it stays barred to The Wardens." ], turns.map(&:body)
-    assert_equal [ universe.characters.find_by!(slug: "ada"), universe.characters.find_by!(slug: "ada") ],
+    assert_equal [ "The gate is open.", "gatekeeper: It opens for the lantern.", "Then it stays barred to The Wardens." ],
+      turns.map(&:body)
+    assert_equal [ universe.characters.find_by!(slug: "ada"), nil, universe.characters.find_by!(slug: "ada") ],
       turns.map(&:speaker)
-    # `@gatekeeper` names no Character file, so its line cannot become a turn;
-    # the preview reports the speaker instead.
-    assert_not_includes turns.map(&:body), "It opens for the lantern."
+    # `@gatekeeper` names no Character file, so it becomes a non-character turn
+    # whose line keeps the tag rather than a speaker the Universe does not have.
+    assert turns.second.non_character_speaker?
 
     hall_elements = hall.scene_elements.reorder(:position, :id)
     assert_equal [ "narration", "dialogue", "narration" ], hall_elements.map(&:kind)
     assert_equal [ "The hall", "The hall (2)", "The hall (3)" ], hall_elements.map(&:name)
     assert_includes hall_elements.first.body, "[[rule:D1]]"
-    assert_equal [ "There is nothing here." ],
+    assert_equal [ "There is nothing here.", "warden: Then we wait." ],
       hall_elements.second.scene_dialogue_turns.reorder(:position, :id).map(&:body)
     assert_includes hall_elements.last.body, "Ada sets the lantern down and waits for the warden to speak."
     # The Scene's title heading names the record rather than starting the prose,
@@ -330,6 +336,97 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     all_bodies = gate_elements.map(&:body).join("\n") + hall_elements.map(&:body).join("\n")
     assert_not_includes all_bodies, "## The gate"
     assert_not_includes all_bodies, "DRAFTING CONTRACT"
+  end
+
+  test "writes one event per scene, dates it from moment, and links it to the scene" do
+    universe = import.call.universe
+    story = universe.stories.find_by!(slug: "synthetic-story")
+    gate = story.scenes.find_by!(slug: "01-arrival-01-the-gate")
+    hall = story.scenes.find_by!(slug: "01-arrival-02-the-hall")
+
+    gate_event = gate.events.sole
+    hall_event = hall.events.sole
+
+    assert_equal "The gate", gate_event.title
+    assert_equal Time.utc(2050, 1, 1, 20), gate_event.start_datetime
+    assert_equal "The hall", hall_event.title
+    # A span is both a relation and, when its target has a date, a computed
+    # start: one hour after the gate.
+    assert_equal Time.utc(2050, 1, 1, 21), hall_event.start_datetime
+    assert_equal gate_event, hall_event.after_event
+    assert_nil hall_event.before_event
+    assert_nil hall_event.simultaneous_event
+  end
+
+  test "writes a before, simultaneous, and bare direction moment as event relations" do
+    write("stories/synthetic-story/chapters/02-winter/01-before.md", <<~MARKDOWN)
+      ---
+      id: B-101
+      title: Before
+      pov: ada
+      location: keep
+      timeline: "before the gate"
+      moment: "before 01-arrival/01-the-gate"
+      branch: main
+      ---
+
+      # Before
+
+      ## Narration
+
+      Before the gate opens.
+    MARKDOWN
+    write("stories/synthetic-story/chapters/02-winter/02-same.md", <<~MARKDOWN)
+      ---
+      id: B-102
+      title: Same
+      pov: ada
+      location: keep
+      timeline: "at the gate"
+      moment: "at the same time as 01-arrival/01-the-gate"
+      branch: main
+      ---
+
+      # Same
+
+      ## Narration
+
+      The same instant as the gate.
+    MARKDOWN
+    write("stories/synthetic-story/chapters/02-winter/03-after.md", <<~MARKDOWN)
+      ---
+      id: B-103
+      title: After
+      pov: ada
+      location: keep
+      timeline: "after the gate"
+      moment: "after 01-arrival/01-the-gate"
+      branch: main
+      ---
+
+      # After
+
+      ## Narration
+
+      After the gate closes.
+    MARKDOWN
+
+    universe = import.call.universe
+    story = universe.stories.find_by!(slug: "synthetic-story")
+    gate_event = story.scenes.find_by!(slug: "01-arrival-01-the-gate").events.sole
+    before_event = story.scenes.find_by!(slug: "02-winter-01-before").events.sole
+    same_event = story.scenes.find_by!(slug: "02-winter-02-same").events.sole
+    after_event = story.scenes.find_by!(slug: "02-winter-03-after").events.sole
+
+    assert_equal gate_event, before_event.before_event
+    assert_nil before_event.after_event
+    assert_equal gate_event, same_event.simultaneous_event
+    # A relation-only scene with a dated target inherits that instant, so it is
+    # still placeable on a chronological listing.
+    assert_equal gate_event.start_datetime, same_event.start_datetime
+    assert_equal gate_event, after_event.after_event
+    assert_nil before_event.start_datetime
+    assert_nil after_event.start_datetime
   end
 
   test "joins a dialogue turn that wraps across physical lines" do
@@ -360,7 +457,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_not_includes gate.drafting_contract, "<!--"
   end
 
-  test "keeps a dialogue with no character speaker as narration prose" do
+  test "imports a bare speaker as a non-character turn with the tag in the line" do
     path = File.join(@root, "stories/synthetic-story/chapters/01-arrival/02-the-hall.md")
     File.write(path, File.read(path).sub('@[[character:ada]] "There is nothing here."', '@other "There is nothing here."'))
 
@@ -368,13 +465,13 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     hall = universe.stories.find_by!(slug: "synthetic-story").scenes.find_by!(slug: "01-arrival-02-the-hall")
     dialogue = hall.scene_elements.reorder(:position, :id).second
 
-    # No line names a Character file, so the block cannot be a Dialogue Element;
-    # its lines stay as prose instead of being lost.
-    assert_equal "narration", dialogue.kind
-    assert_equal "The hall (2)", dialogue.name
-    assert_includes dialogue.body, "other: There is nothing here."
-    assert_includes dialogue.body, "warden: Then we wait."
-    assert_empty dialogue.scene_dialogue_turns
+    # Neither line names a Character file, so both become non-character turns
+    # whose bodies keep the tag instead of being dropped as prose.
+    assert_equal "dialogue", dialogue.kind
+    turns = dialogue.scene_dialogue_turns.reorder(:position, :id)
+    assert_equal [ "other: There is nothing here.", "warden: Then we wait." ], turns.map(&:body)
+    assert turns.all?(&:non_character_speaker?)
+    assert_empty turns.filter_map(&:speaker)
   end
 
   test "reports the scene facts the application has no column for" do
@@ -384,11 +481,9 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
       "01-the-gate: id",
       "01-the-gate: timeline",
       "01-the-gate: branch",
-      "01-the-gate: gatekeeper",
       "02-the-hall: id",
       "02-the-hall: timeline",
-      "02-the-hall: branch",
-      "02-the-hall: warden"
+      "02-the-hall: branch"
     ], reported_items(StoryInterchange::Importers::Scenes.reported(report))
   end
 
@@ -434,6 +529,12 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     stories = StoryInterchange::Importers::Stories.records(report)
     assert_equal [ "Synthetic Story" ], stories.map(&:label)
     assert_not stories.sole.reported?
+
+    # The Events slice names its records after their Scenes, and every accepted
+    # moment shape is stored whole.
+    events = StoryInterchange::Importers::Events.records(report)
+    assert_equal [ "The gate", "The hall" ], events.map(&:label)
+    assert_not events.any?(&:reported?)
   end
 
   test "a reported record names what was left behind, and a whole one carries no note" do
@@ -615,9 +716,9 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
 
     assert plan.importable?
     assert_equal [ "Canon rules", "Factions", "Characters", "Relations", "Locations", "Items", "Stories",
-      "Sections", "Scenes", "Plots" ],
+      "Sections", "Scenes", "Events", "Plots" ],
       plan.slices.map { |slice| I18n.t(slice.label_key) }
-    assert_equal [ 4, 1, 1, 0, 1, 1, 1, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
+    assert_equal [ 4, 1, 1, 0, 1, 1, 1, 2, 2, 2, 1 ], plan.slices.map { |slice| slice.preview(plan.report) }
     assert_empty plan.slices.first.reported(plan.report)
     assert_empty plan.slices.third.reported(plan.report)
     assert_equal 0, Universe.where(slug: "synthetic-universe").count
@@ -700,7 +801,7 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
             scene.scene_locations.map { |link| link.location.slug }.sort,
             scene.scene_elements.reorder(:position, :id).map do |element|
               [ element.name, element.kind, element.body,
-                element.scene_dialogue_turns.reorder(:position, :id).map { |turn| [ turn.speaker.slug, turn.body ] } ]
+                element.scene_dialogue_turns.reorder(:position, :id).map { |turn| [ turn.speaker&.slug, turn.body ] } ]
             end
           ]
         end

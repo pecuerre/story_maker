@@ -4,6 +4,7 @@ title: The hall
 pov: ada
 location: keep
 timeline: "moments after the gate"
+moment: "1 hour after 01-arrival/01-the-gate"
 branch: fork of Ada-01
 ---
 

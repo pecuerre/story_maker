@@ -681,7 +681,8 @@ every assigned Scene Tag, and every assigned Plot belong to the Scene's Story be
 resolves its Universe through that Element. Element positions are flat and contiguous inside their
 Scene, while turn positions are flat and contiguous inside their Element. `SceneElement` uses a
 YAML-only `manifest_key` when turns need to reference an Element that has no public slug. A Dialogue
-attributes each line with its own `speaker:` reference, and those turns are its whole cast. A
+attributes each line with its own `speaker:` reference, and those turns are its whole cast; omitting
+`speaker:` makes a non-character turn whose body keeps the tag. A
 `SceneCharacter` declares `character:`, a `SceneItem` declares `item:`, and a `SceneLocation` declares
 `location:` — each with an optional `role:`; leave `role:` empty to record the appearance without
 one. The Dark manifests deliberately include a Scene with no elements at all, a

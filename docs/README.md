@@ -52,7 +52,7 @@ How to use these docs:
    | Universe-scoped Faction profiles and tags | [features/factions.md](features/factions.md) |
    | Character profiles, Markdown descriptions and links, Faction membership, the interaction network | [features/characters.md](features/characters.md) |
    | Prose mentions, suggestions, and in-place name highlighting | [features/mentions.md](features/mentions.md) |
-   | The Story-wide appearance grid and its two layers | [features/appearances.md](features/appearances.md) |
+   | The Story-wide appearance grid, its two layers, and the Story overview's scenes-per-character chart | [features/appearances.md](features/appearances.md) |
    | Location Markdown profiles, presence, search, and the Locations workspace | [features/locations.md](features/locations.md) |
    | Item Markdown profiles, ownership, search, and the Items workspace | [features/items.md](features/items.md) |
    | Reading a Story as a printable book, and the export scopes | [features/exports.md](features/exports.md) |

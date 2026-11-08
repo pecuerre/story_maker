@@ -60,11 +60,21 @@ module SceneElementsHelper
 
   # [ label, value ] pairs for a dialogue turn's speaker picker. Every universe
   # Character is offered, because the same Character may speak in any number of
-  # Elements. The pairs are `ScenesHelper#name_id_choices`, shared with the three
-  # participation tabs, so a Character offered here is offered under the same name
-  # and with the same value there.
+  # Elements, and the final pair is the non-Character choice: the line then
+  # carries the speaker tag instead of naming a record. The Character pairs are
+  # `ScenesHelper#name_id_choices`, shared with the three participation tabs, so a
+  # Character offered here is offered under the same name and with the same value
+  # there.
   def scene_element_speaker_choices(characters)
-    name_id_choices(characters)
+    name_id_choices(characters) + [
+      [ t("scenes.elements.dialogue_turns.non_character_speaker"), SceneDialogueTurn::NON_CHARACTER_SPEAKER ]
+    ]
+  end
+
+  # A turn's speaker is a Character record or the non-Character label. The label
+  # is chrome, so it is resolved here rather than stored on the turn.
+  def scene_dialogue_turn_speaker_name(turn)
+    turn.speaker&.name || t("scenes.elements.dialogue_turns.non_character_speaker")
   end
 
   # A short, single-line preview of the Element content. The full prose stays on
@@ -122,7 +132,8 @@ module SceneElementsHelper
     {
       id: turn.id,
       speaker_id: turn.speaker_id,
-      speaker_name: turn.speaker.name,
+      speaker_value: turn.speaker_id || SceneDialogueTurn::NON_CHARACTER_SPEAKER,
+      speaker_name: scene_dialogue_turn_speaker_name(turn),
       body: turn.body,
       parenthetical: turn.parenthetical,
       position: turn.position,

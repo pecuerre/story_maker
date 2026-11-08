@@ -432,6 +432,7 @@ en:
       stories: "Stories"
       sections: "Sections"
       scenes: "Scenes"
+      events: "Events"
       plots: "Plots"
     # The note beside a record on the preview and the run page. A record written
     # whole carries none and is shown by its name alone; each kind of leftover is
@@ -570,6 +571,52 @@ en:
       owner_description: "A universe holds the world, characters, locations, events, and items shared by its stories."
       guest_title: "No public universes yet"
       guest_description: "Sign in to create a universe, or check back when a public universe is available."
+    # The guest view of the universes index. These strings describe features that
+    # already exist; the planned analyzers are not promised here.
+    landing:
+      document_title: "Universe Maker — stories that stay consistent"
+      eyebrow: "Universe Maker"
+      title: "Stories that stay consistent."
+      lede: "A writing workspace that keeps the facts of your world together — who was where, when, and with whom — so every story can be checked against them."
+      browse: "Browse public universes"
+      note: "Public universes are readable without an account."
+      facts:
+        title: "The facts add up"
+        where_label: "Where"
+        where_detail: "Locations and the routes between them"
+        when_label: "When"
+        when_detail: "Events and the universe timeline"
+        who_label: "Who"
+        who_detail: "Characters, factions, and their relations"
+      steps:
+        title: "One world, many stories"
+        description: "Every record belongs to a universe. Every story is written inside it."
+        world:
+          title: "Build the world"
+          description: "Characters, factions, locations, routes, items, events, and canon rules."
+        story:
+          title: "Write the story"
+          description: "Sections, scenes, and plot arcs, with each scene linked to the records it depicts."
+        continuity:
+          title: "Check the continuity"
+          description: "The timeline, the map, and the appearance grid show where the story and the facts disagree."
+      public:
+        title: "Public universes"
+        description: "These worlds are readable by anyone. Open one to see its stories."
+      collaboration:
+        title: "Built for more than one author"
+        visibility:
+          title: "Public or private"
+          description: "A public universe is readable by guests. A private one is visible only to its members."
+        access:
+          title: "Read, write, or administer"
+          description: "Access is granted per universe and applies uniformly to every story inside it."
+        review:
+          title: "Changes you can review"
+          description: "A universe can remember a change in a draft instead of writing it immediately, so it can be applied or reviewed first."
+      footer:
+        tagline: "A workspace for stories that stay consistent."
+        navigation_label: "Landing page links"
     form:
       name: "Name"
       slug: "Address slug"
@@ -1317,6 +1364,25 @@ en:
       # universe's name: "Shared by every story in X" cannot become Spanish by
       # substituting the name into a fixed frame.
       bible_description: "Every story in %{universe} shares these records."
+      cast_eyebrow: "Story balance"
+      cast_heading: "Scenes per character"
+      cast_description: "How many scenes in this story include each character. Every bar is measured against the whole story."
+      cast_scroll_label: "Scenes per character chart"
+      cast_chart_aria: "Scenes per character: %{characters} across %{scenes}"
+      cast_chart_label: "%{name}: %{count} of %{scenes}"
+      cast_chart_value: "%{count} of %{total}"
+      cast_caption: "A bar is the share of this story's %{scenes} in which the character appears. A prose mention is not an appearance and is not counted."
+      cast_table_summary:
+        one: "Show the character as a table"
+        other: "Show all %{count} characters as a table"
+      cast_table_caption: "Scenes per character in %{story}, out of %{scenes}"
+      cast_table_character: "Character"
+      cast_table_scenes: "Scenes"
+      cast_table_share: "Share"
+      cast_none_scenes_title: "No scenes yet"
+      cast_none_scenes_description: "A character appears here when a scene records them. Add the first scene to begin."
+      cast_none_characters_title: "No characters appear in %{story} yet"
+      cast_none_characters_description: "Record a character in a scene, or give them a line of dialogue, and they will appear here."
     # The code-owned starting shapes in `StoryStructureCatalog`. Their labels are
     # keys here rather than strings in the catalogue, so the picker and the
     # records it creates render in the request's language.
@@ -1833,9 +1899,14 @@ en:
       section_hint: "Optional. A Section groups this scene, for example under a book, chapter, season, or episode. Grouping changes organization only: it never changes this scene's narrative position, and a nested Section also places the scene inside its ancestor path."
       in_world_time_legend: "In-world time"
       datetime: "In-world time"
-      datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the events linked on the Events tab: changing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
-      events_note_html: "This scene's events are linked from its %{events}, where each link carries its own order and an optional role."
-      events_note_new: "Save this scene first, then link the events it depicts from its Events tab."
+      datetime_hint: "Optional. A single point in story time, stored with the same precision and without a timezone as event dates. It is independent of the events linked here and on the Events tab: changing or clearing one never writes, clears, or checks the other, so you can deliberately keep them different."
+      events_legend: "Events"
+      events_label: "Events this scene depicts"
+      events_hint: "Optional. Link any of this universe's events. The search box narrows the list. A link's role and order are edited on the Events tab."
+      events_empty: "This universe has no events yet. Create one from this scene below, then link more from the Events tab."
+      create_event: "Create an event from this scene"
+      create_event_hint: "Optional, only when creating. Saves a new event named after this scene, timed by the in-world time above when one is set, and linked to it."
+      events_note_html: "Each link's role and order are edited from the %{events}."
       events_link: "Events tab"
       point_of_view_legend: "Point of view"
       plots_legend: "Plot arcs"
@@ -1902,9 +1973,10 @@ en:
         pending: "Saved to draft"
         save_failed: "The turn could not be saved."
         speaker: "Speaker"
-        speaker_hint: "The character who speaks this line. A turn's speaker is not a scene presence link — speaking does not add the character to the scene's cast."
+        non_character_speaker: "Non-character speaker"
+        speaker_hint: "The character who speaks this line, or Non-character speaker when the speaker has no Character record. A turn's speaker is not a scene presence link — speaking does not add the character to the scene's cast."
         body: "Line"
-        body_hint: "The words the character speaks in this turn."
+        body_hint: "The words the character speaks in this turn. For a non-character speaker, start the line with the speaker tag, such as “review-chair: …”."
         parenthetical: "Delivery note"
         parenthetical_hint: "An optional direction such as “whispering” or “through gritted teeth.”"
         form:
@@ -3687,6 +3759,7 @@ en:
         section: "Section"
         datetime: "In-world time"
         pov_character: "Point of view"
+        create_event: "Create an event from this scene"
         scene_tags: "Scene tags"
         scene_tropes_attributes: "Trope detections"
         id: "Assignment ID"

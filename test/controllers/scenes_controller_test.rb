@@ -724,6 +724,63 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_equal Time.utc(2019, 11, 5, 21), created.datetime
   end
 
+  test "creates a scene linked to selected events" do
+    assert_difference [ "Scene.count", "SceneEvent.count" ], 1 do
+      post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+        params: { scene: { name: "Linked scene", event_ids: [ events(:event_two).id ] } }
+    end
+
+    created = @story.scenes.find_by!(name: "Linked scene")
+    assert_equal [ events(:event_two) ], created.events.to_a
+    assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: created)
+  end
+
+  test "creates a scene and an event from it in one save" do
+    assert_difference("Scene.count", 1) do
+      assert_difference("Event.count", 1) do
+        assert_difference("SceneEvent.count", 2) do
+          post universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story),
+            params: {
+              scene: {
+                name: "Event source scene",
+                datetime: "2031-02-03T04:05",
+                create_event: "1",
+                event_ids: [ events(:event_two).id ]
+              }
+            }
+        end
+      end
+    end
+
+    created = @story.scenes.find_by!(name: "Event source scene")
+    event = created.events.find_by!(title: "Event source scene")
+    assert_equal Time.utc(2031, 2, 3, 4, 5), event.start_datetime
+    # The checkbox is one more link: the chosen existing event is kept too.
+    assert_equal [ events(:event_two), event ].sort_by(&:id), created.events.to_a.sort_by(&:id)
+  end
+
+  test "updates the event links and clears them with a blank choice" do
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { event_ids: [ events(:event_two).id ] } }
+
+    assert_equal [ events(:event_two) ], @scene.reload.events.to_a
+
+    assert_no_difference("Event.count") do
+      patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+        params: { scene: { event_ids: [ "" ] } }
+    end
+
+    assert_empty @scene.reload.events
+  end
+
+  test "rejects an event from another universe without changing the scene" do
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { event_ids: [ events(:event_other_universe).id ] } }
+
+    assert_response :unprocessable_content
+    assert_equal [ events(:event_one) ], @scene.reload.events.to_a
+  end
+
   test "the new and edit forms expose a scoped section selector" do
     get new_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story)
 
@@ -733,10 +790,17 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
       text: "Section one"
     assert_select "select[name='scene[section_id]'] option[value=?]", sections(:section_two).id,
       text: "— Section two"
-    assert_select "select[name='scene[event_id]']", count: 0
+    assert_select "select[name='scene[event_ids][]'][multiple][data-controller=tom-select]"
+    assert_select "select[name='scene[event_ids][]'] option[value=?]", events(:event_one).id
+    assert_select "input[type=checkbox][name='scene[create_event]']", count: 1
     assert_select "input[type=datetime-local][name='scene[datetime]']"
 
     get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    # The create-only checkbox is not offered once the scene exists, but the
+    # stored link is selected in the searchable field.
+    assert_select "input[type=checkbox][name='scene[create_event]']", count: 0
+    assert_select "select[name='scene[event_ids][]'] option[selected=selected][value=?]", events(:event_one).id
 
     assert_select "select[name='scene[section_id]'] option[selected=selected][value=?]",
       sections(:section_one).id

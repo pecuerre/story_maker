@@ -20,6 +20,9 @@ class StoriesController < ApplicationController
     @story_tropes = @story.story_tropes.to_a
     # The structure card states the Story's whole prose total, grouped or not.
     @word_counts = WordCounts.for_story(@story)
+    # The cast chart reads the same participation union the appearance surfaces
+    # do; it is Story-scoped, so it is built here rather than from `Current`.
+    @character_scene_counts = CharacterSceneCounts.for(@story)
     @story_structure_empty = @sections.empty? && !@story.scenes.exists?
     @story_structure_available = @story_structure_empty && Current.universe.direct?
     @story_structure_options = StoryStructureCatalog.entries if @story_structure_available

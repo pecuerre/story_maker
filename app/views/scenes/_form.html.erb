@@ -98,19 +98,40 @@
       <div class="form-text"><%= t("scenes.form.datetime_hint") %></div>
     </div>
 
-    <%# The Event links are their own workspace tab, because a Scene may depict
-        several Events and each link carries a role and an order. A Scene that has
-        not been saved yet has no tab to open, so the two cases say different
-        things rather than linking to a route that does not exist. %>
-    <p class="form-text mb-0">
-      <% if scene.persisted? %>
+  </fieldset>
+
+  <fieldset class="mb-3">
+    <legend class="h6"><%= t("scenes.form.events_legend") %></legend>
+    <div class="mb-3">
+      <%= form.label :event_ids, t("scenes.form.events_label"), class: "form-label" %>
+      <% if @event_options.any? %>
+        <%= form.select :event_ids, scene_event_choices(@event_options),
+          { include_hidden: true },
+          { multiple: true, class: "form-select", data: { controller: "tom-select" } } %>
+        <div class="form-text"><%= t("scenes.form.events_hint") %></div>
+      <% else %>
+        <p class="text-body-secondary mb-2"><%= t("scenes.form.events_empty") %></p>
+      <% end %>
+    </div>
+
+    <%# The create-only choice makes a new Event from this Scene. It is offered
+        only while creating: once the Scene exists, its Event links belong to the
+        field above and to the Events tab, which owns a link's role and order. %>
+    <% unless scene.persisted? %>
+      <div class="form-check mb-3">
+        <%= form.check_box :create_event, class: "form-check-input" %>
+        <%= form.label :create_event, t("scenes.form.create_event"), class: "form-check-label" %>
+        <div class="form-text"><%= t("scenes.form.create_event_hint") %></div>
+      </div>
+    <% end %>
+
+    <% if scene.persisted? %>
+      <p class="form-text mb-0">
         <%= t("scenes.form.events_note_html",
           events: link_to(t("scenes.form.events_link"),
             universe_story_scene_scene_events_path(story_id: scene.story, scene_id: scene))) %>
-      <% else %>
-        <%= t("scenes.form.events_note_new") %>
-      <% end %>
-    </p>
+      </p>
+    <% end %>
   </fieldset>
 
   <fieldset class="mb-3">

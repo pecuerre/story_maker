@@ -281,10 +281,10 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select "legend", text: "Organización"
     assert_select "legend", text: "Tiempo en el mundo"
     assert_select "label[for=scene_datetime]", text: "Tiempo en el mundo"
-    assert_select "select[name='scene[event_id]']", count: 0
-    # A Scene that has not been saved yet has no Events tab to open, so the note
-    # says to save it first rather than linking to a route that does not exist.
-    assert_select "p.form-text", text: /Guarda esta escena primero/
+    assert_select "legend", text: "Sucesos"
+    assert_select "label[for=scene_event_ids]", text: "Sucesos que representa esta escena"
+    assert_select "select[name='scene[event_ids][]'][multiple][data-controller=tom-select]"
+    assert_select "label[for=scene_create_event]", text: "Crear un suceso a partir de esta escena"
     # The blank section option's value is the empty string the form stores, so it
     # is not translated; only the label is.
     assert_select "select[name='scene[section_id]'] option[value='']", text: "Sin agrupar"

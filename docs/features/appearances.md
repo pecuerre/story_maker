@@ -10,6 +10,9 @@ The prose layer is produced by [Prose mentions](mentions.md) and the presence la
 [Scenes](scenes.md#participation-is-a-union-never-a-sum) uses everywhere else. This page combines
 them for display; it does not create a third source.
 
+The Story overview draws the same presence union the other way round, as a scenes-per-character
+chart; it is described [below](#the-scenes-per-character-chart).
+
 ## The grid
 
 - **Columns** are the Story's Scenes in `(position, id)` order. The column header shows the 1-based
@@ -42,6 +45,37 @@ body. Names, aliases, matching, ambiguity, and Story scope are all
 The legend states the distinction in the reader's language: a solid mark is a recorded appearance,
 and a dashed outline is a prose mention, which **is not an appearance**.
 
+## The scenes-per-character chart
+
+The Story overview (`GET /u/:universe_slug/s/:story_id`, `StoriesController#show`) carries the other
+Story-wide appearance read: one bar per Character recorded present in at least one of the Story's live
+Scenes, scaled to the Story's whole Scene count. It is read-only and has no record, no route of its
+own, and no stored result.
+
+- **The count is the presence union, never a sum.** `CharacterSceneCounts` reads
+  `SceneParticipants.character_ids_by_scene`, so an explicit `SceneCharacter` link and a Dialogue
+  speaker are one appearance when both name the same Character in one Scene. A Character with no
+  recorded presence in the Story is left out rather than printed as a zero, and only the Story's live
+  Scenes count.
+- **An Event reference and a prose mention do not add a Character.** An Event is a source for an
+  Event's appearances, not a Character's, and a mention is a suggestion. The chart reads stored
+  participation only and never scans prose, so the grid's mention layer has no counterpart here.
+- **The denominator is the whole Story.** Bars are measured against every live Scene, including
+  Scenes in which nobody appears, so a bar answers how much of this Story a Character carries rather
+  than how the Characters compare with each other. The table states the same share as a percentage.
+- **Order is appearances, then name.** The same name tie-break the grid uses orders the rows, so the
+  same Story renders the same chart on every request.
+- **The table is the equivalent.** The chart is a server-rendered SVG inside a focusable scroll
+  region, and every bar links to its Character. A native disclosure beneath it holds a real table of
+  the Character, the count, and the share, so a keyboard or screen-reader reader is not asked to
+  decode the bars. The page has no JavaScript.
+- **Two empty states are separate.** A Story with no Scenes says **No scenes yet**, and only a writer
+  is offered the Scenes workspace; a Story whose Scenes record no Character says **No characters
+  appear in &lt;Story&gt; yet**.
+
+Access follows the Story page: [the grid's access rule](#access-and-response) applies unchanged,
+because the chart is another read on the same Story.
+
 ## Access and response
 
 The grid is a `show` on the Story, so it follows the Story page's rule: a guest may read a public
@@ -69,7 +103,10 @@ headers stick to the left edge during horizontal scrolling. The painted rules ar
 
 ## Code, styles, and tests
 
-- `app/models/appearance_grid.rb`, `app/helpers/story_workspace_helper.rb`
+- `app/models/appearance_grid.rb`, `app/models/character_scene_counts.rb`,
+  `app/helpers/story_workspace_helper.rb`
 - `app/controllers/appearances_controller.rb`, `app/views/appearances/show.html.erb`
-- `app/assets/stylesheets/_appearance_grid.scss`
-- `test/models/appearance_grid_test.rb`, `test/controllers/appearances_controller_test.rb`
+- `app/controllers/stories_controller.rb`, `app/views/stories/_character_scene_chart.html.erb`
+- `app/assets/stylesheets/_appearance_grid.scss`, `app/assets/stylesheets/_character_scene_chart.scss`
+- `test/models/appearance_grid_test.rb`, `test/models/character_scene_counts_test.rb`,
+  `test/controllers/appearances_controller_test.rb`, `test/controllers/stories_controller_test.rb`

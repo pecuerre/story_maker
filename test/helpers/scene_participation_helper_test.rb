@@ -62,11 +62,14 @@ class SceneParticipationHelperTest < ActionView::TestCase
     # pair or a serialized hash looks like. A reversed pair still renders a
     # full-looking dropdown and submits the wrong value.
     candidates = presenting_characters
+    character_pairs = name_id_choices(candidates)
 
-    assert_equal candidates.map { |character| [ character.name, character.id ] }, name_id_choices(candidates)
-    assert_equal name_id_choices(candidates), scene_character_choices(candidates)
-    assert_equal name_id_choices(candidates), scene_item_choices(candidates)
-    assert_equal name_id_choices(candidates), scene_element_speaker_choices(candidates)
+    assert_equal candidates.map { |character| [ character.name, character.id ] }, character_pairs
+    assert_equal character_pairs, scene_character_choices(candidates)
+    assert_equal character_pairs, scene_item_choices(candidates)
+    # The speaker picker adds the non-Character choice after every Character.
+    assert_equal character_pairs + [ [ non_character_speaker_label, SceneDialogueTurn::NON_CHARACTER_SPEAKER ] ],
+      scene_element_speaker_choices(candidates)
   end
 
   test "the speaker picker offers the whole universe while the tab offers the Scene" do
@@ -76,7 +79,9 @@ class SceneParticipationHelperTest < ActionView::TestCase
     # because the same Character may speak in any number of Elements.
     universe_characters = universes(:universe_one).characters.order(:name, :id).to_a
 
-    assert_equal name_id_choices(universe_characters), scene_element_speaker_choices(universe_characters)
+    assert_equal name_id_choices(universe_characters) +
+      [ [ non_character_speaker_label, SceneDialogueTurn::NON_CHARACTER_SPEAKER ] ],
+      scene_element_speaker_choices(universe_characters)
     assert_equal presenting_characters.size, scene_character_choices(presenting_characters).size
     assert_operator presenting_characters.size, :<, universe_characters.size
   end
@@ -101,6 +106,10 @@ class SceneParticipationHelperTest < ActionView::TestCase
   BLANK_ROLE_SENTENCE = "No role recorded"
 
   private
+    def non_character_speaker_label
+      t("scenes.elements.dialogue_turns.non_character_speaker")
+    end
+
     def presenting_characters
       @scene.scene_characters.includes(:character).map(&:character).sort_by(&:name)
     end

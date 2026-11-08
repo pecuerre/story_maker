@@ -135,7 +135,7 @@ README and a canon area file do not need one.
 | Location | `name`, `slug` | `type`, `controller`, `status`, `backlog` |
 | Item (`tech/`) | `name`, `slug` | `type`, `invented_by`, `status`, `backlog` |
 | Plot | `name`, `slug` | `type`, `status`, `owner_pov`, `opened_in`, `backlog` |
-| Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | none |
+| Scene | `id`, `title`, `pov`, `location`, `timeline`, `branch` | `moment` |
 
 Rules for those values:
 
@@ -151,8 +151,24 @@ Rules for those values:
 - A Scene's `branch` is `main` or `fork of <Holder>-<NN>`.
 - A Scene carries no writing status and no dependency list. The application writes every imported
   Scene as `draft`; a `status` or `depends_on` key is an unknown frontmatter key.
-- `timeline` is author prose such as "ninth day after the flare", never a date the import may parse
-  into `datetime`, so it is reported rather than imported.
+- `timeline` is author prose such as "ninth day after the flare". It is reported rather than read as
+  a date; `moment` is its parseable twin.
+- `moment` is optional in the validator so an older source still imports, but the current source
+  carries the key in every scene, with an empty string when neither a point nor a relation is known.
+  It has exactly one of these forms, most specific first:
+
+  | Form | Meaning |
+  |---|---|
+  | `YYYY-MM-DD HH:MM` | a known date and clock time (`2050-03-03 09:20`) |
+  | `YYYY-MM-DD` | a known date, no clock time (`3550-03-03`); a date-only Event starts at midnight |
+  | `<N> <unit> before\|after <scene>` | a known span from another scene (`1500 years after 02-the-flare/01-the-flare`); the unit is `years`, `months`, `weeks`, `days`, `hours`, or `minutes` |
+  | `before\|after <scene>` | only the direction is known |
+  | `at the same time as <scene>` | exactly simultaneous with another scene |
+  | `""` | nothing concrete and nothing relative |
+
+  `<scene>` is the target's path under the Story's `chapters/` directory without `.md`
+  (`06-the-meeting/02-the-page`), so it is unique across chapters and may point forward or
+  backward. A relation must name a scene that exists in the same Story, and never the scene itself.
 - An unknown frontmatter key is a warning; a missing or blank required key is an error.
 
 ## Profile sections
@@ -283,25 +299,26 @@ assignments belong to a later slice, so a Plot lands with no Scenes.
 
 A Scene file becomes one Scene in the Section its chapter directory names. The frontmatter with an
 application column is written: `title` is the Scene's name, `pov` is its point-of-view Character,
-and `location` is a Location presence link with no role. `chapter`, `sequence`, and the scene slug
-come from the path, and `id`, `timeline`, and `branch` have no Scene column and are reported. Every
-imported Scene is written as `draft`, because the source keeps no writing status. A Scene's closing
-`DRAFTING CONTRACT` HTML comment is read into the Scene's `drafting_contract` note rather than
-into prose; it is the one comment the import keeps.
+`location` is a Location presence link with no role, and a concrete `moment` (a date or a date and
+time) is the Scene's own `datetime`. `chapter`, `sequence`, and the scene slug come from the path,
+and `id`, `timeline`, and `branch` have no Scene column and are reported. Every imported Scene is
+written as `draft`, because the source keeps no writing status. A Scene's closing `DRAFTING
+CONTRACT` HTML comment is read into the Scene's `drafting_contract` note rather than into prose; it
+is the one comment the import keeps.
 
 A Scene's body opens with its `#` title heading — the same text as the frontmatter `title` — and
 continues as alternating `## Narration` and `## Dialog` blocks in reading order: the first block is
 Narration, and two blocks of the same kind never sit next to each other. Each block becomes one
 ordered Element. A Narration block's paragraphs are the Element's Content, with entity references
-written as record names as in a profile answer. A Dialog block becomes a Dialogue Element whose
-resolvable lines are its ordered turns: `@[[character:slug]] "…"`
-is a turn, and `[[kind:slug]]` inside the line is a prose mention, resolved the same way. A turn may
+written as record names as in a profile answer. A Dialog block becomes a Dialogue Element whose lines
+are its ordered turns. `@[[character:slug]] "…"` names a Character speaker; a bare `@slug "…"` names a
+speaker with no entity file and becomes a **non-character turn** whose `body` keeps the tag as
+`slug: …`. `[[kind:slug]]` inside the line is a prose mention, resolved the same way. A turn may
 wrap across physical lines; it continues until its closing quote, and the continuation lines are
-joined with a space because the source's line break is the editor's. A bare
-`@slug` names a speaker with no entity file, so its line cannot become a turn and the preview
-reports the speaker; a Dialog block with no registrable speaker at all is kept as Narration prose so
-the lines are not lost. A `##` heading other than those two, prose before the first block, and two
-adjacent blocks of the same kind are reported or refused as described under
+joined with a space because the source's line break is the editor's. Every source line becomes a
+turn, so a block's speakers are its cast and a dialog is never downgraded to Narration. A `##`
+heading other than those two, prose before the first block, and two adjacent blocks of the same kind
+are reported or refused as described under
 [The validator](#the-validator). The source records no block title, so the first Element takes the
 Scene's title and each later one appends its number. The source carries no tag taxonomy, so the
 import creates no Scene Tags.
@@ -359,13 +376,18 @@ a reference inside inline code is real, because the source writes rule citations
 
 A Scene's `## Dialog` block names each line's speaker with an `@` form:
 `@[[character:slug]] "…"` is a Character in the same source, and `@slug "…"` is a speaker with no
-entity file. A bare speaker is never resolved to a Character that happens to share its slug.
-Entity references inside a spoken line are ordinary references and resolve to record names.
+entity file, which imports as a non-character turn whose line keeps the tag. A bare speaker is never
+resolved to a Character that happens to share its slug. Entity references inside a spoken line are
+ordinary references and resolve to record names.
 
 A typed reference must name a record of the kind its prefix declares. `[[location:ada]]` is an error
 even though `ada` exists, because the page would have to break the link the author asked for. A bare
 `[[slug]]` is the older form and is still accepted; it relies on the slug being unique across every
 record kind, which the layout already requires.
+
+A `moment` relation is not a `[[bracket]]` reference: it names its target by the scene's path under
+`chapters/` without `.md` (`06-the-meeting/02-the-page`), so it is checked by the moment rules above
+rather than by the reference scanner. Unlike `[[scene:NN-slug]]`, it may cross chapters.
 
 A work-item id is not a link: the source writes `B-###` as plain prose, so the scanner ignores it
 rather than treating it as a reference. A bracketed `[[B-###]]` is still accepted as the same
@@ -385,7 +407,7 @@ backlog references are not entity references and are left as written.
 report exposes `universe_slug`, `universe_name`, `stories`, `chapters`, `counts`, `errors`,
 `warnings`, and `valid?`, plus the parsed `canon_rules` and `canon_questions` so the canon slice
 writes what the preview showed. Counts are available for canon rules, open canon questions,
-characters, factions, locations, items, stories, plots, chapters, and scenes.
+characters, factions, locations, items, stories, plots, chapters, scenes, and events.
 
 The report also carries each parsed record as a `Report::Entity` — its kind, slug, name, frontmatter,
 `##` sections, and introduction — reachable through `entities(kind)` and `entity(slug)`. A Plot entity
@@ -417,6 +439,7 @@ The task prints the identity, the counts, and every issue, and exits non-zero wh
 - a `[[slug]]`, `[[rule:ID]]`/`[[canon:ID]]`, or `[[scene:NN-slug]]` does not resolve, or a bracket
   reference has an unknown form;
 - a Scene's id, branch, point of view, or location does not match the contract above;
+- a Scene's `moment` does not parse, names no scene, or names its own scene;
 - a Scene has no `#` title heading, no `## Narration` block, a block other than `## Narration` or
   `## Dialog`, a first block that is not Narration, two adjacent blocks of the same kind, a Dialog
   line that is not `@speaker "line"`, or a Dialog turn whose quote never closes.
@@ -427,8 +450,6 @@ knows:
 - an unknown frontmatter key;
 - a Scene's `#` title heading that disagrees with its frontmatter `title`;
 - prose before a Scene's first `##` block, which has no Element target;
-- a `## Dialog` block whose speakers are all bare `@slug` names, because it has no Character the
-  application can make a Dialogue from and is written as Narration prose instead;
 - a canon id outside a Locked, Derived, or Open section, or a locked id under Open;
 - an unexpected entry in a story directory;
 - an entry directly under `universe/` that is neither the README, `canon/`, nor one of the entity
@@ -516,9 +537,14 @@ story directory, because a Plot needs the Story it belongs to, and **Sections** 
 Section per chapter directory, named from its README heading as described under
 [Story records](#story-records).
 **Scenes** follows, writing each Scene with its Elements and dialogue turns, because it needs the
-Story, the Section, and the Character and Location links those earlier slices created. **Plots** runs
-last and writes each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into
-the same registry when their slice exists.
+Story, the Section, and the Character and Location links those earlier slices created. **Events**
+runs after Scenes and writes one Event per Scene, named after the Scene and linked to it. A concrete
+`moment` becomes the Event's `start_datetime`; a `before`, `after`, or `at the same time as` relation
+becomes the matching `before_event`, `after_event`, or `simultaneous_event`; a span also computes
+the Event's start from its target when the target has one. Every Event is created before any
+relation is written, so a relation may point forward to a later scene. **Plots** runs last and
+writes each Plot with no Scenes. Plot Scene assignments remain validator-only and plug into the same
+registry when their slice exists.
 
 A slice's `Outcome` lists every record it writes, in source order, and marks the ones that carry
 content the app cannot store as reported. Both the preview and the [run page](#the-run-page) show one
@@ -543,9 +569,12 @@ a guest signs in and a signed-in non-operator receives `403`.
 
 It writes only the records a registered slice owns, and it does not write the source back out, copy
 it into the repository, or restore a replaced Universe. Character relations, Faction-to-Faction
-relationships, Location and Item hierarchy, Plot Scene assignments, Scene Tags, and a Scene's
-in-world datetime do not arrive from this slice; the source text that would carry them is reported.
-Authoring
-guidance such as `universe/inspirations.md` has no record kind and is reported rather than imported.
+relationships, Location and Item hierarchy, Plot Scene assignments, and Scene Tags do not arrive from
+this slice; the source text that would carry them is reported. A Scene's concrete `moment` and the
+Events one per Scene are written, but an Event's own description, tags, and parent stay empty
+because the source states none there.
+
+Authoring guidance such as `universe/inspirations.md` has no record kind and is reported rather than
+imported.
 A [Universe backup](universe_backup.md) writes the reverse direction as a readable projection; that
 document owns what the projection can and cannot carry.

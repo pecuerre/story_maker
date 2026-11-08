@@ -113,7 +113,35 @@ class SceneDialogueTurnsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_content
     assert_includes response.parsed_body["speaker"], "must exist"
-    assert_includes response.parsed_body["speaker"], "can't be blank"
+  end
+
+  test "creates a non-character speaker with the tag kept in the line" do
+    assert_difference("SceneDialogueTurn.count", 1) do
+      post @turn_path, params: {
+        scene_dialogue_turn: {
+          speaker_id: SceneDialogueTurn::NON_CHARACTER_SPEAKER,
+          body: "review-chair: Something"
+        }
+      }, as: :json
+    end
+
+    created = @element.scene_dialogue_turns.order(:id).last
+    assert_response :created
+    assert_nil created.speaker_id
+    assert_equal "review-chair: Something", created.body
+    assert_equal "Non-character speaker", response.parsed_body["speaker_name"]
+    assert_equal SceneDialogueTurn::NON_CHARACTER_SPEAKER, response.parsed_body["speaker_value"]
+  end
+
+  test "a non-character speaker needs a line to carry the tag" do
+    assert_no_difference("SceneDialogueTurn.count") do
+      post @turn_path, params: {
+        scene_dialogue_turn: { speaker_id: SceneDialogueTurn::NON_CHARACTER_SPEAKER, body: "" }
+      }, as: :json
+    end
+
+    assert_response :unprocessable_content
+    assert_includes response.parsed_body["body"], "can't be blank"
   end
 
   test "a narration element cannot carry a turn" do

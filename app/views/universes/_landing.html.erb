@@ -1,0 +1,121 @@
+<%# The public front door. A guest lands here because they have no universes of
+    their own to choose between, so the page answers what this workspace is before
+    it offers the public worlds that can be read. Every claim below describes a
+    feature that already exists; the future analyzers are deliberately not
+    advertised. %>
+<div class="landing">
+  <section class="landing-hero" aria-labelledby="landing-title">
+    <div class="landing-hero-copy">
+      <p class="page-eyebrow"><%= t("universes.landing.eyebrow") %></p>
+      <h1 class="landing-title" id="landing-title"><%= t("universes.landing.title") %></h1>
+      <p class="landing-lede"><%= t("universes.landing.lede") %></p>
+
+      <div class="landing-actions">
+        <%= link_to t("universes.landing.browse"), "#public-universes", class: "btn btn-primary btn-lg" %>
+        <%= link_to t("layouts.log_in"), new_session_path, class: "btn btn-outline-secondary btn-lg" %>
+      </div>
+      <p class="landing-note"><%= t("universes.landing.note") %></p>
+    </div>
+
+    <div class="landing-facts" aria-labelledby="landing-facts-title">
+      <h2 class="landing-facts-title" id="landing-facts-title"><%= t("universes.landing.facts.title") %></h2>
+      <ul class="landing-fact-list">
+        <li>
+          <span class="landing-fact-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
+          <span>
+            <strong><%= t("universes.landing.facts.where_label") %></strong>
+            — <%= t("universes.landing.facts.where_detail") %>
+          </span>
+        </li>
+        <li>
+          <span class="landing-fact-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+          <span>
+            <strong><%= t("universes.landing.facts.when_label") %></strong>
+            — <%= t("universes.landing.facts.when_detail") %>
+          </span>
+        </li>
+        <li>
+          <span class="landing-fact-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
+          <span>
+            <strong><%= t("universes.landing.facts.who_label") %></strong>
+            — <%= t("universes.landing.facts.who_detail") %>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="landing-section" aria-labelledby="landing-steps-title">
+    <div class="landing-section-heading">
+      <h2 id="landing-steps-title"><%= t("universes.landing.steps.title") %></h2>
+      <p><%= t("universes.landing.steps.description") %></p>
+    </div>
+
+    <div class="landing-card-grid">
+      <% [
+        ["world", "bi-globe2"],
+        ["story", "bi-journal-text"],
+        ["continuity", "bi-check2-circle"]
+      ].each do |key, icon| %>
+        <article class="landing-card">
+          <span class="landing-card-icon"><i class="bi <%= icon %>" aria-hidden="true"></i></span>
+          <h3><%= t("universes.landing.steps.#{key}.title") %></h3>
+          <p><%= t("universes.landing.steps.#{key}.description") %></p>
+        </article>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="landing-section" id="public-universes" aria-labelledby="landing-public-title">
+    <div class="landing-section-heading">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h2 id="landing-public-title"><%= t("universes.landing.public.title") %></h2>
+        <span class="badge rounded-pill text-bg-light border"
+          aria-label="<%= count_with_label(universes.size, "universe") %>">
+          <%= universes.size %>
+        </span>
+      </div>
+      <p><%= t("universes.landing.public.description") %></p>
+    </div>
+
+    <% if universes.any? %>
+      <%= render "universe_list", universes: universes %>
+    <% else %>
+      <%= render "shared/empty_state",
+        title: t("universes.empty.guest_title"),
+        description: t("universes.empty.guest_description"),
+        icon: "globe2" %>
+    <% end %>
+  </section>
+
+  <section class="landing-section" aria-labelledby="landing-collaboration-title">
+    <div class="landing-section-heading">
+      <h2 id="landing-collaboration-title"><%= t("universes.landing.collaboration.title") %></h2>
+    </div>
+
+    <div class="landing-card-grid">
+      <% [
+        ["visibility", "bi-eye"],
+        ["access", "bi-people"],
+        ["review", "bi-clipboard-check"]
+      ].each do |key, icon| %>
+        <article class="landing-card">
+          <span class="landing-card-icon"><i class="bi <%= icon %>" aria-hidden="true"></i></span>
+          <h3><%= t("universes.landing.collaboration.#{key}.title") %></h3>
+          <p><%= t("universes.landing.collaboration.#{key}.description") %></p>
+        </article>
+      <% end %>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div>
+      <p class="landing-footer-brand"><%= t("app.name") %></p>
+      <p class="landing-footer-tagline"><%= t("universes.landing.footer.tagline") %></p>
+    </div>
+    <nav aria-label="<%= t("universes.landing.footer.navigation_label") %>">
+      <%= link_to t("layouts.log_in"), new_session_path %>
+      <%= link_to t("layouts.settings"), settings_path %>
+    </nav>
+  </footer>
+</div>

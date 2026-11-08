@@ -153,6 +153,34 @@
     </div>
   </div>
 
+  <div class="col-12">
+    <div class="surface-card p-4">
+      <div class="page-eyebrow"><%= t("stories.show.cast_eyebrow") %></div>
+      <h2 class="h4"><%= t("stories.show.cast_heading") %></h2>
+
+      <% if @character_scene_counts.any? %>
+        <p class="text-body-secondary">
+          <%= t("stories.show.cast_description") %>
+        </p>
+        <%= render "stories/character_scene_chart", counts: @character_scene_counts %>
+      <% elsif @character_scene_counts.scenes? %>
+        <%= render "shared/empty_state",
+          title: t("stories.show.cast_none_characters_title", story: @story.name),
+          description: t("stories.show.cast_none_characters_description"),
+          icon: "person" %>
+      <% else %>
+        <%= render "shared/empty_state",
+          title: t("stories.show.cast_none_scenes_title"),
+          description: t("stories.show.cast_none_scenes_description"),
+          icon: "film" do %>
+          <% if can_write_universe? %>
+            <%= link_to t("stories.show.open_scenes"), universe_story_scenes_path(story_id: @story), class: "btn btn-primary" %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
   <div class="col-md-6">
     <div class="surface-card h-100 p-4">
       <div class="page-eyebrow"><%= t("stories.show.sections_eyebrow") %></div>

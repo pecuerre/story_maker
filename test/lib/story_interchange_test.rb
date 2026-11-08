@@ -52,6 +52,7 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_equal 1, report.counts[:plots]
     assert_equal 2, report.counts[:chapters]
     assert_equal 2, report.counts[:scenes]
+    assert_equal 2, report.counts[:events]
 
     character = report.entity("ada")
     assert_equal :character, character.kind
@@ -291,14 +292,14 @@ class StoryInterchangeTest < ActiveSupport::TestCase
     assert_match(/dialog line must be `@speaker "line"`/, errors(report))
   end
 
-  test "warns about a dialog block with no character speaker" do
+  test "accepts a dialog block whose speakers are all non-character" do
     replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md",
       '@[[character:ada]] "There is nothing here."', '@warden "There is nothing here."')
 
     report = validate
 
     assert report.valid?, errors(report)
-    assert_match(/no `@\[\[character:…\]\]` speaker/, warnings(report))
+    assert_no_match(/no `@\[\[character:…\]\]` speaker/, warnings(report))
   end
 
   test "warns about a scene frontmatter key that has no column" do
@@ -308,6 +309,54 @@ class StoryInterchangeTest < ActiveSupport::TestCase
 
     assert report.valid?, errors(report)
     assert_match(/scene: unknown frontmatter key `status`/, warnings(report))
+  end
+
+  test "accepts every scene moment shape, including an empty one" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md",
+      'moment: "2050-01-01 20:00"', 'moment: ""')
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md",
+      'moment: "1 hour after 01-arrival/01-the-gate"', 'moment: "at the same time as 01-arrival/01-the-gate"')
+
+    report = validate
+
+    assert report.valid?, errors(report)
+  end
+
+  test "reads a scene moment as an entity fact rather than an unknown key" do
+    report = validate
+
+    assert_equal "2050-01-01 20:00", report.entity("01-the-gate").frontmatter["moment"]
+    refute_match(/moment/, warnings(report))
+  end
+
+  test "refuses a scene moment that is not one of the accepted shapes" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md",
+      'moment: "2050-01-01 20:00"', 'moment: "the first night"')
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene moment .*must be `YYYY-MM-DD HH:MM`/, errors(report))
+  end
+
+  test "refuses a scene moment that names a scene outside the story" do
+    replace("stories/synthetic-story/chapters/01-arrival/02-the-hall.md",
+      'moment: "1 hour after 01-arrival/01-the-gate"', 'moment: "1 hour after 01-arrival/99-missing"')
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene moment references unknown scene `01-arrival\/99-missing`/, errors(report))
+  end
+
+  test "refuses a scene moment that references its own scene" do
+    replace("stories/synthetic-story/chapters/01-arrival/01-the-gate.md",
+      'moment: "2050-01-01 20:00"', 'moment: "before 01-arrival/01-the-gate"')
+
+    report = validate
+
+    assert_not report.valid?
+    assert_match(/scene moment cannot reference itself/, errors(report))
   end
 
   test "refuses a scene without a title heading" do

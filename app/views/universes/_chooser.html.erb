@@ -1,0 +1,21 @@
+<%# What a signed-in reader gets at `/`: the chooser, not the front door. The page
+    exists to pick a world, so it stays a plain list with one primary action. %>
+<%= render "shared/page_header",
+  title: t("universes.title"),
+  description: t("universes.description"),
+  count: universes.size,
+  count_label: "universe" do %>
+  <%= link_to new_universe_path, class: "btn btn-primary" do %>
+    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+    <span><%= t("universes.new") %></span>
+  <% end %>
+<% end %>
+
+<% if universes.any? %>
+  <%= render "universe_list", universes: universes %>
+<% else %>
+  <%= render "shared/empty_state",
+    title: t("universes.empty.owner_title"),
+    description: t("universes.empty.owner_description"),
+    icon: "globe2" %>
+<% end %>

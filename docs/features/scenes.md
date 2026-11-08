@@ -30,7 +30,9 @@ prose, and a story interchange import writes a scene's closing `DRAFTING CONTRAC
 `belongs_to :section, optional: true` carries the organizational group,
 and the single optional `datetime` carries the in-world time point. The Events a Scene depicts are its own ordered
 link rows (`SceneEvent`), so a Scene may depict several; each link carries the author's free-text
-`role` and a `position`, and `Scene#event_id` no longer exists. `belongs_to :pov_character,
+`role` and a `position`, and `Scene#event_id` no longer exists. The editor's searchable
+`event_ids` writer reconciles those links after save, and its create-only `create_event` virtual
+attribute adds one Event named after the Scene. `belongs_to :pov_character,
 class_name: "Character", optional: true` names the single character whose perspective presents the
 scene; it must belong to the scene's universe and is independent of both the Event links and the
 in-world time. The Event links and the datetime are **independent**: neither writes, clears, nor
@@ -124,15 +126,17 @@ same JSON, error, pending, and server-refresh behavior.
 
 `SceneDialogueTurnsController` has no read action — turns are read with their Element on Scene Details.Create, update, delete, and move are JSON-only and pass through `RequiresJsonMutationFormat` before
 writing. In `direct` mode, create returns `201`, update and move return `200`, each with the JSON
-fields `id`, `speaker_id`, `speaker_name`, `body`, `parenthetical`, `position`, `update_url`,
-`move_up_url`, `move_down_url`, and `destroy_url`; delete returns `204` with no body. In other
-collaboration modes, the shared `DraftMutation` contract remembers the change and returns `202` (see
-[architecture.md](../architecture.md#response-formats-per-controller)).
+fields `id`, `speaker_id`, `speaker_value`, `speaker_name`, `body`, `parenthetical`, `position`,
+`update_url`, `move_up_url`, `move_down_url`, and `destroy_url`; delete returns `204` with no body.
+In other collaboration modes, the shared `DraftMutation` contract remembers the change and returns
+`202` (see [architecture.md](../architecture.md#response-formats-per-controller)).
 The turn is resolved through the request's authorized Universe → Story → Scene → Element path; a turn
 belonging to another Element is a `404`. An unknown or other-Universe speaker is a `422` model error,
-a narration Element refuses a turn with `422`, and an unknown move direction is `400`. Guests cannot
-mutate and are sent to sign in; a read-only member receives `403`. HTML mutations are refused with
-`406` before any write. CSRF protection applies to all four mutation verbs.
+a narration Element refuses a turn with `422`, and an unknown move direction is `400`. The picker's
+`non_character` value is a control, not a record: the controller stores a null `speaker_id` and
+requires the line to carry the tag. Guests cannot mutate and are sent to sign in; a read-only member
+receives `403`. HTML mutations are refused with `406` before any write. CSRF protection applies to
+all four mutation verbs.
 
 `SceneEventsController` follows the same read-page/JSON-mutation contract as the presence tabs. Its
 links are resolved through the request's authorized Universe → Story → Scene path, so a link belonging
@@ -341,12 +345,14 @@ textarea. A Dialogue has no Content field: its prose is its ordered turns, so th
 fields are hidden for Narration and Content is hidden for Dialogue. `scene_element_form_controller.js`
 and `scene_turns_controller.js` own that presentation; the server is what enforces it.
 
-`SceneDialogueTurn belongs_to :scene_element` and records one line's same-Universe `speaker`, optional
-plain-text `body`, optional `parenthetical`/delivery note, and flat contiguous `position` within that
-Element. It has no URL, public slug, or independent Universe; its Universe is resolved through
+`SceneDialogueTurn belongs_to :scene_element` and records one line's optional same-Universe
+`speaker`, optional plain-text `body`, optional `parenthetical`/delivery note, and flat contiguous
+`position` within that Element. A turn with **no** speaker is a **non-character speaker**: the line
+itself carries the tag (`review-chair: …`) and the row contributes no Character to participation. It
+has no URL, public slug, or independent Universe; its Universe is resolved through
 `scene_element → scene → story → universe`. **The turns are the Dialogue's cast**: there is no separate
 block-level speaker list, so the cast cannot disagree with the lines it describes, and a Dialogue with
-no turns yet is a valid empty block. A turn contributes to derived speaker participation and
+no turns yet is a valid empty block. A Character turn contributes to derived speaker participation and
 appearance, with duplicates collapsed to one Character/Element; it never creates a `SceneCharacter`
 presence link. `position` is not a form field; only the editor's Move up/Move down operations change
 turn order. The table, manifest reference, and validation details are in
@@ -355,8 +361,10 @@ turn order. The table, manifest reference, and validation details are in
 The ordered turns are edited inside the existing **Elements** modal, not on a new page. A new Element
 must first be saved as Dialogue so it has a scoped id; reopening it then exposes the turn editor. The
 modal shows each turn's speaker, line, and optional delivery note, and supports adding a turn, editing
-those three fields, and moving a turn up or down, with sequence-boundary moves disabled. Switching an
-Element to Narration hides the turn entry fields while keeping existing turn rows available to remove;
+those three fields, and moving a turn up or down, with sequence-boundary moves disabled. The speaker
+picker ends with **Non-character speaker**; choosing it stores no Character and the author writes the
+speaker tag at the start of the line. Switching an Element to Narration hides the turn entry fields
+while keeping existing turn rows available to remove;
 the server refuses to save Narration while any turns remain. Turn mutations use the nested JSON-only
 endpoints and server-provided scoped URLs. A saved turn is appended to the open list from the response,
 so writing a conversation does not close the editor between lines. A draft-based Universe returns only
@@ -386,7 +394,8 @@ This is the single most repeated rule in the Scene system, and it is one rule:
   Speech is derived from the line-level turns. `SceneParticipants` reports the union — a Character who
   both participates and speaks is one participant, never two. Never create a presence row for a
   speaker, and never add the sources together for a count.
-- Speaking is **not** a presence link: it never creates a `SceneCharacter` row.
+- Speaking is **not** a presence link: it never creates a `SceneCharacter` row. A non-character
+  speaker names no Character, so it contributes neither a participant nor an appearance.
 - `SceneAppearances` is the same union in the reverse direction, and adds each Event link as a
   third source, so it is also a union and never a sum.
 
@@ -518,11 +527,13 @@ The Scene form offers the fixed **Status** selector beside the title and descrip
 the narrative position. **Scene tags**
 holds the optional native multi-select with root-first tag paths, **Organization** holds the Section
 selector (with **Ungrouped** and depth-indented Section names), and **In-world time** holds the
-`datetime-local` field plus a note pointing at the Events tab. Each field has copy stating what it
-does *not* do. The Event selector is deliberately **not** on this
-form: a Scene may depict several Events, each with a role and an order, so the links belong to the
-Events tab and a new Scene links them after it has been saved. Trope references are deliberately **not**
-a field of this form either: the full catalogue is too long to stack there, so the **Tropes** tab lists
+`datetime-local` field. Each field has copy stating what it does *not* do. **Events** holds a
+searchable multi-select of every Event in the Universe, so a Scene can link the Events it depicts
+directly from the editor; a blank choice removes the Scene's links without deleting the Events. The
+field carries the links themselves, not their role or order, which stay on the Events tab. A
+create-only **Create an event from this scene** checkbox saves one new Event named after the Scene,
+timed by the `datetime` field when one is set, and links it. Trope references are deliberately **not**
+a field of this form: the full catalogue is too long to stack there, so the **Tropes** tab lists
 only the references the Scene carries and offers the rest through its editor's picker.
 
 `Story#menu_scene_count` uses its own cache scope (`Story::SCENE_MENU_COUNT_SCOPE`, referenced by

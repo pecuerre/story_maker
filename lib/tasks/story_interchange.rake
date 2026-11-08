@@ -26,7 +26,8 @@ namespace :story_interchange do
       stories: "Stories",
       plots: "Plots",
       chapters: "Chapters",
-      scenes: "Scenes"
+      scenes: "Scenes",
+      events: "Events"
     }
     labels.each { |kind, label| puts "#{label}: #{report.counts[kind]}" }
 

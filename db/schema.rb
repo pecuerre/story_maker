@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_005245) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_08_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -588,7 +588,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_005245) do
 
   create_table "scene_dialogue_turns", force: :cascade do |t|
     t.integer "scene_element_id", null: false
-    t.integer "speaker_id", null: false
+    t.integer "speaker_id"
     t.text "body"
     t.text "parenthetical"
     t.integer "position", default: 0, null: false

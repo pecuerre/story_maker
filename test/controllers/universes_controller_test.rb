@@ -47,6 +47,29 @@ class UniversesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".entity-title", text: "Private", count: 0
   end
 
+  test "a guest sees the public front door instead of the chooser" do
+    sign_out
+
+    get universes_url
+    assert_response :success
+
+    assert_select ".page-header", count: 0
+    assert_select ".landing-hero h1", text: I18n.t("universes.landing.title")
+    assert_select ".landing-hero a[href=?]", "#public-universes", text: I18n.t("universes.landing.browse")
+    assert_select ".landing-hero a[href=?]", new_session_path, text: I18n.t("layouts.log_in")
+    assert_select "#public-universes .entity-row", minimum: 1
+    assert_select ".landing-footer nav a[href=?]", settings_path, text: I18n.t("layouts.settings")
+  end
+
+  test "a signed-in reader sees the chooser rather than the front door" do
+    get universes_url
+    assert_response :success
+
+    assert_select ".landing-hero", count: 0
+    assert_select ".page-header h1", text: I18n.t("universes.title")
+    assert_select ".page-actions a[href=?]", new_universe_path, text: /#{I18n.t("universes.new")}/
+  end
+
   test "the index does not recount every universe on every render" do
     sign_in_as(users(:user_one))
 

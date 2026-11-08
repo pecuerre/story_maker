@@ -11,8 +11,10 @@ The whole interface follows one idea: a reader picks a universe, then a story, a
 visible is scoped to that choice.
 
 1. **No universe selected yet** (fresh login → the Universes index): workspace navigation is not
-   rendered and the main column takes the full width. The only initial task is selecting or creating
-   a universe from the landing page.
+   rendered and the main column takes the full width. A guest gets the **public front door** on this
+   route — a short statement of the continuity promise, the universe/story model, the collaboration
+   rules, and the public universes that can be read without an account — while a signed-in reader
+   gets the plain **chooser**, whose only task is selecting or creating a universe.
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
    and as a left offcanvas below `lg`. At `xl` and above, a 14rem right utility sidebar is also
    visible.
@@ -31,9 +33,9 @@ The navbar is deliberately three links, one search box, and two actions. It is n
 box issues **no query of its own**: it renders from `Current`, from `Search::Scope`, and from what a
 reader types. The notifications bell does issue one, and says why below.
 
-- **Universe Maker** — the brand, and the landing page (`/`, the universes index). It is where the
-  visitor sees the universes they may open and where a **New universe** is created, so there is no
-  universe picker in the top bar.
+- **Universe Maker** — the brand, and the landing page (`/`, the universes index). A guest sees the
+  public front door there; a signed-in reader sees the universes they may open and creates one with
+  **New universe**, so there is no universe picker in the top bar.
 - **Universe: [name]** — a plain link to the current universe page, present when `Current.universe`
   exists. Changing universes happens on the landing page.
 - **Story: [name]** — a plain link to the current story page, present when `Current.story` exists.

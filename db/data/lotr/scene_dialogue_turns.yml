@@ -11,3 +11,8 @@
   body: "I wish it were not."
   parenthetical: "quietly"
   position: 1
+
+# A non-character speaker keeps the tag in the line and stores no Character.
+- scene_element: SceneElement.lotr-party-dialogue
+  body: "innkeeper: Rooms are upstairs."
+  position: 2

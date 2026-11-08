@@ -21,6 +21,7 @@ module StoryInterchange
       Stories,
       Sections,
       Scenes,
+      Events,
       Plots
     ].freeze
 

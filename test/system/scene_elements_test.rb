@@ -149,6 +149,29 @@ class SceneElementsTest < ApplicationSystemTestCase
     end
   end
 
+  test "a non-character speaker keeps the tag in the line" do
+    sign_in_via_form(users(:user_one))
+    visit universe_story_scene_path(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    click_button "Add element"
+    within ".modal.show" do
+      select "Dialogue", from: "Scene element type"
+      fill_in "Title", with: "A voice through the door"
+      click_button "Save element"
+    end
+
+    row = find(".scene-elements .entity-row", text: "A voice through the door", wait: REFRESH_WAIT)
+    click_row_menu_action row, "Edit"
+    within ".modal.show" do
+      select "Non-character speaker", from: "Speaker"
+      fill_in "Line", with: "review-chair: Something"
+      click_button "Add turn"
+
+      assert_selector ".turn-row", count: 1
+      assert_selector ".turn-row", text: /Non-character speaker:\s+review-chair: Something/
+    end
+  end
+
   test "narration stays blocked until its dialogue turns are removed" do
     element = scene_elements(:dialogue_one)
 

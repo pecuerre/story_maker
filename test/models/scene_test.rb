@@ -93,6 +93,50 @@ class SceneTest < ActiveSupport::TestCase
     assert_equal [ events(:event_two) ], event_only.reload.events.to_a
   end
 
+  test "assigns event links through event_ids and removes the ones left out" do
+    scene = scenes(:scene_one)
+    assert_equal [ events(:event_one) ], scene.events.to_a
+
+    scene.update!(event_ids: [ events(:event_two).id ])
+
+    assert_equal [ events(:event_two) ], scene.reload.events.to_a
+    assert_equal "event-two", scene.events.sole.slug
+  end
+
+  test "clearing event_ids removes links without removing the events" do
+    scene = scenes(:scene_one)
+
+    assert_no_difference("Event.count") do
+      scene.update!(event_ids: [])
+    end
+
+    assert_empty scene.reload.events
+  end
+
+  test "rejects an event link from another universe" do
+    scene = scenes(:scene_one)
+    scene.event_ids = [ events(:event_other_universe).id ]
+
+    assert_not scene.valid?
+    assert_includes scene.errors[:events], I18n.t("scenes.errors.must_belong_to_universe")
+  end
+
+  test "creates and links an event named after the scene when asked" do
+    scene = nil
+
+    assert_difference("Event.count", +1) do
+      scene = @story.scenes.create!(
+        name: "A new event scene",
+        datetime: Time.utc(2030, 4, 5, 6, 7),
+        create_event: "1"
+      )
+    end
+
+    event = scene.events.sole
+    assert_equal "A new event scene", event.title
+    assert_equal Time.utc(2030, 4, 5, 6, 7), event.start_datetime
+  end
+
   test "several scenes may depict the same event" do
     scenes(:scene_three).scene_events.create!(event: events(:event_one))
 

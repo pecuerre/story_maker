@@ -202,18 +202,6 @@ triaged into this list.
    approval-required: it must remap ids, decide how an older archive's missing tables are treated,
    and must not reuse the development-data reset path.
 
-67. **Scenes-per-Character chart.**
-
-   A record page lists its own appearances and the Characters list is Universe-scoped, but no page
-   answers how much of the current Story each Character carries. One bar per Character counts the
-   Scenes in which they appear, over the current Story. The count is the existing union — explicit
-   link, Dialogue speech, Event reference — with a Character who both participates and speaks
-   counted once; prose mentions never add to it and may appear only as a second distinguished layer.
-   **Needs a home** — the Story overview is the natural one because the measure is Story-scoped —
-   plus a table equivalent and a chart pattern shared with the
-   [Appearance grid](features/appearances.md). There is no chart library; the Map's server-rendered
-   SVG is the closest existing pattern.
-
 ## FUTURE WORK
 
 Loose ideas that have not been triaged live here, in any format. When one is taken up, it is

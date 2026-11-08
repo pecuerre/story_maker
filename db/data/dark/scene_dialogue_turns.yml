@@ -10,6 +10,12 @@
   body: "I found a map. In a drawer that was empty last Tuesday."
   position: 1
 
+# A speaker with no Character record: the tag stays in the line, and the row
+# stores no Character. It is deliberate that `speaker:` is absent.
+- scene_element: SceneElement.dark-secrets-dialogue
+  body: "landlord: Rent is due on Friday."
+  position: 2
+
 - scene_element: SceneElement.dark-secrets-interruption
   speaker: Character.martha
   body: "I should get that."

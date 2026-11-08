@@ -416,6 +416,7 @@ es:
       stories: "Historias"
       sections: "Secciones"
       scenes: "Escenas"
+      events: "Sucesos"
       plots: "Tramas"
     # The notes beside a record on the preview and the run page.
     records:
@@ -544,6 +545,50 @@ es:
       owner_description: "Un universo contiene el mundo, los personajes, los lugares, los sucesos y los objetos que comparten sus historias."
       guest_title: "Todavía no hay universos públicos"
       guest_description: "Inicia sesión para crear un universo, o vuelve cuando haya uno público disponible."
+    landing:
+      document_title: "Universe Maker — historias que se mantienen coherentes"
+      eyebrow: "Universe Maker"
+      title: "Historias que se mantienen coherentes."
+      lede: "Un espacio de escritura que reúne los hechos de tu mundo —quién estaba dónde, cuándo y con quién— para que cada historia pueda contrastarse con ellos."
+      browse: "Explorar universos públicos"
+      note: "Los universos públicos pueden leerse sin cuenta."
+      facts:
+        title: "Los hechos encajan"
+        where_label: "Dónde"
+        where_detail: "Lugares y las rutas que los conectan"
+        when_label: "Cuándo"
+        when_detail: "Sucesos y la línea temporal del universo"
+        who_label: "Quién"
+        who_detail: "Personajes, facciones y sus relaciones"
+      steps:
+        title: "Un mundo, muchas historias"
+        description: "Cada registro pertenece a un universo. Cada historia se escribe dentro de él."
+        world:
+          title: "Construye el mundo"
+          description: "Personajes, facciones, lugares, rutas, objetos, sucesos y reglas de canon."
+        story:
+          title: "Escribe la historia"
+          description: "Secciones, escenas y arcos argumentales, con cada escena vinculada a los registros que representa."
+        continuity:
+          title: "Comprueba la coherencia"
+          description: "La línea temporal, el mapa y la cuadrícula de apariciones muestran dónde no coinciden la historia y los hechos."
+      public:
+        title: "Universos públicos"
+        description: "Cualquiera puede leer estos mundos. Abre uno para ver sus historias."
+      collaboration:
+        title: "Hecho para más de un autor"
+        visibility:
+          title: "Público o privado"
+          description: "Un universo público puede leerlo cualquier visitante. Uno privado solo es visible para sus miembros."
+        access:
+          title: "Lectura, escritura o administración"
+          description: "El acceso se concede por universo y se aplica por igual a todas sus historias."
+        review:
+          title: "Cambios que puedes revisar"
+          description: "Un universo puede recordar un cambio en un borrador en lugar de escribirlo de inmediato, para aplicarlo o revisarlo antes."
+      footer:
+        tagline: "Un espacio para historias que se mantienen coherentes."
+        navigation_label: "Enlaces de la página de inicio"
     form:
       name: "Nombre"
       slug: "Slug de la dirección"
@@ -1251,6 +1296,25 @@ es:
       bible_eyebrow: "Biblia del universo compartida"
       bible_heading: "Registros de construcción del mundo"
       bible_description: "Todas las historias de %{universe} comparten estos registros."
+      cast_eyebrow: "Equilibrio de la historia"
+      cast_heading: "Escenas por personaje"
+      cast_description: "Cuántas escenas de esta historia incluyen a cada personaje. Cada barra se mide con respecto a toda la historia."
+      cast_scroll_label: "Gráfico de escenas por personaje"
+      cast_chart_aria: "Escenas por personaje: %{characters} en %{scenes}"
+      cast_chart_label: "%{name}: %{count} de %{scenes}"
+      cast_chart_value: "%{count} de %{total}"
+      cast_caption: "Cada barra es la proporción de las %{scenes} de esta historia en las que aparece el personaje. Una mención en la prosa no es una aparición y no se cuenta."
+      cast_table_summary:
+        one: "Mostrar el personaje como tabla"
+        other: "Mostrar los %{count} personajes como tabla"
+      cast_table_caption: "Escenas por personaje en %{story}, de %{scenes}"
+      cast_table_character: "Personaje"
+      cast_table_scenes: "Escenas"
+      cast_table_share: "Proporción"
+      cast_none_scenes_title: "Todavía no hay escenas"
+      cast_none_scenes_description: "Un personaje aparece aquí cuando una escena lo registra. Añade la primera escena para comenzar."
+      cast_none_characters_title: "Ningún personaje aparece todavía en %{story}"
+      cast_none_characters_description: "Registra un personaje en una escena, o dale una línea de diálogo, y aparecerá aquí."
     structures:
       eyebrow: "Plantillas de historia"
       heading: "Empezar a partir de una estructura"
@@ -1760,9 +1824,14 @@ es:
       section_hint: "Opcional. Una Sección agrupa esta escena, por ejemplo bajo un libro, un capítulo, una temporada o un episodio. La agrupación solo cambia la organización: nunca cambia la posición narrativa de esta escena, y una Sección anidada también sitúa la escena dentro de la ruta de sus ancestros."
       in_world_time_legend: "Tiempo en el mundo"
       datetime: "Tiempo en el mundo"
-      datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente de los sucesos enlazados en la pestaña Sucesos: cambiar o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
-      events_note_html: "Los sucesos de esta escena se enlazan desde su %{events}, donde cada enlace tiene su propio orden y una función opcional."
-      events_note_new: "Guarda esta escena primero y enlaza después los sucesos que representa desde su pestaña Sucesos."
+      datetime_hint: "Opcional. Un único punto en el tiempo de la historia, almacenado con la misma precisión y sin zona horaria que las fechas de los sucesos. Es independiente de los sucesos enlazados aquí y en la pestaña Sucesos: cambiar o limpiar uno nunca escribe, limpia ni comprueba el otro, así que puedes mantenerlos distintos a propósito."
+      events_legend: "Sucesos"
+      events_label: "Sucesos que representa esta escena"
+      events_hint: "Opcional. Enlaza cualquiera de los sucesos de este universo. El buscador filtra la lista. La función y el orden de un enlace se editan en la pestaña Sucesos."
+      events_empty: "Este universo todavía no tiene sucesos. Crea uno desde esta escena abajo y enlaza más desde la pestaña Sucesos."
+      create_event: "Crear un suceso a partir de esta escena"
+      create_event_hint: "Opcional, solo al crear. Guarda un suceso nuevo con el nombre de esta escena, fechado con el tiempo en el mundo de arriba cuando lo haya, y enlazado a ella."
+      events_note_html: "La función y el orden de cada enlace se editan en la %{events}."
       events_link: "pestaña Sucesos"
       point_of_view_legend: "Punto de vista"
       plots_legend: "Arcos argumentales"
@@ -1832,9 +1901,10 @@ es:
         pending: "Guardado en el borrador"
         save_failed: "No se pudo guardar el turno."
         speaker: "Hablante"
-        speaker_hint: "El personaje que dice esta línea. El hablante de un turno no es un enlace de presencia en la escena: hablar no añade al personaje al reparto de la escena."
+        non_character_speaker: "Hablante no personaje"
+        speaker_hint: "El personaje que dice esta línea, o «Hablante no personaje» cuando el hablante no tiene ficha de personaje. El hablante de un turno no es un enlace de presencia en la escena: hablar no añade al personaje al reparto de la escena."
         body: "Línea"
-        body_hint: "Las palabras que el personaje dice en este turno."
+        body_hint: "Las palabras que el personaje dice en este turno. Para un hablante no personaje, empieza la línea con la etiqueta del hablante, como «review-chair: …»."
         parenthetical: "Nota de entrega"
         parenthetical_hint: "Una nota opcional, como «susurrando» o «entre dientes»."
         form:
@@ -3273,6 +3343,7 @@ es:
         section: "Sección"
         datetime: "Tiempo en el mundo"
         pov_character: "Punto de vista"
+        create_event: "Crear un suceso a partir de esta escena"
         scene_tags: "Etiquetas de escena"
         scene_tropes_attributes: "Tropos detectados"
         id: "Identificador de la asignación"

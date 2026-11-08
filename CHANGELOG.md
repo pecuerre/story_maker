@@ -38,6 +38,29 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-08
+
+### added
+
+- **Public front door.** A guest at `/` now sees a landing page introducing the continuity promise and the universe/story model, with public universes listed below; a signed-in reader still gets the plain chooser.
+- **Scenes-per-character chart.** The Story overview now draws one bar per Character for the Scenes they appear in, using the existing participation union and the Story's whole Scene count as the scale, with a table equivalent.
+- **Non-character dialogue speakers.** A Dialogue turn can now store no Character; the editor's "Non-character speaker" option puts the speaker tag at the start of the line, and the interchange import keeps a bare `@slug` line that way instead of dropping it.
+
+### docs
+
+- **Non-character speaker docs.** The Scenes, story-interchange, exports, and data-model documents describe the nullable `speaker_id` and the tag kept in the line.
+
+## 2026-11-07
+
+### added
+
+- **Scene `moment` import.** The story-interchange validator reads the parseable scene `moment` field, and the import writes one Event per Scene with its datetime and any before/after/simultaneous relation, linking each Event to its Scene.
+- **Scene form Events field.** The Scene editor links Events through a searchable multi-select, and a create-only "Create an event from this scene" checkbox saves a new Event named after the Scene and links it.
+
+### docs
+
+- **Scene and interchange docs for `moment`.** The story-interchange and Scenes documents now own the `moment` grammar, the Event-per-Scene import, and the editor's Event field.
+
 ## 2026-11-06
 
 ### added

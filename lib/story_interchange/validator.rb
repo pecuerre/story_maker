@@ -117,9 +117,11 @@ module StoryInterchange
     PLOT_OPTIONAL = %w[type status owner_pov opened_in backlog].freeze
     # The chapter and sequence live in the path, and the new scene format keeps
     # no status or dependency list. `id` is the author's backlog item, not a
-    # unique scene identity: two scenes may share it.
+    # unique scene identity: two scenes may share it. `moment` is the parseable
+    # twin of `timeline`; an older source may omit it, so it is optional rather
+    # than required, but a value that is present must follow the grammar.
     SCENE_REQUIRED = %w[id title pov location timeline branch].freeze
-    SCENE_OPTIONAL = [].freeze
+    SCENE_OPTIONAL = %w[moment].freeze
 
     # Everything directly under `universe/` that the interchange reads. A
     # `README.md` is documentation at any depth, and `inspirations.md` is
@@ -139,6 +141,12 @@ module StoryInterchange
       @location_slugs = Set.new
       @canon_ids = {}
       @scene_keys = Set.new
+      # `[[scene:NN-slug]]` names a scene in the same chapter, while a
+      # `moment` relation names a scene by its path under `chapters/`
+      # (`chapter/scene`). Both are checked after every scene has been read,
+      # because a relation may point forward to a scene that does not exist yet.
+      @scene_paths = Set.new
+      @scene_moments = []
     end
 
     def call
@@ -154,6 +162,7 @@ module StoryInterchange
       read_canon
       read_entities
       read_stories
+      check_moment_references
       check_references
       @report
     end
@@ -621,6 +630,9 @@ module StoryInterchange
         document = document_for(file)
         @entries << Entry.new(document: document, kind: :scene, story_slug: story_slug, chapter_slug: chapter)
         @report.count(:scenes)
+        # One Event is written per Scene, so the preview has a count of its own
+        # rather than borrowing the Scene count.
+        @report.count(:events)
 
         frontmatter = validate_frontmatter(document,
           kind: :scene,
@@ -633,6 +645,7 @@ module StoryInterchange
         register_entity(document, :scene, frontmatter, story_slug: story_slug, chapter_slug: chapter,
           name: frontmatter["title"], drafting_contract: drafting_contract(document))
         check_scene(document, frontmatter, story_slug, chapter)
+        register_moment(document, frontmatter, story_slug, chapter)
       end
 
       # The chapter and the two-digit sequence are the path, not frontmatter. The
@@ -652,6 +665,42 @@ module StoryInterchange
         check_scene_title(document, frontmatter["title"])
         check_scene_blocks(document)
         @scene_keys << [ story_slug, chapter, File.basename(document.path, ".md") ]
+      end
+
+      # `moment` is the parseable twin of `timeline`. A missing or blank value is
+      # the grammar's empty form, and an older source may carry no key at all. A
+      # value that is present must parse, and a relation must name a scene that
+      # exists in this Story; that check runs after every scene is known.
+      def register_moment(document, frontmatter, story_slug, chapter)
+        scene_file = File.basename(document.path, ".md")
+        scene_path = "#{chapter}/#{scene_file}"
+        @scene_paths << [ story_slug, scene_path ]
+
+        moment = Moment.parse(frontmatter["moment"])
+        return if moment.empty?
+
+        unless moment.valid?
+          error(document, 1, "scene moment #{moment.error}")
+          return
+        end
+
+        if moment.relation?
+          @scene_moments << [ story_slug, scene_path, document, moment ]
+        end
+      end
+
+      # A `moment` relation names its target by the scene's path under
+      # `chapters/`, not by `[[scene:NN-slug]]`'s same-chapter form. The target
+      # must exist in the same Story, and a scene cannot be its own reference.
+      def check_moment_references
+        @scene_moments.each do |story_slug, scene_path, document, moment|
+          if moment.reference == scene_path
+            error(document, 1, "scene moment cannot reference itself (`#{moment.reference}`)")
+          elsif !@scene_paths.include?([ story_slug, moment.reference ])
+            error(document, 1,
+              "scene moment references unknown scene `#{moment.reference}` in story #{story_slug}")
+          end
+        end
       end
 
       # The source repeats the title as the file's only `#` heading. It names the
@@ -703,9 +752,9 @@ module StoryInterchange
       end
 
       # Every nonblank line of a Dialog block starts a turn or continues the
-      # open turn its speaker began. A block with no `@[[character:…]]` speaker
-      # has no Character the application can attribute a dialogue to, so it is
-      # named as a warning.
+      # open turn its speaker began. Both speaker forms the source writes are
+      # importable: a typed `@[[character:…]]` link and a bare `@slug` that names
+      # a speaker with no entity file.
       def check_dialog_lines(document, section)
         parsed = SceneDialogue.parse(section.body)
 
@@ -717,10 +766,6 @@ module StoryInterchange
           end
           error(document, 1, message)
         end
-
-        return if parsed.turns.any? { |turn| turn.speaker.start_with?("[[character:") }
-
-        warning(document, 1, "a `## Dialog` block with no `@[[character:…]]` speaker cannot be imported as a dialogue")
       end
 
       def drafting_contract(document)

@@ -1,0 +1,64 @@
+<% counts = local_assigns.fetch(:counts) %>
+<% entries = counts.entries %>
+<% row_height = 34 %>
+<% label_length = 36 %>
+
+<figure class="character-scene-chart">
+  <div class="character-scene-chart-scroll" role="region" tabindex="0"
+    aria-label="<%= t("stories.show.cast_scroll_label") %>">
+    <svg class="character-scene-chart-svg" width="100%" height="<%= entries.size * row_height %>"
+      role="group"
+      aria-label="<%= t("stories.show.cast_chart_aria",
+        characters: count_with_label(entries.size, "character"),
+        scenes: count_with_label(counts.scene_count, "scene")) %>">
+      <% entries.each_with_index do |entry, index| %>
+        <% top = index * row_height %>
+        <% share = format("%.2f", counts.share_for(entry)) %>
+        <% label = t("stories.show.cast_chart_label", name: entry.character.name,
+          count: entry.scene_count, scenes: count_with_label(counts.scene_count, "scene")) %>
+        <%= link_to universe_character_path(id: entry.character),
+          class: "character-scene-chart-row", aria: { label: label } do %>
+          <title><%= label %></title>
+          <text class="character-scene-chart-label" x="0" y="<%= top + 13 %>"><%= truncate(entry.character.name, length: label_length) %></text>
+          <text class="character-scene-chart-value" x="100%" y="<%= top + 13 %>" text-anchor="end"><%= t("stories.show.cast_chart_value", count: entry.scene_count, total: counts.scene_count) %></text>
+          <rect class="character-scene-chart-track" x="0" y="<%= top + 20 %>" width="100%" height="8" rx="4"></rect>
+          <rect class="character-scene-chart-bar" x="0" y="<%= top + 20 %>" width="<%= share %>%" height="8" rx="4"></rect>
+        <% end %>
+      <% end %>
+    </svg>
+  </div>
+
+  <figcaption class="character-scene-chart-caption text-body-secondary small">
+    <%= t("stories.show.cast_caption", scenes: count_with_label(counts.scene_count, "scene")) %>
+  </figcaption>
+</figure>
+
+<details class="character-scene-chart-table mt-3">
+  <summary class="small"><%= t("stories.show.cast_table_summary", count: entries.size) %></summary>
+  <div class="table-responsive mt-2">
+    <table class="table table-sm align-middle mb-0">
+      <caption class="visually-hidden">
+        <%= t("stories.show.cast_table_caption", story: counts.story.name,
+          scenes: count_with_label(counts.scene_count, "scene")) %>
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col"><%= t("stories.show.cast_table_character") %></th>
+          <th scope="col" class="text-end"><%= t("stories.show.cast_table_scenes") %></th>
+          <th scope="col" class="text-end"><%= t("stories.show.cast_table_share") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% entries.each do |entry| %>
+          <tr>
+            <th scope="row" class="fw-normal">
+              <%= link_to entry.character.name, universe_character_path(id: entry.character) %>
+            </th>
+            <td class="text-end"><%= entry.scene_count %></td>
+            <td class="text-end"><%= number_to_percentage(counts.share_for(entry), precision: 0) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</details>

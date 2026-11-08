@@ -603,9 +603,11 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
 
     dialogue = secrets.scene_elements.find_by!(kind: "dialogue")
     assert_predicate dialogue.body, :present?
-    assert_equal [ 0, 1 ], dialogue.scene_dialogue_turns.reorder(:position, :id).pluck(:position)
-    assert_equal [ "Katharina", "Martha" ], dialogue.scene_dialogue_turns.includes(:speaker)
-      .reorder(:position, :id).map { |turn| turn.speaker.name }
+    assert_equal [ 0, 1, 2 ], dialogue.scene_dialogue_turns.reorder(:position, :id).pluck(:position)
+    turns = dialogue.scene_dialogue_turns.includes(:speaker).reorder(:position, :id)
+    assert_equal [ "Katharina", "Martha" ], turns.filter_map(&:speaker).map(&:name)
+    assert_predicate turns.last, :non_character_speaker?
+    assert_equal "landlord: Rent is due on Friday.", turns.last.body
     assert_not_includes SceneElement.column_names, "manifest_key",
       "the reference key is YAML metadata and is not stored on the model"
     interruption = secrets.scene_elements.find_by!(name: "An interruption")
@@ -641,8 +643,10 @@ class UniverseDataLoaderTest < ActiveSupport::TestCase
     assert_equal [ 0, 1, 2 ], council.scene_elements.reorder(:position, :id).pluck(:position)
     party = story.scenes.find_by!(slug: "a-long-expected-party")
     turn_dialogue = party.scene_elements.find_by!(kind: "dialogue")
-    assert_equal [ "Gandalf the Grey", "Frodo Baggins" ], turn_dialogue.scene_dialogue_turns.includes(:speaker)
-      .reorder(:position, :id).map { |turn| turn.speaker.name }
+    turns = turn_dialogue.scene_dialogue_turns.includes(:speaker).reorder(:position, :id)
+    assert_equal [ "Gandalf the Grey", "Frodo Baggins" ], turns.filter_map(&:speaker).map(&:name)
+    assert_predicate turns.last, :non_character_speaker?
+    assert_equal "innkeeper: Rooms are upstairs.", turns.last.body
     # Legolas and Gimli speak here without ever being stored as participants.
     assert_equal [ "Aragorn", "Frodo Baggins" ], council.scene_characters.includes(:character)
       .map { |link| link.character.name }.sort

@@ -23,6 +23,10 @@ The sidebar is the one place where color carries structure: the universe, the cu
 configuration/tools area each own one hue, so a reader can tell at a glance which scope a section
 belongs to. Everything else stays in the neutral palette.
 
+The **public front door** at `/` is the one guest-facing introductory surface. It uses a neutral hero
+band with a soft primary tint, a small fact card, and a grid of bordered cards. It introduces no
+palette and borrows no sidebar scope hue; every other page stays a workspace surface.
+
 The workspace keeps a quiet, permanent right utility sidebar at wide breakpoints. Its
 **Configuration** section contains the real Tags entry and the Members access manager, while the
 remaining Collaboration, Analytics,
@@ -557,6 +561,23 @@ The grid's rows, layers, and read-only contract are in
 - Print removes the sticky offsets, keeps the marks as black fill and black dashes, and avoids
   breaking a row across pages. The grid is a read-only page, so it adds no buttons, forms, or hover
   actions.
+
+### Scenes-per-character chart
+
+The chart's count, empty states, and Story scope are in
+[features/appearances.md](features/appearances.md#the-scenes-per-character-chart); the painted shape:
+
+- A server-rendered SVG sits inside a vertically scrollable `.character-scene-chart-scroll` region
+  with `tabindex="0"` and an accessible name, so a long cast never pushes the rest of the overview
+  down and a keyboard user can reach every bar.
+- A row shows the Character's name at the left and the count at the right above a full-width track;
+  the primary-colored bar is the share of the Story's Scenes. The visible name is shortened with an
+  ellipsis when it is very long; the link's accessible name and the table carry the whole name.
+- Every bar is a link and paints a visible focus ring on the bar itself. The table equivalent sits in
+  a native disclosure below the figure, so it needs no JavaScript.
+- The track, bar, labels, and focus state come from Bootstrap theme tokens, so the chart stays
+  legible in Light and Dark. Print removes the scroll limit and paints the bar black on a white
+  track.
 
 ### Map diagram
 

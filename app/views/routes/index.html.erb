@@ -20,6 +20,15 @@
   <% end %>
 
   <% if rejected %><%= render "shared/error_summary", record: rejected, subject: t("routes.errors.subject") %><% end %>
+
+  <%# Routes is the second tab of the Locations workspace, so it carries the
+      same strip as the Locations tree and the Map, and this tab is the active
+      one here. %>
+  <%= render "shared/content_tabs",
+    aria_label: t("locations.tabs_aria_label"),
+    intro: t("routes.description"),
+    tabs: content_workspace_tabs(:location) %>
+
   <% if @routes.any? || pending_creates.any? %>
     <div class="content-surface entity-list"><div class="list-group list-group-flush">
       <% @routes.each do |route| %>

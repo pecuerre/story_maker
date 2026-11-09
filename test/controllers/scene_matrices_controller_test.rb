@@ -16,9 +16,13 @@ class SceneMatricesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Scene matrix"
-    assert_select "nav.content-tabs a.active[aria-current=page][href=?]", matrix_path, text: "Scene matrix"
-    assert_select "nav.content-tabs a", text: "Scenes"
-    assert_select "nav.content-tabs a", text: "Appearances"
+    # The Scene matrix is its own Story analytics destination, not a tab of the
+    # Scene workspace.
+    assert_select "nav.content-tabs", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active[aria-current=page][href=?]",
+      matrix_path do
+      assert_select ".sidebar-link-label", text: "Scene matrix"
+    end
 
     assert_select ".scene-matrix thead th", count: 9
     assert_select ".scene-matrix thead th", text: "Scene tags"

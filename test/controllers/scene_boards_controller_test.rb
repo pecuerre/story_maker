@@ -16,9 +16,11 @@ class SceneBoardsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Scene board"
+    assert_select "nav.content-tabs[aria-label=?] a", "Scene list and board", count: 2
     assert_select "nav.content-tabs a.active[aria-current=page][href=?]", board_path, text: "Scene board"
-    assert_select "nav.content-tabs a", text: "Scene matrix"
+    assert_select "nav.content-tabs a", text: "Scene matrix", count: 0
     assert_select "nav.content-tabs a", text: "Scenes"
+    assert_select "aside.workspace-sidebar a.sidebar-link.active[aria-current=page]", text: /Scenes/
 
     assert_select ".scene-board-column", count: 3
     assert_select ".scene-board-column h2", text: "Section one"

@@ -143,8 +143,10 @@ signed cookie `um_locale`, and `ApplicationController#switch_locale` is an `arou
 translated. The layout renders `<html lang="...">` from the same value, so the first paint is in the
 right language. The start page (`AppStartPage`, signed cookie `um_start_page`) is a third, and it is
 navigation state rather than display state: it decides where a sign-in with nothing to return to
-lands, and it has its own section on `/settings`. All three, and why the layout owns them, are in
-[features/settings.md](features/settings.md).
+lands, and it has its own section on `/settings`. The drafting-contract visibility
+(`AppDraftingContract`, signed cookie `um_drafting_contract`) is a fourth and decides only whether
+Scene pages draw the note and its editor field. All of them, and why the layout owns the first two,
+are in [features/settings.md](features/settings.md).
 
 Because the session story map is cleared at every session boundary, the remembered **destination** is
 separate state: a signed browser cookie (`um_last_scope`) holding the account id, universe slug, and

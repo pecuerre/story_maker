@@ -7,7 +7,8 @@ store a Map record or Location coordinates. The page uses the universe authoriza
 
 ## Page
 
-Open **Map** from the Universe Bible sidebar at `/u/:universe_slug/map`. The page shows:
+Open **Map**, the third tab of the Locations workspace, at `/u/:universe_slug/map`; the three-tab
+workspace is described in [locations.md](locations.md#workspace-tabs). The page shows:
 
 - live Locations as a nested, accessible list in their hierarchy order, with each Location linking to
   its details page;

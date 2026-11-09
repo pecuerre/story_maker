@@ -502,6 +502,10 @@ The painted shape:
   editor. A one-line hint under the type selector states what each kind is, and the same line changes
   with the selection. An empty Element list gets its own empty state, because a Scene may hold any
   number of Elements, including none.
+- A Scene's drafting contract, when the browser preference shows it, is a `.drafting-contract-body`
+  surface closing the page: a tertiary-background card with a leading accent rule, rendered
+  Markdown, and tighter list spacing than body prose, so an imported contract reads as an outline
+  rather than its source block. The whole section is absent when the preference is **Hide**.
 - A long Section name wraps instead of pushing the layout, and the action group wraps below the title
   at narrow widths instead of hiding it or relying on hover.
 

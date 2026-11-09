@@ -15,8 +15,15 @@ module StoryInterchange
     # Chapters are flat, so every imported Section is top-level and its position
     # follows the sorted directory order within its Story. The chapter is read
     # before its scenes, so the Scenes slice can group them under this Section.
+    #
+    # Every chapter Section carries one `Chapter` Section Tag. The source has no
+    # tag taxonomy of its own, but a chapter is the one section kind it names, so
+    # the run creates that tag once per Story instead of leaving the imported
+    # chapters unlabeled.
     class Sections < Importer
       slice label_key: "imports.slices.sections", count: :chapters
+
+      CHAPTER_TAG_NAME = "Chapter"
 
       class << self
         def records(report)
@@ -51,9 +58,11 @@ module StoryInterchange
 
       def call
         positions = Hash.new(0)
+        chapter_tags = {}
 
         created = report.chapters.map do |chapter|
           story = universe.stories.find_by!(slug: chapter.story_slug)
+          chapter_tag = chapter_tags[story.id] ||= SectionTag.create!(story: story, name: CHAPTER_TAG_NAME)
           position = positions[chapter.story_slug]
           positions[chapter.story_slug] += 1
 
@@ -62,7 +71,8 @@ module StoryInterchange
             name: chapter.name,
             slug: chapter.slug,
             position: position,
-            description: self.class.resolve_references(report, chapter.description).presence
+            description: self.class.resolve_references(report, chapter.description).presence,
+            section_tags: [ chapter_tag ]
           )
         end
 

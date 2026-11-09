@@ -15,6 +15,15 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Map"
+    # Map is the third tab of the Locations workspace, and this is the active tab
+    # here.
+    assert_select "nav.content-tabs[aria-label=?]", "Location workspace"
+    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
+      universe_map_path(universe_slug: @universe.slug), text: "Map"
+    assert_select "nav.content-tabs a[href=?]",
+      universe_locations_path(universe_slug: @universe.slug), text: "Locations"
+    assert_select "nav.content-tabs a[href=?]",
+      universe_routes_path(universe_slug: @universe.slug), text: "Routes"
     assert_select "ul.map-location-tree > li a[href=?]",
       universe_location_path(universe_slug: @universe.slug, id: @location)
     assert_select "ul.map-location-children a[href=?]",

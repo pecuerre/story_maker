@@ -27,6 +27,8 @@ to `draft` — validated by the model and a database check constraint; it is an 
 a manuscript state machine. `drafting_contract` is an optional free-text note recording the scene's
 one place, one beat of time, one point of view, and dramatic question; it is writer's guidance, not
 prose, and a story interchange import writes a scene's closing `DRAFTING CONTRACT` block into it.
+Whether a browser draws and edits that note is the `AppDraftingContract` display preference described
+in [settings.md](settings.md); the import and the Scene API write and return it either way.
 `belongs_to :section, optional: true` carries the organizational group,
 and the single optional `datetime` carries the in-world time point. The Events a Scene depicts are its own ordered
 link rows (`SceneEvent`), so a Scene may depict several; each link carries the author's free-text
@@ -209,7 +211,7 @@ refresh a save performs.
 
 ## Narrative order beside the Timeline
 
-The Story workspace's **Narrative order** tab
+The **Narrative order** entry in the Story analytics block of the left sidebar
 (`GET /u/:universe_slug/s/:story_id/narrative_order`) is a signed-in, read-only comparison of the
 Story's `Scene.position` sequence with the Universe Timeline. `NarrativeOrdersController#show`
 resolves the Story through the request's `Current.story` and builds `TimelineLayout` over the
@@ -217,11 +219,11 @@ universe's Events, so the page cannot disagree with the Timeline about Event ord
 mutation route, no form, and no stored result. The design reasoning is in
 [ADR 0037](../adr/0037-compare-narrative-order-with-the-timeline-read-only.md).
 
-The tab is the one signed-in destination in the Story strip: a guest is sent to sign in and is not
-shown the tab. After authentication the ordinary universe read rule applies — any signed-in reader
-may open it on a public universe, and a private universe keeps its owner/membership rule. The strip
-is built by `StoryWorkspaceHelper#story_workspace_tabs`; every Story workspace page uses that one
-helper, so another destination is added in one place rather than copied into the page views.
+The entry is the one signed-in destination in the Story analytics block: a guest is sent to sign in
+and is not shown the entry. After authentication the ordinary universe read rule applies — any
+signed-in reader may open it on a public universe, and a private universe keeps its
+owner/membership rule. It is a destination of its own rather than a tab of the Scene workspace, and
+`_left_sidebar.html.erb` renders it only for a signed-in reader.
 
 **A conflict is one Scene, not a disagreement between the two orders.** `Scene.position` orders
 telling and the Timeline orders happening, so a reversal is a flashback, a parallel thread, or a
@@ -257,8 +259,8 @@ are not projected: the page reads saved records, like the Timeline.
 a table: one row per Scene in `(position, id)` order and one column for each fact the Story already
 stores on it — Section path, Scene Tags, point of view, in-world time, linked Events, Element count,
 word count, and participant count. It is the table counterpart to the Appearance grid, reached from
-`StoryWorkspaceHelper#story_workspace_tabs`, and it is a **read**: no form, no mutation route, no CSRF
-surface, no stored result, and no JavaScript.
+the **Scene matrix** entry in the Story analytics block of the left sidebar, and it is a **read**: no
+form, no mutation route, no CSRF surface, no stored result, and no JavaScript.
 
 - **Rows and columns are the whole Story.** There is no filter, sort, or pagination: a narrowed matrix
   is not the Story at once, and `Scene#position` stays the only order. Section grouping is a column,
@@ -287,10 +289,10 @@ The table is its own accessible equivalent, and its painted rules are in
 
 `GET /u/:universe_slug/s/:story_id/scene_board` (`SceneBoardsController#show`) shows the Story's shape
 as columns: every Section in the Story's tree order, plus the **Ungrouped** column, with each column's
-Scenes as cards in `Scene#position` order. It is the board beside the matrix, reached from
-`StoryWorkspaceHelper#story_workspace_tabs`, and it has no record and no mutation route of its own: a
-card posts the same `ScenesController#move` and `#group` actions the Scenes list and the Sections
-workspace already post.
+Scenes as cards in `Scene#position` order. It is the second tab of the Scene workspace, reached from
+`StoryWorkspaceHelper#story_workspace_tabs` beside the Scenes list, and it has no record and no
+mutation route of its own: a card posts the same `ScenesController#move` and `#group` actions the
+Scenes list and the Sections workspace already post.
 
 - **The columns are the whole Section tree, even when a column is empty.** A Section with no Scenes
   keeps its column and says **No scenes here**, because an empty column is where the next Scene goes;
@@ -513,18 +515,24 @@ Scene Details (`/scenes/:id`) is the canonical, inspectable page: it renders the
 position, writing status, Section group, Scene Tags, linked Events, formatted in-world time, point of
 view, and story context for writers, read-only members, and guests, and gives only writers an **Edit
 scene** action. The short description is deliberately not printed there; it stays on the record, in
-the editor, and in the Scenes list. The drafting contract closes the page in its own section below
-the Elements, because it is the writer's note about the scene as a whole rather than an identity
-fact. The form lives once, at `/scenes/:id/edit`
+the editor, and in the Scenes list. When the browser's drafting contract preference is **Show**, the
+drafting contract closes the page in its own section below the Elements, because it is the writer's
+note about the scene as a whole rather than an identity fact. Its stored Markdown is rendered as
+Markdown — a bullet line is a list row, and a `[[kind:slug]]` reference is the same link a record
+description makes — instead of printing the source block verbatim. When the preference is **Hide**
+the section is absent entirely, and nothing else on the page changes. The form lives once, at
+`/scenes/:id/edit`
 (`scenes/_form`, reused by `new`), so there is no second edit surface and no second form for the same
 fields. The editor's workspace tabs go
 through `shared/_content_tabs`: **Scene Details**, **Events**, **Characters**, **Items**, **Locations**,
 and **Tropes** are all live links, each its own canonical page. A tab is never a link to a route that
 does not exist and never an in-document Bootstrap pane.
 
-The Scene form offers the fixed **Status** selector beside the title and description, and a
-**Drafting contract** textarea that keeps the author's scene note as written; neither field changes
-the narrative position. **Scene tags**
+The Scene form offers the fixed **Status** selector beside the title and description, and, while the
+browser's drafting contract preference is **Show**, a **Drafting contract** textarea that keeps the
+author's scene note as written; neither field changes the narrative position. When the preference is
+**Hide** the textarea is absent, so the note can be neither seen nor edited there, and an update
+leaves the stored column untouched. **Scene tags**
 holds the optional native multi-select with root-first tag paths, **Organization** holds the Section
 selector (with **Ungrouped** and depth-indented Section names), and **In-world time** holds the
 `datetime-local` field. Each field has copy stating what it does *not* do. **Events** holds a

@@ -18,8 +18,9 @@ visible is scoped to that choice.
 2. **Universe selected** (`Current.universe`): a 16rem workspace sidebar appears on large screens
    and as a left offcanvas below `lg`. At `xl` and above, a 14rem right utility sidebar is also
    visible.
-3. **Story selected** (`Current.story`): the Story workspace gains the story overview plus
-   **Sections** and **Scenes**.
+3. **Story selected** (`Current.story`): the left sidebar gains the **Story workspace** (Story
+   overview, Sections, Scenes, Plots, Export) and the **Story analytics** block (Narrative order,
+   Appearances, Scene matrix).
 
 There is deliberately **no fallback to the universe's first story** — a story only becomes current when
 the user picks it, and the remembered selection is cleared whenever an authenticated session starts
@@ -76,26 +77,34 @@ always knows which scope a link belongs to:
 - **Current universe** context: the universe name. The navbar already states the universe's
   visibility and access level, and the universe page lists the stories, so the context block stays a
   statement of scope.
-- **Universe Bible**: direct links to Characters, Factions, Locations, Routes, Canon, Map, Events, and Items. Routes
-  are universe-scoped paths between Locations and have their own workspace. Canon is the universe's
-  list of rules with an optional story owner, and its page contract is in
-  [features/canon.md](canon.md). Map is the read-only
-  Location-hierarchy and Route view; its page contract is in [features/map.md](map.md). Characters
-  opens its related record tabs (Relations and the derived Network, whose rules are in
-  [features/characters.md](characters.md#interaction-network)); Items opens Ownerships. **Events** opens
-  the Event workspace, whose second tab is the **Timeline**, so the Timeline has no sidebar entry of
-  its own and that one link stays current across both tabs. Locations and Sections remain
-  single-record workspaces.
+- **Universe Bible**: direct links to Characters, Factions, Locations, Canon, Events, and Items. Canon is
+  the universe's list of rules with an optional story owner, and its page contract is in
+  [features/canon.md](canon.md). Characters opens its related record tabs (Relations and the derived
+  Network, whose rules are in [features/characters.md](characters.md#interaction-network)); Items opens
+  Ownerships. **Locations** opens the Locations workspace, whose other two tabs are **Routes** and
+  **Map**, so those two have no sidebar entry of their own and the one Locations link stays current
+  across all three tabs; the tab strip itself is described in [features/locations.md](locations.md).
+  **Events** opens the Event workspace, whose second tab is the **Timeline**, so the Timeline has no
+  sidebar entry of its own and that one link stays current across both tabs. Sections remain a
+  single-record workspace.
 - **Current story** context: the story name — or an explicit **None selected** state with a prompt
   when no story is current. The section/plot/scene counts and the description stay out of this block and
   live on the story's own pages.
-- **Story workspace**: Story overview + Sections + Plots + Scenes when a story is selected; otherwise All
-  stories plus a prompt to select one. Creating a story belongs to the universe page (and the
-  stories index), never to the sidebar. **Plots** and **Scenes** are real story-scoped links with
-  their own cached counts once a story is selected, and `aria-disabled` `#` placeholders while no
-  story is current — neither falls back to the universe's first story. **Export** follows Scenes and
-  opens the Story's export options; its page contract is in
-  [features/exports.md](exports.md).
+- **Story workspace**: **Story overview**, **Sections**, **Scenes**, **Plots**, **Export**, in that
+  order, when a story is selected; otherwise All stories plus `aria-disabled` placeholders and a
+  prompt to select one. Creating a story belongs to the universe page (and the stories index), never
+  to the sidebar. **Sections**, **Scenes**, and **Plots** are real story-scoped links with their own
+  cached counts once a story is selected, and none falls back to the universe's first story.
+  **Export** is the last entry and opens the Story's export options; its page contract is in
+  [features/exports.md](exports.md). The Scenes entry stays current on the **Scene board** too,
+  because both are one workspace and the board is its second tab rather than a separate sidebar
+  entry.
+- **Story analytics**: **Narrative order**, **Appearances**, **Scene matrix**, in that order, and
+  only while a story is selected — each is a read of that Story, so the block is absent from the
+  picker state rather than offering three dead destinations. **Narrative order** is the one
+  signed-in entry: a guest is not offered a link that would only send them to sign in. The other two
+  are guest-readable on a public universe. These pages are destinations of their own, not tabs of
+  the Scene workspace.
 
 Configuration is **not** in this column: this one stays about universe and story content only.
 

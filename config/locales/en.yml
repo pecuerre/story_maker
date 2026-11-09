@@ -65,13 +65,12 @@ en:
     navigation_label: "Universe and story navigation"
     universe_bible: "Universe Bible"
     story_workspace: "Story workspace"
+    story_analytics: "Story analytics"
     story_overview: "Story overview"
     characters: "Characters"
     factions: "Factions"
     locations: "Locations"
-    routes: "Routes"
     canon: "Canon"
-    map: "Map"
     events: "Events"
     timeline: "Timeline"
     items: "Items"
@@ -1735,6 +1734,9 @@ en:
   # `Cancel`/`Close` are the `shared.form` pair.
   scenes:
     title: "Scenes"
+    # The story-level strip beside a Scene's own Details tabs, so the two
+    # navigation landmarks on the editor page do not share a label.
+    workspace_tabs_aria_label: "Scene list and board"
     add: "Add scene"
     # The fixed writing-state vocabulary. The values are data and never
     # translated; only these labels are.
@@ -2431,6 +2433,10 @@ en:
         no_role: "no role recorded"
     tabs:
       locations: "Locations"
+      # Routes and Map are the two related workspaces reached through this
+      # workspace's own tab strip, so the sidebar keeps one Locations entry.
+      routes: "Routes"
+      map: "Map"
 
   maps:
     title: "Map"
@@ -3551,6 +3557,7 @@ en:
       appearance: "Appearance"
       language: "Language"
       start_page: "Start page"
+      drafting_contract: "Drafting contract"
       limits: "Limits"
     appearance:
       title: "Appearance"
@@ -3580,6 +3587,15 @@ en:
       legend: "After signing in"
       hint: "The choice is remembered in this browser. Returning to your last story still only happens when you picked that story yourself; Universe Maker never chooses a story for you."
       submit: "Save start page"
+    # A display preference like the theme, but it changes which facts Scene
+    # Details and the Scene editor draw rather than how the whole document is
+    # painted. Hiding is never deleting: the import still stores the note.
+    drafting_contract:
+      title: "Drafting contract"
+      description: "Whether this browser shows the drafting contract note on a Scene. The note is writer's guidance, not prose, and every page that draws a Scene follows the choice."
+      legend: "On Scene pages"
+      hint: "The choice is remembered in this browser and applies to Scene Details and the Scene editor. Hiding the note never removes it from the database: an imported contract is still stored, and the Scene API still returns it."
+      submit: "Save drafting contract choice"
     # The only section that is not a browser preference, and the only one a plain
     # reader never sees: it configures the deployment rather than this browser, so
     # it is here for an operator and absent for everyone else. The wording keeps
@@ -3600,10 +3616,13 @@ en:
       theme_saved: "Theme set to %{theme}."
       locale_saved: "Language set to %{language}."
       start_page_saved: "After signing in, you will go to %{start_page}."
+      drafting_contract_shown: "The drafting contract is now shown on Scene pages."
+      drafting_contract_hidden: "The drafting contract is now hidden on Scene pages. It is still stored on each Scene."
       limit_saved: "New universes per account per hour set to %{limit}."
       theme_unknown: "Choose either the light or the dark theme."
       locale_unknown: "Choose a language this application offers."
       start_page_unknown: "Choose either your last story or the universes list."
+      drafting_contract_unknown: "Choose whether to show or hide the drafting contract."
 
   # The two start pages, named the way a reader would ask for them.
   start_pages:
@@ -3622,6 +3641,15 @@ en:
     dark:
       label: "Dark"
       description: "A dark page with light text."
+
+  # The two drafting contract visibility choices, for Scene pages.
+  drafting_contracts:
+    show:
+      label: "Show"
+      description: "Draw the drafting contract on Scene Details and offer its field in the Scene editor."
+    hide:
+      label: "Hide"
+      description: "Keep the drafting contract out of every Scene page. The stored note is never removed."
 
   # The attribute names this slice's own forms and error messages read.
   #

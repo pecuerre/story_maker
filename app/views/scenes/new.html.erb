@@ -6,7 +6,7 @@
   description: t("scenes.new_description", story: @story.name) %>
 
 <%= render "shared/content_tabs",
-  aria_label: t("sidebar.story_workspace"),
+  aria_label: t("scenes.workspace_tabs_aria_label"),
   tabs: story_workspace_tabs(@story) %>
 
 <%= render "form", scene: @scene, section_paths: @section_paths %>

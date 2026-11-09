@@ -6,6 +6,15 @@ hierarchical tree at `/u/:universe_slug/locations`, and each record's own page i
 cascade are summarized in [data_model.md](../data_model.md); the hierarchy, tags, editor, and page
 patterns they follow are in [conventions.md](../conventions.md).
 
+## Workspace tabs
+
+The Locations workspace is three tabs reached through the shared tab strip: **Locations** (the
+hierarchical tree described below), **Routes**, and **Map**. Each tab is a separate request with its
+own canonical URL — `/u/:universe_slug/locations`, `/u/:universe_slug/routes`, and
+`/u/:universe_slug/map` — so the left sidebar keeps one **Locations** entry and it stays current on
+all three. Routes and Map are universe-scoped world-building records rather than separate sidebar
+sections; their page contracts are in [routes.md](routes.md) and [map.md](map.md).
+
 ## Location profile
 
 A Location records its name, its place in the hierarchy, optional tags, a photo, a short summary,

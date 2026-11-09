@@ -16,9 +16,8 @@ class PlotsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".sidebar-link.active[href=?]", universe_story_plots_path(
       universe_slug: @universe.slug, story_id: @story
     )
-    assert_select "nav.content-tabs a[href=?]", universe_story_scenes_path(
-      universe_slug: @universe.slug, story_id: @story
-    ), text: "Scenes"
+    # Plots is its own sidebar destination, not a tab of the Scene workspace.
+    assert_select "nav.content-tabs", 0
     assert_select "a[href=?]", universe_story_plot_path(
       universe_slug: @universe.slug, story_id: @story, id: @plot
     ), text: "Details"

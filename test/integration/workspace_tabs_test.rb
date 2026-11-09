@@ -27,9 +27,11 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
       universe_item_tag_path(universe_slug: @universe.slug, id: item_tags(:item_tag_one), from: "workspace")
   end
 
-  test "location workspace has one record tab" do
+  test "location workspace keeps locations, routes, and map together" do
     assert_workspace_tabs [
-      [ "Locations", universe_locations_path(universe_slug: @universe.slug) ]
+      [ "Locations", universe_locations_path(universe_slug: @universe.slug) ],
+      [ "Routes", universe_routes_path(universe_slug: @universe.slug) ],
+      [ "Map", universe_map_path(universe_slug: @universe.slug) ]
     ], sidebar_label: "Locations"
     assert_menu_tab universe_locations_path(universe_slug: @universe.slug),
       "Location tag one",
@@ -45,12 +47,43 @@ class WorkspaceTabsTest < ActionDispatch::IntegrationTest
       universe_event_tag_path(universe_slug: @universe.slug, id: event_tags(:event_tag_one), from: "workspace")
   end
 
-  test "story workspace keeps sections, Plots, and scenes together" do
+  test "the Scene workspace keeps the Scenes list and board together" do
     assert_workspace_tabs [
-      [ "Sections", universe_story_sections_path(universe_slug: @universe.slug, story_id: @story), "Sections" ],
-      [ "Plots", universe_story_plots_path(universe_slug: @universe.slug, story_id: @story), "Plots" ],
-      [ "Scenes", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story), "Scenes" ]
+      [ "Scenes", universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story), "Scenes" ],
+      [ "Scene board", universe_story_scene_board_path(universe_slug: @universe.slug, story_id: @story), "Scenes" ]
     ]
+  end
+
+  test "Sections, Plots, and the Story analytics pages have no Scene tab strip" do
+    {
+      universe_story_sections_path(universe_slug: @universe.slug, story_id: @story) => "Sections",
+      universe_story_plots_path(universe_slug: @universe.slug, story_id: @story) => "Plots"
+    }.each do |path, label|
+      get path
+
+      assert_response :success
+      assert_select "main nav.content-tabs", 0
+      assert_select "aside.workspace-sidebar a.sidebar-link.active[aria-current='page'] .sidebar-link-label",
+        text: label
+    end
+
+    get universe_story_narrative_order_path(universe_slug: @universe.slug, story_id: @story)
+    assert_response :success
+    assert_select "main nav.content-tabs", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active .sidebar-link-label",
+      text: "Narrative order"
+
+    get universe_story_appearances_path(universe_slug: @universe.slug, story_id: @story)
+    assert_response :success
+    assert_select "main nav.content-tabs", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active .sidebar-link-label",
+      text: "Appearances"
+
+    get universe_story_scene_matrix_path(universe_slug: @universe.slug, story_id: @story)
+    assert_response :success
+    assert_select "main nav.content-tabs", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active .sidebar-link-label",
+      text: "Scene matrix"
   end
 
   test "tags workspace has universe and story selectors" do

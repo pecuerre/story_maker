@@ -25,7 +25,13 @@ class AppearancesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Appearance grid"
-    assert_select "nav.content-tabs a.active[aria-current=page][href=?]", appearances_path
+    # The grid is its own Story analytics destination, not a tab of the Scene
+    # workspace.
+    assert_select "nav.content-tabs", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active[aria-current=page][href=?]",
+      appearances_path do
+      assert_select ".sidebar-link-label", text: "Appearances"
+    end
     assert_select "a[href=?]", universe_story_path(universe_slug: @universe.slug, id: @story), text: "Story overview"
 
     assert_select ".appearance-grid thead th", text: "Character"

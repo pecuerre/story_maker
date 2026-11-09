@@ -116,8 +116,9 @@ turn it into a record by accident.
   The prose before the README's first `##` heading is the Section's `description`, with its
   Markdown kept and its entity references resolved to record names like any other profile answer.
   A `##` subsection has no Section column, so the import reports it rather than dropping it; the
-  preview names the subsections it left behind. Chapters are written in sorted
-  directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
+  preview names the subsections it left behind. Every imported chapter Section is labelled with the
+  Story's **Chapter** Section Tag, which the run creates once per Story. Chapters are written in
+  sorted directory order. Chapter and scene numbers are two-digit positions; they are filenames, not
   database ids. A scene's frontmatter `id` is the backlog item it was written from, never a unique
   scene key; the filename is the scene's identity inside its chapter.
 - `stories/<story>/plots/` is optional. Each Markdown file is one Plot thread; the directory's
@@ -304,7 +305,8 @@ time) is the Scene's own `datetime`. `chapter`, `sequence`, and the scene slug c
 and `id`, `timeline`, and `branch` have no Scene column and are reported. Every imported Scene is
 written as `draft`, because the source keeps no writing status. A Scene's closing `DRAFTING
 CONTRACT` HTML comment is read into the Scene's `drafting_contract` note rather than into prose; it
-is the one comment the import keeps.
+is the one comment the import keeps. The browser preference that can hide the note from Scene pages
+is a display choice and never changes what the import writes.
 
 A Scene's body opens with its `#` title heading — the same text as the frontmatter `title` — and
 continues as alternating `## Narration` and `## Dialog` blocks in reading order: the first block is
@@ -535,7 +537,8 @@ question as a rule of type `open`. **Factions** runs before **Characters**, **Lo
 `[[faction:slug]]` affiliation needs its Faction to exist first. **Stories** writes one Story per
 story directory, because a Plot needs the Story it belongs to, and **Sections** then writes one
 Section per chapter directory, named from its README heading as described under
-[Story records](#story-records).
+[Story records](#story-records), and labels each one with the Story's single **Chapter** Section
+Tag.
 **Scenes** follows, writing each Scene with its Elements and dialogue turns, because it needs the
 Story, the Section, and the Character and Location links those earlier slices created. **Events**
 runs after Scenes and writes one Event per Scene, named after the Scene and linked to it. A concrete
@@ -570,7 +573,9 @@ a guest signs in and a signed-in non-operator receives `403`.
 It writes only the records a registered slice owns, and it does not write the source back out, copy
 it into the repository, or restore a replaced Universe. Character relations, Faction-to-Faction
 relationships, Location and Item hierarchy, Plot Scene assignments, and Scene Tags do not arrive from
-this slice; the source text that would carry them is reported. A Scene's concrete `moment` and the
+this slice; the source text that would carry them is reported. The one Section Tag it creates is the
+**Chapter** label every chapter Section carries, because a chapter is the only section kind the
+source names. A Scene's concrete `moment` and the
 Events one per Scene are written, but an Event's own description, tags, and parent stay empty
 because the source states none there.
 

@@ -39,6 +39,18 @@ module ApplicationHelper
     @current_start_page ||= AppStartPage.read(cookies)
   end
 
+  # Whether this browser shows a Scene's drafting contract. Also read from a
+  # signed cookie, and memoized so Scene Details and the editor cannot disagree
+  # within one render. Hiding it changes only what these pages draw: the stored
+  # note, and what an import writes, are untouched.
+  def current_drafting_contract
+    @current_drafting_contract ||= AppDraftingContract.read(cookies)
+  end
+
+  def drafting_contract_visible?
+    current_drafting_contract == "show"
+  end
+
   # The settings sections, in the order the vertical navigation lists them. Each
   # one owns a real destination, so the navigation is URL-backed like every other
   # tab strip in the application: no `data-bs-toggle`, no in-document panes. The
@@ -50,7 +62,7 @@ module ApplicationHelper
   # Adding a section is one entry here, one in `settings_sections`, and one panel
   # in the view — the sections are a list rather than a pair of booleans for
   # exactly that reason.
-  SETTINGS_SECTIONS = %w[appearance language start_page].freeze
+  SETTINGS_SECTIONS = %w[appearance language start_page drafting_contract].freeze
 
   # The sections this particular reader may open. It is `SETTINGS_SECTIONS` plus
   # whatever the reader is entitled to, rather than a filtered view of a list that
@@ -79,7 +91,9 @@ module ApplicationHelper
       { label: t("settings.tabs.language"), icon: "translate", path: settings_path(section: "language"),
         active: settings_section?("language") },
       { label: t("settings.tabs.start_page"), icon: "box-arrow-in-right", path: settings_path(section: "start_page"),
-        active: settings_section?("start_page") }
+        active: settings_section?("start_page") },
+      { label: t("settings.tabs.drafting_contract"), icon: "file-text",
+        path: settings_path(section: "drafting_contract"), active: settings_section?("drafting_contract") }
     ]
 
     return tabs unless platform_admin?
@@ -370,6 +384,15 @@ module ApplicationHelper
   # both reach it here.
   def markdown_description_html(record)
     MarkdownDescription.new(record.universe, record.description).to_html
+  end
+
+  # A Scene's drafting contract as safe HTML. It is stored as the Markdown note
+  # the source carried in, so it goes through the same dialect and the same
+  # reference rules as a record description; the Scene's own Universe resolves
+  # any `[[kind:slug]]` reference, and the sanitized output keeps a bullet list
+  # a list rather than the block of source a raw print produced.
+  def drafting_contract_html(scene)
+    MarkdownDescription.new(scene.story.universe, scene.drafting_contract).to_html
   end
 
   # The short summary at the top of a record's details page, as one safe line in

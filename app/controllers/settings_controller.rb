@@ -41,7 +41,8 @@ class SettingsController < ApplicationController
   PREFERENCES = {
     theme: AppTheme,
     locale: AppLocale,
-    start_page: AppStartPage
+    start_page: AppStartPage,
+    drafting_contract: AppDraftingContract
   }.freeze
 
   # The one platform-owned value on this page. Named rather than written inline
@@ -149,6 +150,9 @@ class SettingsController < ApplicationController
         t("settings.flash.theme_saved", theme: AppTheme.label_for(value))
       when :start_page
         save_start_page(value)
+      when :drafting_contract
+        AppDraftingContract.write(cookies, value)
+        t("settings.flash.drafting_contract_#{value == "show" ? "shown" : "hidden"}")
       end
     end
 

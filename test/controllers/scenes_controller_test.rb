@@ -975,6 +975,61 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "No drafting contract recorded yet."
   end
 
+  test "scene details renders the drafting contract as Markdown rather than its source" do
+    @scene.update!(drafting_contract: "- one place, one beat of time: can the lantern cross?\n" \
+      "- exit question: who opened the gate?")
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select ".drafting-contract-body ul li", 2
+    assert_select ".drafting-contract-body li", text: /can the lantern cross\?/
+    assert_select ".drafting-contract-body li", text: /who opened the gate\?/
+    css_select(".drafting-contract-body").each do |body|
+      assert_not_includes body.text, "- one place",
+        "the source bullet marker is rendered by the list, not printed as text"
+    end
+  end
+
+  test "the drafting contract preference hides it from details and the editor" do
+    @scene.update!(drafting_contract: "- one place.\n- one beat of time.")
+    hide_drafting_contract
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select ".scene-drafting-contract", 0
+    assert_not_includes response.body, "one beat of time"
+
+    get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+
+    assert_response :success
+    assert_select "textarea[name='scene[drafting_contract]']", 0
+    assert_not_includes response.body, "one beat of time"
+  end
+
+  test "hiding the drafting contract also hides the empty state" do
+    hide_drafting_contract
+
+    get universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: scenes(:scene_three))
+
+    assert_response :success
+    assert_select ".scene-drafting-contract", 0
+    assert_not_includes response.body, "No drafting contract recorded yet."
+  end
+
+  test "an update made while the contract is hidden leaves the stored note alone" do
+    @scene.update!(drafting_contract: "- one place.")
+    hide_drafting_contract
+
+    patch universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene),
+      params: { scene: { name: "Renamed while hidden" } }
+
+    assert_redirected_to universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
+    assert_equal [ "Renamed while hidden", "- one place." ],
+      [ @scene.reload.name, @scene.drafting_contract ]
+  end
+
   test "should get edit" do
     get edit_universe_story_scene_url(universe_slug: @universe.slug, story_id: @story, id: @scene)
 
@@ -1260,4 +1315,14 @@ class ScenesControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal "Scene one", @scene.reload.name
   end
+
+  private
+    # The signed cookie the browser would present next, written the way the
+    # application writes it. Using the preference's own writer keeps the cookie
+    # name and its signing out of the test.
+    def hide_drafting_contract
+      jar = ActionDispatch::TestRequest.create.cookie_jar
+      AppDraftingContract.write(jar, "hide")
+      cookies[AppDraftingContract::COOKIE_NAME.to_s] = jar[AppDraftingContract::COOKIE_NAME]
+    end
 end

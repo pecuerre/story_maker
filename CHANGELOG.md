@@ -38,6 +38,19 @@ Labels used below, in the order their groups appear:
 - `chore` — tests, fixtures, seed data, dependency, CI, or maintenance work
 - `planned` — a documented future direction; not implemented in that entry
 
+## 2026-11-09
+
+### added
+
+- **Drafting contract visibility.** Settings now has a browser-owned Drafting contract section that shows or hides the note on Scene Details and in the Scene editor, while the import still stores it.
+- **Chapter tag on import.** A story-interchange run now creates one **Chapter** Section Tag per Story and labels every imported chapter Section with it.
+
+### changed
+
+- **Drafting contract rendering.** Scene Details renders the stored contract as Markdown on a bordered note surface instead of printing its source block verbatim.
+- **Story sidebar reorganized.** Sections and Plots are standalone Story workspace entries, Narrative order, Appearances, and Scene matrix moved to a new Story analytics block, and the Scenes workspace keeps only the Scenes and Scene board tabs.
+- **Locations workspace tabs.** Routes and Map left the Universe Bible sidebar and now open as the second and third tabs of the Locations workspace, beside the Locations tree.
+
 ## 2026-11-08
 
 ### added

@@ -10,8 +10,11 @@ class MapFlowTest < ApplicationSystemTestCase
     visit universe_map_path(universe_slug: universe.slug)
 
     assert_selector "h1", text: "Map"
-    within "nav[aria-label='Universe and story navigation']" do
+    within "nav[aria-label='Location workspace']" do
       assert_selector "a.active[aria-current='page']", text: "Map"
+    end
+    within "nav[aria-label='Universe and story navigation']" do
+      assert_selector "a.active[aria-current='page']", text: "Locations"
     end
     assert_selector ".map-location-tree > li a[aria-label='Details for #{root.name}']", text: root.name
     assert_selector ".map-location-children > li a[aria-label='Details for #{child.name}']", text: child.name

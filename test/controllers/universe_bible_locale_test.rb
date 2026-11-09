@@ -60,6 +60,10 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_equal "Mapa", rendered_title
     assert_select "h1", text: "Mapa"
     assert_select ".page-description", text: /cómo se anidan los lugares/
+    assert_select "nav.content-tabs[aria-label=?]", "Espacio de trabajo de lugares"
+    assert_select "nav.content-tabs a.active[aria-current=page]", text: "Mapa"
+    assert_select "nav.content-tabs a", text: "Lugares"
+    assert_select "nav.content-tabs a", text: "Rutas"
     assert_select "#map-diagram-heading", text: "Distribución derivada"
     assert_select ".map-diagram-caption", text: /se genera automáticamente/
     assert_select "#map-locations-heading", text: "Lugares"
@@ -158,6 +162,8 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".page-eyebrow", text: "Biblia del universo"
     assert_select ".page-actions button", text: "Añadir lugar"
     assert_select "nav.content-tabs a.active", text: "Lugares"
+    assert_select "nav.content-tabs a", text: "Rutas"
+    assert_select "nav.content-tabs a", text: "Mapa"
     # The tree names its own empty state from the model param, not from a
     # hand-written string, and this workspace has no separate empty title.
     assert_select ".taxonomy-node", 2
@@ -383,6 +389,10 @@ class UniverseBibleLocaleTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "Rutas", rendered_title
     assert_select "h1", text: "Rutas"
+    assert_select "nav.content-tabs[aria-label=?]", "Espacio de trabajo de lugares"
+    assert_select "nav.content-tabs a.active[aria-current=page]", text: "Rutas"
+    assert_select "nav.content-tabs a", text: "Lugares"
+    assert_select "nav.content-tabs a", text: "Mapa"
     assert_select "button.btn-primary[data-action='modal-form#open']", text: "Añadir ruta"
     assert_select "label[for=route_name]", text: "Nombre"
     assert_select "label[for=route_from_location_id]", text: "Lugar de origen"

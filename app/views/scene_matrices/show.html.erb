@@ -7,11 +7,6 @@
   count: @matrix.scenes.size,
   count_label: "scene" %>
 
-<%= render "shared/content_tabs",
-  aria_label: t("sidebar.story_workspace"),
-  intro: t("scene_matrices.intro", story: @story.name),
-  tabs: story_workspace_tabs(@story) %>
-
 <% if @matrix.scenes? %>
   <%# The table is the matrix and its own accessible equivalent: a caption, real
       column headers, and a Scene row header. The scroll region is focusable so a

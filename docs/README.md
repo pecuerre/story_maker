@@ -57,7 +57,7 @@ How to use these docs:
    | Item Markdown profiles, ownership, search, and the Items workspace | [features/items.md](features/items.md) |
    | Reading a Story as a printable book, and the export scopes | [features/exports.md](features/exports.md) |
    | Translations and writing a translatable string | [features/i18n.md](features/i18n.md) |
-  | The platform Settings page and its two preferences | [features/settings.md](features/settings.md) |
+  | The platform Settings page and its browser preferences | [features/settings.md](features/settings.md) |
   | The contract every in-list filter shares | [features/list_filters.md](features/list_filters.md) |
   | Setup, commands, tests, CI, demo data, deployment | [development.md](development.md) |
   | Verified open oddities and tech debt | [known_quirks.md](known_quirks.md) |

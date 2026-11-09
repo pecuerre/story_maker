@@ -168,7 +168,9 @@ module TagsHelper
     "location" => {
       key: "locations",
       tabs: [
-        { name: "locations", path: :universe_locations_path, controller: :locations }
+        { name: "locations", path: :universe_locations_path, controller: :locations },
+        { name: "routes", path: :universe_routes_path, controller: :routes },
+        { name: "map", path: :universe_map_path, controller: :maps }
       ]
     },
     "event" => {

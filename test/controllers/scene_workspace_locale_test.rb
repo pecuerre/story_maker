@@ -38,7 +38,8 @@ class SceneWorkspaceLocaleTest < ActionDispatch::IntegrationTest
     # The count is resolved with a `count:`, so the plural comes from the locale.
     assert_select ".page-header .badge[aria-label=?]", "3 escenas"
     assert_select "nav.content-tabs a.active", text: "Escenas"
-    assert_select "nav.content-tabs a", text: "Secciones"
+    assert_select "nav.content-tabs a", text: "Tablero de escenas"
+    assert_select "nav.content-tabs a", text: "Secciones", count: 0
     assert_select ".page-actions a", text: "Añadir escena"
     # Author data is never translated: the scene's own name still reads as its
     # author typed it.

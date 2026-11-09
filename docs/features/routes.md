@@ -9,8 +9,9 @@ are in [conventions.md](../conventions.md).
 
 ## Workspace
 
-Routes are universe-scoped world-building records, available from **Routes** in the Universe Bible
-sidebar at `/u/:universe_slug/routes`. The workspace is a flat list with the established Bootstrap
+Routes are universe-scoped world-building records, and they are the **Routes** tab of the Locations
+workspace at `/u/:universe_slug/routes`; the three-tab workspace is described in
+[locations.md](locations.md#workspace-tabs). The workspace is a flat list with the established Bootstrap
 modal editor. Each row names the path, links to both endpoint Locations, and may show its distance,
 travel time, and description. The read-only details page is `/u/:universe_slug/routes/:id`.
 

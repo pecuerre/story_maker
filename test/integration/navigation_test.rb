@@ -70,6 +70,8 @@ class NavigationTest < ActionDispatch::IntegrationTest
 
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story workspace"
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Universe Bible"
+    # Story analytics needs a selected story, so it is absent from the picker state.
+    assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story analytics", count: 0
     assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Configuration", count: 0
     assert_select "aside.workspace-sidebar a", text: "All stories"
     assert_select "aside.workspace-sidebar a", text: "New story", count: 0
@@ -77,6 +79,8 @@ class NavigationTest < ActionDispatch::IntegrationTest
       text: /Scenes/
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#'][aria-disabled=true][data-placeholder-link=true]",
       text: /Plots/
+    assert_select "aside.workspace-sidebar a.sidebar-link[href='#'][aria-disabled=true][data-placeholder-link=true]",
+      text: /Sections/
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_story_scenes_path(universe_slug: @universe.slug, story_id: @story),
       count: 0
@@ -100,6 +104,13 @@ class NavigationTest < ActionDispatch::IntegrationTest
       universe_relations_path(universe_slug: @universe.slug), count: 0
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_ownerships_path(universe_slug: @universe.slug), count: 0
+    # Routes and Map are the other two tabs of the Locations workspace rather
+    # than destinations of their own, so the sidebar keeps one Locations entry
+    # and the two routes are reachable from its tab strip.
+    assert_select "aside.workspace-sidebar a[href=?]",
+      universe_routes_path(universe_slug: @universe.slug), count: 0
+    assert_select "aside.workspace-sidebar a[href=?]",
+      universe_map_path(universe_slug: @universe.slug), count: 0
 
     # Configuration and Tags moved to the right utility sidebar, so the left
     # column keeps no tools section and no taxonomy entry.
@@ -203,6 +214,16 @@ class NavigationTest < ActionDispatch::IntegrationTest
     end
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Scenes/, count: 0
     assert_select "aside.workspace-sidebar a.sidebar-link[href='#']", text: /Plots/, count: 0
+    # The Story workspace order is the reading order of the Story itself.
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-workspace-title'] .sidebar-link-label" do |labels|
+      assert_equal [ "Story overview", "Sections", "Scenes", "Plots", "Export" ], labels.map(&:text)
+    end
+    # Story analytics is its own block, and the Scene workspace no longer owns
+    # these destinations as tabs.
+    assert_select "aside.workspace-sidebar .sidebar-section-title", text: "Story analytics"
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] .sidebar-link-label" do |labels|
+      assert_equal [ "Narrative order", "Appearances", "Scene matrix" ], labels.map(&:text)
+    end
     assert_select "aside.workspace-sidebar a[href=?]",
       universe_tags_path(universe_slug: @universe.slug), count: 0
     assert_select "aside.right-sidebar section[aria-labelledby='configuration-title'] a.sidebar-link", text: "Tags"

@@ -61,6 +61,46 @@
         </div>
       <% end %>
     </section>
+  <% elsif settings_section?("drafting_contract") %>
+    <%# A display preference, like the theme, but it changes which facts a Scene
+        page draws rather than how the whole document is painted. The copy states
+        plainly that hiding is not deleting: an import always stores the note. %>
+    <section class="settings-panel" aria-labelledby="drafting-contract-title">
+      <h2 class="settings-panel-title" id="drafting-contract-title"><%= t("settings.drafting_contract.title") %></h2>
+      <p class="settings-panel-description"><%= t("settings.drafting_contract.description") %></p>
+
+      <%= form_with url: settings_path_for("drafting_contract"), method: :patch, class: "form-surface settings-form",
+        data: { turbo: false } do |form| %>
+        <fieldset class="settings-fieldset">
+          <legend class="form-label"><%= t("settings.drafting_contract.legend") %></legend>
+          <p class="settings-hint" id="drafting-contract-hint"><%= t("settings.drafting_contract.hint") %></p>
+
+          <div class="theme-options">
+            <% AppDraftingContract.names.each do |name| %>
+              <%# The label is the card, so the checked state is one adjacent-sibling
+                  rule away and the control needs no scripting. %>
+              <div class="theme-option">
+                <%= form.radio_button :drafting_contract, name,
+                  checked: name == current_drafting_contract,
+                  class: "form-check-input",
+                  aria: { describedby: "drafting-contract-hint" } %>
+                <label class="theme-option-label" for="drafting_contract_<%= name %>">
+                  <span class="theme-option-icon" aria-hidden="true"><i class="bi bi-<%= AppDraftingContract.icon_for(name) %>"></i></span>
+                  <span class="theme-option-copy">
+                    <span class="theme-option-name"><%= AppDraftingContract.label_for(name) %></span>
+                    <span class="theme-option-description"><%= AppDraftingContract.description_for(name) %></span>
+                  </span>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </fieldset>
+
+        <div class="form-actions">
+          <%= form.submit t("settings.drafting_contract.submit"), class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </section>
   <% elsif settings_section?("limits") %>
     <%# The one panel that is not a browser preference. The others write a signed
         cookie this browser sends back; this one writes a row the whole deployment

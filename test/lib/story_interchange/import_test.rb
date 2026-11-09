@@ -283,6 +283,14 @@ class StoryInterchangeImportTest < ActiveSupport::TestCase
     assert_equal 1, winter.position
     assert_empty winter.scenes
 
+    # The run creates one Chapter Section Tag per Story and labels every imported
+    # chapter with it.
+    chapter_tag = story.section_tags.find_by!(slug: "chapter")
+    assert_equal "Chapter", chapter_tag.name
+    assert_equal [ chapter_tag ], story.section_tags.to_a
+    assert_equal [ chapter_tag ], arrival.section_tags.to_a
+    assert_equal [ chapter_tag ], winter.section_tags.to_a
+
     gate = story.scenes.find_by!(slug: "01-arrival-01-the-gate")
     assert_equal "The gate", gate.name
     assert_equal arrival, gate.section

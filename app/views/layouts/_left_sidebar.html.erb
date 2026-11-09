@@ -33,29 +33,16 @@
         path: universe_factions_path,
         controllers: %i[ factions faction_relationships ] %>
 
+      <%# Locations opens its related workspace tabs: Routes and Map are reached
+          through the strip on every one of the three pages, so the sidebar keeps
+          one entry rather than three. %>
       <%= render "shared/sidebar_link",
         icon: "geo-alt",
         label: t("sidebar.locations"),
         count_label: "location",
         count: menu_counts[:locations],
         path: universe_locations_path,
-        controllers: %i[ locations ] %>
-
-      <%= render "shared/sidebar_link",
-        icon: "signpost-2",
-        label: t("sidebar.routes"),
-        count_label: "route",
-        count: menu_counts[:routes],
-        path: universe_routes_path,
-        controllers: %i[ routes ] %>
-
-      <%= render "shared/sidebar_link",
-        icon: "map",
-        label: t("sidebar.map"),
-        count_label: "location",
-        count: menu_counts[:locations],
-        path: universe_map_path,
-        controllers: %i[ maps ] %>
+        controllers: %i[ locations routes maps ] %>
 
       <%# The Timeline is the second tab of the Event workspace, so the sidebar has
           one Event entry rather than two, and it stays current on both tabs. %>
@@ -105,14 +92,6 @@
     <ul class="sidebar-list">
       <% if Current.story.present? %>
         <%= render "shared/sidebar_link",
-          icon: "diagram-3",
-          label: t("sidebar.plots"),
-          count_label: "plot",
-          count: plot_count,
-          path: universe_story_plots_path(story_id: Current.story),
-          controllers: %i[ plots ] %>
-
-        <%= render "shared/sidebar_link",
           icon: "house",
           label: t("sidebar.story_overview"),
           path: universe_story_path(id: Current.story),
@@ -132,7 +111,15 @@
           count_label: "scene",
           count: scene_count,
           path: universe_story_scenes_path(story_id: Current.story),
-          controllers: %i[ scenes ] %>
+          controllers: %i[ scenes scene_boards ] %>
+
+        <%= render "shared/sidebar_link",
+          icon: "diagram-3",
+          label: t("sidebar.plots"),
+          count_label: "plot",
+          count: plot_count,
+          path: universe_story_plots_path(story_id: Current.story),
+          controllers: %i[ plots ] %>
 
         <%# Export reads the selected Story as a book. It belongs to the story
             block rather than to a workspace tab: it is a destination of its own
@@ -149,18 +136,26 @@
           path: universe_stories_path,
           controllers: %i[ stories ] %>
 
+        <%# Sections, Scenes, and Plots are story-scoped: they stay placeholders
+            until a story is selected, and never fall back to the universe's
+            first story. %>
         <%= render "shared/sidebar_link",
-          icon: "diagram-3",
-          label: t("sidebar.plots"),
+          icon: "list-nested",
+          label: t("sidebar.sections"),
           path: "#",
           controllers: [],
           placeholder: true %>
 
-        <%# Scenes are story-scoped: stay a placeholder until a story is selected,
-            and never fall back to the universe's first story. %>
         <%= render "shared/sidebar_link",
           icon: "film",
           label: t("sidebar.scenes"),
+          path: "#",
+          controllers: [],
+          placeholder: true %>
+
+        <%= render "shared/sidebar_link",
+          icon: "diagram-3",
+          label: t("sidebar.plots"),
           path: "#",
           controllers: [],
           placeholder: true %>
@@ -171,4 +166,37 @@
       <p class="sidebar-hint"><%= t("sidebar.select_story_hint") %></p>
     <% end %>
   </section>
+
+  <% if Current.story.present? %>
+    <%# The Story analytics section holds the read-only views of the selected
+        Story — narrative order, the appearance grid, and the Scene matrix. Each
+        is a destination of its own rather than a tab of the Scene workspace, so
+        the Scene strip stays about the sequence itself. %>
+    <section class="sidebar-section sidebar-section--story" aria-labelledby="story-analytics-title">
+      <h3 class="sidebar-section-title" id="story-analytics-title"><%= t("sidebar.story_analytics") %></h3>
+      <ul class="sidebar-list">
+        <%# Narrative order is the one signed-in destination: a guest is not
+            offered a link that would only send them to sign in. %>
+        <% if Current.user.present? %>
+          <%= render "shared/sidebar_link",
+            icon: "signpost-split",
+            label: t("sidebar.narrative_order"),
+            path: universe_story_narrative_order_path(story_id: Current.story),
+            controllers: %i[ narrative_orders ] %>
+        <% end %>
+
+        <%= render "shared/sidebar_link",
+          icon: "grid-3x3-gap",
+          label: t("sidebar.appearances"),
+          path: universe_story_appearances_path(story_id: Current.story),
+          controllers: %i[ appearances ] %>
+
+        <%= render "shared/sidebar_link",
+          icon: "table",
+          label: t("sidebar.scene_matrix"),
+          path: universe_story_scene_matrix_path(story_id: Current.story),
+          controllers: %i[ scene_matrices ] %>
+      </ul>
+    </section>
+  <% end %>
 </nav>

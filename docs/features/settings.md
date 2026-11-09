@@ -13,12 +13,13 @@ There is exactly one section that is not a browser preference — **Limits** —
 under [The one platform-owned setting](#the-one-platform-owned-setting) below. Everything else on the
 page, including the reason a guest can reach all of it, follows from the sentence above.
 
-## The three independent preferences
+## The four independent preferences
 
 **Theme** ([ADR 0013](../adr/0013-platform-settings-and-browser-theme.md)), **language**
-([ADR 0016](../adr/0016-internationalization-and-browser-locale.md)), and **start page**
-([ADR 0017](../adr/0017-browser-owned-start-page-and-remembered-destination.md)) are all per-browser
-signed cookies, and each is resolved in a different place because each answers a different question.
+([ADR 0016](../adr/0016-internationalization-and-browser-locale.md)), **start page**
+([ADR 0017](../adr/0017-browser-owned-start-page-and-remembered-destination.md)), and **drafting
+contract** are all per-browser signed cookies, and each is resolved in a different place because each
+answers a different question.
 
 - `AppTheme` reads the signed cookie `um_theme` and the layout renders it as `<html data-bs-theme>`,
   so the first paint is already correct and no script is involved. The `current_theme` helper
@@ -33,20 +34,27 @@ signed cookies, and each is resolved in a different place because each answers a
   section rather than part of Appearance. The value is one of `remember` (the default) and
   `universes`; the remembered destination it governs is separate state, described in
   [architecture.md](../architecture.md).
+- `AppDraftingContract` reads the signed cookie `um_drafting_contract` and answers whether this
+  browser draws a Scene's drafting contract. The value is one of `show` (the default) and `hide`. It
+  is a **display** choice only: Scene Details omits the section and the Scene editor omits its field,
+  while the stored `scenes.drafting_contract` column, the story interchange import that writes it,
+  and the bearer-token Scene API are unaffected. The Scene rules are in [scenes.md](scenes.md).
 
-All three are validated independently before any is written, so a request that refuses one does not
-apply the others. All three forms opt out of Turbo. For the theme and the language that is a
+All four are validated independently before any is written, so a request that refuses one does not
+apply the others. All four forms opt out of Turbo. For the theme and the language that is a
 necessity — the theme lives in an attribute on the root element, and `I18n.locale` is read at render,
 so a Turbo Drive navigation would update the body while leaving the root element stale. The start
-page form opts out for **consistency** rather than necessity: nothing it sets lives on the root
-element, but every section of the page then saves the same way, and the section navigation's active
-state and the flash are both rendered by one response rather than re-derived from the one before it.
+page and drafting contract forms opt out for **consistency** rather than necessity: nothing either
+sets lives on the root element, but every section of the page then saves the same way, and the
+section navigation's active state and the flash are both rendered by one response rather than
+re-derived from the one before it.
 
 ## The page
 
-`app/views/settings/show.html.erb` posts a flat `theme`, `locale`, `start_page`, and/or
-`universe_creation_limit` parameter to `PATCH /settings`, and the controller answers with a redirect
-(`see_other`) or a refusal. The controller declares the three browser preferences as one
+`app/views/settings/show.html.erb` posts a flat `theme`, `locale`, `start_page`,
+`drafting_contract`, and/or `universe_creation_limit` parameter to `PATCH /settings`, and the
+controller answers with a redirect
+(`see_other`) or a refusal. The controller declares the four browser preferences as one
 `PREFERENCES` map from request parameter to the model that owns the cookie, so the "is this value
 known" and "write this preference" pairs cannot drift apart between sections; the limit is named
 separately because it writes a row rather than a cookie.
@@ -79,10 +87,15 @@ page shape:
   palette to preview. Choosing the universes list also forgets the stored destination, so the two
   cannot be left disagreeing; choosing the last story keeps it. The page says plainly that returning
   to a story only ever happens for a story the reader picked themselves.
+- **Drafting contract** holds the same control for a Scene's writer note: **Show** or **Hide**. Its
+  cards also carry an icon rather than a colour swatch, because a visibility choice has no palette to
+  preview. The page says plainly that hiding is not deleting: the import still stores the note and
+  the Scene API still returns it, so turning the section off only quiets the pages this browser
+  draws.
 
 ## The one platform-owned setting
 
-**Limits** is the fourth section, and the only part of this page that is not remembered by the
+**Limits** is the fifth section, and the only part of this page that is not remembered by the
 browser. It holds `platform_settings.universe_creation_limit` — how many universes one account may
 create per hour — which belongs to the deployment rather than to any universe, because universe
 creation is the one mutation with no universe yet to own a budget. [ADR
@@ -103,7 +116,7 @@ Three things about it are worth stating rather than leaving to the code:
   reader, so a section that is not offered is also a section a guessed `?section=limits` cannot
   reach — it falls back to the first section exactly as a typo does. The flag defaults to `false` and
   nothing in the interface sets it; a guest, a plain reader, and the owner of a universe all see the
-  same three sections they have always seen.
+  same four sections they have always seen.
 
 The page remembers where it was opened from and offers a **Go back** action that returns there. The
 painted treatment is in [visual_design.md](../visual_design.md); the rules for writing a translatable

@@ -1184,12 +1184,36 @@ $um-search-match: #ffc107;
   -webkit-line-clamp: 2;
 }
 
-// The imported drafting contract is one note kept as the author wrote it, so
-// its line breaks are prose and stay visible instead of collapsing.
+// The imported drafting contract is a note kept as the author wrote it, but it
+// is stored as Markdown. It is rendered as Markdown so a bullet line is a real
+// list row, and the surface gives the note the weight of an aside rather than a
+// second body of prose on Scene Details.
 .drafting-contract-body {
   max-width: 52rem;
+  padding: .875rem 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-left: 3px solid var(--um-primary-strong);
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-tertiary-bg);
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  ul,
+  ol {
+    margin-bottom: 0;
+    padding-left: 1.25rem;
+  }
+
+  li + li {
+    margin-top: .375rem;
+  }
+
+  p + p {
+    margin-top: .5rem;
+  }
 }
 
 .row-actions {

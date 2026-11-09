@@ -20,11 +20,13 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Narrative order"
-    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
-      narrative_order_path, text: "Narrative order"
-    assert_select "nav.content-tabs a", text: "Sections"
-    assert_select "nav.content-tabs a", text: "Plots"
-    assert_select "nav.content-tabs a", text: "Scenes"
+    # Narrative order is its own Story analytics destination, not a tab of the
+    # Scene workspace.
+    assert_select "nav.content-tabs", 0
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link.active[aria-current=page][href=?]",
+      narrative_order_path do
+      assert_select ".sidebar-link-label", text: "Narrative order"
+    end
 
     # The left column is narrative order, and it is the story's whole sequence.
     assert_equal [ "Scene one", "Scene two", "Scene three" ],
@@ -112,7 +114,7 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "a guest is sent to sign in and is not offered the tab" do
+  test "a guest is sent to sign in and is not offered the sidebar entry" do
     sign_out
 
     get narrative_order_url
@@ -120,10 +122,14 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
 
     get universe_story_scenes_url(universe_slug: @universe.slug, story_id: @story)
     assert_response :success
-    assert_select "nav.content-tabs a", text: "Narrative order", count: 0
+    assert_select "aside.workspace-sidebar a", text: "Narrative order", count: 0
+    # The other analytics destinations are guest-readable, so the section is
+    # still there for a guest.
+    assert_select "aside.workspace-sidebar section[aria-labelledby='story-analytics-title'] a.sidebar-link",
+      text: /Appearances/
   end
 
-  test "the signed-in tab is on every Story workspace page" do
+  test "the signed-in sidebar entry is on every Story page" do
     {
       "Sections" => universe_story_sections_url(universe_slug: @universe.slug, story_id: @story),
       "Plots" => universe_story_plots_url(universe_slug: @universe.slug, story_id: @story),
@@ -131,7 +137,8 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
     }.each_value do |url|
       get url
       assert_response :success
-      assert_select "nav.content-tabs a[href=?]", narrative_order_path, text: "Narrative order"
+      assert_select "aside.workspace-sidebar a[href=?]", narrative_order_path, text: /Narrative order/
+      assert_select "nav.content-tabs a[href=?]", narrative_order_path, count: 0
     end
   end
 
@@ -142,7 +149,7 @@ class NarrativeOrdersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Orden narrativo"
-    assert_select "nav.content-tabs a.active", text: "Orden narrativo"
+    assert_select "aside.workspace-sidebar a.sidebar-link.active .sidebar-link-label", text: "Orden narrativo"
     assert_select "h2", text: "Cómo leer la comparación"
     assert_select "dt", text: /Primera de este tramo/
     assert_select "ol.list-group", text: /Sin suceso vinculado/

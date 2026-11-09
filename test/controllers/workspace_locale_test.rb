@@ -266,8 +266,9 @@ class WorkspaceLocaleTest < ActionDispatch::IntegrationTest
     assert_select ".page-eyebrow", text: "Historia: Story One"
     assert_select ".page-description", text: /Organiza esta historia en una jerarquía/
     assert_select ".page-actions button", text: "Añadir sección"
-    assert_select "nav.content-tabs a", text: "Secciones"
-    assert_select "nav.content-tabs a", text: "Escenas"
+    # Sections is its own sidebar destination, not a tab of the Scene workspace.
+    assert_select "nav.content-tabs", 0
+    assert_select "aside.workspace-sidebar a.sidebar-link.active .sidebar-link-label", text: "Secciones"
 
     get universe_story_section_url(universe_slug: @universe.slug, story_id: @story, id: sections(:section_one))
 

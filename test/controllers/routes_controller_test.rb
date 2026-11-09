@@ -13,6 +13,15 @@ class RoutesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Routes"
+    # Routes is the second tab of the Locations workspace, and this is the active
+    # tab here.
+    assert_select "nav.content-tabs[aria-label=?]", "Location workspace"
+    assert_select "nav.content-tabs a.active[aria-current=page][href=?]",
+      universe_routes_path(universe_slug: @universe.slug), text: "Routes"
+    assert_select "nav.content-tabs a[href=?]",
+      universe_locations_path(universe_slug: @universe.slug), text: "Locations"
+    assert_select "nav.content-tabs a[href=?]",
+      universe_map_path(universe_slug: @universe.slug), text: "Map"
     assert_select ".entity-row", text: /Road one/
     assert_select ".entity-row a[href=?]", universe_location_path(universe_slug: @universe.slug, id: @from)
     assert_select ".entity-row a[href=?]", universe_location_path(universe_slug: @universe.slug, id: @to)

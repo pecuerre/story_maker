@@ -29,8 +29,8 @@ The Plot workspace is `/u/:universe_slug/s/:story_id/plots`, with a read-only de
 Plot from the list, and the details page's **Edit plot** control opens that same editor rather than a
 second form. Its Details page lists assigned Scenes in narrative order. The Scene's existing
 full-page editor assigns zero or more Plots; it also links back to the Plot workspace when none
-exist. The story sidebar and story workspace tabs expose Sections, Plots, and Scenes as separate
-destinations.
+exist. The Story workspace block in the left sidebar exposes Sections, Plots, and Scenes as separate
+destinations; Plots is its own entry rather than a tab of the Scene workspace.
 
 Index and Details are guest-readable. Create, update, and delete are JSON-only mutations through the
 shared modal contract; an existing draft-based universe remembers those writes in the usual way.

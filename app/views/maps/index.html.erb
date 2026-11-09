@@ -1,7 +1,15 @@
 <% content_for :title, t("maps.title") %>
 
-<%= render "shared/page_header", title: t("maps.title"), description: t("maps.description"),
+<%= render "shared/page_header", title: t("maps.title"),
   eyebrow: t("sidebar.universe_bible"), count: @hierarchy.records.size, count_label: "location" %>
+
+<%# Map is the third tab of the Locations workspace, so it carries the same strip
+    as the Locations tree and the Routes list, and this tab is the active one
+    here. %>
+<%= render "shared/content_tabs",
+  aria_label: t("locations.tabs_aria_label"),
+  intro: t("maps.description"),
+  tabs: content_workspace_tabs(:location) %>
 
 <% if @hierarchy.records.any? %>
   <section class="mb-4" aria-labelledby="map-diagram-heading">

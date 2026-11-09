@@ -65,9 +65,10 @@ class RecordDetailsTest < ApplicationSystemTestCase
       assert_selector ".sidebar-context--story .sidebar-story-name", text: story.name
 
       # Universe Bible comes first, then the story context, then the story
-      # workspace. Configuration and Tags are not in this column.
-      # The titles are uppercase in the rendered text, like every section header.
-      assert_equal [ "UNIVERSE BIBLE", "STORY WORKSPACE" ],
+      # workspace and its analytics block. Configuration and Tags are not in this
+      # column. The titles are uppercase in the rendered text, like every section
+      # header.
+      assert_equal [ "UNIVERSE BIBLE", "STORY WORKSPACE", "STORY ANALYTICS" ],
         all(".workspace-navigation .sidebar-section-title").map { |title| title.text.strip }
       assert_selector ".workspace-navigation .sidebar-context--story", count: 1
       assert_no_selector ".workspace-navigation .sidebar-section--tools"

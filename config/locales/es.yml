@@ -62,13 +62,12 @@ es:
     navigation_label: "Navegación del universo y de la historia"
     universe_bible: "Biblia del universo"
     story_workspace: "Espacio de trabajo de la historia"
+    story_analytics: "Analítica de la historia"
     story_overview: "Resumen de la historia"
     characters: "Personajes"
     factions: "Facciones"
     locations: "Lugares"
-    routes: "Rutas"
     canon: "Canon"
-    map: "Mapa"
     events: "Sucesos"
     timeline: "Cronología"
     items: "Objetos"
@@ -1657,6 +1656,7 @@ es:
   # `shared.form`.
   scenes:
     title: "Escenas"
+    workspace_tabs_aria_label: "Lista y tablero de escenas"
     add: "Añadir escena"
     statuses:
       draft: "Borrador"
@@ -2371,6 +2371,11 @@ es:
         no_role: "sin rol registrado"
     tabs:
       locations: "Lugares"
+      # Rutas y Mapa son los dos espacios de trabajo relacionados a los que se
+      # llega desde la propia tira de pestañas, así que la barra lateral mantiene
+      # una sola entrada de Lugares.
+      routes: "Rutas"
+      map: "Mapa"
 
   maps:
     title: "Mapa"
@@ -3724,6 +3729,7 @@ es:
       appearance: "Apariencia"
       language: "Idioma"
       start_page: "Página de inicio"
+      drafting_contract: "Contrato de escritura"
       limits: "Límites"
     appearance:
       title: "Apariencia"
@@ -3751,6 +3757,16 @@ es:
       legend: "Después de iniciar sesión"
       hint: "La elección se recuerda en este navegador. Volver a tu última historia solo ocurre si esa historia la elegiste tú; Universe Maker nunca elige una historia por ti."
       submit: "Guardar la página de inicio"
+    # Una preferencia de visualización como el tema, pero cambia qué datos
+    # dibujan Detalles de la escena y el editor de la escena, no cómo se pinta
+    # todo el documento. Ocultar nunca borra: la importación sigue guardando la
+    # nota.
+    drafting_contract:
+      title: "Contrato de escritura"
+      description: "Si este navegador muestra la nota del contrato de escritura en una escena. La nota es una guía para quien escribe, no prosa, y todas las páginas que dibujan una escena siguen la elección."
+      legend: "En las páginas de escena"
+      hint: "La elección se recuerda en este navegador y se aplica a Detalles de la escena y al editor de la escena. Ocultar la nota nunca la elimina de la base de datos: un contrato importado sigue guardado y la API de escenas lo sigue devolviendo."
+      submit: "Guardar la elección del contrato"
     # La única sección que no es una preferencia del navegador, y la única que
     # nadie más que una persona operadora ve: configura la instalación y no este
     # navegador, así que se guarda una vez y la lee cualquier cuenta. El texto
@@ -3771,10 +3787,13 @@ es:
       theme_saved: "El tema ahora es %{theme}."
       locale_saved: "El idioma ahora es %{language}."
       start_page_saved: "Después de iniciar sesión, irás a %{start_page}."
+      drafting_contract_shown: "El contrato de escritura ahora se muestra en las páginas de escena."
+      drafting_contract_hidden: "El contrato de escritura ahora está oculto en las páginas de escena. Sigue guardado en cada escena."
       limit_saved: "Universos nuevos por cuenta y hora: %{limit}."
       theme_unknown: "Elige entre el tema claro y el oscuro."
       locale_unknown: "Elige uno de los idiomas que ofrece la aplicación."
       start_page_unknown: "Elige entre tu última historia y la lista de universos."
+      drafting_contract_unknown: "Elige si mostrar u ocultar el contrato de escritura."
 
   # Las dos páginas de inicio, nombradas como las pediría un lector.
   start_pages:
@@ -3792,6 +3811,15 @@ es:
     dark:
       label: "Oscuro"
       description: "Una página oscura con texto claro."
+
+  # Las dos opciones de visibilidad del contrato de escritura.
+  drafting_contracts:
+    show:
+      label: "Mostrar"
+      description: "Dibuja el contrato de escritura en Detalles de la escena y ofrece su campo en el editor de la escena."
+    hide:
+      label: "Ocultar"
+      description: "Mantiene el contrato de escritura fuera de todas las páginas de escena. La nota guardada nunca se elimina."
 
   # Los nombres de los tipos de registro viven en la raíz de la Locale a
   # propósito. Cada espacio de trabajo ya pasa uno de ellos como una palabra

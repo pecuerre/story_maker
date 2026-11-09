@@ -29,11 +29,16 @@
     <div class="form-text"><%= t("scenes.form.description_hint") %></div>
   </div>
 
-  <div class="mb-3">
-    <%= form.label :drafting_contract, t("scenes.form.drafting_contract"), class: "form-label" %>
-    <%= form.text_area :drafting_contract, class: "form-control", rows: 8 %>
-    <div class="form-text"><%= t("scenes.form.drafting_contract_hint") %></div>
-  </div>
+  <%# The drafting contract is a browser display preference. Hiding it removes
+      the editor field too, so a reader who has turned it off cannot see or change
+      the note; an absent field leaves the stored value alone on update. %>
+  <% if drafting_contract_visible? %>
+    <div class="mb-3">
+      <%= form.label :drafting_contract, t("scenes.form.drafting_contract"), class: "form-label" %>
+      <%= form.text_area :drafting_contract, class: "form-control", rows: 8 %>
+      <div class="form-text"><%= t("scenes.form.drafting_contract_hint") %></div>
+    </div>
+  <% end %>
 
   <div class="mb-3">
     <%= form.label :status, t("scenes.form.status"), class: "form-label" %>

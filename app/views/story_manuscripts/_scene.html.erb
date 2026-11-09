@@ -36,7 +36,8 @@
       <% prose = true %>
       <div class="manuscript-dialogue">
         <% turns.each do |turn| %>
-          <p class="manuscript-turn">- <span class="manuscript-speaker"><%= scene_dialogue_turn_speaker_name(turn) %></span><% if turn.parenthetical.present? %> <span class="manuscript-parenthetical">(<%= turn.parenthetical %>)</span><% end %>: <span class="manuscript-line"><%= turn.body %></span></p>
+          <% speaker, line = manuscript_turn_speaker_and_line(turn) %>
+          <p class="manuscript-turn">- <span class="manuscript-speaker"><%= speaker %></span><% if turn.parenthetical.present? %> <span class="manuscript-parenthetical">(<%= turn.parenthetical %>)</span><% end %>: <span class="manuscript-line"><%= line %></span></p>
         <% end %>
       </div>
     <% elsif element.body.present? %>

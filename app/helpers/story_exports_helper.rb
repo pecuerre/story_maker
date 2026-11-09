@@ -6,12 +6,34 @@
 # deeply nested story inside HTML's six levels: a document with an `h9` would be
 # invalid even though the tree is not.
 module StoryExportsHelper
+  # A non-character turn has no Character to name its speaker, so the line
+  # carries the tag instead: the interchange writes `registry-clerk: line`, and
+  # the author may type `Registry Clerk: line`. The tag is the text before the
+  # first colon, and the speech is the rest.
+  NON_CHARACTER_SPEAKER_TAG = /\A\s*(?<name>[^:\n]{1,60}):[ \t]+(?<line>\S.*)\z/m
+
   def manuscript_section_heading(depth)
     "h#{depth + 2 < 6 ? depth + 2 : 6}"
   end
 
   def manuscript_scene_heading(depth)
     "h#{depth + 3 < 6 ? depth + 3 : 6}"
+  end
+
+  # The speaker and the spoken line a printed turn shows. A Character turn names
+  # its speaker directly. A non-character turn names it in the line's own tag,
+  # so the tag becomes the speaker — `registry-clerk` reads as `Registry Clerk`
+  # — and the printed line keeps only the speech; without that, the manuscript
+  # would say "Non-character speaker: registry-clerk: …" and name the speaker
+  # twice. A line with no tag still falls back to the translated label, because
+  # a turn must print a speaker.
+  def manuscript_turn_speaker_and_line(turn)
+    return [ turn.speaker.name, turn.body ] if turn.speaker.present?
+
+    match = turn.body.to_s.match(NON_CHARACTER_SPEAKER_TAG)
+    return [ t("scenes.elements.dialogue_turns.non_character_speaker"), turn.body ] if match.nil?
+
+    [ match[:name].squish.titleize, match[:line] ]
   end
 
   # The text printed under one appendix entry's name. A category either prints

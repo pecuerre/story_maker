@@ -46,6 +46,10 @@ Labels used below, in the order their groups appear:
 - **Scenes-per-character chart.** The Story overview now draws one bar per Character for the Scenes they appear in, using the existing participation union and the Story's whole Scene count as the scale, with a table equivalent.
 - **Non-character dialogue speakers.** A Dialogue turn can now store no Character; the editor's "Non-character speaker" option puts the speaker tag at the start of the line, and the interchange import keeps a bare `@slug` line that way instead of dropping it.
 
+### changed
+
+- **Non-character speakers in the export.** The printable manuscript reads a non-character turn's `registry-clerk: …` tag as the speaker and prints the speech alone instead of the "Non-character speaker" label plus the tag.
+
 ### docs
 
 - **Non-character speaker docs.** The Scenes, story-interchange, exports, and data-model documents describe the nullable `speaker_id` and the tag kept in the line.

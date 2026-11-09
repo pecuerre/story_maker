@@ -46,4 +46,36 @@ class StoryExportsHelperTest < ActionView::TestCase
 
     assert_empty manuscript_scene_notes(scene)
   end
+
+  test "a non-character turn prints its slug tag as a speaker and keeps only the speech" do
+    turn = SceneDialogueTurn.new(body: "registry-clerk: Your material came up with the last road lot.")
+
+    assert_equal [ "Registry Clerk", "Your material came up with the last road lot." ],
+      manuscript_turn_speaker_and_line(turn)
+  end
+
+  test "a non-character tag the author wrote as a name keeps its words" do
+    turn = SceneDialogueTurn.new(body: "Tomás Nieves: That's the whole of it?")
+
+    assert_equal [ "Tomás Nieves", "That's the whole of it?" ], manuscript_turn_speaker_and_line(turn)
+  end
+
+  test "only the first colon separates a non-character tag from the speech" do
+    turn = SceneDialogueTurn.new(body: "registry-clerk: That's what was registered: nothing.")
+
+    assert_equal [ "Registry Clerk", "That's what was registered: nothing." ],
+      manuscript_turn_speaker_and_line(turn)
+  end
+
+  test "a non-character line with no tag keeps the label and prints whole" do
+    turn = SceneDialogueTurn.new(body: "The gate is open.")
+
+    assert_equal [ "Non-character speaker", "The gate is open." ], manuscript_turn_speaker_and_line(turn)
+  end
+
+  test "a character turn keeps its stored speaker and its whole line" do
+    turn = SceneDialogueTurn.new(speaker: characters(:character_one), body: "registry-clerk: not a tag here")
+
+    assert_equal [ "Character one", "registry-clerk: not a tag here" ], manuscript_turn_speaker_and_line(turn)
+  end
 end

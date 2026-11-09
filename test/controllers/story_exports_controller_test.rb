@@ -82,6 +82,21 @@ class StoryExportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h2", text: "Universe bible", count: 0
   end
 
+  test "a non-character turn prints its tag as the speaker, not the picker label" do
+    scene_elements(:dialogue_one).scene_dialogue_turns.create!(
+      speaker: nil,
+      body: "registry-clerk: Your material came up with the last road lot."
+    )
+
+    get manuscript_url
+
+    assert_response :success
+    assert_select ".manuscript-speaker", text: "Registry Clerk"
+    assert_select ".manuscript-turn", text: /\A-\s+Registry Clerk:\s+Your material came up with the last road lot\.\z/
+    assert_select ".manuscript-turn", text: /Non-character speaker/, count: 0
+    assert_select ".manuscript-line", text: /registry-clerk/, count: 0
+  end
+
   test "the printable prose marks a registered name and keeps a suggestion distinct" do
     character = @universe.characters.create!(name: "Mira")
     scene = @story.scenes.create!(name: "The gate", position: 10)

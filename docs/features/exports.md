@@ -84,8 +84,11 @@ with line-level turns prints the turns — speaker, optional parenthetical, and 
 the attributed lines, and its block body repeats the same speech. A Dialogue with no turns prints its
 body alone. Each turn prints as one hyphenated line, `- *Speaker* (parenthetical): line`, with the
 speaker in italics and a colon before the speech, so the turns read as a list of spoken lines rather
-than as a cast list. A non-character turn prints the **Non-character speaker** label and the line,
-which already carries its own tag. A wrapped line hangs under the speech, not under the hyphen.
+than as a cast list. A non-character turn names its speaker in the line's own tag, so the manuscript
+lifts the text before the first colon out as the speaker and prints the speech alone: `registry-clerk:
+…` reads as `Registry Clerk: …`, not as **Non-character speaker** followed by the tag. A line with no
+tag falls back to the **Non-character speaker** label and prints whole. A wrapped line hangs under
+the speech, not under the hyphen.
 
 A registered Character name in a printed body is marked and linked, with a mention kept visually
 distinct from recorded presence; the matching rules are in [mentions.md](mentions.md).
